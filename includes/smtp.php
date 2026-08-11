@@ -1,0 +1,270 @@
+<?php
+/**
+ * Paal 13 SMTP Mailer
+ * Puur PHP SMTP implementatie — geen composer, geen dependencies
+ * Ondersteunt: plain, STARTTLS, SSL/TLS, AUTH LOGIN, AUTH PLAIN
+ */
+
+class Mailer
+{
+    // ── Hoofd verzendmethode ──────────────────────────────────
+    public static function verstuur(
+        string $naar,
+        string $naam,
+        string $onderwerp,
+        string $html_body,
+        ?int $sol_id = null
+    ): bool {
+        $ok = false;
+        $fout = null;
+
+        try {
+            if (defined('SMTP_HOST') && SMTP_HOST !== '') {
+                $ok = self::viaSMTP($naar, $naam, $onderwerp, $html_body);
+            } else {
+                $ok = self::viaPhpMail($naar, $naam, $onderwerp, $html_body);
+            }
+        } catch (Exception $e) {
+            $fout = $e->getMessage();
+            $ok = false;
+            error_log('[Mailer] Fout: ' . $fout);
+        }
+
+        // Log in database
+        try {
+            db()->prepare(
+                "INSERT INTO mail_log (sollicitatie_id, type, ontvanger, onderwerp, status, foutmelding)
+                 VALUES (?, 'mail', ?, ?, ?, ?)"
+            )->execute([$sol_id, $naar, $onderwerp, $ok ? 'verstuurd' : 'mislukt', $fout]);
+        } catch (Exception $e) {
+            // Mail log mislukking is niet fataal
+        }
+
+        return $ok;
+    }
+
+    // ── SMTP verzending ───────────────────────────────────────
+    private static function viaSMTP(string $naar, string $naam, string $onderwerp, string $body): bool
+    {
+        $host     = SMTP_HOST;
+        $port     = (int)(defined('SMTP_PORT') ? SMTP_PORT : 587);
+        $user     = defined('SMTP_USER') ? SMTP_USER : '';
+        $pass     = defined('SMTP_PASS') ? SMTP_PASS : '';
+        $encrypt  = defined('SMTP_ENCRYPT') ? strtolower(SMTP_ENCRYPT) : 'tls';
+        $from     = defined('MAIL_FROM') ? MAIL_FROM : $user;
+        $fromName = defined('MAIL_FROM_NAME') ? MAIL_FROM_NAME : 'Paal 13';
+        $timeout  = 15;
+
+        // Verbinding openen
+        if ($encrypt === 'ssl') {
+            $socket = @fsockopen("ssl://{$host}", $port, $errno, $errstr, $timeout);
+        } else {
+            $socket = @fsockopen($host, $port, $errno, $errstr, $timeout);
+        }
+
+        if (!$socket) {
+            throw new Exception("SMTP verbinding mislukt ({$host}:{$port}): {$errstr} ({$errno})");
+        }
+
+        stream_set_timeout($socket, $timeout);
+
+        // Helper: lees response
+        $lees = function () use ($socket): string {
+            $r = '';
+            while ($line = fgets($socket, 515)) {
+                $r .= $line;
+                if (substr($line, 3, 1) === ' ') break; // laatste regel heeft spatie na code
+            }
+            return $r;
+        };
+
+        // Helper: stuur commando
+        $stuur = function (string $cmd) use ($socket, $lees): string {
+            fwrite($socket, $cmd . "\r\n");
+            return $lees();
+        };
+
+        // Welkomstbericht
+        $resp = $lees();
+        if (!str_starts_with($resp, '2')) {
+            fclose($socket);
+            throw new Exception("SMTP welkomst mislukt: {$resp}");
+        }
+
+        // EHLO
+        $resp = $stuur("EHLO " . ($_SERVER['SERVER_NAME'] ?? 'localhost'));
+        if (!str_starts_with($resp, '2')) {
+            $resp = $stuur("HELO localhost"); // fallback
+        }
+
+        // STARTTLS opwaarderen
+        if ($encrypt === 'tls') {
+            $resp = $stuur("STARTTLS");
+            if (!str_starts_with($resp, '2')) {
+                fclose($socket);
+                throw new Exception("STARTTLS geweigerd: {$resp}");
+            }
+            if (!stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
+                fclose($socket);
+                throw new Exception("TLS handshake mislukt");
+            }
+            // Opnieuw EHLO na TLS
+            $resp = $stuur("EHLO " . ($_SERVER['SERVER_NAME'] ?? 'localhost'));
+        }
+
+        // Authenticatie
+        if ($user !== '' && $pass !== '') {
+            // Probeer AUTH LOGIN
+            $resp = $stuur("AUTH LOGIN");
+            if (str_starts_with($resp, '334')) {
+                $stuur(base64_encode($user));
+                $resp = $stuur(base64_encode($pass));
+                if (!str_starts_with($resp, '235')) {
+                    fclose($socket);
+                    throw new Exception("SMTP authenticatie mislukt: {$resp}");
+                }
+            } else {
+                // Probeer AUTH PLAIN
+                $auth = base64_encode("\0{$user}\0{$pass}");
+                $resp = $stuur("AUTH PLAIN {$auth}");
+                if (!str_starts_with($resp, '235')) {
+                    fclose($socket);
+                    throw new Exception("SMTP authenticatie mislukt: {$resp}");
+                }
+            }
+        }
+
+        // MAIL FROM
+        $resp = $stuur("MAIL FROM:<{$from}>");
+        if (!str_starts_with($resp, '2')) {
+            fclose($socket);
+            throw new Exception("MAIL FROM geweigerd: {$resp}");
+        }
+
+        // RCPT TO
+        $resp = $stuur("RCPT TO:<{$naar}>");
+        if (!str_starts_with($resp, '2')) {
+            fclose($socket);
+            throw new Exception("RCPT TO geweigerd voor {$naar}: {$resp}");
+        }
+
+        // DATA
+        $stuur("DATA");
+
+        // Bouw MIME bericht
+        $boundary = md5(uniqid((string)mt_rand(), true));
+        $datum    = date('r');
+        $msgid    = '<' . md5(uniqid()) . '@paal13.com>';
+        $naamEnc  = '=?UTF-8?B?' . base64_encode($naam) . '?=';
+        $ondEnc   = '=?UTF-8?B?' . base64_encode($onderwerp) . '?=';
+        $vanEnc   = '=?UTF-8?B?' . base64_encode($fromName) . '?=';
+
+        // Plain text versie (strip HTML tags)
+        $plain = strip_tags(preg_replace('/<br\s*\/?>/i', "\n", $body));
+        $plain = html_entity_decode($plain, ENT_QUOTES, 'UTF-8');
+        $plain = preg_replace('/\n{3,}/', "\n\n", trim($plain));
+
+        $bericht =
+            "Date: {$datum}\r\n" .
+            "Message-ID: {$msgid}\r\n" .
+            "From: {$vanEnc} <{$from}>\r\n" .
+            "To: {$naamEnc} <{$naar}>\r\n" .
+            "Subject: {$ondEnc}\r\n" .
+            "MIME-Version: 1.0\r\n" .
+            "Content-Type: multipart/alternative; boundary=\"{$boundary}\"\r\n" .
+            "\r\n" .
+            "--{$boundary}\r\n" .
+            "Content-Type: text/plain; charset=UTF-8\r\n" .
+            "Content-Transfer-Encoding: quoted-printable\r\n" .
+            "\r\n" .
+            quoted_printable_encode($plain) . "\r\n" .
+            "--{$boundary}\r\n" .
+            "Content-Type: text/html; charset=UTF-8\r\n" .
+            "Content-Transfer-Encoding: quoted-printable\r\n" .
+            "\r\n" .
+            quoted_printable_encode(self::bereideHtmlVoor($naam, $onderwerp, $body)) . "\r\n" .
+            "--{$boundary}--\r\n" .
+            ".";
+
+        $resp = $stuur($bericht);
+        $stuur("QUIT");
+        fclose($socket);
+
+        if (!str_starts_with($resp, '2')) {
+            throw new Exception("Bericht geweigerd: {$resp}");
+        }
+
+        return true;
+    }
+
+    // ── Fallback: PHP mail() ──────────────────────────────────
+    private static function viaPhpMail(string $naar, string $naam, string $onderwerp, string $body): bool
+    {
+        $from     = defined('MAIL_FROM') ? MAIL_FROM : 'noreply@paal13.com';
+        $fromName = defined('MAIL_FROM_NAME') ? MAIL_FROM_NAME : 'Paal 13';
+        $headers  = implode("\r\n", [
+            "MIME-Version: 1.0",
+            "Content-Type: text/html; charset=UTF-8",
+            "From: {$fromName} <{$from}>",
+            "Reply-To: " . (defined('MAIL_BESTUUR') ? MAIL_BESTUUR : $from),
+        ]);
+        return @mail($naar, $onderwerp, self::htmlTemplate($naam, $onderwerp, $body), $headers);
+    }
+
+    // ── Bereid HTML voor: wrap alleen als nog geen volledige HTML ──
+    private static function bereideHtmlVoor(string $naam, string $onderwerp, string $body): string {
+        $trimmed = ltrim($body);
+        // Al een volledige HTML pagina (van mail_html_wrapper) → niet opnieuw wrappen
+        if (stripos($trimmed, '<!DOCTYPE') === 0 || stripos($trimmed, '<html') === 0) {
+            return $body;
+        }
+        return self::htmlTemplate($naam, $onderwerp, $body);
+    }
+
+    // ── HTML e-mail template ──────────────────────────────────
+    public static function htmlTemplate(string $naam, string $onderwerp, string $body): string
+    {
+        $logo    = defined('APP_URL') ? APP_URL . '/assets/img/logo.png' : '';
+        $bestuur = defined('MAIL_BESTUUR') ? MAIL_BESTUUR : '';
+        $h       = fn(string $s) => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
+
+        return <<<HTML
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  body { font-family: Arial, Helvetica, sans-serif; background: #f0f4f8; margin: 0; padding: 20px; }
+  .wrap { max-width: 580px; margin: 0 auto; background: #fff; border-radius: 10px; overflow: hidden; }
+  .head { background: #002147; padding: 24px 32px; text-align: center; }
+  .head img { height: 50px; display: block; margin: 0 auto; }
+  .head h2 { color: #FF6B35; margin: 14px 0 0; font-size: 18px; font-weight: bold; }
+  .body { padding: 28px 32px; color: #1a2332; line-height: 1.7; font-size: 15px; }
+  .body p { margin: 0 0 16px; }
+  .btn { display: inline-block; background: #FF6B35; color: #ffffff !important; text-decoration: none; padding: 13px 28px; border-radius: 7px; font-weight: bold; font-size: 15px; margin: 8px 0; }
+  .otp-code { font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #002147; text-align: center; background: #f0f4f8; border-radius: 8px; padding: 16px; margin: 16px 0; }
+  .foot { background: #001530; padding: 16px 32px; text-align: center; color: #8899aa; font-size: 12px; }
+  .foot a { color: #FF6B35; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <img src="{$logo}" alt="Reddingsbrigade Paal 13">
+    <h2>{$h($onderwerp)}</h2>
+  </div>
+  <div class="body">
+    <p>Hoi {$h($naam)},</p>
+    {$body}
+  </div>
+  <div class="foot">
+    Reddingsbrigade Callantsoog &amp; Groote Keeten &mdash; Paal 13<br>
+    <a href="mailto:{$bestuur}">{$bestuur}</a>
+  </div>
+</div>
+</body>
+</html>
+HTML;
+    }
+}

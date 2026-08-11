@@ -1,0 +1,30 @@
+# ── Paal 13 Sollicitatiesysteem — .gitignore ──
+# Houdt geheimen en per-server data buiten Git.
+
+# Configuratie met wachtwoorden (database, SMTP, OIDC).
+# Elke server (test/productie) heeft zijn EIGEN config.php die hier NIET in Git staat.
+# Het veilige voorbeeld config.template.php gaat WEL mee.
+includes/config.php
+
+# Door gebruikers geüploade bestanden (BLK-foto's e.d.) — per server, niet in Git.
+uploads/
+
+# Automatische backups van de oude deploy-tool — per server, groot, niet in Git.
+_backups/
+
+# Losse ZIP-bundels en archieven.
+*.zip
+
+# Logbestanden.
+*.log
+error_log
+
+# Tijdelijke en systeem-bestanden.
+*.tmp
+*.bak
+.DS_Store
+Thumbs.db
+
+# Editor-mappen.
+.vscode/
+.idea/

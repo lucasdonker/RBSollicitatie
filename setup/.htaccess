@@ -1,0 +1,4 @@
+# Setup-map volledig afgeschermd. Alle beheertools (deploy, import) zijn
+# verplaatst naar de admin-omgeving, die zelf al een admin-login afdwingt.
+# Verwijder deze map bij voorkeur helemaal van de productieserver.
+Require all denied
