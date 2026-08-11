@@ -6,7 +6,7 @@ Dit systeem draait in twee omgevingen, elk met een eigen database en eigen `conf
 
 | Omgeving   | Adres                          | Branch        | Uitrol      |
 |------------|--------------------------------|---------------|-------------|
-| Productie  | sollicitatie.paal13.com        | `main`        | handmatig   |
+| Productie  | sollicitatie.paal13.com        | `main`        | automatisch |
 | Test       | test.sollicitatie.paal13.com   | `Development` | automatisch |
 
 Werkwijze: wijzigingen commit je op `Development` → Plesk rolt automatisch uit naar test
@@ -21,6 +21,7 @@ opzetten: kopieer `includes/config.template.php` naar `includes/config.php` en v
 echte waarden in, of doorloop de installatiewizard op `/setup/`.
 
 ---
+
 
 ## Installatie (eerste keer)
 
@@ -107,6 +108,8 @@ Optie B — iFrame (past de stijl aan):
   style="border-radius:12px">
 </iframe>
 ```
+To DO
+
 
 ---
 
