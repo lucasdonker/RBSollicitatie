@@ -565,8 +565,8 @@ html[data-theme="dark"] .theme-tgl { background:#161a26; color:#fff; }
 
 /* Al ingevuld badge */
 .blk-status-bar { background:linear-gradient(135deg,#e1f5ee,#d1fae5); border:1px solid #6ee7b7; border-radius:8px; padding:10px 14px; margin-bottom:14px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; }
-.blk-status-bar .lbl { font-size:13px; font-weight:600; color:#065f46; }
-.blk-status-bar .sub { font-size:12px; color:#047857; }
+.blk-status-bar .lbl { font-size:13px; font-weight:600; color:var(--groen); }
+.blk-status-bar .sub { font-size:12px; color:var(--groen); }
 
 /* Week selector */
 .week-maand { margin-bottom:16px; }
@@ -580,7 +580,7 @@ html[data-theme="dark"] .theme-tgl { background:#161a26; color:#fff; }
 .week-opt label strong { font-size:12px; font-weight:600; }
 .week-opt label span { font-size:11px; color:var(--tekst-zacht); }
 .week-opt input:checked + label { background:rgba(255,107,53,.12); border-color:var(--oranje); color:var(--tekst); }
-.week-opt input:checked + label strong { color:#c05a1a; }
+.week-opt input:checked + label strong { color:var(--oranje-dim); }
 html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; }
 .week-opt input:checked + label span { opacity:.85; }
 .week-teller { font-size:14px; color:var(--tekst-zacht); margin-bottom:14px; }
@@ -987,7 +987,7 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
     </div>
     <div class="card-body">
       <?php if ($alles_klaar): ?>
-        <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px 14px;font-size:13px;color:#065f46">
+        <div style="background:var(--groen-bg);border:1px solid var(--groen);border-radius:8px;padding:12px 14px;font-size:13px;color:var(--groen)">
           ✅ Alle formulieren zijn ondertekend door je ouder/verzorger. Je hoeft verder niets te doen.
         </div>
       <?php else: ?>
@@ -1050,11 +1050,11 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
     <div class="card-body" id="blkBody" <?= $blk ? 'style="display:none"' : 'style="display:none"' ?>>
       <?php if ($blk): ?>
       <!-- Ingevuld: toon samenvatting, verberg formulier tenzij op bewerken geklikt -->
-      <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:14px 16px;margin-bottom:14px">
+      <div style="background:var(--groen-bg);border:1px solid var(--groen);border-radius:8px;padding:14px 16px;margin-bottom:14px">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
           <div>
-            <div style="font-weight:600;color:#065f46;font-size:14px">✅ Beter leren kennen — Afgerond</div>
-            <div style="font-size:12px;color:#047857;margin-top:2px">
+            <div style="font-weight:600;color:var(--groen);font-size:14px">✅ Beter leren kennen — Afgerond</div>
+            <div style="font-size:12px;color:var(--groen);margin-top:2px">
               Ingevuld op <?= datum_nl(substr($blk['ingevuld_op']??'',0,10)) ?>
               <?php if (!empty($blk_weken_sel)): ?> · <?= count($blk_weken_sel) ?> <?= count($blk_weken_sel) === 1 ? 'week' : 'weken' ?> geselecteerd<?php endif; ?>
             </div>
@@ -1089,8 +1089,8 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
         <div class="formulier-stap zichtbaar" id="fs1">
           <div class="sectie-titel">Jouw gegevens</div>
           <div class="form-rij">
-            <div class="form-groep"><label>Naam</label><input type="text" value="<?= h(volledige_naam($sol)) ?>" disabled style="background:#f7f8fa;color:var(--grijs)"></div>
-            <div class="form-groep"><label>E-mail</label><input type="text" value="<?= h($sol['email']) ?>" disabled style="background:#f7f8fa;color:var(--grijs)"></div>
+            <div class="form-groep"><label>Naam</label><input type="text" value="<?= h(volledige_naam($sol)) ?>" disabled style="background:var(--grijs-bg);color:var(--grijs)"></div>
+            <div class="form-groep"><label>E-mail</label><input type="text" value="<?= h($sol['email']) ?>" disabled style="background:var(--grijs-bg);color:var(--grijs)"></div>
           </div>
           <div class="form-rij" style="grid-template-columns:1fr 1fr">
             <div class="form-groep">
@@ -1287,7 +1287,7 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
             <div id="b2Preview" aria-live="polite" style="font-size:13px;line-height:1.7;color:var(--tekst)">
               <span style="color:var(--grijs);font-style:italic">Vul je periode in…</span>
             </div>
-            <div id="b2OverlapWaarschuwing" style="display:none;margin-top:10px;padding:9px 12px;background:#fff8e1;border-left:3px solid #f0a500;border-radius:6px;font-size:12.5px;color:#8a6d00"></div>
+            <div id="b2OverlapWaarschuwing" style="display:none;margin-top:10px;padding:9px 12px;background:var(--amber-bg);border-left:3px solid var(--amber);border-radius:6px;font-size:12.5px;color:var(--amber)"></div>
           </div>
 
           <!-- 5. Afwijkend aantal dagen (weggestopt) -->
@@ -1372,7 +1372,7 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
             <textarea name="reden_wijziging" rows="2" data-verplicht-edit="5"
                       placeholder="Bijv: Mijn telefoonnummer is gewijzigd, fout in mijn motivatietekst..."
                       style="width:100%;margin-top:4px"></textarea>
-            <div class="form-hulp" style="color:#92400e">We houden bij wat je aanpast zodat er geen verwarring ontstaat.</div>
+            <div class="form-hulp" style="color:var(--amber)">We houden bij wat je aanpast zodat er geen verwarring ontstaat.</div>
           </div>
           <?php endif; ?>
 
@@ -1406,7 +1406,7 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
       <?php if ($b2tw_voorlopig): ?>
       <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--oranje-bg);border:1px solid var(--oranje);border-radius:8px;margin-bottom:12px">
         <span style="font-size:18px">⏳</span>
-        <div style="font-size:12.5px;color:#c05a1a">
+        <div style="font-size:12.5px;color:var(--oranje-dim)">
           <strong>Nog voorlopig.</strong> Werk het op tijd bij en zet het definitief — anders gebruiken we je huidige invoer automatisch vanaf 2 weken vóór het trainingsweekend.
         </div>
       </div>

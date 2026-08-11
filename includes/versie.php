@@ -3,10 +3,18 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.36.1');
+define('APP_VERSIE', '2.37.0');
 
 function app_changelog(): array {
     return [
+        '2.37.0' => [
+            'datum'  => '2026-08-11',
+            'titel'  => 'Portaal dark mode: gekleurde vlakken schakelen nu mee',
+            'punten' => [
+                'De groene "gelukt"- en amber waarschuwing-vlakken in het sollicitantenportaal bleven in dark mode licht; ze gebruiken nu themavariabelen en passen zich aan aan light/dark mode',
+                'Nieuwe themavariabele --amber / --amber-bg toegevoegd voor waarschuwingen, met een leesbare variant in dark mode',
+            ],
+        ],
         '2.36.1' => [
             'datum'  => '2026-08-11',
             'titel'  => 'Ondertekeningen-tabel maakt zichzelf aan',
