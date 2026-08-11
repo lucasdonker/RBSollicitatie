@@ -843,11 +843,50 @@ function ondertekening_herinnerd_auto_setup(): void {
     $done = true;
     try {
         $db = db();
+        // Zorg eerst dat de tabel zelf bestaat (op een verse database komt die anders alleen via migratie 0016)
+        ondertekeningen_auto_setup();
         $dbn = $db->query("SELECT DATABASE()")->fetchColumn();
         $c = $db->prepare("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=? AND TABLE_NAME='ondertekeningen' AND COLUMN_NAME='herinnerd_op'");
         $c->execute([$dbn]);
         if (!$c->fetchColumn()) $db->exec("ALTER TABLE `ondertekeningen` ADD COLUMN `herinnerd_op` DATETIME DEFAULT NULL");
     } catch (\Exception $e) {}
+}
+
+if (!function_exists('ondertekeningen_auto_setup')) {
+/**
+ * Maakt de ondertekeningen-tabel aan als die nog niet bestaat.
+ * Voorheen kwam deze tabel alleen via migratie 0016 — op een verse database (bijv. test)
+ * ontbrak hij daardoor. Nu maakt het systeem hem zelf aan, net als de andere tabellen.
+ */
+function ondertekeningen_auto_setup(): void {
+    static $done = false; if ($done) return; $done = true;
+    try {
+        db()->exec("CREATE TABLE IF NOT EXISTS `ondertekeningen` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `sollicitatie_id` INT NOT NULL,
+            `type` VARCHAR(30) NOT NULL,
+            `token` VARCHAR(64) NOT NULL UNIQUE,
+            `ondertekenaar_rol` VARCHAR(20) NOT NULL DEFAULT 'sollicitant',
+            `ondertekenaar_naam` VARCHAR(150) DEFAULT NULL,
+            `ondertekenaar_email` VARCHAR(200) DEFAULT NULL,
+            `ondertekenaar_relatie` VARCHAR(30) DEFAULT NULL,
+            `ondertekenaar_geboortedatum` DATE DEFAULT NULL,
+            `ondertekenaar_geboorteplaats` VARCHAR(150) DEFAULT NULL,
+            `formulier_data` MEDIUMTEXT DEFAULT NULL,
+            `plaats` VARCHAR(150) DEFAULT NULL,
+            `ondertekend_op` DATETIME DEFAULT NULL,
+            `ondertekend_ip` VARCHAR(45) DEFAULT NULL,
+            `ondertekend_user_agent` VARCHAR(500) DEFAULT NULL,
+            `geldig_tot` DATE DEFAULT NULL,
+            `herinnerd_op` DATETIME DEFAULT NULL,
+            `aangemaakt_op` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            INDEX (`sollicitatie_id`),
+            INDEX (`type`),
+            INDEX (`token`),
+            INDEX (`ondertekend_op`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    } catch (\Exception $e) { error_log('ondertekeningen_auto_setup: ' . $e->getMessage()); }
+}
 }
 
 // ── Lazy-cron: draait max 1x per uur bij admin-bezoek ─────────

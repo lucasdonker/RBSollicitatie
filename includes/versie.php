@@ -3,10 +3,17 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.36.0');
+define('APP_VERSIE', '2.36.1');
 
 function app_changelog(): array {
     return [
+        '2.36.1' => [
+            'datum'  => '2026-08-11',
+            'titel'  => 'Ondertekeningen-tabel maakt zichzelf aan',
+            'punten' => [
+                'De ondertekeningen-tabel wordt nu automatisch aangemaakt als die ontbreekt, net als de andere tabellen — voorheen kwam die alleen via een migratie, waardoor ondertekenen op een verse database (zoals de testomgeving) een foutmelding gaf',
+            ],
+        ],
         '2.36.0' => [
             'datum'  => '2026-08-02',
             'titel'  => 'Fouten herleidbaar: referentienummers + foutenlog',

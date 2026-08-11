@@ -9,6 +9,8 @@ require_once __DIR__ . '/../includes/functions.php';
 sessie_start();
 
 $db     = db();
+// Zorg dat de ondertekeningen-tabel bestaat (op een verse database komt die anders alleen via migratie)
+if (function_exists('ondertekeningen_auto_setup')) ondertekeningen_auto_setup();
 $token  = trim($_GET['token'] ?? '');
 
 if (!$token) {
