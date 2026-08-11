@@ -35,6 +35,7 @@ const FOUTCODES = [
     'P13-S002' => 'Onbevoegde toegang',
     'P13-S003' => 'Pagina niet gevonden',
     'P13-S004' => 'Upload map niet beschrijfbaar',
+    'P13-S000' => 'Onverwachte fout',
     // Instellingen
     'P13-I001' => 'Instelling opslaan mislukt',
     'P13-I002' => 'AI API sleutel ontbreekt',
@@ -52,6 +53,8 @@ function p13_fout(
     $regel      = $e ? $e->getLine()  : (debug_backtrace(0, 2)[1]['line'] ?? 0);
     $url        = $_SERVER['REQUEST_URI'] ?? '';
     $gebruiker  = $_SESSION['bhd_email'] ?? ($_SESSION['portaal_email'] ?? 'anoniem');
+    // Kort, uniek referentienummer zodat een foutmelding op het scherm terug te vinden is in het log
+    $ref        = substr(bin2hex(random_bytes(4)), 0, 8);
 
     // Log naar database (best-effort)
     try {
@@ -60,7 +63,7 @@ function p13_fout(
                 INSERT INTO error_log (code, bericht, bestand, regel, gebruiker, url)
                 VALUES (?, ?, ?, ?, ?, ?)
             ");
-            $stmt->execute([$code, $bericht, $bestand, $regel, $gebruiker, $url]);
+            $stmt->execute([$code, "[ref $ref] $bericht", $bestand, $regel, $gebruiker, $url]);
         }
     } catch (\Exception $dbEx) {
         // DB logging mislukt — schrijf naar PHP error log
@@ -71,14 +74,14 @@ function p13_fout(
     p13_stuur_fout_mail($code, $bericht, $bestand, $regel, $url, $gebruiker, $e);
 
     // PHP error log
-    error_log("[$code] $bericht" . ($e ? " ({$e->getMessage()})" : ''));
+    error_log("[$code ref:$ref] $bericht" . ($e ? " ({$e->getMessage()})" : ''));
 
     if ($fataal) {
         // Toon vriendelijke foutpagina
         if (!headers_sent()) {
             http_response_code(500);
         }
-        $foutcode_html = htmlspecialchars($code);
+        $foutcode_html = htmlspecialchars($code . ' · ref ' . $ref);
         if (php_sapi_name() !== 'cli') {
             include __DIR__ . '/../500.php';
         }
@@ -136,13 +139,13 @@ function p13_stuur_fout_mail(
 function p13_php_error_handler(int $errno, string $errstr, string $errfile, int $errline): bool {
     if (!($errno & error_reporting())) return false;
     if ($errno === E_NOTICE || $errno === E_DEPRECATED) return false; // Negeer notices
-    p13_fout('P13-S001', "$errstr in " . basename($errfile) . ":$errline");
+    p13_fout('P13-S000', "$errstr in " . basename($errfile) . ":$errline");
     return false; // Laat PHP ook zijn standaard afhandeling doen
 }
 
 // Global uncaught exception handler
 function p13_exception_handler(\Throwable $e): void {
-    p13_fout('P13-S001', $e->getMessage(), $e, true);
+    p13_fout('P13-S000', $e->getMessage(), $e, true);
 }
 
 // Registreer handlers

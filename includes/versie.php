@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.35.0');
+define('APP_VERSIE', '2.36.0');
 
 function app_changelog(): array {
     return [
+        '2.36.0' => [
+            'datum'  => '2026-08-02',
+            'titel'  => 'Fouten herleidbaar: referentienummers + foutenlog',
+            'punten' => [
+                'Onverwachte fouten krijgen nu de code P13-S000 ("onverwachte fout") in plaats van het misleidende P13-S001 ("configuratiebestand ontbreekt")',
+                'Elke fout krijgt een uniek referentienummer dat op de foutpagina aan de gebruiker wordt getoond én in het log staat — zo koppel je een melding aan de echte oorzaak',
+                'Nieuw tabblad Instellingen → Foutenlog: bekijk de laatste fouten met code, referentienummer, bestand, regel en de echte fouttekst',
+            ],
+        ],
         '2.35.0' => [
             'datum'  => '2026-08-02',
             'titel'  => 'Voorbereiding test- en productieomgeving (Git)',
