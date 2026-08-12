@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/functions.php';
+ if (function_exists('extra_tabellen_auto_setup')) extra_tabellen_auto_setup();
 sessie_start();
 
 // Alleen ingelogde sollicitanten

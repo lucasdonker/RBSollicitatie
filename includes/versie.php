@@ -3,10 +3,18 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.38.0');
+define('APP_VERSIE', '2.39.0');
 
 function app_changelog(): array {
     return [
+        '2.39.0' => [
+            'datum'  => '2026-08-12',
+            'titel'  => 'Ontbrekende tabellen + mailfouten zichtbaar in het foutenlog',
+            'punten' => [
+                'Vier tabellen die voorheen alleen via migraties kwamen (sollicitant_notities, sollicitant_taken, blk_wijzigingen, otp_tokens) maken zichzelf nu aan — voorheen gaven ze een foutmelding op een verse database zoals de testomgeving',
+                'Mislukte mails verschijnen nu in Instellingen → Foutenlog met de echte reden (bijv. "SMTP verbinding mislukt"), in plaats van alleen in het server-logbestand',
+            ],
+        ],
         '2.38.0' => [
             'datum'  => '2026-08-11',
             'titel'  => 'Alle mails onder één centrale, aanpasbare template',

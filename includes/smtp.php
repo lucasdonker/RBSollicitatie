@@ -30,6 +30,14 @@ class Mailer
             error_log('[Mailer] Fout: ' . $fout);
         }
 
+        // Mislukte mail ook naar het foutenlog schrijven, zodat de reden zichtbaar is
+        // in Instellingen → Foutenlog (niet alleen in het server-errorlog).
+        if (!$ok && function_exists('p13_fout')) {
+            $reden = $fout ?: 'onbekende reden';
+            $code  = (defined('SMTP_HOST') && SMTP_HOST !== '') ? 'P13-M001' : 'P13-M002';
+            p13_fout($code, "Mail aan {$naar} ('{$onderwerp}') mislukt: {$reden}");
+        }
+
         // Log in database
         try {
             db()->prepare(
