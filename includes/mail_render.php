@@ -3,6 +3,9 @@
  * Mail template renderer — Paal 13
  */
 
+// Centrale mail-opmaak (het "jasje" om elke mail). Alle wrappers gebruiken dit.
+if (file_exists(__DIR__ . '/mail_thema.php')) require_once __DIR__ . '/mail_thema.php';
+
 function mail_variabelen(array $sol, array $seizoen = []): array {
     $sd_datum = !empty($seizoen['datum_selectiedag']) ? datum_nl($seizoen['datum_selectiedag']) : 'Nader te bepalen';
     $sd_tijd  = !empty($seizoen['selectiedag_verzameltijd']) ? ' om ' . substr($seizoen['selectiedag_verzameltijd'], 0, 5) : '';
@@ -230,9 +233,24 @@ function mail_html_wrapper(
     string $hero_titel = '',
     string $hero_subtitel = '',
     ?string $hero_image = null,
-    string $hero_kleur = '#1A2540'
+    string $hero_kleur = ''
 ): string {
+    // Nieuwe centrale template gebruiken als die beschikbaar is.
+    if (function_exists('mail_thema_wrapper')) {
+        return mail_thema_wrapper(
+            mail_inline_styles($body_html),
+            $onderwerp,
+            $hero_titel,
+            $hero_subtitel,
+            // '#1A2540' was de oude standaard navy; leeg laten = thema-kleur gebruiken
+            ($hero_kleur && $hero_kleur !== '#1A2540') ? $hero_kleur : '',
+            $hero_image ?: ''
+        );
+    }
+
+    // ── Terugval: oude ingebouwde opmaak (mocht het thema ontbreken) ──
     if (!$hero_titel) $hero_titel = $onderwerp;
+    if (!$hero_kleur) $hero_kleur = '#1A2540';
     $body_html = mail_inline_styles($body_html);
     $logo_inst = function_exists('site_logo_url') ? site_logo_url() : null;
     $logo      = $logo_inst ?: (defined('APP_URL') ? APP_URL . '/assets/img/logo.png' : '');
@@ -335,6 +353,20 @@ function mail_html_wrapper(
 
 
 function mail_simple_wrapper(string $body_html, string $onderwerp, string $custom_image = ''): string {
+    // Nieuwe centrale template gebruiken als die beschikbaar is.
+    // Een eigen afbeelding wordt de fotohero.
+    if (function_exists('mail_thema_wrapper')) {
+        return mail_thema_wrapper(
+            mail_inline_styles($body_html),
+            $onderwerp,
+            $onderwerp,
+            '',
+            '',
+            $custom_image
+        );
+    }
+
+    // ── Terugval: oude ingebouwde opmaak ──
     $logo    = defined('APP_URL') ? APP_URL . '/assets/img/logo.png' : '';
     $bestuur = defined('MAIL_BESTUUR') ? MAIL_BESTUUR : '';
     $jaar    = date('Y');

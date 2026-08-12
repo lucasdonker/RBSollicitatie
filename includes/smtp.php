@@ -224,6 +224,17 @@ class Mailer
     // ── HTML e-mail template ──────────────────────────────────
     public static function htmlTemplate(string $naam, string $onderwerp, string $body): string
     {
+        // Nieuwe centrale mail-template gebruiken als die beschikbaar is.
+        // De aanhef "Hoi {naam}," wordt vooraan de body gezet (deed de oude template ook).
+        if (function_exists('mail_thema_wrapper')) {
+            $aanhef = $naam
+                ? '<p style="margin:0 0 16px"><strong style="color:#054d8a">Hoi ' . htmlspecialchars($naam, ENT_QUOTES, 'UTF-8') . ',</strong></p>'
+                : '';
+            $body_verwerkt = function_exists('mail_inline_styles') ? mail_inline_styles($body) : $body;
+            return mail_thema_wrapper($aanhef . $body_verwerkt, $onderwerp, $onderwerp);
+        }
+
+        // ── Terugval: oude ingebouwde opmaak ──
         $logo    = defined('APP_URL') ? APP_URL . '/assets/img/logo.png' : '';
         $bestuur = defined('MAIL_BESTUUR') ? MAIL_BESTUUR : '';
         $h       = fn(string $s) => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');

@@ -3,10 +3,21 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.37.0');
+define('APP_VERSIE', '2.38.0');
 
 function app_changelog(): array {
     return [
+        '2.38.0' => [
+            'datum'  => '2026-08-11',
+            'titel'  => 'Alle mails onder één centrale, aanpasbare template',
+            'punten' => [
+                'Nieuwe centrale mail-template: alle uitgaande mails gebruiken nu dezelfde opmaak (logo-balk, hero, knoppen, footer)',
+                'De opmaak van álle mails is op één plek aan te passen — includes/mail_thema.php bevat bovenaan een instellingenblok voor kleuren, logo, hero-stijl en footer',
+                'Logo staat nu in volle kleur op een eigen witte balk (was voorheen wit-gefilterd en vaak onzichtbaar); PNG-versie toegevoegd omdat mailclients geen SVG tonen',
+                'De drie losse mailsystemen (mail_render, smtp, ondertekening-mails) verwijzen nu allemaal naar deze ene template — consistent én makkelijker te onderhouden',
+                'Fotohero optioneel: zet in het thema hero_stijl op "foto" met een afbeelding voor een strandsfeer met leesbare witte tekst (donkere overlay)',
+            ],
+        ],
         '2.37.0' => [
             'datum'  => '2026-08-11',
             'titel'  => 'Portaal dark mode: gekleurde vlakken schakelen nu mee',
