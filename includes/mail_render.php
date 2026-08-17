@@ -36,9 +36,15 @@ function mail_variabelen(array $sol, array $seizoen = []): array {
         'achternaam'                  => $sol['achternaam'] ?? '',
         'volledige_naam'              => volledige_naam($sol),
         'portaal_url'                 => defined('APP_URL') ? APP_URL . '/portaal/' : '',
+        'seizoen_naam'                => $seizoen['naam'] ?? '',
         'selectiedag_datum'           => $sd_datum,
         'selectiedag_tijd'            => $sd_tijd,
         'selectiedag_locatie'         => $sd_loc,
+        'tw_datum_start'              => datum_nl($seizoen['datum_tw_start'] ?? null),
+        'tw_datum_eind'               => datum_nl($seizoen['datum_tw_eind'] ?? null),
+        'tw_locatie'                  => $seizoen['locatie_tw'] ?? 'Nader te bepalen',
+        'tw_verzameltijd'             => $seizoen['tw_verzameltijd'] ?? 'Nader te bepalen',
+        'bestuur_email'               => defined('MAIL_BESTUUR') ? MAIL_BESTUUR : '',
     ];
 }
 
@@ -145,8 +151,13 @@ function mail_hero_image(): string {
 }
 
 function mail_vervang(string $tekst, array $vars): string {
+    // Variabelen die bewust HTML bevatten (door het systeem zelf opgebouwd, geen
+    // gebruikersinvoer) mogen NIET ge-escaped worden — anders zie je de rauwe HTML-code
+    // in de mail. Herkenbaar aan de naam-suffix '_blok' of '_html'.
     foreach ($vars as $k => $v) {
-        $tekst = str_replace('{{' . $k . '}}', htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'), $tekst);
+        $is_html = (substr($k, -5) === '_blok' || substr($k, -5) === '_html');
+        $waarde  = $is_html ? (string)$v : htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
+        $tekst   = str_replace('{{' . $k . '}}', $waarde, $tekst);
     }
     return $tekst;
 }

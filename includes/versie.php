@@ -3,10 +3,22 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.40.1');
+define('APP_VERSIE', '2.41.0');
 
 function app_changelog(): array {
     return [
+        '2.41.0' => [
+            'datum'  => '2026-08-17',
+            'titel'  => 'Meerdere testbevindingen opgelost',
+            'punten' => [
+                'Beschikbaarheid, dekking én seizoen-instellingen werkten niet goed als er meerdere seizoenen waren: het systeem koos het seizoen met het hoogste id in plaats van het geopende seizoen. Nu wordt altijd het open seizoen gebruikt',
+                'Leeftijdscheck onder 15 toont nu de nette melding in plaats van een kale invulveld-fout',
+                'Ouder-ondertekenmail: de formulier-knoppen worden nu netjes weergegeven in plaats van als rauwe HTML-code',
+                'BLK-formulier: de onterechte melding "Vul een reden in voor de wijziging" bij de eerste indiening is weg (alleen bij een echte wijziging na aanmelding wordt nog een reden gevraagd)',
+                'Aangenomen-mail: de placeholders ({{seizoen_naam}} e.a.) worden nu correct ingevuld',
+                'AI-analyse wordt nu ook verwerkt als de reguliere cron niet draait (via de achtergrondtaak bij beheer-bezoek)',
+            ],
+        ],
         '2.40.0' => [
             'datum'  => '2026-08-12',
             'titel'  => 'E-mailinstellingen (SMTP) instelbaar in het beheer',

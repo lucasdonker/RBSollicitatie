@@ -98,7 +98,7 @@ body{background:#001530;min-height:100vh;display:flex;align-items:center;justify
       </div>
       <div class="form-groep"><label>Achternaam <span class="vereist">*</span></label><input type="text" name="achternaam" value="<?=h($_POST['achternaam']??'')?>" required autocomplete="family-name"></div>
       <div class="form-rij">
-        <div class="form-groep"><label>Geboortedatum <span class="vereist">*</span></label><input type="date" name="geboortedatum" id="geboortedatum" value="<?=h($_POST['geboortedatum']??'')?>" required max="<?=date('Y-m-d',strtotime('-15 years'))?>"></div>
+        <div class="form-groep"><label>Geboortedatum <span class="vereist">*</span></label><input type="date" name="geboortedatum" id="geboortedatum" value="<?=h($_POST['geboortedatum']??'')?>" required></div>
         <div class="form-groep"><label>Geslacht</label><select name="geslacht"><option value="onbekend">Zeg ik liever niet</option><option value="man" <?=($_POST['geslacht']??'')==='man'?'selected':''?>>Man</option><option value="vrouw" <?=($_POST['geslacht']??'')==='vrouw'?'selected':''?>>Vrouw</option><option value="anders" <?=($_POST['geslacht']??'')==='anders'?'selected':''?>>Anders</option></select></div>
       </div>
       <div class="form-groep"><label>E-mailadres <span class="vereist">*</span></label><input type="email" name="email" value="<?=h($_POST['email']??'')?>" required autocomplete="email"><div class="form-hulp">Hierop ontvang je de bevestiging en uitnodigingen.</div></div>

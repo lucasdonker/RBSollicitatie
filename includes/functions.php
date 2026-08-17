@@ -281,7 +281,13 @@ function toon_flash(): void { $f = get_flash(); if ($f) echo '<div class="flash 
 // ── Seizoen ───────────────────────────────────────────────────
 function actief_seizoen(): ?array {
     static $s = null;
-    if ($s === null) { try { $s = db()->query("SELECT * FROM seizoenen ORDER BY id DESC LIMIT 1")->fetch() ?: null; } catch (Exception $e) { $s = null; } }
+    if ($s === null) {
+        try {
+            // Kies het GEOPENDE seizoen (het meest recente als er meerdere open zijn).
+            // Pas als er geen enkel seizoen open is, terugvallen op het nieuwste seizoen.
+            $s = db()->query("SELECT * FROM seizoenen ORDER BY (status='open') DESC, id DESC LIMIT 1")->fetch() ?: null;
+        } catch (Exception $e) { $s = null; }
+    }
     return $s;
 }
 
@@ -955,6 +961,7 @@ function lazy_cron_tick(): void {
         if (function_exists('reminder_run')) reminder_run();
         if (function_exists('auto_invite_run')) auto_invite_run();
         if (function_exists('mail_queue_verwerk')) mail_queue_verwerk(10);
+        if (function_exists('ai_queue_verwerk')) { try { ai_queue_verwerk(3); } catch (\Exception $e) {} }
     } catch (\Exception $e) { error_log('lazy_cron: ' . $e->getMessage()); }
 }
 

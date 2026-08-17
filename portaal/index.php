@@ -268,7 +268,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['blk_submit']) && $sta
     csrf_check();
     $sol_id = (int)$_SESSION['portaal_sol_id'];
     $reden  = trim($_POST['reden_wijziging'] ?? '');
-    $is_edit = !empty($blk);
+    // Een "edit" is alleen een WIJZIGING ná definitieve indiening — niet de eerste
+    // indiening vanuit een autosave-concept. Doordat de autosave al een blk-rij
+    // aanmaakt, mag het bestaan van die rij niet als "edit" gelden (dat gaf onterecht
+    // "Vul een reden in voor de wijziging"). We leiden het af uit de fase: pas vanaf
+    // 'aangemeld_selectie' is het formulier eerder definitief ingediend.
+    $reeds_ingediend_fases = ['aangemeld_selectie','selectiedag_geweest','uitgenodigd_tw','tw_geweest','aangenomen','afgewezen'];
+    $is_edit = !empty($blk) && in_array($sol['fase'] ?? '', $reeds_ingediend_fases, true);
 
     // Weken zijn nu opgeslagen als JSON
     // Weken afleiden uit de periode-blokken — compat met blk.beschikbaarheid_intentie
