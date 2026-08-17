@@ -119,6 +119,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect(APP_URL . '/admin/instellingen.php?tab=authentik');
     }
 
+    if ($actie === 'smtp_opslaan') {
+        $velden = [
+            'smtp.host'     => trim($_POST['smtp_host'] ?? ''),
+            'smtp.port'     => trim($_POST['smtp_port'] ?? '587'),
+            'smtp.user'     => trim($_POST['smtp_user'] ?? ''),
+            'smtp.encrypt'  => trim($_POST['smtp_encrypt'] ?? 'tls'),
+            'smtp.from'     => trim($_POST['smtp_from'] ?? ''),
+            'smtp.from_naam'=> trim($_POST['smtp_from_naam'] ?? ''),
+        ];
+        foreach ($velden as $sleutel => $waarde) {
+            instelling_opslaan($sleutel, $waarde);
+        }
+        // Wachtwoord alleen bijwerken als er een nieuwe is ingevuld (anders behouden)
+        $nieuw_ww = $_POST['smtp_pass'] ?? '';
+        if ($nieuw_ww !== '' && $nieuw_ww !== '••••••••') {
+            instelling_opslaan('smtp.pass', $nieuw_ww);
+        }
+        flash('succes', 'SMTP-instellingen opgeslagen.');
+        redirect(APP_URL . '/admin/instellingen.php?tab=smtp');
+    }
+
+    if ($actie === 'smtp_test') {
+        $naar = trim($_POST['smtp_test_naar'] ?? '');
+        if (!filter_var($naar, FILTER_VALIDATE_EMAIL)) {
+            flash('fout', 'Vul een geldig e-mailadres in voor de test.');
+        } else {
+            $res = smtp_test($naar);
+            flash($res['ok'] ? 'succes' : 'fout', $res['melding']);
+        }
+        redirect(APP_URL . '/admin/instellingen.php?tab=smtp');
+    }
+
     if ($actie === 'authentik_bulk_sync') {
         instelling_opslaan('authentik.laatste_bulk_sync', ''); // reset gate → forceer
         $res = competenties_cron_sync();
@@ -285,6 +317,7 @@ require __DIR__ . '/layout_top.php';
           'Koppelingen' => [
             ['authentik', 'Authentik & competenties', '<path d="M12 2l7 4v6c0 5-3.5 8-7 10-3.5-2-7-5-7-10V6z"/>'],
             ['ai',       'AI Analyse',         '<circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 10v6m11-11h-6m-10 0H1"/>'],
+            ['smtp',     'E-mail (SMTP)',      '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 5L2 7"/>'],
             ['sso',      'Authentik SSO',      '<path d="M12 1l3 6 6 .75-4.12 4.62L18 19l-6-3.25L6 19l1.13-6.63L3 7.75 9 7z"/>'],
           ],
           'Selectiedag' => [
@@ -1258,6 +1291,85 @@ require __DIR__ . '/layout_top.php';
     <?php endif; ?>
   </div>
 </div>
+
+<?php elseif ($tab === 'smtp'): ?>
+  <?php
+    $s_host    = instelling('smtp.host', defined('SMTP_HOST') ? SMTP_HOST : '');
+    $s_port    = instelling('smtp.port', defined('SMTP_PORT') ? (string)SMTP_PORT : '587');
+    $s_user    = instelling('smtp.user', defined('SMTP_USER') ? SMTP_USER : '');
+    $s_encrypt = instelling('smtp.encrypt', defined('SMTP_ENCRYPT') ? SMTP_ENCRYPT : 'tls');
+    $s_from    = instelling('smtp.from', defined('MAIL_FROM') ? MAIL_FROM : '');
+    $s_fromnaam= instelling('smtp.from_naam', defined('MAIL_FROM_NAME') ? MAIL_FROM_NAME : 'Reddingsbrigade Paal 13');
+    $s_heeft_ww= instelling('smtp.pass', '') !== '' || (defined('SMTP_PASS') && SMTP_PASS !== '');
+  ?>
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-header"><div class="card-title">E-mailinstellingen (SMTP)</div></div>
+    <div class="card-body">
+      <p style="font-size:13px;color:var(--tekst-zacht);margin:0 0 16px">
+        Hiermee verstuurt het systeem e-mails. Vul de gegevens van je mailserver in. Weet je ze niet? Die vind je bij je hostingprovider (Cloud86) onder de e-mailinstellingen van dit adres.
+      </p>
+      <form method="POST">
+        <?= csrf_input() ?>
+        <input type="hidden" name="actie" value="smtp_opslaan">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div style="grid-column:1/-1">
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--tekst-zacht);margin-bottom:4px">SMTP-server (host)</label>
+            <input type="text" name="smtp_host" value="<?= h($s_host) ?>" placeholder="mail.paal13.com" style="width:100%;padding:9px 12px;border:1px solid var(--rand);border-radius:8px;font-size:14px">
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--tekst-zacht);margin-bottom:4px">Poort</label>
+            <input type="text" name="smtp_port" value="<?= h($s_port) ?>" placeholder="587" style="width:100%;padding:9px 12px;border:1px solid var(--rand);border-radius:8px;font-size:14px">
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--tekst-zacht);margin-bottom:4px">Beveiliging</label>
+            <select name="smtp_encrypt" style="width:100%;padding:9px 12px;border:1px solid var(--rand);border-radius:8px;font-size:14px">
+              <option value="tls" <?= $s_encrypt==='tls'?'selected':'' ?>>STARTTLS (poort 587) — meest gebruikt</option>
+              <option value="ssl" <?= $s_encrypt==='ssl'?'selected':'' ?>>SSL/TLS (poort 465)</option>
+              <option value="none" <?= $s_encrypt==='none'?'selected':'' ?>>Geen (afgeraden)</option>
+            </select>
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--tekst-zacht);margin-bottom:4px">Gebruikersnaam</label>
+            <input type="text" name="smtp_user" value="<?= h($s_user) ?>" placeholder="website@paal13.com" style="width:100%;padding:9px 12px;border:1px solid var(--rand);border-radius:8px;font-size:14px">
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--tekst-zacht);margin-bottom:4px">Wachtwoord</label>
+            <input type="password" name="smtp_pass" value="<?= $s_heeft_ww ? '••••••••' : '' ?>" autocomplete="new-password" style="width:100%;padding:9px 12px;border:1px solid var(--rand);border-radius:8px;font-size:14px">
+            <span style="font-size:11px;color:var(--grijs)"><?= $s_heeft_ww ? 'Laat ongewijzigd om het huidige wachtwoord te behouden.' : 'Nog geen wachtwoord ingesteld.' ?></span>
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--tekst-zacht);margin-bottom:4px">Afzender-adres</label>
+            <input type="text" name="smtp_from" value="<?= h($s_from) ?>" placeholder="no-reply@paal13.com" style="width:100%;padding:9px 12px;border:1px solid var(--rand);border-radius:8px;font-size:14px">
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--tekst-zacht);margin-bottom:4px">Afzender-naam</label>
+            <input type="text" name="smtp_from_naam" value="<?= h($s_fromnaam) ?>" placeholder="Reddingsbrigade Paal 13" style="width:100%;padding:9px 12px;border:1px solid var(--rand);border-radius:8px;font-size:14px">
+          </div>
+        </div>
+        <div style="margin-top:16px">
+          <button type="submit" class="btn btn-primary">Opslaan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-title">Testmail versturen</div></div>
+    <div class="card-body">
+      <p style="font-size:13px;color:var(--tekst-zacht);margin:0 0 14px">
+        Stuur een testmail om te controleren of je instellingen werken. Sla je wijzigingen eerst op. Lukt het niet, dan zie je de reden hier én in <a href="<?= APP_URL ?>/admin/foutenlog.php" style="color:var(--navy)">Foutenlog</a>.
+      </p>
+      <form method="POST" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+        <?= csrf_input() ?>
+        <input type="hidden" name="actie" value="smtp_test">
+        <div style="flex:1;min-width:220px">
+          <label style="display:block;font-size:12px;font-weight:600;color:var(--tekst-zacht);margin-bottom:4px">Stuur test naar</label>
+          <input type="email" name="smtp_test_naar" value="<?= h(huidige_beheerder()['email'] ?? '') ?>" placeholder="jouw@email.nl" style="width:100%;padding:9px 12px;border:1px solid var(--rand);border-radius:8px;font-size:14px">
+        </div>
+        <button type="submit" class="btn btn-outline">Verstuur testmail</button>
+      </form>
+    </div>
+  </div>
 
 <?php endif; ?>
 

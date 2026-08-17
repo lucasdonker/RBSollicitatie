@@ -8,6 +8,12 @@
 class Mailer
 {
     // ── Hoofd verzendmethode ──────────────────────────────────
+    /** True als SMTP is ingesteld (via beheer óf config.php). */
+    public static function smtpActief(): bool {
+        if (function_exists('instelling') && instelling('smtp.host', '') !== '') return true;
+        return defined('SMTP_HOST') && SMTP_HOST !== '';
+    }
+
     public static function verstuur(
         string $naar,
         string $naam,
@@ -19,7 +25,7 @@ class Mailer
         $fout = null;
 
         try {
-            if (defined('SMTP_HOST') && SMTP_HOST !== '') {
+            if (self::smtpActief()) {
                 $ok = self::viaSMTP($naar, $naam, $onderwerp, $html_body);
             } else {
                 $ok = self::viaPhpMail($naar, $naam, $onderwerp, $html_body);
@@ -34,7 +40,7 @@ class Mailer
         // in Instellingen → Foutenlog (niet alleen in het server-errorlog).
         if (!$ok && function_exists('p13_fout')) {
             $reden = $fout ?: 'onbekende reden';
-            $code  = (defined('SMTP_HOST') && SMTP_HOST !== '') ? 'P13-M001' : 'P13-M002';
+            $code  = self::smtpActief() ? 'P13-M001' : 'P13-M002';
             p13_fout($code, "Mail aan {$naar} ('{$onderwerp}') mislukt: {$reden}");
         }
 
@@ -54,13 +60,21 @@ class Mailer
     // ── SMTP verzending ───────────────────────────────────────
     private static function viaSMTP(string $naar, string $naam, string $onderwerp, string $body): bool
     {
-        $host     = SMTP_HOST;
-        $port     = (int)(defined('SMTP_PORT') ? SMTP_PORT : 587);
-        $user     = defined('SMTP_USER') ? SMTP_USER : '';
-        $pass     = defined('SMTP_PASS') ? SMTP_PASS : '';
-        $encrypt  = defined('SMTP_ENCRYPT') ? strtolower(SMTP_ENCRYPT) : 'tls';
-        $from     = defined('MAIL_FROM') ? MAIL_FROM : $user;
-        $fromName = defined('MAIL_FROM_NAME') ? MAIL_FROM_NAME : 'Paal 13';
+        // Instellingen: eerst uit de database (beheer), anders uit config.php als terugval.
+        $ci = function(string $sleutel, string $const, string $default = ''): string {
+            if (function_exists('instelling')) {
+                $v = instelling($sleutel, '');
+                if ($v !== '') return $v;
+            }
+            return defined($const) ? (string)constant($const) : $default;
+        };
+        $host     = $ci('smtp.host', 'SMTP_HOST');
+        $port     = (int)$ci('smtp.port', 'SMTP_PORT', '587');
+        $user     = $ci('smtp.user', 'SMTP_USER');
+        $pass     = $ci('smtp.pass', 'SMTP_PASS');
+        $encrypt  = strtolower($ci('smtp.encrypt', 'SMTP_ENCRYPT', 'tls'));
+        $from     = $ci('smtp.from', 'MAIL_FROM', $user);
+        $fromName = $ci('smtp.from_naam', 'MAIL_FROM_NAME', 'Paal 13');
         $timeout  = 15;
 
         // Verbinding openen
@@ -285,5 +299,34 @@ class Mailer
 </body>
 </html>
 HTML;
+    }
+
+    /**
+     * Probeert een testmail te versturen en geeft het resultaat terug met foutmelding.
+     * @return array{ok:bool, melding:string}
+     */
+    public static function test(string $naar): array {
+        if (!self::smtpActief()) {
+            return ['ok' => false, 'melding' => 'Geen SMTP ingesteld. Vul eerst de servergegevens in (of het systeem gebruikt PHP mail(), wat op shared hosting vaak niet werkt).'];
+        }
+        try {
+            $body = '<p>Dit is een testmail van het Paal 13 sollicitatiesysteem.</p><p>Als je deze ontvangt, werken je SMTP-instellingen correct.</p>';
+            $html = function_exists('mail_thema_wrapper')
+                ? mail_thema_wrapper($body, 'SMTP-test', 'Testmail', 'Je instellingen werken!')
+                : $body;
+            $ok = self::viaSMTP($naar, 'Test', 'SMTP-test Paal 13', $html);
+            return $ok
+                ? ['ok' => true, 'melding' => "Testmail verstuurd naar {$naar}. Controleer je inbox (en spam)."]
+                : ['ok' => false, 'melding' => 'De testmail kon niet worden verstuurd (onbekende reden).'];
+        } catch (\Exception $e) {
+            return ['ok' => false, 'melding' => 'Testmail mislukt: ' . $e->getMessage()];
+        }
+    }
+}
+
+// Losse wrapper zodat het beheer smtp_test() kan aanroepen
+if (!function_exists('smtp_test')) {
+    function smtp_test(string $naar): array {
+        return SmtpMailer::test($naar);
     }
 }

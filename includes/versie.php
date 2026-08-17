@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.39.0');
+define('APP_VERSIE', '2.40.0');
 
 function app_changelog(): array {
     return [
+        '2.40.0' => [
+            'datum'  => '2026-08-12',
+            'titel'  => 'E-mailinstellingen (SMTP) instelbaar in het beheer',
+            'punten' => [
+                'Nieuw tabblad Instellingen → E-mail (SMTP): server, poort, beveiliging, gebruikersnaam, wachtwoord en afzender zijn nu in het beheer aan te passen',
+                'Testmail-knop: stuur direct een testmail en zie of de instellingen werken (met de foutmelding erbij als het misgaat)',
+                'De instellingen uit het beheer hebben voorrang; config.php blijft werken als terugval, zodat productie niet breekt',
+                'De beveiligingsinstelling (STARTTLS/SSL) is nu kiesbaar — dat lost de "Must issue a STARTTLS command first"-fout op',
+            ],
+        ],
         '2.39.0' => [
             'datum'  => '2026-08-12',
             'titel'  => 'Ontbrekende tabellen + mailfouten zichtbaar in het foutenlog',
