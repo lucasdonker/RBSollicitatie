@@ -327,6 +327,6 @@ HTML;
 // Losse wrapper zodat het beheer smtp_test() kan aanroepen
 if (!function_exists('smtp_test')) {
     function smtp_test(string $naar): array {
-        return SmtpMailer::test($naar);
+        return Mailer::test($naar);
     }
 }
