@@ -3,10 +3,21 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.43.1');
+define('APP_VERSIE', '2.44.0');
 
 function app_changelog(): array {
     return [
+        '2.44.0' => [
+            'datum'  => '2026-08-18',
+            'titel'  => 'Welkomstmail, selectiedag-uitnodiging, bellijst-mail en meer',
+            'punten' => [
+                'De "aanmelding ontvangen"-mail gebruikt nu de aanpasbare welkom-template uit Mail templates (met terugval op de vaste tekst als de template leeg is)',
+                'De selectiedag-uitnodiging heeft nu een volwaardige tekst: datum en locatie, de melding dat er nog taken openstaan om deelname te bevestigen, en een link naar het portaal',
+                'Bellijst: bij "door" doorvoeren gaat nu ook de uitnodiging voor het trainingsweekend eruit (bij "niet"/afwijzen bewust geen automatische mail — dat doe je persoonlijk)',
+                'BLK-formulier: een tussentijdse pagina-refresh markeert de taak niet langer onterecht als volledig ingevuld',
+                'Foto van een kandidaat is nu ook klikbaar/vergrootbaar op de nabespreking-pagina',
+            ],
+        ],
         '2.43.1' => [
             'datum'  => '2026-08-18',
             'titel'  => 'BLK opnieuw invullen gaf een foutmelding (+ foto)',

@@ -172,7 +172,10 @@ require __DIR__ . '/layout_top.php';
 <div class="nb-kaart <?= $besluit ? 'b-' . $besluit : '' ?>" id="nb-<?= $sol_id ?>">
   <div class="nb-kop">
     <?php if ($foto): ?>
-      <img class="nb-foto" src="<?= h($foto) ?>" alt="" loading="lazy">
+      <img class="nb-foto" src="<?= h($foto) ?>" alt="" loading="lazy"
+           style="cursor:pointer"
+           data-foto="<?= h($foto) ?>" data-naam="<?= h(trim($k['voornaam'].' '.$k['achternaam'])) ?>"
+           onclick="fotoVergroten(this.dataset.foto, this.dataset.naam)">
     <?php else: ?>
       <span class="nb-foto-leeg"><?= h(mb_strtoupper(mb_substr($k['voornaam'],0,1) . mb_substr($k['achternaam'],0,1))) ?></span>
     <?php endif; ?>

@@ -38,8 +38,19 @@ if($_SERVER['REQUEST_METHOD']==='POST'&&$open){
                ->execute([$pid,$seizoen['id'],$ter,$token,date('Y-m-d H:i:s'),PRIVACY_VERSIE,$ip,$ouder_op,$ouder_naam_val]);
             $sid=$db->lastInsertId();
             $purl=APP_URL.'/portaal/?token='.$token;
-            $body="<p>Bedankt voor je aanmelding als lifeguard bij Reddingsbrigade Paal 13!</p><p>Aanmelding ontvangen voor <strong>{$seizoen['naam']}</strong>.</p>".($ter?"<p><em>Welkom terug! We zien dat je eerder hebt gesolliciteerd.</em></p>":"")."<p>Je ontvangt bericht als je wordt uitgenodigd voor de selectiedag. Je kunt je status volgen op:<br><a href='$purl' class='btn'>Bekijk mijn sollicitatie →</a></p><p style='font-size:12px;color:#666'>Bewaar deze link — je hebt hem nodig voor het invullen van verdere informatie.</p>";
-            stuur_mail($email,$voornaam,'Aanmelding ontvangen — Paal 13 '.$seizoen['naam'],$body,$sid);
+            // Probeer eerst de aanpasbare 'welkom'-template (Mail templates in beheer).
+            // Lukt dat niet (template leeg/afwezig), val dan terug op de vaste tekst.
+            $sol_voor_mail = ['voornaam'=>$voornaam, 'achternaam'=>$achternaam, 'email'=>$email, 'portaal_token'=>$token];
+            $welkom_verstuurd = false;
+            if (function_exists('stuur_template_mail')) {
+                try {
+                    $welkom_verstuurd = stuur_template_mail('welkom', $email, $sol_voor_mail, $seizoen, [], (int)$sid);
+                } catch (\Exception $e) { $welkom_verstuurd = false; }
+            }
+            if (!$welkom_verstuurd) {
+                $body="<p>Bedankt voor je aanmelding als lifeguard bij Reddingsbrigade Paal 13!</p><p>Aanmelding ontvangen voor <strong>{$seizoen['naam']}</strong>.</p>".($ter?"<p><em>Welkom terug! We zien dat je eerder hebt gesolliciteerd.</em></p>":"")."<p>Je ontvangt bericht als je wordt uitgenodigd voor de selectiedag. Je kunt je status volgen op:<br><a href='$purl' class='btn'>Bekijk mijn sollicitatie →</a></p><p style='font-size:12px;color:#666'>Bewaar deze link — je hebt hem nodig voor het invullen van verdere informatie.</p>";
+                stuur_mail($email,$voornaam,'Aanmelding ontvangen — Paal 13 '.$seizoen['naam'],$body,$sid);
+            }
             stuur_mail(MAIL_BESTUUR,'Bestuur',"Nieuwe aanmelding: $voornaam $achternaam","<p><strong>$voornaam $achternaam</strong><br>$email | $tel".($ter?"<br><em>⚠️ Terugkerende sollicitant</em>":"")."</p><p><a href='".APP_URL."/admin/sollicitanten.php' class='btn'>Bekijk dashboard →</a></p>",$sid);
             // Competenties ophalen uit Authentik (best-effort, blokkeert nooit de aanmelding)
             if (function_exists('competenties_sync') && function_exists('competentie_sync_klaar') && competentie_sync_klaar()) {

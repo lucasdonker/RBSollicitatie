@@ -831,12 +831,11 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
 
   // 3) BLK invullen als open taak (bij uitgenodigd én aangemeld voor selectiedag)
   if (in_array($sol['fase'], ['uitgenodigd_selectie','aangemeld_selectie'])) {
-      $blk_klaar_taak = false;
-      try {
-          $bq2 = db()->prepare("SELECT 1 FROM blk_formulieren WHERE sollicitatie_id=?");
-          $bq2->execute([$sol['id']]);
-          $blk_klaar_taak = (bool)$bq2->fetchColumn();
-      } catch (Exception $e) {}
+      // De taak is pas 'gedaan' als het formulier DEFINITIEF is ingediend. Dat blijkt uit
+      // de fase (aangemeld_selectie), niet uit het bestaan van een blk-rij — want de
+      // autosave maakt al een concept-rij aan tijdens het typen. Voorheen werd de taak
+      // daardoor onterecht als afgerond getoond na een tussentijdse pagina-refresh.
+      $blk_klaar_taak = ($sol['fase'] === 'aangemeld_selectie');
       array_unshift($alle_taken, [
           'titel'  => 'Vul het "Beter leren kennen" formulier in',
           'done'   => $blk_klaar_taak,

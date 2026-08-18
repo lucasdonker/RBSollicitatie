@@ -110,6 +110,47 @@ function mail_templates_auto_setup(): void {
             try { $upd->execute([$waarden[0], $waarden[1], $slug]); } catch (\Exception $e) {}
         }
 
+        // Seed een volwaardige body voor de selectiedag-uitnodiging als die nog leeg is.
+        // Zo bevat de mail meteen info over de dag + de melding dat er nog taken openstaan
+        // om de deelname te bevestigen (het BLK-formulier invullen in het portaal).
+        try {
+            $chk_us = $db->prepare("SELECT body_html FROM mail_templates WHERE slug='uitnodiging_selectie'");
+            $chk_us->execute();
+            $rij_us = $chk_us->fetch();
+            $body_leeg = !$rij_us || trim((string)($rij_us['body_html'] ?? '')) === '';
+            if ($body_leeg) {
+                $ubody = "<p>Hoi {{voornaam}},</p>\n"
+                    . "<p>Goed nieuws — we nodigen je van harte uit voor de <strong>selectiedag</strong> van Reddingsbrigade Paal 13! Dit is jouw kans om te ontdekken hoe het is om strandwacht te zijn, en meteen onze kans om jou te leren kennen.</p>\n"
+                    . "[info]<strong>De selectiedag op een rij</strong><br>\n"
+                    . "📅 Wanneer: {{selectiedag_datum}}{{selectiedag_tijd}}<br>\n"
+                    . "📍 Waar: {{selectiedag_locatie}}[/info]\n"
+                    . "<p><strong>Bevestig je deelname</strong><br>\n"
+                    . "Log in op je portaal en vul het \"Beter leren kennen\"-formulier in. Daarmee bevestig je meteen je deelname aan de selectiedag — zo weten wij dat je komt én leren we je alvast een beetje kennen. Er staan nog een of meer taken voor je klaar; je ziet ze zodra je inlogt.</p>\n"
+                    . "[knop href=\"{{portaal_url}}\"]Naar mijn portaal[/knop]\n"
+                    . "<p><strong>Wat kun je verwachten?</strong><br>\n"
+                    . "Tijdens de selectiedag doe je een conditietest en een zwemtest, en hebben we een persoonlijk gesprek. Geen zorgen als je nog niet alles vloeiend kunt — we kijken vooral naar je inzet en enthousiasme.</p>\n"
+                    . "<p><strong>Kom je met het openbaar vervoer?</strong><br>\n"
+                    . "We bieden een pendeldienst aan vanaf station Beverwijk. Laat het ons even weten via sollicitatie@paal13.com of een berichtje naar 0224-581601, dan zorgen we dat je op tijd en zonder stress aankomt.</p>\n"
+                    . "<p>Tot op de selectiedag!<br><strong>Team Sollicitaties</strong></p>";
+                if ($rij_us) {
+                    $db->prepare("UPDATE mail_templates SET body_html=? WHERE slug='uitnodiging_selectie'")->execute([$ubody]);
+                } else {
+                    $db->prepare("INSERT INTO mail_templates (slug, naam, beschrijving, onderwerp, body_html, hero_titel, hero_subtitel, hero_kleur)
+                                  VALUES (?,?,?,?,?,?,?,?)")
+                       ->execute([
+                           'uitnodiging_selectie',
+                           'Uitnodiging selectiedag',
+                           'Wordt gestuurd als een sollicitant wordt uitgenodigd voor de selectiedag. Bevat de details en de oproep om het formulier in te vullen (= deelname bevestigen).',
+                           'Je bent uitgenodigd voor de selectiedag — Paal 13',
+                           $ubody,
+                           'Je bent uitgenodigd!',
+                           'We zien je graag op de selectiedag',
+                           '#1A2540',
+                       ]);
+                }
+            }
+        } catch (\Exception $e) { error_log('seed uitnodiging_selectie: ' . $e->getMessage()); }
+
         // Seed de beschikbaarheid-deadline reminder als die nog niet bestaat
         $chk = $db->prepare("SELECT 1 FROM mail_templates WHERE slug='reminder_beschikbaarheid'");
         $chk->execute();

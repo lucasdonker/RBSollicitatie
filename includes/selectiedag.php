@@ -571,23 +571,11 @@ function selectie_besluit_doorvoeren(int $seizoen_id): int {
     selectiedag_auto_setup();
     $besluiten = selectie_besluiten($seizoen_id);
     $n = 0;
-    $db = db();
     foreach ($besluiten as $sol_id => $b) {
-        $naar = match ($b['besluit']) {
-            'door' => 'uitgenodigd_tw',
-            'niet' => 'afgewezen',
-            default => null,
-        };
-        if ($naar === null) continue;
-        // Alleen doorvoeren als de kandidaat nog in de selectiedag-fase zit
-        $r = $db->prepare("UPDATE sollicitaties SET fase=?, gewijzigd_op=NOW()
-                           WHERE id=? AND seizoen_id=? AND fase IN ('uitgenodigd_selectie','aangemeld_selectie','selectiedag_geweest')");
-        $r->execute([$naar, $sol_id, $seizoen_id]);
-        if ($r->rowCount() > 0) {
-            $db->prepare("UPDATE selectie_besluit SET doorgevoerd_op=NOW() WHERE sollicitatie_id=? AND seizoen_id=?")
-               ->execute([$sol_id, $seizoen_id]);
-            $n++;
-        }
+        if (!in_array($b['besluit'] ?? '', ['door','niet'], true)) continue;
+        // Hergebruik de per-persoon functie zodat de uitnodigingsmail (bij 'door')
+        // ook hier meegaat — anders liepen de twee routes uit elkaar.
+        if (selectie_besluit_doorvoeren_een($seizoen_id, (int)$sol_id)) $n++;
     }
     return $n;
 }
@@ -634,6 +622,14 @@ function selectie_besluit_doorvoeren_een(int $seizoen_id, int $sol_id): bool {
     if ($r->rowCount() > 0) {
         $db->prepare("UPDATE selectie_besluit SET doorgevoerd_op=NOW() WHERE sollicitatie_id=? AND seizoen_id=?")
            ->execute([$sol_id, $seizoen_id]);
+        // Bij 'door' → uitnodiging voor het trainingsweekend mailen (net als de handmatige route).
+        // Bij 'niet' (afgewezen) bewust GEEN automatische mail: dat doe je persoonlijk (telefonisch).
+        if ($naar === 'uitgenodigd_tw' && function_exists('verstuur_fase_mail')) {
+            try {
+                $seizoen = function_exists('actief_seizoen') ? (actief_seizoen() ?? []) : [];
+                verstuur_fase_mail($sol_id, 'uitnodiging_tw', '%trainingsweekend%', $seizoen, 60);
+            } catch (\Exception $e) { error_log('bellijst uitnodiging_tw mail: ' . $e->getMessage()); }
+        }
         return true;
     }
     return false;
