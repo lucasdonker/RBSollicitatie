@@ -385,14 +385,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['blk_submit']) && $sta
                        ->execute([$sol_id, $reden, json_encode($blk_changes)]);
                 } catch (Exception $e) { /* tabel bestaat nog niet — skip */ }
             }
-            $sets = implode(',', array_map(fn($k) => "`$k`=?", array_keys($velden)));
-            db()->prepare("UPDATE blk_formulieren SET $sets, foto_url=?, bijgewerkt_op=NOW() WHERE sollicitatie_id=?")
-               ->execute([...array_values($nulls), $foto_url, $sol_id]);
-        } else {
+        }
+        // Opslaan met INSERT ... ON DUPLICATE KEY UPDATE, zodat het altijd werkt —
+        // ook als er nog een oude blk-rij bestaat (bijv. na 'verwijderen' via de interface
+        // dat de rij niet volledig weghaalde). Voorheen gaf dat een duplicate-fout.
+        {
             $cols = implode(',', array_map(fn($k) => "`$k`", array_keys($velden)));
             $ph   = implode(',', array_fill(0, count($velden), '?'));
-            db()->prepare("INSERT INTO blk_formulieren (sollicitatie_id,$cols,foto_url) VALUES(?,$ph,?)")
+            $upd  = implode(',', array_map(fn($k) => "`$k`=VALUES(`$k`)", array_keys($velden)));
+            db()->prepare("INSERT INTO blk_formulieren (sollicitatie_id,$cols,foto_url) VALUES(?,$ph,?)
+                           ON DUPLICATE KEY UPDATE $upd, foto_url=VALUES(foto_url), bijgewerkt_op=NOW()")
                ->execute([$sol_id, ...array_values($nulls), $foto_url]);
+        }
+        if (!$is_edit) {
             if ($sol['fase'] === 'uitgenodigd_selectie') {
                 db()->prepare("UPDATE sollicitaties SET fase='aangemeld_selectie' WHERE id=?")->execute([$sol_id]);
                 $sol['fase'] = 'aangemeld_selectie';

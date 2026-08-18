@@ -3,10 +3,18 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.43.0');
+define('APP_VERSIE', '2.43.1');
 
 function app_changelog(): array {
     return [
+        '2.43.1' => [
+            'datum'  => '2026-08-18',
+            'titel'  => 'BLK opnieuw invullen gaf een foutmelding (+ foto)',
+            'punten' => [
+                'Het opnieuw invullen van het BLK-formulier gaf een "duplicate entry"-fout als er nog een oude formulierrij bestond (bijv. na verwijderen via de interface). Opslaan werkt nu altijd, of de rij nu bestaat of niet',
+                'Hierdoor werd ook de geüploade foto niet bewaard (de opslag crashte vóór het fotopad werd opgeslagen). Dat is nu opgelost',
+            ],
+        ],
         '2.43.0' => [
             'datum'  => '2026-08-18',
             'titel'  => 'AI-beschikbaarheid: exacte data + invoer terugkijken',
