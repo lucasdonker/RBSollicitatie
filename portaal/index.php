@@ -1672,9 +1672,10 @@ function aiBeschVulIn(d) {
       d.afwezig.forEach(a => {
         b2AfwezigToevoegen();
         const rij = afwLijst.lastElementChild;
-        // Afwezigheid gebruikt datums; we zetten de weken om naar de maandag/zondag van die week
-        const van = aiWeekNaarDatum(a.van_week, 'start');
-        const tot = aiWeekNaarDatum(a.tot_week, 'eind');
+        // Afwezigheid komt nu als exacte datums uit de AI (halve weken blijven behouden).
+        // Terugval: als er toch nog een weeknummer komt, zetten we die om naar maandag/zondag.
+        const van = a.van_datum || (a.van_week ? aiWeekNaarDatum(a.van_week, 'start') : '');
+        const tot = a.tot_datum || (a.tot_week ? aiWeekNaarDatum(a.tot_week, 'eind') : '');
         if (van) rij.querySelector('[name="b2_afw_van[]"]').value = van;
         if (tot) rij.querySelector('[name="b2_afw_tot[]"]').value = tot;
         const lbl = rij.querySelector('[name="b2_afw_label[]"]');

@@ -55,7 +55,18 @@ function ai_besch_verwerk(string $tekst, array $geldige_weken, ?array $seizoen =
     $min_week = $geldige_weken ? min($geldige_weken) : 22;
     $max_week = $geldige_weken ? max($geldige_weken) : 35;
 
-    $prompt = ai_besch_prompt($tekst, implode(', ', $week_labels), $min_week, $max_week);
+    // Seizoen bewaren voor de terugval-conversie (week → datum) in de validatie
+    $GLOBALS['ai_besch_seizoen'] = $seizoen;
+
+    // Datumbereik van het seizoen bepalen (eerste weekstart t/m laatste weekeind)
+    $seizoen_start = ''; $seizoen_eind = '';
+    if ($wd && $geldige_weken) {
+        $eerste = $wd[$min_week] ?? null; $laatste = $wd[$max_week] ?? null;
+        if ($eerste) $seizoen_start = $eerste['start']->format('Y-m-d');
+        if ($laatste) $seizoen_eind = $laatste['eind']->format('Y-m-d');
+    }
+
+    $prompt = ai_besch_prompt($tekst, implode(', ', $week_labels), $min_week, $max_week, $seizoen_start, $seizoen_eind);
 
     $payload = json_encode([
         'contents' => [['parts' => [['text' => $prompt]]]],
@@ -88,10 +99,14 @@ function ai_besch_verwerk(string $tekst, array $geldige_weken, ?array $seizoen =
 }
 
 /** De strikte prompt. Alleen beschikbaarheid; JSON-only; weigert off-topic. */
-function ai_besch_prompt(string $tekst, string $weken_context, int $min_week, int $max_week): string {
+function ai_besch_prompt(string $tekst, string $weken_context, int $min_week, int $max_week, string $seizoen_start = '', string $seizoen_eind = ''): string {
+    $datum_regel = ($seizoen_start && $seizoen_eind)
+        ? "Het seizoen loopt van $seizoen_start t/m $seizoen_eind (datums in YYYY-MM-DD)."
+        : "";
     return <<<PROMPT
 Je bent een hulpje dat ALLEEN beschikbaarheid voor vakantiewerk omzet naar gestructureerde data.
 Je vult een rooster in voor een reddingsbrigade. Het seizoen loopt van week $min_week t/m week $max_week.
+$datum_regel
 
 Beschikbare weken dit seizoen: $weken_context
 
@@ -105,6 +120,7 @@ STRIKTE REGELS:
 - Verzin nooit weken buiten $min_week–$max_week. Clamp naar dit bereik.
 - Een regime is "vijf" (hele werkweek, 5 dagen) of "weekend" (alleen weekenddagen).
 - Weekenddagen: 5=vrijdag, 6=zaterdag, 7=zondag. Als iemand "weekenden" zegt zonder specificatie: [6,7].
+- BELANGRIJK voor afwezigheid (vakantie): geef EXACTE datums (van_datum en tot_datum, YYYY-MM-DD), NIET hele weken. Als iemand zegt "3 t/m 16 augustus op vakantie", gebruik dan precies die datums. Zo blijven halve weken behouden en is het controleerbaar.
 
 ANTWOORD ALLEEN met JSON in dit exacte format:
 {
@@ -113,7 +129,7 @@ ANTWOORD ALLEEN met JSON in dit exacte format:
     {"van_week": <int>, "tot_week": <int>, "regime": "vijf"|"weekend", "weekend_dagen": [<int>,...]}
   ],
   "afwezig": [
-    {"van_week": <int>, "tot_week": <int>, "label": "<korte reden, bijv. vakantie>"}
+    {"van_datum": "<YYYY-MM-DD>", "tot_datum": "<YYYY-MM-DD>", "label": "<korte reden, bijv. vakantie>"}
   ],
   "vraag": "<optionele vervolgvraag als iets onduidelijk is, anders leeg>",
   "samenvatting": "<één zin in gewone taal: zo heb ik het begrepen>"
@@ -129,6 +145,14 @@ PROMPT;
 }
 
 /** Valideer + saneer de AI-output. Nooit vertrouwen op rauwe AI-data. */
+/** Controleert of een string een geldige datum in YYYY-MM-DD is; retourneert de datum of ''. */
+function ai_besch_datum_geldig($d): string {
+    $d = trim((string)$d);
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $d)) return '';
+    [$y, $m, $dag] = array_map('intval', explode('-', $d));
+    return checkdate($m, $dag, $y) ? $d : '';
+}
+
 function ai_besch_valideer(array $data, array $geldige_weken, int $min_week, int $max_week): array {
     $status = $data['status'] ?? 'geweigerd';
     if ($status === 'geweigerd') {
@@ -153,14 +177,24 @@ function ai_besch_valideer(array $data, array $geldige_weken, int $min_week, int
         $blokken[] = $blok;
     }
 
-    // Afwezigheid valideren
+    // Afwezigheid valideren — nu met exacte datums (van_datum/tot_datum, YYYY-MM-DD).
+    // Terugvalcompat: als de AI toch nog weken teruggeeft, zetten we die om naar datums.
     $afwezig = [];
     foreach ($data['afwezig'] ?? [] as $a) {
         if (!is_array($a)) continue;
-        $van = $clamp($a['van_week'] ?? 0);
-        $tot = $clamp($a['tot_week'] ?? 0);
-        if ($tot < $van) { $t = $van; $van = $tot; $tot = $t; }
-        $afwezig[] = ['van_week' => $van, 'tot_week' => $tot, 'label' => mb_substr(trim((string)($a['label'] ?? '')), 0, 60)];
+        $van_d = ai_besch_datum_geldig($a['van_datum'] ?? '');
+        $tot_d = ai_besch_datum_geldig($a['tot_datum'] ?? '');
+        // Terugval: oude week-notatie omzetten naar datums via de seizoen-weekdatums
+        if ((!$van_d || !$tot_d) && isset($a['van_week'], $a['tot_week'])) {
+            $vw = $clamp($a['van_week']); $tw = $clamp($a['tot_week']);
+            if ($tw < $vw) { $t=$vw; $vw=$tw; $tw=$t; }
+            $wd = function_exists('seizoen_weken_datums') ? seizoen_weken_datums($GLOBALS['ai_besch_seizoen'] ?? null) : [];
+            if (isset($wd[$vw])) $van_d = $van_d ?: $wd[$vw]['start']->format('Y-m-d');
+            if (isset($wd[$tw])) $tot_d = $tot_d ?: $wd[$tw]['eind']->format('Y-m-d');
+        }
+        if (!$van_d || !$tot_d) continue;
+        if ($tot_d < $van_d) { $t = $van_d; $van_d = $tot_d; $tot_d = $t; }
+        $afwezig[] = ['van_datum' => $van_d, 'tot_datum' => $tot_d, 'label' => mb_substr(trim((string)($a['label'] ?? '')), 0, 60)];
     }
 
     $vraag = mb_substr(trim((string)($data['vraag'] ?? '')), 0, 300);

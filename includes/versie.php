@@ -3,10 +3,37 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.41.0');
+define('APP_VERSIE', '2.43.0');
 
 function app_changelog(): array {
     return [
+        '2.43.0' => [
+            'datum'  => '2026-08-18',
+            'titel'  => 'AI-beschikbaarheid: exacte data + invoer terugkijken',
+            'punten' => [
+                'Vakanties/afwezigheid uit de AI-hulp worden nu als exacte datums verwerkt in plaats van hele weken — halve weken blijven zo behouden en zijn controleerbaar',
+                'De vrije tekst die een sollicitant bij de AI-hulp invulde, is nu terug te zien bij het BLK-detail van die sollicitant',
+            ],
+        ],
+        '2.42.0' => [
+            'datum'  => '2026-08-18',
+            'titel'  => 'Bellijst voor de selectiedag-uitslag',
+            'punten' => [
+                'Nieuw tabblad "Bellijst" in de nabespreking: bel kandidaten persoonlijk met de uitslag en voer per persoon de statuswijziging door zodra je gebeld hebt',
+                'Per kandidaat: telefoonnummer (klikbaar), een "gebeld"-knop met optioneel notitieveld, en de keuze om meteen of later door te voeren',
+                'Meerdere gebelde kandidaten in één keer doorvoeren kan ook',
+                'De oude manier (alles ineens doorvoeren) blijft beschikbaar onder "Geavanceerd" — handig bij heel veel sollicitanten',
+                'Statussen wijzigen nooit meer automatisch: pas na jullie nabespreking en telefoontje wordt een kandidaat op "uitgenodigd TW" of "afgewezen" gezet',
+            ],
+        ],
+        '2.41.1' => [
+            'datum'  => '2026-08-17',
+            'titel'  => 'Beschikbaarheid werd niet opgeslagen',
+            'punten' => [
+                'De beschikbaarheid-tabel ontbrak op verse databases (zoals de testomgeving), waardoor het opslaan van beschikbaarheid stil mislukte — de tabel maakt zichzelf nu aan',
+                'Als het synchroniseren van beschikbaarheid toch mislukt, verschijnt de reden nu in het foutenlog in plaats van onzichtbaar te verdwijnen',
+            ],
+        ],
         '2.41.0' => [
             'datum'  => '2026-08-17',
             'titel'  => 'Meerdere testbevindingen opgelost',

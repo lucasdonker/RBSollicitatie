@@ -86,6 +86,21 @@ function beschikbaarheid2_auto_setup(): void {
             INDEX (`sollicitatie_id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+        // De 'beschikbaarheid'-tabel (compat: weken_json) stond alleen in schema.sql
+        // en ontbrak daardoor op verse databases (zoals de testomgeving). Zonder deze
+        // tabel faalde het opslaan van beschikbaarheid stil — nu maakt hij zichzelf aan.
+        $db->exec("CREATE TABLE IF NOT EXISTS `beschikbaarheid` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `sollicitatie_id` INT NOT NULL UNIQUE,
+            `weken_json` JSON DEFAULT NULL,
+            `uitzonderingen` TEXT DEFAULT NULL,
+            `definitief_json` JSON DEFAULT NULL,
+            `dagloon` DECIMAL(8,2) DEFAULT NULL,
+            `functie` ENUM('aspirant','lifeguard','senior_lifeguard') DEFAULT 'aspirant',
+            `ingevuld_op` DATETIME DEFAULT NULL,
+            `definitief_op` DATETIME DEFAULT NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
         // Kolom-migraties voor bestaande installaties
         $extra_kol = [
             'beschikbaarheid_blok'    => ['weekend_dagen' => "VARCHAR(20) DEFAULT NULL"],
@@ -235,13 +250,16 @@ function beschikbaarheid2_effectief(int $sol_id, ?array $seizoen = null): array 
 
 function beschikbaarheid2_sync_compat(int $sol_id): void {
     try {
+        beschikbaarheid2_auto_setup();
         $eff = beschikbaarheid2_effectief($sol_id);
         $weken = array_keys($eff); sort($weken);
         $db = db();
         $q = $db->prepare("SELECT 1 FROM beschikbaarheid WHERE sollicitatie_id=?"); $q->execute([$sol_id]);
         if ($q->fetchColumn()) $db->prepare("UPDATE beschikbaarheid SET weken_json=?, ingevuld_op=NOW() WHERE sollicitatie_id=?")->execute([json_encode($weken), $sol_id]);
         else $db->prepare("INSERT INTO beschikbaarheid (sollicitatie_id, weken_json, ingevuld_op) VALUES (?,?,NOW())")->execute([$sol_id, json_encode($weken)]);
-    } catch (\Exception $e) {}
+    } catch (\Exception $e) {
+        error_log('beschikbaarheid2_sync_compat: ' . $e->getMessage());
+    }
 }
 
 function beschikbaarheid2_opslaan(int $sol_id, array $input): void {
