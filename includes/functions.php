@@ -22,6 +22,7 @@ if (file_exists(__DIR__ . '/ai_analyse.php'))      require_once __DIR__ . '/ai_a
 if (file_exists(__DIR__ . '/kennismakingspakket.php')) require_once __DIR__ . '/kennismakingspakket.php';
 if (file_exists(__DIR__ . '/ondertekeningen_auto.php')) require_once __DIR__ . '/ondertekeningen_auto.php';
 if (file_exists(__DIR__ . '/ondertekening_mails.php')) require_once __DIR__ . '/ondertekening_mails.php';
+if (file_exists(__DIR__ . '/ondertekening_pdf.php')) require_once __DIR__ . '/ondertekening_pdf.php';
 if (file_exists(__DIR__ . '/beschikbaarheid_dagen.php')) require_once __DIR__ . '/beschikbaarheid_dagen.php';
 if (file_exists(__DIR__ . '/beschikbaarheid2.php')) require_once __DIR__ . '/beschikbaarheid2.php';
 if (file_exists(__DIR__ . '/competenties.php')) require_once __DIR__ . '/competenties.php';

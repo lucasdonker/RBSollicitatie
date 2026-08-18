@@ -514,6 +514,6 @@ function stuur_template_mail(
     return Mailer::verstuur($naar, $sol['voornaam'] ?? '', $render['onderwerp'], $html, $sol_id);
 }
 
-function stuur_mail_html(string $naar, string $naam, string $onderwerp, string $html, ?int $sol_id = null): bool {
-    return Mailer::verstuur($naar, $naam, $onderwerp, $html, $sol_id);
+function stuur_mail_html(string $naar, string $naam, string $onderwerp, string $html, ?int $sol_id = null, array $bijlagen = []): bool {
+    return Mailer::verstuur($naar, $naam, $onderwerp, $html, $sol_id, $bijlagen);
 }

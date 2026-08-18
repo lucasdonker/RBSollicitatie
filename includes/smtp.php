@@ -19,14 +19,15 @@ class Mailer
         string $naam,
         string $onderwerp,
         string $html_body,
-        ?int $sol_id = null
+        ?int $sol_id = null,
+        array $bijlagen = []
     ): bool {
         $ok = false;
         $fout = null;
 
         try {
             if (self::smtpActief()) {
-                $ok = self::viaSMTP($naar, $naam, $onderwerp, $html_body);
+                $ok = self::viaSMTP($naar, $naam, $onderwerp, $html_body, $bijlagen);
             } else {
                 $ok = self::viaPhpMail($naar, $naam, $onderwerp, $html_body);
             }
@@ -58,7 +59,7 @@ class Mailer
     }
 
     // ── SMTP verzending ───────────────────────────────────────
-    private static function viaSMTP(string $naar, string $naam, string $onderwerp, string $body): bool
+    private static function viaSMTP(string $naar, string $naam, string $onderwerp, string $body, array $bijlagen = []): bool
     {
         // Instellingen: eerst uit de database (beheer), anders uit config.php als terugval.
         $ci = function(string $sleutel, string $const, string $default = ''): string {
@@ -186,15 +187,8 @@ class Mailer
         $plain = html_entity_decode($plain, ENT_QUOTES, 'UTF-8');
         $plain = preg_replace('/\n{3,}/', "\n\n", trim($plain));
 
-        $bericht =
-            "Date: {$datum}\r\n" .
-            "Message-ID: {$msgid}\r\n" .
-            "From: {$vanEnc} <{$from}>\r\n" .
-            "To: {$naamEnc} <{$naar}>\r\n" .
-            "Subject: {$ondEnc}\r\n" .
-            "MIME-Version: 1.0\r\n" .
-            "Content-Type: multipart/alternative; boundary=\"{$boundary}\"\r\n" .
-            "\r\n" .
+        // Het inhoudsdeel (tekst + HTML) — altijd multipart/alternative
+        $altBody =
             "--{$boundary}\r\n" .
             "Content-Type: text/plain; charset=UTF-8\r\n" .
             "Content-Transfer-Encoding: quoted-printable\r\n" .
@@ -205,8 +199,59 @@ class Mailer
             "Content-Transfer-Encoding: quoted-printable\r\n" .
             "\r\n" .
             quoted_printable_encode(self::bereideHtmlVoor($naam, $onderwerp, $body)) . "\r\n" .
-            "--{$boundary}--\r\n" .
-            ".";
+            "--{$boundary}--\r\n";
+
+        // Geldige bijlagen verzamelen (bestaande, leesbare bestanden)
+        $geldige_bijlagen = [];
+        foreach ($bijlagen as $b) {
+            $pad = is_array($b) ? ($b['pad'] ?? '') : $b;
+            if ($pad && is_file($pad) && is_readable($pad)) {
+                $geldige_bijlagen[] = [
+                    'pad'  => $pad,
+                    'naam' => is_array($b) ? ($b['naam'] ?? basename($pad)) : basename($pad),
+                    'mime' => is_array($b) ? ($b['mime'] ?? 'application/octet-stream') : 'application/octet-stream',
+                ];
+            }
+        }
+
+        $headers =
+            "Date: {$datum}\r\n" .
+            "Message-ID: {$msgid}\r\n" .
+            "From: {$vanEnc} <{$from}>\r\n" .
+            "To: {$naamEnc} <{$naar}>\r\n" .
+            "Subject: {$ondEnc}\r\n" .
+            "MIME-Version: 1.0\r\n";
+
+        if ($geldige_bijlagen) {
+            // multipart/mixed: eerst het alternative-deel, dan de bijlagen
+            $mixed = md5(uniqid((string)mt_rand(), true)) . 'mix';
+            $bericht = $headers .
+                "Content-Type: multipart/mixed; boundary=\"{$mixed}\"\r\n" .
+                "\r\n" .
+                "--{$mixed}\r\n" .
+                "Content-Type: multipart/alternative; boundary=\"{$boundary}\"\r\n" .
+                "\r\n" .
+                $altBody;
+            foreach ($geldige_bijlagen as $bij) {
+                $data = base64_encode((string)file_get_contents($bij['pad']));
+                $data = chunk_split($data, 76, "\r\n");
+                $bnaam = '=?UTF-8?B?' . base64_encode($bij['naam']) . '?=';
+                $bericht .=
+                    "--{$mixed}\r\n" .
+                    "Content-Type: {$bij['mime']}; name=\"{$bnaam}\"\r\n" .
+                    "Content-Transfer-Encoding: base64\r\n" .
+                    "Content-Disposition: attachment; filename=\"{$bnaam}\"\r\n" .
+                    "\r\n" .
+                    $data . "\r\n";
+            }
+            $bericht .= "--{$mixed}--\r\n.";
+        } else {
+            $bericht = $headers .
+                "Content-Type: multipart/alternative; boundary=\"{$boundary}\"\r\n" .
+                "\r\n" .
+                $altBody .
+                ".";
+        }
 
         $resp = $stuur($bericht);
         $stuur("QUIT");

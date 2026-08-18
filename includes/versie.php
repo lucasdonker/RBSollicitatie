@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.44.0');
+define('APP_VERSIE', '2.45.0');
 
 function app_changelog(): array {
     return [
+        '2.45.0' => [
+            'datum'  => '2026-08-18',
+            'titel'  => 'Formulieren: inhoud, gezondheidsverklaring en PDF naar ouders',
+            'punten' => [
+                'Het intakeformulier heeft nu echte inhoud: gezondheid & veiligheid, fotobeleid, en verklaring & aansprakelijkheid met de bijbehorende vinkjes — niet langer alleen een handtekening',
+                'De gezondheidsverklaring is aangevuld met de huisarts-waarschuwing en de geldigheidstermijn (1 jaar), passend bij het officiële formulier',
+                'Na ondertekening door een ouder wordt nu een nette PDF (met logo) van het ondertekende document naar de ouder gemaild, zodat ze kunnen terugzien waar ze voor tekenden',
+                'De ondertekenmails (naar ouder, bevestiging, herinnering) zijn bewerkbaar via Instellingen → Mail templates',
+            ],
+        ],
         '2.44.0' => [
             'datum'  => '2026-08-18',
             'titel'  => 'Welkomstmail, selectiedag-uitnodiging, bellijst-mail en meer',

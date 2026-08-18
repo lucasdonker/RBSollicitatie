@@ -88,11 +88,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_ondertekend) {
                 'overig'           => trim($_POST['a_overig'] ?? ''),
             ];
         }
-        if ($rec['type'] === 'intake') {
+        if ($rec['type'] === 'intake' || $rec['type'] === 'intake_ouder') {
             $form['geslacht']         = $_POST['geslacht'] ?? '';
-            $form['heeft_aandacht']   = ($_POST['aandacht'] ?? '') === 'ja';
-            $form['aandacht_tekst']   = trim($_POST['aandacht_tekst'] ?? '');
-            $form['foto_toestemming'] = !empty($_POST['foto_akkoord']);
+            if ($rec['type'] === 'intake_ouder') {
+                $form['relatie'] = $_POST['relatie'] ?? '';
+            }
+            // 1. Gezondheid & veiligheid
+            $form['gezondheid_keuze']       = $_POST['gezondheid_keuze'] ?? '';
+            $form['gezondheid_toelichting'] = trim($_POST['gezondheid_toelichting'] ?? '');
+            // 2. Foto's beleid (optioneel)
+            $form['foto_toestemming'] = !empty($_POST['foto_toestemming']);
+            // 3. Verklaring & aansprakelijkheid
+            $form['verklaring'] = [
+                'naar_waarheid'  => !empty($_POST['v_waarheid']),
+                'goede_gezondheid' => !empty($_POST['v_gezondheid']),
+                'eigen_risico'   => !empty($_POST['v_eigenrisico']),
+                'leeftijd_16'    => !empty($_POST['v_leeftijd']),
+            ];
         }
 
         // Update record
@@ -132,6 +144,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_ondertekend) {
                 }
             } catch (\Exception $e) {}
         }
+
+        // Stuur de ondertekende PDF naar de ONDERTEKENAAR zelf (met name de ouder),
+        // zodat hij/zij kan terugzien waar de handtekening onder staat.
+        if ($rec['ondertekenaar_rol'] === 'ouder' && function_exists('ondertekening_pdf_genereer')) {
+            try {
+                // Verse gegevens ophalen (net opgeslagen) voor een kloppende PDF
+                $vers = $db->prepare("SELECT * FROM ondertekeningen WHERE token=?");
+                $vers->execute([$token]);
+                $rec_vers = $vers->fetch() ?: $rec;
+                $ouder_email = $rec_vers['ondertekenaar_email'] ?? '';
+                $pdf_pad = ondertekening_pdf_genereer($rec_vers, $sol);
+                if ($pdf_pad && $ouder_email && function_exists('stuur_mail_html')) {
+                    $doc_label = match($rec['type']) {
+                        'gezondheid_ouder' => 'gezondheidsverklaring',
+                        'intake_ouder'     => 'intakeformulier',
+                        default            => 'formulier',
+                    };
+                    $body_pdf = "<p>Beste " . h($rec_vers['ondertekenaar_naam'] ?: 'ouder/verzorger') . ",</p>"
+                        . "<p>Bedankt voor het ondertekenen van {$doc_label} voor <strong>" . h(trim(($sol['voornaam']??'').' '.($sol['achternaam']??''))) . "</strong>.</p>"
+                        . "<p>In de bijlage vind je een kopie van het ondertekende document, zodat je kunt terugzien waar je je handtekening onder hebt gezet.</p>"
+                        . "<p>Met vriendelijke groet,<br><strong>Team Sollicitaties</strong><br>Reddingsbrigade Paal 13</p>";
+                    $html_pdf = function_exists('mail_thema_wrapper')
+                        ? mail_thema_wrapper($body_pdf, 'Ondertekend ' . $doc_label, 'Kopie van je ondertekening', 'Voor je administratie')
+                        : $body_pdf;
+                    $bestandsnaam = 'Ondertekend_' . ucfirst($doc_label) . '_Paal13.pdf';
+                    stuur_mail_html($ouder_email, $rec_vers['ondertekenaar_naam'] ?: 'Ouder/verzorger',
+                        'Kopie ondertekend ' . $doc_label . ' — Paal 13', $html_pdf, (int)$rec['sollicitatie_id'],
+                        [['pad' => $pdf_pad, 'naam' => $bestandsnaam, 'mime' => 'application/pdf']]);
+                    @unlink($pdf_pad);
+                }
+            } catch (\Exception $e) { error_log('ondertekening PDF-mail: ' . $e->getMessage()); }
+        }
+
         redirect(APP_URL . '/portaal/ondertekenen.php?token=' . urlencode($token) . '&klaar=1');
     }
 }
@@ -333,6 +378,43 @@ body { background:var(--bg); min-height:100vh; }
 
       <?php endif; ?>
 
+      <?php if ($rec['type'] === 'intake' || $rec['type'] === 'intake_ouder'): ?>
+
+        <div style="margin-top:20px">
+          <h3>1. Gezondheid &amp; veiligheid</h3>
+          <div class="verklaring-tekst">
+            <p>Om jouw veiligheid te kunnen waarborgen, vragen wij of er medische of fysieke aandachtspunten zijn waarmee we tijdens de selectiedag rekening moeten houden. Je bent niet verplicht iets te delen. Wat je invult wordt vertrouwelijk behandeld.</p>
+          </div>
+          <div class="aandoening-lijst">
+            <label><input type="radio" name="gezondheid_keuze" value="geen" required> Ik heb geen aandachtspunten om te melden.</label>
+            <label><input type="radio" name="gezondheid_keuze" value="ja"> Ja, namelijk:</label>
+          </div>
+          <div class="form-groep" style="margin-top:8px">
+            <textarea name="gezondheid_toelichting" rows="3" placeholder="Vul hier je aandachtspunten in (alleen nodig als je hierboven 'Ja' koos)"></textarea>
+          </div>
+
+          <h3 style="margin-top:24px">2. Foto's beleid</h3>
+          <div class="verklaring-tekst">
+            <p>Tijdens deze dag worden foto's gemaakt voor interne evaluatie, promotie en sociale media. We gaan hier zorgvuldig mee om: niemand wordt ongepast of negatief in beeld gebracht, bijvoorbeeld in het zwembad.</p>
+          </div>
+          <div class="aandoening-lijst">
+            <label><input type="checkbox" name="foto_toestemming" value="1"> Ik geef toestemming voor het gebruik van foto's zoals hierboven omschreven.</label>
+          </div>
+
+          <h3 style="margin-top:24px">3. Verklaring &amp; aansprakelijkheid</h3>
+          <div class="aandoening-lijst">
+            <label><input type="checkbox" name="v_waarheid" value="1" required> Ik verklaar dat ik dit formulier naar waarheid heb ingevuld.</label>
+            <label><input type="checkbox" name="v_gezondheid" value="1" required> Ik verklaar dat ik in goede gezondheid verkeer om deel te nemen aan sportieve activiteiten.</label>
+            <label><input type="checkbox" name="v_eigenrisico" value="1" required> Deelname is op eigen risico. De organisatie is niet aansprakelijk voor letsel dat voortkomt uit verzwegen of onbekende omstandigheden.</label>
+            <?php if ($rec['type'] === 'intake'): ?>
+            <label><input type="checkbox" name="v_leeftijd" value="1" required> Ik ben 16 jaar of ouder en bevoegd om dit formulier zelfstandig te ondertekenen.</label>
+            <?php endif; ?>
+          </div>
+          <p style="font-size:12.5px;color:var(--tekst-zacht);margin-top:6px">De vinkjes met een verplichting zijn nodig om te kunnen ondertekenen. Het fotobeleid is optioneel.</p>
+        </div>
+
+      <?php endif; ?>
+
       <?php if ($rec['type'] === 'gezondheid_ouder' || $rec['type'] === 'gezondheid_18plus'): ?>
 
         <div style="margin-top:20px">
@@ -358,6 +440,10 @@ body { background:var(--bg); min-height:100vh; }
           <div class="form-groep" style="margin-top:12px">
             <label>Overige aandoeningen of medicatie <span style="font-weight:400;color:var(--tekst-zacht)">(optioneel)</span></label>
             <textarea name="a_overig" rows="2" placeholder="Bijv. medicatie, allergieën, andere aandoeningen…"></textarea>
+          </div>
+          <div class="verklaring-tekst" style="margin-top:12px">
+            <p style="font-weight:600">Vraag bij enige twijfel advies aan uw huisarts of behandelend specialist. Doe dit ook na iedere belangrijke ziekte, in het bijzonder infectieziekten en operaties.</p>
+            <p style="font-size:13px;color:var(--tekst-zacht)">Deze gezondheidsverklaring is 1 jaar geldig vanaf de datum van ondertekening. Zonder ondertekening is deze verklaring niet geldig.</p>
           </div>
         </div>
       <?php endif; ?>
