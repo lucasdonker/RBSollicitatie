@@ -456,6 +456,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['blk_submit']) && $sta
                     'opmerking'        => trim($_POST['beschikbaarheid_uitzonderingen'] ?? '') ?: null,
                 ]);
             }
+
+            // Losse dagen (concrete kalenderdatums die iemand niet kan / liever vrij wil)
+            if (function_exists('beschikbaarheid_dagen_opslaan')) {
+                $dd = $_POST['b2_dag_datum'] ?? []; $ds = $_POST['b2_dag_soort'] ?? []; $dr = $_POST['b2_dag_reden'] ?? [];
+                $losse = [];
+                foreach ($dd as $i => $datum) {
+                    if (trim($datum) === '') continue;
+                    $losse[] = [
+                        'datum' => trim($datum),
+                        'soort' => $ds[$i] ?? 'niet_beschikbaar',
+                        'reden' => trim($dr[$i] ?? ''),
+                    ];
+                }
+                beschikbaarheid_dagen_opslaan($sol['id'], $losse, 'sollicitant');
+            }
         } catch (Exception $e) { error_log('b2 opslaan: ' . $e->getMessage()); }
 
         // AI analyse: toevoegen aan wachtrij (cron verwerkt dit)
@@ -1264,6 +1279,29 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
             <button type="button" class="btn btn-outline btn-sm" onclick="b2AfwezigToevoegen()">+ Periode toevoegen</button>
           </div>
 
+          <!-- 2b. Losse dagen dat je niet kunt -->
+          <?php $losse_dagen = function_exists('beschikbaarheid_dagen') ? beschikbaarheid_dagen($sol['id']) : []; ?>
+          <div style="background:var(--bg-card);border:1px solid var(--rand);border-radius:10px;padding:16px;margin-bottom:12px">
+            <div style="font-weight:600;font-size:13.5px;margin-bottom:4px">Losse dagen dat je niet kunt</div>
+            <p style="font-size:12px;color:var(--tekst-zacht);margin-bottom:10px">
+              Kun je een week wel werken, maar één losse dag niet (bijv. een afspraak op 12 augustus, of die ene woensdag)? Geef die dag hier op. Voor hele periodes gebruik je het blok hierboven.
+            </p>
+            <div id="b2LosseDagLijst">
+              <?php foreach ($losse_dagen as $ld): ?>
+              <div class="b2-losdag-rij" style="display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
+                <input type="date" name="b2_dag_datum[]" value="<?= h($ld['datum']) ?>" aria-label="Datum" style="flex:1;min-width:140px">
+                <select name="b2_dag_soort[]" aria-label="Soort" style="flex:1;min-width:130px">
+                  <option value="niet_beschikbaar" <?= ($ld['soort']??'')==='niet_beschikbaar'?'selected':'' ?>>Kan ik niet</option>
+                  <option value="voorkeur_vrij" <?= ($ld['soort']??'')==='voorkeur_vrij'?'selected':'' ?>>Liever vrij</option>
+                </select>
+                <input type="text" name="b2_dag_reden[]" value="<?= h($ld['reden'] ?? '') ?>" placeholder="reden (optioneel)" aria-label="Reden" style="flex:1;min-width:100px">
+                <button type="button" class="btn btn-outline btn-sm" onclick="this.parentElement.remove()" aria-label="Verwijderen" style="min-width:44px;min-height:38px">✕</button>
+              </div>
+              <?php endforeach; ?>
+            </div>
+            <button type="button" class="btn btn-outline btn-sm" onclick="b2LosseDagToevoegen()">+ Dag toevoegen</button>
+          </div>
+
           <!-- 3. Vaste vrije dag → VOORKEUR (punt 3) -->
           <div style="background:var(--bg-card);border:1px solid var(--rand);border-radius:10px;padding:16px;margin-bottom:12px">
             <div style="font-weight:600;font-size:13.5px;margin-bottom:4px">3 · Zou je een vaste dag willen vrijhouden?</div>
@@ -1721,8 +1759,16 @@ function b2AfwezigToevoegen() {
   document.getElementById('b2AfwezigLijst').appendChild(div);
 }
 
-function b2VerzoekToevoegen() {
+function b2LosseDagToevoegen() {
   const div = document.createElement('div');
+  div.className = 'b2-losdag-rij';
+  div.style.cssText = 'display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap';
+  div.innerHTML = '<input type="date" name="b2_dag_datum[]" aria-label="Datum" style="flex:1;min-width:140px">' +
+    '<select name="b2_dag_soort[]" aria-label="Soort" style="flex:1;min-width:130px"><option value="niet_beschikbaar">Kan ik niet</option><option value="voorkeur_vrij">Liever vrij</option></select>' +
+    '<input type="text" name="b2_dag_reden[]" placeholder="reden (optioneel)" aria-label="Reden" style="flex:1;min-width:100px">' +
+    '<button type="button" class="btn btn-outline btn-sm" onclick="this.parentElement.remove()" aria-label="Verwijderen" style="min-width:44px;min-height:38px">✕</button>';
+  document.getElementById('b2LosseDagLijst').appendChild(div);
+}
   div.className = 'b2-verzoek-rij';
   div.style.cssText = 'border:1px solid var(--rand-licht);border-radius:8px;padding:10px;margin-bottom:8px';
   div.innerHTML =

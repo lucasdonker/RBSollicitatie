@@ -398,6 +398,18 @@ $ai_analyse = $blk ? ($blk['ai_analyse'] ?? null) : null;
           ✈️ <strong>Afwezig:</strong> <?php echo implode(' · ', array_map(fn($a) => h(datum_nl($a['van_datum'])) . '–' . h(datum_nl($a['tot_datum'])) . ($a['label'] ? ' (' . h($a['label']) . ')' : ''), $b2data['afwezig'])); ?><br>
         <?php endif; ?>
 
+        <?php
+          $losse_dagen_p = function_exists('beschikbaarheid_dagen') ? beschikbaarheid_dagen($id) : [];
+          if ($losse_dagen_p): ?>
+          📅 <strong>Losse dagen:</strong>
+          <?php echo implode(' · ', array_map(function($ld) {
+              $lbl = h(datum_nl($ld['datum']));
+              if (($ld['soort'] ?? '') === 'voorkeur_vrij') $lbl .= ' (liever vrij)';
+              if (!empty($ld['reden'])) $lbl .= ' — ' . h($ld['reden']);
+              return $lbl;
+          }, $losse_dagen_p)); ?><br>
+        <?php endif; ?>
+
         <?php if (!empty($b2data['profiel']['vaste_dagen_uit'])): ?>
           ⭐ <strong>Voorkeur vrij:</strong> <?= implode(', ', array_map('dag_kort', $b2data['profiel']['vaste_dagen_uit'])) ?>
           <span style="color:var(--grijs);font-size:11px">(voorkeur, planner beslist)</span>

@@ -26,6 +26,7 @@ if (file_exists(__DIR__ . '/ondertekening_pdf.php')) require_once __DIR__ . '/on
 if (file_exists(__DIR__ . '/rechten.php')) require_once __DIR__ . '/rechten.php';
 if (file_exists(__DIR__ . '/beschikbaarheid_dagen.php')) require_once __DIR__ . '/beschikbaarheid_dagen.php';
 if (file_exists(__DIR__ . '/beschikbaarheid2.php')) require_once __DIR__ . '/beschikbaarheid2.php';
+if (file_exists(__DIR__ . '/beschikbaarheid_dag.php')) require_once __DIR__ . '/beschikbaarheid_dag.php';
 if (file_exists(__DIR__ . '/competenties.php')) require_once __DIR__ . '/competenties.php';
 if (file_exists(__DIR__ . '/bezetting.php')) require_once __DIR__ . '/bezetting.php';
 if (file_exists(__DIR__ . '/loonplan.php')) require_once __DIR__ . '/loonplan.php';
