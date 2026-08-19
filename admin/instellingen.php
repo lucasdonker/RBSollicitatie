@@ -303,28 +303,28 @@ require __DIR__ . '/layout_top.php';
       <div class="inst-nav">
         <?php $nav_groepen = [
           'Organisatie' => [
-            ['algemeen', 'Algemeen',           '<circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>'],
-            ['functies', 'Functies & factoren','<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'],
-            ['loon',     'Minimumlonen',       '<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>'],
-            ['bezetting','Posten & bezetting',  '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>'],
+            ['algemeen', 'Algemeen',            '<circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>'],
+            ['functies', 'Functies & factoren', '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'],
           ],
-          'Proces' => [
+          'Selectie & seizoen' => [
             ['uitnodiging','Uitnodiging & automatisering', '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.15 12 19.79 19.79 0 0 1 1.08 3.4 2 2 0 0 1 3.06 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.09 8.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21 16"/>'],
+            ['selectie', 'Beoordelingscriteria', '<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>'],
+            ['bezetting','Posten & bezetting',   '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>'],
+          ],
+          'Loon & planning' => [
+            ['loon',     'Vakantietoeslag & lonen', '<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>'],
           ],
           'Communicatie' => [
-            ['mail',     'Mail & wachtrijen',  '<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>'],
+            ['mail',     'Mail & herinneringen',  '<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>'],
+            ['smtp',     'E-mailserver (SMTP)',   '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 5L2 7"/>'],
           ],
-          'Koppelingen' => [
+          'AI & koppelingen' => [
+            ['ai',       'AI-analyse',            '<circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 10v6m11-11h-6m-10 0H1"/>'],
             ['authentik', 'Authentik & competenties', '<path d="M12 2l7 4v6c0 5-3.5 8-7 10-3.5-2-7-5-7-10V6z"/>'],
-            ['ai',       'AI Analyse',         '<circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 10v6m11-11h-6m-10 0H1"/>'],
-            ['smtp',     'E-mail (SMTP)',      '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 5L2 7"/>'],
-            ['sso',      'Authentik SSO',      '<path d="M12 1l3 6 6 .75-4.12 4.62L18 19l-6-3.25L6 19l1.13-6.63L3 7.75 9 7z"/>'],
-          ],
-          'Selectiedag' => [
-            ['selectie', 'Beoordelingscriteria', '<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>'],
+            ['sso',      'Authentik SSO-login',   '<path d="M12 1l3 6 6 .75-4.12 4.62L18 19l-6-3.25L6 19l1.13-6.63L3 7.75 9 7z"/>'],
           ],
           'Privacy' => [
-            ['bewaren', 'Bewaartermijnen', '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>'],
+            ['bewaren', 'Bewaartermijnen (AVG)', '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>'],
           ],
         ]; ?>
         <?php foreach ($nav_groepen as $groep => $items): ?>

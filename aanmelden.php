@@ -38,16 +38,17 @@ if($_SERVER['REQUEST_METHOD']==='POST'&&$open){
                ->execute([$pid,$seizoen['id'],$ter,$token,date('Y-m-d H:i:s'),PRIVACY_VERSIE,$ip,$ouder_op,$ouder_naam_val]);
             $sid=$db->lastInsertId();
             $purl=APP_URL.'/portaal/?token='.$token;
-            // Probeer eerst de aanpasbare 'welkom'-template (Mail templates in beheer).
-            // Lukt dat niet (template leeg/afwezig), val dan terug op de vaste tekst.
+            // Gebruik de aanpasbare 'welkomstmail'-template (Mail templates in beheer, naam "Bevestiging aanmelding").
+            // Alleen als die template volledig ontbreekt valt hij terug op een minimale vaste tekst — als vangnet.
             $sol_voor_mail = ['voornaam'=>$voornaam, 'achternaam'=>$achternaam, 'email'=>$email, 'portaal_token'=>$token];
             $welkom_verstuurd = false;
             if (function_exists('stuur_template_mail')) {
                 try {
-                    $welkom_verstuurd = stuur_template_mail('welkom', $email, $sol_voor_mail, $seizoen, [], (int)$sid);
+                    $welkom_verstuurd = stuur_template_mail('welkomstmail', $email, $sol_voor_mail, $seizoen, [], (int)$sid);
                 } catch (\Exception $e) { $welkom_verstuurd = false; }
             }
             if (!$welkom_verstuurd) {
+                error_log('aanmelden: welkomstmail-template kon niet verstuurd worden, vangnet gebruikt');
                 $body="<p>Bedankt voor je aanmelding als lifeguard bij Reddingsbrigade Paal 13!</p><p>Aanmelding ontvangen voor <strong>{$seizoen['naam']}</strong>.</p>".($ter?"<p><em>Welkom terug! We zien dat je eerder hebt gesolliciteerd.</em></p>":"")."<p>Je ontvangt bericht als je wordt uitgenodigd voor de selectiedag. Je kunt je status volgen op:<br><a href='$purl' class='btn'>Bekijk mijn sollicitatie →</a></p><p style='font-size:12px;color:#666'>Bewaar deze link — je hebt hem nodig voor het invullen van verdere informatie.</p>";
                 stuur_mail($email,$voornaam,'Aanmelding ontvangen — Paal 13 '.$seizoen['naam'],$body,$sid);
             }

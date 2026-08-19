@@ -3,10 +3,22 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.46.0');
+define('APP_VERSIE', '2.47.0');
 
 function app_changelog(): array {
     return [
+        '2.47.0' => [
+            'datum'  => '2026-08-19',
+            'titel'  => 'Mails via templates, PDF-consistentie en overzichtelijker instellingen',
+            'punten' => [
+                'De welkomstmail na aanmelden gebruikt nu de bewerkbare template "welkomstmail" (Bevestiging aanmelding) — niet langer een vaste tekst',
+                'De auto-invite gebruikt nu dezelfde bewerkbare template "uitnodiging_selectie" als het handmatig uitnodigen; beide routes zijn nu gelijk',
+                'Ook het handmatig toevoegen van een sollicitant en het ondertekenverzoek gebruiken nu bewerkbare templates',
+                'Alle sollicitant-mails zijn nu template-gebaseerd; alleen als een template volledig ontbreekt is er nog een vaste vangnet-tekst',
+                'Een ondertekend formulier bekijken/printen in het beheer gebruikt nu exact dezelfde PDF als de ouders per mail ontvangen',
+                'Het instellingenscherm is logischer ingedeeld in zes groepen met consistente labels',
+            ],
+        ],
         '2.46.0' => [
             'datum'  => '2026-08-18',
             'titel'  => 'Rollen & rechten: volledige rechtenmatrix + security-audit',

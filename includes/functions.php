@@ -1019,18 +1019,16 @@ function auto_invite_run(): array {
 
         if (!$ok['voldoet']) { $res['overgeslagen']++; continue; }
 
-        // Verstuur uitnodiging via queue
-        $onderwerp = 'Uitnodiging selectiedag — Paal 13';
-        $datum = $seizoen['datum_selectiedag'] ? date('d-m-Y', strtotime($seizoen['datum_selectiedag'])) : 'binnenkort';
-        $body  = "<p>Hoi {$k['voornaam']},</p>
-<p>We zijn enthousiast over je aanmelding! We willen je graag uitnodigen voor onze selectiedag op <strong>$datum</strong>.</p>
-<p>Log in op het portaal voor meer informatie en om je deelname te bevestigen: <a href=\"" . APP_URL . "/portaal/\">" . APP_URL . "/portaal/</a></p>
-<p>Tot dan!<br>Reddingsbrigade Paal 13</p>";
-        if (mail_queue_toevoegen($k['email'], $k['voornaam'], $onderwerp, $body, (int)$k['id'])) {
-            // Update fase
-            db()->prepare("UPDATE sollicitaties SET fase='uitgenodigd_selectie' WHERE id=?")->execute([$k['id']]);
-            $res['uitgenodigd']++;
+        // Zet eerst de fase, verstuur dan de mail via dezelfde weg als de handmatige route:
+        // de bewerkbare template 'uitnodiging_selectie'. Zo krijgen auto-invite en handmatig
+        // uitnodigen exact dezelfde (bewerkbare) mail — niets hardgecodeerd.
+        db()->prepare("UPDATE sollicitaties SET fase='uitgenodigd_selectie' WHERE id=?")->execute([$k['id']]);
+        if (function_exists('verstuur_fase_mail')) {
+            try {
+                verstuur_fase_mail((int)$k['id'], 'uitnodiging_selectie', '%selectiedag%', $seizoen, 60);
+            } catch (\Exception $e) { error_log('auto-invite mail: ' . $e->getMessage()); }
         }
+        $res['uitgenodigd']++;
     }
     return $res;
 }
