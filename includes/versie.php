@@ -3,10 +3,22 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.45.0');
+define('APP_VERSIE', '2.46.0');
 
 function app_changelog(): array {
     return [
+        '2.46.0' => [
+            'datum'  => '2026-08-18',
+            'titel'  => 'Rollen & rechten: volledige rechtenmatrix + security-audit',
+            'punten' => [
+                'Nieuw scherm "Rollen & rechten": stel per rol in wie wat mag, per onderdeel en per actie (lezen, bewerken, verwijderen)',
+                'Rollen zijn nu vrij toe te voegen en te koppelen aan een Authentik-groep, zodat SSO-gebruikers automatisch de juiste rol krijgen',
+                'Veilige standaardrechten: een begeleider kan standaard niet meer bij persoonsgegevens; alleen wie het nodig heeft ziet gevoelige data',
+                'Het menu toont voortaan alleen onderdelen waar je rol toegang toe heeft — geen doodlopende "geen toegang"-klikken meer',
+                'Beveiliging: uploads-map beschermd tegen scriptuitvoering, en de autorisatie op BLK-details en beschikbaarheid rechtgetrokken (AVG)',
+                'De rol-keuze bij beheerders toont nu automatisch alle rollen die je hebt aangemaakt',
+            ],
+        ],
         '2.45.0' => [
             'datum'  => '2026-08-18',
             'titel'  => 'Formulieren: inhoud, gezondheidsverklaring en PDF naar ouders',

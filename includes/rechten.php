@@ -1,0 +1,213 @@
+<?php
+/**
+ * Paal 13 — Rollen- en rechtensysteem (RBAC).
+ *
+ * Eén bron van waarheid voor "wie mag wat". Rollen staan in de database (toe te
+ * voegen/hernoemen), elke rol koppelt aan een Authentik-groep, en per rol/module
+ * zijn er drie rechten: lezen, bewerken, verwijderen.
+ *
+ * Gebruik in pagina's:   vereis_recht('sollicitanten', 'lezen');
+ * Gebruik in het menu:    if (mag('sollicitanten', 'lezen')) { ... toon item ... }
+ */
+
+if (!function_exists('rechten_modules')) {
+
+/**
+ * De modules waarop rechten gelden. Sleutel = interne naam, waarde = weergave +
+ * of de drie acties (bewerken/verwijderen) zinvol zijn voor die module.
+ * 'acties' bepaalt welke kolommen in de matrix-UI verschijnen.
+ */
+function rechten_modules(): array {
+    return [
+        'sollicitanten'   => ['label' => 'Sollicitanten',          'groep' => 'Werving',        'acties' => ['lezen','bewerken','verwijderen']],
+        'blk'             => ['label' => 'BLK-formulieren & details','groep' => 'Werving',       'acties' => ['lezen','bewerken']],
+        'selectiedag'     => ['label' => 'Selectiedag',            'groep' => 'Selectie',       'acties' => ['lezen','bewerken']],
+        'ondertekeningen' => ['label' => 'Ondertekeningen',        'groep' => 'Selectie',       'acties' => ['lezen','bewerken']],
+        'beschikbaarheid' => ['label' => 'Beschikbaarheid',        'groep' => 'Planning',       'acties' => ['lezen','bewerken']],
+        'dekking'         => ['label' => 'Dekking',                'groep' => 'Planning',       'acties' => ['lezen']],
+        'loonplanning'    => ['label' => 'Loonplanning',           'groep' => 'Planning',       'acties' => ['lezen','bewerken']],
+        'mailing'         => ['label' => 'Mailings & templates',   'groep' => 'Communicatie',   'acties' => ['lezen','bewerken']],
+        'seizoen'         => ['label' => 'Seizoenbeheer',          'groep' => 'Beheer',         'acties' => ['lezen','bewerken']],
+        'instellingen'    => ['label' => 'Instellingen',           'groep' => 'Beheer',         'acties' => ['lezen','bewerken']],
+        'beheerders'      => ['label' => 'Beheerders & rollen',    'groep' => 'Beheer',         'acties' => ['lezen','bewerken']],
+        'systeem'         => ['label' => 'Systeem, updates & logs','groep' => 'Beheer',         'acties' => ['lezen','bewerken']],
+    ];
+}
+
+/** De drie mogelijke acties, in vaste volgorde. */
+function rechten_acties(): array {
+    return ['lezen' => 'Lezen', 'bewerken' => 'Bewerken', 'verwijderen' => 'Verwijderen'];
+}
+
+/**
+ * Standaardrollen + hun rechten. Veilige defaults: begeleider mag weinig.
+ * Rang bepaalt de hiërarchie (hoger = meer). De 'admin'-rol krijgt altijd alles,
+ * ongeacht de matrix (zie mag()).
+ *
+ * Per rol: [module => [lezen,bewerken,verwijderen]] als bitjes.
+ */
+function rechten_standaard_rollen(): array {
+    // Helper-notatie: 'r'=lezen, 'w'=bewerken, 'd'=verwijderen
+    return [
+        'begeleider' => [
+            'naam' => 'Begeleider',
+            'authentik_groep' => 'Sol-Begeleider',
+            'rang' => 1,
+            'rechten' => [
+                // Begeleider: alleen wat nodig is op de selectiedag. GEEN persoonsgegevens.
+                'selectiedag'     => 'r',       // mag inchecken/meedraaien, niet bewerken
+                'dekking'         => 'r',
+            ],
+        ],
+        'bestuur' => [
+            'naam' => 'Bestuur',
+            'authentik_groep' => 'Bestuur',
+            'rang' => 2,
+            'rechten' => [
+                'sollicitanten'   => 'rwd',
+                'blk'             => 'rw',
+                'selectiedag'     => 'rw',
+                'ondertekeningen' => 'rw',
+                'beschikbaarheid' => 'rw',
+                'dekking'         => 'r',
+                'loonplanning'    => 'rw',
+                'mailing'         => 'rw',
+                'seizoen'         => 'rw',
+                'instellingen'    => 'rw',
+                // GEEN beheerders/systeem — dat blijft admin.
+            ],
+        ],
+        'admin' => [
+            'naam' => 'Admin',
+            'authentik_groep' => 'Sol-Admin',
+            'rang' => 3,
+            'rechten' => 'ALLES', // admin krijgt altijd alles
+        ],
+    ];
+}
+
+/** Auto-setup: maak de tabellen en seed de standaardrollen als ze nog niet bestaan. */
+function rechten_auto_setup(): void {
+    static $done = false; if ($done) return; $done = true;
+    try {
+        $db = db();
+        $db->exec("CREATE TABLE IF NOT EXISTS `rollen` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `sleutel` VARCHAR(40) NOT NULL UNIQUE,
+            `naam` VARCHAR(80) NOT NULL,
+            `authentik_groep` VARCHAR(120) DEFAULT NULL,
+            `rang` INT NOT NULL DEFAULT 1,
+            `systeemrol` TINYINT(1) NOT NULL DEFAULT 0,
+            `aangemaakt_op` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $db->exec("CREATE TABLE IF NOT EXISTS `rol_rechten` (
+            `rol_sleutel` VARCHAR(40) NOT NULL,
+            `module` VARCHAR(40) NOT NULL,
+            `lezen` TINYINT(1) NOT NULL DEFAULT 0,
+            `bewerken` TINYINT(1) NOT NULL DEFAULT 0,
+            `verwijderen` TINYINT(1) NOT NULL DEFAULT 0,
+            PRIMARY KEY (`rol_sleutel`, `module`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        // Seed alleen als er nog geen rollen zijn
+        $aantal = (int)$db->query("SELECT COUNT(*) FROM rollen")->fetchColumn();
+        if ($aantal === 0) {
+            foreach (rechten_standaard_rollen() as $sleutel => $rol) {
+                $db->prepare("INSERT INTO rollen (sleutel, naam, authentik_groep, rang, systeemrol) VALUES (?,?,?,?,1)")
+                   ->execute([$sleutel, $rol['naam'], $rol['authentik_groep'], $rol['rang']]);
+
+                if ($rol['rechten'] === 'ALLES') {
+                    foreach (rechten_modules() as $mod => $_m) {
+                        $db->prepare("INSERT INTO rol_rechten (rol_sleutel, module, lezen, bewerken, verwijderen) VALUES (?,?,1,1,1)")
+                           ->execute([$sleutel, $mod]);
+                    }
+                } else {
+                    foreach ($rol['rechten'] as $mod => $bits) {
+                        $l = str_contains($bits, 'r') ? 1 : 0;
+                        $w = str_contains($bits, 'w') ? 1 : 0;
+                        $d = str_contains($bits, 'd') ? 1 : 0;
+                        $db->prepare("INSERT INTO rol_rechten (rol_sleutel, module, lezen, bewerken, verwijderen) VALUES (?,?,?,?,?)")
+                           ->execute([$sleutel, $mod, $l, $w, $d]);
+                    }
+                }
+            }
+        }
+    } catch (\Exception $e) { error_log('rechten_auto_setup: ' . $e->getMessage()); }
+}
+
+/** Alle rollen ophalen (voor de matrix-UI en Authentik-mapping). */
+function rollen_alle(): array {
+    rechten_auto_setup();
+    try {
+        return db()->query("SELECT * FROM rollen ORDER BY rang DESC, naam")->fetchAll();
+    } catch (\Exception $e) { return []; }
+}
+
+/** De rechten van één rol als [module => ['lezen'=>bool,...]]. */
+function rol_rechten(string $rol_sleutel): array {
+    rechten_auto_setup();
+    $uit = [];
+    try {
+        $q = db()->prepare("SELECT * FROM rol_rechten WHERE rol_sleutel=?");
+        $q->execute([$rol_sleutel]);
+        foreach ($q->fetchAll() as $r) {
+            $uit[$r['module']] = [
+                'lezen'       => (bool)$r['lezen'],
+                'bewerken'    => (bool)$r['bewerken'],
+                'verwijderen' => (bool)$r['verwijderen'],
+            ];
+        }
+    } catch (\Exception $e) {}
+    return $uit;
+}
+
+/**
+ * De kernfunctie: mag de ingelogde beheerder deze actie op deze module?
+ * admin-rol mag altijd alles (kan zichzelf nooit buitensluiten).
+ */
+function mag(string $module, string $actie = 'lezen'): bool {
+    rechten_auto_setup();
+    $rol = $_SESSION['bhd_rol'] ?? '';
+    if ($rol === '') return false;
+    if ($rol === 'admin') return true; // admin: altijd volledige toegang
+
+    // Cache per request
+    static $cache = [];
+    if (!isset($cache[$rol])) $cache[$rol] = rol_rechten($rol);
+    $r = $cache[$rol][$module] ?? null;
+    if (!$r) return false;
+    return !empty($r[$actie]);
+}
+
+/** Breekt af met 403 als de beheerder het recht niet heeft. Voor bovenaan pagina's. */
+function vereis_recht(string $module, string $actie = 'lezen'): void {
+    if (function_exists('vereist_login')) vereist_login();
+    if (!mag($module, $actie)) {
+        http_response_code(403);
+        $terug = defined('APP_URL') ? APP_URL . '/admin/' : '/admin/';
+        die('<div style="font-family:sans-serif;max-width:520px;margin:80px auto;text-align:center">
+             <h2>Geen toegang</h2>
+             <p style="color:#555">Je hebt geen rechten voor dit onderdeel. Neem contact op met een beheerder als je denkt dat dit niet klopt.</p>
+             <p><a href="' . htmlspecialchars($terug) . '" style="color:#054d8a">← Terug naar het dashboard</a></p></div>');
+    }
+}
+
+/** Zet Authentik-groepen om naar een rol-sleutel op basis van de rollen-tabel. */
+function rol_uit_authentik_groepen(array $groups): ?string {
+    rechten_auto_setup();
+    try {
+        // Hoogste rang wint als iemand in meerdere groepen zit
+        $rollen = db()->query("SELECT sleutel, authentik_groep, rang FROM rollen WHERE authentik_groep IS NOT NULL AND authentik_groep<>'' ORDER BY rang DESC")->fetchAll();
+        foreach ($rollen as $rol) {
+            foreach ($groups as $g) {
+                if (strcasecmp(trim($rol['authentik_groep']), trim($g)) === 0) {
+                    return $rol['sleutel'];
+                }
+            }
+        }
+    } catch (\Exception $e) {}
+    return null;
+}
+
+}

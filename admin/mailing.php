@@ -3,7 +3,7 @@ require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/mail_render.php';
 $pagina_titel = 'Mailings';
 $actieve_nav  = 'mailing';
-vereist_rol('bestuur');
+vereis_recht('mailing', 'bewerken');
 
 $db      = db();
 $seizoen = actief_seizoen();

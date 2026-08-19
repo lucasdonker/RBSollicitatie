@@ -9,7 +9,6 @@ $fout = '';
 // ── Verwerken ────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
-    csrf_check();
     $actie = $_POST['actie'] ?? '';
 
     if ($actie === 'nieuw') {
@@ -90,9 +89,9 @@ require __DIR__.'/layout_top.php';
             <input type="hidden" name="actie" value="rol">
             <input type="hidden" name="bid" value="<?= $b['id'] ?>">
             <select name="rol" onchange="this.form.submit()" style="font-size:12px;padding:3px 6px;width:auto">
-              <option value="begeleider" <?= $b['rol']==='begeleider'?'selected':'' ?>>Begeleider</option>
-              <option value="bestuur"    <?= $b['rol']==='bestuur'?'selected':'' ?>>Bestuur</option>
-              <option value="admin"      <?= $b['rol']==='admin'?'selected':'' ?>>Admin</option>
+              <?php foreach (rollen_alle() as $_rol): ?>
+                <option value="<?= h($_rol['sleutel']) ?>" <?= $b['rol']===$_rol['sleutel']?'selected':'' ?>><?= h($_rol['naam']) ?></option>
+              <?php endforeach; ?>
             </select>
           </form>
         </td>
@@ -145,9 +144,9 @@ require __DIR__.'/layout_top.php';
         <div class="form-groep"><label>Tijdelijk wachtwoord</label><input type="password" name="wachtwoord" required minlength="8" placeholder="Minimaal 8 tekens"><div class="form-hulp">Geef dit door aan de persoon — zij kunnen het later wijzigen.</div></div>
         <div class="form-groep"><label>Rol</label>
           <select name="rol">
-            <option value="begeleider">Begeleider — alleen selectiedag beoordelen</option>
-            <option value="bestuur" selected>Bestuur — alles beheren</option>
-            <option value="admin">Admin — inclusief beheerders beheren</option>
+            <?php foreach (rollen_alle() as $_rol): ?>
+              <option value="<?= h($_rol['sleutel']) ?>" <?= $_rol['sleutel']==='bestuur'?'selected':'' ?>><?= h($_rol['naam']) ?></option>
+            <?php endforeach; ?>
           </select>
         </div>
         <button type="submit" class="btn btn-primary">Account aanmaken</button>

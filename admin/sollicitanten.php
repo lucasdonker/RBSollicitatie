@@ -11,7 +11,7 @@ $sid     = $seizoen ? (int)$seizoen['id'] : 0;
 // ── Bulk actie verwerken ──────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_actie'])) {
     csrf_check();
-    vereist_rol('bestuur');
+    vereis_recht('sollicitanten', 'lezen');
     $ids    = array_map('intval', $_POST['ids'] ?? []);
     $actie  = $_POST['bulk_actie'];
     if (!empty($ids)) {
@@ -78,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_actie'])) {
 
 // ── Individuele fase wisselen (GET fallback) ──────────────────
 if (isset($_GET['actie'], $_GET['id'], $_GET['naar'])) {
-    vereist_rol('bestuur');
+    vereis_recht('sollicitanten', 'lezen');
     $id   = (int)$_GET['id'];
     $naar = $_GET['naar'];
     $ok   = ['aangemeld','uitgenodigd_selectie','aangemeld_selectie','selectiedag_geweest','uitgenodigd_tw','tw_geweest','aangenomen','afgewezen'];

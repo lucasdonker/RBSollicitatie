@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../includes/functions.php';
 $pagina_titel = 'Seizoenbeheer';
 $actieve_nav  = 'seizoen';
-vereist_rol('bestuur');
+vereis_recht('seizoen', 'bewerken');
 
 $db  = db();
 $bhd = huidige_beheerder();

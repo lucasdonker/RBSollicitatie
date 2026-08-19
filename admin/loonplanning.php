@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../includes/functions.php';
 $pagina_titel = 'Loonplanning';
 $actieve_nav  = 'loonplanning';
-vereist_rol('bestuur');
+vereis_recht('loonplanning', 'lezen');
 
 $db = db();
 try { instellingen_laden(); } catch (Exception $e) {}

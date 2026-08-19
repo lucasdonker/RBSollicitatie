@@ -32,7 +32,7 @@ require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/mail_render.php';
 $pagina_titel = 'Mail templates';
 $actieve_nav  = 'mail_templates';
-vereist_rol('bestuur');
+vereis_recht('mailing', 'bewerken');
 $db = db();
 
 // Auto-setup: tabel + kolommen aanmaken als nodig

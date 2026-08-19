@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../includes/functions.php';
 $pagina_titel = 'Beschikbaarheid';
 $actieve_nav  = 'beschikbaarheid';
+vereis_recht('beschikbaarheid', 'lezen');
 
 $db      = db();
 $seizoen = actief_seizoen();

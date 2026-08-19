@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../includes/functions.php';
 $pagina_titel = 'Nabespreking';
 $actieve_nav  = 'selectiedag';
-vereist_rol('bestuur');
+vereis_recht('selectiedag', 'bewerken');
 
 $seizoen = actief_seizoen();
 $sid = $seizoen ? (int)$seizoen['id'] : 0;

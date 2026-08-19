@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/functions.php';
  if (function_exists('extra_tabellen_auto_setup')) extra_tabellen_auto_setup();
-vereist_rol('bestuur');
+vereis_recht('sollicitanten', 'lezen');
 header('Content-Type: application/json');
 
 $sol_id = (int)($_GET['sol_id'] ?? 0);

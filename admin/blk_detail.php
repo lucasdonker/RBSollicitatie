@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../includes/functions.php';
 $pagina_titel = 'BLK Formulier';
 $actieve_nav  = 'sollicitanten';
-vereist_login();
+vereis_recht('blk', 'lezen');
 
 $sol_id = (int)($_GET['id'] ?? 0);
 if (!$sol_id) redirect(APP_URL . '/admin/sollicitanten.php');
@@ -121,9 +121,8 @@ require __DIR__ . '/layout_top.php';
   <div class="card-body">
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">
       <?php
-      // AVG: begeleiders zien alleen woonplaats, niet volledig adres
-      $bhd_rol_d = huidige_beheerder()['rol'] ?? 'sol-begeleider';
-      $mag_adres = in_array($bhd_rol_d, ['admin','bestuur','sol-admin'], true);
+      // AVG: alleen wie de BLK-module mag lezen ziet het volledige adres; anders alleen woonplaats
+      $mag_adres = function_exists('mag') ? mag('blk', 'lezen') : true;
       $adres_volledig = trim(($blk['straat'] ?? '') . ' ' . ($blk['huisnummer'] ?? '') . ', ' . ($blk['postcode'] ?? '') . ' ' . ($blk['woonplaats'] ?? ''), ' ,');
       if (trim($adres_volledig, ' ,') === '') $adres_volledig = $blk['adres'] ?? '';
       $adres_toon = $mag_adres ? ($adres_volledig ?: '—') : ($blk['woonplaats'] ?? '—');

@@ -23,6 +23,7 @@ if (file_exists(__DIR__ . '/kennismakingspakket.php')) require_once __DIR__ . '/
 if (file_exists(__DIR__ . '/ondertekeningen_auto.php')) require_once __DIR__ . '/ondertekeningen_auto.php';
 if (file_exists(__DIR__ . '/ondertekening_mails.php')) require_once __DIR__ . '/ondertekening_mails.php';
 if (file_exists(__DIR__ . '/ondertekening_pdf.php')) require_once __DIR__ . '/ondertekening_pdf.php';
+if (file_exists(__DIR__ . '/rechten.php')) require_once __DIR__ . '/rechten.php';
 if (file_exists(__DIR__ . '/beschikbaarheid_dagen.php')) require_once __DIR__ . '/beschikbaarheid_dagen.php';
 if (file_exists(__DIR__ . '/beschikbaarheid2.php')) require_once __DIR__ . '/beschikbaarheid2.php';
 if (file_exists(__DIR__ . '/competenties.php')) require_once __DIR__ . '/competenties.php';
@@ -69,18 +70,33 @@ function vereist_login(): void {
     if (!is_ingelogd()) { header('Location: ' . APP_URL . '/admin/login.php?terug=' . urlencode($_SERVER['REQUEST_URI'] ?? '')); exit; }
 }
 
+/** Rang van een rol-sleutel; uit de database (nieuwe rollen), met terugval op de basis. */
+function rol_rang(string $sleutel): int {
+    static $cache = null;
+    if ($cache === null) {
+        $cache = ['begeleider' => 1, 'bestuur' => 2, 'admin' => 3]; // terugval
+        if (function_exists('rechten_auto_setup')) {
+            try {
+                rechten_auto_setup();
+                foreach (db()->query("SELECT sleutel, rang FROM rollen")->fetchAll() as $r) {
+                    $cache[$r['sleutel']] = (int)$r['rang'];
+                }
+            } catch (\Exception $e) {}
+        }
+    }
+    return $cache[$sleutel] ?? 0;
+}
+
 function vereist_rol(string $min): void {
     vereist_login();
-    $r = ['begeleider' => 1, 'bestuur' => 2, 'admin' => 3];
-    if (($r[$_SESSION['bhd_rol'] ?? 'begeleider'] ?? 0) < ($r[$min] ?? 99)) {
+    if (rol_rang($_SESSION['bhd_rol'] ?? 'begeleider') < rol_rang($min)) {
         http_response_code(403); die('<h2 style="font-family:sans-serif">Geen toegang</h2>');
     }
 }
 
 /** True als de ingelogde beheerder minstens de gevraagde rol heeft (zonder af te breken). */
 function huidige_gebruiker_rol_minstens(string $min): bool {
-    $r = ['begeleider' => 1, 'bestuur' => 2, 'admin' => 3];
-    return ($r[$_SESSION['bhd_rol'] ?? 'begeleider'] ?? 0) >= ($r[$min] ?? 99);
+    return rol_rang($_SESSION['bhd_rol'] ?? 'begeleider') >= rol_rang($min);
 }
 
 // ── Omgeving-detectie (test vs productie) ─────────────────────
@@ -368,13 +384,18 @@ function authentik_email_bestaat(string $email): array|false {
  * Returns: 'admin' | 'bestuur' | 'sol-admin' | 'sol-begeleider' | null (geen admin)
  */
 function authentik_groups_naar_rol(array $groups): ?string {
-    // Volgorde = prioriteit (hoogste eerst)
+    // Nieuw: gebruik de rollen-tabel (door de gebruiker beheerd via de rechtenmatrix).
+    if (function_exists('rol_uit_authentik_groepen')) {
+        $r = rol_uit_authentik_groepen($groups);
+        if ($r !== null) return $r;
+    }
+    // Terugval op de oorspronkelijke hardcoded mapping (voor als de tabel nog leeg is).
     $map = [
         'admin'           => 'admin',
         'bestuur'         => 'bestuur',
-        'sol-admin'       => 'sol-admin',
-        'sol-begeleider'  => 'sol-begeleider',
-        'sol_begeleider'  => 'sol-begeleider',
+        'sol-admin'       => 'admin',
+        'sol-begeleider'  => 'begeleider',
+        'sol_begeleider'  => 'begeleider',
     ];
     foreach ($groups as $g) {
         $g_low = strtolower($g);

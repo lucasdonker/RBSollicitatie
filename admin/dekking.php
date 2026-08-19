@@ -3,7 +3,7 @@
  * Admin — Dekking: kunnen we de posten bemannen met de beschikbare mensen?
  */
 require_once __DIR__ . '/../includes/functions.php';
-vereist_rol('bestuur');
+vereis_recht('dekking', 'lezen');
 
 $pagina_titel = 'Dekking';
 $actieve_nav  = 'dekking';

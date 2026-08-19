@@ -67,7 +67,7 @@ Schrijf een beknopt assessment in dit exacte format (geen inleiding, direct begi
 }
 $pagina_titel = 'Instellingen';
 $actieve_nav  = 'instellingen';
-vereist_rol('bestuur');
+vereis_recht('instellingen', 'lezen');
 
 $db = db();
 // Triggers auto-setup van alle tabellen
@@ -78,7 +78,7 @@ $tab = $_GET['tab'] ?? 'algemeen';
 // ── Opslaan ───────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
-    vereist_rol('bestuur');
+    vereis_recht('instellingen', 'lezen');
 
     $actie = $_POST['actie'] ?? '';
 

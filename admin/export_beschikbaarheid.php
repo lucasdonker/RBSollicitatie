@@ -5,7 +5,7 @@
  */
 require_once __DIR__ . '/../includes/functions.php';
 vereist_login();
-vereist_rol('bestuur');
+vereis_recht('beschikbaarheid', 'lezen');
 
 $seizoen = actief_seizoen();
 $sid     = $seizoen ? (int)$seizoen['id'] : 0;

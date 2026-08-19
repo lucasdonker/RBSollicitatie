@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/functions.php';
-vereist_rol('bestuur');
+vereis_recht('ondertekeningen', 'lezen');
 $db = db();
 
 // ── Export één ondertekening als printbaar HTML ───────────────

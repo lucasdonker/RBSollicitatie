@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/functions.php';
-vereist_rol('bestuur');
+vereis_recht('sollicitanten', 'verwijderen');
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -45,7 +45,7 @@ try {
             break;
 
         case 'verwijder_beoordeling':
-            vereist_rol('bestuur');
+            vereis_recht('sollicitanten', 'verwijderen');
             db()->prepare("DELETE FROM beoordelingen WHERE sollicitatie_id = ?")->execute([$sol_id]);
             echo json_encode(['ok' => true, 'msg' => 'Beoordeling verwijderd.']);
             break;

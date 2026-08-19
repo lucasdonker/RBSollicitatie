@@ -27,6 +27,7 @@ $_nav_items = [
 ];
 if ($_bhd['rol'] === 'admin') {
     $_nav_items[] = ['id'=>'beheerders','label'=>'Beheerders','url'=>'/admin/beheerders.php','svg'=>'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'];
+    $_nav_items[] = ['id'=>'rollen','label'=>'Rollen & rechten','url'=>'/admin/rollen.php','svg'=>'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>'];
     // Voeg systeem-link toe in instellingen submenu
     foreach ($_nav_items as &$_n) {
         if ($_n['id'] === 'instellingen') {
@@ -34,6 +35,48 @@ if ($_bhd['rol'] === 'admin') {
             $_n['sub'][] = ['id'=>'deploy', 'label'=>'Deploy & Versiebeheer', 'url'=>'/admin/deploy.php'];
             $_n['sub'][] = ['id'=>'foutenlog', 'label'=>'Foutenlog', 'url'=>'/admin/foutenlog.php'];
             break;
+        }
+    }
+    unset($_n);
+}
+
+// Rol-bewust menu: verberg items waar de rol geen leesrecht op heeft.
+// Elk item koppelt aan een module; admin ziet alles (mag() geeft admin altijd true).
+$_nav_modules = [
+    'dashboard'       => null,               // dashboard altijd zichtbaar voor ingelogden
+    'sollicitanten'   => 'sollicitanten',
+    'selectiedag'     => 'selectiedag',
+    'ondertekeningen' => 'ondertekeningen',
+    'beschikbaarheid' => 'beschikbaarheid',
+    'dekking'         => 'dekking',
+    'loonplanning'    => 'loonplanning',
+    'instellingen'    => 'instellingen',
+    'beheerders'      => 'beheerders',
+    'rollen'          => 'beheerders',
+];
+if (function_exists('mag')) {
+    $_nav_items = array_values(array_filter($_nav_items, function($item) use ($_nav_modules) {
+        $mod = $_nav_modules[$item['id']] ?? null;
+        if ($mod === null) return true;            // geen module-koppeling → altijd tonen
+        return mag($mod, 'lezen');
+    }));
+    // Submenu-items ook filteren
+    $_sub_modules = [
+        'seizoen'        => 'seizoen',
+        'mailing'        => 'mailing',
+        'mail_templates' => 'mailing',
+        'systeem'        => 'systeem',
+        'deploy'         => 'systeem',
+        'foutenlog'      => 'systeem',
+        'instellingen'   => 'instellingen',
+    ];
+    foreach ($_nav_items as &$_n) {
+        if (!empty($_n['sub'])) {
+            $_n['sub'] = array_values(array_filter($_n['sub'], function($s) use ($_sub_modules) {
+                $mod = $_sub_modules[$s['id']] ?? null;
+                if ($mod === null) return true;
+                return mag($mod, 'lezen');
+            }));
         }
     }
     unset($_n);
