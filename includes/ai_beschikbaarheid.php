@@ -121,6 +121,7 @@ STRIKTE REGELS:
 - Een regime is "vijf" (hele werkweek, 5 dagen) of "weekend" (alleen weekenddagen).
 - Weekenddagen: 5=vrijdag, 6=zaterdag, 7=zondag. Als iemand "weekenden" zegt zonder specificatie: [6,7].
 - BELANGRIJK voor afwezigheid (vakantie): geef EXACTE datums (van_datum en tot_datum, YYYY-MM-DD), NIET hele weken. Als iemand zegt "3 t/m 16 augustus op vakantie", gebruik dan precies die datums. Zo blijven halve weken behouden en is het controleerbaar.
+- LOSSE DAGEN: als iemand één losse dag niet kan (bijv. "behalve 12 augustus", "maar die woensdag de 6e niet", "op 20 juli heb ik een afspraak"), zet die dan in "losse_dagen" als één datum — NIET als afwezigheidsperiode. Gebruik soort "niet_beschikbaar" als iemand echt niet kan, en "voorkeur_vrij" als iemand die dag liever vrij wil maar het geen must is. Reken losse weekdagen om naar de concrete datum binnen het seizoen.
 
 ANTWOORD ALLEEN met JSON in dit exacte format:
 {
@@ -131,11 +132,14 @@ ANTWOORD ALLEEN met JSON in dit exacte format:
   "afwezig": [
     {"van_datum": "<YYYY-MM-DD>", "tot_datum": "<YYYY-MM-DD>", "label": "<korte reden, bijv. vakantie>"}
   ],
+  "losse_dagen": [
+    {"datum": "<YYYY-MM-DD>", "soort": "niet_beschikbaar"|"voorkeur_vrij", "reden": "<korte reden, optioneel>"}
+  ],
   "vraag": "<optionele vervolgvraag als iets onduidelijk is, anders leeg>",
   "samenvatting": "<één zin in gewone taal: zo heb ik het begrepen>"
 }
 
-Bij status "geweigerd": laat blokken en afwezig leeg, en leg in "samenvatting" kort uit waarom (bijv. "Ik kon geen beschikbaarheid herkennen").
+Bij status "geweigerd": laat blokken, afwezig en losse_dagen leeg, en leg in "samenvatting" kort uit waarom (bijv. "Ik kon geen beschikbaarheid herkennen").
 
 GEBRUIKERSTEKST:
 """
@@ -197,16 +201,26 @@ function ai_besch_valideer(array $data, array $geldige_weken, int $min_week, int
         $afwezig[] = ['van_datum' => $van_d, 'tot_datum' => $tot_d, 'label' => mb_substr(trim((string)($a['label'] ?? '')), 0, 60)];
     }
 
+    // Losse dagen valideren — concrete kalenderdatums die iemand niet kan / liever vrij wil.
+    $losse_dagen = [];
+    foreach ($data['losse_dagen'] ?? [] as $ld) {
+        if (!is_array($ld)) continue;
+        $d = ai_besch_datum_geldig($ld['datum'] ?? '');
+        if (!$d) continue;
+        $soort = in_array($ld['soort'] ?? '', ['niet_beschikbaar', 'voorkeur_vrij'], true) ? $ld['soort'] : 'niet_beschikbaar';
+        $losse_dagen[] = ['datum' => $d, 'soort' => $soort, 'reden' => mb_substr(trim((string)($ld['reden'] ?? '')), 0, 100)];
+    }
+
     $vraag = mb_substr(trim((string)($data['vraag'] ?? '')), 0, 300);
     $samenvatting = mb_substr(trim((string)($data['samenvatting'] ?? '')), 0, 300);
 
     // Niets bruikbaars + geen vraag → behandel als geweigerd
-    if (!$blokken && !$afwezig && !$vraag) {
+    if (!$blokken && !$afwezig && !$losse_dagen && !$vraag) {
         return ['status' => 'geweigerd', 'bericht' => $samenvatting ?: 'Ik kon geen beschikbaarheid herkennen. Probeer het iets concreter te beschrijven.'];
     }
 
     // Alleen een vraag, niets ingevuld
-    if (!$blokken && !$afwezig && $vraag) {
+    if (!$blokken && !$afwezig && !$losse_dagen && $vraag) {
         return ['status' => 'vraag', 'vraag' => $vraag, 'samenvatting' => $samenvatting];
     }
 
@@ -214,6 +228,7 @@ function ai_besch_valideer(array $data, array $geldige_weken, int $min_week, int
         'status'       => 'ok',
         'blokken'      => $blokken,
         'afwezig'      => $afwezig,
+        'losse_dagen'  => $losse_dagen,
         'vraag'        => $vraag,
         'samenvatting' => $samenvatting,
     ];

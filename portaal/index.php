@@ -1725,6 +1725,24 @@ function aiBeschVulIn(d) {
       });
     }
   }
+
+  // Losse dagen (concrete datums die iemand niet kan / liever vrij wil)
+  if ((d.losse_dagen || []).length) {
+    const losLijst = document.getElementById('b2LosseDagLijst');
+    if (losLijst) {
+      losLijst.innerHTML = '';
+      d.losse_dagen.forEach(ld => {
+        b2LosseDagToevoegen();
+        const rij = losLijst.lastElementChild;
+        if (ld.datum) rij.querySelector('[name="b2_dag_datum[]"]').value = ld.datum;
+        const soortSel = rij.querySelector('[name="b2_dag_soort[]"]');
+        if (soortSel && ld.soort) soortSel.value = ld.soort;
+        const redenInp = rij.querySelector('[name="b2_dag_reden[]"]');
+        if (redenInp && ld.reden) redenInp.value = ld.reden;
+      });
+    }
+  }
+
   b2Herbereken();
   // Scroll naar het formulier zodat de gebruiker het resultaat ziet
   document.getElementById('b2BlokLijst')?.scrollIntoView({behavior:'smooth', block:'center'});

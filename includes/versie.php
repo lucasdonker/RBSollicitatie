@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.48.0');
+define('APP_VERSIE', '2.48.1');
 
 function app_changelog(): array {
     return [
+        '2.48.1' => [
+            'datum'  => '2026-08-19',
+            'titel'  => 'AI-beschikbaarheid herkent nu ook losse dagen',
+            'punten' => [
+                'De AI-beschikbaarheidshulp herkent nu losse dagen: zeg "de hele zomer, behalve 12 augustus" en die dag wordt automatisch als losse vrije dag ingevuld',
+                'Onderscheid tussen "kan echt niet" en "liever vrij" wordt ook door de AI opgepikt',
+                'Een invoer met alleen een losse dag (zonder werkperiode) wordt correct verwerkt in plaats van geweigerd',
+            ],
+        ],
         '2.48.0' => [
             'datum'  => '2026-08-19',
             'titel'  => 'Losse vrije dagen — klaar voor de rooster-API',
