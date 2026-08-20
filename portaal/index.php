@@ -1824,6 +1824,9 @@ function b2LosseDagToevoegen() {
     '<button type="button" class="btn btn-outline btn-sm" onclick="this.parentElement.remove()" aria-label="Verwijderen" style="min-width:44px;min-height:38px">✕</button>';
   document.getElementById('b2LosseDagLijst').appendChild(div);
 }
+
+function b2VerzoekToevoegen() {
+  const div = document.createElement('div');
   div.className = 'b2-verzoek-rij';
   div.style.cssText = 'border:1px solid var(--rand-licht);border-radius:8px;padding:10px;margin-bottom:8px';
   div.innerHTML =

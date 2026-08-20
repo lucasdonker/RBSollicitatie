@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.49.0');
+define('APP_VERSIE', '2.49.1');
 
 function app_changelog(): array {
     return [
+        '2.49.1' => [
+            'datum'  => '2026-08-20',
+            'titel'  => 'Herstel: kapotte JavaScript in het portaal',
+            'punten' => [
+                'Bij het herontwerp van het beschikbaarheidsformulier was een JavaScript-functie beschadigd geraakt, waardoor het hele script in het portaal niet meer werkte',
+                'Hierdoor reageerde de knop "Invullen" bij het BLK-formulier niet, en werkte het inline ouder-formulier bij 18-minners niet',
+                'De beschadigde functie is hersteld; alle knoppen en formulieren in het portaal werken weer',
+            ],
+        ],
         '2.49.0' => [
             'datum'  => '2026-08-19',
             'titel'  => 'Beschikbaarheid-formulier vereenvoudigd',
