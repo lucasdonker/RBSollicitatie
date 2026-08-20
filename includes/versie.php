@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.48.1');
+define('APP_VERSIE', '2.49.0');
 
 function app_changelog(): array {
     return [
+        '2.49.0' => [
+            'datum'  => '2026-08-19',
+            'titel'  => 'Beschikbaarheid-formulier vereenvoudigd',
+            'punten' => [
+                'Het beschikbaarheidsformulier is opnieuw ingedeeld: één duidelijke hoofdvraag ("wanneer kun je werken?") en alle uitzonderingen samengebracht onder één inklapbaar blok',
+                'De AI-hulp staat nu bovenaan als vriendelijke snelle route ("Liever gewoon typen?"), blijft experimenteel en uitschakelbaar',
+                'De werkperiode staat standaard voorgevuld op het hele seizoen — wie het hele seizoen kan hoeft alleen te bevestigen',
+                'Uitzonderingen (vakantie, losse dagen, vaste vrije dag, minder dagen) zijn standaard dichtgeklapt; bij een terugkerende sollicitant klappen de al ingevulde onderdelen automatisch open',
+            ],
+        ],
         '2.48.1' => [
             'datum'  => '2026-08-19',
             'titel'  => 'AI-beschikbaarheid herkent nu ook losse dagen',

@@ -1193,36 +1193,53 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
           </details>
 
           <!-- Foutmelding-blok (WCAG: tekst, niet alleen kleur) -->
-          <div id="b2FoutMelding" role="alert" aria-live="assertive" style="display:none;margin-bottom:12px;padding:11px 14px;background:var(--rood-bg);border-left:3px solid var(--rood);border-radius:6px;font-size:13px;color:var(--rood)"></div>
+          <?php
+            // Detecteer per uitzondering of er al data is → dan het blok automatisch openklappen
+            // (nieuw formulier = alles dicht; terugkerend = toon wat al ingevuld is).
+            $losse_dagen   = function_exists('beschikbaarheid_dagen') ? beschikbaarheid_dagen($sol['id']) : [];
+            $vaste_sel     = $b2p['vaste_dagen_uit'] ?? [];
+            $heeft_afwezig = !empty($b2['afwezig']);
+            $heeft_losse   = !empty($losse_dagen);
+            $heeft_vaste   = !empty($vaste_sel);
+            $heeft_verzoek = false;
+            foreach ($b2['verzoeken'] as $vz) { if (($vz['status'] ?? '') === 'open' || ($vz['status'] ?? '') === 'goedgekeurd') { $heeft_verzoek = true; break; } }
+          ?>
 
           <?php if (function_exists('ai_besch_actief') && ai_besch_actief()): ?>
-          <!-- AI-hulp (experimenteel) -->
-          <div style="background:linear-gradient(135deg,rgba(5,77,138,.06),rgba(212,61,0,.05));border:1px solid var(--rand);border-radius:10px;padding:16px;margin-bottom:12px">
-            <div style="font-weight:600;font-size:13.5px;margin-bottom:4px">✨ Laat de AI je helpen <span style="font-size:11px;font-weight:400;color:var(--grijs)">experimenteel</span></div>
+          <!-- AI-hulp: de snelle route (experimenteel, uitschakelbaar via instellingen) -->
+          <div style="background:linear-gradient(135deg,rgba(5,77,138,.06),rgba(212,61,0,.05));border:1px solid var(--rand);border-radius:12px;padding:16px;margin-bottom:14px">
+            <div style="font-weight:600;font-size:14px;margin-bottom:4px;color:var(--navy)">✨ Liever gewoon typen? <span style="font-size:11px;font-weight:500;color:var(--grijs);background:var(--bg);padding:2px 8px;border-radius:10px;margin-left:4px">experimenteel</span></div>
             <p style="font-size:12.5px;color:var(--tekst-zacht);margin:0 0 10px">
-              Typ in gewone taal wanneer je kunt werken, dan vult de AI het formulier hieronder alvast in.
-              <strong>Controleer daarna zelf of het klopt.</strong> Bijvoorbeeld: "de hele zomer, in juni alleen weekenden, week 30 en 31 op vakantie".
+              Schrijf in je eigen woorden wanneer je kunt, dan vult de AI de velden hieronder alvast in. <strong>Jij controleert het daarna.</strong> Bijvoorbeeld: "de hele zomer, in juni alleen weekenden, 20 juli–3 augustus op vakantie".
             </p>
             <p style="font-size:11.5px;color:var(--grijs);margin:0 0 10px;display:flex;align-items:flex-start;gap:5px">
               <span aria-hidden="true">ℹ️</span>
-              <span>Je tekst wordt hiervoor verwerkt door een externe AI-dienst (Google Gemini). Vul hier geen gevoelige of medische informatie in — dat kan gewoon in het formulier zelf.</span>
+              <span>Je tekst wordt verwerkt door een externe AI-dienst (Google Gemini). Vul hier geen gevoelige of medische informatie in — dat kan gewoon in het formulier zelf.</span>
             </p>
             <textarea id="aiBeschTekst" rows="2" placeholder="Typ hier je beschikbaarheid…"
                       style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--rand);border-radius:8px;font-size:14px;font-family:inherit;resize:vertical"></textarea>
             <div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap">
               <button type="button" class="btn btn-primary btn-sm" id="aiBeschKnop" onclick="aiBeschVerwerk()">
-                <span class="ai-tekst">✨ Vul formulier in</span>
+                <span class="ai-tekst">✨ Vul het formulier voor mij in</span>
                 <span class="ai-spinner" style="display:none">⏳ Bezig…</span>
               </button>
               <span id="aiBeschStatus" style="font-size:12.5px;color:var(--tekst-zacht)"></span>
             </div>
             <div id="aiBeschVraag" style="display:none;margin-top:10px;padding:10px 12px;background:var(--geel-bg);border-left:3px solid var(--geel);border-radius:6px;font-size:13px"></div>
           </div>
+          <div style="text-align:center;font-size:12px;color:var(--grijs);margin:2px 0 14px;text-transform:uppercase;letter-spacing:.05em">— of vul het zelf in —</div>
           <?php endif; ?>
 
-          <!-- 1. Periode-blokken -->
-          <div style="background:var(--bg-card);border:1px solid var(--rand);border-radius:10px;padding:16px;margin-bottom:12px">
-            <div style="font-weight:600;font-size:13.5px;margin-bottom:10px">1 · In welke periode(s) kun je werken?</div>
+          <!-- Foutmelding-blok (WCAG: tekst, niet alleen kleur) -->
+          <div id="b2FoutMelding" role="alert" aria-live="assertive" style="display:none;margin-bottom:12px;padding:11px 14px;background:var(--rood-bg);border-left:3px solid var(--rood);border-radius:6px;font-size:13px;color:var(--rood)"></div>
+
+          <!-- STAP 1: Wanneer kun je werken? (verplicht, standaard hele seizoen) -->
+          <div style="background:var(--bg-card);border:1px solid var(--rand);border-radius:12px;padding:16px;margin-bottom:14px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+              <span style="flex-shrink:0;width:24px;height:24px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600">1</span>
+              <span style="font-weight:600;font-size:14.5px">Wanneer kun je werken?</span>
+              <span style="margin-left:auto;font-size:11px;font-weight:600;padding:3px 10px;border-radius:11px;background:var(--oranje-bg);color:var(--oranje)">nodig</span>
+            </div>
             <div id="b2BlokLijst">
               <?php foreach ($bestaande_blokken as $blok):
                 $is_weekend = ($blok['regime'] ?? '') === 'weekend';
@@ -1244,7 +1261,6 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
                   </select>
                   <button type="button" class="btn btn-outline btn-sm" onclick="b2BlokVerwijder(this)" title="Periode verwijderen" aria-label="Periode verwijderen" style="min-width:44px;min-height:38px">✕</button>
                 </div>
-                <!-- Weekend-dagen keuze (alleen bij regime weekend) -->
                 <div class="b2-weekend-dagen" style="<?= $is_weekend?'':'display:none;' ?>margin-top:8px;padding-top:8px;border-top:1px dashed var(--rand-licht)">
                   <span style="font-size:12px;color:var(--tekst-zacht);margin-right:6px">Welke dagen?</span>
                   <?php foreach ([5=>'vr',6=>'za',7=>'zo'] as $dn=>$dl): ?>
@@ -1258,127 +1274,148 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
               <?php endforeach; ?>
             </div>
             <button type="button" class="btn btn-outline btn-sm" onclick="b2BlokToevoegen()">+ Nog een periode</button>
-            <p style="font-size:11.5px;color:var(--grijs);margin-top:8px">Extra weekenden werken is juist fijn! Kies "alleen weekenden" bijvoorbeeld voor het begin van het seizoen als je dan doordeweeks nog niet kunt.</p>
+            <p style="font-size:11.5px;color:var(--grijs);margin-top:8px">💡 Dit staat al ingevuld op het hele seizoen. Klopt dat? Dan hoef je hier niets te doen. Extra weekenden werken mag ook — kies dan "alleen weekenden".</p>
           </div>
 
-          <!-- 2. Afwezigheid -->
-          <div style="background:var(--bg-card);border:1px solid var(--rand);border-radius:10px;padding:16px;margin-bottom:12px">
-            <div style="font-weight:600;font-size:13.5px;margin-bottom:4px">2 · Ben je tussendoor een periode weg?</div>
-            <p style="font-size:12px;color:var(--tekst-zacht);margin-bottom:10px">Bijvoorbeeld vakantie of kamp. Laat leeg als je er de hele periode bent.</p>
-            <div id="b2AfwezigLijst">
-              <?php foreach ($b2['afwezig'] as $a): ?>
-              <div class="b2-afwezig-rij" style="display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
-                <input type="date" name="b2_afw_van[]" value="<?= h($a['van_datum']) ?>" onchange="b2Herbereken()" aria-label="Afwezig van" style="flex:1;min-width:130px">
-                <span style="color:var(--grijs)">t/m</span>
-                <input type="date" name="b2_afw_tot[]" value="<?= h($a['tot_datum']) ?>" onchange="b2Herbereken()" aria-label="Afwezig tot en met" style="flex:1;min-width:130px">
-                <input type="text" name="b2_afw_label[]" value="<?= h($a['label'] ?? '') ?>" placeholder="bijv. vakantie" aria-label="Omschrijving" style="flex:1;min-width:100px">
-                <button type="button" class="btn btn-outline btn-sm" onclick="this.parentElement.remove();b2Herbereken()" aria-label="Verwijderen" style="min-width:44px;min-height:38px">✕</button>
-              </div>
-              <?php endforeach; ?>
+          <!-- STAP 2: Uitzonderingen (optioneel, inklapbaar) -->
+          <div style="background:var(--bg-card);border:1px solid var(--rand);border-radius:12px;padding:16px;margin-bottom:14px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+              <span style="flex-shrink:0;width:24px;height:24px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600">2</span>
+              <span style="font-weight:600;font-size:14.5px">Zijn er uitzonderingen?</span>
+              <span style="margin-left:auto;font-size:11px;font-weight:600;padding:3px 10px;border-radius:11px;background:var(--grijs-bg);color:var(--tekst-zacht)">optioneel</span>
             </div>
-            <button type="button" class="btn btn-outline btn-sm" onclick="b2AfwezigToevoegen()">+ Periode toevoegen</button>
+            <p style="font-size:12.5px;color:var(--tekst-zacht);margin:0 0 12px">Open alleen wat op jou van toepassing is. Geen uitzonderingen? Dan ben je klaar — sla onderaan op.</p>
+
+            <!-- Uitzondering: vakantie/afwezig -->
+            <details class="b2-uitz" <?= $heeft_afwezig?'open':'' ?> style="border:1px solid var(--rand);border-radius:10px;margin-bottom:8px;background:var(--bg)">
+              <summary style="padding:12px 14px;cursor:pointer;font-size:14px;list-style:none;display:flex;align-items:center;gap:10px">
+                <span aria-hidden="true">✈️</span> Ik ben een hele periode weg (vakantie)
+                <span class="b2-uitz-chev" style="margin-left:auto;color:var(--grijs)">›</span>
+              </summary>
+              <div style="padding:0 14px 14px">
+                <p style="font-size:12px;color:var(--tekst-zacht);margin:0 0 10px">Bijvoorbeeld vakantie of kamp. Voor één losse dag gebruik je het blok hieronder.</p>
+                <div id="b2AfwezigLijst">
+                  <?php foreach ($b2['afwezig'] as $a): ?>
+                  <div class="b2-afwezig-rij" style="display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
+                    <input type="date" name="b2_afw_van[]" value="<?= h($a['van_datum']) ?>" onchange="b2Herbereken()" aria-label="Afwezig van" style="flex:1;min-width:130px">
+                    <span style="color:var(--grijs)">t/m</span>
+                    <input type="date" name="b2_afw_tot[]" value="<?= h($a['tot_datum']) ?>" onchange="b2Herbereken()" aria-label="Afwezig tot en met" style="flex:1;min-width:130px">
+                    <input type="text" name="b2_afw_label[]" value="<?= h($a['label'] ?? '') ?>" placeholder="bijv. vakantie" aria-label="Omschrijving" style="flex:1;min-width:100px">
+                    <button type="button" class="btn btn-outline btn-sm" onclick="this.parentElement.remove();b2Herbereken()" aria-label="Verwijderen" style="min-width:44px;min-height:38px">✕</button>
+                  </div>
+                  <?php endforeach; ?>
+                </div>
+                <button type="button" class="btn btn-outline btn-sm" onclick="b2AfwezigToevoegen()">+ Periode toevoegen</button>
+              </div>
+            </details>
+
+            <!-- Uitzondering: losse dagen -->
+            <details class="b2-uitz" <?= $heeft_losse?'open':'' ?> style="border:1px solid var(--rand);border-radius:10px;margin-bottom:8px;background:var(--bg)">
+              <summary style="padding:12px 14px;cursor:pointer;font-size:14px;list-style:none;display:flex;align-items:center;gap:10px">
+                <span aria-hidden="true">📅</span> Losse dagen dat ik niet kan
+                <span class="b2-uitz-chev" style="margin-left:auto;color:var(--grijs)">›</span>
+              </summary>
+              <div style="padding:0 14px 14px">
+                <p style="font-size:12px;color:var(--tekst-zacht);margin:0 0 10px">Kun je een week wél werken, maar één losse dag niet (bijv. 12 augustus, of die ene woensdag)? Geef die dag hier op.</p>
+                <div id="b2LosseDagLijst">
+                  <?php foreach ($losse_dagen as $ld): ?>
+                  <div class="b2-losdag-rij" style="display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
+                    <input type="date" name="b2_dag_datum[]" value="<?= h($ld['datum']) ?>" aria-label="Datum" style="flex:1;min-width:140px">
+                    <select name="b2_dag_soort[]" aria-label="Soort" style="flex:1;min-width:130px">
+                      <option value="niet_beschikbaar" <?= ($ld['soort']??'')==='niet_beschikbaar'?'selected':'' ?>>Kan ik niet</option>
+                      <option value="voorkeur_vrij" <?= ($ld['soort']??'')==='voorkeur_vrij'?'selected':'' ?>>Liever vrij</option>
+                    </select>
+                    <input type="text" name="b2_dag_reden[]" value="<?= h($ld['reden'] ?? '') ?>" placeholder="reden (optioneel)" aria-label="Reden" style="flex:1;min-width:100px">
+                    <button type="button" class="btn btn-outline btn-sm" onclick="this.parentElement.remove()" aria-label="Verwijderen" style="min-width:44px;min-height:38px">✕</button>
+                  </div>
+                  <?php endforeach; ?>
+                </div>
+                <button type="button" class="btn btn-outline btn-sm" onclick="b2LosseDagToevoegen()">+ Dag toevoegen</button>
+              </div>
+            </details>
+
+            <!-- Uitzondering: vaste vrije dag -->
+            <details class="b2-uitz" <?= $heeft_vaste?'open':'' ?> style="border:1px solid var(--rand);border-radius:10px;margin-bottom:8px;background:var(--bg)">
+              <summary style="padding:12px 14px;cursor:pointer;font-size:14px;list-style:none;display:flex;align-items:center;gap:10px">
+                <span aria-hidden="true">🔁</span> Een vaste dag die ik elke week vrij wil
+                <span class="b2-uitz-chev" style="margin-left:auto;color:var(--grijs)">›</span>
+              </summary>
+              <div style="padding:0 14px 14px">
+                <p style="font-size:12px;color:var(--tekst-zacht);margin:0 0 10px">
+                  Heb je een terugkerende reden waardoor een vaste dag lastig is (school, sport, ander werk)? Geef het door als <strong>voorkeur</strong>.
+                </p>
+                <input type="checkbox" id="b2VasteAan" <?= $heeft_vaste?'checked':'' ?> onchange="b2VasteToggle()" style="display:none">
+                <div id="b2VasteBlok">
+                  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+                    <?php foreach ([1=>'ma',2=>'di',3=>'wo',4=>'do',5=>'vr',6=>'za',7=>'zo'] as $dn => $dl): ?>
+                    <label style="display:flex;align-items:center;gap:5px;padding:8px 14px;border:1px solid var(--rand);border-radius:6px;cursor:pointer;font-size:13px;min-height:40px">
+                      <input type="checkbox" name="b2_vaste_uit[]" value="<?= $dn ?>" <?= in_array($dn, $vaste_sel) ? 'checked' : '' ?>
+                             onchange="b2VasteDagCheck();b2Herbereken()"> <?= $dl ?>
+                    </label>
+                    <?php endforeach; ?>
+                  </div>
+                  <div style="padding:10px 14px;background:var(--blauw-bg);border-left:3px solid var(--blauw);border-radius:6px;font-size:12.5px;color:var(--tekst);margin-bottom:8px">
+                    ℹ️ <strong>Dit is een voorkeur, geen vaste afspraak.</strong> We nemen het mee, maar het betekent niet dat je die dag automatisch vrij krijgt — de planning maken we later samen. Kun je een <strong>weekenddag</strong> (vr/za/zo) écht niet? Dat zijn onze drukste dagen, dus licht dat goed toe.
+                  </div>
+                  <textarea name="b2_vaste_toelichting" id="b2VasteToelichting" rows="2" placeholder="Waarom zou je deze dag(en) willen vrijhouden?" aria-label="Toelichting vaste vrije dag" style="width:100%"><?= h($b2p['vaste_toelichting'] ?? '') ?></textarea>
+                </div>
+              </div>
+            </details>
+
+            <!-- Uitzondering: minder dagen (verzoek) -->
+            <details class="b2-uitz" <?= $heeft_verzoek?'open':'' ?> style="border:1px solid var(--rand);border-radius:10px;background:var(--bg)">
+              <summary style="padding:12px 14px;cursor:pointer;font-size:14px;list-style:none;display:flex;align-items:center;gap:10px">
+                <span aria-hidden="true">➖</span> In bepaalde weken minder dagen
+                <span class="b2-uitz-chev" style="margin-left:auto;color:var(--grijs)">›</span>
+              </summary>
+              <div style="padding:0 14px 14px">
+                <p style="font-size:12px;color:var(--tekst-zacht);margin:0 0 10px">
+                  Standaard gaan we uit van 5 dagen per week. Wil je in bepaalde weken minder? Geef het door als <strong>verzoek</strong> — het bestuur beoordeelt dit. Je kunt optioneel aangeven welke dagen je die week <strong>wél</strong> kunt.
+                </p>
+                <div id="b2VerzoekLijst">
+                  <?php foreach ($b2['verzoeken'] as $vz): if ($vz['status']!=='open' && $vz['status']!=='goedgekeurd') continue;
+                    $pool_sel = $vz['dagen_pool'] ?: []; ?>
+                  <div class="b2-verzoek-rij" style="border:1px solid var(--rand-licht);border-radius:8px;padding:10px;margin-bottom:8px">
+                    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+                      <span style="font-size:12px;color:var(--grijs)">van</span>
+                      <select name="b2_vz_van[]" aria-label="Verzoek van week" style="flex:1;min-width:105px">
+                        <?php foreach ($week_opties as $wn => $lbl): ?><option value="<?= $wn ?>" <?= (int)$vz['van_week']===$wn?'selected':'' ?>><?= h($lbl) ?></option><?php endforeach; ?>
+                      </select>
+                      <span style="font-size:12px;color:var(--grijs)">t/m</span>
+                      <select name="b2_vz_tot[]" aria-label="Verzoek tot week" style="flex:1;min-width:105px">
+                        <?php foreach ($week_opties as $wn => $lbl): ?><option value="<?= $wn ?>" <?= (int)$vz['tot_week']===$wn?'selected':'' ?>><?= h($lbl) ?></option><?php endforeach; ?>
+                      </select>
+                      <input type="number" name="b2_vz_dagen[]" value="<?= (int)$vz['dagen_aantal'] ?>" min="1" max="6" aria-label="Aantal dagen" style="width:60px" placeholder="dagen">
+                      <span style="font-size:12px;color:var(--grijs)">dagen</span>
+                      <button type="button" class="btn btn-outline btn-sm" onclick="this.closest('.b2-verzoek-rij').remove()" aria-label="Verwijderen" style="min-width:44px;min-height:38px">✕</button>
+                      <?php if ($vz['status']==='goedgekeurd'): ?><span style="font-size:11px;color:var(--groen)">✓ goedgekeurd</span><?php endif; ?>
+                    </div>
+                    <input type="text" name="b2_vz_toelichting[]" value="<?= h($vz['toelichting'] ?? '') ?>" placeholder="reden (bijv. school)" aria-label="Reden" style="width:100%;margin-top:6px">
+                    <div style="margin-top:8px">
+                      <span style="font-size:12px;color:var(--tekst-zacht);margin-right:6px">Welke dagen kun je die week wél? (optioneel)</span>
+                      <?php foreach ([1=>'ma',2=>'di',3=>'wo',4=>'do',5=>'vr',6=>'za',7=>'zo'] as $dn=>$dl): ?>
+                      <label style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border:1px solid var(--rand);border-radius:5px;cursor:pointer;font-size:12px;margin:2px 2px 0 0">
+                        <input type="checkbox" class="b2-vz-pooldag" value="<?= $dn ?>" <?= in_array($dn,$pool_sel)?'checked':'' ?>> <?= $dl ?>
+                      </label>
+                      <?php endforeach; ?>
+                      <input type="hidden" name="b2_vz_pool[]" value="<?= h(json_encode($pool_sel)) ?>">
+                    </div>
+                  </div>
+                  <?php endforeach; ?>
+                </div>
+                <button type="button" class="btn btn-outline btn-sm" onclick="b2VerzoekToevoegen()">+ Verzoek toevoegen</button>
+              </div>
+            </details>
           </div>
 
-          <!-- 2b. Losse dagen dat je niet kunt -->
-          <?php $losse_dagen = function_exists('beschikbaarheid_dagen') ? beschikbaarheid_dagen($sol['id']) : []; ?>
-          <div style="background:var(--bg-card);border:1px solid var(--rand);border-radius:10px;padding:16px;margin-bottom:12px">
-            <div style="font-weight:600;font-size:13.5px;margin-bottom:4px">Losse dagen dat je niet kunt</div>
-            <p style="font-size:12px;color:var(--tekst-zacht);margin-bottom:10px">
-              Kun je een week wel werken, maar één losse dag niet (bijv. een afspraak op 12 augustus, of die ene woensdag)? Geef die dag hier op. Voor hele periodes gebruik je het blok hierboven.
-            </p>
-            <div id="b2LosseDagLijst">
-              <?php foreach ($losse_dagen as $ld): ?>
-              <div class="b2-losdag-rij" style="display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
-                <input type="date" name="b2_dag_datum[]" value="<?= h($ld['datum']) ?>" aria-label="Datum" style="flex:1;min-width:140px">
-                <select name="b2_dag_soort[]" aria-label="Soort" style="flex:1;min-width:130px">
-                  <option value="niet_beschikbaar" <?= ($ld['soort']??'')==='niet_beschikbaar'?'selected':'' ?>>Kan ik niet</option>
-                  <option value="voorkeur_vrij" <?= ($ld['soort']??'')==='voorkeur_vrij'?'selected':'' ?>>Liever vrij</option>
-                </select>
-                <input type="text" name="b2_dag_reden[]" value="<?= h($ld['reden'] ?? '') ?>" placeholder="reden (optioneel)" aria-label="Reden" style="flex:1;min-width:100px">
-                <button type="button" class="btn btn-outline btn-sm" onclick="this.parentElement.remove()" aria-label="Verwijderen" style="min-width:44px;min-height:38px">✕</button>
-              </div>
-              <?php endforeach; ?>
-            </div>
-            <button type="button" class="btn btn-outline btn-sm" onclick="b2LosseDagToevoegen()">+ Dag toevoegen</button>
-          </div>
-
-          <!-- 3. Vaste vrije dag → VOORKEUR (punt 3) -->
-          <div style="background:var(--bg-card);border:1px solid var(--rand);border-radius:10px;padding:16px;margin-bottom:12px">
-            <div style="font-weight:600;font-size:13.5px;margin-bottom:4px">3 · Zou je een vaste dag willen vrijhouden?</div>
-            <p style="font-size:12px;color:var(--tekst-zacht);margin-bottom:10px">
-              Heb je een terugkerende reden waardoor een vaste dag lastig is (school, sport, ander werk)? Geef het door als <strong>voorkeur</strong>. Standaard: liever niet nodig.
-            </p>
-            <?php $vaste_sel = $b2p['vaste_dagen_uit'] ?? []; $heeft_vaste = !empty($vaste_sel); ?>
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;margin-bottom:10px">
-              <input type="checkbox" id="b2VasteAan" <?= $heeft_vaste?'checked':'' ?> onchange="b2VasteToggle()" style="width:18px;height:18px">
-              Ja, ik heb een vaste dag die ik graag zou willen vrijhouden
-            </label>
-            <div id="b2VasteBlok" style="<?= $heeft_vaste?'':'display:none;' ?>">
-              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
-                <?php foreach ([1=>'ma',2=>'di',3=>'wo',4=>'do',5=>'vr',6=>'za',7=>'zo'] as $dn => $dl): ?>
-                <label style="display:flex;align-items:center;gap:5px;padding:8px 14px;border:1px solid var(--rand);border-radius:6px;cursor:pointer;font-size:13px;min-height:40px">
-                  <input type="checkbox" name="b2_vaste_uit[]" value="<?= $dn ?>" <?= in_array($dn, $vaste_sel) ? 'checked' : '' ?>
-                         onchange="b2VasteDagCheck();b2Herbereken()"> <?= $dl ?>
-                </label>
-                <?php endforeach; ?>
-              </div>
-              <div style="padding:10px 14px;background:var(--blauw-bg);border-left:3px solid var(--blauw);border-radius:6px;font-size:12.5px;color:var(--tekst);margin-bottom:8px">
-                ℹ️ <strong>Dit is een voorkeur, geen vaste afspraak.</strong> We nemen het mee, maar het betekent niet dat je die dag automatisch vrij krijgt — de planning maken we later samen. Kun je een <strong>weekenddag</strong> (vr/za/zo) écht niet? Dat zijn onze drukste dagen, dus licht dat goed toe.
-              </div>
-              <textarea name="b2_vaste_toelichting" id="b2VasteToelichting" rows="2" placeholder="Waarom zou je deze dag(en) willen vrijhouden?" aria-label="Toelichting vaste vrije dag" style="width:100%"><?= h($b2p['vaste_toelichting'] ?? '') ?></textarea>
-            </div>
-          </div>
-
-          <!-- 4. Live preview -->
-          <div style="background:var(--grijs-bg);border:1px solid var(--rand);border-radius:10px;padding:16px;margin-bottom:12px">
+          <!-- Overzicht: zo begrijpen wij het -->
+          <div style="background:var(--groen-bg,var(--grijs-bg));border:1px solid var(--rand);border-radius:12px;padding:16px;margin-bottom:14px">
             <div style="font-weight:600;font-size:13.5px;margin-bottom:8px">📋 Zo begrijpen wij het <span id="b2WekenTeller" style="font-weight:400;color:var(--tekst-zacht)"></span></div>
             <div id="b2Preview" aria-live="polite" style="font-size:13px;line-height:1.7;color:var(--tekst)">
               <span style="color:var(--grijs);font-style:italic">Vul je periode in…</span>
             </div>
             <div id="b2OverlapWaarschuwing" style="display:none;margin-top:10px;padding:9px 12px;background:var(--amber-bg);border-left:3px solid var(--amber);border-radius:6px;font-size:12.5px;color:var(--amber)"></div>
           </div>
-
-          <!-- 5. Afwijkend aantal dagen (weggestopt) -->
-          <details style="margin-bottom:12px;border:1px solid var(--rand);border-radius:10px;background:var(--bg-card)">
-            <summary style="padding:12px 16px;cursor:pointer;font-size:13px;color:var(--tekst-zacht)">Wil je in bepaalde weken minder dagen werken? (verzoek)</summary>
-            <div style="padding:0 16px 16px">
-              <p style="font-size:12px;color:var(--tekst-zacht);margin-bottom:10px">
-                Standaard gaan we uit van 5 dagen per week. Wil je in bepaalde weken minder? Geef het hier door als <strong>verzoek</strong> — het bestuur beoordeelt dit. Je kunt optioneel aangeven welke dagen je die week <strong>wél</strong> kunt; wij kiezen daar dan het afgesproken aantal uit.
-              </p>
-              <div id="b2VerzoekLijst">
-                <?php foreach ($b2['verzoeken'] as $vz): if ($vz['status']!=='open' && $vz['status']!=='goedgekeurd') continue;
-                  $pool_sel = $vz['dagen_pool'] ?: []; ?>
-                <div class="b2-verzoek-rij" style="border:1px solid var(--rand-licht);border-radius:8px;padding:10px;margin-bottom:8px">
-                  <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-                    <span style="font-size:12px;color:var(--grijs)">van</span>
-                    <select name="b2_vz_van[]" aria-label="Verzoek van week" style="flex:1;min-width:105px">
-                      <?php foreach ($week_opties as $wn => $lbl): ?><option value="<?= $wn ?>" <?= (int)$vz['van_week']===$wn?'selected':'' ?>><?= h($lbl) ?></option><?php endforeach; ?>
-                    </select>
-                    <span style="font-size:12px;color:var(--grijs)">t/m</span>
-                    <select name="b2_vz_tot[]" aria-label="Verzoek tot week" style="flex:1;min-width:105px">
-                      <?php foreach ($week_opties as $wn => $lbl): ?><option value="<?= $wn ?>" <?= (int)$vz['tot_week']===$wn?'selected':'' ?>><?= h($lbl) ?></option><?php endforeach; ?>
-                    </select>
-                    <input type="number" name="b2_vz_dagen[]" value="<?= (int)$vz['dagen_aantal'] ?>" min="1" max="6" aria-label="Aantal dagen" style="width:60px" placeholder="dagen">
-                    <span style="font-size:12px;color:var(--grijs)">dagen</span>
-                    <button type="button" class="btn btn-outline btn-sm" onclick="this.closest('.b2-verzoek-rij').remove()" aria-label="Verwijderen" style="min-width:44px;min-height:38px">✕</button>
-                    <?php if ($vz['status']==='goedgekeurd'): ?><span style="font-size:11px;color:var(--groen)">✓ goedgekeurd</span><?php endif; ?>
-                  </div>
-                  <input type="text" name="b2_vz_toelichting[]" value="<?= h($vz['toelichting'] ?? '') ?>" placeholder="reden (bijv. school)" aria-label="Reden" style="width:100%;margin-top:6px">
-                  <div style="margin-top:8px">
-                    <span style="font-size:12px;color:var(--tekst-zacht);margin-right:6px">Welke dagen kun je die week wél? (optioneel)</span>
-                    <?php foreach ([1=>'ma',2=>'di',3=>'wo',4=>'do',5=>'vr',6=>'za',7=>'zo'] as $dn=>$dl): ?>
-                    <label style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border:1px solid var(--rand);border-radius:5px;cursor:pointer;font-size:12px;margin:2px 2px 0 0">
-                      <input type="checkbox" class="b2-vz-pooldag" value="<?= $dn ?>" <?= in_array($dn,$pool_sel)?'checked':'' ?>> <?= $dl ?>
-                    </label>
-                    <?php endforeach; ?>
-                    <input type="hidden" name="b2_vz_pool[]" value="<?= h(json_encode($pool_sel)) ?>">
-                  </div>
-                </div>
-                <?php endforeach; ?>
-              </div>
-              <button type="button" class="btn btn-outline btn-sm" onclick="b2VerzoekToevoegen()">+ Verzoek toevoegen</button>
-            </div>
-          </details>
 
           <!-- 6. Voorlopig / definitief -->
           <div style="background:var(--oranje-bg);border:1px solid var(--oranje);border-radius:10px;padding:14px 16px;margin-bottom:12px">
@@ -1811,14 +1848,12 @@ function b2LosseDagToevoegen() {
 }
 
 function b2VasteToggle() {
-  const aan = document.getElementById('b2VasteAan').checked;
-  document.getElementById('b2VasteBlok').style.display = aan ? '' : 'none';
-  if (!aan) {
-    // Uitzetten wist de keuzes
-    document.querySelectorAll('[name="b2_vaste_uit[]"]:checked').forEach(c => c.checked = false);
-    const t = document.getElementById('b2VasteToelichting'); if (t) t.value = '';
-  }
-  b2Herbereken();
+  // Het vaste-dag-blok zit nu in een uitklapbare <details>; die regelt zichtbaarheid.
+  // Deze functie houdt alleen de checkbox-status in sync (voor bestaande aanroepen).
+  const cb = document.getElementById('b2VasteAan');
+  const blok = document.getElementById('b2VasteBlok');
+  if (blok) blok.style.display = '';
+  // Als iemand alle dagen uitvinkt, hoeft er niets gewist te worden — leeg = geen voorkeur.
 }
 
 function b2VasteDagCheck() { /* voorkeur — geen harde eis meer, preview verzorgt de rest */ }
