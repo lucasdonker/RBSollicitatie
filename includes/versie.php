@@ -3,10 +3,21 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.49.1');
+define('APP_VERSIE', '2.50.0');
 
 function app_changelog(): array {
     return [
+        '2.50.0' => [
+            'datum'  => '2026-08-20',
+            'titel'  => 'AI vollediger, betere preview, dag-export en leeftijdsfix',
+            'punten' => [
+                'Leeftijdsfix: de 18-grens werkt nu weer exact — 16- en 17-jarigen moeten de oudergegevens invullen, 18-plussers niet (de oude berekening rondde soms een jaar verkeerd af)',
+                'De AI-beschikbaarheidshulp vult nu ook een vaste vrije dag (met reden) en verzoeken om minder dagen in',
+                'Als de AI uitzonderingen invult, klappen die blokken meteen open in het formulier',
+                'De "zo begrijpen wij het"-samenvatting toont nu ook losse dagen en de verzoeken om minder dagen, en werkt live bij bij wijzigingen',
+                'Nieuw in het beheer: per kandidaat een dag-voor-dag export van de beschikbaarheid over het hele seizoen — als leesbare tabel én als JSON, precies zoals het aan de rooster-API zou worden doorgegeven',
+            ],
+        ],
         '2.49.1' => [
             'datum'  => '2026-08-20',
             'titel'  => 'Herstel: kapotte JavaScript in het portaal',

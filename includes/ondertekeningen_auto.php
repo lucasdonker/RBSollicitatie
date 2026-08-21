@@ -29,8 +29,13 @@ function personen_ouder_auto_setup(): void {
 
 function sol_is_minderjarig(array $sol): bool {
     if (empty($sol['geboortedatum'])) return false;
-    $leeftijd = (int)floor((time() - strtotime($sol['geboortedatum'])) / 31557600);
-    return $leeftijd < 18;
+    if (function_exists('leeftijd_uit_datum')) {
+        $leeftijd = leeftijd_uit_datum($sol['geboortedatum']);
+        return $leeftijd !== null && $leeftijd < 18;
+    }
+    try {
+        return (new DateTime($sol['geboortedatum']))->diff(new DateTime())->y < 18;
+    } catch (Exception $e) { return false; }
 }
 
 function ondertekeningen_klaarzetten_sd(int $sol_id): array {

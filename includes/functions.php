@@ -591,9 +591,13 @@ function consent_auto_setup(): void {
 if (!function_exists('leeftijd_uit_datum')) {
 function leeftijd_uit_datum(?string $geboortedatum): ?int {
     if (empty($geboortedatum)) return null;
-    $ts = strtotime($geboortedatum);
-    if ($ts === false) return null;
-    return (int)floor((time() - $ts) / 31557600); // 31557600 = 365.25 dagen
+    try {
+        // Exacte leeftijd via echte kalenderdatums — de 365.25-benadering rekent
+        // sommige leeftijden een jaar te hoog door schrikkeljaar-afronding.
+        return (new DateTime($geboortedatum))->diff(new DateTime())->y;
+    } catch (Exception $e) {
+        return null;
+    }
 }
 }
 

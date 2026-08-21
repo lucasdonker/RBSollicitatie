@@ -234,7 +234,8 @@ $ai_analyse = $blk ? ($blk['ai_analyse'] ?? null) : null;
   <!-- Ondertekeningen (gezondheidsverklaring + intake) -->
   <?php
     $geb = $sol['geboortedatum'] ?? null;
-    $leef = $geb ? (int)((strtotime('now') - strtotime($geb)) / 31557600) : null;
+    $leef = function_exists('leeftijd_uit_datum') ? leeftijd_uit_datum($geb)
+          : ($geb ? (new DateTime($geb))->diff(new DateTime())->y : null);
     $is_minderjarig = ($leef !== null && $leef < 18);
   ?>
   <div class="paneel-sectie">
@@ -422,6 +423,13 @@ $ai_analyse = $blk ? ($blk['ai_analyse'] ?? null) : null;
         <?php if (!empty($b2data['profiel']['opmerking'])): ?>
           💬 <span style="color:var(--tekst-zacht)"><?= h($b2data['profiel']['opmerking']) ?></span>
         <?php endif; ?>
+
+        <div style="margin-top:10px">
+          <a href="<?= APP_URL ?>/admin/export_dagbeschikbaarheid.php?id=<?= (int)$id ?>" target="_blank"
+             class="btn btn-outline btn-sm" style="font-size:11px">
+            📆 Beschikbaarheid per dag bekijken (API-check)
+          </a>
+        </div>
       </div>
 
       <?php

@@ -863,7 +863,8 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
   $toon_ouder_form = false;
   if (in_array($sol['fase'], ['uitgenodigd_selectie','aangemeld_selectie'])) {
       $geb = $sol['geboortedatum'] ?? null;
-      $lft = $geb ? (int)floor((time() - strtotime($geb)) / 31557600) : null;
+      $lft = function_exists('leeftijd_uit_datum') ? leeftijd_uit_datum($geb)
+           : ($geb ? (new DateTime($geb))->diff(new DateTime())->y : null);
       if ($lft !== null && $lft < 18) {
           $ouder_bekend = false;
           $ouder_gegevens = null;
@@ -1780,9 +1781,60 @@ function aiBeschVulIn(d) {
     }
   }
 
+  // Vaste vrije dag(en) — weekdagnummers die elke week vrij zijn
+  if ((d.vaste_vrije_dagen || []).length) {
+    // Vink de juiste weekdagen aan
+    document.querySelectorAll('[name="b2_vaste_uit[]"]').forEach(cb => {
+      cb.checked = d.vaste_vrije_dagen.map(String).includes(cb.value);
+    });
+    const toel = document.getElementById('b2VasteToelichting');
+    if (toel && d.vaste_reden) toel.value = d.vaste_reden;
+    const cbAan = document.getElementById('b2VasteAan');
+    if (cbAan) cbAan.checked = true;
+    if (typeof b2VasteToggle === 'function') b2VasteToggle();
+  }
+
+  // Verzoeken — minder dagen in bepaalde weken
+  if ((d.verzoeken || []).length) {
+    const vzLijst = document.getElementById('b2VerzoekLijst');
+    if (vzLijst) {
+      vzLijst.innerHTML = '';
+      d.verzoeken.forEach(vz => {
+        b2VerzoekToevoegen();
+        const rij = vzLijst.lastElementChild;
+        if (vz.van_week) { const s = rij.querySelector('[name="b2_vz_van[]"]'); if (s) s.value = vz.van_week; }
+        if (vz.tot_week) { const s = rij.querySelector('[name="b2_vz_tot[]"]'); if (s) s.value = vz.tot_week; }
+        if (vz.dagen_aantal) { const n = rij.querySelector('[name="b2_vz_dagen[]"]'); if (n) n.value = vz.dagen_aantal; }
+        const toel = rij.querySelector('[name="b2_vz_toelichting[]"]');
+        if (toel && vz.toelichting) toel.value = vz.toelichting;
+        // Pool-dagen aanvinken
+        if ((vz.pool || []).length) {
+          rij.querySelectorAll('.b2-vz-pooldag').forEach(cb => {
+            cb.checked = vz.pool.map(String).includes(cb.value);
+          });
+        }
+      });
+    }
+  }
+
+  // Uitzonderingen die de AI invulde meteen uitklappen, zodat de gebruiker ze ziet
+  b2OpenDetailsMet('b2AfwezigLijst',   (d.afwezig || []).length);
+  b2OpenDetailsMet('b2LosseDagLijst',  (d.losse_dagen || []).length);
+  b2OpenDetailsMet('b2VasteBlok',      (d.vaste_vrije_dagen || []).length);
+  b2OpenDetailsMet('b2VerzoekLijst',   (d.verzoeken || []).length);
+
   b2Herbereken();
   // Scroll naar het formulier zodat de gebruiker het resultaat ziet
   document.getElementById('b2BlokLijst')?.scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+// Klap het <details>-blok open dat een bepaald element bevat (bij AI-invulling)
+function b2OpenDetailsMet(elementId, conditie) {
+  if (!conditie) return;
+  const el = document.getElementById(elementId);
+  if (!el) return;
+  const details = el.closest('details.b2-uitz');
+  if (details) details.open = true;
 }
 
 // Weeknummer → datum (op basis van de week-opties die al in de select staan)
@@ -1925,6 +1977,38 @@ function b2Herbereken() {
     html += '<div style="margin-top:6px">• Voorkeur vrij: <strong>' + vasteUit.map(d => B2_DAGNL[d]).join(', ') + '</strong> <span style="color:var(--grijs)">(planner beslist)</span>.</div>';
   }
 
+  // Losse dagen dat iemand niet kan / liever vrij wil
+  const losRijen = Array.from(document.querySelectorAll('#b2LosseDagLijst .b2-losdag-rij'));
+  const losStukken = [];
+  losRijen.forEach(rij => {
+    const datum = rij.querySelector('[name="b2_dag_datum[]"]')?.value;
+    if (!datum) return;
+    const soort = rij.querySelector('[name="b2_dag_soort[]"]')?.value;
+    const reden = rij.querySelector('[name="b2_dag_reden[]"]')?.value;
+    let stuk = b2DatumNL(datum);
+    if (soort === 'voorkeur_vrij') stuk += ' (liever vrij)';
+    if (reden) stuk += ' — ' + reden;
+    losStukken.push(stuk);
+  });
+  if (losStukken.length) {
+    html += '<div style="margin-top:6px">• Losse dagen niet beschikbaar: <strong>' + losStukken.join(', ') + '</strong>.</div>';
+  }
+
+  // Verzoeken om minder dagen in bepaalde weken
+  const vzRijen = Array.from(document.querySelectorAll('#b2VerzoekLijst .b2-verzoek-rij'));
+  const vzStukken = [];
+  vzRijen.forEach(rij => {
+    const van = rij.querySelector('[name="b2_vz_van[]"]')?.value;
+    const tot = rij.querySelector('[name="b2_vz_tot[]"]')?.value;
+    const dagen = rij.querySelector('[name="b2_vz_dagen[]"]')?.value;
+    if (!van || !tot || !dagen) return;
+    let stuk = (B2_WEEKLABEL[van]||('W'+van)) + ' t/m ' + (B2_WEEKLABEL[tot]||('W'+tot)) + ': max ' + dagen + ' ' + (dagen==1?'dag':'dagen');
+    vzStukken.push(stuk);
+  });
+  if (vzStukken.length) {
+    html += '<div style="margin-top:6px">• Verzoek minder dagen: <strong>' + vzStukken.join('; ') + '</strong> <span style="color:var(--grijs)">(bestuur beoordeelt)</span>.</div>';
+  }
+
   const n = totaalWeken.size;
   if (teller) teller.textContent = '— ' + n + (n === 1 ? ' week' : ' weken');
   box.innerHTML = html || '<span style="color:var(--grijs)">Geen periode ingevuld.</span>';
@@ -1982,6 +2066,15 @@ function b2Valideer() {
 // Init
 document.querySelectorAll('#b2BlokLijst .b2-blok-rij [name="b2_blok_regime[]"]').forEach(s => b2RegimeCheck(s));
 b2Herbereken();
+
+// Live preview bijwerken bij wijzigingen in losse dagen en verzoeken
+['b2LosseDagLijst', 'b2VerzoekLijst'].forEach(id => {
+  const lijst = document.getElementById(id);
+  if (lijst) {
+    lijst.addEventListener('input', b2Herbereken);
+    lijst.addEventListener('change', b2Herbereken);
+  }
+});
 
 /* ── Autosave concept (punt 14): tekstvelden tussentijds bewaren ── */
 (function() {
