@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.50.0');
+define('APP_VERSIE', '2.50.1');
 
 function app_changelog(): array {
     return [
+        '2.50.1' => [
+            'datum'  => '2026-08-20',
+            'titel'  => 'Herstel: seizoensinstellingen die leeg terugkwamen',
+            'punten' => [
+                'De werkperiode-datums en enkele andere seizoensvelden kwamen soms leeg terug na opslaan, doordat de bijbehorende database-kolommen ontbraken',
+                'De "begintijd programma TW" werd helemaal niet opgeslagen (ontbrak in de opslag) — nu opgelost',
+                'Er is nu een robuuste automatische migratie die alle benodigde seizoen-kolommen aanmaakt zodra het seizoenscherm wordt geopend',
+            ],
+        ],
         '2.50.0' => [
             'datum'  => '2026-08-20',
             'titel'  => 'AI vollediger, betere preview, dag-export en leeftijdsfix',

@@ -7,13 +7,35 @@ vereis_recht('seizoen', 'bewerken');
 $db  = db();
 $bhd = huidige_beheerder();
 
-// Auto-migratie: voeg werkperiode kolommen toe als ze ontbreken
+// Auto-migratie: zorg dat alle seizoen-kolommen bestaan (robuust, ook op oudere MariaDB
+// waar ADD COLUMN IF NOT EXISTS niet altijd betrouwbaar is). We checken per kolom.
+$seizoen_kolommen = [
+    'selectiedag_starttijd'    => 'TIME DEFAULT NULL',
+    'selectiedag_verzameltijd' => 'TIME DEFAULT NULL',
+    'datum_tw_start'           => 'DATE DEFAULT NULL',
+    'datum_tw_eind'            => 'DATE DEFAULT NULL',
+    'locatie_tw'               => 'VARCHAR(255) DEFAULT NULL',
+    'tw_verzameltijd'          => 'TIME DEFAULT NULL',
+    'tw_begintijd'             => 'TIME DEFAULT NULL',
+    'datum_werk_start'         => 'DATE DEFAULT NULL',
+    'datum_werk_eind'          => 'DATE DEFAULT NULL',
+    'hoofdseizoen_start_week'  => 'INT DEFAULT NULL',
+    'hoofdseizoen_eind_week'   => 'INT DEFAULT NULL',
+];
 try {
-    $db->exec("ALTER TABLE `seizoenen`
-        ADD COLUMN IF NOT EXISTS `datum_werk_start` DATE DEFAULT NULL AFTER `locatie_tw`,
-        ADD COLUMN IF NOT EXISTS `datum_werk_eind`  DATE DEFAULT NULL AFTER `datum_werk_start`
-    ");
-} catch (Exception $e) {}
+    // Bestaande kolommen ophalen
+    $bestaand = [];
+    foreach ($db->query("SHOW COLUMNS FROM seizoenen")->fetchAll() as $col) {
+        $bestaand[$col['Field']] = true;
+    }
+    foreach ($seizoen_kolommen as $kolom => $definitie) {
+        if (!isset($bestaand[$kolom])) {
+            try {
+                $db->exec("ALTER TABLE `seizoenen` ADD COLUMN `$kolom` $definitie");
+            } catch (Exception $e) { error_log("seizoen-migratie kolom $kolom: " . $e->getMessage()); }
+        }
+    }
+} catch (Exception $e) { error_log('seizoen-migratie: ' . $e->getMessage()); }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
@@ -33,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 $db->prepare("UPDATE seizoenen SET naam=?, datum_selectiedag=?, locatie_selectiedag=?,
                     selectiedag_verzameltijd=?, selectiedag_starttijd=?,
-                    datum_tw_start=?, datum_tw_eind=?, locatie_tw=?, tw_verzameltijd=?,
+                    datum_tw_start=?, datum_tw_eind=?, locatie_tw=?, tw_verzameltijd=?, tw_begintijd=?,
                     datum_werk_start=?, datum_werk_eind=?,
                     hoofdseizoen_start_week=?, hoofdseizoen_eind_week=?
                     WHERE id=?")
@@ -47,6 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                        $_POST['datum_tw_eind'] ?: null,
                        $_POST['locatie_tw'] ?: null,
                        $_POST['tw_verzameltijd'] ?: null,
+                       $_POST['tw_begintijd'] ?: null,
                        $_POST['datum_werk_start'] ?: null,
                        $_POST['datum_werk_eind'] ?: null,
                        (int)($_POST['hoofdseizoen_start_week'] ?? 0) ?: null,
