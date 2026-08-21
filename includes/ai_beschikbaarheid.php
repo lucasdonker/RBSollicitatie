@@ -123,7 +123,7 @@ STRIKTE REGELS:
 - BELANGRIJK voor afwezigheid (vakantie): geef EXACTE datums (van_datum en tot_datum, YYYY-MM-DD), NIET hele weken. Als iemand zegt "3 t/m 16 augustus op vakantie", gebruik dan precies die datums. Zo blijven halve weken behouden en is het controleerbaar.
 - LOSSE DAGEN: als iemand één losse dag niet kan (bijv. "behalve 12 augustus", "maar die woensdag de 6e niet", "op 20 juli heb ik een afspraak"), zet die dan in "losse_dagen" als één datum — NIET als afwezigheidsperiode. Gebruik soort "niet_beschikbaar" als iemand echt niet kan, en "voorkeur_vrij" als iemand die dag liever vrij wil maar het geen must is. Reken losse weekdagen om naar de concrete datum binnen het seizoen.
 - VASTE VRIJE DAG: als iemand ELKE week een bepaalde weekdag vrij wil (bijv. "elke woensdag naar school", "op maandag heb ik altijd sport", "donderdags kan ik nooit"), zet die weekdag(en) in "vaste_vrije_dagen" als weekdagnummers (1=maandag, 2=dinsdag, 3=woensdag, 4=donderdag, 5=vrijdag, 6=zaterdag, 7=zondag) en zet de reden in "vaste_reden". Dit is iets anders dan een losse dag: een vaste vrije dag geldt ELKE week, een losse dag is één keer.
-- MINDER DAGEN (verzoek): als iemand in BEPAALDE WEKEN minder dagen wil werken dan normaal (bijv. "in juli maar 3 dagen per week", "week 30 tot 32 wil ik het rustig aan doen, hooguit 2 dagen"), zet dat in "verzoeken" met van_week, tot_week en dagen_aantal. Dit is een verzoek dat het bestuur beoordeelt. Optioneel: welke dagen iemand die weken wél kan in "pool" (weekdagnummers).
+- MINDER DAGEN (verzoek): als iemand in BEPAALDE WEKEN minder dagen wil werken dan normaal (bijv. "in juli maar 3 dagen per week", "week 30 tot 32 wil ik het rustig aan doen, hooguit 2 dagen"), zet dat in "verzoeken" met van_week, tot_week en dagen_aantal. Dit is een verzoek dat het bestuur beoordeelt. Optioneel: welke dagen iemand die weken wél kan in "pool" (weekdagnummers). LET OP: als je een pool opgeeft, moet die MINSTENS zoveel dagen bevatten als dagen_aantal (je kunt geen 3 dagen werken als je er maar 2 aanvinkt). Weet je niet welke dagen? Laat pool dan leeg.
 
 ANTWOORD ALLEEN met JSON in dit exacte format:
 {
@@ -239,6 +239,10 @@ function ai_besch_valideer(array $data, array $geldige_weken, int $min_week, int
         if ($aantal < 1 || $aantal > 6) continue;   // buiten 1-6 dagen is geen zinnig verzoek
         $pool = [];
         foreach ($vz['pool'] ?? [] as $pd) { $n = (int)$pd; if ($n >= 1 && $n <= 7 && !in_array($n, $pool, true)) $pool[] = $n; }
+        // Validatie: een pool moet minstens het gevraagde aantal dagen bevatten.
+        // Is de pool te klein (of leeg), dan laten we 'm weg — dan kiest de roosteraar
+        // zelf welke dagen, in plaats van een onmogelijk verzoek door te geven.
+        if (count($pool) < $aantal) $pool = [];
         $verzoeken[] = [
             'van_week'     => $vw,
             'tot_week'     => $tw,

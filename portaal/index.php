@@ -407,7 +407,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['blk_submit']) && $sta
                 try { mail_taak_afgerond($sol_id, 'Beter leren kennen-formulier'); } catch (Exception $e) {}
             }
         }
-        flash('succes', '✅ Opgeslagen!');
+        $_SESSION['b2_toon_opgeslagen'] = true;
 
         // Beschikbaarheid 2.0 opslaan (periode-blokken model)
         try {
@@ -436,15 +436,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['blk_submit']) && $sta
                 $verzoeken = [];
                 $vv = $_POST['b2_vz_van'] ?? []; $vt = $_POST['b2_vz_tot'] ?? []; $vd = $_POST['b2_vz_dagen'] ?? []; $vl = $_POST['b2_vz_toelichting'] ?? [];
                 $vp = $_POST['b2_vz_pool'] ?? []; // per verzoek-index: JSON string van beschikbare dagen
+                $vz_fouten = [];
                 foreach ($vv as $i => $v) {
                     if ($v && !empty($vt[$i]) && !empty($vd[$i])) {
-                        $verzoek = ['van_week' => (int)$v, 'tot_week' => (int)$vt[$i], 'dagen' => (int)$vd[$i], 'toelichting' => $vl[$i] ?? ''];
+                        $aantal = (int)$vd[$i];
+                        $verzoek = ['van_week' => (int)$v, 'tot_week' => (int)$vt[$i], 'dagen' => $aantal, 'toelichting' => $vl[$i] ?? ''];
+                        $pool = [];
                         if (!empty($vp[$i])) {
-                            $pool = json_decode($vp[$i], true);
-                            if (is_array($pool)) $verzoek['pool'] = array_map('intval', $pool);
+                            $decoded = json_decode($vp[$i], true);
+                            if (is_array($decoded)) $pool = array_map('intval', $decoded);
                         }
+                        // Validatie: als er voorkeursdagen zijn opgegeven, moeten dat er minstens
+                        // zoveel zijn als het gevraagde aantal dagen. Anders haal je het aantal niet.
+                        if ($pool && count($pool) < $aantal) {
+                            $vz_fouten[] = "Verzoek voor week {$v}: je hebt {$aantal} dagen aangevraagd maar slechts " . count($pool) . " dag(en) aangevinkt. Vink minstens {$aantal} dagen aan.";
+                            continue; // dit verzoek niet opslaan
+                        }
+                        if ($pool) $verzoek['pool'] = $pool;
                         $verzoeken[] = $verzoek;
                     }
+                }
+                if ($vz_fouten) {
+                    // Bewaar de fouten zodat ze getoond kunnen worden; sla de geldige verzoeken wel op
+                    $_SESSION['b2_vz_waarschuwing'] = implode(' ', $vz_fouten);
                 }
                 beschikbaarheid2_opslaan($sol_id, [
                     'blokken'          => $blokken,
@@ -472,6 +486,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['blk_submit']) && $sta
                 beschikbaarheid_dagen_opslaan($sol['id'], $losse, 'sollicitant');
             }
         } catch (Exception $e) { error_log('b2 opslaan: ' . $e->getMessage()); }
+
+        // Bevestiging: waarschuwing als een verzoek werd geweigerd, anders gewoon opgeslagen
+        if (!empty($_SESSION['b2_vz_waarschuwing'])) {
+            flash('info', '⚠️ Let op: ' . $_SESSION['b2_vz_waarschuwing'] . ' Dat verzoek is niet opgeslagen; de rest wel.');
+            unset($_SESSION['b2_vz_waarschuwing']);
+        } elseif (!empty($_SESSION['b2_toon_opgeslagen'])) {
+            flash('succes', '✅ Opgeslagen!');
+        }
+        unset($_SESSION['b2_toon_opgeslagen']);
 
         // AI analyse: toevoegen aan wachtrij (cron verwerkt dit)
         if (function_exists('ai_queue_toevoegen') && instelling('ai.api_key')) {
@@ -1933,7 +1956,25 @@ function b2Herbereken() {
   });
   document.querySelectorAll('#b2VerzoekLijst .b2-verzoek-rij').forEach(rij => {
     const hid = rij.querySelector('[name="b2_vz_pool[]"]');
-    if (hid) hid.value = JSON.stringify(Array.from(rij.querySelectorAll('.b2-vz-pooldag:checked')).map(c => parseInt(c.value)));
+    const aangevinkt = Array.from(rij.querySelectorAll('.b2-vz-pooldag:checked')).map(c => parseInt(c.value));
+    if (hid) hid.value = JSON.stringify(aangevinkt);
+
+    // Validatie: aantal aangevinkte dagen moet minstens gelijk zijn aan het gevraagde aantal
+    const aantalInput = rij.querySelector('[name="b2_vz_dagen[]"]');
+    const gevraagd = aantalInput ? parseInt(aantalInput.value) || 0 : 0;
+    let waarschuwing = rij.querySelector('.b2-vz-waarschuwing');
+    if (!waarschuwing) {
+      waarschuwing = document.createElement('div');
+      waarschuwing.className = 'b2-vz-waarschuwing';
+      waarschuwing.style.cssText = 'font-size:12px;color:var(--oranje);margin-top:6px;display:none';
+      rij.appendChild(waarschuwing);
+    }
+    if (aangevinkt.length > 0 && gevraagd > 0 && aangevinkt.length < gevraagd) {
+      waarschuwing.textContent = '⚠️ Je vraagt ' + gevraagd + ' dagen aan, maar hebt er ' + aangevinkt.length + ' aangevinkt. Vink minstens ' + gevraagd + ' dagen aan die je wél kunt.';
+      waarschuwing.style.display = '';
+    } else {
+      waarschuwing.style.display = 'none';
+    }
   });
 
   const box = document.getElementById('b2Preview');

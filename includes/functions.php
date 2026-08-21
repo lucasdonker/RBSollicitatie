@@ -33,10 +33,12 @@ if (file_exists(__DIR__ . '/loonplan.php')) require_once __DIR__ . '/loonplan.ph
 if (file_exists(__DIR__ . '/selectiedag.php')) require_once __DIR__ . '/selectiedag.php';
 if (file_exists(__DIR__ . '/ai_beschikbaarheid.php')) require_once __DIR__ . '/ai_beschikbaarheid.php';
 if (file_exists(__DIR__ . '/opschonen.php')) require_once __DIR__ . '/opschonen.php';
+if (file_exists(__DIR__ . '/db_failsafe.php')) require_once __DIR__ . '/db_failsafe.php';
 
 // ── Database ──────────────────────────────────────────────────
 function db(): PDO {
     static $pdo = null;
+    static $failsafe_bezig = false;
     if ($pdo === null) {
         try {
             $dsn = sprintf('mysql:host=%s;dbname=%s;charset=%s', DB_HOST, DB_NAME, DB_CHARSET);
@@ -48,6 +50,12 @@ function db(): PDO {
         } catch (PDOException $e) {
             http_response_code(500);
             die('<html><body style="font-family:sans-serif;padding:40px"><h2 style="color:#c53030">Database fout</h2><p>' . htmlspecialchars($e->getMessage()) . '</p><p><a href="/setup/">Controleer de configuratie</a></p></body></html>');
+        }
+        // Zelfherstel: zorg dat het schema klopt zodra de connectie er is.
+        // $failsafe_bezig voorkomt oneindige recursie (db_failsafe roept db() aan).
+        if (!$failsafe_bezig && function_exists('db_failsafe')) {
+            $failsafe_bezig = true;
+            try { db_failsafe(); } catch (\Throwable $e) { error_log('db_failsafe trigger: ' . $e->getMessage()); }
         }
     }
     return $pdo;

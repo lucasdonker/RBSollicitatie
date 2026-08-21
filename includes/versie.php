@@ -3,10 +3,31 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.50.1');
+define('APP_VERSIE', '2.51.1');
 
 function app_changelog(): array {
     return [
+        '2.51.1' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Verzoeken minder dagen: hardheid en validatie',
+            'punten' => [
+                'Verzoeken om minder dagen tellen nu als harde beperking: wie 2 dagen opgeeft, kan de andere dagen die week echt niet (stond eerst als voorkeur/zacht)',
+                'Nieuwe validatie: het aantal aangevinkte voorkeursdagen moet minstens gelijk zijn aan het gevraagde aantal dagen — meer mag (dan kiest de roosteraar), minder niet',
+                'De sollicitant krijgt direct een waarschuwing bij het verzoek als er te weinig dagen zijn aangevinkt, en het verzoek wordt niet opgeslagen tot het klopt',
+                'De AI houdt zich aan dezelfde regel: een te kleine selectie voorkeursdagen wordt weggelaten zodat de roosteraar kan kiezen',
+            ],
+        ],
+        '2.51.0' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Zelfherstellende database + beschikbaarheid-export compleet',
+            'punten' => [
+                'Het systeem controleert en herstelt nu automatisch het databaseschema bij elk bezoek — ontbrekende tabellen én kolommen worden vanzelf aangemaakt, zodat vergeten migraties geen stille fouten meer geven',
+                'Nieuwe schema-gezondheidscheck op het systeemscherm: zie in één oogopslag of de database in orde is, met een knop om handmatig te controleren',
+                'Beschikbaarheid-export: "alleen weekenden" wordt nu correct verwerkt — wie alleen in het weekend werkt, staat doordeweeks terecht op niet-beschikbaar (stond eerst onterecht op beschikbaar)',
+                'Beschikbaarheid-export: dagen buiten alle werkperiodes staan nu correct op niet-beschikbaar',
+                'Beschikbaarheid-export: verzoeken om minder dagen per week worden nu meegenomen, inclusief de voorkeursdagen — de API krijgt door welke dagen die week wél kunnen',
+            ],
+        ],
         '2.50.1' => [
             'datum'  => '2026-08-20',
             'titel'  => 'Herstel: seizoensinstellingen die leeg terugkwamen',

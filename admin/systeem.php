@@ -27,16 +27,18 @@ try {
     $db_fout = $e->getMessage();
 }
 
-// Migraties forceren (handig na een upload)
+// Migraties forceren / schema repareren (handig na een upload)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['actie'] ?? '') === 'migreer') {
     csrf_check();
-    $gedraaid = [];
-    foreach (['instellingen_auto_setup', 'beschikbaarheid2_auto_setup', 'competenties_auto_setup', 'loonplan_auto_setup'] as $fn) {
-        if (function_exists($fn)) { try { $fn(); $gedraaid[] = $fn; } catch (Exception $e) {} }
+    if (function_exists('db_failsafe')) {
+        try { db_failsafe(); } catch (\Throwable $e) {}
     }
-    flash('succes', 'Migraties uitgevoerd: ' . (count($gedraaid) ?: 0) . ' setup-routines.');
+    flash('succes', 'Databasecontrole uitgevoerd: ontbrekende tabellen en kolommen zijn aangemaakt waar nodig.');
     redirect(APP_URL . '/admin/systeem.php');
 }
+
+// Schema-gezondheid ophalen (voor de statusweergave)
+$gezondheid = function_exists('db_gezondheid') ? db_gezondheid() : null;
 
 $changelog = function_exists('app_changelog') ? app_changelog() : [];
 
@@ -66,9 +68,26 @@ require __DIR__ . '/layout_top.php';
     <?php if ($db_fout): ?>
       <div style="color:var(--rood)">Kan de database niet lezen: <?= h($db_fout) ?></div>
     <?php else: ?>
+      <?php if ($gezondheid !== null): ?>
+        <?php if ($gezondheid['ok']): ?>
+          <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--groen-bg);border:1px solid var(--groen);border-radius:8px;margin-bottom:12px">
+            <span style="font-size:18px">✓</span>
+            <span style="font-size:13px;color:var(--groen)"><strong>Database in orde.</strong> Alle verwachte tabellen en kolommen zijn aanwezig.</span>
+          </div>
+        <?php else: ?>
+          <div style="padding:10px 14px;background:var(--oranje-bg);border:1px solid var(--oranje);border-radius:8px;margin-bottom:12px">
+            <div style="font-size:13px;color:var(--oranje);font-weight:600;margin-bottom:4px">⚠ Er ontbreekt iets in de database</div>
+            <?php if (!empty($gezondheid['ontbrekende_kolommen'])): ?>
+              <div style="font-size:12px;color:var(--tekst-zacht)">Ontbrekende kolommen: <?= h(implode(', ', $gezondheid['ontbrekende_kolommen'])) ?></div>
+            <?php endif; ?>
+            <div style="font-size:12px;color:var(--tekst-zacht);margin-top:4px">Klik op "Databasecontrole uitvoeren" hieronder om dit automatisch te herstellen.</div>
+          </div>
+        <?php endif; ?>
+      <?php endif; ?>
       <p style="font-size:12.5px;color:var(--tekst-zacht);margin-bottom:12px">
-        Ontbrekende tabellen worden automatisch aangemaakt zodra de bijbehorende functie voor het eerst gebruikt wordt.
-        Klopt er iets niet na een upload? Klik dan op "Migraties uitvoeren".
+        Het systeem controleert en herstelt het databaseschema automatisch bij elk bezoek. Ontbrekende tabellen
+        en kolommen worden vanzelf aangemaakt. Klopt er toch iets niet na een upload? Klik dan op
+        "Databasecontrole uitvoeren".
       </p>
       <?php foreach ($verwacht as $groep => $tabellen): ?>
       <div style="margin-bottom:10px">

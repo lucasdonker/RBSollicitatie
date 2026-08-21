@@ -103,12 +103,51 @@ function beschikbaarheid_per_dag(int $sol_id, string $van, string $tot): array {
     }
     if ($eind < $start) return [];
 
-    // 1. Basis: elke dag in het bereik is beschikbaar, tenzij hieronder geblokkeerd.
+    // 1. Basis: begin met ALLES niet-beschikbaar. Een dag wordt pas beschikbaar
+    //    als hij binnen een werkperiode valt én bij het regime past (stap 1b).
+    //    Zo staat iemand met "alleen weekenden" doordeweeks correct op niet-beschikbaar,
+    //    en dagen buiten alle werkperiodes ook.
     $cursor = clone $start;
     while ($cursor <= $eind) {
-        $uit[$cursor->format('Y-m-d')] = ['beschikbaar' => true, 'reden' => '', 'hardheid' => null];
+        $uit[$cursor->format('Y-m-d')] = ['beschikbaar' => false, 'reden' => 'buiten werkperiode', 'hardheid' => 'hard'];
         $cursor->modify('+1 day');
     }
+
+    // 1b. Werkregime toepassen: welke dagen kan iemand volgens zijn periode-blokken?
+    //     regime 'vijf'   = hele week werkbaar (ma t/m zo; vaste vrije dagen gaan er later af)
+    //     regime 'weekend'= alleen de gekozen weekenddagen (default vr/za/zo)
+    //     Per week telt het EERSTE blok dat die week dekt (net als in beschikbaarheid2).
+    $regime_per_week = [];  // ISO-weeknr => ['kandidaat'=>[weekdagen], ] — voor stap 5 (verzoeken)
+    try {
+        $b = db()->prepare("SELECT van_week, tot_week, regime, weekend_dagen
+                            FROM beschikbaarheid_blok WHERE sollicitatie_id=? ORDER BY van_week");
+        $b->execute([$sol_id]);
+        $blokken = $b->fetchAll();
+        foreach ($blokken as $blok) {
+            $regime = ($blok['regime'] ?? 'vijf') === 'weekend' ? 'weekend' : 'vijf';
+            $weekend_dagen = json_decode($blok['weekend_dagen'] ?? 'null', true) ?: [5,6,7];
+            $weekend_dagen = array_values(array_intersect(array_map('intval', $weekend_dagen), [5,6,7]));
+            if ($regime === 'weekend' && !$weekend_dagen) $weekend_dagen = [5,6,7];
+            $kandidaat = $regime === 'weekend' ? $weekend_dagen : [1,2,3,4,5,6,7];
+
+            for ($wk = (int)$blok['van_week']; $wk <= (int)$blok['tot_week']; $wk++) {
+                if (isset($regime_per_week[$wk])) continue;  // eerste blok wint bij overlap
+                $regime_per_week[$wk] = ['kandidaat' => $kandidaat];
+            }
+        }
+        // Nu per dag: beschikbaar als de week gedekt is én de weekdag kandidaat is
+        foreach ($uit as $datum => &$info) {
+            $dt = new DateTime($datum);
+            $wk = (int)$dt->format('W');
+            $weekdag = (int)$dt->format('N');
+            if (isset($regime_per_week[$wk]) && in_array($weekdag, $regime_per_week[$wk]['kandidaat'], true)) {
+                $info['beschikbaar'] = true;
+                $info['reden'] = '';
+                $info['hardheid'] = null;
+            }
+        }
+        unset($info);
+    } catch (\Exception $e) {}
 
     // 2. Vaste vrije weekdagen (bijv. elke woensdag school) — uit het profiel.
     try {
@@ -158,6 +197,40 @@ function beschikbaarheid_per_dag(int $sol_id, string $van, string $tot): array {
         $uit[$datum]['reden'] = trim($dag['reden'] ?? '') ?: ($dag['soort'] === 'voorkeur_vrij' ? 'liever vrij' : 'niet beschikbaar');
         $uit[$datum]['hardheid'] = ($dag['soort'] === 'voorkeur_vrij') ? 'zacht' : 'hard';
     }
+
+    // 5. Verzoeken "minder dagen per week" (goedgekeurd) — met voorkeursdagen (pool).
+    //    Als iemand in bepaalde weken max N dagen wil, en aangeeft welke dagen wél (pool),
+    //    dan zijn de dagen BUITEN de pool die week niet beschikbaar. Zo krijgt de rooster-API
+    //    door: deze week alleen op deze specifieke dagen, en hooguit N.
+    try {
+        $v = db()->prepare("SELECT van_week, tot_week, dagen_aantal, dagen_pool, toelichting
+                            FROM beschikbaarheid_verzoek WHERE sollicitatie_id=? AND status='goedgekeurd'");
+        $v->execute([$sol_id]);
+        foreach ($v->fetchAll() as $vz) {
+            $pool = json_decode($vz['dagen_pool'] ?? 'null', true);
+            $pool = is_array($pool) ? array_map('intval', $pool) : null;
+            $reden = trim($vz['toelichting'] ?? '') ?: 'minder dagen (verzoek)';
+            // Alleen zinvol als er voorkeursdagen zijn opgegeven; anders laat de rooster-API
+            // zelf kiezen welke N dagen — dan blokkeren we hier niets, maar geven het wel door.
+            if (!$pool) continue;
+            for ($wk = (int)$vz['van_week']; $wk <= (int)$vz['tot_week']; $wk++) {
+                foreach ($uit as $datum => &$info) {
+                    $dt = new DateTime($datum);
+                    if ((int)$dt->format('W') !== $wk) continue;
+                    if (!$info['beschikbaar']) continue;              // al geblokkeerd, laat staan
+                    $weekdag = (int)$dt->format('N');
+                    if (!in_array($weekdag, $pool, true)) {
+                        // Deze dag valt buiten de voorkeursdagen van het verzoek → niet beschikbaar.
+                        // Hard: als iemand max N dagen opgeeft, kan hij de andere dagen echt niet.
+                        $info['beschikbaar'] = false;
+                        $info['reden'] = $reden;
+                        $info['hardheid'] = 'hard';
+                    }
+                }
+                unset($info);
+            }
+        }
+    } catch (\Exception $e) {}
 
     return $uit;
 }
