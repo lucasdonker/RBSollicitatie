@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.64.4');
+define('APP_VERSIE', '2.64.5');
 
 function app_changelog(): array {
     return [
+        '2.64.5' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Taken definitief in de ontwerpstijl',
+            'punten' => [
+                'De taken staan nu als rustige rijen in één kaart met dunne scheidingslijntjes, precies zoals het ontwerp — geen losse gekleurde blokken meer',
+                'Elke taak heeft een icoon-vierkantje, titel en meta-regel, en een chevron als je erop kunt tikken',
+                'Het inline oudergegevens-formulier is behouden en in de nieuwe stijl',
+            ],
+        ],
         '2.64.4' => [
             'datum'  => '2026-08-21',
             'titel'  => 'Mijn gegevens op de gedeelde layout',

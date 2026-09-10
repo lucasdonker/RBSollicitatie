@@ -1087,8 +1087,8 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
   $open_taken = array_filter($alle_taken, fn($t) => !$t['done']);
   if ($alle_taken):
   ?>
-  <div class="ds-kaart" style="margin-top:16px;overflow:hidden">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid var(--rand)">
+  <div class="ds-kaart" style="margin-top:16px;padding:6px;overflow:hidden">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 12px 10px">
       <span style="font:var(--text-subhead);color:var(--ink)"><?= $open_taken ? 'Nu te doen' : 'Jouw acties' ?></span>
       <?php if ($open_taken): ?>
         <span class="ds-badge ds-badge-accent"><?= count($open_taken) ?> open</span>
@@ -1096,57 +1096,50 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
         <span class="ds-badge ds-badge-ok"><?= icoon('vink', 13) ?> Alles gedaan</span>
       <?php endif; ?>
     </div>
-    <div class="card-body" style="padding:12px 16px;display:flex;flex-direction:column;gap:10px">
-      <?php foreach ($alle_taken as $t):
-        // Statuskleur + lijn-icoon per taak (ontwerp: geen emoji)
-        if ($t['done'])                        { $rand='var(--ok)';     $badge='ds-badge-ok';     $badgetxt=$t['status'] ?? 'Gedaan'; $ico='vink-cirkel'; $icocls='ok'; }
-        elseif (($t['status'] ?? '')==='Wachten op ouder') { $rand='var(--navy)'; $badge='ds-badge-navy'; $badgetxt='Wachten op ouder'; $ico='mail'; $icocls='navy'; }
-        elseif (!empty($t['urgent']))          { $rand='var(--accent)'; $badge='ds-badge-accent'; $badgetxt='Actie nodig'; $ico='wachten'; $icocls='accent'; }
-        else                                   { $rand='var(--border)'; $badge='ds-badge-grijs';  $badgetxt=$t['status'] ?? 'Open'; $ico='mail'; $icocls=''; }
-      ?>
-        <div style="border:1px solid var(--border);border-left:3px solid <?= $rand ?>;border-radius:var(--radius-md);padding:12px 14px;background:var(--surface);<?= $t['done'] ? 'opacity:.62' : '' ?>">
-          <div style="display:flex;align-items:flex-start;gap:11px">
-            <span class="ds-taak-icoon <?= $icocls ?>" style="width:34px;height:34px;border-radius:9px"><?= icoon($ico, 17) ?></span>
-            <div style="flex:1;min-width:0">
-              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-                <span style="font:var(--text-label);font-size:14px;<?= $t['done'] ? 'text-decoration:line-through;color:var(--ink-muted)' : '' ?>"><?= h($t['titel']) ?></span>
-                <span class="ds-badge <?= $badge ?>" style="font-size:10px"><?= h($badgetxt) ?></span>
-              </div>
-              <?php if (!empty($t['hint'])): ?>
-                <div style="font:var(--text-meta);color:var(--ink-soft);margin-top:3px"><?= h($t['hint']) ?></div>
-              <?php endif; ?>
+    <?php foreach ($alle_taken as $ti => $t):
+        // Lijn-icoon + accentkleur per taak (ontwerp: geen emoji, geen gekleurde blokranden)
+        if ($t['done'])                                     { $ico='vink-cirkel'; $icocls='ok'; }
+        elseif (($t['status'] ?? '')==='Wachten op ouder')  { $ico='mail';        $icocls='navy'; }
+        elseif (!empty($t['urgent']))                       { $ico='wachten';     $icocls='accent'; }
+        else                                                { $ico='mail';        $icocls=''; }
+        $heeft_form = (!empty($t['inline_form']) && $t['inline_form'] === 'ouder');
+        $klikbaar = (!$t['done'] && !empty($t['url']) && !$heeft_form);
+    ?>
+        <?php if ($ti > 0): ?><div style="height:1px;background:var(--border);margin:0 12px"></div><?php endif; ?>
+        <?php if ($klikbaar): ?><a href="<?= h($t['url']) ?>" style="text-decoration:none;color:inherit;display:block"><?php endif; ?>
+        <div style="padding:13px 12px;display:flex;align-items:flex-start;gap:13px;<?= $t['done'] ? 'opacity:.6' : '' ?>">
+          <span class="ds-taak-icoon <?= $icocls ?>" style="width:40px;height:40px;border-radius:10px;flex-shrink:0"><?= icoon($ico, 18) ?></span>
+          <div style="flex:1;min-width:0">
+            <div style="font:var(--text-label);font-size:15px;<?= $t['done'] ? 'text-decoration:line-through;color:var(--ink-muted)' : 'color:var(--ink)' ?>"><?= h($t['titel']) ?></div>
+            <?php if (!empty($t['hint'])): ?>
+              <div style="font:var(--text-meta);color:var(--ink-muted);margin-top:2px"><?= h($t['hint']) ?></div>
+            <?php endif; ?>
 
-            <?php if (!empty($t['inline_form']) && $t['inline_form'] === 'ouder'): ?>
+            <?php if ($heeft_form): ?>
               <?php $od = $t['ouder_data'] ?? null; $is_ingevuld = !empty($t['done']); ?>
               <?php if ($is_ingevuld): ?>
-                <button type="button" class="btn btn-outline btn-sm" style="margin-top:8px" onclick="var f=this.nextElementSibling; f.style.display = f.style.display==='none'?'block':'none';">Wijzigen</button>
+                <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" style="margin-top:10px" onclick="var f=this.nextElementSibling; f.style.display = f.style.display==='none'?'block':'none';">Wijzigen</button>
               <?php endif; ?>
               <form method="POST" style="margin-top:10px<?= $is_ingevuld ? ';display:none' : '' ?>" onsubmit="return ouderValideer(this)">
                 <?= csrf_input() ?>
                 <input type="hidden" name="ouder_submit" value="1">
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px" class="ouder-grid">
-                  <input type="text" name="ouder_naam" placeholder="Naam ouder/verzorger" value="<?= h($od['ouder_naam'] ?? '') ?>"
-                         style="padding:9px 12px;border:1px solid var(--rand);border-radius:6px;font-size:13px;background:var(--bg-card);color:var(--tekst)">
-                  <input type="email" name="ouder_email" placeholder="E-mail ouder/verzorger" value="<?= h($od['ouder_email'] ?? '') ?>"
-                         style="padding:9px 12px;border:1px solid var(--rand);border-radius:6px;font-size:13px;background:var(--bg-card);color:var(--tekst)">
+                  <input type="text" name="ouder_naam" placeholder="Naam ouder/verzorger" value="<?= h($od['ouder_naam'] ?? '') ?>" class="ds-input" style="height:42px">
+                  <input type="email" name="ouder_email" placeholder="E-mail ouder/verzorger" value="<?= h($od['ouder_email'] ?? '') ?>" class="ds-input" style="height:42px">
                 </div>
-                <input type="tel" name="ouder_telefoon" placeholder="Telefoonnummer ouder/verzorger" value="<?= h($od['ouder_telefoon'] ?? '') ?>"
-                       style="width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid var(--rand);border-radius:6px;font-size:13px;background:var(--bg-card);color:var(--tekst);margin-bottom:8px">
-                <div class="ouder-fout" style="display:none;color:var(--rood);font-size:12px;margin-bottom:8px"></div>
-                <button type="submit" class="btn btn-primary btn-sm">
+                <input type="tel" name="ouder_telefoon" placeholder="Telefoonnummer ouder/verzorger" value="<?= h($od['ouder_telefoon'] ?? '') ?>" class="ds-input" style="height:42px;margin-bottom:8px">
+                <div class="ouder-fout" style="display:none;color:var(--error);font-size:12px;margin-bottom:8px"></div>
+                <button type="submit" class="ds-btn ds-btn-primair ds-btn-sm">
                   <span class="btn-tekst"><?= $is_ingevuld ? 'Opnieuw versturen' : 'Versturen naar ouder' ?></span>
                   <span class="btn-spinner" style="display:none">Bezig…</span>
                 </button>
               </form>
             <?php endif; ?>
-            </div>
-            <?php if (!$t['done'] && !empty($t['url'])): ?>
-
-            <?php endif; ?>
           </div>
+          <?php if ($klikbaar): ?><span style="color:var(--ink-muted);flex-shrink:0;align-self:center"><?= icoon('chevron', 18) ?></span><?php endif; ?>
         </div>
+        <?php if ($klikbaar): ?></a><?php endif; ?>
       <?php endforeach; ?>
-    </div>
   </div>
   <?php endif; ?>
 
