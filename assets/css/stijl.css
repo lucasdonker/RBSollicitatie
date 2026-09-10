@@ -1224,3 +1224,12 @@ table.tabel td, table.tabel th { overflow-wrap: normal; word-break: normal; }
   .ds-code-cijfer { width: 42px; height: 52px; font-size: 21px; }
   .ds-code-inputs { gap: 6px; }
 }
+
+/* Link-knop (tekst die als link oogt maar een knop is, bv "opnieuw sturen") */
+.ds-link-knop {
+  background: none; border: none; padding: 0; cursor: pointer;
+  color: var(--accent); font: var(--text-meta); font-weight: 600;
+  text-decoration: none;
+}
+.ds-link-knop:hover:not(:disabled) { text-decoration: underline; }
+.ds-link-knop:disabled { color: var(--ink-muted); cursor: default; font-weight: 500; }

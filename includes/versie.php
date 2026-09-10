@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.63.0');
+define('APP_VERSIE', '2.63.1');
 
 function app_changelog(): array {
     return [
+        '2.63.1' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Inlogscherm compleet: opnieuw-sturen en doorstuur-pagina',
+            'punten' => [
+                'Op het code-scherm zit nu een "opnieuw sturen"-teller (60 seconden), waarna je een nieuwe code kunt aanvragen',
+                'Bekende accounts krijgen nu een net doorstuur-scherm ("je hebt al een account, we sturen je door") met een uitweg "stuur mij toch een code", in plaats van een directe doorverwijzing',
+                'Interne herstelling: het code-scherm sloot zijn script-blok niet correct af; dat is gerepareerd',
+            ],
+        ],
         '2.63.0' => [
             'datum'  => '2026-08-21',
             'titel'  => 'Nieuw inlogscherm (stap 2 van de herbouw)',

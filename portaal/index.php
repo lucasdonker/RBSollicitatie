@@ -13,12 +13,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['email_submit'])) {
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $fout = 'Vul een geldig e-mailadres in.';
     } else {
-        // Probeer Authentik SSO: als email daar bestaat, redirect naar SSO
-        // (alleen als API token is geconfigureerd)
+        // Probeer Authentik SSO: als email daar bestaat, toon een tussenscherm
+        // ("je hebt al een account, we sturen je door") met een uitweg naar de code.
         $authentik_user = authentik_email_bestaat($email);
         if ($authentik_user) {
             $_SESSION['otp_email'] = $email; // wordt door auth_sso.php gebruikt
-            redirect(APP_URL . '/portaal/auth_sso.php');
+            $_SESSION['doorsturen_email'] = $email;
+            redirect(APP_URL . '/portaal/?stap=doorsturen');
         }
 
         // Fallback: OTP code
@@ -44,7 +45,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['email_submit'])) {
     }
 }
 
-// ── OTP stap 2 ────────────────────────────────────────────────
+// ── Vanaf het doorstuur-scherm: toch een code i.p.v. het account ──
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toch_code'])) {
+    csrf_check();
+    $email = strtolower(trim($_SESSION['doorsturen_email'] ?? ''));
+    if ($email && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $p = db()->prepare("SELECT p.voornaam FROM personen p JOIN sollicitaties s ON s.persoon_id=p.id WHERE p.email=? LIMIT 1");
+        $p->execute([$email]); $persoon = $p->fetch();
+        if ($persoon) {
+            $rl = db()->prepare("SELECT 1 FROM otp_tokens WHERE email=? AND type='portaal' AND gebruikt=0 AND aangemaakt_op > DATE_SUB(NOW(), INTERVAL 60 SECOND) LIMIT 1");
+            $rl->execute([$email]); $recent_otp = (bool)$rl->fetchColumn();
+            if (!$recent_otp) {
+                $code = otp_genereer($email, 'portaal');
+                stuur_mail($email, $persoon['voornaam'], 'Inlogcode Paal 13 portaal',
+                    '<p>Jouw inlogcode voor het sollicitantenportaal:</p>
+                     <div style="font-size:40px;font-weight:bold;letter-spacing:10px;color:#054d8a;text-align:center;background:#f0f4f8;border-radius:8px;padding:22px;margin:16px 0">' . $code . '</div>
+                     <p>Geldig 15 minuten.</p>');
+            }
+        }
+        $_SESSION['otp_email'] = $email;
+        unset($_SESSION['doorsturen_email']);
+        redirect(APP_URL . '/portaal/?stap=code');
+    }
+    redirect(APP_URL . '/portaal/');
+}
+
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['code_submit'])) {
     csrf_check();
     $email = $_SESSION['otp_email'] ?? '';
@@ -728,9 +754,15 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
       <button type="submit" class="ds-btn ds-btn-primair ds-btn-vol" id="submitBtn" disabled>Inloggen</button>
     </form>
     <div class="ds-login-voet">
-      <a href="<?= APP_URL ?>/portaal/">← Ander e-mailadres</a>
+      Geen mail ontvangen? <button type="button" class="ds-link-knop" id="opnieuwBtn" disabled>Opnieuw sturen (<span id="teller">0:60</span>)</button>
+      <br><a href="<?= APP_URL ?>/portaal/">← Ander e-mailadres</a>
     </div>
   </div>
+  <form method="POST" id="opnieuwForm" style="display:none">
+    <?= csrf_input() ?>
+    <input type="hidden" name="email_submit" value="1">
+    <input type="hidden" name="email" value="<?= h($_SESSION['otp_email'] ?? '') ?>">
+  </form>
   <script>
   const inp = document.querySelectorAll('.code-cijfer'), h = document.getElementById('codeHidden'), b = document.getElementById('submitBtn');
   inp.forEach((el,i) => {
@@ -740,7 +772,50 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
   });
   function upd() { const c=Array.from(inp).map(i=>i.value).join(''); h.value=c; b.disabled=c.length!==6; if(c.length===6)b.focus(); }
   inp[0].focus();
+  // Opnieuw-sturen teller: 60s aftellen, daarna knop actief
+  (function(){
+    var t = 60, el = document.getElementById('teller'), knop = document.getElementById('opnieuwBtn');
+    var iv = setInterval(function(){
+      t--;
+      if (t <= 0) {
+        clearInterval(iv);
+        knop.disabled = false;
+        knop.innerHTML = 'Opnieuw sturen';
+        knop.addEventListener('click', function(){ document.getElementById('opnieuwForm').submit(); });
+      } else {
+        el.textContent = '0:' + (t < 10 ? '0' : '') + t;
+      }
+    }, 1000);
+  })();
+  </script>
 
+<?php elseif ($stap === 'doorsturen'): ?>
+  <?php $dse = $_SESSION['doorsturen_email'] ?? ''; ?>
+  <div class="ds-login">
+    <div class="ds-login-kop">
+      <div class="ds-login-logo"><?= icoon('slot', 26) ?></div>
+      <h1>Je hebt al een account</h1>
+      <p>We sturen je door naar het Paal 13-account van <strong><?= h($dse) ?></strong>. Daar log je in zoals je gewend bent.</p>
+    </div>
+    <div class="ds-melding ds-melding-info" style="margin-bottom:16px">
+      <?= icoon('klok', 18) ?> <div>Even geduld — je wordt doorgestuurd…</div>
+    </div>
+    <a href="<?= APP_URL ?>/portaal/auth_sso.php" class="ds-btn ds-btn-primair ds-btn-vol" id="dsNu">Nu doorgaan</a>
+    <form method="POST" style="margin-top:14px">
+      <?= csrf_input() ?>
+      <input type="hidden" name="toch_code" value="1">
+      <div class="ds-login-voet" style="margin-top:0">
+        Geen account meer? <button type="submit" class="ds-link-knop">Stuur mij toch een code</button>
+      </div>
+    </form>
+  </div>
+  <script>
+    setTimeout(function(){ window.location.href = document.getElementById('dsNu').href; }, 2500);
+  </script>
+
+<?php endif; ?>
+
+<?php if ($stap === 'dossier' && $sol): ?>
 
   <!-- Voortgang -->
   <?php if ($sol['fase'] !== 'afgewezen'): ?>
