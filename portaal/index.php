@@ -817,21 +817,55 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
 
 <?php if ($stap === 'dossier' && $sol): ?>
 
+  <?php
+    $vnaam = $sol['voornaam'] ?? '';
+    $begroetingen = [
+      'aangemeld'            => 'Hoi ' . $vnaam . '|Je aanmelding is binnen. We nemen contact op zodra we je uitnodigen.',
+      'uitgenodigd_selectie' => 'Je bent uitgenodigd|Er staan een paar dingen voor je klaar.',
+      'aangemeld_selectie'   => 'Bijna klaar, ' . $vnaam . '|Je formulieren zijn ontvangen. Tot de selectiedag!',
+      'selectiedag_geweest'  => 'Goed gedaan, ' . $vnaam . '|Je was op de selectiedag. We laten snel weten hoe het verder gaat.',
+      'uitgenodigd_tw'       => 'Door naar het trainingsweekend|Er staat iets voor je klaar.',
+      'tw_geweest'           => 'Bedankt, ' . $vnaam . '|Het trainingsweekend zit erop. We nemen contact op.',
+      'aangenomen'           => 'Welkom bij Paal 13|Je bent aangenomen als strandwacht.',
+      'afgewezen'            => 'Bedankt voor je sollicitatie|Dit seizoen gaan we niet verder, maar we waarderen je inzet.',
+    ];
+    $begroet = explode('|', $begroetingen[$sol['fase']] ?? ('Hoi ' . $vnaam . '|'));
+  ?>
+  <div class="pt-begroet">
+    <h1><?= h($begroet[0]) ?></h1>
+    <?php if (!empty($begroet[1])): ?><p><?= h($begroet[1]) ?></p><?php endif; ?>
+  </div>
+
   <!-- Voortgang -->
-  <?php if ($sol['fase'] !== 'afgewezen'): ?>
-  <div class="vg2">
-    <?php $vg=[['aangemeld','Aangemeld'],['uitgenodigd_selectie','Selectiedag'],['selectiedag_geweest','Na selectie'],['uitgenodigd_tw','Training'],['aangenomen','Aangenomen']];
-    $fi=array_search($sol['fase'],$fases_volgorde);
-    foreach($vg as $idx => [$sf,$sl]):
-      $si=array_search($sf,$fases_volgorde);
-      $in_this=in_array($sol['fase'],[$sf,$sf==='uitgenodigd_selectie'?'aangemeld_selectie':''],true);
-      $cls=($fi!==false&&$si<$fi)?'gedaan':($in_this?'actief':''); ?>
-    <div class="vg2-stap <?=$cls?>">
-      <div class="vg2-bol"><?= $cls==='gedaan' ? icoon('vink', 13) : '' ?></div>
-      <div class="vg2-label"><?=h($sl)?></div>
-      <?php if ($idx < count($vg)-1): ?><div class="vg2-lijn"></div><?php endif; ?>
+  <?php if ($sol['fase'] !== 'afgewezen'):
+    $vg_stappen = [['aangemeld','Aangemeld'],['uitgenodigd_selectie','Selectiedag'],['selectiedag_geweest','Na de selectie'],['uitgenodigd_tw','Trainingsweekend'],['aangenomen','Aangenomen']];
+    $fi = array_search($sol['fase'], $fases_volgorde);
+    $actief_idx = 0;
+    foreach ($vg_stappen as $vi => $vs) {
+      $vsi = array_search($vs[0], $fases_volgorde);
+      $in_this = in_array($sol['fase'], [$vs[0], $vs[0] === 'uitgenodigd_selectie' ? 'aangemeld_selectie' : ''], true);
+      if ($in_this) $actief_idx = $vi;
+      elseif ($fi !== false && $vsi !== false && $vsi < $fi) $actief_idx = max($actief_idx, $vi);
+    }
+    $vg_totaal = count($vg_stappen);
+    $vg_pct = round($actief_idx / ($vg_totaal - 1) * 100);
+  ?>
+  <div class="ds-kaart ds-kaart-p vg3">
+    <div class="vg3-top">
+      <div class="vg3-nu">
+        <span class="vg3-stapnr">Stap <?= $actief_idx + 1 ?> van <?= $vg_totaal ?></span>
+        <span class="vg3-naam"><?= h($vg_stappen[$actief_idx][1]) ?></span>
+      </div>
+      <div class="vg3-bollen">
+        <?php foreach ($vg_stappen as $vi => $vs): $c = $vi < $actief_idx ? 'gedaan' : ($vi == $actief_idx ? 'nu' : ''); ?>
+          <span class="vg3-bol <?= $c ?>"></span>
+        <?php endforeach; ?>
+      </div>
     </div>
-    <?php endforeach; ?>
+    <div class="vg3-balk"><div class="vg3-vul" style="width:<?= $vg_pct ?>%"></div></div>
+    <?php if ($actief_idx + 1 < $vg_totaal): ?>
+    <div class="vg3-volgende">Hierna: <?= h($vg_stappen[$actief_idx + 1][1]) ?></div>
+    <?php endif; ?>
   </div>
   <?php endif; ?>
 

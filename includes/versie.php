@@ -3,10 +3,18 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.64.1');
+define('APP_VERSIE', '2.64.2');
 
 function app_changelog(): array {
     return [
+        '2.64.2' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Startpagina: begroeting en nieuwe voortgang',
+            'punten' => [
+                'De startpagina heeft nu een persoonlijke begroeting die past bij je fase ("Je bent uitgenodigd", "Welkom bij Paal 13", enzovoort)',
+                'De voortgang is vervangen door de rustige "stap X van 5"-weergave met een voortgangsbalk en de melding wat er hierna komt',
+            ],
+        ],
         '2.64.1' => [
             'datum'  => '2026-08-21',
             'titel'  => 'Portaal krijgt de globale navigatiebalk',
