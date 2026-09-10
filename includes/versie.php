@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.61.0');
+define('APP_VERSIE', '2.62.0');
 
 function app_changelog(): array {
     return [
+        '2.62.0' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Nieuw ontwerp-fundament (stap 1 van de herbouw)',
+            'punten' => [
+                'De officiële ontwerp-tokens (kleuren, typografie, ruimte, vorm) uit het goedgekeurde ontwerp zijn toegevoegd als basis voor alle nieuwe schermen',
+                'Een set herbruikbare componenten (knoppen, kaarten, statusbadges, formuliervelden, meldingen, taken, lege staten) in de nieuwe stijl',
+                'Het ontwerp-lettertype (Instrument Sans) toegevoegd; bestaande schermen blijven werken via compatibiliteits-aliassen',
+                'Dit raakt nog geen bestaand scherm inhoudelijk — het is de basis waarop het portaal en de rest opnieuw worden opgebouwd',
+            ],
+        ],
         '2.61.0' => [
             'datum'  => '2026-08-21',
             'titel'  => 'Foto-vergroter overal, wervingsoverzicht en mobiele verbeteringen',

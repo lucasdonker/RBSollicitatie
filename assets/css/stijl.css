@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600;700&display=swap');
 
 /* ═══════════════════════════════════════════════════════════════
    Paal 13 — Stijl  |  Light + Dark mode  |  Responsive
@@ -875,3 +875,310 @@ table.tabel td, table.tabel th { overflow-wrap: normal; word-break: normal; }
   /* Tabellen die te breed zijn horizontaal scrollbaar maken i.p.v. de pagina te breken */
   .tabel-scroll, .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   STIJL-FUNDAMENT v2.62 — icoon-systeem + verfijnde tokens
+   (aanvullend; bestaande variabelen blijven werken)
+   ═══════════════════════════════════════════════════════════════ */
+:root {
+  /* Verfijnde grijstinten voor tekst (rustiger dan puur zwart) */
+  --ink:    #1a2230;
+  --ink-2:  #5a6478;
+  --ink-3:  #8a93a6;
+  /* Zachtere randen en kaarten */
+  --rand-2: #eef1f5;
+  --card:   #ffffff;
+  /* Verfijnde schaduwen (subtiel, niet zwaar) */
+  --sh:    0 1px 2px rgba(16,26,46,.04), 0 2px 8px rgba(16,26,46,.05);
+  --sh-lg: 0 4px 24px rgba(16,26,46,.10);
+}
+
+/* Icoon-systeem — één consistente lijnstijl overal */
+.ic {
+  display: inline-block;
+  vertical-align: -0.18em;
+  flex-shrink: 0;
+}
+/* Icoon dat als knop-inhoud dient netjes uitlijnen */
+.btn .ic { vertical-align: -0.2em; }
+
+/* Iconen erven de tekstkleur, dus ze passen automatisch in elke context */
+
+/* ── Info-kaart elementen (portaal: selectiedag/TW-info) ────────── */
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+@media (max-width: 420px) { .info-grid { grid-template-columns: 1fr; } }
+.info-item {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+}
+.info-item .ii-ic {
+  color: currentColor;
+  opacity: .7;
+  margin-top: 1px;
+  flex-shrink: 0;
+}
+.info-item .ii-l {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  opacity: .65;
+  line-height: 1.3;
+}
+.info-item .ii-v {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+}
+.info-melding {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  padding: 9px 12px;
+  border-radius: var(--radius, 8px);
+}
+.info-melding .ic { flex-shrink: 0; }
+.info-melding-actie { background: rgba(255,255,255,.15); }
+.info-melding-ok    { background: rgba(255,255,255,.18); }
+
+/* ── Voortgang v2 (portaal stepper) ─────────────────────────────── */
+.vg2 {
+  display: flex;
+  align-items: flex-start;
+  background: var(--card, #fff);
+  border: 1px solid var(--rand);
+  border-radius: var(--radius-lg, 12px);
+  padding: 18px 8px 16px;
+  margin-bottom: 16px;
+  box-shadow: var(--sh);
+}
+.vg2-stap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  min-width: 0;
+}
+.vg2-bol {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--rand);
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  position: relative;
+  z-index: 2;
+}
+.vg2-stap.gedaan .vg2-bol { background: var(--groen); border-color: var(--groen); }
+.vg2-stap.actief .vg2-bol { border-color: var(--oranje); background: var(--oranje); box-shadow: 0 0 0 4px rgba(212,61,0,.14); }
+.vg2-label {
+  font-size: 10.5px;
+  text-align: center;
+  color: var(--ink-3, #8a93a6);
+  font-weight: 500;
+  line-height: 1.25;
+  padding: 0 2px;
+  word-break: break-word;
+  hyphens: auto;
+}
+.vg2-stap.gedaan .vg2-label { color: var(--ink-2, #5a6478); }
+.vg2-stap.actief .vg2-label { color: var(--oranje); font-weight: 700; }
+/* Lijn: loopt van deze bol naar de volgende, ACHTER de bollen langs,
+   en stopt netjes zodat labels niet worden geraakt. */
+.vg2-lijn {
+  position: absolute;
+  top: 14px;
+  left: calc(50% + 18px);
+  right: calc(-50% + 18px);
+  height: 2px;
+  background: var(--rand);
+  z-index: 1;
+}
+.vg2-stap.gedaan .vg2-lijn { background: var(--groen); }
+
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   ONTWERP-FUNDAMENT v2.62 — officiële design-tokens (Claude Design)
+   Dit is de basis voor alle nieuw op te bouwen schermen. De tokens komen
+   één-op-één uit het goedgekeurde ontwerp (Componenten-bestand).
+   ═══════════════════════════════════════════════════════════════════ */
+:root {
+  /* ── Kleur (19 tokens) ── */
+  --navy:          #054d8a;   /* navigatie, koppen, informatievlakken */
+  --navy-hover:    #043c6d;   /* ingedrukte navy-knop */
+  --accent:        #D43D00;   /* één hoofdactie per scherm */
+  --accent-hover:  #bb3600;
+  --accent-soft:   #fdf1ea;   /* zachte accent-achtergrond */
+  --ink:           #1a2230;   /* primaire tekst */
+  --ink-soft:      #5a6478;   /* secundaire tekst */
+  --ink-muted:     #8a93a6;   /* tertiaire tekst / labels */
+  --bg:            #f4f6f9;   /* pagina-achtergrond */
+  --bg-subtle:     #f8fafc;
+  --surface:       #ffffff;   /* kaarten */
+  --border:        #e6e9ef;
+  --border-strong: #cdd4e0;
+  --ok:            #1f7a3d;   --ok-soft:    #ecf5ef;
+  --warn:          #b7791f;   --warn-soft:  #fbf4e6;
+  --error:         #b3261e;   --error-soft: #fdf0ef;
+
+  /* ── Typografie (9 tokens) ── */
+  --font: 'Instrument Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --text-display: 600 32px/1.1 var(--font);
+  --text-title:   600 22px/1.2 var(--font);
+  --text-heading: 600 19px/1.3 var(--font);
+  --text-subhead: 600 17px/1.4 var(--font);
+  --text-body:    400 15px/1.6 var(--font);
+  --text-label:   600 13px/1.4 var(--font);
+  --text-meta:    400 13px/1.5 var(--font);
+
+  /* ── Ruimte (8 tokens) ── */
+  --space-1: 4px;   --space-2: 8px;   --space-3: 12px;  --space-4: 16px;
+  --space-5: 18px;  --space-6: 24px;  --space-7: 32px;  --space-8: 48px;
+
+  /* ── Vorm (radius + schaduw) ── */
+  --radius-sm: 8px;  --radius-md: 10px;  --radius-lg: 14px;
+  --radius-xl: 18px; --radius-full: 999px;
+  --shadow-card:  0 1px 2px rgba(16,26,46,.04), 0 2px 8px rgba(16,26,46,.05);
+  --shadow-float: 0 4px 16px rgba(16,26,46,.10);
+  --shadow-modal: 0 12px 48px rgba(16,26,46,.22);
+
+  /* Compat-aliassen zodat bestaande schermen blijven werken */
+  --tekst: var(--ink);
+  --tekst-zacht: var(--ink-soft);
+  --rand: var(--border);
+  --bg-card: var(--surface);
+  --radius: var(--radius-sm);
+  --oranje: var(--accent);
+  --oranje-bg: var(--accent-soft);
+  --groen: var(--ok);
+  --groen-bg: var(--ok-soft);
+  --rood: var(--error);
+  --rood-bg: var(--error-soft);
+  --sh: var(--shadow-card);
+  --sh-lg: var(--shadow-float);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ONTWERP-COMPONENTEN v2.62 — herbruikbare bouwstenen (ds-* prefix)
+   Volgen exact het goedgekeurde ontwerp. Gebruikt door de nieuw op te
+   bouwen schermen; botsen niet met bestaande klassen.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Knoppen ── */
+.ds-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: 48px; padding: 0 22px; border-radius: var(--radius-md);
+  font: var(--text-label); font-size: 15px; cursor: pointer;
+  border: 1px solid transparent; text-decoration: none; transition: .13s;
+  white-space: nowrap;
+}
+.ds-btn-primair   { background: var(--accent); color: #fff; }
+.ds-btn-primair:hover { background: var(--accent-hover); }
+.ds-btn-secundair { background: var(--surface); color: var(--navy); border-color: var(--border-strong); }
+.ds-btn-secundair:hover { border-color: var(--navy); background: var(--bg-subtle); }
+.ds-btn-zacht     { background: var(--bg); color: var(--ink-soft); }
+.ds-btn-zacht:hover { background: var(--border); }
+.ds-btn-gevaar    { background: var(--error-soft); color: var(--error); border-color: #f0c9be; }
+.ds-btn-sm { height: 40px; padding: 0 16px; font-size: 14px; }
+.ds-btn-vol { width: 100%; }
+.ds-btn:disabled { opacity: .55; cursor: default; }
+
+/* ── Kaarten ── */
+.ds-kaart {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-card);
+}
+.ds-kaart-p { padding: var(--space-5); }
+.ds-kaart-navy {
+  background: linear-gradient(135deg, var(--navy), var(--navy-hover));
+  color: #fff; border: none;
+}
+
+/* ── Statusbadges (de zeven fases) ── */
+.ds-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font: var(--text-label); font-size: 12px; padding: 4px 11px;
+  border-radius: var(--radius-full);
+}
+.ds-badge-navy   { background: #e8f0f8; color: var(--navy); }
+.ds-badge-accent { background: var(--accent-soft); color: var(--accent); }
+.ds-badge-ok     { background: var(--ok-soft); color: var(--ok); }
+.ds-badge-warn   { background: var(--warn-soft); color: var(--warn); }
+.ds-badge-error  { background: var(--error-soft); color: var(--error); }
+.ds-badge-grijs  { background: var(--border); color: var(--ink-soft); }
+
+/* ── Formuliervelden ── */
+.ds-veld { display: flex; flex-direction: column; gap: 6px; }
+.ds-label { font: var(--text-label); color: var(--ink); }
+.ds-input, .ds-select, .ds-textarea {
+  height: 48px; padding: 0 14px; border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md); font: var(--text-body); font-size: 16px;
+  background: var(--surface); color: var(--ink); width: 100%;
+}
+.ds-textarea { height: auto; padding: 12px 14px; min-height: 90px; resize: vertical; }
+.ds-input:focus, .ds-select:focus, .ds-textarea:focus {
+  outline: none; border-color: var(--navy);
+  box-shadow: 0 0 0 3px rgba(5,77,138,.12);
+}
+.ds-veld-hint { font: var(--text-meta); color: var(--ink-muted); }
+
+/* ── Meldingen ── */
+.ds-melding {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 12px 14px; border-radius: var(--radius-md); font: var(--text-body); font-size: 14px;
+}
+.ds-melding .ic { flex-shrink: 0; margin-top: 1px; }
+.ds-melding-ok    { background: var(--ok-soft); color: var(--ok); }
+.ds-melding-warn  { background: var(--warn-soft); color: var(--warn); }
+.ds-melding-error { background: var(--error-soft); color: var(--error); }
+.ds-melding-info  { background: #e8f0f8; color: var(--navy); }
+
+/* ── Lege staat ── */
+.ds-leeg { text-align: center; padding: 32px 20px; color: var(--ink-soft); }
+.ds-leeg-icoon {
+  width: 52px; height: 52px; border-radius: var(--radius-lg);
+  background: var(--ok-soft); color: var(--ok);
+  display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;
+}
+.ds-leeg h3 { font: var(--text-subhead); color: var(--ink); margin-bottom: 4px; }
+
+/* ── Sectiekop ── */
+.ds-sectie-titel {
+  font: var(--text-label); font-size: 11px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--ink-muted);
+  margin: var(--space-6) 2px var(--space-3);
+}
+
+/* ── Taak-rij (klikbaar) ── */
+.ds-taak {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card); text-decoration: none; color: inherit;
+  margin-bottom: 10px;
+}
+.ds-taak-open { border-left: 3px solid var(--accent); }
+.ds-taak-icoon {
+  width: 40px; height: 40px; border-radius: 11px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.ds-taak-icoon.accent { background: var(--accent-soft); color: var(--accent); }
+.ds-taak-icoon.warn   { background: var(--warn-soft); color: var(--warn); }
+.ds-taak-icoon.ok     { background: var(--ok-soft); color: var(--ok); }
+.ds-taak-tekst { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.ds-taak-titel { display: block; font: var(--text-label); font-size: 14px; }
+.ds-taak-sub   { display: block; font: var(--text-meta); color: var(--ink-soft); }
+.ds-taak .ds-taak-chevron { color: var(--ink-muted); flex-shrink: 0; }
