@@ -3,10 +3,21 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.54.0');
+define('APP_VERSIE', '2.55.0');
 
 function app_changelog(): array {
     return [
+        '2.55.0' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Nieuwe inlogstroom: portaal als startpagina, keuze admin/portaal',
+            'punten' => [
+                'De oude landingspagina is vervangen: wie naar het systeem gaat, komt meteen op het inlogscherm',
+                'Sollicitanten en beheerders loggen in via hetzelfde scherm (e-mail); bekende mensen gaan via Authentik en OTP blijft de terugval',
+                'Wie zowel beheer- als portaaltoegang heeft, kiest na het inloggen waar hij heen wil — met een per-persoon voorkeur die onthouden wordt',
+                'Makkelijk wisselen tussen beheer en het eigen portaal via een knop, alleen zichtbaar als je beide rechten hebt',
+                'Beheerders kunnen nog steeds rechtstreeks naar /admin; alle wissels zijn beveiligd zodat niemand in een deel komt zonder recht',
+            ],
+        ],
         '2.54.0' => [
             'datum'  => '2026-08-21',
             'titel'  => 'Publieke API voor de website-koppeling (fase 1)',

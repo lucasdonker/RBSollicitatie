@@ -93,15 +93,28 @@ if (!$fout) {
     $q->execute([$email]);
     $sol = $q->fetch();
 
+    // Bepaal of deze persoon ook beheertoegang heeft. Zo ja → keuzescherm.
+    $heeft_beheer = false;
+    if (function_exists('toegang_bepaal')) {
+        $t = toegang_bepaal($email);
+        $heeft_beheer = $t['beheer'];
+    }
+
+    if ($heeft_beheer) {
+        // Dubbele toegang (of alleen beheer): laat het keuzescherm beslissen/routeren.
+        unset($_SESSION['portaal_sso_state'], $_SESSION['portaal_sso_email'], $_SESSION['otp_email']);
+        $_SESSION['toegang_email'] = $email;
+        redirect(APP_URL . '/kies.php');
+    }
+
     if (!$sol) {
-        // Geen bestaande sollicitatie — kan een nieuwe sollicitant zijn
-        // Voor nu: terug naar login met melding
+        // Geen bestaande sollicitatie én geen beheer — kan een nieuwe sollicitant zijn
         unset($_SESSION['portaal_sso_state'], $_SESSION['portaal_sso_email']);
         $_SESSION['portaal_flash'] = 'Je Authentik-account is herkend, maar er is nog geen sollicitatie. Vul eerst het aanmeldformulier in.';
         redirect(APP_URL . '/portaal/');
     }
 
-    // Login!
+    // Alleen sollicitant → gewoon inloggen zoals voorheen.
     login_portaal((int)$sol['sol_id'], $email);
     unset($_SESSION['portaal_sso_state'], $_SESSION['portaal_sso_email'], $_SESSION['otp_email']);
     redirect(APP_URL . '/portaal/');

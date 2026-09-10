@@ -175,6 +175,21 @@ if (function_exists('mag')) {
       <?= $_bhd['via'] === 'authentik' ? '🔐 Authentik SSO' : '🔑 Wachtwoord' ?>
     </div>
 
+    <?php
+      // Switch-knop naar het portaal — alleen als deze beheerder ook een sollicitatie heeft.
+      $_kan_portaal = false;
+      if (function_exists('toegang_bepaal') && !empty($_bhd['email'])) {
+          $_t = toegang_bepaal($_bhd['email']);
+          $_kan_portaal = $_t['portaal'];
+      }
+      if ($_kan_portaal):
+    ?>
+    <a href="<?= APP_URL ?>/wissel.php?naar=portaal"
+       style="display:block;color:rgba(255,255,255,.7);font-size:12px;text-decoration:none;margin-bottom:8px">
+      ↔ Naar mijn sollicitatie
+    </a>
+    <?php endif; ?>
+
     <a href="<?= APP_URL ?>/admin/uitloggen.php"
        style="color:rgba(255,255,255,.45);font-size:12px;text-decoration:none">Uitloggen</a>
   </div>

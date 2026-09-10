@@ -77,6 +77,9 @@ function db_verwachte_kolommen(): array {
             'gewijzigd_door' => 'INT DEFAULT NULL',
             'gewijzigd_op'   => 'DATETIME DEFAULT NULL',
         ],
+        'beheerders' => [
+            'standaard_ingang' => "VARCHAR(10) DEFAULT NULL",
+        ],
     ];
 }
 

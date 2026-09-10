@@ -1572,6 +1572,19 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
   <div style="text-align:center;margin-top:18px;padding-bottom:24px">
     <a href="<?= APP_URL ?>/portaal/gegevens.php" style="font-size:12px;color:var(--tekst-zacht);text-decoration:none">🔒 Mijn gegevens</a>
     &nbsp;·&nbsp;
+    <?php
+      // Switch naar beheer — alleen als deze sollicitant ook beheertoegang heeft.
+      $_kan_beheer = false;
+      $_p_email = $_SESSION['portaal_email'] ?? '';
+      if (function_exists('toegang_bepaal') && $_p_email) {
+          $_t = toegang_bepaal($_p_email);
+          $_kan_beheer = $_t['beheer'];
+      }
+      if ($_kan_beheer):
+    ?>
+    <a href="<?= APP_URL ?>/wissel.php?naar=beheer" style="font-size:12px;color:var(--tekst-zacht);text-decoration:none">↔ Naar beheer</a>
+    &nbsp;·&nbsp;
+    <?php endif; ?>
     <a href="<?= APP_URL ?>/portaal/?uitloggen=1" style="font-size:12px;color:var(--tekst-zacht);text-decoration:none">Uitloggen</a>
     &nbsp;·&nbsp;
     <a href="https://paal13.com" style="font-size:12px;color:var(--tekst-zacht);text-decoration:none">paal13.com</a>
