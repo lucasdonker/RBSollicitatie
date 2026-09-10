@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.60.0');
+define('APP_VERSIE', '2.61.0');
 
 function app_changelog(): array {
     return [
+        '2.61.0' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Foto-vergroter overal, wervingsoverzicht en mobiele verbeteringen',
+            'punten' => [
+                'Elke foto in het systeem (admin én portaal) is nu aanklikbaar om te vergroten — op desktop en mobiel, met sluiten via tik-buiten, kruisje of Escape',
+                'Nieuw wervingsoverzicht: per bron het aantal aanmeldingen en hoeveel daarvan zijn aangenomen',
+                'Mobiele verbeteringen: knoppen en velden groter en beter aan te raken, invoervelden zoomen niet meer ongewenst in op iPhone, brede tabellen scrollen netjes',
+                'Lange e-mailadressen breken nu netjes af in het kandidaatpaneel in plaats van de opmaak te verstoren',
+            ],
+        ],
         '2.60.0' => [
             'datum'  => '2026-08-21',
             'titel'  => 'Export van BLK-dossiers naar Excel en PDF',

@@ -127,4 +127,31 @@ function landing_stats(int $landing_id): array {
     return $uit;
 }
 
+/**
+ * Wervingsoverzicht: per bron hoeveel aanmeldingen en hoeveel daarvan aangenomen.
+ * Zo zie je aan het eind van de werving welke landingspagina/advertentie het meest
+ * heeft opgeleverd. Optioneel beperkt tot één seizoen.
+ */
+function landing_werving_overzicht(?int $seizoen_id = null): array {
+    try {
+        landing_auto_setup();
+        $db = db();
+        $where = "WHERE s.bron_code IS NOT NULL AND s.bron_code <> ''";
+        $args = [];
+        if ($seizoen_id) { $where .= " AND s.seizoen_id = ?"; $args[] = $seizoen_id; }
+        $q = $db->prepare("
+            SELECT COALESCE(s.bron_label, s.bron_code) AS bron,
+                   s.bron_code,
+                   COUNT(*) AS aanmeldingen,
+                   SUM(CASE WHEN s.fase = 'aangenomen' THEN 1 ELSE 0 END) AS aangenomen
+            FROM sollicitaties s
+            $where
+            GROUP BY s.bron_code, bron
+            ORDER BY aanmeldingen DESC
+        ");
+        $q->execute($args);
+        return $q->fetchAll();
+    } catch (\Exception $e) { return []; }
+}
+
 }

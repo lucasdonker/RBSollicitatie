@@ -191,6 +191,41 @@ if ($actie === 'bewerk' || $actie === 'nieuw'):
     </div>
 
     <?php $paginas = landing_alle(); ?>
+
+    <?php
+      // Wervingsoverzicht: per bron hoeveel aanmeldingen en aangenomen
+      $werving = function_exists('landing_werving_overzicht') ? landing_werving_overzicht() : [];
+      if ($werving):
+    ?>
+    <div style="background:var(--bg-card,#fff);border:1px solid var(--rand);border-radius:10px;padding:16px;margin-bottom:18px">
+      <div style="font-weight:600;font-size:15px;margin-bottom:4px">Wervingsoverzicht — waar komen aanmeldingen vandaan?</div>
+      <p style="font-size:12px;color:var(--tekst-zacht);margin:0 0 12px">Per bron het aantal aanmeldingen en hoeveel daarvan zijn aangenomen.</p>
+      <div class="tabel-scroll">
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead>
+            <tr style="border-bottom:1px solid var(--rand)">
+              <th style="text-align:left;padding:6px 8px">Bron</th>
+              <th style="text-align:right;padding:6px 8px">Aanmeldingen</th>
+              <th style="text-align:right;padding:6px 8px">Aangenomen</th>
+              <th style="text-align:right;padding:6px 8px">Conversie</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php foreach ($werving as $w):
+              $conv = $w['aanmeldingen'] > 0 ? round($w['aangenomen'] / $w['aanmeldingen'] * 100) : 0;
+            ?>
+            <tr style="border-bottom:1px solid var(--rand)">
+              <td style="padding:7px 8px"><?= h($w['bron']) ?></td>
+              <td style="text-align:right;padding:7px 8px"><?= (int)$w['aanmeldingen'] ?></td>
+              <td style="text-align:right;padding:7px 8px"><?= (int)$w['aangenomen'] ?></td>
+              <td style="text-align:right;padding:7px 8px;color:var(--tekst-zacht)"><?= $conv ?>%</td>
+            </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <?php endif; ?>
     <?php if (!$paginas): ?>
       <div style="padding:30px;text-align:center;color:var(--tekst-zacht);background:var(--bg-card,#fff);border:1px solid var(--rand);border-radius:10px">
         Nog geen landingspagina's. Maak er een aan voor je eerste doelgroep.

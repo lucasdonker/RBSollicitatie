@@ -597,5 +597,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (panelId) openPaneel(parseInt(panelId));
 });
 </script>
+<script src="<?= APP_URL ?>/assets/js/app.js?v=<?= @filemtime(__DIR__.'/../assets/js/app.js') ?>"></script>
 </body>
 </html>

@@ -242,5 +242,6 @@ body{background:var(--bg);min-height:100vh}
 <?php endif; ?>
 
 </div>
+<script src="<?= APP_URL ?>/assets/js/app.js?v=<?= @filemtime(__DIR__."/../assets/js/app.js") ?>"></script>
 </body>
 </html>

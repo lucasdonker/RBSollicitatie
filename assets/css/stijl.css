@@ -338,8 +338,8 @@ textarea { resize: vertical; min-height: 80px; }
 .paneel-header { background: var(--navy); padding: 18px 20px; color: #fff; }
 .paneel-sluiten { float: right; background: rgba(255,255,255,.15); border: none; color: #fff; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center; }
 .paneel-sluiten:hover { background: rgba(255,255,255,.25); }
-.paneel-naam  { font-size: 17px; font-weight: 700; margin-top: 10px; }
-.paneel-email { font-size: 12px; color: rgba(255,255,255,.6); margin-top: 2px; }
+.paneel-naam  { font-size: 17px; font-weight: 700; margin-top: 10px; word-break: break-word; }
+.paneel-email { font-size: 12px; color: rgba(255,255,255,.6); margin-top: 2px; word-break: break-all; overflow-wrap: anywhere; }
 .paneel-body  { padding: 20px; }
 .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
 .info-item label { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--grijs); display: block; margin-bottom: 2px; }
@@ -827,3 +827,51 @@ table.tabel td, table.tabel th { overflow-wrap: normal; word-break: normal; }
 }
 .hulp-paneel.open { display: block; }
 @media (max-width: 900px) { .hulp-paneel { margin: 0 12px; } }
+
+/* ── Universele foto-vergroter (lightbox) ───────────────────────── */
+#p13-lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .85);
+  z-index: 10000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  -webkit-tap-highlight-color: transparent;
+}
+#p13-lightbox img {
+  max-width: 100%;
+  max-height: 90vh;
+  border-radius: 8px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, .5);
+  object-fit: contain;
+}
+.p13-lightbox-sluit {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: rgba(255, 255, 255, .15);
+  color: #fff;
+  font-size: 28px;
+  line-height: 1;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.p13-lightbox-sluit:hover { background: rgba(255, 255, 255, .28); }
+
+/* ── Mobiele aanraak-verbeteringen (systeembreed) ───────────────── */
+@media (max-width: 768px) {
+  /* Knoppen en links groot genoeg om met een vinger te raken (min. 44px) */
+  .btn, button, .nav-link, .tab, select, input[type="checkbox"], input[type="radio"] {
+    min-height: 44px;
+  }
+  .btn.btn-sm { min-height: 38px; }
+  /* Voorkom in-zoomen bij focus op iOS: invoervelden minstens 16px */
+  input, select, textarea { font-size: 16px; }
+  /* Tabellen die te breed zijn horizontaal scrollbaar maken i.p.v. de pagina te breken */
+  .tabel-scroll, .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
