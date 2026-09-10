@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.62.0');
+define('APP_VERSIE', '2.63.0');
 
 function app_changelog(): array {
     return [
+        '2.63.0' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Nieuw inlogscherm (stap 2 van de herbouw)',
+            'punten' => [
+                'Het inlogscherm van het portaal is opnieuw opgebouwd in de nieuwe ontwerpstijl: e-mailadres invoeren en de code van zes cijfers, rustig en app-achtig',
+                'Dezelfde werking als voorheen (e-mail bepaalt de route: code per mail of doorsturen naar het account); alleen de vormgeving is nieuw',
+                'Foutmelding bij een onjuiste code netjes in de nieuwe stijl',
+            ],
+        ],
         '2.62.0' => [
             'datum'  => '2026-08-21',
             'titel'  => 'Nieuw ontwerp-fundament (stap 1 van de herbouw)',

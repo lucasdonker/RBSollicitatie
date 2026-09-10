@@ -1182,3 +1182,45 @@ table.tabel td, table.tabel th { overflow-wrap: normal; word-break: normal; }
 .ds-taak-titel { display: block; font: var(--text-label); font-size: 14px; }
 .ds-taak-sub   { display: block; font: var(--text-meta); color: var(--ink-soft); }
 .ds-taak .ds-taak-chevron { color: var(--ink-muted); flex-shrink: 0; }
+
+/* ── Portaal inlogscherm (nieuw ontwerp) ────────────────────────── */
+.ds-login {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 8px 4px;
+}
+.ds-login-kop { text-align: center; margin-bottom: 24px; }
+.ds-login-logo {
+  width: 60px; height: 60px; margin: 0 auto 16px;
+  border-radius: var(--radius-xl);
+  background: var(--navy); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+}
+.ds-login-kop h1 { font: var(--text-title); color: var(--ink); margin-bottom: 6px; }
+.ds-login-kop p { font: var(--text-body); color: var(--ink-soft); max-width: 340px; margin: 0 auto; }
+.ds-login-form { display: flex; flex-direction: column; gap: 16px; }
+.ds-login-voet {
+  text-align: center; margin-top: 18px;
+  font: var(--text-meta); color: var(--ink-soft);
+}
+.ds-login-voet a { color: var(--accent); text-decoration: none; font-weight: 600; }
+.ds-login-voet a:hover { text-decoration: underline; }
+
+/* 6-cijfer code-invoer */
+.ds-code-inputs {
+  display: flex; gap: 8px; justify-content: center;
+}
+.ds-code-cijfer {
+  width: 48px; height: 58px; text-align: center;
+  font-size: 24px; font-weight: 600; color: var(--ink);
+  border: 1px solid var(--border-strong); border-radius: var(--radius-md);
+  background: var(--surface);
+}
+.ds-code-cijfer:focus {
+  outline: none; border-color: var(--navy);
+  box-shadow: 0 0 0 3px rgba(5,77,138,.12);
+}
+@media (max-width: 380px) {
+  .ds-code-cijfer { width: 42px; height: 52px; font-size: 21px; }
+  .ds-code-inputs { gap: 6px; }
+}

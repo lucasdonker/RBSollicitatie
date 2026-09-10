@@ -681,40 +681,54 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
   <?php endif; ?>
 
 <?php if ($stap === 'login'): ?>
-  <div class="login-portaal">
-    <h2>Inloggen</h2>
-    <p class="sub">Vul je e-mailadres in.<?= authentik_actief() ? ' Heb je al een Authentik account, dan log je daarmee in. Anders krijg je een inlogcode per mail.' : ' Je ontvangt een 6-cijferige inlogcode.' ?></p>
-    <form method="POST" onsubmit="this.querySelector('button[type=submit]').disabled=true; this.querySelector('button[type=submit]').innerHTML='Versturen…';">
+  <div class="ds-login">
+    <div class="ds-login-kop">
+      <div class="ds-login-logo"><?= icoon('golf', 26) ?></div>
+      <h1>Welkom terug</h1>
+      <p>Vul je e-mailadres in. <?= authentik_actief()
+        ? 'Heb je al een Paal 13-account, dan sturen we je automatisch door. Anders krijg je een code van zes cijfers.'
+        : 'Je krijgt een code van zes cijfers om in te loggen.' ?></p>
+    </div>
+    <form method="POST" class="ds-login-form" onsubmit="this.querySelector('button[type=submit]').disabled=true; this.querySelector('button[type=submit]').innerHTML='Versturen…';">
       <?= csrf_input() ?>
       <input type="hidden" name="email_submit" value="1">
-      <div class="form-groep">
-        <label>E-mailadres</label>
-        <input type="email" name="email" required autofocus autocomplete="email"
+      <div class="ds-veld">
+        <label class="ds-label">E-mailadres</label>
+        <input type="email" name="email" required autofocus autocomplete="email" class="ds-input"
                value="<?= h($_POST['email'] ?? '') ?>" placeholder="jou@voorbeeld.nl">
-        <div class="form-hulp">Waarmee je je hebt aangemeld bij Paal 13</div>
+        <div class="ds-veld-hint">Waarmee je je hebt aangemeld bij Paal 13</div>
       </div>
-      <button type="submit" class="btn btn-primary btn-lg" style="width:100%;justify-content:center">Code versturen →</button>
+      <button type="submit" class="ds-btn ds-btn-primair ds-btn-vol">Doorgaan</button>
     </form>
+    <div class="ds-login-voet">
+      Nog niet aangemeld? <a href="<?= APP_URL ?>/aanmelden.php">Meld je aan</a>
+    </div>
   </div>
 
 <?php elseif ($stap === 'code'): ?>
-  <div class="login-portaal">
-    <h2>Code invoeren</h2>
-    <p class="sub">We stuurden een code naar <strong><?= h($_SESSION['otp_email'] ?? '') ?></strong>. Check ook spam.</p>
-    <form method="POST" id="codeForm">
+  <div class="ds-login">
+    <div class="ds-login-kop">
+      <div class="ds-login-logo"><?= icoon('mail', 26) ?></div>
+      <h1>Code invoeren</h1>
+      <p>We hebben zes cijfers gestuurd naar <strong><?= h($_SESSION['otp_email'] ?? '') ?></strong>. Check ook je spam-map.</p>
+    </div>
+    <?php if (!empty($fout)): ?>
+    <div class="ds-melding ds-melding-error" style="margin-bottom:14px"><?= icoon('let-op', 18) ?> <div><strong>Code onjuist.</strong> <?= h($fout) ?></div></div>
+    <?php endif; ?>
+    <form method="POST" id="codeForm" class="ds-login-form">
       <?= csrf_input() ?>
       <input type="hidden" name="code_submit" value="1">
       <input type="hidden" name="code" id="codeHidden">
-      <div class="code-inputs">
+      <div class="ds-code-inputs">
         <?php for ($i = 0; $i < 6; $i++): ?>
-        <input type="text" inputmode="numeric" pattern="[0-9]" maxlength="1" class="code-cijfer"
+        <input type="text" inputmode="numeric" pattern="[0-9]" maxlength="1" class="code-cijfer ds-code-cijfer"
                autocomplete="<?= $i === 0 ? 'one-time-code' : 'off' ?>">
         <?php endfor; ?>
       </div>
-      <button type="submit" class="btn btn-primary btn-lg" style="width:100%;justify-content:center" id="submitBtn" disabled>Inloggen →</button>
+      <button type="submit" class="ds-btn ds-btn-primair ds-btn-vol" id="submitBtn" disabled>Inloggen</button>
     </form>
-    <div style="text-align:center;margin-top:14px;font-size:13px">
-      <a href="<?= APP_URL ?>/portaal/" style="color:var(--oranje)">← Ander e-mailadres</a>
+    <div class="ds-login-voet">
+      <a href="<?= APP_URL ?>/portaal/">← Ander e-mailadres</a>
     </div>
   </div>
   <script>
@@ -726,29 +740,37 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
   });
   function upd() { const c=Array.from(inp).map(i=>i.value).join(''); h.value=c; b.disabled=c.length!==6; if(c.length===6)b.focus(); }
   inp[0].focus();
-  </script>
 
-<?php elseif ($stap === 'dossier' && $sol): ?>
 
   <!-- Voortgang -->
   <?php if ($sol['fase'] !== 'afgewezen'): ?>
-  <div class="voortgang">
+  <div class="vg2">
     <?php $vg=[['aangemeld','Aangemeld'],['uitgenodigd_selectie','Selectiedag'],['selectiedag_geweest','Na selectie'],['uitgenodigd_tw','Training'],['aangenomen','Aangenomen']];
     $fi=array_search($sol['fase'],$fases_volgorde);
-    foreach($vg as [$sf,$sl]):
+    foreach($vg as $idx => [$sf,$sl]):
       $si=array_search($sf,$fases_volgorde);
       $in_this=in_array($sol['fase'],[$sf,$sf==='uitgenodigd_selectie'?'aangemeld_selectie':''],true);
       $cls=($fi!==false&&$si<$fi)?'gedaan':($in_this?'actief':''); ?>
-    <div class="vg-stap <?=$cls?>"><div class="vg-bol"><?=$cls==='gedaan'?'✓':($cls==='actief'?'→':'·')?></div><div class="vg-label"><?=h($sl)?></div></div>
+    <div class="vg2-stap <?=$cls?>">
+      <div class="vg2-bol"><?= $cls==='gedaan' ? icoon('vink', 13) : '' ?></div>
+      <div class="vg2-label"><?=h($sl)?></div>
+      <?php if ($idx < count($vg)-1): ?><div class="vg2-lijn"></div><?php endif; ?>
+    </div>
     <?php endforeach; ?>
   </div>
   <?php endif; ?>
 
   <!-- Status banners -->
   <?php
-  $banner_map=['afgewezen'=>['rood','❌ Niet geselecteerd','Na zorgvuldige beoordeling nemen we je dit seizoen niet verder mee.'],'aangenomen'=>['ok','🎉 Welkom bij Paal 13!','Je bent aangenomen! Je ontvangt binnenkort meer informatie.'],'aangemeld'=>['wacht','✅ Aanmelding ontvangen','We bekijken alle aanmeldingen en nemen contact op als je wordt uitgenodigd.'.($sol['terugkerend']?' Welkom terug!':'')],'selectiedag_geweest'=>['wacht','⏳ Beslissing volgt','Je was aanwezig op de selectiedag. Het bestuur bespreekt de resultaten.'],'tw_geweest'=>['wacht','⏳ Na het trainingsweekend','Het bestuur bespreekt de resultaten. Je ontvangt bericht.']];
-  if(isset($banner_map[$sol['fase']])):[$type,$titel,$tekst]=$banner_map[$sol['fase']]; ?>
-  <div class="banner banner-<?=$type?>"><h2><?=$titel?></h2><p><?=$tekst?></p></div>
+  $banner_map=[
+    'afgewezen'=>['rood','kruis-cirkel','Niet geselecteerd','Na zorgvuldige beoordeling nemen we je dit seizoen niet verder mee.'],
+    'aangenomen'=>['ok','feest','Welkom bij Paal 13!','Je bent aangenomen! Je ontvangt binnenkort meer informatie.'],
+    'aangemeld'=>['wacht','vink-cirkel','Aanmelding ontvangen','We bekijken alle aanmeldingen en nemen contact op als je wordt uitgenodigd.'.($sol['terugkerend']?' Welkom terug!':'')],
+    'selectiedag_geweest'=>['wacht','wachten','Beslissing volgt','Je was aanwezig op de selectiedag. Het bestuur bespreekt de resultaten.'],
+    'tw_geweest'=>['wacht','wachten','Na het trainingsweekend','Het bestuur bespreekt de resultaten. Je ontvangt bericht.'],
+  ];
+  if(isset($banner_map[$sol['fase']])):[$type,$ic,$titel,$tekst]=$banner_map[$sol['fase']]; ?>
+  <div class="banner banner-<?=$type?>"><h2><?= icoon($ic, 20) ?> <?=h($titel)?></h2><p><?=h($tekst)?></p></div>
   <?php endif; ?>
 
   <?php
@@ -793,17 +815,17 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
 
   <?php if(in_array($sol['fase'],['uitgenodigd_selectie','aangemeld_selectie'])): ?>
   <div class="banner banner-actie">
-    <h2>🏖️ Uitgenodigd voor de selectiedag!</h2>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px">
-      <?php if($sol['datum_selectiedag']): ?><div class="detail" style="margin:0"><strong>📅 Datum:</strong> <?=datum_nl($sol['datum_selectiedag'])?></div><?php endif; ?>
-      <?php $v = $sol['selectiedag_verzameltijd'] ?? null; if($v): ?><div class="detail" style="margin:0"><strong>🕗 Verzamelen:</strong> <?=h($v)?> uur</div><?php endif; ?>
-      <?php if($sol['locatie_selectiedag']): ?><div class="detail" style="margin:0"><strong>📍 Locatie:</strong> <?=h($sol['locatie_selectiedag'])?></div><?php endif; ?>
-      <?php $s = $sol['selectiedag_starttijd'] ?? null; if($s): ?><div class="detail" style="margin:0"><strong>🕙 Start:</strong> <?=h($s)?> uur</div><?php endif; ?>
+    <h2><?= icoon('strand', 20) ?> Uitgenodigd voor de selectiedag</h2>
+    <div class="info-grid" style="margin-top:12px">
+      <?php if($sol['datum_selectiedag']): ?><div class="info-item"><span class="ii-ic"><?= icoon('kalender', 16) ?></span><div><span class="ii-l">Datum</span><span class="ii-v"><?=datum_nl($sol['datum_selectiedag'])?></span></div></div><?php endif; ?>
+      <?php $v = $sol['selectiedag_verzameltijd'] ?? null; if($v): ?><div class="info-item"><span class="ii-ic"><?= icoon('klok', 16) ?></span><div><span class="ii-l">Verzamelen</span><span class="ii-v"><?=h($v)?> uur</span></div></div><?php endif; ?>
+      <?php if($sol['locatie_selectiedag']): ?><div class="info-item"><span class="ii-ic"><?= icoon('reddingsboei', 16) ?></span><div><span class="ii-l">Locatie</span><span class="ii-v"><?=h($sol['locatie_selectiedag'])?></span></div></div><?php endif; ?>
+      <?php $s = $sol['selectiedag_starttijd'] ?? null; if($s): ?><div class="info-item"><span class="ii-ic"><?= icoon('klok', 16) ?></span><div><span class="ii-l">Start</span><span class="ii-v"><?=h($s)?> uur</span></div></div><?php endif; ?>
     </div>
     <?php if($sol['fase']==='uitgenodigd_selectie'): ?>
-    <div style="margin-top:10px;font-size:13px;color:var(--tekst-zacht)">👆 Vergeet niet het formulier hieronder in te vullen voor de selectiedag!</div>
+    <div class="info-melding info-melding-actie" style="margin-top:12px"><?= icoon('info', 15) ?> Vergeet niet het formulier hieronder in te vullen voor de selectiedag.</div>
     <?php elseif($sol['fase']==='aangemeld_selectie'): ?>
-    <div style="margin-top:10px;font-size:13px;color:var(--groen)">✅ Jouw formulier is ontvangen. Tot de selectiedag!</div>
+    <div class="info-melding info-melding-ok" style="margin-top:12px"><?= icoon('vink', 15) ?> Jouw formulier is ontvangen. Tot de selectiedag!</div>
     <?php endif; ?>
 
   <?php
