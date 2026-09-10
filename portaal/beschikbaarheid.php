@@ -56,38 +56,23 @@ $dgn_tot = $deadline ? (int)floor(($deadline->getTimestamp() - strtotime('today'
 
 $logo = function_exists('site_logo_url') ? (site_logo_url() ?: '') : '';
 $dagnamen = ['',' maandag','dinsdag','woensdag','donderdag','vrijdag','zaterdag','zondag'];
+$portaal_titel = 'Mijn beschikbaarheid';
+$portaal_nav = 'start';
+require __DIR__ . '/_kop.php';
 ?>
-<!DOCTYPE html>
-<html lang="nl" data-theme="">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Mijn beschikbaarheid — Paal 13</title>
-<link rel="stylesheet" href="<?= APP_URL ?>/assets/css/stijl.css">
-<script>(function(){var t=localStorage.getItem('paal13-theme')||'light';document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'');})();</script>
 <style>
-body{background:var(--bg);min-height:100vh}
-.wrap{max-width:640px;margin:0 auto;padding:24px 16px 48px}
-.bk-card{background:var(--bg-card);border:1px solid var(--rand);border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:var(--shadow)}
-.bk-card h2{margin-top:0;font-size:16px;font-weight:600}
-.bk-rij{padding:8px 0;border-bottom:1px solid var(--rand-licht);font-size:13.5px;line-height:1.6}
+.bk-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:16px;box-shadow:var(--shadow-card)}
+.bk-card h2{margin-top:0;font:var(--text-subhead)}
+.bk-rij{padding:8px 0;border-bottom:1px solid var(--rand-2);font-size:14px;line-height:1.6}
 .bk-rij:last-child{border-bottom:none}
-.badge{display:inline-block;font-size:11px;font-weight:700;color:#fff;padding:3px 10px;border-radius:5px}
+.badge{display:inline-block;font-size:11px;font-weight:700;color:#fff;padding:3px 10px;border-radius:var(--radius-sm)}
 </style>
-</head>
-<body>
-<div class="wrap">
 
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;gap:12px;flex-wrap:wrap">
-    <a href="<?= APP_URL ?>/portaal/" class="btn btn-outline btn-sm">← Terug naar portaal</a>
-    <?php if ($logo): ?><img src="<?= h($logo) ?>" alt="Paal 13" style="height:32px"><?php endif; ?>
-  </div>
-
-  <h1 style="font-size:22px;margin-bottom:6px">Mijn beschikbaarheid</h1>
-  <p style="color:var(--tekst-zacht);font-size:13px;margin-bottom:20px">Dit is wat wij van jou begrepen hebben voor seizoen <?= h($mij['seizoen_naam']) ?>. Zo gebruiken we het voor de planning.</p>
+  <h1 style="font:var(--text-title);margin-bottom:6px">Mijn beschikbaarheid</h1>
+  <p style="color:var(--ink-soft);font-size:14px;margin-bottom:20px">Dit is wat wij van jou begrepen hebben voor seizoen <?= h($mij['seizoen_naam']) ?>. Zo gebruiken we het voor de planning.</p>
 
   <?php if ($flash_ok): ?>
-    <div style="margin-bottom:16px;padding:12px 16px;background:var(--groen-bg);border-left:3px solid var(--groen);border-radius:6px;font-size:13.5px;color:var(--groen)">✓ <?= h($flash_ok) ?></div>
+    <div class="ds-melding ds-melding-ok" style="margin-bottom:16px"><?= icoon('vink', 18) ?> <?= h($flash_ok) ?></div>
   <?php endif; ?>
   <?php if ($flash_fout): ?>
     <div style="margin-bottom:16px;padding:12px 16px;background:var(--rood-bg);border-left:3px solid var(--rood);border-radius:6px;font-size:13.5px;color:var(--rood)">⚠️ <?= h($flash_fout) ?></div>
@@ -97,7 +82,7 @@ body{background:var(--bg);min-height:100vh}
     <div class="bk-card" style="text-align:center;padding:32px 20px">
       <div style="font-size:32px;margin-bottom:8px">📋</div>
       <p style="font-size:14px;margin-bottom:16px">Je hebt nog geen beschikbaarheid doorgegeven.</p>
-      <a href="<?= APP_URL ?>/portaal/#blk" class="btn btn-primary">Beschikbaarheid invullen</a>
+      <a href="<?= APP_URL ?>/portaal/#blk" class="ds-btn ds-btn-primair">Beschikbaarheid invullen</a>
     </div>
   <?php else: ?>
 
@@ -115,14 +100,14 @@ body{background:var(--bg);min-height:100vh}
           <br><span style="color:var(--tekst-zacht);font-size:12.5px">Werk je het niet bij, dan gebruiken we je huidige invoer automatisch vanaf 2 weken vóór het trainingsweekend.</span>
         </p>
       <?php else: ?>
-        <span class="badge" style="background:var(--groen)">✓ DEFINITIEF</span>
+        <span class="ds-badge ds-badge-ok"><?= icoon("vink", 13) ?> Definitief</span>
         <p style="font-size:13.5px;margin:10px 0 0;color:var(--tekst-zacht)">Je beschikbaarheid is definitief<?= !empty($b2p['definitief_op']) ? ' sinds ' . h(datum_nl($b2p['definitief_op'])) : '' ?>. Je kunt hem nog steeds aanpassen als er iets wijzigt.</p>
       <?php endif; ?>
     </div>
 
     <!-- Samenvatting in mensentaal -->
     <div class="bk-card">
-      <h2>📅 Wanneer je kunt werken</h2>
+      <h2><?= icoon("kalender", 18) ?> Wanneer je kunt werken</h2>
       <?php foreach ($b2['blokken'] as $blok): ?>
         <div class="bk-rij">
           <strong><?= h($wk_label($blok['van_week'])) ?> t/m <?= h($wk_label($blok['tot_week'])) ?></strong> —
@@ -166,7 +151,7 @@ body{background:var(--bg);min-height:100vh}
       <?php foreach ($b2['verzoeken'] as $vz):
         $st = $vz['status'];
         $st_kleur = $st === 'goedgekeurd' ? 'var(--groen)' : ($st === 'afgewezen' ? 'var(--rood)' : 'var(--oranje)');
-        $st_tekst = $st === 'goedgekeurd' ? '✓ goedgekeurd' : ($st === 'afgewezen' ? '✕ afgewezen' : '⏳ in behandeling');
+        $st_tekst = $st === 'goedgekeurd' ? 'goedgekeurd' : ($st === 'afgewezen' ? 'afgewezen' : 'in behandeling');
       ?>
         <div class="bk-rij">
           <strong><?= h($wk_label($vz['van_week'])) ?> t/m <?= h($wk_label($vz['tot_week'])) ?></strong>: <?= (int)$vz['dagen_aantal'] ?> dagen/week
@@ -198,18 +183,16 @@ body{background:var(--bg);min-height:100vh}
 
     <!-- Acties -->
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px">
-      <a href="<?= APP_URL ?>/portaal/#blk" class="btn btn-outline" style="flex:1;min-width:140px;text-align:center">✏️ Aanpassen</a>
+      <a href="<?= APP_URL ?>/portaal/#blk" class="ds-btn ds-btn-secundair" style="flex:1;min-width:140px"><?= icoon("potlood", 16) ?> Aanpassen</a>
       <?php if ($voorlopig): ?>
       <form method="POST" style="flex:1;min-width:140px;margin:0">
         <?= csrf_input() ?>
         <input type="hidden" name="actie" value="definitief">
-        <button type="submit" class="btn btn-primary" style="width:100%" onclick="return confirm('Weet je zeker dat je beschikbaarheid klopt en definitief mag?')">✓ Definitief maken</button>
+
       </form>
       <?php endif; ?>
     </div>
 
   <?php endif; ?>
 
-</div>
-</body>
-</html>
+<?php require __DIR__ . '/_voet.php'; ?>

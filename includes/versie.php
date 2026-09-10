@@ -3,10 +3,18 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.64.5');
+define('APP_VERSIE', '2.64.6');
 
 function app_changelog(): array {
     return [
+        '2.64.6' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Beschikbaarheid en ondertekenen in de nieuwe stijl',
+            'punten' => [
+                'De beschikbaarheid-pagina gebruikt nu de gedeelde portaal-layout met navigatie, in de nieuwe stijl — het overzicht zelf blijft ongewijzigd',
+                'De ondertekenen-pagina is opgeschoond naar de nieuwe stijl (lijn-iconen, nette knoppen); het handtekening-vak volgt in een aparte stap',
+            ],
+        ],
         '2.64.5' => [
             'datum'  => '2026-08-21',
             'titel'  => 'Taken definitief in de ontwerpstijl',

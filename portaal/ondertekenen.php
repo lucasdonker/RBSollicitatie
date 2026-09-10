@@ -224,14 +224,14 @@ body { background:var(--bg); min-height:100vh; }
 
 <?php if (isset($_GET['klaar']) || $is_ondertekend): ?>
   <div class="klaar-melding">
-    <h2 style="margin:0 0 8px">✓ Bedankt voor het ondertekenen</h2>
+    <h2 style="margin:0 0 8px"><?= icoon("vink-cirkel", 20) ?> Bedankt voor het ondertekenen</h2>
     <p style="margin:0;color:inherit">
       We hebben de ondertekening ontvangen op <?= h(datum_nl(substr($rec['ondertekend_op'] ?? date('Y-m-d'), 0, 10))) ?>.
       Er is een bevestiging naar het bestuur gestuurd.
     </p>
     <?php if ($rec['ondertekenaar_rol'] === 'sollicitant'): ?>
     <p style="margin-top:16px">
-      <a href="<?= APP_URL ?>/portaal/" class="btn btn-primary">← Terug naar het portaal — bekijk je overige taken</a>
+      <a href="<?= APP_URL ?>/portaal/" class="ds-btn ds-btn-primair">Terug naar het portaal</a>
     </p>
     <?php else: ?>
     <p style="margin-top:14px;font-size:12px;color:var(--tekst-zacht)">
@@ -474,8 +474,8 @@ body { background:var(--bg); min-height:100vh; }
         📌 Bij het versturen worden je naam, IP-adres, browsergegevens en tijdstip vastgelegd als digitale handtekening (juridisch geldig conform eIDAS voor niet-notariële zaken).
       </div>
 
-      <button type="submit" class="btn btn-primary btn-lg" style="width:100%;margin-top:16px">
-        <span class="btn-tekst">✍️ Digitaal ondertekenen</span>
+      <button type="submit" class="ds-btn ds-btn-primair ds-btn-vol" style="margin-top:16px">
+        <span class="btn-tekst">Digitaal ondertekenen</span>
         <span class="btn-spinner" style="display:none">⏳ Bezig met ondertekenen…</span>
       </button>
     </form>
