@@ -5,14 +5,34 @@ $db=db(); $seizoen=actief_seizoen();
 $open=$seizoen&&$seizoen['status']==='open';
 $fout=''; $succes=false;
 
+// Bron-attributie: waar komt deze bezoeker vandaan? (landingspagina/advertentie)
+// Komt binnen via ?bron=... (of in de POST, zodat hij door de hele flow meereist).
+$bron_code = substr(trim((string)($_POST['bron_code'] ?? $_GET['bron'] ?? '')), 0, 80);
+$ingebed = !empty($_GET['ingebed']);
+
 if($_SERVER['REQUEST_METHOD']==='POST'&&$open){
     csrf_check();
-    // Verwerk via de gedeelde bron van waarheid (zelfde logica als de API).
-    $resultaat = sollicitatie_aanmaken($_POST, ['ip'=>$_SERVER['REMOTE_ADDR']??'', 'via'=>'website_formulier']);
+    // Bron meegeven aan de gedeelde bron van waarheid.
+    $invoer = $_POST;
+    if ($bron_code !== '') {
+        $invoer['bron_code'] = $bron_code;
+        if (function_exists('landing_via_bron')) {
+            $lp = landing_via_bron($bron_code);
+            if ($lp) $invoer['bron_label'] = $lp['titel'] ?? $bron_code;
+        }
+    }
+    $resultaat = sollicitatie_aanmaken($invoer, ['ip'=>$_SERVER['REMOTE_ADDR']??'', 'via'=>'website_formulier']);
     if ($resultaat['ok']) {
         $succes = true;
     } else {
         $fout = $resultaat['fout'];
+    }
+} elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && $open && $bron_code !== '') {
+    // Formulier geopend vanaf een landingspagina → tel als "formulier gestart" (anoniem).
+    if (function_exists('landing_track')) {
+        $landing_id = null;
+        if (function_exists('landing_via_bron')) { $lp = landing_via_bron($bron_code); $landing_id = $lp['id'] ?? null; }
+        landing_track('formulier_start', $landing_id, $bron_code);
     }
 }
 ?>
@@ -58,6 +78,7 @@ body{background:#001530;min-height:100vh;display:flex;align-items:center;justify
     <p style="font-size:13px;color:var(--tekst-zacht);margin-bottom:18px">Meld je aan voor de selectieprocedure <?=h($seizoen['naam']??'')?></p>
     <form method="POST">
       <?= csrf_input() ?>
+      <?php if ($bron_code !== ''): ?><input type="hidden" name="bron_code" value="<?= h($bron_code) ?>"><?php endif; ?>
       <div class="form-rij">
         <div class="form-groep"><label>Voornaam <span class="vereist">*</span></label><input type="text" name="voornaam" value="<?=h($_POST['voornaam']??'')?>" required autocomplete="given-name"></div>
         <div class="form-groep"><label>Tussenvoegsel</label><input type="text" name="tussenvoegsel" value="<?=h($_POST['tussenvoegsel']??'')?>"></div>

@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.56.0');
+define('APP_VERSIE', '2.57.0');
 
 function app_changelog(): array {
     return [
+        '2.57.0' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Landingspagina\'s met werving-tracking',
+            'punten' => [
+                'Nieuw: maak eigen landingspagina\'s met vrije HTML en CSS, met een live voorbeeld en het aanmeldformulier op de plek van [[formulier]]',
+                'Elke pagina heeft een status: concept, alleen voor admins zichtbaar, of gepubliceerd — zo kun je pagina\'s voorbereiden of tijdelijk uitzetten',
+                'Anonieme tracking per pagina: unieke bezoekers, bezoeken, hoeveel het formulier starten en hoeveel het afmaken (met conversiepercentages)',
+                'Herkomst-attributie: bij een aanmelding wordt vastgelegd via welke pagina/bron iemand binnenkwam, zodat je aan het eind ziet waar aangenomen mensen vandaan kwamen — ongeacht of ze via de website of een platform-landingspagina kwamen',
+            ],
+        ],
         '2.56.0' => [
             'datum'  => '2026-08-21',
             'titel'  => 'Systeemgezondheid: zelfcontrole en -reparatie',

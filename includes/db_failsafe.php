@@ -80,6 +80,10 @@ function db_verwachte_kolommen(): array {
         'beheerders' => [
             'standaard_ingang' => "VARCHAR(10) DEFAULT NULL",
         ],
+        'sollicitaties' => [
+            'bron_code'  => 'VARCHAR(80) DEFAULT NULL',
+            'bron_label' => 'VARCHAR(150) DEFAULT NULL',
+        ],
     ];
 }
 
@@ -111,6 +115,7 @@ function db_failsafe(): void {
         'rechten_auto_setup',
         'beschikbaarheid_dag_auto_setup',
         'audit_dag_auto_setup',
+        'landing_auto_setup',
     ];
     foreach ($setups as $fn) {
         if (function_exists($fn)) {

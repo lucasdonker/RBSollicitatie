@@ -73,10 +73,30 @@ function sollicitatie_aanmaken(array $in, array $context = []): array {
     $ouder_op = ($leeftijd < 16) ? date('Y-m-d H:i:s') : null;
     $ouder_naam_val = ($leeftijd < 16) ? ($ouder_naam ?: null) : null;
 
-    $db->prepare("INSERT INTO sollicitaties (persoon_id,seizoen_id,terugkerend,portaal_token,privacy_akkoord_op,privacy_versie,privacy_ip,ouder_toestemming_op,ouder_toestemming_naam)
-                  VALUES(?,?,?,?,?,?,?,?,?)")
-       ->execute([$pid, $seizoen['id'], $ter, $token, date('Y-m-d H:i:s'), PRIVACY_VERSIE, $ip, $ouder_op, $ouder_naam_val]);
+    // Bron-attributie: waar kwam deze aanmelding vandaan? (landingspagina/advertentie)
+    $bron_code  = isset($in['bron_code'])  ? substr(trim((string)$in['bron_code']), 0, 80)   : null;
+    $bron_label = isset($in['bron_label']) ? substr(trim((string)$in['bron_label']), 0, 150) : null;
+
+    // Zorg dat de bron-kolommen bestaan (failsafe-stijl), dan pas invoegen.
+    if (function_exists('db_kolom_verzeker')) {
+        db_kolom_verzeker($db, 'sollicitaties', 'bron_code', 'VARCHAR(80) DEFAULT NULL');
+        db_kolom_verzeker($db, 'sollicitaties', 'bron_label', 'VARCHAR(150) DEFAULT NULL');
+    }
+
+    $db->prepare("INSERT INTO sollicitaties (persoon_id,seizoen_id,terugkerend,portaal_token,privacy_akkoord_op,privacy_versie,privacy_ip,ouder_toestemming_op,ouder_toestemming_naam,bron_code,bron_label)
+                  VALUES(?,?,?,?,?,?,?,?,?,?,?)")
+       ->execute([$pid, $seizoen['id'], $ter, $token, date('Y-m-d H:i:s'), PRIVACY_VERSIE, $ip, $ouder_op, $ouder_naam_val, $bron_code, $bron_label]);
     $sid = (int)$db->lastInsertId();
+
+    // Tel de formulier-afronding mee voor de landingspagina-statistiek (anoniem).
+    if (function_exists('landing_track') && $bron_code) {
+        $landing_id = null;
+        if (function_exists('landing_via_bron')) {
+            $lp = landing_via_bron($bron_code);
+            $landing_id = $lp['id'] ?? null;
+        }
+        landing_track('formulier_klaar', $landing_id, $bron_code);
+    }
 
     // Bevestigingsmail naar sollicitant (template met vangnet)
     $purl = APP_URL . '/portaal/?token=' . $token;
