@@ -1319,3 +1319,7 @@ table.tabel td, table.tabel th { overflow-wrap: normal; word-break: normal; }
   .pt-nav-item.actief { background: var(--navy); color: #fff; }
   .pt-nav-item.actief .ic { stroke: #fff; }
 }
+
+/* Portaal met onderbalk: ruimte onderaan zodat content niet achter de balk valt */
+body.heeft-nav { padding-bottom: 84px; }
+@media (min-width: 720px) { body.heeft-nav { padding-bottom: 20px; } }

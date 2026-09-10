@@ -671,7 +671,7 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
 .reden-box label { font-size:13px; font-weight:600; color:var(--navy); display:block; margin-bottom:6px; }
 </style>
 </head>
-<body>
+<body class="<?= ($stap === 'dossier' && portaal_ingelogd()) ? 'heeft-nav' : '' ?>">
 <!-- Lichte/donkere modus toggle (klein knopje rechtsboven) -->
 <button type="button" class="theme-tgl" id="themeTgl" onclick="togglePortaalTheme()" title="Wissel licht/donker">
   <span id="themeIcon">🌙</span>
@@ -1667,8 +1667,6 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
   <?php endif; endif; ?>
 
   <div style="text-align:center;margin-top:18px;padding-bottom:24px">
-    <a href="<?= APP_URL ?>/portaal/gegevens.php" style="font-size:12px;color:var(--tekst-zacht);text-decoration:none">🔒 Mijn gegevens</a>
-    &nbsp;·&nbsp;
     <?php
       // Switch naar beheer — alleen als deze sollicitant ook beheertoegang heeft.
       $_kan_beheer = false;
@@ -2435,6 +2433,15 @@ document.querySelectorAll('a.btn').forEach(a => {
   });
 });
 </script>
+<?php if ($stap === 'dossier' && portaal_ingelogd()):
+  $_nav = ($_GET['tab'] ?? '') === 'taken' ? 'taken' : 'start';
+?>
+<nav class="pt-nav" aria-label="Hoofdnavigatie">
+  <a href="<?= APP_URL ?>/portaal/" class="pt-nav-item <?= $_nav==='start'?'actief':'' ?>"><?= icoon('huis', 22) ?><span>Start</span></a>
+  <a href="<?= APP_URL ?>/portaal/?tab=taken" class="pt-nav-item <?= $_nav==='taken'?'actief':'' ?>"><?= icoon('lijst', 22) ?><span>Taken</span></a>
+  <a href="<?= APP_URL ?>/portaal/gegevens.php" class="pt-nav-item"><?= icoon('persoon', 22) ?><span>Gegevens</span></a>
+</nav>
+<?php endif; ?>
 <script src="<?= APP_URL ?>/assets/js/app.js?v=<?= @filemtime(__DIR__."/../assets/js/app.js") ?>"></script>
 </body>
 </html>

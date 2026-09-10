@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.64.0');
+define('APP_VERSIE', '2.64.1');
 
 function app_changelog(): array {
     return [
+        '2.64.1' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Portaal krijgt de globale navigatiebalk',
+            'punten' => [
+                'De startpagina van het portaal heeft nu de app-navigatie: een onderbalk (mobiel) / horizontale balk (desktop) met Start, Taken en Gegevens',
+                'De navigatie zit op één gedeelde plek en verschijnt precies één keer — geen dubbele of overlappende balken',
+                'De oude losse "Mijn gegevens"-link is weggehaald omdat die nu een navigatie-tab is; uitloggen en naar-beheer blijven bestaan',
+            ],
+        ],
         '2.64.0' => [
             'datum'  => '2026-08-21',
             'titel'  => 'Gedeelde portaal-layout + navigatie (fundament stap 3)',
