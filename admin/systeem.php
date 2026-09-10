@@ -40,6 +40,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['actie'] ?? '') === 'migree
 // Schema-gezondheid ophalen (voor de statusweergave)
 $gezondheid = function_exists('db_gezondheid') ? db_gezondheid() : null;
 
+// Health check: volledige systeemcontrole (met optionele reparatie)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['actie'] ?? '') === 'health_repareer') {
+    csrf_check();
+    if (function_exists('health_check')) health_check(true);
+    flash('succes', 'Systeemcontrole uitgevoerd en waar mogelijk hersteld.');
+    redirect(APP_URL . '/admin/systeem.php');
+}
+$health = function_exists('health_check') ? health_check(false) : null;
+
 $changelog = function_exists('app_changelog') ? app_changelog() : [];
 
 require __DIR__ . '/layout_top.php';
@@ -60,6 +69,51 @@ require __DIR__ . '/layout_top.php';
     </form>
   </div>
 </div>
+
+<!-- Systeemgezondheid (health check) -->
+<?php if ($health !== null): ?>
+<div class="card" style="margin-bottom:14px">
+  <div class="card-header"><div class="card-title">Systeemgezondheid</div></div>
+  <div class="card-body">
+    <?php
+      $health_kleur = ['ok' => 'var(--groen)', 'waarschuwing' => 'var(--oranje)', 'fout' => 'var(--rood)'];
+      $health_bg    = ['ok' => 'var(--groen-bg)', 'waarschuwing' => 'var(--oranje-bg)', 'fout' => 'var(--rood-bg)'];
+      $health_icoon = ['ok' => '✓', 'waarschuwing' => '⚠', 'fout' => '✗'];
+      $health_label = ['ok' => 'Alles in orde', 'waarschuwing' => 'Aandachtspunten', 'fout' => 'Er is een probleem'];
+      $st = $health['status'];
+    ?>
+    <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:<?= $health_bg[$st] ?>;border:1px solid <?= $health_kleur[$st] ?>;border-radius:8px;margin-bottom:14px">
+      <span style="font-size:18px"><?= $health_icoon[$st] ?></span>
+      <span style="font-size:13px;color:<?= $health_kleur[$st] ?>"><strong><?= $health_label[$st] ?>.</strong></span>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <?php
+        $check_namen = [
+          'database' => 'Database', 'cron' => 'Cron (automatische taken)', 'mailwachtrij' => 'Mailwachtrij',
+          'opschoning' => 'AVG-opschoning', 'mappen' => 'Mappen & rechten', 'configuratie' => 'Configuratie',
+        ];
+        foreach ($health['checks'] as $sleutel => $check):
+          $ck = $check['status'];
+      ?>
+      <div style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--rand)">
+        <span style="font-size:14px;color:<?= $health_kleur[$ck] ?>;min-width:16px"><?= $health_icoon[$ck] ?></span>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:600"><?= h($check_namen[$sleutel] ?? $sleutel) ?></div>
+          <div style="font-size:12px;color:var(--tekst-zacht)"><?= h($check['uitleg']) ?><?= !empty($check['hersteld']) ? ' <span style="color:var(--groen)">(automatisch hersteld)</span>' : '' ?></div>
+        </div>
+      </div>
+      <?php endforeach; ?>
+    </div>
+
+    <form method="post" style="margin-top:14px">
+      <?= csrf_input() ?>
+      <input type="hidden" name="actie" value="health_repareer">
+      <button type="submit" class="btn btn-primary btn-sm">Controleren &amp; repareren</button>
+    </form>
+  </div>
+</div>
+<?php endif; ?>
 
 <!-- Tabelstatus -->
 <div class="card" style="margin-bottom:14px">

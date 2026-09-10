@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.55.0');
+define('APP_VERSIE', '2.56.0');
 
 function app_changelog(): array {
     return [
+        '2.56.0' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Systeemgezondheid: zelfcontrole en -reparatie',
+            'punten' => [
+                'Nieuwe health check op het systeemscherm die de belangrijkste onderdelen controleert: database, cron, mailwachtrij, opschoning, mappen en configuratie',
+                'Waar mogelijk herstelt het systeem zichzelf: ontbrekende tabellen en kolommen worden automatisch aangemaakt met één klik',
+                'Duidelijke signalering als de cron niet meer draait of e-mails blijven hangen, zodat problemen op tijd opvallen',
+            ],
+        ],
         '2.55.0' => [
             'datum'  => '2026-08-21',
             'titel'  => 'Nieuwe inlogstroom: portaal als startpagina, keuze admin/portaal',
