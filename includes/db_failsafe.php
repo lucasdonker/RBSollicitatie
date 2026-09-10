@@ -116,6 +116,7 @@ function db_failsafe(): void {
         'beschikbaarheid_dag_auto_setup',
         'audit_dag_auto_setup',
         'landing_auto_setup',
+        'optout_auto_setup',
     ];
     foreach ($setups as $fn) {
         if (function_exists($fn)) {

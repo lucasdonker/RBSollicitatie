@@ -40,6 +40,7 @@ if (file_exists(__DIR__ . '/health.php')) require_once __DIR__ . '/health.php';
 if (file_exists(__DIR__ . '/landing.php')) require_once __DIR__ . '/landing.php';
 if (file_exists(__DIR__ . '/kanalen.php')) require_once __DIR__ . '/kanalen.php';
 if (file_exists(__DIR__ . '/notificatie.php')) require_once __DIR__ . '/notificatie.php';
+if (file_exists(__DIR__ . '/optout.php')) require_once __DIR__ . '/optout.php';
 
 // ── Database ──────────────────────────────────────────────────
 function db(): PDO {
@@ -481,6 +482,19 @@ function verstuur_fase_mail(
             'telefoon'      => $row['telefoon'] ?? '',
         ];
         $ok = stuur_template_mail($template_slug, $row['email'], $sol_arr, $seizoen, [], $sol_id);
+
+        // Ook via SMS/WhatsApp als dat voor dit meldingstype is ingesteld en de sollicitant
+        // een telefoonnummer heeft. De e-mail is hierboven al verstuurd.
+        if (!empty($row['telefoon']) && function_exists('notificatie_kanalen')) {
+            $k = notificatie_kanalen($template_slug);
+            if (($k['sms'] || $k['wa']) && function_exists('notificatie_verstuur')) {
+                $naam = trim($row['voornaam'] . ' ' . ($row['achternaam'] ?? ''));
+                $kort = notificatie_korte_tekst($template_slug, $row['voornaam'], $seizoen);
+                try {
+                    notificatie_verstuur($template_slug, ['telefoon' => $row['telefoon'], 'naam' => $naam], ['kort' => $kort], $sol_id);
+                } catch (\Exception $e) { error_log('fase-notificatie sms/wa: ' . $e->getMessage()); }
+            }
+        }
         return $ok ? 'verstuurd' : 'fout';
     } catch (\Exception $e) {
         error_log("verstuur_fase_mail: " . $e->getMessage());

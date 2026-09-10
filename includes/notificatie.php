@@ -88,4 +88,31 @@ function notificatie_verstuur(string $type, array $ontvanger, array $inhoud, ?in
     return $resultaat;
 }
 
+/**
+ * Maak een passende korte tekst (voor SMS/WhatsApp) per meldingstype. Kort en functioneel;
+ * met een link naar het portaal voor de details.
+ */
+function notificatie_korte_tekst(string $type, string $voornaam, array $seizoen = []): string {
+    $portaal = defined('APP_URL') ? APP_URL . '/portaal/' : '';
+    $sel_datum = '';
+    if (!empty($seizoen['datum_selectiedag'])) {
+        $ts = strtotime($seizoen['datum_selectiedag']);
+        if ($ts) $sel_datum = date('d-m-Y', $ts);
+    }
+    switch ($type) {
+        case 'uitnodiging_selectie':
+            return "Hoi $voornaam, je bent uitgenodigd voor de selectiedag bij Paal 13" . ($sel_datum ? " op $sel_datum" : "") . ". Check je e-mail en portaal voor alle details: $portaal";
+        case 'herinnering_selectie':
+            return "Hoi $voornaam, denk je aan de selectiedag" . ($sel_datum ? " op $sel_datum" : "") . "? Details in je portaal: $portaal";
+        case 'uitnodiging_tw':
+            return "Hoi $voornaam, je bent uitgenodigd voor het trainingsweekend bij Paal 13. Details in je e-mail en portaal: $portaal";
+        case 'status_update':
+            return "Hoi $voornaam, er is een update over je sollicitatie bij Paal 13. Bekijk 'm in je portaal: $portaal";
+        case 'ondertekening_herinnering':
+            return "Hoi $voornaam, er staat nog een document klaar om te ondertekenen in je portaal: $portaal";
+        default:
+            return "Hoi $voornaam, er is een bericht voor je van Paal 13. Bekijk je portaal: $portaal";
+    }
+}
+
 }

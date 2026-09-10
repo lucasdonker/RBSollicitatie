@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.58.0');
+define('APP_VERSIE', '2.59.0');
 
 function app_changelog(): array {
     return [
+        '2.59.0' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Meldingen overal via gekozen kanalen + afmelden voor mailings',
+            'punten' => [
+                'De uitnodigingen (selectiedag, trainingsweekend) gaan nu ook via SMS/WhatsApp als dat voor dat type is ingesteld — niet meer alleen de aanmeldbevestiging',
+                'Nieuwsbrieven/mailings hebben nu een afmeldlink (AVG-verplicht); afgemelde mensen worden automatisch overgeslagen',
+                'Belangrijke berichten (uitnodigingen, bevestigingen) blijven altijd doorgaan — een afmelding geldt alleen voor niet-essentiële mailings',
+                'Afmelden en weer aanmelden kan via een eigen pagina met een persoonlijke, veilige link',
+            ],
+        ],
         '2.58.0' => [
             'datum'  => '2026-08-21',
             'titel'  => 'Meldingen via SMS en WhatsApp, per kanaal instelbaar',

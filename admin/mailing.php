@@ -19,7 +19,8 @@ try {
 $alle_soll = [];
 if ($sid) {
     $stmt = $db->prepare("
-        SELECT s.id, s.fase, p.voornaam, p.tussenvoegsel, p.achternaam, p.email
+        SELECT s.id, s.fase, s.persoon_id, p.voornaam, p.tussenvoegsel, p.achternaam, p.email,
+               COALESCE(p.mailing_afgemeld, 0) AS mailing_afgemeld
         FROM sollicitaties s JOIN personen p ON p.id = s.persoon_id
         WHERE s.seizoen_id = ? ORDER BY p.achternaam, p.voornaam
     ");
@@ -52,7 +53,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verzend'])) {
     $via_queue = count($verzend_lijst) > 10 && function_exists('mail_queue_toevoegen');
 
     foreach ($verzend_lijst as $s) {
+        // Afgemelde mensen overslaan (AVG: respecteer opt-out voor mailings).
+        if (!empty($s['mailing_afgemeld'])) {
+            $details[] = ['naam'=>volledige_naam($s),'email'=>$s['email'],'status'=>'overgeslagen','fout'=>'afgemeld'];
+            continue;
+        }
         $sol = ['voornaam'=>$s['voornaam'],'tussenvoegsel'=>$s['tussenvoegsel']??'','achternaam'=>$s['achternaam'],'email'=>$s['email'],'telefoon'=>''];
+        // Afmeld-footer voor onder de mailing
+        $afmeld_footer = (function_exists('optout_footer') && !empty($s['persoon_id'])) ? optout_footer((int)$s['persoon_id']) : '';
         try {
             // Bouw onderwerp + html (zelfde logica voor queue of direct)
             if ($gebruik_tmpl) {
@@ -73,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verzend'])) {
                 $vars      = mail_variabelen($sol, $seizoen ?? []);
                 $onderwerp = mail_vervang($custom_subject, $vars);
                 $hero      = mail_vervang($custom_hero, $vars);
-                $body      = mail_shortcodes(mail_vervang($custom_body, $vars));
+                $body      = mail_shortcodes(mail_vervang($custom_body, $vars)) . $afmeld_footer;
                 $html = match($mail_stijl) {
                     'volledig' => mail_html_wrapper($body, $onderwerp, $hero),
                     'eigen'    => mail_simple_wrapper($body, $onderwerp, $eigen_img),
