@@ -1,64 +1,18 @@
 <?php
 require_once __DIR__.'/includes/functions.php';
+require_once __DIR__.'/includes/aanmelden_kern.php';
 $db=db(); $seizoen=actief_seizoen();
 $open=$seizoen&&$seizoen['status']==='open';
 $fout=''; $succes=false;
 
 if($_SERVER['REQUEST_METHOD']==='POST'&&$open){
     csrf_check();
-    $voornaam=trim($_POST['voornaam']??''); $tv=trim($_POST['tussenvoegsel']??''); $achternaam=trim($_POST['achternaam']??'');
-    $email=strtolower(trim($_POST['email']??'')); $tel=trim($_POST['telefoon']??''); $dob=trim($_POST['geboortedatum']??'');
-    $geslacht=$_POST['geslacht']??'onbekend'; $akkoord=isset($_POST['akkoord']);
-    // Leeftijd bepalen voor de toestemmingslogica (16+ mag zelf; 15 = jeugdledenuitzondering met oudertoestemming)
-    $leeftijd = leeftijd_uit_datum($dob);
-    $ouder_akkoord = isset($_POST['ouder_akkoord']);
-    $ouder_toestemming_naam = trim($_POST['ouder_toestemming_naam'] ?? '');
-    if(!$voornaam||!$achternaam||!$email||!$tel||!$dob) $fout='Vul alle verplichte velden in.';
-    elseif(!filter_var($email,FILTER_VALIDATE_EMAIL)) $fout='Ongeldig e-mailadres.';
-    elseif($leeftijd===null) $fout='Vul een geldige geboortedatum in.';
-    elseif($leeftijd<15) $fout='Je moet minimaal 15 jaar zijn om je aan te melden.';
-    elseif(!$akkoord) $fout='Ga akkoord met de privacyverklaring.';
-    // 15-jarigen (jeugdledenuitzondering) hebben toestemming van een ouder/verzorger nodig
-    elseif($leeftijd<16 && (!$ouder_akkoord || $ouder_toestemming_naam==='')) $fout='Omdat je nog geen 16 bent, hebben we de toestemming en naam van je ouder/verzorger nodig.';
-    else{
-        $bestaand=$db->prepare("SELECT id FROM personen WHERE email=?"); $bestaand->execute([$email]); $p=$bestaand->fetch();
-        if($p){ $pid=$p['id']; $db->prepare("UPDATE personen SET voornaam=?,tussenvoegsel=?,achternaam=?,telefoon=?,geboortedatum=?,geslacht=? WHERE id=?")->execute([$voornaam,$tv?:null,$achternaam,$tel,$dob,$geslacht,$pid]); }
-        else{ $db->prepare("INSERT INTO personen (voornaam,tussenvoegsel,achternaam,email,telefoon,geboortedatum,geslacht) VALUES(?,?,?,?,?,?,?)")->execute([$voornaam,$tv?:null,$achternaam,$email,$tel,$dob,$geslacht]); $pid=$db->lastInsertId(); }
-        $al=$db->prepare("SELECT id FROM sollicitaties WHERE persoon_id=? AND seizoen_id=?"); $al->execute([$pid,$seizoen['id']]);
-        if($al->fetch()) $fout='Je hebt je al aangemeld voor dit seizoen. Check je e-mail.';
-        else{
-            $eerder=$db->prepare("SELECT COUNT(*) FROM sollicitaties WHERE persoon_id=?"); $eerder->execute([$pid]); $ter=$eerder->fetchColumn()>0?1:0;
-            $token=genereer_token();
-            // Zorg dat de toestemming-kolommen bestaan, en leg de toestemming aantoonbaar vast
-            if (function_exists('consent_auto_setup')) consent_auto_setup();
-            $ip = substr($_SERVER['REMOTE_ADDR'] ?? '', 0, 45);
-            $ouder_op = ($leeftijd!==null && $leeftijd<16) ? date('Y-m-d H:i:s') : null;
-            $ouder_naam_val = ($leeftijd!==null && $leeftijd<16) ? ($ouder_toestemming_naam ?: null) : null;
-            $db->prepare("INSERT INTO sollicitaties (persoon_id,seizoen_id,terugkerend,portaal_token,privacy_akkoord_op,privacy_versie,privacy_ip,ouder_toestemming_op,ouder_toestemming_naam) VALUES(?,?,?,?,?,?,?,?,?)")
-               ->execute([$pid,$seizoen['id'],$ter,$token,date('Y-m-d H:i:s'),PRIVACY_VERSIE,$ip,$ouder_op,$ouder_naam_val]);
-            $sid=$db->lastInsertId();
-            $purl=APP_URL.'/portaal/?token='.$token;
-            // Gebruik de aanpasbare 'welkomstmail'-template (Mail templates in beheer, naam "Bevestiging aanmelding").
-            // Alleen als die template volledig ontbreekt valt hij terug op een minimale vaste tekst — als vangnet.
-            $sol_voor_mail = ['voornaam'=>$voornaam, 'achternaam'=>$achternaam, 'email'=>$email, 'portaal_token'=>$token];
-            $welkom_verstuurd = false;
-            if (function_exists('stuur_template_mail')) {
-                try {
-                    $welkom_verstuurd = stuur_template_mail('welkomstmail', $email, $sol_voor_mail, $seizoen, [], (int)$sid);
-                } catch (\Exception $e) { $welkom_verstuurd = false; }
-            }
-            if (!$welkom_verstuurd) {
-                error_log('aanmelden: welkomstmail-template kon niet verstuurd worden, vangnet gebruikt');
-                $body="<p>Bedankt voor je aanmelding als lifeguard bij Reddingsbrigade Paal 13!</p><p>Aanmelding ontvangen voor <strong>{$seizoen['naam']}</strong>.</p>".($ter?"<p><em>Welkom terug! We zien dat je eerder hebt gesolliciteerd.</em></p>":"")."<p>Je ontvangt bericht als je wordt uitgenodigd voor de selectiedag. Je kunt je status volgen op:<br><a href='$purl' class='btn'>Bekijk mijn sollicitatie →</a></p><p style='font-size:12px;color:#666'>Bewaar deze link — je hebt hem nodig voor het invullen van verdere informatie.</p>";
-                stuur_mail($email,$voornaam,'Aanmelding ontvangen — Paal 13 '.$seizoen['naam'],$body,$sid);
-            }
-            stuur_mail(MAIL_BESTUUR,'Bestuur',"Nieuwe aanmelding: $voornaam $achternaam","<p><strong>$voornaam $achternaam</strong><br>$email | $tel".($ter?"<br><em>⚠️ Terugkerende sollicitant</em>":"")."</p><p><a href='".APP_URL."/admin/sollicitanten.php' class='btn'>Bekijk dashboard →</a></p>",$sid);
-            // Competenties ophalen uit Authentik (best-effort, blokkeert nooit de aanmelding)
-            if (function_exists('competenties_sync') && function_exists('competentie_sync_klaar') && competentie_sync_klaar()) {
-                try { competenties_sync((int)$sid, $email); } catch (\Exception $e) { error_log('sync bij aanmelding: '.$e->getMessage()); }
-            }
-            $succes=true;
-        }
+    // Verwerk via de gedeelde bron van waarheid (zelfde logica als de API).
+    $resultaat = sollicitatie_aanmaken($_POST, ['ip'=>$_SERVER['REMOTE_ADDR']??'', 'via'=>'website_formulier']);
+    if ($resultaat['ok']) {
+        $succes = true;
+    } else {
+        $fout = $resultaat['fout'];
     }
 }
 ?>

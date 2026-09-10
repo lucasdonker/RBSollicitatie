@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.53.0');
+define('APP_VERSIE', '2.54.0');
 
 function app_changelog(): array {
     return [
+        '2.54.0' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Publieke API voor de website-koppeling (fase 1)',
+            'punten' => [
+                'Nieuwe beveiligde API waarmee de WordPress-plugin op de website kan koppelen: seizoensinfo ophalen en aanmeldingen versturen',
+                'De aanmeldlogica is samengebracht op één plek (bron van waarheid), gebruikt door zowel het eigen formulier als de API — zodat alle regels (leeftijd, oudertoestemming) overal identiek zijn',
+                'API beveiligd met een geheime sleutel; te beheren via Instellingen → Website & API (sleutel genereren, toegestane websites instellen)',
+                'Snelheidsbegrenzing tegen misbruik van het aanmeld-endpoint',
+            ],
+        ],
         '2.53.0' => [
             'datum'  => '2026-08-21',
             'titel'  => 'Auditlogboek: wie wat wanneer deed',

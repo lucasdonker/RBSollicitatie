@@ -119,6 +119,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect(APP_URL . '/admin/instellingen.php?tab=authentik');
     }
 
+    if ($actie === 'api_sleutel_genereer') {
+        // Nieuwe geheime sleutel genereren (32 bytes, hex).
+        $nieuw = bin2hex(random_bytes(32));
+        instelling_opslaan('api.sleutel', $nieuw);
+        if (function_exists('audit_log')) audit_log('gewijzigd', 'instelling', null, ['veld' => 'api.sleutel', 'actie' => 'nieuwe sleutel gegenereerd']);
+        flash('succes', 'Nieuwe API-sleutel gegenereerd. Vergeet niet deze in de WordPress-plugin te zetten.');
+        redirect(APP_URL . '/admin/instellingen.php?tab=api');
+    }
+    if ($actie === 'api_opslaan') {
+        instelling_opslaan('api.origins', trim($_POST['api_origins'] ?? ''));
+        flash('succes', 'API-instellingen opgeslagen.');
+        redirect(APP_URL . '/admin/instellingen.php?tab=api');
+    }
+
     if ($actie === 'smtp_opslaan') {
         $velden = [
             'smtp.host'     => trim($_POST['smtp_host'] ?? ''),
@@ -322,6 +336,9 @@ require __DIR__ . '/layout_top.php';
             ['ai',       'AI-analyse',            '<circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 10v6m11-11h-6m-10 0H1"/>'],
             ['authentik', 'Authentik & competenties', '<path d="M12 2l7 4v6c0 5-3.5 8-7 10-3.5-2-7-5-7-10V6z"/>'],
             ['sso',      'Authentik SSO-login',   '<path d="M12 1l3 6 6 .75-4.12 4.62L18 19l-6-3.25L6 19l1.13-6.63L3 7.75 9 7z"/>'],
+          ],
+          'Koppelingen' => [
+            ['api', 'Website & API', '<path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/>'],
           ],
           'Privacy' => [
             ['bewaren', 'Bewaartermijnen (AVG)', '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>'],
@@ -1368,6 +1385,61 @@ require __DIR__ . '/layout_top.php';
         </div>
         <button type="submit" class="btn btn-outline">Verstuur testmail</button>
       </form>
+    </div>
+  </div>
+
+<?php elseif ($tab === 'api'): ?>
+  <?php
+    $api_sleutel = instelling('api.sleutel', '');
+    $api_origins = instelling('api.origins', '');
+    $api_basis_url = APP_URL . '/api';
+  ?>
+  <div class="inst-sectie">
+    <h2 style="font-size:16px;margin:0 0 4px">Website &amp; API</h2>
+    <p style="color:var(--tekst-zacht);font-size:13.5px;margin:0 0 18px">
+      Hiermee koppelt de WordPress-plugin op de website met dit systeem: de plugin haalt de
+      seizoensinfo op en stuurt aanmeldingen hierheen. De verbinding is beveiligd met een geheime sleutel.
+    </p>
+
+    <div style="background:var(--bg-card,#fff);border:1px solid var(--rand);border-radius:10px;padding:16px;margin-bottom:16px">
+      <div style="font-weight:600;font-size:14px;margin-bottom:8px">API-sleutel</div>
+      <?php if ($api_sleutel): ?>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
+          <input type="text" readonly value="<?= h($api_sleutel) ?>" id="apiSleutel"
+                 style="flex:1;min-width:280px;font-family:monospace;font-size:12px;background:var(--bg)">
+          <button type="button" class="btn btn-outline btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('apiSleutel').value);this.textContent='Gekopieerd!'">Kopieer</button>
+        </div>
+        <p style="font-size:12px;color:var(--tekst-zacht);margin:0 0 10px">
+          Zet deze sleutel in de WordPress-plugin. Houd 'm geheim — wie de sleutel heeft, kan aanmeldingen versturen.
+        </p>
+      <?php else: ?>
+        <p style="font-size:13px;color:var(--oranje);margin:0 0 10px">Er is nog geen sleutel. Genereer er een om de koppeling te activeren.</p>
+      <?php endif; ?>
+      <form method="post" onsubmit="return confirm('<?= $api_sleutel ? 'Een nieuwe sleutel maakt de oude ongeldig. De plugin moet dan bijgewerkt worden. Doorgaan?' : 'Nieuwe sleutel genereren?' ?>')">
+        <?= csrf_input() ?>
+        <input type="hidden" name="actie" value="api_sleutel_genereer">
+        <button type="submit" class="btn btn-primary btn-sm"><?= $api_sleutel ? 'Nieuwe sleutel genereren' : 'Sleutel genereren' ?></button>
+      </form>
+    </div>
+
+    <form method="post">
+      <?= csrf_input() ?>
+      <input type="hidden" name="actie" value="api_opslaan">
+      <label style="display:block;font-weight:600;font-size:14px;margin-bottom:4px">Toegestane websites (CORS)</label>
+      <p style="font-size:12px;color:var(--tekst-zacht);margin:0 0 6px">
+        Eén per regel. De hoofdsite (paal13.com) is altijd toegestaan. Voeg hier extra domeinen toe als de plugin op een ander adres draait.
+      </p>
+      <textarea name="api_origins" rows="3" style="width:100%;font-family:monospace;font-size:12px" placeholder="https://paal13.com"><?= h($api_origins) ?></textarea>
+      <div style="margin-top:10px"><button type="submit" class="btn btn-primary btn-sm">Opslaan</button></div>
+    </form>
+
+    <div style="margin-top:20px;padding:14px;background:var(--bg);border:1px solid var(--rand);border-radius:10px">
+      <div style="font-weight:600;font-size:13px;margin-bottom:6px">Voor de plugin-instellingen</div>
+      <table style="font-size:12.5px;width:100%">
+        <tr><td style="padding:3px 8px;color:var(--tekst-zacht)">API-basis-URL</td><td style="padding:3px 8px;font-family:monospace"><?= h($api_basis_url) ?></td></tr>
+        <tr><td style="padding:3px 8px;color:var(--tekst-zacht)">Seizoensinfo</td><td style="padding:3px 8px;font-family:monospace">GET <?= h($api_basis_url) ?>/seizoen.php</td></tr>
+        <tr><td style="padding:3px 8px;color:var(--tekst-zacht)">Aanmelden</td><td style="padding:3px 8px;font-family:monospace">POST <?= h($api_basis_url) ?>/aanmelden.php</td></tr>
+      </table>
     </div>
   </div>
 
