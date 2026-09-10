@@ -122,6 +122,20 @@ function sollicitatie_aanmaken(array $in, array $context = []): array {
         try { stuur_mail(MAIL_BESTUUR, 'Bestuur', "Nieuwe aanmelding: $voornaam $achternaam", $body, $sid); } catch (\Exception $e) {}
     }
 
+    // Aanmeldbevestiging ook via SMS/WhatsApp, als dat voor dit type is ingesteld.
+    // (De e-mail is hierboven al via de template verstuurd; hier alleen de extra kanalen.)
+    if (function_exists('notificatie_kanalen')) {
+        $k = notificatie_kanalen('aanmeldbevestiging');
+        if (($k['sms'] || $k['wa']) && function_exists('notificatie_verstuur')) {
+            $kort = "Hoi $voornaam, we hebben je aanmelding voor lifeguard bij Paal 13 ontvangen. Je hoort van ons over de selectiedag. Volg je status: " . APP_URL . '/portaal/?token=' . $token;
+            // e-mail hier uitzetten (al verstuurd), alleen sms/wa laten lopen
+            $tijdelijk_type = 'aanmeldbevestiging';
+            try {
+                notificatie_verstuur($tijdelijk_type, ['telefoon' => $tel, 'naam' => "$voornaam $achternaam"], ['kort' => $kort], $sid);
+            } catch (\Exception $e) { error_log('notificatie aanmeldbevestiging: ' . $e->getMessage()); }
+        }
+    }
+
     // Competenties uit Authentik (best-effort)
     if (function_exists('competenties_sync') && function_exists('competentie_sync_klaar') && competentie_sync_klaar()) {
         try { competenties_sync($sid, $email); } catch (\Exception $e) { error_log('sync bij aanmelding: ' . $e->getMessage()); }

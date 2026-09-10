@@ -38,6 +38,8 @@ if (file_exists(__DIR__ . '/audit.php')) require_once __DIR__ . '/audit.php';
 if (file_exists(__DIR__ . '/toegang.php')) require_once __DIR__ . '/toegang.php';
 if (file_exists(__DIR__ . '/health.php')) require_once __DIR__ . '/health.php';
 if (file_exists(__DIR__ . '/landing.php')) require_once __DIR__ . '/landing.php';
+if (file_exists(__DIR__ . '/kanalen.php')) require_once __DIR__ . '/kanalen.php';
+if (file_exists(__DIR__ . '/notificatie.php')) require_once __DIR__ . '/notificatie.php';
 
 // ── Database ──────────────────────────────────────────────────
 function db(): PDO {

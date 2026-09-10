@@ -3,10 +3,21 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.57.0');
+define('APP_VERSIE', '2.58.0');
 
 function app_changelog(): array {
     return [
+        '2.58.0' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Meldingen via SMS en WhatsApp, per kanaal instelbaar',
+            'punten' => [
+                'Meldingen kunnen nu naast e-mail ook via SMS en WhatsApp — beide los in- en uitschakelbaar',
+                'SMS werkt met meerdere gateways: van je eigen telefoon/VoIP-nummer (goedkoopst, alleen je eigen bundel) tot kant-en-klare providers (EasySendSMS, MessageBird)',
+                'WhatsApp via WhatsReach is beschikbaar, standaard uit, met een waarschuwing over het risico op nummerblokkade',
+                'Per soort melding is instelbaar via welke kanalen die verstuurd wordt (e-mail, SMS, WhatsApp of een combinatie)',
+                'Testknop om een proefbericht via SMS of WhatsApp te sturen',
+            ],
+        ],
         '2.57.0' => [
             'datum'  => '2026-08-21',
             'titel'  => 'Landingspagina\'s met werving-tracking',

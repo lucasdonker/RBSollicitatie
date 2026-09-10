@@ -133,6 +133,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect(APP_URL . '/admin/instellingen.php?tab=api');
     }
 
+    if ($actie === 'berichten_opslaan') {
+        // SMS
+        instelling_opslaan('sms.actief', !empty($_POST['sms_actief']) ? '1' : '0');
+        instelling_opslaan('sms.gateway', $_POST['sms_gateway'] ?? '');
+        instelling_opslaan('sms.afzender', trim($_POST['sms_afzender'] ?? 'Paal13'));
+        instelling_opslaan('sms.http_url', trim($_POST['sms_http_url'] ?? ''));
+        instelling_opslaan('sms.http_method', $_POST['sms_http_method'] ?? 'POST');
+        instelling_opslaan('sms.http_token', trim($_POST['sms_http_token'] ?? ''));
+        instelling_opslaan('sms.easysendsms_key', trim($_POST['sms_easysendsms_key'] ?? ''));
+        instelling_opslaan('sms.messagebird_key', trim($_POST['sms_messagebird_key'] ?? ''));
+        // WhatsApp (WhatsReach)
+        instelling_opslaan('wa.actief', !empty($_POST['wa_actief']) ? '1' : '0');
+        instelling_opslaan('wa.api_sleutel', trim($_POST['wa_api_sleutel'] ?? ''));
+        instelling_opslaan('wa.endpoint', trim($_POST['wa_endpoint'] ?? ''));
+        // Per-melding kanaalkeuze
+        if (function_exists('notificatie_typen')) {
+            foreach (array_keys(notificatie_typen()) as $type) {
+                $gekozen = $_POST['notif'][$type] ?? [];
+                if (!is_array($gekozen)) $gekozen = [];
+                $geldig = array_values(array_intersect($gekozen, ['email','sms','wa']));
+                instelling_opslaan('notif.' . $type, implode(',', $geldig));
+            }
+        }
+        flash('succes', 'Bericht-instellingen opgeslagen.');
+        redirect(APP_URL . '/admin/instellingen.php?tab=berichten');
+    }
+
+    if ($actie === 'bericht_test') {
+        // Test-SMS of test-WA sturen
+        $naar = trim($_POST['test_nummer'] ?? '');
+        $via = $_POST['test_kanaal'] ?? 'sms';
+        $tekst = 'Testbericht van Paal 13 sollicitatiesysteem.';
+        $ok = false;
+        if ($via === 'sms' && function_exists('sms_verstuur')) $ok = sms_verstuur($naar, $tekst);
+        if ($via === 'wa' && function_exists('wa_verstuur')) $ok = wa_verstuur($naar, $tekst);
+        flash($ok ? 'succes' : 'fout', $ok ? 'Testbericht verstuurd.' : 'Testbericht mislukt — controleer de instellingen (en de foutlog).');
+        redirect(APP_URL . '/admin/instellingen.php?tab=berichten');
+    }
+
     if ($actie === 'smtp_opslaan') {
         $velden = [
             'smtp.host'     => trim($_POST['smtp_host'] ?? ''),
@@ -339,6 +378,7 @@ require __DIR__ . '/layout_top.php';
           ],
           'Koppelingen' => [
             ['api', 'Website & API', '<path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/>'],
+            ['berichten', 'SMS, WhatsApp & meldingen', '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>'],
           ],
           'Privacy' => [
             ['bewaren', 'Bewaartermijnen (AVG)', '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>'],
@@ -1442,6 +1482,161 @@ require __DIR__ . '/layout_top.php';
       </table>
     </div>
   </div>
+
+<?php elseif ($tab === 'berichten'): ?>
+  <?php
+    $sms_gw = instelling('sms.gateway', '');
+    $notif_typen = function_exists('notificatie_typen') ? notificatie_typen() : [];
+  ?>
+  <div class="inst-sectie">
+    <h2 style="font-size:16px;margin:0 0 4px">SMS, WhatsApp &amp; meldingen</h2>
+    <p style="color:var(--tekst-zacht);font-size:13.5px;margin:0 0 18px">
+      Stuur meldingen naast e-mail ook via SMS of WhatsApp. Beide kanalen zijn los in- en uit te
+      schakelen. Onderaan bepaal je per soort melding via welke kanalen die verstuurd wordt.
+    </p>
+
+    <form method="post">
+      <?= csrf_input() ?>
+      <input type="hidden" name="actie" value="berichten_opslaan">
+
+      <!-- SMS -->
+      <div style="background:var(--bg-card,#fff);border:1px solid var(--rand);border-radius:10px;padding:16px;margin-bottom:16px">
+        <label class="inst-toggle" style="display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px;margin-bottom:12px">
+          <input type="checkbox" name="sms_actief" value="1" <?= instelling('sms.actief','0')==='1'?'checked':'' ?>>
+          SMS inschakelen
+        </label>
+
+        <label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px">Gateway (verzendmethode)</label>
+        <select name="sms_gateway" id="smsGateway" onchange="smsGatewayToon()" style="width:100%;max-width:360px;margin-bottom:6px">
+          <option value="">— kies —</option>
+          <option value="eigen_telefoon" <?= $sms_gw==='eigen_telefoon'?'selected':'' ?>>Eigen telefoon / VoIP (goedkoopst)</option>
+          <option value="http_gateway" <?= $sms_gw==='http_gateway'?'selected':'' ?>>Generieke HTTP-gateway</option>
+          <option value="easysendsms" <?= $sms_gw==='easysendsms'?'selected':'' ?>>EasySendSMS (pay-as-you-go)</option>
+          <option value="messagebird" <?= $sms_gw==='messagebird'?'selected':'' ?>>MessageBird / Bird (NL)</option>
+        </select>
+        <p style="font-size:12px;color:var(--tekst-zacht);margin:0 0 12px">
+          <strong>Goedkoopst:</strong> "Eigen telefoon / VoIP" — je gebruikt je eigen (VoIP- of Android-)nummer met
+          een app of dienst die een simpel webadres aanbiedt om een SMS te sturen. Je betaalt dan alleen je eigen
+          bundel, geen kosten per bericht. De andere opties rekenen per bericht (ca. 1 cent), maar zijn kant-en-klaar.
+        </p>
+
+        <div style="margin-bottom:10px">
+          <label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px">Afzendernaam</label>
+          <input type="text" name="sms_afzender" value="<?= h(instelling('sms.afzender','Paal13')) ?>" style="width:100%;max-width:200px" maxlength="11">
+          <span style="font-size:11px;color:var(--tekst-zacht)">max 11 tekens</span>
+        </div>
+
+        <!-- HTTP / eigen telefoon velden -->
+        <div class="sms-veld" data-voor="eigen_telefoon http_gateway" style="display:none">
+          <label style="display:block;font-size:13px;font-weight:600;margin:8px 0 4px">Webadres (URL) van de gateway</label>
+          <input type="text" name="sms_http_url" value="<?= h(instelling('sms.http_url','')) ?>" style="width:100%" placeholder="https://.../send?to={nummer}&text={tekst}">
+          <p style="font-size:11px;color:var(--tekst-zacht);margin:2px 0 8px">Je mag <code>{nummer}</code> en <code>{tekst}</code> als plek-houders gebruiken. Anders worden ze als POST-velden meegestuurd.</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <div>
+              <label style="display:block;font-size:12px;margin-bottom:2px">Methode</label>
+              <select name="sms_http_method" style="width:100px">
+                <option value="POST" <?= instelling('sms.http_method','POST')==='POST'?'selected':'' ?>>POST</option>
+                <option value="GET" <?= instelling('sms.http_method','POST')==='GET'?'selected':'' ?>>GET</option>
+              </select>
+            </div>
+            <div style="flex:1;min-width:180px">
+              <label style="display:block;font-size:12px;margin-bottom:2px">Token (optioneel)</label>
+              <input type="text" name="sms_http_token" value="<?= h(instelling('sms.http_token','')) ?>" style="width:100%">
+            </div>
+          </div>
+        </div>
+
+        <!-- EasySendSMS -->
+        <div class="sms-veld" data-voor="easysendsms" style="display:none">
+          <label style="display:block;font-size:13px;font-weight:600;margin:8px 0 4px">EasySendSMS API-sleutel</label>
+          <input type="text" name="sms_easysendsms_key" value="<?= h(instelling('sms.easysendsms_key','')) ?>" style="width:100%">
+        </div>
+
+        <!-- MessageBird -->
+        <div class="sms-veld" data-voor="messagebird" style="display:none">
+          <label style="display:block;font-size:13px;font-weight:600;margin:8px 0 4px">MessageBird API-sleutel</label>
+          <input type="text" name="sms_messagebird_key" value="<?= h(instelling('sms.messagebird_key','')) ?>" style="width:100%">
+        </div>
+      </div>
+
+      <!-- WhatsApp -->
+      <div style="background:var(--bg-card,#fff);border:1px solid var(--rand);border-radius:10px;padding:16px;margin-bottom:16px">
+        <label class="inst-toggle" style="display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px;margin-bottom:10px">
+          <input type="checkbox" name="wa_actief" value="1" <?= instelling('wa.actief','0')==='1'?'checked':'' ?>>
+          WhatsApp inschakelen (via WhatsReach)
+        </label>
+        <div style="padding:10px 14px;background:var(--oranje-bg);border:1px solid var(--oranje);border-radius:8px;font-size:12.5px;color:var(--oranje);margin-bottom:12px">
+          <strong>Let op:</strong> WhatsReach werkt buiten de officiële WhatsApp Business API om. Dit brengt een
+          reëel risico met zich mee dat het gebruikte WhatsApp-nummer door WhatsApp geblokkeerd wordt. Gebruik bij
+          voorkeur een apart nummer, en stuur alleen naar mensen die contact via WhatsApp verwachten. Dit kanaal
+          staat daarom standaard uit.
+        </div>
+        <label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px">WhatsReach API-sleutel</label>
+        <input type="text" name="wa_api_sleutel" value="<?= h(instelling('wa.api_sleutel','')) ?>" style="width:100%;margin-bottom:8px">
+        <label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px">Endpoint (URL)</label>
+        <input type="text" name="wa_endpoint" value="<?= h(instelling('wa.endpoint','https://api.whatsreach.co/v1/messages')) ?>" style="width:100%">
+      </div>
+
+      <!-- Kanaal per melding -->
+      <div style="background:var(--bg-card,#fff);border:1px solid var(--rand);border-radius:10px;padding:16px;margin-bottom:16px">
+        <div style="font-weight:600;font-size:15px;margin-bottom:6px">Welke melding via welk kanaal?</div>
+        <p style="font-size:12px;color:var(--tekst-zacht);margin:0 0 12px">Kies per soort melding de kanalen. SMS en WhatsApp werken alleen als ze hierboven zijn ingeschakeld én de ontvanger een telefoonnummer heeft.</p>
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead>
+            <tr style="border-bottom:1px solid var(--rand)">
+              <th style="text-align:left;padding:6px 8px">Melding</th>
+              <th style="padding:6px 8px;width:70px">E-mail</th>
+              <th style="padding:6px 8px;width:70px">SMS</th>
+              <th style="padding:6px 8px;width:70px">WhatsApp</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php foreach ($notif_typen as $type => $naam): $k = notificatie_kanalen($type); ?>
+            <tr style="border-bottom:1px solid var(--rand)">
+              <td style="padding:7px 8px"><?= h($naam) ?></td>
+              <td style="text-align:center"><input type="checkbox" name="notif[<?= $type ?>][]" value="email" <?= $k['email']?'checked':'' ?>></td>
+              <td style="text-align:center"><input type="checkbox" name="notif[<?= $type ?>][]" value="sms" <?= $k['sms']?'checked':'' ?>></td>
+              <td style="text-align:center"><input type="checkbox" name="notif[<?= $type ?>][]" value="wa" <?= $k['wa']?'checked':'' ?>></td>
+            </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+
+      <button type="submit" class="btn btn-primary">Opslaan</button>
+    </form>
+
+    <!-- Test -->
+    <div style="background:var(--bg);border:1px solid var(--rand);border-radius:10px;padding:16px;margin-top:16px">
+      <div style="font-weight:600;font-size:14px;margin-bottom:8px">Testbericht sturen</div>
+      <form method="post" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end">
+        <?= csrf_input() ?>
+        <input type="hidden" name="actie" value="bericht_test">
+        <div>
+          <label style="display:block;font-size:12px;margin-bottom:2px">Telefoonnummer</label>
+          <input type="text" name="test_nummer" placeholder="06..." style="width:160px">
+        </div>
+        <div>
+          <label style="display:block;font-size:12px;margin-bottom:2px">Via</label>
+          <select name="test_kanaal" style="width:120px">
+            <option value="sms">SMS</option>
+            <option value="wa">WhatsApp</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-outline btn-sm">Test versturen</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function smsGatewayToon() {
+      var gw = document.getElementById('smsGateway').value;
+      document.querySelectorAll('.sms-veld').forEach(function(el){
+        el.style.display = el.dataset.voor.split(' ').includes(gw) ? '' : 'none';
+      });
+    }
+    smsGatewayToon();
+  </script>
 
 <?php endif; ?>
 
