@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.59.0');
+define('APP_VERSIE', '2.60.0');
 
 function app_changelog(): array {
     return [
+        '2.60.0' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Export van BLK-dossiers naar Excel en PDF',
+            'punten' => [
+                'Exporteer de gegevens van geselecteerde sollicitanten naar één Excel-bestand — inclusief de beschikbaarheid duidelijk uitgewerkt in gewone taal',
+                'Bulk-export via de selectie op de sollicitantenlijst, of in één klik het hele seizoen',
+                'Per sollicitant een netjes opgemaakt, printbaar dossier (PDF) via de afdrukfunctie',
+                'Alle exports worden vastgelegd in het auditlogboek (wie exporteerde wat)',
+            ],
+        ],
         '2.59.0' => [
             'datum'  => '2026-08-21',
             'titel'  => 'Meldingen overal via gekozen kanalen + afmelden voor mailings',

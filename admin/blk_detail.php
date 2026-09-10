@@ -107,6 +107,8 @@ require __DIR__ . '/layout_top.php';
     <span class="badge badge-<?= fase_kleur($sol['fase']) ?>"><?= fase_label($sol['fase']) ?></span>
     <?php if ($sol['terugkerend']): ?><span class="badge badge-terugkerend">↩ Terugkerend</span><?php endif; ?>
     <button onclick="window.print()" class="btn btn-outline btn-sm">🖨️ Afdrukken</button>
+    <a href="<?= APP_URL ?>/admin/export_blk.php?formaat=pdf&id=<?= $sol_id ?>" target="_blank" class="btn btn-outline btn-sm">📄 Dossier (PDF)</a>
+    <a href="<?= APP_URL ?>/admin/export_blk.php?formaat=excel&ids=<?= $sol_id ?>" class="btn btn-outline btn-sm">📊 Excel</a>
     <a href="<?= APP_URL ?>/admin/sollicitanten.php?panel=<?= $sol_id ?>" class="btn btn-outline btn-sm">Open in paneel</a>
   </div>
 </div>

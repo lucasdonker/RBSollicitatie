@@ -197,6 +197,9 @@ function filter_url(string $fase, string $zoek, string $terug, string $blk, stri
   <div class="card-body" style="padding:12px 16px">
     <div class="filter-balk">
       <a href="<?= APP_URL ?>/admin/sollicitant_nieuw.php" class="btn btn-groen btn-sm">+ Toevoegen</a>
+      <?php if (!empty($sid)): ?>
+      <a href="<?= APP_URL ?>/admin/export_blk.php?formaat=excel&seizoen=<?= (int)$sid ?>" class="btn btn-outline btn-sm">📊 Export alle (Excel)</a>
+      <?php endif; ?>
       <div class="zoek-input">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -510,7 +513,8 @@ function updateBulk() {
     if (fases.some(f => f === 'selectiedag_geweest'))
       html += `<button type="button" class="btn btn-primary btn-sm" onclick="bulkActie('uitnodigen_tw')">📧 Uitnodigen TW</button> `;
     html += `<button type="button" class="btn btn-groen btn-sm" onclick="bulkActie('aangenomen')">✓ Aannemen</button> `;
-    html += `<button type="button" class="btn btn-rood btn-sm" onclick="bulkActie('afgewezen')">✕ Afwijzen</button>`;
+    html += `<button type="button" class="btn btn-rood btn-sm" onclick="bulkActie('afgewezen')">✕ Afwijzen</button> `;
+    html += `<button type="button" class="btn btn-outline btn-sm" style="color:#fff;border-color:rgba(255,255,255,.3)" onclick="bulkExport()">📊 Export Excel</button>`;
     document.getElementById('bulkKnoppen').innerHTML = html;
   } else {
     balk.classList.remove('zichtbaar');
@@ -521,6 +525,13 @@ function wisSelectie() {
   document.querySelectorAll('.soll-cb').forEach(cb => { cb.checked = false; });
   document.getElementById('selecteerAlle').checked = false;
   updateBulk();
+}
+
+function bulkExport() {
+  const ids = [...document.querySelectorAll('.soll-cb:checked')].map(cb => cb.value).filter(Boolean);
+  if (!ids.length) return;
+  // Open de Excel-export met de geselecteerde sollicitanten
+  window.location.href = '<?= APP_URL ?>/admin/export_blk.php?formaat=excel&ids=' + ids.join(',');
 }
 
 function bulkActie(actie) {
