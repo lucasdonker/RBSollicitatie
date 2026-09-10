@@ -89,6 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ]);
         }
         flash('succes', 'Werkperiodes opgeslagen namens ' . h($naam) . '.');
+        if (function_exists('audit_log')) audit_log('gewijzigd', 'beschikbaarheid', $id, ['via' => 'bestuur_formulier', 'blokken' => count($blokken)]);
         redirect(APP_URL . '/admin/beschikbaarheid_bewerken.php?id=' . $id . '#formulier');
     }
 }

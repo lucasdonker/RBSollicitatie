@@ -34,6 +34,7 @@ if (file_exists(__DIR__ . '/selectiedag.php')) require_once __DIR__ . '/selectie
 if (file_exists(__DIR__ . '/ai_beschikbaarheid.php')) require_once __DIR__ . '/ai_beschikbaarheid.php';
 if (file_exists(__DIR__ . '/opschonen.php')) require_once __DIR__ . '/opschonen.php';
 if (file_exists(__DIR__ . '/db_failsafe.php')) require_once __DIR__ . '/db_failsafe.php';
+if (file_exists(__DIR__ . '/audit.php')) require_once __DIR__ . '/audit.php';
 
 // ── Database ──────────────────────────────────────────────────
 function db(): PDO {
@@ -136,6 +137,7 @@ function login_beheerder(array $b, string $via = 'wachtwoord'): void {
     $_SESSION['bhd_email'] = $b['email']; $_SESSION['bhd_rol'] = $b['rol'];
     $_SESSION['bhd_via'] = $via; $_SESSION['_t'] = time();
     try { db()->prepare("UPDATE beheerders SET laatste_login = NOW() WHERE id = ?")->execute([$b['id']]); } catch (Exception $e) {}
+    if (function_exists('audit_log')) audit_log('ingelogd', 'beheerder', (int)$b['id'], ['via' => $via]);
 }
 
 // ── Brute-force bescherming (login) ───────────────────────────

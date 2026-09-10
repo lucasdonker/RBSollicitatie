@@ -227,6 +227,27 @@ function opschoon_run(bool $dry_run = false, string $bron = 'cron'): array {
         }
     }
 
+    // Auditlog opschonen (bewaartermijn, default 12 maanden)
+    try {
+        $audit_maanden = (int)instelling('bewaar.audit_maanden', '12');
+        if ($audit_maanden > 0) {
+            $audit_grens = date('Y-m-d H:i:s', strtotime("-$audit_maanden months"));
+            if ($dry_run) {
+                $c = $db->prepare("SELECT COUNT(*) FROM audit_log WHERE moment < ?");
+                $c->execute([$audit_grens]);
+                $aantal = (int)$c->fetchColumn();
+            } else {
+                $del = $db->prepare("DELETE FROM audit_log WHERE moment < ?");
+                $del->execute([$audit_grens]);
+                $aantal = $del->rowCount();
+            }
+            $uit['categorieen']['auditlog_verwijderd'] = $aantal;
+            if (!$dry_run) opschoon_log_schrijf('auditlog_verwijderd', $aantal, $bron);
+        }
+    } catch (\Exception $e) {
+        $uit['categorieen']['auditlog_verwijderd'] = 0;
+    }
+
     instelling_opslaan('bewaar.laatste_run', date('Y-m-d H:i:s'));
     return $uit;
 }

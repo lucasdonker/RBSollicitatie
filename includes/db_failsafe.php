@@ -107,6 +107,7 @@ function db_failsafe(): void {
         'loonplan_auto_setup',
         'rechten_auto_setup',
         'beschikbaarheid_dag_auto_setup',
+        'audit_dag_auto_setup',
     ];
     foreach ($setups as $fn) {
         if (function_exists($fn)) {

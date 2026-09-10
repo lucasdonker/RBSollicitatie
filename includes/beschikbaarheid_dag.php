@@ -102,6 +102,9 @@ function beschikbaarheid_dag_bestuur_zet(int $sol_id, string $datum, string $soo
                         (sollicitatie_id, datum, soort, reden, bron, status, gewijzigd_door, gewijzigd_op)
                       VALUES (?,?,?,?,'bestuur','goedgekeurd',?,NOW())")
            ->execute([$sol_id, $datum, $soort, (($reden !== null && trim($reden) !== '') ? trim($reden) : null), $beheerder_id]);
+        if (function_exists('audit_log')) {
+            audit_log('gewijzigd', 'beschikbaarheid', $sol_id, ['datum' => $datum, 'soort' => $soort, 'reden' => $reden, 'via' => 'bestuur_per_dag']);
+        }
     } catch (\Exception $e) { error_log('beschikbaarheid_dag_bestuur_zet: ' . $e->getMessage()); }
 }
 
@@ -111,6 +114,9 @@ function beschikbaarheid_dag_bestuur_verwijder(int $sol_id, string $datum): void
     try {
         db()->prepare("DELETE FROM beschikbaarheid_dag WHERE sollicitatie_id=? AND datum=? AND bron='bestuur'")
             ->execute([$sol_id, $datum]);
+        if (function_exists('audit_log')) {
+            audit_log('gewijzigd', 'beschikbaarheid', $sol_id, ['datum' => $datum, 'via' => 'bestuur_teruggedraaid']);
+        }
     } catch (\Exception $e) {}
 }
 

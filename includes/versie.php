@@ -3,10 +3,21 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.52.0');
+define('APP_VERSIE', '2.53.0');
 
 function app_changelog(): array {
     return [
+        '2.53.0' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Auditlogboek: wie wat wanneer deed',
+            'punten' => [
+                'Nieuw auditlogboek dat vastlegt wie welke actie deed (inloggen, wijzigen, exporteren, en meer) — zonder het systeem trager te maken, doordat de registratie pas ná het laden van de pagina wordt weggeschreven',
+                'Doorzoekbaar inzage-scherm in het beheer (Systeem → Auditlogboek): filter op wie, actie, objecttype en periode',
+                'De beschikbaarheid-aanpassingen door het bestuur worden nu vastgelegd in het logboek, inclusief wat er veranderde',
+                'Beheerder-logins en beschikbaarheid-exports worden vastgelegd',
+                'Automatische opschoning: auditregels ouder dan 12 maanden worden opgeruimd (instelbaar), passend binnen de AVG-bewaartermijnen',
+            ],
+        ],
         '2.52.0' => [
             'datum'  => '2026-08-21',
             'titel'  => 'Beheer kan beschikbaarheid per dag aanpassen + verzoekdagen standaard aan',

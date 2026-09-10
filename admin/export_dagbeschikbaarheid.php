@@ -42,6 +42,10 @@ $naam = trim($sol['voornaam'] . ' ' . ($sol['tussenvoegsel'] ? $sol['tussenvoegs
 // De kern: dag-voor-dag beschikbaarheid (zoals de rooster-API het zou krijgen)
 $per_dag = function_exists('beschikbaarheid_per_dag') ? beschikbaarheid_per_dag($id, $van, $tot) : [];
 
+if (function_exists('audit_log')) {
+    audit_log('geexporteerd', 'beschikbaarheid', $id, ['formaat' => $formaat]);
+}
+
 // ── JSON-uitvoer (het formaat dat de API zou ontvangen) ──────────────
 if ($formaat === 'json') {
     header('Content-Type: application/json; charset=utf-8');
