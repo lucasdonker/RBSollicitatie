@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.63.1');
+define('APP_VERSIE', '2.64.0');
 
 function app_changelog(): array {
     return [
+        '2.64.0' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Gedeelde portaal-layout + navigatie (fundament stap 3)',
+            'punten' => [
+                'Nieuwe gedeelde portaal-layout (kop + voet) zodat de navigatie op precies één plek bestaat en overal identiek verschijnt — nooit dubbel of uit elkaar',
+                'App-navigatie: een onderbalk met Start / Taken / Gegevens op mobiel, en een nette horizontale balk op desktop',
+                'De topbar met logo en seizoensnaam, in de nieuwe ontwerpstijl',
+                'Dit zijn de bouwstenen; de startpagina zelf wordt in de volgende stap op deze layout gezet',
+            ],
+        ],
         '2.63.1' => [
             'datum'  => '2026-08-21',
             'titel'  => 'Inlogscherm compleet: opnieuw-sturen en doorstuur-pagina',
