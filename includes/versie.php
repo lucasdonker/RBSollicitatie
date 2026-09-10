@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.64.2');
+define('APP_VERSIE', '2.64.3');
 
 function app_changelog(): array {
     return [
+        '2.64.3' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Startpagina: taken in de nieuwe stijl',
+            'punten' => [
+                'De taken op de startpagina zijn omgezet naar de nieuwe stijl: lijn-iconen in plaats van emoji, nette badges en een duidelijke "Openen"-knop',
+                'De "Jouw acties"-kop is nu "Nu te doen" met een telling van openstaande taken, passend bij het ontwerp',
+                'Het inline oudergegevens-formulier en het ouder-status-overzicht zijn behouden en emoji-vrij gemaakt',
+            ],
+        ],
         '2.64.2' => [
             'datum'  => '2026-08-21',
             'titel'  => 'Startpagina: begroeting en nieuwe voortgang',

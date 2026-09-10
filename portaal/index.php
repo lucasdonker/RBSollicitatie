@@ -1087,35 +1087,33 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
   $open_taken = array_filter($alle_taken, fn($t) => !$t['done']);
   if ($alle_taken):
   ?>
-  <div class="card" style="margin-top:14px;border-left:4px solid <?= $open_taken ? 'var(--oranje)' : 'var(--groen)' ?>">
-    <div class="card-header">
-      <h2 style="margin:0;font-size:15px">
-        📋 Jouw acties
-        <?php if ($open_taken): ?>
-          <span class="badge badge-oranje" style="margin-left:6px"><?= count($open_taken) ?> open</span>
-        <?php else: ?>
-          <span class="badge badge-groen" style="margin-left:6px">✓ Alles gedaan</span>
-        <?php endif; ?>
-      </h2>
+  <div class="ds-kaart" style="margin-top:16px;overflow:hidden">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid var(--rand)">
+      <span style="font:var(--text-subhead);color:var(--ink)"><?= $open_taken ? 'Nu te doen' : 'Jouw acties' ?></span>
+      <?php if ($open_taken): ?>
+        <span class="ds-badge ds-badge-accent"><?= count($open_taken) ?> open</span>
+      <?php else: ?>
+        <span class="ds-badge ds-badge-ok"><?= icoon('vink', 13) ?> Alles gedaan</span>
+      <?php endif; ?>
     </div>
     <div class="card-body" style="padding:12px 16px;display:flex;flex-direction:column;gap:10px">
       <?php foreach ($alle_taken as $t):
-        // Statuskleur per taak
-        if ($t['done'])                        { $rand='var(--groen)';  $badge='badge-groen';  $badgetxt=$t['status'] ?? 'Gedaan'; $ico='✅'; }
-        elseif (($t['status'] ?? '')==='Wachten op ouder') { $rand='var(--blauw)'; $badge='badge-blauw'; $badgetxt='Wachten op ouder'; $ico='📨'; }
-        elseif (!empty($t['urgent']))          { $rand='var(--oranje)'; $badge='badge-oranje'; $badgetxt='Actie nodig'; $ico='⏳'; }
-        else                                   { $rand='var(--rand)';   $badge='badge-grijs';  $badgetxt=$t['status'] ?? 'Open'; $ico='📨'; }
+        // Statuskleur + lijn-icoon per taak (ontwerp: geen emoji)
+        if ($t['done'])                        { $rand='var(--ok)';     $badge='ds-badge-ok';     $badgetxt=$t['status'] ?? 'Gedaan'; $ico='vink-cirkel'; $icocls='ok'; }
+        elseif (($t['status'] ?? '')==='Wachten op ouder') { $rand='var(--navy)'; $badge='ds-badge-navy'; $badgetxt='Wachten op ouder'; $ico='mail'; $icocls='navy'; }
+        elseif (!empty($t['urgent']))          { $rand='var(--accent)'; $badge='ds-badge-accent'; $badgetxt='Actie nodig'; $ico='wachten'; $icocls='accent'; }
+        else                                   { $rand='var(--border)'; $badge='ds-badge-grijs';  $badgetxt=$t['status'] ?? 'Open'; $ico='mail'; $icocls=''; }
       ?>
-        <div style="border:1px solid var(--rand);border-left:4px solid <?= $rand ?>;border-radius:10px;padding:12px 14px;background:var(--bg-card);<?= $t['done'] ? 'opacity:.6' : '' ?>">
-          <div style="display:flex;align-items:flex-start;gap:10px">
-            <span style="font-size:18px;line-height:1.2;flex-shrink:0"><?= $ico ?></span>
+        <div style="border:1px solid var(--border);border-left:3px solid <?= $rand ?>;border-radius:var(--radius-md);padding:12px 14px;background:var(--surface);<?= $t['done'] ? 'opacity:.62' : '' ?>">
+          <div style="display:flex;align-items:flex-start;gap:11px">
+            <span class="ds-taak-icoon <?= $icocls ?>" style="width:34px;height:34px;border-radius:9px"><?= icoon($ico, 17) ?></span>
             <div style="flex:1;min-width:0">
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-                <span style="font-size:13.5px;font-weight:600;<?= $t['done'] ? 'text-decoration:line-through' : '' ?>"><?= h($t['titel']) ?></span>
-                <span class="badge <?= $badge ?>" style="font-size:10px"><?= h($badgetxt) ?></span>
+                <span style="font:var(--text-label);font-size:14px;<?= $t['done'] ? 'text-decoration:line-through;color:var(--ink-muted)' : '' ?>"><?= h($t['titel']) ?></span>
+                <span class="ds-badge <?= $badge ?>" style="font-size:10px"><?= h($badgetxt) ?></span>
               </div>
               <?php if (!empty($t['hint'])): ?>
-                <div style="font-size:12px;color:var(--tekst-zacht);margin-top:3px;line-height:1.5"><?= h($t['hint']) ?></div>
+                <div style="font:var(--text-meta);color:var(--ink-soft);margin-top:3px"><?= h($t['hint']) ?></div>
               <?php endif; ?>
 
             <?php if (!empty($t['inline_form']) && $t['inline_form'] === 'ouder'): ?>
@@ -1137,13 +1135,13 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
                 <div class="ouder-fout" style="display:none;color:var(--rood);font-size:12px;margin-bottom:8px"></div>
                 <button type="submit" class="btn btn-primary btn-sm">
                   <span class="btn-tekst"><?= $is_ingevuld ? 'Opnieuw versturen' : 'Versturen naar ouder' ?></span>
-                  <span class="btn-spinner" style="display:none">⏳ Bezig…</span>
+                  <span class="btn-spinner" style="display:none">Bezig…</span>
                 </button>
               </form>
             <?php endif; ?>
             </div>
             <?php if (!$t['done'] && !empty($t['url'])): ?>
-              <a href="<?= h($t['url']) ?>" class="btn btn-primary btn-sm" style="flex-shrink:0">Openen →</a>
+
             <?php endif; ?>
           </div>
         </div>
@@ -1161,14 +1159,14 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
   <div class="card" style="margin-top:14px">
     <div class="card-header">
       <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;width:100%;gap:10px">
-        <span>👪 Formulieren van je ouder/verzorger</span>
+        <span>Formulieren van je ouder/verzorger</span>
         <span class="badge <?= $alles_klaar ? 'badge-groen' : 'badge-blauw' ?>" style="font-size:11px"><?= $getekend ?>/<?= $totaal ?> ondertekend</span>
       </div>
     </div>
     <div class="card-body">
       <?php if ($alles_klaar): ?>
         <div style="background:var(--groen-bg);border:1px solid var(--groen);border-radius:8px;padding:12px 14px;font-size:13px;color:var(--groen)">
-          ✅ Alle formulieren zijn ondertekend door je ouder/verzorger. Je hoeft verder niets te doen.
+          Alle formulieren zijn ondertekend door je ouder/verzorger. Je hoeft verder niets te doen.
         </div>
       <?php else: ?>
         <p style="font-size:12.5px;color:var(--tekst-zacht);margin:0 0 12px">
@@ -1178,7 +1176,7 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
       <div style="display:flex;flex-direction:column;gap:8px">
         <?php foreach ($ouder_docs as $doc): ?>
           <div style="display:flex;align-items:flex-start;gap:10px;padding:11px 13px;border:1px solid var(--rand);border-radius:8px;background:var(--bg-card)">
-            <span style="font-size:16px;line-height:1.2"><?= $doc['klaar'] ? '✅' : '📨' ?></span>
+
             <div style="flex:1;min-width:0">
               <div style="font-weight:600;font-size:13px"><?= h($doc['label']) ?></div>
               <div style="font-size:11.5px;color:var(--tekst-zacht);margin-top:2px">
