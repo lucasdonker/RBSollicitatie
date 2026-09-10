@@ -106,7 +106,7 @@ if ($actie === 'bewerk' || $actie === 'nieuw'):
       <?= csrf_input() ?>
       <input type="hidden" name="id" value="<?= (int)($lp['id'] ?? 0) ?>">
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:12px">
         <div>
           <label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px">Titel *</label>
           <input type="text" name="titel" value="<?= h($lp['titel'] ?? '') ?>" required style="width:100%">
@@ -117,7 +117,7 @@ if ($actie === 'bewerk' || $actie === 'nieuw'):
         </div>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:12px">
         <div>
           <label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px">URL-naam (slug) *</label>
           <input type="text" name="slug" value="<?= h($lp['slug'] ?? '') ?>" required placeholder="medisch" style="width:100%">
