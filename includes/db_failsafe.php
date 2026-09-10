@@ -73,6 +73,10 @@ function db_verwachte_kolommen(): array {
         'mail_templates' => [
             'hero_titel'   => 'VARCHAR(200) DEFAULT NULL',
         ],
+        'beschikbaarheid_dag' => [
+            'gewijzigd_door' => 'INT DEFAULT NULL',
+            'gewijzigd_op'   => 'DATETIME DEFAULT NULL',
+        ],
     ];
 }
 
@@ -120,6 +124,19 @@ function db_failsafe(): void {
             foreach ($kolommen as $kolom => $definitie) {
                 db_kolom_verzeker($db, $tabel, $kolom, $definitie);
             }
+        }
+        // Speciaal: soort-enum van beschikbaarheid_dag moet 'beschikbaar' bevatten
+        // (voor bestuurs-overrides die een dag expliciet beschikbaar maken).
+        if (db_tabel_bestaat($db, 'beschikbaarheid_dag')) {
+            try {
+                $q = $db->query("SHOW COLUMNS FROM beschikbaarheid_dag LIKE 'soort'");
+                $col = $q->fetch();
+                if ($col && stripos($col['Type'] ?? '', "'beschikbaar'") === false) {
+                    $db->exec("ALTER TABLE beschikbaarheid_dag MODIFY COLUMN soort
+                               ENUM('niet_beschikbaar','voorkeur_vrij','beschikbaar') NOT NULL DEFAULT 'niet_beschikbaar'");
+                    error_log('db_failsafe: soort-enum uitgebreid met beschikbaar');
+                }
+            } catch (\Exception $e) { error_log('db_failsafe soort-enum: ' . $e->getMessage()); }
         }
     } catch (\Exception $e) {
         error_log('db_failsafe kolom-check: ' . $e->getMessage());

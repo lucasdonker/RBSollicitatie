@@ -3,10 +3,21 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.51.1');
+define('APP_VERSIE', '2.52.0');
 
 function app_changelog(): array {
     return [
+        '2.52.0' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Beheer kan beschikbaarheid per dag aanpassen + verzoekdagen standaard aan',
+            'punten' => [
+                'Nieuw beheer-scherm: het bestuur kan de beschikbaarheid van een sollicitant per dag aanpassen (kalender met klik-om-te-wijzigen) én werkperiodes invullen in portaal-stijl',
+                'Bestuurs-aanpassingen worden de eindwaarheid, ook in het portaal van de sollicitant, met een duidelijke melding welke dagen zijn aangepast',
+                'Alles herleidbaar: elke bestuurs-wijziging legt vast wie het deed en wanneer',
+                'Een bestuurs-aanpassing per dag kan worden teruggedraaid; dan geldt weer de eigen invoer van de sollicitant',
+                'Bij verzoeken "minder dagen" staan de voorkeursdagen nu standaard allemaal aangevinkt (je vinkt uit wat niet kan), zodat niet onbewust "ik kan alle dagen" wordt gezegd; de waarschuwing verschijnt meteen bij te weinig dagen',
+            ],
+        ],
         '2.51.1' => [
             'datum'  => '2026-08-21',
             'titel'  => 'Verzoeken minder dagen: hardheid en validatie',

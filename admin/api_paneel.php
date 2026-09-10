@@ -424,11 +424,17 @@ $ai_analyse = $blk ? ($blk['ai_analyse'] ?? null) : null;
           💬 <span style="color:var(--tekst-zacht)"><?= h($b2data['profiel']['opmerking']) ?></span>
         <?php endif; ?>
 
-        <div style="margin-top:10px">
+        <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">
           <a href="<?= APP_URL ?>/admin/export_dagbeschikbaarheid.php?id=<?= (int)$id ?>" target="_blank"
              class="btn btn-outline btn-sm" style="font-size:11px">
             📆 Beschikbaarheid per dag bekijken (API-check)
           </a>
+          <?php if (function_exists('mag') && mag('beschikbaarheid', 'bewerken')): ?>
+          <a href="<?= APP_URL ?>/admin/beschikbaarheid_bewerken.php?id=<?= (int)$id ?>"
+             class="btn btn-outline btn-sm" style="font-size:11px">
+            ✏️ Beschikbaarheid aanpassen
+          </a>
+          <?php endif; ?>
         </div>
       </div>
 

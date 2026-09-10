@@ -1257,6 +1257,30 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
           <!-- Foutmelding-blok (WCAG: tekst, niet alleen kleur) -->
           <div id="b2FoutMelding" role="alert" aria-live="assertive" style="display:none;margin-bottom:12px;padding:11px 14px;background:var(--rood-bg);border-left:3px solid var(--rood);border-radius:6px;font-size:13px;color:var(--rood)"></div>
 
+          <?php
+            // Melding als het bestuur dagen heeft aangepast (herleidbaar, transparant naar de sollicitant)
+            $bestuur_aanpassingen = [];
+            if (function_exists('beschikbaarheid_dagen')) {
+                foreach (beschikbaarheid_dagen($sol['id']) as $bd) {
+                    if (($bd['bron'] ?? '') === 'bestuur') $bestuur_aanpassingen[] = $bd;
+                }
+            }
+            if ($bestuur_aanpassingen):
+          ?>
+          <div style="margin-bottom:14px;padding:12px 15px;background:var(--blauw-bg,#e8f0f8);border-left:3px solid var(--navy);border-radius:8px;font-size:13px">
+            <strong>ℹ️ Een aantal dagen is door het bestuur aangepast.</strong>
+            <div style="margin-top:6px;color:var(--tekst-zacht)">
+              <?php foreach ($bestuur_aanpassingen as $ba):
+                $lbl = date('d-m-Y', strtotime($ba['datum']));
+                $status = ($ba['soort'] ?? '') === 'beschikbaar' ? 'beschikbaar gemaakt' : 'op niet-beschikbaar gezet';
+              ?>
+              <div>• <?= h($lbl) ?> — <?= h($status) ?><?= !empty($ba['reden']) ? ' (' . h($ba['reden']) . ')' : '' ?></div>
+              <?php endforeach; ?>
+            </div>
+            <div style="margin-top:6px;font-size:12px;color:var(--grijs)">Deze aanpassingen gelden boven je eigen invoer. Klopt er iets niet? Neem contact op met het bestuur.</div>
+          </div>
+          <?php endif; ?>
+
           <!-- STAP 1: Wanneer kun je werken? (verplicht, standaard hele seizoen) -->
           <div style="background:var(--bg-card);border:1px solid var(--rand);border-radius:12px;padding:16px;margin-bottom:14px">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
@@ -1398,7 +1422,9 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
                 </p>
                 <div id="b2VerzoekLijst">
                   <?php foreach ($b2['verzoeken'] as $vz): if ($vz['status']!=='open' && $vz['status']!=='goedgekeurd') continue;
-                    $pool_sel = $vz['dagen_pool'] ?: []; ?>
+                    $pool_sel = $vz['dagen_pool'] ?: [];
+                    // Lege pool betekent "alle dagen" — toon dan alles aangevinkt (i.p.v. impliciet niks).
+                    if (!$pool_sel) $pool_sel = [1,2,3,4,5,6,7]; ?>
                   <div class="b2-verzoek-rij" style="border:1px solid var(--rand-licht);border-radius:8px;padding:10px;margin-bottom:8px">
                     <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
                       <span style="font-size:12px;color:var(--grijs)">van</span>
@@ -1416,7 +1442,7 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
                     </div>
                     <input type="text" name="b2_vz_toelichting[]" value="<?= h($vz['toelichting'] ?? '') ?>" placeholder="reden (bijv. school)" aria-label="Reden" style="width:100%;margin-top:6px">
                     <div style="margin-top:8px">
-                      <span style="font-size:12px;color:var(--tekst-zacht);margin-right:6px">Welke dagen kun je die week wél? (optioneel)</span>
+                      <span style="font-size:12px;color:var(--tekst-zacht);margin-right:6px">Welke dagen kun je die week wél? Vink de dagen uit die niet kunnen.</span>
                       <?php foreach ([1=>'ma',2=>'di',3=>'wo',4=>'do',5=>'vr',6=>'za',7=>'zo'] as $dn=>$dl): ?>
                       <label style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border:1px solid var(--rand);border-radius:5px;cursor:pointer;font-size:12px;margin:2px 2px 0 0">
                         <input type="checkbox" class="b2-vz-pooldag" value="<?= $dn ?>" <?= in_array($dn,$pool_sel)?'checked':'' ?>> <?= $dl ?>
@@ -1916,11 +1942,11 @@ function b2VerzoekToevoegen() {
     '</div>' +
     '<input type="text" name="b2_vz_toelichting[]" placeholder="reden (bijv. school)" aria-label="Reden" style="width:100%;margin-top:6px">' +
     '<div style="margin-top:8px">' +
-      '<span style="font-size:12px;color:var(--tekst-zacht);margin-right:6px">Welke dagen kun je die week wél? (optioneel)</span>' +
+      '<span style="font-size:12px;color:var(--tekst-zacht);margin-right:6px">Welke dagen kun je die week wél? Vink de dagen uit die niet kunnen.</span>' +
       [[1,'ma'],[2,'di'],[3,'wo'],[4,'do'],[5,'vr'],[6,'za'],[7,'zo']].map(d =>
-        '<label style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border:1px solid var(--rand);border-radius:5px;cursor:pointer;font-size:12px;margin:2px 2px 0 0"><input type="checkbox" class="b2-vz-pooldag" value="'+d[0]+'"> '+d[1]+'</label>'
+        '<label style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border:1px solid var(--rand);border-radius:5px;cursor:pointer;font-size:12px;margin:2px 2px 0 0"><input type="checkbox" class="b2-vz-pooldag" value="'+d[0]+'" checked> '+d[1]+'</label>'
       ).join('') +
-      '<input type="hidden" name="b2_vz_pool[]" value="[]">' +
+      '<input type="hidden" name="b2_vz_pool[]" value="[1,2,3,4,5,6,7]">' +
     '</div>';
   document.getElementById('b2VerzoekLijst').appendChild(div);
 }
@@ -1969,7 +1995,7 @@ function b2Herbereken() {
       waarschuwing.style.cssText = 'font-size:12px;color:var(--oranje);margin-top:6px;display:none';
       rij.appendChild(waarschuwing);
     }
-    if (aangevinkt.length > 0 && gevraagd > 0 && aangevinkt.length < gevraagd) {
+    if (gevraagd > 0 && aangevinkt.length < gevraagd) {
       waarschuwing.textContent = '⚠️ Je vraagt ' + gevraagd + ' dagen aan, maar hebt er ' + aangevinkt.length + ' aangevinkt. Vink minstens ' + gevraagd + ' dagen aan die je wél kunt.';
       waarschuwing.style.display = '';
     } else {

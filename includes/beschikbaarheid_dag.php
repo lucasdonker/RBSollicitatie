@@ -22,10 +22,12 @@ function beschikbaarheid_dag_auto_setup(): void {
             `id` INT AUTO_INCREMENT PRIMARY KEY,
             `sollicitatie_id` INT NOT NULL,
             `datum` DATE NOT NULL,
-            `soort` ENUM('niet_beschikbaar','voorkeur_vrij') NOT NULL DEFAULT 'niet_beschikbaar',
+            `soort` ENUM('niet_beschikbaar','voorkeur_vrij','beschikbaar') NOT NULL DEFAULT 'niet_beschikbaar',
             `reden` VARCHAR(300) DEFAULT NULL,
             `bron` ENUM('sollicitant','bestuur') NOT NULL DEFAULT 'sollicitant',
             `status` ENUM('open','goedgekeurd','afgewezen') NOT NULL DEFAULT 'goedgekeurd',
+            `gewijzigd_door` INT DEFAULT NULL COMMENT 'beheerder_id bij bron=bestuur',
+            `gewijzigd_op` DATETIME DEFAULT NULL,
             `aangemaakt_op` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             UNIQUE KEY `uniek_dag` (`sollicitatie_id`, `datum`, `soort`),
             KEY `idx_sol_datum` (`sollicitatie_id`, `datum`)
@@ -77,6 +79,38 @@ function beschikbaarheid_dag_verwijderen(int $sol_id, int $dag_id): void {
     beschikbaarheid_dag_auto_setup();
     try {
         db()->prepare("DELETE FROM beschikbaarheid_dag WHERE id=? AND sollicitatie_id=?")->execute([$dag_id, $sol_id]);
+    } catch (\Exception $e) {}
+}
+
+/**
+ * Bestuurs-override voor één dag. Het bestuur zet een specifieke datum expliciet op
+ * beschikbaar of niet-beschikbaar; dat wordt de eindwaarheid (bron='bestuur' wint in de
+ * merge). Legt vast wie het deed en wanneer, zodat alles herleidbaar is.
+ *
+ * @param string $soort 'beschikbaar' | 'niet_beschikbaar' | 'voorkeur_vrij'
+ */
+function beschikbaarheid_dag_bestuur_zet(int $sol_id, string $datum, string $soort, ?string $reden, int $beheerder_id): void {
+    beschikbaarheid_dag_auto_setup();
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $datum)) return;
+    if (!in_array($soort, ['beschikbaar','niet_beschikbaar','voorkeur_vrij'], true)) return;
+    try {
+        $db = db();
+        // Precies één bestuurs-waarheid per dag: verwijder eerst een eventuele eerdere.
+        $db->prepare("DELETE FROM beschikbaarheid_dag WHERE sollicitatie_id=? AND datum=? AND bron='bestuur'")
+           ->execute([$sol_id, $datum]);
+        $db->prepare("INSERT INTO beschikbaarheid_dag
+                        (sollicitatie_id, datum, soort, reden, bron, status, gewijzigd_door, gewijzigd_op)
+                      VALUES (?,?,?,?,'bestuur','goedgekeurd',?,NOW())")
+           ->execute([$sol_id, $datum, $soort, (($reden !== null && trim($reden) !== '') ? trim($reden) : null), $beheerder_id]);
+    } catch (\Exception $e) { error_log('beschikbaarheid_dag_bestuur_zet: ' . $e->getMessage()); }
+}
+
+/** Een bestuurs-override voor één dag terugdraaien (dan geldt weer de sollicitant-invoer). */
+function beschikbaarheid_dag_bestuur_verwijder(int $sol_id, string $datum): void {
+    beschikbaarheid_dag_auto_setup();
+    try {
+        db()->prepare("DELETE FROM beschikbaarheid_dag WHERE sollicitatie_id=? AND datum=? AND bron='bestuur'")
+            ->execute([$sol_id, $datum]);
     } catch (\Exception $e) {}
 }
 
@@ -187,15 +221,32 @@ function beschikbaarheid_per_dag(int $sol_id, string $van, string $tot): array {
         }
     } catch (\Exception $e) {}
 
-    // 4. Losse dagen (het nieuwe stuk) — de meest specifieke, dus deze wint.
-    //    Alleen goedgekeurde (of direct-genoteerde) dagen tellen mee voor het rooster.
-    foreach (beschikbaarheid_dagen($sol_id, $van, $tot) as $dag) {
+    // 4. Losse dagen — de meest specifieke laag. Sollicitant-dagen eerst, dan bestuur:
+    //    een bestuurs-override wint altijd (dat is de afgesproken eindwaarheid).
+    $losse = beschikbaarheid_dagen($sol_id, $van, $tot);
+    // Sorteer zodat 'sollicitant' vóór 'bestuur' komt (bestuur overschrijft daarna).
+    usort($losse, function ($a, $b) {
+        $rang = ['sollicitant' => 0, 'bestuur' => 1];
+        return ($rang[$a['bron'] ?? 'sollicitant'] ?? 0) <=> ($rang[$b['bron'] ?? 'sollicitant'] ?? 0);
+    });
+    foreach ($losse as $dag) {
         if (($dag['status'] ?? 'goedgekeurd') !== 'goedgekeurd') continue;
         $datum = $dag['datum'];
         if (!isset($uit[$datum])) continue;
-        $uit[$datum]['beschikbaar'] = false;
-        $uit[$datum]['reden'] = trim($dag['reden'] ?? '') ?: ($dag['soort'] === 'voorkeur_vrij' ? 'liever vrij' : 'niet beschikbaar');
-        $uit[$datum]['hardheid'] = ($dag['soort'] === 'voorkeur_vrij') ? 'zacht' : 'hard';
+        $soort = $dag['soort'] ?? 'niet_beschikbaar';
+        $is_bestuur = ($dag['bron'] ?? 'sollicitant') === 'bestuur';
+
+        if ($soort === 'beschikbaar') {
+            // Expliciet beschikbaar (alleen zinvol als bestuurs-override van een blokkade).
+            $uit[$datum]['beschikbaar'] = true;
+            $uit[$datum]['reden'] = '';
+            $uit[$datum]['hardheid'] = null;
+        } else {
+            $uit[$datum]['beschikbaar'] = false;
+            $uit[$datum]['reden'] = trim($dag['reden'] ?? '') ?: ($soort === 'voorkeur_vrij' ? 'liever vrij' : 'niet beschikbaar');
+            $uit[$datum]['hardheid'] = ($soort === 'voorkeur_vrij') ? 'zacht' : 'hard';
+        }
+        if ($is_bestuur) $uit[$datum]['door_bestuur'] = true;   // markering voor herleidbaarheid
     }
 
     // 5. Verzoeken "minder dagen per week" (goedgekeurd) — met voorkeursdagen (pool).
