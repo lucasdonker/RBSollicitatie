@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.64.3');
+define('APP_VERSIE', '2.64.4');
 
 function app_changelog(): array {
     return [
+        '2.64.4' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Mijn gegevens op de gedeelde layout',
+            'punten' => [
+                'De pagina "Mijn gegevens" gebruikt nu de gedeelde portaal-layout, met dezelfde topbar en navigatie als de rest',
+                'Omgezet naar de nieuwe stijl: lijn-iconen in plaats van emoji, nette knoppen en kaarten',
+                'De losse "terug naar portaal"-knop is weg — dat doet de navigatiebalk nu',
+            ],
+        ],
         '2.64.3' => [
             'datum'  => '2026-08-21',
             'titel'  => 'Startpagina: taken in de nieuwe stijl',

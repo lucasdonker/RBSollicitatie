@@ -124,38 +124,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verwijder'])) {
     }
 }
 
-$titel = 'Mijn gegevens';
+$portaal_titel = 'Mijn gegevens';
+$portaal_nav = 'gegevens';
 $logo  = function_exists('site_logo_url') ? site_logo_url() : '';
+require __DIR__ . '/_kop.php';
 ?>
-<!DOCTYPE html>
-<html lang="nl" data-theme="">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title><?= h($titel) ?> — Paal 13</title>
-<link rel="stylesheet" href="<?= APP_URL ?>/assets/css/stijl.css">
-<script>(function(){var t=localStorage.getItem('paal13-theme')||'light';document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'');})();</script>
 <style>
-body{background:var(--bg);min-height:100vh}
-.wrap{max-width:640px;margin:0 auto;padding:24px 16px 48px}
-.avg-card{background:var(--bg-card);border:1px solid var(--rand);border-radius:12px;padding:24px;margin-bottom:16px;box-shadow:var(--shadow)}
-.avg-card h2{margin-top:0;font-size:17px;font-weight:600}
-.avg-rij{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--rand-licht);font-size:13.5px;gap:12px;flex-wrap:wrap}
+.avg-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:16px;box-shadow:var(--shadow-card)}
+.avg-card h2{margin-top:0;font:var(--text-subhead)}
+.avg-rij{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--rand-2);font-size:14px;gap:12px;flex-wrap:wrap}
 .avg-rij:last-child{border-bottom:none}
-.avg-label{color:var(--tekst-zacht);flex-shrink:0}
-.avg-waarde{color:var(--tekst);font-weight:500;text-align:right;word-break:break-word}
-.gevaar{border-color:var(--rood-bg);background:var(--rood-bg);padding:20px;border-radius:8px;margin-top:14px}
-.gevaar h3{color:var(--rood);margin-top:0;font-size:15px}
-.gevaar-input{width:100%;margin-top:8px;padding:10px;border:1px solid var(--rood);border-radius:6px;font-family:monospace;background:var(--bg-card);color:var(--tekst)}
+.avg-label{color:var(--ink-soft);flex-shrink:0}
+.avg-waarde{color:var(--ink);font-weight:500;text-align:right;word-break:break-word}
+.gevaar{border:1px solid #f0c9be;background:var(--error-soft);padding:18px;border-radius:var(--radius-md);margin-top:14px}
+.gevaar h3{color:var(--error);margin-top:0;font-size:15px}
+.gevaar-input{width:100%;margin-top:8px;padding:10px;border:1px solid var(--error);border-radius:var(--radius-sm);font-family:monospace;background:var(--surface);color:var(--ink)}
 </style>
-</head>
-<body>
-<div class="wrap">
-
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;gap:12px;flex-wrap:wrap">
-  <a href="<?= APP_URL ?>/portaal/" class="btn btn-outline btn-sm">← Terug naar portaal</a>
-  <?php if ($logo): ?><img src="<?= h($logo) ?>" alt="Paal 13" style="height:32px"><?php endif; ?>
-</div>
 
 <h1 style="font-size:22px;margin-bottom:6px">Mijn gegevens</h1>
 <p style="color:var(--tekst-zacht);font-size:13px;margin-bottom:24px">
@@ -164,7 +148,7 @@ body{background:var(--bg);min-height:100vh}
 
 <?php if ($verwijderd): ?>
   <div class="flash flash-succes" style="text-align:center;padding:24px">
-    <h2 style="margin-top:0">✓ Account verwijderd</h2>
+    <h2 style="margin-top:0"><?= icoon("vink-cirkel", 20) ?> Account verwijderd</h2>
     <p style="margin-bottom:0">Je persoonlijke gegevens zijn geanonimiseerd. Bedankt voor je interesse in Paal 13.</p>
     <p style="font-size:12px;color:var(--tekst-zacht);margin-top:14px">
       <a href="https://paal13.com">Terug naar paal13.com</a>
@@ -178,7 +162,7 @@ body{background:var(--bg);min-height:100vh}
 
   <!-- Wat is er van jou bekend -->
   <div class="avg-card">
-    <h2>👤 Wat we van je weten</h2>
+    <h2><?= icoon("persoon", 18) ?> Wat we van je weten</h2>
     <div class="avg-rij">
       <span class="avg-label">Naam</span>
       <span class="avg-waarde"><?= h(trim($mij['voornaam'] . ' ' . ($mij['tussenvoegsel'] ? $mij['tussenvoegsel'] . ' ' : '') . $mij['achternaam'])) ?></span>
@@ -205,16 +189,16 @@ body{background:var(--bg);min-height:100vh}
 
   <!-- Downloaden -->
   <div class="avg-card">
-    <h2>📥 Al mijn gegevens downloaden</h2>
+    <h2><?= icoon("download", 18) ?> Al mijn gegevens downloaden</h2>
     <p style="font-size:13px;color:var(--tekst-zacht)">
       Volgens de AVG (artikel 15) heb je recht op inzage. Je krijgt hieronder een JSON-bestand met alles wat we van je hebben: persoon, BLK-formulier, beschikbaarheid en mail-geschiedenis.
     </p>
-    <a href="?download=1" class="btn btn-primary">📄 Download als JSON</a>
+    <a href="?download=1" class="ds-btn ds-btn-primair"><?= icoon("download", 18) ?> Download als JSON</a>
   </div>
 
   <!-- Verwijderen -->
   <div class="avg-card">
-    <h2>🗑️ Mijn account verwijderen</h2>
+    <h2><?= icoon("prullenbak", 18) ?> Mijn account verwijderen</h2>
     <p style="font-size:13px;color:var(--tekst-zacht)">
       Volgens de AVG (artikel 17) heb je recht op vergetelheid. Bij verwijdering:
     </p>
@@ -234,14 +218,11 @@ body{background:var(--bg);min-height:100vh}
         <?= csrf_input() ?>
         <input type="hidden" name="verwijder" value="1">
         <input type="text" name="bevestig" placeholder="VERWIJDER" autocomplete="off" class="gevaar-input" required>
-        <button type="submit" class="btn btn-danger" style="margin-top:10px;width:100%">Definitief verwijderen</button>
+        <button type="submit" class="ds-btn ds-btn-gevaar ds-btn-vol" style="margin-top:10px">Definitief verwijderen</button>
       </form>
     </div>
   </div>
 
 <?php endif; ?>
 
-</div>
-<script src="<?= APP_URL ?>/assets/js/app.js?v=<?= @filemtime(__DIR__."/../assets/js/app.js") ?>"></script>
-</body>
-</html>
+<?php require __DIR__ . '/_voet.php'; ?>
