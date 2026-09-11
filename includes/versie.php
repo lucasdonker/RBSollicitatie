@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.70.0');
+define('APP_VERSIE', '2.71.0');
 
 function app_changelog(): array {
     return [
+        '2.71.0' => [
+            'datum'  => '2026-09-11',
+            'titel'  => 'Ondertekenen afgemaakt: zichtbaar handtekening-vak, validatie, handtekening op PDF',
+            'punten' => [
+                'Het handtekening-vak is nu duidelijk zichtbaar (navy kader op een lichte achtergrond) — ook op de ouder-pagina, waar het eerder wit-op-wit was',
+                'De ondertekenpagina heeft nu overal de nieuwe stijl: nette invoervelden en knoppen in plaats van standaard-grijze',
+                'Duidelijke foutmelding bij ondertekenen: ontbrekende verplichte velden en vinkjes worden rood gemarkeerd, met een melding en scroll naar het probleem',
+                'De gezette handtekening staat nu ook op de geëxporteerde PDF, onder de getypte naam',
+            ],
+        ],
         '2.70.0' => [
             'datum'  => '2026-09-11',
             'titel'  => 'Startpagina op de gedeelde header + navigatie bovenin op desktop',

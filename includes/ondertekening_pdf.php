@@ -178,6 +178,26 @@ function ondertekening_pdf_genereer(array $rec, array $sol): ?string {
 
         $kop('Digitale ondertekening');
         $veld('Naam (getypt)', $rec['ondertekenaar_naam'] ?? '');
+
+        // Handtekening-afbeelding (indien getekend). Base64 PNG data-URL → tijdelijk bestand → Image.
+        $hdt_tmp = null;
+        if (!empty($rec['handtekening_beeld']) && strpos($rec['handtekening_beeld'], 'data:image/png;base64,') === 0) {
+            $data = base64_decode(substr($rec['handtekening_beeld'], strlen('data:image/png;base64,')), true);
+            if ($data !== false && strlen($data) > 0) {
+                $hdt_tmp = sys_get_temp_dir() . '/hdt_' . ($rec['id'] ?? 'x') . '_' . uniqid() . '.png';
+                if (@file_put_contents($hdt_tmp, $data) !== false) {
+                    $pdf->Ln(2);
+                    $pdf->SetFont('Arial', '', 9);
+                    $pdf->SetTextColor(...$GRIJS);
+                    $pdf->Cell(38, 6, $tx('Handtekening'), 0, 0);
+                    $y_hdt = $pdf->GetY();
+                    // Plaats de handtekening (max 60mm breed, 22mm hoog) rechts van het label
+                    try { $pdf->Image($hdt_tmp, 58, $y_hdt - 1, 60, 0, 'PNG'); } catch (\Throwable $e) {}
+                    $pdf->Ln(24);
+                }
+            }
+        }
+
         $veld('Plaats', $rec['plaats'] ?? '');
         if (!empty($rec['ondertekend_op'])) $veld('Datum & tijd', date('d-m-Y H:i', strtotime($rec['ondertekend_op'])));
         if (!empty($rec['geldig_tot']))     $veld('Geldig tot', datum_nl($rec['geldig_tot']));
@@ -192,6 +212,7 @@ function ondertekening_pdf_genereer(array $rec, array $sol): ?string {
         $bestandsnaam = 'ondertekend_' . preg_replace('/[^a-z0-9]/i', '_', $rec['type']) . '_' . ($rec['id'] ?? 'x') . '.pdf';
         $pad = sys_get_temp_dir() . '/' . $bestandsnaam;
         $pdf->Output('F', $pad);
+        if ($hdt_tmp && is_file($hdt_tmp)) @unlink($hdt_tmp);
         return is_file($pad) ? $pad : null;
 
     } catch (\Throwable $e) {

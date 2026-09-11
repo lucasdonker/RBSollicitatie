@@ -219,6 +219,22 @@ body { background:var(--bg); min-height:100vh; }
 .verklaring-tekst p:last-child { margin-bottom:0; }
 .aandoening-lijst { display:grid; grid-template-columns:1fr; gap:8px; padding:12px 16px; background:var(--grijs-bg); border-radius:6px; font-size:13px; }
 .klaar-melding { background:var(--groen-bg); color:var(--groen); padding:20px; border-radius:12px; text-align:center; }
+/* Formuliervelden in de nieuwe ontwerpstijl */
+.doc-card .form-groep { margin-bottom:14px; }
+.doc-card .form-groep > label { display:block; font:var(--text-label); color:var(--ink); margin-bottom:6px; }
+.doc-card input[type="text"], .doc-card input[type="email"], .doc-card input[type="date"],
+.doc-card input[type="tel"], .doc-card select, .doc-card textarea {
+  width:100%; box-sizing:border-box; height:48px; padding:0 14px;
+  border:1px solid var(--border-strong); border-radius:var(--radius-md);
+  font:var(--text-body); font-size:16px; background:var(--surface); color:var(--ink);
+}
+.doc-card textarea { height:auto; min-height:80px; padding:12px 14px; resize:vertical; }
+.doc-card input:focus, .doc-card select:focus, .doc-card textarea:focus {
+  outline:none; border-color:var(--navy); box-shadow:0 0 0 3px rgba(5,77,138,.12);
+}
+.doc-card input[type="checkbox"] { width:18px; height:18px; accent-color:var(--navy); vertical-align:-3px; }
+.form-rij { display:flex; gap:12px; flex-wrap:wrap; }
+.form-rij .form-groep { flex:1; min-width:160px; }
 </style>
 </head>
 <body>
@@ -507,7 +523,42 @@ body { background:var(--bg); min-height:100vh; }
 </div>
 <script>
 function valideer(f) {
-  if (!f.akkoord.checked) { alert('Vink het akkoord aan.'); return false; }
+  // Wis eerdere foutmarkeringen
+  f.querySelectorAll('.veld-fout').forEach(el => el.classList.remove('veld-fout'));
+  const bestaandeMelding = document.getElementById('ondtFoutmelding');
+  if (bestaandeMelding) bestaandeMelding.remove();
+
+  const fouten = [];
+  // Verplichte tekstvelden/selects met [required]
+  f.querySelectorAll('[required]').forEach(veld => {
+    const leeg = (veld.type === 'checkbox' || veld.type === 'radio') ? !veld.checked : !String(veld.value || '').trim();
+    if (leeg) {
+      fouten.push(veld);
+      const doel = veld.closest('.form-groep') || veld;
+      doel.classList.add('veld-fout');
+    }
+  });
+  // Handtekening verplicht
+  const hdt = document.getElementById('hdtData');
+  if (hdt && !hdt.value) {
+    const wrap = document.querySelector('.hdt-wrap');
+    if (wrap) wrap.classList.add('veld-fout');
+    fouten.push(hdt);
+  }
+
+  if (fouten.length) {
+    // Toon een duidelijke melding bovenaan het formulier + scroll naar het eerste probleem
+    const melding = document.createElement('div');
+    melding.id = 'ondtFoutmelding';
+    melding.className = 'ds-melding ds-melding-error';
+    melding.style.marginBottom = '16px';
+    melding.textContent = 'Er ontbreken nog een paar dingen — de rood gemarkeerde velden hieronder zijn verplicht.';
+    f.prepend(melding);
+    const eerste = fouten[0].closest('.form-groep') || fouten[0].closest('.hdt-wrap') || fouten[0];
+    eerste.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return false;
+  }
+
   const btn = f.querySelector('button[type="submit"]');
   if (btn) {
     btn.disabled = true;
