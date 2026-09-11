@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['email_submit'])) {
         }
 
         // Fallback: OTP code
-        $p = db()->prepare("SELECT p.voornaam FROM personen p JOIN sollicitaties s ON s.persoon_id=p.id WHERE p.email=? LIMIT 1");
+        $p = db()->prepare("SELECT p.voornaam, p.telefoon FROM personen p JOIN sollicitaties s ON s.persoon_id=p.id WHERE p.email=? LIMIT 1");
         $p->execute([$email]); $persoon = $p->fetch();
         if ($persoon) {
             // Atomische throttle: is er afgelopen 60s al een actieve OTP gegenereerd?
@@ -33,10 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['email_submit'])) {
 
             if (!$recent_otp) {
                 $code = otp_genereer($email, 'portaal');
-                stuur_mail($email, $persoon['voornaam'], 'Inlogcode Paal 13 portaal',
-                    '<p>Jouw inlogcode voor het sollicitantenportaal:</p>
-                     <div style="font-size:40px;font-weight:bold;letter-spacing:10px;color:#054d8a;text-align:center;background:#f0f4f8;border-radius:8px;padding:22px;margin:16px 0">' . $code . '</div>
-                     <p>Geldig 15 minuten.</p>');
+                portaal_code_versturen($email, $persoon['voornaam'], $code, $persoon['telefoon'] ?? null);
             }
             // Als wel recent: bestaande code blijft geldig, geen nieuwe mail
         }
@@ -50,17 +47,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toch_code'])) {
     csrf_check();
     $email = strtolower(trim($_SESSION['doorsturen_email'] ?? ''));
     if ($email && filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $p = db()->prepare("SELECT p.voornaam FROM personen p JOIN sollicitaties s ON s.persoon_id=p.id WHERE p.email=? LIMIT 1");
+        $p = db()->prepare("SELECT p.voornaam, p.telefoon FROM personen p JOIN sollicitaties s ON s.persoon_id=p.id WHERE p.email=? LIMIT 1");
         $p->execute([$email]); $persoon = $p->fetch();
         if ($persoon) {
             $rl = db()->prepare("SELECT 1 FROM otp_tokens WHERE email=? AND type='portaal' AND gebruikt=0 AND aangemaakt_op > DATE_SUB(NOW(), INTERVAL 60 SECOND) LIMIT 1");
             $rl->execute([$email]); $recent_otp = (bool)$rl->fetchColumn();
             if (!$recent_otp) {
                 $code = otp_genereer($email, 'portaal');
-                stuur_mail($email, $persoon['voornaam'], 'Inlogcode Paal 13 portaal',
-                    '<p>Jouw inlogcode voor het sollicitantenportaal:</p>
-                     <div style="font-size:40px;font-weight:bold;letter-spacing:10px;color:#054d8a;text-align:center;background:#f0f4f8;border-radius:8px;padding:22px;margin:16px 0">' . $code . '</div>
-                     <p>Geldig 15 minuten.</p>');
+                portaal_code_versturen($email, $persoon['voornaam'], $code, $persoon['telefoon'] ?? null);
             }
         }
         $_SESSION['otp_email'] = $email;
@@ -433,6 +427,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['blk_submit']) && $sta
                 try { mail_taak_afgerond($sol_id, 'Beter leren kennen-formulier'); } catch (Exception $e) {}
             }
         }
+        // Markeer het BLK expliciet als definitief ingediend (niet door autosave gezet).
+        // Dit is de betrouwbare "taak afgerond"-indicator, los van de fase.
+        if (function_exists('db_kolom_verzeker')) {
+            db_kolom_verzeker(db(), 'blk_formulieren', 'definitief_op', 'DATETIME DEFAULT NULL');
+        }
+        try { db()->prepare("UPDATE blk_formulieren SET definitief_op=NOW() WHERE sollicitatie_id=? AND definitief_op IS NULL")->execute([$sol_id]); } catch (\Exception $e) {}
         $_SESSION['b2_toon_opgeslagen'] = true;
 
         // Beschikbaarheid 2.0 opslaan (periode-blokken model) — via gedeelde functie
@@ -948,13 +948,7 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
       // de fase (aangemeld_selectie), niet uit het bestaan van een blk-rij — want de
       // autosave maakt al een concept-rij aan tijdens het typen. Voorheen werd de taak
       // daardoor onterecht als afgerond getoond na een tussentijdse pagina-refresh.
-      $blk_klaar_taak = ($sol['fase'] === 'aangemeld_selectie');
-      array_unshift($alle_taken, [
-          'titel'  => 'Vul het "Beter leren kennen" formulier in',
-          'done'   => $blk_klaar_taak,
-          'url'    => '#blk',
-          'urgent' => !$blk_klaar_taak,
-      ]);
+
 
       // Beschikbaarheid als eigen taak (het ontwerp maakt dit een losse taak, los van het BLK)
       $besch_ingevuld = false;
@@ -1166,7 +1160,7 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
   if (in_array($sol['fase'], ['uitgenodigd_selectie','aangemeld_selectie'])): ?>
   <?php // Kaart is standaard verborgen; verschijnt als je op de taak "Openen →" klikt (#blk),
         // of direct zichtbaar als het BLK al is ingevuld (om te kunnen bekijken/bewerken). ?>
-  <div class="card" id="blk" <?= $blk ? '' : 'style="display:none"' ?>>
+
     <div class="card-header" style="cursor:pointer" onclick="blkToggle()">
       <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;width:100%;gap:10px">
         <span style="display:flex;align-items:center;gap:8px;font:var(--text-subhead);color:var(--ink)">

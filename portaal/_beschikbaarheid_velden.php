@@ -157,7 +157,7 @@ if (!isset($sol) || !isset($alle_weken)) { return; }
             <!-- Uitzondering: vakantie/afwezig -->
             <details class="b2-uitz" <?= $heeft_afwezig?'open':'' ?> style="border:1px solid var(--rand);border-radius:10px;margin-bottom:8px;background:var(--bg)">
               <summary style="padding:12px 14px;cursor:pointer;font-size:14px;list-style:none;display:flex;align-items:center;gap:10px">
-                <span aria-hidden="true">✈️</span> Ik ben een hele periode weg (vakantie)
+                <span style="color:var(--navy)"><?= icoon("strand", 18) ?></span> Ik ben een hele periode weg (vakantie)
                 <span class="b2-uitz-chev" style="margin-left:auto;color:var(--grijs)">›</span>
               </summary>
               <div style="padding:0 14px 14px">
@@ -205,7 +205,7 @@ if (!isset($sol) || !isset($alle_weken)) { return; }
             <!-- Uitzondering: vaste vrije dag -->
             <details class="b2-uitz" <?= $heeft_vaste?'open':'' ?> style="border:1px solid var(--rand);border-radius:10px;margin-bottom:8px;background:var(--bg)">
               <summary style="padding:12px 14px;cursor:pointer;font-size:14px;list-style:none;display:flex;align-items:center;gap:10px">
-                <span aria-hidden="true">🔁</span> Een vaste dag die ik elke week vrij wil
+                <span style="color:var(--navy)"><?= icoon("ververs", 18) ?></span> Een vaste dag die ik elke week vrij wil
                 <span class="b2-uitz-chev" style="margin-left:auto;color:var(--grijs)">›</span>
               </summary>
               <div style="padding:0 14px 14px">
@@ -233,7 +233,7 @@ if (!isset($sol) || !isset($alle_weken)) { return; }
             <!-- Uitzondering: minder dagen (verzoek) -->
             <details class="b2-uitz" <?= $heeft_verzoek?'open':'' ?> style="border:1px solid var(--rand);border-radius:10px;background:var(--bg)">
               <summary style="padding:12px 14px;cursor:pointer;font-size:14px;list-style:none;display:flex;align-items:center;gap:10px">
-                <span aria-hidden="true">➖</span> In bepaalde weken minder dagen
+                <span style="color:var(--navy)"><?= icoon("min", 18) ?></span> In bepaalde weken minder dagen
                 <span class="b2-uitz-chev" style="margin-left:auto;color:var(--grijs)">›</span>
               </summary>
               <div style="padding:0 14px 14px">

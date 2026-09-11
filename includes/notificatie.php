@@ -13,17 +13,7 @@
 if (!function_exists('notificatie_typen')) {
 
 /** De meldingstypen die via meerdere kanalen kunnen. Sleutel => leesbare naam. */
-function notificatie_typen(): array {
-    return [
-        'aanmeldbevestiging' => 'Bevestiging van aanmelding',
-        'uitnodiging_selectie' => 'Uitnodiging selectiedag',
-        'herinnering_selectie' => 'Herinnering selectiedag',
-        'uitnodiging_tw'     => 'Uitnodiging trainingsweekend',
-        'status_update'      => 'Status-update sollicitatie',
-        'ondertekening_herinnering' => 'Herinnering ondertekening',
-        'algemeen'           => 'Algemene mededeling',
-    ];
-}
+
 
 /**
  * Welke kanalen zijn ingesteld voor een meldingstype?
@@ -112,6 +102,33 @@ function notificatie_korte_tekst(string $type, string $voornaam, array $seizoen 
             return "Hoi $voornaam, er staat nog een document klaar om te ondertekenen in je portaal: $portaal";
         default:
             return "Hoi $voornaam, er is een bericht voor je van Paal 13. Bekijk je portaal: $portaal";
+    }
+}
+
+/**
+ * Verstuur de portaal-inlogcode via de ingestelde kanalen.
+ * E-mail is altijd de betrouwbare basis; SMS/WhatsApp worden toegevoegd als het beheer die
+ * voor het type 'portaal_code' heeft aangezet én de kanalen actief zijn en er een nummer is.
+ */
+function portaal_code_versturen(string $email, string $voornaam, string $code, ?string $telefoon = null): void {
+    $k = notificatie_kanalen('portaal_code');
+    $mail_body = '<p>Jouw inlogcode voor het sollicitantenportaal:</p>'
+        . '<div style="font-size:40px;font-weight:bold;letter-spacing:10px;color:#054d8a;text-align:center;background:#f0f4f8;border-radius:8px;padding:22px;margin:16px 0">' . htmlspecialchars($code) . '</div>'
+        . '<p>Geldig 15 minuten.</p>';
+    // E-mail (tenzij het beheer e-mail expliciet heeft uitgezet én een ander kanaal aan staat)
+    if ($k['email'] && function_exists('stuur_mail')) {
+        stuur_mail($email, $voornaam, 'Inlogcode Paal 13 portaal', $mail_body);
+    }
+    $kort = "Je inlogcode voor het Paal 13 portaal is: $code (geldig 15 minuten).";
+    if ($k['sms'] && $telefoon && function_exists('sms_verstuur') && sms_actief()) {
+        sms_verstuur($telefoon, $kort);
+    }
+    if ($k['wa'] && $telefoon && function_exists('wa_verstuur') && wa_actief()) {
+        wa_verstuur($telefoon, $kort);
+    }
+    // Vangnet: als om welke reden dan ook geen enkel kanaal aanstond, tóch e-mailen.
+    if (!$k['email'] && !$k['sms'] && !$k['wa'] && function_exists('stuur_mail')) {
+        stuur_mail($email, $voornaam, 'Inlogcode Paal 13 portaal', $mail_body);
     }
 }
 

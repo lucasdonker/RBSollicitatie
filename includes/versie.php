@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.68.0');
+define('APP_VERSIE', '2.69.0');
 
 function app_changelog(): array {
     return [
+        '2.69.0' => [
+            'datum'  => '2026-09-11',
+            'titel'  => 'Meldingen per kanaal (incl. inlogcode), BLK-taak-fix, beschikbaarheid in nieuwe stijl',
+            'punten' => [
+                'Alle meldingen zijn nu per kanaal instelbaar (e-mail / SMS / WhatsApp) — inclusief de portaal-inlogcode, die je nu bijvoorbeeld via SMS kunt laten sturen',
+                'De BLK-taak wordt nu betrouwbaar als afgerond gemarkeerd; het "Vertel ons meer over jezelf"-blok verdwijnt zodra het formulier definitief is ingediend',
+                'Het beschikbaarheid-doorgeven scherm is nu volledig in de nieuwe ontwerpstijl (nette secties, kaarten, lijn-iconen)',
+                'Bijkomende fix: de beschikbaarheid-pagina toonde geen periode-labels bij de weken — nu wel',
+            ],
+        ],
         '2.68.0' => [
             'datum'  => '2026-09-11',
             'titel'  => 'Blokkers uit testronde opgelost (beschikbaarheid, landingspagina, WhatsApp)',

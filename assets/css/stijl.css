@@ -1372,3 +1372,84 @@ body.heeft-nav { padding-bottom: 84px; }
   font: var(--text-label); font-size: 12px; color: var(--navy); cursor: pointer;
 }
 .hdt-wis:hover { background: var(--bg); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   BESCHIKBAARHEID-FORMULIER v2.69 — nieuwe ontwerp-stijl (ds-tokens)
+   Gebruikt op de losse beschikbaarheid-pagina en (waar nog aanwezig) elders.
+   ═══════════════════════════════════════════════════════════════════ */
+.sectie-titel {
+  font: var(--text-label); font-size: 11px; font-weight: 700;
+  color: var(--ink-muted); text-transform: uppercase; letter-spacing: .08em;
+  margin: 22px 2px 10px;
+}
+.sectie-titel:first-child { margin-top: 4px; }
+
+/* Werkperiode-blok en uitzonderingsrijen als nette kaarten */
+.b2-blok-rij, .b2-afwezig-rij, .b2-losdag-rij, .b2-verzoek-rij {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  margin-bottom: 10px;
+  box-shadow: var(--shadow-card);
+}
+.b2-blok-rij select, .b2-blok-rij input,
+.b2-afwezig-rij input, .b2-losdag-rij input, .b2-losdag-rij select,
+.b2-verzoek-rij input, .b2-verzoek-rij select {
+  height: 44px; padding: 0 12px;
+  border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
+  font: var(--text-body); font-size: 16px; background: var(--surface); color: var(--ink);
+}
+.b2-verzoek-rij textarea, .b2-afwezig-rij textarea {
+  padding: 10px 12px; border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm); font: var(--text-body); font-size: 16px; width: 100%;
+}
+
+/* Uitklapbare uitzonderingsblokken (accordeon) */
+details.b2-uitz {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+details.b2-uitz > summary {
+  list-style: none; cursor: pointer;
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 16px;
+  font: var(--text-label); font-size: 14px; color: var(--ink);
+}
+details.b2-uitz > summary::-webkit-details-marker { display: none; }
+details.b2-uitz .b2-uitz-chev { margin-left: auto; color: var(--ink-muted); transition: transform .2s; }
+details.b2-uitz[open] .b2-uitz-chev { transform: rotate(90deg); }
+details.b2-uitz > div { padding: 0 16px 16px; }
+
+/* Weekenddag- en pooldag-keuzevakjes als pills */
+.b2-weekend-dagen, .b2-vz-pool { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.b2-weekend-dagen label, .b2-vz-pool label {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 6px 11px; border: 1px solid var(--border-strong);
+  border-radius: var(--radius-full); font: var(--text-meta); cursor: pointer;
+  background: var(--surface);
+}
+.b2-weekend-dagen input, .b2-vz-pool input { accent-color: var(--navy); }
+
+/* AI "typ je beschikbaarheid"-hulp */
+.b2-ai-vak {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px; margin-bottom: 16px;
+}
+.b2-ai-vak textarea {
+  width: 100%; min-height: 70px; padding: 10px 12px;
+  border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
+  font: var(--text-body); font-size: 16px; resize: vertical;
+}
+
+/* Live "zo begrijpen wij het"-preview */
+.b2-preview {
+  background: var(--ok-soft); border: 1px solid #cfe6d6;
+  border-radius: var(--radius-md); padding: 13px 15px; margin-top: 12px;
+  font: var(--text-body); font-size: 14px; color: var(--ink);
+}

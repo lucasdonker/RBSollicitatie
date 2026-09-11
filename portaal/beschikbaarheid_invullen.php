@@ -56,13 +56,7 @@ if (!$week_start || !$week_eind) {
 $dag  = new DateTime($week_start);
 $eind = new DateTime($week_eind);
 while ($dag->format('N') != 1) $dag->modify('+1 day'); // naar maandag
-while ($dag <= $eind) {
-    $alle_weken[] = ['week' => (int)$dag->format('W'), 'maand' => (int)$dag->format('n')];
-    $dag->modify('+7 days');
-}
-if (empty($alle_weken)) { // veiligheidsnet
-    for ($w = 22; $w <= 35; $w++) $alle_weken[] = ['week' => $w, 'maand' => 0];
-}
+
 $ew = $alle_weken[0]['week'];
 $lw = end($alle_weken)['week'];
 reset($alle_weken);
