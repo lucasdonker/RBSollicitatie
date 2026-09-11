@@ -156,6 +156,19 @@ if ($actie === 'bewerk' || $actie === 'nieuw'):
           <a href="<?= APP_URL ?>/l/<?= h($lp['slug']) ?>" target="_blank" class="btn btn-outline">Openen in nieuw tabblad ↗</a>
         <?php endif; ?>
       </div>
+
+      <?php if ($lp && ($lp['status'] ?? 'concept') !== 'gepubliceerd'): ?>
+        <div style="margin-top:14px;padding:12px 14px;background:var(--oranje-bg);border-left:3px solid var(--oranje);border-radius:8px;font-size:13px;color:var(--oranje)">
+          <strong>Deze pagina is nog niet openbaar.</strong>
+          De status staat op "<?= h($status_label[$lp['status']] ?? $lp['status']) ?>". Zolang de pagina niet op
+          <strong>Gepubliceerd</strong> staat, krijgen bezoekers een 404 als ze de link openen.
+          Zet de status hierboven op "Gepubliceerd" en klik op Opslaan om 'm live te zetten.
+        </div>
+      <?php elseif ($lp): ?>
+        <div style="margin-top:14px;padding:12px 14px;background:var(--groen-bg);border-left:3px solid var(--groen);border-radius:8px;font-size:13px;color:var(--groen)">
+          <strong>Deze pagina is live</strong> op <?= APP_URL ?>/l/<?= h($lp['slug']) ?>
+        </div>
+      <?php endif; ?>
     </form>
 
     <!-- Live preview -->

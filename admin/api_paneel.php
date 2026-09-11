@@ -35,10 +35,28 @@ $fases = ['aangemeld','uitgenodigd_selectie','aangemeld_selectie','selectiedag_g
 $fi    = array_search($sol['fase'], $fases);
 $alle_fases = ['aangemeld'=>'Aangemeld','uitgenodigd_selectie'=>'Uitgenodigd SD','aangemeld_selectie'=>'Aangemeld SD','selectiedag_geweest'=>'SD geweest','uitgenodigd_tw'=>'Uitgenodigd TW','tw_geweest'=>'TW geweest','aangenomen'=>'Aangenomen','afgewezen'=>'Afgewezen'];
 
-// Leeftijd en auto-invite check
+// Leeftijd op de HUIDIGE datum tonen (jouw keuze). Daarnaast: berekenen of/wanneer iemand
+// tijdens/voor het seizoen 16 wordt, zodat het bestuur dat als melding ziet.
+$lft = function_exists('leeftijd_uit_datum') ? leeftijd_uit_datum($sol['geboortedatum']) : null;
 $peil = $sol['datum_werk_start'] ?? date('Y-06-01');
-$lft  = leeftijd_op_datum($sol['geboortedatum'], $peil);
-$aanbeveling = function_exists('invite_aanbeveling') ? invite_aanbeveling($lft) : null;
+$lft_seizoen = ($sol['geboortedatum'] && function_exists('leeftijd_op_datum'))
+    ? leeftijd_op_datum($sol['geboortedatum'], $peil) : $lft;
+// Melding als de leeftijd nu en op de seizoensstart verschilt rond de 16-grens
+$wordt_16_melding = '';
+if ($sol['geboortedatum'] && $lft !== null) {
+    try {
+        $geb = new DateTime($sol['geboortedatum']);
+        $zestien = (clone $geb)->modify('+16 years');
+        $vandaag = new DateTime('today');
+        if ($lft < 16 && $zestien > $vandaag) {
+            $wordt_16_melding = 'Wordt 16 op ' . $zestien->format('d-m-Y');
+        } elseif ($lft >= 16 && $lft_seizoen < 16) {
+            // Nu 16, maar was op de seizoensstart nog 15
+            $wordt_16_melding = 'Was 15 bij aanmelding/seizoensstart, inmiddels 16';
+        }
+    } catch (\Exception $e) {}
+}
+$aanbeveling = function_exists('invite_aanbeveling') ? invite_aanbeveling($lft_seizoen) : null;
 
 // BLK weken
 $blk_weken = [];
@@ -76,7 +94,7 @@ $ai_analyse = $blk ? ($blk['ai_analyse'] ?? null) : null;
   <!-- NAW + basis -->
   <div class="info-grid">
     <div class="info-item"><label>Telefoon</label><span><?= h($sol['telefoon'] ?: '—') ?></span></div>
-    <div class="info-item"><label>Leeftijd</label><span><?= $lft ?> jaar</span></div>
+    <div class="info-item"><label>Leeftijd</label><span><?= $lft ?> jaar<?php if ($wordt_16_melding): ?> <span title="<?= h($wordt_16_melding) ?>" style="display:inline-block;font-size:11px;font-weight:600;color:var(--oranje);background:var(--oranje-bg);padding:1px 7px;border-radius:9px;margin-left:4px"><?= h($wordt_16_melding) ?></span><?php endif; ?></span></div>
     <div class="info-item"><label>Geboortedatum</label><span><?= datum_nl($sol['geboortedatum']) ?></span></div>
     <div class="info-item"><label>Aangemeld</label><span><?= datum_nl($sol['aangemeld_op']) ?></span></div>
     <?php // Toestemming-vastlegging (AVG) — tonen zodra beschikbaar ?>

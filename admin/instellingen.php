@@ -146,7 +146,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // WhatsApp (WhatsReach)
         instelling_opslaan('wa.actief', !empty($_POST['wa_actief']) ? '1' : '0');
         instelling_opslaan('wa.api_sleutel', trim($_POST['wa_api_sleutel'] ?? ''));
-        instelling_opslaan('wa.endpoint', trim($_POST['wa_endpoint'] ?? ''));
+        instelling_opslaan('wa.base_url', trim($_POST['wa_base_url'] ?? '') ?: 'https://api.whatsreach.co/api/v1');
+        instelling_opslaan('wa.afzender_nummer', trim($_POST['wa_afzender_nummer'] ?? ''));
         // Per-melding kanaalkeuze
         if (function_exists('notificatie_typen')) {
             foreach (array_keys(notificatie_typen()) as $type) {
@@ -1571,10 +1572,13 @@ require __DIR__ . '/layout_top.php';
           voorkeur een apart nummer, en stuur alleen naar mensen die contact via WhatsApp verwachten. Dit kanaal
           staat daarom standaard uit.
         </div>
-        <label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px">WhatsReach API-sleutel</label>
-        <input type="text" name="wa_api_sleutel" value="<?= h(instelling('wa.api_sleutel','')) ?>" style="width:100%;margin-bottom:8px">
-        <label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px">Endpoint (URL)</label>
-        <input type="text" name="wa_endpoint" value="<?= h(instelling('wa.endpoint','https://api.whatsreach.co/v1/messages')) ?>" style="width:100%">
+        <label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px">WhatsReach API-sleutel <span style="font-weight:400;color:var(--ink-muted)">(X-API-Key)</span></label>
+        <input type="text" name="wa_api_sleutel" value="<?= h(instelling('wa.api_sleutel','')) ?>" style="width:100%;margin-bottom:8px" placeholder="je API-sleutel">
+        <label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px">Base URL</label>
+        <input type="text" name="wa_base_url" value="<?= h(instelling('wa.base_url','https://api.whatsreach.co/api/v1')) ?>" style="width:100%;margin-bottom:8px">
+        <label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px">Afzendernummer <span style="font-weight:400;color:var(--ink-muted)">(optioneel — bij meerdere gekoppelde apparaten)</span></label>
+        <input type="text" name="wa_afzender_nummer" value="<?= h(instelling('wa.afzender_nummer','')) ?>" style="width:100%" placeholder="+31612345678">
+        <p style="font-size:12px;color:var(--ink-muted);margin:6px 0 0">Het WhatsApp-nummer waarvandaan berichten verstuurd worden (het "from"-apparaat uit WhatsReach). Laat leeg als je maar één apparaat hebt gekoppeld.</p>
       </div>
 
       <!-- Kanaal per melding -->

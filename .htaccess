@@ -1,0 +1,15 @@
+# Paal 13 sollicitatiesysteem — Apache-configuratie
+# Minimale, veilige rewrite voor nette landingspagina-URL's: /l/<slug> → l.php?p=<slug>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Nette landingspagina-URL's: /l/mijn-slug  →  l.php?p=mijn-slug
+    # Alleen letters, cijfers en koppeltekens in de slug.
+    RewriteRule ^l/([a-zA-Z0-9\-]+)/?$ l.php?p=$1 [L,QSA]
+</IfModule>
+
+# Toon geen PHP-fouten aan bezoekers (fouten gaan naar het log)
+<IfModule mod_php.c>
+    php_flag display_errors Off
+</IfModule>

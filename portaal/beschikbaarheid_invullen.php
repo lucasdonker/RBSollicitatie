@@ -12,30 +12,60 @@ if (!function_exists('portaal_ingelogd') || !portaal_ingelogd()) {
 }
 
 $email = $_SESSION['portaal_email'] ?? '';
-$stmt = db()->prepare("
-    SELECT s.*, p.voornaam, p.achternaam, p.email, sz.naam AS seizoen_naam,
-           sz.eerste_week, sz.laatste_week
-    FROM sollicitaties s
-    JOIN personen p ON p.id = s.persoon_id
-    LEFT JOIN seizoenen sz ON sz.id = s.seizoen_id
-    WHERE p.email = ?
-    ORDER BY s.id DESC LIMIT 1
-");
-$stmt->execute([$email]);
-$sol = $stmt->fetch();
+// Haal seizoen op met graceful fallback als de datum_werk-kolommen ontbreken (net als het BLK).
+try {
+    $stmt = db()->prepare("
+        SELECT s.*, p.voornaam, p.achternaam, p.email, sz.naam AS seizoen_naam,
+               sz.datum_werk_start, sz.datum_werk_eind, sz.id AS seizoen_id
+        FROM sollicitaties s
+        JOIN personen p ON p.id = s.persoon_id
+        LEFT JOIN seizoenen sz ON sz.id = s.seizoen_id
+        WHERE p.email = ?
+        ORDER BY s.id DESC LIMIT 1
+    ");
+    $stmt->execute([$email]);
+    $sol = $stmt->fetch();
+} catch (\PDOException $e) {
+    // Oude database zonder datum_werk-kolommen → zonder die kolommen ophalen
+    $stmt = db()->prepare("
+        SELECT s.*, p.voornaam, p.achternaam, p.email, sz.naam AS seizoen_naam,
+               NULL AS datum_werk_start, NULL AS datum_werk_eind, sz.id AS seizoen_id
+        FROM sollicitaties s
+        JOIN personen p ON p.id = s.persoon_id
+        LEFT JOIN seizoenen sz ON sz.id = s.seizoen_id
+        WHERE p.email = ?
+        ORDER BY s.id DESC LIMIT 1
+    ");
+    $stmt->execute([$email]);
+    $sol = $stmt->fetch();
+}
 if (!$sol) { redirect(APP_URL . '/portaal/'); }
 
 $sol_id = (int)$sol['id'];
 
-// Weken van het seizoen klaarzetten (zelfde bron als het BLK gebruikt)
+// Weken van het seizoen bepalen uit de werk-datums — exact dezelfde logica als het BLK-formulier.
 $alle_weken = [];
-$ew = (int)($sol['eerste_week'] ?? 23);
-$lw = (int)($sol['laatste_week'] ?? 35);
-if ($lw < $ew) $lw = $ew;
 $jaar = (int)date('Y');
-for ($w = $ew; $w <= $lw; $w++) {
-    $alle_weken[] = ['week' => $w];
+$week_start = $sol['datum_werk_start'] ?? null;
+$week_eind  = $sol['datum_werk_eind']  ?? null;
+if (!$week_start || !$week_eind) {
+    // Fallback: week 22 t/m 35 (eind mei – begin sept)
+    $week_start = (new DateTime())->setISODate($jaar, 22, 1)->format('Y-m-d');
+    $week_eind  = (new DateTime())->setISODate($jaar, 35, 7)->format('Y-m-d');
 }
+$dag  = new DateTime($week_start);
+$eind = new DateTime($week_eind);
+while ($dag->format('N') != 1) $dag->modify('+1 day'); // naar maandag
+while ($dag <= $eind) {
+    $alle_weken[] = ['week' => (int)$dag->format('W'), 'maand' => (int)$dag->format('n')];
+    $dag->modify('+7 days');
+}
+if (empty($alle_weken)) { // veiligheidsnet
+    for ($w = 22; $w <= 35; $w++) $alle_weken[] = ['week' => $w, 'maand' => 0];
+}
+$ew = $alle_weken[0]['week'];
+$lw = end($alle_weken)['week'];
+reset($alle_weken);
 
 // ── POST-verwerking: beschikbaarheid opslaan via de gedeelde functie ──
 $flash_ok = '';

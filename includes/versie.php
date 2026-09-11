@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.67.0');
+define('APP_VERSIE', '2.68.0');
 
 function app_changelog(): array {
     return [
+        '2.68.0' => [
+            'datum'  => '2026-09-11',
+            'titel'  => 'Blokkers uit testronde opgelost (beschikbaarheid, landingspagina, WhatsApp)',
+            'punten' => [
+                'Beschikbaarheid invullen werkt weer: de databasefout ("onbekende kolom eerste_week") is opgelost — de pagina bepaalt de weken nu op dezelfde manier als het BLK',
+                'Landingspagina\'s: nette /l/<slug>-URL werkt nu (rewrite toegevoegd), en het beheer waarschuwt duidelijk dat een pagina pas openbaar is als de status op "Gepubliceerd" staat',
+                'WhatsReach-koppeling gecorrigeerd naar de echte API (X-API-Key, juiste base-URL en verzend-endpoint, afzendernummer instelbaar)',
+                'Leeftijd in het kandidaatpaneel toont nu de actuele leeftijd, met een melding wanneer iemand pas later 16 wordt',
+            ],
+        ],
         '2.67.0' => [
             'datum'  => '2026-08-22',
             'titel'  => 'Echt handtekening-vak bij ondertekenen',

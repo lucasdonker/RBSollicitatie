@@ -160,27 +160,70 @@ function sms_via_messagebird(string $nummer, string $tekst): bool {
  */
 function wa_verstuur(string $telefoon, string $tekst): bool {
     if (!wa_actief()) return false;
-    $nummer = telefoon_normaliseer($telefoon);
+    $nummer = telefoon_normaliseer($telefoon); // E.164 met '+', precies wat WhatsReach wil
     if (!$nummer) return false;
 
-    $sleutel = instelling('wa.api_sleutel', '');
-    $endpoint = instelling('wa.endpoint', 'https://api.whatsreach.co/v1/messages');
+    $sleutel  = instelling('wa.api_sleutel', '');
+    // Base URL is https://api.whatsreach.co/api/v1 ; het verzend-endpoint is /send
+    $base     = rtrim(instelling('wa.base_url', 'https://api.whatsreach.co/api/v1'), '/');
+    $endpoint = $base . '/send';
+    $afzender = instelling('wa.afzender_nummer', ''); // 'from' = device-telefoonnummer (uit /devices)
+
+    $body = ['to' => $nummer, 'message' => $tekst, 'type' => 'text'];
+    if ($afzender !== '') $body['from'] = $afzender;
+
     try {
         $ch = curl_init($endpoint);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_POST           => true,
-            CURLOPT_HTTPHEADER     => ['Authorization: Bearer ' . $sleutel, 'Content-Type: application/json'],
-            CURLOPT_POSTFIELDS     => json_encode(['to' => ltrim($nummer, '+'), 'message' => $tekst, 'type' => 'text']),
+            // WhatsReach authenticeert met X-API-Key (niet Bearer)
+            CURLOPT_HTTPHEADER     => ['X-API-Key: ' . $sleutel, 'Content-Type: application/json'],
+            CURLOPT_POSTFIELDS     => json_encode($body),
             CURLOPT_TIMEOUT        => 12,
         ]);
         $resp = curl_exec($ch);
         $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
-        return $code >= 200 && $code < 300;
+        // Succes: 2xx én "success": true in de response
+        if ($code >= 200 && $code < 300) {
+            $j = json_decode((string)$resp, true);
+            return !is_array($j) || ($j['success'] ?? true) !== false;
+        }
+        error_log('wa_verstuur: HTTP ' . $code . ' — ' . substr((string)$resp, 0, 200));
+        return false;
     } catch (\Throwable $e) {
         error_log('wa_verstuur: ' . $e->getMessage());
         return false;
+    }
+}
+
+/**
+ * Haal de gekoppelde WhatsApp-apparaten (devices) op bij WhatsReach.
+ * Gebruikt in het instellingenscherm om het afzendernummer te kiezen.
+ * Retourneert een lijst met ['phone_number','status','device_name'] of [] bij een fout.
+ */
+function wa_devices(): array {
+    if (!function_exists('instelling')) return [];
+    $sleutel = instelling('wa.api_sleutel', '');
+    if ($sleutel === '') return [];
+    $base = rtrim(instelling('wa.base_url', 'https://api.whatsreach.co/api/v1'), '/');
+    try {
+        $ch = curl_init($base . '/devices');
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER     => ['X-API-Key: ' . $sleutel, 'Accept: application/json'],
+            CURLOPT_TIMEOUT        => 10,
+        ]);
+        $resp = curl_exec($ch);
+        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        if ($code < 200 || $code >= 300) return [];
+        $j = json_decode((string)$resp, true);
+        return is_array($j['devices'] ?? null) ? $j['devices'] : [];
+    } catch (\Throwable $e) {
+        error_log('wa_devices: ' . $e->getMessage());
+        return [];
     }
 }
 
