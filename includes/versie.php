@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.64.6');
+define('APP_VERSIE', '2.64.7');
 
 function app_changelog(): array {
     return [
+        '2.64.7' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'BLK-formulier en trainingsweekend-info in de nieuwe stijl; portaal emoji-vrij',
+            'punten' => [
+                'Het "Beter Leren Kennen"-formulier is omgezet naar de nieuwe stijl: nette stapindicator, invoervelden en knoppen',
+                'Het trainingsweekend-infoblok staat nu in dezelfde nette info-kaart als de selectiedag',
+                'Alle emoji in het portaal zijn vervangen door consistente lijn-iconen — het hele portaal volgt nu het ontwerp',
+                'Alle knoppen in het portaal gebruiken nu de nieuwe knopstijl',
+            ],
+        ],
         '2.64.6' => [
             'datum'  => '2026-08-21',
             'titel'  => 'Beschikbaarheid en ondertekenen in de nieuwe stijl',

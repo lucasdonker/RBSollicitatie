@@ -518,7 +518,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['blk_submit']) && $sta
             flash('info', '⚠️ Let op: ' . $_SESSION['b2_vz_waarschuwing'] . ' Dat verzoek is niet opgeslagen; de rest wel.');
             unset($_SESSION['b2_vz_waarschuwing']);
         } elseif (!empty($_SESSION['b2_toon_opgeslagen'])) {
-            flash('succes', '✅ Opgeslagen!');
+            flash('succes', 'Opgeslagen!');
         }
         unset($_SESSION['b2_toon_opgeslagen']);
 
@@ -627,12 +627,11 @@ html[data-theme="dark"] .theme-tgl { background:#161a26; color:#fff; }
 .banner-rood h2 { color:var(--rood); }
 
 /* Multi-step formulier */
-.stap-ind { display:flex; gap:0; margin-bottom:18px; border-radius:8px; overflow:hidden; border:1px solid var(--rand); }
-.si { flex:1; padding:9px 5px; text-align:center; font-size:11px; color:var(--grijs); background:#fff; cursor:pointer; border-right:1px solid var(--rand); transition:all .15s; user-select:none; }
-.si:last-child { border-right:none; }
-.si.actief { background:var(--navy); color:#fff; font-weight:600; }
-.si.klaar  { background:#e1f5ee; color:#085041; }
-.si .snr   { display:block; font-size:16px; font-weight:700; margin-bottom:1px; }
+.stap-ind { display:flex; gap:6px; margin-bottom:18px; }
+.si { flex:1; padding:10px 4px; text-align:center; font-size:11px; color:var(--ink-muted); background:var(--surface); cursor:pointer; border:1px solid var(--border); border-radius:var(--radius-md); transition:all .15s; user-select:none; }
+.si.actief { background:var(--navy); color:#fff; font-weight:600; border-color:var(--navy); }
+.si.klaar  { background:var(--ok-soft); color:var(--ok); border-color:var(--ok-soft); }
+.si .snr   { display:block; font-size:15px; font-weight:700; margin-bottom:2px; }
 .formulier-stap { display:none; }
 .formulier-stap.zichtbaar { display:block; }
 .stap-nav { display:flex; justify-content:space-between; align-items:center; margin-top:16px; padding-top:14px; border-top:1px solid var(--rand); }
@@ -891,7 +890,7 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
           $open = count(array_filter($taken, fn($t) => $t['status'] === 'open'));
   ?>
   <div class="banner banner-actie" style="margin-top:14px">
-    <h2>📋 Jouw taken <?php if ($open > 0): ?><span style="font-size:14px;font-weight:400;opacity:.85">— <?= $open ?> nog open</span><?php endif; ?></h2>
+
     <p style="margin:6px 0 12px">Voltooi deze stappen om je lidmaatschap af te ronden.</p>
     <div style="display:flex;flex-direction:column;gap:8px">
       <?php foreach ($taken as $t):
@@ -1073,12 +1072,12 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
   ?>
   <div class="card" style="margin-top:14px;border-left:4px solid <?= $_kleur ?>;background:<?= $_bg ?>">
     <div style="display:flex;align-items:center;gap:12px;padding:4px 2px">
-      <span style="font-size:26px"><?= ($_over !== null && $_over <= 7) ? '⏰' : '⏳' ?></span>
+      <span style="color:var(--warn)"><?= icoon('wachten', 24) ?></span>
       <div style="flex:1">
         <div style="font-weight:600;font-size:14px;margin-bottom:2px">Beschikbaarheid nog niet definitief</div>
         <div style="font-size:13px;color:var(--tekst-zacht);line-height:1.5"><?= $_tekst ?><?= $besch_deadline ? ' <span style="white-space:nowrap">(deadline ' . h(datum_nl($besch_deadline->format('Y-m-d'))) . ')</span>' : '' ?></div>
       </div>
-      <a href="<?= APP_URL ?>/portaal/beschikbaarheid.php" class="btn btn-primary btn-sm" style="white-space:nowrap">Bekijken</a>
+      <a href="<?= APP_URL ?>/portaal/beschikbaarheid.php" class="ds-btn ds-btn-primair ds-btn-sm" style="white-space:nowrap">Bekijken</a>
     </div>
   </div>
   <?php endif; ?>
@@ -1191,16 +1190,14 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
   </div>
   <?php endif; ?>
   <?php if(in_array($sol['fase'],['uitgenodigd_tw','tw_geweest'])): ?>
-  <div class="banner banner-ok">
-    <h2>🏕️ Uitgenodigd voor het trainingsweekend!</h2>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px">
-      <?php if($sol['datum_tw_start']): ?><div class="detail" style="margin:0"><strong>📅 Datum:</strong> <?=datum_nl($sol['datum_tw_start'])?> t/m <?=datum_nl($sol['datum_tw_eind'])?></div><?php endif; ?>
-      <?php $vtw = $sol['tw_verzameltijd'] ?? null; if($vtw): ?><div class="detail" style="margin:0"><strong>🕗 Verzamelen:</strong> <?=h($vtw)?> uur</div><?php endif; ?>
-      <?php if($sol['locatie_tw']): ?><div class="detail" style="margin:0"><strong>📍 Locatie:</strong> <?=h($sol['locatie_tw'])?></div><?php endif; ?>
+  <div class="ds-kaart ds-kaart-navy" style="padding:16px;margin-bottom:16px">
+    <div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:16px;margin-bottom:12px"><?= icoon('reddingsboei', 20) ?> Uitgenodigd voor het trainingsweekend</div>
+    <div class="info-grid">
+      <?php if($sol['datum_tw_start']): ?><div class="info-item"><span class="ii-ic"><?= icoon('kalender', 16) ?></span><div><span class="ii-l">Datum</span><span class="ii-v"><?=datum_nl($sol['datum_tw_start'])?> t/m <?=datum_nl($sol['datum_tw_eind'])?></span></div></div><?php endif; ?>
+      <?php $vtw = $sol['tw_verzameltijd'] ?? null; if($vtw): ?><div class="info-item"><span class="ii-ic"><?= icoon('klok', 16) ?></span><div><span class="ii-l">Verzamelen</span><span class="ii-v"><?=h($vtw)?> uur</span></div></div><?php endif; ?>
+      <?php if($sol['locatie_tw']): ?><div class="info-item"><span class="ii-ic"><?= icoon('reddingsboei', 16) ?></span><div><span class="ii-l">Locatie</span><span class="ii-v"><?=h($sol['locatie_tw'])?></span></div></div><?php endif; ?>
     </div>
-    <div style="margin-top:10px;font-size:13px;color:var(--tekst-zacht)">
-      Hieronder zie je de beschikbaarheid die we van je hebben. Klopt er iets niet meer? Dan kun je dat daar aangeven. 👇
-    </div>
+    <div class="info-melding info-melding-actie" style="margin-top:12px"><?= icoon('info', 15) ?> Hieronder zie je je beschikbaarheid. Klopt er iets niet meer? Geef dat daar aan.</div>
   </div>
   <?php endif; ?>
 
@@ -1211,11 +1208,11 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
   <div class="card" id="blk" <?= $blk ? '' : 'style="display:none"' ?>>
     <div class="card-header" style="cursor:pointer" onclick="blkToggle()">
       <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;width:100%;gap:10px">
-        <span style="display:flex;align-items:center;gap:8px">
+        <span style="display:flex;align-items:center;gap:8px;font:var(--text-subhead);color:var(--ink)">
           Vertel ons meer over jezelf
-          <?php if ($blk): ?><span class="badge badge-groen" style="font-size:10px">✓ Ingevuld</span><?php endif; ?>
+          <?php if ($blk): ?><span class="ds-badge ds-badge-ok" style="font-size:10px"><?= icoon('vink', 12) ?> Ingevuld</span><?php endif; ?>
         </span>
-        <button type="button" id="blkToggleBtn" class="btn btn-outline btn-sm" onclick="event.stopPropagation();blkToggle()"><?= $blk ? 'Bekijken ↓' : 'Invullen ↓' ?></button>
+        <button type="button" id="blkToggleBtn" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="event.stopPropagation();blkToggle()"><?= $blk ? 'Bekijken' : 'Invullen' ?></button>
       </div>
     </div>
     <div class="card-body" id="blkBody" <?= $blk ? 'style="display:none"' : 'style="display:none"' ?>>
@@ -1224,15 +1221,15 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
       <div style="background:var(--groen-bg);border:1px solid var(--groen);border-radius:8px;padding:14px 16px;margin-bottom:14px">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
           <div>
-            <div style="font-weight:600;color:var(--groen);font-size:14px">✅ Beter leren kennen — Afgerond</div>
+            <div style="font-weight:600;color:var(--ok);font-size:14px"><?= icoon("vink", 15) ?> Beter leren kennen — Afgerond</div>
             <div style="font-size:12px;color:var(--groen);margin-top:2px">
               Ingevuld op <?= datum_nl(substr($blk['ingevuld_op']??'',0,10)) ?>
               <?php if (!empty($blk_weken_sel)): ?> · <?= count($blk_weken_sel) ?> <?= count($blk_weken_sel) === 1 ? 'week' : 'weken' ?> geselecteerd<?php endif; ?>
             </div>
           </div>
-          <button type="button" class="btn btn-outline btn-sm"
+          <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm"
                   onclick="document.getElementById('blkFormWrapper').style.display='block';this.closest('div').style.display='none'">
-            ✏️ Bewerken
+            <?= icoon("potlood", 15) ?> Bewerken
           </button>
         </div>
       </div>
@@ -1286,7 +1283,7 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
             </div>
           </div>
           <div class="form-hulp" id="adr-status" style="margin-top:-6px;margin-bottom:8px;min-height:18px"></div>
-          <div class="stap-nav"><div></div><button type="button" class="btn btn-primary" onclick="gaNaar(2)">Volgende →</button></div>
+          <div class="stap-nav"><div></div><button type="button" class="ds-btn ds-btn-primair" onclick="gaNaar(2)">Volgende</button></div>
         </div>
 
         <!-- Stap 2: Achtergrond -->
@@ -1295,7 +1292,7 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
           <div class="form-groep"><label>Opleiding <span class="vereist">*</span></label><textarea name="opleiding" rows="2" data-verplicht="2" placeholder="Bijv: HAVO 4, HBO Verpleegkunde jaar 3..."><?= h($blk['opleiding'] ?? '') ?></textarea></div>
           <div class="form-groep"><label>Diploma's en certificaten</label><textarea name="diplomas" rows="2" placeholder="Bijv: Zwemdiploma A+B, EHBO, Junior Lifeguard..."><?= h($blk['diplomas'] ?? '') ?></textarea></div>
           <div class="form-groep"><label>Werkervaring</label><textarea name="werkervaring" rows="2" placeholder="Bijv: bijbaan, vrijwilligerswerk..."><?= h($blk['werkervaring'] ?? '') ?></textarea></div>
-          <div class="stap-nav"><button type="button" class="btn btn-outline" onclick="gaNaar(1)">← Terug</button><button type="button" class="btn btn-primary" onclick="gaNaar(3)">Volgende →</button></div>
+          <div class="stap-nav"><button type="button" class="ds-btn ds-btn-secundair" onclick="gaNaar(1)">Terug</button><button type="button" class="ds-btn ds-btn-primair" onclick="gaNaar(3)">Volgende</button></div>
         </div>
 
         <!-- Stap 3: Motivatie -->
@@ -1303,7 +1300,7 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
           <div class="sectie-titel">Motivatie</div>
           <div class="form-groep"><label>Waarom wil je lifeguard worden bij Paal 13? <span class="vereist">*</span></label><textarea name="motivatie_lifeguard" rows="4" data-verplicht="3" placeholder="Vertel ons wat je motiveert..."><?= h($blk['motivatie_lifeguard'] ?? '') ?></textarea></div>
           <div class="form-groep"><label>Wat doe je het liefst op het strand?</label><textarea name="motivatie_strand" rows="2" placeholder="Bijv: zwemmen, volleybal, mensen helpen..."><?= h($blk['motivatie_strand'] ?? '') ?></textarea></div>
-          <div class="stap-nav"><button type="button" class="btn btn-outline" onclick="gaNaar(2)">← Terug</button><button type="button" class="btn btn-primary" onclick="gaNaar(4)">Volgende →</button></div>
+          <div class="stap-nav"><button type="button" class="ds-btn ds-btn-secundair" onclick="gaNaar(2)">Terug</button><button type="button" class="ds-btn ds-btn-primair" onclick="gaNaar(4)">Volgende</button></div>
         </div>
 
         <!-- Stap 4: Beschikbaarheid (periode-blokken model) -->
@@ -1326,7 +1323,7 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
 
           <!-- Gidsje (punt 13) -->
           <details style="margin-bottom:14px;border:1px solid var(--blauw);border-radius:10px;background:var(--blauw-bg)">
-            <summary style="padding:11px 16px;cursor:pointer;font-size:13px;font-weight:600;color:var(--blauw)">💡 Hoe vul ik dit in? (voorbeeld)</summary>
+            <summary style="padding:11px 16px;cursor:pointer;font-size:13px;font-weight:600;color:var(--blauw)">Hoe vul ik dit in? (voorbeeld)</summary>
             <div style="padding:4px 16px 14px;font-size:12.5px;line-height:1.7;color:var(--tekst)">
               <p style="margin:0 0 8px"><strong>Stel:</strong> je werkt de hele zomervakantie, behalve twee weken dat je zelf op vakantie bent in augustus.</p>
               <p style="margin:0 0 4px">Dan vul je in:</p>
@@ -1365,9 +1362,9 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
             <textarea id="aiBeschTekst" rows="2" placeholder="Typ hier je beschikbaarheid…"
                       style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--rand);border-radius:8px;font-size:14px;font-family:inherit;resize:vertical"></textarea>
             <div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap">
-              <button type="button" class="btn btn-primary btn-sm" id="aiBeschKnop" onclick="aiBeschVerwerk()">
+              <button type="button" class="ds-btn ds-btn-primair ds-btn-sm" id="aiBeschKnop" onclick="aiBeschVerwerk()">
                 <span class="ai-tekst">✨ Vul het formulier voor mij in</span>
-                <span class="ai-spinner" style="display:none">⏳ Bezig…</span>
+                <span class="ai-spinner" style="display:none">Bezig…</span>
               </button>
               <span id="aiBeschStatus" style="font-size:12.5px;color:var(--tekst-zacht)"></span>
             </div>
@@ -1429,7 +1426,7 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
                     <option value="vijf" <?= !$is_weekend?'selected':'' ?>>hele weken (5 dagen)</option>
                     <option value="weekend" <?= $is_weekend?'selected':'' ?>>alleen weekenden</option>
                   </select>
-                  <button type="button" class="btn btn-outline btn-sm" onclick="b2BlokVerwijder(this)" title="Periode verwijderen" aria-label="Periode verwijderen" style="min-width:44px;min-height:38px">✕</button>
+                  <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="b2BlokVerwijder(this)" title="Periode verwijderen" aria-label="Periode verwijderen" style="min-width:44px;min-height:38px"><?= icoon("kruis", 15) ?></button>
                 </div>
                 <div class="b2-weekend-dagen" style="<?= $is_weekend?'':'display:none;' ?>margin-top:8px;padding-top:8px;border-top:1px dashed var(--rand-licht)">
                   <span style="font-size:12px;color:var(--tekst-zacht);margin-right:6px">Welke dagen?</span>
@@ -1443,8 +1440,8 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
               </div>
               <?php endforeach; ?>
             </div>
-            <button type="button" class="btn btn-outline btn-sm" onclick="b2BlokToevoegen()">+ Nog een periode</button>
-            <p style="font-size:11.5px;color:var(--grijs);margin-top:8px">💡 Dit staat al ingevuld op het hele seizoen. Klopt dat? Dan hoef je hier niets te doen. Extra weekenden werken mag ook — kies dan "alleen weekenden".</p>
+            <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="b2BlokToevoegen()">+ Nog een periode</button>
+            <p style="font-size:11.5px;color:var(--grijs);margin-top:8px">Dit staat al ingevuld op het hele seizoen. Klopt dat? Dan hoef je hier niets te doen. Extra weekenden werken mag ook — kies dan "alleen weekenden".</p>
           </div>
 
           <!-- STAP 2: Uitzonderingen (optioneel, inklapbaar) -->
@@ -1471,18 +1468,18 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
                     <span style="color:var(--grijs)">t/m</span>
                     <input type="date" name="b2_afw_tot[]" value="<?= h($a['tot_datum']) ?>" onchange="b2Herbereken()" aria-label="Afwezig tot en met" style="flex:1;min-width:130px">
                     <input type="text" name="b2_afw_label[]" value="<?= h($a['label'] ?? '') ?>" placeholder="bijv. vakantie" aria-label="Omschrijving" style="flex:1;min-width:100px">
-                    <button type="button" class="btn btn-outline btn-sm" onclick="this.parentElement.remove();b2Herbereken()" aria-label="Verwijderen" style="min-width:44px;min-height:38px">✕</button>
+                    <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="this.parentElement.remove();b2Herbereken()" aria-label="Verwijderen" style="min-width:44px;min-height:38px"><?= icoon("kruis", 15) ?></button>
                   </div>
                   <?php endforeach; ?>
                 </div>
-                <button type="button" class="btn btn-outline btn-sm" onclick="b2AfwezigToevoegen()">+ Periode toevoegen</button>
+                <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="b2AfwezigToevoegen()">+ Periode toevoegen</button>
               </div>
             </details>
 
             <!-- Uitzondering: losse dagen -->
             <details class="b2-uitz" <?= $heeft_losse?'open':'' ?> style="border:1px solid var(--rand);border-radius:10px;margin-bottom:8px;background:var(--bg)">
               <summary style="padding:12px 14px;cursor:pointer;font-size:14px;list-style:none;display:flex;align-items:center;gap:10px">
-                <span aria-hidden="true">📅</span> Losse dagen dat ik niet kan
+                Losse dagen dat ik niet kan
                 <span class="b2-uitz-chev" style="margin-left:auto;color:var(--grijs)">›</span>
               </summary>
               <div style="padding:0 14px 14px">
@@ -1496,11 +1493,11 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
                       <option value="voorkeur_vrij" <?= ($ld['soort']??'')==='voorkeur_vrij'?'selected':'' ?>>Liever vrij</option>
                     </select>
                     <input type="text" name="b2_dag_reden[]" value="<?= h($ld['reden'] ?? '') ?>" placeholder="reden (optioneel)" aria-label="Reden" style="flex:1;min-width:100px">
-                    <button type="button" class="btn btn-outline btn-sm" onclick="this.parentElement.remove()" aria-label="Verwijderen" style="min-width:44px;min-height:38px">✕</button>
+                    <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="this.parentElement.remove()" aria-label="Verwijderen" style="min-width:44px;min-height:38px"><?= icoon("kruis", 15) ?></button>
                   </div>
                   <?php endforeach; ?>
                 </div>
-                <button type="button" class="btn btn-outline btn-sm" onclick="b2LosseDagToevoegen()">+ Dag toevoegen</button>
+                <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="b2LosseDagToevoegen()">+ Dag toevoegen</button>
               </div>
             </details>
 
@@ -1559,7 +1556,7 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
                       </select>
                       <input type="number" name="b2_vz_dagen[]" value="<?= (int)$vz['dagen_aantal'] ?>" min="1" max="6" aria-label="Aantal dagen" style="width:60px" placeholder="dagen">
                       <span style="font-size:12px;color:var(--grijs)">dagen</span>
-                      <button type="button" class="btn btn-outline btn-sm" onclick="this.closest('.b2-verzoek-rij').remove()" aria-label="Verwijderen" style="min-width:44px;min-height:38px">✕</button>
+                      <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="this.closest('.b2-verzoek-rij').remove()" aria-label="Verwijderen" style="min-width:44px;min-height:38px"><?= icoon("kruis", 15) ?></button>
                       <?php if ($vz['status']==='goedgekeurd'): ?><span style="font-size:11px;color:var(--groen)">✓ goedgekeurd</span><?php endif; ?>
                     </div>
                     <input type="text" name="b2_vz_toelichting[]" value="<?= h($vz['toelichting'] ?? '') ?>" placeholder="reden (bijv. school)" aria-label="Reden" style="width:100%;margin-top:6px">
@@ -1575,14 +1572,14 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
                   </div>
                   <?php endforeach; ?>
                 </div>
-                <button type="button" class="btn btn-outline btn-sm" onclick="b2VerzoekToevoegen()">+ Verzoek toevoegen</button>
+                <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="b2VerzoekToevoegen()">+ Verzoek toevoegen</button>
               </div>
             </details>
           </div>
 
           <!-- Overzicht: zo begrijpen wij het -->
           <div style="background:var(--groen-bg,var(--grijs-bg));border:1px solid var(--rand);border-radius:12px;padding:16px;margin-bottom:14px">
-            <div style="font-weight:600;font-size:13.5px;margin-bottom:8px">📋 Zo begrijpen wij het <span id="b2WekenTeller" style="font-weight:400;color:var(--tekst-zacht)"></span></div>
+            <div style="font-weight:600;font-size:13.5px;margin-bottom:8px">Zo begrijpen wij het <span id="b2WekenTeller" style="font-weight:400;color:var(--tekst-zacht)"></span></div>
             <div id="b2Preview" aria-live="polite" style="font-size:13px;line-height:1.7;color:var(--tekst)">
               <span style="color:var(--grijs);font-style:italic">Vul je periode in…</span>
             </div>
@@ -1600,7 +1597,7 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
             </label>
           </div>
 
-          <div class="stap-nav"><button type="button" class="btn btn-outline" onclick="gaNaar(3)">← Terug</button><button type="button" class="btn btn-primary" onclick="b2Valideer()&&gaNaar(5)">Volgende →</button></div>
+          <div class="stap-nav"><button type="button" class="ds-btn ds-btn-secundair" onclick="gaNaar(3)">Terug</button><button type="button" class="ds-btn ds-btn-primair" onclick="b2Valideer()&&gaNaar(5)">Volgende</button></div>
         </div>
 
         <!-- Stap 5: Overig + reden + versturen -->
@@ -1634,9 +1631,9 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
           <?php endif; ?>
 
           <div class="stap-nav">
-            <button type="button" class="btn btn-outline" onclick="gaNaar(4)">← Terug</button>
-            <button type="submit" class="btn btn-primary btn-lg">
-              <?= $blk ? '💾 Bijwerken' : '✅ Insturen' ?>
+            <button type="button" class="ds-btn ds-btn-secundair" onclick="gaNaar(4)">Terug</button>
+            <button type="submit" class="ds-btn ds-btn-primair">
+              <?= $blk ? "Bijwerken" : "Insturen" ?>
             </button>
           </div>
         </div>
@@ -1657,12 +1654,12 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
   ?>
   <div class="card">
     <div class="card-header">
-      <div class="card-title">📅 Jouw beschikbaarheid</div>
+      <div class="card-title"><?= icoon("kalender", 18) ?> Jouw beschikbaarheid</div>
     </div>
     <div class="card-body">
       <?php if ($b2tw_voorlopig): ?>
       <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--oranje-bg);border:1px solid var(--oranje);border-radius:8px;margin-bottom:12px">
-        <span style="font-size:18px">⏳</span>
+        <span style="color:var(--ink-muted)"><?= icoon("wachten", 17) ?></span>
         <div style="font-size:12.5px;color:var(--oranje-dim)">
           <strong>Nog voorlopig.</strong> Werk het op tijd bij en zet het definitief — anders gebruiken we je huidige invoer automatisch vanaf 2 weken vóór het trainingsweekend.
         </div>
@@ -1686,7 +1683,7 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
         <div style="color:var(--grijs);margin-top:4px"><?= count($b2tw_eff) ?> <?= count($b2tw_eff) === 1 ? 'week' : 'weken' ?> beschikbaar<?php if (!empty($b2tw['afwezig'])): ?> · <?= count($b2tw['afwezig']) ?> afwezigheidsperiode<?= count($b2tw['afwezig'])>1?'s':'' ?><?php endif; ?></div>
       </div>
 
-      <a href="<?= APP_URL ?>/portaal/beschikbaarheid.php" class="btn btn-outline btn-sm">Bekijken & aanpassen →</a>
+      <a href="<?= APP_URL ?>/portaal/beschikbaarheid.php" class="ds-btn ds-btn-secundair ds-btn-sm">Bekijken & aanpassen →</a>
     </div>
   </div>
   <?php endif; endif; ?>
@@ -1785,7 +1782,7 @@ document.getElementById('fotoInput')?.addEventListener('change', function() {
       status.textContent = '';
       return;
     }
-    status.textContent = '⏳ Adres opzoeken…';
+    status.textContent = 'Adres opzoeken…';
     status.style.color = 'var(--grijs)';
     fetch('<?= APP_URL ?>/portaal/api_adres.php?postcode=' + encodeURIComponent(pcVal) + '&huisnummer=' + encodeURIComponent(hn.value.trim()))
       .then(r => r.json())
@@ -1840,7 +1837,7 @@ function b2BlokToevoegen() {
       '<span style="font-size:12px;color:var(--grijs)">t/m</span>' +
       '<select name="b2_blok_tot[]" onchange="b2Herbereken()" aria-label="Tot en met week" style="flex:1;min-width:110px">' + b2WeekOpties(B2_LAATSTE) + '</select>' +
       '<select name="b2_blok_regime[]" onchange="b2RegimeCheck(this);b2Herbereken()" aria-label="Regime" style="flex:1;min-width:130px"><option value="vijf">hele weken (5 dagen)</option><option value="weekend">alleen weekenden</option></select>' +
-      '<button type="button" class="btn btn-outline btn-sm" onclick="b2BlokVerwijder(this)" aria-label="Periode verwijderen" style="min-width:44px;min-height:38px">✕</button>' +
+      '<button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="b2BlokVerwijder(this)" aria-label="Periode verwijderen" style="min-width:44px;min-height:38px"><?= icoon("kruis", 15) ?></button>' +
     '</div>' +
     '<div class="b2-weekend-dagen" style="display:none;margin-top:8px;padding-top:8px;border-top:1px dashed var(--rand-licht)">' +
       '<span style="font-size:12px;color:var(--tekst-zacht);margin-right:6px">Welke dagen?</span>' +
@@ -2044,7 +2041,7 @@ function b2AfwezigToevoegen() {
     '<span style="color:var(--grijs)">t/m</span>' +
     '<input type="date" name="b2_afw_tot[]" onchange="b2Herbereken()" aria-label="Afwezig tot en met" style="flex:1;min-width:130px">' +
     '<input type="text" name="b2_afw_label[]" placeholder="bijv. vakantie" aria-label="Omschrijving" style="flex:1;min-width:100px">' +
-    '<button type="button" class="btn btn-outline btn-sm" onclick="this.parentElement.remove();b2Herbereken()" aria-label="Verwijderen" style="min-width:44px;min-height:38px">✕</button>';
+    '<button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="this.parentElement.remove();b2Herbereken()" aria-label="Verwijderen" style="min-width:44px;min-height:38px"><?= icoon("kruis", 15) ?></button>';
   document.getElementById('b2AfwezigLijst').appendChild(div);
 }
 
@@ -2055,7 +2052,7 @@ function b2LosseDagToevoegen() {
   div.innerHTML = '<input type="date" name="b2_dag_datum[]" aria-label="Datum" style="flex:1;min-width:140px">' +
     '<select name="b2_dag_soort[]" aria-label="Soort" style="flex:1;min-width:130px"><option value="niet_beschikbaar">Kan ik niet</option><option value="voorkeur_vrij">Liever vrij</option></select>' +
     '<input type="text" name="b2_dag_reden[]" placeholder="reden (optioneel)" aria-label="Reden" style="flex:1;min-width:100px">' +
-    '<button type="button" class="btn btn-outline btn-sm" onclick="this.parentElement.remove()" aria-label="Verwijderen" style="min-width:44px;min-height:38px">✕</button>';
+    '<button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="this.parentElement.remove()" aria-label="Verwijderen" style="min-width:44px;min-height:38px"><?= icoon("kruis", 15) ?></button>';
   document.getElementById('b2LosseDagLijst').appendChild(div);
 }
 
@@ -2071,7 +2068,7 @@ function b2VerzoekToevoegen() {
       '<select name="b2_vz_tot[]" aria-label="Verzoek tot week" style="flex:1;min-width:105px">' + b2WeekOpties(B2_LAATSTE) + '</select>' +
       '<input type="number" name="b2_vz_dagen[]" min="1" max="6" aria-label="Aantal dagen" style="width:60px" placeholder="dagen">' +
       '<span style="font-size:12px;color:var(--grijs)">dagen</span>' +
-      '<button type="button" class="btn btn-outline btn-sm" onclick="this.closest(\'.b2-verzoek-rij\').remove()" aria-label="Verwijderen" style="min-width:44px;min-height:38px">✕</button>' +
+      '<button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="this.closest(\'.b2-verzoek-rij\').remove()" aria-label="Verwijderen" style="min-width:44px;min-height:38px"><?= icoon("kruis", 15) ?></button>' +
     '</div>' +
     '<input type="text" name="b2_vz_toelichting[]" placeholder="reden (bijv. school)" aria-label="Reden" style="width:100%;margin-top:6px">' +
     '<div style="margin-top:8px">' +
@@ -2378,7 +2375,7 @@ function portaalSubmit(form) {
     btn.disabled = true;
     const t = btn.querySelector('.btn-tekst'), s = btn.querySelector('.btn-spinner');
     if (t && s) { t.style.display = 'none'; s.style.display = ''; }
-    else { btn.dataset.oud = btn.innerHTML; btn.innerHTML = '⏳ Bezig…'; }
+    else { btn.dataset.oud = btn.innerHTML; btn.innerHTML = 'Bezig…'; }
   }
   return true;
 }
@@ -2453,7 +2450,7 @@ document.querySelectorAll('a.btn').forEach(a => {
   a.addEventListener('click', () => {
     if (a.href && !a.href.startsWith('#')) {
       a.style.opacity = '.6';
-      a.textContent = '⏳ Openen…';
+      a.textContent = 'Openen…';
     }
   });
 });
