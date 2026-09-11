@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.65.0');
+define('APP_VERSIE', '2.66.0');
 
 function app_changelog(): array {
     return [
+        '2.66.0' => [
+            'datum'  => '2026-08-22',
+            'titel'  => 'Beschikbaarheid is nu een losse taak (niet meer in het BLK)',
+            'punten' => [
+                'Beschikbaarheid doorgeven is een eigen taak met een eigen pagina geworden — precies zoals het ontwerp wil, los van het "Beter leren kennen"-formulier',
+                'Het BLK-formulier is teruggebracht van 5 naar 4 stappen (beschikbaarheid eruit)',
+                'De invul-logica (formuliervelden, opslag, en de slimme "typ je beschikbaarheid"-hulp) is gedeeld tussen oud en nieuw via herbruikbare onderdelen — geen dubbele code',
+                'Op de startpagina staat nu een aparte taak "Geef je beschikbaarheid door"',
+            ],
+        ],
         '2.65.0' => [
             'datum'  => '2026-08-22',
             'titel'  => 'Beschikbaarheid-opslag als herbruikbare functie (voorbereiding losse taak)',
