@@ -435,66 +435,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['blk_submit']) && $sta
         }
         $_SESSION['b2_toon_opgeslagen'] = true;
 
-        // Beschikbaarheid 2.0 opslaan (periode-blokken model)
+        // Beschikbaarheid 2.0 opslaan (periode-blokken model) — via gedeelde functie
         try {
-            if (function_exists('beschikbaarheid2_opslaan') && !empty($_POST['b2_blok_van'])) {
-                // Blokken (met weekend-dagen bij regime weekend)
-                $blokken = [];
-                $bv = $_POST['b2_blok_van'] ?? []; $bt = $_POST['b2_blok_tot'] ?? []; $br = $_POST['b2_blok_regime'] ?? [];
-                $bwd = $_POST['b2_blok_wkdagen'] ?? []; // per blok-index: JSON string van gekozen weekenddagen
-                foreach ($bv as $i => $v) {
-                    if ($v && !empty($bt[$i])) {
-                        $blok = ['van_week' => (int)$v, 'tot_week' => (int)$bt[$i], 'regime' => $br[$i] ?? 'vijf'];
-                        if (($br[$i] ?? '') === 'weekend' && !empty($bwd[$i])) {
-                            $wd = json_decode($bwd[$i], true);
-                            if (is_array($wd)) $blok['weekend_dagen'] = array_map('intval', $wd);
-                        }
-                        $blokken[] = $blok;
-                    }
-                }
-                // Afwezigheid
-                $afw = [];
-                $av = $_POST['b2_afw_van'] ?? []; $at = $_POST['b2_afw_tot'] ?? []; $al = $_POST['b2_afw_label'] ?? [];
-                foreach ($av as $i => $v) {
-                    if ($v && !empty($at[$i])) $afw[] = ['van' => $v, 'tot' => $at[$i], 'label' => $al[$i] ?? ''];
-                }
-                // Verzoeken afwijkend aantal dagen (met optionele dagen-pool)
-                $verzoeken = [];
-                $vv = $_POST['b2_vz_van'] ?? []; $vt = $_POST['b2_vz_tot'] ?? []; $vd = $_POST['b2_vz_dagen'] ?? []; $vl = $_POST['b2_vz_toelichting'] ?? [];
-                $vp = $_POST['b2_vz_pool'] ?? []; // per verzoek-index: JSON string van beschikbare dagen
-                $vz_fouten = [];
-                foreach ($vv as $i => $v) {
-                    if ($v && !empty($vt[$i]) && !empty($vd[$i])) {
-                        $aantal = (int)$vd[$i];
-                        $verzoek = ['van_week' => (int)$v, 'tot_week' => (int)$vt[$i], 'dagen' => $aantal, 'toelichting' => $vl[$i] ?? ''];
-                        $pool = [];
-                        if (!empty($vp[$i])) {
-                            $decoded = json_decode($vp[$i], true);
-                            if (is_array($decoded)) $pool = array_map('intval', $decoded);
-                        }
-                        // Validatie: als er voorkeursdagen zijn opgegeven, moeten dat er minstens
-                        // zoveel zijn als het gevraagde aantal dagen. Anders haal je het aantal niet.
-                        if ($pool && count($pool) < $aantal) {
-                            $vz_fouten[] = "Verzoek voor week {$v}: je hebt {$aantal} dagen aangevraagd maar slechts " . count($pool) . " dag(en) aangevinkt. Vink minstens {$aantal} dagen aan.";
-                            continue; // dit verzoek niet opslaan
-                        }
-                        if ($pool) $verzoek['pool'] = $pool;
-                        $verzoeken[] = $verzoek;
-                    }
-                }
-                if ($vz_fouten) {
-                    // Bewaar de fouten zodat ze getoond kunnen worden; sla de geldige verzoeken wel op
-                    $_SESSION['b2_vz_waarschuwing'] = implode(' ', $vz_fouten);
-                }
-                beschikbaarheid2_opslaan($sol_id, [
-                    'blokken'          => $blokken,
-                    'afwezig'          => $afw,
-                    'verzoeken'        => $verzoeken,
-                    'vaste_dagen_uit'  => $_POST['b2_vaste_uit'] ?? [],
-                    'vaste_toelichting'=> trim($_POST['b2_vaste_toelichting'] ?? '') ?: null,
-                    'voorlopig'        => !empty($_POST['b2_voorlopig']),
-                    'opmerking'        => trim($_POST['beschikbaarheid_uitzonderingen'] ?? '') ?: null,
-                ]);
+            $b2_waarschuwingen = beschikbaarheid_opslaan_uit_post($sol_id, $_POST);
+            if ($b2_waarschuwingen) {
+                $_SESSION['b2_vz_waarschuwing'] = implode(' ', $b2_waarschuwingen);
             }
 
             // Losse dagen (concrete kalenderdatums die iemand niet kan / liever vrij wil)

@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.64.7');
+define('APP_VERSIE', '2.65.0');
 
 function app_changelog(): array {
     return [
+        '2.65.0' => [
+            'datum'  => '2026-08-22',
+            'titel'  => 'Beschikbaarheid-opslag als herbruikbare functie (voorbereiding losse taak)',
+            'punten' => [
+                'De opslaglogica van het beschikbaarheidsformulier is uit het BLK-formulier gehaald en in één geteste, herbruikbare functie gezet',
+                'Dit is de veilige eerste stap om beschikbaarheid een losse taak te maken; het BLK werkt ongewijzigd via dezelfde functie',
+                'Interne verbetering, geen zichtbare wijziging',
+            ],
+        ],
         '2.64.7' => [
             'datum'  => '2026-08-21',
             'titel'  => 'BLK-formulier en trainingsweekend-info in de nieuwe stijl; portaal emoji-vrij',
