@@ -950,6 +950,10 @@ function ondertekeningen_auto_setup(): void {
             INDEX (`token`),
             INDEX (`ondertekend_op`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        // Handtekening-afbeelding (base64 PNG data-URL) — nieuw in de ontwerp-herbouw
+        if (function_exists('db_kolom_verzeker')) {
+            db_kolom_verzeker(db(), 'ondertekeningen', 'handtekening_beeld', 'MEDIUMTEXT DEFAULT NULL');
+        }
     } catch (\Exception $e) { error_log('ondertekeningen_auto_setup: ' . $e->getMessage()); }
 }
 }

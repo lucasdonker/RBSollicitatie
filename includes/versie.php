@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.66.0');
+define('APP_VERSIE', '2.67.0');
 
 function app_changelog(): array {
     return [
+        '2.67.0' => [
+            'datum'  => '2026-08-22',
+            'titel'  => 'Echt handtekening-vak bij ondertekenen',
+            'punten' => [
+                'Bij het digitaal ondertekenen zet je nu een echte handtekening in een tekenvak (met je vinger op mobiel, of met de muis op desktop)',
+                'Een "Wissen"-knop om opnieuw te beginnen; de handtekening wordt bij het versturen vastgelegd naast je naam, datum en IP',
+                'Werkt voor zowel de sollicitant (18+) als de ouder/verzorger (voor minderjarigen)',
+            ],
+        ],
         '2.66.0' => [
             'datum'  => '2026-08-22',
             'titel'  => 'Beschikbaarheid is nu een losse taak (niet meer in het BLK)',

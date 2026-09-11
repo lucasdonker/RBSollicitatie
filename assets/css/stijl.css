@@ -1342,3 +1342,33 @@ body.heeft-nav { padding-bottom: 84px; }
 .vg3-balk { height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; }
 .vg3-vul { height: 100%; background: linear-gradient(90deg, var(--navy), var(--accent)); border-radius: 99px; transition: width .4s; }
 .vg3-volgende { font: var(--text-meta); color: var(--ink-muted); margin-top: 8px; }
+
+/* ── Handtekening-vak ───────────────────────────────────────────── */
+.hdt-wrap { position: relative; }
+.hdt-canvas {
+  width: 100%;
+  height: 150px;
+  border: 1.5px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle);
+  touch-action: none;
+  display: block;
+  cursor: crosshair;
+}
+.hdt-hint {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex; align-items: center; gap: 6px;
+  font: var(--text-meta); color: var(--ink-muted);
+  pointer-events: none;
+}
+.hdt-wis {
+  position: absolute;
+  top: 10px; right: 10px;
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 5px 10px;
+  font: var(--text-label); font-size: 12px; color: var(--navy); cursor: pointer;
+}
+.hdt-wis:hover { background: var(--bg); }

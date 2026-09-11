@@ -63,10 +63,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_ondertekend) {
     $naam_getypt = trim($_POST['naam_getypt'] ?? '');
     $plaats      = trim($_POST['plaats'] ?? '');
     $akkoord     = !empty($_POST['akkoord']);
+    $handtekening = $_POST['handtekening_beeld'] ?? '';
+    // Valideer de handtekening-data-URL (PNG, redelijke grootte)
+    if ($handtekening !== '' && !preg_match('#^data:image/png;base64,[A-Za-z0-9+/=]+$#', $handtekening)) {
+        $handtekening = '';
+    }
+    if (strlen($handtekening) > 600000) $handtekening = ''; // te groot → negeren
 
     if (!$akkoord)                       $fout = 'Vink het akkoord aan.';
     elseif (strlen($naam_getypt) < 3)    $fout = 'Vul je volledige naam in ter ondertekening.';
     elseif (!$plaats)                    $fout = 'Vul je woonplaats in.';
+    elseif ($handtekening === '')        $fout = 'Zet je handtekening in het vak.';
     else {
         // Verzamel form-data (verschilt per type)
         $form = [];
@@ -110,7 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_ondertekend) {
         // Update record
         $db->prepare("UPDATE ondertekeningen SET
                         ondertekenaar_naam=?, ondertekenaar_geboortedatum=?, ondertekenaar_geboorteplaats=?, ondertekenaar_relatie=?,
-                        formulier_data=?, plaats=?,
+                        formulier_data=?, plaats=?, handtekening_beeld=?,
                         ondertekend_op=NOW(), ondertekend_ip=?, ondertekend_user_agent=?,
                         geldig_tot=DATE_ADD(CURDATE(), INTERVAL 1 YEAR)
                      WHERE token=?")
@@ -121,6 +128,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_ondertekend) {
                 $form['relatie'] ?? null,
                 json_encode($form, JSON_UNESCAPED_UNICODE),
                 $plaats,
+                $handtekening,
                 $_SERVER['REMOTE_ADDR'] ?? null,
                 substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 500),
                 $token,
@@ -470,13 +478,26 @@ body { background:var(--bg); min-height:100vh; }
         </label>
       </div>
 
-      <div style="background:var(--blauw-bg);border-left:3px solid var(--blauw);padding:12px 14px;border-radius:6px;font-size:12px;color:var(--tekst-zacht);margin-top:12px">
-        📌 Bij het versturen worden je naam, IP-adres, browsergegevens en tijdstip vastgelegd als digitale handtekening (juridisch geldig conform eIDAS voor niet-notariële zaken).
+      <!-- Handtekening-vak -->
+      <div class="form-groep" style="margin-top:16px">
+        <label>Jouw handtekening</label>
+        <div class="hdt-wrap">
+          <canvas id="hdtCanvas" class="hdt-canvas"></canvas>
+          <div class="hdt-hint" id="hdtHint"><?= icoon('potlood', 16) ?> Teken hier met je vinger of muis</div>
+          <button type="button" class="hdt-wis" id="hdtWis"><?= icoon('ververs', 15) ?> Wissen</button>
+        </div>
+        <input type="hidden" name="handtekening_beeld" id="hdtData">
+        <div class="ds-veld-hint" style="margin-top:6px">Zet je handtekening in het vak hierboven. Dit hoort bij je getypte naam.</div>
+      </div>
+
+      <div style="background:#e8f0f8;border-left:3px solid var(--navy);padding:12px 14px;border-radius:var(--radius-sm);font-size:12px;color:var(--ink-soft);margin-top:12px;display:flex;gap:8px;align-items:flex-start">
+        <span style="flex-shrink:0;margin-top:1px"><?= icoon('slot', 15) ?></span>
+        <span>Bij het versturen worden je naam, handtekening, IP-adres, browsergegevens en tijdstip vastgelegd als digitale handtekening (juridisch geldig conform eIDAS voor niet-notariële zaken).</span>
       </div>
 
       <button type="submit" class="ds-btn ds-btn-primair ds-btn-vol" style="margin-top:16px">
         <span class="btn-tekst">Digitaal ondertekenen</span>
-        <span class="btn-spinner" style="display:none">⏳ Bezig met ondertekenen…</span>
+        <span class="btn-spinner" style="display:none">Bezig met ondertekenen…</span>
       </button>
     </form>
   </div>
@@ -495,6 +516,65 @@ function valideer(f) {
   }
   return true;
 }
+
+// ── Handtekening-canvas ──
+(function() {
+  const canvas = document.getElementById('hdtCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const hint = document.getElementById('hdtHint');
+  const dataVeld = document.getElementById('hdtData');
+  let tekent = false, leeg = true, vorigeX = 0, vorigeY = 0;
+
+  // Canvas op juiste resolutie zetten (scherp op retina)
+  function pasGrootteAan() {
+    const rect = canvas.getBoundingClientRect();
+    const ratio = window.devicePixelRatio || 1;
+    // Bewaar bestaande tekening
+    const oud = leeg ? null : canvas.toDataURL();
+    canvas.width = rect.width * ratio;
+    canvas.height = rect.height * ratio;
+    ctx.scale(ratio, ratio);
+    ctx.lineWidth = 2.2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#1a2230';
+    if (oud) { const img = new Image(); img.onload = () => ctx.drawImage(img, 0, 0, rect.width, rect.height); img.src = oud; }
+  }
+  setTimeout(pasGrootteAan, 50);
+  window.addEventListener('resize', pasGrootteAan);
+
+  function pos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const t = e.touches ? e.touches[0] : e;
+    return { x: t.clientX - rect.left, y: t.clientY - rect.top };
+  }
+  function start(e) {
+    e.preventDefault(); tekent = true;
+    const p = pos(e); vorigeX = p.x; vorigeY = p.y;
+    if (leeg) { leeg = false; if (hint) hint.style.display = 'none'; }
+  }
+  function beweeg(e) {
+    if (!tekent) return; e.preventDefault();
+    const p = pos(e);
+    ctx.beginPath(); ctx.moveTo(vorigeX, vorigeY); ctx.lineTo(p.x, p.y); ctx.stroke();
+    vorigeX = p.x; vorigeY = p.y;
+  }
+  function stop() { tekent = false; if (!leeg) dataVeld.value = canvas.toDataURL('image/png'); }
+
+  canvas.addEventListener('mousedown', start);
+  canvas.addEventListener('mousemove', beweeg);
+  window.addEventListener('mouseup', stop);
+  canvas.addEventListener('touchstart', start, { passive: false });
+  canvas.addEventListener('touchmove', beweeg, { passive: false });
+  canvas.addEventListener('touchend', stop);
+
+  document.getElementById('hdtWis').addEventListener('click', function() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    leeg = true; dataVeld.value = '';
+    if (hint) hint.style.display = '';
+  });
+})();
 </script>
 </body>
 </html>
