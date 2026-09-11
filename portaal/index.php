@@ -615,25 +615,19 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
 .reden-box label { font-size:13px; font-weight:600; color:var(--navy); display:block; margin-bottom:6px; }
 </style>
 </head>
-<body class="<?= ($stap === 'dossier' && portaal_ingelogd()) ? 'heeft-nav' : '' ?>">
-<!-- Lichte/donkere modus toggle (klein knopje rechtsboven) -->
-<button type="button" class="theme-tgl" id="themeTgl" onclick="togglePortaalTheme()" title="Wissel licht/donker">
-  <span id="themeIcon">🌙</span>
-</button>
+<body class="pt-body <?= ($stap === 'dossier' && portaal_ingelogd()) ? 'heeft-nav' : '' ?>">
 
-<div class="wrap">
-  <div class="portaal-top">
-    <?php $_lgo = site_logo_url(); ?>
-    <img src="<?= h($_lgo ?: APP_URL . '/assets/img/logo.png') ?>" alt="Paal 13"
-         onerror="this.onerror=null;this.src='<?= APP_URL ?>/assets/img/logo.svg'">
-    <?php if ($stap === 'dossier' && $sol): ?>
-    <h1>Hoi <?= h($sol['voornaam']) ?>!</h1>
-    <p>Jouw sollicitatie — <?= h($sol['sz_naam']) ?></p>
-    <?php else: ?>
-    <h1>Sollicitantenportaal</h1>
-    <p>Reddingsbrigade Paal 13</p>
-    <?php endif; ?>
-  </div>
+<?php if ($stap === 'dossier' && portaal_ingelogd()): ?>
+  <header class="pt-topbar">
+    <div class="pt-merk">
+      <span class="pt-merk-logo"><?= icoon('golf', 20) ?></span>
+      <span>Paal 13</span>
+    </div>
+    <span class="pt-merk-sub"><?= $sol ? h($sol['sz_naam'] ?? 'Sollicitatie') : 'Sollicitatie' ?></span>
+  </header>
+<?php endif; ?>
+
+<main class="pt-main">
 
   <?php toon_flash(); ?>
   <?php if ($fout): ?><div class="flash flash-fout" style="margin-bottom:12px"><?= h($fout) ?></div><?php endif; ?>
@@ -1363,7 +1357,7 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
     <a href="https://paal13.com" style="font-size:12px;color:var(--tekst-zacht);text-decoration:none">paal13.com</a>
   </div>
 <?php endif; ?>
-</div>
+</main>
 
 <script>
 let huidig = 1;

@@ -3,10 +3,18 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.69.0');
+define('APP_VERSIE', '2.70.0');
 
 function app_changelog(): array {
     return [
+        '2.70.0' => [
+            'datum'  => '2026-09-11',
+            'titel'  => 'Startpagina op de gedeelde header + navigatie bovenin op desktop',
+            'punten' => [
+                'De startpagina gebruikt nu dezelfde nette topbar als de rest van het portaal — de dubbele/gekke header en de losse licht/donker-knop zijn weg',
+                'Op desktop staat de navigatie nu bovenin (onder de topbar) in plaats van onderaan; op mobiel blijft het de app-balk onderaan',
+            ],
+        ],
         '2.69.0' => [
             'datum'  => '2026-09-11',
             'titel'  => 'Meldingen per kanaal (incl. inlogcode), BLK-taak-fix, beschikbaarheid in nieuwe stijl',

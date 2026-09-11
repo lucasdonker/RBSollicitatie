@@ -1299,16 +1299,15 @@ table.tabel td, table.tabel th { overflow-wrap: normal; word-break: normal; }
 /* Desktop: topbar breder, navigatie bovenin i.p.v. onderbalk */
 @media (min-width: 720px) {
   .pt-body { padding-bottom: 0; }
-  .pt-topbar { padding: 13px 32px; }
-  .pt-main { max-width: 620px; padding: 28px 24px; }
+  .pt-topbar { padding: 13px 32px; position: fixed; top: 0; left: 0; right: 0; z-index: 50; }
+  .pt-main { max-width: 620px; padding: 28px 24px; margin-top: 108px; }
   .pt-nav {
-    position: sticky; top: 54px; bottom: auto;
-    max-width: 620px; margin: 0 auto;
+    position: fixed; top: 54px; bottom: auto; left: 0; right: 0; z-index: 45;
     border-top: none; border-bottom: 1px solid var(--border);
-    background: transparent;
+    background: var(--surface);
     padding: 8px 0;
+    justify-content: center;
     gap: 4px;
-    justify-content: flex-start;
   }
   .pt-nav-item {
     flex: 0 0 auto;
