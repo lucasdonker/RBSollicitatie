@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.76.0');
+define('APP_VERSIE', '2.76.1');
 
 function app_changelog(): array {
     return [
+        '2.76.1' => [
+            'datum'  => '2026-09-11',
+            'titel'  => 'Beschikbaarheid: week-dropdowns definitief gevuld (ook na AI)',
+            'punten' => [
+                'De week-dropdowns worden nu gevuld met de seizoensweken (de weeklijst werd niet aan de losse pagina meegegeven)',
+                'Als de AI een week net buiten het seizoen voorstelt, wordt die nu netjes binnen het seizoensbereik gehouden in plaats van de dropdown leeg te laten',
+                'Getest in een echte browser: dropdowns, "Nog een periode", preview en AI-invulling werken',
+            ],
+        ],
         '2.76.0' => [
             'datum'  => '2026-09-11',
             'titel'  => 'Beschikbaarheidsformulier gerepareerd (losse pagina)',

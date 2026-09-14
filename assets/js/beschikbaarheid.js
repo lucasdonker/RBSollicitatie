@@ -89,8 +89,12 @@ function aiBeschVulIn(d) {
   (d.blokken || []).forEach(blok => {
     b2BlokToevoegen();
     const rij = lijst.lastElementChild;
-    rij.querySelector('[name="b2_blok_van[]"]').value = blok.van_week;
-    rij.querySelector('[name="b2_blok_tot[]"]').value = blok.tot_week;
+    // Klem de weeknummers binnen het geldige seizoensbereik, anders bestaat de <option> niet
+    // en springt de dropdown terug naar leeg (AI kan soms een week net buiten het seizoen geven).
+    const klem = (w) => Math.min(B2_LAATSTE, Math.max(B2_EERSTE, parseInt(w) || B2_EERSTE));
+    const vanW = klem(blok.van_week), totW = klem(blok.tot_week);
+    rij.querySelector('[name="b2_blok_van[]"]').value = vanW;
+    rij.querySelector('[name="b2_blok_tot[]"]').value = Math.max(vanW, totW);
     const regimeSel = rij.querySelector('[name="b2_blok_regime[]"]');
     regimeSel.value = blok.regime === 'weekend' ? 'weekend' : 'vijf';
     b2RegimeCheck(regimeSel);
@@ -162,8 +166,7 @@ function aiBeschVulIn(d) {
       d.verzoeken.forEach(vz => {
         b2VerzoekToevoegen();
         const rij = vzLijst.lastElementChild;
-        if (vz.van_week) { const s = rij.querySelector('[name="b2_vz_van[]"]'); if (s) s.value = vz.van_week; }
-        if (vz.tot_week) { const s = rij.querySelector('[name="b2_vz_tot[]"]'); if (s) s.value = vz.tot_week; }
+
         if (vz.dagen_aantal) { const n = rij.querySelector('[name="b2_vz_dagen[]"]'); if (n) n.value = vz.dagen_aantal; }
         const toel = rij.querySelector('[name="b2_vz_toelichting[]"]');
         if (toel && vz.toelichting) toel.value = vz.toelichting;
