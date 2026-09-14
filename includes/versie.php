@@ -3,10 +3,18 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.76.1');
+define('APP_VERSIE', '2.76.2');
 
 function app_changelog(): array {
     return [
+        '2.76.2' => [
+            'datum'  => '2026-09-11',
+            'titel'  => 'Beschikbaarheid: week-dropdowns nu echt gevuld (ontbrekende lus hersteld)',
+            'punten' => [
+                'De echte oorzaak gevonden: de lus die de seizoensweken opbouwt was weggevallen, waardoor de weeklijst leeg bleef en dus alle dropdowns leeg waren',
+                'Hersteld en getest met een echte database: de dropdowns lopen nu van de eerste tot de laatste seizoensweek',
+            ],
+        ],
         '2.76.1' => [
             'datum'  => '2026-09-11',
             'titel'  => 'Beschikbaarheid: week-dropdowns definitief gevuld (ook na AI)',
