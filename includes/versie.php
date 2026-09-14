@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.73.0');
+define('APP_VERSIE', '2.74.0');
 
 function app_changelog(): array {
     return [
+        '2.74.0' => [
+            'datum'  => '2026-09-11',
+            'titel'  => 'Opschoning voor productie',
+            'punten' => [
+                'Dode code van de oude licht/donker-schakelaar verwijderd (de knop was al weg)',
+                'Laatste emoji in het portaal vervangen door nette lijn-iconen — het portaal is nu volledig consistent',
+                'Alle geautomatiseerde tests draaien groen; geen syntaxfouten in de hele codebase',
+            ],
+        ],
         '2.73.0' => [
             'datum'  => '2026-09-11',
             'titel'  => 'P2-polish afgerond (tien verbeterpunten uit de testronde)',

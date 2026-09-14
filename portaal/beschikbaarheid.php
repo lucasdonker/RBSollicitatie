@@ -80,7 +80,7 @@ require __DIR__ . '/_kop.php';
 
   <?php if (!$heeft_besch): ?>
     <div class="bk-card" style="text-align:center;padding:32px 20px">
-      <div style="font-size:32px;margin-bottom:8px">📋</div>
+      <div style="margin-bottom:8px;color:var(--navy)"><?= icoon("lijst", 30) ?></div>
       <p style="font-size:14px;margin-bottom:16px">Je hebt nog geen beschikbaarheid doorgegeven.</p>
       <a href="<?= APP_URL ?>/portaal/#blk" class="ds-btn ds-btn-primair">Beschikbaarheid invullen</a>
     </div>
@@ -89,7 +89,7 @@ require __DIR__ . '/_kop.php';
     <!-- Status -->
     <div class="bk-card">
       <?php if ($voorlopig): ?>
-        <span class="badge" style="background:var(--oranje)">⏳ VOORLOPIG</span>
+        <span class="ds-badge ds-badge-warn">Voorlopig</span>
         <p style="font-size:13.5px;margin:10px 0 0;line-height:1.6">
           Je beschikbaarheid staat nog op voorlopig. Klopt alles? Maak het dan definitief.
           <?php if ($deadline): ?>
@@ -170,7 +170,7 @@ require __DIR__ . '/_kop.php';
     <!-- Bestuurs-correcties (als die er zijn, transparant tonen) -->
     <?php if (!empty($b2['correcties'])): ?>
     <div class="bk-card">
-      <h2>📝 Aangepast in overleg</h2>
+      <h2><?= icoon("potlood", 18) ?> Aangepast in overleg</h2>
       <?php foreach ($b2['correcties'] as $c): ?>
         <div class="bk-rij">
           <strong><?= h($wk_label($c['week'])) ?></strong>:

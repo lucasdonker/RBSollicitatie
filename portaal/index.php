@@ -502,20 +502,9 @@ $weken_datums_ai = function_exists('seizoen_weken_datums') ? seizoen_weken_datum
 <meta name="robots" content="noindex">
 <script>
 (function(){
-  var t = localStorage.getItem('paal13-theme') || 'light';
-  document.documentElement.setAttribute('data-theme', t==='dark'?'dark':'');
-  window.togglePortaalTheme = function() {
-    var huidig = document.documentElement.getAttribute('data-theme');
-    var nieuw  = huidig === 'dark' ? '' : 'dark';
-    document.documentElement.setAttribute('data-theme', nieuw);
-    localStorage.setItem('paal13-theme', nieuw === 'dark' ? 'dark' : 'light');
-    var ico = document.getElementById('themeIcon');
-    if (ico) ico.textContent = nieuw === 'dark' ? '☀️' : '🌙';
-  };
-  document.addEventListener('DOMContentLoaded', function() {
-    var ico = document.getElementById('themeIcon');
-    if (ico) ico.textContent = t === 'dark' ? '☀️' : '🌙';
-  });
+  // Licht thema is de standaard. (De licht/donker-toggle is verwijderd in de nieuwe stijl;
+  // deze regel houdt alleen het lichte thema actief voor eventuele oude opgeslagen voorkeur.)
+  document.documentElement.setAttribute('data-theme', '');
 })();
 </script>
 <style>
