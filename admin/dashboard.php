@@ -80,6 +80,39 @@ try {
 } catch (Exception $e) { $health['ond_open_3d'] = 0; }
 
 $health_ok = ($health['mail_stuck'] === 0 && $health['mail_fout_24h'] < 3);
+
+/* Werving per bron/doelgroep (samengebracht vanuit de landingspagina-statistiek) */
+$werving = [];
+if (function_exists('landing_werving_overzicht')) {
+    try { $werving = landing_werving_overzicht($seizoen['id'] ?? null); } catch (Exception $e) { $werving = []; }
+}
+
+/* Gemiddelde doorlooptijd: van aanmelding tot aangenomen (in dagen) */
+$doorlooptijd = null;
+try {
+    $q = $db->prepare("
+        SELECT AVG(DATEDIFF(aangenomen_op, aangemeld_op)) AS gem, COUNT(*) AS n
+        FROM (
+            SELECT aangemeld_op,
+                   COALESCE(
+                     (SELECT MAX(gewijzigd_op) FROM audit_log a
+                       WHERE a.objecttype='sollicitatie' AND a.object_id=s.id AND a.details LIKE '%aangenomen%'),
+                     bijgewerkt_op
+                   ) AS aangenomen_op
+            FROM sollicitaties s
+            WHERE seizoen_id=? AND fase='aangenomen' AND aangemeld_op IS NOT NULL
+        ) t
+        WHERE aangenomen_op IS NOT NULL AND aangenomen_op >= aangemeld_op
+    ");
+    $q->execute([$seizoen['id'] ?? 0]);
+    $rij = $q->fetch();
+    if ($rij && $rij['n'] > 0 && $rij['gem'] !== null) $doorlooptijd = round((float)$rij['gem']);
+} catch (Exception $e) { $doorlooptijd = null; }
+
+/* Kerncijfers voor de bovenste rij */
+$kpi_aanmeldingen = $funnel_data['aangemeld'] ?? 0;
+$kpi_aangenomen   = $funnel_data['aangenomen'] ?? 0;
+$kpi_conversie    = $kpi_aanmeldingen > 0 ? round($kpi_aangenomen / $kpi_aanmeldingen * 100) : 0;
 ?>
 
 <div class="container">
@@ -89,6 +122,26 @@ $health_ok = ($health['mail_stuck'] === 0 && $health['mail_fout_24h'] < 3);
       <div style="font-size:13px;color:var(--tekst-zacht)">Seizoen: <?= h($seizoen['naam'] ?? '—') ?></div>
     </div>
     <span class="badge <?= $health_ok ? 'badge-groen' : 'badge-rood' ?>"><?= $health_ok ? '✓ Systeem gezond' : '⚠ Aandacht nodig' ?></span>
+  </div>
+
+  <!-- Kerncijfers -->
+  <div class="stat-rij" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">
+    <div class="stat-box">
+      <div class="stat-n"><?= (int)$kpi_aanmeldingen ?></div>
+      <div class="stat-l">Aanmeldingen</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-n" style="color:var(--oranje)"><?= (int)$kpi_aangenomen ?></div>
+      <div class="stat-l">Aangenomen</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-n"><?= (int)$kpi_conversie ?>%</div>
+      <div class="stat-l">Conversie</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-n"><?= $doorlooptijd !== null ? (int)$doorlooptijd : '–' ?><?= $doorlooptijd !== null ? '<span style="font-size:14px;font-weight:500"> dg</span>' : '' ?></div>
+      <div class="stat-l">Gem. doorlooptijd</div>
+    </div>
   </div>
 
   <?php if (!empty($meldingen)): ?>
@@ -159,6 +212,48 @@ $health_ok = ($health['mail_stuck'] === 0 && $health['mail_fout_24h'] < 3);
     </div>
   </div>
   <?php endif; ?>
+
+  <!-- Werving: waar komen de aanmeldingen vandaan? -->
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-header"><h2>Werving — waar komen aanmeldingen vandaan?</h2></div>
+    <div class="card-body">
+      <?php if (empty($werving)): ?>
+        <p style="color:var(--tekst-zacht);font-size:14px;margin:0">
+          Nog geen herkomst-gegevens dit seizoen. Zodra sollicitanten via een landingspagina of
+          campagne binnenkomen (met een bron-code), zie je hier per bron hoeveel aanmeldingen en
+          hoeveel daarvan zijn aangenomen.
+        </p>
+      <?php else: ?>
+        <div class="tabel-scroll">
+          <table style="width:100%;border-collapse:collapse;font-size:14px">
+            <thead>
+              <tr style="border-bottom:1px solid var(--rand);text-align:left">
+                <th style="padding:8px 10px">Bron / doelgroep</th>
+                <th style="padding:8px 10px;text-align:right">Aanmeldingen</th>
+                <th style="padding:8px 10px;text-align:right">Aangenomen</th>
+                <th style="padding:8px 10px;text-align:right">Conversie</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php foreach ($werving as $w):
+                $conv = $w['aanmeldingen'] > 0 ? round($w['aangenomen'] / $w['aanmeldingen'] * 100) : 0; ?>
+              <tr style="border-bottom:1px solid var(--rand-licht,#eef1f5)">
+                <td style="padding:9px 10px;font-weight:600"><?= h($w['bron']) ?></td>
+                <td style="padding:9px 10px;text-align:right"><?= (int)$w['aanmeldingen'] ?></td>
+                <td style="padding:9px 10px;text-align:right"><?= (int)$w['aangenomen'] ?></td>
+                <td style="padding:9px 10px;text-align:right;color:var(--tekst-zacht)"><?= $conv ?>%</td>
+              </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:12px;font-size:12px;color:var(--tekst-zacht)">
+          Tip: geef elke landingspagina een eigen bron-code, dan zie je precies welke doelgroep het
+          beste werft.
+        </div>
+      <?php endif; ?>
+    </div>
+  </div>
 
   <!-- System health -->
   <div class="card">

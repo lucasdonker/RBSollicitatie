@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.74.0');
+define('APP_VERSIE', '2.75.0');
 
 function app_changelog(): array {
     return [
+        '2.75.0' => [
+            'datum'  => '2026-09-11',
+            'titel'  => 'Statistieken gebundeld op het dashboard',
+            'punten' => [
+                'Vier kerncijfers bovenaan het dashboard: aanmeldingen, aangenomen, conversie en gemiddelde doorlooptijd',
+                'Nieuwe wervings-sectie: per bron/doelgroep hoeveel aanmeldingen en aangenomen, met conversie — voorheen zat dit apart bij de landingspaginas',
+                'Alles staat nu op een centrale plek, samen met de bestaande funnel, weekgrafiek en systeemstatus',
+            ],
+        ],
         '2.74.0' => [
             'datum'  => '2026-09-11',
             'titel'  => 'Opschoning voor productie',
