@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.75.0');
+define('APP_VERSIE', '2.76.0');
 
 function app_changelog(): array {
     return [
+        '2.76.0' => [
+            'datum'  => '2026-09-11',
+            'titel'  => 'Beschikbaarheidsformulier gerepareerd (losse pagina)',
+            'punten' => [
+                'De week-dropdowns worden nu gevuld — ze bleven leeg doordat de weeklijst niet werd meegegeven aan het formulier',
+                'Hierdoor werkten ook "Nog een periode", de uitzonderingen en de live-preview ("wat we hebben begrepen") niet; die doen het nu weer',
+                'De AI-hulp ("typ je beschikbaarheid") bereikt nu de AI — de aanvraag werd naar een pagina gestuurd die er niets mee deed',
+                'Weeklabels netjes in het Nederlands (bijv. "W22 · 25 mei")',
+            ],
+        ],
         '2.75.0' => [
             'datum'  => '2026-09-11',
             'titel'  => 'Statistieken gebundeld op het dashboard',

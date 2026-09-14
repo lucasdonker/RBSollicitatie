@@ -63,6 +63,31 @@ reset($alle_weken);
 
 // ── POST-verwerking: beschikbaarheid opslaan via de gedeelde functie ──
 $flash_ok = '';
+// ── AI-beschikbaarheid: interpreteer ingesproken/getypte tekst → voorstel ──
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ai_besch_submit'])) {
+    header('Content-Type: application/json');
+    csrf_check();
+    if (!function_exists('ai_besch_actief') || !ai_besch_actief()) {
+        echo json_encode(['status' => 'uit']); exit;
+    }
+    // Rate-limit: max 8 verzoeken per 10 minuten per sessie
+    $nu = time();
+    $_SESSION['ai_besch_hits'] = array_filter($_SESSION['ai_besch_hits'] ?? [], fn($t) => $t > $nu - 600);
+    if (count($_SESSION['ai_besch_hits']) >= 8) {
+        echo json_encode(['status' => 'fout', 'bericht' => 'Even rustig aan — probeer het over een paar minuten weer.']); exit;
+    }
+    $_SESSION['ai_besch_hits'][] = $nu;
+
+    $seizoen_ai = function_exists('actief_seizoen') ? actief_seizoen() : null;
+    $weken_geldig = array_keys(function_exists('seizoen_weken_datums') ? seizoen_weken_datums($seizoen_ai) : []);
+    $res = ai_besch_verwerk($_POST['tekst'] ?? '', $weken_geldig, $seizoen_ai);
+    if (function_exists('ai_besch_log')) {
+        ai_besch_log($sol_id, $_POST['tekst'] ?? '', $res);
+    }
+    echo json_encode($res);
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['besch_submit'])) {
     csrf_check();
     try {
@@ -135,8 +160,10 @@ require __DIR__ . '/_kop.php';
           'eind'  => (($weken_datums_ai[$wk]['eind']  ?? null) instanceof DateTimeInterface) ? $weken_datums_ai[$wk]['eind']->format('Y-m-d')  : '',
       ];
   }
+
 ?>
 <script>
+  const B2_WEEKLABEL = <?= json_encode($week_labels, JSON_UNESCAPED_UNICODE) ?>;
   const B2_EERSTE = <?= (int)$ew ?>;
   const B2_LAATSTE = <?= (int)$lw ?>;
   window.AI_WEEK_DATUMS = <?= json_encode($ai_datums) ?>;
