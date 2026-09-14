@@ -630,7 +630,8 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
 <main class="pt-main">
 
   <?php toon_flash(); ?>
-  <?php if ($fout): ?><div class="flash flash-fout" style="margin-bottom:12px"><?= h($fout) ?></div><?php endif; ?>
+  <?php if ($fout && $stap !== 'code'): // op het code-scherm toont dat scherm de fout zelf ?>
+  <div class="flash flash-fout" style="margin-bottom:12px"><?= h($fout) ?></div><?php endif; ?>
   <?php if (!empty($_SESSION['portaal_flash'])): ?>
     <div class="flash flash-info" style="margin-bottom:12px"><?= h($_SESSION['portaal_flash']) ?></div>
     <?php unset($_SESSION['portaal_flash']); ?>
@@ -774,8 +775,8 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
     <?php if (!empty($begroet[1])): ?><p><?= h($begroet[1]) ?></p><?php endif; ?>
   </div>
 
-  <!-- Voortgang -->
-  <?php if ($sol['fase'] !== 'afgewezen'):
+  <!-- Voortgang (niet meer tonen als de reis klaar is: aangenomen of afgewezen) -->
+  <?php if (!in_array($sol['fase'], ['afgewezen', 'aangenomen'], true)):
     $vg_stappen = [['aangemeld','Aangemeld'],['uitgenodigd_selectie','Selectiedag'],['selectiedag_geweest','Na de selectie'],['uitgenodigd_tw','Trainingsweekend'],['aangenomen','Aangenomen']];
     $fi = array_search($sol['fase'], $fases_volgorde);
     $actief_idx = 0;
@@ -1267,7 +1268,7 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
               <input type="file" id="fotoInput" name="foto" accept="image/jpeg,image/png,image/webp">
             </div>
           </div>
-          <div class="form-groep"><label>Bijzonderheden, medicatie of allergieën</label><textarea name="bijzonderheden" rows="2" placeholder="Iets wat we moeten weten?"><?= h($blk['bijzonderheden'] ?? '') ?></textarea></div>
+          <div class="form-groep"><label>Bijzonderheden, medicatie of allergieën</label><textarea name="bijzonderheden" rows="2" placeholder="Iets wat we moeten weten?"><?= h($blk['bijzonderheden'] ?? '') ?></textarea><div class="form-hulp" style="font-size:12px;color:var(--ink-muted);margin-top:4px">Laat dit veld leeg als er niets bijzonders is. Vul het alleen in als wij ergens rekening mee moeten houden (bijv. een allergie of medicatie).</div></div>
 
           <!-- Reden voor wijziging — alleen tonen bij bewerken -->
           <?php if ($blk): ?>
@@ -1649,10 +1650,14 @@ document.querySelectorAll('a.btn').forEach(a => {
 </script>
 <?php if ($stap === 'dossier' && portaal_ingelogd()):
   $_nav = ($_GET['tab'] ?? '') === 'taken' ? 'taken' : 'start';
+  $_open_aantal = isset($open_taken) ? count($open_taken) : 0;
 ?>
 <nav class="pt-nav" aria-label="Hoofdnavigatie">
   <a href="<?= APP_URL ?>/portaal/" class="pt-nav-item <?= $_nav==='start'?'actief':'' ?>"><?= icoon('huis', 22) ?><span>Start</span></a>
-  <a href="<?= APP_URL ?>/portaal/?tab=taken" class="pt-nav-item <?= $_nav==='taken'?'actief':'' ?>"><?= icoon('lijst', 22) ?><span>Taken</span></a>
+  <a href="<?= APP_URL ?>/portaal/?tab=taken" class="pt-nav-item <?= $_nav==='taken'?'actief':'' ?>">
+    <span class="pt-nav-icoon-wrap"><?= icoon('lijst', 22) ?><?php if ($_open_aantal > 0): ?><span class="pt-nav-badge"><?= $_open_aantal ?></span><?php endif; ?></span>
+    <span>Taken</span>
+  </a>
   <a href="<?= APP_URL ?>/portaal/gegevens.php" class="pt-nav-item"><?= icoon('persoon', 22) ?><span>Gegevens</span></a>
 </nav>
 <?php endif; ?>

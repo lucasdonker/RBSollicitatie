@@ -13,7 +13,27 @@
 if (!function_exists('notificatie_typen')) {
 
 /** De meldingstypen die via meerdere kanalen kunnen. Sleutel => leesbare naam. */
+function notificatie_typen(): array {
+    return [
+        'portaal_code'       => 'Portaal-inlogcode',
+        'aanmeldbevestiging' => 'Bevestiging van aanmelding',
+        'uitnodiging_selectie' => 'Uitnodiging selectiedag',
+        'herinnering_selectie' => 'Herinnering selectiedag',
+        'uitnodiging_tw'     => 'Uitnodiging trainingsweekend',
+        'status_update'      => 'Status-update sollicitatie',
+        'taak_afgerond'      => 'Bevestiging taak afgerond',
+        'ondertekening_herinnering' => 'Herinnering ondertekening',
+        'algemeen'           => 'Algemene mededeling',
+    ];
+}
 
+/**
+ * Standaard-kanaal per meldingstype. De portaal-inlogcode staat standaard op e-mail
+ * (dat is de betrouwbaarste bezorging); de rest ook, tenzij het beheer het aanpast.
+ */
+function notificatie_standaard(string $type): string {
+    return 'email';
+}
 
 /**
  * Welke kanalen zijn ingesteld voor een meldingstype?

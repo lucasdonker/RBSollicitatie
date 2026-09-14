@@ -3,10 +3,32 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.71.0');
+define('APP_VERSIE', '2.73.0');
 
 function app_changelog(): array {
     return [
+        '2.73.0' => [
+            'datum'  => '2026-09-11',
+            'titel'  => 'P2-polish afgerond (tien verbeterpunten uit de testronde)',
+            'punten' => [
+                'Taken-tab heeft nu een telbolletje met het aantal openstaande taken in de navigatie',
+                'De voortgangsindicator verdwijnt zodra iemand is aangenomen (de reis is dan klaar)',
+                'Betere leesbaarheid van de informatieblokken (selectiedag/trainingsweekend) door meer contrast',
+                'De "er staan taken klaar"-mail heeft nu één persoonlijke begroeting (geen dubbele meer) en een duidelijkere tekst',
+                'Het logo laadt nu correct in alle mails (verwees naar een niet-bestaand bestand)',
+                'Foutmelding bij een onjuiste inlogcode verschijnt nog maar op één plek',
+                'Uitleg toegevoegd bij het "bijzonderheden"-veld (leeg laten als er niets is)',
+            ],
+        ],
+        '2.72.0' => [
+            'datum'  => '2026-09-11',
+            'titel'  => 'Meldingen-matrix hersteld + bevestiging bij zelf ondertekenen',
+            'punten' => [
+                'Belangrijke reparatie: de "welke melding via welk kanaal"-tabel was leeg doordat de lijst met meldingstypen per ongeluk uit de code was weggevallen — die is hersteld, de matrix toont nu weer alle typen met hun vinkjes',
+                'Wie zelf ondertekent (18+) krijgt nu óók een bevestigingsmail met de ondertekende PDF als bijlage — voorheen kreeg alleen de ouder die',
+                'Een automatische test bewaakt voortaan dat de meldingstypen aanwezig blijven',
+            ],
+        ],
         '2.71.0' => [
             'datum'  => '2026-09-11',
             'titel'  => 'Ondertekenen afgemaakt: zichtbaar handtekening-vak, validatie, handtekening op PDF',

@@ -302,7 +302,7 @@ class Mailer
         }
 
         // ── Terugval: oude ingebouwde opmaak ──
-        $logo    = defined('APP_URL') ? APP_URL . '/assets/img/logo.png' : '';
+        $logo    = defined('APP_URL') ? APP_URL . '/assets/img/logo-mail.png' : '';
         $bestuur = defined('MAIL_BESTUUR') ? MAIL_BESTUUR : '';
         $h       = fn(string $s) => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
 

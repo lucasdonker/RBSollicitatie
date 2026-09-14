@@ -185,6 +185,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_ondertekend) {
             } catch (\Exception $e) { error_log('ondertekening PDF-mail: ' . $e->getMessage()); }
         }
 
+        // B6 — consistente bevestiging: óók de sollicitant die ZELF tekent (18+) krijgt een
+        // bevestiging met de ondertekende PDF als bijlage. Zo krijgt iedereen dezelfde afronding.
+        if ($rec['ondertekenaar_rol'] === 'sollicitant' && !empty($sol['email']) && function_exists('ondertekening_pdf_genereer')) {
+            try {
+                $vers = $db->prepare("SELECT * FROM ondertekeningen WHERE token=?");
+                $vers->execute([$token]);
+                $rec_vers = $vers->fetch() ?: $rec;
+                $doc_label = match($rec['type']) {
+                    'gezondheid_18plus', 'gezondheid_ouder' => 'gezondheidsverklaring',
+                    'intake', 'intake_ouder'                => 'intakeformulier',
+                    default                                 => 'formulier',
+                };
+                $pdf_pad = ondertekening_pdf_genereer($rec_vers, $sol);
+                $body_pdf = "<p>Beste " . h($sol['voornaam']) . ",</p>"
+                    . "<p>Bedankt voor het digitaal ondertekenen van de {$doc_label}. In de bijlage vind je een kopie van het ondertekende document voor je eigen administratie.</p>"
+                    . "<p>Met vriendelijke groet,<br><strong>Team Sollicitaties</strong><br>Reddingsbrigade Paal 13</p>";
+                $html_pdf = function_exists('mail_thema_wrapper')
+                    ? mail_thema_wrapper($body_pdf, 'Ondertekend: ' . $doc_label, 'Kopie van je ondertekening', 'Voor je administratie')
+                    : $body_pdf;
+                $bijlagen = ($pdf_pad) ? [['pad' => $pdf_pad, 'naam' => 'Ondertekend_' . ucfirst($doc_label) . '_Paal13.pdf', 'mime' => 'application/pdf']] : [];
+                if (function_exists('stuur_mail_html')) {
+                    stuur_mail_html($sol['email'], $sol['voornaam'], 'Bevestiging ondertekening ' . $doc_label . ' — Paal 13', $html_pdf, (int)$rec['sollicitatie_id'], $bijlagen);
+                }
+                if ($pdf_pad) @unlink($pdf_pad);
+            } catch (\Exception $e) { error_log('ondertekening bevestiging sollicitant: ' . $e->getMessage()); }
+        }
+
         redirect(APP_URL . '/portaal/ondertekenen.php?token=' . urlencode($token) . '&klaar=1');
     }
 }

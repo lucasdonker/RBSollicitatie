@@ -922,15 +922,7 @@ table.tabel td, table.tabel th { overflow-wrap: normal; word-break: normal; }
   margin-top: 1px;
   flex-shrink: 0;
 }
-.info-item .ii-l {
-  display: block;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: .03em;
-  text-transform: uppercase;
-  opacity: .65;
-  line-height: 1.3;
-}
+
 .info-item .ii-v {
   display: block;
   font-size: 14px;
@@ -1465,4 +1457,15 @@ details.b2-uitz > div { padding: 0 16px 16px; }
   0%,100% { transform: translateX(0); }
   25% { transform: translateX(-4px); }
   75% { transform: translateX(4px); }
+}
+
+/* Telbolletje op de Taken-tab in de navigatie */
+.pt-nav-icoon-wrap { position: relative; display: inline-flex; }
+.pt-nav-badge {
+  position: absolute; top: -6px; right: -8px;
+  min-width: 16px; height: 16px; padding: 0 4px;
+  background: var(--accent); color: #fff;
+  border-radius: 999px; font-size: 10px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  line-height: 1;
 }

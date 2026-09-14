@@ -305,7 +305,7 @@ function mail_html_wrapper(
     if (!$hero_kleur) $hero_kleur = '#1A2540';
     $body_html = mail_inline_styles($body_html);
     $logo_inst = function_exists('site_logo_url') ? site_logo_url() : null;
-    $logo      = $logo_inst ?: (defined('APP_URL') ? APP_URL . '/assets/img/logo.png' : '');
+    $logo      = $logo_inst ?: (defined('APP_URL') ? APP_URL . '/assets/img/logo-mail.png' : '');
     $bestuur   = defined('MAIL_BESTUUR') ? MAIL_BESTUUR : '';
     $jaar      = date('Y');
     $ond       = htmlspecialchars($onderwerp, ENT_QUOTES, 'UTF-8');
@@ -419,7 +419,7 @@ function mail_simple_wrapper(string $body_html, string $onderwerp, string $custo
     }
 
     // ── Terugval: oude ingebouwde opmaak ──
-    $logo    = defined('APP_URL') ? APP_URL . '/assets/img/logo.png' : '';
+    $logo    = defined('APP_URL') ? APP_URL . '/assets/img/logo-mail.png' : '';
     $bestuur = defined('MAIL_BESTUUR') ? MAIL_BESTUUR : '';
     $jaar    = date('Y');
     $ond     = htmlspecialchars($onderwerp, ENT_QUOTES, 'UTF-8');

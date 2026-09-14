@@ -545,8 +545,15 @@ function stuur_taak_mail(int $sol_id, string $onderwerp, string $body, int $wind
 if (!function_exists('mail_taken_klaar')) {
 function mail_taken_klaar(int $sol_id): string {
     $url = rtrim(APP_URL, '/') . '/portaal/';
-    $body = "<p>Hoi,</p>
-<p>Er staan een paar acties voor je klaar in je Paal 13 portaal. Log in om ze in te vullen — denk aan het \"Beter leren kennen\"-formulier en (als je nog geen 18 bent) de gegevens van je ouder/verzorger.</p>
+    // Voornaam ophalen voor een persoonlijke, enkele begroeting (voorkomt dubbele aanhef).
+    $vnaam = '';
+    try {
+        $r = db()->prepare("SELECT p.voornaam FROM sollicitaties s JOIN personen p ON p.id=s.persoon_id WHERE s.id=?");
+        $r->execute([$sol_id]); $vnaam = (string)($r->fetchColumn() ?: '');
+    } catch (\Exception $e) {}
+    $aanhef = $vnaam !== '' ? ('Hoi ' . h($vnaam) . ',') : 'Hoi,';
+    $body = "<p>$aanhef</p>
+<p>Er staan een paar acties voor je klaar in je Paal 13 portaal. Log in om ze af te ronden — denk aan het \"Beter leren kennen\"-formulier, je beschikbaarheid doorgeven, en (als je nog geen 18 bent) de gegevens van je ouder/verzorger. Zo bevestig je meteen je deelname aan de selectiedag.</p>
 <p><a href=\"" . h($url) . "\">Ga naar je portaal &rarr;</a></p>
 <p>Groet,<br>Reddingsbrigade Paal 13</p>";
     return stuur_taak_mail($sol_id, 'Er staan taken voor je klaar — Paal 13', $body);
