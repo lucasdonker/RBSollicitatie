@@ -166,7 +166,9 @@ function aiBeschVulIn(d) {
       d.verzoeken.forEach(vz => {
         b2VerzoekToevoegen();
         const rij = vzLijst.lastElementChild;
-
+        const klemVz = (w, fb) => Math.min(B2_LAATSTE, Math.max(B2_EERSTE, parseInt(w) || fb));
+        if (vz.van_week) { const s = rij.querySelector('[name="b2_vz_van[]"]'); if (s) s.value = klemVz(vz.van_week, B2_EERSTE); }
+        if (vz.tot_week) { const s = rij.querySelector('[name="b2_vz_tot[]"]'); if (s) s.value = klemVz(vz.tot_week, B2_LAATSTE); }
         if (vz.dagen_aantal) { const n = rij.querySelector('[name="b2_vz_dagen[]"]'); if (n) n.value = vz.dagen_aantal; }
         const toel = rij.querySelector('[name="b2_vz_toelichting[]"]');
         if (toel && vz.toelichting) toel.value = vz.toelichting;

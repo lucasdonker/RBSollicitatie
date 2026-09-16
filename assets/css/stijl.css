@@ -1239,13 +1239,7 @@ table.tabel td, table.tabel th { overflow-wrap: normal; word-break: normal; }
 }
 
 /* Topbar */
-.pt-topbar {
-  position: sticky; top: 0; z-index: 40;
-  background: var(--navy); color: #fff;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 13px 18px;
-  min-height: 54px;
-}
+
 .pt-merk { display: flex; align-items: center; gap: 9px; font-weight: 700; font-size: 16px; letter-spacing: -.01em; }
 .pt-merk-logo {
   width: 28px; height: 28px; border-radius: 8px;
@@ -1291,7 +1285,7 @@ table.tabel td, table.tabel th { overflow-wrap: normal; word-break: normal; }
 /* Desktop: topbar breder, navigatie bovenin i.p.v. onderbalk */
 @media (min-width: 720px) {
   .pt-body { padding-bottom: 0; }
-  .pt-topbar { padding: 13px 32px; position: fixed; top: 0; left: 0; right: 0; z-index: 50; }
+
   .pt-main { max-width: 620px; padding: 28px 24px; margin-top: 108px; }
   .pt-nav {
     position: fixed; top: 54px; bottom: auto; left: 0; right: 0; z-index: 45;

@@ -173,7 +173,12 @@ require __DIR__ . '/_kop.php';
           'eind'  => (($weken_datums_ai[$wk]['eind']  ?? null) instanceof DateTimeInterface) ? $weken_datums_ai[$wk]['eind']->format('Y-m-d')  : '',
       ];
   }
-
+  // Weeklabels voor de JS-dropdowns (verzoeken + AI-invulling). Direct uit $alle_weken opgebouwd,
+  // dezelfde bron als de server-side periode-dropdowns — zodat ze nooit uit elkaar lopen.
+  $week_labels = [];
+  foreach ($alle_weken as $w) {
+      $week_labels[$w['week']] = 'W' . $w['week'] . ' · ' . ($w['periode'] ?? '');
+  }
 ?>
 <script>
   const B2_WEEKLABEL = <?= json_encode($week_labels, JSON_UNESCAPED_UNICODE) ?>;
