@@ -193,6 +193,12 @@
   };
 
   /* AI-hulp */
+  /* Voorbeeld-chip vult het AI-tekstveld */
+  window.beschAiChip = function (btn) {
+    const veld = el('beschAiTekst');
+    if (veld) { veld.value = btn.textContent.trim(); veld.focus(); }
+  };
+
   window.beschAiVerwerk = function () {
     const veld = el('beschAiTekst'), knop = el('beschAiKnop'), status = el('beschAiStatus');
     if (!veld || !veld.value.trim()) { if (status) status.textContent = 'Typ eerst iets over wanneer je kunt werken.'; return; }
@@ -219,11 +225,18 @@
       });
   };
   function beschAiVulIn(d) {
+    // Een AI-voorstel VERVANGT de huidige invoer — alle secties eerst leegmaken.
+    el('beschPeriodes').innerHTML = '';
+    el('beschAfwezig').innerHTML = '';
+    el('beschLosseDagen').innerHTML = '';
+    el('beschVerzoeken').innerHTML = '';
     if (d.blokken && d.blokken.length) {
-      el('beschPeriodes').innerHTML = '';
       d.blokken.forEach(function (b) {
         beschPeriodeToevoegen({ van_week: klem(b.van_week, CFG.eerste), tot_week: klem(b.tot_week, CFG.laatste), regime: b.regime === 'weekend' ? 'weekend' : 'vijf', weekend_dagen: b.weekend_dagen || [6, 7] });
       });
+    } else {
+      // Geen periode in het voorstel? Toch één neerzetten zodat het formulier geldig blijft.
+      beschPeriodeToevoegen({ van_week: CFG.eerste, tot_week: CFG.laatste, regime: 'vijf' });
     }
     (d.afwezig || []).forEach(function (a) { beschAfwezigToevoegen({ van: a.van || a.van_datum, tot: a.tot || a.tot_datum, label: a.label }); });
     (d.losse_dagen || []).forEach(function (l) { beschLosseDagToevoegen({ datum: l.datum, soort: l.soort, reden: l.reden }); });

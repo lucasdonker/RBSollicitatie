@@ -20,14 +20,21 @@ $ico = function($naam, $g=18) { return function_exists('icoon') ? icoon($naam, $
 
 <?php if (function_exists('ai_besch_actief') && ai_besch_actief()): ?>
 <div class="besch-ai">
-  <div class="besch-ai-kop"><?= $ico('bliksem', 16) ?> Liever gewoon typen? <span style="font-weight:400">(experimenteel)</span></div>
-  <p class="besch-hint" style="margin:2px 0 8px">Schrijf in je eigen woorden wanneer je kunt. Bijvoorbeeld: "Ik kan van eind juni tot half augustus, behalve de eerste week van juli."</p>
-  <textarea id="beschAiTekst" class="besch-breed" rows="2" placeholder="Typ hier je beschikbaarheid…"></textarea>
-  <div style="display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap">
-    <button type="button" id="beschAiKnop" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="beschAiVerwerk()">Voorstel maken</button>
+  <div class="besch-ai-kop"><?= $ico('bliksem', 16) ?> Wanneer kun je werken deze zomer?</div>
+  <p class="besch-hint" style="margin:2px 0 10px">Schrijf het in je eigen woorden — wij zetten het om in een voorstel dat je daarna kunt aanpassen.</p>
+  <textarea id="beschAiTekst" class="besch-ai-veld" rows="3" placeholder="Bijvoorbeeld: Ik kan van eind juni tot half augustus, behalve de eerste week van juli…"></textarea>
+  <div class="besch-ai-voorbeelden">
+    <span class="besch-ai-vb-lbl">Voorbeelden om te beginnen:</span>
+    <button type="button" class="besch-chip" onclick="beschAiChip(this)">Alleen weekenden</button>
+    <button type="button" class="besch-chip" onclick="beschAiChip(this)">Hele juli en augustus</button>
+    <button type="button" class="besch-chip" onclick="beschAiChip(this)">Niet in de bouwvak</button>
+  </div>
+  <div class="besch-ai-actie">
+    <button type="button" id="beschAiKnop" class="besch-ai-knop" onclick="beschAiVerwerk()">Maak mijn voorstel</button>
     <span id="beschAiStatus" class="besch-hint"></span>
   </div>
 </div>
+<div class="besch-of-scheiding"><span>of vul het zelf in</span></div>
 <?php endif; ?>
 
 <div id="beschPeriodes">

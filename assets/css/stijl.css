@@ -1240,6 +1240,14 @@ table.tabel td, table.tabel th { overflow-wrap: normal; word-break: normal; }
 
 /* Topbar */
 
+.pt-topbar {
+  position: sticky; top: 0; z-index: 40;
+  background: var(--navy); color: #fff;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 18px;
+  height: 54px;
+  box-sizing: border-box;
+}
 .pt-merk { display: flex; align-items: center; gap: 9px; font-weight: 700; font-size: 16px; letter-spacing: -.01em; }
 .pt-merk-logo {
   width: 28px; height: 28px; border-radius: 8px;
@@ -1573,3 +1581,32 @@ details.besch-uitz[open] .besch-chev { transform: rotate(90deg); }
   font-size: 14px; color: var(--ink);
 }
 .besch-voorlopig input { accent-color: var(--navy); margin-top: 2px; }
+
+/* Beschikbaarheid AI-hulp — Claude Design stijl */
+.besch-ai-veld {
+  width: 100%; box-sizing: border-box; padding: 14px;
+  border: 1px solid var(--border-strong); border-radius: var(--radius-md);
+  font-size: 15px; line-height: 1.6; resize: vertical; background: var(--surface); color: var(--ink);
+}
+.besch-ai-voorbeelden { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 12px; }
+.besch-ai-vb-lbl { font-size: 13px; color: var(--ink-muted); }
+.besch-chip {
+  height: 34px; padding: 0 14px; border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md); background: var(--surface); color: var(--ink);
+  font-size: 13px; cursor: pointer; display: inline-flex; align-items: center;
+}
+.besch-chip:hover { border-color: var(--navy); background: var(--bg); }
+.besch-ai-actie { display: flex; align-items: center; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
+.besch-ai-knop {
+  height: 48px; padding: 0 22px; border: none; border-radius: var(--radius-md);
+  background: var(--accent); color: #fff; font-weight: 600; font-size: 15px; cursor: pointer;
+}
+.besch-ai-knop:hover { background: #b83500; }
+.besch-ai-knop:disabled { opacity: .6; cursor: default; }
+.besch-of-scheiding {
+  display: flex; align-items: center; text-align: center; gap: 12px;
+  margin: 20px 0 16px; color: var(--ink-muted); font-size: 13px;
+}
+.besch-of-scheiding::before, .besch-of-scheiding::after {
+  content: ""; flex: 1; height: 1px; background: var(--border);
+}

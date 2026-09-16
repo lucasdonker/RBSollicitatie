@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.78.0');
+define('APP_VERSIE', '2.78.1');
 
 function app_changelog(): array {
     return [
+        '2.78.1' => [
+            'datum'  => '2026-09-11',
+            'titel'  => 'Beschikbaarheid: AI-dubbeling, opmaak en bovenbalk',
+            'punten' => [
+                'AI-voorstel vervangt nu de bestaande invoer in plaats van dubbel toe te voegen',
+                'De opmaak volgt nu het Claude Design-ontwerp: tekstveld met voorbeeld-chips en een duidelijke voorstel-knop',
+                'De blauwe bovenbalk is overal terug (was per ongeluk uit de stijl verdwenen)',
+            ],
+        ],
         '2.78.0' => [
             'datum'  => '2026-09-11',
             'titel'  => 'Beschikbaarheidsformulier volledig herbouwd (schoon en modulair)',
