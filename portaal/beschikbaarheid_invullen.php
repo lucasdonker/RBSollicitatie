@@ -157,34 +157,23 @@ require __DIR__ . '/_kop.php';
   <?php require __DIR__ . '/_beschikbaarheid_velden.php'; ?>
 
   <div style="margin-top:20px">
-    <button type="submit" class="ds-btn ds-btn-primair ds-btn-vol" onclick="return b2Valideer()"><?= icoon('vink', 16) ?> Beschikbaarheid opslaan</button>
+    <button type="submit" class="ds-btn ds-btn-primair ds-btn-vol" onclick="return beschValideer()"><?= icoon('vink', 16) ?> Beschikbaarheid opslaan</button>
   </div>
 </form>
 
 <?php
-  // Constanten die het gedeelde beschikbaarheid-script nodig heeft
-  $seizoen_obj = ['id' => $sol['seizoen_id'] ?? null, 'eerste_week' => $ew, 'laatste_week' => $lw];
-  $weken_datums_ai = function_exists('seizoen_weken_datums') ? seizoen_weken_datums($seizoen_obj) : [];
-  $ai_datums = [];
-  foreach (array_keys($weken_datums_ai) as $wk) {
-      $ai_datums[] = [
-          'wk'    => $wk,
-          'start' => (($weken_datums_ai[$wk]['start'] ?? null) instanceof DateTimeInterface) ? $weken_datums_ai[$wk]['start']->format('Y-m-d') : '',
-          'eind'  => (($weken_datums_ai[$wk]['eind']  ?? null) instanceof DateTimeInterface) ? $weken_datums_ai[$wk]['eind']->format('Y-m-d')  : '',
-      ];
-  }
-  // Weeklabels voor de JS-dropdowns (verzoeken + AI-invulling). Direct uit $alle_weken opgebouwd,
-  // dezelfde bron als de server-side periode-dropdowns — zodat ze nooit uit elkaar lopen.
+  // Weeklabels voor de dropdowns: weeknummer => "W22 · 25 mei", direct uit $alle_weken.
   $week_labels = [];
   foreach ($alle_weken as $w) {
       $week_labels[$w['week']] = 'W' . $w['week'] . ' · ' . ($w['periode'] ?? '');
   }
 ?>
 <script>
-  const B2_WEEKLABEL = <?= json_encode($week_labels, JSON_UNESCAPED_UNICODE) ?>;
-  const B2_EERSTE = <?= (int)$ew ?>;
-  const B2_LAATSTE = <?= (int)$lw ?>;
-  window.AI_WEEK_DATUMS = <?= json_encode($ai_datums) ?>;
+  window.BESCH_CFG = {
+    weken:   <?= json_encode($week_labels, JSON_UNESCAPED_UNICODE) ?>,
+    eerste:  <?= (int)$ew ?>,
+    laatste: <?= (int)$lw ?>
+  };
 </script>
 <script src="<?= APP_URL ?>/assets/js/beschikbaarheid.js?v=<?= @filemtime(__DIR__.'/../assets/js/beschikbaarheid.js') ?>"></script>
 

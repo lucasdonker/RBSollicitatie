@@ -3,10 +3,21 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.77.0');
+define('APP_VERSIE', '2.78.0');
 
 function app_changelog(): array {
     return [
+        '2.78.0' => [
+            'datum'  => '2026-09-11',
+            'titel'  => 'Beschikbaarheidsformulier volledig herbouwd (schoon en modulair)',
+            'punten' => [
+                'Het hele formulier is opnieuw opgebouwd met schone, modulaire code — geen lappendeken van losse fixes meer',
+                '"Zo begrijpen wij het" toont nu meteen bij het openen een samenvatting, en neemt álle onderdelen mee (ook losse dagen en minder-dagen)',
+                'Alle uitzonderingen hebben nu hetzelfde uniforme uiterlijk (icoon, titel, chevron)',
+                'De AI-hulp werkt weer betrouwbaar; voorstellen vullen alle secties correct in',
+                'Opslaan is grondig getest: elke sectie (periodes, afwezig, losse dagen, minder-dagen, vaste dagen) wordt correct bewaard en weer getoond',
+            ],
+        ],
         '2.77.0' => [
             'datum'  => '2026-09-11',
             'titel'  => 'Beschikbaarheidstaak volledig werkend (invullen + opslaan)',

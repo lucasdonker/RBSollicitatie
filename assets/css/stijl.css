@@ -1482,3 +1482,94 @@ details.b2-uitz > div { padding: 0 16px 16px; }
 @media (max-width: 640px) {
   .dashboard .stat-rij, .stat-rij { grid-template-columns: 1fr 1fr !important; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   BESCHIKBAARHEIDSFORMULIER v2.78 — schone, uniforme opzet (.besch-*)
+   ═══════════════════════════════════════════════════════════════════ */
+.besch-sectie-titel {
+  display: flex; align-items: center; gap: 8px;
+  font: var(--text-label); font-size: 15px; font-weight: 700; color: var(--ink);
+  margin: 24px 0 10px;
+}
+.besch-sectie-titel:first-child { margin-top: 4px; }
+.besch-sectie-titel .ic { color: var(--navy); }
+.besch-optioneel { font-size: 12px; font-weight: 500; color: var(--ink-muted); background: var(--bg); padding: 2px 8px; border-radius: 99px; }
+.besch-hint { font: var(--text-meta); color: var(--ink-muted); margin: 4px 0 10px; }
+
+/* Rijen */
+.besch-rij {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 12px; margin-bottom: 10px;
+}
+.besch-rij-hoofd { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.besch-lbl { font-size: 13px; color: var(--ink-soft); }
+.besch-rij select, .besch-rij input[type="date"], .besch-rij input[type="number"], .besch-rij input[type="text"] {
+  height: 44px; padding: 0 12px; border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm); font-size: 16px; background: var(--surface); color: var(--ink);
+}
+.besch-rij select { min-width: 120px; flex: 1; }
+.besch-getal { width: 70px !important; flex: none !important; }
+.besch-breed { width: 100%; box-sizing: border-box; margin-top: 8px; }
+.besch-regime { min-width: 130px; }
+
+/* Verwijderknop (uniform) */
+.besch-x {
+  width: 40px; height: 40px; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--surface); color: var(--ink-muted); cursor: pointer;
+}
+.besch-x:hover { border-color: var(--error); color: var(--error); }
+
+/* Dag-pillen (weekend, pool, vaste dagen) */
+.besch-weekenddagen, .besch-pooldagen, .besch-vastedagen {
+  display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 10px;
+}
+.besch-dagpil {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 7px 12px; border: 1px solid var(--border-strong);
+  border-radius: 99px; font-size: 13px; cursor: pointer; background: var(--surface);
+}
+.besch-dagpil input { accent-color: var(--navy); }
+
+/* Uitzonderingen (accordeon) — uniform */
+details.besch-uitz {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-md); margin-bottom: 10px; overflow: hidden;
+}
+details.besch-uitz > summary {
+  list-style: none; cursor: pointer;
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 16px; font: var(--text-label); font-size: 14px; color: var(--ink);
+}
+details.besch-uitz > summary::-webkit-details-marker { display: none; }
+.besch-uitz-ico { color: var(--navy); display: inline-flex; }
+.besch-chev { margin-left: auto; color: var(--ink-muted); transition: transform .2s; display: inline-flex; }
+details.besch-uitz[open] .besch-chev { transform: rotate(90deg); }
+.besch-uitz-body { padding: 0 16px 16px; }
+
+/* AI-hulp */
+.besch-ai {
+  background: var(--bg-subtle); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 14px; margin-bottom: 14px;
+}
+.besch-ai-kop { display: flex; align-items: center; gap: 6px; font: var(--text-label); font-size: 14px; color: var(--navy); }
+.besch-ai textarea { border: 1px solid var(--border-strong); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 16px; resize: vertical; }
+
+/* Preview "Zo begrijpen wij het" */
+.besch-preview {
+  background: var(--ok-soft); border: 1px solid #cfe6d6;
+  border-radius: var(--radius-md); padding: 14px 16px;
+}
+.besch-preview-lijst { margin: 0; padding-left: 20px; }
+.besch-preview-lijst li { font-size: 14px; color: var(--ink); margin: 3px 0; }
+.besch-preview-leeg { margin: 0; font-size: 14px; color: var(--ink-soft); font-style: italic; }
+
+/* Voorlopig-vinkje */
+.besch-voorlopig {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: var(--warn-soft); border: 1px solid #ecd9a8;
+  border-radius: var(--radius-md); padding: 12px 14px; margin-top: 16px;
+  font-size: 14px; color: var(--ink);
+}
+.besch-voorlopig input { accent-color: var(--navy); margin-top: 2px; }
