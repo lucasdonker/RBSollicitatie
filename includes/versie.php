@@ -3,10 +3,18 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.78.1');
+define('APP_VERSIE', '2.78.2');
 
 function app_changelog(): array {
     return [
+        '2.78.2' => [
+            'datum'  => '2026-09-11',
+            'titel'  => 'Beschikbaarheid: AI vult vaste dagen + voorkeursdagen, week maandag-eerst',
+            'punten' => [
+                'De AI-hulp vult nu ook vaste vrije dagen in en de voorkeursdagen bij een minder-dagen-verzoek',
+                'Alle dagkeuzes staan nu op volgorde van maandag t/m zondag',
+            ],
+        ],
         '2.78.1' => [
             'datum'  => '2026-09-11',
             'titel'  => 'Beschikbaarheid: AI-dubbeling, opmaak en bovenbalk',

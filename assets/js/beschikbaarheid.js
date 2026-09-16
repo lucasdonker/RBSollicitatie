@@ -52,7 +52,7 @@
       '</div>' +
       '<div class="besch-weekenddagen" style="' + (regime === 'weekend' ? '' : 'display:none') + '">' +
         '<span class="besch-lbl">welke dagen?</span>' +
-        [6, 7, 1, 2, 3, 4, 5].map(function (d) {
+        [1, 2, 3, 4, 5, 6, 7].map(function (d) {
           const aan = (data.weekend_dagen || [6, 7]).map(String).includes(String(d));
           return '<label class="besch-dagpil"><input type="checkbox" class="besch-wkdag" value="' + d + '"' + (aan ? ' checked' : '') + ' onchange="beschWkdagSync(this); beschHerbereken()"> ' + DAGEN_KORT[d] + '</label>';
         }).join('') +
@@ -241,6 +241,10 @@
     (d.afwezig || []).forEach(function (a) { beschAfwezigToevoegen({ van: a.van || a.van_datum, tot: a.tot || a.tot_datum, label: a.label }); });
     (d.losse_dagen || []).forEach(function (l) { beschLosseDagToevoegen({ datum: l.datum, soort: l.soort, reden: l.reden }); });
     (d.verzoeken || []).forEach(function (v) { beschVerzoekToevoegen({ van_week: klem(v.van_week, CFG.eerste), tot_week: klem(v.tot_week, CFG.laatste), dagen_aantal: v.dagen_aantal || v.dagen, dagen_pool: v.dagen_pool || v.pool || [], toelichting: v.toelichting }); });
+    // Vaste vrije dagen: de checkboxes aanvinken (AI geeft weekdagnummers 1-7)
+    const vasteDagen = (d.vaste_vrije_dagen || []).map(String);
+    document.querySelectorAll('.besch-vastedag').forEach(function (cb) { cb.checked = vasteDagen.includes(cb.value); });
+    if (d.vaste_reden && el('beschVasteToelichting')) el('beschVasteToelichting').value = d.vaste_reden;
     beschHerbereken();
   }
 
