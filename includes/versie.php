@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.78.2');
+define('APP_VERSIE', '2.79.0');
 
 function app_changelog(): array {
     return [
+        '2.79.0' => [
+            'datum'  => '2026-09-11',
+            'titel'  => 'Beschikbaarheid: AI-wizard (slim invullen in stappen)',
+            'punten' => [
+                'Als de AI-hulp aan staat, begint de beschikbaarheid nu met een slim-invullen-scherm: typ het in eigen woorden, krijg een voorstel te zien (zo hebben we het begrepen), en neem het over of pas het zelf aan',
+                'Je kunt in het voorstel-scherm nog iets aanvullen; bij twijfel stelt de AI een korte vervolgvraag',
+                'Staat de AI-hulp uit in de instellingen, dan ga je meteen naar het gewone formulier met vinkjes',
+            ],
+        ],
         '2.78.2' => [
             'datum'  => '2026-09-11',
             'titel'  => 'Beschikbaarheid: AI vult vaste dagen + voorkeursdagen, week maandag-eerst',

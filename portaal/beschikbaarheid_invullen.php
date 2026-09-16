@@ -137,6 +137,10 @@ $portaal_terug = APP_URL . '/portaal/';
 require __DIR__ . '/_kop.php';
 ?>
 
+
+
+<?php $ai_aan = function_exists('ai_besch_actief') && ai_besch_actief(); ?>
+
 <h1 style="font:var(--text-title);margin-bottom:6px">Beschikbaarheid doorgeven</h1>
 <p style="color:var(--ink-soft);font-size:14px;margin-bottom:18px">Welke weken kun je werken dit seizoen? Geef het hieronder aan — je kunt het later altijd aanpassen.</p>
 
@@ -150,12 +154,61 @@ require __DIR__ . '/_kop.php';
   <div class="ds-melding ds-melding-warn" style="margin-bottom:16px"><?= icoon('waarschuwing', 18) ?> <?= h($vz_waarschuwing) ?></div>
 <?php endif; ?>
 
-<form method="POST" id="beschForm">
+<?php if ($ai_aan): ?>
+<!-- ══ AI-WIZARD (stap 1 t/m 4) — alleen als AI-hulp aan staat ══ -->
+<div id="wizStap1" class="wiz-stap">
+  <div class="wiz-slim">
+    <div class="wiz-slim-badge"><?= icoon('bliksem', 14) ?> Slim invullen</div>
+    <h2 class="wiz-slim-titel">Typ gewoon wanneer je kunt — wij maken er een planning van.</h2>
+    <p class="wiz-slim-sub">Je ziet daarna precies wat we ervan begrepen hebben en kunt alles nog aanpassen.</p>
+    <div class="wiz-slim-veld">
+      <label class="wiz-veld-lbl">Wanneer kun je werken deze zomer?</label>
+      <textarea id="beschAiTekst" rows="5" placeholder="Bijvoorbeeld: Ik kan van eind juni tot half augustus hele weken, behalve dat ik op woensdag naar school moet. Van 23 augustus tot 1 september ben ik op vakantie."></textarea>
+    </div>
+    <div class="wiz-voorbeelden">
+      <span class="wiz-vb-lbl">Voorbeelden om te beginnen:</span>
+      <button type="button" class="besch-chip" onclick="beschAiChip(this)">Alleen weekenden</button>
+      <button type="button" class="besch-chip" onclick="beschAiChip(this)">Hele juli en augustus</button>
+      <button type="button" class="besch-chip" onclick="beschAiChip(this)">Niet in de bouwvak</button>
+    </div>
+    <button type="button" class="wiz-zelf-link" onclick="wizNaarFormulier()">Liever zelf invullen met vinkjes</button>
+  </div>
+  <button type="button" id="beschAiKnop" class="besch-ai-knop ds-btn-vol" style="margin-top:14px" onclick="beschAiVerwerk()">Maak er een planning van &rarr;</button>
+  <div id="beschAiStatus" class="besch-hint" style="margin-top:8px;text-align:center"></div>
+</div>
+<div id="wizStap2" class="wiz-stap" style="display:none">
+  <div class="wiz-kaart">
+    <div class="wiz-laad-kop"><span class="wiz-spinner"></span> We lezen je antwoord…</div>
+    <ul class="wiz-checklist">
+      <li id="wizChk1"><span class="wiz-chk-bol"></span> Werkperiodes gevonden</li>
+      <li id="wizChk2"><span class="wiz-chk-bol"></span> Vakantie en losse dagen</li>
+      <li id="wizChk3"><span class="wiz-chk-bol"></span> Vaste vrije dag</li>
+    </ul>
+    <p class="besch-hint" style="margin:12px 0 0">Dit duurt een paar seconden. Je hoeft niets te doen.</p>
+  </div>
+</div>
+<div id="wizStap3" class="wiz-stap" style="display:none">
+  <div class="wiz-begrepen">
+    <div class="wiz-begrepen-lbl">Zo hebben we het begrepen</div>
+    <p id="wizSamenvatting" class="wiz-begrepen-tekst"></p>
+  </div>
+  <div id="wizNavraag"></div>
+  <div class="wiz-aanvullen">
+    <label class="wiz-veld-lbl">Nog iets aanvullen?</label>
+    <div class="wiz-aanvullen-rij">
+      <input type="text" id="beschAiAanvul" placeholder='Bijv. "week 33 kan ik ook niet"'>
+      <button type="button" class="wiz-aanvul-knop" onclick="beschAiAanvullen()" aria-label="Verstuur">&rarr;</button>
+    </div>
+  </div>
+  <button type="button" class="besch-ai-knop ds-btn-vol" style="margin-top:14px" onclick="wizOvernemen()">Klopt, dit overnemen</button>
+  <button type="button" class="ds-btn ds-btn-secundair ds-btn-vol" style="margin-top:10px" onclick="wizNaarFormulier()">Zelf aanpassen in het formulier</button>
+</div>
+<?php endif; ?>
+
+<form method="POST" id="beschForm" class="wiz-stap" <?= $ai_aan ? 'style="display:none"' : '' ?>>
   <?= csrf_input() ?>
   <input type="hidden" name="besch_submit" value="1">
-
   <?php require __DIR__ . '/_beschikbaarheid_velden.php'; ?>
-
   <div style="margin-top:20px">
     <button type="submit" class="ds-btn ds-btn-primair ds-btn-vol" onclick="return beschValideer()"><?= icoon('vink', 16) ?> Beschikbaarheid opslaan</button>
   </div>

@@ -18,25 +18,6 @@ $ico = function($naam, $g=18) { return function_exists('icoon') ? icoon($naam, $
 
 <div class="besch-sectie-titel"><?= $ico('kalender', 18) ?> Wanneer kun je werken?</div>
 
-<?php if (function_exists('ai_besch_actief') && ai_besch_actief()): ?>
-<div class="besch-ai">
-  <div class="besch-ai-kop"><?= $ico('bliksem', 16) ?> Wanneer kun je werken deze zomer?</div>
-  <p class="besch-hint" style="margin:2px 0 10px">Schrijf het in je eigen woorden — wij zetten het om in een voorstel dat je daarna kunt aanpassen.</p>
-  <textarea id="beschAiTekst" class="besch-ai-veld" rows="3" placeholder="Bijvoorbeeld: Ik kan van eind juni tot half augustus, behalve de eerste week van juli…"></textarea>
-  <div class="besch-ai-voorbeelden">
-    <span class="besch-ai-vb-lbl">Voorbeelden om te beginnen:</span>
-    <button type="button" class="besch-chip" onclick="beschAiChip(this)">Alleen weekenden</button>
-    <button type="button" class="besch-chip" onclick="beschAiChip(this)">Hele juli en augustus</button>
-    <button type="button" class="besch-chip" onclick="beschAiChip(this)">Niet in de bouwvak</button>
-  </div>
-  <div class="besch-ai-actie">
-    <button type="button" id="beschAiKnop" class="besch-ai-knop" onclick="beschAiVerwerk()">Maak mijn voorstel</button>
-    <span id="beschAiStatus" class="besch-hint"></span>
-  </div>
-</div>
-<div class="besch-of-scheiding"><span>of vul het zelf in</span></div>
-<?php endif; ?>
-
 <div id="beschPeriodes">
   <?php foreach ($b2['blokken'] as $blok): ?>
     <?php /* server-side gerenderde bestaande periodes; JS neemt het daarna over */ ?>

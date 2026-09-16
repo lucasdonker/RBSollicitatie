@@ -1610,3 +1610,70 @@ details.besch-uitz[open] .besch-chev { transform: rotate(90deg); }
 .besch-of-scheiding::before, .besch-of-scheiding::after {
   content: ""; flex: 1; height: 1px; background: var(--border);
 }
+
+/* ═══ BESCHIKBAARHEID AI-WIZARD (stap 1-4) ═══════════════════════════ */
+.wiz-stap { animation: wizIn .25s ease; }
+@keyframes wizIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* Stap 1: slim-invullen kaart (navy) */
+.wiz-slim {
+  background: linear-gradient(150deg, var(--navy), #043a68);
+  color: #fff; border-radius: var(--radius-lg); padding: 20px;
+}
+.wiz-slim-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  color: #cfe0f0; margin-bottom: 12px;
+}
+.wiz-slim-titel { font-size: 20px; font-weight: 700; line-height: 1.25; margin: 0 0 8px; }
+.wiz-slim-sub { font-size: 14px; color: rgba(255,255,255,.8); margin: 0 0 16px; }
+.wiz-slim-veld { background: #fff; border-radius: var(--radius-md); padding: 12px; }
+.wiz-veld-lbl { display: block; font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
+.wiz-slim-veld textarea {
+  width: 100%; box-sizing: border-box; border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm); padding: 12px; font-size: 15px; line-height: 1.6; resize: vertical; color: var(--ink);
+}
+.wiz-voorbeelden { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 14px; }
+.wiz-vb-lbl { font-size: 13px; color: rgba(255,255,255,.75); width: 100%; }
+.wiz-slim .besch-chip { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.3); color: #fff; }
+.wiz-slim .besch-chip:hover { background: rgba(255,255,255,.2); }
+.wiz-zelf-link {
+  display: block; margin-top: 16px; background: none; border: none;
+  color: #fff; font-size: 14px; font-weight: 600; text-decoration: underline; cursor: pointer; padding: 0;
+}
+
+/* Stap 2: laadscherm */
+.wiz-kaart { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 22px; }
+.wiz-laad-kop { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 600; color: var(--ink); margin-bottom: 16px; }
+.wiz-spinner {
+  width: 20px; height: 20px; border: 2.5px solid var(--border); border-top-color: var(--navy);
+  border-radius: 50%; animation: wizSpin .7s linear infinite; flex-shrink: 0;
+}
+@keyframes wizSpin { to { transform: rotate(360deg); } }
+.wiz-checklist { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
+.wiz-checklist li { display: flex; align-items: center; gap: 10px; font-size: 15px; color: var(--ink-muted); transition: color .3s; }
+.wiz-chk-bol { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; transition: all .3s; }
+.wiz-checklist li.wiz-chk-klaar { color: var(--ink); }
+.wiz-checklist li.wiz-chk-klaar .wiz-chk-bol {
+  border-color: var(--ok); background: var(--ok);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: center;
+}
+
+/* Stap 3: begrepen-blok + navraag */
+.wiz-begrepen { background: linear-gradient(150deg, var(--navy), #043a68); color: #fff; border-radius: var(--radius-lg); padding: 20px; margin-bottom: 16px; }
+.wiz-begrepen-lbl { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #cfe0f0; margin-bottom: 8px; }
+.wiz-begrepen-tekst { font-size: 17px; line-height: 1.5; margin: 0; font-weight: 500; }
+.wiz-navraag { background: var(--warn-soft); border: 1px solid #ecd9a8; border-radius: var(--radius-md); padding: 16px; margin-bottom: 16px; }
+.wiz-navraag-kop { font-size: 14px; font-weight: 700; color: #8a6d1a; margin-bottom: 6px; }
+.wiz-navraag-vraag { font-size: 15px; color: var(--ink); margin: 0 0 12px; }
+.wiz-aanvullen { margin-bottom: 4px; }
+.wiz-aanvullen-rij { display: flex; gap: 8px; }
+.wiz-aanvullen-rij input {
+  flex: 1; height: 46px; padding: 0 14px; border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md); font-size: 15px; background: var(--surface); color: var(--ink);
+}
+.wiz-aanvul-knop {
+  width: 46px; height: 46px; flex-shrink: 0; border: none; border-radius: var(--radius-md);
+  background: var(--navy); color: #fff; font-size: 20px; cursor: pointer;
+}

@@ -199,30 +199,105 @@
     if (veld) { veld.value = btn.textContent.trim(); veld.focus(); }
   };
 
+  /* ── Wizard-navigatie ─────────────────────────────────────────── */
+  function wizToon(stapId) {
+    ['wizStap1', 'wizStap2', 'wizStap3', 'beschForm'].forEach(function (id) {
+      const e = el(id); if (e) e.style.display = (id === stapId) ? '' : 'none';
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  window.wizNaarFormulier = function () { wizToon('beschForm'); };
+  window.wizOvernemen = function () {
+    // De secties zijn al gevuld door beschAiVulIn; toon het formulier ter controle.
+    wizToon('beschForm');
+  };
+
+  // Bewaart de laatst getypte AI-tekst zodat "aanvullen" de context meestuurt.
+  let wizLaatsteTekst = '';
+
+  function wizVerstuurTekst(tekst, knop, statusEl) {
+    if (knop) { knop.disabled = true; knop.dataset.oud = knop.textContent; knop.textContent = 'Bezig…'; }
+    if (statusEl) statusEl.textContent = '';
+    wizLaatsteTekst = tekst;
+    // Naar stap 2 (laadscherm) als de wizard aanwezig is
+    if (el('wizStap2')) { wizToon('wizStap2'); wizChecklistAnimatie(); }
+    const body = new URLSearchParams();
+    body.set('ai_besch_submit', '1');
+    body.set('tekst', tekst);
+    const csrf = document.querySelector('[name="_csrf"]');
+    if (csrf) body.set('_csrf', csrf.value);
+    return fetch(location.pathname, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() })
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (knop) { knop.disabled = false; knop.textContent = knop.dataset.oud || 'Maak er een planning van'; }
+        if (res.status === 'uit') { wizFout('De AI-hulp staat momenteel uit. Vul je beschikbaarheid handmatig in.', statusEl); return; }
+        if (res.status === 'fout' || res.status === 'geweigerd') { wizFout(res.bericht || 'Het lukte niet. Vul het handmatig in.', statusEl); return; }
+        // Vul de secties vast in (ook bij een vervolgvraag: wat we WEL weten staat er dan al)
+        beschAiVulIn(res);
+        if (el('wizStap3')) {
+          // Toon het voorstel-scherm
+          if (el('wizSamenvatting')) el('wizSamenvatting').textContent = res.samenvatting || 'We hebben je beschikbaarheid ingevuld — controleer het hieronder.';
+          wizToonNavraag(res.vraag || '');
+          wizToon('wizStap3');
+        } else {
+          wizNaarFormulier();
+        }
+      })
+      .catch(function () {
+        if (knop) { knop.disabled = false; knop.textContent = knop.dataset.oud || 'Maak er een planning van'; }
+        wizFout('Er ging iets mis met de verbinding. Vul je beschikbaarheid handmatig in.', statusEl);
+      });
+  }
+
+  function wizFout(bericht, statusEl) {
+    // Terug naar stap 1 met de foutmelding
+    if (el('wizStap1')) wizToon('wizStap1');
+    const s = statusEl || el('beschAiStatus');
+    if (s) s.textContent = bericht;
+  }
+
+  function wizChecklistAnimatie() {
+    ['wizChk1', 'wizChk2', 'wizChk3'].forEach(function (id, i) {
+      const e = el(id); if (!e) return;
+      e.classList.remove('wiz-chk-klaar');
+      setTimeout(function () { e.classList.add('wiz-chk-klaar'); }, 500 + i * 600);
+    });
+  }
+
+  function wizToonNavraag(vraag) {
+    const doel = el('wizNavraag');
+    if (!doel) return;
+    if (!vraag) { doel.innerHTML = ''; return; }
+    // De AI kan een vrije vervolgvraag stellen; toon 'm als een net blok met een tekstantwoord.
+    doel.innerHTML =
+      '<div class="wiz-navraag">' +
+        '<div class="wiz-navraag-kop">' + esc('Nog even checken') + '</div>' +
+        '<p class="wiz-navraag-vraag">' + esc(vraag) + '</p>' +
+        '<div class="wiz-aanvullen-rij">' +
+          '<input type="text" id="beschAiNavraag" placeholder="Je antwoord…">' +
+          '<button type="button" class="wiz-aanvul-knop" onclick="beschAiNavraagVerstuur()" aria-label="Verstuur">&rarr;</button>' +
+        '</div>' +
+      '</div>';
+  }
+
+  window.beschAiNavraagVerstuur = function () {
+    const inp = el('beschAiNavraag');
+    if (!inp || !inp.value.trim()) return;
+    // Stuur de oorspronkelijke tekst + het antwoord op de vraag samen opnieuw.
+    wizVerstuurTekst(wizLaatsteTekst + '\n\nAanvulling: ' + inp.value.trim(), null, el('beschAiStatus'));
+  };
+
+  window.beschAiAanvullen = function () {
+    const inp = el('beschAiAanvul');
+    if (!inp || !inp.value.trim()) return;
+    wizVerstuurTekst(wizLaatsteTekst + '\n\nAanvulling: ' + inp.value.trim(), null, el('beschAiStatus'));
+    inp.value = '';
+  };
+
   window.beschAiVerwerk = function () {
     const veld = el('beschAiTekst'), knop = el('beschAiKnop'), status = el('beschAiStatus');
     if (!veld || !veld.value.trim()) { if (status) status.textContent = 'Typ eerst iets over wanneer je kunt werken.'; return; }
-    if (knop) { knop.disabled = true; knop.dataset.oud = knop.textContent; knop.textContent = 'Bezig…'; }
-    if (status) status.textContent = '';
-    const body = new URLSearchParams();
-    body.set('ai_besch_submit', '1');
-    body.set('tekst', veld.value.trim());
-    const csrf = document.querySelector('[name="_csrf"]');
-    if (csrf) body.set('_csrf', csrf.value);
-    fetch(location.pathname, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString() })
-      .then(function (r) { return r.json(); })
-      .then(function (res) {
-        if (knop) { knop.disabled = false; knop.textContent = knop.dataset.oud || 'Voorstel maken'; }
-        if (res.status === 'uit') { if (status) status.textContent = 'De AI-hulp staat momenteel uit. Vul je beschikbaarheid handmatig in.'; return; }
-        if (res.status === 'fout' || res.status === 'geweigerd') { if (status) status.textContent = res.bericht || 'Het lukte niet. Probeer het handmatig.'; return; }
-        if (res.status === 'vraag') { if (status) status.textContent = res.vraag || 'Kun je het iets specifieker maken?'; return; }
-        beschAiVulIn(res);
-        if (status) status.textContent = 'Voorstel ingevuld — controleer het hieronder en pas aan waar nodig.';
-      })
-      .catch(function () {
-        if (knop) { knop.disabled = false; knop.textContent = knop.dataset.oud || 'Voorstel maken'; }
-        if (status) status.textContent = 'Er ging iets mis met de verbinding. Vul je beschikbaarheid handmatig in.';
-      });
+    wizVerstuurTekst(veld.value.trim(), knop, status);
   };
   function beschAiVulIn(d) {
     // Een AI-voorstel VERVANGT de huidige invoer — alle secties eerst leegmaken.
