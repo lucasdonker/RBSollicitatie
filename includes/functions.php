@@ -44,6 +44,10 @@ if (file_exists(__DIR__ . '/notificatie.php')) require_once __DIR__ . '/notifica
 if (file_exists(__DIR__ . '/optout.php')) require_once __DIR__ . '/optout.php';
 if (file_exists(__DIR__ . '/export_dossier.php')) require_once __DIR__ . '/export_dossier.php';
 if (file_exists(__DIR__ . '/iconen.php')) require_once __DIR__ . '/iconen.php';
+if (file_exists(__DIR__ . '/blk.php')) require_once __DIR__ . '/blk.php';
+if (file_exists(__DIR__ . '/portaal_dossier.php')) require_once __DIR__ . '/portaal_dossier.php';
+if (file_exists(__DIR__ . '/portaal_taken.php')) require_once __DIR__ . '/portaal_taken.php';
+if (file_exists(__DIR__ . '/portaal_berichten.php')) require_once __DIR__ . '/portaal_berichten.php';
 
 // ── Database ──────────────────────────────────────────────────
 function db(): PDO {

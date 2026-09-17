@@ -10,7 +10,8 @@
 $portaal_geen_nav = $portaal_geen_nav ?? false;
 $_nav = $portaal_nav ?? '';
 $_toon_nav = !$portaal_geen_nav && function_exists('portaal_ingelogd') && portaal_ingelogd();
-$_open = (int)($portaal_open_taken ?? 0);
+$_open = isset($portaal_open_taken) ? (int)$portaal_open_taken
+       : (($_toon_nav && function_exists('portaal_taken_open_aantal')) ? portaal_taken_open_aantal((int)$_SESSION['portaal_sol_id']) : 0);
 ?>
   </main>
 
@@ -27,7 +28,7 @@ $_open = (int)($portaal_open_taken ?? 0);
       <a href="<?= APP_URL ?>/portaal/" class="pt-nav-item <?= $_nav==='start'?'actief':'' ?>">
         <?= icoon('huis', 22) ?><span>Start</span>
       </a>
-      <a href="<?= APP_URL ?>/portaal/?tab=taken" class="pt-nav-item <?= $_nav==='taken'?'actief':'' ?>">
+      <a href="<?= APP_URL ?>/portaal/taken.php" class="pt-nav-item <?= $_nav==='taken'?'actief':'' ?>">
         <span class="pt-nav-icoon-wrap"><?= icoon('lijst', 22) ?><?php if ($_open > 0): ?><span class="pt-nav-badge"><?= $_open ?></span><?php endif; ?></span>
         <span>Taken</span>
       </a>

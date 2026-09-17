@@ -210,7 +210,7 @@ require __DIR__ . '/_kop.php';
     </ul>
 
     <div class="gevaar">
-      <h3>⚠️ Definitief verwijderen</h3>
+      <h3><?= icoon('waarschuwing', 16) ?> Definitief verwijderen</h3>
       <p style="font-size:12.5px;color:var(--rood);margin-bottom:10px">
         Typ <strong>VERWIJDER</strong> in het veld en klik op de knop.
       </p>
