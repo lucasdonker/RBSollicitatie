@@ -24,19 +24,18 @@ $_fav = function_exists('site_favicon_url') ? site_favicon_url() : '';
 </head>
 <body class="pt-body">
 
-  <!-- Topbar -->
+  <!-- Topbar (exact volgens Portaal.dc: navy, logo-vierkantje, merk-kolom, icoon rechts) -->
+  <?php $sz = function_exists('actief_seizoen') ? actief_seizoen() : null; ?>
   <header class="pt-topbar">
+    <span class="pt-merk-logo"><?= icoon('golf', 16) ?></span>
+    <div class="pt-merk-tekst">
+      <span class="pt-merk-naam">Paal 13</span>
+      <span class="pt-merk-sub"><?= $sz ? h($sz['naam']) : 'Sollicitatie 2026' ?></span>
+    </div>
     <?php if ($portaal_terug): ?>
-      <a href="<?= h($portaal_terug) ?>" class="pt-topbar-terug" aria-label="Terug"><?= icoon('terug', 22) ?></a>
-      <span class="pt-topbar-titel"><?= h($portaal_titel) ?></span>
-      <span style="width:38px"></span>
+      <a href="<?= h($portaal_terug) ?>" class="pt-topbar-actie" aria-label="Terug"><?= icoon('terug', 20) ?></a>
     <?php else: ?>
-      <div class="pt-merk">
-        <span class="pt-merk-logo"><?= icoon('golf', 20) ?></span>
-        <span>Paal 13</span>
-      </div>
-      <?php $sz = function_exists('actief_seizoen') ? actief_seizoen() : null; ?>
-      <span class="pt-merk-sub"><?= $sz ? h($sz['naam']) : 'Sollicitatie' ?></span>
+      <a href="<?= APP_URL ?>/portaal/?uitloggen=1" class="pt-topbar-actie" aria-label="Uitloggen"><?= icoon('uitloggen', 20) ?></a>
     <?php endif; ?>
   </header>
 

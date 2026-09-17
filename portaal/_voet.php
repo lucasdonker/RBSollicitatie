@@ -15,15 +15,24 @@ $_toon_nav = !$portaal_geen_nav && function_exists('portaal_ingelogd') && portaa
 
 <?php if ($_toon_nav): ?>
   <nav class="pt-nav" aria-label="Hoofdnavigatie">
-    <a href="<?= APP_URL ?>/portaal/" class="pt-nav-item <?= $_nav==='start'?'actief':'' ?>">
-      <?= icoon('huis', 22) ?><span>Start</span>
-    </a>
-    <a href="<?= APP_URL ?>/portaal/?tab=taken" class="pt-nav-item <?= $_nav==='taken'?'actief':'' ?>">
-      <?= icoon('lijst', 22) ?><span>Taken</span>
-    </a>
-    <a href="<?= APP_URL ?>/portaal/gegevens.php" class="pt-nav-item <?= $_nav==='gegevens'?'actief':'' ?>">
-      <?= icoon('persoon', 22) ?><span>Gegevens</span>
-    </a>
+    <div class="pt-nav-merk">
+      <span class="pt-merk-logo"><?= icoon('golf', 18) ?></span>
+      <div class="pt-merk-tekst">
+        <span class="pt-merk-naam">Paal 13</span>
+        <span class="pt-merk-sub"><?php $sz = function_exists('actief_seizoen') ? actief_seizoen() : null; echo $sz ? h($sz['naam']) : 'Sollicitatie 2026'; ?></span>
+      </div>
+    </div>
+    <div class="pt-nav-items">
+      <a href="<?= APP_URL ?>/portaal/" class="pt-nav-item <?= $_nav==='start'?'actief':'' ?>">
+        <?= icoon('huis', 22) ?><span>Start</span>
+      </a>
+      <a href="<?= APP_URL ?>/portaal/?tab=taken" class="pt-nav-item <?= $_nav==='taken'?'actief':'' ?>">
+        <?= icoon('lijst', 22) ?><span>Taken</span>
+      </a>
+      <a href="<?= APP_URL ?>/portaal/gegevens.php" class="pt-nav-item <?= $_nav==='gegevens'?'actief':'' ?>">
+        <?= icoon('persoon', 22) ?><span>Gegevens</span>
+      </a>
+    </div>
   </nav>
 <?php endif; ?>
 

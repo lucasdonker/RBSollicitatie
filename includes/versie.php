@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.79.0');
+define('APP_VERSIE', '2.80.0');
 
 function app_changelog(): array {
     return [
+        '2.80.0' => [
+            'datum'  => '2026-09-11',
+            'titel'  => 'Portaal-fundament exact volgens het ontwerp (font, kleuren, header, navigatie)',
+            'punten' => [
+                'Instrument Sans is nu overal het lettertype, zoals in het ontwerp',
+                'De header staat exact volgens het ontwerp: logo, "Paal 13" met "Sollicitatie 2026" eronder, en een uitlog-icoon rechts',
+                'De actieve tab in de onderbalk (mobiel) is nu oranje, precies zoals het ontwerp',
+                'Op desktop staat nu een navy zijbalk links (met logo en menu), zoals het ontwerp — de actieve tab is daar een witte balk',
+            ],
+        ],
         '2.79.0' => [
             'datum'  => '2026-09-11',
             'titel'  => 'Beschikbaarheid: AI-wizard (slim invullen in stappen)',

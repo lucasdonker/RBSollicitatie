@@ -606,15 +606,7 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
 </head>
 <body class="pt-body <?= ($stap === 'dossier' && portaal_ingelogd()) ? 'heeft-nav' : '' ?>">
 
-<?php if ($stap === 'dossier' && portaal_ingelogd()): ?>
-  <header class="pt-topbar">
-    <div class="pt-merk">
-      <span class="pt-merk-logo"><?= icoon('golf', 20) ?></span>
-      <span>Paal 13</span>
-    </div>
-    <span class="pt-merk-sub"><?= $sol ? h($sol['sz_naam'] ?? 'Sollicitatie') : 'Sollicitatie' ?></span>
-  </header>
-<?php endif; ?>
+
 
 <main class="pt-main">
 
