@@ -3,10 +3,18 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.83.0');
+define('APP_VERSIE', '2.83.1');
 
 function app_changelog(): array {
     return [
+        '2.83.1' => [
+            'datum'  => '2026-09-12',
+            'titel'  => 'Inlogscherm: uitlijning en e-mailveld',
+            'punten' => [
+                'Het inlogscherm staat op desktop weer netjes gecentreerd (stond scheef door de zijbalk-marge)',
+                'Het e-mailveld kan niet meer worden aangepast nadat je op versturen hebt geklikt',
+            ],
+        ],
         '2.83.0' => [
             'datum'  => '2026-09-11',
             'titel'  => 'Beschikbaarheid AI-wizard exact volgens het ontwerp',

@@ -1295,9 +1295,11 @@ table.tabel td, table.tabel th { overflow-wrap: normal; word-break: normal; }
 /* Desktop: topbar breder, navigatie bovenin i.p.v. onderbalk */
 @media (min-width: 860px) {
   .pt-body { padding-bottom: 0; }
-  /* Desktop: navy zijbalk links (250px), content rechts */
+  /* Desktop: navy zijbalk links (250px), content rechts — alleen als er een nav is */
   .pt-topbar { display: none; }               /* mobiele topbar weg op desktop */
-  .pt-main { max-width: 760px; padding: 32px 32px 48px; margin: 0 auto 0 290px; }
+  body.heeft-nav .pt-main { max-width: 760px; padding: 32px 32px 48px; margin: 0 auto 0 290px; }
+  body:not(.heeft-nav) .pt-main { max-width: 760px; padding: 32px 24px 48px; margin: 0 auto; }
+  body:not(.heeft-nav) .pt-topbar { display: flex; }  /* zonder nav: topbar wél tonen */
   .pt-nav {
     position: fixed; top: 0; bottom: 0; left: 0; right: auto; z-index: 45;
     width: 250px; flex-direction: column; justify-content: flex-start; gap: 24px;

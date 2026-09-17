@@ -635,7 +635,7 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
         ? 'Heb je al een Paal 13-account, dan sturen we je automatisch door. Anders krijg je een code van zes cijfers.'
         : 'Je krijgt een code van zes cijfers om in te loggen.' ?></p>
     </div>
-    <form method="POST" class="ds-login-form" onsubmit="this.querySelector('button[type=submit]').disabled=true; this.querySelector('button[type=submit]').innerHTML='Versturen…';">
+    <form method="POST" class="ds-login-form" onsubmit="var b=this.querySelector('button[type=submit]'); b.disabled=true; b.innerHTML='Versturen…'; this.querySelector('input[name=email]').readOnly=true;">
       <?= csrf_input() ?>
       <input type="hidden" name="email_submit" value="1">
       <div class="ds-veld">
