@@ -92,9 +92,9 @@ function blk_adres_splitsen(?string $adres): array {
 /** Platforms voor het social-media-blok: sleutel => naam + placeholder. */
 function blk_social_platforms(): array {
     return [
-        'instagram' => ['naam' => 'Instagram', 'placeholder' => '@jouwnaam'],
-        'tiktok'    => ['naam' => 'TikTok',    'placeholder' => '@jouwnaam'],
-        'facebook'  => ['naam' => 'Facebook',  'placeholder' => 'naam of link naar je profiel'],
+        'instagram' => ['naam' => 'Instagram', 'placeholder' => '@jouwnaam (als je het hebt)'],
+        'tiktok'    => ['naam' => 'TikTok',    'placeholder' => '@jouwnaam (als je het hebt)'],
+        'facebook'  => ['naam' => 'Facebook',  'placeholder' => 'naam of link (als je het hebt)'],
     ];
 }
 

@@ -331,13 +331,14 @@ require __DIR__ . '/_kop.php';
         <div class="blk-sectie"><span class="blk-sectie-titel">Tot slot</span><div class="blk-sectie-streep"></div></div>
         <div class="blk-kaart">
           <div class="blk-veld"><span class="blk-lbl">Social media <span class="optioneel">(optioneel)</span></span>
+            <span class="blk-hint">Vul alleen in wat je gebruikt; de rest mag leeg blijven.</span>
             <div class="blk-social">
               <?php foreach (blk_social_platforms() as $sleutel => $pf): ?>
               <label class="blk-social-rij"><span class="blk-social-lbl"><?= h($pf['naam']) ?></span>
                 <input class="blk-input" type="text" name="social_<?= $sleutel ?>" value="<?= h($social_w[$sleutel] ?? '') ?>" placeholder="<?= h($pf['placeholder']) ?>" autocomplete="off"></label>
               <?php endforeach; ?>
             </div>
-            <span class="blk-hint">Alleen je gebruikersnaam is genoeg; een link plakken mag ook.</span></div>
+            <span class="blk-hint">Je gebruikersnaam is genoeg; een link plakken mag ook.</span></div>
           <div class="blk-veld" style="gap:9px">
             <span class="blk-lbl">Foto van jezelf</span>
             <div class="blk-foto-zone">
