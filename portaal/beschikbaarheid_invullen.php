@@ -157,23 +157,27 @@ require __DIR__ . '/_kop.php';
 <?php if ($ai_aan): ?>
 <!-- ══ AI-WIZARD (stap 1 t/m 4) — alleen als AI-hulp aan staat ══ -->
 <div id="wizStap1" class="wiz-stap">
-  <div class="wiz-slim">
-    <div class="wiz-slim-badge"><?= icoon('bliksem', 14) ?> Slim invullen</div>
-    <h2 class="wiz-slim-titel">Typ gewoon wanneer je kunt — wij maken er een planning van.</h2>
-    <p class="wiz-slim-sub">Je ziet daarna precies wat we ervan begrepen hebben en kunt alles nog aanpassen.</p>
-    <div class="wiz-slim-veld">
-      <label class="wiz-veld-lbl">Wanneer kun je werken deze zomer?</label>
-      <textarea id="beschAiTekst" rows="5" placeholder="Bijvoorbeeld: Ik kan van eind juni tot half augustus hele weken, behalve dat ik op woensdag naar school moet. Van 23 augustus tot 1 september ben ik op vakantie."></textarea>
-    </div>
-    <div class="wiz-voorbeelden">
-      <span class="wiz-vb-lbl">Voorbeelden om te beginnen:</span>
-      <button type="button" class="besch-chip" onclick="beschAiChip(this)">Alleen weekenden</button>
-      <button type="button" class="besch-chip" onclick="beschAiChip(this)">Hele juli en augustus</button>
-      <button type="button" class="besch-chip" onclick="beschAiChip(this)">Niet in de bouwvak</button>
-    </div>
-    <button type="button" class="wiz-zelf-link" onclick="wizNaarFormulier()">Liever zelf invullen met vinkjes</button>
+  <div class="wiz1-navy">
+    <div class="wiz1-badge"><?= icoon('bliksem', 14) ?> <span>Slim invullen</span></div>
+    <span class="wiz1-titel">Typ gewoon wanneer je kunt — wij maken er een planning van.</span>
+    <span class="wiz1-sub">Je ziet daarna precies wat we ervan begrepen hebben en kunt alles nog aanpassen.</span>
   </div>
-  <button type="button" id="beschAiKnop" class="besch-ai-knop ds-btn-vol" style="margin-top:14px" onclick="beschAiVerwerk()">Maak er een planning van &rarr;</button>
+  <div class="wiz1-veldkaart">
+    <label class="wiz1-veld-lbl">Wanneer kun je werken deze zomer?</label>
+    <textarea id="beschAiTekst" rows="6" placeholder="Bijvoorbeeld: Ik kan vanaf eind juni tot eind augustus hele weken, behalve dat ik op woensdag naar school moet. Van 23 augustus tot 1 september ben ik op vakantie in Frankrijk en 18 juli heb ik een bruiloft. In week 31 heb ik tentamens, dan liever max 3 dagen."></textarea>
+    <div class="wiz1-voorbeelden">
+      <span class="wiz1-vb-lbl">Voorbeelden om te beginnen</span>
+      <div class="wiz1-chips">
+        <button type="button" class="wiz1-chip" onclick="beschAiChip(this)">Alleen weekenden</button>
+        <button type="button" class="wiz1-chip" onclick="beschAiChip(this)">Hele juli en augustus</button>
+        <button type="button" class="wiz1-chip" onclick="beschAiChip(this)">Niet in de bouwvak</button>
+      </div>
+    </div>
+    <button type="button" class="wiz1-zelf" onclick="wizNaarFormulier()">Liever zelf invullen met vinkjes</button>
+  </div>
+  <div class="wiz1-voet">
+    <button type="button" id="beschAiKnop" class="wiz1-knop" onclick="beschAiVerwerk()">Maak er een planning van <?= icoon('pijl-rechts', 18) ?></button>
+  </div>
   <div id="beschAiStatus" class="besch-hint" style="margin-top:8px;text-align:center"></div>
 </div>
 <div id="wizStap2" class="wiz-stap" style="display:none">
@@ -188,20 +192,21 @@ require __DIR__ . '/_kop.php';
   </div>
 </div>
 <div id="wizStap3" class="wiz-stap" style="display:none">
-  <div class="wiz-begrepen">
-    <div class="wiz-begrepen-lbl">Zo hebben we het begrepen</div>
-    <p id="wizSamenvatting" class="wiz-begrepen-tekst"></p>
+  <div class="wiz3-navy">
+    <span class="wiz3-lbl">Zo hebben we het begrepen</span>
+    <span id="wizSamenvatting" class="wiz3-tekst"></span>
   </div>
+  <div id="wizOnderdelen" class="wiz3-onderdelen"></div>
   <div id="wizNavraag"></div>
-  <div class="wiz-aanvullen">
-    <label class="wiz-veld-lbl">Nog iets aanvullen?</label>
-    <div class="wiz-aanvullen-rij">
+  <div class="wiz3-aanvullen">
+    <label class="wiz3-aanvullen-lbl">Nog iets aanvullen?</label>
+    <div class="wiz3-aanvullen-rij">
       <input type="text" id="beschAiAanvul" placeholder='Bijv. "week 33 kan ik ook niet"'>
-      <button type="button" class="wiz-aanvul-knop" onclick="beschAiAanvullen()" aria-label="Verstuur">&rarr;</button>
+      <button type="button" class="wiz3-aanvul-knop" onclick="beschAiAanvullen()" aria-label="Verstuur"><?= icoon('pijl-rechts', 18) ?></button>
     </div>
   </div>
-  <button type="button" class="besch-ai-knop ds-btn-vol" style="margin-top:14px" onclick="wizOvernemen()">Klopt, dit overnemen</button>
-  <button type="button" class="ds-btn ds-btn-secundair ds-btn-vol" style="margin-top:10px" onclick="wizNaarFormulier()">Zelf aanpassen in het formulier</button>
+  <button type="button" class="wiz1-knop" style="margin-top:14px" onclick="wizOvernemen()">Klopt, dit overnemen</button>
+  <button type="button" class="wiz3-zelf-knop" style="margin-top:10px" onclick="wizNaarFormulier()">Zelf aanpassen in het formulier</button>
 </div>
 <?php endif; ?>
 

@@ -3,10 +3,18 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.82.0');
+define('APP_VERSIE', '2.83.0');
 
 function app_changelog(): array {
     return [
+        '2.83.0' => [
+            'datum'  => '2026-09-11',
+            'titel'  => 'Beschikbaarheid AI-wizard exact volgens het ontwerp',
+            'punten' => [
+                'Het slim-invullen-scherm is nu exact zoals het ontwerp: navy uitlegkaart, wit invoervak met voorbeelden, en de oranje knop',
+                'Het voorstel-scherm toont nu per onderdeel (werkperiode, vaste dag, afwezig, verzoek) een aparte regel met een Wijzig-knop, precies zoals het ontwerp',
+            ],
+        ],
         '2.82.0' => [
             'datum'  => '2026-09-11',
             'titel'  => 'Beschikbaarheidsformulier exact volgens het ontwerp',

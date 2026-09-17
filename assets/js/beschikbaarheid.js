@@ -291,6 +291,7 @@
         if (el('wizStap3')) {
           // Toon het voorstel-scherm
           if (el('wizSamenvatting')) el('wizSamenvatting').textContent = res.samenvatting || 'We hebben je beschikbaarheid ingevuld — controleer het hieronder.';
+          wizBouwOnderdelen(res);
           wizToonNavraag(res.vraag || '');
           wizToon('wizStap3');
         } else {
@@ -316,6 +317,41 @@
       e.classList.remove('wiz-chk-klaar');
       setTimeout(function () { e.classList.add('wiz-chk-klaar'); }, 500 + i * 600);
     });
+  }
+
+  function wizBouwOnderdelen(d) {
+    const doel = el('wizOnderdelen');
+    if (!doel) return;
+    const items = [];
+    const dagNaam = { 1:'maandag', 2:'dinsdag', 3:'woensdag', 4:'donderdag', 5:'vrijdag', 6:'zaterdag', 7:'zondag' };
+    (d.blokken || []).forEach(function (b) {
+      const regime = b.regime === 'weekend' ? 'alleen weekend' : 'hele weken';
+      items.push({ titel: 'Werkperiode: week ' + b.van_week + ' t/m ' + b.tot_week, sub: regime });
+    });
+    (d.vaste_vrije_dagen || []).forEach(function (n) {
+      items.push({ titel: 'Vaste vrije dag: ' + (dagNaam[n] || n), sub: d.vaste_reden || '' });
+    });
+    (d.afwezig || []).forEach(function (a) {
+      items.push({ titel: 'Afwezig: ' + (a.van || a.van_datum) + ' t/m ' + (a.tot || a.tot_datum), sub: a.label || '' });
+    });
+    (d.losse_dagen || []).forEach(function (l) {
+      items.push({ titel: (l.soort === 'voorkeur_vrij' ? 'Liever vrij: ' : 'Niet beschikbaar: ') + l.datum, sub: l.reden || '' });
+    });
+    (d.verzoeken || []).forEach(function (v) {
+      items.push({ titel: 'Week ' + v.van_week + '-' + v.tot_week + ': max ' + (v.dagen_aantal || v.dagen) + ' dagen', sub: 'Als verzoek opgenomen — het bestuur beoordeelt dit', waarschuwing: true });
+    });
+    if (!items.length) { doel.innerHTML = ''; return; }
+    let html = '<div class="wiz3-kaart">';
+    items.forEach(function (it, i) {
+      if (i > 0) html += '<div class="wiz3-lijn"></div>';
+      html += '<div class="wiz3-rij' + (it.waarschuwing ? ' waarschuwing' : '') + '">' +
+        '<div class="wiz3-rij-tekst"><span class="wiz3-rij-titel">' + esc(it.titel) + '</span>' +
+        (it.sub ? '<span class="wiz3-rij-sub">' + esc(it.sub) + '</span>' : '') + '</div>' +
+        '<button type="button" class="wiz3-wijzig" onclick="wizNaarFormulier()">Wijzig</button>' +
+      '</div>';
+    });
+    html += '</div>';
+    doel.innerHTML = html;
   }
 
   function wizToonNavraag(vraag) {

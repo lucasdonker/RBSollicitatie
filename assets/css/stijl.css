@@ -1808,3 +1808,84 @@ details.besch-uitz[open] .besch-chev { transform: rotate(90deg); }
   font-size: 14px; color: var(--ink); margin-top: 4px;
 }
 .bs-voorlopig input { accent-color: #054d8a; margin-top: 2px; }
+
+/* ═══ WIZARD STAP 1 (exact volgens Portaal.dc 4a) ═══ */
+.wiz1-navy {
+  background: #054d8a; border-radius: 14px; padding: 18px;
+  display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px;
+}
+.wiz1-badge { display: flex; align-items: center; gap: 9px; }
+.wiz1-badge span { font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: #a9c8e2; }
+.wiz1-badge .ic { stroke: #a9c8e2; }
+.wiz1-titel { font-size: 17px; line-height: 1.5; font-weight: 600; color: #fff; }
+.wiz1-sub { font-size: 14px; line-height: 1.55; color: #c8dcec; }
+.wiz1-veldkaart {
+  background: #fff; border: 1px solid #e6e9ef; border-radius: 14px; padding: 16px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.wiz1-veld-lbl { font-size: 13px; font-weight: 600; color: var(--ink); }
+.wiz1-veldkaart textarea {
+  width: 100%; box-sizing: border-box; padding: 14px;
+  border: 1px solid #cdd4e0; border-radius: 8px;
+  font-size: 15px; line-height: 1.6; font-family: 'Instrument Sans', sans-serif; resize: vertical;
+  color: var(--ink);
+}
+.wiz1-veldkaart textarea:focus { border-color: #054d8a; box-shadow: 0 0 0 3px rgba(5,77,138,.12); outline: none; }
+.wiz1-voorbeelden { display: flex; flex-direction: column; gap: 8px; }
+.wiz1-vb-lbl { font-size: 12px; color: #8a93a6; }
+.wiz1-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.wiz1-chip {
+  height: 34px; padding: 0 12px; border: 1px solid #cdd4e0; border-radius: 8px;
+  background: #fff; font-size: 13px; color: #5a6478; cursor: pointer;
+  display: inline-flex; align-items: center;
+}
+.wiz1-chip:hover { border-color: #054d8a; color: #054d8a; }
+.wiz1-zelf {
+  background: none; border: none; font-size: 13px; font-weight: 600; color: #054d8a;
+  text-align: center; padding-top: 4px; cursor: pointer;
+}
+.wiz1-voet { margin-top: 14px; }
+.wiz1-knop {
+  width: 100%; height: 48px; border: none; border-radius: 10px; background: #D43D00;
+  color: #fff; font: 600 15px 'Instrument Sans', sans-serif; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+}
+.wiz1-knop:hover { background: #b83500; }
+.wiz1-knop .ic { stroke: #fff; }
+.wiz1-knop:disabled { opacity: .6; cursor: default; }
+
+/* ═══ WIZARD STAP 3 — voorstel (exact volgens Portaal.dc) ═══ */
+.wiz3-navy {
+  background: #054d8a; border-radius: 14px; padding: 18px;
+  display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px;
+}
+.wiz3-lbl { font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: #a9c8e2; }
+.wiz3-tekst { font-size: 17px; line-height: 1.55; color: #fff; }
+.wiz3-kaart {
+  background: #fff; border: 1px solid #e6e9ef; border-radius: 14px; padding: 6px;
+  display: flex; flex-direction: column; margin-bottom: 14px;
+}
+.wiz3-rij { padding: 14px; display: flex; align-items: flex-start; gap: 12px; }
+.wiz3-rij-tekst { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
+.wiz3-rij-titel { font-size: 15px; font-weight: 600; color: var(--ink); }
+.wiz3-rij-sub { font-size: 13px; line-height: 1.5; color: #8a93a6; }
+.wiz3-rij.waarschuwing { background: #fff8ec; border-radius: 10px; }
+.wiz3-wijzig { background: none; border: none; font-size: 13px; font-weight: 600; color: #054d8a; cursor: pointer; flex: none; padding: 0; }
+.wiz3-lijn { height: 1px; background: #e6e9ef; margin: 0 14px; }
+.wiz3-aanvullen { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
+.wiz3-aanvullen-lbl { font-size: 13px; font-weight: 600; color: var(--ink); }
+.wiz3-aanvullen-rij { display: flex; gap: 8px; }
+.wiz3-aanvullen-rij input {
+  flex: 1; height: 46px; padding: 0 14px; border: 1px solid #cdd4e0; border-radius: 10px;
+  font-size: 15px; background: #fff; color: var(--ink);
+}
+.wiz3-aanvul-knop {
+  width: 46px; height: 46px; flex: none; border: none; border-radius: 10px;
+  background: #054d8a; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.wiz3-aanvul-knop .ic { stroke: #fff; }
+.wiz3-zelf-knop {
+  width: 100%; height: 48px; border: 1px solid #cdd4e0; border-radius: 10px; background: #fff;
+  color: var(--ink); font: 600 15px 'Instrument Sans', sans-serif; cursor: pointer;
+}
+.wiz3-zelf-knop:hover { background: #f4f6f9; }
