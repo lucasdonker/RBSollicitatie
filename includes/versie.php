@@ -3,10 +3,22 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.83.1');
+define('APP_VERSIE', '2.84.0');
 
 function app_changelog(): array {
     return [
+        '2.84.0' => [
+            'datum'  => '2026-09-17',
+            'titel'  => 'Beter Leren Kennen is een eigen pagina (losgekoppeld van de startpagina)',
+            'punten' => [
+                'Het "Beter Leren Kennen"-formulier staat niet meer inline op de startpagina, maar op een eigen pagina — precies zoals de beschikbaarheid al een eigen taak was',
+                'Op de startpagina staat het nu als taak "Beter Leren Kennen invullen"; na inleveren wordt het een afgeronde taak met "Bekijken" (bijwerken kan nog, met een reden)',
+                'De nieuwe pagina volgt exact het Claude Design-ontwerp (sectie 03): vier aanklikbare stappen, automatisch bewaard concept, adres-kaartje na het opzoeken, foto maken of kiezen, en op desktop een overzicht naast het formulier',
+                'Telefoonnummer is toegevoegd aan stap 1 (zoals in het ontwerp) en wordt bij je gegevens bijgewerkt',
+                'De startpagina is een stuk kleiner en eenvoudiger geworden (ruim 600 regels formulier, stijl en script eruit)',
+                'Losse links op de beschikbaarheidspagina wezen nog naar het oude inline formulier; die gaan nu naar de juiste pagina',
+            ],
+        ],
         '2.83.1' => [
             'datum'  => '2026-09-12',
             'titel'  => 'Inlogscherm: uitlijning en e-mailveld',

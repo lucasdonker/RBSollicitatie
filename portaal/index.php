@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/blk.php';
 sessie_start();
 
 $stap = $_GET['stap'] ?? 'login';
@@ -115,8 +116,8 @@ if ($stap === 'dossier') {
     }
     if (!$sol) { unset($_SESSION['portaal_sol_id']); redirect(APP_URL . '/portaal/'); }
 
-    $b = db()->prepare("SELECT * FROM blk_formulieren WHERE sollicitatie_id=?");
-    $b->execute([$sol_id]); $blk = $b->fetch();
+    // BLK-rij (voor de taakstatus; het formulier zelf staat op blk_invullen.php)
+    $blk = blk_van($sol_id);
 
     $bd = db()->prepare("SELECT * FROM beschikbaarheid WHERE sollicitatie_id=?");
     $bd->execute([$sol_id]); $besch = $bd->fetch();
@@ -145,24 +146,6 @@ if ($stap === 'dossier') {
     }
 }
 
-// ── Veldlabels voor wijzigingslog ─────────────────────────────
-$blk_veld_labels = [
-    'postcode'                       => 'Postcode',
-    'huisnummer'                     => 'Huisnummer',
-    'straat'                         => 'Straat',
-    'woonplaats'                     => 'Woonplaats',
-    'adres'                          => 'Woonadres',
-    'opleiding'                      => 'Opleiding',
-    'werkervaring'                   => 'Werkervaring',
-    'diplomas'                       => "Diploma's",
-    'motivatie_lifeguard'            => 'Motivatie lifeguard',
-    'motivatie_strand'               => 'Strand motivatie',
-    'beschikbaarheid_intentie'       => 'Beschikbaarheid',
-    'beschikbaarheid_uitzonderingen' => 'Uitzonderingen',
-    'social_media'                   => 'Social media',
-    'bijzonderheden'                 => 'Bijzonderheden',
-];
-
 // ── AI-beschikbaarheid: vrije tekst → formulierdata (experimenteel) ──
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ai_besch_submit']) && portaal_ingelogd()) {
     header('Content-Type: application/json');
@@ -189,7 +172,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ai_besch_submit']) &&
     exit;
 }
 
-// ── BLK opslaan ───────────────────────────────────────────────
+// ── Oudergegevens opslaan (minderjarigen) ─────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ouder_submit']) && !isset($_POST['ond_id']) && portaal_ingelogd()) {
     csrf_check();
     $sol_id = (int)$_SESSION['portaal_sol_id'];
@@ -284,206 +267,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ouder_submit']) && po
     redirect(APP_URL . '/portaal/#taken');
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['blk_submit']) && $stap === 'dossier') {
-    csrf_check();
-    $sol_id = (int)$_SESSION['portaal_sol_id'];
-    $reden  = trim($_POST['reden_wijziging'] ?? '');
-    // Een "edit" is alleen een WIJZIGING ná definitieve indiening — niet de eerste
-    // indiening vanuit een autosave-concept. Doordat de autosave al een blk-rij
-    // aanmaakt, mag het bestaan van die rij niet als "edit" gelden (dat gaf onterecht
-    // "Vul een reden in voor de wijziging"). We leiden het af uit de fase: pas vanaf
-    // 'aangemeld_selectie' is het formulier eerder definitief ingediend.
-    $reeds_ingediend_fases = ['aangemeld_selectie','selectiedag_geweest','uitgenodigd_tw','tw_geweest','aangenomen','afgewezen'];
-    $is_edit = !empty($blk) && in_array($sol['fase'] ?? '', $reeds_ingediend_fases, true);
-
-    // Weken zijn nu opgeslagen als JSON
-    // Weken afleiden uit de periode-blokken — compat met blk.beschikbaarheid_intentie
-    $weken_sel = [];
-    if (!empty($_POST['b2_blok_van'])) {
-        $bv = $_POST['b2_blok_van']; $bt = $_POST['b2_blok_tot'] ?? [];
-        foreach ($bv as $i => $v) {
-            $van = (int)$v; $tot = (int)($bt[$i] ?? 0);
-            if ($van < 1 || $tot < 1) continue;
-            if ($tot < $van) { $t = $van; $van = $tot; $tot = $t; }
-            for ($w = $van; $w <= $tot; $w++) $weken_sel[$w] = true;
-        }
-        $weken_sel = array_keys($weken_sel);
-    }
-    sort($weken_sel);
-
-    // Adresvelden: postcode normaliseren (1234 AB)
-    $pc_raw = strtoupper(preg_replace('/\s+/', '', $_POST['postcode'] ?? ''));
-    $pc     = preg_match('/^([0-9]{4})([A-Z]{2})$/', $pc_raw, $m) ? "{$m[1]} {$m[2]}" : $pc_raw;
-    $straat_in = trim($_POST['straat'] ?? '');
-    $hnr_in    = trim($_POST['huisnummer'] ?? '');
-    $wp_in     = trim($_POST['woonplaats'] ?? '');
-    // Samengesteld adres voor backwards compat
-    $adres_samen = ($straat_in && $hnr_in) ? "$straat_in $hnr_in, $pc $wp_in" : '';
-
-    $velden = [
-        'postcode'                       => $pc,
-        'huisnummer'                     => $hnr_in,
-        'straat'                         => $straat_in,
-        'woonplaats'                     => $wp_in,
-        'adres'                          => $adres_samen,
-        'opleiding'                      => trim($_POST['opleiding'] ?? ''),
-        'werkervaring'                   => trim($_POST['werkervaring'] ?? ''),
-        'diplomas'                       => trim($_POST['diplomas'] ?? ''),
-        'motivatie_lifeguard'            => trim($_POST['motivatie_lifeguard'] ?? ''),
-        'motivatie_strand'               => trim($_POST['motivatie_strand'] ?? ''),
-        'beschikbaarheid_intentie'       => !empty($weken_sel) ? json_encode($weken_sel) : '',
-        'beschikbaarheid_uitzonderingen' => trim($_POST['beschikbaarheid_uitzonderingen'] ?? ''),
-        'social_media'                   => trim($_POST['social_media'] ?? ''),
-        'bijzonderheden'                 => trim($_POST['bijzonderheden'] ?? ''),
-    ];
-
-    // Filter velden zodat we niet falen als migratie 0007 nog niet draaide
-    try {
-        $kolommen = db()->query("SHOW COLUMNS FROM blk_formulieren")->fetchAll(PDO::FETCH_COLUMN);
-    } catch (\Exception $e) { $kolommen = []; }
-    $kolommen_set = array_flip($kolommen);
-    $velden = array_intersect_key($velden, $kolommen_set);
-    // Voeg adres-fallback toe als nieuwe kolommen ontbreken maar 'adres' wel bestaat
-    if (!isset($velden['postcode']) && isset($kolommen_set['adres']) && !isset($velden['adres'])) {
-        $velden['adres'] = $adres_samen;
-    }
-
-    // Bepaal of er inhoudelijk iets aan het BLK gewijzigd is (bij een edit).
-    // Zo niet, dan is een reden onzinnig — de gebruiker werkte bijv. alleen
-    // z'n beschikbaarheid bij, die apart wordt opgeslagen.
-    $blk_changes = [];
-    if ($is_edit) {
-        foreach ($velden as $veld => $nieuw) {
-            $oud = $blk[$veld] ?? '';
-            if ($veld === 'beschikbaarheid_intentie') {
-                $oud_w = json_decode($oud ?? '[]', true) ?: [];
-                $nieuw_w = json_decode($nieuw ?? '[]', true) ?: [];
-                if ($oud_w != $nieuw_w) $blk_changes[] = ['veld'=>$veld, 'label'=>$blk_veld_labels[$veld] ?? $veld,
-                    'oud'=>'Weken: ' . implode(', ', $oud_w), 'nieuw'=>'Weken: ' . implode(', ', $nieuw_w)];
-            } elseif (trim($oud ?? '') !== trim($nieuw ?? '')) {
-                $blk_changes[] = ['veld'=>$veld, 'label'=>$blk_veld_labels[$veld] ?? $veld, 'oud'=>$oud, 'nieuw'=>$nieuw];
-            }
-        }
-    }
-
-    if (!$velden['motivatie_lifeguard']) {
-        $fout = 'Vul je motivatie in (stap 3).';
-    } elseif ($is_edit && $blk_changes && !$reden) {
-        $fout = 'Vul een reden in voor de wijziging (stap 5).';
-    } else {
-        // Foto upload — relatief pad opslaan zodat APP_URL veranderingen geen issue zijn
-        $foto_url = $blk['foto_url'] ?? null;
-        if (!empty($_FILES['foto']['tmp_name']) && $_FILES['foto']['error'] === 0) {
-            $ext = strtolower(pathinfo($_FILES['foto']['name'], PATHINFO_EXTENSION));
-            // Controleer dat het bestand ECHT een afbeelding is (niet alleen de extensie vertrouwen).
-            // getimagesize leest de daadwerkelijke bestandsinhoud; faalt bij niet-afbeeldingen.
-            $imginfo = @getimagesize($_FILES['foto']['tmp_name']);
-            $toegestaan = [IMAGETYPE_JPEG => 'jpg', IMAGETYPE_PNG => 'png', IMAGETYPE_WEBP => 'webp'];
-            $echt_type  = $imginfo['2'] ?? null;
-            if ($imginfo !== false && isset($toegestaan[$echt_type])
-                && in_array($ext, ['jpg','jpeg','png','webp'])
-                && $_FILES['foto']['size'] < 5*1024*1024) {
-                $dir = __DIR__ . '/../uploads/fotos/';
-                if (!is_dir($dir)) @mkdir($dir, 0755, true);
-                // Gebruik de extensie die hoort bij het WERKELIJKE bestandstype, niet de opgegeven naam
-                $veilige_ext = $toegestaan[$echt_type];
-                $fn = 'sol_' . $sol_id . '_' . time() . '.' . $veilige_ext;
-                if (move_uploaded_file($_FILES['foto']['tmp_name'], $dir . $fn)) {
-                    // Sla RELATIEF pad op vanaf de root, zonder APP_URL prefix
-                    $foto_url = '/uploads/fotos/' . $fn;
-                }
-            }
-        }
-
-        $nulls = array_map(fn($v) => $v ?: null, $velden);
-
-        if ($is_edit) {
-            // Log wijzigingen (al berekend als $blk_changes vóór de validatie)
-            if (!empty($blk_changes)) {
-                try {
-                    db()->prepare("INSERT INTO blk_wijzigingen (sollicitatie_id, reden, wijzigingen_json) VALUES(?,?,?)")
-                       ->execute([$sol_id, $reden, json_encode($blk_changes)]);
-                } catch (Exception $e) { /* tabel bestaat nog niet — skip */ }
-            }
-        }
-        // Opslaan met INSERT ... ON DUPLICATE KEY UPDATE, zodat het altijd werkt —
-        // ook als er nog een oude blk-rij bestaat (bijv. na 'verwijderen' via de interface
-        // dat de rij niet volledig weghaalde). Voorheen gaf dat een duplicate-fout.
-        {
-            $cols = implode(',', array_map(fn($k) => "`$k`", array_keys($velden)));
-            $ph   = implode(',', array_fill(0, count($velden), '?'));
-            $upd  = implode(',', array_map(fn($k) => "`$k`=VALUES(`$k`)", array_keys($velden)));
-            db()->prepare("INSERT INTO blk_formulieren (sollicitatie_id,$cols,foto_url) VALUES(?,$ph,?)
-                           ON DUPLICATE KEY UPDATE $upd, foto_url=VALUES(foto_url), bijgewerkt_op=NOW()")
-               ->execute([$sol_id, ...array_values($nulls), $foto_url]);
-        }
-        if (!$is_edit) {
-            if ($sol['fase'] === 'uitgenodigd_selectie') {
-                db()->prepare("UPDATE sollicitaties SET fase='aangemeld_selectie' WHERE id=?")->execute([$sol_id]);
-                $sol['fase'] = 'aangemeld_selectie';
-            }
-            // Taak afgerond: bevestigingsmail
-            if (function_exists('mail_taak_afgerond')) {
-                try { mail_taak_afgerond($sol_id, 'Beter leren kennen-formulier'); } catch (Exception $e) {}
-            }
-        }
-        // Markeer het BLK expliciet als definitief ingediend (niet door autosave gezet).
-        // Dit is de betrouwbare "taak afgerond"-indicator, los van de fase.
-        if (function_exists('db_kolom_verzeker')) {
-            db_kolom_verzeker(db(), 'blk_formulieren', 'definitief_op', 'DATETIME DEFAULT NULL');
-        }
-        try { db()->prepare("UPDATE blk_formulieren SET definitief_op=NOW() WHERE sollicitatie_id=? AND definitief_op IS NULL")->execute([$sol_id]); } catch (\Exception $e) {}
-        $_SESSION['b2_toon_opgeslagen'] = true;
-
-        // Beschikbaarheid 2.0 opslaan (periode-blokken model) — via gedeelde functie
-        try {
-            $b2_waarschuwingen = beschikbaarheid_opslaan_uit_post($sol_id, $_POST);
-            if ($b2_waarschuwingen) {
-                $_SESSION['b2_vz_waarschuwing'] = implode(' ', $b2_waarschuwingen);
-            }
-
-            // Losse dagen (concrete kalenderdatums die iemand niet kan / liever vrij wil)
-            if (function_exists('beschikbaarheid_dagen_opslaan')) {
-                $dd = $_POST['b2_dag_datum'] ?? []; $ds = $_POST['b2_dag_soort'] ?? []; $dr = $_POST['b2_dag_reden'] ?? [];
-                $losse = [];
-                foreach ($dd as $i => $datum) {
-                    if (trim($datum) === '') continue;
-                    $losse[] = [
-                        'datum' => trim($datum),
-                        'soort' => $ds[$i] ?? 'niet_beschikbaar',
-                        'reden' => trim($dr[$i] ?? ''),
-                    ];
-                }
-                beschikbaarheid_dagen_opslaan($sol['id'], $losse, 'sollicitant');
-            }
-        } catch (Exception $e) { error_log('b2 opslaan: ' . $e->getMessage()); }
-
-        // Bevestiging: waarschuwing als een verzoek werd geweigerd, anders gewoon opgeslagen
-        if (!empty($_SESSION['b2_vz_waarschuwing'])) {
-            flash('info', '⚠️ Let op: ' . $_SESSION['b2_vz_waarschuwing'] . ' Dat verzoek is niet opgeslagen; de rest wel.');
-            unset($_SESSION['b2_vz_waarschuwing']);
-        } elseif (!empty($_SESSION['b2_toon_opgeslagen'])) {
-            flash('succes', 'Opgeslagen!');
-        }
-        unset($_SESSION['b2_toon_opgeslagen']);
-
-        // AI analyse: toevoegen aan wachtrij (cron verwerkt dit)
-        if (function_exists('ai_queue_toevoegen') && instelling('ai.api_key')) {
-            try { ai_queue_toevoegen($sol_id, 'blk_analyse'); } catch (Exception $e) {}
-        }
-
-        redirect(APP_URL . '/portaal/');
-    }
-}
-
-// ── Beschikbaarheid weken opslaan ─────────────────────────────
-// BLK weken ophalen voor pre-fill in formulier
-$blk_weken_sel = [];
-if ($blk && !empty($blk['beschikbaarheid_intentie'])) {
-    $decoded = json_decode($blk['beschikbaarheid_intentie'], true);
-    if (is_array($decoded)) $blk_weken_sel = $decoded;
-}
-
 $fases_volgorde = ['aangemeld','uitgenodigd_selectie','aangemeld_selectie','selectiedag_geweest','uitgenodigd_tw','tw_geweest','aangenomen'];
 
 // Weken-datums voor de AI-beschikbaarheid JS (weeknr → start/eind datum)
@@ -559,49 +342,6 @@ html[data-theme="dark"] .theme-tgl { background:#161a26; color:#fff; }
 .banner-actie h2 { color:var(--oranje); }
 .banner-ok h2 { color:var(--groen); }
 .banner-rood h2 { color:var(--rood); }
-
-/* Multi-step formulier */
-.stap-ind { display:flex; gap:6px; margin-bottom:18px; }
-.si { flex:1; padding:10px 4px; text-align:center; font-size:11px; color:var(--ink-muted); background:var(--surface); cursor:pointer; border:1px solid var(--border); border-radius:var(--radius-md); transition:all .15s; user-select:none; }
-.si.actief { background:var(--navy); color:#fff; font-weight:600; border-color:var(--navy); }
-.si.klaar  { background:var(--ok-soft); color:var(--ok); border-color:var(--ok-soft); }
-.si .snr   { display:block; font-size:15px; font-weight:700; margin-bottom:2px; }
-.formulier-stap { display:none; }
-.formulier-stap.zichtbaar { display:block; }
-.stap-nav { display:flex; justify-content:space-between; align-items:center; margin-top:16px; padding-top:14px; border-top:1px solid var(--rand); }
-.sectie-titel { font-size:12px; font-weight:700; color:var(--navy); text-transform:uppercase; letter-spacing:.05em; border-bottom:2px solid var(--oranje); padding-bottom:5px; margin:16px 0 10px; }
-
-/* Al ingevuld badge */
-.blk-status-bar { background:linear-gradient(135deg,#e1f5ee,#d1fae5); border:1px solid #6ee7b7; border-radius:8px; padding:10px 14px; margin-bottom:14px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; }
-.blk-status-bar .lbl { font-size:13px; font-weight:600; color:var(--groen); }
-.blk-status-bar .sub { font-size:12px; color:var(--groen); }
-
-/* Week selector */
-.week-maand { margin-bottom:16px; }
-.week-maand-titel { font-size:13px; font-weight:600; color:var(--tekst-zacht); margin-bottom:7px; display:flex; align-items:center; gap:6px; }
-.week-maand-titel::after { content:''; flex:1; height:1px; background:var(--rand); }
-.week-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:7px; }
-.week-opt { position:relative; }
-.week-opt input { position:absolute; opacity:0; width:0; height:0; }
-.week-opt label { display:flex; flex-direction:column; gap:2px; padding:10px 12px; border-radius:8px; border:1.5px solid var(--rand); background:var(--grijs-bg); cursor:pointer; transition:all .15s; color:var(--tekst); }
-.week-opt label:hover { border-color:var(--grijs); background:var(--bg-card); }
-.week-opt label strong { font-size:12px; font-weight:600; }
-.week-opt label span { font-size:11px; color:var(--tekst-zacht); }
-.week-opt input:checked + label { background:rgba(255,107,53,.12); border-color:var(--oranje); color:var(--tekst); }
-.week-opt input:checked + label strong { color:var(--oranje-dim); }
-html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; }
-.week-opt input:checked + label span { opacity:.85; }
-.week-teller { font-size:14px; color:var(--tekst-zacht); margin-bottom:14px; }
-.week-teller strong { color:var(--oranje); font-size:18px; margin-right:5px; }
-
-/* Upload */
-.upload-zone { border:2px dashed var(--rand); border-radius:8px; padding:18px; text-align:center; cursor:pointer; background:var(--bg-card); transition:border-color .15s; }
-.upload-zone:hover { border-color:var(--oranje); }
-.upload-zone input[type=file] { position:absolute; opacity:0; width:1px; height:1px; pointer-events:none; }
-
-/* Reden wijziging */
-.reden-box { background:#fff8f0; border:2px solid var(--oranje); border-radius:8px; padding:14px; margin-top:14px; }
-.reden-box label { font-size:13px; font-weight:600; color:var(--navy); display:block; margin-bottom:6px; }
 </style>
 </head>
 <body class="pt-body <?= ($stap === 'dossier' && portaal_ingelogd()) ? 'heeft-nav' : '' ?>">
@@ -852,7 +592,7 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
       <?php $s = $sol['selectiedag_starttijd'] ?? null; if($s): ?><div class="info-item"><span class="ii-ic"><?= icoon('klok', 16) ?></span><div><span class="ii-l">Start</span><span class="ii-v"><?=h($s)?> uur</span></div></div><?php endif; ?>
     </div>
     <?php if($sol['fase']==='uitgenodigd_selectie'): ?>
-    <div class="info-melding info-melding-actie" style="margin-top:12px"><?= icoon('info', 15) ?> Vergeet niet het formulier hieronder in te vullen voor de selectiedag.</div>
+    <div class="info-melding info-melding-actie" style="margin-top:12px"><?= icoon('info', 15) ?> Rond de taken hieronder af vóór de selectiedag.</div>
     <?php elseif($sol['fase']==='aangemeld_selectie'): ?>
     <div class="info-melding info-melding-ok" style="margin-top:12px"><?= icoon('vink', 15) ?> Jouw formulier is ontvangen. Tot de selectiedag!</div>
     <?php endif; ?>
@@ -918,13 +658,22 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
       ];
   }
 
-  // 3) BLK invullen als open taak (bij uitgenodigd én aangemeld voor selectiedag)
-  if (in_array($sol['fase'], ['uitgenodigd_selectie','aangemeld_selectie'])) {
-      // De taak is pas 'gedaan' als het formulier DEFINITIEF is ingediend. Dat blijkt uit
-      // de fase (aangemeld_selectie), niet uit het bestaan van een blk-rij — want de
-      // autosave maakt al een concept-rij aan tijdens het typen. Voorheen werd de taak
-      // daardoor onterecht als afgerond getoond na een tussentijdse pagina-refresh.
-
+  // 3) BLK en beschikbaarheid als eigen taken (bij uitgenodigd én aangemeld voor selectiedag)
+  if (in_array($sol['fase'], blk_fases_zichtbaar(), true)) {
+      // Beter Leren Kennen: eigen pagina (blk_invullen.php). De taak is pas 'gedaan' als het
+      // formulier DEFINITIEF is ingediend — niet zodra er een (autosave-)rij bestaat.
+      $blk_klaar = blk_is_ingediend($sol, $blk);
+      $blk_op    = $blk['definitief_op'] ?? ($blk['ingevuld_op'] ?? null);
+      $alle_taken[] = [
+          'titel'  => 'Beter Leren Kennen invullen',
+          'done'   => $blk_klaar,
+          'url'    => APP_URL . '/portaal/blk_invullen.php',
+          'urgent' => !$blk_klaar,
+          'hint'   => $blk_klaar
+              ? 'Ingeleverd' . ($blk_op ? ' ' . datum_nl(substr($blk_op, 0, 10)) : '')
+              : '± 8 minuten' . (!empty($sol['datum_selectiedag']) ? ' · vóór ' . datum_nl($sol['datum_selectiedag']) : ''),
+          'klikbaar_gedaan' => true, // ook na inleveren te openen (Bekijken / bijwerken)
+      ];
 
       // Beschikbaarheid als eigen taak (het ontwerp maakt dit een losse taak, los van het BLK)
       $besch_ingevuld = false;
@@ -1033,7 +782,7 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
         elseif (!empty($t['urgent']))                       { $ico='wachten';     $icocls='accent'; }
         else                                                { $ico='mail';        $icocls=''; }
         $heeft_form = (!empty($t['inline_form']) && $t['inline_form'] === 'ouder');
-        $klikbaar = (!$t['done'] && !empty($t['url']) && !$heeft_form);
+        $klikbaar = (!$t['done'] || !empty($t['klikbaar_gedaan'])) && !empty($t['url']) && !$heeft_form;
     ?>
         <?php if ($ti > 0): ?><div style="height:1px;background:var(--border);margin:0 12px"></div><?php endif; ?>
         <?php if ($klikbaar): ?><a href="<?= h($t['url']) ?>" style="text-decoration:none;color:inherit;display:block"><?php endif; ?>
@@ -1066,7 +815,8 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
               </form>
             <?php endif; ?>
           </div>
-          <?php if ($klikbaar): ?><span style="color:var(--ink-muted);flex-shrink:0;align-self:center"><?= icoon('chevron', 18) ?></span><?php endif; ?>
+          <?php if ($klikbaar && $t['done']): ?><span style="font:var(--text-label);color:var(--navy);flex-shrink:0;align-self:center">Bekijken</span>
+          <?php elseif ($klikbaar): ?><span style="color:var(--ink-muted);flex-shrink:0;align-self:center"><?= icoon('chevron', 18) ?></span><?php endif; ?>
         </div>
         <?php if ($klikbaar): ?></a><?php endif; ?>
       <?php endforeach; ?>
@@ -1129,149 +879,6 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
       <?php if($sol['locatie_tw']): ?><div class="info-item"><span class="ii-ic"><?= icoon('reddingsboei', 16) ?></span><div><span class="ii-l">Locatie</span><span class="ii-v"><?=h($sol['locatie_tw'])?></span></div></div><?php endif; ?>
     </div>
     <div class="info-melding info-melding-actie" style="margin-top:12px"><?= icoon('info', 15) ?> Hieronder zie je je beschikbaarheid. Klopt er iets niet meer? Geef dat daar aan.</div>
-  </div>
-  <?php endif; ?>
-
-  <?php // ── BLK Formulier (multi-step) ──────────────────────
-  if (in_array($sol['fase'], ['uitgenodigd_selectie','aangemeld_selectie'])): ?>
-  <?php // Kaart is standaard verborgen; verschijnt als je op de taak "Openen →" klikt (#blk),
-        // of direct zichtbaar als het BLK al is ingevuld (om te kunnen bekijken/bewerken). ?>
-
-    <div class="card-header" style="cursor:pointer" onclick="blkToggle()">
-      <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;width:100%;gap:10px">
-        <span style="display:flex;align-items:center;gap:8px;font:var(--text-subhead);color:var(--ink)">
-          Vertel ons meer over jezelf
-          <?php if ($blk): ?><span class="ds-badge ds-badge-ok" style="font-size:10px"><?= icoon('vink', 12) ?> Ingevuld</span><?php endif; ?>
-        </span>
-        <button type="button" id="blkToggleBtn" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="event.stopPropagation();blkToggle()"><?= $blk ? 'Bekijken' : 'Invullen' ?></button>
-      </div>
-    </div>
-    <div class="card-body" id="blkBody" <?= $blk ? 'style="display:none"' : 'style="display:none"' ?>>
-      <?php if ($blk): ?>
-      <!-- Ingevuld: toon samenvatting, verberg formulier tenzij op bewerken geklikt -->
-      <div style="background:var(--groen-bg);border:1px solid var(--groen);border-radius:8px;padding:14px 16px;margin-bottom:14px">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-          <div>
-            <div style="font-weight:600;color:var(--ok);font-size:14px"><?= icoon("vink", 15) ?> Beter leren kennen — Afgerond</div>
-            <div style="font-size:12px;color:var(--groen);margin-top:2px">
-              Ingevuld op <?= datum_nl(substr($blk['ingevuld_op']??'',0,10)) ?>
-              <?php if (!empty($blk_weken_sel)): ?> · <?= count($blk_weken_sel) ?> <?= count($blk_weken_sel) === 1 ? 'week' : 'weken' ?> geselecteerd<?php endif; ?>
-            </div>
-          </div>
-          <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm"
-                  onclick="document.getElementById('blkFormWrapper').style.display='block';this.closest('div').style.display='none'">
-            <?= icoon("potlood", 15) ?> Bewerken
-          </button>
-        </div>
-      </div>
-      <div id="blkFormWrapper" style="display:none">
-      <?php else: ?>
-      <p style="font-size:13px;color:var(--tekst-zacht);margin-bottom:14px">Vul dit in vóór de selectiedag. Duurt circa 5 minuten.</p>
-      <div id="blkFormWrapper">
-      <?php endif; ?>
-
-      <div class="stap-ind" id="stapInd">
-        <div class="si actief" onclick="gaNaar(1)" id="si1"><span class="snr">1</span>Gegevens</div>
-        <div class="si"        onclick="gaNaar(2)" id="si2"><span class="snr">2</span>Achtergrond</div>
-        <div class="si"        onclick="gaNaar(3)" id="si3"><span class="snr">3</span>Motivatie</div>
-        <div class="si"        onclick="gaNaar(4)" id="si4"><span class="snr">4</span>Overig</div>
-      </div>
-
-      <div id="blkAutosaveStatus" style="font-size:12px;text-align:right;min-height:16px;margin:-4px 0 10px;transition:opacity .4s;opacity:0.5" aria-live="polite">Je invoer wordt automatisch bewaard</div>
-
-      <form method="POST" enctype="multipart/form-data" id="blkForm" onsubmit="return blkValideer(this)">
-        <?= csrf_input() ?>
-        <input type="hidden" name="blk_submit" value="1">
-
-        <!-- Stap 1: Gegevens -->
-        <div class="formulier-stap zichtbaar" id="fs1">
-          <div class="sectie-titel">Jouw gegevens</div>
-          <div class="form-rij">
-            <div class="form-groep"><label>Naam</label><input type="text" value="<?= h(volledige_naam($sol)) ?>" disabled style="background:var(--grijs-bg);color:var(--grijs)"></div>
-            <div class="form-groep"><label>E-mail</label><input type="text" value="<?= h($sol['email']) ?>" disabled style="background:var(--grijs-bg);color:var(--grijs)"></div>
-          </div>
-          <div class="form-rij" style="grid-template-columns:1fr 1fr">
-            <div class="form-groep">
-              <label>Postcode <span class="vereist">*</span></label>
-              <input type="text" name="postcode" id="adr-pc" value="<?= h($blk['postcode'] ?? '') ?>"
-                     placeholder="1234 AB" maxlength="7" data-verplicht="1">
-            </div>
-            <div class="form-groep">
-              <label>Huisnummer <span class="vereist">*</span></label>
-              <input type="text" name="huisnummer" id="adr-hn" value="<?= h($blk['huisnummer'] ?? '') ?>"
-                     placeholder="12a" data-verplicht="1">
-            </div>
-          </div>
-          <div class="form-rij" style="grid-template-columns:2fr 1fr">
-            <div class="form-groep">
-              <label>Straat</label>
-              <input type="text" name="straat" id="adr-st" value="<?= h($blk['straat'] ?? '') ?>" placeholder="Wordt automatisch ingevuld">
-            </div>
-            <div class="form-groep">
-              <label>Woonplaats</label>
-              <input type="text" name="woonplaats" id="adr-wp" value="<?= h($blk['woonplaats'] ?? '') ?>" placeholder="Wordt automatisch ingevuld">
-            </div>
-          </div>
-          <div class="form-hulp" id="adr-status" style="margin-top:-6px;margin-bottom:8px;min-height:18px"></div>
-          <div class="stap-nav"><div></div><button type="button" class="ds-btn ds-btn-primair" onclick="gaNaar(2)">Volgende</button></div>
-        </div>
-
-        <!-- Stap 2: Achtergrond -->
-        <div class="formulier-stap" id="fs2">
-          <div class="sectie-titel">Achtergrond</div>
-          <div class="form-groep"><label>Opleiding <span class="vereist">*</span></label><textarea name="opleiding" rows="2" data-verplicht="2" placeholder="Bijv: HAVO 4, HBO Verpleegkunde jaar 3..."><?= h($blk['opleiding'] ?? '') ?></textarea></div>
-          <div class="form-groep"><label>Diploma's en certificaten</label><textarea name="diplomas" rows="2" placeholder="Bijv: Zwemdiploma A+B, EHBO, Junior Lifeguard..."><?= h($blk['diplomas'] ?? '') ?></textarea></div>
-          <div class="form-groep"><label>Werkervaring</label><textarea name="werkervaring" rows="2" placeholder="Bijv: bijbaan, vrijwilligerswerk..."><?= h($blk['werkervaring'] ?? '') ?></textarea></div>
-          <div class="stap-nav"><button type="button" class="ds-btn ds-btn-secundair" onclick="gaNaar(1)">Terug</button><button type="button" class="ds-btn ds-btn-primair" onclick="gaNaar(3)">Volgende</button></div>
-        </div>
-
-        <!-- Stap 3: Motivatie -->
-        <div class="formulier-stap" id="fs3">
-          <div class="sectie-titel">Motivatie</div>
-          <div class="form-groep"><label>Waarom wil je lifeguard worden bij Paal 13? <span class="vereist">*</span></label><textarea name="motivatie_lifeguard" rows="4" data-verplicht="3" placeholder="Vertel ons wat je motiveert..."><?= h($blk['motivatie_lifeguard'] ?? '') ?></textarea></div>
-          <div class="form-groep"><label>Wat doe je het liefst op het strand?</label><textarea name="motivatie_strand" rows="2" placeholder="Bijv: zwemmen, volleybal, mensen helpen..."><?= h($blk['motivatie_strand'] ?? '') ?></textarea></div>
-          <div class="stap-nav"><button type="button" class="ds-btn ds-btn-secundair" onclick="gaNaar(2)">Terug</button><button type="button" class="ds-btn ds-btn-primair" onclick="gaNaar(4)">Volgende</button></div>
-        </div>
-
-        <div class="formulier-stap" id="fs4">
-          <div class="sectie-titel">Tot slot</div>
-          <div class="form-groep"><label>Social media <span style="font-weight:400;color:var(--grijs)">(optioneel)</span></label><input type="text" name="social_media" value="<?= h($blk['social_media'] ?? '') ?>" placeholder="@jouwinstagram"></div>
-          <div class="form-groep">
-            <label>Foto van jezelf</label>
-            <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fotoInput').click()">
-              <?php if ($blk['foto_url'] ?? null): ?>
-              <img src="<?= h(foto_url($blk['foto_url'])) ?>" style="height:80px;width:80px;object-fit:cover;border-radius:50%;display:block;margin:0 auto 8px">
-              <p style="font-size:13px;color:var(--grijs)">Klik om te wijzigen</p>
-              <?php else: ?>
-              <div style="font-size:28px;margin-bottom:6px">📸</div>
-              <p style="font-size:13px;color:var(--grijs)">Klik om te uploaden (JPG/PNG/WebP, max 5MB)</p>
-              <?php endif; ?>
-              <input type="file" id="fotoInput" name="foto" accept="image/jpeg,image/png,image/webp">
-            </div>
-          </div>
-          <div class="form-groep"><label>Bijzonderheden, medicatie of allergieën</label><textarea name="bijzonderheden" rows="2" placeholder="Iets wat we moeten weten?"><?= h($blk['bijzonderheden'] ?? '') ?></textarea><div class="form-hulp" style="font-size:12px;color:var(--ink-muted);margin-top:4px">Laat dit veld leeg als er niets bijzonders is. Vul het alleen in als wij ergens rekening mee moeten houden (bijv. een allergie of medicatie).</div></div>
-
-          <!-- Reden voor wijziging — alleen tonen bij bewerken -->
-          <?php if ($blk): ?>
-          <div class="reden-box">
-            <label>Waarom pas je het formulier aan? <span class="vereist">*</span></label>
-            <textarea name="reden_wijziging" rows="2" data-verplicht-edit="5"
-                      placeholder="Bijv: Mijn telefoonnummer is gewijzigd, fout in mijn motivatietekst..."
-                      style="width:100%;margin-top:4px"></textarea>
-            <div class="form-hulp" style="color:var(--amber)">We houden bij wat je aanpast zodat er geen verwarring ontstaat.</div>
-          </div>
-          <?php endif; ?>
-
-          <div class="stap-nav">
-            <button type="button" class="ds-btn ds-btn-secundair" onclick="gaNaar(3)">Terug</button>
-            <button type="submit" class="ds-btn ds-btn-primair">
-              <?= $blk ? "Bijwerken" : "Insturen" ?>
-            </button>
-          </div>
-        </div>
-      </form>
-      </div><!-- /blkFormWrapper -->
-    </div>
   </div>
   <?php endif; ?>
 
@@ -1342,204 +949,6 @@ html[data-theme="dark"] .week-opt input:checked + label strong { color:#fdba74; 
 </main>
 
 <script>
-let huidig = 1;
-function gaNaar(nr) {
-  if (nr > huidig) {
-    const el = document.getElementById('fs' + huidig);
-    for (const f of el.querySelectorAll('[data-verplicht]')) {
-      if (!f.value.trim()) {
-        f.focus();
-        f.style.borderColor='var(--rood)';
-        f.setAttribute('aria-invalid','true');
-        // Zichtbare tekstmelding i.p.v. alleen kleur (WCAG)
-        let melding = el.querySelector('.stap-fout');
-        if (!melding) {
-          melding = document.createElement('div');
-          melding.className = 'stap-fout';
-          melding.setAttribute('role','alert');
-          melding.style.cssText = 'margin-bottom:12px;padding:11px 14px;background:var(--rood-bg);border-left:3px solid var(--rood);border-radius:6px;font-size:13px;color:var(--rood)';
-          el.insertBefore(melding, el.firstChild.nextSibling);
-        }
-        const lbl = f.closest('.form-groep')?.querySelector('label')?.textContent.replace('*','').trim() || 'een verplicht veld';
-        melding.textContent = '⚠️ Vul eerst "' + lbl + '" in voordat je verdergaat.';
-        melding.scrollIntoView({behavior:'smooth', block:'center'});
-        setTimeout(()=>{ f.style.borderColor=''; f.removeAttribute('aria-invalid'); }, 4000);
-        return;
-      }
-    }
-    // Alles ingevuld → wis eventuele foutmelding van deze stap
-    const oudeFout = el.querySelector('.stap-fout'); if (oudeFout) oudeFout.remove();
-  }
-  document.querySelectorAll('.formulier-stap').forEach(e=>e.classList.remove('zichtbaar'));
-  document.getElementById('fs'+nr).classList.add('zichtbaar');
-  document.querySelectorAll('.si').forEach((e,i)=>{
-    e.classList.remove('actief','klaar');
-    if(i+1<nr) e.classList.add('klaar');
-    else if(i+1===nr) e.classList.add('actief');
-  });
-  huidig = nr;
-  const top = document.querySelector('.card-body');
-  if (top) window.scrollTo({top: top.offsetTop - 20, behavior:'smooth'});
-}
-
-document.getElementById('fotoInput')?.addEventListener('change', function() {
-  if (!this.files[0]) return;
-  const r = new FileReader();
-  r.onload = e => {
-    // BELANGRIJK: behoud de file input, vervang alleen de preview-elementen!
-    const zone = document.getElementById('uploadZone');
-    // Verwijder alle elementen behalve de input zelf
-    Array.from(zone.children).forEach(el => { if (el.tagName !== 'INPUT') el.remove(); });
-    // Voeg preview toe vóór de input
-    const wrap = document.createElement('div');
-    wrap.innerHTML = '<img src="'+e.target.result+'" style="height:90px;width:90px;object-fit:cover;border-radius:50%;display:block;margin:0 auto 8px"><p style="font-size:13px;color:var(--tekst-zacht)">✓ Foto geselecteerd — klik om te wijzigen</p>';
-    zone.insertBefore(wrap, zone.querySelector('input'));
-  };
-  r.readAsDataURL(this.files[0]);
-});
-
-/* ── Adres validatie via PDOK ─────────────────────────────────── */
-(function() {
-  const pc = document.getElementById('adr-pc');
-  const hn = document.getElementById('adr-hn');
-  const st = document.getElementById('adr-st');
-  const wp = document.getElementById('adr-wp');
-  const status = document.getElementById('adr-status');
-  if (!pc || !hn) return;
-
-  let timer;
-  function valideer() {
-    const pcVal = pc.value.replace(/\s+/g,'').toUpperCase();
-    if (!/^[0-9]{4}[A-Z]{2}$/.test(pcVal) || !hn.value.trim()) {
-      status.textContent = '';
-      return;
-    }
-    status.textContent = 'Adres opzoeken…';
-    status.style.color = 'var(--grijs)';
-    fetch('<?= APP_URL ?>/portaal/api_adres.php?postcode=' + encodeURIComponent(pcVal) + '&huisnummer=' + encodeURIComponent(hn.value.trim()))
-      .then(r => r.json())
-      .then(d => {
-        if (d.ok) {
-          // Alleen overschrijven als leeg of als de gebruiker niet recent heeft getypt
-          if (!st.dataset.touched) st.value = d.straat;
-          if (!wp.dataset.touched) wp.value = d.woonplaats;
-          pc.value = d.postcode;
-          status.textContent = '✓ ' + d.straat + ', ' + d.woonplaats;
-          status.style.color = 'var(--groen)';
-        } else {
-          status.textContent = '⚠ ' + (d.fout || 'Adres niet gevonden — vul handmatig in');
-          status.style.color = '#e55a25';
-        }
-      })
-      .catch(() => {
-        status.textContent = '⚠ Kon adres niet automatisch ophalen';
-        status.style.color = '#e55a25';
-      });
-  }
-
-  function debouncedValideer() { clearTimeout(timer); timer = setTimeout(valideer, 400); }
-
-  pc.addEventListener('input', debouncedValideer);
-  hn.addEventListener('input', debouncedValideer);
-  st.addEventListener('input', () => st.dataset.touched = '1');
-  wp.addEventListener('input', () => wp.dataset.touched = '1');
-})();
-</script>
-<script>
-
-/* ── Autosave concept (punt 14): tekstvelden tussentijds bewaren ── */
-(function() {
-  const form = document.getElementById('blkForm');
-  if (!form) return;
-  const csrf = form.querySelector('[name="_csrf"]')?.value || '';
-  const tekstVelden = ['postcode','huisnummer','straat','woonplaats','opleiding','werkervaring','motivatie_lifeguard','motivatie_strand','diplomas','beschikbaarheid_uitzonderingen','social_media','bijzonderheden'];
-  let timer = null, laatstGehashed = '';
-
-  function verzamel() {
-    const data = new URLSearchParams();
-    data.append('_csrf', csrf);
-    let iets = false;
-    tekstVelden.forEach(naam => {
-      const el = form.querySelector('[name="' + naam + '"]');
-      if (el && el.value.trim()) { data.append(naam, el.value); iets = true; }
-    });
-    return iets ? data : null;
-  }
-
-  function toonStatus(tekst, kleur) {
-    let ind = document.getElementById('blkAutosaveStatus');
-    if (!ind) return;
-    ind.textContent = tekst;
-    ind.style.color = kleur || 'var(--grijs)';
-    ind.style.opacity = '1';
-    if (tekst.startsWith('✓')) {
-      clearTimeout(ind._fade);
-      ind._fade = setTimeout(() => { ind.style.opacity = '0.5'; }, 3000);
-    }
-  }
-
-  function bewaar(sync) {
-    const data = verzamel();
-    if (!data) return;
-    const hash = data.toString();
-    if (hash === laatstGehashed) return; // niks veranderd
-    laatstGehashed = hash;
-    const url = '<?= APP_URL ?>/portaal/api_blk_concept.php';
-    if (sync && navigator.sendBeacon) {
-      navigator.sendBeacon(url, data);
-    } else {
-      toonStatus('Bezig met opslaan…', 'var(--grijs)');
-      fetch(url, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:data.toString() })
-        .then(r => r.json())
-        .then(d => { if (d.ok) toonStatus('✓ Concept opgeslagen' + (d.tijd ? ' om ' + d.tijd : ''), 'var(--groen)'); else toonStatus('Kon concept niet opslaan', 'var(--oranje)'); })
-        .catch(() => toonStatus('Kon concept niet opslaan', 'var(--oranje)'));
-    }
-  }
-
-  // Debounced autosave bij typen
-  form.addEventListener('input', function(e) {
-    if (!tekstVelden.includes(e.target.name)) return;
-    clearTimeout(timer);
-    timer = setTimeout(() => bewaar(false), 2500);
-  });
-  // Direct opslaan bij stapwissel (knoppen die gaNaar aanroepen)
-  form.addEventListener('click', function(e) {
-    if (e.target.closest('.stap-nav button')) setTimeout(() => bewaar(false), 50);
-  });
-  // Laatste redmiddel: bij verlaten van de pagina
-  window.addEventListener('pagehide', () => bewaar(true));
-})();
-
-/* ── BLK kaart open/dicht ────────────────────────────────── */
-function blkToggle() {
-  const b = document.getElementById('blkBody');
-  const btn = document.getElementById('blkToggleBtn');
-  if (!b) return;
-  const open = b.style.display !== 'none';
-  b.style.display = open ? 'none' : '';
-  if (btn) btn.textContent = open ? btn.textContent.replace('↑','↓') : btn.textContent.replace('↓','↑');
-}
-// Taak-link "#blk" opent de kaart en scrollt ernaartoe
-if (location.hash === '#blk') {
-  const k = document.getElementById('blk');
-  if (k) k.style.display = '';
-  const b = document.getElementById('blkBody');
-  if (b) { b.style.display = ''; }
-  const btn = document.getElementById('blkToggleBtn');
-  if (btn) btn.textContent = btn.textContent.replace('↓','↑');
-  setTimeout(() => { if (k) k.scrollIntoView({behavior:'smooth'}); }, 50);
-}
-document.querySelectorAll('a[href="#blk"]').forEach(a => {
-  a.addEventListener('click', () => {
-    const k = document.getElementById('blk');
-    if (k) k.style.display = '';
-    const b = document.getElementById('blkBody');
-    if (b) b.style.display = '';
-    const btn = document.getElementById('blkToggleBtn');
-    if (btn) btn.textContent = btn.textContent.replace('↓','↑');
-    setTimeout(() => { if (k) k.scrollIntoView({behavior:'smooth'}); }, 50);
-  });
-});
 
 /* ── Loading states ──────────────────────────────────────── */
 // Alle form-submits: knop → spinner, voorkom dubbel klikken
@@ -1575,44 +984,6 @@ function ouderValideer(form) {
   return true;
 }
 
-// BLK-validatie bij submit: loopt alle verplichte velden langs, navigeert naar de
-// eerste onvolledige stap en toont daar de fout. Velden gebruiken data-verplicht
-// i.p.v. required, zodat verborgen stappen de submit niet stil blokkeren.
-function blkValideer(form) {
-  for (const f of form.querySelectorAll('[data-verplicht]')) {
-    if (!f.value.trim()) {
-      const stap = parseInt(f.getAttribute('data-verplicht')) || 1;
-      if (typeof gaNaar === 'function') gaNaar(stap);
-      setTimeout(() => {
-        f.focus();
-        f.style.borderColor = 'var(--rood)';
-        f.setAttribute('aria-invalid','true');
-        const lbl = f.closest('.form-groep')?.querySelector('label')?.textContent.replace('*','').trim()
-                  || f.getAttribute('placeholder') || 'een verplicht veld';
-        const el = document.getElementById('fs' + stap);
-        let melding = el?.querySelector('.stap-fout');
-        if (el && !melding) {
-          melding = document.createElement('div');
-          melding.className = 'stap-fout';
-          melding.setAttribute('role','alert');
-          melding.style.cssText = 'margin-bottom:12px;padding:11px 14px;background:var(--rood-bg);border-left:3px solid var(--rood);border-radius:6px;font-size:13px;color:var(--rood)';
-          el.insertBefore(melding, el.firstChild.nextSibling);
-        }
-        if (melding) { melding.textContent = '⚠️ Vul eerst "' + lbl + '" in.'; melding.scrollIntoView({behavior:'smooth', block:'center'}); }
-        setTimeout(()=>{ f.style.borderColor=''; f.removeAttribute('aria-invalid'); }, 4000);
-      }, 60);
-      return false;
-    }
-  }
-  const reden = form.querySelector('[data-verplicht-edit]');
-  if (reden && reden.offsetParent !== null && !reden.value.trim()) {
-    const stap = parseInt(reden.getAttribute('data-verplicht-edit')) || 5;
-    if (typeof gaNaar === 'function') gaNaar(stap);
-    setTimeout(() => { reden.focus(); reden.style.borderColor = 'var(--rood)'; }, 60);
-    return false;
-  }
-  return portaalSubmit(form);
-}
 // Automatisch op alle forms zonder expliciete handler
 document.querySelectorAll('form').forEach(f => {
   if (!f.hasAttribute('onsubmit')) {

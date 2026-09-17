@@ -82,7 +82,7 @@ require __DIR__ . '/_kop.php';
     <div class="bk-card" style="text-align:center;padding:32px 20px">
       <div style="margin-bottom:8px;color:var(--navy)"><?= icoon("lijst", 30) ?></div>
       <p style="font-size:14px;margin-bottom:16px">Je hebt nog geen beschikbaarheid doorgegeven.</p>
-      <a href="<?= APP_URL ?>/portaal/#blk" class="ds-btn ds-btn-primair">Beschikbaarheid invullen</a>
+      <a href="<?= APP_URL ?>/portaal/beschikbaarheid_invullen.php" class="ds-btn ds-btn-primair">Beschikbaarheid invullen</a>
     </div>
   <?php else: ?>
 
@@ -183,7 +183,7 @@ require __DIR__ . '/_kop.php';
 
     <!-- Acties -->
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px">
-      <a href="<?= APP_URL ?>/portaal/#blk" class="ds-btn ds-btn-secundair" style="flex:1;min-width:140px"><?= icoon("potlood", 16) ?> Aanpassen</a>
+      <a href="<?= APP_URL ?>/portaal/beschikbaarheid_invullen.php" class="ds-btn ds-btn-secundair" style="flex:1;min-width:140px"><?= icoon("potlood", 16) ?> Aanpassen</a>
       <?php if ($voorlopig): ?>
       <form method="POST" style="flex:1;min-width:140px;margin:0">
         <?= csrf_input() ?>
