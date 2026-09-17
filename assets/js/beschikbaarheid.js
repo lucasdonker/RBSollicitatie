@@ -21,6 +21,14 @@
     }
     return html;
   }
+  function weekOptiesNr(gekozen) {
+    let html = '';
+    for (const wk in CFG.weken) {
+      const sel = (String(wk) === String(gekozen)) ? ' selected' : '';
+      html += '<option value="' + wk + '"' + sel + '>' + wk + '</option>';
+    }
+    return html;
+  }
   function xBtn() {
     return '<button type="button" class="besch-x" onclick="this.closest(\'.besch-rij\').remove(); beschHerbereken()" aria-label="Verwijderen">' +
       '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>';
@@ -103,18 +111,24 @@
   };
 
   /* Sectie 2: Afwezig */
+  function wisBtn() {
+    return '<button type="button" class="bs-item-wis" onclick="this.closest(\'.besch-rij\').remove(); beschHerbereken()" aria-label="Verwijderen">' +
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>';
+  }
+
   function afwezigRij(data) {
     data = data || {};
     const div = document.createElement('div');
-    div.className = 'besch-rij besch-afwezig';
+    div.className = 'besch-rij besch-afwezig bs-item-rij';
     div.innerHTML =
-      '<div class="besch-rij-hoofd">' +
-        '<input type="date" name="b2_afw_van[]" value="' + esc(data.van_datum || data.van || '') + '" onchange="beschHerbereken()" aria-label="Van datum">' +
-        '<span class="besch-lbl">t/m</span>' +
-        '<input type="date" name="b2_afw_tot[]" value="' + esc(data.tot_datum || data.tot || '') + '" onchange="beschHerbereken()" aria-label="Tot datum">' +
-        xBtn() +
-      '</div>' +
-      '<input type="text" name="b2_afw_label[]" value="' + esc(data.label || '') + '" placeholder="reden (bijv. vakantie)" class="besch-breed" onchange="beschHerbereken()">';
+      '<div class="bs-item-tekst">' +
+        '<div class="bs-item-datums">' +
+          '<input type="date" name="b2_afw_van[]" value="' + esc(data.van_datum || data.van || '') + '" onchange="beschHerbereken()" aria-label="Van">' +
+          '<span>t/m</span>' +
+          '<input type="date" name="b2_afw_tot[]" value="' + esc(data.tot_datum || data.tot || '') + '" onchange="beschHerbereken()" aria-label="Tot">' +
+        '</div>' +
+        '<input type="text" name="b2_afw_label[]" value="' + esc(data.label || '') + '" placeholder="reden (bijv. vakantie)" class="bs-invoer" style="margin-top:8px" onchange="beschHerbereken()">' +
+      '</div>' + wisBtn();
     return div;
   }
   window.beschAfwezigToevoegen = function (data) { el('beschAfwezig').appendChild(afwezigRij(data)); beschHerbereken(); };
@@ -124,17 +138,18 @@
     data = data || {};
     const soort = data.soort === 'voorkeur_vrij' ? 'voorkeur_vrij' : 'niet_beschikbaar';
     const div = document.createElement('div');
-    div.className = 'besch-rij besch-losdag';
+    div.className = 'besch-rij besch-losdag bs-item-rij';
     div.innerHTML =
-      '<div class="besch-rij-hoofd">' +
-        '<input type="date" name="b2_dag_datum[]" value="' + esc(data.datum || '') + '" onchange="beschHerbereken()" aria-label="Datum">' +
-        '<select name="b2_dag_soort[]" onchange="beschHerbereken()">' +
-          '<option value="niet_beschikbaar"' + (soort === 'niet_beschikbaar' ? ' selected' : '') + '>kan ik niet</option>' +
-          '<option value="voorkeur_vrij"' + (soort === 'voorkeur_vrij' ? ' selected' : '') + '>liever vrij</option>' +
-        '</select>' +
-        xBtn() +
-      '</div>' +
-      '<input type="text" name="b2_dag_reden[]" value="' + esc(data.reden || '') + '" placeholder="reden (optioneel)" class="besch-breed" onchange="beschHerbereken()">';
+      '<div class="bs-item-tekst">' +
+        '<div class="bs-item-datums">' +
+          '<input type="date" name="b2_dag_datum[]" value="' + esc(data.datum || '') + '" onchange="beschHerbereken()" aria-label="Datum">' +
+          '<select name="b2_dag_soort[]" class="bs-mini-select" onchange="beschHerbereken()">' +
+            '<option value="niet_beschikbaar"' + (soort === 'niet_beschikbaar' ? ' selected' : '') + '>kan niet</option>' +
+            '<option value="voorkeur_vrij"' + (soort === 'voorkeur_vrij' ? ' selected' : '') + '>liever vrij</option>' +
+          '</select>' +
+        '</div>' +
+        '<input type="text" name="b2_dag_reden[]" value="' + esc(data.reden || '') + '" placeholder="reden (optioneel)" class="bs-invoer" style="margin-top:8px" onchange="beschHerbereken()">' +
+      '</div>' + wisBtn();
     return div;
   }
   window.beschLosseDagToevoegen = function (data) { el('beschLosseDagen').appendChild(losseDagRij(data)); beschHerbereken(); };
@@ -143,27 +158,21 @@
   function verzoekRij(data) {
     data = data || {};
     const div = document.createElement('div');
-    div.className = 'besch-rij besch-verzoek';
-    const pool = (data.dagen_pool || data.pool || []).map(String);
+    div.className = 'besch-rij besch-verzoek bs-item-rij';
     div.innerHTML =
-      '<div class="besch-rij-hoofd">' +
-        '<span class="besch-lbl">van</span>' +
-        '<select name="b2_vz_van[]" onchange="beschHerbereken()">' + weekOpties(data.van_week || CFG.eerste) + '</select>' +
-        '<span class="besch-lbl">t/m</span>' +
-        '<select name="b2_vz_tot[]" onchange="beschHerbereken()">' + weekOpties(data.tot_week || CFG.laatste) + '</select>' +
-        '<input type="number" name="b2_vz_dagen[]" min="1" max="6" value="' + esc(data.dagen_aantal || data.dagen || '') + '" placeholder="dagen" class="besch-getal" onchange="beschHerbereken()" aria-label="Aantal dagen">' +
-        '<span class="besch-lbl">dagen</span>' +
-        xBtn() +
-      '</div>' +
-      '<div class="besch-pooldagen">' +
-        '<span class="besch-lbl">welke dagen kun je wél? (optioneel)</span>' +
-        [1, 2, 3, 4, 5, 6, 7].map(function (d) {
-          const aan = pool.includes(String(d));
-          return '<label class="besch-dagpil"><input type="checkbox" class="besch-pooldag" value="' + d + '"' + (aan ? ' checked' : '') + ' onchange="beschPoolSync(this); beschHerbereken()"> ' + DAGEN_KORT[d] + '</label>';
-        }).join('') +
+      '<div class="bs-item-tekst">' +
+        '<div class="bs-item-datums">' +
+          '<span class="bs-lbl-mini">week</span>' +
+          '<select name="b2_vz_van[]" class="bs-mini-select" onchange="beschHerbereken()">' + weekOptiesNr(data.van_week || CFG.eerste) + '</select>' +
+          '<span>t/m</span>' +
+          '<select name="b2_vz_tot[]" class="bs-mini-select" onchange="beschHerbereken()">' + weekOptiesNr(data.tot_week || CFG.laatste) + '</select>' +
+          '<span>max</span>' +
+          '<input type="number" name="b2_vz_dagen[]" min="1" max="6" value="' + esc(data.dagen_aantal || data.dagen || '') + '" class="bs-mini-getal" onchange="beschHerbereken()" aria-label="dagen">' +
+          '<span>dgn</span>' +
+        '</div>' +
+        '<input type="text" name="b2_vz_toelichting[]" value="' + esc(data.toelichting || '') + '" placeholder="reden (bijv. school)" class="bs-invoer" style="margin-top:8px" onchange="beschHerbereken()">' +
         '<input type="hidden" name="b2_vz_pool[]" value="' + esc(JSON.stringify((data.dagen_pool || data.pool || []))) + '">' +
-      '</div>' +
-      '<input type="text" name="b2_vz_toelichting[]" value="' + esc(data.toelichting || '') + '" placeholder="reden (bijv. school)" class="besch-breed" onchange="beschHerbereken()">';
+      '</div>' + wisBtn();
     return div;
   }
   window.beschVerzoekToevoegen = function (data) { el('beschVerzoeken').appendChild(verzoekRij(data)); beschHerbereken(); };
@@ -217,10 +226,24 @@
     const doel = el('beschPreview');
     if (!doel) return;
     if (regels.length) {
-      doel.innerHTML = '<ul class="besch-preview-lijst">' + regels.map(function (r) { return '<li>' + esc(r) + '</li>'; }).join('') + '</ul>';
+      doel.textContent = regels.join('. ') + '.';
     } else {
-      doel.innerHTML = '<p class="besch-preview-leeg">Vul hierboven je beschikbaarheid in — hier verschijnt dan een samenvatting.</p>';
+      doel.textContent = 'Vul hieronder je beschikbaarheid in.';
     }
+  };
+
+  /* Vaste vrije dag aan/uit (pil-toggle) */
+  window.beschVasteToggle = function (cb) {
+    const lbl = cb.closest('.bs-dagpil');
+    if (lbl) lbl.classList.toggle('actief', cb.checked);
+    // Hint bijwerken
+    const hint = el('beschVasteHint');
+    if (hint) {
+      const namen = { 1:'ma', 2:'di', 3:'wo', 4:'do', 5:'vr' };
+      const gekozen = Array.from(document.querySelectorAll('.besch-vastedag:checked')).map(function (c) { return namen[c.value]; });
+      hint.textContent = gekozen.length ? 'Elke ' + gekozen.join(', ') : 'Geen';
+    }
+    beschHerbereken();
   };
 
   /* AI-hulp */

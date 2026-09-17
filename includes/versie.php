@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.81.0');
+define('APP_VERSIE', '2.82.0');
 
 function app_changelog(): array {
     return [
+        '2.82.0' => [
+            'datum'  => '2026-09-11',
+            'titel'  => 'Beschikbaarheidsformulier exact volgens het ontwerp',
+            'punten' => [
+                'Het hele beschikbaarheidsformulier is nu exact zoals het Claude Design-ontwerp: de navy samenvatting bovenaan, de werkperiode-kaart, en de uitzonderingen netjes gegroepeerd',
+                'Vaste vrije dag met dag-knoppen (maandag t/m zondag, weekenden uitgeschakeld)',
+                'Uitzonderingen, minder-dagen-verzoeken en losse dagen als nette rijen met toevoeg-knoppen',
+            ],
+        ],
         '2.81.0' => [
             'datum'  => '2026-09-11',
             'titel'  => 'Beschikbaarheid: periode-kaart exact volgens het ontwerp',

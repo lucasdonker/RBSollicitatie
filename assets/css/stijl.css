@@ -1724,3 +1724,87 @@ details.besch-uitz[open] .besch-chev { transform: rotate(90deg); }
 }
 .besch-dagpil input { display: none; }
 .besch-dagpil.actief { border-color: #054d8a; background: #054d8a; color: #fff; font-weight: 700; }
+
+/* ═══ BESCHIKBAARHEID SECTIES (exact volgens Portaal.dc 4b) ═══ */
+/* Jouw samenvatting (navy, bovenaan) */
+.bs-samenvatting {
+  background: #054d8a; border-radius: 14px; padding: 16px;
+  display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px;
+}
+.bs-samenvatting-lbl { font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: #a9c8e2; }
+.bs-samenvatting-tekst { font-size: 15px; line-height: 1.6; color: #fff; }
+
+/* Wanneer kun je werken? kaart */
+.bs-kaart {
+  background: #fff; border: 1px solid #e6e9ef; border-radius: 14px; padding: 18px;
+  display: flex; flex-direction: column; gap: 16px; margin-bottom: 14px;
+}
+.bs-kaart-kop { display: flex; flex-direction: column; gap: 3px; }
+.bs-kaart-titel { font-size: 19px; font-weight: 600; letter-spacing: -.01em; color: var(--ink); }
+.bs-kaart-sub { font-size: 13px; line-height: 1.5; color: #8a93a6; }
+.bs-toevoeg-knop {
+  height: 44px; border: 1px dashed #cdd4e0; border-radius: 10px; background: #fff;
+  color: #054d8a; font: 600 14px 'Instrument Sans', sans-serif; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.bs-toevoeg-knop:hover { background: #f4f6f9; }
+
+/* Sectie-label */
+.bs-sectie-lbl {
+  display: block; font-size: 11px; font-weight: 600; letter-spacing: .12em;
+  text-transform: uppercase; color: #8a93a6; padding: 4px 2px 0; margin-bottom: 8px;
+}
+
+/* Uitzonderingen-kaart met sub-secties */
+.bs-uitz-kaart {
+  background: #fff; border: 1px solid #e6e9ef; border-radius: 14px; padding: 6px;
+  display: flex; flex-direction: column; margin-bottom: 16px;
+}
+.bs-uitz-sec { padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+.bs-uitz-kop { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.bs-uitz-titel { font-size: 15px; font-weight: 600; color: var(--ink); }
+.bs-uitz-hint { font-size: 13px; color: #8a93a6; }
+.bs-uitz-toevoeg { background: none; border: none; font-size: 13px; font-weight: 600; color: #054d8a; cursor: pointer; padding: 0; }
+.bs-uitz-uitleg { font-size: 13px; line-height: 1.55; color: #8a93a6; }
+.bs-uitz-lijn { height: 1px; background: #e6e9ef; margin: 0 14px; }
+
+/* Vaste-dag-pillen (7 dagen ma-zo) */
+.bs-dagpillen { display: flex; gap: 6px; }
+.bs-dagpil {
+  flex: 1; height: 44px; border: 1px solid #cdd4e0; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 600; color: #5a6478; cursor: pointer;
+}
+.bs-dagpil input { display: none; }
+.bs-dagpil.actief { border-color: #054d8a; background: #054d8a; color: #fff; font-weight: 700; }
+.bs-dagpil.weekend { background: #f4f6f9; border-color: #e6e9ef; color: #8a93a6; cursor: not-allowed; }
+
+/* Item-rijen (afwezig/losse/verzoek) — grijze rij met verwijder-knop */
+.bs-item-rij {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 12px 14px; background: #f4f6f9; border-radius: 10px;
+  border: none !important; margin-bottom: 8px;
+}
+.bs-item-tekst { flex: 1; min-width: 0; }
+.bs-item-datums { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; color: #5a6478; }
+.bs-item-datums input[type="date"], .bs-mini-select, .bs-mini-getal {
+  height: 38px; border: 1px solid #cdd4e0; border-radius: 8px; padding: 0 8px;
+  font-size: 14px; background: #fff; color: var(--ink);
+}
+.bs-mini-getal { width: 52px; text-align: center; }
+.bs-mini-select { appearance: none; -webkit-appearance: none; padding-right: 8px; }
+.bs-lbl-mini { font-size: 13px; color: #5a6478; }
+.bs-item-wis { background: none; border: none; color: #8a93a6; cursor: pointer; padding: 4px; flex: none; display: flex; }
+.bs-item-wis:hover { color: var(--error); }
+.bs-invoer {
+  width: 100%; box-sizing: border-box; height: 40px; padding: 0 12px;
+  border: 1px solid #cdd4e0; border-radius: 8px; font-size: 14px; background: #fff; color: var(--ink);
+}
+
+/* Voorlopig-vinkje */
+.bs-voorlopig {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: #fff8ec; border: 1px solid #ecd9a8; border-radius: 12px; padding: 12px 14px;
+  font-size: 14px; color: var(--ink); margin-top: 4px;
+}
+.bs-voorlopig input { accent-color: #054d8a; margin-top: 2px; }
