@@ -20,6 +20,13 @@ $portaal_geen_nav    = $portaal_geen_nav ?? false;
 $portaal_geen_topbar = $portaal_geen_topbar ?? false;
 $_fav = function_exists('site_favicon_url') ? site_favicon_url() : '';
 $_heeft_nav = !$portaal_geen_nav && function_exists('portaal_ingelogd') && portaal_ingelogd();
+// Status-chip in de desktop-paginakop: fase van de ingelogde sollicitant (pagina mag hem zelf zetten)
+if ($_heeft_nav && empty($portaal_status_fase) && function_exists('portaal_sollicitant_laden')) {
+    $_ps = portaal_sollicitant_laden((int)$_SESSION['portaal_sol_id']);
+    $portaal_status_fase = $_ps['fase'] ?? '';
+}
+$portaal_status_fase = $portaal_status_fase ?? '';
+$_chip_kleur = match ($portaal_status_fase) { 'aangenomen' => 'ok', 'afgewezen' => 'error', 'aangemeld' => 'navy', default => 'accent' };
 ?><!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -47,6 +54,20 @@ $_heeft_nav = !$portaal_geen_nav && function_exists('portaal_ingelogd') && porta
       <a href="<?= APP_URL ?>/portaal/?uitloggen=1" class="pt-topbar-actie" aria-label="Uitloggen"><?= icoon('uitloggen', 20) ?></a>
     <?php endif; ?>
   </header>
+<?php endif; ?>
+
+<?php if ($_heeft_nav): ?>
+  <!-- Desktop-paginakop (ontwerp: witte balk met titel, status-chip en icoonknop; op mobiel verborgen) -->
+  <div class="pt-paginakop">
+    <?php if ($portaal_terug): ?><a href="<?= h($portaal_terug) ?>" class="pt-paginakop-knop" aria-label="Terug"><?= icoon('terug', 18) ?></a><?php endif; ?>
+    <span class="pt-paginakop-titel"><?= h($portaal_titel) ?></span>
+    <div class="pt-paginakop-acties">
+      <?php if ($portaal_status_fase !== ''): ?>
+        <span class="pt-paginakop-chip <?= $_chip_kleur ?>"><span class="pt-paginakop-stip"></span><?= h(fase_label($portaal_status_fase)) ?></span>
+      <?php endif; ?>
+      <a href="<?= APP_URL ?>/portaal/?uitloggen=1" class="pt-paginakop-knop" aria-label="Uitloggen"><?= icoon('uitloggen', 18) ?></a>
+    </div>
+  </div>
 <?php endif; ?>
 
   <!-- Pagina-inhoud -->

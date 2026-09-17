@@ -17,6 +17,7 @@
  *   volgorde    int      sorteersleutel binnen open/afgerond
  *   inline_form ?string  'ouder' → de rij toont het ouderformulier
  *   inline_data array    gegevens voor het inline formulier
+ *   wacht       bool     open, maar een ander is aan zet (ouder tekent); telt niet als "open"
  *
  * Geen HTML hier; de partials portaal/_taakrij.php en _takenlijst.php renderen.
  */
@@ -42,7 +43,7 @@ function portaal_taken(array $sol, ?array $blk = null): array {
     $taken  = [];
     $std    = ['sub' => '', 'done' => false, 'done_op' => null, 'url' => null, 'icoon' => 'document',
                'kleur' => 'accent', 'actie_label' => null, 'urgent' => false, 'volgorde' => 50,
-               'inline_form' => null, 'inline_data' => []];
+               'inline_form' => null, 'inline_data' => [], 'wacht' => false];
 
     // 1) Ouder/verzorger-gegevens (minderjarig in de selectiedag-fases, of documenten die op
     //    een ouder wachten zonder e-mailadres).
@@ -115,6 +116,7 @@ function portaal_taken(array $sol, ?array $blk = null): array {
             'kleur'    => $d['klaar'] ? 'ok' : 'navy',
             'urgent'   => false,
             'volgorde' => 25,
+            'wacht'    => !$d['klaar'],   // niet de sollicitant maar de ouder is aan zet
         ]);
     }
 
@@ -213,9 +215,14 @@ function portaal_taken(array $sol, ?array $blk = null): array {
     return $taken;
 }
 
-/** Alleen de open taken. */
+/** Alleen de open taken waar de sollicitant zelf iets mee moet (niet: wachten op een ander). */
 function portaal_taken_open(array $taken): array {
-    return array_values(array_filter($taken, fn($t) => empty($t['done'])));
+    return array_values(array_filter($taken, fn($t) => empty($t['done']) && empty($t['wacht'])));
+}
+
+/** Open taken waarbij een ander (ouder/verzorger) aan zet is. */
+function portaal_taken_wachtend(array $taken): array {
+    return array_values(array_filter($taken, fn($t) => empty($t['done']) && !empty($t['wacht'])));
 }
 
 /** Alleen de afgeronde taken. */

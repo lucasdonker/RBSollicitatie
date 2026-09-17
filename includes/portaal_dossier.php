@@ -85,9 +85,11 @@ function portaal_naam(array $sol): string {
 
 /** Initialen (max 2) voor het gebruikersblok in de zijbalk. */
 function portaal_initialen(array $sol): string {
-    $v = mb_substr(trim($sol['voornaam'] ?? ''), 0, 1);
-    $a = mb_substr(trim($sol['achternaam'] ?? ''), 0, 1);
-    return mb_strtoupper($v . $a) ?: '?';
+    $eerste = function (string $s): string { return preg_match('/^\s*(\S)/u', $s, $m) ? $m[1] : ''; };
+    $v = $eerste($sol['voornaam'] ?? '');
+    $a = $eerste($sol['achternaam'] ?? '');
+    $ini = function_exists('mb_strtoupper') ? mb_strtoupper($v . $a, 'UTF-8') : strtoupper($v . $a);
+    return $ini !== '' ? $ini : '?';
 }
 
 /**

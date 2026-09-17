@@ -1468,6 +1468,10 @@ a.pt-taakrij:hover { background: var(--bg); }
 .pt-afgewezen p a { color: var(--navy); font-weight: 600; text-decoration: none; }
 .pt-afgewezen-scheiding { height: 1px; background: var(--border); }
 
+/* Desktop-paginakop (witte balk boven de content) en gebruikersblok in de zijbalk: alleen ≥860px */
+.pt-paginakop { display: none; }
+.pt-nav-gebruiker { display: none; }
+
 /* Paginatitel met teller rechts (Taken-tab) */
 .pt-paginatitel { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
 .pt-paginatitel h1 { font: var(--text-title); color: var(--ink); margin: 0; }
@@ -1502,6 +1506,46 @@ a.pt-taakrij:hover { background: var(--bg); }
     border: 1px solid var(--border-strong); background: var(--surface); color: var(--navy);
   }
   .pt-takenlijst.knoppen .pt-taakrij-knop.primair { background: var(--accent); color: #fff; border-color: transparent; }
+
+  /* Paginakop: titel links, status-chip + icoonknop rechts (ontwerp: p16/28, rand onder) */
+  .pt-paginakop {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    margin-left: 250px; padding: 16px 28px;
+    background: var(--surface); border-bottom: 1px solid var(--border);
+  }
+  .pt-paginakop-titel { font-size: 17px; font-weight: 600; color: var(--ink); flex: 1; min-width: 0; }
+  .pt-paginakop-acties { display: flex; align-items: center; gap: 10px; flex: none; }
+  .pt-paginakop-chip {
+    display: inline-flex; align-items: center; gap: 7px; height: 28px; padding: 0 12px; border-radius: 8px;
+    font-size: 13px; font-weight: 600; background: var(--accent-soft); color: #a83100;
+  }
+  .pt-paginakop-stip { width: 6px; height: 6px; border-radius: 3px; background: var(--accent); }
+  .pt-paginakop-chip.ok { background: var(--ok-soft); color: #1a6b36; }
+  .pt-paginakop-chip.ok .pt-paginakop-stip { background: var(--ok); }
+  .pt-paginakop-chip.error { background: var(--error-soft); color: var(--error); }
+  .pt-paginakop-chip.error .pt-paginakop-stip { background: var(--error); }
+  .pt-paginakop-chip.navy { background: #e8f0f8; color: var(--navy); }
+  .pt-paginakop-chip.navy .pt-paginakop-stip { background: var(--navy); }
+  .pt-paginakop-knop {
+    width: 36px; height: 36px; border: 1px solid var(--border-strong); border-radius: 10px;
+    display: flex; align-items: center; justify-content: center; color: var(--ink-soft); text-decoration: none; flex: none;
+  }
+  .pt-paginakop-knop:hover { border-color: var(--navy); color: var(--navy); }
+
+  /* Gebruikersblok onderin de zijbalk */
+  .pt-nav-gebruiker {
+    margin-top: auto; padding: 12px; border-radius: 10px; background: rgba(255,255,255,.08);
+    display: flex; align-items: center; gap: 10px; width: 100%; box-sizing: border-box;
+  }
+  .pt-nav-initialen {
+    width: 30px; height: 30px; border-radius: 15px; background: #fff; color: var(--navy);
+    font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex: none;
+  }
+  .pt-nav-gebruiker-tekst { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+  .pt-nav-gebruiker-naam { font-size: 13px; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pt-nav-gebruiker-sub { font-size: 11px; color: #a9c8e2; }
+  .pt-nav-uitloggen { color: #c8dcec; display: flex; flex: none; padding: 4px; border-radius: 6px; }
+  .pt-nav-uitloggen:hover { background: rgba(255,255,255,.12); color: #fff; }
 }
 
 /* ── Portaal: voetlinks (uitloggen, naar beheer, site) ───────────── */

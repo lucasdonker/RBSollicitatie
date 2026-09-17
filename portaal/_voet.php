@@ -36,6 +36,18 @@ $_open = isset($portaal_open_taken) ? (int)$portaal_open_taken
         <?= icoon('persoon', 22) ?><span>Gegevens</span>
       </a>
     </div>
+    <?php // Gebruikersblok onderin de desktop-zijbalk (ontwerp): initialen, naam, stap, uitloggen
+      $_gs = function_exists('portaal_sollicitant_laden') ? portaal_sollicitant_laden((int)$_SESSION['portaal_sol_id']) : null;
+      if ($_gs): $_gv = portaal_voortgang($_gs['fase'] ?? ''); ?>
+    <div class="pt-nav-gebruiker">
+      <span class="pt-nav-initialen"><?= h(portaal_initialen($_gs)) ?></span>
+      <div class="pt-nav-gebruiker-tekst">
+        <span class="pt-nav-gebruiker-naam"><?= h(portaal_naam($_gs)) ?></span>
+        <span class="pt-nav-gebruiker-sub"><?= $_gv ? 'Stap ' . (int)$_gv['stap'] . ' van ' . (int)$_gv['totaal'] : h(fase_label($_gs['fase'] ?? '')) ?></span>
+      </div>
+      <a href="<?= APP_URL ?>/portaal/?uitloggen=1" class="pt-nav-uitloggen" aria-label="Uitloggen"><?= icoon('uitloggen', 17) ?></a>
+    </div>
+    <?php endif; ?>
   </nav>
 <?php endif; ?>
 

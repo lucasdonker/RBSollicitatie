@@ -263,6 +263,7 @@ require __DIR__ . '/_kop.php';
   $fase       = $sol['fase'];
   $taken      = portaal_taken($sol, $blk);
   $open_taken = portaal_taken_open($taken);
+  $wacht_taken= portaal_taken_wachtend($taken);
   $n_open     = count($open_taken);
   $vg         = portaal_voortgang($fase);
   $begroet    = portaal_begroeting($sol, $n_open);
@@ -330,6 +331,11 @@ require __DIR__ . '/_kop.php';
         <?php if ($wachtend): ?>
           <span class="pt-hulp">Vragen? Mail <a href="mailto:<?= h(portaal_contact_email()) ?>"><?= h(portaal_contact_email()) ?></a></span>
         <?php endif; ?>
+      <?php endif; ?>
+
+      <?php if ($wacht_taken && !$aangenomen): ?>
+        <div class="pt-sectiekop"><span>Wacht op je ouder/verzorger</span></div>
+        <?php $lijst = $wacht_taken; require __DIR__ . '/_takenlijst.php'; ?>
       <?php endif; ?>
     </div>
     <?php endif; ?>
