@@ -1330,6 +1330,18 @@ body.heeft-nav { padding-bottom: 84px; }
 .pt-begroet h1 { font: var(--text-title); color: var(--ink); margin: 0 0 4px; }
 .pt-begroet p { font: var(--text-body); color: var(--ink-soft); margin: 0; }
 
+/* ── Portaal: voetlinks (uitloggen, naar beheer, site) ───────────── */
+.pt-voetlinks {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px;
+  margin-top: 24px; padding-bottom: 8px;
+  font: var(--text-meta); font-size: 13px;
+}
+.pt-voetlinks a {
+  display: inline-flex; align-items: center; gap: 5px;
+  color: var(--ink-muted); text-decoration: none;
+}
+.pt-voetlinks a:hover { color: var(--navy); }
+
 /* ── Voortgang optie B (stap X van 5) ───────────────────────────── */
 .vg3 { margin-bottom: 14px; }
 .vg3-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 12px; }

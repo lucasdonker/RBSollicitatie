@@ -271,84 +271,28 @@ $fases_volgorde = ['aangemeld','uitgenodigd_selectie','aangemeld_selectie','sele
 
 // Weken-datums voor de AI-beschikbaarheid JS (weeknr → start/eind datum)
 $weken_datums_ai = function_exists('seizoen_weken_datums') ? seizoen_weken_datums($seizoen ?? null) : [];
+
+// ── Gedeelde kop (topbar + head). Inlogschermen: kaal (geen topbar, geen nav). ──
+$portaal_titel = 'Mijn sollicitatie';
+$portaal_nav   = 'start';
+if ($stap !== 'dossier') { $portaal_geen_nav = true; $portaal_geen_topbar = true; }
+require __DIR__ . '/_kop.php';
 ?>
-<!DOCTYPE html>
-<html lang="nl" data-theme="">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Mijn sollicitatie — Paal 13</title>
-<?php $_fav = site_favicon_url(); if ($_fav): ?>
-<link rel="icon" href="<?= h($_fav) ?>">
-<?php endif; ?>
-<link rel="stylesheet" href="<?= APP_URL ?>/assets/css/stijl.css?v=<?= @filemtime(__DIR__.'/../assets/css/stijl.css') ?>">
-<meta name="robots" content="noindex">
-<script>
-(function(){
-  // Licht thema is de standaard. (De licht/donker-toggle is verwijderd in de nieuwe stijl;
-  // deze regel houdt alleen het lichte thema actief voor eventuele oude opgeslagen voorkeur.)
-  document.documentElement.setAttribute('data-theme', '');
-})();
-</script>
+<?php if ($stap === 'dossier'): ?>
 <style>
-/* Portaal: licht thema default, dark via toggle */
-body { background:var(--bg, #f0f4f8); min-height:100vh; padding:20px; color:var(--tekst, #1a2332); }
-.wrap { max-width:680px; margin:0 auto; }
-.portaal-top { text-align:center; padding:24px 0 18px; }
-.portaal-top img { height:48px; }
-.portaal-top h1 { color:var(--navy); font-size:20px; margin:12px 0 3px; }
-.portaal-top p { color:var(--tekst-zacht); font-size:13px; }
-
-/* Login */
-.login-portaal { background:var(--bg-card, #fff); border-radius:14px; padding:30px; max-width:400px; margin:0 auto; box-shadow:var(--shadow-md, 0 8px 40px rgba(0,0,0,.12)); border:1px solid var(--rand); }
-.login-portaal h2 { font-size:16px; color:var(--navy); margin-bottom:5px; }
-.login-portaal .sub { font-size:13px; color:var(--tekst-zacht); margin-bottom:18px; }
-.code-inputs { display:flex; gap:8px; justify-content:center; margin:14px 0; }
-.code-inputs input { width:44px; height:54px; text-align:center; font-size:22px; font-weight:700; border:2px solid var(--rand); border-radius:8px; color:var(--navy); background:var(--bg-card); }
-.code-inputs input:focus { border-color:var(--oranje); outline:none; }
-
-/* Voortgang */
-.voortgang { display:flex; justify-content:center; background:var(--bg-card); border:1px solid var(--rand); border-radius:10px; padding:14px 8px; margin-bottom:16px; }
-
-/* Dark mode overrides */
-html[data-theme="dark"] body { background:#0b0e16; color:#e8edf5; }
-html[data-theme="dark"] .login-portaal { background:#161a26; color:#e8edf5; border-color:#2a3142; }
-html[data-theme="dark"] .login-portaal h2 { color:#e8edf5; }
-html[data-theme="dark"] .portaal-top h1 { color:var(--oranje); }
-html[data-theme="dark"] .portaal-top p { color:#a0aec0; }
-
-/* Theme toggle knopje */
-.theme-tgl { position:fixed; top:14px; right:14px; width:34px; height:34px; border-radius:50%; border:1px solid var(--rand); background:var(--bg-card); cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:15px; transition:all .2s; z-index:100; }
-.theme-tgl:hover { transform:scale(1.05); border-color:var(--oranje); }
-html[data-theme="dark"] .theme-tgl { background:#161a26; color:#fff; }
-.vg-stap { display:flex; flex-direction:column; align-items:center; gap:6px; flex:1; position:relative; }
-.vg-stap:not(:last-child)::after { content:''; position:absolute; top:12px; left:50%; right:-50%; height:2px; background:var(--rand); z-index:0; }
-.vg-stap.gedaan::after { background:var(--groen); }
-.vg-bol { width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; border:2px solid var(--rand); background:var(--grijs-bg); color:var(--grijs); position:relative; z-index:1; }
-.vg-stap.gedaan .vg-bol { background:var(--groen); border-color:var(--groen); color:#fff; }
-.vg-stap.actief .vg-bol { background:var(--oranje); border-color:var(--oranje); color:#fff; }
-.vg-label { font-size:9px; color:var(--grijs); text-align:center; max-width:60px; line-height:1.3; }
-.vg-stap.gedaan .vg-label,.vg-stap.actief .vg-label { color:var(--tekst); font-weight:600; }
-
-/* Banners */
+/* TIJDELIJK — oude banner-stijl van de startpagina; verdwijnt bij de herbouw van de start-staten */
 .banner { border-radius:10px; padding:14px 16px; margin-bottom:12px; }
-.banner-wacht { background:var(--grijs-bg); border:1px solid var(--rand); }
-.banner-actie  { background:var(--oranje-bg); border:1px solid var(--oranje); }
-.banner-ok     { background:var(--groen-bg); border:1px solid var(--groen); }
-.banner-rood   { background:var(--rood-bg); border:1px solid var(--rood); }
-.banner h2 { font-size:15px; font-weight:700; color:var(--tekst); margin-bottom:4px; }
-.banner p { font-size:13px; color:var(--tekst-zacht); margin:0; }
-.banner .detail { font-size:13px; color:var(--tekst); margin-top:7px; padding-top:7px; border-top:1px solid var(--rand-licht, rgba(0,0,0,.08)); }
-.banner-actie h2 { color:var(--oranje); }
-.banner-ok h2 { color:var(--groen); }
-.banner-rood h2 { color:var(--rood); }
+.banner-wacht { background:var(--bg-subtle); border:1px solid var(--border); }
+.banner-actie  { background:var(--accent-soft); border:1px solid var(--accent); }
+.banner-ok     { background:var(--ok-soft); border:1px solid var(--ok); }
+.banner-rood   { background:var(--error-soft); border:1px solid var(--error); }
+.banner h2 { font-size:15px; font-weight:700; color:var(--ink); margin-bottom:4px; }
+.banner p { font-size:13px; color:var(--ink-soft); margin:0; }
+.banner-actie h2 { color:var(--accent); }
+.banner-ok h2 { color:var(--ok); }
+.banner-rood h2 { color:var(--error); }
 </style>
-</head>
-<body class="pt-body <?= ($stap === 'dossier' && portaal_ingelogd()) ? 'heeft-nav' : '' ?>">
-
-
-
-<main class="pt-main">
+<?php endif; ?>
 
   <?php toon_flash(); ?>
   <?php if ($fout && $stap !== 'code'): // op het code-scherm toont dat scherm de fout zelf ?>
@@ -927,26 +871,7 @@ html[data-theme="dark"] .theme-tgl { background:#161a26; color:#fff; }
   </div>
   <?php endif; endif; ?>
 
-  <div style="text-align:center;margin-top:18px;padding-bottom:24px">
-    <?php
-      // Switch naar beheer — alleen als deze sollicitant ook beheertoegang heeft.
-      $_kan_beheer = false;
-      $_p_email = $_SESSION['portaal_email'] ?? '';
-      if (function_exists('toegang_bepaal') && $_p_email) {
-          $_t = toegang_bepaal($_p_email);
-          $_kan_beheer = $_t['beheer'];
-      }
-      if ($_kan_beheer):
-    ?>
-    <a href="<?= APP_URL ?>/wissel.php?naar=beheer" style="font-size:12px;color:var(--tekst-zacht);text-decoration:none">↔ Naar beheer</a>
-    &nbsp;·&nbsp;
-    <?php endif; ?>
-    <a href="<?= APP_URL ?>/portaal/?uitloggen=1" style="font-size:12px;color:var(--tekst-zacht);text-decoration:none">Uitloggen</a>
-    &nbsp;·&nbsp;
-    <a href="https://paal13.com" style="font-size:12px;color:var(--tekst-zacht);text-decoration:none">paal13.com</a>
-  </div>
 <?php endif; ?>
-</main>
 
 <script>
 
@@ -1000,19 +925,8 @@ document.querySelectorAll('a.btn').forEach(a => {
   });
 });
 </script>
-<?php if ($stap === 'dossier' && portaal_ingelogd()):
-  $_nav = ($_GET['tab'] ?? '') === 'taken' ? 'taken' : 'start';
-  $_open_aantal = isset($open_taken) ? count($open_taken) : 0;
-?>
-<nav class="pt-nav" aria-label="Hoofdnavigatie">
-  <a href="<?= APP_URL ?>/portaal/" class="pt-nav-item <?= $_nav==='start'?'actief':'' ?>"><?= icoon('huis', 22) ?><span>Start</span></a>
-  <a href="<?= APP_URL ?>/portaal/?tab=taken" class="pt-nav-item <?= $_nav==='taken'?'actief':'' ?>">
-    <span class="pt-nav-icoon-wrap"><?= icoon('lijst', 22) ?><?php if ($_open_aantal > 0): ?><span class="pt-nav-badge"><?= $_open_aantal ?></span><?php endif; ?></span>
-    <span>Taken</span>
-  </a>
-  <a href="<?= APP_URL ?>/portaal/gegevens.php" class="pt-nav-item"><?= icoon('persoon', 22) ?><span>Gegevens</span></a>
-</nav>
-<?php endif; ?>
-<script src="<?= APP_URL ?>/assets/js/app.js?v=<?= @filemtime(__DIR__."/../assets/js/app.js") ?>"></script>
-</body>
-</html>
+<?php
+// Gedeelde voet (nav + script). Telbolletje op "Taken" = aantal open taken.
+$portaal_nav = (($_GET['tab'] ?? '') === 'taken') ? 'taken' : 'start';
+$portaal_open_taken = isset($open_taken) ? count($open_taken) : 0;
+require __DIR__ . '/_voet.php';

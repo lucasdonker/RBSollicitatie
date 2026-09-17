@@ -3,13 +3,14 @@
  * Gedeelde portaal-voet. Sluit de pagina met de navigatiebalk (één keer, hier gedefinieerd)
  * en het gedeelde script. De actieve tab komt uit $portaal_nav.
  *
- * De navigatie verschijnt alleen als de sollicitant is ingelogd én we niet op een
- * "terug"-subpagina zitten met een eigen kop (dan zou een tabbalk verwarren). Dat regelt
- * $portaal_geen_nav (zet die op true om de balk te verbergen, bijv. op het inlogscherm).
+ * De navigatie verschijnt alleen als de sollicitant is ingelogd én $portaal_geen_nav niet
+ * gezet is (bijv. op het inlogscherm). Het telbolletje op "Taken" toont $portaal_open_taken
+ * (aantal open taken) als de pagina dat heeft gezet en het groter is dan nul.
  */
 $portaal_geen_nav = $portaal_geen_nav ?? false;
 $_nav = $portaal_nav ?? '';
 $_toon_nav = !$portaal_geen_nav && function_exists('portaal_ingelogd') && portaal_ingelogd();
+$_open = (int)($portaal_open_taken ?? 0);
 ?>
   </main>
 
@@ -27,7 +28,8 @@ $_toon_nav = !$portaal_geen_nav && function_exists('portaal_ingelogd') && portaa
         <?= icoon('huis', 22) ?><span>Start</span>
       </a>
       <a href="<?= APP_URL ?>/portaal/?tab=taken" class="pt-nav-item <?= $_nav==='taken'?'actief':'' ?>">
-        <?= icoon('lijst', 22) ?><span>Taken</span>
+        <span class="pt-nav-icoon-wrap"><?= icoon('lijst', 22) ?><?php if ($_open > 0): ?><span class="pt-nav-badge"><?= $_open ?></span><?php endif; ?></span>
+        <span>Taken</span>
       </a>
       <a href="<?= APP_URL ?>/portaal/gegevens.php" class="pt-nav-item <?= $_nav==='gegevens'?'actief':'' ?>">
         <?= icoon('persoon', 22) ?><span>Gegevens</span>

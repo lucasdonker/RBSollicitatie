@@ -223,6 +223,23 @@ require __DIR__ . '/_kop.php';
     </div>
   </div>
 
+  <?php
+    // Uitloggen / naar beheer (alleen als deze sollicitant ook beheertoegang heeft).
+    $_kan_beheer = false;
+    $_p_email = $_SESSION['portaal_email'] ?? '';
+    if (function_exists('toegang_bepaal') && $_p_email) {
+        $_t = toegang_bepaal($_p_email);
+        $_kan_beheer = !empty($_t['beheer']);
+    }
+  ?>
+  <div class="pt-voetlinks">
+    <?php if ($_kan_beheer): ?>
+      <a href="<?= APP_URL ?>/wissel.php?naar=beheer"><?= icoon('wissel', 15) ?> Naar beheer</a>
+    <?php endif; ?>
+    <a href="<?= APP_URL ?>/portaal/?uitloggen=1"><?= icoon('uitloggen', 15) ?> Uitloggen</a>
+    <a href="https://paal13.com">paal13.com</a>
+  </div>
+
 <?php endif; ?>
 
 <?php require __DIR__ . '/_voet.php'; ?>
