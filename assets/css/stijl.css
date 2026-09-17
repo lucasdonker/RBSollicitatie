@@ -1977,6 +1977,12 @@ details.besch-uitz[open] .besch-chev { transform: rotate(90deg); }
 }
 .blk-chip:hover { border-color: #054d8a; color: #054d8a; }
 
+/* Social media: platform-label + gebruikersnaam per rij */
+.blk-social { display: flex; flex-direction: column; gap: 8px; }
+.blk-social-rij { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.blk-social-lbl { flex: none; width: 84px; font-size: 13px; font-weight: 600; color: #5a6478; }
+.blk-social-rij .blk-input { flex: 1; min-width: 0; height: 44px; }
+
 /* Adres gevonden (PDOK) */
 .blk-adres {
   display: flex; align-items: flex-start; gap: 11px; padding: 14px 16px; border-radius: 12px;

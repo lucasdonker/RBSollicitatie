@@ -255,8 +255,19 @@
 
   /* ── Autosave concept ─────────────────────────────────────────── */
   const csrf = (form.querySelector('[name="_csrf"]') || {}).value || '';
-  const tekstVelden = ['postcode', 'huisnummer', 'straat', 'woonplaats', 'opleiding', 'werkervaring', 'motivatie_lifeguard', 'motivatie_strand', 'diplomas', 'social_media', 'bijzonderheden'];
+  const tekstVelden = ['postcode', 'huisnummer', 'straat', 'woonplaats', 'opleiding', 'werkervaring', 'motivatie_lifeguard', 'motivatie_strand', 'diplomas', 'bijzonderheden'];
+  const socialVelden = alle('[name^="social_"]', form);
   let autosaveTimer = null, laatstOpgeslagen = '';
+
+  /* Social media: de losse platform-velden gaan als één tekst mee in het concept
+     (zelfde vorm als de server opslaat: "Instagram @naam · TikTok @naam"). */
+  function socialTekst() {
+    return socialVelden.map(function (f) {
+      const v = f.value.trim();
+      const naam = f.closest('.blk-social-rij').querySelector('.blk-social-lbl').textContent.trim();
+      return v ? naam + ' ' + v : '';
+    }).filter(Boolean).join(' · ');
+  }
 
   function conceptData() {
     const d = new URLSearchParams();
@@ -266,6 +277,8 @@
       const f = form.querySelector('[name="' + n + '"]');
       if (f && f.value.trim()) { d.append(n, f.value); iets = true; }
     });
+    const soc = socialTekst();
+    if (soc) { d.append('social_media', soc); iets = true; }
     return iets ? d : null;
   }
   function toonStatus(tekst, ok) {
@@ -289,7 +302,7 @@
       .catch(function () { toonStatus('Concept kon niet worden opgeslagen', false); });
   }
   form.addEventListener('input', function (e) {
-    if (tekstVelden.indexOf(e.target.name) === -1) return;
+    if (tekstVelden.indexOf(e.target.name) === -1 && (e.target.name || '').indexOf('social_') !== 0) return;
     clearTimeout(autosaveTimer);
     autosaveTimer = setTimeout(function () { bewaar(false); }, 2500);
   });

@@ -70,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['blk_submit'])) {
         'diplomas'            => trim($_POST['diplomas'] ?? ''),
         'motivatie_lifeguard' => trim($_POST['motivatie_lifeguard'] ?? ''),
         'motivatie_strand'    => trim($_POST['motivatie_strand'] ?? ''),
-        'social_media'        => trim($_POST['social_media'] ?? ''),
+        'social_media'        => blk_social_samenstellen(blk_social_uit_post($_POST)),
         'bijzonderheden'      => trim($_POST['bijzonderheden'] ?? ''),
     ];
 
@@ -186,7 +186,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['blk_submit'])) {
 // Bij een fout tonen we wat er is ingevuld; anders de opgeslagen (concept)waarden.
 $na_fout = $fout !== '';
 $w       = $na_fout ? $_POST : ($blk ?? []);
-$v       = fn(string $k): string => h((string)($w[$k] ?? ''));
+// Oudere rijen hebben soms alleen het samengestelde 'adres' (de losse kolommen ontbraken toen);
+// leid postcode/huisnummer/straat/woonplaats daar dan uit af, anders blijft stap 1 leeg.
+if (empty($w['postcode']) && empty($w['huisnummer']) && !empty($w['adres'])) {
+    $w = array_merge($w, array_filter(blk_adres_splitsen($w['adres'])));
+}
+$social_w = $na_fout ? blk_social_uit_post($_POST) : blk_social_splitsen($blk['social_media'] ?? '');
+$v        = fn(string $k): string => h((string)($w[$k] ?? ''));
 $tel_w   = $na_fout ? ($_POST['telefoon'] ?? '') : ($sol['telefoon'] ?? '');
 $adres_bekend = !empty($w['straat']) && !empty($w['woonplaats']);
 
@@ -324,8 +330,14 @@ require __DIR__ . '/_kop.php';
       <section class="blk-stap" id="fs4">
         <div class="blk-sectie"><span class="blk-sectie-titel">Tot slot</span><div class="blk-sectie-streep"></div></div>
         <div class="blk-kaart">
-          <label class="blk-veld"><span class="blk-lbl">Social media <span class="optioneel">(optioneel)</span></span>
-            <input class="blk-input" type="text" name="social_media" value="<?= $v('social_media') ?>" placeholder="@jouwinstagram"></label>
+          <div class="blk-veld"><span class="blk-lbl">Social media <span class="optioneel">(optioneel)</span></span>
+            <div class="blk-social">
+              <?php foreach (blk_social_platforms() as $sleutel => $pf): ?>
+              <label class="blk-social-rij"><span class="blk-social-lbl"><?= h($pf['naam']) ?></span>
+                <input class="blk-input" type="text" name="social_<?= $sleutel ?>" value="<?= h($social_w[$sleutel] ?? '') ?>" placeholder="<?= h($pf['placeholder']) ?>" autocomplete="off"></label>
+              <?php endforeach; ?>
+            </div>
+            <span class="blk-hint">Alleen je gebruikersnaam is genoeg; een link plakken mag ook.</span></div>
           <div class="blk-veld" style="gap:9px">
             <span class="blk-lbl">Foto van jezelf</span>
             <div class="blk-foto-zone">
@@ -353,7 +365,7 @@ require __DIR__ . '/_kop.php';
         <div class="blk-kaart">
           <label class="blk-veld"><span class="blk-lbl">Bijzonderheden, medicatie of allergieën</span>
             <textarea class="blk-textarea" name="bijzonderheden" rows="3" placeholder="Iets wat we moeten weten?"><?= $v('bijzonderheden') ?></textarea>
-            <span class="blk-hint">Laat dit veld leeg als er niets bijzonders is. Vul het alleen in als wij ergens rekening mee moeten houden (bijv. een allergie of medicatie). Alleen het bestuur ziet dit.</span></label>
+            <span class="blk-hint">Laat dit veld leeg als er niets bijzonders is. Vul het alleen in als wij ergens rekening mee moeten houden (bijv. een allergie of medicatie). Alleen de mensen voor wie dit relevant is, zien dit.</span></label>
         </div>
         <?php if ($is_ingediend): ?>
         <div class="blk-reden">

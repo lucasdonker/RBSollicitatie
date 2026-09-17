@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.84.0');
+define('APP_VERSIE', '2.84.1');
 
 function app_changelog(): array {
     return [
+        '2.84.1' => [
+            'datum'  => '2026-09-17',
+            'titel'  => 'BLK: adres bleef leeg bij bewerken, social media per platform, tekst bijzonderheden',
+            'punten' => [
+                'Bij het bewerken van het formulier bleven postcode en huisnummer leeg (de losse adreskolommen ontbraken op de database, waardoor ze stil niet werden opgeslagen). De kolommen worden nu automatisch aangemaakt en oude rijen met alleen een samengesteld adres worden netjes uitgesplitst',
+                'Social media is nu per platform in te vullen (Instagram, TikTok, Facebook); een geplakte link wordt omgezet naar de gebruikersnaam. In het beheer staat het als één leesbare regel ("Instagram @naam · Facebook naam")',
+                'De uitleg bij "Bijzonderheden" zegt niet meer dat alleen het bestuur het ziet (ook begeleiders zien het), maar "alleen de mensen voor wie dit relevant is"',
+            ],
+        ],
         '2.84.0' => [
             'datum'  => '2026-09-17',
             'titel'  => 'Beter Leren Kennen is een eigen pagina (losgekoppeld van de startpagina)',

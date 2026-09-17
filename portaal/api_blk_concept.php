@@ -5,6 +5,7 @@
  * Wijzigt NIET de fase en logt geen wijzigingen — puur een concept-buffer.
  */
 require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/blk.php';
 
 header('Content-Type: application/json');
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); exit; }
@@ -23,6 +24,7 @@ $toegestaan = ['postcode', 'huisnummer', 'straat', 'woonplaats', 'adres',
                'motivatie_strand', 'beschikbaarheid_uitzonderingen', 'social_media',
                'bijzonderheden'];
 
+blk_kolommen_verzeker(); // adreskolommen e.d. moeten bestaan, anders valt het concept stil weg
 try {
     $kolommen = db()->query("SHOW COLUMNS FROM blk_formulieren")->fetchAll(PDO::FETCH_COLUMN);
 } catch (\Exception $e) { $kolommen = []; }
