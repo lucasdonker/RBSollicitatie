@@ -3,10 +3,18 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.80.0');
+define('APP_VERSIE', '2.81.0');
 
 function app_changelog(): array {
     return [
+        '2.81.0' => [
+            'datum'  => '2026-09-11',
+            'titel'  => 'Beschikbaarheid: periode-kaart exact volgens het ontwerp',
+            'punten' => [
+                'De werkperiode-kaart is nu exact zoals het ontwerp: een nette kaart met "Week X t/m Y", de van/tot keuzes, en een schakelaar "Hele week / Alleen weekend"',
+                'Bij "Alleen weekend" verschijnen de weekenddag-keuzes als knoppen',
+            ],
+        ],
         '2.80.0' => [
             'datum'  => '2026-09-11',
             'titel'  => 'Portaal-fundament exact volgens het ontwerp (font, kleuren, header, navigatie)',

@@ -38,29 +38,60 @@
     const div = document.createElement('div');
     div.className = 'besch-rij besch-periode';
     const regime = data.regime === 'weekend' ? 'weekend' : 'vijf';
+    const vanW = data.van_week || CFG.eerste;
+    const totW = data.tot_week || CFG.laatste;
     div.innerHTML =
-      '<div class="besch-rij-hoofd">' +
-        '<span class="besch-lbl">van</span>' +
-        '<select name="b2_blok_van[]" onchange="beschHerbereken()">' + weekOpties(data.van_week || CFG.eerste) + '</select>' +
-        '<span class="besch-lbl">t/m</span>' +
-        '<select name="b2_blok_tot[]" onchange="beschHerbereken()">' + weekOpties(data.tot_week || CFG.laatste) + '</select>' +
-        '<select name="b2_blok_regime[]" class="besch-regime" onchange="beschRegimeToggle(this); beschHerbereken()">' +
-          '<option value="vijf"' + (regime === 'vijf' ? ' selected' : '') + '>hele weken</option>' +
-          '<option value="weekend"' + (regime === 'weekend' ? ' selected' : '') + '>alleen weekend</option>' +
-        '</select>' +
-        xBtn() +
+      '<div class="bp-kop">' +
+        '<span class="bp-titel">Week ' + esc(vanW) + ' t/m ' + esc(totW) + '</span>' +
+        '<button type="button" class="bp-wis" onclick="this.closest(\'.besch-rij\').remove(); beschHerbereken()" aria-label="Verwijderen">' +
+          '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>' +
+        '</button>' +
+      '</div>' +
+      '<div class="bp-velden">' +
+        '<label class="bp-veld"><span class="bp-veld-lbl">Van week</span>' +
+          '<select name="b2_blok_van[]" class="bp-select" onchange="beschPeriodeTitel(this); beschHerbereken()">' + weekOpties(vanW) + '</select>' +
+        '</label>' +
+        '<label class="bp-veld"><span class="bp-veld-lbl">Tot en met</span>' +
+          '<select name="b2_blok_tot[]" class="bp-select" onchange="beschPeriodeTitel(this); beschHerbereken()">' + weekOpties(totW) + '</select>' +
+        '</label>' +
+      '</div>' +
+      '<div class="bp-segment">' +
+        '<button type="button" class="bp-seg' + (regime === 'vijf' ? ' actief' : '') + '" onclick="beschRegimeKies(this,\'vijf\')">Hele week</button>' +
+        '<button type="button" class="bp-seg' + (regime === 'weekend' ? ' actief' : '') + '" onclick="beschRegimeKies(this,\'weekend\')">Alleen weekend</button>' +
+        '<input type="hidden" name="b2_blok_regime[]" value="' + regime + '">' +
       '</div>' +
       '<div class="besch-weekenddagen" style="' + (regime === 'weekend' ? '' : 'display:none') + '">' +
-        '<span class="besch-lbl">welke dagen?</span>' +
-        [1, 2, 3, 4, 5, 6, 7].map(function (d) {
+        '<span class="besch-dagpil-lbl">Welke dagen in het weekend?</span>' +
+        '<div class="besch-dagpil-rij">' +
+        [6, 7].map(function (d) {
           const aan = (data.weekend_dagen || [6, 7]).map(String).includes(String(d));
-          return '<label class="besch-dagpil"><input type="checkbox" class="besch-wkdag" value="' + d + '"' + (aan ? ' checked' : '') + ' onchange="beschWkdagSync(this); beschHerbereken()"> ' + DAGEN_KORT[d] + '</label>';
+          return '<label class="besch-dagpil' + (aan ? ' actief' : '') + '"><input type="checkbox" class="besch-wkdag" value="' + d + '"' + (aan ? ' checked' : '') + ' onchange="beschDagpilToggle(this); beschWkdagSync(this); beschHerbereken()"> ' + DAGEN_KORT[d] + '</label>';
         }).join('') +
+        '</div>' +
         '<input type="hidden" name="b2_blok_wkdagen[]" value="' + esc(JSON.stringify(data.weekend_dagen || [6, 7])) + '">' +
       '</div>';
     return div;
   }
   window.beschPeriodeToevoegen = function (data) { el('beschPeriodes').appendChild(periodeRij(data)); beschHerbereken(); };
+  window.beschPeriodeTitel = function (sel) {
+    const rij = sel.closest('.besch-rij');
+    const van = rij.querySelector('[name="b2_blok_van[]"]').value;
+    const tot = rij.querySelector('[name="b2_blok_tot[]"]').value;
+    const t = rij.querySelector('.bp-titel');
+    if (t) t.textContent = 'Week ' + van + ' t/m ' + tot;
+  };
+  window.beschRegimeKies = function (btn, regime) {
+    const rij = btn.closest('.besch-rij');
+    rij.querySelectorAll('.bp-seg').forEach(function (b) { b.classList.remove('actief'); });
+    btn.classList.add('actief');
+    rij.querySelector('[name="b2_blok_regime[]"]').value = regime;
+    rij.querySelector('.besch-weekenddagen').style.display = regime === 'weekend' ? '' : 'none';
+    beschHerbereken();
+  };
+  window.beschDagpilToggle = function (cb) {
+    const lbl = cb.closest('.besch-dagpil');
+    if (lbl) lbl.classList.toggle('actief', cb.checked);
+  };
   window.beschRegimeToggle = function (sel) {
     const rij = sel.closest('.besch-rij');
     rij.querySelector('.besch-weekenddagen').style.display = sel.value === 'weekend' ? '' : 'none';

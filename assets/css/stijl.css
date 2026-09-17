@@ -1683,3 +1683,44 @@ details.besch-uitz[open] .besch-chev { transform: rotate(90deg); }
   width: 46px; height: 46px; flex-shrink: 0; border: none; border-radius: var(--radius-md);
   background: var(--navy); color: #fff; font-size: 20px; cursor: pointer;
 }
+
+/* ═══ BESCHIKBAARHEID PERIODE-KAART (exact volgens Portaal.dc 4b) ═══ */
+.besch-periode {
+  border: 1px solid #cdd4e0 !important; border-radius: 12px !important;
+  padding: 16px !important; display: flex; flex-direction: column; gap: 14px;
+  background: #fff; margin-bottom: 10px;
+}
+.bp-kop { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.bp-titel { font-size: 17px; font-weight: 600; color: var(--ink); }
+.bp-wis { background: none; border: none; color: #8a93a6; cursor: pointer; padding: 4px; display: flex; }
+.bp-wis:hover { color: var(--error); }
+.bp-velden { display: flex; gap: 10px; }
+.bp-veld { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.bp-veld-lbl { font-size: 12px; color: #5a6478; }
+.bp-select {
+  height: 48px; border: 1px solid #cdd4e0; border-radius: 8px;
+  padding: 0 12px; font-size: 15px; font-weight: 600; background: #fff; color: var(--ink);
+  appearance: none; -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238a93a6' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center;
+}
+.bp-segment {
+  display: flex; padding: 4px; background: #f4f6f9; border: 1px solid #e6e9ef;
+  border-radius: 10px; gap: 4px;
+}
+.bp-seg {
+  flex: 1; height: 40px; border: none; border-radius: 8px; background: transparent;
+  font: 600 14px 'Instrument Sans', sans-serif; color: #5a6478; cursor: pointer;
+}
+.bp-seg.actief { background: #fff; box-shadow: 0 1px 2px rgba(5,77,138,.10); color: #054d8a; }
+/* Weekend-dagpillen in de periode-kaart */
+.besch-weekenddagen { display: flex; flex-direction: column; gap: 8px; }
+.besch-dagpil-lbl { font-size: 12px; color: #5a6478; }
+.besch-dagpil-rij { display: flex; gap: 6px; }
+.besch-dagpil {
+  flex: 1; height: 44px; border: 1px solid #cdd4e0; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 600; color: #5a6478; cursor: pointer;
+}
+.besch-dagpil input { display: none; }
+.besch-dagpil.actief { border-color: #054d8a; background: #054d8a; color: #fff; font-weight: 700; }
