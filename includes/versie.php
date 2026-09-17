@@ -3,10 +3,23 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.84.1');
+define('APP_VERSIE', '2.85.0');
 
 function app_changelog(): array {
     return [
+        '2.85.0' => [
+            'datum'  => '2026-09-17',
+            'titel'  => 'Startpagina en Taken-tab herbouwd volgens het ontwerp; berichten achter het belletje',
+            'punten' => [
+                'De startpagina toont nu eerst je status en de praktische info (voortgang "Stap N van 5", de selectiedag- of trainingsweekend-kaart met datum, tijden, locatie, adres en wat je meeneemt) en daaronder alleen de open taken met één hoofdactie — exact volgens het Claude Design-ontwerp, in alle fases (aangemeld, uitgenodigd, wachtend, trainingsweekend, aangenomen, afgewezen)',
+                'Het Taken-tabblad is een eigen pagina met "Nu te doen", "Wacht op je ouder/verzorger" en "Afgerond" (met datum en Bekijken/Wijzigen). Start, Taken en het telbolletje gebruiken één takenbron',
+                'Achter het belletje staat een berichtenoverzicht van de e-mails die we je stuurden, met ongelezen-markering (sms/WhatsApp volgt later)',
+                'Op desktop: witte paginakop met je status, en onderin de zijbalk je naam en stap; uitloggen zit daar en onderaan Mijn gegevens',
+                'De startpagina gebruikt nu de gedeelde kop en navigatie (geen eigen kopie meer); de oude inline stijl, banners en dode CSS zijn opgeruimd',
+                'Beheer › Seizoen: nieuwe velden voor selectiedag en trainingsweekend (eindtijd, adres, wat meenemen) — ook als mail-placeholders beschikbaar',
+                'Afgewezen sollicitanten zien een rustige pagina met alleen de AVG-acties (gegevens downloaden of laten verwijderen)',
+            ],
+        ],
         '2.84.1' => [
             'datum'  => '2026-09-17',
             'titel'  => 'BLK: adres bleef leeg bij bewerken, social media per platform, tekst bijzonderheden',

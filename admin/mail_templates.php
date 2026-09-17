@@ -150,8 +150,8 @@ foreach ($templates as $t) { if ($t['slug'] === '_hero_image') { $hero_row = $t;
 $vars_ref = [
     'Sollicitant'    => ['sollicitant.voornaam','sollicitant.achternaam','sollicitant.volledige_naam','sollicitant.email'],
     'Seizoen'        => ['seizoen.naam'],
-    'Selectiedag'    => ['selectiedag.datum','selectiedag.locatie','selectiedag.starttijd','selectiedag.verzameltijd'],
-    'Trainingsweekend' => ['tw.datum_start','tw.datum_eind','tw.locatie','tw.verzameltijd'],
+    'Selectiedag'    => ['selectiedag.datum','selectiedag.locatie','selectiedag.adres','selectiedag.starttijd','selectiedag.verzameltijd','selectiedag.eindtijd','selectiedag.meenemen'],
+    'Trainingsweekend' => ['tw.datum_start','tw.datum_eind','tw.locatie','tw.adres','tw.verzameltijd','tw.eindtijd','tw.meenemen'],
     'Overig'         => ['portaal.url','bestuur.email','otp.code'],
 ];
 $shortcodes = [

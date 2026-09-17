@@ -427,7 +427,7 @@ require __DIR__ . '/layout_top.php';
         <div class="card-header"><div class="card-title">📎 Variabelen & shortcodes</div></div>
         <div class="card-body" style="padding:12px 14px">
           <?php
-          $vref = ['Sollicitant'=>['sollicitant.voornaam','sollicitant.achternaam','sollicitant.volledige_naam','sollicitant.email'],'Seizoen'=>['seizoen.naam'],'Selectiedag'=>['selectiedag.datum','selectiedag.locatie','selectiedag.starttijd','selectiedag.verzameltijd'],'Trainingsweekend'=>['tw.datum_start','tw.datum_eind','tw.locatie','tw.verzameltijd'],'Links'=>['portaal.url','bestuur.email']];
+          $vref = ['Sollicitant'=>['sollicitant.voornaam','sollicitant.achternaam','sollicitant.volledige_naam','sollicitant.email'],'Seizoen'=>['seizoen.naam'],'Selectiedag'=>['selectiedag.datum','selectiedag.locatie','selectiedag.adres','selectiedag.starttijd','selectiedag.verzameltijd','selectiedag.eindtijd','selectiedag.meenemen'],'Trainingsweekend'=>['tw.datum_start','tw.datum_eind','tw.locatie','tw.adres','tw.verzameltijd','tw.eindtijd','tw.meenemen'],'Links'=>['portaal.url','bestuur.email']];
           foreach ($vref as $cat => $vars): ?>
           <div style="margin-bottom:8px">
             <div style="font-size:10px;font-weight:600;color:var(--grijs);text-transform:uppercase;margin-bottom:3px"><?=$cat?></div>

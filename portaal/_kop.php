@@ -27,6 +27,14 @@ if ($_heeft_nav && empty($portaal_status_fase) && function_exists('portaal_solli
 }
 $portaal_status_fase = $portaal_status_fase ?? '';
 $_chip_kleur = match ($portaal_status_fase) { 'aangenomen' => 'ok', 'afgewezen' => 'error', 'aangemeld' => 'navy', default => 'accent' };
+// Belletje: ongelezen berichten (pagina mag het aantal zelf zetten, bijv. berichten.php → 0)
+$_ongelezen = 0;
+if ($_heeft_nav) {
+    $_ongelezen = isset($portaal_berichten_ongelezen) ? (int)$portaal_berichten_ongelezen
+                : (function_exists('portaal_berichten_ongelezen') ? portaal_berichten_ongelezen((int)$_SESSION['portaal_sol_id']) : 0);
+}
+$_bel = '<a href="' . APP_URL . '/portaal/berichten.php" class="pt-topbar-actie" aria-label="Berichten' . ($_ongelezen ? ' (' . $_ongelezen . ' ongelezen)' : '') . '">'
+      . icoon('bel', 20) . ($_ongelezen ? '<span class="pt-topbar-stip"></span>' : '') . '</a>';
 ?><!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -50,6 +58,8 @@ $_chip_kleur = match ($portaal_status_fase) { 'aangenomen' => 'ok', 'afgewezen' 
     </div>
     <?php if ($portaal_terug): ?>
       <a href="<?= h($portaal_terug) ?>" class="pt-topbar-actie" aria-label="Terug"><?= icoon('terug', 20) ?></a>
+    <?php elseif ($_heeft_nav): ?>
+      <?= $_bel ?>
     <?php else: ?>
       <a href="<?= APP_URL ?>/portaal/?uitloggen=1" class="pt-topbar-actie" aria-label="Uitloggen"><?= icoon('uitloggen', 20) ?></a>
     <?php endif; ?>
@@ -65,7 +75,7 @@ $_chip_kleur = match ($portaal_status_fase) { 'aangenomen' => 'ok', 'afgewezen' 
       <?php if ($portaal_status_fase !== ''): ?>
         <span class="pt-paginakop-chip <?= $_chip_kleur ?>"><span class="pt-paginakop-stip"></span><?= h(fase_label($portaal_status_fase)) ?></span>
       <?php endif; ?>
-      <a href="<?= APP_URL ?>/portaal/?uitloggen=1" class="pt-paginakop-knop" aria-label="Uitloggen"><?= icoon('uitloggen', 18) ?></a>
+      <a href="<?= APP_URL ?>/portaal/berichten.php" class="pt-paginakop-knop" aria-label="Berichten<?= $_ongelezen ? ' (' . $_ongelezen . ' ongelezen)' : '' ?>"><?= icoon('bel', 18) ?><?php if ($_ongelezen): ?><span class="pt-topbar-stip"></span><?php endif; ?></a>
     </div>
   </div>
 <?php endif; ?>
