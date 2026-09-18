@@ -12,9 +12,11 @@ $db = db();
 $sol_id = (int)$_SESSION['portaal_sol_id'];
 
 // Ophalen gegevens
+if (function_exists('personen_kanaal_auto_setup')) personen_kanaal_auto_setup();
 $q = $db->prepare("
-    SELECT s.id, s.fase, s.aangemeld_op, sz.naam AS seizoen_naam,
-           p.voornaam, p.tussenvoegsel, p.achternaam, p.email, p.telefoon, p.geboortedatum
+    SELECT s.id, s.fase, s.aangemeld_op, sz.naam AS seizoen_naam, p.id AS persoon_id,
+           p.voornaam, p.tussenvoegsel, p.achternaam, p.email, p.telefoon, p.geboortedatum,
+           COALESCE(p.kanaal_voorkeur, 'whatsapp') AS kanaal_voorkeur
     FROM sollicitaties s
     JOIN personen p ON p.id = s.persoon_id
     JOIN seizoenen sz ON sz.id = s.seizoen_id
@@ -24,9 +26,26 @@ $q->execute([$sol_id]);
 $mij = $q->fetch();
 if (!$mij) redirect(APP_URL . '/portaal/');
 
+// ── Kanaalvoorkeur voor korte berichten (WhatsApp / sms / alleen e-mail) ──
+$kanaal_opties = ['whatsapp' => 'WhatsApp', 'sms' => 'Sms', 'email' => 'Alleen e-mail'];
+if (!function_exists('wa_actief') || !wa_actief()) unset($kanaal_opties['whatsapp']);
+if (!function_exists('sms_actief') || !sms_actief()) unset($kanaal_opties['sms']);
+$kanaal_flash = null;
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['kanaal_opslaan'])) {
+    csrf_check();
+    $keuze = (string)($_POST['kanaal_voorkeur'] ?? 'email');
+    if (!in_array($keuze, ['email', 'whatsapp', 'sms'], true)) $keuze = 'email';
+    try {
+        $db->prepare("UPDATE personen SET kanaal_voorkeur=?, kanaal_gewijzigd_op=NOW(), kanaal_bron='portaal' WHERE id=?")->execute([$keuze, (int)$mij['persoon_id']]);
+        if (function_exists('audit_log')) audit_log('kanaal_voorkeur', 'persoon', (int)$mij['persoon_id'], ['naar' => $keuze, 'via' => 'portaal']);
+        $mij['kanaal_voorkeur'] = $keuze;
+        $kanaal_flash = 'Je voorkeur is opgeslagen.';
+    } catch (Exception $e) { $kanaal_flash = null; }
+}
+
 // ── Download data (JSON) ────────────────────────────────────
 if (isset($_GET['download'])) {
-    $data = ['persoon' => $mij];
+    $data = ['persoon' => array_diff_key($mij, ['persoon_id' => 1])];
     try {
         // BLK zonder AI analyse (intern bestuurs-oordeel, geen persoonsdata van sollicitant)
         $b = $db->prepare("SELECT * FROM blk_formulieren WHERE sollicitatie_id = ?");
@@ -43,7 +62,7 @@ if (isset($_GET['download'])) {
         $data['beschikbaarheid'] = $b->fetch() ?: null;
     } catch (Exception $e) { $data['beschikbaarheid'] = null; }
     try {
-        $b = $db->prepare("SELECT onderwerp, verstuurd_op, status FROM mail_log WHERE sollicitatie_id = ? ORDER BY verstuurd_op DESC");
+        $b = $db->prepare("SELECT onderwerp, verstuurd_op, status, kanaal FROM mail_log WHERE sollicitatie_id = ? AND COALESCE(ontvanger_rol,'sollicitant')='sollicitant' ORDER BY verstuurd_op DESC");
         $b->execute([$sol_id]);
         $data['mail_geschiedenis'] = $b->fetchAll();
     } catch (Exception $e) { $data['mail_geschiedenis'] = []; }
@@ -191,6 +210,32 @@ require __DIR__ . '/_kop.php';
       <span class="avg-label">Huidige status</span>
       <span class="avg-waarde"><?= h(fase_label($mij['fase'])) ?></span>
     </div>
+  </div>
+
+  <!-- Berichten: kanaalvoorkeur -->
+  <div class="avg-card">
+    <h2><?= icoon("bel", 18) ?> Hoe wil je berichten ontvangen?</h2>
+    <p style="font-size:13px;color:var(--tekst-zacht)">
+      Belangrijke berichten (uitnodiging, herinnering, bevestiging) sturen we per e-mail. Korte berichten sturen we
+      <?php $kort_kanalen = array_values(array_diff_key($kanaal_opties, ['email' => 1])); ?>
+      daarnaast via <?= h($kort_kanalen ? implode(' of ', $kort_kanalen) : 'WhatsApp of sms') ?>
+      naar <?= $mij['telefoon'] ? h($mij['telefoon']) : 'je telefoonnummer (nog niet bekend)' ?>. Lukt dat niet, dan krijg je het bericht per e-mail.
+      Kies hier wat jij wilt; je kunt dit altijd aanpassen.
+    </p>
+    <?php if ($kanaal_flash): ?><div class="flash flash-succes" style="margin-bottom:10px"><?= h($kanaal_flash) ?></div><?php endif; ?>
+    <form method="POST">
+      <?= csrf_input() ?>
+      <input type="hidden" name="kanaal_opslaan" value="1">
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
+        <?php $huidig = isset($kanaal_opties[$mij['kanaal_voorkeur'] ?? '']) ? $mij['kanaal_voorkeur'] : 'email'; foreach ($kanaal_opties as $kk => $kl): ?>
+        <label style="display:flex;align-items:center;gap:10px;font-size:14px;padding:10px 12px;border:1px solid var(--rand-2);border-radius:var(--radius-md);cursor:pointer">
+          <input type="radio" name="kanaal_voorkeur" value="<?= $kk ?>" <?= $huidig === $kk ? 'checked' : '' ?>>
+          <?= h($kl) ?><?= $kk === 'email' ? ' <span style="color:var(--tekst-zacht);font-size:12px">(geen WhatsApp/sms)</span>' : '' ?>
+        </label>
+        <?php endforeach; ?>
+      </div>
+      <button type="submit" class="ds-btn ds-btn-primair">Voorkeur opslaan</button>
+    </form>
   </div>
 
   <!-- Downloaden -->

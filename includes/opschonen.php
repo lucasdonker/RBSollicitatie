@@ -206,6 +206,24 @@ function opschoon_run(bool $dry_run = false, string $bron = 'cron'): array {
         }
     }
 
+    // ── 5a. Inhoud van berichten (body) leegmaken — de logregel zelf blijft ──
+    $mnd_body = instelling_int('bewaar.maillog_body_mnd', 3);
+    if ($grensdatum = $grens($mnd_body)) {
+        try {
+            if ($dry_run) {
+                $c = $db->prepare("SELECT COUNT(*) FROM mail_log WHERE body IS NOT NULL AND verstuurd_op < ?");
+                $c->execute([$grensdatum]);
+                $aantal = (int)$c->fetchColumn();
+            } else {
+                $upd = $db->prepare("UPDATE mail_log SET body=NULL WHERE body IS NOT NULL AND verstuurd_op < ?");
+                $upd->execute([$grensdatum]);
+                $aantal = $upd->rowCount();
+            }
+            $uit['categorieen']['berichtinhoud_geleegd'] = $aantal;
+            if (!$dry_run && $aantal) opschoon_log_schrijf('berichtinhoud_geleegd', $aantal, $bron);
+        } catch (\Exception $e) { $uit['categorieen']['berichtinhoud_geleegd'] = 0; }
+    }
+
     // ── 5. Mail-/actielogboek verwijderen ────────────────────────────
     $mnd = instelling_int('bewaar.maillog_mnd', 0);
     if ($grensdatum = $grens($mnd)) {

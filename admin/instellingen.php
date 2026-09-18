@@ -1313,11 +1313,15 @@ require __DIR__ . '/layout_top.php';
       </div>
       <div class="form-rij">
         <div class="form-groep">
-          <label>Mail- en actielogboek</label>
+          <label>Berichtenlog (alle kanalen)</label>
           <input type="number" name="inst[bewaar.maillog_mnd]" value="<?= instelling_int('bewaar.maillog_mnd',12) ?>" min="0" max="60">
-          <div class="form-hulp">Daarna verwijderen</div>
+          <div class="form-hulp">Daarna de logregels verwijderen</div>
         </div>
-        <div class="form-groep"></div>
+        <div class="form-groep">
+          <label>Inhoud van berichten <span class="tip" data-tip="De volledige tekst van verstuurde berichten (leesbaar in het portaal en het berichtenlog). Daarna blijft alleen onderwerp + samenvatting over."></span></label>
+          <input type="number" name="inst[bewaar.maillog_body_mnd]" value="<?= instelling_int('bewaar.maillog_body_mnd',3) ?>" min="0" max="24">
+          <div class="form-hulp">Daarna de inhoud leegmaken</div>
+        </div>
       </div>
 
       <button type="submit" class="btn btn-primary">Opslaan</button>

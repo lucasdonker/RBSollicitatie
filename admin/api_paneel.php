@@ -10,6 +10,7 @@ try {
     $stmt = $db->prepare("
         SELECT s.*, p.voornaam, p.tussenvoegsel, p.achternaam,
                p.email, p.geboortedatum, p.telefoon, p.geslacht, p.id AS pid,
+               COALESCE(p.kanaal_voorkeur, 'whatsapp') AS kanaal_voorkeur,
                sz.naam sz_naam, sz.datum_werk_start
         FROM sollicitaties s JOIN personen p ON p.id = s.persoon_id
         JOIN seizoenen sz ON sz.id = s.seizoen_id
@@ -94,6 +95,12 @@ $ai_analyse = $blk ? ($blk['ai_analyse'] ?? null) : null;
   <!-- NAW + basis -->
   <div class="info-grid">
     <div class="info-item"><label>Telefoon</label><span><?= h($sol['telefoon'] ?: '—') ?></span></div>
+    <div class="info-item"><label>Berichten via</label>
+      <span><select onchange="kanaalVoorkeurZet(<?= (int)$sol['pid'] ?>, this.value, this)" style="font-size:12px;padding:3px 6px;width:auto">
+        <?php $kv = $sol['kanaal_voorkeur'] ?? 'whatsapp'; foreach (['whatsapp' => 'WhatsApp', 'sms' => 'Sms', 'email' => 'Alleen e-mail'] as $kk => $kl): ?>
+        <option value="<?= $kk ?>" <?= $kv === $kk ? 'selected' : '' ?>><?= $kl ?></option>
+        <?php endforeach; ?>
+      </select></span></div>
     <div class="info-item"><label>Leeftijd</label><span><?= $lft ?> jaar<?php if ($wordt_16_melding): ?> <span title="<?= h($wordt_16_melding) ?>" style="display:inline-block;font-size:11px;font-weight:600;color:var(--oranje);background:var(--oranje-bg);padding:1px 7px;border-radius:9px;margin-left:4px"><?= h($wordt_16_melding) ?></span><?php endif; ?></span></div>
     <div class="info-item"><label>Geboortedatum</label><span><?= datum_nl($sol['geboortedatum']) ?></span></div>
     <div class="info-item"><label>Aangemeld</label><span><?= datum_nl($sol['aangemeld_op']) ?></span></div>

@@ -2197,3 +2197,18 @@ details.b2-uitz > div { padding: 0 16px 16px; }
 .p13-evis h3 { font-size: 16px; margin: 14px 0 6px; color: var(--navy); }
 .p13-evis:empty:before { content: attr(data-placeholder); color: var(--grijs); }
 .p13-ehtml { width: 100%; padding: 12px 14px; font-family: monospace; font-size: 12px; line-height: 1.6; border: none; resize: vertical; color: var(--tekst); background: #fafafa; }
+/* ═══ PORTAAL BERICHTEN: samenvatting + detail (2.87.4) ═══ */
+a.pt-bericht { text-decoration: none; color: inherit; }
+.pt-bericht-sam { font-size: 14px; line-height: 1.55; color: var(--ink-muted); }
+.pt-bericht.ongelezen .pt-bericht-sam { color: var(--ink-soft); }
+.pt-bericht-detail { background: var(--surface, #fff); border: 1px solid #e6e9ef; border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.pt-bericht-detail-kop { display: flex; gap: 13px; align-items: flex-start; }
+.pt-bericht-detail .pt-bericht-titel { color: var(--ink); }
+.pt-bericht-inhoud { border-top: 1px solid #e6e9ef; padding-top: 14px; font-size: 15px; line-height: 1.65; color: var(--ink); word-break: break-word; }
+.pt-bericht-inhoud-leeg { border-top: 1px solid #e6e9ef; padding-top: 14px; font-size: 14px; line-height: 1.55; color: var(--ink-muted); }
+.pt-korttekst { white-space: pre-wrap; }
+.pt-mailtekst p { margin: 0 0 12px; }
+.pt-mailtekst a { color: var(--navy); font-weight: 600; }
+.pt-mailtekst img { max-width: 100%; height: auto; border-radius: 8px; }
+.pt-mailtekst table { max-width: 100%; }
+.pt-mailtekst h2, .pt-mailtekst h3 { margin: 16px 0 8px; color: var(--navy); }

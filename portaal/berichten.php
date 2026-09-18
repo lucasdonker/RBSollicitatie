@@ -1,7 +1,8 @@
 <?php
 /**
- * Portaal — Berichten (achter het belletje, ontwerp 08). Overzicht van verzonden e-mails
- * aan deze sollicitant, met ongelezen-markering. Bij openen wordt alles als gelezen gezet.
+ * Portaal — Berichten (achter het belletje, ontwerp 08). Overzicht van alle berichten aan deze
+ * sollicitant (e-mail, WhatsApp, sms) met samenvatting en ongelezen-markering. Tik op een
+ * bericht om het volledig te lezen. Bij openen wordt alles als gelezen gezet.
  */
 require_once __DIR__ . '/../includes/functions.php';
 sessie_start();
@@ -32,20 +33,21 @@ require __DIR__ . '/_kop.php';
     <div class="pt-leeg">
       <span class="pt-leeg-icoon navy"><?= icoon('mail', 24) ?></span>
       <span class="pt-leeg-titel">Nog geen berichten</span>
-      <span class="pt-leeg-tekst">Mails die we je sturen, zoals een uitnodiging of herinnering, verschijnen hier.</span>
+      <span class="pt-leeg-tekst">Berichten die we je sturen, zoals een uitnodiging of herinnering, verschijnen hier.</span>
     </div>
   <?php else: ?>
     <?php foreach ($berichten as $b): ?>
-    <div class="pt-bericht<?= $b['ongelezen'] ? ' ongelezen' : '' ?>">
-      <span class="pt-bericht-icoon"><?= icoon('mail', 20) ?></span>
+    <a class="pt-bericht<?= $b['ongelezen'] ? ' ongelezen' : '' ?>" href="<?= APP_URL ?>/portaal/bericht.php?id=<?= (int)$b['id'] ?>">
+      <span class="pt-bericht-icoon"><?= icoon($b['icoon'], 20) ?></span>
       <div class="pt-bericht-tekst">
         <div class="pt-bericht-kop">
           <span class="pt-bericht-titel"><?= h($b['titel']) ?></span>
           <?php if ($b['ongelezen']): ?><span class="pt-bericht-stip" aria-label="Ongelezen"></span><?php endif; ?>
         </div>
+        <?php if ($b['samenvatting'] !== ''): ?><span class="pt-bericht-sam"><?= h($b['samenvatting']) ?></span><?php endif; ?>
         <span class="pt-bericht-meta"><?= h($b['meta']) ?></span>
       </div>
-    </div>
+    </a>
     <?php endforeach; ?>
     <span class="pt-hulp">Berichten blijven een seizoen bewaard.</span>
   <?php endif; ?>

@@ -3,10 +3,21 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.87.3');
+define('APP_VERSIE', '2.87.4');
 
 function app_changelog(): array {
     return [
+        '2.87.4' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Meldingen: portaal — alle kanalen onder Berichten, bericht lezen, kanaalvoorkeur (bundel 5 van 7)',
+            'punten' => [
+                'Berichten in het portaal toont nu alle berichten aan jou (e-mail, WhatsApp, sms) met een icoon per kanaal en een samenvattingsregel, exact volgens het ontwerp; berichten aan je ouder/verzorger of het bestuur staan er niet meer tussen',
+                'Tik op een bericht om het volledig te lezen in het portaal (geen wisselen van apps meer); de inhoud blijft standaard 3 maanden beschikbaar (instelbaar), de regel zelf een seizoen',
+                'Mijn gegevens: kies hoe je korte berichten ontvangt (WhatsApp, sms of alleen e-mail). WhatsApp staat standaard aan zodra je nummer bekend is; afmelden kan hier altijd',
+                'Beheer: de kanaalvoorkeur is in het detailpaneel te zien en aan te passen (wordt gelogd)',
+                'AVG: bij het verwijderen van je account wordt ook de inhoud van je berichten gewist; de export bevat het kanaal per bericht',
+            ],
+        ],
         '2.87.3' => [
             'datum'  => '2026-09-18',
             'titel'  => 'Meldingen: beheer — sjablonen per kanaal, berichten sturen, kanaalkeuze (bundel 4 van 7)',
