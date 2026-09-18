@@ -221,4 +221,24 @@ function ondertekening_pdf_genereer(array $rec, array $sol): ?string {
     }
 }
 
+/**
+ * Genereert de PDF en stuurt hem direct naar de browser (inline). Eén plek voor het portaal
+ * (kopie voor de ondertekenaar) en het beheer (bekijken/printen). Stopt de request; bij een
+ * fout een nette 500-tekst. $sol: voornaam, achternaam (met tussenvoegsel), geboortedatum.
+ */
+function ondertekening_pdf_stream(array $rec, array $sol, string $bestandsnaam): never {
+    $pad = ondertekening_pdf_genereer($rec, $sol);
+    if ($pad && is_file($pad)) {
+        header('Content-Type: application/pdf');
+        header('Content-Disposition: inline; filename="' . preg_replace('/[^A-Za-z0-9_.-]/', '_', $bestandsnaam) . '"');
+        header('Content-Length: ' . filesize($pad));
+        header('Cache-Control: private, no-store');
+        readfile($pad);
+        @unlink($pad);
+        exit;
+    }
+    http_response_code(500);
+    exit('Kon het PDF-document niet genereren.');
+}
+
 }

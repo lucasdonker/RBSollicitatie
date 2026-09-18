@@ -3,10 +3,21 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.88.0');
+define('APP_VERSIE', '2.89.0');
 
 function app_changelog(): array {
     return [
+        '2.89.0' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Portaal: ondertekenen exact volgens het ontwerp (18+ zelf en ouder-link)',
+            'punten' => [
+                'Het ondertekenscherm is herbouwd volgens het ontwerp: het document (in te klappen), de vragen in nette kaarten, het handtekeningvak met "Wissen", het akkoord-vinkje en één duidelijke knop onderaan; op desktop staat het document naast het ondertekenpaneel',
+                'Sollicitanten van 18 of ouder tekenen binnen het portaal (met navigatie en terugknop); de ouder/verzorger krijgt een eigen, kaal scherm via de persoonlijke link in de u-vorm',
+                'Na het ondertekenen een bevestiging met de ondertekende PDF om te downloaden (ook later, via dezelfde link); een ongeldige of gebruikte link toont een nette uitleg in plaats van een kale foutpagina',
+                'Bij een fout blijft alles staan, inclusief de gezette handtekening; verplichte velden worden ter plekke rood gemarkeerd',
+                'Documentnamen en -teksten staan nu op één plek (includes/ondertekening_tekst.php); het beheer en het portaal gebruiken dezelfde PDF-uitvoer',
+            ],
+        ],
         '2.88.0' => [
             'datum'  => '2026-09-18',
             'titel'  => 'Portaal: eigen 404-pagina, inloggen afgedwongen, BLK-autosave op de gedeelde helper',

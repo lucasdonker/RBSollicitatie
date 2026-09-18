@@ -25,17 +25,8 @@ if (isset($_GET['export'])) {
         'achternaam'    => trim(($rec['tussenvoegsel'] ? $rec['tussenvoegsel'] . ' ' : '') . ($rec['achternaam'] ?? '')),
         'geboortedatum' => $rec['geboortedatum'] ?? '',
     ];
-    if (function_exists('ondertekening_pdf_genereer')) {
-        $pdf_pad = ondertekening_pdf_genereer($rec, $sol_voor_pdf);
-        if ($pdf_pad && is_file($pdf_pad)) {
-            $naam_bestand = 'Ondertekend_' . preg_replace('/[^a-z0-9]/i', '_', $rec['type']) . '.pdf';
-            header('Content-Type: application/pdf');
-            header('Content-Disposition: inline; filename="' . $naam_bestand . '"');
-            header('Content-Length: ' . filesize($pdf_pad));
-            readfile($pdf_pad);
-            @unlink($pdf_pad);
-            exit;
-        }
+    if (function_exists('ondertekening_pdf_stream')) {
+        ondertekening_pdf_stream($rec, $sol_voor_pdf, 'Ondertekend_' . preg_replace('/[^a-z0-9]/i', '_', $rec['type']) . '.pdf');
     }
     http_response_code(500);
     exit('Kon het PDF-document niet genereren.');

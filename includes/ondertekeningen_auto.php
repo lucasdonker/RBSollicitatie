@@ -27,16 +27,7 @@ function personen_ouder_auto_setup(): void {
     } catch (\Exception $e) { error_log('personen_ouder_auto_setup: ' . $e->getMessage()); }
 }
 
-/** Leesbare naam van een documenttype (één bron voor mails en herinneringen). */
-function ondertekening_label(string $type): string {
-    return match ($type) {
-        'gezondheid_ouder'  => 'Gezondheidsverklaring (t/m 17)',
-        'gezondheid_18plus' => 'Gezondheidsverklaring 18+',
-        'intake'            => 'Intakeformulier selectiedag',
-        'intake_ouder'      => 'Intakeformulier selectiedag (ouder)',
-        default             => 'Formulier',
-    };
-}
+// ondertekening_label() en de documentteksten staan in includes/ondertekening_tekst.php (één bron).
 
 /** Onderteken-URL voor een token. */
 function ondertekening_url(string $token): string {

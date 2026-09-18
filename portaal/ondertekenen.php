@@ -1,64 +1,100 @@
 <?php
 /**
- * Digitale ondertekening — toegankelijk via unieke token in URL.
- * Twee toegangspaden:
- *   1) Sollicitant zelf ingelogd → invite genereert token en linkt hier heen
- *   2) Ouder/verzorger via mail-link → alleen token in URL nodig
+ * Digitale ondertekening — Portaal.dc sectie 05 (18+: zelf tekenen, in het portaal) en 09
+ * (ouder/verzorger via een persoonlijke link, buiten het portaal: geen inlog, geen navigatie).
+ *
+ * Toegang via de unieke token in de URL. Twee routes, nooit beide:
+ *   1) Sollicitant zelf (ondertekenaar_rol = sollicitant): opent vanuit zijn taken; ingelogd → met
+ *      portaal-navigatie, anders (link uit de mail) alleen het document.
+ *   2) Ouder/verzorger (ondertekenaar_rol = ouder): alleen de token uit de mail is nodig.
+ * Na ondertekenen: bevestiging + PDF-kopie (?pdf=1, alleen voor een ondertekend document).
+ *
+ * Veldnamen en opslag zijn ongewijzigd (formulier_data-JSON per type); alleen de presentatie is nieuw.
+ * Documentteksten en -namen: includes/ondertekening_tekst.php. Velden: _ondertekenen_velden.php.
+ * Canvas + validatie: assets/js/ondertekenen.js. Stijl: het "ONDERTEKENEN"-blok (.ond-*) in stijl.css.
  */
 require_once __DIR__ . '/../includes/functions.php';
 sessie_start();
 
-$db     = db();
+$db = db();
 // Zorg dat de ondertekeningen-tabel bestaat (op een verse database komt die anders alleen via migratie)
 if (function_exists('ondertekeningen_auto_setup')) ondertekeningen_auto_setup();
-$token  = trim($_GET['token'] ?? '');
+$token = trim($_GET['token'] ?? '');
 
-if (!$token) {
+if ($token === '') {
     // Zonder token: alleen een ingelogde sollicitant kan zelf een nieuw document starten
     $sol_id = portaal_vereis_login();
     $type = $_GET['nieuw'] ?? '';
-    if ($type && in_array($type, ['intake','gezondheid_18plus'], true)) {
-        // Maak nieuw record aan met unieke token
+    if (in_array($type, ['intake', 'gezondheid_18plus'], true)) {
         $nieuw_token = bin2hex(random_bytes(24));
         $db->prepare("INSERT INTO ondertekeningen (sollicitatie_id, type, token, ondertekenaar_rol) VALUES (?,?,?,'sollicitant')")
            ->execute([$sol_id, $type, $nieuw_token]);
         redirect(APP_URL . '/portaal/ondertekenen.php?token=' . $nieuw_token);
     }
+    pagina_404();
 }
 
-// Ophalen record via token
+// ── Record + sollicitant ophalen ─────────────────────────────
 $q = $db->prepare("SELECT * FROM ondertekeningen WHERE token = ?");
 $q->execute([$token]);
 $rec = $q->fetch();
+$sol = null;
+if ($rec) {
+    $s_q = $db->prepare("SELECT s.id, s.fase, p.voornaam, p.tussenvoegsel, p.achternaam, p.geboortedatum, p.email, sz.naam AS seizoen_naam
+                         FROM sollicitaties s JOIN personen p ON p.id = s.persoon_id JOIN seizoenen sz ON sz.id = s.seizoen_id WHERE s.id = ?");
+    $s_q->execute([$rec['sollicitatie_id']]);
+    $sol = $s_q->fetch() ?: null;
+}
+$contact = portaal_contact_email();
 
-if (!$rec) {
+if (!$rec || !$sol) {
+    // Ongeldige of verlopen link (ontwerp 10: systeemstaat, nooit een technische code als kop)
     http_response_code(404);
-    ?><!DOCTYPE html><html lang="nl"><head><meta charset="UTF-8"><title>Niet gevonden</title>
-    <link rel="stylesheet" href="<?= APP_URL ?>/assets/css/stijl.css"></head>
-    <body style="padding:40px;text-align:center;background:var(--bg);color:var(--tekst);font-family:Inter,sans-serif">
-    <h1>Link niet gevonden</h1>
-    <p>Deze link is ongeldig of verlopen. Neem contact op met Paal 13.</p>
-    <p><a href="https://paal13.com">paal13.com</a></p>
-    </body></html><?php
+    $portaal_titel     = 'Link niet gevonden';
+    $portaal_geen_nav  = true;
+    $portaal_merk_naam = 'Reddingsbrigade Paal 13';
+    require __DIR__ . '/_kop.php';
+    ?>
+  <div class="pt-leeg groot ond-ongeldig">
+    <span class="pt-leeg-icoon warn"><?= icoon('klok', 26) ?></span>
+    <span class="pt-leeg-titel">Deze link werkt niet meer</span>
+    <span class="pt-leeg-tekst">De link is ongeldig of niet meer geldig. Vraag zo nodig een nieuwe aan bij het bestuur.</span>
+    <span class="pt-hulp">Lukt het niet? Mail <a href="mailto:<?= h($contact) ?>"><?= h($contact) ?></a></span>
+  </div>
+    <?php
+    require __DIR__ . '/_voet.php';
     exit;
 }
 
-// Ophalen sollicitant info voor context
-$s_q = $db->prepare("SELECT s.id, s.fase, p.voornaam, p.tussenvoegsel, p.achternaam, p.geboortedatum, p.email, sz.naam AS seizoen_naam FROM sollicitaties s JOIN personen p ON p.id = s.persoon_id JOIN seizoenen sz ON sz.id = s.seizoen_id WHERE s.id = ?");
-$s_q->execute([$rec['sollicitatie_id']]);
-$sol = $s_q->fetch();
-if (!$sol) { http_response_code(404); exit; }
-
-$naam_sol = trim($sol['voornaam'] . ' ' . ($sol['tussenvoegsel'] ? $sol['tussenvoegsel'] . ' ' : '') . $sol['achternaam']);
+$type           = (string)$rec['type'];
+$is_ouder       = $rec['ondertekenaar_rol'] === 'ouder' || ondertekening_is_ouder_type($type);
+$is_gezondheid  = ondertekening_is_gezondheid($type);
+$is_intake      = !$is_gezondheid;
 $is_ondertekend = !empty($rec['ondertekend_op']);
+$voornaam       = (string)$sol['voornaam'];
+$naam_sol       = trim($voornaam . ' ' . trim(($sol['tussenvoegsel'] ?? '') . ' ' . $sol['achternaam']));
+$leeftijd       = function_exists('leeftijd_uit_datum') ? leeftijd_uit_datum($sol['geboortedatum'] ?? null) : null;
+$titel_kort     = ondertekening_titel_kort($type);
+$doc            = ondertekening_document($type, $voornaam);
+$eigen_ingelogd = !$is_ouder && portaal_ingelogd() && (int)($_SESSION['portaal_sol_id'] ?? 0) === (int)$rec['sollicitatie_id'];
+$basis_url      = APP_URL . '/portaal/ondertekenen.php?token=' . urlencode($token);
 
-// ── POST: verwerken ondertekening ────────────────────────────
+// ── PDF-kopie (alleen van een ondertekend document; de token is de sleutel) ──
+if (isset($_GET['pdf']) && $is_ondertekend && function_exists('ondertekening_pdf_stream')) {
+    ondertekening_pdf_stream($rec, [
+        'voornaam'      => $voornaam,
+        'achternaam'    => trim(($sol['tussenvoegsel'] ? $sol['tussenvoegsel'] . ' ' : '') . $sol['achternaam']),
+        'geboortedatum' => $sol['geboortedatum'] ?? '',
+    ], ondertekening_pdf_bestandsnaam($type));
+}
+
+// ── POST: verwerken ondertekening (logica ongewijzigd) ───────
 $fout = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_ondertekend) {
     csrf_check();
-    $naam_getypt = trim($_POST['naam_getypt'] ?? '');
-    $plaats      = trim($_POST['plaats'] ?? '');
-    $akkoord     = !empty($_POST['akkoord']);
+    $naam_getypt  = trim($_POST['naam_getypt'] ?? '');
+    $plaats       = trim($_POST['plaats'] ?? '');
+    $akkoord      = !empty($_POST['akkoord']);
     $handtekening = $_POST['handtekening_beeld'] ?? '';
     // Valideer de handtekening-data-URL (PNG, redelijke grootte)
     if ($handtekening !== '' && !preg_match('#^data:image/png;base64,[A-Za-z0-9+/=]+$#', $handtekening)) {
@@ -67,35 +103,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_ondertekend) {
     if (strlen($handtekening) > 600000) $handtekening = ''; // te groot → negeren
 
     if (!$akkoord)                       $fout = 'Vink het akkoord aan.';
-    elseif (strlen($naam_getypt) < 3)    $fout = 'Vul je volledige naam in ter ondertekening.';
-    elseif (!$plaats)                    $fout = 'Vul je woonplaats in.';
-    elseif ($handtekening === '')        $fout = 'Zet je handtekening in het vak.';
+    elseif (strlen($naam_getypt) < 3)    $fout = ($is_ouder ? 'Vul uw' : 'Vul je') . ' volledige naam in ter ondertekening.';
+    elseif (!$plaats)                    $fout = ($is_ouder ? 'Vul uw' : 'Vul je') . ' woonplaats in.';
+    elseif ($handtekening === '')        $fout = ($is_ouder ? 'Zet uw' : 'Zet je') . ' handtekening in het vak.';
     else {
         // Verzamel form-data (verschilt per type)
         $form = [];
-        if ($rec['type'] === 'gezondheid_ouder' || $rec['type'] === 'gezondheid_18plus') {
+        if ($is_gezondheid) {
             $form['geslacht']       = $_POST['geslacht'] ?? '';
             $form['geboorteplaats'] = trim($_POST['geboorteplaats'] ?? '');
             $form['geboortedatum']  = $_POST['geboortedatum'] ?? '';
-            if ($rec['type'] === 'gezondheid_ouder') {
-                $form['relatie'] = $_POST['relatie'] ?? '';
-            }
+            if ($type === 'gezondheid_ouder') $form['relatie'] = $_POST['relatie'] ?? '';
             // Optionele aandoeningen (checkboxes)
             $form['aandoeningen'] = [
-                'diabetes'         => !empty($_POST['a_diabetes']),
-                'breuken'          => !empty($_POST['a_breuken']),
-                'hart_vaat'        => !empty($_POST['a_hartvaat']),
-                'ademhaling'       => !empty($_POST['a_ademhaling']),
-                'zenuwstelsel'     => !empty($_POST['a_zenuwstelsel']),
-                'gehoororgaan'     => !empty($_POST['a_gehoor']),
-                'overig'           => trim($_POST['a_overig'] ?? ''),
+                'diabetes'     => !empty($_POST['a_diabetes']),
+                'breuken'      => !empty($_POST['a_breuken']),
+                'hart_vaat'    => !empty($_POST['a_hartvaat']),
+                'ademhaling'   => !empty($_POST['a_ademhaling']),
+                'zenuwstelsel' => !empty($_POST['a_zenuwstelsel']),
+                'gehoororgaan' => !empty($_POST['a_gehoor']),
+                'overig'       => trim($_POST['a_overig'] ?? ''),
             ];
-        }
-        if ($rec['type'] === 'intake' || $rec['type'] === 'intake_ouder') {
-            $form['geslacht']         = $_POST['geslacht'] ?? '';
-            if ($rec['type'] === 'intake_ouder') {
-                $form['relatie'] = $_POST['relatie'] ?? '';
-            }
+        } else {
+            $form['geslacht'] = $_POST['geslacht'] ?? '';
+            if ($type === 'intake_ouder') $form['relatie'] = $_POST['relatie'] ?? '';
+            $form['geboortedatum'] = $_POST['geboortedatum'] ?? '';
             // 1. Gezondheid & veiligheid
             $form['gezondheid_keuze']       = $_POST['gezondheid_keuze'] ?? '';
             $form['gezondheid_toelichting'] = trim($_POST['gezondheid_toelichting'] ?? '');
@@ -103,14 +135,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_ondertekend) {
             $form['foto_toestemming'] = !empty($_POST['foto_toestemming']);
             // 3. Verklaring & aansprakelijkheid
             $form['verklaring'] = [
-                'naar_waarheid'  => !empty($_POST['v_waarheid']),
+                'naar_waarheid'    => !empty($_POST['v_waarheid']),
                 'goede_gezondheid' => !empty($_POST['v_gezondheid']),
-                'eigen_risico'   => !empty($_POST['v_eigenrisico']),
-                'leeftijd_16'    => !empty($_POST['v_leeftijd']),
+                'eigen_risico'     => !empty($_POST['v_eigenrisico']),
+                'leeftijd_16'      => !empty($_POST['v_leeftijd']),
             ];
         }
 
-        // Update record
         $db->prepare("UPDATE ondertekeningen SET
                         ondertekenaar_naam=?, ondertekenaar_geboortedatum=?, ondertekenaar_geboorteplaats=?, ondertekenaar_relatie=?,
                         formulier_data=?, plaats=?, handtekening_beeld=?,
@@ -119,7 +150,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_ondertekend) {
                      WHERE token=?")
            ->execute([
                 $naam_getypt,
-                $form['geboortedatum'] ?? null,
+                ($form['geboortedatum'] ?? '') !== '' ? $form['geboortedatum'] : null,
                 $form['geboorteplaats'] ?? null,
                 $form['relatie'] ?? null,
                 json_encode($form, JSON_UNESCAPED_UNICODE),
@@ -129,21 +160,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_ondertekend) {
                 substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 500),
                 $token,
            ]);
+
         // Meldingen via de centrale kern: bevestiging aan de sollicitant, kopie (PDF) aan de
         // ondertekenaar, en optioneel een seintje aan het bestuur. Fouten blokkeren nooit.
         if (function_exists('melding_verstuur')) {
-            $sol_id_o  = (int)$rec['sollicitatie_id'];
-            $doc_naam  = function_exists('ondertekening_label') ? ondertekening_label($rec['type']) : 'Formulier';
-            $is_ouder  = ($rec['ondertekenaar_rol'] === 'ouder');
-            $ref       = 'ondertekening:' . (int)$rec['id'];
-            $pdf_pad   = null; $bijlagen = [];
+            $sol_id_o = (int)$rec['sollicitatie_id'];
+            $doc_naam = ondertekening_label($type);
+            $ref      = 'ondertekening:' . (int)$rec['id'];
+            $pdf_pad  = null; $bijlagen = [];
             try {
                 if (function_exists('ondertekening_pdf_genereer')) {
                     $vers = $db->prepare("SELECT * FROM ondertekeningen WHERE token=?");
                     $vers->execute([$token]);
                     $rec_vers = $vers->fetch() ?: $rec;
                     $pdf_pad  = ondertekening_pdf_genereer($rec_vers, $sol);
-                    if ($pdf_pad) $bijlagen = [['pad' => $pdf_pad, 'naam' => 'Ondertekend_' . preg_replace('/[^A-Za-z0-9]+/', '_', $doc_naam) . '_Paal13.pdf', 'mime' => 'application/pdf']];
+                    if ($pdf_pad) $bijlagen = [['pad' => $pdf_pad, 'naam' => 'Ondertekend_' . ondertekening_pdf_bestandsnaam($type), 'mime' => 'application/pdf']];
                 }
             } catch (\Throwable $e) { error_log('ondertekening PDF: ' . $e->getMessage()); }
             try {
@@ -166,447 +197,158 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_ondertekend) {
             if ($pdf_pad) @unlink($pdf_pad);
         }
 
-        redirect(APP_URL . '/portaal/ondertekenen.php?token=' . urlencode($token) . '&klaar=1');
+        redirect($basis_url . '&klaar=1' . (portaal_terug_param() === 'taken' ? '&terug=taken' : ''));
     }
 }
 
-$titel = match ($rec['type']) {
-    'gezondheid_ouder'  => 'Gezondheidsverklaring (t/m 17 jaar)',
-    'gezondheid_18plus' => 'Gezondheidsverklaring 18+',
-    'intake'            => 'Intakeformulier Selectiedag',
-    'intake_ouder'      => 'Intakeformulier Selectiedag (ouder)',
-    default             => 'Ondertekening',
-};
-$logo = function_exists('site_logo_url') ? site_logo_url() : '';
+// ── Weergave ─────────────────────────────────────────────────
+$na_fout = $fout !== '';
+$std = [
+    'naam_getypt'   => $is_ouder ? (string)($rec['ondertekenaar_naam'] ?? '') : $naam_sol,
+    'geboortedatum' => $is_ouder ? '' : (string)($sol['geboortedatum'] ?? ''),
+];
+$v   = fn(string $k): string => h((string)($na_fout ? ($_POST[$k] ?? '') : ($std[$k] ?? '')));
+$aan = fn(string $k, string $waarde = '1'): string => ($na_fout && (string)($_POST[$k] ?? '') === $waarde) ? ' checked' : '';
+$sel = fn(string $k, string $waarde): string => ($na_fout && (string)($_POST[$k] ?? '') === $waarde) ? ' selected' : '';
+$u   = $is_ouder; // aanspreekvorm: ouder = u, sollicitant = je
+$ondertekend_op = $is_ondertekend ? strtotime($rec['ondertekend_op']) : null;
+$maanden = ['januari', 'februari', 'maart', 'april', 'mei', 'juni', 'juli', 'augustus', 'september', 'oktober', 'november', 'december'];
+$ondertekend_tekst = $ondertekend_op ? 'Ondertekend ' . date('j', $ondertekend_op) . ' ' . $maanden[(int)date('n', $ondertekend_op) - 1] . ' om ' . date('H:i', $ondertekend_op) : '';
+
+$portaal_titel = $titel_kort;
+if ($eigen_ingelogd) {
+    $portaal_terug = portaal_terug_url();
+} else {
+    $portaal_geen_nav  = true;
+    $portaal_merk_naam = 'Reddingsbrigade Paal 13';
+    $portaal_merk_sub  = $is_ouder ? 'Ondertekenen voor ' . $naam_sol : (string)$sol['seizoen_naam'];
+}
+require __DIR__ . '/_kop.php';
 ?>
-<!DOCTYPE html>
-<html lang="nl" data-theme="">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title><?= h($titel) ?> — Paal 13</title>
-<link rel="stylesheet" href="<?= APP_URL ?>/assets/css/stijl.css">
-<script>(function(){var t=localStorage.getItem('paal13-theme')||'light';document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'');})();</script>
-<style>
-body { background:var(--bg); min-height:100vh; }
-.doc-wrap { max-width:720px; margin:0 auto; padding:20px 16px 48px; }
-.doc-kop { text-align:center; margin-bottom:20px; }
-.doc-kop img { height:50px; margin-bottom:8px; }
-.doc-kop h1 { font-size:22px; letter-spacing:.02em; margin:0 0 6px; }
-.doc-kop .sub { color:var(--tekst-zacht); font-size:13px; }
-.doc-card { background:var(--bg-card); border:1px solid var(--rand); border-radius:12px; padding:24px; margin-bottom:16px; box-shadow:var(--shadow); }
-.verklaring-tekst { font-size:13px; line-height:1.65; color:var(--tekst-zacht); background:var(--grijs-bg); padding:16px 18px; border-radius:8px; border-left:3px solid var(--oranje); margin-bottom:16px; }
-.verklaring-tekst p { margin:0 0 10px; }
-.verklaring-tekst p:last-child { margin-bottom:0; }
-.aandoening-lijst { display:grid; grid-template-columns:1fr; gap:8px; padding:12px 16px; background:var(--grijs-bg); border-radius:6px; font-size:13px; }
-.klaar-melding { background:var(--groen-bg); color:var(--groen); padding:20px; border-radius:12px; text-align:center; }
-/* Formuliervelden in de nieuwe ontwerpstijl */
-.doc-card .form-groep { margin-bottom:14px; }
-.doc-card .form-groep > label { display:block; font:var(--text-label); color:var(--ink); margin-bottom:6px; }
-.doc-card input[type="text"], .doc-card input[type="email"], .doc-card input[type="date"],
-.doc-card input[type="tel"], .doc-card select, .doc-card textarea {
-  width:100%; box-sizing:border-box; height:48px; padding:0 14px;
-  border:1px solid var(--border-strong); border-radius:var(--radius-md);
-  font:var(--text-body); font-size:16px; background:var(--surface); color:var(--ink);
-}
-.doc-card textarea { height:auto; min-height:80px; padding:12px 14px; resize:vertical; }
-.doc-card input:focus, .doc-card select:focus, .doc-card textarea:focus {
-  outline:none; border-color:var(--navy); box-shadow:0 0 0 3px rgba(5,77,138,.12);
-}
-.doc-card input[type="checkbox"] { width:18px; height:18px; accent-color:var(--navy); vertical-align:-3px; }
-.form-rij { display:flex; gap:12px; flex-wrap:wrap; }
-.form-rij .form-groep { flex:1; min-width:160px; }
-</style>
-</head>
-<body>
-<div class="doc-wrap">
 
-<div class="doc-kop">
-  <?php if ($logo): ?><img src="<?= h($logo) ?>" alt="Paal 13"><?php endif; ?>
-  <h1><?= h($titel) ?></h1>
-  <div class="sub">Reddingsbrigade Paal 13 — <?= h($sol['seizoen_naam']) ?></div>
-</div>
-
-<?php if (isset($_GET['klaar']) || $is_ondertekend): ?>
-  <div class="klaar-melding">
-    <h2 style="margin:0 0 8px"><?= icoon("vink-cirkel", 20) ?> Bedankt voor het ondertekenen</h2>
-    <p style="margin:0;color:inherit">
-      We hebben de ondertekening ontvangen op <?= h(datum_nl(substr($rec['ondertekend_op'] ?? date('Y-m-d'), 0, 10))) ?>.
-      Er is een bevestiging naar het bestuur gestuurd.
-    </p>
-    <?php if ($rec['ondertekenaar_rol'] === 'sollicitant'): ?>
-    <p style="margin-top:16px">
-      <a href="<?= APP_URL ?>/portaal/" class="ds-btn ds-btn-primair">Terug naar het portaal</a>
-    </p>
-    <?php else: ?>
-    <p style="margin-top:14px;font-size:12px;color:var(--tekst-zacht)">
-      Je kunt dit venster nu sluiten.
-    </p>
+<?php if ($is_ondertekend): ?>
+  <!-- Na ondertekenen (ontwerp 09: bevestiging met kopie) -->
+  <div class="ond-klaar">
+    <span class="ond-klaar-icoon"><?= icoon('vink', 30) ?></span>
+    <span class="ond-klaar-titel">Bedankt, ondertekend</span>
+    <span class="ond-klaar-tekst">
+      <?php if ($is_ouder): ?>
+        <?= h($voornaam) ?> ziet in het portaal dat dit rond is.<?= !empty($rec['ondertekenaar_email']) ? ' U krijgt een kopie per e-mail.' : '' ?>
+      <?php else: ?>
+        Dit document is rond. Je krijgt een kopie per e-mail; in je portaal staat de taak op afgerond.
+      <?php endif; ?>
+    </span>
+    <a class="ond-bestand" href="<?= h($basis_url) ?>&amp;pdf=1" target="_blank" rel="noopener">
+      <span class="ond-bestand-icoon"><?= icoon('document', 20) ?></span>
+      <span class="ond-bestand-tekst">
+        <span class="ond-bestand-naam"><?= h(ondertekening_pdf_bestandsnaam($type)) ?></span>
+        <span class="ond-bestand-sub"><?= h($ondertekend_tekst) ?><?= !empty($rec['ondertekenaar_naam']) ? ' door ' . h($rec['ondertekenaar_naam']) : '' ?></span>
+      </span>
+      <?= icoon('download', 18) ?>
+    </a>
+    <?php if ($eigen_ingelogd): ?>
+      <a href="<?= h(portaal_terug_url()) ?>" class="ds-btn ds-btn-primair ond-klaar-knop">Terug naar het portaal</a>
     <?php endif; ?>
+    <span class="pt-hulp">Vragen? Mail <a href="mailto:<?= h($contact) ?>"><?= h($contact) ?></a></span>
   </div>
+
 <?php else: ?>
+  <form method="POST" class="ond<?= $is_ouder ? ' ouder' : '' ?>" id="ondForm" onsubmit="return ondValideer(this)" novalidate>
+    <?= csrf_input() ?>
+    <input type="hidden" name="terug" value="<?= h(portaal_terug_param()) ?>">
 
-  <div class="doc-card">
-    <p style="margin-bottom:16px;font-size:14px">
-      Deze verklaring wordt ondertekend voor <strong><?= h($naam_sol) ?></strong>
-      <?php if ($sol['geboortedatum']): ?>
-        (geboren <?= h(datum_nl($sol['geboortedatum'])) ?>)
-      <?php endif; ?>.
-    </p>
+    <!-- Kop: titel + status (mobiel: witte balk onder de topbar; desktop: kaartkop met chip) -->
+    <header class="ond-kop">
+      <div class="ond-kop-titel">
+        <span class="ond-kop-naam"><?= h($titel_kort) ?></span>
+        <span class="ond-kop-sub"><?= $eigen_ingelogd ? 'Nog te ondertekenen' : h($naam_sol) . ' · ' . h($sol['seizoen_naam']) ?></span>
+      </div>
+      <span class="ond-chip"><span class="ond-chip-stip"></span>Nog te ondertekenen</span>
+    </header>
 
-    <?php if ($fout): ?>
-      <div class="flash flash-fout" style="margin-bottom:16px"><?= h($fout) ?></div>
-    <?php endif; ?>
-
-    <form method="POST" onsubmit="return valideer(this)">
-      <?= csrf_input() ?>
-
-      <?php if ($rec['type'] === 'gezondheid_ouder'): ?>
-
-        <h3>Gegevens ouder / verzorger</h3>
-        <div class="form-rij">
-          <div class="form-groep">
-            <label>Relatie tot minderjarige</label>
-            <select name="relatie" required>
-              <option value="">— kies —</option>
-              <option value="vader">Vader</option>
-              <option value="moeder">Moeder</option>
-              <option value="voogd">Voogd / voogdes</option>
-            </select>
-          </div>
-          <div class="form-groep">
-            <label>Geslacht</label>
-            <select name="geslacht" required>
-              <option value="">— kies —</option>
-              <option value="man">Man</option>
-              <option value="vrouw">Vrouw</option>
-              <option value="anders">Anders</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-groep">
-          <label>Volledige naam (zoals in ID)</label>
-          <input type="text" name="naam_getypt" required autocomplete="name">
-        </div>
-        <div class="form-rij">
-          <div class="form-groep">
-            <label>Geboorteplaats</label>
-            <input type="text" name="geboorteplaats" required>
-          </div>
-          <div class="form-groep">
-            <label>Geboortedatum</label>
-            <input type="date" name="geboortedatum" required>
-          </div>
-        </div>
-
-      <?php elseif ($rec['type'] === 'gezondheid_18plus'): ?>
-
-        <h3>Jouw gegevens</h3>
-        <div class="form-groep">
-          <label>Volledige naam (zoals in ID)</label>
-          <input type="text" name="naam_getypt" required autocomplete="name" value="<?= h($naam_sol) ?>">
-        </div>
-        <div class="form-rij">
-          <div class="form-groep">
-            <label>Geslacht</label>
-            <select name="geslacht" required>
-              <option value="">— kies —</option>
-              <option value="man">Man</option>
-              <option value="vrouw">Vrouw</option>
-              <option value="anders">Anders</option>
-            </select>
-          </div>
-          <div class="form-groep">
-            <label>Geboorteplaats</label>
-            <input type="text" name="geboorteplaats" required>
-          </div>
-        </div>
-        <div class="form-groep">
-          <label>Geboortedatum</label>
-          <input type="date" name="geboortedatum" value="<?= h($sol['geboortedatum'] ?? '') ?>" required>
-        </div>
-
-      <?php elseif ($rec['type'] === 'intake' || $rec['type'] === 'intake_ouder'): ?>
-
-        <?php if ($rec['type'] === 'intake_ouder'): ?>
-          <h3>Gegevens ouder / verzorger</h3>
-          <div class="form-rij">
-            <div class="form-groep">
-              <label>Relatie tot minderjarige</label>
-              <select name="relatie" required>
-                <option value="">— kies —</option>
-                <option value="vader">Vader</option>
-                <option value="moeder">Moeder</option>
-                <option value="voogd">Voogd / voogdes</option>
-              </select>
-            </div>
-            <div class="form-groep">
-              <label>Geslacht</label>
-              <select name="geslacht" required>
-                <option value="">— kies —</option>
-                <option value="man">Man</option>
-                <option value="vrouw">Vrouw</option>
-                <option value="anders">Anders</option>
-              </select>
-            </div>
-          </div>
-          <div class="form-groep">
-            <label>Volledige naam (ouder/verzorger)</label>
-            <input type="text" name="naam_getypt" required autocomplete="name">
-          </div>
-          <div class="form-groep">
-            <label>Geboortedatum</label>
-            <input type="date" name="geboortedatum" required>
-          </div>
-        <?php else: ?>
-          <h3>Jouw gegevens</h3>
-          <div class="form-groep">
-            <label>Volledige naam</label>
-            <input type="text" name="naam_getypt" required value="<?= h($naam_sol) ?>">
-          </div>
-          <div class="form-rij">
-            <div class="form-groep">
-              <label>Geslacht</label>
-              <select name="geslacht" required>
-                <option value="">— kies —</option>
-                <option value="man">Man</option>
-                <option value="vrouw">Vrouw</option>
-                <option value="anders">Anders</option>
-              </select>
-            </div>
-            <div class="form-groep">
-              <label>Geboortedatum</label>
-              <input type="date" name="geboortedatum" value="<?= h($sol['geboortedatum'] ?? '') ?>" required>
-            </div>
+    <div class="ond-body">
+      <div class="ond-links">
+        <?php if ($is_ouder): ?>
+          <div class="ond-intro">
+            <span class="ond-intro-titel"><?= h($titel_kort) ?></span>
+            <span class="ond-intro-tekst">Uw kind <?= h($voornaam) ?><?= $leeftijd !== null ? ' (' . (int)$leeftijd . ')' : '' ?> meldt zich aan als strandwacht bij Reddingsbrigade Paal 13. Voor deelname is uw handtekening nodig.</span>
           </div>
         <?php endif; ?>
 
-      <?php endif; ?>
+        <?php if ($na_fout): ?>
+          <div class="ds-melding ds-melding-error" id="ondFoutmelding" role="alert"><?= icoon('let-op', 18) ?> <div><?= h($fout) ?></div></div>
+        <?php endif; ?>
 
-      <?php if ($rec['type'] === 'intake' || $rec['type'] === 'intake_ouder'): ?>
-
-        <div style="margin-top:20px">
-          <h3>1. Gezondheid &amp; veiligheid</h3>
-          <div class="verklaring-tekst">
-            <p>Om jouw veiligheid te kunnen waarborgen, vragen wij of er medische of fysieke aandachtspunten zijn waarmee we tijdens de selectiedag rekening moeten houden. Je bent niet verplicht iets te delen. Wat je invult wordt vertrouwelijk behandeld.</p>
-          </div>
-          <div class="aandoening-lijst">
-            <label><input type="radio" name="gezondheid_keuze" value="geen" required> Ik heb geen aandachtspunten om te melden.</label>
-            <label><input type="radio" name="gezondheid_keuze" value="ja"> Ja, namelijk:</label>
-          </div>
-          <div class="form-groep" style="margin-top:8px">
-            <textarea name="gezondheid_toelichting" rows="3" placeholder="Vul hier je aandachtspunten in (alleen nodig als je hierboven 'Ja' koos)"></textarea>
-          </div>
-
-          <h3 style="margin-top:24px">2. Foto's beleid</h3>
-          <div class="verklaring-tekst">
-            <p>Tijdens deze dag worden foto's gemaakt voor interne evaluatie, promotie en sociale media. We gaan hier zorgvuldig mee om: niemand wordt ongepast of negatief in beeld gebracht, bijvoorbeeld in het zwembad.</p>
-          </div>
-          <div class="aandoening-lijst">
-            <label><input type="checkbox" name="foto_toestemming" value="1"> Ik geef toestemming voor het gebruik van foto's zoals hierboven omschreven.</label>
-          </div>
-
-          <h3 style="margin-top:24px">3. Verklaring &amp; aansprakelijkheid</h3>
-          <div class="aandoening-lijst">
-            <label><input type="checkbox" name="v_waarheid" value="1" required> Ik verklaar dat ik dit formulier naar waarheid heb ingevuld.</label>
-            <label><input type="checkbox" name="v_gezondheid" value="1" required> Ik verklaar dat ik in goede gezondheid verkeer om deel te nemen aan sportieve activiteiten.</label>
-            <label><input type="checkbox" name="v_eigenrisico" value="1" required> Deelname is op eigen risico. De organisatie is niet aansprakelijk voor letsel dat voortkomt uit verzwegen of onbekende omstandigheden.</label>
-            <?php if ($rec['type'] === 'intake'): ?>
-            <label><input type="checkbox" name="v_leeftijd" value="1" required> Ik ben 16 jaar of ouder en bevoegd om dit formulier zelfstandig te ondertekenen.</label>
-            <?php endif; ?>
-          </div>
-          <p style="font-size:12.5px;color:var(--tekst-zacht);margin-top:6px">De vinkjes met een verplichting zijn nodig om te kunnen ondertekenen. Het fotobeleid is optioneel.</p>
+        <!-- Het document (ingeklapt met vervaging; "Volledig document lezen" klapt uit) -->
+        <div class="ond-doc dicht" id="ondDoc">
+          <span class="ond-doc-titel"><?= h($doc['titel']) ?></span>
+          <?php foreach ($doc['alineas'] as $alinea): ?>
+            <span class="ond-doc-alinea"><?= h($alinea) ?></span>
+          <?php endforeach; ?>
+          <div class="ond-doc-vervaag"></div>
         </div>
+        <span class="ond-doc-meer">Volledig document · <button type="button" id="ondDocToggle" data-open="Inklappen" data-dicht="Alles lezen">Alles lezen</button></span>
 
-      <?php endif; ?>
-
-      <?php if ($rec['type'] === 'gezondheid_ouder' || $rec['type'] === 'gezondheid_18plus'): ?>
-
-        <div style="margin-top:20px">
-          <h3>Verklaring</h3>
-          <div class="verklaring-tekst">
-            <?php if ($rec['type'] === 'gezondheid_ouder'): ?>
-              <p><strong>Ondergetekende verklaart:</strong> dat bovengenoemde minderjarige mag deelnemen aan de opleidingen en het examen voor zwemmend en/of varend redden en/of wedstrijden waarbij de bepalingen van het geldige Examen Reglement worden gehandhaafd.</p>
-            <?php else: ?>
-              <p><strong>Ondergetekende verklaart:</strong> deel te mogen nemen aan de opleidingen en het examen voor zwemmend en/of varend redden en/of wedstrijden waarbij de bepalingen van het geldige Examen Reglement worden gehandhaafd.</p>
-            <?php endif; ?>
-            <p>Ondergetekende verklaart bekend te zijn met het feit dat het bovenstaande verhoogde eisen stelt aan de fysieke toestand van de deelnemer en verklaart kennis te hebben genomen van de factoren die hieronder zijn opgenomen.</p>
-            <p>Ondergetekende verklaart jegens de organisatie die de opleiding en het examen verzorgt, alsmede de Koninklijke Nederlandse Bond tot het Redden van Drenkelingen, het risico van deelname te aanvaarden en beide instanties uitdrukkelijk van iedere aansprakelijkheid te vrijwaren, voor zover deze aansprakelijkheid betrekking heeft op gebeurtenissen die voortvloeien uit de hieronder vermelde gezondheidsrisico's.</p>
-          </div>
-
-          <h3>Van toepassing? Vink aan wat geldt</h3>
-          <div class="aandoening-lijst">
-            <label><input type="checkbox" name="a_diabetes"> Diabetes (suikerziekte) of breuken</label>
-            <label><input type="checkbox" name="a_hartvaat"> Hart- en vaataandoeningen (benauwdheid, snelle vermoeidheid, hartkloppingen)</label>
-            <label><input type="checkbox" name="a_ademhaling"> Astma / bronchitis</label>
-            <label><input type="checkbox" name="a_zenuwstelsel"> Duizeligheid, flauwtes, wegrakingen, epilepsie</label>
-            <label><input type="checkbox" name="a_gehoor"> Middenoorontstekingen, loop-oor, gat in trommelvlies</label>
-          </div>
-          <div class="form-groep" style="margin-top:12px">
-            <label>Overige aandoeningen of medicatie <span style="font-weight:400;color:var(--tekst-zacht)">(optioneel)</span></label>
-            <textarea name="a_overig" rows="2" placeholder="Bijv. medicatie, allergieën, andere aandoeningen…"></textarea>
-          </div>
-          <div class="verklaring-tekst" style="margin-top:12px">
-            <p style="font-weight:600">Vraag bij enige twijfel advies aan uw huisarts of behandelend specialist. Doe dit ook na iedere belangrijke ziekte, in het bijzonder infectieziekten en operaties.</p>
-            <p style="font-size:13px;color:var(--tekst-zacht)">Deze gezondheidsverklaring is 1 jaar geldig vanaf de datum van ondertekening. Zonder ondertekening is deze verklaring niet geldig.</p>
-          </div>
-        </div>
-      <?php endif; ?>
-
-
-      <hr style="margin:24px 0;border:none;border-top:1px solid var(--rand)">
-
-      <h3>Ondertekening</h3>
-      <div class="form-rij">
-        <div class="form-groep">
-          <label>Plaats van ondertekening</label>
-          <input type="text" name="plaats" required placeholder="Bijv. Callantsoog">
-        </div>
-        <div class="form-groep">
-          <label>Datum</label>
-          <input type="text" value="<?= h(datum_nl(date('Y-m-d'))) ?>" disabled>
-        </div>
+        <?php require __DIR__ . '/_ondertekenen_velden.php'; ?>
       </div>
 
-      <div class="form-groep" style="margin-top:8px">
-        <label>
-          <input type="checkbox" name="akkoord" value="1" required>
-          &nbsp; Ik verklaar bovenstaande naar waarheid te hebben ingevuld en onderteken hierbij digitaal.
-        </label>
-      </div>
-
-      <!-- Handtekening-vak -->
-      <div class="form-groep" style="margin-top:16px">
-        <label>Jouw handtekening</label>
-        <div class="hdt-wrap">
-          <canvas id="hdtCanvas" class="hdt-canvas"></canvas>
-          <div class="hdt-hint" id="hdtHint"><?= icoon('potlood', 16) ?> Teken hier met je vinger of muis</div>
-          <button type="button" class="hdt-wis" id="hdtWis"><?= icoon('ververs', 15) ?> Wissen</button>
+      <div class="ond-rechts">
+        <!-- Handtekening -->
+        <div class="ond-kaart ond-teken">
+          <label class="ds-veld ond-veld">
+            <span class="ond-lbl"><?= $u ? 'Uw naam' : 'Je naam' ?> <span class="ster">*</span></span>
+            <input type="text" name="naam_getypt" class="ds-input" value="<?= $v('naam_getypt') ?>" autocomplete="name" required>
+            <span class="ds-veld-hint"><?= $u ? 'Uw volledige naam, zoals op uw identiteitsbewijs.' : 'Je volledige naam, zoals op je identiteitsbewijs.' ?></span>
+          </label>
+          <label class="ds-veld ond-veld">
+            <span class="ond-lbl">Plaats van ondertekening <span class="ster">*</span></span>
+            <input type="text" name="plaats" class="ds-input" value="<?= $v('plaats') ?>" placeholder="Bijv. Callantsoog" autocomplete="address-level2" required>
+          </label>
+          <div class="ond-teken-kop">
+            <span class="ond-teken-titel"><?= $u ? 'Uw handtekening' : 'Jouw handtekening' ?></span>
+            <button type="button" class="ond-teken-wis" id="hdtWis">Wissen</button>
+          </div>
+          <div class="ond-vak" id="hdtWrap">
+            <canvas id="hdtCanvas" class="ond-canvas" aria-label="Handtekeningvak"></canvas>
+            <span class="ond-vak-hint" id="hdtHint">Teken met <?= $u ? 'uw' : 'je' ?> vinger</span>
+          </div>
+          <input type="hidden" name="handtekening_beeld" id="hdtData" value="<?= $v('handtekening_beeld') ?>">
+          <label class="ond-check">
+            <input type="checkbox" name="akkoord" value="1"<?= $aan('akkoord') ?> required>
+            <span class="ond-check-box"><?= icoon('vink', 14) ?></span>
+            <span class="ond-check-tekst"><?= $u
+              ? 'Ik heb het document gelezen en geef toestemming voor deelname.'
+              : 'Ik heb het document gelezen en verklaar naar waarheid te hebben ondertekend.' ?></span>
+          </label>
         </div>
-        <input type="hidden" name="handtekening_beeld" id="hdtData">
-        <div class="ds-veld-hint" style="margin-top:6px">Zet je handtekening in het vak hierboven. Dit hoort bij je getypte naam.</div>
+
+        <?php if (!$is_ouder): ?>
+          <!-- Ondertekenaar (desktop) -->
+          <div class="ond-ondertekenaar">
+            <span class="ond-ondertekenaar-lbl">Ondertekenaar</span>
+            <span class="ond-ondertekenaar-naam"><?= h($naam_sol) ?><?= $leeftijd !== null ? ' · ' . (int)$leeftijd . ' jaar' : '' ?></span>
+            <span class="ond-ondertekenaar-sub">18 of ouder, dus je tekent zelf. Onder 18 vervalt dit scherm en tekent alleen de ouder via een eigen link.</span>
+          </div>
+        <?php endif; ?>
+
+        <div class="ond-info<?= $is_ouder ? ' navy' : '' ?>">
+          <?= icoon('slot', $is_ouder ? 18 : 20) ?>
+          <span><?= $is_ouder
+            ? 'Deze link is persoonlijk en vervalt na ondertekening. U hoeft geen account te maken. We bewaren datum, tijd en uw IP-adres bij de handtekening.'
+            : 'Je bent 18 of ouder, dus je ondertekent zelf. We bewaren datum, tijd en je IP-adres bij de handtekening.' ?></span>
+        </div>
+
+        <footer class="ond-voet">
+          <button type="submit" class="ond-knop">
+            <span class="btn-tekst"><?= $is_ouder ? 'Ondertekenen' : 'Ondertekenen en versturen' ?></span>
+            <span class="btn-spinner" hidden>Bezig met ondertekenen…</span>
+          </button>
+        </footer>
       </div>
+    </div>
+  </form>
 
-      <div style="background:#e8f0f8;border-left:3px solid var(--navy);padding:12px 14px;border-radius:var(--radius-sm);font-size:12px;color:var(--ink-soft);margin-top:12px;display:flex;gap:8px;align-items:flex-start">
-        <span style="flex-shrink:0;margin-top:1px"><?= icoon('slot', 15) ?></span>
-        <span>Bij het versturen worden je naam, handtekening, IP-adres, browsergegevens en tijdstip vastgelegd als digitale handtekening (juridisch geldig conform eIDAS voor niet-notariële zaken).</span>
-      </div>
-
-      <button type="submit" class="ds-btn ds-btn-primair ds-btn-vol" style="margin-top:16px">
-        <span class="btn-tekst">Digitaal ondertekenen</span>
-        <span class="btn-spinner" style="display:none">Bezig met ondertekenen…</span>
-      </button>
-    </form>
-  </div>
-
+  <script src="<?= APP_URL ?>/assets/js/ondertekenen.js?v=<?= @filemtime(__DIR__ . '/../assets/js/ondertekenen.js') ?>"></script>
 <?php endif; ?>
 
-</div>
-<script>
-function valideer(f) {
-  // Wis eerdere foutmarkeringen
-  f.querySelectorAll('.veld-fout').forEach(el => el.classList.remove('veld-fout'));
-  const bestaandeMelding = document.getElementById('ondtFoutmelding');
-  if (bestaandeMelding) bestaandeMelding.remove();
-
-  const fouten = [];
-  // Verplichte tekstvelden/selects met [required]
-  f.querySelectorAll('[required]').forEach(veld => {
-    const leeg = (veld.type === 'checkbox' || veld.type === 'radio') ? !veld.checked : !String(veld.value || '').trim();
-    if (leeg) {
-      fouten.push(veld);
-      const doel = veld.closest('.form-groep') || veld;
-      doel.classList.add('veld-fout');
-    }
-  });
-  // Handtekening verplicht
-  const hdt = document.getElementById('hdtData');
-  if (hdt && !hdt.value) {
-    const wrap = document.querySelector('.hdt-wrap');
-    if (wrap) wrap.classList.add('veld-fout');
-    fouten.push(hdt);
-  }
-
-  if (fouten.length) {
-    // Toon een duidelijke melding bovenaan het formulier + scroll naar het eerste probleem
-    const melding = document.createElement('div');
-    melding.id = 'ondtFoutmelding';
-    melding.className = 'ds-melding ds-melding-error';
-    melding.style.marginBottom = '16px';
-    melding.textContent = 'Er ontbreken nog een paar dingen — de rood gemarkeerde velden hieronder zijn verplicht.';
-    f.prepend(melding);
-    const eerste = fouten[0].closest('.form-groep') || fouten[0].closest('.hdt-wrap') || fouten[0];
-    eerste.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    return false;
-  }
-
-  const btn = f.querySelector('button[type="submit"]');
-  if (btn) {
-    btn.disabled = true;
-    btn.querySelector('.btn-tekst').style.display = 'none';
-    btn.querySelector('.btn-spinner').style.display = '';
-  }
-  return true;
-}
-
-// ── Handtekening-canvas ──
-(function() {
-  const canvas = document.getElementById('hdtCanvas');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  const hint = document.getElementById('hdtHint');
-  const dataVeld = document.getElementById('hdtData');
-  let tekent = false, leeg = true, vorigeX = 0, vorigeY = 0;
-
-  // Canvas op juiste resolutie zetten (scherp op retina)
-  function pasGrootteAan() {
-    const rect = canvas.getBoundingClientRect();
-    const ratio = window.devicePixelRatio || 1;
-    // Bewaar bestaande tekening
-    const oud = leeg ? null : canvas.toDataURL();
-    canvas.width = rect.width * ratio;
-    canvas.height = rect.height * ratio;
-    ctx.scale(ratio, ratio);
-    ctx.lineWidth = 2.2;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.strokeStyle = '#1a2230';
-    if (oud) { const img = new Image(); img.onload = () => ctx.drawImage(img, 0, 0, rect.width, rect.height); img.src = oud; }
-  }
-  setTimeout(pasGrootteAan, 50);
-  window.addEventListener('resize', pasGrootteAan);
-
-  function pos(e) {
-    const rect = canvas.getBoundingClientRect();
-    const t = e.touches ? e.touches[0] : e;
-    return { x: t.clientX - rect.left, y: t.clientY - rect.top };
-  }
-  function start(e) {
-    e.preventDefault(); tekent = true;
-    const p = pos(e); vorigeX = p.x; vorigeY = p.y;
-    if (leeg) { leeg = false; if (hint) hint.style.display = 'none'; }
-  }
-  function beweeg(e) {
-    if (!tekent) return; e.preventDefault();
-    const p = pos(e);
-    ctx.beginPath(); ctx.moveTo(vorigeX, vorigeY); ctx.lineTo(p.x, p.y); ctx.stroke();
-    vorigeX = p.x; vorigeY = p.y;
-  }
-  function stop() { tekent = false; if (!leeg) dataVeld.value = canvas.toDataURL('image/png'); }
-
-  canvas.addEventListener('mousedown', start);
-  canvas.addEventListener('mousemove', beweeg);
-  window.addEventListener('mouseup', stop);
-  canvas.addEventListener('touchstart', start, { passive: false });
-  canvas.addEventListener('touchmove', beweeg, { passive: false });
-  canvas.addEventListener('touchend', stop);
-
-  document.getElementById('hdtWis').addEventListener('click', function() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    leeg = true; dataVeld.value = '';
-    if (hint) hint.style.display = '';
-  });
-})();
-</script>
-</body>
-</html>
+<?php require __DIR__ . '/_voet.php'; ?>

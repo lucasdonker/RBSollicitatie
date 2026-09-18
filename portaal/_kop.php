@@ -7,6 +7,8 @@
  *   $portaal_terug      = APP_URL.'/portaal/';   // als gezet: toon een terug-pijl i.p.v. het topbar-icoon
  *   $portaal_geen_nav   = true;                  // geen navigatiebalk/zijbalk (bijv. inlogscherm)
  *   $portaal_geen_topbar= true;                  // geen navy topbar (inlogscherm heeft eigen kop)
+ *   $portaal_merk_naam  = 'Reddingsbrigade Paal 13'; // afwijkende merkregels in de topbar (bijv. de
+ *   $portaal_merk_sub   = 'Ondertekenen voor Lars';  // ouder-ondertekenlink, ontwerp 09)
  * en sluit af met require _voet.php.
  *
  * De body krijgt 'heeft-nav' zodra de sollicitant is ingelogd en de nav niet is uitgezet;
@@ -19,6 +21,8 @@ $portaal_nav         = $portaal_nav ?? '';
 $portaal_terug       = $portaal_terug ?? '';
 $portaal_geen_nav    = $portaal_geen_nav ?? false;
 $portaal_geen_topbar = $portaal_geen_topbar ?? false;
+$portaal_merk_naam   = $portaal_merk_naam ?? 'Paal 13';
+$portaal_merk_sub    = $portaal_merk_sub ?? '';
 $_fav = function_exists('site_favicon_url') ? site_favicon_url() : '';
 $_heeft_nav = !$portaal_geen_nav && function_exists('portaal_ingelogd') && portaal_ingelogd();
 // Status-chip in de desktop-paginakop: fase van de ingelogde sollicitant (pagina mag hem zelf zetten)
@@ -54,14 +58,14 @@ $_bel = '<a href="' . APP_URL . '/portaal/berichten.php" class="pt-topbar-actie"
   <header class="pt-topbar">
     <span class="pt-merk-logo"><?= icoon('golf', 16) ?></span>
     <div class="pt-merk-tekst">
-      <span class="pt-merk-naam">Paal 13</span>
-      <span class="pt-merk-sub"><?= $sz ? h($sz['naam']) : 'Sollicitatie 2026' ?></span>
+      <span class="pt-merk-naam"><?= h($portaal_merk_naam) ?></span>
+      <span class="pt-merk-sub"><?= $portaal_merk_sub !== '' ? h($portaal_merk_sub) : ($sz ? h($sz['naam']) : 'Sollicitatie 2026') ?></span>
     </div>
     <?php if ($portaal_terug): ?>
       <a href="<?= h($portaal_terug) ?>" class="pt-topbar-actie" aria-label="Terug"><?= icoon('terug', 20) ?></a>
     <?php elseif ($_heeft_nav): ?>
       <?= $_bel ?>
-    <?php else: ?>
+    <?php elseif (function_exists('portaal_ingelogd') && portaal_ingelogd()): ?>
       <a href="<?= APP_URL ?>/portaal/?uitloggen=1" class="pt-topbar-actie" aria-label="Uitloggen"><?= icoon('uitloggen', 20) ?></a>
     <?php endif; ?>
   </header>

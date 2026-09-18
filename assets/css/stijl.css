@@ -1467,35 +1467,170 @@ a.pt-taakrij:hover { background: var(--bg); }
 }
 .pt-voetlinks a:hover { color: var(--navy); }
 
-/* ── Handtekening-vak ───────────────────────────────────────────── */
-.hdt-wrap { position: relative; }
-.hdt-canvas {
-  width: 100%;
-  height: 150px;
-  border: 2px dashed var(--navy);
-  border-radius: var(--radius-md);
-  background: #eef2f7;
-  touch-action: none;
-  display: block;
-  cursor: crosshair;
+/* ═══════════════════════════════════════════════════════════════════
+   ONDERTEKENEN v2.89 — exact Portaal.dc secties 05 (18+ tekent zelf) en 09 (ouder-link)
+   Kop, document met vervaging, gegevens-/vragenkaarten, handtekeningvak, keuzevakjes,
+   infoblok, voet met hoofdactie; na ondertekenen de bevestiging met PDF-kopie.
+   Gebruikt door portaal/ondertekenen.php + _ondertekenen_velden.php + assets/js/ondertekenen.js.
+   ═══════════════════════════════════════════════════════════════════ */
+.ond { display: flex; flex-direction: column; }
+.ond [hidden] { display: none !important; }
+
+/* Kop (mobiel: witte balk tot de randen van .pt-main; desktop: kaartkop met chip) */
+.ond-kop {
+  background: #fff; border-bottom: 1px solid #e6e9ef; padding: 14px 16px;
+  display: flex; align-items: center; gap: 12px; margin: -16px -16px 0;
 }
-.hdt-hint {
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  display: flex; align-items: center; gap: 6px;
-  font: var(--text-meta); color: var(--ink-muted);
-  pointer-events: none;
+.ond-kop-titel { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.ond-kop-naam { font-size: 15px; font-weight: 600; color: var(--ink); }
+.ond-kop-sub { font-size: 12px; color: #8a93a6; }
+.ond-chip { display: none; }
+.ond.ouder .ond-kop { display: none; }   /* ouder-link (09): op mobiel geen kopbalk, de intro zegt al wat het is */
+
+/* Inhoud */
+.ond-body { padding: 16px 0 0; display: flex; flex-direction: column; gap: 14px; }
+.ond-links, .ond-rechts { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+
+/* Ouder-intro (09: "Uw kind ... meldt zich aan") */
+.ond-intro { display: flex; flex-direction: column; gap: 5px; padding-top: 2px; }
+.ond-intro-titel { font-size: 22px; font-weight: 600; letter-spacing: -.01em; color: var(--ink); }
+.ond-intro-tekst { font-size: 15px; line-height: 1.55; color: #5a6478; }
+
+/* Document (ingeklapt met vervaging; "Alles lezen" klapt uit) */
+.ond-doc {
+  background: #fff; border: 1px solid #e6e9ef; border-radius: 14px; padding: 18px;
+  display: flex; flex-direction: column; gap: 12px; position: relative;
 }
-.hdt-wis {
-  position: absolute;
-  top: 10px; right: 10px;
-  display: inline-flex; align-items: center; gap: 5px;
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius-sm); padding: 5px 10px;
-  font: var(--text-label); font-size: 12px; color: var(--navy); cursor: pointer;
+.ond-doc.dicht { max-height: 250px; overflow: hidden; }
+.ond-doc-titel { font-size: 16px; font-weight: 600; color: var(--ink); }
+.ond-doc-alinea { font-size: 14px; line-height: 1.65; color: #5a6478; }
+.ond-doc-vervaag {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 64px; display: none;
+  background: linear-gradient(180deg, rgba(255,255,255,0), #fff);
 }
-.hdt-wis:hover { background: var(--bg); }
+.ond-doc.dicht .ond-doc-vervaag { display: block; }
+.ond-doc-meer { font-size: 13px; color: #8a93a6; text-align: center; }
+.ond-doc-meer button { background: none; border: none; padding: 0; font: 600 13px var(--font); color: #054d8a; cursor: pointer; }
+
+/* Kaarten met gegevens en vragen */
+.ond-kaart {
+  background: #fff; border: 1px solid #e6e9ef; border-radius: 14px; padding: 16px;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.ond-kaart-lbl {
+  display: flex; align-items: center; gap: 9px;
+  font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: #8a93a6;
+}
+.ond-kaart-lbl .ic { stroke: #8a93a6; flex: none; }
+.ond-kaart-tekst { font-size: 14px; line-height: 1.55; color: #5a6478; }
+.ond-veld { gap: 7px; min-width: 0; }
+.ond-lbl { font-size: 13px; font-weight: 600; color: var(--ink); }
+.ond-lbl .ster { color: #D43D00; }
+.ond-lbl .optioneel { font-weight: 400; color: #8a93a6; }
+.ond .ds-input, .ond .ds-select, .ond .ds-textarea { border-radius: 8px; font-size: 15px; }
+.ond .ds-textarea { min-height: 80px; }
+.ond-rij { display: flex; gap: 12px; }
+.ond-rij > * { flex: 1; min-width: 0; }
+
+/* Keuzevakjes (ontwerp: 22px, hoek 6, navy gevuld met wit vinkje; rondje voor één keuze) */
+.ond-check, .ond-radio { display: flex; align-items: flex-start; gap: 11px; cursor: pointer; position: relative; }
+.ond-check input, .ond-radio input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; }
+.ond-check-box, .ond-radio-box {
+  width: 22px; height: 22px; border-radius: 6px; border: 1.5px solid #cdd4e0; background: #fff;
+  display: flex; align-items: center; justify-content: center; flex: none; margin-top: 1px; box-sizing: border-box;
+}
+.ond-radio-box { border-radius: 11px; }
+.ond-check-box .ic { stroke: #fff; stroke-width: 2.4; display: none; }
+.ond-radio-box::after { content: ''; width: 10px; height: 10px; border-radius: 5px; background: #fff; display: none; }
+.ond-check input:checked + .ond-check-box, .ond-radio input:checked + .ond-radio-box { background: #054d8a; border-color: #054d8a; }
+.ond-check input:checked + .ond-check-box .ic, .ond-radio input:checked + .ond-radio-box::after { display: block; }
+.ond-check input:focus-visible + .ond-check-box, .ond-radio input:focus-visible + .ond-radio-box { box-shadow: 0 0 0 3px rgba(5,77,138,.2); }
+.ond-check-tekst, .ond-radio-tekst { font-size: 14px; line-height: 1.55; color: var(--ink); }
+.ond-lijst { display: flex; flex-direction: column; gap: 12px; }
+
+/* Handtekening */
+.ond-teken-kop { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.ond-teken-titel { font-size: 15px; font-weight: 600; color: var(--ink); }
+.ond-teken-wis { background: none; border: none; padding: 0; font: 600 13px var(--font); color: #054d8a; cursor: pointer; }
+.ond-vak { height: 130px; border: 1.5px dashed #cdd4e0; border-radius: 10px; background: #f8fafc; position: relative; overflow: hidden; }
+.ond-canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
+.ond-vak-hint { position: absolute; top: 10px; left: 14px; font-size: 12px; color: #8a93a6; pointer-events: none; }
+.ond-vak.fout { border-color: var(--error); box-shadow: 0 0 0 3px rgba(179,38,30,.12); }
+
+/* Ondertekenaar (alleen desktop) en infoblok */
+.ond-ondertekenaar { display: none; }
+.ond-info {
+  display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border-radius: 12px;
+  background: #f4f6f9; border: 1px solid #e6e9ef;
+}
+.ond-info .ic { flex: none; margin-top: 1px; stroke: #5a6478; }
+.ond-info span { font-size: 14px; line-height: 1.55; color: #5a6478; }
+.ond-info.navy { background: #eef2f8; border-color: #d5e0ee; gap: 11px; }
+.ond-info.navy .ic { stroke: #054d8a; margin-top: 2px; }
+.ond-info.navy span { font-size: 13px; color: #054d8a; }
+
+/* Voet met de hoofdactie (mobiel: witte balk tot de randen) */
+.ond-voet { background: #fff; border-top: 1px solid #e6e9ef; padding: 14px 16px; display: flex; gap: 10px; margin: 2px -16px 0; }
+.ond-knop { height: 48px; border: none; border-radius: 10px; background: #D43D00; color: #fff; font: 600 15px var(--font); cursor: pointer; flex: 1; }
+.ond-knop:hover { background: #bb3600; }
+.ond-knop:disabled { opacity: .55; cursor: default; }
+
+/* Foutmarkering */
+.ond-veld.fout .ds-input, .ond-veld.fout .ds-select, .ond-veld.fout .ds-textarea { border-color: var(--error); box-shadow: 0 0 0 3px rgba(179,38,30,.12); }
+.ond-veld.fout .ond-lbl { color: var(--error); }
+.ond-check.fout .ond-check-box, .ond-radio.fout .ond-radio-box { border-color: var(--error); box-shadow: 0 0 0 3px rgba(179,38,30,.12); }
+
+/* Na ondertekenen (09: bevestiging met kopie) */
+.ond-klaar {
+  background: #fff; border: 1px solid #e6e9ef; border-radius: 18px; padding: 44px 24px;
+  display: flex; flex-direction: column; align-items: center; text-align: center; gap: 14px;
+}
+.ond-klaar-icoon { width: 64px; height: 64px; border-radius: 32px; background: #ecf5ef; color: #1f7a3d; display: flex; align-items: center; justify-content: center; }
+.ond-klaar-titel { font-size: 24px; font-weight: 600; letter-spacing: -.015em; color: var(--ink); }
+.ond-klaar-tekst { font-size: 15px; line-height: 1.6; color: #5a6478; }
+.ond-bestand {
+  width: 100%; margin-top: 8px; border: 1px solid #e6e9ef; border-radius: 14px; padding: 16px;
+  display: flex; align-items: center; gap: 12px; text-align: left; color: inherit; text-decoration: none; box-sizing: border-box;
+}
+.ond-bestand:hover { border-color: #cdd4e0; }
+.ond-bestand > .ic { flex: none; stroke: #054d8a; }
+.ond-bestand-icoon { width: 40px; height: 40px; border-radius: 10px; background: #f4f6f9; color: #5a6478; display: flex; align-items: center; justify-content: center; flex: none; }
+.ond-bestand-tekst { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.ond-bestand-naam { font-size: 14px; font-weight: 600; color: var(--ink); }
+.ond-bestand-sub { font-size: 13px; color: #8a93a6; }
+.ond-klaar-knop { width: 100%; margin-top: 4px; }
+.ond-klaar .pt-hulp { margin-top: 4px; }
+.pt-leeg-icoon.warn { background: var(--warn-soft); color: var(--warn); border: 1px solid #ecdcbc; box-sizing: border-box; }
+
+/* Desktop (ontwerp: kaart met kop + chip; document links op #f8fafc naast het ondertekenpaneel) */
+@media (min-width: 860px) {
+  .ond { border: 1px solid #e6e9ef; border-radius: 18px; background: #fff; overflow: hidden; box-shadow: 0 1px 2px rgba(5,77,138,.05); }
+  .ond-kop, .ond.ouder .ond-kop { display: flex; margin: 0; padding: 20px 28px; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+  .ond-intro-titel { display: none; }   /* desktop: de kaartkop draagt de titel al */
+  .ond-kop-titel { gap: 3px; }
+  .ond-kop-naam { font-size: 19px; letter-spacing: -.01em; }
+  .ond-kop-sub { font-size: 13px; }
+  .ond-chip { display: inline-flex; align-items: center; gap: 7px; height: 28px; padding: 0 12px; border-radius: 8px; background: #fdf1ea; color: #a83100; font-size: 13px; font-weight: 600; }
+  .ond-chip-stip { width: 6px; height: 6px; border-radius: 3px; background: #D43D00; }
+  .ond-body { padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 0; align-items: start; }
+  .ond-links { padding: 28px; background: #f8fafc; border-right: 1px solid #e6e9ef; gap: 16px; }
+  .ond-rechts { padding: 28px; gap: 18px; position: sticky; top: 28px; }
+  .ond-doc { background: transparent; border: none; padding: 0; border-radius: 0; gap: 14px; }
+  .ond-doc.dicht { max-height: none; }
+  .ond-doc-vervaag { display: none !important; }
+  .ond-doc-meer { display: none; }
+  .ond-doc-titel { font-size: 20px; letter-spacing: -.01em; }
+  .ond-doc-alinea { font-size: 15px; line-height: 1.7; }
+  .ond-teken { border: none; padding: 0; gap: 14px; }
+  .ond-vak { height: 140px; }
+  .ond-ondertekenaar { display: flex; flex-direction: column; gap: 10px; border: 1px solid #e6e9ef; border-radius: 12px; padding: 18px; background: #f8fafc; }
+  .ond-ondertekenaar-lbl { font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: #8a93a6; }
+  .ond-ondertekenaar-naam { font-size: 15px; font-weight: 600; color: var(--ink); }
+  .ond-ondertekenaar-sub { font-size: 13px; line-height: 1.55; color: #8a93a6; }
+  .ond-voet { margin: 0; padding: 0; border: none; background: transparent; }
+  .ond-knop { height: 44px; width: 100%; }
+  .ond-klaar { max-width: 520px; margin: 0 auto; }
+}
 
 /* ═══════════════════════════════════════════════════════════════════
    BESCHIKBAARHEID-FORMULIER v2.69 — nieuwe ontwerp-stijl (ds-tokens)
@@ -1578,9 +1713,8 @@ details.b2-uitz > div { padding: 0 16px 16px; }
   font: var(--text-body); font-size: 14px; color: var(--ink);
 }
 
-/* Foutmarkering bij formuliervalidatie (ondertekenen e.a.) */
-.veld-fout input, .veld-fout select, .veld-fout textarea,
-.hdt-wrap.veld-fout .hdt-canvas {
+/* Foutmarkering bij formuliervalidatie (oudere formulieren) */
+.veld-fout input, .veld-fout select, .veld-fout textarea {
   border-color: var(--error) !important;
   box-shadow: 0 0 0 3px rgba(179,38,30,.12);
 }
