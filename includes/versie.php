@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.87.6');
+define('APP_VERSIE', '2.87.7');
 
 function app_changelog(): array {
     return [
+        '2.87.7' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Meldingen: fixes uit de eerste test (Berichten verstuurde niets, inlogcode leeg in de mail)',
+            'punten' => [
+                'Berichten verstuurde niets: zonder ?tab= in het adres werd de verzending overgeslagen (tab was leeg) — opgelost; verzenden via e-mail, WhatsApp/SMS en beide getest',
+                'De inlogcode-mail toonde een lege code: het bestaande sjabloon gebruikte nog {{otp.code}} — oude en nieuwe variabelenamen worden nu allebei gevuld en het sjabloon is bijgewerkt; de kop is weer kort ("Inlogcode"), zodat mailapps van "Paal 13" geen adreslink meer maken',
+                'Variabelen in een handmatig bericht ({{voornaam}} in je eigen tekst) werden niet ingevuld — opgelost (ook in de korte WhatsApp/SMS-tekst)',
+                'Fouten bij het versturen komen nu met oorzaak in het Foutenlog en op het resultaatscherm van Berichten',
+            ],
+        ],
         '2.87.6' => [
             'datum'  => '2026-09-18',
             'titel'  => 'Meldingen: opruimen van de oude verzendwegen (bundel 7 van 7)',

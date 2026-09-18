@@ -77,6 +77,16 @@ function sjablonen_migreer_slugs($db): void {
             try { $upd->execute([$nieuw, $oud]); $bestaand[] = $nieuw; } catch (\Throwable $e) {}
         }
     }
+    // Oude variabelenaam in de inlogcode-mail ({{otp.code}}) → nieuwe; en de oude lange hero-titel
+    // ("Jouw inlogcode voor het Paal 13 portaal" — mailclients maken van "Paal 13" een adreslink) → kort.
+    try {
+        $db->exec("UPDATE mail_templates SET body_html=REPLACE(body_html,'{{otp.code}}','{{otp_code}}') WHERE body_html LIKE '%{{otp.code}}%'");
+        if (function_exists('meldingen_register') && isset(meldingen_register()['portaal_code'])) {
+            $s = meldingen_register()['portaal_code']['seed'];
+            $db->prepare("UPDATE mail_templates SET hero_titel=?, hero_subtitel=? WHERE slug='portaal_code' AND (hero_titel IS NULL OR hero_titel='' OR hero_titel LIKE '%inlogcode voor%')")
+               ->execute([$s['hero_titel'], $s['hero_subtitel']]);
+        }
+    } catch (\Throwable $e) {}
 }
 
 /** Zaai ontbrekende sjablonen uit het register; vul lege nieuwe kolommen bij bestaande. */
@@ -167,14 +177,22 @@ function melding_vars(int $sol_id, array $extra = []): array {
         $vars['afmeld_url'] = '';
     }
     foreach ($extra as $k => $v) $vars[$k] = $v;
+    // Oude sjablonen gebruiken de lange namen ({{otp.code}}); nieuwe de korte ({{otp_code}}). Beide vullen.
+    foreach (['otp_code' => 'otp.code', 'portaal_url' => 'portaal.url', 'bestuur_email' => 'bestuur.email', 'voornaam' => 'sollicitant.voornaam', 'achternaam' => 'sollicitant.achternaam', 'volledige_naam' => 'sollicitant.volledige_naam', 'seizoen_naam' => 'seizoen.naam'] as $kort => $lang) {
+        if (isset($vars[$kort]) && $vars[$kort] !== '' && (!isset($vars[$lang]) || $vars[$lang] === '')) $vars[$lang] = $vars[$kort];
+        if (isset($vars[$lang]) && $vars[$lang] !== '' && (!isset($vars[$kort]) || $vars[$kort] === '')) $vars[$kort] = $vars[$lang];
+    }
     return $vars;
 }
 
 /** Platte vervanging van {{var}} zonder HTML-escaping (voor onderwerp, korte tekst, samenvatting). */
 function tekst_vervang(string $tekst, array $vars): string {
-    foreach ($vars as $k => $v) {
-        if (is_array($v)) continue;
-        $tekst = str_replace('{{' . $k . '}}', (string)$v, $tekst);
+    // Twee rondes: een variabele (bijv. tekst_kort van een handmatig bericht) kan zelf variabelen bevatten.
+    for ($ronde = 0; $ronde < 2 && strpos($tekst, '{{') !== false; $ronde++) {
+        foreach ($vars as $k => $v) {
+            if (is_array($v)) continue;
+            $tekst = str_replace('{{' . $k . '}}', (string)$v, $tekst);
+        }
     }
     // Onbekende variabelen netjes weghalen
     return trim((string)preg_replace('/\{\{[a-z0-9_.]+\}\}/i', '', $tekst));
@@ -203,6 +221,8 @@ function melding_render(string $type, array $vars, array $override = []): ?array
     if (!$t) return null;
     foreach ($override as $k => $v) if ($v !== null && $v !== '') $t[$k] = $v;
 
+    // Twee keer vervangen: een variabele (bijv. body_html van een handmatig bericht) kan zelf weer
+    // variabelen bevatten ({{voornaam}}).
     $onderwerp = tekst_vervang((string)$t['onderwerp'], $vars);
     $hero_t    = tekst_vervang((string)($t['hero_titel'] ?: $onderwerp), $vars);
     $hero_s    = tekst_vervang((string)($t['hero_subtitel'] ?? ''), $vars);
@@ -212,7 +232,7 @@ function melding_render(string $type, array $vars, array $override = []): ?array
     if ($img !== '' && function_exists('foto_url')) { try { $img = (string)foto_url($img); } catch (\Throwable $e) {} }
 
     $body = (string)$t['body_html'];
-    $body = function_exists('mail_vervang') ? mail_vervang($body, $vars) : tekst_vervang($body, $vars);
+    $body = function_exists('mail_vervang') ? mail_vervang(mail_vervang($body, $vars), $vars) : tekst_vervang(tekst_vervang($body, $vars), $vars);
     $body = (string)preg_replace('/\{\{[a-z0-9_.]+\}\}/i', '', $body);
     if (function_exists('mail_shortcodes')) $body = mail_shortcodes($body);
     if (!empty($override['voetnoot_html'])) $body .= $override['voetnoot_html'];

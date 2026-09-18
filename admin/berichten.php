@@ -13,7 +13,8 @@ vereis_recht('mailing', 'lezen');
 $db      = db();
 $seizoen = actief_seizoen();
 $sid     = $seizoen ? (int)$seizoen['id'] : 0;
-$tab     = in_array($_GET['tab'] ?? 'nieuw', ['nieuw', 'log'], true) ? $_GET['tab'] : 'nieuw';
+$tab     = (string)($_GET['tab'] ?? 'nieuw');
+if (!in_array($tab, ['nieuw', 'log'], true)) $tab = 'nieuw';
 $modi    = function_exists('meldingen_kanaalmodi') ? meldingen_kanaalmodi() : ['email' => 'E-mail'];
 unset($modi['uit']);
 $fases   = function_exists('fasen') ? fasen() : [];
@@ -43,7 +44,7 @@ try { $sjablonen = $db->query("SELECT slug, naam, onderwerp FROM mail_templates 
 $sjablonen = array_values(array_filter($sjablonen, fn($t) => $t['slug'] !== 'handmatig'));
 
 /** Inhoud + override uit het formulier (of uit een eigen sjabloon). */
-function berichten_inhoud(array $post, PDO $db): array {
+function berichten_inhoud(array $post, $db): array {
     $slug = preg_replace('/[^a-z0-9_-]/i', '', (string)($post['sjabloon'] ?? ''));
     $inhoud = ['onderwerp' => trim($post['onderwerp'] ?? ''), 'body_html' => (string)($post['body_html'] ?? ''), 'tekst_kort' => trim((string)($post['tekst_kort'] ?? ''))];
     $override = ['hero_titel' => trim($post['hero_titel'] ?? '')];
@@ -111,7 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tab === 'nieuw') {
                 if ($st === 'verstuurd') $resultaat['ok']++; elseif ($st === 'wacht') $resultaat['wacht']++; elseif ($st === 'overgeslagen') $resultaat['overgeslagen']++; else $resultaat['mislukt']++;
                 $resultaat['details'][] = ['naam' => $namen[$id], 'status' => $st, 'kanaal' => $r['kanaal'] ?? null, 'reden' => $r['reden'] ?? null];
             }
-            if (function_exists('audit_log')) audit_log('bericht_verstuurd', 'sollicitatie', null, ['aantal' => count($ids), 'kanaal' => $modus, 'onderwerp' => mb_substr($inhoud['onderwerp'], 0, 80)]);
+            if (function_exists('audit_log')) audit_log('bericht_verstuurd', 'sollicitatie', null, ['aantal' => count($ids), 'kanaal' => $modus, 'onderwerp' => substr($inhoud['onderwerp'], 0, 80)]);
         }
     }
 }

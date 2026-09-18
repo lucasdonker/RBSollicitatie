@@ -212,8 +212,9 @@ function melding_verstuur(string $type, int $sol_id, array $extra = [], array $o
         }
         return $uit;
     } catch (\Throwable $e) {
-        error_log('melding_verstuur ' . $type . ': ' . $e->getMessage());
-        $uit['status'] = 'mislukt'; $uit['reden'] = 'exceptie';
+        error_log('melding_verstuur ' . $type . ': ' . $e->getMessage() . ' @ ' . basename($e->getFile()) . ':' . $e->getLine());
+        if (function_exists('p13_fout')) p13_fout('P13-M002', "melding_verstuur($type): " . $e->getMessage() . ' @ ' . basename($e->getFile()) . ':' . $e->getLine());
+        $uit['status'] = 'mislukt'; $uit['reden'] = 'exceptie: ' . $e->getMessage();
         return $uit;
     }
 }
@@ -371,7 +372,11 @@ function melding_queue_toevoegen(array $item, string $prioriteit): int {
         $qid = (int)$db->lastInsertId();
         $db->prepare("UPDATE mail_log SET queue_id=? WHERE id=?")->execute([$qid, $log_id]);
         return $log_id;
-    } catch (\Throwable $e) { error_log('melding_queue_toevoegen: ' . $e->getMessage()); return 0; }
+    } catch (\Throwable $e) {
+        error_log('melding_queue_toevoegen: ' . $e->getMessage());
+        if (function_exists('p13_fout')) p13_fout('P13-M002', 'wachtrij (' . ($item['meldingstype'] ?? '?') . '): ' . $e->getMessage());
+        return 0;
+    }
 }
 
 /**
