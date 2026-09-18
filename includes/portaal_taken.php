@@ -74,7 +74,10 @@ function portaal_taken(array $sol, ?array $blk = null): array {
         ]);
     }
 
-    // 2) Eigen ondertekeningen (gezondheidsverklaring 18+, intakeformulier).
+    // 2) Eigen ondertekeningen (gezondheidsverklaring 18+, intakeformulier). Worden klaargezet bij de
+    //    selectiedag-uitnodiging (fase_zetten → ondertekeningen_klaarzetten_sd); het vangnet hieronder
+    //    herstelt dossiers waar dat destijds niet gebeurde.
+    if (function_exists('ondertekeningen_verzekeren_sd')) ondertekeningen_verzekeren_sd($sol_id, $fase);
     try {
         $q = db()->prepare("SELECT id, type, token, ondertekend_op FROM ondertekeningen WHERE sollicitatie_id=? AND ondertekenaar_rol='sollicitant' ORDER BY aangemaakt_op");
         $q->execute([$sol_id]);

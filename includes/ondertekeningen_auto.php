@@ -87,6 +87,26 @@ function sol_is_minderjarig(array $sol): bool {
     } catch (Exception $e) { return false; }
 }
 
+/**
+ * Vangnet: zit de sollicitant in een selectiedag-fase zonder dat er ooit documenten zijn klaargezet
+ * (uitgenodigd vóór 2.87.0 toen dat bij automatisch/bulk uitnodigen niet gebeurde, of de instelling
+ * stond toen uit), dan alsnog klaarzetten. Idempotent: één controlequery per request; daarna doet
+ * ondertekeningen_klaarzetten_sd() alleen wat nog ontbreekt (18+: taken; <18: ouder mailen zodra
+ * de oudergegevens er zijn).
+ */
+function ondertekeningen_verzekeren_sd(int $sol_id, string $fase): void {
+    static $gedaan = [];
+    if (isset($gedaan[$sol_id])) return;
+    $gedaan[$sol_id] = true;
+    if (!in_array($fase, ['uitgenodigd_selectie', 'aangemeld_selectie'], true)) return;
+    try {
+        $q = db()->prepare("SELECT 1 FROM ondertekeningen WHERE sollicitatie_id=? LIMIT 1");
+        $q->execute([$sol_id]);
+        if ($q->fetchColumn()) return;
+        ondertekeningen_klaarzetten_sd($sol_id);
+    } catch (\Throwable $e) { error_log('ondertekeningen_verzekeren_sd: ' . $e->getMessage()); }
+}
+
 function ondertekeningen_klaarzetten_sd(int $sol_id): array {
     $res = ['aangemaakt' => [], 'ouder_gemaild' => false, 'wacht_op_ouder' => false];
     if (function_exists('instelling') && instelling('auto.ondertekening_sd', '1') !== '1') return $res;
