@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.90.1');
+define('APP_VERSIE', '2.90.2');
 
 function app_changelog(): array {
     return [
+        '2.90.2' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Aangenomen-takenpakket, bundel 3: documenten uploaden',
+            'punten' => [
+                'Nieuwe uploadpagina in het portaal voor kopie ID (paspoort of identiteitskaart voor/achter), kopie bankpas en pasfoto: foto maken of bestand kiezen, voorbeeld, vervangen en verwijderen zolang de penningmeester het nog niet heeft verwerkt',
+                'Bestanden worden in het geheugen gecontroleerd (type, inhoud, max 10 MB) en direct versleuteld in de kluis gezet; zonder werkende kluis is uploaden geblokkeerd met een duidelijke melding',
+                'De taak op Start en Taken springt automatisch op afgerond zodra de benodigde vakken gevuld zijn',
+            ],
+        ],
         '2.90.1' => [
             'datum'  => '2026-09-18',
             'titel'  => 'Aangenomen-takenpakket, bundel 2: takenlijst met uploaden en afvinken',
