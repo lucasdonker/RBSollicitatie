@@ -7,6 +7,8 @@
  *   $taak_knop  bool    optioneel: op desktop knoppen i.p.v. chevrons (startpagina)
  * Lege lijst → niets (de pagina toont zelf een lege staat).
  */
+require_once __DIR__ . '/../includes/functions.php';
+portaal_alleen_include(__FILE__);
 $taak_terug = $taak_terug ?? 'start';
 $taak_knop  = $taak_knop ?? false;
 if (!empty($lijst)): ?>

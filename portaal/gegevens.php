@@ -1,15 +1,8 @@
 <?php
 require_once __DIR__ . '/../includes/functions.php';
  if (function_exists('extra_tabellen_auto_setup')) extra_tabellen_auto_setup();
-sessie_start();
-
-// Alleen ingelogde sollicitanten
-if (empty($_SESSION['portaal_sol_id'])) {
-    redirect(APP_URL . '/portaal/');
-}
-
+$sol_id = portaal_vereis_login();
 $db = db();
-$sol_id = (int)$_SESSION['portaal_sol_id'];
 
 // Ophalen gegevens
 if (function_exists('personen_kanaal_auto_setup')) personen_kanaal_auto_setup();

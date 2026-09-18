@@ -6,6 +6,8 @@
  * gelijk aan wat includes/beschikbaarheid_post.php verwerkt.
  * Zet: $besch_data (opgeslagen data in het gedeelde JS-formaat).
  */
+require_once __DIR__ . '/../includes/functions.php';
+portaal_alleen_include(__FILE__);
 if (!isset($sol)) { return; }
 
 $b2  = $b2 ?? (function_exists('beschikbaarheid2_van') ? beschikbaarheid2_van($sol['id']) : ['profiel'=>null,'blokken'=>[],'afwezig'=>[],'verzoeken'=>[]]);

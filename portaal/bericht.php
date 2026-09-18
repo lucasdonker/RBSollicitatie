@@ -4,10 +4,7 @@
  * sollicitant zelf; de inhoud wordt opgeschoond getoond (geen scripts/formulieren).
  */
 require_once __DIR__ . '/../includes/functions.php';
-sessie_start();
-if (!portaal_ingelogd()) redirect(APP_URL . '/portaal/');
-
-$sol_id = (int)$_SESSION['portaal_sol_id'];
+$sol_id = portaal_vereis_login();
 $sol = portaal_sollicitant_laden($sol_id);
 if (!$sol) { unset($_SESSION['portaal_sol_id']); redirect(APP_URL . '/portaal/'); }
 

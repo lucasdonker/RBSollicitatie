@@ -4,6 +4,8 @@
  * Verwacht $_t (de taak, met inline_data: ouder_naam/ouder_email/ouder_telefoon) en $taak_terug.
  * Veldnamen en de POST-afhandeling (ouder_submit) zijn ongewijzigd: includes/portaal_taken.php.
  */
+require_once __DIR__ . '/../includes/functions.php';
+portaal_alleen_include(__FILE__);
 $_od  = $_t['inline_data'] ?? [];
 $_af  = !empty($_t['done']);
 ?>

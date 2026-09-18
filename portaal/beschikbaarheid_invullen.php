@@ -6,10 +6,7 @@
  */
 require_once __DIR__ . '/../includes/functions.php';
 
-// Sollicitant moet ingelogd zijn
-if (!function_exists('portaal_ingelogd') || !portaal_ingelogd()) {
-    redirect(APP_URL . '/portaal/');
-}
+portaal_vereis_login();
 
 $email = $_SESSION['portaal_email'] ?? '';
 // Haal seizoen op met graceful fallback als de datum_werk-kolommen ontbreken (net als het BLK).

@@ -12,7 +12,8 @@
  * De body krijgt 'heeft-nav' zodra de sollicitant is ingelogd en de nav niet is uitgezet;
  * de CSS (stijl.css, .pt-*) gebruikt dat voor de desktop-zijbalk-marge.
  */
-if (!defined('APP_URL')) { require_once __DIR__ . '/../includes/functions.php'; }
+require_once __DIR__ . '/../includes/functions.php';
+portaal_alleen_include(__FILE__);
 $portaal_titel       = $portaal_titel ?? 'Mijn sollicitatie';
 $portaal_nav         = $portaal_nav ?? '';
 $portaal_terug       = $portaal_terug ?? '';

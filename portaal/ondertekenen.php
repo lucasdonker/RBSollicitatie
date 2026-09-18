@@ -14,12 +14,8 @@ if (function_exists('ondertekeningen_auto_setup')) ondertekeningen_auto_setup();
 $token  = trim($_GET['token'] ?? '');
 
 if (!$token) {
-    // Ingelogde sollicitant kan zelf een nieuwe start uitkiezen
-    if (empty($_SESSION['portaal_sol_id'])) {
-        redirect(APP_URL . '/portaal/');
-    }
-    // Toon overzicht van beschikbare formulieren
-    $sol_id = (int)$_SESSION['portaal_sol_id'];
+    // Zonder token: alleen een ingelogde sollicitant kan zelf een nieuw document starten
+    $sol_id = portaal_vereis_login();
     $type = $_GET['nieuw'] ?? '';
     if ($type && in_array($type, ['intake','gezondheid_18plus'], true)) {
         // Maak nieuw record aan met unieke token

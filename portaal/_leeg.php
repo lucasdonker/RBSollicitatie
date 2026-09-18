@@ -3,6 +3,8 @@
  * Partial: lege staat "Je bent helemaal bij" (ontwerp 02/08).
  * Verwacht $leeg_titel, $leeg_tekst; optioneel $leeg_groot (bool) en $leeg_knop = ['url','label'].
  */
+require_once __DIR__ . '/../includes/functions.php';
+portaal_alleen_include(__FILE__);
 $leeg_groot = $leeg_groot ?? false;
 $leeg_knop  = $leeg_knop ?? null;
 ?>

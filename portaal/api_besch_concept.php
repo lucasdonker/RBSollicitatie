@@ -12,7 +12,8 @@ require_once __DIR__ . '/../includes/functions.php';
 header('Content-Type: application/json');
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); exit; }
 
-if (!function_exists('portaal_ingelogd') || !portaal_ingelogd() || empty($_SESSION['portaal_sol_id'])) {
+if (!portaal_ingelogd()) {
+    http_response_code(401);
     echo json_encode(['ok' => false, 'fout' => 'Niet ingelogd']); exit;
 }
 $sol_id = (int)$_SESSION['portaal_sol_id'];

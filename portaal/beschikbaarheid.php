@@ -5,12 +5,7 @@
  * en knoppen om aan te passen of definitief te maken.
  */
 require_once __DIR__ . '/../includes/functions.php';
-sessie_start();
-
-if (empty($_SESSION['portaal_sol_id'])) {
-    redirect(APP_URL . '/portaal/');
-}
-$sol_id = (int)$_SESSION['portaal_sol_id'];
+$sol_id = portaal_vereis_login();
 $db = db();
 
 // Sollicitant + seizoen

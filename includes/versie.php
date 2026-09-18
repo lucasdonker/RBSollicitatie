@@ -3,10 +3,21 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.87.10');
+define('APP_VERSIE', '2.88.0');
 
 function app_changelog(): array {
     return [
+        '2.88.0' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Portaal: eigen 404-pagina, inloggen afgedwongen, BLK-autosave op de gedeelde helper',
+            'punten' => [
+                'Een adres onder het portaal (of beheer) dat niet bestaat toont nu een eigen 404-pagina in de huisstijl, met een knop terug naar het portaal of het dashboard',
+                'Elke portaal-pagina dwingt op één centrale plek het inloggen af; de losse bouwstenen van het portaal (kop, voet, taakrijen) zijn niet meer los op te vragen: niet ingelogd → inlogscherm, wel ingelogd → 404',
+                'De adres-opzoekfunctie (PDOK) werkt alleen nog voor ingelogde sollicitanten (was een open doorgeefluik)',
+                'Beter Leren Kennen gebruikt dezelfde autosave-helper als de beschikbaarheid (één stuk code voor het tussentijds bewaren); gedrag voor de sollicitant is ongewijzigd',
+                'Vangnet: wie in de selectiedag-fase zit zonder klaargezette intake/gezondheidsverklaring (uitgenodigd vóór 2.87.0) krijgt die alsnog bij het openen van het portaal; minderjarigen zodra de oudergegevens zijn ingevuld',
+            ],
+        ],
         '2.87.10' => [
             'datum'  => '2026-09-18',
             'titel'  => 'Meldingen: bijlagen blijven vaker echte bijlagen',

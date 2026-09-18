@@ -7,6 +7,8 @@
  * gezet is (bijv. op het inlogscherm). Het telbolletje op "Taken" toont $portaal_open_taken
  * (aantal open taken) als de pagina dat heeft gezet en het groter is dan nul.
  */
+require_once __DIR__ . '/../includes/functions.php';
+portaal_alleen_include(__FILE__);
 $portaal_geen_nav = $portaal_geen_nav ?? false;
 $_nav = $portaal_nav ?? '';
 $_toon_nav = !$portaal_geen_nav && function_exists('portaal_ingelogd') && portaal_ingelogd();

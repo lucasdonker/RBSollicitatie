@@ -285,6 +285,30 @@ function huidige_beheerder(): array {
 // ── Portaal auth (sollicitant) ────────────────────────────────
 function portaal_ingelogd(): bool { sessie_start(); return !empty($_SESSION['portaal_sol_id']); }
 
+/** Elke portaal-pagina (behalve login/token-pagina's) begint hiermee: niet ingelogd → inlogscherm. */
+function portaal_vereis_login(): int {
+    if (!portaal_ingelogd()) redirect(APP_URL . '/portaal/');
+    return (int)$_SESSION['portaal_sol_id'];
+}
+
+/**
+ * Voor partials (portaal/_kop.php enz.): alleen via require te gebruiken. Direct opgevraagd in de
+ * browser → niet ingelogd: inlogscherm; ingelogd: de 404-pagina (een partial is geen pagina).
+ */
+function portaal_alleen_include(string $bestand): void {
+    $script = realpath((string)($_SERVER['SCRIPT_FILENAME'] ?? ''));
+    if (!$script || $script !== realpath($bestand)) return;
+    portaal_vereis_login();
+    pagina_404();
+}
+
+/** Eigen 404-pagina (404.php in de root, ook Apache's ErrorDocument) tonen en stoppen. */
+function pagina_404(): never {
+    http_response_code(404);
+    require __DIR__ . '/../404.php';
+    exit;
+}
+
 function login_portaal(int $sol_id, string $email): void {
     sessie_start(); session_regenerate_id(true);
     $_SESSION['portaal_sol_id'] = $sol_id; $_SESSION['portaal_email'] = $email; $_SESSION['_t'] = time();

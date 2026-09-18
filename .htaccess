@@ -12,6 +12,9 @@
     RewriteRule ^d/([0-9]+-[0-9]+-[a-f0-9]+)/?$ download.php?d=$1 [L]
 </IfModule>
 
+# Eigen 404-pagina (huisstijl) voor adressen die niet bestaan, ook onder /portaal/ en /admin/
+ErrorDocument 404 /404.php
+
 # Toon geen PHP-fouten aan bezoekers (fouten gaan naar het log)
 <IfModule mod_php.c>
     php_flag display_errors Off

@@ -3,6 +3,8 @@
  * Partial: voortgangskaart "Stap N van 5 — Naam" + percentage + balk + vijf bolletjes (ontwerp 02).
  * Verwacht $vg (portaal_voortgang()) en optioneel $vg_toelichting (alleen zichtbaar op desktop).
  */
+require_once __DIR__ . '/../includes/functions.php';
+portaal_alleen_include(__FILE__);
 $vg_toelichting = $vg_toelichting ?? '';
 ?>
 <div class="pt-voortgang<?= !empty($vg['klaar']) ? ' klaar' : '' ?>" role="group" aria-label="Voortgang van je sollicitatie">

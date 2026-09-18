@@ -8,6 +8,8 @@
  *  uitgenodigd_tw         → navy kaart TRAININGSWEEKEND
  *  afgewezen              → kaart "Dit seizoen niet verder" + AVG-acties
  */
+require_once __DIR__ . '/../includes/functions.php';
+portaal_alleen_include(__FILE__);
 $_fase = $sol['fase'] ?? '';
 $_kaart = null; // navy infokaart: label, datum, tijd, locatie, meenemen
 if (in_array($_fase, ['uitgenodigd_selectie', 'aangemeld_selectie'], true) && !empty($sol['datum_selectiedag'])) {

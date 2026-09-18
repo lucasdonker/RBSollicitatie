@@ -4,6 +4,8 @@
  * Verwacht $taak (contract in includes/portaal_taken.php), $taak_terug, optioneel $taak_eerste
  * (eerste open rij → oranje knop op desktop). Rijen met inline_form tonen het formulier eronder.
  */
+require_once __DIR__ . '/../includes/functions.php';
+portaal_alleen_include(__FILE__);
 $_t      = $taak;
 $_inline = $_t['inline_form'] ?? null;
 $_klik   = !empty($_t['url']) && !$_inline;
