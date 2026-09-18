@@ -108,7 +108,7 @@
     if (!valideer()) return;
     volgKnop.disabled = true;
     const tekst = volgKnop.querySelector('.tekst'); if (tekst) tekst.textContent = 'Bezig…';
-    bewaar(true);
+    if (concept) concept.stop(); // het echte opslaan neemt het over; geen concept meer sturen
     form.submit();
   });
 
@@ -253,11 +253,9 @@
     });
   })();
 
-  /* ── Autosave concept ─────────────────────────────────────────── */
-  const csrf = (form.querySelector('[name="_csrf"]') || {}).value || '';
+  /* ── Autosave concept (gedeelde helper assets/js/portaal_concept.js) ── */
   const tekstVelden = ['postcode', 'huisnummer', 'straat', 'woonplaats', 'opleiding', 'werkervaring', 'motivatie_lifeguard', 'motivatie_strand', 'diplomas', 'bijzonderheden'];
   const socialVelden = alle('[name^="social_"]', form);
-  let autosaveTimer = null, laatstOpgeslagen = '';
 
   /* Social media: de losse platform-velden gaan als één tekst mee in het concept
      (zelfde vorm als de server opslaat: "Instagram @naam · TikTok @naam"). */
@@ -269,45 +267,35 @@
     }).filter(Boolean).join(' · ');
   }
 
+  /* Huidige formulierstaat als {veld: waarde}; null zolang er niets is ingevuld. */
   function conceptData() {
-    const d = new URLSearchParams();
-    d.append('_csrf', csrf);
+    const d = {};
     let iets = false;
     tekstVelden.forEach(function (n) {
       const f = form.querySelector('[name="' + n + '"]');
-      if (f && f.value.trim()) { d.append(n, f.value); iets = true; }
+      if (f && f.value.trim()) { d[n] = f.value; iets = true; }
     });
     const soc = socialTekst();
-    if (soc) { d.append('social_media', soc); iets = true; }
+    if (soc) { d.social_media = soc; iets = true; }
     return iets ? d : null;
   }
-  function toonStatus(tekst, ok) {
-    const s = el('blkAutosave'), t = el('blkAutosaveTekst');
-    if (!s || !t) return;
-    t.textContent = tekst;
-    s.classList.toggle('ok', !!ok);
+
+  let concept = null;
+  if (window.PortaalConcept && CFG.apiConcept) {
+    concept = PortaalConcept.maak({
+      url: CFG.apiConcept,
+      csrf: (form.querySelector('[name="_csrf"]') || {}).value || '',
+      verzamel: conceptData,
+      statusEl: el('blkAutosave'),
+      tekstEl: el('blkAutosaveTekst')
+    });
+    concept.prime(); // wat al geladen is, hoeft niet opnieuw gestuurd
+    form.addEventListener('input', function (e) {
+      if (tekstVelden.indexOf(e.target.name) === -1 && (e.target.name || '').indexOf('social_') !== 0) return;
+      concept.plan();
+    });
+    alle('.blk-tab, #blkTerug, #blkVolgende').forEach(function (k) { k.addEventListener('click', function () { setTimeout(function () { concept.bewaarNu(); }, 50); }); });
   }
-  function bewaar(sync) {
-    if (!CFG.apiConcept) return;
-    const d = conceptData();
-    if (!d) return;
-    const hash = d.toString();
-    if (hash === laatstOpgeslagen) return;
-    laatstOpgeslagen = hash;
-    if (sync && navigator.sendBeacon) { navigator.sendBeacon(CFG.apiConcept, d); return; }
-    toonStatus('Concept opslaan…', false);
-    fetch(CFG.apiConcept, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: hash })
-      .then(function (r) { return r.json(); })
-      .then(function (r) { toonStatus(r.ok ? 'Concept opgeslagen' + (r.tijd ? ' om ' + r.tijd : '') : 'Concept kon niet worden opgeslagen', !!r.ok); })
-      .catch(function () { toonStatus('Concept kon niet worden opgeslagen', false); });
-  }
-  form.addEventListener('input', function (e) {
-    if (tekstVelden.indexOf(e.target.name) === -1 && (e.target.name || '').indexOf('social_') !== 0) return;
-    clearTimeout(autosaveTimer);
-    autosaveTimer = setTimeout(function () { bewaar(false); }, 2500);
-  });
-  alle('.blk-tab, #blkTerug, #blkVolgende').forEach(function (k) { k.addEventListener('click', function () { setTimeout(function () { bewaar(false); }, 50); }); });
-  window.addEventListener('pagehide', function () { bewaar(true); });
 
   /* ── Start ───────────────────────────────────────────────────── */
   toonStap(huidig, huidig !== 1);

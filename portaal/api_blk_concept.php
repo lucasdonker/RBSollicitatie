@@ -1,8 +1,11 @@
 <?php
 /**
- * Autosave-concept voor het BLK-formulier.
- * Slaat tekstvelden tussentijds op zodat een time-out geen invoer wist.
+ * Autosave-concept voor het BLK-formulier (zelfde contract als api_besch_concept.php, zodat
+ * beide formulieren de gedeelde helper assets/js/portaal_concept.js gebruiken).
+ * Slaat tekstvelden tussentijds op in blk_formulieren zodat een time-out geen invoer wist.
  * Wijzigt NIET de fase en logt geen wijzigingen — puur een concept-buffer.
+ *
+ * POST _csrf + concept=<json {veld: waarde}>  → {ok, opgeslagen, tijd}
  */
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/blk.php';
@@ -10,15 +13,20 @@ require_once __DIR__ . '/../includes/blk.php';
 header('Content-Type: application/json');
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); exit; }
 
-// Sollicitant moet ingelogd zijn via portaal-sessie
-if (!function_exists('portaal_ingelogd') || !portaal_ingelogd() || empty($_SESSION['portaal_sol_id'])) {
+if (!portaal_ingelogd()) {
+    http_response_code(401);
     echo json_encode(['ok' => false, 'fout' => 'Niet ingelogd']); exit;
 }
 $sol_id = (int)$_SESSION['portaal_sol_id'];
 
 csrf_check();
 
-// Alle bekende tekstvelden accepteren (geen fase-wijziging, puur concept-buffer)
+$ruw = (string)($_POST['concept'] ?? '');
+if ($ruw === '' || strlen($ruw) > 30000) { echo json_encode(['ok' => false, 'fout' => 'Ongeldig concept']); exit; }
+$concept = json_decode($ruw, true);
+if (!is_array($concept)) { echo json_encode(['ok' => false, 'fout' => 'Ongeldig concept']); exit; }
+
+// Alleen bekende tekstvelden accepteren (geen fase-wijziging, puur concept-buffer)
 $toegestaan = ['postcode', 'huisnummer', 'straat', 'woonplaats', 'adres',
                'opleiding', 'werkervaring', 'diplomas', 'motivatie_lifeguard',
                'motivatie_strand', 'beschikbaarheid_uitzonderingen', 'social_media',
@@ -32,8 +40,8 @@ $kolommen_set = array_flip($kolommen);
 
 $velden = [];
 foreach ($toegestaan as $veld) {
-    if (isset($_POST[$veld]) && isset($kolommen_set[$veld])) {
-        $velden[$veld] = trim($_POST[$veld]) ?: null;
+    if (array_key_exists($veld, $concept) && isset($kolommen_set[$veld]) && is_scalar($concept[$veld])) {
+        $velden[$veld] = trim((string)$concept[$veld]) ?: null;
     }
 }
 

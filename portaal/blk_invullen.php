@@ -10,10 +10,7 @@
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/blk.php';
 
-if (!function_exists('portaal_ingelogd') || !portaal_ingelogd()) {
-    redirect(APP_URL . '/portaal/');
-}
-$sol_id = (int)$_SESSION['portaal_sol_id'];
+$sol_id = portaal_vereis_login();
 
 $stmt = db()->prepare("
     SELECT s.*, p.id AS persoon_id, p.voornaam, p.tussenvoegsel, p.achternaam, p.email, p.telefoon
@@ -421,6 +418,7 @@ require __DIR__ . '/_kop.php';
     totaal:     <?= count($stappen) ?>
   };
 </script>
+<script src="<?= APP_URL ?>/assets/js/portaal_concept.js?v=<?= @filemtime(__DIR__ . '/../assets/js/portaal_concept.js') ?>"></script>
 <script src="<?= APP_URL ?>/assets/js/blk.js?v=<?= @filemtime(__DIR__ . '/../assets/js/blk.js') ?>"></script>
 
 <?php require __DIR__ . '/_voet.php'; ?>
