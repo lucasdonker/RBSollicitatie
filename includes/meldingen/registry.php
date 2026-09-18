@@ -25,7 +25,8 @@ function meldingen_categorieen(): array {
         'herinnering' => 'Herinneringen',
         'bestuur'     => 'Meldingen aan het bestuur',
         'systeem'     => 'Systeem',
-        'handmatig'   => 'Handmatig en gepland',
+        'handmatig'   => 'Handmatig',
+        'gepland'     => 'Gepland',
     ];
 }
 
@@ -391,7 +392,16 @@ function meldingen_register(): array {
             ],
         ]),
 
-        // ── Handmatig ─────────────────────────────────────────────────
+        // ── Handmatig en gepland ──────────────────────────────────────
+        'gepland' => array_merge($std, [
+            'naam' => 'Gepland bericht', 'categorie' => 'gepland', 'kanaal_standaard' => 'email', 'dedup_min' => 0,
+            'beschrijving' => 'Een bericht uit een geplande regel ("X dagen na gebeurtenis Y"); inhoud komt uit het gekozen eigen sjabloon.',
+            'vars' => ['onderwerp', 'body_html', 'tekst_kort'],
+            'seed' => [
+                'onderwerp' => '{{onderwerp}}', 'hero_titel' => '{{onderwerp}}', 'hero_subtitel' => '',
+                'body_html' => '{{body_html}}', 'tekst_kort' => '{{tekst_kort}}', 'samenvatting' => '',
+            ],
+        ]),
         'handmatig' => array_merge($std, [
             'naam' => 'Handmatig bericht', 'categorie' => 'handmatig', 'kanaal_standaard' => 'email', 'dedup_min' => 0,
             'beschrijving' => 'Een bericht dat het bestuur zelf schrijft en verstuurt (onderwerp en inhoud per verzending).',

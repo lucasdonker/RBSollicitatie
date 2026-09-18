@@ -120,6 +120,8 @@ function db_failsafe(): void {
         'sjablonen_auto_setup',
         'meldingen_log_auto_setup',
         'personen_kanaal_auto_setup',
+        'bijlagen_auto_setup',
+        'gepland_auto_setup',
     ];
     foreach ($setups as $fn) {
         if (function_exists($fn)) {

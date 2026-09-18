@@ -81,11 +81,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
         if ($onderwerp === '') { flash('fout', 'Onderwerp is verplicht.'); redirect(APP_URL . '/admin/mail_templates.php?slug=' . urlencode($slug)); }
+        // Bijlagen: bestaande ids behouden (minus verwijderde) + nieuwe upload
+        $bijl_ids = array_values(array_filter(array_map('intval', $_POST['bijlage_ids'] ?? [])));
+        if (!empty($_FILES['bijlage_upload']['tmp_name']) && function_exists('bijlage_opslaan')) {
+            $bu = bijlage_opslaan($_FILES['bijlage_upload'], (int)(huidige_beheerder()['id'] ?? 0), 'Sjabloon ' . $slug);
+            if ($bu['ok']) $bijl_ids[] = (int)$bu['id']; else flash('waarschuwing', 'Bijlage niet opgeslagen: ' . $bu['fout']);
+        }
         try {
-            $sql = "UPDATE mail_templates SET onderwerp=?, hero_titel=?, hero_subtitel=?, hero_image_url=?, hero_kleur=?, body_html=?, tekst_kort=?, samenvatting=?, gewijzigd_op=NOW()" . ($naam !== '' ? ", naam=?" : '') . " WHERE slug=?";
-            $p = [$onderwerp, $hero_titel ?: null, $hero_subtitel ?: null, $hero_image_url ?: null, $hero_kleur ?: null, $body, $tekst_kort, $samenvatting];
+            $sql = "UPDATE mail_templates SET onderwerp=?, hero_titel=?, hero_subtitel=?, hero_image_url=?, hero_kleur=?, body_html=?, tekst_kort=?, samenvatting=?, bijlagen_json=?, gewijzigd_op=NOW()" . ($naam !== '' ? ", naam=?" : '') . " WHERE slug=?";
+            $p = [$onderwerp, $hero_titel ?: null, $hero_subtitel ?: null, $hero_image_url ?: null, $hero_kleur ?: null, $body, $tekst_kort, $samenvatting, $bijl_ids ? json_encode(array_values(array_unique($bijl_ids))) : null];
             if ($naam !== '') $p[] = $naam;
             $p[] = $slug;
+            if (!$in_db_post = (int)$db->query("SELECT COUNT(*) FROM mail_templates WHERE slug=" . $db->quote($slug))->fetchColumn()) {
+                $rdef = $register[$slug] ?? null;
+                $db->prepare("INSERT INTO mail_templates (slug, naam, beschrijving, onderwerp, body_html, categorie) VALUES (?,?,?,?,?,?)")
+                   ->execute([$slug, $rdef['naam'] ?? ($naam ?: $slug), $rdef['beschrijving'] ?? '', $onderwerp, $body, $rdef['categorie'] ?? 'handmatig']);
+            }
             $db->prepare($sql)->execute($p);
             if (function_exists('audit_log')) audit_log('gewijzigd', 'sjabloon', null, ['slug' => $slug]);
             flash('succes', 'Sjabloon opgeslagen.');
@@ -305,6 +316,16 @@ require __DIR__ . '/layout_top.php';
           <textarea name="samenvatting" rows="5" maxlength="200" style="width:100%;font-size:13px;padding:8px 11px"><?= h($actief['samenvatting'] ?? '') ?></textarea>
           <div style="font-size:11px;color:var(--tekst-zacht);margin-top:3px">Eén regel onder de titel in het berichtenoverzicht van de sollicitant.</div>
         </div>
+      </div>
+
+      <div style="padding:14px 16px 0">
+        <label class="veld-label">Bijlagen (gaan mee met elke e-mail; WhatsApp/SMS krijgt een downloadlink)</label>
+        <?php $bijl_huidig = []; if (!empty($actief['bijlagen_json']) && function_exists('bijlagen_van_ids')) { $j = json_decode((string)$actief['bijlagen_json'], true); if (is_array($j)) $bijl_huidig = bijlagen_van_ids($j); } ?>
+        <?php foreach ($bijl_huidig as $bh): ?>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin:4px 0"><input type="checkbox" name="bijlage_ids[]" value="<?= (int)$bh['id'] ?>" checked> <?= h($bh['naam']) ?> <span style="color:var(--grijs);font-size:11px">(uitvinken = loskoppelen)</span></label>
+        <?php endforeach; ?>
+        <input type="file" name="bijlage_upload" accept=".pdf,.jpg,.jpeg,.png,.webp,.docx,.xlsx" style="font-size:12px">
+        <div style="font-size:11px;color:var(--tekst-zacht);margin-top:3px">pdf, jpg, png, webp, docx, xlsx · max 10 MB.</div>
       </div>
 
       <div style="padding:12px 16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">

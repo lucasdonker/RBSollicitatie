@@ -144,6 +144,12 @@ function herinnering_run(?string $alleen_slug = null, bool $dry_run = false): ar
         }
         $uit[$slug] = $res;
     }
+    // Geplande berichten (regels uit het beheer) draaien mee
+    if (function_exists('gepland_run') && ($alleen_slug === null || str_starts_with($alleen_slug, 'gepland_'))) {
+        $gid = $alleen_slug !== null ? (int)substr($alleen_slug, 8) : null;
+        try { foreach (gepland_run($gid, $dry_run) as $k => $r) $uit[$k] = $r; }
+        catch (\Throwable $e) { error_log('gepland_run: ' . $e->getMessage()); }
+    }
     return $uit;
 }
 

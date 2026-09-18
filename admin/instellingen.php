@@ -1322,6 +1322,11 @@ require __DIR__ . '/layout_top.php';
           <input type="number" name="inst[bewaar.maillog_body_mnd]" value="<?= instelling_int('bewaar.maillog_body_mnd',3) ?>" min="0" max="24">
           <div class="form-hulp">Daarna de inhoud leegmaken</div>
         </div>
+        <div class="form-groep">
+          <label>Losse bijlagen <span class="tip" data-tip="Geüploade bestanden die aan geen enkel sjabloon meer hangen."></span></label>
+          <input type="number" name="inst[bewaar.bijlagen_mnd]" value="<?= instelling_int('bewaar.bijlagen_mnd',12) ?>" min="0" max="60">
+          <div class="form-hulp">Daarna verwijderen</div>
+        </div>
       </div>
 
       <button type="submit" class="btn btn-primary">Opslaan</button>

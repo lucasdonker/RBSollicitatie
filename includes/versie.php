@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.87.4');
+define('APP_VERSIE', '2.87.5');
 
 function app_changelog(): array {
     return [
+        '2.87.5' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Meldingen: bijlagen en geplande berichten (bundel 6 van 7)',
+            'punten' => [
+                'Bijlagen (pdf, jpg, png, webp, docx, xlsx; max 10 MB) bij sjablonen én handmatige berichten: gaan mee in de e-mail; WhatsApp/SMS krijgt een beveiligde downloadlink die 14 dagen geldig is. Bestanden staan buiten het webbereik',
+                'Geplande berichten (Instellingen › Geplande berichten): regels als "10 dagen na het inleveren van het formulier: stuur het magazine", ook vóór/na de selectiedag of het trainingsweekend, per fase, met kanaalkeuze, maximum per persoon en proefdraaien. Ze draaien mee met de herinneringen',
+                'Bij een bericht mét bijlage via WhatsApp/SMS wordt automatisch ook een e-mail gestuurd (het bestand kan alleen per e-mail mee)',
+                'AVG: losse bijlagen die aan geen sjabloon meer hangen worden na 12 maanden opgeruimd (instelbaar); downloads worden gelogd',
+            ],
+        ],
         '2.87.4' => [
             'datum'  => '2026-09-18',
             'titel'  => 'Meldingen: portaal — alle kanalen onder Berichten, bericht lezen, kanaalvoorkeur (bundel 5 van 7)',

@@ -23,6 +23,7 @@ $_nav_items = [
             ['id'=>'seizoen',         'label'=>'Seizoenbeheer',    'url'=>'/admin/seizoen.php'],
             ['id'=>'berichten',       'label'=>'Berichten',        'url'=>'/admin/berichten.php'],
             ['id'=>'mail_templates',  'label'=>'Sjablonen',        'url'=>'/admin/mail_templates.php'],
+            ['id'=>'geplande_berichten', 'label'=>'Geplande berichten', 'url'=>'/admin/geplande_berichten.php'],
         ],
     ],
 ];
@@ -67,6 +68,7 @@ if (function_exists('mag')) {
         'mailing'        => 'mailing',
         'berichten'      => 'mailing',
         'mail_templates' => 'mailing',
+        'geplande_berichten' => 'mailing',
         'systeem'        => 'systeem',
         'deploy'         => 'systeem',
         'foutenlog'      => 'systeem',

@@ -224,6 +224,22 @@ function opschoon_run(bool $dry_run = false, string $bron = 'cron'): array {
         } catch (\Exception $e) { $uit['categorieen']['berichtinhoud_geleegd'] = 0; }
     }
 
+    // ── 5b. Bijlagen die nergens meer aan een sjabloon hangen en ouder zijn dan N maanden ──
+    $mnd_bijl = instelling_int('bewaar.bijlagen_mnd', 12);
+    if (($grensdatum = $grens($mnd_bijl)) && function_exists('bijlagen_lijst')) {
+        try {
+            $in_gebruik = function_exists('bijlagen_in_gebruik') ? bijlagen_in_gebruik() : [];
+            $aantal = 0;
+            foreach (bijlagen_lijst() as $b) {
+                if (in_array((int)$b['id'], $in_gebruik, true) || $b['aangemaakt_op'] >= $grensdatum) continue;
+                if ($dry_run) { $aantal++; continue; }
+                if (bijlage_verwijderen((int)$b['id'])) $aantal++;
+            }
+            $uit['categorieen']['bijlagen_verwijderd'] = $aantal;
+            if (!$dry_run && $aantal) opschoon_log_schrijf('bijlagen_verwijderd', $aantal, $bron);
+        } catch (\Exception $e) { $uit['categorieen']['bijlagen_verwijderd'] = 0; }
+    }
+
     // ── 5. Mail-/actielogboek verwijderen ────────────────────────────
     $mnd = instelling_int('bewaar.maillog_mnd', 0);
     if ($grensdatum = $grens($mnd)) {

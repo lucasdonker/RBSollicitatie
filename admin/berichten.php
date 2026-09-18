@@ -69,8 +69,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tab === 'nieuw') {
     $bi     = berichten_inhoud($_POST, $db);
     $inhoud = $bi['inhoud']; $override = $bi['override'];
     $voorsel = $ids;
+    // Bijlagen: geüploade bestanden naar de bibliotheek (alleen bij echt verzenden/testen)
+    $bijlagen_opties = [];
+    if (in_array($actie, ['verzend', 'test'], true) && !empty($_FILES['bijlagen']['name']) && function_exists('bijlage_opslaan')) {
+        foreach ((array)$_FILES['bijlagen']['name'] as $i => $bn) {
+            if ($bn === '' || ($_FILES['bijlagen']['error'][$i] ?? 4) !== UPLOAD_ERR_OK) continue;
+            $een = ['name' => $bn, 'tmp_name' => $_FILES['bijlagen']['tmp_name'][$i], 'size' => $_FILES['bijlagen']['size'][$i], 'error' => $_FILES['bijlagen']['error'][$i]];
+            $bu = bijlage_opslaan($een, (int)(huidige_beheerder()['id'] ?? 0), 'Handmatig bericht');
+            if ($bu['ok']) $bijlagen_opties[] = (int)$bu['id']; else $fout = 'Bijlage "' . h($bn) . '" niet opgeslagen: ' . $bu['fout'];
+        }
+    }
 
-    if ($inhoud['onderwerp'] === '' || trim(strip_tags($inhoud['body_html'])) === '') {
+    if ($fout) {
+        // bijlage-fout: niets versturen
+    } elseif ($inhoud['onderwerp'] === '' || trim(strip_tags($inhoud['body_html'])) === '') {
         $fout = 'Vul een onderwerp en een berichttekst in (of kies een sjabloon).';
     } elseif ($modus !== 'email' && $inhoud['tekst_kort'] === '') {
         $fout = 'Voor WhatsApp/SMS is een korte tekst nodig.';
@@ -81,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tab === 'nieuw') {
     } elseif ($actie === 'test') {
         $bhd = huidige_beheerder();
         $r = melding_verstuur('handmatig', 0, $inhoud, [
-            'override' => $override, 'kanaalmodus' => 'email', 'prioriteit' => 'direct', 'negeer_plafond' => true,
+            'override' => $override, 'kanaalmodus' => 'email', 'prioriteit' => 'direct', 'negeer_plafond' => true, 'bijlagen' => $bijlagen_opties,
             'ontvanger' => ['email' => (string)($bhd['email'] ?? ''), 'naam' => (string)($bhd['naam'] ?? 'Test'), 'telefoon' => '', 'rol' => 'direct'],
         ]);
         $fout = $r['status'] === 'verstuurd' ? null : 'Testmail mislukt: ' . ($r['reden'] ?? 'onbekend');
@@ -94,7 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tab === 'nieuw') {
             $namen = []; foreach ($alle as $s) $namen[(int)$s['id']] = volledige_naam($s);
             foreach ($ids as $id) {
                 if (!isset($namen[$id])) continue;
-                $r = melding_verstuur('handmatig', $id, $inhoud, ['override' => $override, 'kanaalmodus' => $modus, 'prioriteit' => $prio, 'referentie' => 'handmatig:' . date('YmdHi')]);
+                $r = melding_verstuur('handmatig', $id, $inhoud, ['override' => $override, 'kanaalmodus' => $modus, 'prioriteit' => $prio, 'referentie' => 'handmatig:' . date('YmdHi'), 'bijlagen' => $bijlagen_opties]);
                 $st = $r['status'];
                 if ($st === 'verstuurd') $resultaat['ok']++; elseif ($st === 'wacht') $resultaat['wacht']++; elseif ($st === 'overgeslagen') $resultaat['overgeslagen']++; else $resultaat['mislukt']++;
                 $resultaat['details'][] = ['naam' => $namen[$id], 'status' => $st, 'kanaal' => $r['kanaal'] ?? null, 'reden' => $r['reden'] ?? null];
@@ -241,7 +253,7 @@ require __DIR__ . '/layout_top.php';
 </div>
 <?php endif; ?>
 
-<form method="POST" id="berichtForm">
+<form method="POST" id="berichtForm" enctype="multipart/form-data">
   <?= csrf_input() ?>
   <input type="hidden" name="actie" id="actieVeld" value="verzend">
   <div class="ber-grid">
@@ -274,6 +286,9 @@ require __DIR__ . '/layout_top.php';
           <div class="form-groep"><label>Korte tekst (WhatsApp/SMS) <span id="kortTeller" style="font-weight:400;color:var(--grijs)"></span></label>
             <textarea name="tekst_kort" id="tekstKort" rows="4" maxlength="400" oninput="kortTeller()" placeholder="Hoi {{voornaam}}, ... Meer info: {{portaal_url}}"><?= h($_POST['tekst_kort'] ?? '') ?></textarea>
             <div class="form-hulp">Alleen nodig bij WhatsApp/SMS. Platte tekst, max 400 tekens.</div></div>
+          <div class="form-groep"><label>Bijlagen <span style="font-weight:400;color:var(--grijs)">(optioneel)</span></label>
+            <input type="file" name="bijlagen[]" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,.docx,.xlsx">
+            <div class="form-hulp">Gaan als bijlage mee in de e-mail; WhatsApp/SMS krijgt een downloadlink (14 dagen geldig). Bij "WhatsApp/SMS" wordt dan ook een e-mail gestuurd. Max 10 MB per bestand.</div></div>
         </div>
         <div class="card-body" id="sjabloonInfo" style="display:none;font-size:13px;color:var(--tekst-zacht)">De inhoud komt uit het gekozen sjabloon. Bewerken: <a href="<?= APP_URL ?>/admin/mail_templates.php" style="color:var(--oranje)">Sjablonen</a>.</div>
       </div>

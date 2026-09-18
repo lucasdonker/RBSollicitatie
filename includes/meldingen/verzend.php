@@ -183,11 +183,12 @@ function melding_verstuur(string $type, int $sol_id, array $extra = [], array $o
             return $uit;
         }
 
+        $bijlagen = melding_bijlagen_normaliseer(array_merge($r['bijlagen'] ?? [], $opties['bijlagen'] ?? []));
+        // Een bestand kan alleen per e-mail mee: bij 'kort' dan óók e-mail (kort krijgt een downloadlink).
+        if ($bijlagen && $modus === 'kort') $modus = 'beide';
         $plannen = melding_kanaalplan($modus, $ontv, $def, $r['tekst_kort'] !== '');
         $prio = $opties['prioriteit'] ?? 'direct';
         if ($prio === 'na_antwoord' && (PHP_SAPI === 'cli' || !function_exists('fastcgi_finish_request'))) $prio = 'direct';
-
-        $bijlagen = array_merge($r['bijlagen'] ?? [], $opties['bijlagen'] ?? []);
         $ids = [];
         foreach ($plannen as $plan) {
             $item = array_merge($basis, [
@@ -418,17 +419,20 @@ function melding_verzend_item(array $m): array {
     $fouten = []; $gelukt = null; $fallback_van = null;
     $log_id = (int)($m['log_id'] ?? 0);
     $bijlagen = [];
-    if (!empty($m['bijlagen_json'])) { $j = json_decode((string)$m['bijlagen_json'], true); if (is_array($j)) $bijlagen = $j; }
+    if (!empty($m['bijlagen_json'])) { $j = json_decode((string)$m['bijlagen_json'], true); if (is_array($j)) $bijlagen = melding_bijlagen_resolve($j); }
+    // Korte kanalen: downloadlinks van bibliotheek-bijlagen achter de tekst
+    $tekst_kort = (string)$m['tekst_kort'];
+    foreach ($bijlagen as $b) if (!empty($b['url'])) $tekst_kort .= "\n" . $b['naam'] . ': ' . $b['url'];
 
     foreach ($plan as $kanaal) {
         if ($kanaal !== 'email' && $poging > 1) { $fouten[] = "$kanaal: overgeslagen bij herhaling"; continue; }
         $r = ['ok' => false, 'fout' => 'onbekend kanaal'];
         try {
             if ($kanaal === 'whatsapp') {
-                $r = melding_kanaal_whatsapp((string)$m['telefoon'], (string)$m['tekst_kort']);
+                $r = melding_kanaal_whatsapp((string)$m['telefoon'], $tekst_kort);
             } elseif ($kanaal === 'sms') {
                 $r = (function_exists('sms_actief') && sms_actief() && $m['telefoon'])
-                    ? melding_resultaat(function_exists('sms_verstuur_res') ? sms_verstuur_res((string)$m['telefoon'], (string)$m['tekst_kort']) : sms_verstuur((string)$m['telefoon'], (string)$m['tekst_kort']))
+                    ? melding_resultaat(function_exists('sms_verstuur_res') ? sms_verstuur_res((string)$m['telefoon'], $tekst_kort) : sms_verstuur((string)$m['telefoon'], $tekst_kort))
                     : ['ok' => false, 'fout' => 'sms niet beschikbaar'];
             } elseif ($kanaal === 'email') {
                 if ($m['naar_email'] === '' || $m['naar_email'] === null) { $r = ['ok' => false, 'fout' => 'geen e-mailadres']; }
@@ -466,6 +470,33 @@ function melding_verzend_item(array $m): array {
         error_log('melding_verzend_item: ' . $e->getMessage());
         return ['status' => 'mislukt', 'kanaal' => null, 'fout' => $e->getMessage()];
     }
+}
+
+/**
+ * Bijlagen normaliseren: int of ['bijlage_id'=>n] (uit de bijlagenbibliotheek) of ['pad','naam','mime']
+ * (tijdelijk bestand, bijv. een PDF van een ondertekening).
+ */
+function melding_bijlagen_normaliseer(array $lijst): array {
+    $uit = [];
+    foreach ($lijst as $b) {
+        if (is_int($b) || (is_string($b) && ctype_digit($b))) { if ((int)$b > 0) $uit[] = ['bijlage_id' => (int)$b]; }
+        elseif (is_array($b) && !empty($b['bijlage_id'])) $uit[] = ['bijlage_id' => (int)$b['bijlage_id']];
+        elseif (is_array($b) && !empty($b['pad'])) $uit[] = ['pad' => $b['pad'], 'naam' => $b['naam'] ?? basename($b['pad']), 'mime' => $b['mime'] ?? 'application/octet-stream'];
+    }
+    return $uit;
+}
+
+/** Bijlagen klaarmaken voor verzending: [['pad','naam','mime','url'=>?]]. Ontbrekende bestanden vallen weg. */
+function melding_bijlagen_resolve(array $lijst): array {
+    $uit = [];
+    foreach ($lijst as $b) {
+        if (!empty($b['bijlage_id'])) {
+            if (function_exists('bijlagen_van_ids')) foreach (bijlagen_van_ids([(int)$b['bijlage_id']]) as $r) $uit[] = $r;
+        } elseif (!empty($b['pad']) && is_file($b['pad'])) {
+            $uit[] = ['pad' => $b['pad'], 'naam' => $b['naam'] ?? basename($b['pad']), 'mime' => $b['mime'] ?? 'application/octet-stream', 'url' => null];
+        }
+    }
+    return $uit;
 }
 
 /** Normaliseer een kanaal-resultaat (bool of ['ok','fout']) naar ['ok','fout']. */
