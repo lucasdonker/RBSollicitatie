@@ -193,6 +193,8 @@ function melding_verstuur(string $type, int $sol_id, array $extra = [], array $o
 
         // Een bestand kan alleen per e-mail mee: bij 'kort' dan óók e-mail (kort krijgt een downloadlink).
         $bijlagen = ($bijl['mee'] || $bijl['links']) ? ['mee' => $bijl['mee'], 'kort' => $bijl['kort']] : [];
+        // Reserve: weigert de mailserver de bijlage (te groot), dan opnieuw met downloadknoppen i.p.v. bijlagen.
+        if ($bijlagen && $bijl['kort']) $bijlagen['reserve_html'] = melding_bijlagen_blok_html(array_map(fn($k) => $k + ['grootte' => 0], $bijl['kort']));
         if ($bijlagen && $modus === 'kort') $modus = 'beide';
         $plannen = melding_kanaalplan($modus, $ontv, $def, $r['tekst_kort'] !== '');
         $prio = $opties['prioriteit'] ?? 'direct';
@@ -440,10 +442,10 @@ function melding_verzend_item(array $m): array {
     $poging = (int)($m['pogingen'] ?? 1);
     $fouten = []; $gelukt = null; $fallback_van = null;
     $log_id = (int)($m['log_id'] ?? 0);
-    $bijlagen = []; $kort_links = [];
+    $bijlagen = []; $kort_links = []; $reserve_html = '';
     if (!empty($m['bijlagen_json'])) {
         $j = json_decode((string)$m['bijlagen_json'], true);
-        if (is_array($j) && isset($j['mee'])) { $bijlagen = melding_bijlagen_resolve($j['mee']); $kort_links = $j['kort'] ?? []; }
+        if (is_array($j) && isset($j['mee'])) { $bijlagen = melding_bijlagen_resolve($j['mee']); $kort_links = $j['kort'] ?? []; $reserve_html = (string)($j['reserve_html'] ?? ''); }
         elseif (is_array($j)) { $bijlagen = melding_bijlagen_resolve($j); foreach ($bijlagen as $b) if (!empty($b['url'])) $kort_links[] = ['naam' => $b['naam_mooi'] ?? $b['naam'], 'url' => $b['url']]; }
     }
     // Korte kanalen: nette downloadlinks achter de tekst
@@ -461,7 +463,17 @@ function melding_verzend_item(array $m): array {
                     : ['ok' => false, 'fout' => 'sms niet beschikbaar'];
             } elseif ($kanaal === 'email') {
                 if ($m['naar_email'] === '' || $m['naar_email'] === null) { $r = ['ok' => false, 'fout' => 'geen e-mailadres']; }
-                elseif (class_exists('Mailer') && method_exists('Mailer', 'verzend')) $r = Mailer::verzend((string)$m['naar_email'], (string)($m['naar_naam'] ?? ''), (string)$m['onderwerp'], (string)$m['body'], $bijlagen);
+                elseif (class_exists('Mailer') && method_exists('Mailer', 'verzend')) {
+                    $r = Mailer::verzend((string)$m['naar_email'], (string)($m['naar_naam'] ?? ''), (string)$m['onderwerp'], (string)$m['body'], $bijlagen);
+                    // Mailserver weigert op grootte → nog één keer zonder bijlagen, met downloadknoppen
+                    if (empty($r['ok']) && $bijlagen && $reserve_html !== '' && preg_match('/size|too (large|big)|exceed|552|limit/i', (string)($r['fout'] ?? ''))) {
+                        $body2 = (string)$m['body'];
+                        $blok  = function_exists('mail_shortcodes') ? mail_shortcodes($reserve_html) : $reserve_html;
+                        $body2 = strpos($body2, '<!-- FOOTER -->') !== false ? str_replace('<!-- FOOTER -->', $blok . '<!-- FOOTER -->', $body2) : $body2 . $blok;
+                        $r2 = Mailer::verzend((string)$m['naar_email'], (string)($m['naar_naam'] ?? ''), (string)$m['onderwerp'], $body2, []);
+                        if (!empty($r2['ok'])) { $fouten[] = 'email: bijlage geweigerd door mailserver, verstuurd met downloadlink'; $r = $r2; }
+                    }
+                }
                 else $r = ['ok' => false, 'fout' => 'mailer ontbreekt'];
             }
         } catch (\Throwable $e) { $r = ['ok' => false, 'fout' => $e->getMessage()]; }

@@ -144,9 +144,13 @@ function bijlage_naam_mooi(string $bestandsnaam): string {
     return $n === '' ? 'Bijlage' : ucfirst($n);
 }
 
-/** Boven deze grootte gaat een bestand niet als e-mailbijlage mee maar als downloadknop (instelling bijlage.mail_max_mb). */
+/**
+ * Boven deze grootte gaat een bestand niet als e-mailbijlage mee maar als downloadknop
+ * (instelling bijlage.mail_max_mb, standaard 15 MB). Weigert de mailserver een kleinere bijlage
+ * alsnog, dan verstuurt de kern de mail automatisch opnieuw met een downloadknop.
+ */
 function bijlagen_mail_max_bytes(): int {
-    $mb = function_exists('instelling_int') ? instelling_int('bijlage.mail_max_mb', 8) : 8;
+    $mb = function_exists('instelling_int') ? instelling_int('bijlage.mail_max_mb', 15) : 15;
     return max(1, $mb) * 1048576;
 }
 

@@ -3,10 +3,18 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.87.9');
+define('APP_VERSIE', '2.87.10');
 
 function app_changelog(): array {
     return [
+        '2.87.10' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Meldingen: bijlagen blijven vaker echte bijlagen',
+            'punten' => [
+                'De grens waarboven een bestand als downloadknop gaat is verhoogd van 8 naar 15 MB (instelbaar tot 25)',
+                'Vangnet: weigert de mailserver een mail alsnog vanwege de grootte, dan wordt hij automatisch één keer opnieuw verstuurd zonder bijlage maar met downloadknoppen; dat staat dan in het berichtenlog',
+            ],
+        ],
         '2.87.9' => [
             'datum'  => '2026-09-18',
             'titel'  => 'Meldingen: grote bijlagen als downloadknop, nette downloadlinks in WhatsApp',

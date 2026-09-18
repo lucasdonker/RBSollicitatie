@@ -764,8 +764,8 @@ require __DIR__ . '/layout_top.php';
           </div>
           <div class="form-groep">
             <label>Bijlage als e-mailbijlage tot (MB)</label>
-            <input type="number" name="inst[bijlage.mail_max_mb]" value="<?= instelling_int('bijlage.mail_max_mb', 8) ?>" min="1" max="25">
-            <div class="form-hulp">Grotere bestanden gaan als downloadknop in de mail (link 14 dagen geldig).</div>
+            <input type="number" name="inst[bijlage.mail_max_mb]" value="<?= instelling_int('bijlage.mail_max_mb', 15) ?>" min="1" max="25">
+            <div class="form-hulp">Grotere bestanden gaan als downloadknop in de mail (link 14 dagen geldig). Weigert de mailserver een bijlage toch, dan gaat de mail automatisch opnieuw met een downloadknop.</div>
           </div>
           <div class="form-groep">
             <label>WhatsApp per uur (max)</label>
