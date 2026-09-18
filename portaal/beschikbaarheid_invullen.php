@@ -237,7 +237,9 @@ require __DIR__ . '/_kop.php';
   window.BESCH_CFG = {
     weken:   <?= json_encode($week_labels, JSON_UNESCAPED_UNICODE) ?>,
     eerste:  <?= (int)$ew ?>,
-    laatste: <?= (int)$lw ?>
+    laatste: <?= (int)$lw ?>,
+    // Opgeslagen werkperiodes (de rijen worden door JS opgebouwd)
+    blokken: <?= json_encode(array_map(fn($b) => ['van_week' => (int)$b['van_week'], 'tot_week' => (int)$b['tot_week'], 'regime' => $b['regime'], 'weekend_dagen' => $b['weekend_dagen'] ?: null], $b2['blokken'] ?? []), JSON_UNESCAPED_UNICODE) ?>
   };
 </script>
 <script src="<?= APP_URL ?>/assets/js/beschikbaarheid.js?v=<?= @filemtime(__DIR__.'/../assets/js/beschikbaarheid.js') ?>"></script>

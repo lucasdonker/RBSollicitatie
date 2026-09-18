@@ -1622,156 +1622,14 @@ details.b2-uitz > div { padding: 0 16px 16px; }
   .dashboard .stat-rij, .stat-rij { grid-template-columns: 1fr 1fr !important; }
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   BESCHIKBAARHEIDSFORMULIER v2.78 — schone, uniforme opzet (.besch-*)
-   ═══════════════════════════════════════════════════════════════════ */
-.besch-sectie-titel {
-  display: flex; align-items: center; gap: 8px;
-  font: var(--text-label); font-size: 15px; font-weight: 700; color: var(--ink);
-  margin: 24px 0 10px;
-}
-.besch-sectie-titel:first-child { margin-top: 4px; }
-.besch-sectie-titel .ic { color: var(--navy); }
-.besch-optioneel { font-size: 12px; font-weight: 500; color: var(--ink-muted); background: var(--bg); padding: 2px 8px; border-radius: 99px; }
+/* Hint-regel onder de wizard (status/foutmelding) */
 .besch-hint { font: var(--text-meta); color: var(--ink-muted); margin: 4px 0 10px; }
-
-/* Rijen */
-.besch-rij {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius-md); padding: 12px; margin-bottom: 10px;
-}
-.besch-rij-hoofd { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.besch-lbl { font-size: 13px; color: var(--ink-soft); }
-.besch-rij select, .besch-rij input[type="date"], .besch-rij input[type="number"], .besch-rij input[type="text"] {
-  height: 44px; padding: 0 12px; border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm); font-size: 16px; background: var(--surface); color: var(--ink);
-}
-.besch-rij select { min-width: 120px; flex: 1; }
-.besch-getal { width: 70px !important; flex: none !important; }
-.besch-breed { width: 100%; box-sizing: border-box; margin-top: 8px; }
-.besch-regime { min-width: 130px; }
-
-/* Verwijderknop (uniform) */
-.besch-x {
-  width: 40px; height: 40px; flex-shrink: 0;
-  display: inline-flex; align-items: center; justify-content: center;
-  border: 1px solid var(--border); border-radius: var(--radius-sm);
-  background: var(--surface); color: var(--ink-muted); cursor: pointer;
-}
-.besch-x:hover { border-color: var(--error); color: var(--error); }
-
-/* Dag-pillen (weekend, pool, vaste dagen) */
-.besch-weekenddagen, .besch-pooldagen, .besch-vastedagen {
-  display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 10px;
-}
-.besch-dagpil {
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 7px 12px; border: 1px solid var(--border-strong);
-  border-radius: 99px; font-size: 13px; cursor: pointer; background: var(--surface);
-}
-.besch-dagpil input { accent-color: var(--navy); }
-
-/* Uitzonderingen (accordeon) — uniform */
-details.besch-uitz {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius-md); margin-bottom: 10px; overflow: hidden;
-}
-details.besch-uitz > summary {
-  list-style: none; cursor: pointer;
-  display: flex; align-items: center; gap: 10px;
-  padding: 14px 16px; font: var(--text-label); font-size: 14px; color: var(--ink);
-}
-details.besch-uitz > summary::-webkit-details-marker { display: none; }
-.besch-uitz-ico { color: var(--navy); display: inline-flex; }
-.besch-chev { margin-left: auto; color: var(--ink-muted); transition: transform .2s; display: inline-flex; }
-details.besch-uitz[open] .besch-chev { transform: rotate(90deg); }
-.besch-uitz-body { padding: 0 16px 16px; }
-
-/* AI-hulp */
-.besch-ai {
-  background: var(--bg-subtle); border: 1px solid var(--border);
-  border-radius: var(--radius-md); padding: 14px; margin-bottom: 14px;
-}
-.besch-ai-kop { display: flex; align-items: center; gap: 6px; font: var(--text-label); font-size: 14px; color: var(--navy); }
-.besch-ai textarea { border: 1px solid var(--border-strong); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 16px; resize: vertical; }
-
-/* Preview "Zo begrijpen wij het" */
-.besch-preview {
-  background: var(--ok-soft); border: 1px solid #cfe6d6;
-  border-radius: var(--radius-md); padding: 14px 16px;
-}
-.besch-preview-lijst { margin: 0; padding-left: 20px; }
-.besch-preview-lijst li { font-size: 14px; color: var(--ink); margin: 3px 0; }
-.besch-preview-leeg { margin: 0; font-size: 14px; color: var(--ink-soft); font-style: italic; }
-
-/* Voorlopig-vinkje */
-.besch-voorlopig {
-  display: flex; align-items: flex-start; gap: 10px;
-  background: var(--warn-soft); border: 1px solid #ecd9a8;
-  border-radius: var(--radius-md); padding: 12px 14px; margin-top: 16px;
-  font-size: 14px; color: var(--ink);
-}
-.besch-voorlopig input { accent-color: var(--navy); margin-top: 2px; }
-
-/* Beschikbaarheid AI-hulp — Claude Design stijl */
-.besch-ai-veld {
-  width: 100%; box-sizing: border-box; padding: 14px;
-  border: 1px solid var(--border-strong); border-radius: var(--radius-md);
-  font-size: 15px; line-height: 1.6; resize: vertical; background: var(--surface); color: var(--ink);
-}
-.besch-ai-voorbeelden { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 12px; }
-.besch-ai-vb-lbl { font-size: 13px; color: var(--ink-muted); }
-.besch-chip {
-  height: 34px; padding: 0 14px; border: 1px solid var(--border-strong);
-  border-radius: var(--radius-md); background: var(--surface); color: var(--ink);
-  font-size: 13px; cursor: pointer; display: inline-flex; align-items: center;
-}
-.besch-chip:hover { border-color: var(--navy); background: var(--bg); }
-.besch-ai-actie { display: flex; align-items: center; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
-.besch-ai-knop {
-  height: 48px; padding: 0 22px; border: none; border-radius: var(--radius-md);
-  background: var(--accent); color: #fff; font-weight: 600; font-size: 15px; cursor: pointer;
-}
-.besch-ai-knop:hover { background: #b83500; }
-.besch-ai-knop:disabled { opacity: .6; cursor: default; }
-.besch-of-scheiding {
-  display: flex; align-items: center; text-align: center; gap: 12px;
-  margin: 20px 0 16px; color: var(--ink-muted); font-size: 13px;
-}
-.besch-of-scheiding::before, .besch-of-scheiding::after {
-  content: ""; flex: 1; height: 1px; background: var(--border);
-}
 
 /* ═══ BESCHIKBAARHEID AI-WIZARD (stap 1-4) ═══════════════════════════ */
 .wiz-stap { animation: wizIn .25s ease; }
 @keyframes wizIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
-/* Stap 1: slim-invullen kaart (navy) */
-.wiz-slim {
-  background: linear-gradient(150deg, var(--navy), #043a68);
-  color: #fff; border-radius: var(--radius-lg); padding: 20px;
-}
-.wiz-slim-badge {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
-  color: #cfe0f0; margin-bottom: 12px;
-}
-.wiz-slim-titel { font-size: 20px; font-weight: 700; line-height: 1.25; margin: 0 0 8px; }
-.wiz-slim-sub { font-size: 14px; color: rgba(255,255,255,.8); margin: 0 0 16px; }
-.wiz-slim-veld { background: #fff; border-radius: var(--radius-md); padding: 12px; }
-.wiz-veld-lbl { display: block; font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
-.wiz-slim-veld textarea {
-  width: 100%; box-sizing: border-box; border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm); padding: 12px; font-size: 15px; line-height: 1.6; resize: vertical; color: var(--ink);
-}
-.wiz-voorbeelden { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 14px; }
-.wiz-vb-lbl { font-size: 13px; color: rgba(255,255,255,.75); width: 100%; }
-.wiz-slim .besch-chip { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.3); color: #fff; }
-.wiz-slim .besch-chip:hover { background: rgba(255,255,255,.2); }
-.wiz-zelf-link {
-  display: block; margin-top: 16px; background: none; border: none;
-  color: #fff; font-size: 14px; font-weight: 600; text-decoration: underline; cursor: pointer; padding: 0;
-}
+/* Stap 1 (slim invullen) staat verderop als .wiz1-* (exact volgens Portaal.dc 4a). */
 
 /* Stap 2: laadscherm */
 .wiz-kaart { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 22px; }
@@ -1791,14 +1649,10 @@ details.besch-uitz[open] .besch-chev { transform: rotate(90deg); }
   background-repeat: no-repeat; background-position: center;
 }
 
-/* Stap 3: begrepen-blok + navraag */
-.wiz-begrepen { background: linear-gradient(150deg, var(--navy), #043a68); color: #fff; border-radius: var(--radius-lg); padding: 20px; margin-bottom: 16px; }
-.wiz-begrepen-lbl { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #cfe0f0; margin-bottom: 8px; }
-.wiz-begrepen-tekst { font-size: 17px; line-height: 1.5; margin: 0; font-weight: 500; }
+/* Stap 3: navraag-blok (het voorstel zelf staat verderop als .wiz3-*) */
 .wiz-navraag { background: var(--warn-soft); border: 1px solid #ecd9a8; border-radius: var(--radius-md); padding: 16px; margin-bottom: 16px; }
 .wiz-navraag-kop { font-size: 14px; font-weight: 700; color: #8a6d1a; margin-bottom: 6px; }
 .wiz-navraag-vraag { font-size: 15px; color: var(--ink); margin: 0 0 12px; }
-.wiz-aanvullen { margin-bottom: 4px; }
 .wiz-aanvullen-rij { display: flex; gap: 8px; }
 .wiz-aanvullen-rij input {
   flex: 1; height: 46px; padding: 0 14px; border: 1px solid var(--border-strong);

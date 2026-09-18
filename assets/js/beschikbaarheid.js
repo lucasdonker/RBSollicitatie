@@ -433,6 +433,8 @@
     document.querySelectorAll('.besch-vastedag').forEach(function (cb) { cb.addEventListener('change', beschHerbereken); });
     const vt = el('beschVasteToelichting');
     if (vt) vt.addEventListener('input', beschHerbereken);
+    // Opgeslagen werkperiodes terugzetten (voorheen begon "Aanpassen" met een lege standaardperiode)
+    (CFG.blokken || []).forEach(function (b) { beschPeriodeToevoegen(b); });
     if (!document.querySelectorAll('#beschPeriodes .besch-periode').length) {
       beschPeriodeToevoegen({ van_week: CFG.eerste, tot_week: CFG.laatste, regime: 'vijf' });
     }
