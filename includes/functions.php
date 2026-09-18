@@ -43,10 +43,11 @@ if (file_exists(__DIR__ . '/kanalen.php')) require_once __DIR__ . '/kanalen.php'
 if (file_exists(__DIR__ . '/notificatie.php')) require_once __DIR__ . '/notificatie.php';
 if (file_exists(__DIR__ . '/optout.php')) require_once __DIR__ . '/optout.php';
 // Centrale meldingen (register, sjablonen, verzendkern) — ná kanalen/optout/mail_render.
-foreach (['registry', 'sjablonen', 'verzend'] as $__m) {
+foreach (['registry', 'sjablonen', 'verzend', 'herinneringen'] as $__m) {
     if (file_exists(__DIR__ . '/meldingen/' . $__m . '.php')) require_once __DIR__ . '/meldingen/' . $__m . '.php';
 }
 if (file_exists(__DIR__ . '/fase.php')) require_once __DIR__ . '/fase.php';
+if (file_exists(__DIR__ . '/cron_taken.php')) require_once __DIR__ . '/cron_taken.php';
 if (file_exists(__DIR__ . '/export_dossier.php')) require_once __DIR__ . '/export_dossier.php';
 if (file_exists(__DIR__ . '/iconen.php')) require_once __DIR__ . '/iconen.php';
 if (file_exists(__DIR__ . '/blk.php')) require_once __DIR__ . '/blk.php';
@@ -696,6 +697,9 @@ function mail_queue_toevoegen(string $naar, string $naam, string $onderwerp, str
 }
 
 function mail_queue_verwerk(int $max = 20): array {
+    // De centrale meldingen-kern verwerkt dezelfde wachtrij (alle kanalen); oude rijen zonder
+    // kanaalplan gaan als e-mail. Dit is nu alleen nog een doorgeefluik.
+    if (function_exists('melding_queue_verwerk')) return melding_queue_verwerk($max);
     mail_queue_auto_setup();
     $res = ['verwerkt'=>0, 'fouten'=>0];
     try {
@@ -726,212 +730,10 @@ function mail_queue_verwerk(int $max = 20): array {
     return $res;
 }
 
-// ── Reminders: sollicitanten die ergens vastzitten ────────────
+// ── Herinneringen: zie includes/meldingen/herinneringen.php (herinnering_run) ──
+/** @deprecated Gebruik herinnering_run(). */
 function reminder_run(): array {
-    $res = ['blk_gemaild'=>0, 'sd_gemaild'=>0, 'sd_morgen_gemaild'=>0];
-    $seizoen = actief_seizoen();
-    if (!$seizoen) return $res;
-
-    // 1. Aangemeld + geen BLK na X dagen (herhaalt elke 14 dagen)
-    if (instelling('reminder.blk_aan', '1') === '1') {
-        $blk_dgn = max(1, instelling_int('reminder.blk_dagen', 7));
-        try {
-            $q = db()->prepare("
-                SELECT s.id, p.email, p.voornaam, p.tussenvoegsel, p.achternaam, p.telefoon
-                FROM sollicitaties s
-                JOIN personen p ON p.id = s.persoon_id
-                LEFT JOIN blk_formulieren b ON b.sollicitatie_id = s.id
-                WHERE s.seizoen_id = ?
-                  AND s.fase = 'aangemeld'
-                  AND b.id IS NULL
-                  AND s.aangemeld_op <= DATE_SUB(NOW(), INTERVAL ? DAY)
-                  AND NOT EXISTS (
-                    SELECT 1 FROM mail_log ml
-                    WHERE ml.sollicitatie_id = s.id AND ml.onderwerp LIKE '%BLK formulier%'
-                      AND ml.verstuurd_op > DATE_SUB(NOW(), INTERVAL 14 DAY)
-                  )
-            ");
-            $q->execute([$seizoen['id'], $blk_dgn]);
-            foreach ($q->fetchAll() as $k) {
-                $sol_arr = ['voornaam'=>$k['voornaam'], 'tussenvoegsel'=>$k['tussenvoegsel']??'', 'achternaam'=>$k['achternaam']??'', 'email'=>$k['email'], 'telefoon'=>$k['telefoon']??''];
-                $vars    = mail_variabelen($sol_arr, $seizoen);
-                $vars['portaal_url'] = APP_URL . '/portaal/';
-                $rendered = mail_template_render('reminder_blk', $vars);
-                if (!$rendered) continue;
-                $html = mail_html_wrapper($rendered['body_html'], $rendered['onderwerp'], $rendered['hero_titel'] ?? '');
-                if (mail_queue_toevoegen($k['email'], $k['voornaam'], $rendered['onderwerp'], $html, (int)$k['id'])) {
-                    $res['blk_gemaild']++;
-                }
-            }
-        } catch (\Exception $e) { error_log("reminder blk: " . $e->getMessage()); }
-    }
-
-    // 2. Selectiedag komt eraan ("bijna zover") — Y dagen vooraf
-    if (instelling('reminder.sd_aan', '1') === '1' && !empty($seizoen['datum_selectiedag'])) {
-        $sd_dgn_vooraf = max(1, instelling_int('reminder.sd_dagen', 3));
-        $dgn_tot_sd = (int)floor((strtotime($seizoen['datum_selectiedag']) - time()) / 86400);
-        // Verstuur als selectiedag nog komt EN binnen drempel valt (maar niet morgen = aparte mail)
-        if ($dgn_tot_sd > 1 && $dgn_tot_sd <= $sd_dgn_vooraf) {
-            try {
-                $q = db()->prepare("
-                    SELECT s.id, p.email, p.voornaam, p.tussenvoegsel, p.achternaam, p.telefoon
-                    FROM sollicitaties s
-                    JOIN personen p ON p.id = s.persoon_id
-                    WHERE s.seizoen_id = ?
-                      AND s.fase IN ('uitgenodigd_selectie','aangemeld_selectie')
-                      AND NOT EXISTS (
-                        SELECT 1 FROM mail_log ml
-                        WHERE ml.sollicitatie_id = s.id AND ml.onderwerp LIKE '%Bijna zover%'
-                          AND ml.verstuurd_op > DATE_SUB(NOW(), INTERVAL 10 DAY)
-                      )
-                ");
-                $q->execute([$seizoen['id']]);
-                foreach ($q->fetchAll() as $k) {
-                    $sol_arr = ['voornaam'=>$k['voornaam'], 'tussenvoegsel'=>$k['tussenvoegsel']??'', 'achternaam'=>$k['achternaam']??'', 'email'=>$k['email'], 'telefoon'=>$k['telefoon']??''];
-                    $vars    = mail_variabelen($sol_arr, $seizoen);
-                    $vars['portaal_url'] = APP_URL . '/portaal/';
-                    $rendered = mail_template_render('reminder_sd_aankomst', $vars);
-                    if (!$rendered) continue;
-                    $html = mail_html_wrapper($rendered['body_html'], $rendered['onderwerp'], $rendered['hero_titel'] ?? '');
-                    if (mail_queue_toevoegen($k['email'], $k['voornaam'], $rendered['onderwerp'], $html, (int)$k['id'])) {
-                        $res['sd_gemaild']++;
-                    }
-                }
-            } catch (\Exception $e) { error_log("reminder sd aankomst: " . $e->getMessage()); }
-        }
-
-        // 3. Selectiedag morgen — laatste praktische info
-        if ($dgn_tot_sd === 1 && instelling('reminder.sd_morgen_aan', '1') === '1') {
-            try {
-                $q = db()->prepare("
-                    SELECT s.id, p.email, p.voornaam, p.tussenvoegsel, p.achternaam, p.telefoon
-                    FROM sollicitaties s
-                    JOIN personen p ON p.id = s.persoon_id
-                    WHERE s.seizoen_id = ?
-                      AND s.fase IN ('uitgenodigd_selectie','aangemeld_selectie')
-                      AND NOT EXISTS (
-                        SELECT 1 FROM mail_log ml
-                        WHERE ml.sollicitatie_id = s.id AND ml.onderwerp LIKE '%Morgen al%'
-                          AND ml.verstuurd_op > DATE_SUB(NOW(), INTERVAL 3 DAY)
-                      )
-                ");
-                $q->execute([$seizoen['id']]);
-                foreach ($q->fetchAll() as $k) {
-                    $sol_arr = ['voornaam'=>$k['voornaam'], 'tussenvoegsel'=>$k['tussenvoegsel']??'', 'achternaam'=>$k['achternaam']??'', 'email'=>$k['email'], 'telefoon'=>$k['telefoon']??''];
-                    $vars    = mail_variabelen($sol_arr, $seizoen);
-                    $vars['portaal_url']  = APP_URL . '/portaal/';
-                    $vars['laatste_info'] = instelling('reminder.sd_morgen_info', '');
-                    $rendered = mail_template_render('reminder_sd_morgen', $vars);
-                    if (!$rendered) continue;
-                    $html = mail_html_wrapper($rendered['body_html'], $rendered['onderwerp'], $rendered['hero_titel'] ?? '');
-                    if (mail_queue_toevoegen($k['email'], $k['voornaam'], $rendered['onderwerp'], $html, (int)$k['id'])) {
-                        $res['sd_morgen_gemaild']++;
-                    }
-                }
-            } catch (\Exception $e) { error_log("reminder sd morgen: " . $e->getMessage()); }
-        }
-    }
-
-    // 4. Open ondertekeningen na X dagen (max 1 herinnering per document)
-    if (instelling('reminder.ondertekening_aan', '1') === '1') {
-        $ond_dgn = max(1, instelling_int('reminder.ondertekening_dagen', 3));
-        try {
-            ondertekening_herinnerd_auto_setup();
-            $q = db()->prepare("
-                SELECT o.id, o.type, o.token, o.ondertekenaar_rol, o.ondertekenaar_naam, o.ondertekenaar_email,
-                       p.voornaam AS sol_voornaam
-                FROM ondertekeningen o
-                JOIN sollicitaties s ON s.id = o.sollicitatie_id
-                JOIN personen p ON p.id = s.persoon_id
-                WHERE o.ondertekend_op IS NULL
-                  AND o.herinnerd_op IS NULL
-                  AND o.ondertekenaar_email IS NOT NULL
-                  AND o.aangemaakt_op < DATE_SUB(NOW(), INTERVAL ? DAY)
-                  AND s.seizoen_id = ?
-            ");
-            $q->execute([$ond_dgn, $seizoen['id']]);
-            foreach ($q->fetchAll() as $o) {
-                $type_label = match($o['type']) {
-                    'gezondheid_ouder'  => 'Gezondheidsverklaring',
-                    'gezondheid_18plus' => 'Gezondheidsverklaring',
-                    'intake'            => 'Intakeformulier selectiedag',
-                    'intake_ouder'      => 'Intakeformulier selectiedag',
-                    default             => 'Formulier',
-                };
-                $is_ouder = ($o['ondertekenaar_rol'] === 'ouder');
-                $url = APP_URL . '/portaal/ondertekenen.php?token=' . urlencode($o['token']);
-                $ontvanger_naam = $o['ondertekenaar_naam'] ?: ($is_ouder ? 'ouder/verzorger' : $o['sol_voornaam']);
-                $vars_r = [
-                    'ontvanger_naam' => $ontvanger_naam,
-                    'voornaam'       => $o['sol_voornaam'],
-                    'document_naam'  => $type_label,
-                    'onderteken_url' => $url,
-                    'is_ouder'       => $is_ouder ? '1' : '0',
-                ];
-                $rendered_r = function_exists('ondertekening_mail_render') ? ondertekening_mail_render('reminder_ondertekening', $vars_r) : null;
-                if ($rendered_r) {
-                    $onderwerp = $rendered_r['onderwerp'];
-                    $html = $rendered_r['html'];
-                } else {
-                    $onderwerp = "Herinnering: $type_label — Paal 13";
-                    $html = '<p>Beste ' . htmlspecialchars($ontvanger_naam) . ',</p><p>Herinnering: <strong>' . $type_label . '</strong> staat nog open.</p><p><a href="' . htmlspecialchars($url) . '">Nu ondertekenen</a></p>';
-                    if (function_exists('mail_simple_wrapper')) $html = mail_simple_wrapper($html, $onderwerp);
-                }
-                if (stuur_mail_html($o['ondertekenaar_email'], $o['ondertekenaar_naam'] ?: '', $onderwerp, $html, null)) {
-                    db()->prepare("UPDATE ondertekeningen SET herinnerd_op=NOW() WHERE id=?")->execute([$o['id']]);
-                    $res['ondertekening_gemaild'] = ($res['ondertekening_gemaild'] ?? 0) + 1;
-                }
-            }
-        } catch (\Exception $e) { error_log("reminder ondertekening: " . $e->getMessage()); }
-    }
-
-    // 4. Beschikbaarheid nog voorlopig — deadline = 2 weken vóór trainingsweekend.
-    //    Herinneringen starten 2 weken VÓÓR de deadline (mensen zijn lastig), herhalen elke 4 dagen.
-    if (instelling('reminder.besch_aan', '1') === '1' && function_exists('beschikbaarheid2_deadline')) {
-        $deadline = beschikbaarheid2_deadline($seizoen);
-        if ($deadline) {
-            $nu = new DateTime('today');
-            $dgn_tot_deadline = (int)floor(($deadline->getTimestamp() - $nu->getTimestamp()) / 86400);
-            // Start 14 dagen vóór de deadline; blijf mailen tot en met de deadline-dag en erna
-            if ($dgn_tot_deadline <= 14) {
-                try {
-                    // Herhaal elke 4 dagen (na deadline: elke 2 dagen dringend)
-                    $herhaal_dagen = $dgn_tot_deadline < 0 ? 2 : 4;
-                    $q = db()->prepare("
-                        SELECT s.id, p.email, p.voornaam, p.tussenvoegsel, p.achternaam, p.telefoon
-                        FROM beschikbaarheid_profiel bp
-                        JOIN sollicitaties s ON s.id = bp.sollicitatie_id
-                        JOIN personen p ON p.id = s.persoon_id
-                        WHERE bp.voorlopig = 1
-                          AND s.seizoen_id = ?
-                          AND s.fase NOT IN ('afgewezen','afgehaakt')
-                          AND NOT EXISTS (
-                            SELECT 1 FROM mail_log ml
-                            WHERE ml.sollicitatie_id = s.id AND ml.onderwerp LIKE '%beschikbaarheid%definitief%'
-                              AND ml.verstuurd_op > DATE_SUB(NOW(), INTERVAL ? DAY)
-                          )
-                    ");
-                    $q->execute([$seizoen['id'], $herhaal_dagen]);
-                    foreach ($q->fetchAll() as $k) {
-                        $sol_arr = ['voornaam'=>$k['voornaam'], 'tussenvoegsel'=>$k['tussenvoegsel']??'', 'achternaam'=>$k['achternaam']??'', 'email'=>$k['email'], 'telefoon'=>$k['telefoon']??''];
-                        $vars = mail_variabelen($sol_arr, $seizoen);
-                        $vars['portaal_url']    = APP_URL . '/portaal/';
-                        $vars['deadline_datum'] = datum_nl($deadline->format('Y-m-d'));
-                        $vars['dagen_resterend']= max(0, $dgn_tot_deadline);
-                        $vars['deadline_voorbij']= $dgn_tot_deadline < 0 ? '1' : '0';
-                        $rendered = mail_template_render('reminder_beschikbaarheid', $vars);
-                        if (!$rendered) continue;
-                        $html = mail_html_wrapper($rendered['body_html'], $rendered['onderwerp'], $rendered['hero_titel'] ?? '');
-                        if (mail_queue_toevoegen($k['email'], $k['voornaam'], $rendered['onderwerp'], $html, (int)$k['id'])) {
-                            $res['besch_gemaild'] = ($res['besch_gemaild'] ?? 0) + 1;
-                        }
-                    }
-                } catch (\Exception $e) { error_log("reminder beschikbaarheid: " . $e->getMessage()); }
-            }
-        }
-    }
-
-    return $res;
+    return function_exists('herinnering_run') ? herinnering_run() : [];
 }
 
 // Auto-setup: herinnerd_op kolom op ondertekeningen
@@ -1052,12 +854,7 @@ function lazy_cron_tick(): void {
     try {
         $laatste = instelling('cron.laatste_run', '');
         if ($laatste && strtotime($laatste) > time() - 3600) return;
-        instelling_opslaan('cron.laatste_run', date('Y-m-d H:i:s'));
-        instelling_opslaan('cron.laatste_bron', 'lazy');
-        if (function_exists('reminder_run')) reminder_run();
-        if (function_exists('auto_invite_run')) auto_invite_run();
-        if (function_exists('mail_queue_verwerk')) mail_queue_verwerk(10);
-        if (function_exists('ai_queue_verwerk')) { try { ai_queue_verwerk(3); } catch (\Exception $e) {} }
+        if (function_exists('cron_taken_uitvoeren')) cron_taken_uitvoeren('lazy', ['queue' => 10, 'ai' => 3]);
     } catch (\Exception $e) { error_log('lazy_cron: ' . $e->getMessage()); }
 }
 

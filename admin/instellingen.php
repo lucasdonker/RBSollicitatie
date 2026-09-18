@@ -709,68 +709,62 @@ require __DIR__ . '/layout_top.php';
       </div>
 
       <div class="inst-sectie">
-        <h3>🔔 Herinneringen</h3>
+        <h3>Herinneringen</h3>
         <p style="font-size:12px;color:var(--tekst-zacht);margin-bottom:10px">
-          Automatische herinneringen. Inhoud bewerken: <a href="<?= APP_URL ?>/admin/mail_templates.php" style="color:var(--oranje)">Mail templates</a>.
+          Automatische herinneringen, gecontroleerd op wat er echt verstuurd is (niet dubbel). Inhoud en kanaal per type:
+          <a href="<?= APP_URL ?>/admin/mail_templates.php" style="color:var(--oranje)">Mail templates</a> en
+          <a href="<?= APP_URL ?>/admin/instellingen.php?tab=berichten" style="color:var(--oranje)">Berichten</a>.
+          Proefdraaien zonder te versturen: <a href="<?= APP_URL ?>/admin/systeem.php#herinneringen" style="color:var(--oranje)">Systeem › Herinneringen</a>.
         </p>
 
-        <div class="form-rij">
-          <div class="form-groep">
+        <?php if (function_exists('herinnering_regels')): foreach (herinnering_regels() as $hslug => $hregel):
+          $h_aan = herinnering_instelling($hslug, 'aan') === '1'; ?>
+        <div class="form-rij" style="align-items:flex-start">
+          <div class="form-groep" style="flex:2">
             <label>
-              <input type="hidden" name="inst[reminder.blk_aan]" value="0">
-              <input type="checkbox" name="inst[reminder.blk_aan]" value="1" <?= instelling('reminder.blk_aan', '1') === '1' ? 'checked' : '' ?>>
-              BLK herinnering
+              <input type="hidden" name="inst[herinnering.<?= $hslug ?>.aan]" value="0">
+              <input type="checkbox" name="inst[herinnering.<?= $hslug ?>.aan]" value="1" <?= $h_aan ? 'checked' : '' ?>>
+              <?= h($hregel['naam']) ?>
             </label>
-            <div class="form-hulp">Geen BLK ingevuld → herinnering, herhaalt elke 14 dagen</div>
+            <div class="form-hulp"><?= h($hregel['uitleg']) ?></div>
+            <?php if ($hslug === 'selectiedag_morgen'): ?>
+            <input type="text" name="inst[herinnering.selectiedag_morgen.info]" value="<?= h(instelling('herinnering.selectiedag_morgen.info', '') ?: instelling('reminder.sd_morgen_info', '')) ?>" placeholder="Laatste info, bv: het wordt warm, neem water mee" style="margin-top:6px">
+            <?php endif; ?>
           </div>
-          <div class="form-groep">
-            <label>Dagen wachten na aanmelding</label>
-            <input type="number" name="inst[reminder.blk_dagen]" value="<?= instelling_int('reminder.blk_dagen', 7) ?>" min="1" max="60">
+          <?php if (empty($hregel['vast_na'])): ?>
+          <div class="form-groep" style="max-width:120px">
+            <label><?= in_array($hslug, ['selectiedag_nadert', 'trainingsweekend_nadert'], true) ? 'Dagen vooraf' : 'Na (dagen)' ?></label>
+            <input type="number" name="inst[herinnering.<?= $hslug ?>.na]" value="<?= (int)herinnering_instelling($hslug, 'na') ?>" min="0" max="60">
           </div>
+          <?php endif; ?>
+          <?php if ((int)$hregel['herhaal'] > 0): ?>
+          <div class="form-groep" style="max-width:120px">
+            <label>Herhaal elke</label>
+            <input type="number" name="inst[herinnering.<?= $hslug ?>.herhaal]" value="<?= (int)herinnering_instelling($hslug, 'herhaal') ?>" min="1" max="60">
+          </div>
+          <div class="form-groep" style="max-width:100px">
+            <label>Max</label>
+            <input type="number" name="inst[herinnering.<?= $hslug ?>.max]" value="<?= (int)herinnering_instelling($hslug, 'max') ?>" min="1" max="20">
+          </div>
+          <?php endif; ?>
         </div>
+        <?php endforeach; endif; ?>
 
         <div class="form-rij">
           <div class="form-groep">
-            <label>
-              <input type="hidden" name="inst[reminder.sd_aan]" value="0">
-              <input type="checkbox" name="inst[reminder.sd_aan]" value="1" <?= instelling('reminder.sd_aan', '1') === '1' ? 'checked' : '' ?>>
-              Selectiedag aankondiging vooraf
-            </label>
-            <div class="form-hulp">"Het is bijna zover" mail X dagen vóór de selectiedag</div>
+            <label>Rustperiode (dagen)</label>
+            <input type="number" name="inst[herinnering.rust_dagen]" value="<?= instelling_int('herinnering.rust_dagen', 3) ?>" min="0" max="30">
+            <div class="form-hulp">Maximaal één "zachte" herinnering per sollicitant per zoveel dagen.</div>
           </div>
           <div class="form-groep">
-            <label>Dagen vooraf</label>
-            <input type="number" name="inst[reminder.sd_dagen]" value="<?= instelling_int('reminder.sd_dagen', 3) ?>" min="1" max="30">
-          </div>
-        </div>
-
-        <div class="form-rij">
-          <div class="form-groep">
-            <label>
-              <input type="hidden" name="inst[reminder.sd_morgen_aan]" value="0">
-              <input type="checkbox" name="inst[reminder.sd_morgen_aan]" value="1" <?= instelling('reminder.sd_morgen_aan', '1') === '1' ? 'checked' : '' ?>>
-              Selectiedag morgen-mail
-            </label>
-            <div class="form-hulp">1 dag vóór selectiedag met laatste praktische info</div>
+            <label>Dagplafond per ontvanger</label>
+            <input type="number" name="inst[melding.plafond_dag]" value="<?= instelling_int('melding.plafond_dag', 8) ?>" min="1" max="50">
+            <div class="form-hulp">Meer automatische meldingen per dag worden overgeslagen (anti-loop; zie foutenlog).</div>
           </div>
           <div class="form-groep">
-            <label>Laatste info <span style="color:var(--grijs);font-weight:400">(optioneel)</span></label>
-            <input type="text" name="inst[reminder.sd_morgen_info]" value="<?= h(instelling('reminder.sd_morgen_info', '')) ?>" placeholder="Bv: het wordt warm, neem water mee">
-          </div>
-        </div>
-
-        <div class="form-rij">
-          <div class="form-groep">
-            <label>
-              <input type="hidden" name="inst[reminder.ondertekening_aan]" value="0">
-              <input type="checkbox" name="inst[reminder.ondertekening_aan]" value="1" <?= instelling('reminder.ondertekening_aan', '1') === '1' ? 'checked' : '' ?>>
-              Herinnering open ondertekeningen
-            </label>
-            <div class="form-hulp">Eén herinnering per document naar de ondertekenaar (ouder of sollicitant) als het na X dagen nog openstaat</div>
-          </div>
-          <div class="form-groep">
-            <label>Na hoeveel dagen</label>
-            <input type="number" name="inst[reminder.ondertekening_dagen]" value="<?= instelling_int('reminder.ondertekening_dagen', 3) ?>" min="1" max="30">
+            <label>WhatsApp per uur (max)</label>
+            <input type="number" name="inst[wa.max_per_uur]" value="<?= instelling_int('wa.max_per_uur', 30) ?>" min="1" max="500">
+            <div class="form-hulp">Boven dit aantal valt de kern terug op SMS/e-mail.</div>
           </div>
         </div>
       </div>

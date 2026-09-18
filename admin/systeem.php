@@ -49,6 +49,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['actie'] ?? '') === 'health
 }
 $health = function_exists('health_check') ? health_check(false) : null;
 
+// Herinneringen: proefdraaien (niets versturen) of nu echt draaien
+$herinnering_resultaat = null; $herinnering_echt = false;
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($_POST['actie'] ?? '', ['herinneringen_proef', 'herinneringen_draai'], true)) {
+    csrf_check();
+    $herinnering_echt = ($_POST['actie'] === 'herinneringen_draai');
+    if (function_exists('herinnering_run')) {
+        $herinnering_resultaat = herinnering_run(null, !$herinnering_echt);
+        if ($herinnering_echt && function_exists('audit_log')) audit_log('herinneringen_gedraaid', 'systeem', null, ['via' => 'beheer']);
+    }
+}
+
 $changelog = function_exists('app_changelog') ? app_changelog() : [];
 
 require __DIR__ . '/layout_top.php';
@@ -111,6 +122,45 @@ require __DIR__ . '/layout_top.php';
       <input type="hidden" name="actie" value="health_repareer">
       <button type="submit" class="btn btn-primary btn-sm">Controleren &amp; repareren</button>
     </form>
+  </div>
+</div>
+<?php endif; ?>
+
+<!-- Herinneringen: proefdraaien -->
+<?php if (function_exists('herinnering_run')): ?>
+<div class="card" style="margin-bottom:14px" id="herinneringen">
+  <div class="card-header"><div class="card-title">Herinneringen</div></div>
+  <div class="card-body">
+    <p style="font-size:13px;color:var(--tekst-zacht);margin:0 0 12px">
+      Laatste automatische run: <strong><?= h(instelling('cron.laatste_run', '') ?: 'nog niet') ?></strong>
+      (<?= h(instelling('cron.laatste_bron', '') ?: '-') ?>). Proefdraaien toont wie een herinnering zou krijgen zonder iets te versturen.
+    </p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <form method="post" style="margin:0"><?= csrf_input() ?><input type="hidden" name="actie" value="herinneringen_proef">
+        <button type="submit" class="btn btn-outline btn-sm">Proefdraaien (niets versturen)</button></form>
+      <form method="post" style="margin:0" onsubmit="return confirm('Herinneringen nu echt versturen (via de wachtrij)?')"><?= csrf_input() ?><input type="hidden" name="actie" value="herinneringen_draai">
+        <button type="submit" class="btn btn-primary btn-sm">Nu draaien</button></form>
+    </div>
+    <?php if ($herinnering_resultaat !== null): ?>
+    <div style="margin-top:14px;font-size:13px">
+      <div style="font-weight:600;margin-bottom:6px"><?= $herinnering_echt ? 'Gedraaid' : 'Proefrun' ?> op <?= date('d-m-Y H:i') ?></div>
+      <?php foreach ($herinnering_resultaat as $hs => $hr): ?>
+      <div style="padding:8px 0;border-bottom:1px solid var(--rand)">
+        <div><strong><?= h($hr['naam']) ?></strong>
+          <?php if (!$hr['aan']): ?><span class="badge">uit</span>
+          <?php else: ?> — <?= (int)$hr['kandidaten'] ?> kandidaat/-aten, <?= (int)$hr['verstuurd'] ?> <?= $herinnering_echt ? 'in de wachtrij' : 'zou versturen' ?>, <?= (int)$hr['overgeslagen'] ?> overgeslagen<?php endif; ?>
+        </div>
+        <?php if (!empty($hr['lijst'])): ?>
+        <div style="color:var(--tekst-zacht);margin-top:4px">
+          <?php foreach ($hr['lijst'] as $hl): ?>
+            <span style="display:inline-block;margin:2px 8px 2px 0"><?= h($hl['naam'] ?: ('#' . $hl['sol_id'])) ?>: <em><?= h($hl['actie']) ?></em></span>
+          <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
+      </div>
+      <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
   </div>
 </div>
 <?php endif; ?>

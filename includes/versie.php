@@ -3,10 +3,22 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.87.1');
+define('APP_VERSIE', '2.87.2');
 
 function app_changelog(): array {
     return [
+        '2.87.2' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Meldingen: herinneringen op basis van feiten, één cron-ingang (bundel 3 van 7)',
+            'punten' => [
+                'Herinneringen worden nu gecontroleerd op wat er echt verstuurd is (per type en per document), niet meer op de onderwerp-tekst. Een aangepaste sjabloontekst kan dus geen eindeloze herhaling meer veroorzaken',
+                'Nieuwe herinneringen: "nog niet aangemeld voor de selectiedag" (uitgenodigd, formulier niet ingeleverd, selectiedag binnen 14 dagen), "gegevens ouder/verzorger ontbreken", "openstaande taken" (alle open taken in één bericht) en "trainingsweekend nadert"',
+                'Per herinnering instelbaar: aan/uit, na hoeveel dagen, herhaal-interval en maximum. Plus een rustperiode: maximaal één zachte herinnering per sollicitant per 3 dagen',
+                'Systeem › Herinneringen: proefdraaien (toont wie wat zou krijgen zonder te versturen) en nu draaien',
+                'Cron en de lazy-cron vanuit het beheer gebruiken één ingang met een lock, zodat herinneringen nooit dubbel gaan als beide tegelijk draaien',
+                'De beschikbaarheidsherinnering was niet uit te zetten in het beheer — opgelost',
+            ],
+        ],
         '2.87.1' => [
             'datum'  => '2026-09-18',
             'titel'  => 'Meldingen: één fase-functie en alle meldingen via de kern (bundel 2 van 7)',
