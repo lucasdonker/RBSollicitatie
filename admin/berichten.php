@@ -289,7 +289,7 @@ require __DIR__ . '/layout_top.php';
             <div class="form-hulp">Alleen nodig bij WhatsApp/SMS. Platte tekst, max 400 tekens.</div></div>
           <div class="form-groep"><label>Bijlagen <span style="font-weight:400;color:var(--grijs)">(optioneel)</span></label>
             <input type="file" name="bijlagen[]" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,.docx,.xlsx">
-            <div class="form-hulp">Gaan als bijlage mee in de e-mail; WhatsApp/SMS krijgt een downloadlink (14 dagen geldig). Bij "WhatsApp/SMS" wordt dan ook een e-mail gestuurd. Max 10 MB per bestand.</div></div>
+            <div class="form-hulp">Gaan als bijlage mee in de e-mail; WhatsApp/SMS krijgt een downloadlink (14 dagen geldig). Bij "WhatsApp/SMS" wordt dan ook een e-mail gestuurd. Max <?= function_exists('bijlagen_max_bytes') ? round(bijlagen_max_bytes() / 1048576) : 25 ?> MB per bestand<?= function_exists('bijlagen_max_bytes') && bijlagen_max_bytes() < 25 * 1048576 ? ' (beperkt door de serverinstelling upload_max_filesize/post_max_size in Plesk)' : '' ?>.</div></div>
         </div>
         <div class="card-body" id="sjabloonInfo" style="display:none;font-size:13px;color:var(--tekst-zacht)">De inhoud komt uit het gekozen sjabloon. Bewerken: <a href="<?= APP_URL ?>/admin/mail_templates.php" style="color:var(--oranje)">Sjablonen</a>.</div>
       </div>

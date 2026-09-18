@@ -81,6 +81,8 @@ function sjablonen_migreer_slugs($db): void {
     // ("Jouw inlogcode voor het Paal 13 portaal" — mailclients maken van "Paal 13" een adreslink) → kort.
     try {
         $db->exec("UPDATE mail_templates SET body_html=REPLACE(body_html,'{{otp.code}}','{{otp_code}}') WHERE body_html LIKE '%{{otp.code}}%'");
+        // De vaste afmeldzin stond t/m 2.87.7 in elke korte tekst; nu alleen bij het eerste korte bericht (code).
+        $db->exec("UPDATE mail_templates SET tekst_kort=TRIM(REPLACE(tekst_kort,'Afmelden voor WhatsApp/SMS kan onder Mijn gegevens in het portaal.','')) WHERE tekst_kort LIKE '%Afmelden voor WhatsApp/SMS kan onder Mijn gegevens%'");
         if (function_exists('meldingen_register') && isset(meldingen_register()['portaal_code'])) {
             $s = meldingen_register()['portaal_code']['seed'];
             $db->prepare("UPDATE mail_templates SET hero_titel=?, hero_subtitel=? WHERE slug='portaal_code' AND (hero_titel IS NULL OR hero_titel='' OR hero_titel LIKE '%inlogcode voor%')")

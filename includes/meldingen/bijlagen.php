@@ -36,6 +36,19 @@ function bijlagen_typen(): array {
     ];
 }
 
+/**
+ * Maximale bestandsgrootte: 25 MB, of minder als de server (upload_max_filesize/post_max_size) minder toestaat.
+ * Mailservers weigeren vaak bijlagen boven ~20 MB; grote bestanden gaan beter via de downloadlink.
+ */
+function bijlagen_max_bytes(): int {
+    $naar_bytes = function (string $v): int {
+        $v = trim($v); if ($v === '' || $v === '-1') return PHP_INT_MAX;
+        $n = (int)$v; $e = strtolower(substr($v, -1));
+        return $e === 'g' ? $n * 1073741824 : ($e === 'm' ? $n * 1048576 : ($e === 'k' ? $n * 1024 : $n));
+    };
+    return (int)min(25 * 1048576, $naar_bytes((string)ini_get('upload_max_filesize')), $naar_bytes((string)ini_get('post_max_size')));
+}
+
 /** De opslagmap (aangemaakt met .htaccess die directe toegang blokkeert). */
 function bijlagen_map(): string {
     $dir = dirname(__DIR__, 2) . '/uploads/bijlagen';
@@ -59,8 +72,8 @@ function bijlage_geheim(): string {
 function bijlage_opslaan(array $upload, ?int $door = null, string $omschrijving = ''): array {
     bijlagen_auto_setup();
     if (empty($upload['tmp_name']) || ($upload['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) return ['ok' => false, 'id' => null, 'fout' => 'geen bestand'];
-    $max = 10 * 1024 * 1024;
-    if ((int)$upload['size'] > $max) return ['ok' => false, 'id' => null, 'fout' => 'bestand groter dan 10 MB'];
+    $max = bijlagen_max_bytes();
+    if ((int)$upload['size'] > $max) return ['ok' => false, 'id' => null, 'fout' => 'bestand groter dan ' . round($max / 1048576) . ' MB'];
     $naam = (string)($upload['name'] ?? 'bestand');
     $ext  = strtolower(pathinfo($naam, PATHINFO_EXTENSION));
     $typen = bijlagen_typen();

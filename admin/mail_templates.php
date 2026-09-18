@@ -325,7 +325,7 @@ require __DIR__ . '/layout_top.php';
         <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin:4px 0"><input type="checkbox" name="bijlage_ids[]" value="<?= (int)$bh['id'] ?>" checked> <?= h($bh['naam']) ?> <span style="color:var(--grijs);font-size:11px">(uitvinken = loskoppelen)</span></label>
         <?php endforeach; ?>
         <input type="file" name="bijlage_upload" accept=".pdf,.jpg,.jpeg,.png,.webp,.docx,.xlsx" style="font-size:12px">
-        <div style="font-size:11px;color:var(--tekst-zacht);margin-top:3px">pdf, jpg, png, webp, docx, xlsx · max 10 MB.</div>
+        <div style="font-size:11px;color:var(--tekst-zacht);margin-top:3px">pdf, jpg, png, webp, docx, xlsx · max <?= function_exists('bijlagen_max_bytes') ? round(bijlagen_max_bytes() / 1048576) : 25 ?> MB<?= function_exists('bijlagen_max_bytes') && bijlagen_max_bytes() < 25 * 1048576 ? ' (beperkt door de serverinstelling in Plesk)' : '' ?>.</div>
       </div>
 
       <div style="padding:12px 16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">

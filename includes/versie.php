@@ -3,10 +3,18 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.87.7');
+define('APP_VERSIE', '2.87.8');
 
 function app_changelog(): array {
     return [
+        '2.87.8' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Meldingen: bijlagen tot 25 MB; WhatsApp-uitleg alleen bij het eerste bericht',
+            'punten' => [
+                'Bijlagen mogen nu 25 MB zijn (was 10). Staat de server lager (upload_max_filesize/post_max_size in Plesk), dan toont het scherm die grens',
+                'De zin over afmelden staat niet meer onder elk WhatsApp/SMS-bericht. Alleen het allereerste korte bericht dat iemand krijgt eindigt met de uitleg dat we via WhatsApp/sms op de hoogte houden en hoe je overstapt naar alleen e-mail; bestaande sjabloonteksten zijn opgeschoond',
+            ],
+        ],
         '2.87.7' => [
             'datum'  => '2026-09-18',
             'titel'  => 'Meldingen: fixes uit de eerste test (Berichten verstuurde niets, inlogcode leeg in de mail)',

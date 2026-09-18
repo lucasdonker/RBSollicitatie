@@ -52,7 +52,6 @@ function meldingen_register(): array {
         'kort_toegestaan' => true, 'dedup_min' => 60, 'body_loggen' => true, 'vars' => [],
         'hero_kleur' => '#054d8a', 'ontvanger' => 'sollicitant',
     ];
-    $afmeld = ' Afmelden voor WhatsApp/SMS kan onder Mijn gegevens in het portaal.';
 
     $reg = [
         // ── Fase-overgangen ───────────────────────────────────────────
@@ -63,7 +62,7 @@ function meldingen_register(): array {
                 'onderwerp' => 'Je aanmelding voor {{seizoen_naam}} is ontvangen',
                 'hero_titel' => 'Aanmelding ontvangen', 'hero_subtitel' => 'Welkom, {{voornaam}}',
                 'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Bedankt voor je aanmelding bij <strong>Reddingsbrigade Paal 13</strong> voor {{seizoen_naam}}!</p>\n<p>We hebben je aanmelding ontvangen en beoordelen deze. Word je uitgenodigd voor de selectiedag, dan krijg je bericht van ons.</p>\n<p>In de tussentijd kun je je gegevens bekijken in het portaal:</p>\n[knop href=\"$portaal\"]Naar het portaal[/knop]\n<p>Vragen? Mail naar <a href=\"mailto:{{bestuur_email}}\">{{bestuur_email}}</a>.</p>",
-                'tekst_kort' => "Hoi {{voornaam}}, we hebben je aanmelding bij Paal 13 ontvangen. Je hoort van ons over de selectiedag. Volg je status: $portaal" . $afmeld,
+                'tekst_kort' => "Hoi {{voornaam}}, we hebben je aanmelding bij Paal 13 ontvangen. Je hoort van ons over de selectiedag. Volg je status: $portaal",
                 'samenvatting' => 'Welkom. We hebben je aanmelding binnen.',
             ],
         ]),
@@ -74,7 +73,7 @@ function meldingen_register(): array {
                 'onderwerp' => 'Je bent uitgenodigd voor de selectiedag — Paal 13',
                 'hero_titel' => 'Je bent uitgenodigd!', 'hero_subtitel' => 'We zien je graag op de selectiedag',
                 'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Goed nieuws: we nodigen je van harte uit voor de <strong>selectiedag</strong> van Reddingsbrigade Paal 13! Dit is jouw kans om te ontdekken hoe het is om strandwacht te zijn, en onze kans om jou te leren kennen.</p>\n[info]<strong>De selectiedag op een rij</strong><br>\nWanneer: {{selectiedag_datum}}{{selectiedag_tijd}}<br>\nWaar: {{selectiedag_locatie}}[/info]\n<p><strong>Bevestig je deelname</strong><br>\nLog in op je portaal en vul het \"Beter leren kennen\"-formulier in. Daarmee bevestig je meteen je deelname aan de selectiedag. Er staan nog een of meer taken voor je klaar; je ziet ze zodra je inlogt.</p>\n[knop href=\"$portaal\"]Naar mijn portaal[/knop]\n<p><strong>Wat kun je verwachten?</strong><br>\nTijdens de selectiedag doe je een conditietest en een zwemtest, en hebben we een persoonlijk gesprek. Geen zorgen als je nog niet alles vloeiend kunt: we kijken vooral naar je inzet en enthousiasme.</p>\n<p>Tot op de selectiedag!<br><strong>Team Sollicitaties</strong></p>",
-                'tekst_kort' => "Hoi {{voornaam}}, je bent uitgenodigd voor de selectiedag bij Paal 13 op {{selectiedag_datum}}. Bevestig je deelname in je portaal: $portaal" . $afmeld,
+                'tekst_kort' => "Hoi {{voornaam}}, je bent uitgenodigd voor de selectiedag bij Paal 13 op {{selectiedag_datum}}. Bevestig je deelname in je portaal: $portaal",
                 'samenvatting' => 'Je bent welkom op {{selectiedag_datum}}. Bevestig je deelname in het portaal.',
             ],
         ]),
@@ -96,7 +95,7 @@ function meldingen_register(): array {
                 'onderwerp' => 'Je bent uitgenodigd voor het trainingsweekend — Paal 13',
                 'hero_titel' => 'Trainingsweekend', 'hero_subtitel' => 'Je bent door de selectie!',
                 'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Geweldig nieuws: je bent door de selectiedag en we nodigen je uit voor het <strong>trainingsweekend</strong>.</p>\n[info]Wanneer: {{tw_datum_start}} t/m {{tw_datum_eind}}<br>Waar: {{tw_locatie}}<br>Verzamelen: {{tw_verzameltijd}}[/info]\n<p>Geef in je portaal je beschikbaarheid voor de zomer door; die hebben we nodig voor de planning.</p>\n[knop href=\"$portaal\"]Beschikbaarheid doorgeven[/knop]\n<p>We zien je graag op het trainingsweekend!</p>",
-                'tekst_kort' => "Hoi {{voornaam}}, je bent uitgenodigd voor het trainingsweekend van Paal 13 ({{tw_datum_start}}). Geef je beschikbaarheid door in je portaal: $portaal" . $afmeld,
+                'tekst_kort' => "Hoi {{voornaam}}, je bent uitgenodigd voor het trainingsweekend van Paal 13 ({{tw_datum_start}}). Geef je beschikbaarheid door in je portaal: $portaal",
                 'samenvatting' => 'Je bent door! Trainingsweekend {{tw_datum_start}} t/m {{tw_datum_eind}}.',
             ],
         ]),
@@ -218,7 +217,7 @@ function meldingen_register(): array {
                 'onderwerp' => 'Er staan nog taken voor je open — Paal 13',
                 'hero_titel' => 'Nog even doen', 'hero_subtitel' => '{{taken_aantal}} open',
                 'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>In je portaal staan nog een of meer taken open. Rond ze af zodat we verder kunnen met je sollicitatie:</p>\n{{taken_blok}}\n[knop href=\"$portaal\"]Naar mijn taken[/knop]",
-                'tekst_kort' => "Hoi {{voornaam}}, er staan nog {{taken_aantal}} taken voor je open in je Paal 13-portaal: $portaal" . $afmeld,
+                'tekst_kort' => "Hoi {{voornaam}}, er staan nog {{taken_aantal}} taken voor je open in je Paal 13-portaal: $portaal",
                 'samenvatting' => 'Je hebt nog {{taken_aantal}} open taken.',
             ],
         ]),
@@ -229,7 +228,7 @@ function meldingen_register(): array {
                 'onderwerp' => 'Bevestig je deelname aan de selectiedag — Paal 13',
                 'hero_titel' => 'Kom je ook?', 'hero_subtitel' => 'Selectiedag {{selectiedag_datum}}', 'hero_kleur' => '#D43D00',
                 'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>De selectiedag op <strong>{{selectiedag_datum}}</strong> komt eraan, maar je hebt je deelname nog niet bevestigd. Dat doe je door het \"Beter leren kennen\"-formulier in je portaal in te vullen.</p>\n[knop href=\"$portaal\"]Formulier invullen[/knop]\n<p>Kun je niet? Laat het ons even weten via <a href=\"mailto:{{bestuur_email}}\">{{bestuur_email}}</a>.</p>",
-                'tekst_kort' => "Hoi {{voornaam}}, de selectiedag op {{selectiedag_datum}} komt eraan. Bevestig je deelname via het formulier in je portaal: $portaal" . $afmeld,
+                'tekst_kort' => "Hoi {{voornaam}}, de selectiedag op {{selectiedag_datum}} komt eraan. Bevestig je deelname via het formulier in je portaal: $portaal",
                 'samenvatting' => 'Je hebt je deelname aan de selectiedag nog niet bevestigd.',
             ],
         ]),
@@ -240,7 +239,7 @@ function meldingen_register(): array {
                 'onderwerp' => 'We missen nog de gegevens van je ouder/verzorger — Paal 13',
                 'hero_titel' => 'Nog één stap', 'hero_subtitel' => 'Gegevens ouder/verzorger',
                 'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Omdat je nog geen 18 bent, moet een ouder/verzorger een paar formulieren ondertekenen. Vul daarvoor in je portaal de naam en het e-mailadres van je ouder/verzorger in; wij sturen de formulieren dan naar hem of haar.</p>\n[knop href=\"$portaal\"]Gegevens invullen[/knop]",
-                'tekst_kort' => "Hoi {{voornaam}}, vul in je Paal 13-portaal nog de gegevens van je ouder/verzorger in, dan kunnen de formulieren getekend worden: $portaal" . $afmeld,
+                'tekst_kort' => "Hoi {{voornaam}}, vul in je Paal 13-portaal nog de gegevens van je ouder/verzorger in, dan kunnen de formulieren getekend worden: $portaal",
                 'samenvatting' => 'Vul de gegevens van je ouder/verzorger in.',
             ],
         ]),

@@ -148,8 +148,9 @@ function melding_verstuur(string $type, int $sol_id, array $extra = [], array $o
         }
         $r = melding_render($type, $vars, $override);
         if (!$r) { $uit['status'] = 'mislukt'; $uit['reden'] = 'geen_sjabloon'; return $uit; }
-        if (in_array($def['categorie'], ['handmatig', 'gepland'], true) && $r['tekst_kort'] !== '' && stripos($r['tekst_kort'], 'afmelden') === false) {
-            $r['tekst_kort'] = rtrim($r['tekst_kort']) . ' Afmelden kan onder Mijn gegevens in het portaal.';
+        // Eén keer, bij het allereerste WhatsApp/SMS-bericht aan deze persoon: uitleg + hoe je afmeldt.
+        if ($r['tekst_kort'] !== '' && !empty($ontv['persoon_id']) && $modus !== 'email' && !melding_eerder_kort((int)$ontv['persoon_id'])) {
+            $r['tekst_kort'] = rtrim($r['tekst_kort']) . "\n\nZo houden we je via WhatsApp of sms op de hoogte van je sollicitatie bij Paal 13. Liever alleen e-mail? Pas dat aan onder Mijn gegevens in je portaal: " . ($vars['portaal_url'] ?? '') . 'gegevens.php';
         }
 
         $basis = [
@@ -314,6 +315,15 @@ function melding_recent(string $type, int $sol_id, int $venster_min, ?string $re
         $q->execute($p);
         return (bool)$q->fetchColumn();
     } catch (\Throwable $e) { return false; }
+}
+
+/** Kreeg deze persoon al eerder een WhatsApp/SMS-bericht (in wachtrij of verstuurd)? */
+function melding_eerder_kort(int $persoon_id): bool {
+    try {
+        $q = db()->prepare("SELECT 1 FROM mail_log WHERE persoon_id=? AND kanaal IN ('whatsapp','sms') AND status IN ('wacht','bezig','verstuurd') LIMIT 1");
+        $q->execute([$persoon_id]);
+        return (bool)$q->fetchColumn();
+    } catch (\Throwable $e) { return true; }
 }
 
 /** Dagplafond: meer dan N automatische meldingen naar hetzelfde adres in 24 uur. */
