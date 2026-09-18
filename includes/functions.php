@@ -25,6 +25,8 @@ if (file_exists(__DIR__ . '/ai_analyse.php'))      require_once __DIR__ . '/ai_a
 if (file_exists(__DIR__ . '/kennismakingspakket.php')) require_once __DIR__ . '/kennismakingspakket.php';
 if (file_exists(__DIR__ . '/ondertekening_tekst.php')) require_once __DIR__ . '/ondertekening_tekst.php';
 if (file_exists(__DIR__ . '/ondertekeningen_auto.php')) require_once __DIR__ . '/ondertekeningen_auto.php';
+if (file_exists(__DIR__ . '/ondertekening_bewijs.php')) require_once __DIR__ . '/ondertekening_bewijs.php';
+if (file_exists(__DIR__ . '/zegel.php')) require_once __DIR__ . '/zegel.php';
 if (file_exists(__DIR__ . '/ondertekening_pdf.php')) require_once __DIR__ . '/ondertekening_pdf.php';
 if (file_exists(__DIR__ . '/rechten.php')) require_once __DIR__ . '/rechten.php';
 if (file_exists(__DIR__ . '/beschikbaarheid_dagen.php')) require_once __DIR__ . '/beschikbaarheid_dagen.php';

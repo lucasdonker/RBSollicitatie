@@ -40,7 +40,7 @@ $q->execute([$token]);
 $rec = $q->fetch();
 $sol = null;
 if ($rec) {
-    $s_q = $db->prepare("SELECT s.id, s.fase, p.voornaam, p.tussenvoegsel, p.achternaam, p.geboortedatum, p.email, sz.naam AS seizoen_naam
+    $s_q = $db->prepare("SELECT s.id, s.fase, p.voornaam, p.tussenvoegsel, p.achternaam, p.geboortedatum, p.email, p.telefoon, sz.naam AS seizoen_naam
                          FROM sollicitaties s JOIN personen p ON p.id = s.persoon_id JOIN seizoenen sz ON sz.id = s.seizoen_id WHERE s.id = ?");
     $s_q->execute([$rec['sollicitatie_id']]);
     $sol = $s_q->fetch() ?: null;
@@ -78,14 +78,16 @@ $titel_kort     = ondertekening_titel_kort($type);
 $doc            = ondertekening_document($type, $voornaam);
 $eigen_ingelogd = !$is_ouder && portaal_ingelogd() && (int)($_SESSION['portaal_sol_id'] ?? 0) === (int)$rec['sollicitatie_id'];
 $basis_url      = APP_URL . '/portaal/ondertekenen.php?token=' . urlencode($token);
+$twee_fa        = !$is_ondertekend && function_exists('ondertekening_2fa_nodig') && ondertekening_2fa_nodig($type);
+$sol_pdf        = ['voornaam' => $voornaam, 'tussenvoegsel' => (string)($sol['tussenvoegsel'] ?? ''), 'achternaam' => (string)$sol['achternaam'], 'geboortedatum' => $sol['geboortedatum'] ?? '', 'email' => (string)($sol['email'] ?? '')];
 
-// ── PDF-kopie (alleen van een ondertekend document; de token is de sleutel) ──
+// ── PDF-kopie (alleen van een ondertekend document; de token is de sleutel). Verzegelde PDF uit de kluis. ──
 if (isset($_GET['pdf']) && $is_ondertekend && function_exists('ondertekening_pdf_stream')) {
-    ondertekening_pdf_stream($rec, [
-        'voornaam'      => $voornaam,
-        'achternaam'    => trim(($sol['tussenvoegsel'] ? $sol['tussenvoegsel'] . ' ' : '') . $sol['achternaam']),
-        'geboortedatum' => $sol['geboortedatum'] ?? '',
-    ], ondertekening_pdf_bestandsnaam($type));
+    if (function_exists('ondertekening_gebeurtenis')) ondertekening_gebeurtenis((int)$rec['id'], 'pdf_gedownload', ['door' => $is_ouder ? 'ouder' : 'sollicitant']);
+    ondertekening_pdf_stream($rec, $sol_pdf, ondertekening_pdf_bestandsnaam($type));
+}
+if (!$is_ondertekend && function_exists('ondertekening_geopend_loggen') && $_SERVER['REQUEST_METHOD'] === 'GET') {
+    ondertekening_geopend_loggen((int)$rec['id'], $is_ouder ? 'ouder' : 'sollicitant');
 }
 
 // ── POST: verwerken ondertekening (logica ongewijzigd) ───────
@@ -102,7 +104,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_ondertekend) {
     }
     if (strlen($handtekening) > 600000) $handtekening = ''; // te groot → negeren
 
-    if (!$akkoord)                       $fout = 'Vink het akkoord aan.';
+    // 2FA: code die vlak hiervoor naar het eigen nummer is gestuurd (zekerheidsniveau komt in het bewijs)
+    $zekerheid = 'link';
+    if ($twee_fa) {
+        $zekerheid = ondertekening_code_controleren((int)$rec['id'], $is_ouder ? (string)$rec['ondertekenaar_email'] : (string)$sol['email'], (string)($_POST['code'] ?? ''));
+        if ($zekerheid === null) $fout = 'De verificatiecode klopt niet of is verlopen. Vraag een nieuwe code aan en vul die in.';
+    }
+
+    if ($fout !== '') { /* code-fout gaat voor */ }
+    elseif (!$akkoord)                   $fout = 'Vink het akkoord aan.';
     elseif (strlen($naam_getypt) < 3)    $fout = ($is_ouder ? 'Vul uw' : 'Vul je') . ' volledige naam in ter ondertekening.';
     elseif (!$plaats)                    $fout = ($is_ouder ? 'Vul uw' : 'Vul je') . ' woonplaats in.';
     elseif ($handtekening === '')        $fout = ($is_ouder ? 'Zet uw' : 'Zet je') . ' handtekening in het vak.';
@@ -142,9 +152,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_ondertekend) {
             ];
         }
 
+        if (function_exists('ondertekening_bewijs_auto_setup')) ondertekening_bewijs_auto_setup();
         $db->prepare("UPDATE ondertekeningen SET
                         ondertekenaar_naam=?, ondertekenaar_geboortedatum=?, ondertekenaar_geboorteplaats=?, ondertekenaar_relatie=?,
-                        formulier_data=?, plaats=?, handtekening_beeld=?,
+                        formulier_data=?, plaats=?, handtekening_beeld=?, zekerheid=?,
                         ondertekend_op=NOW(), ondertekend_ip=?, ondertekend_user_agent=?,
                         geldig_tot=DATE_ADD(CURDATE(), INTERVAL 1 YEAR)
                      WHERE token=?")
@@ -156,26 +167,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_ondertekend) {
                 json_encode($form, JSON_UNESCAPED_UNICODE),
                 $plaats,
                 $handtekening,
+                $zekerheid,
                 $_SERVER['REMOTE_ADDR'] ?? null,
                 substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 500),
                 $token,
            ]);
+        $sol_id_o = (int)$rec['sollicitatie_id'];
+        $ond_id   = (int)$rec['id'];
+
+        // Bewijs: gebeurtenis + audit + bewijs-hash over het vastgelegde record
+        $vers = $db->prepare("SELECT * FROM ondertekeningen WHERE token=?");
+        $vers->execute([$token]);
+        $rec_vers = $vers->fetch() ?: $rec;
+        if (function_exists('ondertekening_gebeurtenis')) ondertekening_gebeurtenis($ond_id, 'ondertekend', ['rol' => $is_ouder ? 'ouder' : 'sollicitant', 'zekerheid' => $zekerheid]);
+        if (function_exists('audit_log')) { try { audit_log('ondertekening_afgerond', 'ondertekening', $ond_id, ['type' => $type, 'rol' => $is_ouder ? 'ouder' : 'sollicitant', 'zekerheid' => $zekerheid]); } catch (\Throwable $e) {} }
+        if (function_exists('ondertekening_bewijs_hash')) {
+            $rec_vers['bewijs_hash'] = ondertekening_bewijs_hash($rec_vers);
+            try { $db->prepare("UPDATE ondertekeningen SET bewijs_hash=? WHERE id=?")->execute([$rec_vers['bewijs_hash'], $ond_id]); } catch (\Throwable $e) {}
+        }
+
+        // Verzegelde PDF éénmaal maken (inhoud + certificaatpagina + digitaal zegel) en versleuteld bewaren
+        $pdf_bytes = null;
+        if (function_exists('ondertekening_pdf_bytes')) {
+            try {
+                $pdf_bytes = ondertekening_pdf_bytes($rec_vers, $sol_pdf);
+                if ($pdf_bytes !== null && function_exists('document_opslaan_inhoud')) {
+                    $opslag = document_opslaan_inhoud($sol_id_o, document_soort_ondertekening($type), $pdf_bytes, ondertekening_pdf_bestandsnaam($type), 'application/pdf', null, $_SERVER['REMOTE_ADDR'] ?? null);
+                    if ($opslag['ok']) {
+                        $db->prepare("UPDATE ondertekeningen SET pdf_document_id=?, pdf_sha256=? WHERE id=?")->execute([$opslag['id'], hash('sha256', $pdf_bytes), $ond_id]);
+                        if (function_exists('ondertekening_gebeurtenis')) ondertekening_gebeurtenis($ond_id, 'pdf_verzegeld', ['sha256' => substr(hash('sha256', $pdf_bytes), 0, 16), 'zegel' => function_exists('zegel_pdf_is_verzegeld') && zegel_pdf_is_verzegeld($pdf_bytes) ? 'ja' : 'nee']);
+                    } else { error_log('ondertekening PDF opslaan: ' . $opslag['fout']); }
+                }
+            } catch (\Throwable $e) { error_log('ondertekening PDF: ' . $e->getMessage()); }
+        }
 
         // Meldingen via de centrale kern: bevestiging aan de sollicitant, kopie (PDF) aan de
         // ondertekenaar, en optioneel een seintje aan het bestuur. Fouten blokkeren nooit.
         if (function_exists('melding_verstuur')) {
-            $sol_id_o = (int)$rec['sollicitatie_id'];
             $doc_naam = ondertekening_label($type);
-            $ref      = 'ondertekening:' . (int)$rec['id'];
+            $ref      = 'ondertekening:' . $ond_id;
             $pdf_pad  = null; $bijlagen = [];
             try {
-                if (function_exists('ondertekening_pdf_genereer')) {
-                    $vers = $db->prepare("SELECT * FROM ondertekeningen WHERE token=?");
-                    $vers->execute([$token]);
-                    $rec_vers = $vers->fetch() ?: $rec;
-                    $pdf_pad  = ondertekening_pdf_genereer($rec_vers, $sol);
-                    if ($pdf_pad) $bijlagen = [['pad' => $pdf_pad, 'naam' => 'Ondertekend_' . ondertekening_pdf_bestandsnaam($type), 'mime' => 'application/pdf']];
+                if ($pdf_bytes !== null) {
+                    $pdf_pad = sys_get_temp_dir() . '/ond_' . $ond_id . '_' . bin2hex(random_bytes(4)) . '.pdf';
+                    if (@file_put_contents($pdf_pad, $pdf_bytes) === false) $pdf_pad = null;
+                } elseif (function_exists('ondertekening_pdf_genereer')) {
+                    $pdf_pad = ondertekening_pdf_genereer($rec_vers, $sol_pdf);
                 }
+                if ($pdf_pad) $bijlagen = [['pad' => $pdf_pad, 'naam' => 'Ondertekend_' . ondertekening_pdf_bestandsnaam($type), 'mime' => 'application/pdf']];
             } catch (\Throwable $e) { error_log('ondertekening PDF: ' . $e->getMessage()); }
             try {
                 // Sollicitant: bevestiging (bij zelf tekenen mét PDF-kopie)
@@ -196,6 +235,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_ondertekend) {
             } catch (\Throwable $e) { error_log('ondertekening meldingen: ' . $e->getMessage()); }
             if ($pdf_pad) @unlink($pdf_pad);
         }
+        // Dossier compleet richting de penningmeester? (loonheffing + ID + bankpas)
+        if (function_exists('documenten_dossier_compleet_check')) { try { documenten_dossier_compleet_check($sol_id_o); } catch (\Throwable $e) {} }
 
         redirect($basis_url . '&klaar=1' . (portaal_terug_param() === 'taken' ? '&terug=taken' : ''));
     }
@@ -231,6 +272,9 @@ require __DIR__ . '/_kop.php';
   <div class="ond-klaar">
     <span class="ond-klaar-icoon"><?= icoon('vink', 30) ?></span>
     <span class="ond-klaar-titel">Bedankt, ondertekend</span>
+    <?php if (!empty($rec['pdf_sha256'])): ?>
+      <span class="ond-klaar-zegel"><?= icoon('schild', 14) ?>Digitaal verzegeld · controlehash <?= h(substr((string)$rec['pdf_sha256'], 0, 12)) ?>…</span>
+    <?php endif; ?>
     <span class="ond-klaar-tekst">
       <?php if ($is_ouder): ?>
         <?= h($voornaam) ?> ziet in het portaal dat dit rond is.<?= !empty($rec['ondertekenaar_email']) ? ' U krijgt een kopie per e-mail.' : '' ?>
@@ -313,6 +357,7 @@ require __DIR__ . '/_kop.php';
             <span class="ond-vak-hint" id="hdtHint">Teken met <?= $u ? 'uw' : 'je' ?> vinger</span>
           </div>
           <input type="hidden" name="handtekening_beeld" id="hdtData" value="<?= $v('handtekening_beeld') ?>">
+          <?php if ($twee_fa): $tel_masker = ondertekening_tel_masker($is_ouder ? ($rec['ouder_telefoon'] ?? '') : ($sol['telefoon'] ?? '')); require __DIR__ . '/_ondertekenen_2fa.php'; endif; ?>
           <label class="ond-check">
             <input type="checkbox" name="akkoord" value="1"<?= $aan('akkoord') ?> required>
             <span class="ond-check-box"><?= icoon('vink', 14) ?></span>

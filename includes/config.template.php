@@ -50,6 +50,9 @@ define('KLUIS_SLEUTEL_VERSIE', 1);
 // Map voor de versleutelde documenten, bij voorkeur BUITEN de webroot (Plesk: /var/www/vhosts/<domein>/private/documenten).
 // Leeg laten = uploads/documenten binnen de webroot (afgeschermd met .htaccess; de health-check waarschuwt).
 define('DOCUMENTEN_MAP', '');
+// Documentzegel (digitale handtekening op PDF's): certificaat + sleutel worden automatisch aangemaakt in
+// <DOCUMENTEN_MAP>/zegel. Optioneel een eigen map, naam en organisatie voor het certificaat:
+// define('ZEGEL_MAP', '');  define('ZEGEL_NAAM', 'Reddingsbrigade Paal 13 - Documentzegel');  define('ZEGEL_ORGANISATIE', 'Reddingsbrigade Paal 13');
 
 // ── Sessie ──
 define('SESSION_NAME',     'p13sess');

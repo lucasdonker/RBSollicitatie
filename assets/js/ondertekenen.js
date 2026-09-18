@@ -101,6 +101,42 @@
     }
   }
 
+  /* ── Verificatiecode (2FA): code aanvragen via de API, dan het codeveld tonen ── */
+  var tfa = document.getElementById('ond2fa');
+  if (tfa) {
+    var stap1 = document.getElementById('ond2faStap1'), stap2 = document.getElementById('ond2faStap2');
+    var status = document.getElementById('ond2faStatus'), fout2 = document.getElementById('ond2faFout');
+    var codeVeld = document.getElementById('ond2faCode');
+    var csrf = form.querySelector('input[name="_csrf"]');
+    var bezig = false;
+    function kanaalTekst(k, naar) {
+      if (k === 'sms') return 'Code verstuurd per sms naar ' + naar + '. Vul hem hieronder in (15 minuten geldig).';
+      if (k === 'whatsapp') return 'Code verstuurd via WhatsApp naar ' + naar + '. Vul hem hieronder in (15 minuten geldig).';
+      return 'Code verstuurd per e-mail naar ' + naar + '. Vul hem hieronder in (15 minuten geldig).';
+    }
+    function codeSturen(knop) {
+      if (bezig) return; bezig = true;
+      if (fout2) { fout2.hidden = true; fout2.textContent = ''; }
+      var oud = knop.textContent; knop.disabled = true; knop.textContent = 'Bezig…';
+      var body = new URLSearchParams(); body.set('token', tfa.dataset.token); if (csrf) body.set('_csrf', csrf.value);
+      fetch(tfa.dataset.api, { method: 'POST', body: body, credentials: 'same-origin', headers: { 'X-Requested-With': 'fetch' } })
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          if (!j.ok) throw new Error(j.fout || 'Versturen mislukt.');
+          stap1.hidden = true; stap2.hidden = false;
+          status.textContent = kanaalTekst(j.kanaal, j.naar);
+          if (codeVeld) { codeVeld.value = ''; codeVeld.focus(); }
+        })
+        .catch(function (e) { if (fout2) { fout2.textContent = e.message; fout2.hidden = false; } })
+        .then(function () { bezig = false; knop.disabled = false; knop.textContent = oud; });
+    }
+    var stuur = document.getElementById('ond2faStuur'), opnieuw = document.getElementById('ond2faOpnieuw');
+    if (stuur) stuur.addEventListener('click', function () { codeSturen(stuur); });
+    if (opnieuw) opnieuw.addEventListener('click', function () { codeSturen(opnieuw); });
+    // Na een serverfout staat de code al in het veld: stap 2 direct tonen
+    if (codeVeld && codeVeld.value) { stap1.hidden = true; stap2.hidden = false; status.textContent = 'Vul de eerder ontvangen code in of vraag een nieuwe aan.'; }
+  }
+
   /* ── Validatie vóór verzenden ── */
   function veldWrap(el) {
     return el.closest('.ond-veld') || el.closest('.ond-check') || el.closest('.ond-radio') || el;
@@ -133,6 +169,14 @@
     if (ja && ja.checked && toel && !toel.value.trim()) { var tw = veldWrap(toel); tw.classList.add('fout'); fouten.push(tw); }
     // Handtekening verplicht
     if (data && !data.value) { if (wrap) { wrap.classList.add('fout'); fouten.push(wrap); } }
+    // Verificatiecode verplicht (6 cijfers) als de stap er is
+    var tfaCode = document.getElementById('ond2faCode');
+    if (tfaCode) {
+      var stap2zicht = document.getElementById('ond2faStap2') && !document.getElementById('ond2faStap2').hidden;
+      if (!stap2zicht || !/^\d{6}$/.test(tfaCode.value.trim())) {
+        var tw2 = document.getElementById('ond2fa'); if (tw2) { tw2.classList.add('fout'); fouten.push(tw2); }
+      }
+    }
 
     if (fouten.length) {
       var melding = document.createElement('div');

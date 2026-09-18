@@ -127,6 +127,7 @@ function db_failsafe(): void {
         'bijlagen_auto_setup',
         'gepland_auto_setup',
         'documenten_auto_setup',
+        'ondertekening_bewijs_auto_setup',
     ];
     foreach ($setups as $fn) {
         if (function_exists($fn)) {

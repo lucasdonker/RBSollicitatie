@@ -26,6 +26,7 @@ function health_check(bool $repareer = false): array {
     $checks['mappen']     = health_check_mappen();
     $checks['configuratie'] = health_check_configuratie();
     $checks['kluis']      = health_check_kluis();
+    $checks['zegel']      = health_check_zegel();
 
     // Totaaloordeel: fout > waarschuwing > ok
     $heeft_fout = false; $heeft_waarschuwing = false;
@@ -170,6 +171,22 @@ function health_check_kluis(): array {
         }
     }
     return ['status' => 'ok', 'uitleg' => $uitleg . ' Documentenmap buiten de webroot.', 'hersteld' => false];
+}
+
+/** Zegel: kan het systeem PDF's digitaal verzegelen (TCPDF/FPDI + certificaat + sleutel in de kluis)? */
+function health_check_zegel(): array {
+    if (!function_exists('zegel_status')) {
+        return ['status' => 'waarschuwing', 'uitleg' => 'Zegel-module niet geladen.', 'hersteld' => false];
+    }
+    $s = zegel_status();
+    if (!$s['ok']) {
+        return ['status' => 'fout', 'uitleg' => 'Documentzegel niet beschikbaar: ' . $s['reden'] . ' Ondertekende PDF\'s worden dan zonder digitaal zegel gemaakt.', 'hersteld' => false];
+    }
+    $i = $s['info'];
+    $dagen = (int)floor((strtotime($i['geldig_tot']) - time()) / 86400);
+    $uitleg = 'Zegelcertificaat "' . $i['naam'] . '" geldig t/m ' . $i['geldig_tot'] . ($i['zelf_uitgegeven'] ? ' (zelf uitgegeven; voor een groen vinkje in Acrobat is een AATL-certificaat nodig)' : '') . '.';
+    if ($dagen < 60) return ['status' => 'waarschuwing', 'uitleg' => $uitleg . " Verloopt over $dagen dagen.", 'hersteld' => false];
+    return ['status' => 'ok', 'uitleg' => $uitleg, 'hersteld' => false];
 }
 
 /** Configuratie: zijn de basiszaken ingesteld? */

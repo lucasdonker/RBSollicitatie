@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.90.2');
+define('APP_VERSIE', '2.90.3');
 
 function app_changelog(): array {
     return [
+        '2.90.3' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Aangenomen-takenpakket, bundel 4: sterk ondertekenen (2FA, bewijslog, verzegelde PDF)',
+            'punten' => [
+                'Ondertekende formulieren worden nu als PDF digitaal verzegeld met een eigen Paal 13-certificaat (PKCS#7/PAdES): elke wijziging achteraf is in Adobe Reader zichtbaar; het certificaat en de sleutel worden automatisch aangemaakt (sleutel in de kluis)',
+                'Elke PDF krijgt een "Certificaat van ondertekening" als laatste pagina: wie, wanneer, IP, browser, verificatiewijze, de volledige tijdlijn (geopend, code verstuurd, code geaccepteerd, ondertekend, verzegeld) en een bewijs-hash',
+                'Voor het loonheffingsformulier en het lidmaatschap (instelbaar) is vlak vóór het tekenen een verificatiecode nodig naar het eigen telefoonnummer (SMS, anders WhatsApp, anders e-mail)',
+                'De verzegelde PDF wordt éénmaal gemaakt en versleuteld bewaard; downloaden geeft altijd exact dat bestand. PDF-motor: TCPDF + FPDI (meegeleverd, geen composer)',
+            ],
+        ],
         '2.90.2' => [
             'datum'  => '2026-09-18',
             'titel'  => 'Aangenomen-takenpakket, bundel 3: documenten uploaden',

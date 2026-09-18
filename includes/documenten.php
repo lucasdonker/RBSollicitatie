@@ -80,15 +80,31 @@ function documenten_max_bytes(): int { return 10 * 1048576; }
  *   upload    : mag de sollicitant dit zelf uploaden (anders maakt het systeem het aan)
  */
 function document_soorten(): array {
-    return [
+    static $s = null;
+    if ($s !== null) return $s;
+    $s = [
         'id_voor'   => ['titel' => 'Identiteitsbewijs — voorkant', 'taak' => 'id_kopie', 'recht' => 'documenten', 'bewaren' => 'loon', 'compleet' => true,  'upload' => true],
         'id_achter' => ['titel' => 'Identiteitsbewijs — achterkant', 'taak' => 'id_kopie', 'recht' => 'documenten', 'bewaren' => 'loon', 'compleet' => false, 'upload' => true],
         'bankpas'   => ['titel' => 'Bankpas — voorkant', 'taak' => 'bankpas_kopie', 'recht' => 'documenten', 'bewaren' => 'verwerkt_dan_weg', 'compleet' => true, 'upload' => true],
         'pasfoto'   => ['titel' => 'Pasfoto', 'taak' => 'pasfoto', 'recht' => 'sollicitanten', 'bewaren' => 'dossier', 'compleet' => false, 'upload' => true],
-        'loonheffing_pdf'  => ['titel' => 'Loonheffingsformulier (verzegeld)', 'taak' => null, 'recht' => 'documenten', 'bewaren' => 'loon', 'compleet' => false, 'upload' => false],
-        'lidmaatschap_pdf' => ['titel' => 'Inschrijving vereniging (verzegeld)', 'taak' => null, 'recht' => 'documenten', 'bewaren' => 'dossier', 'compleet' => false, 'upload' => false],
     ];
+    // Verzegelde PDF's van ondertekeningen: soort ondertekening_<type> (aangemaakt door het systeem bij het tekenen)
+    foreach (['gezondheid_18plus', 'gezondheid_ouder', 'intake', 'intake_ouder', 'loonheffing', 'lidmaatschap'] as $type) {
+        $gevoelig = in_array($type, ['loonheffing', 'lidmaatschap'], true); // BSN resp. IBAN
+        $s['ondertekening_' . $type] = [
+            'titel'    => (function_exists('ondertekening_label') ? ondertekening_label($type) : $type) . ' (verzegeld)',
+            'taak'     => null,
+            'recht'    => $gevoelig ? 'documenten' : 'ondertekeningen',
+            'bewaren'  => $type === 'loonheffing' ? 'loon' : 'dossier',
+            'compleet' => false,
+            'upload'   => false,
+        ];
+    }
+    return $s;
 }
+
+/** Soort van de verzegelde PDF bij een ondertekeningstype. */
+function document_soort_ondertekening(string $type): string { return 'ondertekening_' . $type; }
 
 /**
  * De upload-taken in het portaal: taak_slug => titel, sub (ontwerp), uitleg, soorten (vakken op de pagina), icoon.
