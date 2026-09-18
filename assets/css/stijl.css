@@ -1277,6 +1277,23 @@ a.pt-taakrij:hover { background: var(--bg); }
 .pt-taakrij-scheiding { height: 1px; background: var(--border); margin: 0 14px; }
 .pt-taakrij-knop { display: none; }
 
+/* Afvink-taken (takenpakket): knop "Gedaan" rechts, externe link in de subregel */
+.pt-taakrij.afvink { align-items: center; }
+.pt-taakrij-afvink { flex: none; display: flex; margin: 0; }
+.pt-taakrij-gedaan {
+  display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: 8px;
+  border: 1px solid var(--border-strong); background: var(--surface); color: var(--navy);
+  font: var(--text-label); font-size: 13px; cursor: pointer;
+}
+.pt-taakrij-gedaan:hover { border-color: var(--navy); background: var(--bg-subtle); }
+.pt-taakrij-gedaan .ic { stroke: var(--navy); stroke-width: 2.2; }
+.pt-taakrij-link {
+  display: inline-flex; align-items: center; gap: 5px; margin-top: 4px; align-self: flex-start;
+  font: var(--text-label); font-size: 13px; color: var(--navy); text-decoration: none;
+}
+.pt-taakrij-link:hover { text-decoration: underline; }
+.pt-taakrij-link .ic { stroke: var(--navy); }
+
 /* Inline formulier in een taakrij (oudergegevens) */
 .pt-taakrij-inline { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
 .pt-taakrij-inline[hidden] { display: none; }
@@ -1601,6 +1618,37 @@ a.pt-taakrij:hover { background: var(--bg); }
 .ond-klaar-knop { width: 100%; margin-top: 4px; }
 .ond-klaar .pt-hulp { margin-top: 4px; }
 .pt-leeg-icoon.warn { background: var(--warn-soft); color: var(--warn); border: 1px solid #ecdcbc; box-sizing: border-box; }
+
+/* Documenten uploaden (portaal/document_upload.php) — op de ond-bouwstenen */
+.du .ond-kop-sub, .du .ond-doc { min-width: 0; }
+.ond-chip.ok { background: #ecf5ef; color: #1a6b36; }
+.ond-chip.ok .ond-chip-stip { background: #1f7a3d; }
+.du-form { display: flex; flex-direction: column; gap: 12px; }
+.du-form .ds-melding { margin: 0; }
+.du-kies {
+  display: flex; align-items: center; gap: 12px; padding: 16px; border: 1.5px dashed #cdd4e0; border-radius: 10px;
+  background: #f8fafc; cursor: pointer; position: relative;
+}
+.du-kies:hover { border-color: #054d8a; }
+.du-kies.klein { padding: 12px 14px; }
+.du-kies .du-input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+.du-kies-icoon { width: 40px; height: 40px; border-radius: 10px; background: #fdf1ea; color: #D43D00; display: flex; align-items: center; justify-content: center; flex: none; }
+.du-kies.klein .du-kies-icoon { width: 32px; height: 32px; }
+.du-kies-tekst { font-size: 14px; font-weight: 600; color: var(--ink); }
+.du-preview { display: flex; align-items: center; gap: 12px; }
+.du-preview-img { width: 96px; height: 72px; object-fit: cover; border-radius: 8px; border: 1px solid #e6e9ef; background: #f4f6f9; }
+.du-preview-naam { font-size: 13px; color: #5a6478; word-break: break-all; }
+.du-acties { display: flex; gap: 10px; flex-wrap: wrap; }
+.du-acties .ds-btn { height: 44px; font-size: 14px; }
+.du-acties .ds-btn-zacht { gap: 6px; }
+.du-status { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; background: #ecf5ef; border: 1px solid #cfe4d6; }
+.du-status-icoon { width: 36px; height: 36px; border-radius: 9px; background: #fff; color: #1f7a3d; display: flex; align-items: center; justify-content: center; flex: none; }
+.du-status-tekst { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.du-status-naam { font-size: 14px; font-weight: 600; color: #155c2d; word-break: break-all; }
+.du-status-sub { font-size: 13px; color: #2b6b41; }
+.ond-knop.secundair { background: #fff; color: #054d8a; border: 1px solid #cdd4e0; }
+.ond-knop.secundair:hover { background: #f8fafc; }
+a.ond-knop { display: flex; align-items: center; justify-content: center; text-decoration: none; }
 
 /* Desktop (ontwerp: kaart met kop + chip; document links op #f8fafc naast het ondertekenpaneel) */
 @media (min-width: 860px) {

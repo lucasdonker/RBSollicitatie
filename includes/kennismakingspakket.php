@@ -77,6 +77,25 @@ function kennismakingspakket_activeren(int $sol_id): array {
     return $resultaat;
 }
 
+/**
+ * Vangnet vanuit portaal_taken(): dossiers in de fase 'aangenomen' die het pakket nog niet (of nog in de
+ * oude vorm) hebben, krijgen het alsnog. Eén controlequery per request; alleen bij afwijking wordt
+ * kennismakingspakket_activeren() aangeroepen.
+ */
+function kennismakingspakket_verzekeren(int $sol_id, string $fase): void {
+    static $gedaan = [];
+    if ($fase !== 'aangenomen' || isset($gedaan[$sol_id])) return;
+    $gedaan[$sol_id] = true;
+    try {
+        $q = db()->prepare("SELECT taak_slug FROM sollicitant_taken WHERE sollicitatie_id=?");
+        $q->execute([$sol_id]);
+        $aanwezig = $q->fetchAll(PDO::FETCH_COLUMN);
+        $oud = array_intersect($aanwezig, ['bevestig_lidmaatschap', 'loonheffing', 'huisregels_gelezen']);
+        $mist = array_diff(array_keys(kennismakingspakket_taken_definities()), $aanwezig);
+        if ($oud || $mist) kennismakingspakket_activeren($sol_id);
+    } catch (\Throwable $e) { error_log('kennismakingspakket_verzekeren: ' . $e->getMessage()); }
+}
+
 /** Zet een taak op voltooid/open (één plek; gebruikt door uploads, afvinken en ondertekeningen). */
 function taak_status_zetten(int $sol_id, string $taak_slug, bool $klaar): void {
     try {

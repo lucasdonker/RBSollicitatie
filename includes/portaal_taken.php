@@ -18,6 +18,10 @@
  *   inline_form ?string  'ouder' → de rij toont het ouderformulier
  *   inline_data array    gegevens voor het inline formulier
  *   wacht       bool     open, maar een ander is aan zet (ouder tekent); telt niet als "open"
+ *   afvink      bool     de sollicitant vinkt de taak zelf af (knop "Gedaan" / "Ongedaan maken"); vereist db_id
+ *   extern      bool     url opent in een nieuw tabblad (bijlage, website)
+ *   knop_label  ?string  desktop-knoptekst voor open rijen (standaard "Invullen"/"Openen")
+ *   db_id       ?int     rij in sollicitant_taken (voor taak_toggle)
  *
  * Geen HTML hier; de partials portaal/_taakrij.php en _takenlijst.php renderen.
  */
@@ -78,20 +82,18 @@ function portaal_taken(array $sol, ?array $blk = null): array {
     //    selectiedag-uitnodiging (fase_zetten → ondertekeningen_klaarzetten_sd); het vangnet hieronder
     //    herstelt dossiers waar dat destijds niet gebeurde.
     if (function_exists('ondertekeningen_verzekeren_sd')) ondertekeningen_verzekeren_sd($sol_id, $fase);
+    // Aangenomen: het takenpakket (uploads, huisregels, account) + de ondertekeningen loonheffing/lidmaatschap
+    if (function_exists('kennismakingspakket_verzekeren')) kennismakingspakket_verzekeren($sol_id, $fase);
     try {
         $q = db()->prepare("SELECT id, type, token, ondertekend_op FROM ondertekeningen WHERE sollicitatie_id=? AND ondertekenaar_rol='sollicitant' ORDER BY aangemaakt_op");
         $q->execute([$sol_id]);
         foreach ($q->fetchAll() as $o) {
             $klaar = !empty($o['ondertekend_op']);
-            $titel = match ($o['type']) {
-                'gezondheid_18plus' => 'Gezondheidsverklaring ondertekenen',
-                'intake'            => 'Intakeformulier invullen',
-                default             => 'Document ondertekenen',
-            };
+            $tt    = ondertekening_taak_titel((string)$o['type'], $klaar, $o['ondertekend_op'] ?: null);
             $taken[] = array_merge($std, [
                 'id'          => 'ond_' . (int)$o['id'],
-                'titel'       => $klaar ? preg_replace('/ (ondertekenen|invullen)$/', '', $titel) : $titel,
-                'sub'         => $klaar ? 'Ondertekend ' . datum_nl(substr($o['ondertekend_op'], 0, 10)) : 'Nodig voor de selectiedag',
+                'titel'       => $tt['titel'],
+                'sub'         => $tt['sub'],
                 'done'        => $klaar,
                 'done_op'     => $o['ondertekend_op'] ?: null,
                 'url'         => APP_URL . '/portaal/ondertekenen.php?token=' . $o['token'],
@@ -183,15 +185,18 @@ function portaal_taken(array $sol, ?array $blk = null): array {
         }
     }
 
-    // 6) Taken uit de database (kennismakingspakket bij aangenomen). Alleen-lezen: het echte
-    //    takenpakket (afvinken, bijlagen) is een aparte, latere bundel.
+    // 6) Taken uit de database (takenpakket bij aangenomen; definities in includes/kennismakingspakket.php).
+    //    soort upload → eigen uploadpagina; link → externe link/bijlage + zelf afvinken; afvinken → alleen afvinken.
     try {
-        $q = db()->prepare("SELECT id, taak_slug, titel, omschrijving, link_url, status, verplicht, voltooid_op FROM sollicitant_taken WHERE sollicitatie_id=? ORDER BY verplicht DESC, id");
+        $q = db()->prepare("SELECT id, taak_slug, titel, omschrijving, link_url, status, verplicht, voltooid_op, soort, document_soort, volgorde FROM sollicitant_taken WHERE sollicitatie_id=? ORDER BY volgorde, id");
         $q->execute([$sol_id]);
+        $doc_taken = function_exists('document_taken') ? document_taken() : [];
         foreach ($q->fetchAll() as $t) {
             $klaar = ($t['status'] ?? '') === 'voltooid';
-            $taken[] = array_merge($std, [
+            $soort = (string)($t['soort'] ?? 'afvinken');
+            $rij = [
                 'id'       => 'db_' . (int)$t['id'],
+                'db_id'    => (int)$t['id'],
                 'titel'    => $t['titel'],
                 'sub'      => $klaar
                     ? 'Afgerond' . (!empty($t['voltooid_op']) ? ' ' . datum_nl(substr($t['voltooid_op'], 0, 10)) : '')
@@ -202,8 +207,28 @@ function portaal_taken(array $sol, ?array $blk = null): array {
                 'icoon'    => 'lijst',
                 'kleur'    => $klaar ? 'ok' : 'accent',
                 'urgent'   => !$klaar && !empty($t['verplicht']),
-                'volgorde' => 50,
-            ]);
+                'volgorde' => (int)($t['volgorde'] ?? 50),
+            ];
+            if ($soort === 'upload') {
+                $slug = (string)($t['document_soort'] ?: $t['taak_slug']);
+                $rij['url']         = APP_URL . '/portaal/document_upload.php?taak=' . urlencode($slug);
+                $rij['icoon']       = $doc_taken[$slug]['icoon'] ?? 'upload';
+                $rij['sub']         = $klaar ? 'Geüpload' . (!empty($t['voltooid_op']) ? ' ' . datum_nl(substr($t['voltooid_op'], 0, 10)) : '') : $rij['sub'];
+                $rij['actie_label'] = $klaar ? 'Bekijken' : null;
+                $rij['knop_label']  = 'Uploaden';
+            } else {
+                // link/afvinken: de sollicitant vinkt zelf af; een link opent extern (bijlage of website)
+                $rij['afvink'] = true;
+                $rij['extern'] = true;
+                $ds = (string)($t['document_soort'] ?? '');
+                if (str_starts_with($ds, 'bijlage:') && function_exists('bijlage_download_url')) {
+                    $rij['url'] = bijlage_download_url((int)substr($ds, 8), 30);
+                    $rij['icoon'] = 'document';
+                } elseif ($rij['url']) {
+                    $rij['icoon'] = 'koppeling';
+                }
+            }
+            $taken[] = array_merge($std, $rij);
         }
     } catch (\Throwable $e) {}
 
@@ -353,10 +378,11 @@ function portaal_taken_post_afhandelen(int $sol_id): void {
         csrf_check();
         $taak_id = (int)($_POST['taak_id'] ?? 0);
         try {
-            $q = db()->prepare("SELECT status FROM sollicitant_taken WHERE id=? AND sollicitatie_id=?");
+            // Alleen taken die de sollicitant zelf afvinkt (link/afvinken); uploads en ondertekeningen niet
+            $q = db()->prepare("SELECT status, soort FROM sollicitant_taken WHERE id=? AND sollicitatie_id=?");
             $q->execute([$taak_id, $sol_id]);
             $t = $q->fetch();
-            if ($t) {
+            if ($t && in_array((string)($t['soort'] ?? 'afvinken'), ['link', 'afvinken'], true)) {
                 $nieuw    = $t['status'] === 'voltooid' ? 'open' : 'voltooid';
                 $voltooid = $nieuw === 'voltooid' ? date('Y-m-d H:i:s') : null;
                 db()->prepare("UPDATE sollicitant_taken SET status=?, voltooid_op=? WHERE id=?")

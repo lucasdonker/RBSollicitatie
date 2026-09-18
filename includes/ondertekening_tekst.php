@@ -26,7 +26,24 @@ function ondertekening_titel_kort(string $type): string {
     return match ($type) {
         'gezondheid_ouder', 'gezondheid_18plus' => 'Gezondheidsverklaring',
         'intake', 'intake_ouder'                => 'Intakeformulier',
+        'loonheffing'                           => 'Loonheffingsformulier',
+        'lidmaatschap'                          => 'Lid worden van de vereniging',
         default                                 => 'Document',
+    };
+}
+
+/**
+ * Titel en subregel van de taakrij in het portaal (open en afgerond), één bron voor start en Taken-tab.
+ * Retour: ['titel' => ..., 'sub' => ...]; $klaar_op = 'Y-m-d H:i:s' van de ondertekening.
+ */
+function ondertekening_taak_titel(string $type, bool $klaar, ?string $klaar_op = null): array {
+    $datum = $klaar && $klaar_op ? datum_nl(substr($klaar_op, 0, 10)) : '';
+    return match ($type) {
+        'gezondheid_18plus' => ['titel' => $klaar ? 'Gezondheidsverklaring' : 'Gezondheidsverklaring ondertekenen', 'sub' => $klaar ? 'Ondertekend ' . $datum : 'Nodig voor de selectiedag'],
+        'intake'            => ['titel' => $klaar ? 'Intakeformulier' : 'Intakeformulier invullen', 'sub' => $klaar ? 'Ondertekend ' . $datum : 'Nodig voor de selectiedag'],
+        'loonheffing'       => ['titel' => $klaar ? 'Loonheffingsformulier' : 'Loonheffingsformulier invullen', 'sub' => $klaar ? 'Ondertekend ' . $datum : 'Nodig voor je salaris · ± 5 minuten'],
+        'lidmaatschap'      => ['titel' => $klaar ? 'Lid van de vereniging' : 'Lid worden van de vereniging', 'sub' => $klaar ? 'Ingeschreven ' . $datum : 'Inschrijven als lid · ± 5 minuten'],
+        default             => ['titel' => $klaar ? 'Document' : 'Document ondertekenen', 'sub' => $klaar ? 'Ondertekend ' . $datum : ''],
     };
 }
 

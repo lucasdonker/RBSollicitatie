@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.90.0');
+define('APP_VERSIE', '2.90.1');
 
 function app_changelog(): array {
     return [
+        '2.90.1' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Aangenomen-takenpakket, bundel 2: takenlijst met uploaden en afvinken',
+            'punten' => [
+                'Het takenpakket op Start en Taken toont nu echte taken: uploads (kopie ID, kopie bankpas, pasfoto) openen een uploadpagina; huisregels en account-activatie vink je zelf af met "Gedaan" (en kun je ongedaan maken)',
+                'Huisregels komen als document uit de bijlagenbibliotheek (instelling), met een "Openen"-link in de taakrij',
+                'Titels van ondertekentaken staan op één plek (ook voor het loonheffingsformulier en het lidmaatschap die in de volgende bundels volgen)',
+            ],
+        ],
         '2.90.0' => [
             'datum'  => '2026-09-18',
             'titel'  => 'Aangenomen-takenpakket, bundel 1: kluis (versleutelde opslag) en fundament',
