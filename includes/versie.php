@@ -3,10 +3,26 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.85.0');
+define('APP_VERSIE', '2.86.0');
 
 function app_changelog(): array {
     return [
+        '2.86.0' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Beschikbaarheid: compacter formulier, automatisch bewaard, terug naar waar je was',
+            'punten' => [
+                'De taak "Beschikbaarheid definitief maken" was niet af te ronden: de knop ontbrak op de overzichtspagina. Die staat er nu, ook na de deadline',
+                'Na het opslaan van je beschikbaarheid (of het BLK) kom je terug op de pagina waar je vandaan kwam (Start of Taken) met een bevestiging — niet meer opnieuw in de AI-invoer',
+                'Je invoer wordt automatisch bewaard als concept: breek je tussentijds af, dan ga je later verder waar je was (ook de getypte tekst voor slim invullen). Wie al beschikbaarheid heeft, komt direct in het ingevulde formulier; slim invullen blijft via een link beschikbaar',
+                'Werkperiodes zijn inklapbare kaarten met de datums en het aantal weken ("29 juni t/m 9 augustus · 6 weken"); de weekend-dagknoppen (za/zo) staan weer netjes',
+                'De secties "alleen als het van toepassing is" zijn één rustige rij met een samenvatting (bijv. "Elke woensdag", "23 aug – 1 sep · Vakantie Frankrijk"); tik om uit te klappen. "Uitzonderingen" heet nu "Vakanties"',
+                'Vakanties, losse dagen en verzoeken hebben nette, uitgelijnde velden; bij verzoeken staan de weken mét datum (W31 · 27 jul) en zie je de status (Verzoek / Goedgekeurd)',
+                'Bij "Aanpassen" stonden je opgeslagen werkperiodes niet in het formulier (opslaan overschreef ze met de standaardperiode) — opgelost',
+                'Een goedgekeurd verzoek werd bij opnieuw opslaan gedupliceerd als nieuw open verzoek — opgelost; wijzig je een goedgekeurd verzoek, dan beoordeelt het bestuur het opnieuw',
+                'Slim invullen: een verzoek voor minder dagen splitst je werkperiode niet meer in stukken; de vaste vrije dag wordt na het AI-voorstel correct getoond',
+                'Je krijgt nu bericht zodra het bestuur je verzoek om minder dagen goed- of afkeurt (nieuw meldingstype, kanalen instelbaar in het beheer; ook zichtbaar onder Berichten)',
+            ],
+        ],
         '2.85.0' => [
             'datum'  => '2026-09-17',
             'titel'  => 'Startpagina en Taken-tab herbouwd volgens het ontwerp; berichten achter het belletje',
