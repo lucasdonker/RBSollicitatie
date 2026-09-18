@@ -86,7 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'vaste_toelichting' => $bestaand['profiel']['vaste_toelichting'] ?? null,
                 'voorlopig'         => $bestaand['profiel']['voorlopig'] ?? 0,
                 'opmerking'         => $bestaand['profiel']['opmerking'] ?? null,
-            ]);
+            ], 'beheer');
         }
         flash('succes', 'Werkperiodes opgeslagen namens ' . h($naam) . '.');
         if (function_exists('audit_log')) audit_log('gewijzigd', 'beschikbaarheid', $id, ['via' => 'bestuur_formulier', 'blokken' => count($blokken)]);

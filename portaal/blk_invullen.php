@@ -157,11 +157,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['blk_submit'])) {
         }
 
         if (!$is_edit) {
-            if ($sol['fase'] === 'uitgenodigd_selectie') {
-                db()->prepare("UPDATE sollicitaties SET fase='aangemeld_selectie' WHERE id=?")->execute([$sol_id]);
+            // Inleveren = aanmelden voor de selectiedag: fase-wissel (met bevestiging + bestuursmelding)
+            // via de centrale fase-functie; was de fase al verder, dan alleen een "taak afgerond"-bericht.
+            $fase_res = ['ok' => false, 'ongewijzigd' => true];
+            if ($sol['fase'] === 'uitgenodigd_selectie' && function_exists('fase_zetten')) {
+                try { $fase_res = fase_zetten($sol_id, 'aangemeld_selectie', 'blk', ['alleen_van' => ['uitgenodigd_selectie'], 'prioriteit' => 'na_antwoord']); } catch (\Throwable $e) {}
             }
-            if (function_exists('mail_taak_afgerond')) {
-                try { mail_taak_afgerond($sol_id, 'Beter leren kennen-formulier'); } catch (\Exception $e) {}
+            if (!empty($fase_res['ongewijzigd']) && function_exists('melding_verstuur')) {
+                try { melding_verstuur('taak_afgerond', $sol_id, ['taak_naam' => 'Beter leren kennen-formulier'], ['prioriteit' => 'na_antwoord']); } catch (\Throwable $e) {}
             }
         }
         // Definitief ingediend markeren (de betrouwbare "taak afgerond"-indicator, los van de fase)

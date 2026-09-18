@@ -68,26 +68,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } catch (\Exception $e) {}
         }
 
-                // Mail versturen indien gewenst — via de bewerkbare 'welkomstmail'-template
-                if ($stuur_mail_optie) {
-                    $sz = $db->prepare("SELECT * FROM seizoenen WHERE id=?");
-                    $sz->execute([$seizoen_id]); $sz_data = $sz->fetch();
-                    $portaal_url = APP_URL . '/portaal/';
-                    $verstuurd = false;
-                    if (function_exists('stuur_template_mail')) {
-                        try {
-                            $verstuurd = stuur_template_mail('welkomstmail', $email,
-                                ['voornaam'=>$voornaam, 'achternaam'=>$achternaam, 'email'=>$email],
-                                $sz_data ?: [], [], (int)$sol_id);
-                        } catch (\Exception $e) { $verstuurd = false; }
-                    }
-                    if (!$verstuurd) {
-                        error_log('sollicitant_nieuw: welkomstmail-template faalde, vangnet gebruikt');
-                        $body = '<p>Je bent aangemeld voor de selectieprocedure van Reddingsbrigade Paal 13 (' . h($sz_data['naam'] ?? '') . ').</p>
-                                 <p>Via het sollicitantenportaal kun je jouw status volgen en formulieren invullen. Je logt in met een code die naar dit e-mailadres wordt gestuurd:</p>
-                                 <p><a href="' . $portaal_url . '" class="btn">Naar het portaal →</a></p>';
-                        stuur_mail($email, $voornaam, 'Aanmelding Paal 13 ' . ($sz_data['naam'] ?? ''), $body, $sol_id);
-                    }
+                // Bevestiging versturen indien gewenst — via de centrale meldingen-kern (sjabloon 'aanmelding_bevestiging')
+                if ($stuur_mail_optie && function_exists('melding_verstuur')) {
+                    try { melding_verstuur('aanmelding_bevestiging', (int)$sol_id); }
+                    catch (\Throwable $e) { error_log('sollicitant_nieuw melding: ' . $e->getMessage()); }
                 }
 
                 flash('succes', "$voornaam $achternaam toegevoegd" . ($terugkerend ? ' (terugkerend)' : '') . '.');

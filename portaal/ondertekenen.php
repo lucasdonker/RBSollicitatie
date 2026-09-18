@@ -133,83 +133,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_ondertekend) {
                 substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 500),
                 $token,
            ]);
-        // Bevestiging naar sollicitant als een OUDER heeft getekend (sluit de loop)
-        if ($rec['ondertekenaar_rol'] === 'ouder' && !empty($sol['email'])) {
+        // Meldingen via de centrale kern: bevestiging aan de sollicitant, kopie (PDF) aan de
+        // ondertekenaar, en optioneel een seintje aan het bestuur. Fouten blokkeren nooit.
+        if (function_exists('melding_verstuur')) {
+            $sol_id_o  = (int)$rec['sollicitatie_id'];
+            $doc_naam  = function_exists('ondertekening_label') ? ondertekening_label($rec['type']) : 'Formulier';
+            $is_ouder  = ($rec['ondertekenaar_rol'] === 'ouder');
+            $ref       = 'ondertekening:' . (int)$rec['id'];
+            $pdf_pad   = null; $bijlagen = [];
             try {
-                $doc_naam = match($rec['type']) {
-                    'gezondheid_ouder' => 'de gezondheidsverklaring',
-                    'intake_ouder'     => 'het intakeformulier',
-                    default            => 'een formulier',
-                };
-                $vars_b = [
-                    'voornaam'      => $sol['voornaam'],
-                    'document_naam' => $doc_naam,
-                    'portaal_url'   => APP_URL . '/portaal/',
-                ];
-                $rendered_b = function_exists('ondertekening_mail_render') ? ondertekening_mail_render('ondertekening_bevestiging', $vars_b) : null;
-                if ($rendered_b && function_exists('stuur_mail_html')) {
-                    stuur_mail_html($sol['email'], $sol['voornaam'], $rendered_b['onderwerp'], $rendered_b['html'], (int)$rec['sollicitatie_id']);
+                if (function_exists('ondertekening_pdf_genereer')) {
+                    $vers = $db->prepare("SELECT * FROM ondertekeningen WHERE token=?");
+                    $vers->execute([$token]);
+                    $rec_vers = $vers->fetch() ?: $rec;
+                    $pdf_pad  = ondertekening_pdf_genereer($rec_vers, $sol);
+                    if ($pdf_pad) $bijlagen = [['pad' => $pdf_pad, 'naam' => 'Ondertekend_' . preg_replace('/[^A-Za-z0-9]+/', '_', $doc_naam) . '_Paal13.pdf', 'mime' => 'application/pdf']];
                 }
-            } catch (\Exception $e) {}
-        }
-
-        // Stuur de ondertekende PDF naar de ONDERTEKENAAR zelf (met name de ouder),
-        // zodat hij/zij kan terugzien waar de handtekening onder staat.
-        if ($rec['ondertekenaar_rol'] === 'ouder' && function_exists('ondertekening_pdf_genereer')) {
+            } catch (\Throwable $e) { error_log('ondertekening PDF: ' . $e->getMessage()); }
             try {
-                // Verse gegevens ophalen (net opgeslagen) voor een kloppende PDF
-                $vers = $db->prepare("SELECT * FROM ondertekeningen WHERE token=?");
-                $vers->execute([$token]);
-                $rec_vers = $vers->fetch() ?: $rec;
-                $ouder_email = $rec_vers['ondertekenaar_email'] ?? '';
-                $pdf_pad = ondertekening_pdf_genereer($rec_vers, $sol);
-                if ($pdf_pad && $ouder_email && function_exists('stuur_mail_html')) {
-                    $doc_label = match($rec['type']) {
-                        'gezondheid_ouder' => 'gezondheidsverklaring',
-                        'intake_ouder'     => 'intakeformulier',
-                        default            => 'formulier',
-                    };
-                    $body_pdf = "<p>Beste " . h($rec_vers['ondertekenaar_naam'] ?: 'ouder/verzorger') . ",</p>"
-                        . "<p>Bedankt voor het ondertekenen van {$doc_label} voor <strong>" . h(trim(($sol['voornaam']??'').' '.($sol['achternaam']??''))) . "</strong>.</p>"
-                        . "<p>In de bijlage vind je een kopie van het ondertekende document, zodat je kunt terugzien waar je je handtekening onder hebt gezet.</p>"
-                        . "<p>Met vriendelijke groet,<br><strong>Team Sollicitaties</strong><br>Reddingsbrigade Paal 13</p>";
-                    $html_pdf = function_exists('mail_thema_wrapper')
-                        ? mail_thema_wrapper($body_pdf, 'Ondertekend ' . $doc_label, 'Kopie van je ondertekening', 'Voor je administratie')
-                        : $body_pdf;
-                    $bestandsnaam = 'Ondertekend_' . ucfirst($doc_label) . '_Paal13.pdf';
-                    stuur_mail_html($ouder_email, $rec_vers['ondertekenaar_naam'] ?: 'Ouder/verzorger',
-                        'Kopie ondertekend ' . $doc_label . ' — Paal 13', $html_pdf, (int)$rec['sollicitatie_id'],
-                        [['pad' => $pdf_pad, 'naam' => $bestandsnaam, 'mime' => 'application/pdf']]);
-                    @unlink($pdf_pad);
+                // Sollicitant: bevestiging (bij zelf tekenen mét PDF-kopie)
+                melding_verstuur('ondertekening_bevestiging', $sol_id_o,
+                    ['document_naam' => $doc_naam, 'door' => $is_ouder ? 'je ouder/verzorger' : 'jou'],
+                    ['referentie' => $ref, 'prioriteit' => 'direct', 'bijlagen' => $is_ouder ? [] : $bijlagen]);
+                // Ouder: kopie met PDF
+                if ($is_ouder && !empty($rec['ondertekenaar_email'])) {
+                    melding_verstuur('ondertekening_kopie', $sol_id_o,
+                        ['document_naam' => $doc_naam, 'ontvanger_naam' => $naam_getypt ?: ($rec['ondertekenaar_naam'] ?: 'ouder/verzorger')],
+                        ['referentie' => $ref, 'prioriteit' => 'direct', 'bijlagen' => $bijlagen,
+                         'ontvanger' => ['email' => $rec['ondertekenaar_email'], 'naam' => $naam_getypt ?: (string)$rec['ondertekenaar_naam'], 'telefoon' => '', 'rol' => 'ouder']]);
                 }
-            } catch (\Exception $e) { error_log('ondertekening PDF-mail: ' . $e->getMessage()); }
-        }
-
-        // B6 — consistente bevestiging: óók de sollicitant die ZELF tekent (18+) krijgt een
-        // bevestiging met de ondertekende PDF als bijlage. Zo krijgt iedereen dezelfde afronding.
-        if ($rec['ondertekenaar_rol'] === 'sollicitant' && !empty($sol['email']) && function_exists('ondertekening_pdf_genereer')) {
-            try {
-                $vers = $db->prepare("SELECT * FROM ondertekeningen WHERE token=?");
-                $vers->execute([$token]);
-                $rec_vers = $vers->fetch() ?: $rec;
-                $doc_label = match($rec['type']) {
-                    'gezondheid_18plus', 'gezondheid_ouder' => 'gezondheidsverklaring',
-                    'intake', 'intake_ouder'                => 'intakeformulier',
-                    default                                 => 'formulier',
-                };
-                $pdf_pad = ondertekening_pdf_genereer($rec_vers, $sol);
-                $body_pdf = "<p>Beste " . h($sol['voornaam']) . ",</p>"
-                    . "<p>Bedankt voor het digitaal ondertekenen van de {$doc_label}. In de bijlage vind je een kopie van het ondertekende document voor je eigen administratie.</p>"
-                    . "<p>Met vriendelijke groet,<br><strong>Team Sollicitaties</strong><br>Reddingsbrigade Paal 13</p>";
-                $html_pdf = function_exists('mail_thema_wrapper')
-                    ? mail_thema_wrapper($body_pdf, 'Ondertekend: ' . $doc_label, 'Kopie van je ondertekening', 'Voor je administratie')
-                    : $body_pdf;
-                $bijlagen = ($pdf_pad) ? [['pad' => $pdf_pad, 'naam' => 'Ondertekend_' . ucfirst($doc_label) . '_Paal13.pdf', 'mime' => 'application/pdf']] : [];
-                if (function_exists('stuur_mail_html')) {
-                    stuur_mail_html($sol['email'], $sol['voornaam'], 'Bevestiging ondertekening ' . $doc_label . ' — Paal 13', $html_pdf, (int)$rec['sollicitatie_id'], $bijlagen);
-                }
-                if ($pdf_pad) @unlink($pdf_pad);
-            } catch (\Exception $e) { error_log('ondertekening bevestiging sollicitant: ' . $e->getMessage()); }
+                // Bestuur (standaard uit)
+                melding_verstuur('bestuur_ondertekening_afgerond', $sol_id_o,
+                    ['document_naam' => $doc_naam, 'ontvanger_naam' => $is_ouder ? 'ouder/verzorger' : 'de sollicitant'],
+                    ['referentie' => $ref, 'prioriteit' => 'queue']);
+            } catch (\Throwable $e) { error_log('ondertekening meldingen: ' . $e->getMessage()); }
+            if ($pdf_pad) @unlink($pdf_pad);
         }
 
         redirect(APP_URL . '/portaal/ondertekenen.php?token=' . urlencode($token) . '&klaar=1');

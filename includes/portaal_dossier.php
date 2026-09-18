@@ -51,6 +51,10 @@ function seizoen_kolommen_verzeker(): void {
  */
 function portaal_sollicitant_laden(int $sol_id): ?array {
     static $cache = [];
+    if (!empty($GLOBALS['_portaal_sol_cache_wis'])) {
+        foreach ($GLOBALS['_portaal_sol_cache_wis'] as $wis) unset($cache[$wis]);
+        $GLOBALS['_portaal_sol_cache_wis'] = [];
+    }
     if (array_key_exists($sol_id, $cache)) return $cache[$sol_id];
 
     $basis = "s.*, p.voornaam, p.tussenvoegsel, p.achternaam, p.email, p.telefoon, p.geboortedatum,
@@ -76,6 +80,11 @@ function portaal_sollicitant_laden(int $sol_id): ?array {
         } catch (\Throwable $e2) { $rij = null; }
     }
     return $cache[$sol_id] = $rij;
+}
+
+/** Vergeet de gecachte rij (na een fase-wissel of andere wijziging in dezelfde request). */
+function portaal_sollicitant_cache_wissen(int $sol_id): void {
+    $GLOBALS['_portaal_sol_cache_wis'][] = $sol_id;
 }
 
 /** Volledige naam van de sollicitant. */

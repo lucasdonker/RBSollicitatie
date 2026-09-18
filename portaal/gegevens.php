@@ -72,6 +72,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verwijder'])) {
             try { $db->prepare("DELETE FROM sollicitant_notities WHERE sollicitatie_id = ?")->execute([$sol_id]); } catch (\Exception $e) {}
             try { $db->prepare("DELETE FROM beoordelingen WHERE sollicitatie_id = ?")->execute([$sol_id]); } catch (\Exception $e) {}
 
+            // Bestuur informeren vóór de anonimisering (de naam is daarna weg); verzending ná het antwoord.
+            if (function_exists('melding_verstuur')) {
+                try { melding_verstuur('bestuur_zelf_verwijderd', $sol_id, [], ['prioriteit' => 'na_antwoord']); } catch (\Throwable $e) {}
+            }
+
             // Anonimiseer sollicitatie (statistiek blijft)
             $db->prepare("UPDATE sollicitaties SET fase='verwijderd_door_sollicitant' WHERE id = ?")->execute([$sol_id]);
 
@@ -112,7 +117,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verwijder'])) {
             }
 
             // Mail-log ontvanger anonimiseren
-            try { $db->prepare("UPDATE mail_log SET ontvanger=?, ontvanger_naam='Verwijderd' WHERE sollicitatie_id = ?")->execute([$anon_email, $sol_id]); } catch (\Exception $e) {}
+            try { $db->prepare("UPDATE mail_log SET ontvanger=?, body=NULL, samenvatting=NULL WHERE sollicitatie_id = ?")->execute([$anon_email, $sol_id]); }
+            catch (\Exception $e) { try { $db->prepare("UPDATE mail_log SET ontvanger=? WHERE sollicitatie_id = ?")->execute([$anon_email, $sol_id]); } catch (\Exception $e2) {} }
 
             $db->commit();
             session_destroy();

@@ -46,6 +46,7 @@ if (file_exists(__DIR__ . '/optout.php')) require_once __DIR__ . '/optout.php';
 foreach (['registry', 'sjablonen', 'verzend'] as $__m) {
     if (file_exists(__DIR__ . '/meldingen/' . $__m . '.php')) require_once __DIR__ . '/meldingen/' . $__m . '.php';
 }
+if (file_exists(__DIR__ . '/fase.php')) require_once __DIR__ . '/fase.php';
 if (file_exists(__DIR__ . '/export_dossier.php')) require_once __DIR__ . '/export_dossier.php';
 if (file_exists(__DIR__ . '/iconen.php')) require_once __DIR__ . '/iconen.php';
 if (file_exists(__DIR__ . '/blk.php')) require_once __DIR__ . '/blk.php';
@@ -473,6 +474,15 @@ function verstuur_fase_mail(
     array $seizoen = [],
     int $window_minuten = 60
 ): string {
+    // @deprecated — gebruik fase_zetten() / melding_verstuur(). Delegeert naar de meldingen-kern.
+    if (function_exists('melding_verstuur') && function_exists('melding_type_alias')) {
+        $r = melding_verstuur(melding_type_alias($template_slug), $sol_id, [], ['dedup_min' => $window_minuten]);
+        return match ($r['status']) {
+            'verstuurd', 'wacht' => 'verstuurd',
+            'overgeslagen'       => ($r['reden'] === 'geen_adres') ? 'geen_email' : 'al_verstuurd',
+            default              => 'fout',
+        };
+    }
     try {
         $db = db();
         $r = $db->prepare("SELECT s.id,p.voornaam,p.email,p.tussenvoegsel,p.achternaam,p.telefoon FROM sollicitaties s JOIN personen p ON p.id=s.persoon_id WHERE s.id=?");
@@ -549,9 +559,13 @@ function stuur_taak_mail(int $sol_id, string $onderwerp, string $body, int $wind
 }
 }
 
-/** "Er staan taken voor je klaar" — bij uitnodiging selectiedag. */
+/** @deprecated "Er staan taken voor je klaar" — nu meldingstype 'ouder_gegevens_ontvangen'. */
 if (!function_exists('mail_taken_klaar')) {
 function mail_taken_klaar(int $sol_id): string {
+    if (function_exists('melding_verstuur')) {
+        $r = melding_verstuur('ouder_gegevens_ontvangen', $sol_id);
+        return in_array($r['status'], ['verstuurd', 'wacht'], true) ? 'verstuurd' : ($r['status'] === 'overgeslagen' ? 'al_verstuurd' : 'fout');
+    }
     $url = rtrim(APP_URL, '/') . '/portaal/';
     // Voornaam ophalen voor een persoonlijke, enkele begroeting (voorkomt dubbele aanhef).
     $vnaam = '';
@@ -568,9 +582,13 @@ function mail_taken_klaar(int $sol_id): string {
 }
 }
 
-/** "Taak afgerond" — bevestiging na afronden van een taak (bijv. ondertekening). */
+/** @deprecated "Taak afgerond" — nu meldingstype 'taak_afgerond'. */
 if (!function_exists('mail_taak_afgerond')) {
 function mail_taak_afgerond(int $sol_id, string $taak_naam): string {
+    if (function_exists('melding_verstuur')) {
+        $r = melding_verstuur('taak_afgerond', $sol_id, ['taak_naam' => $taak_naam]);
+        return in_array($r['status'], ['verstuurd', 'wacht'], true) ? 'verstuurd' : ($r['status'] === 'overgeslagen' ? 'al_verstuurd' : 'fout');
+    }
     $url = rtrim(APP_URL, '/') . '/portaal/';
     $body = "<p>Hoi,</p>
 <p>Goed nieuws: de taak <strong>" . h($taak_naam) . "</strong> is afgerond. ✅</p>
@@ -1075,16 +1093,14 @@ function auto_invite_run(): array {
 
         if (!$ok['voldoet']) { $res['overgeslagen']++; continue; }
 
-        // Zet eerst de fase, verstuur dan de mail via dezelfde weg als de handmatige route:
-        // de bewerkbare template 'uitnodiging_selectie'. Zo krijgen auto-invite en handmatig
-        // uitnodigen exact dezelfde (bewerkbare) mail — niets hardgecodeerd.
-        db()->prepare("UPDATE sollicitaties SET fase='uitgenodigd_selectie' WHERE id=?")->execute([$k['id']]);
-        if (function_exists('verstuur_fase_mail')) {
+        // Dezelfde centrale fase-functie als de handmatige route: documenten klaarzetten én de
+        // bewerkbare uitnodiging (via de meldingen-kern, in de wachtrij).
+        if (function_exists('fase_zetten')) {
             try {
-                verstuur_fase_mail((int)$k['id'], 'uitnodiging_selectie', '%selectiedag%', $seizoen, 60);
-            } catch (\Exception $e) { error_log('auto-invite mail: ' . $e->getMessage()); }
+                $fr = fase_zetten((int)$k['id'], 'uitgenodigd_selectie', 'auto_invite', ['alleen_van' => ['aangemeld'], 'prioriteit' => 'queue']);
+                if ($fr['ok'] && !$fr['ongewijzigd']) $res['uitgenodigd']++; else $res['overgeslagen']++;
+            } catch (\Exception $e) { error_log('auto-invite: ' . $e->getMessage()); $res['overgeslagen']++; }
         }
-        $res['uitgenodigd']++;
     }
     return $res;
 }

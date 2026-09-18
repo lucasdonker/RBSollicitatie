@@ -334,8 +334,8 @@ function portaal_taken_post_afhandelen(int $sol_id): void {
                 $docs_ok = true;
                 try { if (function_exists('ondertekeningen_klaarzetten_sd')) ondertekeningen_klaarzetten_sd($sol_id); }
                 catch (\Throwable $e) { $docs_ok = false; error_log('ondertekeningen_klaarzetten_sd: ' . $e->getMessage()); }
-                try { if (function_exists('mail_taken_klaar')) mail_taken_klaar($sol_id); }
-                catch (\Throwable $e) { error_log('mail_taken_klaar: ' . $e->getMessage()); }
+                try { if (function_exists('melding_verstuur')) melding_verstuur('ouder_gegevens_ontvangen', $sol_id, [], ['prioriteit' => 'na_antwoord']); }
+                catch (\Throwable $e) { error_log('melding ouder_gegevens_ontvangen: ' . $e->getMessage()); }
                 $_SESSION['flash_portaal'] = $docs_ok
                     ? 'Bedankt! Je ouder/verzorger ontvangt nu een mail om de formulieren te ondertekenen.'
                     : 'De gegevens zijn opgeslagen. Het klaarzetten van de formulieren lukte nog niet — we kijken ernaar; probeer het zo nodig later opnieuw.';
@@ -373,7 +373,15 @@ function portaal_taken_post_afhandelen(int $sol_id): void {
                 // Alleen eigen records zonder ondertekening bijwerken
                 $upd = db()->prepare("UPDATE ondertekeningen SET ondertekenaar_naam=?, ondertekenaar_email=? WHERE id=? AND sollicitatie_id=? AND ondertekend_op IS NULL");
                 $upd->execute([$ouder_naam, $ouder_email, $ond_id, $sol_id]);
-                if ($upd->rowCount() > 0 && function_exists('ouder_mail_versturen')) ouder_mail_versturen($ond_id);
+                // Nieuw adres → het ondertekenverzoek opnieuw naar de ouder sturen
+                if ($upd->rowCount() > 0 && function_exists('ondertekening_verzoek_versturen')) {
+                    $oq = db()->prepare("SELECT type, token FROM ondertekeningen WHERE id=?");
+                    $oq->execute([$ond_id]);
+                    if ($o = $oq->fetch()) {
+                        ondertekening_verzoek_versturen($sol_id, ['email' => $ouder_email, 'naam' => $ouder_naam, 'rol' => 'ouder'],
+                            [ondertekening_label($o['type']) => ondertekening_url($o['token'])], 'ondertekening:' . $ond_id);
+                    }
+                }
             } catch (\Throwable $e) {}
         }
         redirect($terug);

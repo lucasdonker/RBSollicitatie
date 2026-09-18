@@ -98,42 +98,17 @@ function sollicitatie_aanmaken(array $in, array $context = []): array {
         landing_track('formulier_klaar', $landing_id, $bron_code);
     }
 
-    // Bevestigingsmail naar sollicitant (template met vangnet)
+    // Bevestiging aan de sollicitant + melding aan het bestuur, via de centrale meldingen-kern
+    // (kanaalkeuze, terugval en logboek zitten daar). Verzending ná het antwoord: snel formulier.
     $purl = APP_URL . '/portaal/?token=' . $token;
-    $sol_voor_mail = ['voornaam'=>$voornaam, 'achternaam'=>$achternaam, 'email'=>$email, 'portaal_token'=>$token];
-    $welkom_verstuurd = false;
-    if (function_exists('stuur_template_mail')) {
-        try { $welkom_verstuurd = stuur_template_mail('welkomstmail', $email, $sol_voor_mail, $seizoen, [], $sid); }
-        catch (\Exception $e) { $welkom_verstuurd = false; }
-    }
-    if (!$welkom_verstuurd && function_exists('stuur_mail')) {
-        $body = "<p>Bedankt voor je aanmelding als lifeguard bij Reddingsbrigade Paal 13!</p>"
-              . "<p>Aanmelding ontvangen voor <strong>{$seizoen['naam']}</strong>.</p>"
-              . ($ter ? "<p><em>Welkom terug! We zien dat je eerder hebt gesolliciteerd.</em></p>" : "")
-              . "<p>Je ontvangt bericht als je wordt uitgenodigd voor de selectiedag. Je kunt je status volgen op:<br>"
-              . "<a href='$purl' class='btn'>Bekijk mijn sollicitatie →</a></p>";
-        try { stuur_mail($email, $voornaam, 'Aanmelding ontvangen — Paal 13 ' . $seizoen['naam'], $body, $sid); } catch (\Exception $e) {}
-    }
-
-    // Melding naar bestuur
-    if (function_exists('stuur_mail') && defined('MAIL_BESTUUR')) {
-        $body = "<p><strong>$voornaam $achternaam</strong><br>$email | $tel" . ($ter ? "<br><em>⚠️ Terugkerende sollicitant</em>" : "") . "</p>"
-              . "<p><a href='" . APP_URL . "/admin/sollicitanten.php' class='btn'>Bekijk dashboard →</a></p>";
-        try { stuur_mail(MAIL_BESTUUR, 'Bestuur', "Nieuwe aanmelding: $voornaam $achternaam", $body, $sid); } catch (\Exception $e) {}
-    }
-
-    // Aanmeldbevestiging ook via SMS/WhatsApp, als dat voor dit type is ingesteld.
-    // (De e-mail is hierboven al via de template verstuurd; hier alleen de extra kanalen.)
-    if (function_exists('notificatie_kanalen')) {
-        $k = notificatie_kanalen('aanmeldbevestiging');
-        if (($k['sms'] || $k['wa']) && function_exists('notificatie_verstuur')) {
-            $kort = "Hoi $voornaam, we hebben je aanmelding voor lifeguard bij Paal 13 ontvangen. Je hoort van ons over de selectiedag. Volg je status: " . APP_URL . '/portaal/?token=' . $token;
-            // e-mail hier uitzetten (al verstuurd), alleen sms/wa laten lopen
-            $tijdelijk_type = 'aanmeldbevestiging';
-            try {
-                notificatie_verstuur($tijdelijk_type, ['telefoon' => $tel, 'naam' => "$voornaam $achternaam"], ['kort' => $kort], $sid);
-            } catch (\Exception $e) { error_log('notificatie aanmeldbevestiging: ' . $e->getMessage()); }
-        }
+    if (function_exists('melding_verstuur')) {
+        try { melding_verstuur('aanmelding_bevestiging', $sid, ['portaal_url' => $purl], ['prioriteit' => 'na_antwoord']); }
+        catch (\Throwable $e) { error_log('melding aanmelding_bevestiging: ' . $e->getMessage()); }
+        try {
+            melding_verstuur('bestuur_nieuwe_aanmelding', $sid,
+                ['terugkerend_html' => $ter ? '<p><em>Terugkerende sollicitant: heeft eerder gesolliciteerd.</em></p>' : ''],
+                ['prioriteit' => 'na_antwoord']);
+        } catch (\Throwable $e) { error_log('melding bestuur_nieuwe_aanmelding: ' . $e->getMessage()); }
     }
 
     // Competenties uit Authentik (best-effort)

@@ -300,11 +300,14 @@ function beschikbaarheid2_concept_wissen(int $sol_id): void {
     catch (\Exception $e) {}
 }
 
-function beschikbaarheid2_opslaan(int $sol_id, array $input): void {
+function beschikbaarheid2_opslaan(int $sol_id, array $input, string $door = 'sollicitant'): void {
     beschikbaarheid2_auto_setup();
     $db = db();
     $vaste = array_values(array_intersect(array_map('intval', $input['vaste_dagen_uit'] ?? []), [1,2,3,4,5,6,7]));
     $voorlopig = !empty($input['voorlopig']) ? 1 : 0;
+    // Was het al definitief? (voor de melding "beschikbaarheid definitief" hieronder)
+    $was_definitief = false;
+    try { $wq = $db->prepare("SELECT voorlopig FROM beschikbaarheid_profiel WHERE sollicitatie_id=?"); $wq->execute([$sol_id]); $wv = $wq->fetch(); $was_definitief = $wv && (int)$wv['voorlopig'] === 0; } catch (\Exception $e) {}
 
     $db->prepare("INSERT INTO beschikbaarheid_profiel (sollicitatie_id, vaste_dagen_uit, vaste_toelichting, vaste_is_voorkeur, voorlopig, opmerking, ingevuld_op, definitief_op, bijgewerkt_op)
                   VALUES (?,?,?,1,?,?,NOW(), " . ($voorlopig ? "NULL" : "NOW()") . ", NOW())
@@ -346,7 +349,7 @@ function beschikbaarheid2_opslaan(int $sol_id, array $input): void {
     } catch (\Exception $e) {}
     $db->prepare("DELETE FROM beschikbaarheid_verzoek WHERE sollicitatie_id=? AND status='open'")->execute([$sol_id]);
     $insv = $db->prepare("INSERT INTO beschikbaarheid_verzoek (sollicitatie_id, van_week, tot_week, dagen_aantal, dagen_pool, toelichting, status) VALUES (?,?,?,?,?,?, 'open')");
-    $behouden = [];
+    $behouden = []; $nieuwe_verzoeken = [];
     foreach ($input['verzoeken'] ?? [] as $v) {
         $vw=(int)($v['van_week']??0); $tw=(int)($v['tot_week']??0); $da=(int)($v['dagen']??0);
         if ($vw<1||$tw<1||$da<1||$da>6) continue;
@@ -362,6 +365,7 @@ function beschikbaarheid2_opslaan(int $sol_id, array $input): void {
             if ($pool_arr) $pool = json_encode($pool_arr);
         }
         $insv->execute([$sol_id, $vw, $tw, $da, $pool, mb_substr(trim($v['toelichting']??''),0,300)?:null]);
+        $nieuwe_verzoeken[] = (int)$db->lastInsertId();
     }
     // Besliste verzoeken die niet (ongewijzigd) terugkwamen: opruimen. Afgewezen verzoeken staan
     // niet in het formulier en blijven bewaard (transparant op het overzicht).
@@ -372,6 +376,13 @@ function beschikbaarheid2_opslaan(int $sol_id, array $input): void {
 
     beschikbaarheid2_concept_wissen($sol_id); // definitief opgeslagen → concept is niet meer nodig
     beschikbaarheid2_sync_compat($sol_id);
+
+    // Meldingen (alleen als de sollicitant zelf opslaat): nieuwe verzoeken → bestuur;
+    // voorlopig → definitief: bevestiging aan de sollicitant + bestuursmelding.
+    if ($door === 'sollicitant') {
+        if ($nieuwe_verzoeken) beschikbaarheid2_verzoeken_melden($sol_id, $nieuwe_verzoeken);
+        if (!$voorlopig && !$was_definitief) beschikbaarheid2_definitief_melden($sol_id);
+    }
 }
 
 /** Bestuurs-correctie zetten/wissen voor één week (herontworpen verhindering). */
@@ -415,36 +426,52 @@ function beschikbaarheid2_verzoek_beslis(int $verzoek_id, string $besluit): void
  * onder Berichten in het portaal. Faalt stil: een mislukte melding mag het besluit niet blokkeren.
  */
 function beschikbaarheid2_verzoek_melding(int $verzoek_id, string $status): void {
-    if (!function_exists('notificatie_verstuur')) return;
+    if (!function_exists('melding_verstuur')) return;
     try {
-        $q = db()->prepare("SELECT v.van_week, v.tot_week, v.dagen_aantal, v.sollicitatie_id, p.voornaam, p.email, p.telefoon, s.seizoen_id
-                            FROM beschikbaarheid_verzoek v JOIN sollicitaties s ON s.id=v.sollicitatie_id JOIN personen p ON p.id=s.persoon_id
-                            WHERE v.id=?");
-        $q->execute([$verzoek_id]);
-        $v = $q->fetch();
-        if (!$v || empty($v['email'])) return;
-
-        $seizoen = null;
-        try { $sq = db()->prepare("SELECT * FROM seizoenen WHERE id=?"); $sq->execute([$v['seizoen_id']]); $seizoen = $sq->fetch() ?: null; } catch (\Exception $e) {}
-        $wkd = seizoen_weken_datums($seizoen);
-        $lbl = function ($wn) use ($wkd) { $wn = (int)$wn; return isset($wkd[$wn]) ? 'week ' . $wn . ' (' . $wkd[$wn]['start']->format('j M') . ')' : 'week ' . $wn; };
-        $weken = (int)$v['van_week'] === (int)$v['tot_week'] ? $lbl($v['van_week']) : $lbl($v['van_week']) . ' t/m ' . $lbl($v['tot_week']);
+        $v = beschikbaarheid2_verzoek_vars($verzoek_id);
+        if (!$v) return;
         $goed = $status === 'goedgekeurd';
-        $url = rtrim(APP_URL, '/') . '/portaal/beschikbaarheid.php';
-        $voornaam = (string)($v['voornaam'] ?? '');
-        $onderwerp = $goed ? 'Je verzoek voor minder dagen is goedgekeurd — Paal 13' : 'Je verzoek voor minder dagen is afgewezen — Paal 13';
-        $body = '<p>Hoi ' . htmlspecialchars($voornaam) . ',</p>'
-              . '<p>Het bestuur heeft je verzoek om in <strong>' . htmlspecialchars($weken) . '</strong> maximaal <strong>' . (int)$v['dagen_aantal'] . ' dagen per week</strong> te werken '
-              . ($goed ? '<strong>goedgekeurd</strong>. We houden daar rekening mee in de planning.' : '<strong>niet goedgekeurd</strong>. We gaan voor die weken uit van je gewone beschikbaarheid. Vragen? Neem gerust contact met ons op.')
-              . '</p>'
-              . '<p><a href="' . htmlspecialchars($url) . '">Bekijk je beschikbaarheid in het portaal &rarr;</a></p>'
-              . '<p>Groet,<br>Reddingsbrigade Paal 13</p>';
-        $kort = function_exists('notificatie_korte_tekst') ? notificatie_korte_tekst('verzoek_beslist', $voornaam) : '';
-        notificatie_verstuur('verzoek_beslist',
-            ['email' => $v['email'], 'telefoon' => $v['telefoon'] ?? null, 'naam' => $voornaam],
-            ['onderwerp' => $onderwerp, 'email_body' => $body, 'kort' => $kort],
-            (int)$v['sollicitatie_id']);
+        $v['besluit']      = $goed ? 'goedgekeurd' : 'afgewezen';
+        $v['besluit_html'] = $goed
+            ? '<p>We houden daar rekening mee in de planning.</p>'
+            : '<p>We gaan voor die weken uit van je gewone beschikbaarheid. Vragen? Neem gerust contact met ons op.</p>';
+        $sol_id = (int)$v['sollicitatie_id'];
+        unset($v['sollicitatie_id']);
+        melding_verstuur('verzoek_beslist', $sol_id, $v, ['referentie' => 'verzoek:' . $verzoek_id]);
     } catch (\Throwable $e) { error_log('beschikbaarheid2_verzoek_melding: ' . $e->getMessage()); }
+}
+
+/** Sjabloonvariabelen van een verzoek: verzoek_weken, verzoek_dagen, verzoek_toelichting (+ sollicitatie_id). */
+function beschikbaarheid2_verzoek_vars(int $verzoek_id): ?array {
+    $q = db()->prepare("SELECT v.van_week, v.tot_week, v.dagen_aantal, v.toelichting, v.sollicitatie_id, s.seizoen_id
+                        FROM beschikbaarheid_verzoek v JOIN sollicitaties s ON s.id=v.sollicitatie_id WHERE v.id=?");
+    $q->execute([$verzoek_id]);
+    $v = $q->fetch();
+    if (!$v) return null;
+    $seizoen = null;
+    try { $sq = db()->prepare("SELECT * FROM seizoenen WHERE id=?"); $sq->execute([$v['seizoen_id']]); $seizoen = $sq->fetch() ?: null; } catch (\Exception $e) {}
+    $wkd = seizoen_weken_datums($seizoen);
+    $lbl = function ($wn) use ($wkd) { $wn = (int)$wn; return isset($wkd[$wn]) ? 'week ' . $wn . ' (' . $wkd[$wn]['start']->format('j M') . ')' : 'week ' . $wn; };
+    $weken = (int)$v['van_week'] === (int)$v['tot_week'] ? $lbl($v['van_week']) : $lbl($v['van_week']) . ' t/m ' . $lbl($v['tot_week']);
+    return [
+        'sollicitatie_id'    => (int)$v['sollicitatie_id'],
+        'verzoek_weken'      => $weken,
+        'verzoek_dagen'      => (string)(int)$v['dagen_aantal'],
+        'verzoek_toelichting'=> (string)($v['toelichting'] ?? ''),
+    ];
+}
+
+/** Bestuur informeren over nieuw ingediende verzoeken (meldingstype 'bestuur_verzoek_minder_dagen'). */
+function beschikbaarheid2_verzoeken_melden(int $sol_id, array $verzoek_ids): void {
+    if (!function_exists('melding_verstuur')) return;
+    foreach ($verzoek_ids as $vid) {
+        try {
+            $v = beschikbaarheid2_verzoek_vars((int)$vid);
+            if (!$v) continue;
+            unset($v['sollicitatie_id']);
+            melding_verstuur('bestuur_verzoek_minder_dagen', $sol_id, $v, ['referentie' => 'verzoek:' . (int)$vid, 'prioriteit' => 'na_antwoord']);
+        } catch (\Throwable $e) { error_log('beschikbaarheid2_verzoeken_melden: ' . $e->getMessage()); }
+    }
 }
 
 /** Alle openstaande verzoeken van een seizoen (voor centraal bestuursoverzicht). */
@@ -481,16 +508,26 @@ function beschikbaarheid2_deadline(?array $seizoen = null): ?DateTime {
 }
 
 /** Sollicitant of bestuur: markeer beschikbaarheid als definitief (haalt voorlopig-vlag weg). */
-function beschikbaarheid2_definitief_maken(int $sol_id): bool {
+function beschikbaarheid2_definitief_maken(int $sol_id, string $door = 'sollicitant'): bool {
     beschikbaarheid2_auto_setup();
     try {
         $c = db()->prepare("SELECT COUNT(*) FROM beschikbaarheid_blok WHERE sollicitatie_id=?");
         $c->execute([$sol_id]);
         if (!$c->fetchColumn()) return false; // geen blokken → niets om definitief te maken
-        db()->prepare("UPDATE beschikbaarheid_profiel SET voorlopig=0, definitief_op=IFNULL(definitief_op, NOW()), bijgewerkt_op=NOW() WHERE sollicitatie_id=?")
-            ->execute([$sol_id]);
+        $u = db()->prepare("UPDATE beschikbaarheid_profiel SET voorlopig=0, definitief_op=IFNULL(definitief_op, NOW()), bijgewerkt_op=NOW() WHERE sollicitatie_id=? AND voorlopig=1");
+        $u->execute([$sol_id]);
+        if ($u->rowCount() > 0 && $door === 'sollicitant') beschikbaarheid2_definitief_melden($sol_id);
         return true;
     } catch (\Exception $e) { return false; }
+}
+
+/** Bevestiging "taak afgerond" aan de sollicitant + (optionele) bestuursmelding. */
+function beschikbaarheid2_definitief_melden(int $sol_id): void {
+    if (!function_exists('melding_verstuur')) return;
+    try {
+        melding_verstuur('taak_afgerond', $sol_id, ['taak_naam' => 'Beschikbaarheid definitief maken'], ['prioriteit' => 'na_antwoord', 'referentie' => 'besch_definitief']);
+        melding_verstuur('bestuur_beschikbaarheid_definitief', $sol_id, [], ['prioriteit' => 'na_antwoord', 'referentie' => 'besch_definitief']);
+    } catch (\Throwable $e) { error_log('beschikbaarheid2_definitief_melden: ' . $e->getMessage()); }
 }
 
 function beschikbaarheid2_voorlopigen(int $seizoen_id): array {

@@ -62,6 +62,19 @@ function notificatie_kanalen(string $type): array {
  * @return array  welke kanalen zijn gebruikt en met welk resultaat
  */
 function notificatie_verstuur(string $type, array $ontvanger, array $inhoud, ?int $sol_id = null): array {
+    // @deprecated — delegeert naar de centrale meldingen-kern als 'handmatig' bericht met de meegegeven inhoud.
+    if (function_exists('melding_verstuur')) {
+        $r = melding_verstuur('handmatig', (int)($sol_id ?? 0), [
+            'onderwerp'  => $inhoud['onderwerp'] ?? 'Bericht van Paal 13',
+            'body_html'  => $inhoud['email_body'] ?? ($inhoud['kort'] ?? ''),
+            'tekst_kort' => $inhoud['kort'] ?? strip_tags($inhoud['email_body'] ?? ''),
+        ], [
+            'kanaalmodus' => melding_kanaalmodus(melding_type_alias($type)),
+            'ontvanger'   => $sol_id ? null : ['email' => $ontvanger['email'] ?? '', 'naam' => $ontvanger['naam'] ?? '', 'telefoon' => $ontvanger['telefoon'] ?? '', 'rol' => 'direct'],
+            'negeer_afmelding' => true,
+        ]);
+        return [$r['kanaal'] ?? 'email' => $r['status'] === 'verstuurd'];
+    }
     $kanalen = notificatie_kanalen($type);
     $resultaat = [];
 
@@ -134,6 +147,21 @@ function notificatie_korte_tekst(string $type, string $voornaam, array $seizoen 
  * voor het type 'portaal_code' heeft aangezet én de kanalen actief zijn en er een nummer is.
  */
 function portaal_code_versturen(string $email, string $voornaam, string $code, ?string $telefoon = null): void {
+    // Nieuwe weg: centrale meldingen-kern (kanaalmodus 'portaal_code', persoonsvoorkeur, e-mail-terugval).
+    // De inhoud (code) wordt nooit gelogd; verzending ná het antwoord zodat het inlogscherm snel is.
+    if (function_exists('melding_verstuur')) {
+        $pid = null; $voorkeur = 'email';
+        try {
+            $q = db()->prepare("SELECT id, kanaal_voorkeur FROM personen WHERE email=? LIMIT 1");
+            $q->execute([$email]);
+            if ($p = $q->fetch()) { $pid = (int)$p['id']; $voorkeur = (string)($p['kanaal_voorkeur'] ?: 'whatsapp'); }
+        } catch (\Throwable $e) {}
+        melding_verstuur('portaal_code', 0, ['otp_code' => $code, 'voornaam' => $voornaam], [
+            'ontvanger'  => ['email' => $email, 'naam' => $voornaam, 'telefoon' => (string)$telefoon, 'persoon_id' => $pid, 'kanaal_voorkeur' => $voorkeur, 'rol' => 'direct'],
+            'prioriteit' => 'na_antwoord', 'dedup_min' => 0,
+        ]);
+        return;
+    }
     $k = notificatie_kanalen('portaal_code');
     $mail_body = '<p>Jouw inlogcode voor het sollicitantenportaal:</p>'
         . '<div style="font-size:40px;font-weight:bold;letter-spacing:10px;color:#054d8a;text-align:center;background:#f0f4f8;border-radius:8px;padding:22px;margin:16px 0">' . htmlspecialchars($code) . '</div>'

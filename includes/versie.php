@@ -3,10 +3,22 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.87.0');
+define('APP_VERSIE', '2.87.1');
 
 function app_changelog(): array {
     return [
+        '2.87.1' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Meldingen: één fase-functie en alle meldingen via de kern (bundel 2 van 7)',
+            'punten' => [
+                'Elke fase-overgang (paneel, bulk, bellijst, automatisch uitnodigen, formulier inleveren) loopt via één functie die ook de documenten en het kennismakingspakket klaarzet. Opgelost: wie automatisch of via de lijst werd uitgenodigd, kreeg de intake- en gezondheidsverklaring niet klaargezet',
+                'Nieuwe meldingen: bevestiging na aanmelden voor de selectiedag (formulier ingeleverd), bevestiging als je beschikbaarheid definitief is, ondertekenverzoek aan een 18+ sollicitant, en bestuursmeldingen bij formulier ingeleverd, beschikbaarheid definitief, nieuw verzoek minder dagen, terugtrekken en ondertekening afgerond (per type aan/uit)',
+                'Aanmeldbevestiging, uitnodigingen, welkomstmail, ondertekenverzoeken, bevestigingen en het besluit over een verzoek gebruiken nu allemaal de bewerkbare sjablonen (geen vaste teksten meer in de code) en de kanaalkeuze per type',
+                'De portaal-inlogcode en de bevestigingen na een formulier worden ná het antwoord verstuurd: het inloggen en inleveren voelen sneller',
+                'Opgelost: na het corrigeren van het e-mailadres van een ouder werd het ondertekenverzoek niet opnieuw verstuurd; de fase-wissel via de lijst werkte zonder beveiliging (nu een beveiligd formulier)',
+                'Het bestuur wordt geïnformeerd als een sollicitant zichzelf terugtrekt (AVG-verzoek), vóórdat de gegevens geanonimiseerd worden',
+            ],
+        ],
         '2.87.0' => [
             'datum'  => '2026-09-18',
             'titel'  => 'Meldingen: één centrale verzendkern voor e-mail, WhatsApp en SMS (bundel 1 van 7)',
