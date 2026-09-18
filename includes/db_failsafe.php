@@ -117,6 +117,9 @@ function db_failsafe(): void {
         'audit_dag_auto_setup',
         'landing_auto_setup',
         'optout_auto_setup',
+        'sjablonen_auto_setup',
+        'meldingen_log_auto_setup',
+        'personen_kanaal_auto_setup',
     ];
     foreach ($setups as $fn) {
         if (function_exists($fn)) {

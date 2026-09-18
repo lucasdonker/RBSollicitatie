@@ -51,27 +51,32 @@ function telefoon_normaliseer(string $tel): ?string {
  * $tekst wordt kort gehouden; de aanroeper zorgt voor een zinnige, korte boodschap.
  */
 function sms_verstuur(string $telefoon, string $tekst): bool {
-    if (!sms_actief()) return false;
+    return sms_verstuur_res($telefoon, $tekst)['ok'];
+}
+
+/** Zelfde als sms_verstuur(), maar met de reden bij falen: ['ok'=>bool, 'fout'=>?string]. */
+function sms_verstuur_res(string $telefoon, string $tekst): array {
+    if (!sms_actief()) return ['ok' => false, 'fout' => 'sms niet actief'];
     $nummer = telefoon_normaliseer($telefoon);
-    if (!$nummer) { error_log('sms_verstuur: onherkenbaar nummer'); return false; }
+    if (!$nummer) return ['ok' => false, 'fout' => 'onherkenbaar nummer'];
 
     $gateway = instelling('sms.gateway', '');
     try {
         switch ($gateway) {
             case 'eigen_telefoon':
             case 'http_gateway':
-                return sms_via_http($nummer, $tekst);
+                $ok = sms_via_http($nummer, $tekst); break;
             case 'easysendsms':
-                return sms_via_easysendsms($nummer, $tekst);
+                $ok = sms_via_easysendsms($nummer, $tekst); break;
             case 'messagebird':
-                return sms_via_messagebird($nummer, $tekst);
+                $ok = sms_via_messagebird($nummer, $tekst); break;
             default:
-                error_log('sms_verstuur: onbekende gateway ' . $gateway);
-                return false;
+                return ['ok' => false, 'fout' => 'onbekende gateway ' . $gateway];
         }
+        return ['ok' => (bool)$ok, 'fout' => $ok ? null : 'gateway ' . $gateway . ' gaf geen 2xx'];
     } catch (\Throwable $e) {
         error_log('sms_verstuur (' . $gateway . '): ' . $e->getMessage());
-        return false;
+        return ['ok' => false, 'fout' => $e->getMessage()];
     }
 }
 
@@ -147,7 +152,7 @@ function sms_via_messagebird(string $nummer, string $tekst): bool {
     $resp = curl_exec($ch);
     $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
-    return $code >= 200 && $code < 201 + 1;
+    return $code >= 200 && $code < 300;
 }
 
 /**
@@ -159,9 +164,14 @@ function sms_via_messagebird(string $nummer, string $tekst): bool {
  * instellingenscherm.
  */
 function wa_verstuur(string $telefoon, string $tekst): bool {
-    if (!wa_actief()) return false;
+    return wa_verstuur_res($telefoon, $tekst)['ok'];
+}
+
+/** Zelfde als wa_verstuur(), maar met de reden bij falen: ['ok'=>bool, 'fout'=>?string]. */
+function wa_verstuur_res(string $telefoon, string $tekst): array {
+    if (!wa_actief()) return ['ok' => false, 'fout' => 'whatsapp niet actief'];
     $nummer = telefoon_normaliseer($telefoon); // E.164 met '+', precies wat WhatsReach wil
-    if (!$nummer) return false;
+    if (!$nummer) return ['ok' => false, 'fout' => 'onherkenbaar nummer'];
 
     $sleutel  = instelling('wa.api_sleutel', '');
     // Base URL is https://api.whatsreach.co/api/v1 ; het verzend-endpoint is /send
@@ -188,13 +198,14 @@ function wa_verstuur(string $telefoon, string $tekst): bool {
         // Succes: 2xx én "success": true in de response
         if ($code >= 200 && $code < 300) {
             $j = json_decode((string)$resp, true);
-            return !is_array($j) || ($j['success'] ?? true) !== false;
+            if (!is_array($j) || ($j['success'] ?? true) !== false) return ['ok' => true, 'fout' => null];
+            return ['ok' => false, 'fout' => 'WhatsReach: ' . substr((string)($j['message'] ?? 'success=false'), 0, 120)];
         }
-        error_log('wa_verstuur: HTTP ' . $code . ' — ' . substr((string)$resp, 0, 200));
-        return false;
+        error_log('wa_verstuur: HTTP ' . $code);
+        return ['ok' => false, 'fout' => 'WhatsReach HTTP ' . ($code ?: 'geen verbinding')];
     } catch (\Throwable $e) {
         error_log('wa_verstuur: ' . $e->getMessage());
-        return false;
+        return ['ok' => false, 'fout' => $e->getMessage()];
     }
 }
 

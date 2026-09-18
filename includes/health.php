@@ -100,7 +100,7 @@ function health_check_mailwachtrij(): array {
             return ['status' => 'ok', 'uitleg' => 'Geen mailwachtrij in gebruik.', 'hersteld' => false];
         }
         // Berichten die al lang wachten (meer dan 1 uur, nog niet verzonden)
-        $q = $db->query("SELECT COUNT(*) FROM mail_queue WHERE verzonden_op IS NULL AND aangemaakt_op < DATE_SUB(NOW(), INTERVAL 1 HOUR)");
+        $q = $db->query("SELECT COUNT(*) FROM mail_queue WHERE status IN ('wacht','bezig') AND aangemaakt_op < DATE_SUB(NOW(), INTERVAL 1 HOUR)");
         $vast = (int)$q->fetchColumn();
         if ($vast > 0) {
             return ['status' => 'waarschuwing', 'uitleg' => "$vast e-mail(s) wachten al meer dan een uur. Draait de cron en klopt de SMTP-instelling?", 'hersteld' => false];

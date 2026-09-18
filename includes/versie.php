@@ -3,10 +3,23 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.86.0');
+define('APP_VERSIE', '2.87.0');
 
 function app_changelog(): array {
     return [
+        '2.87.0' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Meldingen: één centrale verzendkern voor e-mail, WhatsApp en SMS (bundel 1 van 7)',
+            'punten' => [
+                'Alle meldingen lopen voortaan door één verzendkern: per soort melding kies je e-mail, WhatsApp/SMS of beide; bij een mislukt WhatsApp- of SMS-bericht gaat het bericht automatisch alsnog per e-mail',
+                'Sollicitanten krijgen korte berichten via WhatsApp (standaard aan zodra er een telefoonnummer is) of SMS; afmelden kan straks onder Mijn gegevens en in het beheer. Ouders en het bestuur krijgen altijd e-mail',
+                'Eén logboek voor alle kanalen: per bericht zie je het kanaal, of er is teruggevallen op e-mail, de status (wacht, verstuurd, mislukt, overgeslagen) en de reden bij overslaan',
+                'Elk meldingstype heeft nu naast de e-mailtekst ook een korte WhatsApp/SMS-tekst en een samenvatting voor het portaal (bewerkbaar in Mail templates; standaardteksten meegeleverd)',
+                'Beveiliging: maximaal 8 automatische meldingen per ontvanger per dag, WhatsApp-uurlimiet en automatische pauze na herhaalde fouten, geen e-mailadressen meer in het foutenlog',
+                'Het testbericht in Instellingen › Berichten loopt door de hele keten (kanaalkeuze, terugval, logboek)',
+                'Opgelost: het dashboard telde mislukte mails nooit mee (verkeerde statuswaarden); de health-check op de mailwachtrij keek naar een niet-bestaande kolom; MessageBird-sms werd bij een geldig antwoord soms als mislukt gezien; het bestuursadres in de mailfooter negeerde de instelling',
+            ],
+        ],
         '2.86.0' => [
             'datum'  => '2026-09-18',
             'titel'  => 'Beschikbaarheid: compacter formulier, automatisch bewaard, terug naar waar je was',

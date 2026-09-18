@@ -17,6 +17,8 @@ const FOUTCODES = [
     'P13-M001' => 'SMTP verbinding mislukt',
     'P13-M002' => 'Mail verzenden mislukt',
     'P13-M003' => 'Template niet gevonden',
+    'P13-M004' => 'Melding overgeslagen: dagplafond per ontvanger bereikt',
+    'P13-M005' => 'WhatsApp tijdelijk gepauzeerd na herhaalde fouten',
     // Portaal
     'P13-P001' => 'OTP genereren mislukt',
     'P13-P002' => 'OTP verificatie mislukt',

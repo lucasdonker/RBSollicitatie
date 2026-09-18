@@ -162,14 +162,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($actie === 'bericht_test') {
-        // Test-SMS of test-WA sturen
-        $naar = trim($_POST['test_nummer'] ?? '');
-        $via = $_POST['test_kanaal'] ?? 'sms';
-        $tekst = 'Testbericht van Paal 13 sollicitatiesysteem.';
-        $ok = false;
-        if ($via === 'sms' && function_exists('sms_verstuur')) $ok = sms_verstuur($naar, $tekst);
-        if ($via === 'wa' && function_exists('wa_verstuur')) $ok = wa_verstuur($naar, $tekst);
-        flash($ok ? 'succes' : 'fout', $ok ? 'Testbericht verstuurd.' : 'Testbericht mislukt — controleer de instellingen (en de foutlog).');
+        // Testbericht door de hele meldingen-keten (kanaalplan, terugval, log) sturen.
+        $naar_tel  = trim($_POST['test_nummer'] ?? '');
+        $naar_mail = trim($_POST['test_email'] ?? ($_SESSION['bhd_email'] ?? ''));
+        $via       = $_POST['test_kanaal'] ?? 'sms';
+        $voorkeur  = $via === 'wa' ? 'whatsapp' : ($via === 'sms' ? 'sms' : 'email');
+        $modus     = $via === 'email' ? 'email' : 'kort';
+        $res = ['status' => 'mislukt', 'reden' => 'meldingen-kern ontbreekt', 'kanaal' => null];
+        if (function_exists('melding_verstuur')) {
+            $res = melding_verstuur('handmatig', 0, [
+                'onderwerp'  => 'Testbericht Paal 13',
+                'body_html'  => '<p>Dit is een testbericht van het Paal 13 sollicitatiesysteem. Als je dit ontvangt, werkt het gekozen kanaal.</p>',
+                'tekst_kort' => 'Testbericht van het Paal 13 sollicitatiesysteem. Als je dit leest, werkt het kanaal.',
+            ], [
+                'ontvanger'   => ['email' => $naar_mail, 'naam' => 'Test', 'telefoon' => $naar_tel, 'rol' => 'direct', 'kanaal_voorkeur' => $voorkeur],
+                'kanaalmodus' => $modus, 'prioriteit' => 'direct', 'negeer_plafond' => true,
+            ]);
+        }
+        $ok = ($res['status'] === 'verstuurd');
+        $melding = $ok
+            ? 'Testbericht verstuurd via ' . ($res['kanaal'] ?? $via) . ($res['kanaal'] && $res['kanaal'] !== $voorkeur ? ' (terugval; het gekozen kanaal mislukte, zie het berichtenlog)' : '') . '.'
+            : 'Testbericht mislukt: ' . ($res['reden'] ?? 'onbekend') . ' — controleer de instellingen en het berichtenlog.';
+        flash($ok ? 'succes' : 'fout', $melding);
         redirect(APP_URL . '/admin/instellingen.php?tab=berichten');
     }
 
@@ -1621,10 +1635,15 @@ require __DIR__ . '/layout_top.php';
           <input type="text" name="test_nummer" placeholder="06..." style="width:160px">
         </div>
         <div>
+          <label style="display:block;font-size:12px;margin-bottom:2px">E-mail (terugval)</label>
+          <input type="email" name="test_email" value="<?= h($_SESSION['bhd_email'] ?? '') ?>" style="width:220px">
+        </div>
+        <div>
           <label style="display:block;font-size:12px;margin-bottom:2px">Via</label>
           <select name="test_kanaal" style="width:120px">
-            <option value="sms">SMS</option>
             <option value="wa">WhatsApp</option>
+            <option value="sms">SMS</option>
+            <option value="email">E-mail</option>
           </select>
         </div>
         <button type="submit" class="btn btn-outline btn-sm">Test versturen</button>

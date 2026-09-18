@@ -60,12 +60,12 @@ $max_trend = max(1, ...array_map(fn($r) => (int)$r['aantal'], $trend ?: [['aanta
 $meldingen = dashboard_meldingen($sid);
 $health = [];
 try {
-    $q = $db->query("SELECT COUNT(*) FROM mail_log WHERE status='wachten' AND verstuurd_op < DATE_SUB(NOW(), INTERVAL 30 MINUTE)");
+    $q = $db->query("SELECT COUNT(*) FROM mail_log WHERE status IN ('wacht','bezig') AND verstuurd_op < DATE_SUB(NOW(), INTERVAL 30 MINUTE)");
     $health['mail_stuck'] = (int)$q->fetchColumn();
 } catch (Exception $e) { $health['mail_stuck'] = 0; }
 
 try {
-    $q = $db->query("SELECT COUNT(*) FROM mail_log WHERE status='fout' AND verstuurd_op > DATE_SUB(NOW(), INTERVAL 24 HOUR)");
+    $q = $db->query("SELECT COUNT(*) FROM mail_log WHERE status='mislukt' AND verstuurd_op > DATE_SUB(NOW(), INTERVAL 24 HOUR)");
     $health['mail_fout_24h'] = (int)$q->fetchColumn();
 } catch (Exception $e) { $health['mail_fout_24h'] = 0; }
 

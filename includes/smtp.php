@@ -14,6 +14,26 @@ class Mailer
         return defined('SMTP_HOST') && SMTP_HOST !== '';
     }
 
+    /**
+     * Puur verzenden (SMTP of mail()), ZONDER logregel. Dit is wat de centrale meldingen-kern
+     * (includes/meldingen/verzend.php) gebruikt; die logt zelf in mail_log.
+     * @return array{ok:bool, fout:?string}
+     */
+    public static function verzend(string $naar, string $naam, string $onderwerp, string $html_body, array $bijlagen = []): array {
+        try {
+            $ok = self::smtpActief()
+                ? self::viaSMTP($naar, $naam, $onderwerp, $html_body, $bijlagen)
+                : self::viaPhpMail($naar, $naam, $onderwerp, $html_body);
+            return ['ok' => (bool)$ok, 'fout' => $ok ? null : 'verzenden gaf false'];
+        } catch (\Throwable $e) {
+            error_log('[Mailer] Fout: ' . $e->getMessage());
+            return ['ok' => false, 'fout' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Legacy: verzenden én zelf loggen in mail_log. Nieuwe code gebruikt melding_verstuur().
+     */
     public static function verstuur(
         string $naar,
         string $naam,
@@ -22,27 +42,16 @@ class Mailer
         ?int $sol_id = null,
         array $bijlagen = []
     ): bool {
-        $ok = false;
-        $fout = null;
-
-        try {
-            if (self::smtpActief()) {
-                $ok = self::viaSMTP($naar, $naam, $onderwerp, $html_body, $bijlagen);
-            } else {
-                $ok = self::viaPhpMail($naar, $naam, $onderwerp, $html_body);
-            }
-        } catch (Exception $e) {
-            $fout = $e->getMessage();
-            $ok = false;
-            error_log('[Mailer] Fout: ' . $fout);
-        }
+        $r    = self::verzend($naar, $naam, $onderwerp, $html_body, $bijlagen);
+        $ok   = $r['ok'];
+        $fout = $r['fout'];
 
         // Mislukte mail ook naar het foutenlog schrijven, zodat de reden zichtbaar is
-        // in Instellingen → Foutenlog (niet alleen in het server-errorlog).
+        // in Instellingen → Foutenlog (niet alleen in het server-errorlog). Zonder adres (AVG).
         if (!$ok && function_exists('p13_fout')) {
             $reden = $fout ?: 'onbekende reden';
             $code  = self::smtpActief() ? 'P13-M001' : 'P13-M002';
-            p13_fout($code, "Mail aan {$naar} ('{$onderwerp}') mislukt: {$reden}");
+            p13_fout($code, "Mail ('{$onderwerp}') mislukt: {$reden}");
         }
 
         // Log in database
@@ -273,7 +282,7 @@ class Mailer
             "MIME-Version: 1.0",
             "Content-Type: text/html; charset=UTF-8",
             "From: {$fromName} <{$from}>",
-            "Reply-To: " . (defined('MAIL_BESTUUR') ? MAIL_BESTUUR : $from),
+            "Reply-To: " . (function_exists('bestuur_email') && bestuur_email() !== '' ? bestuur_email() : (defined('MAIL_BESTUUR') ? MAIL_BESTUUR : $from)),
         ]);
         return @mail($naar, $onderwerp, self::htmlTemplate($naam, $onderwerp, $body), $headers);
     }
