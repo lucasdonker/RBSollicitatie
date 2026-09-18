@@ -2178,3 +2178,22 @@ details.b2-uitz > div { padding: 0 16px 16px; }
   }
   .blk-knop-volgende { flex: none; height: 44px; padding: 0 22px; font-size: 14px; }
 }
+
+/* ═══ P13-EDITOR (gedeelde e-mail-editor, admin/_editor.php + assets/js/editor.js) ═══ */
+.p13-editor { border: 1px solid var(--rand); border-radius: 8px; overflow: hidden; background: #fff; }
+.p13-etabs { display: flex; border-bottom: 1px solid var(--rand); background: #f7f8fa; }
+.p13-etab { padding: 7px 14px; font-size: 12px; font-weight: 500; cursor: pointer; border: none; background: none; color: var(--grijs); border-bottom: 2px solid transparent; }
+.p13-etab.actief { color: var(--navy); border-bottom-color: var(--oranje); background: #fff; }
+.p13-etoolbar { background: #f7f8fa; padding: 6px 8px; display: flex; flex-wrap: wrap; gap: 3px; border-bottom: 1px solid var(--rand); align-items: center; }
+.p13-ek { padding: 5px 8px; border: 1px solid transparent; background: none; border-radius: 4px; cursor: pointer; font-size: 12px; color: var(--tekst); white-space: nowrap; }
+.p13-ek:hover { background: #fff; border-color: var(--rand); }
+.p13-eblok { font-size: 12px; padding: 4px 6px; border: 1px solid var(--rand); border-radius: 4px; height: 28px; width: auto; }
+.p13-esep { width: 1px; background: var(--rand); margin: 3px 2px; align-self: stretch; }
+.p13-evis { padding: 14px 16px; outline: none; font-family: Arial, sans-serif; font-size: 14px; line-height: 1.7; color: #374151; overflow-y: auto; }
+.p13-evis:focus { box-shadow: inset 0 0 0 2px rgba(212, 61, 0, .15); }
+.p13-evis a { color: var(--oranje); }
+.p13-evis p { margin: 0 0 12px; }
+.p13-evis h2 { font-size: 20px; margin: 18px 0 8px; color: var(--navy); }
+.p13-evis h3 { font-size: 16px; margin: 14px 0 6px; color: var(--navy); }
+.p13-evis:empty:before { content: attr(data-placeholder); color: var(--grijs); }
+.p13-ehtml { width: 100%; padding: 12px 14px; font-family: monospace; font-size: 12px; line-height: 1.6; border: none; resize: vertical; color: var(--tekst); background: #fafafa; }

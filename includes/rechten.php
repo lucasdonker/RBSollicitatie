@@ -26,7 +26,7 @@ function rechten_modules(): array {
         'beschikbaarheid' => ['label' => 'Beschikbaarheid',        'groep' => 'Planning',       'acties' => ['lezen','bewerken']],
         'dekking'         => ['label' => 'Dekking',                'groep' => 'Planning',       'acties' => ['lezen']],
         'loonplanning'    => ['label' => 'Loonplanning',           'groep' => 'Planning',       'acties' => ['lezen','bewerken']],
-        'mailing'         => ['label' => 'Mailings & templates',   'groep' => 'Communicatie',   'acties' => ['lezen','bewerken']],
+        'mailing'         => ['label' => 'Berichten & sjablonen',  'groep' => 'Communicatie',   'acties' => ['lezen','bewerken']],
         'seizoen'         => ['label' => 'Seizoenbeheer',          'groep' => 'Beheer',         'acties' => ['lezen','bewerken']],
         'instellingen'    => ['label' => 'Instellingen',           'groep' => 'Beheer',         'acties' => ['lezen','bewerken']],
         'beheerders'      => ['label' => 'Beheerders & rollen',    'groep' => 'Beheer',         'acties' => ['lezen','bewerken']],

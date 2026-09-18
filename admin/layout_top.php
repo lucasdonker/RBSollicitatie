@@ -2,7 +2,7 @@
 vereist_login();
 $_bhd     = huidige_beheerder();
 // Zorg dat mail_template kolommen bestaan + seed defaults (idempotent, één keer per request)
-if (function_exists('mail_templates_auto_setup')) { mail_templates_auto_setup(); }
+if (function_exists('sjablonen_auto_setup')) { sjablonen_auto_setup(); }
 if (function_exists('lazy_cron_tick')) { lazy_cron_tick(); }
 $_seizoen = actief_seizoen();
 
@@ -21,8 +21,8 @@ $_nav_items = [
         'sub' => [
             ['id'=>'instellingen',    'label'=>'Algemeen',         'url'=>'/admin/instellingen.php?tab=algemeen'],
             ['id'=>'seizoen',         'label'=>'Seizoenbeheer',    'url'=>'/admin/seizoen.php'],
-            ['id'=>'mailing',         'label'=>'Mailings',         'url'=>'/admin/mailing.php'],
-            ['id'=>'mail_templates',  'label'=>'Mail templates',   'url'=>'/admin/mail_templates.php'],
+            ['id'=>'berichten',       'label'=>'Berichten',        'url'=>'/admin/berichten.php'],
+            ['id'=>'mail_templates',  'label'=>'Sjablonen',        'url'=>'/admin/mail_templates.php'],
         ],
     ],
 ];
@@ -65,6 +65,7 @@ if (function_exists('mag')) {
     $_sub_modules = [
         'seizoen'        => 'seizoen',
         'mailing'        => 'mailing',
+        'berichten'      => 'mailing',
         'mail_templates' => 'mailing',
         'systeem'        => 'systeem',
         'deploy'         => 'systeem',

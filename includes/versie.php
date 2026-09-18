@@ -3,10 +3,23 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.87.2');
+define('APP_VERSIE', '2.87.3');
 
 function app_changelog(): array {
     return [
+        '2.87.3' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Meldingen: beheer — sjablonen per kanaal, berichten sturen, kanaalkeuze (bundel 4 van 7)',
+            'punten' => [
+                'Nieuw scherm Berichten (vervangt Mailings): stuur een bericht naar één persoon, een selectie uit de sollicitantenlijst of hele fases, via e-mail, WhatsApp/SMS of beide, met voorbeeld, testmail naar jezelf en een resultaat per ontvanger',
+                'Berichtenlog van alle kanalen met filters (kanaal, status, type, zoeken) en de volledige inhoud per bericht; terugval op e-mail is zichtbaar',
+                'Sjablonen: per meldingstype bewerk je nu de e-mail, de korte WhatsApp/SMS-tekst (teller tot 400 tekens) en de samenvatting voor het portaal; voorbeeld per kanaal; kanaal per type direct instelbaar; eigen sjablonen aanmaken voor handmatige en geplande berichten',
+                'Instellingen › Berichten: per meldingstype één keuze (E-mail / WhatsApp-SMS / Beide / Uit), gegroepeerd per categorie met uitleg',
+                'Eén gedeelde tekst-editor voor alle beheerschermen (kop, vet, lijst, link, knop, info-blok, let op, afbeelding, lijn, HTML-tab)',
+                'Sollicitantenlijst: bulkactie "Bericht sturen"; de telefoonkolom toont weer het nummer; in het detailpaneel een knop "Bericht sturen"',
+                'Handmatige en geplande berichten krijgen automatisch een afmeldvoet (e-mail) en afmeldzin (WhatsApp/SMS); afgemelde personen worden overgeslagen',
+            ],
+        ],
         '2.87.2' => [
             'datum'  => '2026-09-18',
             'titel'  => 'Meldingen: herinneringen op basis van feiten, één cron-ingang (bundel 3 van 7)',

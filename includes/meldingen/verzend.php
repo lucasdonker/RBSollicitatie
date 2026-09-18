@@ -137,8 +137,20 @@ function melding_verstuur(string $type, int $sol_id, array $extra = [], array $o
             $vars['ontvanger_naam'] = $vars['ontvanger_naam'] ?? ($ontv['naam'] ?? '');
             if ($def['ontvanger'] === 'ouder' && empty($vars['ouder_naam'])) $vars['ouder_naam'] = $ontv['naam'] ?? '';
         }
-        $r = melding_render($type, $vars, $opties['override'] ?? ($def['categorie'] === 'handmatig' ? ['voetnoot_html' => $opties['voetnoot_html'] ?? ''] : []));
+        $override = $opties['override'] ?? [];
+        if (in_array($def['categorie'], ['handmatig', 'gepland'], true)) {
+            // Niet-transactioneel: afmeldvoet verplicht (AVG/Telecommunicatiewet)
+            $voet = $opties['voetnoot_html'] ?? '';
+            if ($voet === '' && !empty($vars['afmeld_url'])) {
+                $voet = '<p style="font-size:11px;color:#999;margin-top:24px;border-top:1px solid #eee;padding-top:12px">Je ontvangt dit bericht omdat je je hebt aangemeld bij Reddingsbrigade Paal 13. Geen berichten meer? <a href="' . htmlspecialchars((string)$vars['afmeld_url'], ENT_QUOTES, 'UTF-8') . '" style="color:#999">Afmelden</a>.</p>';
+            }
+            if ($voet !== '') $override['voetnoot_html'] = $voet;
+        }
+        $r = melding_render($type, $vars, $override);
         if (!$r) { $uit['status'] = 'mislukt'; $uit['reden'] = 'geen_sjabloon'; return $uit; }
+        if (in_array($def['categorie'], ['handmatig', 'gepland'], true) && $r['tekst_kort'] !== '' && stripos($r['tekst_kort'], 'afmelden') === false) {
+            $r['tekst_kort'] = rtrim($r['tekst_kort']) . ' Afmelden kan onder Mijn gegevens in het portaal.';
+        }
 
         $basis = [
             'sollicitatie_id' => $sol_id ?: null, 'persoon_id' => $ontv['persoon_id'] ?? null,

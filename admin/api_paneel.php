@@ -598,6 +598,7 @@ $ai_analyse = $blk ? ($blk['ai_analyse'] ?? null) : null;
     <?php elseif($sol['fase']==='selectiedag_geweest'): ?>
     <button class="btn btn-groen" onclick="uitnodigVanUitPaneel(<?= $id ?>,'uitnodigen_tw')">📧 Uitnodigen trainingsweekend</button>
     <?php endif; ?>
+    <a href="<?= APP_URL ?>/admin/berichten.php?ids=<?= (int)$id ?>" class="btn btn-outline">Bericht sturen</a>
     <a href="mailto:<?= h($sol['email']) ?>" class="btn btn-outline">✉️ E-mail</a>
     <?php if($sol['telefoon']): ?><a href="tel:<?= h($sol['telefoon']) ?>" class="btn btn-outline">📞 Bellen</a><?php endif; ?>
   </div>

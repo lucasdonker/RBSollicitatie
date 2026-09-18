@@ -14,6 +14,10 @@ function ondertekening_templates_seed(): void {
     static $done = false;
     if ($done) return;
     $done = true;
+    // Sinds 2.87: de sjablonen heten ondertekening_verzoek_ouder / ondertekening_bevestiging /
+    // ondertekening_herinnering en worden gezaaid door sjablonen_auto_setup(). Oude seeds hier
+    // niet meer uitvoeren (die zouden de hernoemde rijen opnieuw aanmaken).
+    if (function_exists('sjablonen_auto_setup')) { sjablonen_auto_setup(); return; }
     try {
         $db = db();
         $bestaand = $db->query("SELECT slug FROM mail_templates WHERE slug IN ('ondertekening_ouder','ondertekening_bevestiging','reminder_ondertekening')")->fetchAll(PDO::FETCH_COLUMN);

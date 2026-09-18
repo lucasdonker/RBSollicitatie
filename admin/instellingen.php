@@ -148,13 +148,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         instelling_opslaan('wa.api_sleutel', trim($_POST['wa_api_sleutel'] ?? ''));
         instelling_opslaan('wa.base_url', trim($_POST['wa_base_url'] ?? '') ?: 'https://api.whatsreach.co/api/v1');
         instelling_opslaan('wa.afzender_nummer', trim($_POST['wa_afzender_nummer'] ?? ''));
-        // Per-melding kanaalkeuze
-        if (function_exists('notificatie_typen')) {
-            foreach (array_keys(notificatie_typen()) as $type) {
-                $gekozen = $_POST['notif'][$type] ?? [];
-                if (!is_array($gekozen)) $gekozen = [];
-                $geldig = array_values(array_intersect($gekozen, ['email','sms','wa']));
-                instelling_opslaan('notif.' . $type, implode(',', $geldig));
+        // Per-melding kanaalmodus (email | kort | beide | uit)
+        if (function_exists('meldingen_register')) {
+            $modi_ok = array_keys(meldingen_kanaalmodi());
+            foreach (meldingen_register() as $type => $mdef) {
+                $gekozen = $_POST['notif'][$type] ?? '';
+                if (!is_string($gekozen) || !in_array($gekozen, $modi_ok, true)) continue;
+                if (!$mdef['kort_toegestaan'] && $gekozen !== 'uit') $gekozen = 'email';
+                instelling_opslaan('notif.' . $type, $gekozen);
             }
         }
         flash('succes', 'Bericht-instellingen opgeslagen.');
@@ -1495,7 +1496,6 @@ require __DIR__ . '/layout_top.php';
 <?php elseif ($tab === 'berichten'): ?>
   <?php
     $sms_gw = instelling('sms.gateway', '');
-    $notif_typen = function_exists('notificatie_typen') ? notificatie_typen() : [];
   ?>
   <div class="inst-sectie">
     <h2 style="font-size:16px;margin:0 0 4px">SMS, WhatsApp &amp; meldingen</h2>
@@ -1592,27 +1592,29 @@ require __DIR__ . '/layout_top.php';
       <!-- Kanaal per melding -->
       <div style="background:var(--bg-card,#fff);border:1px solid var(--rand);border-radius:10px;padding:16px;margin-bottom:16px">
         <div style="font-weight:600;font-size:15px;margin-bottom:6px">Welke melding via welk kanaal?</div>
-        <p style="font-size:12px;color:var(--tekst-zacht);margin:0 0 12px">Kies per soort melding de kanalen. SMS en WhatsApp werken alleen als ze hierboven zijn ingeschakeld én de ontvanger een telefoonnummer heeft.</p>
+        <p style="font-size:12px;color:var(--tekst-zacht);margin:0 0 12px">
+          <strong>E-mail</strong> = alleen e-mail. <strong>WhatsApp/SMS</strong> = kort bericht via het kanaal dat de sollicitant koos (standaard WhatsApp; SMS als WhatsApp niet kan);
+          lukt dat niet, dan alsnog per e-mail. <strong>Beide</strong> = e-mail én kort bericht. <strong>Uit</strong> = niet versturen.
+          Ouders en het bestuur krijgen altijd e-mail. Teksten bewerken: <a href="<?= APP_URL ?>/admin/mail_templates.php" style="color:var(--oranje)">Sjablonen</a>.
+        </p>
+        <?php if (function_exists('meldingen_per_categorie')): $kmodi = meldingen_kanaalmodi(); foreach (meldingen_per_categorie() as $ck => $typen): if ($ck === 'handmatig') continue; ?>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--grijs);margin:12px 0 4px"><?= h(meldingen_categorieen()[$ck] ?? $ck) ?></div>
         <table style="width:100%;border-collapse:collapse;font-size:13px">
-          <thead>
-            <tr style="border-bottom:1px solid var(--rand)">
-              <th style="text-align:left;padding:6px 8px">Melding</th>
-              <th style="padding:6px 8px;width:70px">E-mail</th>
-              <th style="padding:6px 8px;width:70px">SMS</th>
-              <th style="padding:6px 8px;width:70px">WhatsApp</th>
-            </tr>
-          </thead>
-          <tbody>
-            <?php foreach ($notif_typen as $type => $naam): $k = notificatie_kanalen($type); ?>
-            <tr style="border-bottom:1px solid var(--rand)">
-              <td style="padding:7px 8px"><?= h($naam) ?></td>
-              <td style="text-align:center"><input type="checkbox" name="notif[<?= $type ?>][]" value="email" <?= $k['email']?'checked':'' ?>></td>
-              <td style="text-align:center"><input type="checkbox" name="notif[<?= $type ?>][]" value="sms" <?= $k['sms']?'checked':'' ?>></td>
-              <td style="text-align:center"><input type="checkbox" name="notif[<?= $type ?>][]" value="wa" <?= $k['wa']?'checked':'' ?>></td>
-            </tr>
-            <?php endforeach; ?>
-          </tbody>
+          <?php foreach ($typen as $type => $mdef): $mm = melding_kanaalmodus($type); ?>
+          <tr style="border-bottom:1px solid var(--rand)">
+            <td style="padding:7px 8px"><a href="<?= APP_URL ?>/admin/mail_templates.php?slug=<?= h($type) ?>" style="color:inherit;text-decoration:none"><?= h($mdef['naam']) ?></a>
+              <div style="font-size:11px;color:var(--tekst-zacht)"><?= h($mdef['beschrijving'] ?? '') ?></div></td>
+            <td style="padding:7px 8px;width:220px;text-align:right">
+              <select name="notif[<?= h($type) ?>]" style="font-size:12px;padding:5px 8px;width:200px">
+                <?php foreach ($kmodi as $mk => $ml): if (!$mdef['kort_toegestaan'] && $mk !== 'email' && $mk !== 'uit') continue; ?>
+                <option value="<?= $mk ?>" <?= $mm === $mk ? 'selected' : '' ?>><?= h($ml) ?></option>
+                <?php endforeach; ?>
+              </select>
+            </td>
+          </tr>
+          <?php endforeach; ?>
         </table>
+        <?php endforeach; endif; ?>
       </div>
 
       <button type="submit" class="btn btn-primary">Opslaan</button>

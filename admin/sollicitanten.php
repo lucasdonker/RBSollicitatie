@@ -14,6 +14,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_actie'])) {
     vereis_recht('sollicitanten', 'lezen');
     $ids    = array_map('intval', $_POST['ids'] ?? []);
     $actie  = $_POST['bulk_actie'];
+    if (!empty($ids) && $actie === 'bericht_sturen') {
+        redirect(APP_URL . '/admin/berichten.php?ids=' . implode(',', $ids));
+    }
     if (!empty($ids) && function_exists('fase_zetten_bulk')) {
         // Alle fase-overgangen via de centrale fase-functie (documenten, pakket en melding inbegrepen).
         // Bij meer dan 10 personen gaan de berichten via de wachtrij (cron).
@@ -95,7 +98,7 @@ $offset     = ($pagina - 1) * $per_pagina;
 
 $stmt = $db->prepare("
     SELECT s.id, s.fase, s.terugkerend, s.aangemeld_op, s.persoon_id,
-           p.voornaam, p.tussenvoegsel, p.achternaam, p.email, p.geboortedatum,
+           p.voornaam, p.tussenvoegsel, p.achternaam, p.email, p.telefoon, p.geboortedatum,
            b.foto_url
     FROM sollicitaties s
     JOIN personen p ON p.id=s.persoon_id
@@ -460,6 +463,7 @@ function updateBulk() {
       html += `<button type="button" class="btn btn-primary btn-sm" onclick="bulkActie('uitnodigen_tw')">📧 Uitnodigen TW</button> `;
     html += `<button type="button" class="btn btn-groen btn-sm" onclick="bulkActie('aangenomen')">✓ Aannemen</button> `;
     html += `<button type="button" class="btn btn-rood btn-sm" onclick="bulkActie('afgewezen')">✕ Afwijzen</button> `;
+    html += `<button type="button" class="btn btn-outline btn-sm" style="color:#fff;border-color:rgba(255,255,255,.3)" onclick="bulkActie('bericht_sturen')">Bericht sturen</button> `;
     html += `<button type="button" class="btn btn-outline btn-sm" style="color:#fff;border-color:rgba(255,255,255,.3)" onclick="bulkExport()">📊 Export Excel</button>`;
     document.getElementById('bulkKnoppen').innerHTML = html;
   } else {
@@ -489,6 +493,11 @@ function bulkActie(actie) {
   };
   const cfg = labels[actie] || { tekst: actie, mail: false };
   const n = document.querySelectorAll('.soll-cb:checked').length;
+  if (actie === 'bericht_sturen') {
+    document.getElementById('bulkActieVeld').value = actie;
+    document.getElementById('bulkForm').submit();
+    return;
+  }
   let bevestiging = n + ' persoon/personen ' + cfg.tekst + '?';
   if (cfg.mail) bevestiging += '\n\n⚠ Er wordt automatisch een uitnodigingsmail verstuurd.';
   if (!confirm(bevestiging)) return;

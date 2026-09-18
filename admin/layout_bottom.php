@@ -598,5 +598,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 <script src="<?= APP_URL ?>/assets/js/app.js?v=<?= @filemtime(__DIR__.'/../assets/js/app.js') ?>"></script>
+<script src="<?= APP_URL ?>/assets/js/editor.js?v=<?= @filemtime(__DIR__.'/../assets/js/editor.js') ?>"></script>
 </body>
 </html>
