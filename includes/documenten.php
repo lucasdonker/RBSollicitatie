@@ -298,4 +298,102 @@ function documenten_taak_bijwerken(int $sol_id, string $taak_slug): void {
     if (function_exists('taak_status_zetten')) taak_status_zetten($sol_id, $taak_slug, documenten_taak_klaar($sol_id, $taak_slug));
 }
 
+// ── Loondossier (penningmeester) ─────────────────────────────
+
+/** De ondertekening van een type voor een dossier (of null). */
+function documenten_ondertekening(int $sol_id, string $type): ?array {
+    try {
+        $q = db()->prepare("SELECT * FROM ondertekeningen WHERE sollicitatie_id=? AND type=? ORDER BY id DESC LIMIT 1");
+        $q->execute([$sol_id, $type]);
+        return $q->fetch() ?: null;
+    } catch (\Throwable $e) { return null; }
+}
+
+/**
+ * Status van het loondossier: loonheffing ondertekend + ID (voor, en achter bij een identiteitskaart) + bankpas.
+ * Retour: ['compleet'=>bool, 'ontbreekt'=>[labels], 'docs'=>soort=>rij, 'loonheffing'=>?rij, 'lidmaatschap'=>?rij, 'verwerkt'=>bool].
+ */
+function documenten_loondossier(int $sol_id): array {
+    $docs = documenten_van($sol_id);
+    $lh   = documenten_ondertekening($sol_id, 'loonheffing');
+    $lid  = documenten_ondertekening($sol_id, 'lidmaatschap');
+    $ontbreekt = [];
+    if (!$lh || empty($lh['ondertekend_op'])) $ontbreekt[] = 'Loonheffingsformulier';
+    if (empty($docs['id_voor'])) $ontbreekt[] = 'Kopie identiteitsbewijs';
+    elseif (($docs['id_voor']['extra'] ?? '') === 'id_kaart' && empty($docs['id_achter'])) $ontbreekt[] = 'Achterkant identiteitskaart';
+    if (empty($docs['bankpas'])) $ontbreekt[] = 'Kopie bankpas';
+    $verwerkt = $lh && !empty($lh['verwerkt_op']);
+    return ['compleet' => !$ontbreekt, 'ontbreekt' => $ontbreekt, 'docs' => $docs, 'loonheffing' => $lh, 'lidmaatschap' => $lid, 'verwerkt' => $verwerkt];
+}
+
+/** Bijlagen (document_id's) voor de mail aan de penningmeester: ID voor/achter, bankpas, verzegelde loonheffing-PDF. */
+function documenten_penningmeester_bijlagen(array $dossier): array {
+    $uit = [];
+    foreach (['id_voor', 'id_achter', 'bankpas'] as $s) if (!empty($dossier['docs'][$s]['id'])) $uit[] = ['document_id' => (int)$dossier['docs'][$s]['id']];
+    if (!empty($dossier['loonheffing']['pdf_document_id'])) $uit[] = ['document_id' => (int)$dossier['loonheffing']['pdf_document_id']];
+    return $uit;
+}
+
+/**
+ * Is het loondossier compleet? Dan één keer de penningmeester mailen (melding penningmeester_dossier_compleet).
+ * Met $opnieuw=true wordt hij nogmaals gestuurd (knop in het beheer). Faalt stil.
+ */
+function documenten_dossier_compleet_check(int $sol_id, bool $opnieuw = false): bool {
+    $d = documenten_loondossier($sol_id);
+    if (!$d['compleet'] || !function_exists('melding_verstuur')) return false;
+    $lh_id = (int)($d['loonheffing']['id'] ?? 0);
+    if (!$opnieuw && $lh_id) {
+        try {
+            $q = db()->prepare("SELECT 1 FROM ondertekening_gebeurtenissen WHERE ondertekening_id=? AND gebeurtenis='penningmeester_gemeld' LIMIT 1");
+            $q->execute([$lh_id]);
+            if ($q->fetchColumn()) return false;
+        } catch (\Throwable $e) {}
+    }
+    $met_bijlagen = function_exists('instelling') && instelling('documenten.penningmeester_bijlagen', '0') === '1';
+    $lijst = '<ul>';
+    $lijst .= '<li>Loonheffingsformulier, ondertekend ' . h(datum_nl(substr((string)$d['loonheffing']['ondertekend_op'], 0, 10))) . ' (digitaal verzegelde PDF)</li>';
+    foreach (['id_voor' => 'Kopie identiteitsbewijs (voorkant)', 'id_achter' => 'Kopie identiteitsbewijs (achterkant)', 'bankpas' => 'Kopie bankpas'] as $s => $l) {
+        if (!empty($d['docs'][$s])) $lijst .= '<li>' . h($l) . ', ontvangen ' . h(datum_nl(substr((string)$d['docs'][$s]['geupload_op'], 0, 10))) . '</li>';
+    }
+    $lijst .= '</ul>';
+    $r = melding_verstuur('penningmeester_dossier_compleet', $sol_id, [
+        'documenten_lijst' => $lijst,
+        'beheer_url'       => rtrim(APP_URL, '/') . '/admin/documenten.php?sol=' . $sol_id,
+        'bijlagen_tekst'   => $met_bijlagen ? 'De stukken zitten als bijlage bij deze mail.' : 'De stukken staan klaar in het beheer (Loondossiers); download ze daar.',
+    ], ['referentie' => 'loondossier:' . $sol_id, 'prioriteit' => 'direct', 'dedup_min' => 0,
+        'bijlagen' => $met_bijlagen ? documenten_penningmeester_bijlagen($d) : []]);
+    $ok = in_array($r['status'] ?? '', ['verstuurd', 'wacht'], true);
+    if ($ok && $lh_id && function_exists('ondertekening_gebeurtenis')) ondertekening_gebeurtenis($lh_id, 'penningmeester_gemeld', ['bijlagen' => $met_bijlagen ? 'ja' : 'nee', 'opnieuw' => $opnieuw ? 'ja' : 'nee']);
+    return $ok;
+}
+
+/** Loondossier verwerkt: documenten + loonheffing op verwerkt, gebeurtenis + audit. */
+function documenten_verwerkt_markeren(int $sol_id, int $door): void {
+    try {
+        db()->prepare("UPDATE sollicitant_documenten SET status='verwerkt', verwerkt_op=NOW(), verwerkt_door=? WHERE sollicitatie_id=? AND status='ingediend' AND soort IN ('id_voor','id_achter','bankpas','ondertekening_loonheffing')")->execute([$door, $sol_id]);
+        db()->prepare("UPDATE ondertekeningen SET verwerkt_op=NOW(), verwerkt_door=? WHERE sollicitatie_id=? AND type='loonheffing' AND ondertekend_op IS NOT NULL AND verwerkt_op IS NULL")->execute([$door, $sol_id]);
+    } catch (\Throwable $e) { error_log('documenten_verwerkt_markeren: ' . $e->getMessage()); }
+    $lh = documenten_ondertekening($sol_id, 'loonheffing');
+    if ($lh && function_exists('ondertekening_gebeurtenis')) ondertekening_gebeurtenis((int)$lh['id'], 'verwerkt', ['door' => $door]);
+    if (function_exists('audit_log')) audit_log('loondossier_verwerkt', 'sollicitatie', $sol_id);
+}
+
+/** Overzicht voor het beheer: alle aangenomen sollicitaties van een seizoen met hun loondossier. */
+function documenten_overzicht(int $seizoen_id): array {
+    $uit = [];
+    try {
+        $q = db()->prepare("SELECT s.id, p.voornaam, p.tussenvoegsel, p.achternaam, p.geboortedatum FROM sollicitaties s JOIN personen p ON p.id=s.persoon_id WHERE s.seizoen_id=? AND s.fase='aangenomen' ORDER BY p.achternaam, p.voornaam");
+        $q->execute([$seizoen_id]);
+        foreach ($q->fetchAll() as $s) {
+            $uit[] = ['sol' => $s, 'naam' => trim($s['voornaam'] . ' ' . trim(($s['tussenvoegsel'] ?? '') . ' ' . $s['achternaam'])), 'dossier' => documenten_loondossier((int)$s['id'])];
+        }
+    } catch (\Throwable $e) {}
+    return $uit;
+}
+
+/** Rechtenmodule die nodig is om een document te downloaden. */
+function document_recht_module(string $soort): string {
+    return document_soorten()[$soort]['recht'] ?? 'documenten';
+}
+
 } // function_exists

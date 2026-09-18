@@ -12,6 +12,7 @@ $_nav_items = [
     ['id'=>'landing',         'label'=>'Landingspagina\'s', 'url'=>'/admin/landing.php',        'svg'=>'<path d="M3 3h18v4H3z"/><path d="M3 11h8v10H3z"/><path d="M15 11h6v4h-6z"/><path d="M15 19h6v2h-6z"/>'],
     ['id'=>'selectiedag',     'label'=>'Selectiedag',     'url'=>'/admin/selectie_indeling.php', 'svg'=>'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>'],
     ['id'=>'ondertekeningen', 'label'=>'Ondertekeningen', 'url'=>'/admin/ondertekeningen.php', 'svg'=>'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>'],
+    ['id'=>'documenten',      'label'=>'Loondossiers',    'url'=>'/admin/documenten.php',      'svg'=>'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><line x1="12" y1="15" x2="12" y2="18"/>'],
     ['id'=>'beschikbaarheid', 'label'=>'Beschikbaarheid', 'url'=>'/admin/beschikbaarheid.php', 'svg'=>'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>'],
     ['id'=>'dekking',         'label'=>'Dekking',         'url'=>'/admin/dekking.php',         'svg'=>'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>'],
     ['id'=>'loonplanning',    'label'=>'Loonplanning',    'url'=>'/admin/loonplanning.php',    'svg'=>'<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>'],
@@ -49,6 +50,7 @@ $_nav_modules = [
     'sollicitanten'   => 'sollicitanten',
     'selectiedag'     => 'selectiedag',
     'ondertekeningen' => 'ondertekeningen',
+    'documenten'      => 'documenten',
     'beschikbaarheid' => 'beschikbaarheid',
     'dekking'         => 'dekking',
     'loonplanning'    => 'loonplanning',
@@ -246,6 +248,7 @@ window.addEventListener('resize',function(){if(window.innerWidth>768)sluitSideba
           'sollicitanten'   => ['Sollicitanten', 'Het hart van het systeem. Klik op een naam voor het detailpaneel met alle gegevens, notities en acties. Selecteer meerdere rijen voor bulk-acties (uitnodigen, aannemen). Fase wijzigen verstuurt automatisch de bijbehorende mail.'],
           'selectiedag'     => ['Selectiedag', 'Beoordeel hier sollicitanten tijdens of na de selectiedag. Vul per persoon scores en aantekeningen in. Groepsindeling helpt bij het organiseren van de dag.'],
           'ondertekeningen' => ['Ondertekeningen', 'Overzicht van alle digitale handtekeningen (gezondheidsverklaring, intake). Bij 18+ tekent de sollicitant zelf via het portaal; bij minderjarigen tekent de ouder via een maillink. "Bekijk / Print" opent een printbare versie voor je administratie.'],
+          'documenten'      => ['Loondossiers', 'Per aangenomen strandwacht: loonheffingsformulier (verzegelde PDF), kopie identiteitsbewijs, kopie bankpas en pasfoto. Alles staat versleuteld in de kluis; elke download wordt vastgelegd. Markeer een dossier als "verwerkt" zodra de loonadministratie het heeft overgenomen; de bankpasfoto wordt daarna automatisch vernietigd.'],
           'instellingen'    => ['Instellingen', 'Alles instelbaar: organisatie, functies, lonen, mails, automatiseringen, AI en SSO. Onder "Uitnodiging" vind je de automatiserings-toggles voor fase-wijzigingen.'],
           'mail_templates'  => ['Mail templates', 'Bewerk hier de inhoud van alle automatische mails. Gebruik variabelen zoals {{voornaam}}. Elke template kan een eigen hero-afbeelding en kleur hebben.'],
       ];

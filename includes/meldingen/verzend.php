@@ -455,9 +455,11 @@ function melding_verzend_item(array $m): array {
     $bijlagen = []; $kort_links = []; $reserve_html = '';
     if (!empty($m['bijlagen_json'])) {
         $j = json_decode((string)$m['bijlagen_json'], true);
-        if (is_array($j) && isset($j['mee'])) { $bijlagen = melding_bijlagen_resolve($j['mee']); $kort_links = $j['kort'] ?? []; $reserve_html = (string)($j['reserve_html'] ?? ''); }
-        elseif (is_array($j)) { $bijlagen = melding_bijlagen_resolve($j); foreach ($bijlagen as $b) if (!empty($b['url'])) $kort_links[] = ['naam' => $b['naam_mooi'] ?? $b['naam'], 'url' => $b['url']]; }
+        if (is_array($j) && isset($j['mee'])) { $bijlagen = melding_bijlagen_resolve($j['mee'], true); $kort_links = $j['kort'] ?? []; $reserve_html = (string)($j['reserve_html'] ?? ''); }
+        elseif (is_array($j)) { $bijlagen = melding_bijlagen_resolve($j, true); foreach ($bijlagen as $b) if (!empty($b['url'])) $kort_links[] = ['naam' => $b['naam_mooi'] ?? $b['naam'], 'url' => $b['url']]; }
     }
+    // Tijdelijk ontsleutelde kluis-documenten na afloop altijd wissen (ook bij een fout)
+    $tmp_wissen = function () use (&$bijlagen) { foreach ($bijlagen as $b) if (!empty($b['tmp'])) @unlink($b['tmp']); };
     // Korte kanalen: nette downloadlinks achter de tekst
     $tekst_kort = rtrim((string)$m['tekst_kort']) . melding_bijlagen_kort_tekst($kort_links);
 
@@ -492,6 +494,7 @@ function melding_verzend_item(array $m): array {
         if ($fallback_van === null) $fallback_van = $kanaal;
         if ($kanaal === 'whatsapp') melding_wa_fout_registreer();
     }
+    $tmp_wissen();
 
     $fouttekst = $fouten ? implode(' | ', $fouten) : null;
     try {
@@ -528,17 +531,37 @@ function melding_bijlagen_normaliseer(array $lijst): array {
     foreach ($lijst as $b) {
         if (is_int($b) || (is_string($b) && ctype_digit($b))) { if ((int)$b > 0) $uit[] = ['bijlage_id' => (int)$b]; }
         elseif (is_array($b) && !empty($b['bijlage_id'])) $uit[] = ['bijlage_id' => (int)$b['bijlage_id']];
+        elseif (is_array($b) && !empty($b['document_id'])) $uit[] = ['document_id' => (int)$b['document_id']];
         elseif (is_array($b) && !empty($b['pad'])) $uit[] = ['pad' => $b['pad'], 'naam' => $b['naam'] ?? basename($b['pad']), 'mime' => $b['mime'] ?? 'application/octet-stream'];
     }
     return $uit;
 }
 
-/** Bijlagen klaarmaken voor verzending: [['id'=>?,'pad','naam','naam_mooi','mime','grootte','url'=>?]]. Ontbrekende bestanden vallen weg. */
-function melding_bijlagen_resolve(array $lijst): array {
+/**
+ * Bijlagen klaarmaken voor verzending: [['id'=>?,'pad','naam','naam_mooi','mime','grootte','url'=>?]]. Ontbrekende bestanden vallen weg.
+ * Documenten uit de kluis ('document_id') worden alleen op het verzendmoment ($materialiseer=true) ontsleuteld naar een
+ * tijdelijk bestand ('tmp' => pad; de verzender wist het na afloop); in de wachtrij blijft alleen het id staan.
+ */
+function melding_bijlagen_resolve(array $lijst, bool $materialiseer = false): array {
     $uit = [];
     foreach ($lijst as $b) {
         if (!empty($b['bijlage_id'])) {
             if (function_exists('bijlagen_van_ids')) foreach (bijlagen_van_ids([(int)$b['bijlage_id']]) as $r) $uit[] = $r;
+        } elseif (!empty($b['document_id'])) {
+            if (!function_exists('document_rij')) continue;
+            $d = document_rij((int)$b['document_id']);
+            if (!$d || !in_array($d['status'], ['ingediend', 'verwerkt'], true)) continue;
+            $rij = ['id' => null, 'document_id' => (int)$d['id'], 'pad' => null, 'naam' => $d['bestandsnaam'], 'naam_mooi' => function_exists('bijlage_naam_mooi') ? bijlage_naam_mooi((string)$d['bestandsnaam']) : $d['bestandsnaam'],
+                    'mime' => $d['mime'], 'grootte' => (int)$d['grootte'], 'url' => null];
+            if ($materialiseer) {
+                $inhoud = document_inhoud($d);
+                if ($inhoud === null) continue;
+                $tmp = sys_get_temp_dir() . '/doc_' . (int)$d['id'] . '_' . bin2hex(random_bytes(4)) . '.bin';
+                if (@file_put_contents($tmp, $inhoud) === false) continue;
+                if (function_exists('kluis_wis')) kluis_wis($inhoud);
+                $rij['pad'] = $tmp; $rij['tmp'] = $tmp;
+            }
+            $uit[] = $rij;
         } elseif (!empty($b['pad']) && is_file($b['pad'])) {
             $naam = $b['naam'] ?? basename($b['pad']);
             $uit[] = ['id' => null, 'pad' => $b['pad'], 'naam' => $naam, 'naam_mooi' => function_exists('bijlage_naam_mooi') ? bijlage_naam_mooi($naam) : $naam,
@@ -558,6 +581,7 @@ function melding_bijlagen_verdeel(array $res): array {
     foreach ($res as $b) {
         $te_groot = (int)($b['grootte'] ?? 0) > $max && !empty($b['url']);
         if ($te_groot) $uit['links'][] = ['naam' => $b['naam_mooi'] ?? $b['naam'], 'url' => $b['url'], 'grootte' => (int)$b['grootte']];
+        elseif (!empty($b['document_id'])) $uit['mee'][] = ['document_id' => (int)$b['document_id']]; // kluis: pas bij verzending ontsleutelen, nooit een downloadlink
         else $uit['mee'][] = !empty($b['id']) ? ['bijlage_id' => (int)$b['id']] : ['pad' => $b['pad'], 'naam' => $b['naam'], 'mime' => $b['mime']];
         if (!empty($b['url'])) $uit['kort'][] = ['naam' => $b['naam_mooi'] ?? $b['naam'], 'url' => $b['url']];
     }

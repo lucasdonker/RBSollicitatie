@@ -17,6 +17,11 @@ if (isset($_GET['export'])) {
     $q->execute([$id]);
     $rec = $q->fetch();
     if (!$rec) { http_response_code(404); exit('Niet gevonden'); }
+    // Loonheffing (BSN) en lidmaatschap (IBAN): alleen met het loondossier-recht, via de gelogde download
+    if (in_array($rec['type'], ['loonheffing', 'lidmaatschap'], true)) {
+        vereis_recht('documenten', 'bewerken');
+        redirect(APP_URL . '/admin/document_download.php?ond=' . $id . '&t=' . urlencode(csrf_token()));
+    }
 
     // Genereer de PDF met exact dezelfde generator als de mail naar de ouders,
     // zodat bekijken/printen in het beheer identiek is aan wat de ouder ontvangt.
@@ -56,8 +61,11 @@ $type_label = fn($t) => match ($t) {
     'gezondheid_18plus' => 'Gezondheid 18+',
     'intake'            => 'Intake (sollicitant)',
     'intake_ouder'      => 'Intake (ouder)',
+    'loonheffing'       => 'Loonheffingsformulier',
+    'lidmaatschap'      => 'Inschrijving lid',
     default             => $t,
 };
+$mag_loondossier = mag('documenten', 'bewerken');
 
 // Groeperen per persoon
 $per_persoon = [];
@@ -148,7 +156,11 @@ foreach ($per_persoon as $p) {
                 <?= h(datum_nl(substr($o['ondertekend_op'], 0, 10))) ?>
                 <?php if (!empty($o['ondertekenaar_naam'])): ?>· <?= h($o['ondertekenaar_naam']) ?><?php endif; ?>
               </span>
-              <a href="?export=<?= (int)$o['id'] ?>" target="_blank" class="btn btn-outline btn-sm">📄 Bekijk</a>
+              <?php if (in_array($o['type'], ['loonheffing', 'lidmaatschap'], true) && !$mag_loondossier): ?>
+                <span class="badge badge-grijs" title="Alleen de penningmeester (loondossier-recht) kan dit document openen">Loondossier</span>
+              <?php else: ?>
+                <a href="?export=<?= (int)$o['id'] ?>" target="_blank" class="btn btn-outline btn-sm">📄 Bekijk</a>
+              <?php endif; ?>
             <?php else: ?>
               <span class="badge badge-oranje" style="font-size:11px">⏳ wacht</span>
               <button class="btn btn-outline btn-sm" onclick="kopieerLink('<?= APP_URL ?>/portaal/ondertekenen.php?token=<?= h($o['token']) ?>', this)">📋 Kopieer link</button>

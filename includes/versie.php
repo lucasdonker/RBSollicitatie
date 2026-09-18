@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.90.5');
+define('APP_VERSIE', '2.90.6');
 
 function app_changelog(): array {
     return [
+        '2.90.6' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Aangenomen-takenpakket, bundel 7: penningmeester en loondossiers in het beheer',
+            'punten' => [
+                'Nieuwe rol "Penningmeester" (Authentik-groep Sol-Penningmeester) met een eigen recht "Loondossiers"; bestuur ziet deze stukken niet, admin wel',
+                'Beheer › Loondossiers: per aangenomen strandwacht de status van loonheffingsformulier, kopie ID (voor/achter), bankpas, pasfoto en lidmaatschap; downloaden (gelogd, met watermerk op ID-/bankpasfoto\'s, maximaal 30 per uur), "verwerkt" markeren, bankpas vernietigen, tijdlijn, melding opnieuw sturen',
+                'Zodra loonheffing + ID + bankpas binnen zijn krijgt de penningmeester automatisch één melding; met de instelling "bijlagen meesturen" gaan de stukken mee (pas op het verzendmoment uit de kluis gehaald, daarna gewist)',
+                'Optionele melding aan het bestuur bij elke download van een loondocument; loonheffing-/lidmaatschap-PDF in Ondertekeningen alleen met het loondossier-recht',
+            ],
+        ],
         '2.90.5' => [
             'datum'  => '2026-09-18',
             'titel'  => 'Aangenomen-takenpakket, bundel 6: inschrijving als lid van de vereniging',

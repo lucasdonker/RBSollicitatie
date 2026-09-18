@@ -23,6 +23,7 @@ function rechten_modules(): array {
         'blk'             => ['label' => 'BLK-formulieren & details','groep' => 'Werving',       'acties' => ['lezen','bewerken']],
         'selectiedag'     => ['label' => 'Selectiedag',            'groep' => 'Selectie',       'acties' => ['lezen','bewerken']],
         'ondertekeningen' => ['label' => 'Ondertekeningen',        'groep' => 'Selectie',       'acties' => ['lezen','bewerken']],
+        'documenten'      => ['label' => 'Loondossiers (ID, bankpas, loonheffing)', 'groep' => 'Beheer', 'acties' => ['lezen','bewerken','verwijderen']],
         'beschikbaarheid' => ['label' => 'Beschikbaarheid',        'groep' => 'Planning',       'acties' => ['lezen','bewerken']],
         'dekking'         => ['label' => 'Dekking',                'groep' => 'Planning',       'acties' => ['lezen']],
         'loonplanning'    => ['label' => 'Loonplanning',           'groep' => 'Planning',       'acties' => ['lezen','bewerken']],
@@ -74,7 +75,17 @@ function rechten_standaard_rollen(): array {
                 'mailing'         => 'rw',
                 'seizoen'         => 'rw',
                 'instellingen'    => 'rw',
-                // GEEN beheerders/systeem — dat blijft admin.
+                // GEEN beheerders/systeem — dat blijft admin. GEEN documenten (BSN/ID): penningmeester + admin.
+            ],
+        ],
+        'penningmeester' => [
+            'naam' => 'Penningmeester',
+            'authentik_groep' => 'Sol-Penningmeester',
+            'rang' => 2,
+            'rechten' => [
+                // Alleen de loonadministratie: loondossiers inzien, downloaden, verwerkt markeren, bankpas vernietigen.
+                'documenten'      => 'rwd',
+                'sollicitanten'   => 'r',
             ],
         ],
         'admin' => [
@@ -110,28 +121,28 @@ function rechten_auto_setup(): void {
             PRIMARY KEY (`rol_sleutel`, `module`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
-        // Seed alleen als er nog geen rollen zijn
-        $aantal = (int)$db->query("SELECT COUNT(*) FROM rollen")->fetchColumn();
-        if ($aantal === 0) {
-            foreach (rechten_standaard_rollen() as $sleutel => $rol) {
-                $db->prepare("INSERT INTO rollen (sleutel, naam, authentik_groep, rang, systeemrol) VALUES (?,?,?,?,1)")
-                   ->execute([$sleutel, $rol['naam'], $rol['authentik_groep'], $rol['rang']]);
-
-                if ($rol['rechten'] === 'ALLES') {
-                    foreach (rechten_modules() as $mod => $_m) {
-                        $db->prepare("INSERT INTO rol_rechten (rol_sleutel, module, lezen, bewerken, verwijderen) VALUES (?,?,1,1,1)")
-                           ->execute([$sleutel, $mod]);
-                    }
-                } else {
-                    foreach ($rol['rechten'] as $mod => $bits) {
-                        $l = str_contains($bits, 'r') ? 1 : 0;
-                        $w = str_contains($bits, 'w') ? 1 : 0;
-                        $d = str_contains($bits, 'd') ? 1 : 0;
-                        $db->prepare("INSERT INTO rol_rechten (rol_sleutel, module, lezen, bewerken, verwijderen) VALUES (?,?,?,?,?)")
-                           ->execute([$sleutel, $mod, $l, $w, $d]);
-                    }
+        // Standaardrollen die nog ontbreken (verse database: allemaal; bestaande database: nieuwe rollen zoals
+        // 'penningmeester') aanmaken met hun standaardrechten. Bestaande rollen worden nooit overschreven.
+        $bestaand = $db->query("SELECT sleutel FROM rollen")->fetchAll(PDO::FETCH_COLUMN);
+        foreach (rechten_standaard_rollen() as $sleutel => $rol) {
+            if (in_array($sleutel, $bestaand, true)) continue;
+            $db->prepare("INSERT INTO rollen (sleutel, naam, authentik_groep, rang, systeemrol) VALUES (?,?,?,?,1)")
+               ->execute([$sleutel, $rol['naam'], $rol['authentik_groep'], $rol['rang']]);
+            if ($rol['rechten'] === 'ALLES') {
+                foreach (rechten_modules() as $mod => $_m) {
+                    $db->prepare("INSERT IGNORE INTO rol_rechten (rol_sleutel, module, lezen, bewerken, verwijderen) VALUES (?,?,1,1,1)")
+                       ->execute([$sleutel, $mod]);
+                }
+            } else {
+                foreach ($rol['rechten'] as $mod => $bits) {
+                    $l = str_contains($bits, 'r') ? 1 : 0;
+                    $w = str_contains($bits, 'w') ? 1 : 0;
+                    $d = str_contains($bits, 'd') ? 1 : 0;
+                    $db->prepare("INSERT IGNORE INTO rol_rechten (rol_sleutel, module, lezen, bewerken, verwijderen) VALUES (?,?,?,?,?)")
+                       ->execute([$sleutel, $mod, $l, $w, $d]);
                 }
             }
+            error_log("rechten_auto_setup: rol '$sleutel' aangemaakt");
         }
     } catch (\Exception $e) { error_log('rechten_auto_setup: ' . $e->getMessage()); }
 }
