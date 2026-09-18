@@ -25,6 +25,7 @@ function health_check(bool $repareer = false): array {
     $checks['opschoning'] = health_check_opschoning();
     $checks['mappen']     = health_check_mappen();
     $checks['configuratie'] = health_check_configuratie();
+    $checks['kluis']      = health_check_kluis();
 
     // Totaaloordeel: fout > waarschuwing > ok
     $heeft_fout = false; $heeft_waarschuwing = false;
@@ -146,6 +147,29 @@ function health_check_mappen(): array {
         return ['status' => 'fout', 'uitleg' => 'Niet schrijfbaar: ' . implode(', ', $problemen) . '. Controleer de maprechten.', 'hersteld' => false];
     }
     return ['status' => 'ok', 'uitleg' => 'Mappen schrijfbaar.', 'hersteld' => false];
+}
+
+/**
+ * Kluis: kan het systeem gevoelige documenten (ID, bankpas, BSN) versleuteld opslaan?
+ * Zonder werkende kluis weigert het portaal die uploads en ondertekeningen.
+ */
+function health_check_kluis(): array {
+    if (!function_exists('kluis_status')) {
+        return ['status' => 'waarschuwing', 'uitleg' => 'Kluis-module niet geladen.', 'hersteld' => false];
+    }
+    $s = kluis_status();
+    if (!$s['ok']) {
+        return ['status' => 'fout', 'uitleg' => 'Kluis niet beschikbaar: ' . $s['reden'] . ' Uploads van ID/bankpas en het loonheffingsformulier zijn geblokkeerd tot dit is opgelost.', 'hersteld' => false];
+    }
+    $uitleg = 'Kluis werkt (' . $s['algoritme'] . ').';
+    if (function_exists('documenten_map')) {
+        $map = documenten_map();
+        if ($map === null) return ['status' => 'fout', 'uitleg' => $uitleg . ' Maar de documentenmap is niet schrijfbaar (DOCUMENTEN_MAP of uploads/documenten).', 'hersteld' => false];
+        if (function_exists('documenten_map_in_webroot') && documenten_map_in_webroot()) {
+            return ['status' => 'waarschuwing', 'uitleg' => $uitleg . ' De documentenmap staat binnen de webroot (afgeschermd met .htaccess). Beter: DOCUMENTEN_MAP in config.php naar een map buiten httpdocs.', 'hersteld' => false];
+        }
+    }
+    return ['status' => 'ok', 'uitleg' => $uitleg . ' Documentenmap buiten de webroot.', 'hersteld' => false];
 }
 
 /** Configuratie: zijn de basiszaken ingesteld? */

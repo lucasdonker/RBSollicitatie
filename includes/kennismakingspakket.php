@@ -1,58 +1,88 @@
 <?php
 /**
- * Paal 13 — Kennismakingspakket
- * Wordt aangeroepen door fase_zetten() bij de overgang naar 'aangenomen'.
- * Maakt de portaal-taken aan; de welkomstmail ('aangenomen') verstuurt fase_zetten() zelf.
+ * Paal 13 — Aangenomen-takenpakket ("kennismakingspakket").
+ *
+ * Wordt aangeroepen door fase_zetten() bij de overgang naar 'aangenomen' en als vangnet vanuit
+ * portaal_taken() zodat bestaande dossiers dezelfde taken krijgen. Maakt/actualiseert de rijen in
+ * sollicitant_taken (idempotent) en zet de ondertekeningen klaar (loonheffing, lidmaatschap).
+ * De welkomstmail ('aangenomen') verstuurt fase_zetten() zelf.
+ *
+ * Soorten taken:
+ *   upload   → portaal/document_upload.php?taak=<slug>  (klaar zodra de documenten er zijn, includes/documenten.php)
+ *   link     → externe link of bijlage; de sollicitant vinkt zelf af
+ *   afvinken → geen link; de sollicitant vinkt zelf af
+ * Loonheffing en lidmaatschap zijn géén taakrij: dat zijn ondertekeningen (portaal_taken() punt 2).
  */
 
+if (!function_exists('kennismakingspakket_taken_definities')) {
+
+/** Eén bron voor de taken van het pakket: slug => rij. */
+function kennismakingspakket_taken_definities(): array {
+    $taken = [];
+    if (function_exists('document_taken')) {
+        foreach (document_taken() as $slug => $d) {
+            $taken[$slug] = ['titel' => $d['titel'], 'omschrijving' => $d['sub'], 'link_url' => null, 'verplicht' => 1,
+                             'soort' => 'upload', 'document_soort' => $slug, 'volgorde' => $d['volgorde']];
+        }
+    }
+    $huisregels = function_exists('instelling_int') ? instelling_int('taken.huisregels_bijlage_id', 0) : 0;
+    if ($huisregels > 0) {
+        $taken['huisregels'] = ['titel' => 'Huisregels lezen', 'omschrijving' => 'Lees ze door en vink daarna af', 'link_url' => null, 'verplicht' => 1,
+                                'soort' => 'link', 'document_soort' => 'bijlage:' . $huisregels, 'volgorde' => 30];
+    }
+    $taken['authentik_activeren'] = ['titel' => 'Paal 13-account activeren', 'omschrijving' => 'Je krijgt later per mail een uitnodiging voor je verenigingsaccount', 'link_url' => null, 'verplicht' => 0,
+                                     'soort' => 'afvinken', 'document_soort' => null, 'volgorde' => 90];
+    return $taken;
+}
+
+/**
+ * Taken aanmaken/bijwerken (status blijft staan), oude slugs uit eerdere versies migreren,
+ * ondertekeningen klaarzetten. Idempotent; mag bij elke aanroep opnieuw.
+ */
 function kennismakingspakket_activeren(int $sol_id): array {
-    $resultaat = ['taken_aangemaakt' => 0];
+    $resultaat = ['taken_aangemaakt' => 0, 'ondertekeningen' => []];
     if (function_exists('instelling') && instelling('auto.kennismakingspakket', '1') !== '1') return $resultaat;
     try {
         $db = db();
-
-        // Bepaal welke taken
-        $taken = [
-            [
-                'slug'        => 'bevestig_lidmaatschap',
-                'titel'       => 'Bevestig je lidmaatschap',
-                'omschrijving'=> 'Bevestig via het portaal dat je lid wilt worden van Reddingsbrigade Paal 13.',
-                'link_url'    => APP_URL . '/portaal/?taak=bevestig_lidmaatschap',
-                'verplicht'   => 1,
-            ],
-            [
-                'slug'        => 'loonheffing',
-                'titel'       => 'Vul loonheffingsformulier in',
-                'omschrijving'=> 'Vul en onderteken het loonheffingsformulier voor de personeelsadministratie. Bekijk het contract-emailtje voor de link.',
-                'link_url'    => null,
-                'verplicht'   => 1,
-            ],
-            [
-                'slug'        => 'huisregels_gelezen',
-                'titel'       => 'Lees de huisregels',
-                'omschrijving'=> 'Neem de huisregels van Paal 13 door. Ze staan in het welkomstpakket dat je per mail hebt ontvangen.',
-                'link_url'    => null,
-                'verplicht'   => 1,
-            ],
-            [
-                'slug'        => 'authentik_activeren',
-                'titel'       => 'Activeer je Paal 13 account',
-                'omschrijving'=> 'Later ontvang je een uitnodiging om je permanente Paal 13 account aan te maken (Authentik). Volg dan de instructies in die mail.',
-                'link_url'    => null,
-                'verplicht'   => 0,
-            ],
-        ];
-
-        // Insert (ignore als al bestaan)
-        $stmt = $db->prepare("INSERT IGNORE INTO sollicitant_taken (sollicitatie_id, taak_slug, titel, omschrijving, link_url, verplicht) VALUES (?,?,?,?,?,?)");
-        foreach ($taken as $t) {
-            if ($stmt->execute([$sol_id, $t['slug'], $t['titel'], $t['omschrijving'], $t['link_url'], $t['verplicht']])) {
-                if ($stmt->rowCount() > 0) $resultaat['taken_aangemaakt']++;
-            }
+        if (function_exists('extra_tabellen_auto_setup')) extra_tabellen_auto_setup();
+        if (function_exists('db_kolom_verzeker')) {
+            db_kolom_verzeker($db, 'sollicitant_taken', 'soort', "VARCHAR(20) NOT NULL DEFAULT 'afvinken'");
+            db_kolom_verzeker($db, 'sollicitant_taken', 'document_soort', 'VARCHAR(40) DEFAULT NULL');
+            db_kolom_verzeker($db, 'sollicitant_taken', 'volgorde', 'INT NOT NULL DEFAULT 50');
         }
 
-    } catch (Exception $e) {
+        // Oude slugs (t/m 2.89): lidmaatschap/loonheffing worden ondertekeningen, huisregels_gelezen → huisregels
+        $db->prepare("DELETE FROM sollicitant_taken WHERE sollicitatie_id=? AND taak_slug IN ('bevestig_lidmaatschap','loonheffing') AND status='open'")->execute([$sol_id]);
+        $db->prepare("UPDATE IGNORE sollicitant_taken SET taak_slug='huisregels' WHERE sollicitatie_id=? AND taak_slug='huisregels_gelezen'")->execute([$sol_id]);
+
+        $stmt = $db->prepare("INSERT INTO sollicitant_taken (sollicitatie_id, taak_slug, titel, omschrijving, link_url, verplicht, soort, document_soort, volgorde)
+                              VALUES (?,?,?,?,?,?,?,?,?)
+                              ON DUPLICATE KEY UPDATE titel=VALUES(titel), omschrijving=VALUES(omschrijving), link_url=VALUES(link_url),
+                                                      verplicht=VALUES(verplicht), soort=VALUES(soort), document_soort=VALUES(document_soort), volgorde=VALUES(volgorde)");
+        foreach (kennismakingspakket_taken_definities() as $slug => $t) {
+            $stmt->execute([$sol_id, $slug, $t['titel'], $t['omschrijving'], $t['link_url'], $t['verplicht'], $t['soort'], $t['document_soort'], $t['volgorde']]);
+            if ($stmt->rowCount() === 1) $resultaat['taken_aangemaakt']++; // 1 = ingevoegd, 2 = bijgewerkt, 0 = ongewijzigd
+        }
+        // Upload-taken: status gelijkzetten aan de aanwezige documenten
+        if (function_exists('documenten_taak_bijwerken') && function_exists('document_taken')) {
+            foreach (array_keys(document_taken()) as $slug) documenten_taak_bijwerken($sol_id, $slug);
+        }
+        // Ondertekeningen die bij het pakket horen (latere bundels leveren deze functies)
+        foreach (['loonheffing_verzekeren', 'lidmaatschap_verzekeren'] as $fn) {
+            if (function_exists($fn)) { try { $resultaat['ondertekeningen'][$fn] = $fn($sol_id); } catch (\Throwable $e) { error_log("$fn: " . $e->getMessage()); } }
+        }
+    } catch (\Throwable $e) {
         error_log('kennismakingspakket: ' . $e->getMessage());
     }
     return $resultaat;
 }
+
+/** Zet een taak op voltooid/open (één plek; gebruikt door uploads, afvinken en ondertekeningen). */
+function taak_status_zetten(int $sol_id, string $taak_slug, bool $klaar): void {
+    try {
+        db()->prepare("UPDATE sollicitant_taken SET status=?, voltooid_op=IF(?, COALESCE(voltooid_op, NOW()), NULL) WHERE sollicitatie_id=? AND taak_slug=?")
+            ->execute([$klaar ? 'voltooid' : 'open', $klaar ? 1 : 0, $sol_id, $taak_slug]);
+    } catch (\Throwable $e) { error_log('taak_status_zetten: ' . $e->getMessage()); }
+}
+
+} // function_exists

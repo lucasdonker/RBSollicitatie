@@ -41,6 +41,16 @@ define('OIDC_ISSUER',        '{{OIDC_ISSUER}}');
 define('OIDC_SLUG',          '{{OIDC_SLUG}}');
 define('OIDC_REDIRECT_URI',  '{{APP_URL}}/admin/auth_callback.php');
 
+// ── Kluis: versleuteling van ID-kopieën, bankpas, BSN, IBAN en verzegelde PDF's ──
+// Genereer per omgeving een EIGEN sleutel:  php -r "echo base64_encode(random_bytes(32));"
+// Bewaar een kopie op een veilige plek buiten de server (zonder deze sleutel zijn de documenten
+// onleesbaar, ook voor ons). Verlies = dataverlies; lekken = alleen samen met de database gevaarlijk.
+define('KLUIS_SLEUTEL',        '{{KLUIS_SLEUTEL}}');
+define('KLUIS_SLEUTEL_VERSIE', 1);
+// Map voor de versleutelde documenten, bij voorkeur BUITEN de webroot (Plesk: /var/www/vhosts/<domein>/private/documenten).
+// Leeg laten = uploads/documenten binnen de webroot (afgeschermd met .htaccess; de health-check waarschuwt).
+define('DOCUMENTEN_MAP', '');
+
 // ── Sessie ──
 define('SESSION_NAME',     'p13sess');
 define('SESSION_LIFETIME', 0);

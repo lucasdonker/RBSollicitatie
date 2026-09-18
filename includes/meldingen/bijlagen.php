@@ -41,12 +41,7 @@ function bijlagen_typen(): array {
  * Mailservers weigeren vaak bijlagen boven ~20 MB; grote bestanden gaan beter via de downloadlink.
  */
 function bijlagen_max_bytes(): int {
-    $naar_bytes = function (string $v): int {
-        $v = trim($v); if ($v === '' || $v === '-1') return PHP_INT_MAX;
-        $n = (int)$v; $e = strtolower(substr($v, -1));
-        return $e === 'g' ? $n * 1073741824 : ($e === 'm' ? $n * 1048576 : ($e === 'k' ? $n * 1024 : $n));
-    };
-    return (int)min(25 * 1048576, $naar_bytes((string)ini_get('upload_max_filesize')), $naar_bytes((string)ini_get('post_max_size')));
+    return (int)min(25 * 1048576, upload_server_max_bytes());
 }
 
 /** De opslagmap (aangemaakt met .htaccess die directe toegang blokkeert). */
@@ -71,26 +66,16 @@ function bijlage_geheim(): string {
  */
 function bijlage_opslaan(array $upload, ?int $door = null, string $omschrijving = ''): array {
     bijlagen_auto_setup();
-    if (empty($upload['tmp_name']) || ($upload['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) return ['ok' => false, 'id' => null, 'fout' => 'geen bestand'];
-    $max = bijlagen_max_bytes();
-    if ((int)$upload['size'] > $max) return ['ok' => false, 'id' => null, 'fout' => 'bestand groter dan ' . round($max / 1048576) . ' MB'];
-    $naam = (string)($upload['name'] ?? 'bestand');
-    $ext  = strtolower(pathinfo($naam, PATHINFO_EXTENSION));
-    $typen = bijlagen_typen();
-    if (!isset($typen[$ext])) return ['ok' => false, 'id' => null, 'fout' => 'bestandstype niet toegestaan (pdf, jpg, png, webp, docx, xlsx)'];
-    // Inhoud controleren (magic bytes) i.p.v. alleen de extensie
-    $mime = function_exists('mime_content_type') ? (@mime_content_type($upload['tmp_name']) ?: '') : '';
-    if ($mime !== '' && $mime !== $typen[$ext] && !($ext === 'jpg' && $mime === 'image/jpeg')) {
-        if (!in_array($mime, ['application/zip', 'application/octet-stream'], true) || !in_array($ext, ['docx', 'xlsx'], true)) return ['ok' => false, 'id' => null, 'fout' => 'bestandsinhoud past niet bij het type'];
-    }
-    $veilige_naam = preg_replace('/[^A-Za-z0-9._-]+/', '_', $naam);
-    $veilige_naam = substr(trim($veilige_naam, '_') ?: 'bestand.' . $ext, 0, 200);
+    // Validatie (fout, grootte, extensie, magic bytes, veilige naam) via de gedeelde helper in includes/upload.php
+    $v = upload_valideer($upload, bijlagen_typen(), bijlagen_max_bytes());
+    if (!$v['ok']) return ['ok' => false, 'id' => null, 'fout' => $v['fout']];
+    $ext = $v['ext']; $veilige_naam = $v['naam'];
     $opslag = bin2hex(random_bytes(16)) . '.' . $ext;
     $doel = bijlagen_map() . '/' . $opslag;
     if (!@move_uploaded_file($upload['tmp_name'], $doel)) return ['ok' => false, 'id' => null, 'fout' => 'opslaan mislukt (map niet schrijfbaar?)'];
     try {
         db()->prepare("INSERT INTO bijlagen (bestandsnaam, opslagnaam, mime, grootte, omschrijving, geupload_door) VALUES (?,?,?,?,?,?)")
-           ->execute([$veilige_naam, $opslag, $typen[$ext], (int)$upload['size'], $omschrijving ?: null, $door]);
+           ->execute([$veilige_naam, $opslag, $v['mime'], $v['grootte'], $omschrijving ?: null, $door]);
         $id = (int)db()->lastInsertId();
         if (function_exists('audit_log')) audit_log('bijlage_geupload', 'bijlage', $id, ['grootte' => (int)$upload['size']]);
         return ['ok' => true, 'id' => $id, 'fout' => null];

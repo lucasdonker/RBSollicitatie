@@ -18,6 +18,9 @@ if (file_exists(__DIR__ . '/versie.php'))        require_once __DIR__ . '/versie
 if (file_exists(__DIR__ . '/mail_render.php'))   require_once __DIR__ . '/mail_render.php';
 if (file_exists(__DIR__ . '/error_handler.php')) require_once __DIR__ . '/error_handler.php';
 if (file_exists(__DIR__ . '/instellingen.php'))  require_once __DIR__ . '/instellingen.php';
+if (file_exists(__DIR__ . '/kluis.php'))          require_once __DIR__ . '/kluis.php';
+if (file_exists(__DIR__ . '/upload.php'))         require_once __DIR__ . '/upload.php';
+if (file_exists(__DIR__ . '/documenten.php'))     require_once __DIR__ . '/documenten.php';
 if (file_exists(__DIR__ . '/ai_analyse.php'))      require_once __DIR__ . '/ai_analyse.php';
 if (file_exists(__DIR__ . '/kennismakingspakket.php')) require_once __DIR__ . '/kennismakingspakket.php';
 if (file_exists(__DIR__ . '/ondertekening_tekst.php')) require_once __DIR__ . '/ondertekening_tekst.php';
@@ -650,6 +653,9 @@ function extra_tabellen_auto_setup(): void {
             `link_url` VARCHAR(500) DEFAULT NULL,
             `status` VARCHAR(20) NOT NULL DEFAULT 'open',
             `verplicht` TINYINT(1) NOT NULL DEFAULT 1,
+            `soort` VARCHAR(20) NOT NULL DEFAULT 'afvinken',
+            `document_soort` VARCHAR(40) DEFAULT NULL,
+            `volgorde` INT NOT NULL DEFAULT 50,
             `aangemaakt_op` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             `voltooid_op` DATETIME DEFAULT NULL,
             INDEX (`sollicitatie_id`), INDEX (`status`),

@@ -70,6 +70,11 @@ function db_verwachte_kolommen(): array {
         'ondertekeningen' => [
             'herinnerd_op' => 'DATETIME DEFAULT NULL',
         ],
+        'sollicitant_taken' => [
+            'soort'          => "VARCHAR(20) NOT NULL DEFAULT 'afvinken'",
+            'document_soort' => 'VARCHAR(40) DEFAULT NULL',
+            'volgorde'       => 'INT NOT NULL DEFAULT 50',
+        ],
         'mail_templates' => [
             'hero_titel'   => 'VARCHAR(200) DEFAULT NULL',
         ],
@@ -121,6 +126,7 @@ function db_failsafe(): void {
         'personen_kanaal_auto_setup',
         'bijlagen_auto_setup',
         'gepland_auto_setup',
+        'documenten_auto_setup',
     ];
     foreach ($setups as $fn) {
         if (function_exists($fn)) {

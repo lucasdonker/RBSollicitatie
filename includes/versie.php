@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.89.0');
+define('APP_VERSIE', '2.90.0');
 
 function app_changelog(): array {
     return [
+        '2.90.0' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Aangenomen-takenpakket, bundel 1: kluis (versleutelde opslag) en fundament',
+            'punten' => [
+                'Nieuwe kluis voor gevoelige documenten en gegevens (kopie ID, bankpas, BSN, IBAN): per bestand een eigen sleutel, versleuteld met XChaCha20-Poly1305 of AES-256-GCM, hoofdsleutel uit config én database samen; zonder werkende kluis worden die uploads geweigerd (nooit onversleuteld)',
+                'Documenten van sollicitanten krijgen een eigen, afgeschermde opslag buiten het webbereik (DOCUMENTEN_MAP in config.php) met metadata en controlehash in de database; de health-check controleert de kluis en de map',
+                'Eén gedeelde upload-validatie (grootte, type, inhoud) voor de bijlagenbibliotheek en de nieuwe documenten',
+                'Het takenpakket bij "aangenomen" is opnieuw gedefinieerd (kopie ID, kopie bankpas, pasfoto, huisregels, account) en werkt oude taken automatisch bij; loonheffing en lidmaatschap volgen als ondertekeningen in de volgende bundels',
+            ],
+        ],
         '2.89.0' => [
             'datum'  => '2026-09-18',
             'titel'  => 'Portaal: ondertekenen exact volgens het ontwerp (18+ zelf en ouder-link)',
