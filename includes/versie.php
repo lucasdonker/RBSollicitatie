@@ -3,10 +3,18 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.87.8');
+define('APP_VERSIE', '2.87.9');
 
 function app_changelog(): array {
     return [
+        '2.87.9' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Meldingen: grote bijlagen als downloadknop, nette downloadlinks in WhatsApp',
+            'punten' => [
+                'Is een bestand te groot voor de e-mail (standaard boven 8 MB, instelbaar bij Herinneringen), dan gaat het niet als bijlage mee maar als downloadknop in de mail met de bestandsgrootte erbij; kleinere bestanden blijven gewone bijlagen',
+                'WhatsApp/SMS: de downloadlink is nu kort (/d/…) en staat met een leesbare naam op een eigen regel ("Bijlage: Magazine 2026"), in plaats van de bestandsnaam met een lange adresregel',
+            ],
+        ],
         '2.87.8' => [
             'datum'  => '2026-09-18',
             'titel'  => 'Meldingen: bijlagen tot 25 MB; WhatsApp-uitleg alleen bij het eerste bericht',

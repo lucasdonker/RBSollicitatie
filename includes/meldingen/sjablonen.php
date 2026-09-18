@@ -236,6 +236,7 @@ function melding_render(string $type, array $vars, array $override = []): ?array
     $body = (string)$t['body_html'];
     $body = function_exists('mail_vervang') ? mail_vervang(mail_vervang($body, $vars), $vars) : tekst_vervang(tekst_vervang($body, $vars), $vars);
     $body = (string)preg_replace('/\{\{[a-z0-9_.]+\}\}/i', '', $body);
+    if (!empty($override['bijlagen_blok_html'])) $body .= $override['bijlagen_blok_html'];
     if (function_exists('mail_shortcodes')) $body = mail_shortcodes($body);
     if (!empty($override['voetnoot_html'])) $body .= $override['voetnoot_html'];
 

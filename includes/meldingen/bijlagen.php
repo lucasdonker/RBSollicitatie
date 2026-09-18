@@ -123,18 +123,34 @@ function bijlagen_lijst(): array {
     try { return db()->query("SELECT * FROM bijlagen ORDER BY id DESC")->fetchAll(); } catch (\Throwable $e) { return []; }
 }
 
-/** Handtekening voor een downloadlink. */
+/** Handtekening voor een downloadlink (24 hex; met HMAC-sleutel van 32 bytes ruim voldoende). */
 function bijlage_token(int $id, int $exp): string {
-    return substr(hash_hmac('sha256', $id . '|' . $exp, bijlage_geheim()), 0, 40);
+    return substr(hash_hmac('sha256', $id . '|' . $exp, bijlage_geheim()), 0, 24);
 }
 
-/** Getekende, verlopende downloadlink (voor WhatsApp/SMS en als knop in e-mail). */
+/**
+ * Getekende, verlopende downloadlink: kort en netjes (/d/<id>-<verloopt>-<token>, via .htaccess
+ * naar download.php). Voor WhatsApp/SMS en als knop in e-mail.
+ */
 function bijlage_download_url(int $id, int $geldig_dagen = 14): string {
     $exp = time() + max(1, $geldig_dagen) * 86400;
-    return rtrim(APP_URL, '/') . '/download.php?b=' . $id . '&e=' . $exp . '&t=' . bijlage_token($id, $exp);
+    return rtrim(APP_URL, '/') . '/d/' . $id . '-' . $exp . '-' . bijlage_token($id, $exp);
 }
 
-/** Klaar-voor-verzending-lijst uit ids: [['id','pad','naam','mime','url']]. Ontbrekende bestanden worden overgeslagen. */
+/** Leesbare naam voor in berichten: "magazine_2026_v2.pdf" → "Magazine 2026 v2". */
+function bijlage_naam_mooi(string $bestandsnaam): string {
+    $n = pathinfo($bestandsnaam, PATHINFO_FILENAME);
+    $n = trim((string)preg_replace('/[_\-]+/', ' ', $n));
+    return $n === '' ? 'Bijlage' : ucfirst($n);
+}
+
+/** Boven deze grootte gaat een bestand niet als e-mailbijlage mee maar als downloadknop (instelling bijlage.mail_max_mb). */
+function bijlagen_mail_max_bytes(): int {
+    $mb = function_exists('instelling_int') ? instelling_int('bijlage.mail_max_mb', 8) : 8;
+    return max(1, $mb) * 1048576;
+}
+
+/** Klaar-voor-verzending-lijst uit ids: [['id','pad','naam','naam_mooi','mime','grootte','url']]. Ontbrekende bestanden worden overgeslagen. */
 function bijlagen_van_ids(array $ids): array {
     $uit = [];
     foreach (array_unique(array_map('intval', $ids)) as $id) {
@@ -143,7 +159,8 @@ function bijlagen_van_ids(array $ids): array {
         if (!$r) continue;
         $pad = bijlage_pad($r);
         if (!$pad) continue;
-        $uit[] = ['id' => $id, 'pad' => $pad, 'naam' => $r['bestandsnaam'], 'mime' => $r['mime'], 'url' => bijlage_download_url($id)];
+        $uit[] = ['id' => $id, 'pad' => $pad, 'naam' => $r['bestandsnaam'], 'naam_mooi' => bijlage_naam_mooi((string)$r['bestandsnaam']),
+                  'mime' => $r['mime'], 'grootte' => (int)($r['grootte'] ?: (@filesize($pad) ?: 0)), 'url' => bijlage_download_url($id)];
     }
     return $uit;
 }

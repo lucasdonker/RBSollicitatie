@@ -319,7 +319,7 @@ require __DIR__ . '/layout_top.php';
       </div>
 
       <div style="padding:14px 16px 0">
-        <label class="veld-label">Bijlagen (gaan mee met elke e-mail; WhatsApp/SMS krijgt een downloadlink)</label>
+        <label class="veld-label">Bijlagen (mee met elke e-mail, grote bestanden als downloadknop; WhatsApp/SMS krijgt een downloadlink)</label>
         <?php $bijl_huidig = []; if (!empty($actief['bijlagen_json']) && function_exists('bijlagen_van_ids')) { $j = json_decode((string)$actief['bijlagen_json'], true); if (is_array($j)) $bijl_huidig = bijlagen_van_ids($j); } ?>
         <?php foreach ($bijl_huidig as $bh): ?>
         <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin:4px 0"><input type="checkbox" name="bijlage_ids[]" value="<?= (int)$bh['id'] ?>" checked> <?= h($bh['naam']) ?> <span style="color:var(--grijs);font-size:11px">(uitvinken = loskoppelen)</span></label>

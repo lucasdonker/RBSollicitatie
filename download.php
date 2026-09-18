@@ -8,6 +8,8 @@ require_once __DIR__ . '/includes/functions.php';
 $id  = (int)($_GET['b'] ?? 0);
 $exp = (int)($_GET['e'] ?? 0);
 $tok = (string)($_GET['t'] ?? '');
+// Korte vorm: /d/<id>-<verloopt>-<token> (via .htaccess) of download.php?d=<id>-<verloopt>-<token>
+if (!$id && preg_match('/^(\d+)-(\d+)-([a-f0-9]{16,64})$/', (string)($_GET['d'] ?? ''), $m)) { $id = (int)$m[1]; $exp = (int)$m[2]; $tok = $m[3]; }
 
 $weiger = function (int $code, string $titel, string $tekst): void {
     http_response_code($code);

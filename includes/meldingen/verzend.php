@@ -146,6 +146,13 @@ function melding_verstuur(string $type, int $sol_id, array $extra = [], array $o
             }
             if ($voet !== '') $override['voetnoot_html'] = $voet;
         }
+        // Bijlagen: uit het sjabloon (bijlagen_json) + meegegeven. Te groot voor e-mail → downloadknop in de mail.
+        $sj_bijl = [];
+        $sj_json = $override['bijlagen_json'] ?? (function_exists('sjabloon_laden') ? (sjabloon_laden($type)['bijlagen_json'] ?? null) : null);
+        if ($sj_json) { $j = json_decode((string)$sj_json, true); if (is_array($j)) $sj_bijl = $j; }
+        $bijl = melding_bijlagen_verdeel(melding_bijlagen_resolve(melding_bijlagen_normaliseer(array_merge($sj_bijl, $opties['bijlagen'] ?? []))));
+        if ($bijl['links']) $override['bijlagen_blok_html'] = melding_bijlagen_blok_html($bijl['links']);
+
         $r = melding_render($type, $vars, $override);
         if (!$r) { $uit['status'] = 'mislukt'; $uit['reden'] = 'geen_sjabloon'; return $uit; }
         // Eén keer, bij het allereerste WhatsApp/SMS-bericht aan deze persoon: uitleg + hoe je afmeldt.
@@ -184,8 +191,8 @@ function melding_verstuur(string $type, int $sol_id, array $extra = [], array $o
             return $uit;
         }
 
-        $bijlagen = melding_bijlagen_normaliseer(array_merge($r['bijlagen'] ?? [], $opties['bijlagen'] ?? []));
         // Een bestand kan alleen per e-mail mee: bij 'kort' dan óók e-mail (kort krijgt een downloadlink).
+        $bijlagen = ($bijl['mee'] || $bijl['links']) ? ['mee' => $bijl['mee'], 'kort' => $bijl['kort']] : [];
         if ($bijlagen && $modus === 'kort') $modus = 'beide';
         $plannen = melding_kanaalplan($modus, $ontv, $def, $r['tekst_kort'] !== '');
         $prio = $opties['prioriteit'] ?? 'direct';
@@ -433,11 +440,14 @@ function melding_verzend_item(array $m): array {
     $poging = (int)($m['pogingen'] ?? 1);
     $fouten = []; $gelukt = null; $fallback_van = null;
     $log_id = (int)($m['log_id'] ?? 0);
-    $bijlagen = [];
-    if (!empty($m['bijlagen_json'])) { $j = json_decode((string)$m['bijlagen_json'], true); if (is_array($j)) $bijlagen = melding_bijlagen_resolve($j); }
-    // Korte kanalen: downloadlinks van bibliotheek-bijlagen achter de tekst
-    $tekst_kort = (string)$m['tekst_kort'];
-    foreach ($bijlagen as $b) if (!empty($b['url'])) $tekst_kort .= "\n" . $b['naam'] . ': ' . $b['url'];
+    $bijlagen = []; $kort_links = [];
+    if (!empty($m['bijlagen_json'])) {
+        $j = json_decode((string)$m['bijlagen_json'], true);
+        if (is_array($j) && isset($j['mee'])) { $bijlagen = melding_bijlagen_resolve($j['mee']); $kort_links = $j['kort'] ?? []; }
+        elseif (is_array($j)) { $bijlagen = melding_bijlagen_resolve($j); foreach ($bijlagen as $b) if (!empty($b['url'])) $kort_links[] = ['naam' => $b['naam_mooi'] ?? $b['naam'], 'url' => $b['url']]; }
+    }
+    // Korte kanalen: nette downloadlinks achter de tekst
+    $tekst_kort = rtrim((string)$m['tekst_kort']) . melding_bijlagen_kort_tekst($kort_links);
 
     foreach ($plan as $kanaal) {
         if ($kanaal !== 'email' && $poging > 1) { $fouten[] = "$kanaal: overgeslagen bij herhaling"; continue; }
@@ -501,16 +511,53 @@ function melding_bijlagen_normaliseer(array $lijst): array {
     return $uit;
 }
 
-/** Bijlagen klaarmaken voor verzending: [['pad','naam','mime','url'=>?]]. Ontbrekende bestanden vallen weg. */
+/** Bijlagen klaarmaken voor verzending: [['id'=>?,'pad','naam','naam_mooi','mime','grootte','url'=>?]]. Ontbrekende bestanden vallen weg. */
 function melding_bijlagen_resolve(array $lijst): array {
     $uit = [];
     foreach ($lijst as $b) {
         if (!empty($b['bijlage_id'])) {
             if (function_exists('bijlagen_van_ids')) foreach (bijlagen_van_ids([(int)$b['bijlage_id']]) as $r) $uit[] = $r;
         } elseif (!empty($b['pad']) && is_file($b['pad'])) {
-            $uit[] = ['pad' => $b['pad'], 'naam' => $b['naam'] ?? basename($b['pad']), 'mime' => $b['mime'] ?? 'application/octet-stream', 'url' => null];
+            $naam = $b['naam'] ?? basename($b['pad']);
+            $uit[] = ['id' => null, 'pad' => $b['pad'], 'naam' => $naam, 'naam_mooi' => function_exists('bijlage_naam_mooi') ? bijlage_naam_mooi($naam) : $naam,
+                      'mime' => $b['mime'] ?? 'application/octet-stream', 'grootte' => (int)(@filesize($b['pad']) ?: 0), 'url' => null];
         }
     }
+    return $uit;
+}
+
+/**
+ * Verdeel opgeloste bijlagen: 'mee' (als e-mailbijlage), 'links' (te groot → downloadknop in de mail),
+ * 'kort' (naam + link voor WhatsApp/SMS; alle bibliotheek-bestanden).
+ */
+function melding_bijlagen_verdeel(array $res): array {
+    $max = function_exists('bijlagen_mail_max_bytes') ? bijlagen_mail_max_bytes() : 8 * 1048576;
+    $uit = ['mee' => [], 'links' => [], 'kort' => []];
+    foreach ($res as $b) {
+        $te_groot = (int)($b['grootte'] ?? 0) > $max && !empty($b['url']);
+        if ($te_groot) $uit['links'][] = ['naam' => $b['naam_mooi'] ?? $b['naam'], 'url' => $b['url'], 'grootte' => (int)$b['grootte']];
+        else $uit['mee'][] = !empty($b['id']) ? ['bijlage_id' => (int)$b['id']] : ['pad' => $b['pad'], 'naam' => $b['naam'], 'mime' => $b['mime']];
+        if (!empty($b['url'])) $uit['kort'][] = ['naam' => $b['naam_mooi'] ?? $b['naam'], 'url' => $b['url']];
+    }
+    return $uit;
+}
+
+/** HTML-blok met downloadknoppen voor bestanden die te groot zijn als bijlage. */
+function melding_bijlagen_blok_html(array $links): string {
+    $h = fn(string $s) => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
+    $uit = '<p style="margin:20px 0 6px"><strong>Download</strong></p>';
+    foreach ($links as $l) {
+        $mb = $l['grootte'] > 0 ? ' (' . round($l['grootte'] / 1048576, 1) . ' MB)' : '';
+        $uit .= '[knop href="' . $h($l['url']) . '"]' . $h($l['naam']) . $mb . '[/knop]';
+    }
+    return $uit . '<p style="font-size:12px;color:#8a94a3">De downloadlink is 14 dagen geldig.</p>';
+}
+
+/** Tekst voor WhatsApp/SMS: leesbare naam + korte link, elk op een eigen regel. */
+function melding_bijlagen_kort_tekst(array $kort): string {
+    if (!$kort) return '';
+    $uit = "\n";
+    foreach ($kort as $l) $uit .= "\n" . (count($kort) > 1 ? 'Bijlage: ' : 'Bijlage: ') . $l['naam'] . "\n" . $l['url'];
     return $uit;
 }
 

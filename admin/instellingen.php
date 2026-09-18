@@ -763,6 +763,11 @@ require __DIR__ . '/layout_top.php';
             <div class="form-hulp">Meer automatische meldingen per dag worden overgeslagen (anti-loop; zie foutenlog).</div>
           </div>
           <div class="form-groep">
+            <label>Bijlage als e-mailbijlage tot (MB)</label>
+            <input type="number" name="inst[bijlage.mail_max_mb]" value="<?= instelling_int('bijlage.mail_max_mb', 8) ?>" min="1" max="25">
+            <div class="form-hulp">Grotere bestanden gaan als downloadknop in de mail (link 14 dagen geldig).</div>
+          </div>
+          <div class="form-groep">
             <label>WhatsApp per uur (max)</label>
             <input type="number" name="inst[wa.max_per_uur]" value="<?= instelling_int('wa.max_per_uur', 30) ?>" min="1" max="500">
             <div class="form-hulp">Boven dit aantal valt de kern terug op SMS/e-mail.</div>
