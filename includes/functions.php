@@ -21,7 +21,6 @@ if (file_exists(__DIR__ . '/instellingen.php'))  require_once __DIR__ . '/instel
 if (file_exists(__DIR__ . '/ai_analyse.php'))      require_once __DIR__ . '/ai_analyse.php';
 if (file_exists(__DIR__ . '/kennismakingspakket.php')) require_once __DIR__ . '/kennismakingspakket.php';
 if (file_exists(__DIR__ . '/ondertekeningen_auto.php')) require_once __DIR__ . '/ondertekeningen_auto.php';
-if (file_exists(__DIR__ . '/ondertekening_mails.php')) require_once __DIR__ . '/ondertekening_mails.php';
 if (file_exists(__DIR__ . '/ondertekening_pdf.php')) require_once __DIR__ . '/ondertekening_pdf.php';
 if (file_exists(__DIR__ . '/rechten.php')) require_once __DIR__ . '/rechten.php';
 if (file_exists(__DIR__ . '/beschikbaarheid_dagen.php')) require_once __DIR__ . '/beschikbaarheid_dagen.php';
@@ -40,7 +39,6 @@ if (file_exists(__DIR__ . '/toegang.php')) require_once __DIR__ . '/toegang.php'
 if (file_exists(__DIR__ . '/health.php')) require_once __DIR__ . '/health.php';
 if (file_exists(__DIR__ . '/landing.php')) require_once __DIR__ . '/landing.php';
 if (file_exists(__DIR__ . '/kanalen.php')) require_once __DIR__ . '/kanalen.php';
-if (file_exists(__DIR__ . '/notificatie.php')) require_once __DIR__ . '/notificatie.php';
 if (file_exists(__DIR__ . '/optout.php')) require_once __DIR__ . '/optout.php';
 // Centrale meldingen (register, sjablonen, verzendkern) — ná kanalen/optout/mail_render.
 foreach (['registry', 'sjablonen', 'verzend', 'bijlagen', 'herinneringen', 'gepland'] as $__m) {
@@ -459,149 +457,6 @@ function stuur_mail(string $naar, string $naam, string $onderwerp, string $body,
     return Mailer::verstuur($naar, $naam, $onderwerp, $body, $sol_id);
 }
 
-/**
- * Stuur uitnodigingsmail VEILIG: dubbel-mail bescherming via mail_log.
- * Stuurt mail tenzij dezelfde sollicitant in afgelopen $minuten al een mail met
- * vergelijkbaar onderwerp heeft gekregen. Retourneert:
- *   - 'verstuurd' : mail is succesvol verstuurd
- *   - 'al_verstuurd' : binnen tijdvenster al verstuurd, skip
- *   - 'fout' : verzending mislukt (controleer mail_log voor details)
- *   - 'geen_email' : sollicitant heeft geen e-mailadres
- */
-function verstuur_fase_mail(
-    int $sol_id,
-    string $template_slug,
-    string $onderwerp_zoek_patroon,
-    array $seizoen = [],
-    int $window_minuten = 60
-): string {
-    // @deprecated — gebruik fase_zetten() / melding_verstuur(). Delegeert naar de meldingen-kern.
-    if (function_exists('melding_verstuur') && function_exists('melding_type_alias')) {
-        $r = melding_verstuur(melding_type_alias($template_slug), $sol_id, [], ['dedup_min' => $window_minuten]);
-        return match ($r['status']) {
-            'verstuurd', 'wacht' => 'verstuurd',
-            'overgeslagen'       => ($r['reden'] === 'geen_adres') ? 'geen_email' : 'al_verstuurd',
-            default              => 'fout',
-        };
-    }
-    try {
-        $db = db();
-        $r = $db->prepare("SELECT s.id,p.voornaam,p.email,p.tussenvoegsel,p.achternaam,p.telefoon FROM sollicitaties s JOIN personen p ON p.id=s.persoon_id WHERE s.id=?");
-        $r->execute([$sol_id]);
-        $row = $r->fetch();
-        if (!$row || empty($row['email'])) return 'geen_email';
-
-        // Dubbel-mail check
-        $recent = $db->prepare("SELECT 1 FROM mail_log WHERE sollicitatie_id=? AND onderwerp LIKE ? AND status='verstuurd' AND verstuurd_op > DATE_SUB(NOW(), INTERVAL ? MINUTE) LIMIT 1");
-        $recent->execute([$sol_id, $onderwerp_zoek_patroon, $window_minuten]);
-        if ($recent->fetch()) return 'al_verstuurd';
-
-        $sol_arr = [
-            'voornaam'      => $row['voornaam'],
-            'tussenvoegsel' => $row['tussenvoegsel'] ?? '',
-            'achternaam'    => $row['achternaam']    ?? '',
-            'email'         => $row['email'],
-            'telefoon'      => $row['telefoon'] ?? '',
-        ];
-        $ok = stuur_template_mail($template_slug, $row['email'], $sol_arr, $seizoen, [], $sol_id);
-
-        // Ook via SMS/WhatsApp als dat voor dit meldingstype is ingesteld en de sollicitant
-        // een telefoonnummer heeft. De e-mail is hierboven al verstuurd.
-        if (!empty($row['telefoon']) && function_exists('notificatie_kanalen')) {
-            $k = notificatie_kanalen($template_slug);
-            if (($k['sms'] || $k['wa']) && function_exists('notificatie_verstuur')) {
-                $naam = trim($row['voornaam'] . ' ' . ($row['achternaam'] ?? ''));
-                $kort = notificatie_korte_tekst($template_slug, $row['voornaam'], $seizoen);
-                try {
-                    notificatie_verstuur($template_slug, ['telefoon' => $row['telefoon'], 'naam' => $naam], ['kort' => $kort], $sol_id);
-                } catch (\Exception $e) { error_log('fase-notificatie sms/wa: ' . $e->getMessage()); }
-            }
-        }
-        return $ok ? 'verstuurd' : 'fout';
-    } catch (\Exception $e) {
-        error_log("verstuur_fase_mail: " . $e->getMessage());
-        return 'fout';
-    }
-}
-
-// ─────────────────────────────────────────────────────────────
-//  Taak-meldingen (functioneel, wordt later herzien in mail-overhaul)
-// ─────────────────────────────────────────────────────────────
-
-/**
- * Stuur een simpele mail met dubbel-bescherming: skip als dezelfde sollicitant
- * in het tijdvenster al een mail met dit onderwerp kreeg. Gebruikt mail_log.
- * Retourneert: 'verstuurd' | 'al_verstuurd' | 'geen_email' | 'fout'.
- */
-if (!function_exists('stuur_taak_mail')) {
-function stuur_taak_mail(int $sol_id, string $onderwerp, string $body, int $window_minuten = 720): string {
-    try {
-        $db = db();
-        $r = $db->prepare("SELECT p.voornaam, p.tussenvoegsel, p.achternaam, p.email
-                           FROM sollicitaties s JOIN personen p ON p.id=s.persoon_id WHERE s.id=?");
-        $r->execute([$sol_id]);
-        $row = $r->fetch();
-        if (!$row || empty($row['email'])) return 'geen_email';
-
-        // Dubbel-mail check op onderwerp
-        try {
-            $recent = $db->prepare("SELECT 1 FROM mail_log WHERE sollicitatie_id=? AND onderwerp=? AND status='verstuurd'
-                                    AND verstuurd_op > DATE_SUB(NOW(), INTERVAL ? MINUTE) LIMIT 1");
-            $recent->execute([$sol_id, $onderwerp, $window_minuten]);
-            if ($recent->fetch()) return 'al_verstuurd';
-        } catch (\Exception $e) { /* mail_log kolomnaam kan afwijken — dan gewoon versturen */ }
-
-        $naam = trim($row['voornaam'] . ' ' . ($row['tussenvoegsel'] ? $row['tussenvoegsel'] . ' ' : '') . $row['achternaam']);
-        return stuur_mail($row['email'], $naam, $onderwerp, $body, $sol_id) ? 'verstuurd' : 'fout';
-    } catch (\Exception $e) {
-        error_log("stuur_taak_mail: " . $e->getMessage());
-        return 'fout';
-    }
-}
-}
-
-/** @deprecated "Er staan taken voor je klaar" — nu meldingstype 'ouder_gegevens_ontvangen'. */
-if (!function_exists('mail_taken_klaar')) {
-function mail_taken_klaar(int $sol_id): string {
-    if (function_exists('melding_verstuur')) {
-        $r = melding_verstuur('ouder_gegevens_ontvangen', $sol_id);
-        return in_array($r['status'], ['verstuurd', 'wacht'], true) ? 'verstuurd' : ($r['status'] === 'overgeslagen' ? 'al_verstuurd' : 'fout');
-    }
-    $url = rtrim(APP_URL, '/') . '/portaal/';
-    // Voornaam ophalen voor een persoonlijke, enkele begroeting (voorkomt dubbele aanhef).
-    $vnaam = '';
-    try {
-        $r = db()->prepare("SELECT p.voornaam FROM sollicitaties s JOIN personen p ON p.id=s.persoon_id WHERE s.id=?");
-        $r->execute([$sol_id]); $vnaam = (string)($r->fetchColumn() ?: '');
-    } catch (\Exception $e) {}
-    $aanhef = $vnaam !== '' ? ('Hoi ' . h($vnaam) . ',') : 'Hoi,';
-    $body = "<p>$aanhef</p>
-<p>Er staan een paar acties voor je klaar in je Paal 13 portaal. Log in om ze af te ronden — denk aan het \"Beter leren kennen\"-formulier, je beschikbaarheid doorgeven, en (als je nog geen 18 bent) de gegevens van je ouder/verzorger. Zo bevestig je meteen je deelname aan de selectiedag.</p>
-<p><a href=\"" . h($url) . "\">Ga naar je portaal &rarr;</a></p>
-<p>Groet,<br>Reddingsbrigade Paal 13</p>";
-    return stuur_taak_mail($sol_id, 'Er staan taken voor je klaar — Paal 13', $body);
-}
-}
-
-/** @deprecated "Taak afgerond" — nu meldingstype 'taak_afgerond'. */
-if (!function_exists('mail_taak_afgerond')) {
-function mail_taak_afgerond(int $sol_id, string $taak_naam): string {
-    if (function_exists('melding_verstuur')) {
-        $r = melding_verstuur('taak_afgerond', $sol_id, ['taak_naam' => $taak_naam]);
-        return in_array($r['status'], ['verstuurd', 'wacht'], true) ? 'verstuurd' : ($r['status'] === 'overgeslagen' ? 'al_verstuurd' : 'fout');
-    }
-    $url = rtrim(APP_URL, '/') . '/portaal/';
-    $body = "<p>Hoi,</p>
-<p>Goed nieuws: de taak <strong>" . h($taak_naam) . "</strong> is afgerond. ✅</p>
-<p>Je kunt in je portaal zien of er nog andere acties openstaan.</p>
-<p><a href=\"" . h($url) . "\">Ga naar je portaal &rarr;</a></p>
-<p>Groet,<br>Reddingsbrigade Paal 13</p>";
-    // Kort venster: elke afgeronde taak mag een eigen bevestiging sturen
-    return stuur_taak_mail($sol_id, 'Taak afgerond: ' . $taak_naam . ' — Paal 13', $body, 5);
-}
-}
-
-
 /** Zorgt dat personen de ouder/verzorger-velden hebben (naam, e-mail, telefoon). */
 if (!function_exists('personen_ouder_auto_setup')) {
 function personen_ouder_auto_setup(): void {
@@ -700,56 +555,7 @@ function mail_queue_verwerk(int $max = 20): array {
     // De centrale meldingen-kern verwerkt dezelfde wachtrij (alle kanalen); oude rijen zonder
     // kanaalplan gaan als e-mail. Dit is nu alleen nog een doorgeefluik.
     if (function_exists('melding_queue_verwerk')) return melding_queue_verwerk($max);
-    mail_queue_auto_setup();
-    $res = ['verwerkt'=>0, 'fouten'=>0];
-    try {
-        $rows = db()->prepare("SELECT * FROM mail_queue WHERE status='wacht' AND pogingen < 3 ORDER BY id ASC LIMIT ?");
-        $rows->execute([$max]);
-        $items = $rows->fetchAll();
-    } catch (\Exception $e) { return $res; }
-
-    foreach ($items as $m) {
-        db()->prepare("UPDATE mail_queue SET status='bezig', pogingen=pogingen+1 WHERE id=?")->execute([$m['id']]);
-        try {
-            $ok = Mailer::verstuur($m['naar_email'], $m['naar_naam'] ?? '', $m['onderwerp'], $m['body'], $m['sol_id'] ?? null);
-            if ($ok) {
-                db()->prepare("UPDATE mail_queue SET status='klaar', verwerkt_op=NOW(), fout=NULL WHERE id=?")->execute([$m['id']]);
-                $res['verwerkt']++;
-            } else {
-                $status = ($m['pogingen'] >= 2) ? 'fout' : 'wacht';
-                db()->prepare("UPDATE mail_queue SET status=?, fout='Mailer.verstuur gaf false' WHERE id=?")->execute([$status, $m['id']]);
-                $res['fouten']++;
-            }
-        } catch (\Exception $e) {
-            $status = ($m['pogingen'] >= 2) ? 'fout' : 'wacht';
-            db()->prepare("UPDATE mail_queue SET status=?, fout=? WHERE id=?")->execute([$status, $e->getMessage(), $m['id']]);
-            $res['fouten']++;
-        }
-        usleep(200000); // 0.2s tussen mails om SMTP niet te overstelpen
-    }
-    return $res;
-}
-
-// ── Herinneringen: zie includes/meldingen/herinneringen.php (herinnering_run) ──
-/** @deprecated Gebruik herinnering_run(). */
-function reminder_run(): array {
-    return function_exists('herinnering_run') ? herinnering_run() : [];
-}
-
-// Auto-setup: herinnerd_op kolom op ondertekeningen
-function ondertekening_herinnerd_auto_setup(): void {
-    static $done = false;
-    if ($done) return;
-    $done = true;
-    try {
-        $db = db();
-        // Zorg eerst dat de tabel zelf bestaat (op een verse database komt die anders alleen via migratie 0016)
-        ondertekeningen_auto_setup();
-        $dbn = $db->query("SELECT DATABASE()")->fetchColumn();
-        $c = $db->prepare("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=? AND TABLE_NAME='ondertekeningen' AND COLUMN_NAME='herinnerd_op'");
-        $c->execute([$dbn]);
-        if (!$c->fetchColumn()) $db->exec("ALTER TABLE `ondertekeningen` ADD COLUMN `herinnerd_op` DATETIME DEFAULT NULL");
-    } catch (\Exception $e) {}
+    return ['verwerkt' => 0, 'fouten' => 0];
 }
 
 if (!function_exists('ondertekeningen_auto_setup')) {

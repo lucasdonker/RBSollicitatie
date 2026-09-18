@@ -107,7 +107,6 @@ function db_failsafe(): void {
         'selectiedag_auto_setup',
         'personen_ouder_auto_setup',
         'ondertekeningen_auto_setup',
-        'ondertekening_herinnerd_auto_setup',
         'extra_tabellen_auto_setup',
         'consent_auto_setup',
         'opschoon_auto_setup',

@@ -56,8 +56,3 @@ function kennismakingspakket_activeren(int $sol_id): array {
     }
     return $resultaat;
 }
-
-/** @deprecated De welkomstmail is nu het meldingstype 'aangenomen' (includes/meldingen/registry.php). */
-function welkom_template_seed(): void {
-    if (function_exists('sjablonen_auto_setup')) sjablonen_auto_setup();
-}

@@ -310,49 +310,7 @@ class Mailer
             return mail_thema_wrapper($aanhef . $body_verwerkt, $onderwerp, $onderwerp);
         }
 
-        // ── Terugval: oude ingebouwde opmaak ──
-        $logo    = defined('APP_URL') ? APP_URL . '/assets/img/logo-mail.png' : '';
-        $bestuur = defined('MAIL_BESTUUR') ? MAIL_BESTUUR : '';
-        $h       = fn(string $s) => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
-
-        return <<<HTML
-<!DOCTYPE html>
-<html lang="nl">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<style>
-  body { font-family: Arial, Helvetica, sans-serif; background: #f0f4f8; margin: 0; padding: 20px; }
-  .wrap { max-width: 580px; margin: 0 auto; background: #fff; border-radius: 10px; overflow: hidden; }
-  .head { background: #002147; padding: 24px 32px; text-align: center; }
-  .head img { height: 50px; display: block; margin: 0 auto; }
-  .head h2 { color: #FF6B35; margin: 14px 0 0; font-size: 18px; font-weight: bold; }
-  .body { padding: 28px 32px; color: #1a2332; line-height: 1.7; font-size: 15px; }
-  .body p { margin: 0 0 16px; }
-  .btn { display: inline-block; background: #FF6B35; color: #ffffff !important; text-decoration: none; padding: 13px 28px; border-radius: 7px; font-weight: bold; font-size: 15px; margin: 8px 0; }
-  .otp-code { font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #002147; text-align: center; background: #f0f4f8; border-radius: 8px; padding: 16px; margin: 16px 0; }
-  .foot { background: #001530; padding: 16px 32px; text-align: center; color: #8899aa; font-size: 12px; }
-  .foot a { color: #FF6B35; }
-</style>
-</head>
-<body>
-<div class="wrap">
-  <div class="head">
-    <img src="{$logo}" alt="Reddingsbrigade Paal 13">
-    <h2>{$h($onderwerp)}</h2>
-  </div>
-  <div class="body">
-    <p>Hoi {$h($naam)},</p>
-    {$body}
-  </div>
-  <div class="foot">
-    Reddingsbrigade Callantsoog &amp; Groote Keeten &mdash; Paal 13<br>
-    <a href="mailto:{$bestuur}">{$bestuur}</a>
-  </div>
-</div>
-</body>
-</html>
-HTML;
+        return '<p>Hoi ' . htmlspecialchars($naam, ENT_QUOTES, 'UTF-8') . ',</p>' . $body;
     }
 
     /**

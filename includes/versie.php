@@ -3,10 +3,18 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.87.5');
+define('APP_VERSIE', '2.87.6');
 
 function app_changelog(): array {
     return [
+        '2.87.6' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Meldingen: opruimen van de oude verzendwegen (bundel 7 van 7)',
+            'punten' => [
+                'De oude, losse mail-functies (fase-mail, taak-mail, herinneringen op onderwerp-tekst, notificatie-routering, aparte ondertekening-mailer) en drie dubbele mail-layouts zijn verwijderd; alles loopt via de centrale meldingen-kern en één huisstijl-layout',
+                'De WhatsApp-terugval bij een herhaalde poging gaat alleen nog per e-mail; korte kanalen worden nooit opnieuw geprobeerd (voorkomt dubbele berichten en WhatsApp-blokkering)',
+            ],
+        ],
         '2.87.5' => [
             'datum'  => '2026-09-18',
             'titel'  => 'Meldingen: bijlagen en geplande berichten (bundel 6 van 7)',
