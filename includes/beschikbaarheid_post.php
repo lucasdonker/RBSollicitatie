@@ -39,14 +39,16 @@ function beschikbaarheid_opslaan_uit_post(int $sol_id, array $post): array {
         if ($v && !empty($at[$i])) $afw[] = ['van' => $v, 'tot' => $at[$i], 'label' => $al[$i] ?? ''];
     }
 
-    // Verzoeken afwijkend aantal dagen (met optionele dagen-pool)
+    // Verzoeken afwijkend aantal dagen (met optionele dagen-pool). Het id van een bestaand
+    // (beslist) verzoek gaat mee, zodat een ongewijzigd goedgekeurd verzoek niet opnieuw als
+    // open verzoek wordt ingediend.
     $verzoeken = [];
     $vv = $post['b2_vz_van'] ?? []; $vt = $post['b2_vz_tot'] ?? []; $vd = $post['b2_vz_dagen'] ?? []; $vl = $post['b2_vz_toelichting'] ?? [];
-    $vp = $post['b2_vz_pool'] ?? [];
+    $vp = $post['b2_vz_pool'] ?? []; $vi = $post['b2_vz_id'] ?? [];
     foreach ($vv as $i => $v) {
         if ($v && !empty($vt[$i]) && !empty($vd[$i])) {
             $aantal = (int)$vd[$i];
-            $verzoek = ['van_week' => (int)$v, 'tot_week' => (int)$vt[$i], 'dagen' => $aantal, 'toelichting' => $vl[$i] ?? ''];
+            $verzoek = ['van_week' => (int)$v, 'tot_week' => (int)$vt[$i], 'dagen' => $aantal, 'toelichting' => $vl[$i] ?? '', 'id' => (int)($vi[$i] ?? 0)];
             $pool = [];
             if (!empty($vp[$i])) {
                 $decoded = json_decode($vp[$i], true);

@@ -22,6 +22,7 @@ function notificatie_typen(): array {
         'uitnodiging_tw'     => 'Uitnodiging trainingsweekend',
         'status_update'      => 'Status-update sollicitatie',
         'taak_afgerond'      => 'Bevestiging taak afgerond',
+        'verzoek_beslist'    => 'Besluit verzoek minder dagen werken',
         'ondertekening_herinnering' => 'Herinnering ondertekening',
         'algemeen'           => 'Algemene mededeling',
     ];
@@ -120,6 +121,8 @@ function notificatie_korte_tekst(string $type, string $voornaam, array $seizoen 
             return "Hoi $voornaam, er is een update over je sollicitatie bij Paal 13. Bekijk 'm in je portaal: $portaal";
         case 'ondertekening_herinnering':
             return "Hoi $voornaam, er staat nog een document klaar om te ondertekenen in je portaal: $portaal";
+        case 'verzoek_beslist':
+            return "Hoi $voornaam, het bestuur heeft je verzoek om minder dagen te werken beoordeeld. Bekijk het besluit in je portaal: {$portaal}beschikbaarheid.php";
         default:
             return "Hoi $voornaam, er is een bericht voor je van Paal 13. Bekijk je portaal: $portaal";
     }

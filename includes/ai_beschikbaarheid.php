@@ -123,7 +123,7 @@ STRIKTE REGELS:
 - BELANGRIJK voor afwezigheid (vakantie): geef EXACTE datums (van_datum en tot_datum, YYYY-MM-DD), NIET hele weken. Als iemand zegt "3 t/m 16 augustus op vakantie", gebruik dan precies die datums. Zo blijven halve weken behouden en is het controleerbaar.
 - LOSSE DAGEN: als iemand één losse dag niet kan (bijv. "behalve 12 augustus", "maar die woensdag de 6e niet", "op 20 juli heb ik een afspraak"), zet die dan in "losse_dagen" als één datum — NIET als afwezigheidsperiode. Gebruik soort "niet_beschikbaar" als iemand echt niet kan, en "voorkeur_vrij" als iemand die dag liever vrij wil maar het geen must is. Reken losse weekdagen om naar de concrete datum binnen het seizoen.
 - VASTE VRIJE DAG: als iemand ELKE week een bepaalde weekdag vrij wil (bijv. "elke woensdag naar school", "op maandag heb ik altijd sport", "donderdags kan ik nooit"), zet die weekdag(en) in "vaste_vrije_dagen" als weekdagnummers (1=maandag, 2=dinsdag, 3=woensdag, 4=donderdag, 5=vrijdag, 6=zaterdag, 7=zondag) en zet de reden in "vaste_reden". Dit is iets anders dan een losse dag: een vaste vrije dag geldt ELKE week, een losse dag is één keer.
-- MINDER DAGEN (verzoek): als iemand in BEPAALDE WEKEN minder dagen wil werken dan normaal (bijv. "in juli maar 3 dagen per week", "week 30 tot 32 wil ik het rustig aan doen, hooguit 2 dagen"), zet dat in "verzoeken" met van_week, tot_week en dagen_aantal. Dit is een verzoek dat het bestuur beoordeelt. Optioneel: welke dagen iemand die weken wél kan in "pool" (weekdagnummers). LET OP: als je een pool opgeeft, moet die MINSTENS zoveel dagen bevatten als dagen_aantal (je kunt geen 3 dagen werken als je er maar 2 aanvinkt). Weet je niet welke dagen? Laat pool dan leeg.
+- MINDER DAGEN (verzoek): als iemand in BEPAALDE WEKEN minder dagen wil werken dan normaal (bijv. "in juli maar 3 dagen per week", "week 30 tot 32 wil ik het rustig aan doen, hooguit 2 dagen"), zet dat in "verzoeken" met van_week, tot_week en dagen_aantal. Dit is een verzoek dat het bestuur beoordeelt. Een verzoek is GEEN aparte werkperiode: laat de werkperiode in "blokken" gewoon doorlopen over die weken en splits die niet op. Optioneel: welke dagen iemand die weken wél kan in "pool" (weekdagnummers). LET OP: als je een pool opgeeft, moet die MINSTENS zoveel dagen bevatten als dagen_aantal (je kunt geen 3 dagen werken als je er maar 2 aanvinkt). Weet je niet welke dagen? Laat pool dan leeg.
 
 ANTWOORD ALLEEN met JSON in dit exacte format:
 {
@@ -164,6 +164,28 @@ function ai_besch_datum_geldig($d): string {
     return checkdate($m, $dag, $y) ? $d : '';
 }
 
+/**
+ * Aangrenzende of overlappende werkperiodes met hetzelfde regime (en dezelfde weekenddagen)
+ * samenvoegen. De AI splitst een periode soms rond een verzoek "minder dagen" (26–30, 31, 32–35);
+ * voor de sollicitant is dat één doorlopende periode met daarbinnen een verzoek.
+ */
+function ai_besch_blokken_samenvoegen(array $blokken): array {
+    usort($blokken, fn($a, $b) => $a['van_week'] <=> $b['van_week'] ?: $a['tot_week'] <=> $b['tot_week']);
+    $uit = [];
+    foreach ($blokken as $b) {
+        $sleutel = $b['regime'] . ':' . json_encode($b['weekend_dagen'] ?? null);
+        $laatste = $uit ? count($uit) - 1 : -1;
+        if ($laatste >= 0 && $uit[$laatste]['_sleutel'] === $sleutel && $b['van_week'] <= $uit[$laatste]['tot_week'] + 1) {
+            $uit[$laatste]['tot_week'] = max($uit[$laatste]['tot_week'], $b['tot_week']);
+            continue;
+        }
+        $b['_sleutel'] = $sleutel;
+        $uit[] = $b;
+    }
+    foreach ($uit as &$b) unset($b['_sleutel']);
+    return $uit;
+}
+
 function ai_besch_valideer(array $data, array $geldige_weken, int $min_week, int $max_week): array {
     $status = $data['status'] ?? 'geweigerd';
     if ($status === 'geweigerd') {
@@ -187,6 +209,7 @@ function ai_besch_valideer(array $data, array $geldige_weken, int $min_week, int
         }
         $blokken[] = $blok;
     }
+    $blokken = ai_besch_blokken_samenvoegen($blokken);
 
     // Afwezigheid valideren — nu met exacte datums (van_datum/tot_datum, YYYY-MM-DD).
     // Terugvalcompat: als de AI toch nog weken teruggeeft, zetten we die om naar datums.

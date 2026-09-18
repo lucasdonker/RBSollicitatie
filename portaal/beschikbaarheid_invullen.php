@@ -63,6 +63,7 @@ while ($dag <= $eind) {
         'week'    => $wk,
         'maand'   => (int)$dag->format('n'),
         'periode' => (int)$dag->format('j') . ' ' . $mnd_nl[(int)$dag->format('n')] . '–' . (int)(clone $dag)->modify('+6 days')->format('j') . ' ' . $mnd_nl[(int)(clone $dag)->modify('+6 days')->format('n')],
+        'start'   => $dag->format('Y-m-d'),
     ];
     $dag->modify('+7 days');
 }
@@ -145,10 +146,30 @@ require __DIR__ . '/_kop.php';
 
 
 
-<?php $ai_aan = function_exists('ai_besch_actief') && ai_besch_actief(); ?>
+<?php
+  $ai_aan = function_exists('ai_besch_actief') && ai_besch_actief();
+  // Opgeslagen beschikbaarheid (de partial hergebruikt $b2). Startpunt: wizard alleen bij een lege
+  // start én AI aan; wie al beschikbaarheid heeft, komt direct in het ingevulde formulier.
+  $b2 = function_exists('beschikbaarheid2_van') ? beschikbaarheid2_van($sol_id) : ['profiel'=>null,'blokken'=>[],'afwezig'=>[],'verzoeken'=>[]];
+  // Tussentijds bewaard concept (autosave): daar gaat de sollicitant verder waar hij was.
+  $concept = function_exists('beschikbaarheid2_concept_van') ? beschikbaarheid2_concept_van($sol_id) : null;
+  if ($concept) {
+      $besch_start = ($ai_aan && ($concept['stap'] ?? '') === 'wizard' && empty($concept['periodes'])) ? 'wizard' : 'formulier';
+  } else {
+      $besch_start = ($ai_aan && empty($b2['blokken'])) ? 'wizard' : 'formulier';
+  }
+  $concept_tekst = 'Je invoer wordt automatisch bewaard';
+  $concept_ok    = false;
+  if ($concept && !empty($concept['op'])) {
+      $ct = strtotime($concept['op']);
+      $concept_tekst = 'Concept opgeslagen ' . (date('Y-m-d', $ct) === date('Y-m-d') ? 'om ' . date('H:i', $ct) : 'op ' . datum_nl(date('Y-m-d', $ct)));
+      $concept_ok = true;
+  }
+?>
 
 <h1 style="font:var(--text-title);margin-bottom:6px">Beschikbaarheid doorgeven</h1>
-<p style="color:var(--ink-soft);font-size:14px;margin-bottom:18px">Welke weken kun je werken dit seizoen? Geef het hieronder aan — je kunt het later altijd aanpassen.</p>
+<p style="color:var(--ink-soft);font-size:14px;margin-bottom:10px">Welke weken kun je werken dit seizoen? Geef het hieronder aan — je kunt het later altijd aanpassen.</p>
+<span class="pt-autosave <?= $concept_ok ? 'ok' : '' ?>" id="beschAutosave" aria-live="polite"><?= icoon('vink', 13) ?><span id="beschAutosaveTekst"><?= h($concept_tekst) ?></span></span>
 
 <?php if ($flash_ok): ?>
   <div class="ds-melding ds-melding-ok" style="margin-bottom:16px"><?= icoon('vink', 18) ?> <?= h($flash_ok) ?></div>
@@ -162,7 +183,7 @@ require __DIR__ . '/_kop.php';
 
 <?php if ($ai_aan): ?>
 <!-- ══ AI-WIZARD (stap 1 t/m 4) — alleen als AI-hulp aan staat ══ -->
-<div id="wizStap1" class="wiz-stap">
+<div id="wizStap1" class="wiz-stap" <?= $besch_start === 'wizard' ? '' : 'style="display:none"' ?>>
   <div class="wiz1-navy">
     <div class="wiz1-badge"><?= icoon('bliksem', 14) ?> <span>Slim invullen</span></div>
     <span class="wiz1-titel">Typ gewoon wanneer je kunt — wij maken er een planning van.</span>
@@ -216,7 +237,7 @@ require __DIR__ . '/_kop.php';
 </div>
 <?php endif; ?>
 
-<form method="POST" id="beschForm" class="wiz-stap" <?= $ai_aan ? 'style="display:none"' : '' ?>>
+<form method="POST" id="beschForm" class="wiz-stap" <?= $besch_start === 'formulier' ? '' : 'style="display:none"' ?>>
   <?= csrf_input() ?>
   <input type="hidden" name="besch_submit" value="1">
   <input type="hidden" name="terug" value="<?= h(portaal_terug_param()) ?>">
@@ -225,23 +246,39 @@ require __DIR__ . '/_kop.php';
     <button type="submit" class="ds-btn ds-btn-primair ds-btn-vol" onclick="return beschValideer()"><?= icoon('vink', 16) ?> Beschikbaarheid opslaan</button>
   </div>
 </form>
+<?php if ($ai_aan): ?>
+  <button type="button" id="beschOpnieuwSlim" class="wiz1-zelf" style="<?= $besch_start === 'formulier' ? '' : 'display:none;' ?>width:100%;margin-top:12px" onclick="wizNaarStart()"><?= icoon('bliksem', 14) ?> Opnieuw slim invullen met tekst</button>
+<?php endif; ?>
 
 <?php
-  // Weeklabels voor de dropdowns: weeknummer => "W22 · 25 mei", direct uit $alle_weken.
-  $week_labels = [];
+  // Weeklabels voor de dropdowns ("W27 · 29 jun") en de datumrange per week voor de subregel
+  // van de periode-kaart ("29 juni t/m 9 augustus · 6 weken"), direct uit $alle_weken.
+  $week_labels = []; $week_datums = [];
+  $mnd_lang = [1=>'januari',2=>'februari',3=>'maart',4=>'april',5=>'mei',6=>'juni',7=>'juli',8=>'augustus',9=>'september',10=>'oktober',11=>'november',12=>'december'];
   foreach ($alle_weken as $w) {
-      $week_labels[$w['week']] = 'W' . $w['week'] . ' · ' . ($w['periode'] ?? '');
+      $delen = explode('–', (string)($w['periode'] ?? ''));
+      $week_labels[$w['week']] = 'W' . $w['week'] . ' · ' . trim($delen[0]);
+      $van_d = !empty($w['start']) ? new DateTime($w['start']) : (new DateTime())->setISODate($jaar, $w['week'], 1);
+      $tot_d = (clone $van_d)->modify('+6 days');
+      $week_datums[$w['week']] = [
+          'van' => (int)$van_d->format('j') . ' ' . $mnd_lang[(int)$van_d->format('n')],
+          'tot' => (int)$tot_d->format('j') . ' ' . $mnd_lang[(int)$tot_d->format('n')],
+      ];
   }
 ?>
 <script>
   window.BESCH_CFG = {
     weken:   <?= json_encode($week_labels, JSON_UNESCAPED_UNICODE) ?>,
+    datums:  <?= json_encode($week_datums, JSON_UNESCAPED_UNICODE) ?>,
     eerste:  <?= (int)$ew ?>,
     laatste: <?= (int)$lw ?>,
-    // Opgeslagen werkperiodes (de rijen worden door JS opgebouwd)
-    blokken: <?= json_encode(array_map(fn($b) => ['van_week' => (int)$b['van_week'], 'tot_week' => (int)$b['tot_week'], 'regime' => $b['regime'], 'weekend_dagen' => $b['weekend_dagen'] ?: null], $b2['blokken'] ?? []), JSON_UNESCAPED_UNICODE) ?>
+    data:    <?= json_encode($besch_data ?? null, JSON_UNESCAPED_UNICODE) ?>,
+    concept: <?= json_encode($concept, JSON_UNESCAPED_UNICODE) ?>,
+    start:   <?= json_encode($besch_start) ?>,
+    apiConcept: <?= json_encode(APP_URL . '/portaal/api_besch_concept.php') ?>
   };
 </script>
+<script src="<?= APP_URL ?>/assets/js/portaal_concept.js?v=<?= @filemtime(__DIR__.'/../assets/js/portaal_concept.js') ?>"></script>
 <script src="<?= APP_URL ?>/assets/js/beschikbaarheid.js?v=<?= @filemtime(__DIR__.'/../assets/js/beschikbaarheid.js') ?>"></script>
 
 <?php require __DIR__ . '/_voet.php'; ?>

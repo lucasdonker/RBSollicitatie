@@ -105,7 +105,9 @@ function beschikbaarheid2_auto_setup(): void {
         $extra_kol = [
             'beschikbaarheid_blok'    => ['weekend_dagen' => "VARCHAR(20) DEFAULT NULL"],
             'beschikbaarheid_verzoek' => ['dagen_pool' => "VARCHAR(20) DEFAULT NULL", 'beslist_op' => "DATETIME DEFAULT NULL"],
-            'beschikbaarheid_profiel' => ['vaste_is_voorkeur' => "TINYINT(1) NOT NULL DEFAULT 1"],
+            'beschikbaarheid_profiel' => ['vaste_is_voorkeur' => "TINYINT(1) NOT NULL DEFAULT 1",
+                                          // Tussentijds bewaard concept van het formulier (autosave), JSON
+                                          'concept_json' => "MEDIUMTEXT DEFAULT NULL", 'concept_op' => "DATETIME DEFAULT NULL"],
         ];
         foreach ($extra_kol as $tabel => $kols) {
             foreach ($kols as $kol => $def) {
@@ -262,6 +264,42 @@ function beschikbaarheid2_sync_compat(int $sol_id): void {
     }
 }
 
+/* ── Concept (autosave van het formulier) ─────────────────────────────────────────────
+ * Het concept is een JSON-snapshot van het formulier in het gedeelde JS-formaat (periodes, vaste,
+ * vakanties, losse, verzoeken, voorlopig, stap, ai_tekst). Het leeft alleen in de profielrij en telt
+ * niet als "ingevuld" (daarvoor kijkt het portaal naar de blokken). Definitief opslaan wist het. */
+
+/** Het bewaarde concept, of null. Bevat altijd 'op' (tijdstip). */
+function beschikbaarheid2_concept_van(int $sol_id): ?array {
+    beschikbaarheid2_auto_setup();
+    try {
+        $q = db()->prepare("SELECT concept_json, concept_op FROM beschikbaarheid_profiel WHERE sollicitatie_id=?");
+        $q->execute([$sol_id]);
+        $r = $q->fetch();
+        if (!$r || empty($r['concept_json'])) return null;
+        $c = json_decode($r['concept_json'], true);
+        if (!is_array($c)) return null;
+        $c['op'] = $r['concept_op'];
+        return $c;
+    } catch (\Exception $e) { return null; }
+}
+
+/** Concept bewaren (maakt de profielrij aan als die nog niet bestaat; raakt niets anders). */
+function beschikbaarheid2_concept_opslaan(int $sol_id, array $concept): bool {
+    beschikbaarheid2_auto_setup();
+    try {
+        db()->prepare("INSERT INTO beschikbaarheid_profiel (sollicitatie_id, concept_json, concept_op) VALUES (?,?,NOW())
+                       ON DUPLICATE KEY UPDATE concept_json=VALUES(concept_json), concept_op=NOW()")
+            ->execute([$sol_id, json_encode($concept, JSON_UNESCAPED_UNICODE)]);
+        return true;
+    } catch (\Exception $e) { error_log('beschikbaarheid2_concept_opslaan: ' . $e->getMessage()); return false; }
+}
+
+function beschikbaarheid2_concept_wissen(int $sol_id): void {
+    try { db()->prepare("UPDATE beschikbaarheid_profiel SET concept_json=NULL, concept_op=NULL WHERE sollicitatie_id=?")->execute([$sol_id]); }
+    catch (\Exception $e) {}
+}
+
 function beschikbaarheid2_opslaan(int $sol_id, array $input): void {
     beschikbaarheid2_auto_setup();
     $db = db();
@@ -297,12 +335,27 @@ function beschikbaarheid2_opslaan(int $sol_id, array $input): void {
         if (!empty($a['van']) && !empty($a['tot'])) $insa->execute([$sol_id, $a['van'], $a['tot'], mb_substr(trim($a['label']??''),0,100)?:null]);
     }
 
+    // Verzoeken: open verzoeken worden vervangen door wat nu is ingestuurd. Al besliste verzoeken
+    // (goedgekeurd/afgewezen) blijven staan zolang ze ongewijzigd terugkomen; is zo'n verzoek
+    // gewijzigd of weggehaald, dan vervalt het besluit (weg, of opnieuw als open verzoek).
+    $besliste = [];
+    try {
+        $q = $db->prepare("SELECT id, van_week, tot_week, dagen_aantal FROM beschikbaarheid_verzoek WHERE sollicitatie_id=? AND status<>'open'");
+        $q->execute([$sol_id]);
+        foreach ($q->fetchAll() as $r) $besliste[(int)$r['id']] = $r;
+    } catch (\Exception $e) {}
     $db->prepare("DELETE FROM beschikbaarheid_verzoek WHERE sollicitatie_id=? AND status='open'")->execute([$sol_id]);
     $insv = $db->prepare("INSERT INTO beschikbaarheid_verzoek (sollicitatie_id, van_week, tot_week, dagen_aantal, dagen_pool, toelichting, status) VALUES (?,?,?,?,?,?, 'open')");
+    $behouden = [];
     foreach ($input['verzoeken'] ?? [] as $v) {
         $vw=(int)($v['van_week']??0); $tw=(int)($v['tot_week']??0); $da=(int)($v['dagen']??0);
         if ($vw<1||$tw<1||$da<1||$da>6) continue;
         if ($tw<$vw) { $t=$vw; $vw=$tw; $tw=$t; }
+        $id = (int)($v['id'] ?? 0);
+        if ($id && isset($besliste[$id])) {
+            $b = $besliste[$id];
+            if ((int)$b['van_week'] === $vw && (int)$b['tot_week'] === $tw && (int)$b['dagen_aantal'] === $da) { $behouden[] = $id; continue; }
+        }
         $pool = null;
         if (!empty($v['pool'])) {
             $pool_arr = array_values(array_intersect(array_map('intval', $v['pool']), [1,2,3,4,5,6,7]));
@@ -310,7 +363,14 @@ function beschikbaarheid2_opslaan(int $sol_id, array $input): void {
         }
         $insv->execute([$sol_id, $vw, $tw, $da, $pool, mb_substr(trim($v['toelichting']??''),0,300)?:null]);
     }
+    // Besliste verzoeken die niet (ongewijzigd) terugkwamen: opruimen. Afgewezen verzoeken staan
+    // niet in het formulier en blijven bewaard (transparant op het overzicht).
+    foreach ($besliste as $id => $b) {
+        if (in_array($id, $behouden, true)) continue;
+        $db->prepare("DELETE FROM beschikbaarheid_verzoek WHERE id=? AND sollicitatie_id=? AND status='goedgekeurd'")->execute([$id, $sol_id]);
+    }
 
+    beschikbaarheid2_concept_wissen($sol_id); // definitief opgeslagen → concept is niet meer nodig
     beschikbaarheid2_sync_compat($sol_id);
 }
 
@@ -342,7 +402,49 @@ function beschikbaarheid2_verzoek_beslis(int $verzoek_id, string $besluit): void
     $q = $db->prepare("SELECT sollicitatie_id FROM beschikbaarheid_verzoek WHERE id=?"); $q->execute([$verzoek_id]);
     $sol_id = $q->fetchColumn();
     $db->prepare("UPDATE beschikbaarheid_verzoek SET status=?, beslist_op=NOW() WHERE id=?")->execute([$status, $verzoek_id]);
-    if ($sol_id) beschikbaarheid2_sync_compat((int)$sol_id);
+    if ($sol_id) {
+        beschikbaarheid2_sync_compat((int)$sol_id);
+        beschikbaarheid2_verzoek_melding($verzoek_id, $status);
+    }
+}
+
+/**
+ * Melding aan de sollicitant zodra het bestuur een verzoek "minder dagen werken" heeft beslist.
+ * Loopt via de notificatie-routering (type 'verzoek_beslist': e-mail, en sms/WhatsApp als het
+ * beheer die voor dit type heeft aangezet). De e-mail landt in mail_log en is zo ook zichtbaar
+ * onder Berichten in het portaal. Faalt stil: een mislukte melding mag het besluit niet blokkeren.
+ */
+function beschikbaarheid2_verzoek_melding(int $verzoek_id, string $status): void {
+    if (!function_exists('notificatie_verstuur')) return;
+    try {
+        $q = db()->prepare("SELECT v.van_week, v.tot_week, v.dagen_aantal, v.sollicitatie_id, p.voornaam, p.email, p.telefoon, s.seizoen_id
+                            FROM beschikbaarheid_verzoek v JOIN sollicitaties s ON s.id=v.sollicitatie_id JOIN personen p ON p.id=s.persoon_id
+                            WHERE v.id=?");
+        $q->execute([$verzoek_id]);
+        $v = $q->fetch();
+        if (!$v || empty($v['email'])) return;
+
+        $seizoen = null;
+        try { $sq = db()->prepare("SELECT * FROM seizoenen WHERE id=?"); $sq->execute([$v['seizoen_id']]); $seizoen = $sq->fetch() ?: null; } catch (\Exception $e) {}
+        $wkd = seizoen_weken_datums($seizoen);
+        $lbl = function ($wn) use ($wkd) { $wn = (int)$wn; return isset($wkd[$wn]) ? 'week ' . $wn . ' (' . $wkd[$wn]['start']->format('j M') . ')' : 'week ' . $wn; };
+        $weken = (int)$v['van_week'] === (int)$v['tot_week'] ? $lbl($v['van_week']) : $lbl($v['van_week']) . ' t/m ' . $lbl($v['tot_week']);
+        $goed = $status === 'goedgekeurd';
+        $url = rtrim(APP_URL, '/') . '/portaal/beschikbaarheid.php';
+        $voornaam = (string)($v['voornaam'] ?? '');
+        $onderwerp = $goed ? 'Je verzoek voor minder dagen is goedgekeurd — Paal 13' : 'Je verzoek voor minder dagen is afgewezen — Paal 13';
+        $body = '<p>Hoi ' . htmlspecialchars($voornaam) . ',</p>'
+              . '<p>Het bestuur heeft je verzoek om in <strong>' . htmlspecialchars($weken) . '</strong> maximaal <strong>' . (int)$v['dagen_aantal'] . ' dagen per week</strong> te werken '
+              . ($goed ? '<strong>goedgekeurd</strong>. We houden daar rekening mee in de planning.' : '<strong>niet goedgekeurd</strong>. We gaan voor die weken uit van je gewone beschikbaarheid. Vragen? Neem gerust contact met ons op.')
+              . '</p>'
+              . '<p><a href="' . htmlspecialchars($url) . '">Bekijk je beschikbaarheid in het portaal &rarr;</a></p>'
+              . '<p>Groet,<br>Reddingsbrigade Paal 13</p>';
+        $kort = function_exists('notificatie_korte_tekst') ? notificatie_korte_tekst('verzoek_beslist', $voornaam) : '';
+        notificatie_verstuur('verzoek_beslist',
+            ['email' => $v['email'], 'telefoon' => $v['telefoon'] ?? null, 'naam' => $voornaam],
+            ['onderwerp' => $onderwerp, 'email_body' => $body, 'kort' => $kort],
+            (int)$v['sollicitatie_id']);
+    } catch (\Throwable $e) { error_log('beschikbaarheid2_verzoek_melding: ' . $e->getMessage()); }
 }
 
 /** Alle openstaande verzoeken van een seizoen (voor centraal bestuursoverzicht). */
