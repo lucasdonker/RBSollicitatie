@@ -127,20 +127,20 @@ function ondertekening_pdf_bouwen_standaard($pdf, array $rec, array $sol): void 
     $pdf->SetFont('helvetica', '', 11); $pdf->SetTextColor(40, 40, 40);
     $regel = 'Dit formulier is ondertekend voor: ' . ondertekening_pdf_naam($sol);
     if (!empty($sol['geboortedatum'])) $regel .= ' (geboren ' . datum_nl($sol['geboortedatum']) . ')';
-    $pdf->MultiCell(0, 6, $tx($regel)); $pdf->Ln(3);
+    $pdf->MultiCell(0, 6, $tx($regel), 0, 'L'); $pdf->Ln(3);
 
     $kop = function (string $t) use ($pdf, $tx, $NAVY) {
         $pdf->Ln(2); $pdf->SetFont('helvetica', 'B', 12); $pdf->SetTextColor(...$NAVY);
         $pdf->Cell(0, 7, $tx($t), 0, 1, 'L'); $pdf->SetFont('helvetica', '', 10.5); $pdf->SetTextColor(40, 40, 40);
     };
-    $para = function (string $t) use ($pdf, $tx) { $pdf->SetFont('helvetica', '', 10); $pdf->SetTextColor(60, 60, 60); $pdf->MultiCell(0, 5, $tx($t)); $pdf->Ln(1); };
+    $para = function (string $t) use ($pdf, $tx) { $pdf->SetFont('helvetica', '', 10); $pdf->SetTextColor(60, 60, 60); $pdf->MultiCell(0, 5, $tx($t), 0, 'L'); $pdf->Ln(1); };
     $vinkje = function (bool $aan, string $t) use ($pdf, $tx) {
         $pdf->SetFont('helvetica', '', 10); $pdf->SetTextColor(40, 40, 40);
-        $pdf->Cell(8, 5, $aan ? '[X]' : '[  ]', 0, 0, 'L'); $pdf->MultiCell(0, 5, $tx($t));
+        $pdf->Cell(8, 5, $aan ? '[X]' : '[  ]', 0, 0, 'L'); $pdf->MultiCell(0, 5, $tx($t), 0, 'L');
     };
     $veld = function (string $label, string $waarde) use ($pdf, $tx, $GRIJS) {
         $pdf->SetFont('helvetica', 'B', 10); $pdf->SetTextColor(...$GRIJS); $pdf->Cell(45, 6, $tx($label), 0, 0, 'L');
-        $pdf->SetFont('helvetica', '', 10); $pdf->SetTextColor(30, 30, 30); $pdf->MultiCell(0, 6, $tx($waarde !== '' ? $waarde : '-'));
+        $pdf->SetFont('helvetica', '', 10); $pdf->SetTextColor(30, 30, 30); $pdf->MultiCell(0, 6, $tx($waarde !== '' ? $waarde : '-'), 0, 'L');
     };
 
     $kop('Ondertekend door');
@@ -191,7 +191,7 @@ function ondertekening_pdf_ondertekenblok($pdf, array $rec): void {
     $pdf->SetFont('helvetica', 'B', 12); $pdf->SetTextColor(...$NAVY); $pdf->Cell(0, 7, 'Digitale ondertekening', 0, 1, 'L');
     $veld = function (string $label, string $waarde) use ($pdf, $tx, $GRIJS) {
         $pdf->SetFont('helvetica', 'B', 10); $pdf->SetTextColor(...$GRIJS); $pdf->Cell(45, 6, $tx($label), 0, 0, 'L');
-        $pdf->SetFont('helvetica', '', 10); $pdf->SetTextColor(30, 30, 30); $pdf->MultiCell(0, 6, $tx($waarde !== '' ? $waarde : '-'));
+        $pdf->SetFont('helvetica', '', 10); $pdf->SetTextColor(30, 30, 30); $pdf->MultiCell(0, 6, $tx($waarde !== '' ? $waarde : '-'), 0, 'L');
     };
     $veld('Naam (getypt)', (string)($rec['ondertekenaar_naam'] ?? ''));
     $pdf->SetFont('helvetica', '', 9); $pdf->SetTextColor(...$GRIJS); $pdf->Cell(45, 6, 'Handtekening', 0, 0);
@@ -215,13 +215,13 @@ function ondertekening_pdf_certificaatpagina($pdf, array $rec, array $sol): arra
     $pdf->SetDrawColor(...$ORANJE); $pdf->SetLineWidth(0.6);
     $y = $pdf->GetY(); $pdf->Line(20, $y, 190, $y); $pdf->Ln(4);
     $pdf->SetFont('helvetica', '', 9.5); $pdf->SetTextColor(60, 60, 60);
-    $pdf->MultiCell(0, 4.8, $tx('Dit blad hoort bij het voorgaande document en legt vast wie het heeft ondertekend, hoe de ondertekenaar is geverifieerd en dat het document sindsdien niet is gewijzigd. Het hele bestand (document + dit blad) is digitaal verzegeld door Reddingsbrigade Paal 13.'));
+    $pdf->MultiCell(0, 4.8, $tx('Dit blad hoort bij het voorgaande document en legt vast wie het heeft ondertekend, hoe de ondertekenaar is geverifieerd en dat het document sindsdien niet is gewijzigd. Het hele bestand (document + dit blad) is digitaal verzegeld door Reddingsbrigade Paal 13.'), 0, 'L');
     $pdf->Ln(3);
 
     $kop = function (string $t) use ($pdf, $NAVY) { $pdf->Ln(1.5); $pdf->SetFont('helvetica', 'B', 11); $pdf->SetTextColor(...$NAVY); $pdf->Cell(0, 6.5, $t, 0, 1); };
     $veld = function (string $label, string $waarde) use ($pdf, $tx, $GRIJS) {
         $pdf->SetFont('helvetica', 'B', 9.5); $pdf->SetTextColor(...$GRIJS); $pdf->Cell(48, 5.5, $tx($label), 0, 0);
-        $pdf->SetFont('helvetica', '', 9.5); $pdf->SetTextColor(30, 30, 30); $pdf->MultiCell(0, 5.5, $tx($waarde !== '' ? $waarde : '-'));
+        $pdf->SetFont('helvetica', '', 9.5); $pdf->SetTextColor(30, 30, 30); $pdf->MultiCell(0, 5.5, $tx($waarde !== '' ? $waarde : '-'), 0, 'L');
     };
     $type  = (string)($rec['type'] ?? '');
     $label = function_exists('ondertekening_label') ? ondertekening_label($type) : $type;
@@ -249,7 +249,7 @@ function ondertekening_pdf_certificaatpagina($pdf, array $rec, array $sol): arra
     $kop('Tijdlijn');
     $gebeurtenissen = function_exists('ondertekening_gebeurtenissen') && !empty($rec['id']) ? ondertekening_gebeurtenissen((int)$rec['id']) : [];
     if (!$gebeurtenissen) {
-        $pdf->SetFont('helvetica', '', 9.5); $pdf->SetTextColor(60, 60, 60); $pdf->MultiCell(0, 5.5, 'Geen gebeurtenissen vastgelegd (document van vóór het gebeurtenissenlog).');
+        $pdf->SetFont('helvetica', '', 9.5); $pdf->SetTextColor(60, 60, 60); $pdf->MultiCell(0, 5.5, 'Geen gebeurtenissen vastgelegd (document van vóór het gebeurtenissenlog).', 0, 'L');
     }
     foreach ($gebeurtenissen as $g) {
         $det = '';
@@ -261,7 +261,7 @@ function ondertekening_pdf_certificaatpagina($pdf, array $rec, array $sol): arra
         }
         $pdf->SetFont('helvetica', '', 9); $pdf->SetTextColor(...$GRIJS); $pdf->Cell(36, 5, date('d-m-Y H:i:s', strtotime($g['tijdstip'])), 0, 0);
         $pdf->SetTextColor(30, 30, 30);
-        $pdf->MultiCell(0, 5, $tx((function_exists('ondertekening_gebeurtenis_label') ? ondertekening_gebeurtenis_label((string)$g['gebeurtenis']) : $g['gebeurtenis']) . $det . (!empty($g['ip']) ? ' - ' . $g['ip'] : '')));
+        $pdf->MultiCell(0, 5, $tx((function_exists('ondertekening_gebeurtenis_label') ? ondertekening_gebeurtenis_label((string)$g['gebeurtenis']) : $g['gebeurtenis']) . $det . (!empty($g['ip']) ? ' - ' . $g['ip'] : '')), 0, 'L');
     }
 
     $kop('Controle');
@@ -274,7 +274,7 @@ function ondertekening_pdf_certificaatpagina($pdf, array $rec, array $sol): arra
     }
     $pdf->Ln(1);
     $pdf->SetFont('helvetica', '', 9); $pdf->SetTextColor(60, 60, 60);
-    $pdf->MultiCell(0, 4.6, $tx('Controleren: open dit bestand in Adobe Acrobat Reader en kies het handtekeningpaneel. Staat daar "Document is niet gewijzigd sinds de ondertekening", dan is de inhoud intact. De melding "geldigheid van de ondertekenaar onbekend" betekent alleen dat het certificaat van Paal 13 niet in de vertrouwenslijst van Adobe staat.'));
+    $pdf->MultiCell(0, 4.6, $tx('Controleren: open dit bestand in Adobe Acrobat Reader en kies het handtekeningpaneel. Staat daar "Document is niet gewijzigd sinds de ondertekening", dan is de inhoud intact. De melding "geldigheid van de ondertekenaar onbekend" betekent alleen dat het certificaat van Paal 13 niet in de vertrouwenslijst van Adobe staat.'), 0, 'L');
 
     // Zichtbaar handtekeningveld (het zegel) rechtsonder op deze pagina
     $veld_pos = ['x' => 120, 'y' => 250, 'w' => 70, 'h' => 26, 'pagina' => $pdf->getPage()];

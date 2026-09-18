@@ -8,6 +8,9 @@
  */
 require_once __DIR__ . '/../includes/functions.php';
 portaal_alleen_include(__FILE__);
+// Eigen veldenset per type (loonheffing = officieel Belastingdienst-formulier; lidmaatschap = inschrijving vereniging)
+if ($type === 'loonheffing')  { require __DIR__ . '/_ondertekenen_velden_loonheffing.php'; return; }
+if ($type === 'lidmaatschap' && is_file(__DIR__ . '/_ondertekenen_velden_lidmaatschap.php')) { require __DIR__ . '/_ondertekenen_velden_lidmaatschap.php'; return; }
 $_check = function (string $naam, string $tekst, bool $verplicht = false) use ($aan): string {
     return '<label class="ond-check"><input type="checkbox" name="' . h($naam) . '" value="1"' . $aan($naam) . ($verplicht ? ' required' : '') . '>'
          . '<span class="ond-check-box">' . icoon('vink', 14) . '</span><span class="ond-check-tekst">' . h($tekst) . '</span></label>';

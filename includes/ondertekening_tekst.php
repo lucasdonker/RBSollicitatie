@@ -17,8 +17,15 @@ function ondertekening_label(string $type): string {
         'gezondheid_18plus' => 'Gezondheidsverklaring 18+',
         'intake'            => 'Intakeformulier selectiedag',
         'intake_ouder'      => 'Intakeformulier selectiedag (ouder)',
+        'loonheffing'       => 'Opgaaf gegevens voor de loonheffingen',
+        'lidmaatschap'      => 'Inschrijving lidmaatschap vereniging',
         default             => 'Formulier',
     };
+}
+
+/** Typen waarbij de sollicitant altijd zelf tekent (ook onder 18): geen ouderflow. */
+function ondertekening_is_werknemer_type(string $type): bool {
+    return in_array($type, ['loonheffing', 'lidmaatschap'], true);
 }
 
 /** Korte titel voor in de kop van het ondertekenscherm en de bestandsnaam ("Gezondheidsverklaring"). */
@@ -71,6 +78,27 @@ function ondertekening_pdf_bestandsnaam(string $type): string {
 function ondertekening_document(string $type, string $voornaam = ''): array {
     $ouder = ondertekening_is_ouder_type($type);
     $kind  = $voornaam !== '' ? $voornaam : 'uw kind';
+    if ($type === 'loonheffing') {
+        return [
+            'titel'   => 'Opgaaf gegevens voor de loonheffingen',
+            'alineas' => [
+                'Als strandwacht krijg je salaris van Reddingsbrigade Paal 13. De Belastingdienst verplicht elke werkgever om vóór de eerste werkdag je gegevens vast te leggen op het formulier "Model Opgaaf gegevens voor de loonheffingen". Dit formulier is dat officiële model; je vult het hier digitaal in en ondertekent het.',
+                'Je geeft je naam, burgerservicenummer (BSN), adres en geboortedatum door, en je kiest of Paal 13 de loonheffingskorting mag toepassen. Die korting mag maar bij één werkgever of uitkeringsinstantie tegelijk. Heb je nog een andere baan of uitkering waar hij al wordt toegepast, kies dan "Nee".',
+                'Geef je je gegevens niet of niet juist door, dan moet de werkgever het hoge tarief van 52% loonheffing inhouden en mag de loonheffingskorting niet worden toegepast. Verandert er later iets in je gegevens, geef dat dan schriftelijk aan de penningmeester door.',
+                'Je BSN wordt versleuteld bewaard en is alleen zichtbaar voor de penningmeester (loonadministratie). Het ondertekende formulier wordt digitaal verzegeld en wettelijk bewaard tot vijf jaar na het einde van het jaar waarin je dienstverband eindigt.',
+            ],
+        ];
+    }
+    if ($type === 'lidmaatschap') {
+        return [
+            'titel'   => 'Inschrijving als lid van Reddingsbrigade Paal 13',
+            'alineas' => [
+                'Als strandwacht word je lid van de vereniging Reddingsbrigade Paal 13. Met dit formulier schrijf je je in; de ledenservice verwerkt je inschrijving en je krijgt daarvan bericht.',
+                'Je gegevens zijn grotendeels al ingevuld vanuit je sollicitatie; controleer ze en vul aan wat ontbreekt. Ben je jonger dan 18, dan vragen we ook de gegevens van je ouder of verzorger.',
+                'De contributie, zwemgelden en eventuele opleidingskosten betaal je per overschrijving of via automatische incasso. Kies je voor incasso, dan machtig je de vereniging om die bedragen jaarlijks van je rekening af te schrijven; je ontvangt minimaal 14 dagen van tevoren een factuur en kunt een afschrijving binnen 56 dagen laten terugboeken.',
+            ],
+        ];
+    }
     if (ondertekening_is_gezondheid($type)) {
         return [
             'titel'   => 'Gezondheidsverklaring strandwacht',

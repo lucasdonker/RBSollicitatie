@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.90.3');
+define('APP_VERSIE', '2.90.4');
 
 function app_changelog(): array {
     return [
+        '2.90.4' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Aangenomen-takenpakket, bundel 5: het loonheffingsformulier',
+            'punten' => [
+                'Het officiële Belastingdienst-formulier "Model Opgaaf gegevens voor de loonheffingen" wordt in het portaal ingevuld en ondertekend: het origineel blijft exact, alleen de invulling (naam, BSN, adres, geboortedatum, loonheffingskorting ja/nee, datums, kruisjes) en de handtekening komen erop',
+                'Gegevens zijn vooringevuld uit het dossier; BSN wordt gecontroleerd (11-proef) en versleuteld in de kluis bewaard, nooit in de gewone formulierdata',
+                'Het formulier wordt klaargezet bij "aangenomen" (ook voor 15-17-jarigen, die tekenen zelf) en verschijnt als taak "Loonheffingsformulier invullen"; ondertekenen vereist de verificatiecode',
+                'Validatiehelpers op één plek (BSN, IBAN, postcode, voorletters)',
+            ],
+        ],
         '2.90.3' => [
             'datum'  => '2026-09-18',
             'titel'  => 'Aangenomen-takenpakket, bundel 4: sterk ondertekenen (2FA, bewijslog, verzegelde PDF)',

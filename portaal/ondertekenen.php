@@ -79,6 +79,8 @@ $doc            = ondertekening_document($type, $voornaam);
 $eigen_ingelogd = !$is_ouder && portaal_ingelogd() && (int)($_SESSION['portaal_sol_id'] ?? 0) === (int)$rec['sollicitatie_id'];
 $basis_url      = APP_URL . '/portaal/ondertekenen.php?token=' . urlencode($token);
 $twee_fa        = !$is_ondertekend && function_exists('ondertekening_2fa_nodig') && ondertekening_2fa_nodig($type);
+$werknemer_type = function_exists('ondertekening_is_werknemer_type') && ondertekening_is_werknemer_type($type); // loonheffing/lidmaatschap: BSN/IBAN → kluis verplicht
+$kluis_ok       = !$werknemer_type || (function_exists('kluis_beschikbaar') && kluis_beschikbaar());
 $sol_pdf        = ['voornaam' => $voornaam, 'tussenvoegsel' => (string)($sol['tussenvoegsel'] ?? ''), 'achternaam' => (string)$sol['achternaam'], 'geboortedatum' => $sol['geboortedatum'] ?? '', 'email' => (string)($sol['email'] ?? '')];
 
 // ── PDF-kopie (alleen van een ondertekend document; de token is de sleutel). Verzegelde PDF uit de kluis. ──
@@ -111,15 +113,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_ondertekend) {
         if ($zekerheid === null) $fout = 'De verificatiecode klopt niet of is verlopen. Vraag een nieuwe code aan en vul die in.';
     }
 
-    if ($fout !== '') { /* code-fout gaat voor */ }
+    // Typespecifieke validatie (loonheffing: BSN 11-proef enz.; lidmaatschap: IBAN bij incasso)
+    $lh = []; $lid = [];
+    if ($fout === '' && $type === 'loonheffing') {
+        if (!$kluis_ok) $fout = 'De beveiligde opslag is tijdelijk niet beschikbaar; je BSN kan nu niet veilig bewaard worden. Probeer het later opnieuw.';
+        else {
+            $lh = [
+                'achternaam' => trim($_POST['lh_achternaam'] ?? ''), 'voorletters' => trim($_POST['lh_voorletters'] ?? ''),
+                'adres' => trim($_POST['lh_adres'] ?? ''), 'postcode' => postcode_opmaak($_POST['lh_postcode'] ?? '') ?: '',
+                'woonplaats' => trim($_POST['lh_woonplaats'] ?? ''), 'geboortedatum' => trim($_POST['lh_geboortedatum'] ?? ''),
+                'korting' => in_array($_POST['lh_korting'] ?? '', ['ja', 'nee'], true) ? $_POST['lh_korting'] : '',
+                'vanaf' => trim($_POST['lh_vanaf'] ?? ''), 'begrip' => !empty($_POST['lh_begrip']),
+            ];
+            $bsn = bsn_schoon($_POST['lh_bsn'] ?? '');
+            if ($lh['achternaam'] === '' || $lh['voorletters'] === '') $fout = 'Vul je achternaam en voorletters in.';
+            elseif (!bsn_geldig($bsn))                                 $fout = 'Het burgerservicenummer klopt niet (9 cijfers, 11-proef). Controleer het op je identiteitsbewijs.';
+            elseif ($lh['adres'] === '' || $lh['postcode'] === '' || $lh['woonplaats'] === '') $fout = 'Vul je straat, huisnummer, postcode (1234 AB) en woonplaats in.';
+            elseif (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $lh['geboortedatum'])) $fout = 'Vul je geboortedatum in.';
+            elseif ($lh['korting'] === '')                             $fout = 'Kies of Paal 13 de loonheffingskorting mag toepassen.';
+            elseif (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $lh['vanaf'])) $fout = 'Vul de datum in vanaf wanneer je keuze geldt.';
+            elseif (!$lh['begrip'])                                    $fout = 'Vink aan dat je begrijpt dat de loonheffingskorting maar bij één werkgever mag.';
+        }
+    }
+    if ($fout === '' && $type === 'lidmaatschap' && function_exists('lidmaatschap_post_valideren')) {
+        $lid = lidmaatschap_post_valideren($_POST, $kluis_ok, $fout);
+    }
+
+    if ($fout !== '') { /* type- of code-fout gaat voor */ }
     elseif (!$akkoord)                   $fout = 'Vink het akkoord aan.';
     elseif (strlen($naam_getypt) < 3)    $fout = ($is_ouder ? 'Vul uw' : 'Vul je') . ' volledige naam in ter ondertekening.';
     elseif (!$plaats)                    $fout = ($is_ouder ? 'Vul uw' : 'Vul je') . ' woonplaats in.';
     elseif ($handtekening === '')        $fout = ($is_ouder ? 'Zet uw' : 'Zet je') . ' handtekening in het vak.';
     else {
-        // Verzamel form-data (verschilt per type)
-        $form = [];
-        if ($is_gezondheid) {
+        // Verzamel form-data (verschilt per type). Vertrouwelijke waarden (BSN, IBAN) gaan apart de kluis in.
+        $form = []; $vertrouwelijk = null;
+        if ($type === 'loonheffing') {
+            $form = $lh + ['geslacht' => '', 'aow' => '', 'sjabloon_versie' => loonheffing_sjabloon_versie(), 'sjabloon_sha256' => loonheffing_sjabloon_sha256()];
+            $vertrouwelijk = kluis_versleutel(json_encode(['bsn' => $bsn]), 'ondertekening|' . (int)$rec['id'] . '|vertrouwelijk');
+            if ($vertrouwelijk === null) { $fout = 'Versleutelen mislukt; probeer het later opnieuw.'; }
+        } elseif ($type === 'lidmaatschap') {
+            $form = $lid['form'] ?? [];
+            if (!empty($lid['vertrouwelijk'])) {
+                $vertrouwelijk = kluis_versleutel(json_encode($lid['vertrouwelijk']), 'ondertekening|' . (int)$rec['id'] . '|vertrouwelijk');
+                if ($vertrouwelijk === null) { $fout = 'Versleutelen mislukt; probeer het later opnieuw.'; }
+            }
+        } elseif ($is_gezondheid) {
             $form['geslacht']       = $_POST['geslacht'] ?? '';
             $form['geboorteplaats'] = trim($_POST['geboorteplaats'] ?? '');
             $form['geboortedatum']  = $_POST['geboortedatum'] ?? '';
@@ -152,12 +190,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_ondertekend) {
             ];
         }
 
+        if ($fout === '') {
         if (function_exists('ondertekening_bewijs_auto_setup')) ondertekening_bewijs_auto_setup();
         $db->prepare("UPDATE ondertekeningen SET
                         ondertekenaar_naam=?, ondertekenaar_geboortedatum=?, ondertekenaar_geboorteplaats=?, ondertekenaar_relatie=?,
-                        formulier_data=?, plaats=?, handtekening_beeld=?, zekerheid=?,
+                        formulier_data=?, vertrouwelijk=?, plaats=?, handtekening_beeld=?, zekerheid=?,
                         ondertekend_op=NOW(), ondertekend_ip=?, ondertekend_user_agent=?,
-                        geldig_tot=DATE_ADD(CURDATE(), INTERVAL 1 YEAR)
+                        geldig_tot=" . ($is_gezondheid ? 'DATE_ADD(CURDATE(), INTERVAL 1 YEAR)' : 'NULL') . "
                      WHERE token=?")
            ->execute([
                 $naam_getypt,
@@ -165,6 +204,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_ondertekend) {
                 $form['geboorteplaats'] ?? null,
                 $form['relatie'] ?? null,
                 json_encode($form, JSON_UNESCAPED_UNICODE),
+                $vertrouwelijk,
                 $plaats,
                 $handtekening,
                 $zekerheid,
@@ -239,6 +279,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_ondertekend) {
         if (function_exists('documenten_dossier_compleet_check')) { try { documenten_dossier_compleet_check($sol_id_o); } catch (\Throwable $e) {} }
 
         redirect($basis_url . '&klaar=1' . (portaal_terug_param() === 'taken' ? '&terug=taken' : ''));
+        } // geen fout
     }
 }
 
@@ -248,6 +289,22 @@ $std = [
     'naam_getypt'   => $is_ouder ? (string)($rec['ondertekenaar_naam'] ?? '') : $naam_sol,
     'geboortedatum' => $is_ouder ? '' : (string)($sol['geboortedatum'] ?? ''),
 ];
+if ($werknemer_type) {
+    // Vooringevuld uit het dossier (persoon, BLK-adres, seizoen); de sollicitant controleert en vult aan
+    $dossier = function_exists('portaal_sollicitant_laden') ? (portaal_sollicitant_laden((int)$rec['sollicitatie_id']) ?: []) : [];
+    $blk = function_exists('blk_van') ? (blk_van((int)$rec['sollicitatie_id']) ?: []) : [];
+    if (empty($blk['straat']) && !empty($blk['adres']) && function_exists('blk_adres_splitsen')) $blk = array_merge($blk, array_filter(blk_adres_splitsen($blk['adres'])));
+    $std += [
+        'lh_achternaam'    => trim((($sol['tussenvoegsel'] ?? '') ? $sol['tussenvoegsel'] . ' ' : '') . $sol['achternaam']),
+        'lh_voorletters'   => naam_voorletters($voornaam),
+        'lh_adres'         => trim(($blk['straat'] ?? '') . ' ' . ($blk['huisnummer'] ?? '')),
+        'lh_postcode'      => (string)($blk['postcode'] ?? ''),
+        'lh_woonplaats'    => (string)($blk['woonplaats'] ?? ''),
+        'lh_geboortedatum' => (string)($sol['geboortedatum'] ?? ''),
+        'lh_vanaf'         => (string)($dossier['datum_werk_start'] ?? ''),
+    ];
+    if (function_exists('lidmaatschap_prefill')) $std += lidmaatschap_prefill($sol, $blk, $dossier);
+}
 $v   = fn(string $k): string => h((string)($na_fout ? ($_POST[$k] ?? '') : ($std[$k] ?? '')));
 $aan = fn(string $k, string $waarde = '1'): string => ($na_fout && (string)($_POST[$k] ?? '') === $waarde) ? ' checked' : '';
 $sel = fn(string $k, string $waarde): string => ($na_fout && (string)($_POST[$k] ?? '') === $waarde) ? ' selected' : '';
@@ -321,6 +378,8 @@ require __DIR__ . '/_kop.php';
 
         <?php if ($na_fout): ?>
           <div class="ds-melding ds-melding-error" id="ondFoutmelding" role="alert"><?= icoon('let-op', 18) ?> <div><?= h($fout) ?></div></div>
+        <?php elseif (!$kluis_ok): ?>
+          <div class="ds-melding ds-melding-warn" role="alert"><?= icoon('let-op', 18) ?> <div>De beveiligde opslag is tijdelijk niet beschikbaar. Dit formulier kan nu niet ondertekend worden; probeer het later opnieuw.</div></div>
         <?php endif; ?>
 
         <!-- Het document (ingeklapt met vervaging; "Volledig document lezen" klapt uit) -->
@@ -372,7 +431,9 @@ require __DIR__ . '/_kop.php';
           <div class="ond-ondertekenaar">
             <span class="ond-ondertekenaar-lbl">Ondertekenaar</span>
             <span class="ond-ondertekenaar-naam"><?= h($naam_sol) ?><?= $leeftijd !== null ? ' · ' . (int)$leeftijd . ' jaar' : '' ?></span>
-            <span class="ond-ondertekenaar-sub">18 of ouder, dus je tekent zelf. Onder 18 vervalt dit scherm en tekent alleen de ouder via een eigen link.</span>
+            <span class="ond-ondertekenaar-sub"><?= $werknemer_type
+              ? 'Dit formulier teken je altijd zelf, ook als je jonger bent dan 18: het is een verklaring van jou als werknemer/lid.'
+              : '18 of ouder, dus je tekent zelf. Onder 18 vervalt dit scherm en tekent alleen de ouder via een eigen link.' ?></span>
           </div>
         <?php endif; ?>
 
@@ -380,7 +441,9 @@ require __DIR__ . '/_kop.php';
           <?= icoon('slot', $is_ouder ? 18 : 20) ?>
           <span><?= $is_ouder
             ? 'Deze link is persoonlijk en vervalt na ondertekening. U hoeft geen account te maken. We bewaren datum, tijd en uw IP-adres bij de handtekening.'
-            : 'Je bent 18 of ouder, dus je ondertekent zelf. We bewaren datum, tijd en je IP-adres bij de handtekening.' ?></span>
+            : ($werknemer_type
+              ? 'Je ondertekent dit zelf. We bewaren datum, tijd, je IP-adres en de verificatiecode-stap als bewijs; de PDF wordt digitaal verzegeld.'
+              : 'Je bent 18 of ouder, dus je ondertekent zelf. We bewaren datum, tijd en je IP-adres bij de handtekening.') ?></span>
         </div>
 
         <footer class="ond-voet">

@@ -67,6 +67,50 @@ function ondertekening_verzoek_versturen(int $sol_id, array $ontvanger, array $l
     return melding_verstuur('ondertekening_verzoek_zelf', $sol_id, $extra, $opties);
 }
 
+/**
+ * Eén ondertekening van een type klaarzetten voor de sollicitant zelf (idempotent). Retour: 'aangemaakt' | 'bestond' | 'fout'.
+ */
+function ondertekening_zelf_verzekeren(int $sol_id, string $type): string {
+    try {
+        $db = db();
+        $check = $db->prepare("SELECT 1 FROM ondertekeningen WHERE sollicitatie_id=? AND type=? LIMIT 1");
+        $check->execute([$sol_id, $type]);
+        if ($check->fetchColumn()) return 'bestond';
+        $q = $db->prepare("SELECT p.email FROM sollicitaties s JOIN personen p ON p.id=s.persoon_id WHERE s.id=?");
+        $q->execute([$sol_id]);
+        $email = (string)($q->fetchColumn() ?: '');
+        $token = bin2hex(random_bytes(24));
+        $db->prepare("INSERT INTO ondertekeningen (sollicitatie_id, type, token, ondertekenaar_rol, ondertekenaar_email) VALUES (?,?,?,'sollicitant',?)")
+           ->execute([$sol_id, $type, $token, $email ?: null]);
+        if (function_exists('ondertekening_gebeurtenis')) ondertekening_gebeurtenis((int)$db->lastInsertId(), 'aangemaakt', ['type' => $type]);
+        return 'aangemaakt';
+    } catch (\Throwable $e) { error_log("ondertekening_zelf_verzekeren($type): " . $e->getMessage()); return 'fout'; }
+}
+
+/** Aangenomen: het loonheffingsformulier (werknemer tekent altijd zelf, ook onder 18). */
+function loonheffing_verzekeren(int $sol_id): string {
+    return ondertekening_zelf_verzekeren($sol_id, 'loonheffing');
+}
+
+/**
+ * Aangenomen: inschrijving als lid — alleen voor wie nog geen Authentik-verenigingsaccount heeft
+ * (wie dat wel heeft, is vrijwel zeker al lid). Retour ook 'overgeslagen'.
+ */
+function lidmaatschap_verzekeren(int $sol_id): string {
+    try {
+        if (function_exists('authentik_actief') && authentik_actief() && function_exists('authentik_email_bestaat')) {
+            $q = db()->prepare("SELECT p.email FROM sollicitaties s JOIN personen p ON p.id=s.persoon_id WHERE s.id=?");
+            $q->execute([$sol_id]);
+            $email = (string)($q->fetchColumn() ?: '');
+            if ($email !== '' && authentik_email_bestaat($email)) {
+                if (function_exists('audit_log')) audit_log('lidmaatschap_overgeslagen', 'sollicitatie', $sol_id, ['reden' => 'Authentik-account bestaat']);
+                return 'overgeslagen';
+            }
+        }
+    } catch (\Throwable $e) { error_log('lidmaatschap_verzekeren authentik: ' . $e->getMessage()); }
+    return ondertekening_zelf_verzekeren($sol_id, 'lidmaatschap');
+}
+
 function sol_is_minderjarig(array $sol): bool {
     if (empty($sol['geboortedatum'])) return false;
     if (function_exists('leeftijd_uit_datum')) {
