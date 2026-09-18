@@ -91,12 +91,12 @@ function ondertekening_pdf_stream(array $rec, array $sol, string $bestandsnaam):
     exit('Kon het PDF-document niet genereren.');
 }
 
-/** Handtekening-afbeelding (data-URL PNG) op de huidige positie plaatsen; retourneert of het gelukt is. */
-function ondertekening_pdf_handtekening($pdf, ?string $data_url, float $x, float $y, float $w): bool {
+/** Handtekening-afbeelding (data-URL PNG) passend in een kader van $w x $h mm (verhouding behouden); retourneert of het gelukt is. */
+function ondertekening_pdf_handtekening($pdf, ?string $data_url, float $x, float $y, float $w, float $h = 22): bool {
     if (!$data_url || strpos($data_url, 'data:image/png;base64,') !== 0) return false;
     $bin = base64_decode(substr($data_url, strlen('data:image/png;base64,')), true);
     if ($bin === false || $bin === '') return false;
-    try { $pdf->Image('@' . $bin, $x, $y, $w, 0, 'PNG'); return true; } catch (\Throwable $e) { return false; }
+    try { $pdf->Image('@' . $bin, $x, $y, $w, $h, 'PNG', '', '', false, 300, '', false, false, 0, true); return true; } catch (\Throwable $e) { return false; }
 }
 
 /** Standaardlayout (gezondheidsverklaring, intake): logo, titel, gegevens, vragen, ondertekening. */

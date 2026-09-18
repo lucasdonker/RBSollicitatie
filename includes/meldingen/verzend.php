@@ -104,6 +104,12 @@ function bestuur_email(): string {
     return defined('MAIL_BESTUUR') ? (string)MAIL_BESTUUR : '';
 }
 
+/** Het adres van de penningmeester (loonadministratie): instelling, anders het bestuursadres. */
+function penningmeester_email(): string {
+    $v = function_exists('instelling') ? trim(instelling('mail.penningmeester_email', '')) : '';
+    return $v !== '' ? $v : bestuur_email();
+}
+
 // ─────────────────────────────────────────────────────────────
 //  Dispatch
 // ─────────────────────────────────────────────────────────────
@@ -248,6 +254,10 @@ function melding_ontvanger(array $def, int $sol_id, array $opties): ?array {
     if ($rol === 'bestuur') {
         $e = bestuur_email();
         return $e === '' ? null : array_merge($basis, ['email' => $e, 'naam' => 'Bestuur', 'rol' => 'bestuur']);
+    }
+    if ($rol === 'penningmeester') {
+        $e = penningmeester_email();
+        return $e === '' ? null : array_merge($basis, ['email' => $e, 'naam' => 'Penningmeester', 'rol' => 'penningmeester']);
     }
     if ($rol === 'direct') return null;
 

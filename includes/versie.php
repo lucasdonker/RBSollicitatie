@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.90.4');
+define('APP_VERSIE', '2.90.5');
 
 function app_changelog(): array {
     return [
+        '2.90.5' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Aangenomen-takenpakket, bundel 6: inschrijving als lid van de vereniging',
+            'punten' => [
+                'Aangenomen strandwachten zonder verenigingsaccount schrijven zich in het portaal in als lid of donateur: dezelfde vragen als het formulier op paal13.com, vooringevuld uit het dossier (diploma\'s worden herkend uit het Beter Leren Kennen-formulier), met oudergegevens onder 18',
+                'Betaling per overschrijving of automatische incasso; bij incasso worden IBAN en tenaamstelling gecontroleerd en versleuteld bewaard en wordt de machtiging ondertekend',
+                'De ondertekende en verzegelde inschrijving gaat automatisch als PDF naar de ledenservice (instelling); nieuwe instellingen voor penningmeester- en ledenservice-adres en de bijlage-optie',
+            ],
+        ],
         '2.90.4' => [
             'datum'  => '2026-09-18',
             'titel'  => 'Aangenomen-takenpakket, bundel 5: het loonheffingsformulier',

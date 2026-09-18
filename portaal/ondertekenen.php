@@ -136,7 +136,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_ondertekend) {
         }
     }
     if ($fout === '' && $type === 'lidmaatschap' && function_exists('lidmaatschap_post_valideren')) {
-        $lid = lidmaatschap_post_valideren($_POST, $kluis_ok, $fout);
+        $lid = lidmaatschap_post_valideren($_POST, $kluis_ok, $fout, $leeftijd);
     }
 
     if ($fout !== '') { /* type- of code-fout gaat voor */ }
@@ -275,6 +275,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_ondertekend) {
             } catch (\Throwable $e) { error_log('ondertekening meldingen: ' . $e->getMessage()); }
             if ($pdf_pad) @unlink($pdf_pad);
         }
+        // Lidmaatschap: inschrijving naar de ledenservice (later ook de hub)
+        if ($type === 'lidmaatschap' && function_exists('lidmaatschap_na_ondertekening')) { try { lidmaatschap_na_ondertekening($rec_vers, $sol_pdf, $pdf_bytes); } catch (\Throwable $e) { error_log('lidmaatschap na ondertekening: ' . $e->getMessage()); } }
         // Dossier compleet richting de penningmeester? (loonheffing + ID + bankpas)
         if (function_exists('documenten_dossier_compleet_check')) { try { documenten_dossier_compleet_check($sol_id_o); } catch (\Throwable $e) {} }
 

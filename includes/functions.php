@@ -30,6 +30,7 @@ if (file_exists(__DIR__ . '/ondertekening_bewijs.php')) require_once __DIR__ . '
 if (file_exists(__DIR__ . '/zegel.php')) require_once __DIR__ . '/zegel.php';
 if (file_exists(__DIR__ . '/ondertekening_pdf.php')) require_once __DIR__ . '/ondertekening_pdf.php';
 if (file_exists(__DIR__ . '/loonheffing_pdf.php')) require_once __DIR__ . '/loonheffing_pdf.php';
+if (file_exists(__DIR__ . '/lidmaatschap.php')) require_once __DIR__ . '/lidmaatschap.php';
 if (file_exists(__DIR__ . '/rechten.php')) require_once __DIR__ . '/rechten.php';
 if (file_exists(__DIR__ . '/beschikbaarheid_dagen.php')) require_once __DIR__ . '/beschikbaarheid_dagen.php';
 if (file_exists(__DIR__ . '/beschikbaarheid2.php')) require_once __DIR__ . '/beschikbaarheid2.php';

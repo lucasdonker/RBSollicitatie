@@ -799,6 +799,22 @@ require __DIR__ . '/layout_top.php';
             <div class="form-hulp">Ontvangt notificaties bij nieuwe aanmeldingen</div>
           </div>
         </div>
+        <div class="form-rij">
+          <div class="form-groep">
+            <label>Penningmeester e-mail</label>
+            <input type="email" name="inst[mail.penningmeester_email]" value="<?= h(instelling('mail.penningmeester_email','')) ?>">
+            <div class="form-hulp">Ontvangt de melding "loondossier compleet" (loonheffing, kopie ID, bankpas). Leeg = bestuursadres</div>
+          </div>
+          <div class="form-groep">
+            <label>Ledenservice e-mail</label>
+            <input type="email" name="inst[mail.ledenservice_email]" value="<?= h(instelling('mail.ledenservice_email','')) ?>">
+            <div class="form-hulp">Ontvangt de ondertekende inschrijving als lid/donateur (met PDF). Leeg = bestuursadres</div>
+          </div>
+        </div>
+        <div class="form-groep">
+          <label class="checkbox-label"><input type="hidden" name="inst[documenten.penningmeester_bijlagen]" value="0"><input type="checkbox" name="inst[documenten.penningmeester_bijlagen]" value="1" <?= instelling('documenten.penningmeester_bijlagen','0') === '1' ? 'checked' : '' ?>> Loondossier-stukken als bijlage meesturen in de mail aan de penningmeester</label>
+          <div class="form-hulp">Standaard uit: de stukken (BSN, kopie identiteitsbewijs, bankpas) gaan dan alleen via de beveiligde inzage in het beheer. Aanzetten stuurt ze onversleuteld per e-mail; doe dat alleen als het mailpad vertrouwd is.</div>
+        </div>
       </div>
       <div class="inst-sectie">
         <h3>AI Analyse (BLK)</h3>

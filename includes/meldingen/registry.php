@@ -376,6 +376,31 @@ function meldingen_register(): array {
             ],
         ]),
 
+        'ledenservice_inschrijving' => array_merge($std, [
+            'naam' => 'Inschrijving lidmaatschap naar de ledenservice', 'categorie' => 'bestuur', 'ontvanger' => 'direct',
+            'kanaal_standaard' => 'email', 'kort_toegestaan' => false, 'dedup_min' => 0, 'body_loggen' => false,
+            'beschrijving' => 'Naar de ledenservice (instelling) zodra een aangenomen strandwacht de inschrijving als lid/donateur heeft ondertekend; met de verzegelde PDF als bijlage.',
+            'vars' => ['gegevens_html', 'lid_soort'],
+            'seed' => [
+                'onderwerp' => 'Nieuwe inschrijving als {{lid_soort}}: {{volledige_naam}}',
+                'hero_titel' => 'Nieuwe inschrijving', 'hero_subtitel' => 'Via het sollicitatiesysteem ({{seizoen_naam}})',
+                'body_html' => "<p><strong>{{volledige_naam}}</strong> is aangenomen als strandwacht en heeft zich via het portaal ingeschreven als <strong>{{lid_soort}}</strong> van de vereniging. De ondertekende en digitaal verzegelde inschrijving zit als PDF in de bijlage.</p>\n{{gegevens_html}}\n<p>Vragen over deze inschrijving? Mail <a href=\"mailto:{{bestuur_email}}\">{{bestuur_email}}</a>.</p>",
+                'tekst_kort' => '', 'samenvatting' => 'Je inschrijving als lid is naar de ledenservice gestuurd.',
+            ],
+        ]),
+        'penningmeester_dossier_compleet' => array_merge($std, [
+            'naam' => 'Loondossier compleet (penningmeester)', 'categorie' => 'bestuur', 'ontvanger' => 'penningmeester',
+            'kanaal_standaard' => 'email', 'kort_toegestaan' => false, 'dedup_min' => 0, 'body_loggen' => false,
+            'beschrijving' => 'Naar de penningmeester zodra loonheffingsformulier, kopie ID en kopie bankpas van een aangenomen strandwacht binnen zijn. Bijlagen alleen als de instelling "documenten.penningmeester_bijlagen" aan staat.',
+            'vars' => ['documenten_lijst', 'beheer_url', 'bijlagen_tekst'],
+            'seed' => [
+                'onderwerp' => 'Loondossier compleet: {{volledige_naam}}',
+                'hero_titel' => 'Loondossier compleet', 'hero_subtitel' => '{{seizoen_naam}}',
+                'body_html' => "<p>Van <strong>{{volledige_naam}}</strong> zijn alle stukken voor de loonadministratie binnen:</p>\n{{documenten_lijst}}\n<p>{{bijlagen_tekst}}</p>\n[knop href=\"{{beheer_url}}\"]Openen in het beheer[/knop]\n[info]De stukken bevatten BSN en een kopie identiteitsbewijs. Download ze alleen op een vertrouwd apparaat en bewaar ze niet buiten de loonadministratie.[/info]",
+                'tekst_kort' => '', 'samenvatting' => '',
+            ],
+        ]),
+
         // ── Systeem ───────────────────────────────────────────────────
         'portaal_code' => array_merge($std, [
             'naam' => 'Portaal-inlogcode', 'categorie' => 'systeem', 'ontvanger' => 'direct',

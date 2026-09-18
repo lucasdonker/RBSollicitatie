@@ -101,6 +101,18 @@
     }
   }
 
+  /* ── Voorwaardelijke blokken: data-toon-bij="veld=waarde" (bijv. IBAN alleen bij incasso) ── */
+  document.querySelectorAll('[data-toon-bij]').forEach(function (blok) {
+    var kv = blok.dataset.toonBij.split('='); var naam = kv[0], waarde = kv[1];
+    var velden = form.querySelectorAll('[name="' + naam + '"]');
+    function bijwerken() {
+      var actueel = ''; velden.forEach(function (v) { if ((v.type !== 'radio' && v.type !== 'checkbox') || v.checked) actueel = v.value; });
+      blok.hidden = (actueel !== waarde);
+    }
+    velden.forEach(function (v) { v.addEventListener('change', bijwerken); });
+    bijwerken();
+  });
+
   /* ── Verificatiecode (2FA): code aanvragen via de API, dan het codeveld tonen ── */
   var tfa = document.getElementById('ond2fa');
   if (tfa) {
@@ -150,6 +162,7 @@
     var gezien = {};
     f.querySelectorAll('[required]').forEach(function (veld) {
       var leegVeld;
+      if (veld.closest('[hidden]')) return; // verborgen voorwaardelijk blok telt niet mee
       if (veld.type === 'radio') {
         if (gezien[veld.name]) return;
         gezien[veld.name] = true;

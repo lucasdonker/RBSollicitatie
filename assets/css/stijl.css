@@ -1574,6 +1574,12 @@ a.pt-taakrij:hover { background: var(--bg); }
 .ond-vak-hint { position: absolute; top: 10px; left: 14px; font-size: 12px; color: #8a93a6; pointer-events: none; }
 .ond-vak.fout { border-color: var(--error); box-shadow: 0 0 0 3px rgba(179,38,30,.12); }
 
+/* Diploma-vinkjes (lidmaatschap) in twee kolommen; voorwaardelijke blokken */
+.ond-dip { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; }
+.ond-dip-item .ond-check-tekst { font-size: 14px; }
+.ond-toon { display: flex; flex-direction: column; gap: 12px; }
+.ond-toon[hidden] { display: none; }
+
 /* Verificatiecode (2FA) in de tekenkaart */
 .ond-2fa { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px; border-radius: 12px; background: #eef2f8; border: 1px solid #d5e0ee; }
 .ond-2fa.fout { border-color: var(--error); box-shadow: 0 0 0 3px rgba(179,38,30,.12); }
