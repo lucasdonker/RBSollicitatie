@@ -406,9 +406,9 @@
     (d.afwezig || []).forEach(function (a) { beschAfwezigToevoegen({ van: a.van || a.van_datum, tot: a.tot || a.tot_datum, label: a.label }); });
     (d.losse_dagen || []).forEach(function (l) { beschLosseDagToevoegen({ datum: l.datum, soort: l.soort, reden: l.reden }); });
     (d.verzoeken || []).forEach(function (v) { beschVerzoekToevoegen({ van_week: klem(v.van_week, CFG.eerste), tot_week: klem(v.tot_week, CFG.laatste), dagen_aantal: v.dagen_aantal || v.dagen, dagen_pool: v.dagen_pool || v.pool || [], toelichting: v.toelichting }); });
-    // Vaste vrije dagen: de checkboxes aanvinken (AI geeft weekdagnummers 1-7)
+    // Vaste vrije dagen: de checkboxes aanvinken (AI geeft weekdagnummers 1-7) én de pil + hint bijwerken
     const vasteDagen = (d.vaste_vrije_dagen || []).map(String);
-    document.querySelectorAll('.besch-vastedag').forEach(function (cb) { cb.checked = vasteDagen.includes(cb.value); });
+    document.querySelectorAll('.besch-vastedag').forEach(function (cb) { cb.checked = vasteDagen.includes(cb.value); beschVasteToggle(cb); });
     if (d.vaste_reden && el('beschVasteToelichting')) el('beschVasteToelichting').value = d.vaste_reden;
     beschHerbereken();
   }

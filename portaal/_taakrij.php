@@ -7,11 +7,12 @@
 $_t      = $taak;
 $_inline = $_t['inline_form'] ?? null;
 $_klik   = !empty($_t['url']) && !$_inline;
+$_url    = $_klik ? portaal_url_met_terug($_t['url'], $taak_terug ?? 'start') : '';
 $_tag    = $_klik ? 'a' : 'div';
 $_cls    = 'pt-taakrij' . (!empty($_t['done']) ? ' gedaan' : '') . ($_inline ? ' inline' : '');
 $_eerste = !empty($taak_eerste);
 ?>
-<<?= $_tag ?><?= $_klik ? ' href="' . h($_t['url']) . '"' : '' ?> class="<?= $_cls ?>" data-taak="<?= h($_t['id']) ?>">
+<<?= $_tag ?><?= $_klik ? ' href="' . h($_url) . '"' : '' ?> class="<?= $_cls ?>" data-taak="<?= h($_t['id']) ?>">
   <span class="pt-taakrij-icoon <?= h($_t['kleur'] ?? 'accent') ?>"><?= icoon(!empty($_t['done']) ? 'vink' : ($_t['icoon'] ?? 'document'), 20) ?></span>
   <span class="pt-taakrij-tekst">
     <span class="pt-taakrij-titel"><?= h($_t['titel']) ?></span>

@@ -28,16 +28,18 @@ if (!$mij) redirect(APP_URL . '/portaal/');
 
 $seizoen = ['datum_werk_start'=>$mij['datum_werk_start'], 'datum_werk_eind'=>$mij['datum_werk_eind'], 'datum_tw_start'=>$mij['datum_tw_start'], 'id'=>$mij['seizoen_id']];
 
-// Actie: definitief maken
-$flash_ok = null; $flash_fout = null;
+// Actie: definitief maken → terug naar Start/Taken (waar de sollicitant vandaan kwam) met melding
+$flash_fout = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['actie'] ?? '') === 'definitief') {
     csrf_check();
     if (function_exists('beschikbaarheid2_definitief_maken') && beschikbaarheid2_definitief_maken($sol_id)) {
-        $flash_ok = 'Je beschikbaarheid staat nu definitief. Bedankt!';
-    } else {
-        $flash_fout = 'Er staat nog geen beschikbaarheid om definitief te maken. Vul die eerst in.';
+        if (function_exists('audit_log')) { try { audit_log('beschikbaarheid_definitief', 'sollicitatie', $sol_id, ['via' => 'portaal']); } catch (\Throwable $e) {} }
+        $_SESSION['flash_portaal'] = 'Je beschikbaarheid staat nu definitief. Bedankt!';
+        redirect(portaal_terug_url());
     }
+    $flash_fout = 'Er staat nog geen beschikbaarheid om definitief te maken. Vul die eerst in.';
 }
+$terug_param = portaal_terug_param();
 
 $b2 = function_exists('beschikbaarheid2_van') ? beschikbaarheid2_van($sol_id) : ['profiel'=>null,'blokken'=>[],'afwezig'=>[],'verzoeken'=>[],'correcties'=>[]];
 $b2p = $b2['profiel'];
@@ -58,6 +60,7 @@ $logo = function_exists('site_logo_url') ? (site_logo_url() ?: '') : '';
 $dagnamen = ['',' maandag','dinsdag','woensdag','donderdag','vrijdag','zaterdag','zondag'];
 $portaal_titel = 'Mijn beschikbaarheid';
 $portaal_nav = 'start';
+$portaal_terug = portaal_terug_url();
 require __DIR__ . '/_kop.php';
 ?>
 <style>
@@ -71,18 +74,15 @@ require __DIR__ . '/_kop.php';
   <h1 style="font:var(--text-title);margin-bottom:6px">Mijn beschikbaarheid</h1>
   <p style="color:var(--ink-soft);font-size:14px;margin-bottom:20px">Dit is wat wij van jou begrepen hebben voor seizoen <?= h($mij['seizoen_naam']) ?>. Zo gebruiken we het voor de planning.</p>
 
-  <?php if ($flash_ok): ?>
-    <div class="ds-melding ds-melding-ok" style="margin-bottom:16px"><?= icoon('vink', 18) ?> <?= h($flash_ok) ?></div>
-  <?php endif; ?>
   <?php if ($flash_fout): ?>
-    <div style="margin-bottom:16px;padding:12px 16px;background:var(--rood-bg);border-left:3px solid var(--rood);border-radius:6px;font-size:13.5px;color:var(--rood)">⚠️ <?= h($flash_fout) ?></div>
+    <div class="ds-melding ds-melding-error" style="margin-bottom:16px"><?= icoon('let-op', 18) ?> <?= h($flash_fout) ?></div>
   <?php endif; ?>
 
   <?php if (!$heeft_besch): ?>
     <div class="bk-card" style="text-align:center;padding:32px 20px">
       <div style="margin-bottom:8px;color:var(--navy)"><?= icoon("lijst", 30) ?></div>
       <p style="font-size:14px;margin-bottom:16px">Je hebt nog geen beschikbaarheid doorgegeven.</p>
-      <a href="<?= APP_URL ?>/portaal/beschikbaarheid_invullen.php" class="ds-btn ds-btn-primair">Beschikbaarheid invullen</a>
+      <a href="<?= h(portaal_url_met_terug(APP_URL . '/portaal/beschikbaarheid_invullen.php', $terug_param)) ?>" class="ds-btn ds-btn-primair">Beschikbaarheid invullen</a>
     </div>
   <?php else: ?>
 
@@ -125,7 +125,7 @@ require __DIR__ . '/_kop.php';
     <!-- Afwezigheid + voorkeuren -->
     <?php if ($b2['afwezig'] || !empty($b2p['vaste_dagen_uit'])): ?>
     <div class="bk-card">
-      <h2>ℹ️ Verder doorgegeven</h2>
+      <h2><?= icoon('info', 18) ?> Verder doorgegeven</h2>
       <?php if ($b2['afwezig']): ?>
         <div class="bk-rij">
           <strong>Afwezig:</strong>
@@ -144,10 +144,9 @@ require __DIR__ . '/_kop.php';
     <?php endif; ?>
 
     <!-- Verzoeken minder dagen + status -->
-    <?php $zichtbare_vz = array_filter($b2['verzoeken'], fn($v) => $v['status'] !== 'afgewezen' || true); ?>
     <?php if ($b2['verzoeken']): ?>
     <div class="bk-card">
-      <h2>⚖️ Verzoeken (minder dagen)</h2>
+      <h2><?= icoon('lijst', 18) ?> Verzoeken (minder dagen)</h2>
       <?php foreach ($b2['verzoeken'] as $vz):
         $st = $vz['status'];
         $st_kleur = $st === 'goedgekeurd' ? 'var(--groen)' : ($st === 'afgewezen' ? 'var(--rood)' : 'var(--oranje)');
@@ -183,12 +182,13 @@ require __DIR__ . '/_kop.php';
 
     <!-- Acties -->
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px">
-      <a href="<?= APP_URL ?>/portaal/beschikbaarheid_invullen.php" class="ds-btn ds-btn-secundair" style="flex:1;min-width:140px"><?= icoon("potlood", 16) ?> Aanpassen</a>
+      <a href="<?= h(portaal_url_met_terug(APP_URL . '/portaal/beschikbaarheid_invullen.php', $terug_param)) ?>" class="ds-btn ds-btn-secundair" style="flex:1;min-width:140px"><?= icoon("potlood", 16) ?> Aanpassen</a>
       <?php if ($voorlopig): ?>
       <form method="POST" style="flex:1;min-width:140px;margin:0">
         <?= csrf_input() ?>
         <input type="hidden" name="actie" value="definitief">
-
+        <input type="hidden" name="terug" value="<?= h($terug_param) ?>">
+        <button type="submit" class="ds-btn ds-btn-primair ds-btn-vol"><?= icoon('vink', 16) ?> Definitief maken</button>
       </form>
       <?php endif; ?>
     </div>

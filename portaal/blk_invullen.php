@@ -178,7 +178,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['blk_submit'])) {
         flash('succes', $is_edit
             ? 'Je wijzigingen aan het Beter Leren Kennen-formulier zijn opgeslagen.'
             : 'Je Beter Leren Kennen-formulier is ingeleverd. Bedankt!');
-        redirect(APP_URL . '/portaal/');
+        redirect(portaal_terug_url());
     }
 }
 
@@ -213,13 +213,14 @@ $stappen = [1 => 'Gegevens', 2 => 'Achtergrond', 3 => 'Motivatie', 4 => 'Overig'
 $start_stap = $na_fout ? $fout_stap : 1;
 
 $portaal_titel = 'Beter Leren Kennen';
-$portaal_terug = APP_URL . '/portaal/';
+$portaal_terug = portaal_terug_url();
 require __DIR__ . '/_kop.php';
 ?>
 
 <form method="POST" enctype="multipart/form-data" id="blkForm" class="blk" novalidate>
   <?= csrf_input() ?>
   <input type="hidden" name="blk_submit" value="1">
+  <input type="hidden" name="terug" value="<?= h(portaal_terug_param()) ?>">
   <input type="hidden" name="foto_verwijderen" id="fotoVerwijderen" value="0">
 
   <!-- Kop: titel + stap, tabs, concept-status -->

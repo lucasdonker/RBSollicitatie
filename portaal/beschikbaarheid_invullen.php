@@ -119,12 +119,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['besch_submit'])) {
             beschikbaarheid_dagen_opslaan($sol_id, $losse);
         }
         if (function_exists('audit_log')) audit_log('beschikbaarheid_ingevuld', 'sollicitatie', $sol_id, ['via' => 'losse taak']);
+        if (empty($waarschuwingen)) {
+            // Klaar: terug naar Start of Taken (waar de sollicitant vandaan kwam) met de melding daar.
+            $_SESSION['flash_portaal'] = 'Je beschikbaarheid is opgeslagen. Bedankt!';
+            redirect(portaal_terug_url());
+        }
         $_SESSION['flash_besch_ok'] = 'Je beschikbaarheid is opgeslagen. Bedankt!';
     } catch (\Exception $e) {
         error_log('beschikbaarheid losse pagina: ' . $e->getMessage());
         $_SESSION['flash_besch_fout'] = 'Er ging iets mis bij het opslaan. Probeer het later opnieuw.';
     }
-    redirect(APP_URL . '/portaal/beschikbaarheid_invullen.php');
+    // Waarschuwing of fout: terug naar het formulier (herkomst bewaren voor de volgende poging)
+    redirect(portaal_url_met_terug(APP_URL . '/portaal/beschikbaarheid_invullen.php', portaal_terug_param()));
 }
 
 $flash_ok = $_SESSION['flash_besch_ok'] ?? '';
@@ -133,7 +139,7 @@ $vz_waarschuwing = $_SESSION['b2_vz_waarschuwing'] ?? '';
 unset($_SESSION['flash_besch_ok'], $_SESSION['flash_besch_fout'], $_SESSION['b2_vz_waarschuwing']);
 
 $portaal_titel = 'Beschikbaarheid doorgeven';
-$portaal_terug = APP_URL . '/portaal/';
+$portaal_terug = portaal_terug_url();
 require __DIR__ . '/_kop.php';
 ?>
 
@@ -213,6 +219,7 @@ require __DIR__ . '/_kop.php';
 <form method="POST" id="beschForm" class="wiz-stap" <?= $ai_aan ? 'style="display:none"' : '' ?>>
   <?= csrf_input() ?>
   <input type="hidden" name="besch_submit" value="1">
+  <input type="hidden" name="terug" value="<?= h(portaal_terug_param()) ?>">
   <?php require __DIR__ . '/_beschikbaarheid_velden.php'; ?>
   <div style="margin-top:20px">
     <button type="submit" class="ds-btn ds-btn-primair ds-btn-vol" onclick="return beschValideer()"><?= icoon('vink', 16) ?> Beschikbaarheid opslaan</button>

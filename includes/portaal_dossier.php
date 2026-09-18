@@ -164,6 +164,27 @@ function portaal_begroeting(array $sol, int $open): array {
     return ['titel' => 'Hoi ' . $naam, 'tekst' => ''];
 }
 
+/**
+ * Waar een taakpagina (beschikbaarheid, BLK, overzicht) na afloop naar terugkeert: de Taken-tab als
+ * de sollicitant daar vandaan kwam (?terug=taken in de link, of het hidden veld 'terug' in het
+ * formulier), anders de startpagina. Whitelist, dus nooit een open redirect.
+ */
+function portaal_terug_url(): string {
+    return portaal_terug_param() === 'taken' ? APP_URL . '/portaal/taken.php' : APP_URL . '/portaal/';
+}
+
+/** 'taken' of '' — de waarde om door te geven in een hidden veld of een vervolg-link. */
+function portaal_terug_param(): string {
+    $t = $_POST['terug'] ?? ($_GET['terug'] ?? '');
+    return $t === 'taken' ? 'taken' : '';
+}
+
+/** Hangt ?terug=taken aan een portaal-eigen url als de herkomst de Taken-tab is. */
+function portaal_url_met_terug(string $url, string $terug): string {
+    if ($terug !== 'taken' || !str_starts_with($url, APP_URL . '/portaal/')) return $url;
+    return $url . (str_contains($url, '?') ? '&' : '?') . 'terug=taken';
+}
+
 /** E-mailadres voor "Vragen? Mail ..." (instelling, met fallback). */
 function portaal_contact_email(): string {
     $e = function_exists('instelling') ? instelling('mail.bestuur_email', '') : '';

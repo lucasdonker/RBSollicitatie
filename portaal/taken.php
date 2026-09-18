@@ -30,6 +30,7 @@ $portaal_status_fase = $sol['fase'];
 $portaal_open_taken  = $n_open;
 require __DIR__ . '/_kop.php';
 ?>
+  <?php toon_flash(); ?>
   <?php if (!empty($_SESSION['flash_portaal'])): ?>
     <div class="flash flash-succes" style="margin-bottom:12px"><?= h($_SESSION['flash_portaal']) ?></div>
     <?php unset($_SESSION['flash_portaal']); ?>
