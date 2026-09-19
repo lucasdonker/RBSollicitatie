@@ -212,15 +212,15 @@ require __DIR__ . '/layout_top.php';
   </div>
 </div>
 
-<!-- Auditlogboek -->
+<!-- Logboek -->
 <div class="card">
-  <div class="card-header"><div class="card-title">Auditlogboek</div></div>
+  <div class="card-header"><div class="card-title">Logboek</div></div>
   <div style="padding:0 0 4px">
     <p style="font-size:12.5px;color:var(--tekst-zacht);margin-bottom:12px">
-      Alle acties (wie wat wanneer deed of zag) worden vastgelegd. Bekijk het volledige,
-      doorzoekbare logboek voor herleidbaarheid en verantwoording.
+      Alle sporen van het systeem in één tijdlijn: acties, verstuurde berichten, technische fouten,
+      het bewijsspoor van ondertekeningen, de AVG-opschoning en mislukte inlogpogingen.
     </p>
-    <a href="<?= APP_URL ?>/admin/audit.php" class="btn btn-outline btn-sm">📋 Auditlogboek openen</a>
+    <a href="<?= APP_URL ?>/admin/logboek.php" class="btn btn-outline btn-sm"><?= icoon('auditlog', 14) ?> Logboek openen</a>
   </div>
 </div>
 

@@ -384,6 +384,9 @@ html[data-theme="dark"] .seizoen-kaart .seizoen-naam { color: var(--tekst); }
 .notitie-box { background: #fffbeb; border: 1px solid #fde68a; border-radius: var(--radius); padding: 10px 12px; font-size: 13px; color: #78350f; line-height: 1.6; }
 html[data-theme="dark"] .notitie-box { background: rgba(245,158,11,.08); border-color: rgba(245,158,11,.25); color: #fcd34d; }
 .groep-header { background: var(--navy); color: #fff; padding: 9px 14px; border-radius: var(--radius) var(--radius) 0 0; font-weight: 600; font-size: 13px; }
+/* Label dat alleen een schermlezer voorleest. Voor velden waar de plaatsaanduiding het
+   enige zichtbare label is — een placeholder telt niet als label. */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 
 /* ── Scrollbar ──────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }

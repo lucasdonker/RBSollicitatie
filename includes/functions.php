@@ -45,6 +45,10 @@ if (file_exists(__DIR__ . '/ai_beschikbaarheid.php')) require_once __DIR__ . '/a
 if (file_exists(__DIR__ . '/opschonen.php')) require_once __DIR__ . '/opschonen.php';
 if (file_exists(__DIR__ . '/db_failsafe.php')) require_once __DIR__ . '/db_failsafe.php';
 if (file_exists(__DIR__ . '/audit.php')) require_once __DIR__ . '/audit.php';
+// Logboek: leest de zes logbronnen uit als één tijdlijn (zie includes/logboek/bronnen.php).
+foreach (['bronnen', 'query', 'weergave'] as $__l) {
+    if (file_exists(__DIR__ . '/logboek/' . $__l . '.php')) require_once __DIR__ . '/logboek/' . $__l . '.php';
+}
 if (file_exists(__DIR__ . '/toegang.php')) require_once __DIR__ . '/toegang.php';
 if (file_exists(__DIR__ . '/health.php')) require_once __DIR__ . '/health.php';
 if (file_exists(__DIR__ . '/paginas.php')) require_once __DIR__ . '/paginas.php';

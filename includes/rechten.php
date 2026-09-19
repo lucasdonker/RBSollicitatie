@@ -33,6 +33,10 @@ function rechten_modules(): array {
         'instellingen'    => ['label' => 'Instellingen',           'groep' => 'Beheer',         'acties' => ['lezen','bewerken']],
         'beheerders'      => ['label' => 'Beheerders & rollen',    'groep' => 'Beheer',         'acties' => ['lezen','bewerken']],
         'systeem'         => ['label' => 'Systeem, updates & logs','groep' => 'Beheer',         'acties' => ['lezen','bewerken']],
+        // Apart van 'systeem': het logboek toont wie-wat-wanneer over personen (inclusief wie een
+        // kopie identiteitsbewijs downloadde). Inzage daarin hoort niet vanzelf bij het recht om
+        // migraties te draaien of te deployen.
+        'logboek'         => ['label' => 'Logboek (alle logs)',    'groep' => 'Beheer',         'acties' => ['lezen']],
     ];
 }
 

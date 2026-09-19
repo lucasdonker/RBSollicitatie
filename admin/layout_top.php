@@ -28,6 +28,10 @@ $_nav_items = [
         ],
     ],
 ];
+// Logboek: eigen module-recht, dus buiten het admin-blok. Het filter hieronder verbergt het
+// item voor wie geen leesrecht heeft (standaard iedereen behalve admin).
+$_nav_items[] = ['id'=>'logboek','label'=>'Logboek','url'=>'/admin/logboek.php','svg'=>'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/>'];
+
 if ($_bhd['rol'] === 'admin') {
     $_nav_items[] = ['id'=>'beheerders','label'=>'Beheerders','url'=>'/admin/beheerders.php','svg'=>'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'];
     $_nav_items[] = ['id'=>'rollen','label'=>'Rollen & rechten','url'=>'/admin/rollen.php','svg'=>'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>'];
@@ -56,6 +60,7 @@ $_nav_modules = [
     'dekking'         => 'dekking',
     'loonplanning'    => 'loonplanning',
     'instellingen'    => 'instellingen',
+    'logboek'         => 'logboek',
     'beheerders'      => 'beheerders',
     'rollen'          => 'beheerders',
 ];
@@ -252,6 +257,7 @@ window.addEventListener('resize',function(){if(window.innerWidth>768)sluitSideba
           'documenten'      => ['Loondossiers', 'Per aangenomen strandwacht: loonheffingsformulier (verzegelde PDF), kopie identiteitsbewijs, kopie bankpas en pasfoto. Alles staat versleuteld in de kluis; elke download wordt vastgelegd. Markeer een dossier als "verwerkt" zodra de loonadministratie het heeft overgenomen; de bankpasfoto wordt daarna automatisch vernietigd.'],
           'instellingen'    => ['Instellingen', 'Alles instelbaar: organisatie, functies, lonen, mails, automatiseringen, AI en SSO. Onder "Uitnodiging" vind je de automatiserings-toggles voor fase-wijzigingen.'],
           'mail_templates'  => ['Mail templates', 'Bewerk hier de inhoud van alle automatische mails. Gebruik variabelen zoals {{voornaam}}. Elke template kan een eigen hero-afbeelding en kleur hebben.'],
+          'logboek'         => ['Logboek', 'Alle sporen van het systeem in één tijdlijn: wie wat wanneer deed, verstuurde berichten, technische fouten, het bewijsspoor van ondertekeningen, wat de bewaartermijnen hebben opgeruimd en mislukte inlogpogingen. Klik op een object om alles te zien wat daarmee gebeurd is. Gebruik dit om een melding te herleiden of verantwoording af te leggen.'],
       ];
       $_hulp = $_hulp_paginas[$actieve_nav ?? ''] ?? null;
       ?>
