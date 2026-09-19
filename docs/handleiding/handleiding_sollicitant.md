@@ -155,26 +155,26 @@ Wat we bewaren, waarom en hoe lang staat in de privacyverklaring op paal13.com.
 
 ## Veelgestelde vragen
 
-**Ik krijg geen inlogcode.**
+**Ik krijg geen inlogcode.**  
 Controleer je spam en of je hetzelfde e-mailadres gebruikt als bij je aanmelding. Na een minuut kun
 je een nieuwe aanvragen. Lukt het echt niet, mail het bestuur; zij kunnen je adres controleren.
 
-**De link in de mail voor mijn ouder werkt niet.**
+**De link in de mail voor mijn ouder werkt niet.**  
 Laat je ouder de link kopiëren en in de browser plakken. Is de link al gebruikt of verlopen, dan
 zie je een uitleg; vraag bij Gegevens een nieuwe aan door het e-mailadres opnieuw op te slaan.
 
-**Ik heb een fout gemaakt in Beter Leren Kennen.**
+**Ik heb een fout gemaakt in Beter Leren Kennen.**  
 Open de taak opnieuw via "Bekijken", pas het aan en geef kort aan wat je hebt veranderd.
 
-**Kan ik mijn beschikbaarheid nog wijzigen na "definitief"?**
+**Kan ik mijn beschikbaarheid nog wijzigen na "definitief"?**  
 Niet zelf. Stuur het bestuur een bericht; zij passen het aan.
 
-**Mijn foto wordt geweigerd.**
+**Mijn foto wordt geweigerd.**  
 Gebruik jpg, png of pdf, maximaal 10 MB. HEIC-foto's van een iPhone kun je in de camera-app als
 jpg laten opslaan (instelling "Meest compatibel").
 
-**Wie ziet mijn bijzonderheden (bijvoorbeeld medische informatie)?**
+**Wie ziet mijn bijzonderheden (bijvoorbeeld medische informatie)?**  
 Alleen de mensen voor wie het relevant is: het bestuur en de begeleiders op de selectiedag.
 
-**Ik ben 17 en heb het loonheffingsformulier zelf getekend. Klopt dat?**
+**Ik ben 17 en heb het loonheffingsformulier zelf getekend. Klopt dat?**  
 Ja. Dat formulier moet je zelf tekenen; alle andere formulieren tekent je ouder zolang je onder de 18 bent.

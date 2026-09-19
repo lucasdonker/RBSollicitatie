@@ -128,24 +128,24 @@ verwerkt hebt, dan kan alleen een beheerder het dossier verwijderen, met een apa
 
 ## Veelgestelde vragen
 
-**Een dossier blijft oranje terwijl de strandwacht zegt dat alles is geüpload.**
+**Een dossier blijft oranje terwijl de strandwacht zegt dat alles is geüpload.**  
 Kijk welk stuk ontbreekt. Bij een ID-kaart moet ook de achterkant erbij; bij een paspoort niet. Het
 loonheffingsformulier telt pas mee na de ondertekening met verificatiecode.
 
-**De strandwacht krijgt geen verificatiecode.**
+**De strandwacht krijgt geen verificatiecode.**  
 De code gaat naar het telefoonnummer uit het dossier (sms, anders WhatsApp, anders e-mail). Laat
 het nummer controleren bij "Mijn gegevens" in het portaal. Blijft het misgaan, dan is dat iets
 voor de admin (foutenlog).
 
-**Ik zie een watermerk op de ID-kopie. Kan dat weg?**
+**Ik zie een watermerk op de ID-kopie. Kan dat weg?**  
 Nee. Het watermerk is bewust en beschermt tegen misbruik van de kopie. Voor de loonadministratie
 is een kopie mét watermerk gewoon geldig.
 
-**Het formulier van vorig jaar staat er niet meer.**
-Loondossiers staan per seizoen. Oudere seizoenen ziet de admin via het seizoenfilter; na de
-bewaartermijn zijn ze definitief weg.
+**Het formulier van vorig jaar staat er niet meer.**  
+Het scherm toont het actieve seizoen. Stukken van eerdere seizoenen blijven in de kluis tot de
+bewaartermijn is verstreken; vraag de admin als je ze nodig hebt.
 
-**Is de PDF echt door de strandwacht ondertekend?**
+**Is de PDF echt door de strandwacht ondertekend?**  
 De laatste pagina van de PDF is het certificaat van ondertekening: wie, wanneer, vanaf welk
 IP-adres, met welke code naar welk nummer, en een controlegetal. Acrobat toont bij het zegel dat het
 document sinds de ondertekening niet is gewijzigd (met een melding dat de uitgever niet in de lijst
