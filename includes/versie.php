@@ -3,10 +3,31 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.93.1');
+define('APP_VERSIE', '2.94.0');
 
 function app_changelog(): array {
     return [
+        '2.94.0' => [
+            'datum'  => '2026-09-19',
+            'titel'  => 'Klaar voor productie: beveiliging aangescherpt, opruiming en documentatie',
+            'punten' => [
+                'De installatiewizard (map setup/) is verwijderd. Hij kon met een verborgen parameter ook op een draaiend systeem worden geopend en dan de configuratie overschrijven; de map was alleen door een serverinstelling afgeschermd. Installeren en bijwerken staat nu beschreven in het runbook voor systeembeheer',
+                'Het standaard beheerdersaccount uit de installatie (admin@paal13.com met een vast, openbaar wachtwoord) wordt automatisch op non-actief gezet als het nog bestaat, en zit niet meer in het databaseschema. De eerste beheerder komt via Authentik',
+                'Elke pagina in het beheer en het portaal stuurt nu beveiligingsheaders mee: scripts en verbindingen alleen vanaf het eigen adres, niet in te sluiten op andere websites (behalve het aanmeldformulier op paal13.com), altijd https. Dit stond ooit in de serverconfiguratie maar was daar verdwenen',
+                'De sessiecookie krijgt achter de Plesk-proxy altijd de "alleen via https"-vlag; die hing eerder af van een serverwaarde die daar niet gegarandeerd is',
+                'De databasecontrole die ontbrekende tabellen en kolommen aanmaakt draaide bij élke pagina (tientallen vragen aan de database per klik). Hij draait nu één keer per versie; bij Systeem & Updates en de systeemcontrole kun je hem altijd nog geforceerd draaien',
+                'Het scherm Deploy & Versiebeheer (ZIP uploaden) is vervallen: uitrollen gaat via Git en Plesk. Het scherm zette bij elke deploy een kopie van de configuratie mét wachtwoorden en van alle uploads in een map binnen het webbereik. Verwijder de map _backups/ op de server',
+                'Mislukt inloggen via Authentik toonde technische details (waaronder het antwoord van de tokenserver) aan iedereen die de pagina opende. Die gaan nu naar het foutenlog; alleen op de testomgeving blijven ze op het scherm',
+                'Valt de database weg, dan zag een bezoeker de ruwe foutmelding met servernaam en gebruikersnaam. Nu een nette storingspagina; de oorzaak staat in het serverlog',
+                'Fatale fouten (bijvoorbeeld geheugen op) gaven een witte pagina; nu de gewone storingspagina met foutcode, en het beheer krijgt de melding',
+                'AVG: als een sollicitant zijn gegevens laat verwijderen en een van de stappen mislukt, wordt alles teruggedraaid en krijgt hij een eerlijke melding. Eerder kon "verwijderd" op het scherm staan terwijl er gegevens waren blijven staan',
+                'Het aanmeldformulier op sollicitatie.paal13.com heeft nu dezelfde bescherming tegen bots als het formulier op landingspagina\'s (verborgen veld en maximaal 5 aanmeldingen per uur per adres). Ook het aanvragen van een inlogcode is per adres begrensd (10 per uur), zodat niemand met veel e-mailadressen de mailserver kan laten volstromen',
+                'De API-sleutel voor de website-koppeling mag alleen nog in de header mee, niet meer in het webadres (waar hij in logboeken belandde). Controleer dat de WordPress-plugin de header X-Paal13-Key gebruikt',
+                'Vangnet voor de berichtenwachtrij: ook een portaalbezoek zet de geplande taken in gang als de echte cron te lang stil is (maximaal één keer per uur). De cron in Plesk blijft verplicht: alleen die doet ook de AVG-opschoning',
+                'Opgeruimd: een dood tweede dashboard, een niet meer gebruikte API voor verhinderingen, en negentien oude changelog-bestanden uit 2.17 t/m 2.29 (de changelog staat in Systeem & Updates)',
+                'Nieuw: handleidingen voor het bestuur, de penningmeester, de sollicitant en het systeembeheer in de map docs/handleiding (ook als Word-bestand), en het vraagteken-hulppaneel in het beheer op elk scherm met een link naar het juiste hoofdstuk',
+            ],
+        ],
         '2.93.1' => [
             'datum'  => '2026-09-19',
             'titel'  => "Landingspagina's: afbeeldingen uploaden en het tellen van bezoeken",
