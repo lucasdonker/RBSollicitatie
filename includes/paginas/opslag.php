@@ -20,8 +20,9 @@ function pag_basis_map(): string { return dirname(__DIR__, 2) . '/uploads/pagina
  * Bewust géén SVG: die kan script bevatten en zou onder script-src 'self' draaien.
  * Bewust ook geen ico/avif: die staan ook niet in de .htaccess van de assets-map, dus ze
  * zouden wel op schijf komen maar nooit uitgeleverd worden.
- * Heet een bestand .jpg maar is het in werkelijkheid een png, dan corrigeert
- * upload_valideer() de extensie — dat is geen fout meer.
+ * Heet een bestand .jpg maar is het in werkelijkheid een png, dan is dat geen fout meer:
+ * upload_valideer() laat het door (het is immers een toegestaan type) en het bestand houdt
+ * de naam die het had — het ontwerp verwijst daarnaar.
  */
 function pag_asset_typen(): array {
     return ['jpg'=>'image/jpeg','jpeg'=>'image/jpeg','png'=>'image/png','gif'=>'image/gif','webp'=>'image/webp'];
@@ -244,18 +245,13 @@ function pag_asset_lijst(string $slug): array {
 }
 
 /**
- * Bijgeüploade afbeelding opslaan.
- * Retour: ['ok'=>bool, 'naam'=>string, 'ext_gewijzigd'=>bool, 'fout'=>string]
- * `ext_gewijzigd` staat aan als de inhoud een ander type bleek dan de extensie beweerde;
- * het ontwerp moet dan naar de nieuwe naam verwijzen.
+ * Bijgeüploade afbeelding opslaan. Retour: ['ok'=>bool, 'naam'=>string, 'fout'=>string]
+ * De extensie blijft die van het geüploade bestand: het ontwerp verwijst ernaar.
  */
 function pag_asset_opslaan(string $slug, array $upload): array {
     $dir = pag_map($slug);
     if ($dir === null) return ['ok' => false, 'naam' => '', 'fout' => 'De opslagmap kon niet worden aangemaakt.'];
     if (!function_exists('upload_valideer')) return ['ok' => false, 'naam' => '', 'fout' => 'Uploaden is niet beschikbaar.'];
-
-    $ext_ruw = strtolower(pathinfo((string)($upload['name'] ?? ''), PATHINFO_EXTENSION));
-    if ($ext_ruw === 'jpeg') $ext_ruw = 'jpg';
 
     $v = upload_valideer($upload, pag_asset_typen(), pag_max_asset_bytes());
     if (!$v['ok']) return ['ok' => false, 'naam' => '', 'fout' => $v['fout']];
@@ -271,7 +267,7 @@ function pag_asset_opslaan(string $slug, array $upload): array {
     }
     @chmod($dir . '/assets/' . $naam, 0644);
     if (function_exists('audit_log')) audit_log('asset_toegevoegd', 'pagina', 0, ['slug' => $slug, 'bestand' => $naam]);
-    return ['ok' => true, 'naam' => $naam, 'ext_gewijzigd' => $ext_ruw !== '' && $ext_ruw !== $v['ext'], 'fout' => ''];
+    return ['ok' => true, 'naam' => $naam, 'fout' => ''];
 }
 
 /**
@@ -302,13 +298,6 @@ function pag_assets_opslaan(string $slug, array $veld): array {
             continue;
         }
         $uit['namen'][] = $res['naam'];
-        if (!empty($res['ext_gewijzigd'])) {
-            // De extensie klopte niet met de inhoud. Zeg het, want het ontwerp verwijst
-            // waarschijnlijk nog naar de oude naam.
-            $uit['let_op'][] = basename((string)$b['name']) . ' is in werkelijkheid een '
-                . strtoupper(pathinfo($res['naam'], PATHINFO_EXTENSION)) . '-bestand en staat er nu als ' . $res['naam']
-                . '; verwijs er in het ontwerp ook zo naar (of lees het ontwerp opnieuw in, dan gaat dat vanzelf).';
-        }
     }
     return $uit;
 }

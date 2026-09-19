@@ -64,11 +64,11 @@ onder het uploadveld staan de namen zoals ze werkelijk zijn opgeslagen.
 Verwijst het ontwerp naar een afbeelding die er nog niet is, dan zegt het rapport welke
 namen hij verwacht. Upload ze daarna onder die naam; opnieuw inlezen hoeft dan niet.
 
-**De extensie kan veranderen.** Het systeem kijkt naar wat er écht in het bestand zit, niet
-naar hoe het heet. Een foto die `duinen.jpg` heet maar in werkelijkheid een PNG is (dat
-gebeurt makkelijk na bewerken of hernoemen) wordt opgeslagen als `duinen.png`. Controleer
-dus altijd de naam in de lijst voordat je ernaar verwijst. Zit er iets in wat helemaal geen
-afbeelding is, dan wordt het geweigerd en staat erbij wat het dan wél is.
+De extensie blijft altijd die van het bestand dat je uploadt. Het systeem kijkt wél naar wat
+er écht in zit: een foto die `duinen.jpg` heet maar in werkelijkheid een PNG is (dat gebeurt
+makkelijk na bewerken of hernoemen) wordt gewoon opgeslagen als `duinen.jpg`, zodat je
+ontwerp blijft kloppen. Zit er iets in wat helemaal geen afbeelding is, dan wordt het
+geweigerd en staat erbij wat het dan wél is.
 
 Geef elke afbeelding een `alt`-tekst: een korte omschrijving als hij iets vertelt, of
 `alt=""` als hij alleen versiering is.

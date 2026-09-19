@@ -60,7 +60,20 @@ function pag_formulier_verwerk(array $pagina, array $post): array {
         return $weiger('rate_limit', 'Er zijn in korte tijd te veel aanmeldingen vanaf dit adres gedaan. Probeer het over een uur opnieuw.');
     }
 
-    // 4. De echte aanmelding — één bron van waarheid
+    // 4. De echte aanmelding — één bron van waarheid.
+    // aanmelden_kern.php hangt niet aan functions.php (alleen aanmelden.php en api/aanmelden.php
+    // laadden hem), dus p.php kende sollicitatie_aanmaken() niet en liep hier stuk. Zelf laden:
+    // het bestand is klein en beschermt zichzelf met function_exists.
+    if (!function_exists('sollicitatie_aanmaken')) {
+        $kern = dirname(__DIR__) . '/aanmelden_kern.php';
+        if (is_file($kern)) require_once $kern;
+    }
+    if (!function_exists('sollicitatie_aanmaken')) {
+        error_log('pag_formulier_verwerk: aanmelden_kern.php ontbreekt');
+        return ['ok' => false, 'code' => 'kern_ontbreekt',
+                'fout' => 'Aanmelden lukt op dit moment niet. Probeer het later opnieuw of mail ons.'];
+    }
+
     $invoer = $post;
     $invoer['bron_code']  = $bron;
     $invoer['bron_label'] = (string)$pagina['titel'];

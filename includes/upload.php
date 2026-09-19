@@ -139,9 +139,11 @@ function upload_mime_bepaal(string $pad): string {
  * $typen: extensie => mime (bijv. ['pdf' => 'application/pdf', 'jpg' => 'image/jpeg']).
  * Retour: ['ok'=>bool, 'fout'=>?string, 'ext'=>string, 'mime'=>string, 'naam'=>string (veilig), 'grootte'=>int].
  *
- * De inhoud is leidend, niet de extensie: een PNG die "foto.jpg" heet is geen fout maar een
- * verkeerd etiket. Zit het gevonden type in de whitelist, dan corrigeren we ext, mime én de
- * bestandsnaam en gaat hij gewoon door. Alleen een type dat er helemaal niet in staat, valt af.
+ * De inhoud bepaalt of een bestand door mag, de extensie bepaalt hoe het gaat heten. Een PNG
+ * die "foto.jpg" heet is dus geen fout maar een verkeerd etiket: zolang het gevonden type in
+ * de whitelist staat, gaat hij door en houdt hij de naam die de gebruiker gaf — daar verwijst
+ * zijn ontwerp of zijn administratie immers naar. `mime` vertelt wél wat er écht in zit.
+ * Alleen een type dat helemaal niet in de whitelist staat, valt af.
  */
 function upload_valideer(array $upload, array $typen, int $max_bytes): array {
     $uit = ['ok' => false, 'fout' => null, 'ext' => '', 'mime' => '', 'naam' => '', 'grootte' => 0];
@@ -154,13 +156,16 @@ function upload_valideer(array $upload, array $typen, int $max_bytes): array {
     if ($grootte <= 0) { $uit['fout'] = 'het bestand is leeg'; return $uit; }
     if ($grootte > $max) { $uit['fout'] = 'het bestand is groter dan ' . round($max / 1048576) . ' MB'; return $uit; }
 
+    // De extensie blijft zoals de gebruiker hem aanleverde (alleen kleine letters). Alleen als
+    // de whitelist de ene schrijfwijze van jpeg niet kent, pakken we de andere.
     $naam = (string)($upload['name'] ?? 'bestand');
     $ext  = strtolower(pathinfo($naam, PATHINFO_EXTENSION));
-    if ($ext === 'jpeg') $ext = 'jpg';
-    if (!isset($typen[$ext]) && !($ext === 'jpg' && isset($typen['jpeg']))) {
+    if (!isset($typen[$ext]) && $ext === 'jpeg' && isset($typen['jpg']))  $ext = 'jpg';
+    if (!isset($typen[$ext]) && $ext === 'jpg'  && isset($typen['jpeg'])) $ext = 'jpeg';
+    if (!isset($typen[$ext])) {
         $uit['fout'] = 'bestandstype niet toegestaan (' . implode(', ', array_unique(array_keys($typen))) . ')'; return $uit;
     }
-    $verwacht = $typen[$ext] ?? $typen['jpeg'];
+    $verwacht = $typen[$ext];
 
     // Inhoud controleren i.p.v. alleen de extensie
     $mime   = upload_mime_bepaal((string)$upload['tmp_name']);
@@ -170,10 +175,8 @@ function upload_valideer(array $upload, array $typen, int $max_bytes): array {
         if ($office && in_array($mime, ['application/zip', 'application/octet-stream', ''], true)) {
             $mime = $verwacht;                       // docx/xlsx zijn zip-bestanden
         } elseif (in_array($mime, $typen, true)) {
-            // Juist bestand, verkeerde extensie: het etiket corrigeren i.p.v. weigeren.
-            $ext = (string)array_search($mime, $typen, true);
-            if ($ext === 'jpeg') $ext = 'jpg';
-            $verwacht = $mime;
+            // Ander type dan de extensie belooft, maar wel een toegestaan type: doorlaten en
+            // de naam laten staan. Alleen $mime vertelt voortaan wat erin zit.
         } else {
             $uit['fout'] = 'de inhoud van het bestand past niet bij het type (herkend als '
                          . ($mime !== '' ? $mime : 'onbekend') . ', verwacht ' . $verwacht . ')';
@@ -181,12 +184,11 @@ function upload_valideer(array $upload, array $typen, int $max_bytes): array {
         }
     }
 
-    // Veilige naam, altijd met de extensie die bij de inhoud hoort.
     $basis  = preg_replace('/[^A-Za-z0-9._-]+/', '_', pathinfo($naam, PATHINFO_FILENAME));
     $basis  = substr(trim((string)$basis, '_.'), 0, 190);
     $veilig = ($basis !== '' ? $basis : 'bestand') . '.' . $ext;
 
-    return ['ok' => true, 'fout' => null, 'ext' => $ext, 'mime' => $verwacht, 'naam' => $veilig, 'grootte' => $grootte];
+    return ['ok' => true, 'fout' => null, 'ext' => $ext, 'mime' => $mime, 'naam' => $veilig, 'grootte' => $grootte];
 }
 
 } // function_exists

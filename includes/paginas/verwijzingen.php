@@ -10,9 +10,8 @@
  *
  * Wat hier gebeurt: elke relatieve verwijzing naar een jpg/png/gif/webp wordt herleid tot
  * de bestandsnaam zoals die bij ons op schijf staat. Staat het bestand er al, dan nemen we
- * die naam letterlijk over (ook als de extensie bij het uploaden is gecorrigeerd, zie
- * upload_valideer). Staat het er nog niet, dan zetten we de naam die het bestand kríjgt
- * zodra hij geüpload wordt — en meldt het rapport welke afbeeldingen nog ontbreken.
+ * die naam letterlijk over. Staat het er nog niet, dan zetten we de naam die het bestand
+ * kríjgt zodra hij geüpload wordt — en meldt het rapport welke afbeeldingen nog ontbreken.
  *
  * Alles wat geen relatieve afbeelding is, blijft onaangeroerd: externe URL's, data-URI's,
  * ankers, markeringen als [[formulier]] en gewone links.
@@ -59,8 +58,9 @@ function pag_verwijzing_ontleed(string $url): ?array {
     $bestand = basename($pad);
     if ($bestand === '' || $bestand === '.' || $bestand === '..') return null;
 
+    // De extensie blijft zoals hij is (ook .jpeg): een upload houdt de zijne ook, dus
+    // alleen zo komt de naam die we hier verzinnen overeen met het bestand dat straks komt.
     $ext = strtolower(pathinfo($bestand, PATHINFO_EXTENSION));
-    if ($ext === 'jpeg') $ext = 'jpg';
     if (!in_array($ext, pag_verwijzing_extensies(), true)) return null;
 
     $sleutel = pag_asset_sleutel($bestand);
