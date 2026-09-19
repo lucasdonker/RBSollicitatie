@@ -46,6 +46,16 @@ function rechten_acties(): array {
 }
 
 /**
+ * Rechten van één module als korte notatie: 'rwd', 'rw', 'r' of 'geen'.
+ * Dezelfde letters als in rechten_standaard_rollen(); handig om in het logboek te tonen
+ * wat er precies veranderde zonder drie booleans uit te schrijven.
+ */
+function rechten_bits(array $r): string {
+    $bits = (!empty($r['lezen']) ? 'r' : '') . (!empty($r['bewerken']) ? 'w' : '') . (!empty($r['verwijderen']) ? 'd' : '');
+    return $bits === '' ? 'geen' : $bits;
+}
+
+/**
  * Standaardrollen + hun rechten. Veilige defaults: begeleider mag weinig.
  * Rang bepaalt de hiërarchie (hoger = meer). De 'admin'-rol krijgt altijd alles,
  * ongeacht de matrix (zie mag()).

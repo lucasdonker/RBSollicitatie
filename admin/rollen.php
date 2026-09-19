@@ -28,6 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $db->prepare("INSERT INTO rol_rechten (rol_sleutel, module, lezen, bewerken, verwijderen) VALUES (?,?,0,0,0)")
                        ->execute([$sleutel, $mod]);
                 }
+                audit_log('rol_aangemaakt', 'rol', null, ['rol' => $sleutel, 'naam' => $naam, 'authentik_groep' => $groep ?: 'geen', 'rang' => $rang]);
                 flash('succes', "Rol \"$naam\" toegevoegd. Stel hieronder de rechten in.");
             } catch (Exception $e) {
                 $fout = 'Er bestaat al een rol met (bijna) dezelfde naam.';
@@ -43,11 +44,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($sleutel && $naam) {
             // Systeemrollen: naam niet wijzigen, wel de Authentik-groep
             $is_systeem = (int)$db->query("SELECT systeemrol FROM rollen WHERE sleutel=".$db->quote($sleutel))->fetchColumn();
+            // De Authentik-groep bepaalt wie deze rol krijgt: een wijziging hier verandert wie
+            // er binnenkomt, dus die hoort in het logboek.
+            $vq = $db->prepare("SELECT naam, authentik_groep FROM rollen WHERE sleutel=?");
+            $vq->execute([$sleutel]);
+            $voor = $vq->fetch() ?: ['naam' => '', 'authentik_groep' => ''];
             if ($is_systeem) {
                 $db->prepare("UPDATE rollen SET authentik_groep=? WHERE sleutel=?")->execute([$groep ?: null, $sleutel]);
+                $na = ['authentik_groep' => $groep];
             } else {
                 $db->prepare("UPDATE rollen SET naam=?, authentik_groep=? WHERE sleutel=?")->execute([$naam, $groep ?: null, $sleutel]);
+                $na = ['naam' => $naam, 'authentik_groep' => $groep];
             }
+            $verschil = [];
+            foreach ($na as $veld => $nieuwe) {
+                if ((string)($voor[$veld] ?? '') !== (string)$nieuwe) {
+                    $verschil[$veld] = ['oud' => (string)($voor[$veld] ?? ''), 'nieuw' => (string)$nieuwe];
+                }
+            }
+            if ($verschil) audit_log('rol_gewijzigd', 'rol', null, array_merge(['rol' => $sleutel], $verschil));
             flash('succes', 'Rol bijgewerkt.');
         }
         redirect(APP_URL.'/admin/rollen.php');
@@ -65,6 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $db->prepare("DELETE FROM rol_rechten WHERE rol_sleutel=?")->execute([$sleutel]);
             $db->prepare("DELETE FROM rollen WHERE sleutel=?")->execute([$sleutel]);
+            audit_log('rol_verwijderd', 'rol', null, ['rol' => $sleutel]);
             flash('succes', 'Rol verwijderd.');
         }
         redirect(APP_URL.'/admin/rollen.php');
@@ -76,6 +92,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $rollen = rollen_alle();
         foreach ($rollen as $rol) {
             if ($rol['sleutel'] === 'admin') continue; // admin blijft altijd alles
+            // Vóór het opslaan vastleggen, zodat we straks alleen de échte wijzigingen loggen.
+            $voor = rol_rechten($rol['sleutel']);
+            $na = [];
             foreach (rechten_modules() as $mod => $mdef) {
                 $l = !empty($matrix[$rol['sleutel']][$mod]['lezen']) ? 1 : 0;
                 $w = !empty($matrix[$rol['sleutel']][$mod]['bewerken']) ? 1 : 0;
@@ -85,7 +104,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $db->prepare("INSERT INTO rol_rechten (rol_sleutel, module, lezen, bewerken, verwijderen) VALUES (?,?,?,?,?)
                               ON DUPLICATE KEY UPDATE lezen=VALUES(lezen), bewerken=VALUES(bewerken), verwijderen=VALUES(verwijderen)")
                    ->execute([$rol['sleutel'], $mod, $l, $w, $d]);
+                $na[$mod] = ['lezen' => (bool)$l, 'bewerken' => (bool)$w, 'verwijderen' => (bool)$d];
             }
+            // Wie een rol meer of minder rechten geeft, moet herleidbaar zijn.
+            $verschil = [];
+            foreach ($na as $mod => $nieuw) {
+                $oud = $voor[$mod] ?? ['lezen' => false, 'bewerken' => false, 'verwijderen' => false];
+                if ($oud != $nieuw) $verschil[$mod] = ['oud' => rechten_bits($oud), 'nieuw' => rechten_bits($nieuw)];
+            }
+            if ($verschil) audit_log('rol_gewijzigd', 'rol', null, array_merge(['rol' => $rol['sleutel']], $verschil));
         }
         flash('succes', 'Rechten opgeslagen.');
         redirect(APP_URL.'/admin/rollen.php');

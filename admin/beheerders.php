@@ -22,6 +22,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 $hash = password_hash($ww, PASSWORD_DEFAULT);
                 $db->prepare("INSERT INTO beheerders (naam,email,wachtwoord,rol) VALUES(?,?,?,?)")->execute([$naam,$email,$hash,$rol]);
+                // Wie toegang krijgt tot het beheer hoort herleidbaar te zijn. Nooit het wachtwoord.
+                audit_log('beheerder_aangemaakt', 'beheerder', (int)$db->lastInsertId(), ['naam' => $naam, 'email' => $email, 'rol' => $rol]);
                 flash('succes', "$naam toegevoegd.");
             } catch (Exception $e) { $fout = 'E-mailadres bestaat al.'; }
         }
@@ -33,24 +35,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (strlen($ww) < 8) { $fout = 'Wachtwoord minimaal 8 tekens.'; }
         else {
             $db->prepare("UPDATE beheerders SET wachtwoord=? WHERE id=?")->execute([password_hash($ww,PASSWORD_DEFAULT),$id]);
+            // Alleen dát het gebeurde, nooit het wachtwoord zelf of de hash.
+            audit_log('beheerder_gewijzigd', 'beheerder', $id, ['wachtwoord' => 'opnieuw ingesteld']);
             flash('succes','Wachtwoord bijgewerkt.');
         }
     }
 
     if ($actie === 'rol') {
-        $db->prepare("UPDATE beheerders SET rol=? WHERE id=?")->execute([$_POST['rol'],(int)$_POST['bid']]);
+        $id = (int)$_POST['bid'];
+        $nieuwe_rol = (string)$_POST['rol'];
+        $vq = $db->prepare("SELECT rol FROM beheerders WHERE id=?"); $vq->execute([$id]);
+        $oude_rol = (string)$vq->fetchColumn();
+        $db->prepare("UPDATE beheerders SET rol=? WHERE id=?")->execute([$nieuwe_rol,$id]);
+        if ($oude_rol !== $nieuwe_rol) {
+            audit_log('beheerder_gewijzigd', 'beheerder', $id, ['rol' => ['oud' => $oude_rol, 'nieuw' => $nieuwe_rol]]);
+        }
         flash('succes','Rol bijgewerkt.');
     }
 
     if ($actie === 'deactiveer') {
         $id = (int)$_POST['bid'];
-        $mij = sessie_beheerder()['id'];
+        $mij = (int)huidige_beheerder()['id'];
         if ($id === $mij) { $fout='Je kunt jezelf niet deactiveren.'; }
-        else { $db->prepare("UPDATE beheerders SET actief=0 WHERE id=?")->execute([$id]); flash('succes','Account gedeactiveerd.'); }
+        else {
+            $db->prepare("UPDATE beheerders SET actief=0 WHERE id=?")->execute([$id]);
+            audit_log('beheerder_gewijzigd', 'beheerder', $id, ['actief' => ['oud' => 'ja', 'nieuw' => 'nee']]);
+            flash('succes','Account gedeactiveerd.');
+        }
     }
 
     if ($actie === 'activeer') {
-        $db->prepare("UPDATE beheerders SET actief=1 WHERE id=?")->execute([(int)$_POST['bid']]);
+        $id = (int)$_POST['bid'];
+        $db->prepare("UPDATE beheerders SET actief=1 WHERE id=?")->execute([$id]);
+        audit_log('beheerder_gewijzigd', 'beheerder', $id, ['actief' => ['oud' => 'nee', 'nieuw' => 'ja']]);
         flash('succes','Account geactiveerd.');
     }
 
