@@ -88,6 +88,17 @@ function sjablonen_migreer_slugs($db): void {
             $db->prepare("UPDATE mail_templates SET hero_titel=?, hero_subtitel=? WHERE slug='portaal_code' AND (hero_titel IS NULL OR hero_titel='' OR hero_titel LIKE '%inlogcode voor%')")
                ->execute([$s['hero_titel'], $s['hero_subtitel']]);
         }
+        // 'ondertekening_bevestiging' was oorspronkelijk (en t/m 2.90.9) de mail "je ouder heeft ondertekend".
+        // Sinds 2.91.0 is dat gesplitst: dit sjabloon gaat naar wie ZELF ondertekent, de oudervariant heeft een
+        // eigen slug. Een sjabloon dat nog over de ouder gaat of de oude {{door}}-variabele gebruikt, is dus fout
+        // voor 18-plussers; dat zetten we terug naar de nieuwe standaardtekst. Een echt eigen tekst blijft staan.
+        if (function_exists('meldingen_register') && isset(meldingen_register()['ondertekening_bevestiging'])) {
+            $s = meldingen_register()['ondertekening_bevestiging']['seed'];
+            $db->prepare("UPDATE mail_templates SET onderwerp=?, hero_titel=?, hero_subtitel=?, body_html=?, tekst_kort=?, samenvatting=?
+                          WHERE slug='ondertekening_bevestiging'
+                            AND (body_html LIKE '%{{door}}%' OR body_html LIKE '%ouder%' OR onderwerp LIKE '%ouder%')")
+               ->execute([$s['onderwerp'], $s['hero_titel'], $s['hero_subtitel'], $s['body_html'], $s['tekst_kort'], $s['samenvatting']]);
+        }
     } catch (\Throwable $e) {}
 }
 

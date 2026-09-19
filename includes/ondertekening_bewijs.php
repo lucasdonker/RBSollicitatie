@@ -68,9 +68,14 @@ function ondertekening_geopend_loggen(int $ond_id, string $rol): void {
     ondertekening_gebeurtenis($ond_id, 'geopend', ['rol' => $rol]);
 }
 
-/** Typen waarvoor een 2FA-code verplicht is (instelling, komma-gescheiden). */
+/**
+ * Typen waarvoor een verificatiecode verplicht is (instelling, komma-gescheiden).
+ * Alleen documenten met persoonsgegevens die wettelijk vastgelegd moeten worden — loonheffing en later een
+ * contract. De inschrijving als lid hoort daar bewust NIET bij (besluit Lucas, 19 sep 2026): die is een
+ * verenigingsformulier, geen wettelijk document, en een extra drempel zou alleen afhaken opleveren.
+ */
 function ondertekening_2fa_typen(): array {
-    $s = function_exists('instelling') ? instelling('ondertekenen.2fa_typen', 'loonheffing,lidmaatschap') : 'loonheffing,lidmaatschap';
+    $s = function_exists('instelling') ? instelling('ondertekenen.2fa_typen', 'loonheffing') : 'loonheffing';
     return array_values(array_filter(array_map('trim', explode(',', $s))));
 }
 function ondertekening_2fa_nodig(string $type): bool {

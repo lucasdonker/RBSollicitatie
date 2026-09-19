@@ -1,4 +1,4 @@
--- Migratie 0019 — twee te beperkte kolommen die stille fouten gaven (2.90.8).
+-- Migratie 0021 — twee te beperkte kolommen die stille fouten gaven (2.90.8).
 -- REFERENTIE: het systeem doet dit zelf (db_failsafe → otp_tokens.type, documenten_auto_setup → soort).
 -- Handmatig draaien is niet nodig; wel handig om te zien wat er verandert.
 

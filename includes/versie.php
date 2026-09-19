@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.90.9');
+define('APP_VERSIE', '2.91.0');
 
 function app_changelog(): array {
     return [
+        '2.91.0' => [
+            'datum'  => '2026-09-19',
+            'titel'  => 'Ondertekenen: juiste bevestigingsmail en code alleen bij wettelijke documenten',
+            'punten' => [
+                'Wie zelf ondertekent (18 jaar of ouder) krijgt nu de mail "Je hebt … ondertekend" met de ondertekende pdf als bijlage. De mail "Je ouder heeft … ondertekend" gaat alleen nog naar minderjarigen van wie de ouder heeft getekend; dat waren twee teksten in één sjabloon, waardoor 18-plussers het verkeerde bericht kregen',
+                'Beide teksten zijn nu apart te bewerken in Instellingen › Sjablonen; een bestaand sjabloon met de oude oudertekst wordt eenmalig bijgewerkt',
+                'De verificatiecode per sms of WhatsApp geldt alleen nog voor documenten met persoonsgegevens die wettelijk vastgelegd moeten worden (loonheffingsformulier, later een contract). Inschrijven als lid van de vereniging gaat weer zonder code',
+                'Losse migratiebestanden opnieuw genummerd (0020 en 0021) omdat de nummers 0018 en 0019 al bestonden',
+            ],
+        ],
         '2.90.9' => [
             'datum'  => '2026-09-19',
             'titel'  => 'Takenpakket: pasfoto vervallen, huisregels plaatsbaar, uitleg bij ondertekenen',

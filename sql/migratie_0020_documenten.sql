@@ -1,4 +1,4 @@
--- Migratie 0018 — Aangenomen-takenpakket (2.90.x): documenten in de kluis, bewijslog ondertekeningen, taken-soorten.
+-- Migratie 0020 — Aangenomen-takenpakket (2.90.x): documenten in de kluis, bewijslog ondertekeningen, taken-soorten.
 -- REFERENTIE: het systeem maakt dit zelf aan (db_failsafe → documenten_auto_setup, ondertekening_bewijs_auto_setup,
 -- extra_tabellen_auto_setup + db_kolom_verzeker). Handmatig draaien is niet nodig.
 

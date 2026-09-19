@@ -257,9 +257,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_ondertekend) {
                 if ($pdf_pad) $bijlagen = [['pad' => $pdf_pad, 'naam' => 'Ondertekend_' . ondertekening_pdf_bestandsnaam($type), 'mime' => 'application/pdf']];
             } catch (\Throwable $e) { error_log('ondertekening PDF: ' . $e->getMessage()); }
             try {
-                // Sollicitant: bevestiging (bij zelf tekenen mét PDF-kopie)
-                melding_verstuur('ondertekening_bevestiging', $sol_id_o,
-                    ['document_naam' => $doc_naam, 'door' => $is_ouder ? 'je ouder/verzorger' : 'jou'],
+                // Sollicitant: bevestiging. Zelf getekend → "je hebt ondertekend" mét PDF-kopie;
+                // door de ouder getekend → "je ouder heeft ondertekend" (de PDF gaat naar de ouder).
+                melding_verstuur($is_ouder ? 'ondertekening_bevestiging_ouder' : 'ondertekening_bevestiging', $sol_id_o,
+                    ['document_naam' => $doc_naam, 'ondertekenaar_naam' => $naam_getypt ?: (string)($rec['ondertekenaar_naam'] ?? 'je ouder/verzorger')],
                     ['referentie' => $ref, 'prioriteit' => 'direct', 'bijlagen' => $is_ouder ? [] : $bijlagen]);
                 // Ouder: kopie met PDF
                 if ($is_ouder && !empty($rec['ondertekenaar_email'])) {
