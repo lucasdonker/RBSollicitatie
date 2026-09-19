@@ -23,7 +23,7 @@ beheer zie je niet, en dat is de bedoeling: alleen jij en de admin kunnen deze s
 
 ## Inloggen
 
-**Waar:** `https://sollicitatie.paal13.com/admin/`
+**Waar:** `https://sollicitatie.paal13.com/admin/`  
 **Wie:** je Authentik-account zit in de groep `Sol-Penningmeester`.
 
 Kies "Inloggen via Authentik". Je komt in het beheer met alleen het menu-item **Loondossiers** en

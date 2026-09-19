@@ -33,12 +33,13 @@ foreach ($n in $Naam) {
   $md = Join-Path $H "$n.md"
   if (-not (Test-Path $md)) { Write-Warning "overgeslagen: $md bestaat niet"; continue }
   $titel = $titels[$n]; if (-not $titel) { $titel = $n }
-  # HTML: op zichzelf staand, eigen stijl (huisstijl), inhoudsopgave, ankers zoals GitHub/pandoc ze maakt.
+  # De H1 van het Markdown wordt de documenttitel (shift -1); elk ## wordt een hoofdstuk (h1).
+  # De ankers blijven gelijk aan wat GitHub/pandoc van de koptekst maakt, dus includes/hulp.php
+  # kan ernaar linken. Geen automatische inhoudsopgave: elke handleiding heeft er zelf een.
   & $Pandoc $md -f gfm -t html5 -s --embed-resources --css "$H\handleiding.css" `
-    --metadata "title=$titel" --metadata lang=nl --toc --toc-depth=2 --shift-heading-level-by=0 `
+    --metadata lang=nl --metadata "pagetitle=$titel" --shift-heading-level-by=-1 `
     -o (Join-Path $H "$n.html")
-  # Word: standaard pandoc-opmaak met inhoudsopgave.
-  & $Pandoc $md -f gfm -t docx --toc --toc-depth=2 --metadata "title=$titel" --metadata lang=nl `
+  & $Pandoc $md -f gfm -t docx --metadata lang=nl --shift-heading-level-by=-1 `
     -o (Join-Path $H "word\$n.docx")
   "klaar: $n.html + word\$n.docx"
 }

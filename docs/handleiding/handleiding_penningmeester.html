@@ -30,9 +30,10 @@ html { font-size: 16px; }
 body { margin: 0; padding: 0 16px 48px; font-family: "Instrument Sans", -apple-system, "Segoe UI", Arial, sans-serif; color: var(--tekst); background: #fff; line-height: 1.6; max-width: 820px; margin-inline: auto; }
 header#title-block-header { border-bottom: 3px solid var(--navy); margin: 24px 0 16px; padding-bottom: 8px; }
 h1.title { color: var(--navy); font-size: 1.7rem; margin: 0; }
-h1 { color: var(--navy); font-size: 1.5rem; margin-top: 1.2em; }
-h2 { color: var(--navy); font-size: 1.25rem; margin-top: 2em; padding-top: 0.6em; border-top: 1px solid var(--rand); }
-h3 { color: var(--tekst); font-size: 1.05rem; margin-top: 1.4em; }
+
+h1 { color: var(--navy); font-size: 1.3rem; margin-top: 2em; padding-top: 0.6em; border-top: 1px solid var(--rand); }
+h2 { color: var(--tekst); font-size: 1.08rem; margin-top: 1.4em; }
+h3 { color: var(--tekst); font-size: 1rem; margin-top: 1.2em; }
 a { color: var(--oranje); }
 nav#TOC { background: var(--bg); border-radius: 10px; padding: 12px 16px; margin: 16px 0 24px; font-size: 0.95rem; }
 nav#TOC ul { margin: 0; padding-left: 18px; }
@@ -49,43 +50,15 @@ hr { border: 0; border-top: 1px solid var(--rand); margin: 24px 0; }
 </head>
 <body>
 <header id="title-block-header">
-<h1 class="title">Handleiding penningmeester</h1>
+<h1 class="title">Handleiding penningmeester — Loondossiers</h1>
 </header>
-<nav id="TOC" role="doc-toc">
-<ul>
-<li><a href="#handleiding-penningmeester--loondossiers" id="toc-handleiding-penningmeester--loondossiers">Handleiding
-penningmeester — Loondossiers</a>
-<ul>
-<li><a href="#inhoud" id="toc-inhoud">Inhoud</a></li>
-<li><a href="#inloggen" id="toc-inloggen">Inloggen</a></li>
-<li><a href="#wat-er-in-een-loondossier-zit" id="toc-wat-er-in-een-loondossier-zit">Wat er in een loondossier
-zit</a></li>
-<li><a href="#wanneer-je-een-melding-krijgt" id="toc-wanneer-je-een-melding-krijgt">Wanneer je een melding
-krijgt</a></li>
-<li><a href="#het-scherm-loondossiers" id="toc-het-scherm-loondossiers">Het scherm Loondossiers</a></li>
-<li><a href="#stukken-downloaden" id="toc-stukken-downloaden">Stukken
-downloaden</a></li>
-<li><a href="#een-dossier-verwerken" id="toc-een-dossier-verwerken">Een
-dossier verwerken</a></li>
-<li><a href="#bankpas-vernietigen" id="toc-bankpas-vernietigen">Bankpas
-vernietigen</a></li>
-<li><a href="#bewaartermijnen-en-verwijderen" id="toc-bewaartermijnen-en-verwijderen">Bewaartermijnen en
-verwijderen</a></li>
-<li><a href="#wat-je-nooit-doet" id="toc-wat-je-nooit-doet">Wat je nooit
-doet</a></li>
-<li><a href="#veelgestelde-vragen" id="toc-veelgestelde-vragen">Veelgestelde vragen</a></li>
-</ul></li>
-</ul>
-</nav>
-<h1 id="handleiding-penningmeester--loondossiers">Handleiding
-penningmeester — Loondossiers</h1>
 <p>Versie 2.94.0 · september 2026</p>
 <p>Deze handleiding is voor de penningmeester. Je gebruikt één scherm in
 het beheer: <strong>Loondossiers</strong>. Daar staat per aangenomen
 strandwacht alles wat de loonadministratie nodig heeft. De rest van het
 beheer zie je niet, en dat is de bedoeling: alleen jij en de admin
 kunnen deze stukken inzien.</p>
-<h2 id="inhoud">Inhoud</h2>
+<h1 id="inhoud">Inhoud</h1>
 <ol type="1">
 <li><a href="#inloggen">Inloggen</a></li>
 <li><a href="#wat-er-in-een-loondossier-zit">Wat er in een loondossier
@@ -102,17 +75,17 @@ verwijderen</a></li>
 <li><a href="#veelgestelde-vragen">Veelgestelde vragen</a></li>
 </ol>
 <hr />
-<h2 id="inloggen">Inloggen</h2>
+<h1 id="inloggen">Inloggen</h1>
 <p><strong>Waar:</strong>
-<code>https://sollicitatie.paal13.com/admin/</code>
+<code>https://sollicitatie.paal13.com/admin/</code><br />
 <strong>Wie:</strong> je Authentik-account zit in de groep
 <code>Sol-Penningmeester</code>.</p>
 <p>Kies &quot;Inloggen via Authentik&quot;. Je komt in het beheer met alleen het
 menu-item <strong>Loondossiers</strong> en (alleen lezen)
 <strong>Sollicitanten</strong>. Zie je meer of minder, dan klopt je
 groep in Authentik niet; meld dat bij de admin.</p>
-<h2 id="wat-er-in-een-loondossier-zit">Wat er in een loondossier
-zit</h2>
+<h1 id="wat-er-in-een-loondossier-zit">Wat er in een loondossier
+zit</h1>
 <p>Per aangenomen strandwacht verzamelt het portaal:</p>
 <table>
 <thead>
@@ -154,8 +127,8 @@ de ledenservice</td>
 <p>Alles staat versleuteld in de kluis. Een dossier is
 <strong>compleet</strong> als loonheffingsformulier, kopie ID en kopie
 bankpas binnen zijn.</p>
-<h2 id="wanneer-je-een-melding-krijgt">Wanneer je een melding
-krijgt</h2>
+<h1 id="wanneer-je-een-melding-krijgt">Wanneer je een melding
+krijgt</h1>
 <p>Zodra een dossier compleet is, krijg je één e-mail &quot;Loondossier
 compleet&quot; op het adres dat bij Instellingen › Algemeen als
 penningmeester-adres staat. De stukken zitten <strong>niet</strong> in
@@ -163,7 +136,7 @@ die mail; je haalt ze op via het beheer. (Het bestuur kan instellen dat
 ze wél meegaan, maar dat raden we af.)</p>
 <p>Krijg je de melding niet, dan kan een beheerder hem opnieuw sturen
 met de knop &quot;Melding opnieuw naar de penningmeester&quot;.</p>
-<h2 id="het-scherm-loondossiers">Het scherm Loondossiers</h2>
+<h1 id="het-scherm-loondossiers">Het scherm Loondossiers</h1>
 <p><strong>Waar:</strong> Beheer › Loondossiers.</p>
 <p>Bovenaan drie tellers: aangenomen, compleet, verwerkt. Daaronder per
 strandwacht een kaart:</p>
@@ -182,7 +155,7 @@ kanaal.</p>
 <p>Staat er bovenaan een rode melding over de kluis of het zegel, dan
 werkt het systeem niet goed; waarschuw de admin. Zolang die melding
 staat kunnen strandwachten niets uploaden.</p>
-<h2 id="stukken-downloaden">Stukken downloaden</h2>
+<h1 id="stukken-downloaden">Stukken downloaden</h1>
 <ol type="1">
 <li>Klik op <strong>Download</strong> achter het stuk.</li>
 <li>Op ID-kopieën en de bankpas staat een watermerk met je naam en de
@@ -196,7 +169,7 @@ zo.</li>
 <p>Download alleen op een vertrouwd apparaat. Zet de stukken direct in
 de loonadministratie en verwijder de gedownloade bestanden daarna van je
 computer en uit je downloadmap.</p>
-<h2 id="een-dossier-verwerken">Een dossier verwerken</h2>
+<h1 id="een-dossier-verwerken">Een dossier verwerken</h1>
 <p>Zodra de gegevens in de loonadministratie staan:</p>
 <ol type="1">
 <li>Klik in de kaart op <strong>Verwerkt in de
@@ -217,13 +190,13 @@ dienstjaar) en worden dan automatisch vernietigd.</li>
 </ul>
 <p>Markeer een dossier pas als verwerkt als het écht verwerkt is.
 Terugdraaien kan niet zelf; vraag dan de admin.</p>
-<h2 id="bankpas-vernietigen">Bankpas vernietigen</h2>
+<h1 id="bankpas-vernietigen">Bankpas vernietigen</h1>
 <p>Wil je de bankpasfoto eerder weg dan de automatische termijn, klik
 dan op <strong>Vernietigen</strong> achter de bankpas en bevestig. Dit
 kan alleen voor de bankpas; de andere stukken vallen onder de
 bewaarplicht.</p>
-<h2 id="bewaartermijnen-en-verwijderen">Bewaartermijnen en
-verwijderen</h2>
+<h1 id="bewaartermijnen-en-verwijderen">Bewaartermijnen en
+verwijderen</h1>
 <table>
 <thead>
 <tr>
@@ -252,7 +225,7 @@ kan hij zijn gegevens zelf verwijderen en verdwijnen de stukken mee.
 Gaat het dienstverband niet door nádat je het dossier verwerkt hebt, dan
 kan alleen een beheerder het dossier verwijderen, met een aparte
 bevestiging.</p>
-<h2 id="wat-je-nooit-doet">Wat je nooit doet</h2>
+<h1 id="wat-je-nooit-doet">Wat je nooit doet</h1>
 <ul>
 <li>Stukken per e-mail of WhatsApp doorsturen, ook niet naar jezelf.
 Gebruik het beheer.</li>
@@ -261,7 +234,7 @@ loonadministratie.</li>
 <li>Je inlog delen. Elke download staat op jouw naam.</li>
 <li>Screenshots maken van ID-kopieën.</li>
 </ul>
-<h2 id="veelgestelde-vragen">Veelgestelde vragen</h2>
+<h1 id="veelgestelde-vragen">Veelgestelde vragen</h1>
 <p><strong>Een dossier blijft oranje terwijl de strandwacht zegt dat
 alles is geüpload.</strong> Kijk welk stuk ontbreekt. Bij een ID-kaart
 moet ook de achterkant erbij; bij een paspoort niet. Het

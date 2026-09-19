@@ -30,9 +30,10 @@ html { font-size: 16px; }
 body { margin: 0; padding: 0 16px 48px; font-family: "Instrument Sans", -apple-system, "Segoe UI", Arial, sans-serif; color: var(--tekst); background: #fff; line-height: 1.6; max-width: 820px; margin-inline: auto; }
 header#title-block-header { border-bottom: 3px solid var(--navy); margin: 24px 0 16px; padding-bottom: 8px; }
 h1.title { color: var(--navy); font-size: 1.7rem; margin: 0; }
-h1 { color: var(--navy); font-size: 1.5rem; margin-top: 1.2em; }
-h2 { color: var(--navy); font-size: 1.25rem; margin-top: 2em; padding-top: 0.6em; border-top: 1px solid var(--rand); }
-h3 { color: var(--tekst); font-size: 1.05rem; margin-top: 1.4em; }
+
+h1 { color: var(--navy); font-size: 1.3rem; margin-top: 2em; padding-top: 0.6em; border-top: 1px solid var(--rand); }
+h2 { color: var(--tekst); font-size: 1.08rem; margin-top: 1.4em; }
+h3 { color: var(--tekst); font-size: 1rem; margin-top: 1.2em; }
 a { color: var(--oranje); }
 nav#TOC { background: var(--bg); border-radius: 10px; padding: 12px 16px; margin: 16px 0 24px; font-size: 0.95rem; }
 nav#TOC ul { margin: 0; padding-left: 18px; }
@@ -49,48 +50,15 @@ hr { border: 0; border-top: 1px solid var(--rand); margin: 24px 0; }
 </head>
 <body>
 <header id="title-block-header">
-<h1 class="title">Runbook systeembeheer</h1>
+<h1 class="title">Runbook systeembeheer — Sollicitatiesysteem Paal
+13</h1>
 </header>
-<nav id="TOC" role="doc-toc">
-<ul>
-<li><a href="#runbook-systeembeheer--sollicitatiesysteem-paal-13" id="toc-runbook-systeembeheer--sollicitatiesysteem-paal-13">Runbook
-systeembeheer — Sollicitatiesysteem Paal 13</a>
-<ul>
-<li><a href="#inhoud" id="toc-inhoud">Inhoud</a></li>
-<li><a href="#omgevingen-en-branches" id="toc-omgevingen-en-branches">Omgevingen en branches</a></li>
-<li><a href="#hoe-het-systeem-in-elkaar-zit" id="toc-hoe-het-systeem-in-elkaar-zit">Hoe het systeem in elkaar
-zit</a></li>
-<li><a href="#uitrollen-naar-productie-checklist" id="toc-uitrollen-naar-productie-checklist">Uitrollen naar productie
-(checklist)</a></li>
-<li><a href="#nieuwe-server-installeren" id="toc-nieuwe-server-installeren">Nieuwe server installeren</a></li>
-<li><a href="#configphp-alle-instellingen" id="toc-configphp-alle-instellingen">config.php: alle
-instellingen</a></li>
-<li><a href="#geheimen-die-in-de-database-staan" id="toc-geheimen-die-in-de-database-staan">Geheimen die in de database
-staan</a></li>
-<li><a href="#cron" id="toc-cron">Cron</a></li>
-<li><a href="#authentik-sso" id="toc-authentik-sso">Authentik
-(SSO)</a></li>
-<li><a href="#systeemcontrole-health-check" id="toc-systeemcontrole-health-check">Systeemcontrole (health
-check)</a></li>
-<li><a href="#back-up-en-herstel" id="toc-back-up-en-herstel">Back-up en
-herstel</a></li>
-<li><a href="#terugdraaien-rollback" id="toc-terugdraaien-rollback">Terugdraaien (rollback)</a></li>
-<li><a href="#logs-lezen" id="toc-logs-lezen">Logs lezen</a></li>
-<li><a href="#beveiligingsmaatregelen-in-het-kort" id="toc-beveiligingsmaatregelen-in-het-kort">Beveiligingsmaatregelen in
-het kort</a></li>
-<li><a href="#bekende-beperkingen" id="toc-bekende-beperkingen">Bekende
-beperkingen</a></li>
-</ul></li>
-</ul>
-</nav>
-<h1 id="runbook-systeembeheer--sollicitatiesysteem-paal-13">Runbook
-systeembeheer — Sollicitatiesysteem Paal 13</h1>
 <p>Versie 2.94.0 · september 2026</p>
 <p>Dit document is voor wie de servers beheert: installeren, uitrollen
 naar productie, configuratie, back-ups, herstel en het lezen van de
 logs. Het is de enige plek waar de technische stappen staan. Wat het
 bestuur in het beheer doet, staat in de <a href="handleiding_beheer.md">handleiding beheer</a>.</p>
-<h2 id="inhoud">Inhoud</h2>
+<h1 id="inhoud">Inhoud</h1>
 <ol type="1">
 <li><a href="#omgevingen-en-branches">Omgevingen en branches</a></li>
 <li><a href="#hoe-het-systeem-in-elkaar-zit">Hoe het systeem in elkaar
@@ -115,7 +83,7 @@ het kort</a></li>
 <li><a href="#bekende-beperkingen">Bekende beperkingen</a></li>
 </ol>
 <hr />
-<h2 id="omgevingen-en-branches">Omgevingen en branches</h2>
+<h1 id="omgevingen-en-branches">Omgevingen en branches</h1>
 <table>
 <thead>
 <tr>
@@ -148,8 +116,8 @@ oranje label TESTOMGEVING in het beheer.</p>
 <p>Werkwijze: bouwen op <code>Development</code> → testen op de
 testomgeving → merge naar <code>main</code> → uitrollen volgens de
 checklist hieronder.</p>
-<h2 id="hoe-het-systeem-in-elkaar-zit">Hoe het systeem in elkaar
-zit</h2>
+<h1 id="hoe-het-systeem-in-elkaar-zit">Hoe het systeem in elkaar
+zit</h1>
 <ul>
 <li><strong>PHP 8.3, MariaDB</strong>, Apache met PHP-FPM achter de
 Plesk-proxy (Cloud86). Geen framework, geen Composer: alles wat nodig is
@@ -178,8 +146,8 @@ versie maakt het systeem ontbrekende tabellen en kolommen zelf aan
 <code>sql/</code> en draai je via Beheer › Instellingen › Systeem &amp;
 Updates › Migraties uitvoeren.</li>
 </ul>
-<h2 id="uitrollen-naar-productie-checklist">Uitrollen naar productie
-(checklist)</h2>
+<h1 id="uitrollen-naar-productie-checklist">Uitrollen naar productie
+(checklist)</h1>
 <p>Doorloop dit bij <strong>elke</strong> release. De stappen met ★ zijn
 eenmalig bij de overgang naar 2.94.0 (de eerste productie-uitrol sinds
 augustus 2026).</p>
@@ -261,7 +229,7 @@ een beheerder (Authentik).</li>
 <li>Noteer de versie en datum in het logboek van het bestuur. De
 changelog staat in Systeem &amp; Updates.</li>
 </ol>
-<h2 id="nieuwe-server-installeren">Nieuwe server installeren</h2>
+<h1 id="nieuwe-server-installeren">Nieuwe server installeren</h1>
 <p>Alleen nodig bij een verhuizing of een extra omgeving. De
 installatiewizard bestaat niet meer.</p>
 <ol type="1">
@@ -287,7 +255,7 @@ stap 10.</li>
 <p>Maprechten: <code>uploads/</code> schrijfbaar voor PHP;
 <code>DOCUMENTEN_MAP</code> schrijfbaar en buiten de webroot. Alle
 andere mappen alleen-lezen is prima.</p>
-<h2 id="configphp-alle-instellingen">config.php: alle instellingen</h2>
+<h1 id="configphp-alle-instellingen">config.php: alle instellingen</h1>
 <table>
 <thead>
 <tr>
@@ -373,8 +341,8 @@ aangemaakt</td>
 </tr>
 </tbody>
 </table>
-<h2 id="geheimen-die-in-de-database-staan">Geheimen die in de database
-staan</h2>
+<h1 id="geheimen-die-in-de-database-staan">Geheimen die in de database
+staan</h1>
 <p>Deze staan niet in <code>config.php</code> maar in de tabel
 <code>instellingen</code>, en vul je in het beheer in:</p>
 <table>
@@ -423,7 +391,7 @@ documenten te lezen</td>
 </table>
 <p>Een database-export bevat deze waarden. Behandel exports dus als
 geheim.</p>
-<h2 id="cron">Cron</h2>
+<h1 id="cron">Cron</h1>
 <p>Plesk › Geplande taken, <strong>elke 5 minuten</strong>, als de
 gebruiker van de site:</p>
 <pre><code>curl -s &quot;https://sollicitatie.paal13.com/cron/run.php?token=&lt;cron.token&gt;&quot; &gt; /dev/null</code></pre>
@@ -436,7 +404,7 @@ het beheer of het portaal zet de wachtrij maximaal één keer per uur in
 gang. Dat vangnet doet <strong>geen</strong> AVG-opschoning en geen
 Authentik-sync. De systeemcontrole waarschuwt na 30 minuten zonder cron
 en meldt een fout na 2 uur.</p>
-<h2 id="authentik-sso">Authentik (SSO)</h2>
+<h1 id="authentik-sso">Authentik (SSO)</h1>
 <p>In Authentik (<code>auth.paal13.com</code>) hoort één
 OAuth2/OpenID-provider met:</p>
 <ul>
@@ -459,8 +427,8 @@ in Authentik in de juiste groep en laat hem één keer inloggen.
 Wachtwoordlogin (<code>/admin/login.php</code>) blijft bestaan als
 noodingang voor accounts waarvoor in het beheer een wachtwoord is
 gezet.</p>
-<h2 id="systeemcontrole-health-check">Systeemcontrole (health
-check)</h2>
+<h1 id="systeemcontrole-health-check">Systeemcontrole (health
+check)</h1>
 <p>Beheer › Instellingen › Systeem &amp; Updates › Systeemcontrole. Acht
 checks:</p>
 <table>
@@ -525,7 +493,7 @@ pagina openen</td>
 </tr>
 </tbody>
 </table>
-<h2 id="back-up-en-herstel">Back-up en herstel</h2>
+<h1 id="back-up-en-herstel">Back-up en herstel</h1>
 <p>Wat je nodig hebt om alles terug te zetten:</p>
 <ol type="1">
 <li><strong>Database</strong> (Plesk-back-up of <code>mysqldump</code>),
@@ -549,7 +517,7 @@ aanvaller.</p>
 <p>Bewaartermijnen van back-ups: hanteer dezelfde termijn als de langste
 wettelijke bewaartermijn in het systeem (5 jaar voor loondocumenten) en
 vernietig back-ups die ouder zijn.</p>
-<h2 id="terugdraaien-rollback">Terugdraaien (rollback)</h2>
+<h1 id="terugdraaien-rollback">Terugdraaien (rollback)</h1>
 <p>Blijkt een release kapot op productie:</p>
 <ol type="1">
 <li>Plesk › Git › kies de vorige commit op <code>main</code> (of zet in
@@ -564,7 +532,7 @@ zodat het in de volgende release wordt opgelost.</li>
 <p>Zet nooit een oudere database-back-up terug alleen om code terug te
 draaien: dan verlies je aanmeldingen en ondertekeningen van na de
 back-up.</p>
-<h2 id="logs-lezen">Logs lezen</h2>
+<h1 id="logs-lezen">Logs lezen</h1>
 <table>
 <thead>
 <tr>
@@ -603,8 +571,8 @@ maximaal één per code per vijf minuten</td>
 <p>Een foutmelding op het scherm toont een code en een referentie
 (<code>P13-S000 · ref 1a2b3c4d</code>); zoek die referentie in het
 Foutenlog.</p>
-<h2 id="beveiligingsmaatregelen-in-het-kort">Beveiligingsmaatregelen in
-het kort</h2>
+<h1 id="beveiligingsmaatregelen-in-het-kort">Beveiligingsmaatregelen in
+het kort</h1>
 <p>Voor de verantwoording (AVG, NIS2-zorgplicht) staat hier wat het
 systeem doet:</p>
 <ul>
@@ -640,7 +608,7 @@ categorie (instelbaar), verwerkingsregister in
 <li><strong>Foutafhandeling:</strong> geen technische details op het
 scherm, wel een referentie; foutmail naar de beheerder.</li>
 </ul>
-<h2 id="bekende-beperkingen">Bekende beperkingen</h2>
+<h1 id="bekende-beperkingen">Bekende beperkingen</h1>
 <ul>
 <li>Het zegelcertificaat is zelf uitgegeven: Acrobat toont &quot;geldigheid
 onbekend&quot; in plaats van een groen vinkje. Het bewijst wél dat de PDF na
