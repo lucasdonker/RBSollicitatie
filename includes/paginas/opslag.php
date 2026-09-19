@@ -25,14 +25,28 @@ function pag_asset_typen(): array {
     return ['jpg'=>'image/jpeg','jpeg'=>'image/jpeg','png'=>'image/png','gif'=>'image/gif','webp'=>'image/webp'];
 }
 
+/**
+ * Maximale grootte van één geüpload ontwerp. Standaard 10 MB: een export uit een
+ * ontwerptool heeft vaak afbeeldingen en lettertypen als data-URI in de HTML zitten,
+ * en die lopen snel over 2 MB heen. Staat de server lager (upload_max_filesize /
+ * post_max_size in Plesk), dan telt die grens — daarom hier al het minimum van beide,
+ * zodat het scherm nooit meer belooft dan er aankomt.
+ */
 function pag_max_html_bytes(): int {
-    $kb = function_exists('instelling_int') ? instelling_int('paginas.max_html_kb', 2048) : 2048;
-    return max(64, $kb) * 1024;
+    $kb = function_exists('instelling_int') ? instelling_int('paginas.max_html_kb', 10240) : 10240;
+    return (int)min(max(64, $kb) * 1024, upload_server_max_bytes());
 }
 
 function pag_max_asset_bytes(): int {
     $kb = function_exists('instelling_int') ? instelling_int('paginas.max_asset_kb', 5120) : 5120;
-    return max(64, $kb) * 1024;
+    return (int)min(max(64, $kb) * 1024, upload_server_max_bytes());
+}
+
+/** Bestandsgrootte in gewone taal: onder 1 MB in KB, daarboven in MB met één decimaal. */
+function pag_bytes_tekst(int $bytes): string {
+    if ($bytes < 1048576) return max(1, (int)round($bytes / 1024)) . ' KB';
+    $mb = $bytes / 1048576;
+    return rtrim(rtrim(number_format($mb, 1, ',', ''), '0'), ',') . ' MB';
 }
 
 /** Map van één pagina; maakt hem aan met de juiste afscherming. Null als dat niet lukt. */

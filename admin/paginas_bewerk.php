@@ -13,6 +13,12 @@ $pagina_titel = (string)$pagina['titel'];
 $actieve_nav  = 'paginas';
 $toon_versie  = (int)($_GET['versie'] ?? 0);   // scanrapport van een net geüploade versie
 
+if (upload_post_te_groot()) {
+    // Te groot voor post_max_size: PHP gooide de hele POST weg (ook het CSRF-token).
+    flash('fout', 'Het bestand is te groot voor de server (maximaal ' . pag_bytes_tekst(upload_server_max_bytes()) . ' per upload). Verhoog upload_max_filesize en post_max_size in Plesk, of maak het bestand kleiner.');
+    redirect(APP_URL . '/admin/paginas_bewerk.php?id=' . $id);
+}
+
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     csrf_check();
     vereis_recht('paginas', 'bewerken');
@@ -125,7 +131,7 @@ require __DIR__ . '/layout_top.php';
           <div class="ds-veld">
             <label class="ds-label" for="pg-ontwerp">HTML-bestand</label>
             <input class="ds-input pg-bestand" type="file" id="pg-ontwerp" name="ontwerp" accept=".html,.htm,text/html" required aria-describedby="pg-ontwerp-hint">
-            <p class="ds-veld-hint" id="pg-ontwerp-hint">Eén .html-bestand, maximaal <?= (int)round(pag_max_html_bytes() / 1024) ?> KB. Het ontwerp wordt niet aangepast; je krijgt eerst een rapport te zien.</p>
+            <p class="ds-veld-hint" id="pg-ontwerp-hint">Eén .html-bestand, maximaal <?= h(pag_bytes_tekst(pag_max_html_bytes())) ?>. Het ontwerp wordt niet aangepast; je krijgt eerst een rapport te zien.</p>
           </div>
           <button type="submit" class="ds-btn ds-btn-primair"><?= icoon('upload', 18) ?> Inlezen</button>
         </form>
@@ -143,7 +149,7 @@ require __DIR__ . '/layout_top.php';
               <p class="pg-rij-meta">
                 <?= h(datum_nl((string)$v['aangemaakt_op'])) ?> ·
                 <?= $v['bron'] === 'migratie' ? 'overgezet uit de oude module' : h((string)($v['bestandsnaam_origineel'] ?? 'upload')) ?> ·
-                <?= (int)round($v['grootte'] / 1024) ?> KB
+                <?= h(pag_bytes_tekst((int)$v['grootte'])) ?>
                 <?php if (!empty($scan['telling']['hoog'])): ?> · <?= (int)$scan['telling']['hoog'] ?> aandachtspunt(en)<?php endif; ?>
               </p>
             </div>
@@ -175,7 +181,7 @@ require __DIR__ . '/layout_top.php';
           <div class="ds-veld">
             <label class="ds-label" for="pg-afb">Afbeelding toevoegen</label>
             <input class="ds-input pg-bestand" type="file" id="pg-afb" name="afbeelding" accept="image/jpeg,image/png,image/gif,image/webp" required aria-describedby="pg-afb-hint">
-            <p class="ds-veld-hint" id="pg-afb-hint">JPG, PNG, GIF of WebP, maximaal <?= (int)round(pag_max_asset_bytes() / 1024 / 1024) ?> MB.</p>
+            <p class="ds-veld-hint" id="pg-afb-hint">JPG, PNG, GIF of WebP, maximaal <?= h(pag_bytes_tekst(pag_max_asset_bytes())) ?>.</p>
           </div>
           <button type="submit" class="ds-btn ds-btn-secundair">Toevoegen</button>
         </form>

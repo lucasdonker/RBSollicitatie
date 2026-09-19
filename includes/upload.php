@@ -32,6 +32,21 @@ function upload_server_max_bytes(): int {
 }
 
 /**
+ * Is deze POST door post_max_size weggegooid?
+ * PHP levert dan een lege $_POST én lege $_FILES, terwijl er wel een body was. Zonder deze
+ * controle loopt zo'n te groot bestand stuk op csrf_check() — de beheerder krijgt dan een
+ * onbegrijpelijke beveiligingsmelding in plaats van "het bestand is te groot".
+ * Aanroepen vóór csrf_check(), alleen op schermen met een upload.
+ */
+function upload_post_te_groot(): bool {
+    if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') return false;
+    $lengte = (int)($_SERVER['CONTENT_LENGTH'] ?? 0);
+    if ($lengte <= 0 || !empty($_POST) || !empty($_FILES)) return false;
+    $max = upload_ini_bytes((string)ini_get('post_max_size'));
+    return $max > 0 && $lengte > $max;
+}
+
+/**
  * Valideer een $_FILES-element.
  * $typen: extensie => mime (bijv. ['pdf' => 'application/pdf', 'jpg' => 'image/jpeg']).
  * Retour: ['ok'=>bool, 'fout'=>?string, 'ext'=>string, 'mime'=>string, 'naam'=>string (veilig), 'grootte'=>int].

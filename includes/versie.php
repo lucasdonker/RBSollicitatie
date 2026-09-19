@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.92.0');
+define('APP_VERSIE', '2.92.1');
 
 function app_changelog(): array {
     return [
+        '2.92.1' => [
+            'datum'  => '2026-09-19',
+            'titel'  => "Landingspagina's: grotere ontwerpen uploaden",
+            'punten' => [
+                'Een ontwerp mag nu 10 MB zijn in plaats van 2 MB. Exports uit een ontwerptool hebben afbeeldingen en lettertypen vaak in het bestand zelf zitten, en liepen daardoor tegen de oude grens aan',
+                'Het scherm toont de grens die er écht is: staat de server lager ingesteld (upload_max_filesize en post_max_size in Plesk), dan zie je díe waarde en niet een belofte die niet waargemaakt kan worden',
+                'Is een bestand te groot voor de server, dan krijg je nu een duidelijke melding met de maximale grootte in plaats van een onbegrijpelijke beveiligingsfout',
+            ],
+        ],
         '2.92.0' => [
             'datum'  => '2026-09-19',
             'titel'  => "Landingspagina's opnieuw opgebouwd: eigen ontwerp uploaden",

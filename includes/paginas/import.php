@@ -27,9 +27,9 @@ function pag_upload_valideer(array $upload): array {
         return $mis;
     }
     $grootte = (int)($upload['size'] ?? 0);
-    $max = min(pag_max_html_bytes(), upload_server_max_bytes());
+    $max = pag_max_html_bytes(); // houdt al rekening met het serverplafond
     if ($grootte <= 0)   { $mis['fout'] = 'Het bestand is leeg.'; return $mis; }
-    if ($grootte > $max) { $mis['fout'] = 'Het bestand is groter dan ' . round($max / 1024) . ' KB.'; return $mis; }
+    if ($grootte > $max) { $mis['fout'] = 'Het bestand is ' . pag_bytes_tekst($grootte) . '; het maximum is ' . pag_bytes_tekst($max) . '.'; return $mis; }
 
     $naam = (string)($upload['name'] ?? 'ontwerp.html');
     $ext  = strtolower(pathinfo($naam, PATHINFO_EXTENSION));
