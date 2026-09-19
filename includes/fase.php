@@ -61,6 +61,9 @@ function fase_zetten(int $sol_id, string $naar, string $bron, array $opties = []
 
         $stil  = !empty($opties['stil']);
         $mopt  = ['prioriteit' => $opties['prioriteit'] ?? 'direct'];
+        // Zet een mens de fase om (paneel, lijst, bulk, bellijst), dan is dat een bewuste keuze:
+        // het anti-loop-dagplafond mag zo'n bericht niet tegenhouden. Automatische bronnen wel.
+        if (in_array($bron, ['paneel', 'lijst', 'bulk', 'bellijst'], true)) $mopt['negeer_plafond'] = true;
         $stuur = function (string $type, array $extra = []) use ($sol_id, $stil, $mopt, &$uit) {
             if ($stil || !function_exists('melding_verstuur')) return;
             $r = melding_verstuur($type, $sol_id, $extra, $mopt);
@@ -117,7 +120,7 @@ function fase_melding_tekst(array $res): string {
             'dubbel'     => 'Bericht al eerder verstuurd (geen dubbele).',
             'geen_adres' => 'Geen e-mailadres of telefoonnummer bekend.',
             'uit'        => '',
-            'plafond'    => 'Bericht niet verstuurd: dagplafond bereikt.',
+            'plafond'    => 'Bericht niet verstuurd: dit bericht ging vandaag al meerdere keren naar deze ontvanger.',
             default      => 'Bericht overgeslagen (' . ($m['reden'] ?? '?') . ').',
         },
         default => '',

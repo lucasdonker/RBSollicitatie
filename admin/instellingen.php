@@ -795,9 +795,10 @@ require __DIR__ . '/layout_top.php';
             <div class="form-hulp">Maximaal één "zachte" herinnering per sollicitant per zoveel dagen.</div>
           </div>
           <div class="form-groep">
-            <label>Dagplafond per ontvanger</label>
+            <label>Anti-loop: zelfde bericht per dag</label>
             <input type="number" name="inst[melding.plafond_dag]" value="<?= instelling_int('melding.plafond_dag', 8) ?>" min="1" max="50">
-            <div class="form-hulp">Meer automatische meldingen per dag worden overgeslagen (anti-loop; zie foutenlog).</div>
+            <div class="form-hulp">Vaker hetzelfde automatische bericht naar dezelfde ontvanger in 24 uur wordt overgeslagen (zie foutenlog).
+              Andere berichtsoorten, bestuursmeldingen en wat je zelf in gang zet (fase omzetten, bulk, handmatig) tellen niet mee.</div>
           </div>
           <div class="form-groep">
             <label>Bijlage als e-mailbijlage tot (MB)</label>

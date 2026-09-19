@@ -189,9 +189,10 @@ function melding_verstuur(string $type, int $sol_id, array $extra = [], array $o
         if (in_array($def['categorie'], ['handmatig', 'gepland'], true) && !empty($ontv['afgemeld']) && empty($opties['negeer_afmelding'])) {
             $uit['reden'] = 'afgemeld'; $uit['log_id'] = melding_log_overgeslagen($basis, 'afgemeld'); return $uit;
         }
-        // Dagplafond per ontvanger (anti-loop); systeem en handmatig uitgezonderd
+        // Dagplafond per ontvanger (anti-loop); systeem, handmatig en interne adressen uitgezonderd
         if (!in_array($def['categorie'], ['systeem', 'handmatig'], true) && empty($opties['negeer_plafond'])
-            && melding_plafond_bereikt($basis['ontvanger'] ?: $basis['telefoon'])) {
+            && !in_array($basis['ontvanger_rol'], ['bestuur', 'penningmeester'], true)
+            && melding_plafond_bereikt($basis['ontvanger'] ?: $basis['telefoon'], $type)) {
             $uit['reden'] = 'plafond'; $uit['log_id'] = melding_log_overgeslagen($basis, 'plafond');
             if (function_exists('p13_fout')) p13_fout('P13-M004', "type $type, log #{$uit['log_id']}");
             return $uit;
@@ -345,14 +346,22 @@ function melding_eerder_kort(int $persoon_id): bool {
     } catch (\Throwable $e) { return true; }
 }
 
-/** Dagplafond: meer dan N automatische meldingen naar hetzelfde adres in 24 uur. */
-function melding_plafond_bereikt(string $adres): bool {
+/**
+ * Anti-loop: meer dan N keer dezelfde automatische melding naar hetzelfde adres in 24 uur.
+ * Bewust per meldingstype — een loop herhaalt altijd hetzelfde bericht, terwijl verschillende
+ * berichten op één dag (fase, taak, herinnering) gewoon legitiem zijn. Zonder type valt het
+ * terug op de oude telling over alle automatische categorieën.
+ */
+function melding_plafond_bereikt(string $adres, string $type = ''): bool {
     if ($adres === '') return false;
     $max = function_exists('instelling_int') ? max(1, instelling_int('melding.plafond_dag', 8)) : 8;
     try {
-        $q = db()->prepare("SELECT COUNT(*) FROM mail_log WHERE ontvanger=? AND categorie IN ('fase','taak','herinnering','bestuur','gepland')
-                            AND status IN ('wacht','bezig','verstuurd') AND verstuurd_op > DATE_SUB(NOW(), INTERVAL 24 HOUR)");
-        $q->execute([$adres]);
+        $sql = "SELECT COUNT(*) FROM mail_log WHERE ontvanger=? AND categorie IN ('fase','taak','herinnering','bestuur','gepland')
+                AND status IN ('wacht','bezig','verstuurd') AND verstuurd_op > DATE_SUB(NOW(), INTERVAL 24 HOUR)";
+        $p = [$adres];
+        if ($type !== '') { $sql .= " AND meldingstype=?"; $p[] = $type; }
+        $q = db()->prepare($sql);
+        $q->execute($p);
         return (int)$q->fetchColumn() >= $max;
     } catch (\Throwable $e) { return false; }
 }

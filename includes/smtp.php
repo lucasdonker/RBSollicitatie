@@ -67,6 +67,20 @@ class Mailer
         return $ok;
     }
 
+    /**
+     * Maakt een MIME-bericht klaar voor de SMTP DATA-fase (RFC 5321 §4.5.2):
+     * alle regeleindes naar CRLF, elke regel die met een punt begint krijgt er één bij,
+     * en het geheel eindigt op CRLF zodat de afsluitende "." op een eigen regel staat.
+     */
+    private static function dataVoorbereiden(string $bericht): string {
+        $bericht = str_replace(["\r\n", "\r"], "\n", $bericht);
+        $bericht = str_replace("\n", "\r\n", $bericht);
+        if (strncmp($bericht, '.', 1) === 0) $bericht = '.' . $bericht;
+        $bericht = str_replace("\r\n.", "\r\n..", $bericht);
+        if (substr($bericht, -2) !== "\r\n") $bericht .= "\r\n";
+        return $bericht;
+    }
+
     // ── SMTP verzending ───────────────────────────────────────
     private static function viaSMTP(string $naar, string $naam, string $onderwerp, string $body, array $bijlagen = []): bool
     {
@@ -253,16 +267,18 @@ class Mailer
                     "\r\n" .
                     $data . "\r\n";
             }
-            $bericht .= "--{$mixed}--\r\n.";
+            $bericht .= "--{$mixed}--\r\n";
         } else {
             $bericht = $headers .
                 "Content-Type: multipart/alternative; boundary=\"{$boundary}\"\r\n" .
                 "\r\n" .
-                $altBody .
-                ".";
+                $altBody;
         }
 
-        $resp = $stuur($bericht);
+        // RFC 5321 §4.5.2: regels die met een punt beginnen verdubbelen, anders eet de
+        // mailserver die punt op. (quoted-printable breekt lange URL's af op 75 tekens;
+        // viel die afbreking net vóór een punt, dan kwam er een kapotte link aan.)
+        $resp = $stuur(self::dataVoorbereiden($bericht) . '.');
         $stuur("QUIT");
         fclose($socket);
 

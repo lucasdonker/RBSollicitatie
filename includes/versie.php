@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.91.1');
+define('APP_VERSIE', '2.91.2');
 
 function app_changelog(): array {
     return [
+        '2.91.2' => [
+            'datum'  => '2026-09-19',
+            'titel'  => 'Fix: kapotte link in de ouder-mail en onterecht geblokkeerde berichten',
+            'punten' => [
+                'De link naar de gezondheidsverklaring in de mail aan ouders werkte soms niet: er verdween een punt uit het webadres. Oorzaak zat in het versturen zelf — begint een regel in een mail met een punt, dan moet die dubbel worden meegestuurd, anders haalt de mailserver hem weg. Lange links werden precies op zo\'n punt afgebroken. Dit gold voor élke mail met een lange link',
+                'De beveiliging tegen berichten-loops blokkeerde te snel: hij telde álle automatische berichten naar één adres samen (8 per dag). Nu telt hij per soort bericht, zodat een sollicitant op één dag gewoon meerdere verschillende berichten kan krijgen',
+                'Berichten aan het bestuur of de penningmeester tellen niet meer mee: die gaan altijd naar hetzelfde adres, waardoor bij drukte de meldingen aan het bestuur stilvielen',
+                'Zet het bestuur zelf een fase om (in het paneel, de lijst, de bellijst of via een bulkactie), dan gaat het bericht altijd de deur uit — dat is een bewuste keuze en geen loop. Bulk versturen werkt daarmee weer normaal',
+            ],
+        ],
         '2.91.1' => [
             'datum'  => '2026-09-19',
             'titel'  => 'Ondertekenen: het geverifieerde telefoonnummer staat nu in het bewijs',
