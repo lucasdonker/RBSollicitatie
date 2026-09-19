@@ -39,7 +39,6 @@ if ($_bhd['rol'] === 'admin') {
     foreach ($_nav_items as &$_n) {
         if ($_n['id'] === 'instellingen') {
             $_n['sub'][] = ['id'=>'systeem', 'label'=>'Systeem & Updates', 'url'=>'/admin/systeem.php'];
-            $_n['sub'][] = ['id'=>'deploy', 'label'=>'Deploy & Versiebeheer', 'url'=>'/admin/deploy.php'];
             $_n['sub'][] = ['id'=>'foutenlog', 'label'=>'Foutenlog', 'url'=>'/admin/foutenlog.php'];
             break;
         }

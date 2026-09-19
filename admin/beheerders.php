@@ -182,7 +182,7 @@ require __DIR__.'/layout_top.php';
   <div class="card" style="margin-top:14px;border-left:3px solid var(--grijs)">
     <div class="card-body" style="padding:14px 16px">
       <div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:4px">Authentik SSO niet ingesteld</div>
-      <p style="font-size:12px;color:var(--tekst-zacht)">Configureer Authentik via <a href="<?= APP_URL ?>/setup/" style="color:var(--oranje)">de installatie wizard</a> om SSO in te schakelen.</p>
+      <p style="font-size:12px;color:var(--tekst-zacht)">Vul de OIDC-gegevens (OIDC_CLIENT_ID, OIDC_CLIENT_SECRET, OIDC_ISSUER) in <code>includes/config.php</code> in om SSO in te schakelen; zie het runbook voor systeembeheer.</p>
     </div>
   </div>
   <?php endif; ?>

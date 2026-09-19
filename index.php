@@ -9,14 +9,8 @@
  *
  * Beheerders die rechtstreeks het klassieke beheerscherm willen, kunnen altijd naar /admin/.
  */
+// Zonder config.php stopt functions.php zelf met een nette 503 (de installatiewizard bestaat niet meer).
 require_once __DIR__ . '/includes/functions.php';
-
-// Nog niet geïnstalleerd? Naar setup.
-$config_file = __DIR__ . '/includes/config.php';
-if (!file_exists($config_file)) {
-    header('Location: /setup/');
-    exit;
-}
 
 // Al ingelogd? Stuur naar het juiste deel.
 sessie_start();

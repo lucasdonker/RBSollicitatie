@@ -433,7 +433,7 @@ require __DIR__ . '/layout_top.php';
     <div class="card-body" style="padding:12px 14px;font-size:12px;color:var(--tekst-zacht);line-height:1.7">
       <strong style="display:block;margin-bottom:4px;color:var(--navy)">Versie</strong>
       <?= defined('APP_VERSIE') ? APP_VERSIE : instelling('app.versie', '1.0.0') ?><br>
-      <a href="<?= APP_URL ?>/admin/deploy.php" style="color:var(--oranje)">Deploy / versiebeheer ↗</a>
+      <a href="<?= APP_URL ?>/admin/systeem.php" style="color:var(--oranje)">Systeem &amp; Updates</a>
     </div>
   </div>
 </div>
