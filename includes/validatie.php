@@ -37,6 +37,19 @@ function iban_opmaak(string $iban): string {
     return trim(chunk_split(strtoupper(preg_replace('/\s+/', '', $iban)), 4, ' '));
 }
 
+/**
+ * Telefoonnummer leesbaar maken: "0612345678" → "06 12 34 56 78". Alleen voor Nederlandse 10-cijferige
+ * nummers die met 0 beginnen; andere notaties (bijv. +31…) komen ongewijzigd terug, alleen opgeschoond.
+ */
+function telefoon_opmaak(string $tel): string {
+    $t = trim($tel);
+    $cijfers = preg_replace('/\D+/', '', $t);
+    if (strlen($cijfers) === 10 && str_starts_with($cijfers, '0') && !str_contains($t, '+')) {
+        return implode(' ', str_split($cijfers, 2));
+    }
+    return $t;
+}
+
 /** Voorletters uit de voornamen: "Lieke Anne-Marie" → "L.A.M.". */
 function naam_voorletters(string $voornamen): string {
     $uit = '';

@@ -244,7 +244,7 @@ function ondertekening_pdf_certificaatpagina($pdf, array $rec, array $sol): arra
     $veld('Plaats (opgegeven)', (string)($rec['plaats'] ?? ''));
     $veld('IP-adres', (string)($rec['ondertekend_ip'] ?? ''));
     $veld('Browser', (string)($rec['ondertekend_user_agent'] ?? ''));
-    $veld('Verificatie', function_exists('ondertekening_zekerheid_label') ? ondertekening_zekerheid_label($rec['zekerheid'] ?? null) : (string)($rec['zekerheid'] ?? ''));
+    $veld('Verificatie', function_exists('ondertekening_zekerheid_label') ? ondertekening_zekerheid_label($rec['zekerheid'] ?? null, $rec['zekerheid_naar'] ?? null) : (string)($rec['zekerheid'] ?? ''));
 
     $kop('Tijdlijn');
     $gebeurtenissen = function_exists('ondertekening_gebeurtenissen') && !empty($rec['id']) ? ondertekening_gebeurtenissen((int)$rec['id']) : [];
@@ -256,7 +256,10 @@ function ondertekening_pdf_certificaatpagina($pdf, array $rec, array $sol): arra
         $d = json_decode((string)($g['details'] ?? ''), true);
         if (is_array($d)) {
             $delen = [];
-            foreach ($d as $k => $v) { if (in_array($k, ['kanaal', 'naar', 'reden', 'rol', 'door'], true) && $v !== '' && $v !== null) $delen[] = $k . ': ' . $v; }
+            foreach ($d as $k => $v) {
+                if (!in_array($k, ['kanaal', 'naar', 'reden', 'rol', 'door'], true) || $v === '' || $v === null) continue;
+                $delen[] = $k . ': ' . ($k === 'naar' && function_exists('telefoon_opmaak') ? telefoon_opmaak((string)$v) : $v);
+            }
             $det = $delen ? ' (' . implode(', ', $delen) . ')' : '';
         }
         $pdf->SetFont('helvetica', '', 9); $pdf->SetTextColor(...$GRIJS); $pdf->Cell(36, 5, date('d-m-Y H:i:s', strtotime($g['tijdstip'])), 0, 0);

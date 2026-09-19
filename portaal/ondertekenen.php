@@ -106,11 +106,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_ondertekend) {
     }
     if (strlen($handtekening) > 600000) $handtekening = ''; // te groot → negeren
 
-    // 2FA: code die vlak hiervoor naar het eigen nummer is gestuurd (zekerheidsniveau komt in het bewijs)
-    $zekerheid = 'link';
+    // 2FA: code die vlak hiervoor naar het eigen nummer is gestuurd. Zowel het kanaal als het gebruikte
+    // nummer/adres komen in het bewijs, zodat later herleidbaar is welk nummer is geverifieerd.
+    $zekerheid = 'link'; $zekerheid_naar = null;
     if ($twee_fa) {
-        $zekerheid = ondertekening_code_controleren((int)$rec['id'], $is_ouder ? (string)$rec['ondertekenaar_email'] : (string)$sol['email'], (string)($_POST['code'] ?? ''));
-        if ($zekerheid === null) $fout = 'De verificatiecode klopt niet of is verlopen. Vraag een nieuwe code aan en vul die in.';
+        $bewijs_2fa = ondertekening_code_controleren((int)$rec['id'], $is_ouder ? (string)$rec['ondertekenaar_email'] : (string)$sol['email'], (string)($_POST['code'] ?? ''));
+        if ($bewijs_2fa === null) $fout = 'De verificatiecode klopt niet of is verlopen. Vraag een nieuwe code aan en vul die in.';
+        else { $zekerheid = $bewijs_2fa['kanaal']; $zekerheid_naar = $bewijs_2fa['naar'] !== '' ? $bewijs_2fa['naar'] : null; }
     }
 
     // Typespecifieke validatie (loonheffing: BSN 11-proef enz.; lidmaatschap: IBAN bij incasso)
@@ -194,7 +196,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_ondertekend) {
         if (function_exists('ondertekening_bewijs_auto_setup')) ondertekening_bewijs_auto_setup();
         $db->prepare("UPDATE ondertekeningen SET
                         ondertekenaar_naam=?, ondertekenaar_geboortedatum=?, ondertekenaar_geboorteplaats=?, ondertekenaar_relatie=?,
-                        formulier_data=?, vertrouwelijk=?, plaats=?, handtekening_beeld=?, zekerheid=?,
+                        formulier_data=?, vertrouwelijk=?, plaats=?, handtekening_beeld=?, zekerheid=?, zekerheid_naar=?,
                         ondertekend_op=NOW(), ondertekend_ip=?, ondertekend_user_agent=?,
                         geldig_tot=" . ($is_gezondheid ? 'DATE_ADD(CURDATE(), INTERVAL 1 YEAR)' : 'NULL') . "
                      WHERE token=?")
@@ -208,6 +210,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_ondertekend) {
                 $plaats,
                 $handtekening,
                 $zekerheid,
+                $zekerheid_naar,
                 $_SERVER['REMOTE_ADDR'] ?? null,
                 substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 500),
                 $token,
@@ -219,8 +222,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_ondertekend) {
         $vers = $db->prepare("SELECT * FROM ondertekeningen WHERE token=?");
         $vers->execute([$token]);
         $rec_vers = $vers->fetch() ?: $rec;
-        if (function_exists('ondertekening_gebeurtenis')) ondertekening_gebeurtenis($ond_id, 'ondertekend', ['rol' => $is_ouder ? 'ouder' : 'sollicitant', 'zekerheid' => $zekerheid]);
-        if (function_exists('audit_log')) { try { audit_log('ondertekening_afgerond', 'ondertekening', $ond_id, ['type' => $type, 'rol' => $is_ouder ? 'ouder' : 'sollicitant', 'zekerheid' => $zekerheid]); } catch (\Throwable $e) {} }
+        if (function_exists('ondertekening_gebeurtenis')) ondertekening_gebeurtenis($ond_id, 'ondertekend', ['rol' => $is_ouder ? 'ouder' : 'sollicitant', 'zekerheid' => $zekerheid] + ($zekerheid_naar !== null ? ['naar' => $zekerheid_naar] : []));
+        if (function_exists('audit_log')) { try { audit_log('ondertekening_afgerond', 'ondertekening', $ond_id, ['type' => $type, 'rol' => $is_ouder ? 'ouder' : 'sollicitant', 'zekerheid' => $zekerheid, 'zekerheid_naar' => $zekerheid_naar]); } catch (\Throwable $e) {} }
         if (function_exists('ondertekening_bewijs_hash')) {
             $rec_vers['bewijs_hash'] = ondertekening_bewijs_hash($rec_vers);
             try { $db->prepare("UPDATE ondertekeningen SET bewijs_hash=? WHERE id=?")->execute([$rec_vers['bewijs_hash'], $ond_id]); } catch (\Throwable $e) {}

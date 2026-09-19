@@ -6,7 +6,10 @@
  *   geopend, code_verzonden, code_fout, code_ok, ondertekend, pdf_verzegeld, pdf_gedownload, ...
  * met tijdstip, IP en browser. Daaruit komt het "Certificaat van ondertekening" (extra pagina in de
  * verzegelde PDF, includes/zegel.php) en het bewijs bij een controle. Gevoelige waarden (BSN, IBAN,
- * code) komen hier nooit in; telefoonnummers gemaskeerd.
+ * de code zelf) komen hier nooit in. Het telefoonnummer of e-mailadres waar de code naartoe ging staat er
+ * WEL volledig in (log + kolom `zekerheid_naar`): zonder dat nummer is niet te herleiden welk middel is
+ * geverifieerd, en dat is precies het bewijs dat de wet vraagt. Op het scherm blijft het gemaskeerd
+ * (`ondertekening_tel_masker()`).
  *
  * 2FA: voor de typen in instelling `ondertekenen.2fa_typen` (standaard loonheffing, lidmaatschap) moet de
  * ondertekenaar vlak vóór het tekenen een code invoeren die naar het eigen telefoonnummer is gestuurd
@@ -35,6 +38,11 @@ function ondertekening_bewijs_auto_setup(): void {
             db_kolom_verzeker($db, 'ondertekeningen', 'pdf_document_id', 'INT DEFAULT NULL');
             db_kolom_verzeker($db, 'ondertekeningen', 'pdf_sha256',      'CHAR(64) DEFAULT NULL');
             db_kolom_verzeker($db, 'ondertekeningen', 'zekerheid',       'VARCHAR(20) DEFAULT NULL');
+            // Het telefoonnummer of e-mailadres waar de verificatiecode naartoe ging, zoals gebruikt op het
+            // moment van ondertekenen. Snapshot: wijzigt de sollicitant later zijn nummer, dan blijft het
+            // bewijs herleidbaar. 255 dekt de breedste bron (personen.ouder_email); nooit korter maken,
+            // MariaDB kapt stil af (zie docs/ai/harnas/schema_check.php).
+            db_kolom_verzeker($db, 'ondertekeningen', 'zekerheid_naar',  'VARCHAR(255) DEFAULT NULL');
             db_kolom_verzeker($db, 'ondertekeningen', 'bewijs_hash',     'CHAR(64) DEFAULT NULL');
             db_kolom_verzeker($db, 'ondertekeningen', 'verwerkt_op',     'DATETIME DEFAULT NULL');
             db_kolom_verzeker($db, 'ondertekeningen', 'verwerkt_door',   'INT DEFAULT NULL');
@@ -82,7 +90,7 @@ function ondertekening_2fa_nodig(string $type): bool {
     return in_array($type, ondertekening_2fa_typen(), true);
 }
 
-/** Telefoonnummer gemaskeerd voor in het bewijs: "06 12 34 56 78" → "06******78". */
+/** Telefoonnummer gemaskeerd voor op het scherm en in de API-respons: "06 12 34 56 78" → "06******78". */
 function ondertekening_tel_masker(?string $tel): string {
     $t = preg_replace('/\D+/', '', (string)$tel);
     if (strlen($t) < 4) return '';
@@ -92,7 +100,8 @@ function ondertekening_tel_masker(?string $tel): string {
 /**
  * Stuur een 2FA-code naar de ondertekenaar. Kanaal: SMS → WhatsApp → e-mail (zekerheid 'sms'|'whatsapp'|'email').
  * $ontvanger: ['email', 'naam', 'telefoon']. De otp-sleutel is het e-mailadres; het type bindt de code aan deze
- * ondertekening. Retour: ['ok'=>bool, 'kanaal'=>string, 'fout'=>?string].
+ * ondertekening. Retour: ['ok'=>bool, 'kanaal'=>string, 'naar'=>string (volledig, alleen voor het bewijs),
+ * 'fout'=>?string].
  */
 function ondertekening_code_versturen(int $ond_id, array $ontvanger): array {
     $email = (string)($ontvanger['email'] ?? '');
@@ -126,23 +135,28 @@ function ondertekening_code_versturen(int $ond_id, array $ontvanger): array {
         $ok = in_array($r['status'] ?? '', ['verstuurd', 'wacht'], true); $kanaal = 'email';
     }
     if (!$ok) return ['ok' => false, 'kanaal' => '', 'fout' => 'De code kon niet verstuurd worden. Probeer het opnieuw of mail ' . (function_exists('portaal_contact_email') ? portaal_contact_email() : 'het bestuur') . '.'];
-    $_SESSION['ond_2fa_' . $ond_id] = ['kanaal' => $kanaal, 'op' => time()];
-    ondertekening_gebeurtenis($ond_id, 'code_verzonden', ['kanaal' => $kanaal, 'naar' => $kanaal === 'email' ? $email : ondertekening_tel_masker($tel)]);
-    return ['ok' => true, 'kanaal' => $kanaal, 'fout' => null];
+    // In het bewijs (sessie + gebeurtenis) het VOLLEDIGE nummer/adres, zodat later herleidbaar is welk nummer is
+    // gebruikt. Op het scherm en in de API-respons blijft het gemaskeerd (zie api_ondertekenen_code.php).
+    $naar = $kanaal === 'email' ? $email : $tel;
+    $_SESSION['ond_2fa_' . $ond_id] = ['kanaal' => $kanaal, 'naar' => $naar, 'op' => time()];
+    ondertekening_gebeurtenis($ond_id, 'code_verzonden', ['kanaal' => $kanaal, 'naar' => $naar]);
+    return ['ok' => true, 'kanaal' => $kanaal, 'naar' => $naar, 'fout' => null];
 }
 
 /**
- * Controleer de ingevoerde code. Logt code_ok / code_fout. Retour: zekerheidsniveau (kanaal) of null bij fout.
+ * Controleer de ingevoerde code. Logt code_ok / code_fout.
+ * Retour: ['kanaal' => 'sms'|'whatsapp'|'email', 'naar' => volledig nummer of e-mailadres] of null bij fout.
  * Spaties en streepjes (uit een gekopieerd sms-bericht) worden weggefilterd.
  */
-function ondertekening_code_controleren(int $ond_id, string $email, string $code): ?string {
+function ondertekening_code_controleren(int $ond_id, string $email, string $code): ?array {
     $sessie = $_SESSION['ond_2fa_' . $ond_id] ?? null;
     $cijfers = preg_replace('/\D+/', '', $code);
     if (!$sessie || strlen($cijfers) !== 6) { ondertekening_gebeurtenis($ond_id, 'code_fout', ['reden' => $sessie ? 'vorm' : 'geen_sessie']); return null; }
     if (!otp_verifieer($email, $cijfers, 'ond' . $ond_id)) { ondertekening_gebeurtenis($ond_id, 'code_fout', ['reden' => 'onjuist_of_verlopen']); return null; }
-    ondertekening_gebeurtenis($ond_id, 'code_ok', ['kanaal' => $sessie['kanaal']]);
+    $naar = (string)($sessie['naar'] ?? '');
+    ondertekening_gebeurtenis($ond_id, 'code_ok', ['kanaal' => $sessie['kanaal'], 'naar' => $naar]);
     unset($_SESSION['ond_2fa_' . $ond_id]);
-    return (string)$sessie['kanaal'];
+    return ['kanaal' => (string)$sessie['kanaal'], 'naar' => $naar];
 }
 
 /** Leesbare naam van een gebeurtenis voor het certificaat en het beheer. */
@@ -161,12 +175,17 @@ function ondertekening_gebeurtenis_label(string $g): string {
     };
 }
 
-/** Leesbaar zekerheidsniveau. */
-function ondertekening_zekerheid_label(?string $z): string {
+/**
+ * Leesbaar zekerheidsniveau, met het nummer of adres waar de code naartoe ging ($naar uit
+ * ondertekeningen.zekerheid_naar). Zonder $naar (oudere records) valt het terug op de algemene tekst.
+ */
+function ondertekening_zekerheid_label(?string $z, ?string $naar = null): string {
+    $waar = trim((string)$naar);
+    $tel  = ($waar !== '' && function_exists('telefoon_opmaak')) ? telefoon_opmaak($waar) : $waar;
     return match ($z) {
-        'sms'      => 'SMS-code naar het eigen mobiele nummer (2FA)',
-        'whatsapp' => 'WhatsApp-code naar het eigen mobiele nummer (2FA)',
-        'email'    => 'Code per e-mail (het account waarmee is ingelogd)',
+        'sms'      => $tel !== ''  ? "SMS-code naar $tel (eigen mobiele nummer, 2FA)"      : 'SMS-code naar het eigen mobiele nummer (2FA)',
+        'whatsapp' => $tel !== ''  ? "WhatsApp-code naar $tel (eigen mobiele nummer, 2FA)" : 'WhatsApp-code naar het eigen mobiele nummer (2FA)',
+        'email'    => $waar !== '' ? "Code per e-mail naar $waar (het account waarmee is ingelogd)" : 'Code per e-mail (het account waarmee is ingelogd)',
         default    => 'Persoonlijke link + inlog met e-mailcode',
     };
 }

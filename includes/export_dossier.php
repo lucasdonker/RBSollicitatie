@@ -114,15 +114,20 @@ function export_dossier_van(int $sol_id): array {
     ];
 }
 
-/** Ondertekende documenten als tekst ("Gezondheidsverklaring 18+: 4 mei 2026 (sms)"); BSN/IBAN nooit. */
+/** Ondertekende documenten als tekst ("Gezondheidsverklaring 18+: 4 mei 2026 (zelf, sms naar 06 12 34 56 78)"); BSN/IBAN nooit. */
 function export_ondertekeningen_tekst(int $sol_id): string {
     try {
-        $q = db()->prepare("SELECT type, ondertekend_op, ondertekenaar_rol, zekerheid FROM ondertekeningen WHERE sollicitatie_id=? ORDER BY aangemaakt_op");
+        $q = db()->prepare("SELECT type, ondertekend_op, ondertekenaar_rol, zekerheid, zekerheid_naar FROM ondertekeningen WHERE sollicitatie_id=? ORDER BY aangemaakt_op");
         $q->execute([$sol_id]);
         $delen = [];
         foreach ($q->fetchAll() as $o) {
             $label = function_exists('ondertekening_label') ? ondertekening_label((string)$o['type']) : $o['type'];
-            $delen[] = $label . ': ' . (!empty($o['ondertekend_op']) ? date('d-m-Y', strtotime($o['ondertekend_op'])) . ' (' . ($o['ondertekenaar_rol'] === 'ouder' ? 'ouder' : 'zelf') . (!empty($o['zekerheid']) ? ', ' . $o['zekerheid'] : '') . ')' : 'open');
+            $zek = '';
+            if (!empty($o['zekerheid'])) {
+                $zek = ', ' . $o['zekerheid'];
+                if (!empty($o['zekerheid_naar'])) $zek .= ' naar ' . (function_exists('telefoon_opmaak') ? telefoon_opmaak((string)$o['zekerheid_naar']) : (string)$o['zekerheid_naar']);
+            }
+            $delen[] = $label . ': ' . (!empty($o['ondertekend_op']) ? date('d-m-Y', strtotime($o['ondertekend_op'])) . ' (' . ($o['ondertekenaar_rol'] === 'ouder' ? 'ouder' : 'zelf') . $zek . ')' : 'open');
         }
         return implode('; ', $delen);
     } catch (\Throwable $e) { return ''; }

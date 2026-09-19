@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.91.0');
+define('APP_VERSIE', '2.91.1');
 
 function app_changelog(): array {
     return [
+        '2.91.1' => [
+            'datum'  => '2026-09-19',
+            'titel'  => 'Ondertekenen: het geverifieerde telefoonnummer staat nu in het bewijs',
+            'punten' => [
+                'Op de certificaatpagina van een ondertekend document stond alleen dát er met een code op het eigen mobiele nummer is geverifieerd. Nu staat er ook welk nummer dat was ("SMS-code naar 06 12 34 56 78"), zodat later herleidbaar is welk middel is gebruikt',
+                'Het nummer wordt bij het ondertekenen vastgelegd bij de ondertekening zelf; wijzigt de sollicitant later zijn telefoonnummer, dan blijft het bewijs kloppen',
+                'De tijdlijn bij Beheer › Loondossiers toont per stap dezelfde gegevens als de certificaatpagina (kanaal, nummer, reden); op het scherm van de sollicitant blijft het nummer gemaskeerd',
+            ],
+        ],
         '2.91.0' => [
             'datum'  => '2026-09-19',
             'titel'  => 'Ondertekenen: juiste bevestigingsmail en code alleen bij wettelijke documenten',

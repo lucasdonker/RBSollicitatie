@@ -84,7 +84,7 @@ $wanneer = function (?string $dt) use ($maanden): string { if (!$dt) return ''; 
           <tbody>
           <tr>
             <td style="width:220px"><strong>Loonheffingsformulier</strong><br><span style="color:var(--tekst-zacht)">Officieel model, digitaal verzegeld</span></td>
-            <td><?php if ($lh && !empty($lh['ondertekend_op'])): ?>Ondertekend <?= h($wanneer($lh['ondertekend_op'])) ?> · <?= h(function_exists('ondertekening_zekerheid_label') ? ondertekening_zekerheid_label($lh['zekerheid'] ?? null) : '') ?><?php if (!empty($lh['pdf_sha256'])): ?><br><span style="color:var(--tekst-zacht);font-family:monospace;font-size:11px">sha256 <?= h(substr((string)$lh['pdf_sha256'], 0, 24)) ?>…</span><?php endif; ?>
+            <td><?php if ($lh && !empty($lh['ondertekend_op'])): ?>Ondertekend <?= h($wanneer($lh['ondertekend_op'])) ?> · <?= h(function_exists('ondertekening_zekerheid_label') ? ondertekening_zekerheid_label($lh['zekerheid'] ?? null, $lh['zekerheid_naar'] ?? null) : '') ?><?php if (!empty($lh['pdf_sha256'])): ?><br><span style="color:var(--tekst-zacht);font-family:monospace;font-size:11px">sha256 <?= h(substr((string)$lh['pdf_sha256'], 0, 24)) ?>…</span><?php endif; ?>
                 <?php elseif ($lh): ?><span class="badge badge-oranje">Nog niet ondertekend</span><?php else: ?><span class="badge badge-grijs">Niet klaargezet</span><?php endif; ?></td>
             <td style="text-align:right;white-space:nowrap"><?php if ($lh && !empty($lh['ondertekend_op']) && $mag_bewerken): ?><a class="btn btn-outline btn-sm" href="<?= APP_URL ?>/admin/document_download.php?ond=<?= (int)$lh['id'] ?>&amp;t=<?= urlencode($tok) ?>"><?= icoon('download', 14) ?> PDF</a><?php endif; ?></td>
           </tr>
@@ -120,7 +120,14 @@ $wanneer = function (?string $dt) use ($maanden): string { if (!$dt) return ''; 
           <?php if ($lh && function_exists('ondertekening_gebeurtenissen')): $geb = ondertekening_gebeurtenissen((int)$lh['id']); if ($geb): ?>
             <details style="font-size:12px;color:var(--tekst-zacht)"><summary style="cursor:pointer">Tijdlijn loonheffing (<?= count($geb) ?>)</summary>
               <ul style="margin:6px 0 0 16px;padding:0">
-              <?php foreach ($geb as $g): ?><li><?= h(date('d-m-Y H:i:s', strtotime($g['tijdstip']))) ?> · <?= h(ondertekening_gebeurtenis_label((string)$g['gebeurtenis'])) ?><?= !empty($g['ip']) ? ' · ' . h($g['ip']) : '' ?></li><?php endforeach; ?>
+              <?php foreach ($geb as $g):
+                    // Zelfde selectie als op de certificaatpagina: kanaal/nummer, reden, rol, door
+                    $gd = json_decode((string)($g['details'] ?? ''), true); $gdel = [];
+                    if (is_array($gd)) foreach ($gd as $gk => $gv) {
+                        if (!in_array($gk, ['kanaal', 'naar', 'reden', 'rol', 'door'], true) || $gv === '' || $gv === null) continue;
+                        $gdel[] = $gk . ': ' . ($gk === 'naar' ? telefoon_opmaak((string)$gv) : $gv);
+                    }
+              ?><li><?= h(date('d-m-Y H:i:s', strtotime($g['tijdstip']))) ?> · <?= h(ondertekening_gebeurtenis_label((string)$g['gebeurtenis'])) ?><?= $gdel ? ' (' . h(implode(', ', $gdel)) . ')' : '' ?><?= !empty($g['ip']) ? ' · ' . h($g['ip']) : '' ?></li><?php endforeach; ?>
               </ul></details>
           <?php endif; endif; ?>
         </div>

@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS `ondertekening_gebeurtenissen` (
   `tijdstip`         DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `ip`               VARCHAR(45) DEFAULT NULL,
   `browser`          VARCHAR(255) DEFAULT NULL,
-  `details`          VARCHAR(500) DEFAULT NULL,    -- JSON zonder gevoelige waarden
+  `details`          VARCHAR(500) DEFAULT NULL,    -- JSON zonder gevoelige waarden (wel het 2FA-nummer: bewijs)
   INDEX (`ondertekening_id`), INDEX (`gebeurtenis`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -40,6 +40,7 @@ ALTER TABLE `ondertekeningen`
   ADD COLUMN `pdf_document_id` INT DEFAULT NULL,         -- verzegelde PDF in sollicitant_documenten
   ADD COLUMN `pdf_sha256`      CHAR(64) DEFAULT NULL,
   ADD COLUMN `zekerheid`       VARCHAR(20) DEFAULT NULL, -- link | sms | whatsapp | email
+  ADD COLUMN `zekerheid_naar`  VARCHAR(255) DEFAULT NULL,-- 2.91.1: nummer/adres waar de code naartoe ging
   ADD COLUMN `bewijs_hash`     CHAR(64) DEFAULT NULL,
   ADD COLUMN `verwerkt_op`     DATETIME DEFAULT NULL,
   ADD COLUMN `verwerkt_door`   INT DEFAULT NULL;

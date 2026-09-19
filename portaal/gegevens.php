@@ -62,7 +62,7 @@ if (isset($_GET['download'])) {
 
     // Ondertekeningen en documenten: alleen metadata (geen BSN/IBAN/handtekening); de PDF's zelf staan onder je taken
     try {
-        $b = $db->prepare("SELECT type, ondertekenaar_rol, ondertekend_op, plaats, zekerheid, pdf_sha256 FROM ondertekeningen WHERE sollicitatie_id = ? ORDER BY aangemaakt_op");
+        $b = $db->prepare("SELECT type, ondertekenaar_rol, ondertekend_op, plaats, zekerheid, zekerheid_naar, pdf_sha256 FROM ondertekeningen WHERE sollicitatie_id = ? ORDER BY aangemaakt_op");
         $b->execute([$sol_id]);
         $data['ondertekeningen'] = $b->fetchAll();
     } catch (Exception $e) { $data['ondertekeningen'] = []; }
