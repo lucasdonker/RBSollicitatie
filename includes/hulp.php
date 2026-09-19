@@ -35,15 +35,39 @@ function hulp_registry(): array {
         'beheerders'      => ['Beheerders', 'Wie toegang heeft tot het beheer en met welke rol. Nieuwe beheerders komen via Authentik: zet iemand daar in de juiste groep en laat hem één keer inloggen. Een wachtwoord zet je alleen als noodingang.', 'beheer', 'beheerders-en-rechten'],
         'rollen'          => ['Rollen & rechten', 'Per rol (begeleider, bestuur, penningmeester, admin) welke onderdelen zichtbaar en bewerkbaar zijn. Admin heeft altijd alles. Wijzigingen worden vastgelegd in het logboek.', 'beheer', 'beheerders-en-rechten'],
         'profiel'         => ['Mijn profiel', 'Je eigen naam, e-mailadres en wachtwoord voor de noodingang. Inloggen gaat normaal via Authentik.', 'beheer', 'inloggen-en-rollen'],
+        'foutenlog'       => ['Foutenlog', 'Technische fouten met een code en een referentienummer. Staat er een foutmelding op het scherm van een gebruiker, dan zoek je de referentie hier op. Blijft dezelfde fout terugkomen, meld hem dan bij de technisch beheerder.', 'beheer', 'systeem-en-foutenlog'],
+        'import'          => ['Sollicitanten importeren', 'Eenmalig een bestaande lijst inlezen uit een CSV-bestand: kies het seizoen en de fase, controleer het voorbeeld en lees in. Dubbele e-mailadressen worden overgeslagen, dus opnieuw inlezen kan veilig.', 'beheer', 'sollicitanten'],
+        'handleiding'     => ['Handleidingen', 'De uitleg bij het systeem, per doelgroep. Het vraagteken rechtsboven op elk scherm brengt je rechtstreeks naar het juiste hoofdstuk.', 'beheer', ''],
     ];
 }
 
-/** Basisadres van de HTML-handleidingen (gegenereerd uit de Markdown, zie maak_export.ps1). */
+/**
+ * De handleidingen: sleutel => titel, voor wie, en het bestand in docs/handleiding/.
+ * Dit is meteen de whitelist van admin/handleiding.php (de map docs/ is afgeschermd).
+ */
+function hulp_handleidingen(): array {
+    return [
+        'beheer'         => ['titel' => 'Handleiding beheer',            'voor' => 'Bestuur: van seizoen opzetten tot aangenomen, scherm voor scherm', 'bestand' => 'handleiding_beheer'],
+        'landingspaginas'=> ['titel' => "Handleiding landingspagina's",  'voor' => 'Bestuur: eigen wervingspagina\'s maken en publiceren',             'bestand' => 'landingspaginas'],
+        'penningmeester' => ['titel' => 'Handleiding penningmeester',    'voor' => 'Penningmeester: loondossiers inzien, verwerken en bewaren',       'bestand' => 'handleiding_penningmeester'],
+        'sollicitant'    => ['titel' => 'Jouw sollicitatie bij Paal 13', 'voor' => 'Sollicitanten en ouders: uitleg over het portaal',                'bestand' => 'handleiding_sollicitant'],
+        'systeembeheer'  => ['titel' => 'Runbook systeembeheer',         'voor' => 'Technisch beheer: installeren, uitrollen, back-up en herstel',    'bestand' => 'runbook_systeembeheer'],
+    ];
+}
+
+/** Bestandsnaam (zonder extensie) van een handleiding, of null als de sleutel niet bestaat. */
+function hulp_handleiding_bestand(string $sleutel): ?string {
+    return hulp_handleidingen()[$sleutel]['bestand'] ?? null;
+}
+
+/**
+ * Adres van een handleiding. De HTML staat in docs/handleiding/ (gegenereerd uit de Markdown met
+ * maak_export.ps1), maar die map is afgeschermd; lezen gaat via admin/handleiding.php.
+ */
 function hulp_url(string $handleiding, string $anker = ''): string {
-    $bestand = ['beheer' => 'handleiding_beheer', 'penningmeester' => 'handleiding_penningmeester',
-                'sollicitant' => 'handleiding_sollicitant', 'landingspaginas' => 'landingspaginas'][$handleiding] ?? 'handleiding_beheer';
+    if (!isset(hulp_handleidingen()[$handleiding])) $handleiding = 'beheer';
     $base = defined('APP_URL') ? APP_URL : '';
-    return $base . '/docs/handleiding/' . $bestand . '.html' . ($anker !== '' ? '#' . $anker : '');
+    return $base . '/admin/handleiding.php?doc=' . rawurlencode($handleiding) . ($anker !== '' ? '#' . $anker : '');
 }
 
 /** Hulptekst voor een scherm: ['titel','tekst','url'] of null als er niets voor is. */

@@ -25,7 +25,8 @@ function app_changelog(): array {
                 'De API-sleutel voor de website-koppeling mag alleen nog in de header mee, niet meer in het webadres (waar hij in logboeken belandde). Controleer dat de WordPress-plugin de header X-Paal13-Key gebruikt',
                 'Vangnet voor de berichtenwachtrij: ook een portaalbezoek zet de geplande taken in gang als de echte cron te lang stil is (maximaal één keer per uur). De cron in Plesk blijft verplicht: alleen die doet ook de AVG-opschoning',
                 'Opgeruimd: een dood tweede dashboard, een niet meer gebruikte API voor verhinderingen, en negentien oude changelog-bestanden uit 2.17 t/m 2.29 (de changelog staat in Systeem & Updates)',
-                'Nieuw: handleidingen voor het bestuur, de penningmeester, de sollicitant en het systeembeheer in de map docs/handleiding (ook als Word-bestand), en het vraagteken-hulppaneel in het beheer op elk scherm met een link naar het juiste hoofdstuk',
+'Nieuw: handleidingen voor het bestuur, de penningmeester, de sollicitant en het technisch beheer, te lezen onder Instellingen › Handleidingen. Het vraagteken rechtsboven werkt nu op élk scherm en brengt je naar het juiste hoofdstuk; eerder hadden maar acht schermen uitleg',
+                'Van elke handleiding is ook een Word-versie beschikbaar om uit te delen of af te drukken (in de map docs/handleiding/word van de broncode)',
             ],
         ],
         '2.93.1' => [

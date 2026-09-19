@@ -6,7 +6,10 @@
 # Vereist pandoc (https://pandoc.org). Zet $env:HANDLEIDING_PANDOC op het pad van pandoc.exe,
 # of laat het script zoeken in PATH en in de Claude-scratchpads op deze machine.
 # Uitvoer: <naam>.html naast het Markdown-bestand en word\<naam>.docx. Allebei gaan mee in Git,
-# zodat de site en het bestuur altijd de actuele versie hebben zonder pandoc op de server.
+# zodat het beheer en het bestuur altijd de actuele versie hebben zonder pandoc op de server.
+# De HTML wordt gelezen via /admin/handleiding.php (de map docs/ is afgeschermd met docs/.htaccess).
+# Draai na een tekstwijziging ook docs\ai\harnas\handleiding_check.php: die controleert of elk
+# anker waar includes/hulp.php naar linkt nog bestaat.
 param([string[]]$Naam = @())
 
 $H = $PSScriptRoot

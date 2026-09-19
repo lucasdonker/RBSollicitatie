@@ -10,6 +10,10 @@ beheer (het gedeelte onder `/admin/`), scherm voor scherm, in de volgorde van he
 systeem iets automatisch doet (een mail sturen, taken klaarzetten, gegevens opruimen), staat dat
 er expliciet bij.
 
+Je vindt deze handleiding terug onder Beheer › Instellingen › Handleidingen, samen met de uitleg
+voor de penningmeester, voor sollicitanten en voor het technisch beheer. Het vraagteken rechtsboven
+op elk scherm geeft de korte uitleg van dát scherm, met een link naar het bijbehorende hoofdstuk.
+
 ## Inhoud
 
 1. [Inloggen en rollen](#inloggen-en-rollen)

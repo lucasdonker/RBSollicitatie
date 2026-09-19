@@ -6,6 +6,12 @@ Dit document is voor wie de servers beheert: installeren, uitrollen naar product
 back-ups, herstel en het lezen van de logs. Het is de enige plek waar de technische stappen staan.
 Wat het bestuur in het beheer doet, staat in de [handleiding beheer](handleiding_beheer.md).
 
+De handleidingen staan als Markdown in `docs/handleiding/`. De map `docs/` is op de server
+afgeschermd (`docs/.htaccess`); in het beheer lees je ze onder Instellingen › Handleidingen, wat
+de meegeleverde HTML-versie achter de login serveert. Na een tekstwijziging draai je
+`docs/handleiding/maak_export.ps1` (pandoc) om de HTML en de Word-versies bij te werken en commit
+je die mee.
+
 ## Inhoud
 
 1. [Omgevingen en branches](#omgevingen-en-branches)

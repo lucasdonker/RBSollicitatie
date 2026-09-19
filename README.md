@@ -17,9 +17,14 @@ Composer.
 | Sollicitanten en ouders | [Jouw sollicitatie bij Paal 13](docs/handleiding/handleiding_sollicitant.md) |
 | Systeembeheer (installatie, uitrol, back-up, herstel) | [Runbook systeembeheer](docs/handleiding/runbook_systeembeheer.md) |
 
-Van elke handleiding staat een Word-versie in `docs/handleiding/word/` en een HTML-versie ernaast;
-die maak je opnieuw met `docs/handleiding/maak_export.ps1` (pandoc) na elke tekstwijziging.
-Het vraagteken rechtsboven in het beheer linkt naar het juiste hoofdstuk.
+In het beheer staan ze onder Instellingen › Handleidingen, en het vraagteken rechtsboven op elk
+scherm linkt naar het juiste hoofdstuk. De map `docs/` is op de server afgeschermd; lezen gaat via
+`/admin/handleiding.php` (achter de login).
+
+De Markdown is de bron. Na elke tekstwijziging draai je `docs/handleiding/maak_export.ps1` (pandoc)
+om de HTML-versie (voor in het beheer) en de Word-versie in `docs/handleiding/word/` bij te werken;
+allebei gaan mee in Git. `docs/ai/harnas/handleiding_check.php` controleert of elk anker waar
+`includes/hulp.php` naar linkt echt bestaat.
 
 ## Omgevingen
 

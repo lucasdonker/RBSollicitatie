@@ -58,6 +58,13 @@ hr { border: 0; border-top: 1px solid var(--rand); margin: 24px 0; }
 naar productie, configuratie, back-ups, herstel en het lezen van de
 logs. Het is de enige plek waar de technische stappen staan. Wat het
 bestuur in het beheer doet, staat in de <a href="handleiding_beheer.md">handleiding beheer</a>.</p>
+<p>De handleidingen staan als Markdown in
+<code>docs/handleiding/</code>. De map <code>docs/</code> is op de
+server afgeschermd (<code>docs/.htaccess</code>); in het beheer lees je
+ze onder Instellingen › Handleidingen, wat de meegeleverde HTML-versie
+achter de login serveert. Na een tekstwijziging draai je
+<code>docs/handleiding/maak_export.ps1</code> (pandoc) om de HTML en de
+Word-versies bij te werken en commit je die mee.</p>
 <h1 id="inhoud">Inhoud</h1>
 <ol type="1">
 <li><a href="#omgevingen-en-branches">Omgevingen en branches</a></li>

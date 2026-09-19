@@ -25,6 +25,7 @@ $_nav_items = [
             ['id'=>'berichten',       'label'=>'Berichten',        'url'=>'/admin/berichten.php'],
             ['id'=>'mail_templates',  'label'=>'Sjablonen',        'url'=>'/admin/mail_templates.php'],
             ['id'=>'geplande_berichten', 'label'=>'Geplande berichten', 'url'=>'/admin/geplande_berichten.php'],
+            ['id'=>'handleiding',     'label'=>'Handleidingen',    'url'=>'/admin/handleiding.php'],
         ],
     ],
 ];
@@ -77,9 +78,9 @@ if (function_exists('mag')) {
         'mail_templates' => 'mailing',
         'geplande_berichten' => 'mailing',
         'systeem'        => 'systeem',
-        'deploy'         => 'systeem',
         'foutenlog'      => 'systeem',
         'instellingen'   => 'instellingen',
+        // 'handleiding' staat er bewust niet in: de uitleg is voor iedereen met toegang.
     ];
     foreach ($_nav_items as &$_n) {
         if (!empty($_n['sub'])) {
