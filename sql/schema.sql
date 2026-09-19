@@ -113,7 +113,7 @@ CREATE TABLE IF NOT EXISTS `otp_tokens` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `email` VARCHAR(200) NOT NULL,
   `code_hash` VARCHAR(64) NOT NULL,
-  `type` ENUM('portaal','beheerder') NOT NULL DEFAULT 'portaal',
+  `type` VARCHAR(30) NOT NULL DEFAULT 'portaal',  -- vrije sleutel: portaal | beheerder | ond<id> (2FA ondertekenen)
   `pogingen` TINYINT NOT NULL DEFAULT 0,
   `gebruikt` TINYINT(1) NOT NULL DEFAULT 0,
   `vervalt_op` DATETIME NOT NULL,

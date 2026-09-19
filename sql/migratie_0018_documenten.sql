@@ -5,7 +5,7 @@
 CREATE TABLE IF NOT EXISTS `sollicitant_documenten` (
   `id`              INT AUTO_INCREMENT PRIMARY KEY,
   `sollicitatie_id` INT NOT NULL,
-  `soort`           VARCHAR(30) NOT NULL,          -- id_voor | id_achter | bankpas | pasfoto | ondertekening_<type>
+  `soort`           VARCHAR(40) NOT NULL,          -- id_voor | id_achter | bankpas | pasfoto | ondertekening_<type>
   `bestandsnaam`    VARCHAR(200) NOT NULL,
   `opslagnaam`      VARCHAR(80) NOT NULL,          -- willekeurige naam .enc in DOCUMENTEN_MAP (kluis)
   `mime`            VARCHAR(100) NOT NULL,

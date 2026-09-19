@@ -142,6 +142,11 @@
         .catch(function (e) { if (fout2) { fout2.textContent = e.message; fout2.hidden = false; } })
         .then(function () { bezig = false; knop.disabled = false; knop.textContent = oud; });
     }
+    // Alleen cijfers in het codeveld (een uit sms gekopieerde code bevat soms spaties)
+    if (codeVeld) codeVeld.addEventListener('input', function () {
+        var schoon = codeVeld.value.replace(/\D+/g, '').slice(0, 6);
+        if (schoon !== codeVeld.value) codeVeld.value = schoon;
+    });
     var stuur = document.getElementById('ond2faStuur'), opnieuw = document.getElementById('ond2faOpnieuw');
     if (stuur) stuur.addEventListener('click', function () { codeSturen(stuur); });
     if (opnieuw) opnieuw.addEventListener('click', function () { codeSturen(opnieuw); });

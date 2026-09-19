@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.90.7');
+define('APP_VERSIE', '2.90.8');
 
 function app_changelog(): array {
     return [
+        '2.90.8' => [
+            'datum'  => '2026-09-19',
+            'titel'  => 'Fix: verificatiecode bij ondertekenen werd altijd afgekeurd',
+            'punten' => [
+                'De code die je per sms, WhatsApp of e-mail kreeg om het loonheffingsformulier te ondertekenen werd altijd als ongeldig gemeld. Oorzaak: de kolom waarin het soort code wordt bewaard liet alleen "portaal" en "beheerder" toe, waardoor de code onvindbaar werd opgeslagen. De kolom is verruimd en oude, onbruikbare codes zijn opgeruimd; dit herstelt zichzelf bij de eerste pagina-opvraag',
+                'Een code met spaties (zoals gekopieerd uit een sms) wordt nu ook geaccepteerd',
+                'Tweede kolom verruimd: de verzegelde PDF van een gezondheidsverklaring 18+ werd onder een afgekapte naam opgeslagen en was daardoor niet terug te vinden',
+                'Als een code onverhoopt niet bewaard kan worden, krijgt de sollicitant nu een duidelijke melding in plaats van een code die niet werkt; nieuwe controle in het testharnas vergelijkt alle kolombreedtes met de waarden die de code gebruikt',
+            ],
+        ],
         '2.90.7' => [
             'datum'  => '2026-09-18',
             'titel'  => 'Aangenomen-takenpakket, bundel 8: bewaartermijnen, verwijderen en export (AVG)',

@@ -324,11 +324,27 @@ function login_portaal(int $sol_id, string $email): void {
 }
 
 // ── OTP ───────────────────────────────────────────────────────
+/**
+ * Nieuwe eenmalige code voor een sleutel ($type): 'portaal', 'beheerder' of 'ond<id>' (ondertekenen-2FA).
+ * De kolom otp_tokens.type was oorspronkelijk een ENUM; op zo'n database wordt een andere sleutel stil als
+ * lege string opgeslagen en is de code daarna nooit te verifiëren. db_failsafe() zet de kolom om naar
+ * VARCHAR; de controle hieronder zorgt dat het probleem anders meteen zichtbaar is in plaats van een code
+ * die niet werkt.
+ */
 function otp_genereer(string $email, string $type = 'portaal'): string {
     db()->prepare("DELETE FROM otp_tokens WHERE email = ? AND type = ?")->execute([$email, $type]);
     $code = str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
     db()->prepare("INSERT INTO otp_tokens (email, code_hash, type, vervalt_op) VALUES (?, ?, ?, DATE_ADD(NOW(), INTERVAL 15 MINUTE))")
        ->execute([$email, hash('sha256', $code), $type]);
+    try {
+        $c = db()->prepare("SELECT `type` FROM otp_tokens WHERE id = ?");
+        $c->execute([(int)db()->lastInsertId()]);
+        $opgeslagen = $c->fetchColumn();
+        if ($opgeslagen !== false && (string)$opgeslagen !== $type) {
+            error_log("otp_genereer: type '$type' werd opgeslagen als '" . (string)$opgeslagen . "' — kolom otp_tokens.type te beperkt (ENUM?).");
+            throw new RuntimeException('otp_type_niet_opgeslagen');
+        }
+    } catch (PDOException $e) { error_log('otp_genereer controle: ' . $e->getMessage()); }
     return $code;
 }
 
@@ -676,11 +692,12 @@ function extra_tabellen_auto_setup(): void {
             INDEX (`sollicitatie_id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+        // `type` is een vrije sleutel: 'portaal', 'beheerder' of 'ond<id>' (2FA bij ondertekenen). Geen ENUM!
         $db->exec("CREATE TABLE IF NOT EXISTS `otp_tokens` (
             `id` INT AUTO_INCREMENT PRIMARY KEY,
             `email` VARCHAR(200) NOT NULL,
             `code_hash` VARCHAR(64) NOT NULL,
-            `type` ENUM('portaal','beheerder') NOT NULL DEFAULT 'portaal',
+            `type` VARCHAR(30) NOT NULL DEFAULT 'portaal',
             `pogingen` TINYINT NOT NULL DEFAULT 0,
             `gebruikt` TINYINT(1) NOT NULL DEFAULT 0,
             `vervalt_op` DATETIME NOT NULL,

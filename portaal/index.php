@@ -33,8 +33,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['email_submit'])) {
             $recent_otp = (bool)$rl->fetchColumn();
 
             if (!$recent_otp) {
-                $code = otp_genereer($email, 'portaal');
-                portaal_code_versturen($email, $persoon['voornaam'], $code, $persoon['telefoon'] ?? null);
+                try {
+                    $code = otp_genereer($email, 'portaal');
+                    portaal_code_versturen($email, $persoon['voornaam'], $code, $persoon['telefoon'] ?? null);
+                } catch (\Throwable $e) { error_log('portaal login otp: ' . $e->getMessage()); }
             }
             // Als wel recent: bestaande code blijft geldig, geen nieuwe mail
         }
@@ -54,8 +56,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toch_code'])) {
             $rl = db()->prepare("SELECT 1 FROM otp_tokens WHERE email=? AND type='portaal' AND gebruikt=0 AND aangemaakt_op > DATE_SUB(NOW(), INTERVAL 60 SECOND) LIMIT 1");
             $rl->execute([$email]); $recent_otp = (bool)$rl->fetchColumn();
             if (!$recent_otp) {
-                $code = otp_genereer($email, 'portaal');
-                portaal_code_versturen($email, $persoon['voornaam'], $code, $persoon['telefoon'] ?? null);
+                try {
+                    $code = otp_genereer($email, 'portaal');
+                    portaal_code_versturen($email, $persoon['voornaam'], $code, $persoon['telefoon'] ?? null);
+                } catch (\Throwable $e) { error_log('portaal login otp: ' . $e->getMessage()); }
             }
         }
         $_SESSION['otp_email'] = $email;

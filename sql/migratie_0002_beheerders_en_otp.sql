@@ -13,11 +13,13 @@ CREATE TABLE IF NOT EXISTS `beheerders` (
   `aangemaakt_op` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- `type` was hier oorspronkelijk ENUM('portaal','beheerder'); sinds 2.90.8 een vrije sleutel
+-- (ook 'ond<id>' voor de 2FA bij ondertekenen). Zie migratie 0019 voor bestaande databases.
 CREATE TABLE IF NOT EXISTS `otp_tokens` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `email` VARCHAR(200) NOT NULL,
   `code_hash` VARCHAR(64) NOT NULL,
-  `type` ENUM('portaal','beheerder') NOT NULL DEFAULT 'portaal',
+  `type` VARCHAR(30) NOT NULL DEFAULT 'portaal',
   `pogingen` TINYINT NOT NULL DEFAULT 0,
   `gebruikt` TINYINT(1) NOT NULL DEFAULT 0,
   `vervalt_op` DATETIME NOT NULL,

@@ -101,7 +101,12 @@ function ondertekening_code_versturen(int $ond_id, array $ontvanger): array {
         if ((int)$q->fetchColumn() >= 5) return ['ok' => false, 'kanaal' => '', 'fout' => 'Er zijn al te veel codes verstuurd. Probeer het over een uur opnieuw.'];
     } catch (\Throwable $e) {}
 
-    $code  = otp_genereer($email, 'ond' . $ond_id);
+    try {
+        $code = otp_genereer($email, 'ond' . $ond_id);
+    } catch (\Throwable $e) {
+        error_log('ondertekening_code_versturen: ' . $e->getMessage());
+        return ['ok' => false, 'kanaal' => '', 'fout' => 'De code kon niet worden klaargezet (technische storing). Meld dit bij het bestuur; probeer het daarna opnieuw.'];
+    }
     $tekst = "Je code om te ondertekenen bij Paal 13: $code (15 minuten geldig). Niet gevraagd? Negeer dit bericht.";
     $kanaal = 'email'; $ok = false;
     if ($tel !== '' && function_exists('sms_actief') && sms_actief()) {
@@ -121,11 +126,15 @@ function ondertekening_code_versturen(int $ond_id, array $ontvanger): array {
     return ['ok' => true, 'kanaal' => $kanaal, 'fout' => null];
 }
 
-/** Controleer de ingevoerde code. Logt code_ok / code_fout. Retour: zekerheidsniveau (kanaal) of null bij fout. */
+/**
+ * Controleer de ingevoerde code. Logt code_ok / code_fout. Retour: zekerheidsniveau (kanaal) of null bij fout.
+ * Spaties en streepjes (uit een gekopieerd sms-bericht) worden weggefilterd.
+ */
 function ondertekening_code_controleren(int $ond_id, string $email, string $code): ?string {
     $sessie = $_SESSION['ond_2fa_' . $ond_id] ?? null;
-    if (!$sessie || !preg_match('/^\d{6}$/', trim($code))) { ondertekening_gebeurtenis($ond_id, 'code_fout', ['reden' => $sessie ? 'vorm' : 'geen_sessie']); return null; }
-    if (!otp_verifieer($email, trim($code), 'ond' . $ond_id)) { ondertekening_gebeurtenis($ond_id, 'code_fout', ['reden' => 'onjuist_of_verlopen']); return null; }
+    $cijfers = preg_replace('/\D+/', '', $code);
+    if (!$sessie || strlen($cijfers) !== 6) { ondertekening_gebeurtenis($ond_id, 'code_fout', ['reden' => $sessie ? 'vorm' : 'geen_sessie']); return null; }
+    if (!otp_verifieer($email, $cijfers, 'ond' . $ond_id)) { ondertekening_gebeurtenis($ond_id, 'code_fout', ['reden' => 'onjuist_of_verlopen']); return null; }
     ondertekening_gebeurtenis($ond_id, 'code_ok', ['kanaal' => $sessie['kanaal']]);
     unset($_SESSION['ond_2fa_' . $ond_id]);
     return (string)$sessie['kanaal'];

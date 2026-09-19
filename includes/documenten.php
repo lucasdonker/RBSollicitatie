@@ -22,7 +22,7 @@ function documenten_auto_setup(): void {
         db()->exec("CREATE TABLE IF NOT EXISTS `sollicitant_documenten` (
             `id`              INT AUTO_INCREMENT PRIMARY KEY,
             `sollicitatie_id` INT NOT NULL,
-            `soort`           VARCHAR(30) NOT NULL,
+            `soort`           VARCHAR(40) NOT NULL,
             `bestandsnaam`    VARCHAR(200) NOT NULL,
             `opslagnaam`      VARCHAR(80) NOT NULL,
             `mime`            VARCHAR(100) NOT NULL,
@@ -40,6 +40,15 @@ function documenten_auto_setup(): void {
             `laatst_gedownload_door` INT DEFAULT NULL,
             INDEX (`sollicitatie_id`), INDEX (`status`), INDEX (`soort`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        // De langste soort is 'ondertekening_gezondheid_18plus' (31 tekens); 2.90.0 maakte de kolom 30 breed,
+        // waardoor die waarde werd afgekapt en de verzegelde PDF niet meer terug te vinden was.
+        try {
+            $col = db()->query("SHOW COLUMNS FROM sollicitant_documenten LIKE 'soort'")->fetch();
+            if ($col && preg_match('/varchar\((\d+)\)/i', (string)($col['Type'] ?? ''), $m) && (int)$m[1] < 40) {
+                db()->exec("ALTER TABLE sollicitant_documenten MODIFY COLUMN `soort` VARCHAR(40) NOT NULL");
+                error_log('db_failsafe: sollicitant_documenten.soort verbreed naar VARCHAR(40)');
+            }
+        } catch (\Throwable $e) { error_log('documenten_auto_setup soort-breedte: ' . $e->getMessage()); }
     } catch (\Throwable $e) { error_log('documenten_auto_setup: ' . $e->getMessage()); }
 }
 

@@ -146,6 +146,21 @@ function db_failsafe(): void {
                 db_kolom_verzeker($db, $tabel, $kolom, $definitie);
             }
         }
+        // Speciaal: otp_tokens.type was ENUM('portaal','beheerder'), maar is nu een vrije sleutel (ook
+        // 'ond<id>' voor de 2FA bij ondertekenen). Op een ENUM-kolom wordt zo'n waarde stil als lege string
+        // opgeslagen, waardoor de verstuurde code nooit te verifiëren is. Omzetten naar VARCHAR en de
+        // onbruikbare rijen (type='') opruimen.
+        if (db_tabel_bestaat($db, 'otp_tokens')) {
+            try {
+                $col = $db->query("SHOW COLUMNS FROM otp_tokens LIKE 'type'")->fetch();
+                if ($col && stripos((string)($col['Type'] ?? ''), 'enum') !== false) {
+                    $db->exec("ALTER TABLE otp_tokens MODIFY COLUMN `type` VARCHAR(30) NOT NULL DEFAULT 'portaal'");
+                    $db->exec("DELETE FROM otp_tokens WHERE `type` = ''");
+                    error_log('db_failsafe: otp_tokens.type omgezet van ENUM naar VARCHAR(30)');
+                }
+            } catch (\Exception $e) { error_log('db_failsafe otp_tokens.type: ' . $e->getMessage()); }
+        }
+
         // Speciaal: soort-enum van beschikbaarheid_dag moet 'beschikbaar' bevatten
         // (voor bestuurs-overrides die een dag expliciet beschikbaar maken).
         if (db_tabel_bestaat($db, 'beschikbaarheid_dag')) {
