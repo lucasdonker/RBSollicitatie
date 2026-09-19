@@ -95,7 +95,7 @@ try {
         FROM (
             SELECT aangemeld_op,
                    COALESCE(
-                     (SELECT MAX(gewijzigd_op) FROM audit_log a
+                     (SELECT MAX(moment) FROM audit_log a
                        WHERE a.objecttype='sollicitatie' AND a.object_id=s.id AND a.details LIKE '%aangenomen%'),
                      bijgewerkt_op
                    ) AS aangenomen_op
