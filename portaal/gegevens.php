@@ -60,6 +60,18 @@ if (isset($_GET['download'])) {
         $data['mail_geschiedenis'] = $b->fetchAll();
     } catch (Exception $e) { $data['mail_geschiedenis'] = []; }
 
+    // Ondertekeningen en documenten: alleen metadata (geen BSN/IBAN/handtekening); de PDF's zelf staan onder je taken
+    try {
+        $b = $db->prepare("SELECT type, ondertekenaar_rol, ondertekend_op, plaats, zekerheid, pdf_sha256 FROM ondertekeningen WHERE sollicitatie_id = ? ORDER BY aangemaakt_op");
+        $b->execute([$sol_id]);
+        $data['ondertekeningen'] = $b->fetchAll();
+    } catch (Exception $e) { $data['ondertekeningen'] = []; }
+    try {
+        $b = $db->prepare("SELECT soort, bestandsnaam, mime, grootte, status, geupload_op, verwerkt_op, vernietigd_op FROM sollicitant_documenten WHERE sollicitatie_id = ? ORDER BY id");
+        $b->execute([$sol_id]);
+        $data['documenten'] = $b->fetchAll();
+    } catch (Exception $e) { $data['documenten'] = []; }
+
     $data['gegenereerd_op'] = date('c');
     $data['toelichting'] = 'Dit is een export van al jouw persoonlijke gegevens bij Reddingsbrigade Paal 13, conform artikel 15 AVG (recht op inzage). Interne beoordelingen van het bestuur zijn niet opgenomen — die vallen onder gerechtvaardigd belang van de organisatie.';
 
@@ -74,11 +86,19 @@ $verwijderd = false;
 $fout = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verwijder'])) {
     csrf_check();
+    $loondossier = function_exists('documenten_loondossier') ? documenten_loondossier($sol_id) : ['verwerkt' => false];
     if (($_POST['bevestig'] ?? '') !== 'VERWIJDER') {
         $fout = 'Typ "VERWIJDER" (hoofdletters) om te bevestigen.';
+    } elseif (!empty($loondossier['verwerkt'])) {
+        // AVG art. 17 lid 3 sub b: wettelijke bewaarplicht (loonadministratie) gaat vóór het recht op wissen
+        $fout = 'Je loongegevens (loonheffingsformulier en kopie identiteitsbewijs) zijn al verwerkt in de loonadministratie. De wet verplicht Paal 13 die 5 jaar te bewaren; daarom kun je je account nu niet zelf verwijderen. Mail ' . portaal_contact_email() . ' als je hierover vragen hebt.';
     } else {
         try {
             $db->beginTransaction();
+            // Documenten in de kluis (ID, bankpas, pasfoto, verzegelde PDF's) vernietigen; taken en vertrouwelijke ondertekengegevens weg
+            if (function_exists('documenten_bij_dossier_verwijderen')) documenten_bij_dossier_verwijderen($sol_id, true);
+            try { $db->prepare("DELETE FROM sollicitant_taken WHERE sollicitatie_id = ?")->execute([$sol_id]); } catch (\Exception $e) {}
+            try { $db->prepare("UPDATE ondertekeningen SET vertrouwelijk=NULL, handtekening_beeld=NULL, pdf_document_id=NULL, formulier_data=NULL WHERE sollicitatie_id = ?")->execute([$sol_id]); } catch (\Exception $e) {}
             $db->prepare("DELETE FROM blk_formulieren WHERE sollicitatie_id = ?")->execute([$sol_id]);
             try { $db->prepare("DELETE FROM beschikbaarheid WHERE sollicitatie_id = ?")->execute([$sol_id]); } catch (\Exception $e) {}
             try { $db->prepare("DELETE FROM sollicitant_notities WHERE sollicitatie_id = ?")->execute([$sol_id]); } catch (\Exception $e) {}

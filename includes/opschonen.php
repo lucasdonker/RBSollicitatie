@@ -282,6 +282,50 @@ function opschoon_run(bool $dry_run = false, string $bron = 'cron'): array {
         $uit['categorieen']['auditlog_verwijderd'] = 0;
     }
 
+    // ── 6. Loondocumenten (loonheffingsformulier + kopie ID): wettelijke bewaartermijn, jaren na einde dienstjaar ──
+    // Wet LB art. 28: bewaren tot 5 jaar na het einde van het kalenderjaar waarin het dienstverband eindigde.
+    // Het dienstjaar = het jaar van het seizoen (datum_werk_eind, anders het jaar van aanmelding).
+    $jaar_bewaar = instelling_int('bewaar.loondocumenten_jaar', 5);
+    if ($jaar_bewaar > 0 && function_exists('document_vernietigen')) {
+        try {
+            $grensjaar = (int)date('Y') - $jaar_bewaar; // dienstjaren t/m dit jaar mogen weg
+            $q = $db->prepare("
+                SELECT d.id FROM sollicitant_documenten d
+                JOIN sollicitaties s ON s.id = d.sollicitatie_id
+                LEFT JOIN seizoenen sz ON sz.id = s.seizoen_id
+                WHERE d.status IN ('ingediend','verwerkt')
+                  AND d.soort IN ('id_voor','id_achter','ondertekening_loonheffing')
+                  AND YEAR(COALESCE(sz.datum_werk_eind, s.aangemeld_op)) <= ?
+            ");
+            $q->execute([$grensjaar]);
+            $ids = $q->fetchAll(PDO::FETCH_COLUMN);
+            $aantal = 0;
+            foreach ($ids as $id) { if ($dry_run) { $aantal++; continue; } if (document_vernietigen((int)$id, 'bewaartermijn loondocumenten verstreken')) $aantal++; }
+            if (!$dry_run && $ids) {
+                // Het ondertekeningsrecord blijft (bewijs dat er getekend is), maar zonder BSN en handtekening
+                $db->prepare("UPDATE ondertekeningen o JOIN sollicitaties s ON s.id=o.sollicitatie_id LEFT JOIN seizoenen sz ON sz.id=s.seizoen_id
+                              SET o.vertrouwelijk=NULL, o.handtekening_beeld=NULL, o.pdf_document_id=NULL
+                              WHERE o.type='loonheffing' AND YEAR(COALESCE(sz.datum_werk_eind, s.aangemeld_op)) <= ?")->execute([$grensjaar]);
+            }
+            $uit['categorieen']['loondocumenten_vernietigd'] = $aantal;
+            if (!$dry_run && $aantal) opschoon_log_schrijf('loondocumenten_vernietigd', $aantal, $bron);
+        } catch (\Exception $e) { $uit['categorieen']['loondocumenten_vernietigd'] = ['fout' => $e->getMessage()]; error_log('opschoon loondocumenten: ' . $e->getMessage()); }
+    }
+
+    // ── 7. Kopie bankpas: vernietigen X dagen nadat de penningmeester het dossier heeft verwerkt ──
+    $dagen_bankpas = instelling_int('bewaar.bankpas_na_verwerking_dagen', 30);
+    if ($dagen_bankpas > 0 && function_exists('document_vernietigen')) {
+        try {
+            $q = $db->prepare("SELECT id FROM sollicitant_documenten WHERE soort='bankpas' AND status='verwerkt' AND verwerkt_op IS NOT NULL AND verwerkt_op < DATE_SUB(NOW(), INTERVAL ? DAY)");
+            $q->execute([$dagen_bankpas]);
+            $ids = $q->fetchAll(PDO::FETCH_COLUMN);
+            $aantal = 0;
+            foreach ($ids as $id) { if ($dry_run) { $aantal++; continue; } if (document_vernietigen((int)$id, 'bankpas na verwerking')) $aantal++; }
+            $uit['categorieen']['bankpas_vernietigd'] = $aantal;
+            if (!$dry_run && $aantal) opschoon_log_schrijf('bankpas_vernietigd', $aantal, $bron);
+        } catch (\Exception $e) { $uit['categorieen']['bankpas_vernietigd'] = ['fout' => $e->getMessage()]; }
+    }
+
     instelling_opslaan('bewaar.laatste_run', date('Y-m-d H:i:s'));
     return $uit;
 }

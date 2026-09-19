@@ -109,7 +109,35 @@ function export_dossier_van(int $sol_id): array {
         'Bijzonderheden'  => $blk['bijzonderheden'] ?? '',
         'Beschikbaarheid' => export_beschikbaarheid_tekst($sol_id),
         'BLK ingevuld op' => !empty($blk['ingevuld_op']) ? date('d-m-Y H:i', strtotime($blk['ingevuld_op'])) : '(nog niet ingevuld)',
+        'Ondertekeningen' => export_ondertekeningen_tekst($sol_id),
+        'Loondossier'     => export_loondossier_tekst($sol_id),
     ];
+}
+
+/** Ondertekende documenten als tekst ("Gezondheidsverklaring 18+: 4 mei 2026 (sms)"); BSN/IBAN nooit. */
+function export_ondertekeningen_tekst(int $sol_id): string {
+    try {
+        $q = db()->prepare("SELECT type, ondertekend_op, ondertekenaar_rol, zekerheid FROM ondertekeningen WHERE sollicitatie_id=? ORDER BY aangemaakt_op");
+        $q->execute([$sol_id]);
+        $delen = [];
+        foreach ($q->fetchAll() as $o) {
+            $label = function_exists('ondertekening_label') ? ondertekening_label((string)$o['type']) : $o['type'];
+            $delen[] = $label . ': ' . (!empty($o['ondertekend_op']) ? date('d-m-Y', strtotime($o['ondertekend_op'])) . ' (' . ($o['ondertekenaar_rol'] === 'ouder' ? 'ouder' : 'zelf') . (!empty($o['zekerheid']) ? ', ' . $o['zekerheid'] : '') . ')' : 'open');
+        }
+        return implode('; ', $delen);
+    } catch (\Throwable $e) { return ''; }
+}
+
+/** Loondossier-status als tekst (alleen metadata: welke stukken, wanneer, verwerkt). */
+function export_loondossier_tekst(int $sol_id): string {
+    if (!function_exists('documenten_loondossier')) return '';
+    $d = documenten_loondossier($sol_id);
+    $delen = [];
+    foreach (['id_voor' => 'ID voor', 'id_achter' => 'ID achter', 'bankpas' => 'bankpas', 'pasfoto' => 'pasfoto'] as $s => $l) {
+        if (!empty($d['docs'][$s])) $delen[] = $l . ' ' . date('d-m-Y', strtotime($d['docs'][$s]['geupload_op'])) . ($d['docs'][$s]['status'] === 'verwerkt' ? ' (verwerkt)' : '');
+    }
+    if (!$delen && !$d['loonheffing']) return '';
+    return ($d['compleet'] ? 'Compleet' : 'Onvolledig: ' . implode(', ', $d['ontbreekt'])) . ($d['verwerkt'] ? ', verwerkt' : '') . ($delen ? ' — ' . implode(', ', $delen) : '');
 }
 
 }

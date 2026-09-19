@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.90.6');
+define('APP_VERSIE', '2.90.7');
 
 function app_changelog(): array {
     return [
+        '2.90.7' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Aangenomen-takenpakket, bundel 8: bewaartermijnen, verwijderen en export (AVG)',
+            'punten' => [
+                'Automatische opschoning kent twee nieuwe categorieën: loonheffingsformulier + kopie ID worden vernietigd na de wettelijke termijn (standaard 5 jaar na het einde van het dienstjaar), de bankpasfoto 30 dagen na verwerking',
+                'Een dossier met een verwerkt loondossier kan de sollicitant niet meer zelf verwijderen (wettelijke bewaarplicht, met uitleg); het beheer moet dan expliciet bevestigen dat het dienstverband niet is doorgegaan',
+                'Bij verwijderen worden alle kluis-documenten vernietigd en taken opgeruimd; de export en de AVG-inzage tonen ondertekeningen en de loondossier-status (zonder BSN of IBAN)',
+                'Verwerkingsregister voor de loonadministratie en het lidmaatschap toegevoegd aan de projectdocumentatie',
+            ],
+        ],
         '2.90.6' => [
             'datum'  => '2026-09-18',
             'titel'  => 'Aangenomen-takenpakket, bundel 7: penningmeester en loondossiers in het beheer',
