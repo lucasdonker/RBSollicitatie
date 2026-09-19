@@ -3,10 +3,25 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.92.2');
+define('APP_VERSIE', '2.93.0');
 
 function app_changelog(): array {
     return [
+        '2.93.0' => [
+            'datum'  => '2026-09-19',
+            'titel'  => 'Logboek: alles wat er in het systeem gebeurt op één plek',
+            'punten' => [
+                'Nieuw menu-item "Logboek" onder Beheer. Daar staat in één tijdlijn wie wat wanneer deed: aanmeldingen, fasewijzigingen, downloads van loondocumenten, gewijzigde instellingen — met de nieuwste bovenaan',
+                'Naast die acties staan er vijf andere sporen in: verstuurde berichten (e-mail, WhatsApp, sms), technische fouten, het bewijsspoor van elke ondertekening, wat de bewaartermijnen hebben opgeruimd, en mislukte inlogpogingen. Die laatste waren nergens te zien; een reeks op hetzelfde adres wijst op iemand die probeert binnen te komen',
+                'Je filtert op persoon, soort actie, periode of ernst, en je kunt vrij zoeken. Klik op bijvoorbeeld "Sollicitatie #42" om alles te zien wat er met dat dossier is gebeurd — handig bij een vraag of een klacht',
+                'Het overzicht is te downloaden als Excel-bestand. Omdat daarmee persoonsgegevens het systeem verlaten, wordt elke download zelf ook vastgelegd',
+                'Alleen beheerders zien het logboek. Het bevat immers ook wie een kopie van een identiteitsbewijs heeft ingezien. Wil je het bestuur toegang geven, dan kan dat bij Rollen & rechten',
+                'Het oude auditlogboek stond in geen enkel menu — alleen verstopt onder Systeem & Updates — en liet maar 7 van de ongeveer 30 soorten acties filteren. Dat is hiermee vervangen; oude links werken gewoon door',
+                'Nieuw vastgelegd: wie een rol meer of minder rechten geeft, wie een beheerder toevoegt, van rol verandert of op non-actief zet, en wie uitlogt. Juist dat spoor heb je nodig als er iets misgaat',
+                'Opgelost: de gemiddelde doorlooptijd op het dashboard bleef altijd leeg, en verstuurde berichten verschenen nooit in de tijdlijn van een sollicitant. Beide kwamen door een verkeerde kolomnaam, waardoor de vraag aan de database stilletjes mislukte',
+                'Opgelost: een beheerder op non-actief zetten gaf een foutmelding in plaats van te werken',
+            ],
+        ],
         '2.92.2' => [
             'datum'  => '2026-09-19',
             'titel'  => "Landingspagina's: foto's uit het ontwerp worden automatisch losgemaakt",
