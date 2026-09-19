@@ -28,14 +28,9 @@ function api_json($data, int $status = 200): never {
     exit;
 }
 
-/** Welke origins mogen de API vanuit de browser aanroepen (CORS). */
+/** Welke origins mogen de API vanuit de browser aanroepen (CORS). Eén bron: site_toegestane_origins(). */
 function api_toegestane_origins(): array {
-    $ruw = function_exists('instelling') ? (string)instelling('api.origins', '') : '';
-    $lijst = array_filter(array_map('trim', explode("\n", str_replace(',', "\n", $ruw))));
-    // Standaard de hoofdsite toestaan
-    $lijst[] = 'https://paal13.com';
-    $lijst[] = 'https://www.paal13.com';
-    return array_values(array_unique($lijst));
+    return site_toegestane_origins();
 }
 
 /** Controleer de API-sleutel. Stopt met 401 als hij ontbreekt of niet klopt. */
@@ -44,8 +39,9 @@ function api_vereis_sleutel(): void {
     if ($verwacht === '') {
         api_json(['ok' => false, 'fout' => 'API is nog niet geconfigureerd (geen sleutel ingesteld).'], 503);
     }
-    // Sleutel uit header of (voor GET) uit query
-    $gegeven = $_SERVER['HTTP_X_PAAL13_KEY'] ?? ($_GET['key'] ?? '');
+    // Alleen uit de header. Een sleutel in de querystring (?key=) belandt in access-logs,
+    // Referer-headers en browsergeschiedenis; sinds 2.94.0 wordt die niet meer geaccepteerd.
+    $gegeven = $_SERVER['HTTP_X_PAAL13_KEY'] ?? '';
     if (!hash_equals($verwacht, (string)$gegeven)) {
         api_json(['ok' => false, 'fout' => 'Ongeldige of ontbrekende API-sleutel.'], 401);
     }

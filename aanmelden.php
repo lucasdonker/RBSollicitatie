@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__.'/includes/functions.php';
 require_once __DIR__.'/includes/aanmelden_kern.php';
+// Dit formulier mag in een iframe op paal13.com staan (zie README); de andere pagina's niet.
+security_headers(site_toegestane_origins());
 $db=db(); $seizoen=actief_seizoen();
 $open=$seizoen&&$seizoen['status']==='open';
 $fout=''; $succes=false;
@@ -12,6 +14,15 @@ $ingebed = !empty($_GET['ingebed']);
 
 if($_SERVER['REQUEST_METHOD']==='POST'&&$open){
     csrf_check();
+    // Zelfde bescherming als het formulier op landingspagina's (includes/paginas/formulier.php):
+    // een verborgen veld dat alleen bots invullen, en maximaal 5 aanmeldingen per uur per adres.
+    if (trim((string)($_POST['p13_w'] ?? '')) !== '') {
+        $fout = 'Het formulier kon niet worden verwerkt. Ververs de pagina en probeer het opnieuw.';
+    } elseif (function_exists('rate_limit') && !rate_limit('aanmelding', rate_identiteit(), 5, 3600)) {
+        $fout = 'Er zijn in korte tijd te veel aanmeldingen vanaf dit adres gedaan. Probeer het over een uur opnieuw.';
+    }
+}
+if($_SERVER['REQUEST_METHOD']==='POST'&&$open&&$fout===''){
     // Bron meegeven aan de gedeelde bron van waarheid.
     $invoer = $_POST;
     if ($bron_code !== '') {
@@ -54,6 +65,7 @@ body{background:#001530;min-height:100vh;display:flex;align-items:center;justify
 .succes-blok .icoon{font-size:52px;margin-bottom:14px}
 .succes-blok h2{color:var(--navy);margin-bottom:8px}
 .succes-blok p{color:var(--tekst-zacht);font-size:14px;line-height:1.7}
+.vangnet{position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden}
 </style>
 </head>
 <body>
@@ -78,6 +90,11 @@ body{background:#001530;min-height:100vh;display:flex;align-items:center;justify
     <form method="POST">
       <?= csrf_input() ?>
       <?php if ($bron_code !== ''): ?><input type="hidden" name="bron_code" value="<?= h($bron_code) ?>"><?php endif; ?>
+      <?php // Honeypot: uit beeld en uit de tab-volgorde, zodat voorleessoftware hem overslaat ?>
+      <div class="vangnet" aria-hidden="true">
+        <label for="aanmeld-website">Website (niet invullen)</label>
+        <input type="text" id="aanmeld-website" name="p13_w" tabindex="-1" autocomplete="off">
+      </div>
       <div class="form-rij">
         <div class="form-groep"><label>Voornaam <span class="vereist">*</span></label><input type="text" name="voornaam" value="<?=h($_POST['voornaam']??'')?>" required autocomplete="given-name"></div>
         <div class="form-groep"><label>Tussenvoegsel</label><input type="text" name="tussenvoegsel" value="<?=h($_POST['tussenvoegsel']??'')?>"></div>

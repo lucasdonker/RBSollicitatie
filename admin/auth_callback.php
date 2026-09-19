@@ -11,7 +11,11 @@ require_once __DIR__ . '/../includes/functions.php';
 sessie_start();
 
 $fout  = '';
+// Technische details (token- en userinfo-antwoorden van Authentik) zijn nuttig bij het inrichten,
+// maar horen niet op een scherm dat iedereen zonder login kan opvragen. Op productie gaan ze
+// alleen naar het foutenlog; op de test-omgeving blijven ze zichtbaar in het uitklapblok.
 $debug = [];
+$debug_tonen = function_exists('is_test_omgeving') && is_test_omgeving();
 
 // ── 1. State validatie ────────────────────────────────────────
 $state_ontvangen = $_GET['state'] ?? '';
@@ -102,12 +106,12 @@ if (!$fout) {
             $fout = "Kan Authentik niet bereiken: {$result['fout']}";
         } else {
             $resp = json_decode($result['body'], true);
-            $fout = 'Token ophalen mislukt (HTTP ' . $result['code'] . '): ' . ($resp['error_description'] ?? $resp['error'] ?? substr($result['body'], 0, 200));
+            $fout = 'Token ophalen mislukt (HTTP ' . $result['code'] . '): ' . ($resp['error_description'] ?? $resp['error'] ?? 'onbekende fout');
         }
     } else {
         $token_data = json_decode($result['body'], true);
         if (!isset($token_data['access_token'])) {
-            $fout    = 'Geen access token in response. Response: ' . substr($result['body'], 0, 200);
+            $fout    = 'Geen access token ontvangen van Authentik.';
             $debug[] = 'Token response: ' . $result['body'];
         }
     }
@@ -123,7 +127,7 @@ if (!$fout) {
     $debug[] = "Userinfo response HTTP {$result2['code']}: " . substr($result2['body'], 0, 300);
 
     if (!$result2['ok']) {
-        $fout = 'Userinfo ophalen mislukt (HTTP ' . $result2['code'] . '): ' . ($result2['fout'] ?: substr($result2['body'], 0, 200));
+        $fout = 'Userinfo ophalen mislukt (HTTP ' . $result2['code'] . ').' . ($result2['fout'] ? ' ' . $result2['fout'] : '');
     } else {
         $userinfo = json_decode($result2['body'], true);
         if (empty($userinfo['email'])) {
@@ -191,6 +195,12 @@ if (!$fout) {
 }
 
 // ── Foutpagina ────────────────────────────────────────────────
+// Op productie: details naar het foutenlog (zonder de token-body zelf), niet naar het scherm.
+if ($fout && !$debug_tonen) {
+    $veilig = array_values(array_filter($debug, fn($r) => !str_starts_with($r, 'Token response') && !str_starts_with($r, 'Userinfo')));
+    if (function_exists('p13_fout')) p13_fout('P13-S002', 'SSO-login mislukt: ' . $fout . ($veilig ? ' | ' . implode(' | ', $veilig) : ''));
+    $debug = [];
+}
 ?>
 <!DOCTYPE html>
 <html lang="nl">

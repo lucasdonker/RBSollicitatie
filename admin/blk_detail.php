@@ -21,7 +21,7 @@ try {
     $stmt->execute([$sol_id]);
     $sol = $stmt->fetch();
 } catch (Exception $e) {
-    die('Database fout: ' . h($e->getMessage()));
+    p13_fout('P13-D002', 'BLK-detail van sollicitatie ' . $sol_id, $e, true);
 }
 
 if (!$sol) redirect(APP_URL . '/admin/sollicitanten.php');

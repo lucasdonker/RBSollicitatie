@@ -97,12 +97,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verwijder'])) {
             $db->beginTransaction();
             // Documenten in de kluis (ID, bankpas, pasfoto, verzegelde PDF's) vernietigen; taken en vertrouwelijke ondertekengegevens weg
             if (function_exists('documenten_bij_dossier_verwijderen')) documenten_bij_dossier_verwijderen($sol_id, true);
-            try { $db->prepare("DELETE FROM sollicitant_taken WHERE sollicitatie_id = ?")->execute([$sol_id]); } catch (\Exception $e) {}
-            try { $db->prepare("UPDATE ondertekeningen SET vertrouwelijk=NULL, handtekening_beeld=NULL, pdf_document_id=NULL, formulier_data=NULL WHERE sollicitatie_id = ?")->execute([$sol_id]); } catch (\Exception $e) {}
-            $db->prepare("DELETE FROM blk_formulieren WHERE sollicitatie_id = ?")->execute([$sol_id]);
-            try { $db->prepare("DELETE FROM beschikbaarheid WHERE sollicitatie_id = ?")->execute([$sol_id]); } catch (\Exception $e) {}
-            try { $db->prepare("DELETE FROM sollicitant_notities WHERE sollicitatie_id = ?")->execute([$sol_id]); } catch (\Exception $e) {}
-            try { $db->prepare("DELETE FROM beoordelingen WHERE sollicitatie_id = ?")->execute([$sol_id]); } catch (\Exception $e) {}
+            // Elke stap moet echt slagen: een fout hier rolt de hele verwijdering terug en de
+            // sollicitant krijgt een eerlijke melding. Alleen een tabel die (nog) niet bestaat
+            // (SQLSTATE 42S02, oudere installaties) mag stil worden overgeslagen.
+            $avg_stappen = [
+                "DELETE FROM sollicitant_taken WHERE sollicitatie_id = ?",
+                "UPDATE ondertekeningen SET vertrouwelijk=NULL, handtekening_beeld=NULL, pdf_document_id=NULL, formulier_data=NULL WHERE sollicitatie_id = ?",
+                "DELETE FROM blk_formulieren WHERE sollicitatie_id = ?",
+                "DELETE FROM beschikbaarheid WHERE sollicitatie_id = ?",
+                "DELETE FROM sollicitant_notities WHERE sollicitatie_id = ?",
+                "DELETE FROM beoordelingen WHERE sollicitatie_id = ?",
+            ];
+            foreach ($avg_stappen as $sql) {
+                try { $db->prepare($sql)->execute([$sol_id]); }
+                catch (\PDOException $e) { if (($e->getCode() ?: '') !== '42S02') throw $e; }
+            }
 
             // Bestuur informeren vóór de anonimisering (de naam is daarna weg); verzending ná het antwoord.
             if (function_exists('melding_verstuur')) {
@@ -156,8 +165,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verwijder'])) {
             session_destroy();
             $verwijderd = true;
         } catch (Exception $e) {
-            $db->rollBack();
-            $fout = 'Verwijderen mislukt: ' . $e->getMessage();
+            if ($db->inTransaction()) $db->rollBack();
+            p13_fout('P13-P004', 'AVG-verwijdering sollicitatie ' . $sol_id . ' mislukt', $e);
+            $fout = 'Het verwijderen is niet gelukt; er is niets gewist. Het beheer is automatisch op de hoogte gebracht. '
+                  . 'Probeer het later opnieuw of mail ' . portaal_contact_email() . '.';
         }
     }
 }

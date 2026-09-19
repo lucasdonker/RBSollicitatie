@@ -4,13 +4,18 @@ $_config = __DIR__ . '/config.php';
 if (file_exists($_config)) {
     require_once $_config;
 } else {
-    $uri = $_SERVER['REQUEST_URI'] ?? '';
-    if (strpos($uri, '/setup/') === false) {
-        $base = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost');
-        header('Location: ' . $base . '/setup/');
-        exit;
+    // Geen config: de installatiewizard bestaat niet meer (2.94.0). Installeren gaat via het
+    // runbook: config.template.php kopiëren naar config.php en invullen.
+    if (php_sapi_name() !== 'cli') {
+        http_response_code(503);
+        header('Content-Type: text/html; charset=utf-8');
+        echo '<!DOCTYPE html><html lang="nl"><head><meta charset="UTF-8"><title>Nog niet ingesteld</title></head>'
+           . '<body style="font-family:sans-serif;max-width:520px;margin:60px auto;padding:0 20px;line-height:1.6;color:#1a2230">'
+           . '<h2 style="color:#054d8a">Systeem is nog niet ingesteld</h2>'
+           . '<p>Het configuratiebestand ontbreekt op de server. Zie het runbook voor systeembeheer '
+           . '(<code>docs/handleiding/runbook_systeembeheer.md</code>).</p></body></html>';
     }
-    return;
+    exit;
 }
 
 require_once __DIR__ . '/smtp.php';
@@ -81,8 +86,13 @@ function db(): PDO {
                 PDO::ATTR_EMULATE_PREPARES   => false,
             ]);
         } catch (PDOException $e) {
-            http_response_code(500);
-            die('<html><body style="font-family:sans-serif;padding:40px"><h2 style="color:#c53030">Database fout</h2><p>' . htmlspecialchars($e->getMessage()) . '</p><p><a href="/setup/">Controleer de configuratie</a></p></body></html>');
+            // De echte oorzaak (host, databasenaam, gebruiker) hoort in het log, niet op het scherm.
+            error_log('P13-D001 databaseverbinding mislukt: ' . $e->getMessage());
+            if (php_sapi_name() === 'cli') { throw $e; }
+            if (!headers_sent()) { http_response_code(503); header('Retry-After: 60'); }
+            $foutcode_html = 'P13-D001';
+            include __DIR__ . '/../500.php';
+            exit;
         }
         // Zelfherstel: zorg dat het schema klopt zodra de connectie er is.
         // $failsafe_bezig voorkomt oneindige recursie (db_failsafe roept db() aan).
@@ -94,11 +104,68 @@ function db(): PDO {
     return $pdo;
 }
 
+// ── HTTPS en beveiligingsheaders ──────────────────────────────
+/**
+ * Draait dit verzoek over https? Achter de Plesk-proxy (nginx vóór Apache/FPM) is $_SERVER['HTTPS']
+ * niet altijd gezet; dan telt de X-Forwarded-Proto-header, en anders het schema van APP_URL.
+ */
+function is_https(): bool {
+    if (!empty($_SERVER['HTTPS']) && strtolower((string)$_SERVER['HTTPS']) !== 'off') return true;
+    if (strtolower((string)($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '')) === 'https') return true;
+    return defined('APP_URL') && str_starts_with(strtolower(APP_URL), 'https://');
+}
+
+/**
+ * Welke andere websites mogen dit systeem aanspreken of insluiten: de hoofdsite paal13.com plus
+ * wat het bestuur bij Instellingen › Website & API onder "origins" heeft gezet. Eén bron voor de
+ * API-CORS (api/_basis.php) en voor het insluiten van het aanmeldformulier in een iframe.
+ */
+function site_toegestane_origins(): array {
+    $ruw = function_exists('instelling') ? (string)instelling('api.origins', '') : '';
+    $lijst = array_filter(array_map('trim', explode("\n", str_replace(',', "\n", $ruw))));
+    $lijst[] = 'https://paal13.com';
+    $lijst[] = 'https://www.paal13.com';
+    return array_values(array_unique($lijst));
+}
+
+/**
+ * Beveiligingsheaders voor het beheer en het portaal. Eén keer per verzoek, vóór de eerste uitvoer;
+ * de eerste aanroep wint (sessie_start roept dit ook aan). Landingspagina's zetten hun eigen,
+ * strengere CSP (includes/paginas/render.php) en hebben geen sessie, dus die komen hier niet.
+ * Niet in .htaccess: onder PHP-FPM is niet zeker dat Apache-directieven doorkomen.
+ *
+ * @param array|null $frame_ancestors  Origins die deze pagina in een iframe mogen tonen (alleen het
+ *                                     aanmeldformulier op paal13.com); standaard alleen de eigen host.
+ */
+function security_headers(?array $frame_ancestors = null): void {
+    static $gedaan = false;
+    if ($gedaan || headers_sent() || php_sapi_name() === 'cli') return;
+    $gedaan = true;
+    header('X-Content-Type-Options: nosniff');
+    header('Referrer-Policy: strict-origin-when-cross-origin');
+    header('Permissions-Policy: camera=(self), microphone=(), geolocation=(), payment=()');
+    if (is_https()) header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
+    if ($frame_ancestors) {
+        $ancestors = "'self' " . implode(' ', array_map(fn($o) => preg_replace('/[^A-Za-z0-9:.\/\-*]/', '', $o), $frame_ancestors));
+    } else {
+        $ancestors = "'self'";
+        header('X-Frame-Options: SAMEORIGIN');
+    }
+    // Inline scripts en stijlen komen in het beheer en portaal nog veel voor (onclick, style=""),
+    // dus 'unsafe-inline' blijft; het echte slot is dat scripts en verbindingen alleen van de eigen
+    // host mogen komen. Camera-upload (blob:) en het handtekening-canvas (data:) hebben img-src nodig.
+    header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; "
+         . "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; "
+         . "img-src 'self' data: blob: https:; connect-src 'self'; frame-ancestors $ancestors; "
+         . "form-action 'self' https:; base-uri 'self'; object-src 'none'");
+}
+
 // ── Sessie ────────────────────────────────────────────────────
 function sessie_start(): void {
+    security_headers();
     if (session_status() === PHP_SESSION_NONE) {
         session_name(SESSION_NAME);
-        session_set_cookie_params(['lifetime' => 0, 'path' => '/', 'secure' => isset($_SERVER['HTTPS']), 'httponly' => true, 'samesite' => 'Lax']);
+        session_set_cookie_params(['lifetime' => 0, 'path' => '/', 'secure' => is_https(), 'httponly' => true, 'samesite' => 'Lax']);
         session_start();
         if (!isset($_SESSION['_t'])) { $_SESSION['_t'] = time(); }
         elseif (time() - $_SESSION['_t'] > 1800) { session_regenerate_id(true); $_SESSION['_t'] = time(); }

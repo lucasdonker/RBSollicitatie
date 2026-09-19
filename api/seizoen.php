@@ -6,7 +6,7 @@
  * of er een open seizoen is, en de relevante datums (selectiedag, trainingsweekend)
  * voor gebruik in website-teksten.
  *
- * Vereist de API-sleutel (header X-Paal13-Key of ?key=).
+ * Vereist de API-sleutel in de header X-Paal13-Key (de querystring-variant is vervallen in 2.94.0).
  */
 require_once __DIR__ . '/_basis.php';
 api_preflight();

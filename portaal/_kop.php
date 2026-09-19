@@ -16,6 +16,9 @@
  */
 require_once __DIR__ . '/../includes/functions.php';
 portaal_alleen_include(__FILE__);
+// Vangnet als de echte cron (Plesk, elke 5 min) niet draait: max 1x per uur, ook bij portaalbezoek,
+// zodat de berichtenwachtrij niet stil blijft staan tot een beheerder inlogt.
+if (function_exists('lazy_cron_tick')) { lazy_cron_tick(); }
 $portaal_titel       = $portaal_titel ?? 'Mijn sollicitatie';
 $portaal_nav         = $portaal_nav ?? '';
 $portaal_terug       = $portaal_terug ?? '';

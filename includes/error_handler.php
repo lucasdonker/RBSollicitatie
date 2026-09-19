@@ -23,6 +23,7 @@ const FOUTCODES = [
     'P13-P001' => 'OTP genereren mislukt',
     'P13-P002' => 'OTP verificatie mislukt',
     'P13-P003' => 'Portaal sessie verlopen',
+    'P13-P004' => 'AVG-verwijdering door sollicitant mislukt (teruggedraaid)',
     // Aanmelden
     'P13-A001' => 'Aanmelding opslaan mislukt',
     'P13-A002' => 'Dubbele aanmelding',
@@ -150,8 +151,18 @@ function p13_exception_handler(\Throwable $e): void {
     p13_fout('P13-S000', $e->getMessage(), $e, true);
 }
 
+// Fatale fouten (E_ERROR, geheugen op, parse-fout in een include) komen niet langs de
+// exception-handler; zonder dit blok ziet de bezoeker een witte pagina in plaats van 500.php.
+function p13_shutdown_handler(): void {
+    $e = error_get_last();
+    if (!$e || !in_array($e['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR], true)) return;
+    if (ob_get_level() > 0) { @ob_end_clean(); }
+    p13_fout('P13-S000', $e['message'] . ' in ' . basename($e['file']) . ':' . $e['line'], null, true);
+}
+
 // Registreer handlers
 if (!defined('P13_NO_ERROR_HANDLER')) {
     set_error_handler('p13_php_error_handler');
     set_exception_handler('p13_exception_handler');
+    register_shutdown_function('p13_shutdown_handler');
 }
