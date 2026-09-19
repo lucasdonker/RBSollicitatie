@@ -19,6 +19,7 @@ if (file_exists(__DIR__ . '/mail_render.php'))   require_once __DIR__ . '/mail_r
 if (file_exists(__DIR__ . '/error_handler.php')) require_once __DIR__ . '/error_handler.php';
 if (file_exists(__DIR__ . '/instellingen.php'))  require_once __DIR__ . '/instellingen.php';
 if (file_exists(__DIR__ . '/validatie.php'))      require_once __DIR__ . '/validatie.php';
+if (file_exists(__DIR__ . '/ratelimit.php'))      require_once __DIR__ . '/ratelimit.php';
 if (file_exists(__DIR__ . '/kluis.php'))          require_once __DIR__ . '/kluis.php';
 if (file_exists(__DIR__ . '/upload.php'))         require_once __DIR__ . '/upload.php';
 if (file_exists(__DIR__ . '/documenten.php'))     require_once __DIR__ . '/documenten.php';
@@ -47,6 +48,7 @@ if (file_exists(__DIR__ . '/audit.php')) require_once __DIR__ . '/audit.php';
 if (file_exists(__DIR__ . '/toegang.php')) require_once __DIR__ . '/toegang.php';
 if (file_exists(__DIR__ . '/health.php')) require_once __DIR__ . '/health.php';
 if (file_exists(__DIR__ . '/landing.php')) require_once __DIR__ . '/landing.php';
+if (file_exists(__DIR__ . '/paginas.php')) require_once __DIR__ . '/paginas.php';
 if (file_exists(__DIR__ . '/kanalen.php')) require_once __DIR__ . '/kanalen.php';
 if (file_exists(__DIR__ . '/optout.php')) require_once __DIR__ . '/optout.php';
 // Centrale meldingen (register, sjablonen, verzendkern) — ná kanalen/optout/mail_render.

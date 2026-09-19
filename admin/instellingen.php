@@ -1387,6 +1387,18 @@ require __DIR__ . '/layout_top.php';
           <div class="form-hulp">Daarna verwijderen</div>
         </div>
       </div>
+      <div class="form-rij">
+        <div class="form-groep">
+          <label>Bezoekersstatistiek landingspagina's <span class="tip" data-tip="Aantallen bezoeken en aanmeldingen per landingspagina. Bevat geen persoonsgegevens."></span></label>
+          <input type="number" name="inst[bewaar.pagina_events_mnd]" value="<?= instelling_int('bewaar.pagina_events_mnd',13) ?>" min="0" max="60">
+          <div class="form-hulp">Daarna verwijderen (0 = bewaren)</div>
+        </div>
+        <div class="form-groep">
+          <label>Herkenning unieke bezoekers <span class="tip" data-tip="Een dag-gebonden pseudoniem om unieke bezoekers te tellen. Wordt hierna gewist; de aantallen blijven staan."></span></label>
+          <input type="number" name="inst[bewaar.pagina_hash_dagen]" value="<?= instelling_int('bewaar.pagina_hash_dagen',30) ?>" min="0" max="365">
+          <div class="form-hulp">Dagen, daarna wissen</div>
+        </div>
+      </div>
 
       <button type="submit" class="btn btn-primary">Opslaan</button>
     </form>

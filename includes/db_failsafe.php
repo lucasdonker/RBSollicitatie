@@ -120,6 +120,7 @@ function db_failsafe(): void {
         'beschikbaarheid_dag_auto_setup',
         'audit_dag_auto_setup',
         'landing_auto_setup',
+        'pag_auto_setup',
         'optout_auto_setup',
         'sjablonen_auto_setup',
         'meldingen_log_auto_setup',

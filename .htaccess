@@ -1,12 +1,18 @@
 # Paal 13 sollicitatiesysteem — Apache-configuratie
-# Minimale, veilige rewrite voor nette landingspagina-URL's: /l/<slug> → l.php?p=<slug>
+# Nette adressen voor landingspagina's (/p/<naam>) en korte downloadlinks.
 
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
-    # Nette landingspagina-URL's: /l/mijn-slug  →  l.php?p=mijn-slug
-    # Alleen letters, cijfers en koppeltekens in de slug.
-    RewriteRule ^l/([a-zA-Z0-9\-]+)/?$ l.php?p=$1 [L,QSA]
+    # Landingspagina: /p/zomer-2027  →  p.php?s=zomer-2027
+    RewriteRule ^p/([a-z0-9\-]{1,80})/?$ p.php?s=$1 [L,QSA]
+
+    # Afbeeldingen bij een landingspagina: /p/zomer-2027/strand.jpg
+    # Komen uit de assets-map van die pagina; die map laat alleen afbeeldingen door.
+    RewriteRule ^p/([a-z0-9\-]{1,80})/([A-Za-z0-9._\-]+)$ uploads/paginas/$1/assets/$2 [L]
+
+    # Oude landingspagina-adressen blijven werken (QR-codes, advertenties).
+    RewriteRule ^l/([a-zA-Z0-9\-]+)/?$ /p/$1 [R=301,L]
 
     # Korte downloadlinks voor bijlagen: /d/<id>-<verloopt>-<token>  →  download.php?d=...
     RewriteRule ^d/([0-9]+-[0-9]+-[a-f0-9]+)/?$ download.php?d=$1 [L]

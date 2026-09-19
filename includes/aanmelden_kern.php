@@ -88,14 +88,10 @@ function sollicitatie_aanmaken(array $in, array $context = []): array {
        ->execute([$pid, $seizoen['id'], $ter, $token, date('Y-m-d H:i:s'), PRIVACY_VERSIE, $ip, $ouder_op, $ouder_naam_val, $bron_code, $bron_label]);
     $sid = (int)$db->lastInsertId();
 
-    // Tel de formulier-afronding mee voor de landingspagina-statistiek (anoniem).
-    if (function_exists('landing_track') && $bron_code) {
-        $landing_id = null;
-        if (function_exists('landing_via_bron')) {
-            $lp = landing_via_bron($bron_code);
-            $landing_id = $lp['id'] ?? null;
-        }
-        landing_track('formulier_klaar', $landing_id, $bron_code);
+    // Tel de afronding mee voor de landingspagina-statistiek (anoniem).
+    if (function_exists('pag_track') && $bron_code) {
+        $lp = function_exists('pag_via_bron') ? pag_via_bron($bron_code) : null;
+        pag_track('formulier_klaar', isset($lp['id']) ? (int)$lp['id'] : null, $bron_code);
     }
 
     // Bevestiging aan de sollicitant + melding aan het bestuur, via de centrale meldingen-kern

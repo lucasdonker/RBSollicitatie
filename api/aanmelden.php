@@ -20,7 +20,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
 $body = api_body();
 
 // Eenvoudige snelheidsbegrenzing per IP (tegen misbruik).
-if (!api_rate_limit('api_aanmelden', $_SERVER['REMOTE_ADDR'] ?? '', 10, 3600)) {
+if (!rate_limit('api_aanmelden', rate_identiteit(), 10, 3600)) {
     api_json(['ok' => false, 'fout' => 'Te veel aanmeldingen in korte tijd. Probeer het later opnieuw.'], 429);
 }
 

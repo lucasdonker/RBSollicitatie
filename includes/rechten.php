@@ -20,6 +20,7 @@ if (!function_exists('rechten_modules')) {
 function rechten_modules(): array {
     return [
         'sollicitanten'   => ['label' => 'Sollicitanten',          'groep' => 'Werving',        'acties' => ['lezen','bewerken','verwijderen']],
+        'paginas'         => ['label' => "Landingspagina's",       'groep' => 'Werving',        'acties' => ['lezen','bewerken','verwijderen']],
         'blk'             => ['label' => 'BLK-formulieren & details','groep' => 'Werving',       'acties' => ['lezen','bewerken']],
         'selectiedag'     => ['label' => 'Selectiedag',            'groep' => 'Selectie',       'acties' => ['lezen','bewerken']],
         'ondertekeningen' => ['label' => 'Ondertekeningen',        'groep' => 'Selectie',       'acties' => ['lezen','bewerken']],
@@ -66,6 +67,7 @@ function rechten_standaard_rollen(): array {
             'rang' => 2,
             'rechten' => [
                 'sollicitanten'   => 'rwd',
+                'paginas'         => 'rwd',
                 'blk'             => 'rw',
                 'selectiedag'     => 'rw',
                 'ondertekeningen' => 'rw',

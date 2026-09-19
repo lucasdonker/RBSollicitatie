@@ -16,8 +16,8 @@ if($_SERVER['REQUEST_METHOD']==='POST'&&$open){
     $invoer = $_POST;
     if ($bron_code !== '') {
         $invoer['bron_code'] = $bron_code;
-        if (function_exists('landing_via_bron')) {
-            $lp = landing_via_bron($bron_code);
+        if (function_exists('pag_via_bron')) {
+            $lp = pag_via_bron($bron_code);
             if ($lp) $invoer['bron_label'] = $lp['titel'] ?? $bron_code;
         }
     }
@@ -29,10 +29,9 @@ if($_SERVER['REQUEST_METHOD']==='POST'&&$open){
     }
 } elseif ($_SERVER['REQUEST_METHOD'] === 'GET' && $open && $bron_code !== '') {
     // Formulier geopend vanaf een landingspagina → tel als "formulier gestart" (anoniem).
-    if (function_exists('landing_track')) {
-        $landing_id = null;
-        if (function_exists('landing_via_bron')) { $lp = landing_via_bron($bron_code); $landing_id = $lp['id'] ?? null; }
-        landing_track('formulier_start', $landing_id, $bron_code);
+    if (function_exists('pag_track')) {
+        $lp = function_exists('pag_via_bron') ? pag_via_bron($bron_code) : null;
+        pag_track('formulier_start', isset($lp['id']) ? (int)$lp['id'] : null, $bron_code);
     }
 }
 ?>
@@ -85,7 +84,7 @@ body{background:#001530;min-height:100vh;display:flex;align-items:center;justify
       </div>
       <div class="form-groep"><label>Achternaam <span class="vereist">*</span></label><input type="text" name="achternaam" value="<?=h($_POST['achternaam']??'')?>" required autocomplete="family-name"></div>
       <div class="form-rij">
-        <div class="form-groep"><label>Geboortedatum <span class="vereist">*</span></label><input type="date" name="geboortedatum" id="geboortedatum" value="<?=h($_POST['geboortedatum']??'')?>" required></div>
+        <div class="form-groep"><label>Geboortedatum <span class="vereist">*</span></label><input type="date" name="geboortedatum" id="geboortedatum" value="<?=h($_POST['geboortedatum']??'')?>" required data-geboortedatum></div>
         <div class="form-groep"><label>Geslacht</label><select name="geslacht"><option value="onbekend">Zeg ik liever niet</option><option value="man" <?=($_POST['geslacht']??'')==='man'?'selected':''?>>Man</option><option value="vrouw" <?=($_POST['geslacht']??'')==='vrouw'?'selected':''?>>Vrouw</option><option value="anders" <?=($_POST['geslacht']??'')==='anders'?'selected':''?>>Anders</option></select></div>
       </div>
       <div class="form-groep"><label>E-mailadres <span class="vereist">*</span></label><input type="email" name="email" value="<?=h($_POST['email']??'')?>" required autocomplete="email"><div class="form-hulp">Hierop ontvang je de bevestiging en uitnodigingen.</div></div>
@@ -98,7 +97,7 @@ body{background:#001530;min-height:100vh;display:flex;align-items:center;justify
       </div>
       <?php // Ouder-toestemming: alleen nodig voor 15-jarigen (jeugdledenuitzondering).
             // Standaard verborgen; verschijnt via JS zodra de geboortedatum onder de 16 jaar valt. ?>
-      <div id="ouderBlok" style="display:none;margin-top:14px;padding:14px 16px;background:var(--oranje-bg);border:1px solid rgba(212,61,0,.25);border-radius:8px">
+      <div id="ouderBlok" hidden data-ouder-blok style="margin-top:14px;padding:14px 16px;background:var(--oranje-bg);border:1px solid rgba(212,61,0,.25);border-radius:8px">
         <div style="font-size:13px;font-weight:600;color:var(--oranje);margin-bottom:8px">👪 Toestemming ouder/verzorger</div>
         <p style="font-size:12.5px;color:var(--tekst-zacht);margin:0 0 12px">Omdat je nog geen 16 jaar bent, hebben we toestemming van een ouder of verzorger nodig voor het verwerken van je gegevens.</p>
         <div class="form-groep" style="margin-bottom:10px">
@@ -115,34 +114,7 @@ body{background:#001530;min-height:100vh;display:flex;align-items:center;justify
     <?php endif; ?>
   </div>
 </div>
-<script>
-// Ouder-toestemmingsblok tonen zodra de gekozen geboortedatum een leeftijd onder 16 aangeeft.
-(function(){
-  var dob = document.getElementById('geboortedatum');
-  var blok = document.getElementById('ouderBlok');
-  if (!dob || !blok) return;
-  function leeftijdOp(d){
-    if (!d) return null;
-    var g = new Date(d); if (isNaN(g)) return null;
-    var n = new Date(), l = n.getFullYear() - g.getFullYear();
-    var m = n.getMonth() - g.getMonth();
-    if (m < 0 || (m === 0 && n.getDate() < g.getDate())) l--;
-    return l;
-  }
-  function update(){
-    var l = leeftijdOp(dob.value);
-    var toon = (l !== null && l < 16);
-    blok.style.display = toon ? 'block' : 'none';
-    // Velden alleen verplicht maken als het blok zichtbaar is (anders blokkeert een verborgen veld de submit)
-    var naam = blok.querySelector('[name="ouder_toestemming_naam"]');
-    var akk  = blok.querySelector('[name="ouder_akkoord"]');
-    if (naam) naam.required = toon;
-    if (akk)  akk.required = toon;
-  }
-  dob.addEventListener('change', update);
-  dob.addEventListener('input', update);
-  update(); // ook direct bij laden (bv. na een validatiefout met ingevulde datum)
-})();
-</script>
+<?php // Ouder-toestemmingsblok: gedeelde logica met het formulier op landingspagina's. ?>
+<script src="<?=APP_URL?>/assets/js/aanmeldformulier.js?v=<?=@filemtime(__DIR__.'/assets/js/aanmeldformulier.js')?>" defer></script>
 </body>
 </html>

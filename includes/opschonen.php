@@ -282,6 +282,22 @@ function opschoon_run(bool $dry_run = false, string $bron = 'cron'): array {
         $uit['categorieen']['auditlog_verwijderd'] = 0;
     }
 
+    // Bezoekersstatistiek van landingspagina's. Twee stappen: eerst het dag-pseudoniem wissen
+    // (tellingen blijven, herleidbaarheid verdwijnt), daarna de gebeurtenis zelf verwijderen.
+    if (function_exists('pag_events_opschonen')) {
+        try {
+            $r = pag_events_opschonen(0, 0, $dry_run);
+            $uit['categorieen']['pagina_hash_gewist']     = $r['gewist'];
+            $uit['categorieen']['pagina_events_verwijderd'] = $r['verwijderd'];
+            if (!$dry_run) {
+                if ($r['gewist'])     opschoon_log_schrijf('pagina_hash_gewist', $r['gewist'], $bron);
+                if ($r['verwijderd']) opschoon_log_schrijf('pagina_events_verwijderd', $r['verwijderd'], $bron);
+            }
+        } catch (\Exception $e) {
+            $uit['categorieen']['pagina_events_verwijderd'] = 0;
+        }
+    }
+
     // ── 6. Loondocumenten (loonheffingsformulier + kopie ID): wettelijke bewaartermijn, jaren na einde dienstjaar ──
     // Wet LB art. 28: bewaren tot 5 jaar na het einde van het kalenderjaar waarin het dienstverband eindigde.
     // Het dienstjaar = het jaar van het seizoen (datum_werk_eind, anders het jaar van aanmelding).

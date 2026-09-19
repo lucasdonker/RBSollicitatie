@@ -2465,3 +2465,96 @@ a.pt-bericht { text-decoration: none; color: inherit; }
 .pt-mailtekst img { max-width: 100%; height: auto; border-radius: 8px; }
 .pt-mailtekst table { max-width: 100%; }
 .pt-mailtekst h2, .pt-mailtekst h3 { margin: 16px 0 8px; color: var(--navy); }
+/* ═══════════════════════════════════════════════════════════════════
+   LANDINGSPAGINA'S — beheer (pg-* prefix)
+   Schermen: admin/paginas.php + admin/paginas_bewerk.php
+   ═══════════════════════════════════════════════════════════════════ */
+
+.pg-wrap { max-width: 1140px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+.pg-terug { display: inline-flex; align-items: center; gap: 6px; font: var(--text-meta); color: var(--ink-soft); text-decoration: none; }
+.pg-terug:hover { color: var(--navy); }
+
+.pg-titelrij { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+.pg-h1 { font-size: 24px; line-height: 1.25; margin: 0; color: var(--ink); }
+.pg-h2 { font-size: 17px; margin: 0 0 4px; color: var(--ink); }
+.pg-h3 { font-size: 15px; margin: 22px 0 8px; color: var(--ink); }
+.pg-sub { font: var(--text-meta); color: var(--ink-soft); margin: 4px 0 14px; }
+.pg-verborgen { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.pg-knoprij { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
+.pg-code { background: var(--bg-subtle); padding: 8px 10px; border-radius: 8px; font-size: 12.5px; overflow-x: auto; margin: 8px 0 0; }
+
+.pg-paneel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: var(--space-5); box-shadow: var(--shadow-card); }
+.pg-paneel[hidden] { display: none; }
+.pg-nieuwform { display: flex; flex-direction: column; gap: 14px; }
+
+.pg-lijst { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.pg-rij { padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; }
+.pg-rij-hoofd { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.pg-rij-titel { font-size: 16px; font-weight: 600; color: var(--navy); text-decoration: none; }
+.pg-rij-titel:hover { text-decoration: underline; }
+.pg-rij-meta { font: var(--text-meta); color: var(--ink-muted); margin: 0; }
+
+.pg-cijfers { display: flex; gap: 22px; flex-wrap: wrap; margin: 6px 0 0; }
+.pg-cijfers div { min-width: 82px; }
+.pg-cijfers dt { font: var(--text-meta); color: var(--ink-muted); }
+.pg-cijfers dd { margin: 0; font-size: 18px; font-weight: 700; color: var(--ink); }
+.pg-cijfers-groot { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px 20px; gap: 32px; }
+.pg-cijfers-groot dd { font-size: 24px; }
+
+.pg-kolommen { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.pg-kolom { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.pg-kolom form { display: flex; flex-direction: column; gap: 14px; }
+.pg-uploadform { margin-bottom: 4px; }
+
+.pg-bestand { height: auto; padding: 10px 12px; }
+.pg-vink { display: flex; align-items: flex-start; gap: 10px; }
+.pg-vink input[type="checkbox"] { width: 20px; height: 20px; margin: 1px 0 0; flex: 0 0 auto; accent-color: var(--accent); }
+.pg-vink label { font: var(--text-body); font-size: 14.5px; line-height: 1.5; cursor: pointer; }
+
+.pg-versies, .pg-assets { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.pg-versie, .pg-assets li { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 11px 13px; background: var(--bg-subtle); border-radius: var(--radius-md); }
+.pg-versie .pg-knoprij, .pg-assets .pg-knoprij { margin-top: 0; }
+.pg-assets form { display: inline; }
+
+.pg-preview { width: 100%; height: 460px; border: 1px solid var(--border); border-radius: var(--radius-md); background: #fff; }
+
+.pg-tabel { width: 100%; border-collapse: collapse; font-size: 14px; }
+.pg-tabel th, .pg-tabel td { padding: 9px 10px; border-bottom: 1px solid var(--border); text-align: left; }
+.pg-tabel th { font: var(--text-label); font-size: 13px; color: var(--ink-soft); }
+.pg-rechts { text-align: right; }
+
+/* ── Scanrapport ── */
+.pg-rapport { border-left: 4px solid var(--accent); }
+.pg-telling { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 14px; }
+.pg-tel { font: var(--text-label); font-size: 12.5px; padding: 3px 10px; border-radius: var(--radius-full); }
+.pg-tel-hoog { background: var(--error-soft); color: var(--error); }
+.pg-tel-midden { background: var(--warn-soft); color: var(--warn); }
+.pg-tel-laag { background: var(--bg-subtle); color: var(--ink-soft); }
+.pg-tel-info { background: #e8f0f8; color: var(--navy); }
+
+.pg-bevindingen { list-style: none; margin: 0 0 18px; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+.pg-bevinding { display: flex; gap: 12px; align-items: flex-start; padding: 11px 13px; border-radius: var(--radius-md); background: var(--bg-subtle); }
+.pg-bevinding p { margin: 2px 0 0; font: var(--text-meta); color: var(--ink-soft); }
+.pg-niveau { flex: 0 0 90px; font: var(--text-label); font-size: 12px; padding-top: 1px; }
+.pg-bevinding-hoog { background: var(--error-soft); }
+.pg-bevinding-hoog .pg-niveau { color: var(--error); }
+.pg-bevinding-midden { background: var(--warn-soft); }
+.pg-bevinding-midden .pg-niveau { color: var(--warn); }
+.pg-bevinding-laag .pg-niveau, .pg-bevinding-info .pg-niveau { color: var(--ink-muted); }
+
+.pg-bevestig { display: flex; flex-direction: column; gap: 14px; border-top: 1px solid var(--border); padding-top: 16px; }
+.pg-hosts { border: 1px solid var(--border); border-radius: var(--radius-md); padding: 13px 15px; margin: 0; display: flex; flex-direction: column; gap: 9px; }
+.pg-hosts legend { font: var(--text-label); font-size: 14px; padding: 0 6px; }
+
+@media (max-width: 900px) {
+  .pg-kolommen { grid-template-columns: 1fr; }
+  .pg-cijfers-groot { gap: 20px; }
+  .pg-preview { height: 380px; }
+}
+@media (max-width: 560px) {
+  .pg-titelrij { flex-direction: column; }
+  .pg-niveau { flex-basis: 100%; }
+  .pg-bevinding { flex-direction: column; gap: 4px; }
+}

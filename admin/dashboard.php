@@ -83,8 +83,8 @@ $health_ok = ($health['mail_stuck'] === 0 && $health['mail_fout_24h'] < 3);
 
 /* Werving per bron/doelgroep (samengebracht vanuit de landingspagina-statistiek) */
 $werving = [];
-if (function_exists('landing_werving_overzicht')) {
-    try { $werving = landing_werving_overzicht($seizoen['id'] ?? null); } catch (Exception $e) { $werving = []; }
+if (function_exists('pag_werving_overzicht')) {
+    try { $werving = pag_werving_overzicht($seizoen['id'] ?? null); } catch (Exception $e) { $werving = []; }
 }
 
 /* Gemiddelde doorlooptijd: van aanmelding tot aangenomen (in dagen) */
