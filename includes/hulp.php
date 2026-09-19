@@ -42,21 +42,39 @@ function hulp_registry(): array {
 }
 
 /**
- * De handleidingen: sleutel => titel, voor wie, en het bestand in docs/handleiding/.
- * Dit is meteen de whitelist van admin/handleiding.php (de map docs/ is afgeschermd).
+ * De handleidingen: sleutel => titel, voor wie, het bestand in docs/handleiding/ en eventueel de
+ * module die je moet mogen lezen. Dit is meteen de whitelist van admin/handleiding.php
+ * (de map docs/ is afgeschermd met docs/.htaccess).
+ *
+ * Alleen het runbook is beperkt: dat gaat over de server, net als Systeem & Updates. De andere
+ * handleidingen mag iedereen met toegang tot het beheer lezen; ze bevatten geen persoonsgegevens.
  */
 function hulp_handleidingen(): array {
     return [
-        'beheer'         => ['titel' => 'Handleiding beheer',            'voor' => 'Bestuur: van seizoen opzetten tot aangenomen, scherm voor scherm', 'bestand' => 'handleiding_beheer'],
-        'landingspaginas'=> ['titel' => "Handleiding landingspagina's",  'voor' => 'Bestuur: eigen wervingspagina\'s maken en publiceren',             'bestand' => 'landingspaginas'],
-        'penningmeester' => ['titel' => 'Handleiding penningmeester',    'voor' => 'Penningmeester: loondossiers inzien, verwerken en bewaren',       'bestand' => 'handleiding_penningmeester'],
-        'sollicitant'    => ['titel' => 'Jouw sollicitatie bij Paal 13', 'voor' => 'Sollicitanten en ouders: uitleg over het portaal',                'bestand' => 'handleiding_sollicitant'],
-        'systeembeheer'  => ['titel' => 'Runbook systeembeheer',         'voor' => 'Technisch beheer: installeren, uitrollen, back-up en herstel',    'bestand' => 'runbook_systeembeheer'],
+        'beheer'         => ['titel' => 'Handleiding beheer',            'voor' => 'Bestuur: van seizoen opzetten tot aangenomen, scherm voor scherm', 'bestand' => 'handleiding_beheer',         'module' => null],
+        'landingspaginas'=> ['titel' => "Handleiding landingspagina's",  'voor' => 'Bestuur: eigen wervingspagina\'s maken en publiceren',             'bestand' => 'landingspaginas',             'module' => null],
+        'penningmeester' => ['titel' => 'Handleiding penningmeester',    'voor' => 'Penningmeester: loondossiers inzien, verwerken en bewaren',       'bestand' => 'handleiding_penningmeester',  'module' => null],
+        'sollicitant'    => ['titel' => 'Jouw sollicitatie bij Paal 13', 'voor' => 'Sollicitanten en ouders: uitleg over het portaal',                'bestand' => 'handleiding_sollicitant',     'module' => null],
+        'systeembeheer'  => ['titel' => 'Runbook systeembeheer',         'voor' => 'Technisch beheer: installeren, uitrollen, back-up en herstel',    'bestand' => 'runbook_systeembeheer',       'module' => 'systeem'],
     ];
 }
 
-/** Bestandsnaam (zonder extensie) van een handleiding, of null als de sleutel niet bestaat. */
+/** Mag de ingelogde beheerder deze handleiding lezen? */
+function hulp_handleiding_mag(string $sleutel): bool {
+    $h = hulp_handleidingen()[$sleutel] ?? null;
+    if (!$h) return false;
+    if ($h['module'] === null) return true;
+    return !function_exists('mag') || mag($h['module'], 'lezen');
+}
+
+/** De handleidingen die de ingelogde beheerder mag lezen. */
+function hulp_handleidingen_zichtbaar(): array {
+    return array_filter(hulp_handleidingen(), fn($s) => hulp_handleiding_mag($s), ARRAY_FILTER_USE_KEY);
+}
+
+/** Bestandsnaam (zonder extensie) van een handleiding, of null als hij niet bestaat of niet mag. */
 function hulp_handleiding_bestand(string $sleutel): ?string {
+    if (!hulp_handleiding_mag($sleutel)) return null;
     return hulp_handleidingen()[$sleutel]['bestand'] ?? null;
 }
 

@@ -18,7 +18,8 @@ $doc = (string)($_GET['doc'] ?? '');
 
 // ── Eén handleiding tonen ─────────────────────────────────────
 if ($doc !== '') {
-    $bestand = hulp_handleiding_bestand($doc);           // whitelist in includes/hulp.php
+    // Whitelist én rechtencheck zitten in includes/hulp.php; null = onbekend of niet toegestaan.
+    $bestand = hulp_handleiding_bestand($doc);
     $pad     = $bestand !== null ? $map . '/' . $bestand . '.html' : null;
     if ($pad === null || !is_file($pad)) {
         pagina_404();
@@ -45,7 +46,7 @@ require __DIR__ . '/layout_top.php';
         delen of af te drukken.
       </p>
       <div style="display:flex;flex-direction:column;gap:2px">
-        <?php foreach (hulp_handleidingen() as $sleutel => $h): ?>
+        <?php foreach (hulp_handleidingen_zichtbaar() as $sleutel => $h): ?>
         <a href="<?= APP_URL ?>/admin/handleiding.php?doc=<?= h($sleutel) ?>" target="_blank" rel="noopener"
            style="display:flex;align-items:flex-start;gap:12px;padding:12px 8px;border-bottom:1px solid var(--rand);text-decoration:none;color:inherit">
           <span style="color:var(--navy);flex-shrink:0;margin-top:2px"><?= icoon('document', 18) ?></span>
