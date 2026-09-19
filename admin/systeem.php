@@ -31,7 +31,7 @@ try {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['actie'] ?? '') === 'migreer') {
     csrf_check();
     if (function_exists('db_failsafe')) {
-        try { db_failsafe(); } catch (\Throwable $e) {}
+        try { db_failsafe(true); } catch (\Throwable $e) {}
     }
     flash('succes', 'Databasecontrole uitgevoerd: ontbrekende tabellen en kolommen zijn aangemaakt waar nodig.');
     redirect(APP_URL . '/admin/systeem.php');

@@ -93,13 +93,27 @@ function db_verwachte_kolommen(): array {
 }
 
 /**
- * De centrale failsafe. Draait één keer per request.
+ * De centrale failsafe. Draait één keer per versie (en verder nooit meer, tot de volgende release).
  * Roept alle auto_setup-functies aan en verzekert de verwachte kolommen.
+ *
+ * Vóór 2.94.0 draaide dit bij élk verzoek: ~50-80 queries, waarvan een flink deel tegen
+ * INFORMATION_SCHEMA. Nu bewaart een geslaagde run de versie in de instelling
+ * `db.failsafe_versie`; staat die gelijk aan APP_VERSIE, dan wordt alles overgeslagen.
+ * Systeem & Updates en de health-check forceren met db_failsafe(true).
  */
-function db_failsafe(): void {
+function db_failsafe(bool $forceer = false): void {
     static $done = false;
-    if ($done) return;
+    if ($done && !$forceer) return;
     $done = true;
+
+    $versie = defined('APP_VERSIE') ? APP_VERSIE : '0';
+    if (!$forceer) {
+        try {
+            $q = db()->prepare("SELECT waarde FROM instellingen WHERE sleutel = 'db.failsafe_versie' LIMIT 1");
+            $q->execute();
+            if ((string)$q->fetchColumn() === $versie) return;
+        } catch (\Throwable $e) { /* tabel bestaat nog niet: gewoon de volledige run doen */ }
+    }
 
     // 1. Alle bekende auto_setup-functies aanroepen (elk heeft zijn eigen guard + try/catch).
     $setups = [
@@ -174,6 +188,27 @@ function db_failsafe(): void {
                 }
             } catch (\Exception $e) { error_log('db_failsafe soort-enum: ' . $e->getMessage()); }
         }
+
+        // Speciaal: het oude installatie-account uit schema.sql/migratie 0002 had een wachtwoord dat
+        // in Git stond ("password"). Bestaat dat account nog met exact die hash, dan gaat het op
+        // non-actief. Inloggen kan daarna alleen nog via Authentik of een echt gezet wachtwoord.
+        if (db_tabel_bestaat($db, 'beheerders')) {
+            try {
+                $seed_hash = '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi';
+                $u = $db->prepare("UPDATE beheerders SET actief = 0 WHERE email = 'admin@paal13.com' AND wachtwoord = ? AND actief = 1");
+                $u->execute([$seed_hash]);
+                if ($u->rowCount() > 0) {
+                    error_log('db_failsafe: installatie-account admin@paal13.com met standaardwachtwoord op non-actief gezet');
+                    if (function_exists('audit_log')) audit_log('seed_account_uitgeschakeld', 'beheerder', null, ['email' => 'admin@paal13.com']);
+                }
+            } catch (\Exception $e) { error_log('db_failsafe seed-account: ' . $e->getMessage()); }
+        }
+
+        // Klaar: deze versie hoeft pas weer te draaien na de volgende release.
+        try {
+            $db->prepare("INSERT INTO instellingen (sleutel, waarde) VALUES ('db.failsafe_versie', ?) ON DUPLICATE KEY UPDATE waarde = ?")
+               ->execute([$versie, $versie]);
+        } catch (\Exception $e) { error_log('db_failsafe versievlag: ' . $e->getMessage()); }
     } catch (\Exception $e) {
         error_log('db_failsafe kolom-check: ' . $e->getMessage());
     }

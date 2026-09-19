@@ -30,6 +30,4 @@ CREATE TABLE IF NOT EXISTS `otp_tokens` (
 -- Voeg foutmelding kolom toe aan mail_log als die ontbreekt
 ALTER TABLE `mail_log` ADD COLUMN IF NOT EXISTS `foutmelding` TEXT DEFAULT NULL;
 
--- Standaard admin account (wachtwoord: password — direct wijzigen!)
-INSERT IGNORE INTO `beheerders` (`naam`, `email`, `wachtwoord`, `rol`)
-VALUES ('Beheerder', 'admin@paal13.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin');
+-- Het standaard admin-account met vast wachtwoord is verwijderd (2.94.0); de eerste beheerder komt via Authentik.

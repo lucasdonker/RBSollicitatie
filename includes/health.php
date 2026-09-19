@@ -56,9 +56,8 @@ function health_check_database(bool $repareer): array {
     // Probeer te repareren
     $hersteld = false;
     if ($repareer && function_exists('db_failsafe')) {
-        // db_failsafe draait 1x per request; forceer een nieuwe controle door de static te omzeilen
-        // is niet nodig — bij een aparte reparatie-aanroep roepen we de setups direct aan.
-        try { db_failsafe(); $hersteld = true; } catch (\Throwable $e) {}
+        // Geforceerd: de versievlag (db.failsafe_versie) slaat de run anders over.
+        try { db_failsafe(true); $hersteld = true; } catch (\Throwable $e) {}
         $g = db_gezondheid();
         if ($g['ok']) {
             return ['status' => 'ok', 'uitleg' => 'Ontbrekende onderdelen automatisch aangemaakt.', 'hersteld' => true];
