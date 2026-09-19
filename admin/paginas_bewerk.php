@@ -193,7 +193,7 @@ require __DIR__ . '/layout_top.php';
       <!-- Afbeeldingen -->
       <section class="ds-kaart ds-kaart-p">
         <h2 class="pg-h2">Afbeeldingen</h2>
-        <p class="pg-sub">Verwijs er in het ontwerp naar met alleen de bestandsnaam, bijvoorbeeld <code>&lt;img src="strand.jpg"&gt;</code>.</p>
+        <p class="pg-sub">Verwijs er in het ontwerp naar met alleen de bestandsnaam, bijvoorbeeld <code>&lt;img src="strand.jpg"&gt;</code>. Staat er een map voor (<code>assets/strand.jpg</code>), dan wordt dat bij het inlezen rechtgezet — alle afbeeldingen van een pagina staan bij ons namelijk bij elkaar.</p>
 
         <?php if ($mag_bewerken): ?>
         <form method="post" enctype="multipart/form-data" class="pg-uploadform">

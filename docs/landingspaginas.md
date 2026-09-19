@@ -53,10 +53,16 @@ de bestandsnaam:
 Je kunt er meerdere tegelijk kiezen (maximaal 20 per keer); per bestand hoor je of het
 gelukt is.
 
-Gebruik namen met kleine letters en streepjes, zonder spaties. Bij het uploaden wordt de
-naam namelijk omgezet ("Strand Foto.JPG" wordt `strand-foto.jpg`), en dan klopt de
-verwijzing in je ontwerp niet meer. In de lijst onder het uploadveld zie je de namen zoals
-ze werkelijk zijn opgeslagen.
+**Staat er een map voor de bestandsnaam?** Dat mag. Een ontwerp uit een ontwerptool
+verwijst meestal naar zijn eigen mappen (`assets/strand.jpg`, `images/duinen.jpg`). Bij ons
+staan alle afbeeldingen van een pagina bij elkaar in één map, dus telt alleen de
+bestandsnaam. Bij het inlezen worden die verwijzingen automatisch rechtgezet — ook namen
+met hoofdletters of spaties, want die worden bij het uploaden omgezet ("Strand Foto.JPG"
+wordt `strand-foto.jpg`). In het rapport zie je precies wat er is aangepast, en in de lijst
+onder het uploadveld staan de namen zoals ze werkelijk zijn opgeslagen.
+
+Verwijst het ontwerp naar een afbeelding die er nog niet is, dan zegt het rapport welke
+namen hij verwacht. Upload ze daarna onder die naam; opnieuw inlezen hoeft dan niet.
 
 **De extensie kan veranderen.** Het systeem kijkt naar wat er écht in het bestand zit, niet
 naar hoe het heet. Een foto die `duinen.jpg` heet maar in werkelijkheid een PNG is (dat

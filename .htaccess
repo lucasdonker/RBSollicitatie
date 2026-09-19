@@ -9,7 +9,14 @@
 
     # Afbeeldingen bij een landingspagina: /p/zomer-2027/strand.jpg
     # Komen uit de assets-map van die pagina; die map laat alleen afbeeldingen door.
-    RewriteRule ^p/([a-z0-9\-]{1,80})/([A-Za-z0-9._\-]+)$ uploads/paginas/$1/assets/$2 [L]
+    #
+    # Een submap ervoor mag ook (/p/zomer-2027/assets/strand.jpg, /p/zomer-2027/img/logo.png):
+    # een ontwerp uit een ontwerptool verwijst naar zijn eigen mappen, terwijl bij ons alles
+    # plat in één map per pagina staat. Alleen de bestandsnaam telt dus. De import zet die
+    # verwijzingen ook recht (zie paginas/verwijzingen.php); deze regel vangt de rest op,
+    # bijvoorbeeld bij ontwerpen die al live stonden of adressen die script zelf opbouwt.
+    # Namen beginnen nooit met een punt: zo blijft .htaccess buiten bereik.
+    RewriteRule ^p/([a-z0-9\-]{1,80})/(?:[A-Za-z0-9._\-]+/)*([A-Za-z0-9_\-][A-Za-z0-9._\-]*)$ uploads/paginas/$1/assets/$2 [L]
 
     # Oude landingspagina-adressen blijven werken (QR-codes, advertenties).
     RewriteRule ^l/([a-zA-Z0-9\-]+)/?$ /p/$1 [R=301,L]

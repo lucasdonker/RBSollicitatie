@@ -243,11 +243,19 @@ function pag_asset_lijst(string $slug): array {
     return $uit;
 }
 
-/** Bijgeüploade afbeelding opslaan. Retour: ['ok'=>bool,'naam'=>string,'fout'=>string] */
+/**
+ * Bijgeüploade afbeelding opslaan.
+ * Retour: ['ok'=>bool, 'naam'=>string, 'ext_gewijzigd'=>bool, 'fout'=>string]
+ * `ext_gewijzigd` staat aan als de inhoud een ander type bleek dan de extensie beweerde;
+ * het ontwerp moet dan naar de nieuwe naam verwijzen.
+ */
 function pag_asset_opslaan(string $slug, array $upload): array {
     $dir = pag_map($slug);
     if ($dir === null) return ['ok' => false, 'naam' => '', 'fout' => 'De opslagmap kon niet worden aangemaakt.'];
     if (!function_exists('upload_valideer')) return ['ok' => false, 'naam' => '', 'fout' => 'Uploaden is niet beschikbaar.'];
+
+    $ext_ruw = strtolower(pathinfo((string)($upload['name'] ?? ''), PATHINFO_EXTENSION));
+    if ($ext_ruw === 'jpeg') $ext_ruw = 'jpg';
 
     $v = upload_valideer($upload, pag_asset_typen(), pag_max_asset_bytes());
     if (!$v['ok']) return ['ok' => false, 'naam' => '', 'fout' => $v['fout']];
@@ -263,7 +271,7 @@ function pag_asset_opslaan(string $slug, array $upload): array {
     }
     @chmod($dir . '/assets/' . $naam, 0644);
     if (function_exists('audit_log')) audit_log('asset_toegevoegd', 'pagina', 0, ['slug' => $slug, 'bestand' => $naam]);
-    return ['ok' => true, 'naam' => $naam, 'fout' => ''];
+    return ['ok' => true, 'naam' => $naam, 'ext_gewijzigd' => $ext_ruw !== '' && $ext_ruw !== $v['ext'], 'fout' => ''];
 }
 
 /**
@@ -289,8 +297,18 @@ function pag_assets_opslaan(string $slug, array $veld): array {
     }
     foreach ($bestanden as $b) {
         $res = pag_asset_opslaan($slug, $b);
-        if ($res['ok']) $uit['namen'][] = $res['naam'];
-        else            $uit['fouten'][] = ($b['name'] !== '' ? basename((string)$b['name']) . ': ' : '') . $res['fout'];
+        if (!$res['ok']) {
+            $uit['fouten'][] = ($b['name'] !== '' ? basename((string)$b['name']) . ': ' : '') . $res['fout'];
+            continue;
+        }
+        $uit['namen'][] = $res['naam'];
+        if (!empty($res['ext_gewijzigd'])) {
+            // De extensie klopte niet met de inhoud. Zeg het, want het ontwerp verwijst
+            // waarschijnlijk nog naar de oude naam.
+            $uit['let_op'][] = basename((string)$b['name']) . ' is in werkelijkheid een '
+                . strtoupper(pathinfo($res['naam'], PATHINFO_EXTENSION)) . '-bestand en staat er nu als ' . $res['naam']
+                . '; verwijs er in het ontwerp ook zo naar (of lees het ontwerp opnieuw in, dan gaat dat vanzelf).';
+        }
     }
     return $uit;
 }

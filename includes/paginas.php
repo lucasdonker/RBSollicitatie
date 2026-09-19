@@ -10,7 +10,7 @@
  * Publieke URL: /p/<slug>     Opslag: uploads/paginas/<slug>/
  */
 
-foreach (['kern', 'opslag', 'statistiek', 'token', 'import', 'formulier', 'render', 'migratie'] as $__pag_deel) {
+foreach (['kern', 'opslag', 'verwijzingen', 'statistiek', 'token', 'import', 'formulier', 'render', 'migratie'] as $__pag_deel) {
     $__pag_pad = __DIR__ . '/paginas/' . $__pag_deel . '.php';
     if (file_exists($__pag_pad)) require_once $__pag_pad;
 }

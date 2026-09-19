@@ -328,7 +328,35 @@ function pag_import_toepassen(array $pagina, array $upload, array $opties = []):
         $html = $ontvlecht['html'];
     }
 
+    // Verwijzingen naar afbeeldingen rechtzetten (assets/Frame 12.png → frame-12.png).
+    // Ná het ontvlechten, zodat de net losgemaakte bestanden meetellen.
+    $verwijzingen = pag_verwijzingen_herschrijf($html, (string)$pagina['slug']);
+    $html = $verwijzingen['html'];
+
     $scan = pag_scan_html($html);
+    if ($verwijzingen['aangepast']) {
+        $vb = [];
+        foreach (array_slice($verwijzingen['aangepast'], 0, 5, true) as $oud => $nieuw) $vb[] = $oud . ' → ' . $nieuw;
+        array_unshift($scan['bevindingen'], [
+            'niveau' => 'info',
+            'titel'  => count($verwijzingen['aangepast']) . ' verwijzing(en) naar afbeeldingen aangepast',
+            'detail' => 'Het ontwerp verwees naar een eigen map of naar een naam met hoofdletters of spaties. '
+                      . 'Bij ons staan de afbeeldingen van een pagina bij elkaar in één map, dus alleen de bestandsnaam telt: '
+                      . implode(', ', $vb) . (count($verwijzingen['aangepast']) > 5 ? ', …' : '') . '.',
+        ]);
+        $scan['telling']['info'] = ($scan['telling']['info'] ?? 0) + 1;
+    }
+    if ($verwijzingen['ontbreekt']) {
+        array_unshift($scan['bevindingen'], [
+            'niveau' => 'midden',
+            'titel'  => count($verwijzingen['ontbreekt']) . ' afbeelding(en) staan nog niet bij deze pagina',
+            'detail' => 'Het ontwerp verwijst naar ' . implode(', ', array_slice($verwijzingen['ontbreekt'], 0, 10))
+                      . (count($verwijzingen['ontbreekt']) > 10 ? ', …' : '')
+                      . '. Upload die hieronder bij "Afbeeldingen"; het ontwerp verwacht ze precies onder deze namen, '
+                      . 'dus opnieuw inlezen hoeft daarna niet. Doe je dit niet, dan blijven die plekken leeg.',
+        ]);
+        $scan['telling']['midden'] = ($scan['telling']['midden'] ?? 0) + 1;
+    }
     if ($ontvlecht && $ontvlecht['bestanden']) {
         array_unshift($scan['bevindingen'], [
             'niveau' => 'info',
