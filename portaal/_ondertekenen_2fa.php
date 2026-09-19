@@ -13,7 +13,11 @@ $_waar   = $tel_masker !== '' && $_kanaal !== 'email'
 ?>
 <div class="ond-2fa" id="ond2fa" data-token="<?= h($token) ?>" data-api="<?= APP_URL ?>/portaal/api_ondertekenen_code.php">
   <div class="ond-2fa-kop">
-    <span class="ond-2fa-titel"><?= icoon('schild', 18) ?>Verificatiecode</span>
+    <span class="ond-2fa-titel"><?= icoon('schild', 18) ?>Verificatiecode
+      <?= info_bol('Waarom een code?', ($u
+        ? "Op dit formulier staan gevoelige gegevens. Met een code op uw eigen telefoon weten we zeker dat ú ondertekent en niet iemand anders die deze link in handen krijgt.\nDe code is 15 minuten geldig en kan één keer gebruikt worden. Bij het document leggen we vast via welk kanaal u de code kreeg; dat hoort bij het bewijs van ondertekening."
+        : "Op dit formulier staan gevoelige gegevens, zoals je burgerservicenummer of je rekeningnummer. Met een code op je eigen telefoon weten we zeker dat jíj ondertekent en niet iemand anders die op jouw account of deze link stuit.\nDe code is 15 minuten geldig en kan één keer gebruikt worden. Bij het document leggen we vast via welk kanaal je de code kreeg; dat hoort bij het bewijs van ondertekening.")) ?>
+    </span>
     <span class="ond-2fa-sub">Ter bevestiging dat <?= $u ? 'u' : 'jij' ?> het bent: <?= $u ? 'u krijgt' : 'je krijgt' ?> een code <?= h($_waar) ?>.</span>
   </div>
   <div class="ond-2fa-stap1" id="ond2faStap1">

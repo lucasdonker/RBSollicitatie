@@ -95,7 +95,7 @@ function document_soorten(): array {
         'id_voor'   => ['titel' => 'Identiteitsbewijs — voorkant', 'taak' => 'id_kopie', 'recht' => 'documenten', 'bewaren' => 'loon', 'compleet' => true,  'upload' => true],
         'id_achter' => ['titel' => 'Identiteitsbewijs — achterkant', 'taak' => 'id_kopie', 'recht' => 'documenten', 'bewaren' => 'loon', 'compleet' => false, 'upload' => true],
         'bankpas'   => ['titel' => 'Bankpas — voorkant', 'taak' => 'bankpas_kopie', 'recht' => 'documenten', 'bewaren' => 'verwerkt_dan_weg', 'compleet' => true, 'upload' => true],
-        'pasfoto'   => ['titel' => 'Pasfoto', 'taak' => 'pasfoto', 'recht' => 'sollicitanten', 'bewaren' => 'dossier', 'compleet' => false, 'upload' => true],
+        // Pasfoto is er bewust NIET (besluit Lucas, 19 sep 2026), ook al staat die in het ontwerp.
     ];
     // Verzegelde PDF's van ondertekeningen: soort ondertekening_<type> (aangemaakt door het systeem bij het tekenen)
     foreach (['gezondheid_18plus', 'gezondheid_ouder', 'intake', 'intake_ouder', 'loonheffing', 'lidmaatschap'] as $type) {
@@ -130,11 +130,6 @@ function document_taken(): array {
             'titel' => 'Kopie bankpas uploaden', 'sub' => 'Voor je salaris', 'icoon' => 'bankpas', 'volgorde' => 21,
             'uitleg' => 'Een foto van de voorkant van je bankpas, zodat we je naam en rekeningnummer goed overnemen. De achterkant is niet nodig. Na verwerking door de penningmeester wordt de foto vernietigd.',
             'soorten' => ['bankpas' => 'Voorkant'],
-        ],
-        'pasfoto' => [
-            'titel' => 'Pasfoto uploaden', 'sub' => 'Voor je dienstpas', 'icoon' => 'camera', 'volgorde' => 22,
-            'uitleg' => 'Een recente foto recht van voren, met een effen achtergrond, zonder zonnebril of pet.',
-            'soorten' => ['pasfoto' => 'Pasfoto'],
         ],
     ];
 }

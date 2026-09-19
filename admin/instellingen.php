@@ -104,6 +104,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
+        // Huisregels-PDF: in de bijlagenbibliotheek zetten en als taak-document koppelen (of losmaken)
+        if (!empty($_FILES['huisregels_upload']['tmp_name']) && function_exists('bijlage_opslaan')) {
+            $hu = bijlage_opslaan($_FILES['huisregels_upload'], (int)($_bhd['id'] ?? 0), 'Huisregels (taak aangenomen)');
+            if ($hu['ok']) {
+                $velden['taken.huisregels_bijlage_id'] = (string)$hu['id'];
+                if (function_exists('audit_log')) audit_log('gewijzigd', 'instelling', null, ['veld' => 'taken.huisregels_bijlage_id', 'bijlage' => $hu['id']]);
+            } else {
+                flash('waarschuwing', 'Huisregels niet opgeslagen: ' . $hu['fout']);
+            }
+        }
+        if (!empty($_POST['huisregels_los'])) $velden['taken.huisregels_bijlage_id'] = '0';
+
         foreach ($velden as $sleutel => $waarde) {
             // Saniteer sleutel (alleen letters, punten, underscores)
             if (!preg_match('/^[a-z0-9._]+$/', $sleutel)) continue;
@@ -468,6 +480,31 @@ require __DIR__ . '/layout_top.php';
         <div class="form-groep">
           <label>Welkomsttekst op portaal login <span class="tip" data-tip="Tekst die sollicitanten zien voordat ze inloggen via OTP-code."></span></label>
           <textarea name="inst[portaal.welkomst_tekst]" rows="3"><?= h(instelling('portaal.welkomst_tekst','Welkom op het sollicitantenportaal van Paal 13.')) ?></textarea>
+        </div>
+      </div>
+
+      <div class="inst-sectie">
+        <h3>Taken na aannemen</h3>
+        <?php
+          $_hr_id  = instelling_int('taken.huisregels_bijlage_id', 0);
+          $_hr_rij = ($_hr_id > 0 && function_exists('bijlage_rij')) ? bijlage_rij($_hr_id) : null;
+        ?>
+        <div class="form-groep">
+          <label>Huisregels (pdf) <span class="tip" data-tip="Aangenomen strandwachten krijgen de taak 'Huisregels lezen' met een link naar dit document. Zonder document blijft de taak staan als 'volgt binnenkort'."></span></label>
+          <?php if ($_hr_rij): ?>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+              <span class="badge badge-groen">In gebruik</span>
+              <a href="<?= h(bijlage_download_url((int)$_hr_rij['id'], 7)) ?>" target="_blank" rel="noopener" style="font-size:13px;color:var(--navy)"><?= h($_hr_rij['bestandsnaam']) ?></a>
+              <span style="font-size:12px;color:var(--tekst-zacht)"><?= round((int)$_hr_rij['grootte'] / 1024) ?> kB · geplaatst <?= h(datum_nl(substr((string)$_hr_rij['aangemaakt_op'], 0, 10))) ?></span>
+              <label style="font-size:12px;color:var(--tekst-zacht);display:inline-flex;align-items:center;gap:5px"><input type="checkbox" name="huisregels_los" value="1"> Losmaken van de taak</label>
+            </div>
+          <?php elseif ($_hr_id > 0): ?>
+            <div class="flash flash-fout" style="margin-bottom:8px">Het gekoppelde document (#<?= $_hr_id ?>) bestaat niet meer. Upload een nieuwe pdf.</div>
+          <?php else: ?>
+            <div class="form-hulp" style="margin-bottom:8px">Nog geen document. De taak "Huisregels lezen" staat bij aangenomen sollicitanten al klaar en krijgt automatisch een link zodra je hier een pdf plaatst.</div>
+          <?php endif; ?>
+          <input type="file" name="huisregels_upload" accept="application/pdf" style="font-size:12px">
+          <div class="form-hulp">Een nieuwe pdf vervangt de link in de taak. Het bestand komt in de bijlagenbibliotheek; de sollicitant opent het via een tijdelijke, persoonlijke downloadlink.</div>
         </div>
       </div>
 

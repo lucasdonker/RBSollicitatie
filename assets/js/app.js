@@ -101,11 +101,50 @@
     });
   }
 
+  /* ── Info-bolletjes (includes/ui.php: info_bol()) ── */
+  function infoSluitAlles(behalve) {
+    document.querySelectorAll('.ui-info-paneel').forEach(function (p) {
+      if (p === behalve) return;
+      p.hidden = true;
+      var k = document.querySelector('.ui-info-knop[aria-controls="' + p.id + '"]');
+      if (k) k.setAttribute('aria-expanded', 'false');
+    });
+  }
+
+  function initInfoBollen() {
+    document.querySelectorAll('.ui-info-knop').forEach(function (knop) {
+      if (knop.dataset.p13Info) return;
+      knop.dataset.p13Info = '1';
+      knop.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var paneel = document.getElementById(knop.getAttribute('aria-controls'));
+        if (!paneel) return;
+        var wasOpen = !paneel.hidden;
+        infoSluitAlles(paneel);
+        paneel.hidden = wasOpen;
+        knop.setAttribute('aria-expanded', wasOpen ? 'false' : 'true');
+      });
+    });
+    document.querySelectorAll('.ui-info-sluit').forEach(function (sluit) {
+      if (sluit.dataset.p13Info) return;
+      sluit.dataset.p13Info = '1';
+      sluit.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); infoSluitAlles(null); });
+    });
+    if (!document.body.dataset.p13InfoGlobal) {
+      document.body.dataset.p13InfoGlobal = '1';
+      // Buiten het paneel klikken of Escape sluit de uitleg
+      document.addEventListener('click', function (e) { if (!e.target.closest || !e.target.closest('.ui-info')) infoSluitAlles(null); });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') infoSluitAlles(null); });
+    }
+  }
+
   function boot() {
     initLightbox();
+    initInfoBollen();
     initPortaalFormulieren();
     if (window.MutationObserver) {
-      var obs = new MutationObserver(function () { initLightbox(); });
+      var obs = new MutationObserver(function () { initLightbox(); initInfoBollen(); });
       obs.observe(document.body, { childList: true, subtree: true });
     }
   }

@@ -410,7 +410,11 @@ require __DIR__ . '/_kop.php';
             <input type="text" name="plaats" class="ds-input" value="<?= $v('plaats') ?>" placeholder="Bijv. Callantsoog" autocomplete="address-level2" required>
           </label>
           <div class="ond-teken-kop">
-            <span class="ond-teken-titel"><?= $u ? 'Uw handtekening' : 'Jouw handtekening' ?></span>
+            <span class="ond-teken-titel"><?= $u ? 'Uw handtekening' : 'Jouw handtekening' ?>
+              <?= info_bol('Waarom een handtekening?', ($u
+                ? "Voor dit document is uw ondertekening nodig. De krabbel die u zet wordt vastgelegd samen met uw naam, de plaats, het tijdstip en het IP-adres waarmee u ondertekent.\nDaarna maken we er een pdf van die digitaal wordt verzegeld. Verandert er later iets in het document, dan meldt elke pdf-lezer dat het gewijzigd is. Zo geldt dit net als een handtekening op papier."
+                : "Voor dit document is je ondertekening nodig. De krabbel die je zet wordt vastgelegd samen met je naam, de plaats, het tijdstip en het IP-adres waarmee je ondertekent.\nDaarna maken we er een pdf van die digitaal wordt verzegeld. Verandert er later iets in het document, dan meldt elke pdf-lezer dat het gewijzigd is. Zo geldt dit net als een handtekening op papier.\nJe krijgt de pdf per e-mail en kunt hem altijd terugvinden bij je taken.")) ?>
+            </span>
             <button type="button" class="ond-teken-wis" id="hdtWis">Wissen</button>
           </div>
           <div class="ond-vak" id="hdtWrap">

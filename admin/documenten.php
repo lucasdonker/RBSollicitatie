@@ -64,7 +64,7 @@ $wanneer = function (?string $dt) use ($maanden): string { if (!$dt) return ''; 
     <span class="badge badge-blauw">Seizoen <?= h($seizoen['naam'] ?? '—') ?></span>
   </div>
 
-  <div class="notitie-box" style="margin-bottom:16px"><?= icoon('slot', 14) ?> Deze stukken bevatten BSN en kopieën van identiteitsbewijzen. Elke download wordt vastgelegd (wie, wanneer) en op ID-kopieën komt een watermerk. Download alleen op een vertrouwd apparaat, en verwijder de bestanden zodra ze in de loonadministratie staan. Bewaarplicht: 5 jaar na einde van het dienstjaar (loonheffing + ID); de bankpasfoto wordt na verwerking vernietigd.</div>
+  <div class="notitie-box" style="margin-bottom:16px"><?= icoon('slot', 14) ?> Deze stukken bevatten een BSN en kopieën van identiteitsbewijzen. Elke download wordt vastgelegd (wie, wanneer) en op ID-kopieën komt een watermerk. Download alleen op een vertrouwd apparaat, en verwijder de bestanden zodra ze in de loonadministratie staan. Bewaarplicht: 5 jaar na einde van het dienstjaar (loonheffing + ID); de bankpasfoto wordt na verwerking vernietigd.</div>
 
   <?php if (!$rijen): ?>
     <div class="card"><div class="card-body"><p style="color:var(--tekst-zacht);text-align:center;padding:24px 0">Nog geen aangenomen sollicitanten in dit seizoen.</p></div></div>
@@ -88,7 +88,7 @@ $wanneer = function (?string $dt) use ($maanden): string { if (!$dt) return ''; 
                 <?php elseif ($lh): ?><span class="badge badge-oranje">Nog niet ondertekend</span><?php else: ?><span class="badge badge-grijs">Niet klaargezet</span><?php endif; ?></td>
             <td style="text-align:right;white-space:nowrap"><?php if ($lh && !empty($lh['ondertekend_op']) && $mag_bewerken): ?><a class="btn btn-outline btn-sm" href="<?= APP_URL ?>/admin/document_download.php?ond=<?= (int)$lh['id'] ?>&amp;t=<?= urlencode($tok) ?>"><?= icoon('download', 14) ?> PDF</a><?php endif; ?></td>
           </tr>
-          <?php foreach (['id_voor' => 'Identiteitsbewijs — voorkant', 'id_achter' => 'Identiteitsbewijs — achterkant', 'bankpas' => 'Kopie bankpas', 'pasfoto' => 'Pasfoto'] as $soort => $label): $doc = $docs[$soort] ?? null; ?>
+          <?php foreach (['id_voor' => 'Identiteitsbewijs — voorkant', 'id_achter' => 'Identiteitsbewijs — achterkant', 'bankpas' => 'Kopie bankpas'] as $soort => $label): $doc = $docs[$soort] ?? null; ?>
           <tr>
             <td><strong><?= h($label) ?></strong><?php if ($soort === 'id_voor' && $doc && !empty($doc['extra'])): ?><br><span style="color:var(--tekst-zacht)"><?= $doc['extra'] === 'paspoort' ? 'Paspoort' : 'Identiteitskaart' ?></span><?php endif; ?></td>
             <td><?php if ($doc): ?><?= h($doc['bestandsnaam']) ?> · <?= h($wanneer($doc['geupload_op'])) ?> · <?= round((int)$doc['grootte'] / 1048576, 1) ?> MB<?= $doc['status'] === 'verwerkt' ? ' · <span class="badge badge-grijs">verwerkt</span>' : '' ?><?php if (!empty($doc['laatst_gedownload_op'])): ?><br><span style="color:var(--tekst-zacht)">Laatst gedownload <?= h($wanneer($doc['laatst_gedownload_op'])) ?></span><?php endif; ?>

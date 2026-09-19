@@ -1485,6 +1485,48 @@ a.pt-taakrij:hover { background: var(--bg); }
 .pt-voetlinks a:hover { color: var(--navy); }
 
 /* ═══════════════════════════════════════════════════════════════════
+   UI-BOUWSTENEN — kleine onderdelen die op meerdere schermen terugkomen
+   (includes/ui.php; gedrag in assets/js/app.js)
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Info-bolletje: rond knopje met "i" dat een korte uitleg openklapt */
+.ui-info { position: relative; display: inline-flex; vertical-align: -4px; }
+.ui-info-knop {
+  width: 20px; height: 20px; padding: 0; flex: none; border-radius: 10px; cursor: pointer;
+  border: 1px solid var(--border-strong); background: var(--surface);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.ui-info-knop .ic { stroke: var(--navy); }
+.ui-info-knop:hover { border-color: var(--navy); background: #eef2f8; }
+.ui-info-knop:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(5,77,138,.2); }
+.ui-info-knop[aria-expanded="true"] { background: var(--navy); border-color: var(--navy); }
+.ui-info-knop[aria-expanded="true"] .ic { stroke: #fff; }
+/* Mobiel: het uitlegblokje komt onderin het scherm (altijd volledig leesbaar, nooit afgekapt door een kaart).
+   Desktop: een popover onder het bolletje zelf. */
+.ui-info-paneel {
+  position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 60;
+  display: flex; flex-direction: column; gap: 7px; text-align: left;
+  background: var(--surface); border: 1px solid var(--border-strong); border-radius: 12px;
+  padding: 16px; box-shadow: var(--shadow-modal);
+}
+body.heeft-nav .ui-info-paneel { bottom: calc(90px + env(safe-area-inset-bottom, 0px)); }
+.ui-info-paneel[hidden] { display: none; }
+@media (min-width: 860px) {
+  /* Popover onder het bolletje, naar links uitklappend: zo blijft hij binnen de kaart (die zijn hoeken afsnijdt) */
+  .ui-info-paneel, body.heeft-nav .ui-info-paneel {
+    position: absolute; top: calc(100% + 8px); left: auto; right: 0; bottom: auto;
+    width: min(300px, 40vw); padding: 14px; box-shadow: var(--shadow-float); z-index: 30;
+  }
+}
+.ui-info-titel { font: var(--text-label); font-size: 13px; color: var(--navy); }
+.ui-info-tekst { font-size: 13px; line-height: 1.55; color: var(--ink-soft); font-weight: 400; }
+.ui-info-sluit {
+  align-self: flex-start; background: none; border: none; padding: 0;
+  font: var(--text-label); font-size: 12px; color: var(--navy); cursor: pointer;
+}
+.ui-info-sluit:hover { text-decoration: underline; }
+
+/* ═══════════════════════════════════════════════════════════════════
    ONDERTEKENEN v2.89 — exact Portaal.dc secties 05 (18+ tekent zelf) en 09 (ouder-link)
    Kop, document met vervaging, gegevens-/vragenkaarten, handtekeningvak, keuzevakjes,
    infoblok, voet met hoofdactie; na ondertekenen de bevestiging met PDF-kopie.

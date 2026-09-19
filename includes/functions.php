@@ -57,6 +57,7 @@ if (file_exists(__DIR__ . '/fase.php')) require_once __DIR__ . '/fase.php';
 if (file_exists(__DIR__ . '/cron_taken.php')) require_once __DIR__ . '/cron_taken.php';
 if (file_exists(__DIR__ . '/export_dossier.php')) require_once __DIR__ . '/export_dossier.php';
 if (file_exists(__DIR__ . '/iconen.php')) require_once __DIR__ . '/iconen.php';
+if (file_exists(__DIR__ . '/ui.php')) require_once __DIR__ . '/ui.php';
 if (file_exists(__DIR__ . '/blk.php')) require_once __DIR__ . '/blk.php';
 if (file_exists(__DIR__ . '/portaal_dossier.php')) require_once __DIR__ . '/portaal_dossier.php';
 if (file_exists(__DIR__ . '/portaal_taken.php')) require_once __DIR__ . '/portaal_taken.php';

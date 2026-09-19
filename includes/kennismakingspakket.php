@@ -25,11 +25,15 @@ function kennismakingspakket_taken_definities(): array {
                              'soort' => 'upload', 'document_soort' => $slug, 'volgorde' => $d['volgorde']];
         }
     }
+    // Huisregels: de PDF komt uit de bijlagenbibliotheek (Instellingen › Algemeen › Huisregels). Zolang er geen
+    // document is gekozen, staat de taak er wel maar zonder link ("volgt binnenkort") — zodat de sollicitant weet
+    // dat dit er nog aankomt en wij niet vergeten het te plaatsen.
     $huisregels = function_exists('instelling_int') ? instelling_int('taken.huisregels_bijlage_id', 0) : 0;
-    if ($huisregels > 0) {
-        $taken['huisregels'] = ['titel' => 'Huisregels lezen', 'omschrijving' => 'Lees ze door en vink daarna af', 'link_url' => null, 'verplicht' => 1,
-                                'soort' => 'link', 'document_soort' => 'bijlage:' . $huisregels, 'volgorde' => 30];
-    }
+    $taken['huisregels'] = $huisregels > 0
+        ? ['titel' => 'Huisregels lezen', 'omschrijving' => 'Open het document en vink daarna af', 'link_url' => null, 'verplicht' => 1,
+           'soort' => 'link', 'document_soort' => 'bijlage:' . $huisregels, 'volgorde' => 30]
+        : ['titel' => 'Huisregels lezen', 'omschrijving' => 'Het document volgt binnenkort van het bestuur', 'link_url' => null, 'verplicht' => 1,
+           'soort' => 'afvinken', 'document_soort' => null, 'volgorde' => 30];
     $taken['authentik_activeren'] = ['titel' => 'Paal 13-account activeren', 'omschrijving' => 'Je krijgt later per mail een uitnodiging voor je verenigingsaccount', 'link_url' => null, 'verplicht' => 0,
                                      'soort' => 'afvinken', 'document_soort' => null, 'volgorde' => 90];
     return $taken;
@@ -54,15 +58,30 @@ function kennismakingspakket_activeren(int $sol_id): array {
         // Oude slugs (t/m 2.89): lidmaatschap/loonheffing worden ondertekeningen, huisregels_gelezen → huisregels
         $db->prepare("DELETE FROM sollicitant_taken WHERE sollicitatie_id=? AND taak_slug IN ('bevestig_lidmaatschap','loonheffing') AND status='open'")->execute([$sol_id]);
         $db->prepare("UPDATE IGNORE sollicitant_taken SET taak_slug='huisregels' WHERE sollicitatie_id=? AND taak_slug='huisregels_gelezen'")->execute([$sol_id]);
+        // Pasfoto is vervallen (besluit Lucas, 19 sep 2026): taak weg en een al geüploade foto vernietigen —
+        // niemand kan hem nog inzien, dus bewaren zou strijdig zijn met dataminimalisatie.
+        $db->prepare("DELETE FROM sollicitant_taken WHERE sollicitatie_id=? AND taak_slug='pasfoto'")->execute([$sol_id]);
+        if (function_exists('document_vernietigen')) {
+            try {
+                $pf = $db->prepare("SELECT id FROM sollicitant_documenten WHERE sollicitatie_id=? AND soort='pasfoto' AND status IN ('ingediend','verwerkt')");
+                $pf->execute([$sol_id]);
+                foreach ($pf->fetchAll(PDO::FETCH_COLUMN) as $doc_id) document_vernietigen((int)$doc_id, 'pasfoto vervallen');
+            } catch (\Throwable $e) { error_log('pasfoto opruimen: ' . $e->getMessage()); }
+        }
 
         $stmt = $db->prepare("INSERT INTO sollicitant_taken (sollicitatie_id, taak_slug, titel, omschrijving, link_url, verplicht, soort, document_soort, volgorde)
                               VALUES (?,?,?,?,?,?,?,?,?)
                               ON DUPLICATE KEY UPDATE titel=VALUES(titel), omschrijving=VALUES(omschrijving), link_url=VALUES(link_url),
                                                       verplicht=VALUES(verplicht), soort=VALUES(soort), document_soort=VALUES(document_soort), volgorde=VALUES(volgorde)");
-        foreach (kennismakingspakket_taken_definities() as $slug => $t) {
+        $definities = kennismakingspakket_taken_definities();
+        foreach ($definities as $slug => $t) {
             $stmt->execute([$sol_id, $slug, $t['titel'], $t['omschrijving'], $t['link_url'], $t['verplicht'], $t['soort'], $t['document_soort'], $t['volgorde']]);
             if ($stmt->rowCount() === 1) $resultaat['taken_aangemaakt']++; // 1 = ingevoegd, 2 = bijgewerkt, 0 = ongewijzigd
         }
+        // Taken die niet meer in de definities staan en nog open zijn: opruimen (afgeronde blijven als bewijs staan).
+        $slugs = array_keys($definities);
+        $db->prepare("DELETE FROM sollicitant_taken WHERE sollicitatie_id=? AND status='open' AND taak_slug NOT IN (" . implode(',', array_fill(0, count($slugs), '?')) . ")")
+           ->execute(array_merge([$sol_id], $slugs));
         // Upload-taken: status gelijkzetten aan de aanwezige documenten
         if (function_exists('documenten_taak_bijwerken') && function_exists('document_taken')) {
             foreach (array_keys(document_taken()) as $slug) documenten_taak_bijwerken($sol_id, $slug);
@@ -90,9 +109,11 @@ function kennismakingspakket_verzekeren(int $sol_id, string $fase): void {
         $q = db()->prepare("SELECT taak_slug FROM sollicitant_taken WHERE sollicitatie_id=?");
         $q->execute([$sol_id]);
         $aanwezig = $q->fetchAll(PDO::FETCH_COLUMN);
-        $oud = array_intersect($aanwezig, ['bevestig_lidmaatschap', 'loonheffing', 'huisregels_gelezen']);
-        $mist = array_diff(array_keys(kennismakingspakket_taken_definities()), $aanwezig);
-        if ($oud || $mist) kennismakingspakket_activeren($sol_id);
+        $definities = kennismakingspakket_taken_definities();
+        $oud  = array_intersect($aanwezig, ['bevestig_lidmaatschap', 'loonheffing', 'huisregels_gelezen', 'pasfoto']);
+        $mist = array_diff(array_keys($definities), $aanwezig);
+        $weg  = array_diff($aanwezig, array_keys($definities));   // vervallen taken (bijv. pasfoto)
+        if ($oud || $mist || $weg) kennismakingspakket_activeren($sol_id);
     } catch (\Throwable $e) { error_log('kennismakingspakket_verzekeren: ' . $e->getMessage()); }
 }
 

@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.90.8');
+define('APP_VERSIE', '2.90.9');
 
 function app_changelog(): array {
     return [
+        '2.90.9' => [
+            'datum'  => '2026-09-19',
+            'titel'  => 'Takenpakket: pasfoto vervallen, huisregels plaatsbaar, uitleg bij ondertekenen',
+            'punten' => [
+                'De taak "Pasfoto uploaden" is vervallen; de taak verdwijnt automatisch en een al geüploade pasfoto wordt vernietigd, omdat niemand hem nog nodig heeft',
+                'De huisregels kun je nu als pdf plaatsen bij Instellingen › Algemeen › Taken na aannemen; de taak "Huisregels lezen" krijgt dan automatisch een downloadlink en staat tot die tijd als "volgt binnenkort" klaar',
+                'Bij het zetten van je handtekening en bij de verificatiecode staat een info-bolletje met korte uitleg waarom dat zo werkt (op de telefoon opent de uitleg onderin, op de computer naast het bolletje)',
+                'Taken die niet meer bestaan worden bij aangenomen sollicitanten opgeruimd; afgeronde taken blijven staan',
+            ],
+        ],
         '2.90.8' => [
             'datum'  => '2026-09-19',
             'titel'  => 'Fix: verificatiecode bij ondertekenen werd altijd afgekeurd',
