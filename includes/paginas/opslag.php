@@ -26,15 +26,32 @@ function pag_asset_typen(): array {
 }
 
 /**
- * Maximale grootte van één geüpload ontwerp. Standaard 10 MB: een export uit een
+ * Maximale grootte van één geüpload ontwerp. Standaard 16 MB: een export uit een
  * ontwerptool heeft vaak afbeeldingen en lettertypen als data-URI in de HTML zitten,
- * en die lopen snel over 2 MB heen. Staat de server lager (upload_max_filesize /
+ * en die lopen makkelijk over 10 MB heen. Staat de server lager (upload_max_filesize /
  * post_max_size in Plesk), dan telt die grens — daarom hier al het minimum van beide,
  * zodat het scherm nooit meer belooft dan er aankomt.
+ *
+ * Hoger dan dit is onverstandig, ook als de server het aankan: het nalezen van het
+ * ontwerp kost ongeveer 3,5x de bestandsgrootte aan werkgeheugen (gemeten: 10,6 MB →
+ * 40 MB, 25 MB → 88 MB), en de bezoeker moet dat hele bestand over 4G binnenhalen
+ * vóór hij iets ziet. Ingesloten afbeeldingen horen los geüpload te worden.
  */
 function pag_max_html_bytes(): int {
-    $kb = function_exists('instelling_int') ? instelling_int('paginas.max_html_kb', 10240) : 10240;
+    $kb = function_exists('instelling_int') ? instelling_int('paginas.max_html_kb', 16384) : 16384;
     return (int)min(max(64, $kb) * 1024, upload_server_max_bytes());
+}
+
+/**
+ * Past een bestand van deze grootte nog in het werkgeheugen van dit proces?
+ * De scan houdt de HTML plus de zoekresultaten vast; reken op 4x de bestandsgrootte.
+ * Zonder deze controle stopt PHP halverwege met een fatale fout — een witte pagina
+ * zonder uitleg, precies op het moment dat de beheerder zijn ontwerp uploadt.
+ */
+function pag_geheugen_genoeg(int $bytes): bool {
+    $limiet = upload_ini_bytes((string)ini_get('memory_limit'));
+    if ($limiet <= 0 || $limiet === PHP_INT_MAX) return true;   // geen limiet ingesteld
+    return ($bytes * 4) < ($limiet - memory_get_usage(true));
 }
 
 function pag_max_asset_bytes(): int {

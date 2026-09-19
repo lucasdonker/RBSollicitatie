@@ -131,7 +131,8 @@ require __DIR__ . '/layout_top.php';
           <div class="ds-veld">
             <label class="ds-label" for="pg-ontwerp">HTML-bestand</label>
             <input class="ds-input pg-bestand" type="file" id="pg-ontwerp" name="ontwerp" accept=".html,.htm,text/html" required aria-describedby="pg-ontwerp-hint">
-            <p class="ds-veld-hint" id="pg-ontwerp-hint">Eén .html-bestand, maximaal <?= h(pag_bytes_tekst(pag_max_html_bytes())) ?>. Het ontwerp wordt niet aangepast; je krijgt eerst een rapport te zien.</p>
+            <p class="ds-veld-hint" id="pg-ontwerp-hint">Eén .html-bestand, maximaal <?= h(pag_bytes_tekst(pag_max_html_bytes())) ?>. Het ontwerp wordt niet aangepast; je krijgt eerst een rapport te zien.<br>
+              Is het bestand groter dan een paar honderd KB, dan zitten de afbeeldingen er waarschijnlijk in verwerkt. Upload die hieronder los: de pagina laadt dan een stuk sneller op een telefoon.</p>
           </div>
           <button type="submit" class="ds-btn ds-btn-primair"><?= icoon('upload', 18) ?> Inlezen</button>
         </form>

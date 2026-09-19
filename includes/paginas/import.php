@@ -31,6 +31,15 @@ function pag_upload_valideer(array $upload): array {
     if ($grootte <= 0)   { $mis['fout'] = 'Het bestand is leeg.'; return $mis; }
     if ($grootte > $max) { $mis['fout'] = 'Het bestand is ' . pag_bytes_tekst($grootte) . '; het maximum is ' . pag_bytes_tekst($max) . '.'; return $mis; }
 
+    // Het nalezen kost ongeveer 4x de bestandsgrootte aan werkgeheugen. Past dat niet,
+    // dan valt PHP halverwege stil met een witte pagina; liever nu een duidelijke melding.
+    if (!pag_geheugen_genoeg($grootte)) {
+        $mis['fout'] = 'Het bestand is ' . pag_bytes_tekst($grootte) . ' en dat past niet in het werkgeheugen van de server (memory_limit staat op '
+                     . (string)ini_get('memory_limit') . '). Zet memory_limit in Plesk op minstens ' . pag_bytes_tekst($grootte * 4 + 33554432)
+                     . ', of maak het ontwerp kleiner door de ingesloten afbeeldingen los te uploaden.';
+        return $mis;
+    }
+
     $naam = (string)($upload['name'] ?? 'ontwerp.html');
     $ext  = strtolower(pathinfo($naam, PATHINFO_EXTENSION));
     if (!in_array($ext, ['html', 'htm'], true)) {
@@ -61,6 +70,28 @@ function pag_upload_valideer(array $upload): array {
     return ['ok' => true, 'html' => $html, 'naam' => substr(preg_replace('/[^A-Za-z0-9._-]+/', '_', $naam), 0, 200), 'fout' => ''];
 }
 
+/**
+ * Zoeken in een ontwerp, met vangnet.
+ *
+ * PCRE stopt bij een te grote of te ingewikkelde tekst na pcre.backtrack_limit stappen
+ * (standaard 1 miljoen) en geeft dan false terug — geen exception, geen waarschuwing.
+ * Zonder deze wikkel zou zo'n bevinding stil uit het rapport verdwijnen en zou de
+ * beheerder een onvolledig rapport voor een schoon ontwerp aanzien. $onleesbaar wordt
+ * dan gezet, zodat het rapport dat eerlijk meldt.
+ */
+function pag_zoek_alles(string $patroon, string $html, ?array &$treffers, int $vlaggen, bool &$onleesbaar): int {
+    $n = @preg_match_all($patroon, $html, $treffers, $vlaggen);
+    if ($n === false) { $treffers = []; $onleesbaar = true; return 0; }
+    return (int)$n;
+}
+
+/** Idem, voor een enkele controle: staat dit erin, ja of nee? */
+function pag_zoek(string $patroon, string $html, bool &$onleesbaar): bool {
+    $n = @preg_match($patroon, $html);
+    if ($n === false) { $onleesbaar = true; return false; }
+    return $n === 1;
+}
+
 /** Hostnamen van bekende trackers; die verdienen altijd een waarschuwing. */
 function pag_tracker_patronen(): array {
     return ['google-analytics', 'googletagmanager', 'doubleclick', 'connect.facebook', 'facebook.net',
@@ -73,11 +104,18 @@ function pag_tracker_patronen(): array {
  * DOM-parser: we schonen toch niets op, dus een grove maar volledige lijst is nuttiger dan
  * een nette boom — en het scheelt een afhankelijkheid van libxml.
  *
+ * Let op bij het uitbreiden: PCRE geeft bij een groot bestand géén foutmelding maar false
+ * (pcre.backtrack_limit, standaard 1 miljoen stappen). Een bevinding zou dan stil uit het
+ * rapport verdwijnen en de beheerder zou een onveilig ontwerp als schoon bevestigen. Zoek
+ * daarom altijd via pag_zoek_alles()/pag_zoek() hieronder, en vermijd een lui `.*?` met /s
+ * over de hele tekst — gebruik een vorm die niet terugkrabbelt, zoals (?:[^<]++|<(?!\/x))*+.
+ *
  * Retour: ['bevindingen'=>[['niveau','titel','detail']], 'hosts'=>[...], 'telling'=>[niveau=>n]]
  */
 function pag_scan_html(string $html): array {
     $b = [];
     $hosts = [];
+    $onleesbaar = false;   // is een van de zoekopdrachten vastgelopen?
 
     $extern = function (string $url): ?string {
         if (!preg_match('~^(?:https?:)?//([^/"\'\s]+)~i', trim($url), $m)) return null;
@@ -87,7 +125,7 @@ function pag_scan_html(string $html): array {
     };
 
     // ── Hoog: externe scripts, frames en formulieren ──
-    if (preg_match_all('/<script[^>]+src\s*=\s*["\']?([^"\'>\s]+)/i', $html, $m)) {
+    if (pag_zoek_alles('/<script[^>]+src\s*=\s*["\']?([^"\'>\s]+)/i', $html, $m, 0, $onleesbaar)) {
         foreach ($m[1] as $url) {
             $host = $extern($url);
             if ($host === null) continue;
@@ -95,7 +133,7 @@ function pag_scan_html(string $html): array {
             $b[] = ['niveau' => 'hoog', 'titel' => 'Extern script', 'detail' => $host . ' — deze code draait mee op de pagina en kan door de eigenaar van die server gewijzigd worden.'];
         }
     }
-    if (preg_match_all('/<(iframe|embed|object)[^>]+(?:src|data)\s*=\s*["\']?([^"\'>\s]+)/i', $html, $m, PREG_SET_ORDER)) {
+    if (pag_zoek_alles('/<(iframe|embed|object)[^>]+(?:src|data)\s*=\s*["\']?([^"\'>\s]+)/i', $html, $m, PREG_SET_ORDER, $onleesbaar)) {
         foreach ($m as $set) {
             $host = $extern($set[2]);
             if ($host === null) continue;
@@ -103,7 +141,7 @@ function pag_scan_html(string $html): array {
             $b[] = ['niveau' => 'hoog', 'titel' => 'Externe inhoud (' . strtolower($set[1]) . ')', 'detail' => $host];
         }
     }
-    if (preg_match_all('/<form[^>]+action\s*=\s*["\']?([^"\'>\s]+)/i', $html, $m)) {
+    if (pag_zoek_alles('/<form[^>]+action\s*=\s*["\']?([^"\'>\s]+)/i', $html, $m, 0, $onleesbaar)) {
         foreach ($m[1] as $url) {
             $host = $extern($url);
             if ($host === null) continue;
@@ -120,13 +158,16 @@ function pag_scan_html(string $html): array {
     }
 
     // ── Midden: inline script, externe stijlen, netwerkverkeer, opslag ──
-    if (preg_match_all('/<script(?![^>]*\bsrc\b)[^>]*>(.*?)<\/script>/is', $html, $m)) {
+    // De inhoud wordt gepakt met (?:[^<]++|<(?!\/script))*+ in plaats van een lui `.*?`:
+    // dat laatste liep bij een script van meer dan ~1 MB vast op de backtrack-limiet,
+    // waarna deze bevinding stil uit het rapport verdween.
+    if (pag_zoek_alles('/<script(?![^>]*\bsrc\b)[^>]*>((?:[^<]++|<(?!\/script))*+)<\/script>/i', $html, $m, 0, $onleesbaar)) {
         $bytes = array_sum(array_map('strlen', $m[1]));
         if ($bytes > 0) {
             $b[] = ['niveau' => 'midden', 'titel' => 'Scripts in het bestand zelf', 'detail' => count($m[1]) . ' stuk(s), samen ' . round($bytes / 1024, 1) . ' KB. Deze code draait op de pagina; hij is niet gecontroleerd.'];
         }
     }
-    if (preg_match_all('/<link[^>]+rel\s*=\s*["\']?stylesheet["\']?[^>]*href\s*=\s*["\']?([^"\'>\s]+)|@import\s+(?:url\()?["\']([^"\')]+)/i', $html, $m, PREG_SET_ORDER)) {
+    if (pag_zoek_alles('/<link[^>]+rel\s*=\s*["\']?stylesheet["\']?[^>]*href\s*=\s*["\']?([^"\'>\s]+)|@import\s+(?:url\()?["\']([^"\')]+)/i', $html, $m, PREG_SET_ORDER, $onleesbaar)) {
         foreach ($m as $set) {
             $host = $extern($set[1] ?: ($set[2] ?? ''));
             if ($host === null) continue;
@@ -136,15 +177,15 @@ function pag_scan_html(string $html): array {
             $b[] = ['niveau' => $niveau, 'titel' => 'Externe stijl of lettertype', 'detail' => $host . $extra];
         }
     }
-    if (preg_match('/\bfetch\s*\(|XMLHttpRequest|sendBeacon|new\s+WebSocket/i', $html)) {
+    if (pag_zoek('/\bfetch\s*\(|XMLHttpRequest|sendBeacon|new\s+WebSocket/i', $html, $onleesbaar)) {
         $b[] = ['niveau' => 'midden', 'titel' => 'De pagina verstuurt gegevens', 'detail' => 'Er staat code in die zelf netwerkverkeer opzet (fetch/XHR/WebSocket). Dit wordt geblokkeerd tenzij je de host hieronder toestaat.'];
     }
-    if (preg_match('/localStorage|sessionStorage|document\.cookie/i', $html)) {
+    if (pag_zoek('/localStorage|sessionStorage|document\.cookie/i', $html, $onleesbaar)) {
         $b[] = ['niveau' => 'midden', 'titel' => 'De pagina slaat iets op bij de bezoeker', 'detail' => 'Cookies of browseropslag. Voor niet-noodzakelijke opslag is toestemming vooraf nodig.'];
     }
 
     // ── Laag ──
-    if (preg_match_all('/<img[^>]+src\s*=\s*["\']?([^"\'>\s]+)/i', $html, $m)) {
+    if (pag_zoek_alles('/<img[^>]+src\s*=\s*["\']?([^"\'>\s]+)/i', $html, $m, 0, $onleesbaar)) {
         $ext_img = [];
         foreach ($m[1] as $url) { $host = $extern($url); if ($host !== null) $ext_img[$host] = true; }
         foreach (array_keys($ext_img) as $host) {
@@ -152,7 +193,7 @@ function pag_scan_html(string $html): array {
             $b[] = ['niveau' => 'laag', 'titel' => 'Afbeelding van een andere website', 'detail' => $host . ' — upload hem liever bij de pagina, dan blijft hij werken.'];
         }
     }
-    if (preg_match_all('/\son[a-z]+\s*=\s*["\']/i', $html, $m)) {
+    if (pag_zoek_alles('/\son[a-z]+\s*=\s*["\']/i', $html, $m, 0, $onleesbaar)) {
         $b[] = ['niveau' => 'laag', 'titel' => 'Klik- en muisacties in de opmaak', 'detail' => count($m[0]) . ' stuk(s) (onclick en dergelijke).'];
     }
     if (stripos($html, 'javascript:') !== false) {
@@ -163,21 +204,28 @@ function pag_scan_html(string $html): array {
     if (!str_contains($html, '[[formulier]]')) {
         $b[] = ['niveau' => 'info', 'titel' => 'Geen aanmeldformulier op de pagina', 'detail' => 'Zet [[formulier]] in het ontwerp op de plek waar het formulier moet komen. Zonder die markering staat er geen formulier op de pagina.'];
     }
-    if (!preg_match('/<html[^>]+lang\s*=/i', $html)) {
+    if (!pag_zoek('/<html[^>]+lang\s*=/i', $html, $onleesbaar)) {
         $b[] = ['niveau' => 'info', 'titel' => 'Taal niet vastgelegd', 'detail' => 'Zet lang="nl" op de html-tag, zodat voorleessoftware de juiste uitspraak gebruikt.'];
     }
-    if (!preg_match('/<title[^>]*>\s*\S/i', $html)) {
+    if (!pag_zoek('/<title[^>]*>\s*\S/i', $html, $onleesbaar)) {
         $b[] = ['niveau' => 'info', 'titel' => 'Geen paginatitel', 'detail' => 'Zonder <title> ziet een bezoeker geen naam in het tabblad en in zoekresultaten.'];
     }
-    if (!preg_match('/<h1[\s>]/i', $html)) {
+    if (!pag_zoek('/<h1[\s>]/i', $html, $onleesbaar)) {
         $b[] = ['niveau' => 'info', 'titel' => 'Geen hoofdkop (h1)', 'detail' => 'Eén duidelijke h1 helpt bezoekers die met voorleessoftware navigeren.'];
     }
     $zonder_alt = 0;
-    if (preg_match_all('/<img\b[^>]*>/i', $html, $m)) {
+    if (pag_zoek_alles('/<img\b[^>]*>/i', $html, $m, 0, $onleesbaar)) {
         foreach ($m[0] as $tag) { if (!preg_match('/\balt\s*=/i', $tag)) $zonder_alt++; }
     }
     if ($zonder_alt > 0) {
         $b[] = ['niveau' => 'info', 'titel' => $zonder_alt . ' afbeelding(en) zonder alt-tekst', 'detail' => 'Voeg alt="" toe bij sierafbeeldingen en een korte omschrijving bij inhoudelijke afbeeldingen.'];
+    }
+
+    // Is er onderweg iets vastgelopen, dan is het rapport niet compleet. Dat moet de
+    // beheerder weten vóór hij bevestigt — stilte zou hier voor "schoon" doorgaan.
+    if ($onleesbaar) {
+        $b[] = ['niveau' => 'hoog', 'titel' => 'Het ontwerp kon niet helemaal worden nagelezen',
+                'detail' => 'Een deel van het bestand was te groot of te ingewikkeld om te doorzoeken, waardoor dit rapport onvolledig is. Maak het ontwerp kleiner (haal ingesloten afbeeldingen eruit en upload ze los) of laat iemand het bestand nakijken voordat je het live zet.'];
     }
 
     $telling = ['hoog' => 0, 'midden' => 0, 'laag' => 0, 'info' => 0];

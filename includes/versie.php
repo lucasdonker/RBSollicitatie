@@ -9,11 +9,14 @@ function app_changelog(): array {
     return [
         '2.92.1' => [
             'datum'  => '2026-09-19',
-            'titel'  => "Landingspagina's: grotere ontwerpen uploaden",
+            'titel'  => "Landingspagina's: grotere ontwerpen uploaden, en het rapport klopt weer",
             'punten' => [
-                'Een ontwerp mag nu 10 MB zijn in plaats van 2 MB. Exports uit een ontwerptool hebben afbeeldingen en lettertypen vaak in het bestand zelf zitten, en liepen daardoor tegen de oude grens aan',
+                'Een ontwerp mag nu 16 MB zijn in plaats van 2 MB. Exports uit een ontwerptool hebben afbeeldingen en lettertypen vaak in het bestand zelf zitten, en liepen daardoor tegen de oude grens aan',
                 'Het scherm toont de grens die er écht is: staat de server lager ingesteld (upload_max_filesize en post_max_size in Plesk), dan zie je díe waarde en niet een belofte die niet waargemaakt kan worden',
                 'Is een bestand te groot voor de server, dan krijg je nu een duidelijke melding met de maximale grootte in plaats van een onbegrijpelijke beveiligingsfout',
+                'Belangrijk voor de veiligheid: bij een ontwerp met een script van meer dan ongeveer 1 MB viel de waarschuwing "Scripts in het bestand zelf" stil uit het rapport weg. Het nalezen liep vast op een grens van PHP en meldde dat niet. Nu wordt zo\'n script wél gevonden, en loopt er toch iets vast, dan zegt het rapport dat het onvolledig is',
+                'Past een bestand niet in het werkgeheugen van de server, dan krijg je een melding met de benodigde instelling in plaats van een witte pagina',
+                'De uploadhulp wijst erop dat ingesloten afbeeldingen beter los geüpload kunnen worden: dat scheelt de bezoeker veel laadtijd op een telefoon',
             ],
         ],
         '2.92.0' => [
