@@ -18,11 +18,21 @@ function pag_basis_map(): string { return dirname(__DIR__, 2) . '/uploads/pagina
 /**
  * Toegestane bestandstypen voor bijgeüploade afbeeldingen.
  * Bewust géén SVG: die kan script bevatten en zou onder script-src 'self' draaien.
- * Bewust ook geen ico/woff2/avif: daarvan wijkt de mime per server af, waardoor de
- * magic-bytes-controle in upload_valideer() legitieme bestanden zou weigeren.
+ * Bewust ook geen ico/avif: die staan ook niet in de .htaccess van de assets-map, dus ze
+ * zouden wel op schijf komen maar nooit uitgeleverd worden.
+ * Heet een bestand .jpg maar is het in werkelijkheid een png, dan corrigeert
+ * upload_valideer() de extensie — dat is geen fout meer.
  */
 function pag_asset_typen(): array {
     return ['jpg'=>'image/jpeg','jpeg'=>'image/jpeg','png'=>'image/png','gif'=>'image/gif','webp'=>'image/webp'];
+}
+
+/**
+ * Hoeveel afbeeldingen mogen er in één keer omhoog. Nooit meer dan de server aanneemt:
+ * daarboven verdwijnen bestanden geruisloos uit $_FILES.
+ */
+function pag_max_assets_per_keer(): int {
+    return max(1, min(20, function_exists('upload_max_bestanden') ? upload_max_bestanden() : 20));
 }
 
 /**
@@ -254,6 +264,35 @@ function pag_asset_opslaan(string $slug, array $upload): array {
     @chmod($dir . '/assets/' . $naam, 0644);
     if (function_exists('audit_log')) audit_log('asset_toegevoegd', 'pagina', 0, ['slug' => $slug, 'bestand' => $naam]);
     return ['ok' => true, 'naam' => $naam, 'fout' => ''];
+}
+
+/**
+ * Meerdere afbeeldingen tegelijk: geeft één $_FILES-veld (los of `naam[]`) aan
+ * pag_asset_opslaan() door. Eén slecht bestand laat de rest gewoon doorgaan.
+ * Retour: ['namen'=>string[], 'fouten'=>string[], 'let_op'=>string[]]
+ */
+function pag_assets_opslaan(string $slug, array $veld): array {
+    $uit = ['namen' => [], 'fouten' => [], 'let_op' => []];
+    if (!function_exists('upload_bestanden')) { $uit['fouten'][] = 'Uploaden is niet beschikbaar.'; return $uit; }
+
+    $bestanden = upload_bestanden($veld);
+    if (!$bestanden) { $uit['fouten'][] = 'Geen afbeelding gekozen.'; return $uit; }
+
+    $max = pag_max_assets_per_keer();
+    if (count($bestanden) > $max) {
+        $uit['fouten'][] = 'Maximaal ' . $max . ' afbeeldingen per keer; de rest is niet verwerkt.';
+        $bestanden = array_slice($bestanden, 0, $max);
+    } elseif (count($bestanden) === $max) {
+        // Precies het plafond: boven max_file_uploads kapt PHP geruisloos af, dus we weten
+        // niet of er nog meer gekozen was. Zeg dat, in plaats van stil minder te doen.
+        $uit['let_op'][] = 'Dat is het maximum per keer; had je er meer gekozen, upload de rest dan in een tweede ronde.';
+    }
+    foreach ($bestanden as $b) {
+        $res = pag_asset_opslaan($slug, $b);
+        if ($res['ok']) $uit['namen'][] = $res['naam'];
+        else            $uit['fouten'][] = ($b['name'] !== '' ? basename((string)$b['name']) . ': ' : '') . $res['fout'];
+    }
+    return $uit;
 }
 
 /**

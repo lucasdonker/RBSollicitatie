@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.93.0');
+define('APP_VERSIE', '2.93.1');
 
 function app_changelog(): array {
     return [
+        '2.93.1' => [
+            'datum'  => '2026-09-19',
+            'titel'  => "Landingspagina's: afbeeldingen uploaden en het tellen van bezoeken",
+            'punten' => [
+                'Je kunt nu meerdere afbeeldingen tegelijk kiezen en in één keer uploaden (maximaal 20 per keer). Per bestand zie je of het gelukt is',
+                'Opgelost: "de inhoud van het bestand past niet bij het type" bij een gewone foto. Veel foto\'s heten .jpg maar zijn in werkelijkheid een PNG (of andersom) — bijvoorbeeld na bewerken of hernoemen. Het systeem kijkt nu naar wat er écht in het bestand zit en zet de juiste extensie erop in plaats van het bestand te weigeren. Klopt het type helemaal niet, dan staat er voortaan bij wat er dan wél in zat',
+                'Dat geldt ook voor de andere uploads in het systeem: bijlagen bij berichten en de documenten van sollicitanten (identiteitsbewijs, bankpas, pasfoto)',
+                'Opgelost: het aantal bezoeken van een landingspagina liep op zodra je van tabblad wisselde. Edge en Chrome laden een tabblad dat even in de slaapstand stond namelijk opnieuw; dat telde als nieuw bezoek. Hetzelfde gebeurde bij vernieuwen of de terug-knop. Een bezoeker telt nu nog maar één keer per half uur per pagina',
+            ],
+        ],
         '2.93.0' => [
             'datum'  => '2026-09-19',
             'titel'  => 'Logboek: alles wat er in het systeem gebeurt op één plek',

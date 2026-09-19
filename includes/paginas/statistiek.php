@@ -32,6 +32,34 @@ function pag_is_bot(): bool {
     return (bool)preg_match('/bot|crawl|spider|slurp|bingpreview|facebookexternalhit|headless|monitor|uptime|curl|wget|python-requests|okhttp|ahrefs|semrush/i', $ua);
 }
 
+/**
+ * Hoe lang na een bezoek hetzelfde bezoek nog "hetzelfde bezoek" is (minuten).
+ * Binnen dit venster telt een nieuwe paginaweergave van dezelfde bezoeker niet opnieuw mee.
+ */
+function pag_bezoek_venster_min(): int {
+    $m = function_exists('instelling_int') ? instelling_int('paginas.bezoek_venster_min', 30) : 30;
+    return max(0, min(1440, $m));
+}
+
+/**
+ * Is deze bezoeker net al geteld op deze pagina?
+ * Een browser vraagt een pagina om allerlei redenen opnieuw op zonder dat iemand hem echt
+ * opnieuw opent: terug-knop, vernieuwen, of een tabblad dat door Edge/Chrome in slaapstand
+ * is gezet en bij het terugwisselen opnieuw wordt geladen. Zonder deze controle telt dat
+ * allemaal als bezoek.
+ */
+function pag_bezoek_recent(?int $pagina_id, string $hash): bool {
+    $min = pag_bezoek_venster_min();
+    if ($min <= 0) return false;
+    try {
+        $q = db()->prepare("SELECT 1 FROM pagina_events
+                            WHERE type = 'bezoek' AND bezoeker_hash = ? AND pagina_id <=> ?
+                              AND moment > DATE_SUB(NOW(), INTERVAL ? MINUTE) LIMIT 1");
+        $q->execute([$hash, $pagina_id, $min]);
+        return (bool)$q->fetchColumn();
+    } catch (\Throwable $e) { error_log('pag_bezoek_recent: ' . $e->getMessage()); return false; }
+}
+
 /** Leg een gebeurtenis vast. Alleen het type, de pagina/bron en het dag-pseudoniem. */
 function pag_track(string $type, ?int $pagina_id, ?string $bron_code = null): void {
     if (!in_array($type, pag_event_typen(), true)) return;
@@ -39,6 +67,8 @@ function pag_track(string $type, ?int $pagina_id, ?string $bron_code = null): vo
     if ($type === 'bezoek' && pag_is_bot()) return;
     try {
         pag_auto_setup();
+        // Herhaalde weergaves binnen het venster niet nóg eens tellen.
+        if ($type === 'bezoek' && pag_bezoek_recent($pagina_id, pag_bezoeker_hash())) return;
         db()->prepare("INSERT INTO pagina_events (pagina_id, bron_code, type, bezoeker_hash) VALUES (?,?,?,?)")
             ->execute([$pagina_id, $bron_code, $type, pag_bezoeker_hash()]);
     } catch (\Throwable $e) { error_log('pag_track: ' . $e->getMessage()); }

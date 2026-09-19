@@ -50,10 +50,19 @@ de bestandsnaam:
 <img src="strand.jpg" alt="Het strand bij Paal 13">
 ```
 
+Je kunt er meerdere tegelijk kiezen (maximaal 20 per keer); per bestand hoor je of het
+gelukt is.
+
 Gebruik namen met kleine letters en streepjes, zonder spaties. Bij het uploaden wordt de
 naam namelijk omgezet ("Strand Foto.JPG" wordt `strand-foto.jpg`), en dan klopt de
 verwijzing in je ontwerp niet meer. In de lijst onder het uploadveld zie je de namen zoals
 ze werkelijk zijn opgeslagen.
+
+**De extensie kan veranderen.** Het systeem kijkt naar wat er écht in het bestand zit, niet
+naar hoe het heet. Een foto die `duinen.jpg` heet maar in werkelijkheid een PNG is (dat
+gebeurt makkelijk na bewerken of hernoemen) wordt opgeslagen als `duinen.png`. Controleer
+dus altijd de naam in de lijst voordat je ernaar verwijst. Zit er iets in wat helemaal geen
+afbeelding is, dan wordt het geweigerd en staat erbij wat het dan wél is.
 
 Geef elke afbeelding een `alt`-tekst: een korte omschrijving als hij iets vertelt, of
 `alt=""` als hij alleen versiering is.
@@ -159,6 +168,10 @@ Om unieke bezoekers te kunnen tellen wordt een versleutelde code bewaard die elk
 verandert en niet naar een persoon te herleiden is. Die code wordt na 30 dagen gewist; de
 aantallen blijven. De cijfers zelf verdwijnen na 13 maanden. Beide termijnen staan bij
 **Instellingen › Bewaartermijnen**.
+
+Dezelfde bezoeker telt hooguit **eens per 30 minuten** als bezoek op dezelfde pagina.
+Vernieuwen, de terug-knop en een tabblad dat door de browser in de slaapstand is gezet en
+daarna opnieuw laadt, tellen dus niet opnieuw mee. (Instelling `paginas.bezoek_venster_min`.)
 
 Let op: zet je ontwerp zelf een cookie of een tracker, dan gelden de gewone regels wél en is
 de brigade daarvoor verantwoordelijk. Het rapport waarschuwt daarvoor, en de browser

@@ -65,8 +65,17 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         flash($ok ? 'succes' : 'fout', $ok ? 'Die versie staat weer live.' : 'Terugrollen is niet gelukt.');
 
     } elseif ($actie === 'asset') {
-        $res = pag_asset_opslaan((string)$pagina['slug'], $_FILES['afbeelding'] ?? []);
-        flash($res['ok'] ? 'succes' : 'fout', $res['ok'] ? 'De afbeelding staat klaar als ' . $res['naam'] : $res['fout']);
+        $res = pag_assets_opslaan((string)$pagina['slug'], $_FILES['afbeelding'] ?? []);
+        // Eén flash-bericht: het gelukte deel én wat er misging (flash() overschrijft zichzelf).
+        $delen = [];
+        if ($res['namen']) {
+            $delen[] = count($res['namen']) === 1
+                ? 'De afbeelding staat klaar als ' . $res['namen'][0] . '.'
+                : count($res['namen']) . ' afbeeldingen staan klaar: ' . implode(', ', $res['namen']) . '.';
+        }
+        if ($res['let_op']) $delen[] = implode(' ', $res['let_op']);
+        if ($res['fouten']) $delen[] = 'Niet gelukt — ' . implode(' · ', $res['fouten']);
+        flash($res['fouten'] ? 'fout' : 'succes', implode(' ', $delen));
 
     } elseif ($actie === 'asset_weg') {
         pag_asset_verwijder((string)$pagina['slug'], (string)($_POST['naam'] ?? ''));
@@ -115,6 +124,7 @@ require __DIR__ . '/layout_top.php';
     <div><dt>Aanmeldingen</dt><dd><?= (int)$stat['klaar'] ?></dd></div>
     <div><dt>Omzetting</dt><dd><?= $stat['uniek'] > 0 ? (int)round($stat['klaar'] / $stat['uniek'] * 100) . '%' : '—' ?></dd></div>
   </dl>
+  <p class="pg-rij-meta">Vernieuwen, de terug-knop of een tabblad dat uit de slaapstand komt telt niet opnieuw mee: dezelfde bezoeker telt hooguit eens per <?= (int)pag_bezoek_venster_min() ?> minuten als bezoek.</p>
 
   <?php if ($rapport_versie && $mag_bewerken): ?>
     <?php require __DIR__ . '/_paginas_scan.php'; ?>
@@ -189,9 +199,9 @@ require __DIR__ . '/layout_top.php';
         <form method="post" enctype="multipart/form-data" class="pg-uploadform">
           <?= csrf_input() ?><input type="hidden" name="actie" value="asset">
           <div class="ds-veld">
-            <label class="ds-label" for="pg-afb">Afbeelding toevoegen</label>
-            <input class="ds-input pg-bestand" type="file" id="pg-afb" name="afbeelding" accept="image/jpeg,image/png,image/gif,image/webp" required aria-describedby="pg-afb-hint">
-            <p class="ds-veld-hint" id="pg-afb-hint">JPG, PNG, GIF of WebP, maximaal <?= h(pag_bytes_tekst(pag_max_asset_bytes())) ?>.</p>
+            <label class="ds-label" for="pg-afb">Afbeeldingen toevoegen</label>
+            <input class="ds-input pg-bestand" type="file" id="pg-afb" name="afbeelding[]" accept="image/jpeg,image/png,image/gif,image/webp" multiple required aria-describedby="pg-afb-hint">
+            <p class="ds-veld-hint" id="pg-afb-hint">JPG, PNG, GIF of WebP, maximaal <?= h(pag_bytes_tekst(pag_max_asset_bytes())) ?> per stuk. Je kunt er meerdere tegelijk kiezen (maximaal <?= (int)pag_max_assets_per_keer() ?>).</p>
           </div>
           <button type="submit" class="ds-btn ds-btn-secundair">Toevoegen</button>
         </form>
