@@ -242,38 +242,29 @@ window.addEventListener('resize',function(){if(window.innerWidth>768)sluitSideba
       <?php if ($_seizoen): ?>
       <span class="seizoen-badge <?= $_seizoen['status'] === 'open' ? 'open' : '' ?>">
         <?= h($_seizoen['naam']) ?> &mdash;
-        <?= $_seizoen['status'] === 'open' ? '✅ Open' : '🔒 Gesloten' ?>
+        <?= $_seizoen['status'] === 'open' ? icoon('vink-cirkel', 13) . ' Open' : icoon('slot', 13) . ' Gesloten' ?>
       </span>
       <?php endif; ?>
 
       <?php
-      // Contextuele hulp per pagina
-      $_hulp_paginas = [
-          'dashboard'       => ['Dashboard', 'Hier zie je in één oogopslag hoe het seizoen loopt. Klik op een funnel-tegel om die sollicitanten te bekijken. De systeemstatus waarschuwt als mails vastlopen of ondertekeningen te lang openstaan.'],
-          'sollicitanten'   => ['Sollicitanten', 'Het hart van het systeem. Klik op een naam voor het detailpaneel met alle gegevens, notities en acties. Selecteer meerdere rijen voor bulk-acties (uitnodigen, aannemen). Fase wijzigen verstuurt automatisch de bijbehorende mail.'],
-          'selectiedag'     => ['Selectiedag', 'Beoordeel hier sollicitanten tijdens of na de selectiedag. Vul per persoon scores en aantekeningen in. Groepsindeling helpt bij het organiseren van de dag.'],
-          'ondertekeningen' => ['Ondertekeningen', 'Overzicht van alle digitale handtekeningen (gezondheidsverklaring, intake). Bij 18+ tekent de sollicitant zelf via het portaal; bij minderjarigen tekent de ouder via een maillink. "Bekijk / Print" opent een printbare versie voor je administratie.'],
-          'documenten'      => ['Loondossiers', 'Per aangenomen strandwacht: loonheffingsformulier (verzegelde PDF), kopie identiteitsbewijs, kopie bankpas en pasfoto. Alles staat versleuteld in de kluis; elke download wordt vastgelegd. Markeer een dossier als "verwerkt" zodra de loonadministratie het heeft overgenomen; de bankpasfoto wordt daarna automatisch vernietigd.'],
-          'instellingen'    => ['Instellingen', 'Alles instelbaar: organisatie, functies, lonen, mails, automatiseringen, AI en SSO. Onder "Uitnodiging" vind je de automatiserings-toggles voor fase-wijzigingen.'],
-          'mail_templates'  => ['Mail templates', 'Bewerk hier de inhoud van alle automatische mails. Gebruik variabelen zoals {{voornaam}}. Elke template kan een eigen hero-afbeelding en kleur hebben.'],
-          'logboek'         => ['Logboek', 'Alle sporen van het systeem in één tijdlijn: wie wat wanneer deed, verstuurde berichten, technische fouten, het bewijsspoor van ondertekeningen, wat de bewaartermijnen hebben opgeruimd en mislukte inlogpogingen. Klik op een object om alles te zien wat daarmee gebeurd is. Gebruik dit om een melding te herleiden of verantwoording af te leggen.'],
-      ];
-      $_hulp = $_hulp_paginas[$actieve_nav ?? ''] ?? null;
+      // Contextuele hulp per pagina: teksten en links in includes/hulp.php (één plek).
+      $_hulp = function_exists('hulp_tekst') ? hulp_tekst((string)($actieve_nav ?? '')) : null;
       ?>
       <?php if ($_hulp): ?>
-      <button type="button" class="hulp-knop" onclick="document.getElementById('hulpPaneel').classList.toggle('open')" title="Uitleg over deze pagina" aria-label="Hulp">?</button>
+      <button type="button" class="hulp-knop" onclick="document.getElementById('hulpPaneel').classList.toggle('open')" title="Uitleg over deze pagina" aria-label="Hulp" aria-expanded="false" aria-controls="hulpPaneel">?</button>
       <?php endif; ?>
 
     </div>
   </div>
 
   <?php if ($_hulp): ?>
-  <div id="hulpPaneel" class="hulp-paneel">
+  <div id="hulpPaneel" class="hulp-paneel" role="region" aria-label="Uitleg over deze pagina">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-      <strong style="font-size:14px;color:var(--navy)">💡 <?= h($_hulp[0]) ?></strong>
-      <button type="button" onclick="document.getElementById('hulpPaneel').classList.remove('open')" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--grijs)">✕</button>
+      <strong style="font-size:14px;color:var(--navy);display:inline-flex;align-items:center;gap:6px"><?= icoon('info', 16) ?> <?= h($_hulp['titel']) ?></strong>
+      <button type="button" onclick="document.getElementById('hulpPaneel').classList.remove('open')" style="background:none;border:none;cursor:pointer;color:var(--grijs);display:inline-flex" aria-label="Sluiten"><?= icoon('kruis', 16) ?></button>
     </div>
-    <p style="margin:0;font-size:13px;line-height:1.7;color:var(--tekst-zacht)"><?= h($_hulp[1]) ?></p>
+    <p style="margin:0 0 8px;font-size:13px;line-height:1.7;color:var(--tekst-zacht)"><?= h($_hulp['tekst']) ?></p>
+    <a href="<?= h($_hulp['url']) ?>" target="_blank" rel="noopener" style="font-size:13px;color:var(--oranje);font-weight:600;display:inline-flex;align-items:center;gap:4px"><?= icoon('document', 14) ?> Lees meer in de handleiding</a>
   </div>
   <?php endif; ?>
 

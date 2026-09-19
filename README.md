@@ -1,126 +1,46 @@
-# Paal 13 Sollicitatie Systeem
+# Paal 13 Sollicitatiesysteem
 
-## Omgevingen (test & productie via Git)
+Sollicitatiesysteem van Reddingsbrigade Paal 13 (Callantsoog en Groote Keeten): van aanmelding tot
+aangenomen strandwacht. Portaal voor sollicitanten (`/portaal/`), beheer voor het bestuur
+(`/admin/`), landingspagina's (`/p/<naam>`) en een API voor de website (`/api/`).
 
-Dit systeem draait in twee omgevingen, elk met een eigen database en eigen `config.php`:
+PHP 8.3, MariaDB, Apache/PHP-FPM op Plesk (Cloud86). Authentik voor SSO. Geen framework, geen
+Composer.
 
-| Omgeving   | Adres                          | Branch        | Uitrol      |
-|------------|--------------------------------|---------------|-------------|
-| Productie  | sollicitatie.paal13.com        | `main`        | automatisch |
-| Test       | test.sollicitatie.paal13.com   | `Development` | automatisch |
+## Documentatie
 
-Werkwijze: wijzigingen commit je op `Development` → Plesk rolt automatisch uit naar test
-→ testen → merge `Development` naar `main` → in Plesk "Deploy from Repository" → productie live.
+| Voor wie | Document |
+|---|---|
+| Bestuur / beheerders | [Handleiding beheer](docs/handleiding/handleiding_beheer.md) |
+| Bestuur: landingspagina's | [Handleiding landingspagina's](docs/handleiding/landingspaginas.md) |
+| Penningmeester | [Handleiding penningmeester](docs/handleiding/handleiding_penningmeester.md) |
+| Sollicitanten en ouders | [Jouw sollicitatie bij Paal 13](docs/handleiding/handleiding_sollicitant.md) |
+| Systeembeheer (installatie, uitrol, back-up, herstel) | [Runbook systeembeheer](docs/handleiding/runbook_systeembeheer.md) |
 
-De code herkent zelf de omgeving (via `APP_URL`) en toont op test een oranje
-**TESTOMGEVING**-label in het beheer, zodat je nooit per ongeluk op productie test.
+Van elke handleiding staat een Word-versie in `docs/handleiding/word/` en een HTML-versie ernaast;
+die maak je opnieuw met `docs/handleiding/maak_export.ps1` (pandoc) na elke tekstwijziging.
+Het vraagteken rechtsboven in het beheer linkt naar het juiste hoofdstuk.
 
-**Belangrijk:** `includes/config.php` bevat wachtwoorden en staat in `.gitignore` — nooit
-in Git. Ook `uploads/` en `_backups/` blijven per server (buiten Git). Een nieuwe server
-opzetten: kopieer `includes/config.template.php` naar `includes/config.php` en vul de
-echte waarden in, of doorloop de installatiewizard op `/setup/`.
+## Omgevingen
 
----
+| Omgeving | Adres | Branch | Uitrol |
+|---|---|---|---|
+| Productie | sollicitatie.paal13.com | `main` | handmatig via Plesk › Git › Deploy |
+| Test | test.sollicitatie.paal13.com | `Development` | automatisch bij elke push |
 
+Werkwijze: bouwen op `Development` → testen op de testomgeving → merge naar `main` → uitrollen
+volgens de checklist in het runbook. `includes/config.php` bevat de geheimen en staat nooit in Git;
+`includes/config.template.php` is het voorbeeld.
 
-## Installatie (eerste keer)
+## Voor ontwikkelaars
 
-### 1. Database aanmaken
-- Open phpMyAdmin op Cloud86
-- Maak database aan: `paal13_sollicitatie`
-- Maak gebruiker aan met alle rechten op die database
-
-### 2. Bestanden uploaden
-- Upload de gehele map naar je server, bijv. `/public_html/sollicitatie/`
-- Subdomein `sollicitatie.paal13.com` → map `/public_html/sollicitatie/`
-- **Controleer rechten:**
-  - `includes/` → 755
-  - `uploads/` → 755 (schrijfbaar voor PHP)
-
-### 3. Logo uploaden
-- Upload jouw logo als `assets/img/logo.png`
-- Aanbevolen: 200×60px, transparante achtergrond, wit
-
-### 4. Installatie wizard
-- Ga naar: `https://sollicitatie.paal13.com/setup/`
-- Stap 1: Database gegevens invullen → schema wordt automatisch aangemaakt
-- Stap 2: E-mailinstellingen
-- Stap 3: Authentik OIDC koppelen
-- Stap 4: Klaar!
-
-### 5. Authentik instellen
-In Authentik (`auth.paal13.com`):
-1. Applications → Providers → Nieuw → **OAuth2/OpenID Provider**
-2. Redirect URI: `https://sollicitatie.paal13.com/admin/auth_callback.php`
-3. Scopes: `openid profile email`
-4. Noteer Client ID en Client Secret
-5. Maak een Application aan met slug bijv. `paal13-sollicitatie`
-6. Wijs toe aan de groepen/gebruikers die beheerder mogen zijn
-
-### 6. Bestaande data importeren
-- Ga naar: `https://sollicitatie.paal13.com/setup/import.php`
-- Kies seizoen, fase en upload de CSV
-- Veilig om meerdere keren te draaien (dubbelen worden overgeslagen)
-
----
-
-## Updaten (nieuwe versie)
-
-1. Download nieuwe ZIP
-2. Upload alle bestanden via FTP (overschrijf alles)
-   - `includes/config.php` blijft staan — wordt nooit overschreven
-3. Ga naar: `https://sollicitatie.paal13.com/setup/update.php`
-4. Klik "Migraties uitvoeren" als er iets pending staat
-5. Klaar
-
----
-
-## URL's
-
-| Pagina | URL |
-|--------|-----|
-| Hoofdpagina | `/` |
-| Aanmeldformulier | `/aanmelden.php` |
-| Sollicitant portaal | `/portaal/?token=XXXXX` |
-| Admin dashboard | `/admin/` |
-| Installatie | `/setup/` |
-| Updaten | `/setup/update.php` |
-| Data importeren | `/setup/import.php` |
-
----
-
-## Aanmeldformulier op WordPress (paal13.com)
-
-Optie A — simpele link:
-```html
-<a href="https://sollicitatie.paal13.com/aanmelden.php" class="jouw-knop-class">
-  Aanmelden als lifeguard
-</a>
-```
-
-Optie B — iFrame (past de stijl aan):
-```html
-<iframe 
-  src="https://sollicitatie.paal13.com/aanmelden.php"
-  width="100%" 
-  height="680"
-  frameborder="0"
-  style="border-radius:12px">
-</iframe>
-```
-To DO
-
-
----
-
-## Nieuwe database kolom toevoegen (ontwikkelaar)
-
-1. Maak `sql/migratie_NNNN_omschrijving.sql` aan
-2. Gebruik `ALTER TABLE ... ADD COLUMN IF NOT EXISTS ...`
-3. Upload en voer uit via `/setup/update.php`
-
-Voorbeeld (`sql/migratie_0003_nieuw_veld.sql`):
-```sql
-ALTER TABLE `blk_formulieren`
-  ADD COLUMN IF NOT EXISTS `nieuw_veld` TEXT DEFAULT NULL AFTER `bijzonderheden`;
-```
+- `CLAUDE.md` (lokaal, niet in Git) en `docs/ai/` bevatten de werkafspraken, de projectcontext en
+  de testharnassen.
+- De changelog staat in `includes/versie.php` en is in het beheer te lezen onder
+  Instellingen › Systeem & Updates.
+- Nieuwe databasekolommen: via `db_kolom_verzeker()` in `includes/db_failsafe.php` (draait
+  automatisch één keer per versie). Grotere schemawijzigingen als `sql/migratie_NNNN_*.sql`,
+  uit te voeren via Systeem & Updates › Migraties uitvoeren.
+- Aanmeldformulier op WordPress: gebruik bij voorkeur een landingspagina. Een iframe op
+  `https://sollicitatie.paal13.com/aanmelden.php` blijft werken vanaf paal13.com (en de origins
+  die bij Instellingen › Website & API staan).

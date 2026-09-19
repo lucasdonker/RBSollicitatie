@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="nl" xml:lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc 3.11" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Handleiding landingspagina&#39;s</title>
+  <style>
+
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+  <style type="text/css">
+:root { --navy: #054d8a; --oranje: #D43D00; --tekst: #1a2230; --grijs: #5a6478; --rand: #e6e9ef; --bg: #f4f6f9; }
+html { font-size: 16px; }
+body { margin: 0; padding: 0 16px 48px; font-family: "Instrument Sans", -apple-system, "Segoe UI", Arial, sans-serif; color: var(--tekst); background: #fff; line-height: 1.6; max-width: 820px; margin-inline: auto; }
+header#title-block-header { border-bottom: 3px solid var(--navy); margin: 24px 0 16px; padding-bottom: 8px; }
+h1.title { color: var(--navy); font-size: 1.7rem; margin: 0; }
+h1 { color: var(--navy); font-size: 1.5rem; margin-top: 1.2em; }
+h2 { color: var(--navy); font-size: 1.25rem; margin-top: 2em; padding-top: 0.6em; border-top: 1px solid var(--rand); }
+h3 { color: var(--tekst); font-size: 1.05rem; margin-top: 1.4em; }
+a { color: var(--oranje); }
+nav#TOC { background: var(--bg); border-radius: 10px; padding: 12px 16px; margin: 16px 0 24px; font-size: 0.95rem; }
+nav#TOC ul { margin: 0; padding-left: 18px; }
+table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 0.92rem; }
+th, td { border: 1px solid var(--rand); padding: 6px 8px; text-align: left; vertical-align: top; }
+th { background: var(--bg); color: var(--navy); }
+code { background: var(--bg); padding: 1px 4px; border-radius: 4px; font-size: 0.9em; }
+pre { background: var(--bg); padding: 10px 12px; border-radius: 8px; overflow-x: auto; }
+pre code { background: none; padding: 0; }
+blockquote { border-left: 3px solid var(--oranje); margin: 12px 0; padding: 4px 12px; color: var(--grijs); }
+hr { border: 0; border-top: 1px solid var(--rand); margin: 24px 0; }
+@media (max-width: 600px) { html { font-size: 15px; } table { display: block; overflow-x: auto; } }
+</style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Handleiding landingspagina&#39;s</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#landingspaginas--handleiding" id="toc-landingspaginas--handleiding">Landingspagina&#39;s — handleiding</a>
+<ul>
+<li><a href="#in-het-kort" id="toc-in-het-kort">In het kort</a></li>
+<li><a href="#het-ontwerp-maken" id="toc-het-ontwerp-maken">Het ontwerp
+maken</a></li>
+<li><a href="#het-rapport" id="toc-het-rapport">Het rapport</a></li>
+<li><a href="#versies" id="toc-versies">Versies</a></li>
+<li><a href="#status" id="toc-status">Status</a></li>
+<li><a href="#herkomst-bijhouden" id="toc-herkomst-bijhouden">Herkomst
+bijhouden</a></li>
+<li><a href="#wat-we-van-bezoekers-bijhouden" id="toc-wat-we-van-bezoekers-bijhouden">Wat we van bezoekers
+bijhouden</a></li>
+<li><a href="#het-adres-wijzigen" id="toc-het-adres-wijzigen">Het adres
+wijzigen</a></li>
+<li><a href="#als-de-pagina-niet-laadt" id="toc-als-de-pagina-niet-laadt">Als de pagina niet laadt</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="landingspaginas--handleiding">Landingspagina&#39;s —
+handleiding</h1>
+<p>Een landingspagina is een eigen wervingspagina voor één doelgroep,
+met het aanmeldformulier erin. Je maakt het ontwerp waar je wilt
+(bijvoorbeeld in Claude Design) en uploadt het hier als
+HTML-bestand.</p>
+<p>Te vinden onder <strong>Beheer › Landingspagina&#39;s</strong>. Je hebt
+het recht <code>paginas</code> nodig.</p>
+<hr />
+<h2 id="in-het-kort">In het kort</h2>
+<ol type="1">
+<li>Maak een pagina aan (titel + adres).</li>
+<li>Maak een ontwerp en zet er <code>[[formulier]]</code> in waar het
+aanmeldformulier moet komen.</li>
+<li>Upload het <code>.html</code>-bestand.</li>
+<li>Lees het rapport en bevestig. Het ontwerp staat dan live.</li>
+<li>Zet de status op <strong>Gepubliceerd</strong>.</li>
+</ol>
+<p>De pagina is dan bereikbaar op
+<code>https://sollicitatie.paal13.com/p/&lt;adres&gt;</code>.</p>
+<hr />
+<h2 id="het-ontwerp-maken">Het ontwerp maken</h2>
+<p>Eén <code>.html</code>-bestand, met de opmaak en eventuele scripts
+erin. Dat is precies wat een export uit Claude Design oplevert — die kun
+je rechtstreeks uploaden.</p>
+<p><strong>Zet <code>[[formulier]]</code> in het ontwerp</strong> op de
+plek waar het aanmeldformulier moet komen. Zonder die markering staat er
+geen formulier op de pagina; het wordt er niet vanzelf onderaan bij
+geplakt, want dat zou het ontwerp verpesten.</p>
+<p>Andere markeringen die je kunt gebruiken:</p>
+<table>
+<thead>
+<tr>
+<th>Markering</th>
+<th>Wordt</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>[[formulier]]</code></td>
+<td>Het aanmeldformulier</td>
+</tr>
+<tr>
+<td><code>[[seizoen]]</code></td>
+<td>De naam van het huidige seizoen, bijvoorbeeld &quot;zomer 2027&quot;</td>
+</tr>
+<tr>
+<td><code>[[aanmeld_url]]</code></td>
+<td>Het adres van het formulier, handig voor een eigen knop</td>
+</tr>
+<tr>
+<td><code>[[bron]]</code></td>
+<td>De bron-code van deze pagina</td>
+</tr>
+</tbody>
+</table>
+<p>Een markering die je verkeerd typt, blijft gewoon zichtbaar op de
+pagina staan. Zie je <code>[[formulir]]</code> staan, dan weet je meteen
+wat eraan scheelt.</p>
+<h3 id="afbeeldingen">Afbeeldingen</h3>
+<p>Upload afbeeldingen los bij de pagina (JPG, PNG, GIF of WebP) en
+verwijs ernaar met alleen de bestandsnaam:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode html"><code class="sourceCode html"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">img</span><span class="ot"> src</span><span class="op">=</span><span class="st">&quot;strand.jpg&quot;</span><span class="ot"> alt</span><span class="op">=</span><span class="st">&quot;Het strand bij Paal 13&quot;</span><span class="dt">&gt;</span></span></code></pre></div>
+<p>Je kunt er meerdere tegelijk kiezen (maximaal 20 per keer); per
+bestand hoor je of het gelukt is.</p>
+<p><strong>Staat er een map voor de bestandsnaam?</strong> Dat mag. Een
+ontwerp uit een ontwerptool verwijst meestal naar zijn eigen mappen
+(<code>assets/strand.jpg</code>, <code>images/duinen.jpg</code>). Bij
+ons staan alle afbeeldingen van een pagina bij elkaar in één map, dus
+telt alleen de bestandsnaam. Bij het inlezen worden die verwijzingen
+automatisch rechtgezet — ook namen met hoofdletters of spaties, want die
+worden bij het uploaden omgezet (&quot;Strand Foto.JPG&quot; wordt
+<code>strand-foto.jpg</code>). In het rapport zie je precies wat er is
+aangepast, en in de lijst onder het uploadveld staan de namen zoals ze
+werkelijk zijn opgeslagen.</p>
+<p>Verwijst het ontwerp naar een afbeelding die er nog niet is, dan zegt
+het rapport welke namen hij verwacht. Upload ze daarna onder die naam;
+opnieuw inlezen hoeft dan niet.</p>
+<p>De extensie blijft altijd die van het bestand dat je uploadt. Het
+systeem kijkt wél naar wat er écht in zit: een foto die
+<code>duinen.jpg</code> heet maar in werkelijkheid een PNG is (dat
+gebeurt makkelijk na bewerken of hernoemen) wordt gewoon opgeslagen als
+<code>duinen.jpg</code>, zodat je ontwerp blijft kloppen. Zit er iets in
+wat helemaal geen afbeelding is, dan wordt het geweigerd en staat erbij
+wat het dan wél is.</p>
+<p>Geef elke afbeelding een <code>alt</code>-tekst: een korte
+omschrijving als hij iets vertelt, of <code>alt=&quot;&quot;</code> als hij alleen
+versiering is.</p>
+<p><strong>Zitten de foto&#39;s in het HTML-bestand verwerkt?</strong> Dat
+gebeurt vanzelf als je een ontwerp uit een ontwerptool downloadt: de
+foto&#39;s staan er dan als een lange reeks tekens in
+(<code>data:image/jpeg;base64,…</code>) en het bestand wordt al snel
+tien keer zo groot. Laat het vinkje <strong>&quot;Ingesloten afbeeldingen
+losmaken&quot;</strong> dan aan staan. Bij het inlezen worden ze eruit
+gehaald en als losse afbeelding bij de pagina gezet
+(<code>ontwerp-1.jpg</code>, <code>ontwerp-2.jpg</code> …); in het
+rapport zie je precies wat er is losgemaakt. Dat scheelt bezoekers veel
+laadtijd, want de browser bewaart losse afbeeldingen en hoeft ze bij een
+volgend bezoek niet opnieuw op te halen.</p>
+<p>Wat niet als afbeelding herkend wordt (bijvoorbeeld een SVG-logo),
+blijft gewoon in het bestand staan. Het ontwerp blijft dus altijd
+werken.</p>
+<p>Wil je het liever zelf regelen, vraag dan in je ontwerptool om een
+export zonder ingesloten afbeeldingen — met
+<code>&lt;img src=&quot;strand.jpg&quot;&gt;</code> en
+<code>background-image: url(duinen.jpg)</code>, zonder
+<code>data:</code>-URI&#39;s en zonder verwijzingen naar andere websites.
+Die laatste worden namelijk geblokkeerd (zie &quot;Externe bronnen&quot;).</p>
+<hr />
+<h2 id="het-rapport">Het rapport</h2>
+<p>Het ontwerp wordt niet aangepast bij het uploaden — animaties en
+interactie blijven dus werken. (De enige uitzondering is het losmaken
+van ingesloten afbeeldingen hierboven, en dat staat achter een vinkje
+dat je kunt uitzetten.) Maar daardoor kan er ook van alles in zitten wat
+je niet wilt. Daarom krijg je na het inlezen een rapport te zien, en
+gaat het ontwerp pas live als je dat bevestigt.</p>
+<p>Waar het rapport op let:</p>
+<ul>
+<li><strong>Let op</strong> — scripts van andere websites, formulieren
+die naar een andere partij sturen, en bekende trackers zoals Google
+Analytics.</li>
+<li><strong>Aandacht</strong> — scripts in het bestand zelf, externe
+lettertypen (Google Fonts stuurt het IP-adres van de bezoeker naar de
+VS), code die netwerkverkeer opzet, en cookies of browseropslag.</li>
+<li><strong>Klein punt</strong> — afbeeldingen van andere websites,
+<code>onclick</code>-acties, <code>javascript:</code>-links.</li>
+<li><strong>Tip</strong> — een ontbrekend <code>[[formulier]]</code>,
+taal, titel, hoofdkop of alt-teksten.</li>
+</ul>
+<p>Een ontwerp dat je zelf hebt gemaakt en dat alles in het bestand zelf
+heeft staan, geeft meestal helemaal geen bevindingen.</p>
+<h3 id="externe-bronnen-toestaan">Externe bronnen toestaan</h3>
+<p>Verwijst het ontwerp naar een andere website — bijvoorbeeld
+<code>cdn.tailwindcss.com</code> voor de opmaak — dan wordt die
+<strong>standaard geblokkeerd</strong> door de browser. De pagina ziet
+er dan anders uit dan bedoeld.</p>
+<p>Bij het bevestigen van het rapport staat per host een vinkje om hem
+toe te staan. Vink alleen aan wat je vertrouwt en wat het ontwerp echt
+nodig heeft. Dat wordt vastgelegd in het logboek.</p>
+<p>Beter dan toestaan is meestal: het lettertype of de opmaak in het
+bestand zelf zetten. Dan werkt de pagina ook als die andere website
+eruit ligt, en gaan er geen gegevens van bezoekers naar derden.</p>
+<hr />
+<h2 id="versies">Versies</h2>
+<p>Elke upload is een nieuwe versie. Je ziet ze allemaal terug, kunt
+elke versie bekijken en met één klik terugzetten. De laatste tien
+versies blijven bewaard.</p>
+<p>Een net geüploade versie staat nog niet live: eerst het rapport
+bevestigen.</p>
+<hr />
+<h2 id="status">Status</h2>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Wat bezoekers zien</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Concept</td>
+<td>Een 404, behalve voor ingelogde beheerders</td>
+</tr>
+<tr>
+<td>Alleen beheerders</td>
+<td>Hetzelfde — handig om iets voor te leggen aan het bestuur</td>
+</tr>
+<tr>
+<td>Gepubliceerd</td>
+<td>De pagina, voor iedereen</td>
+</tr>
+</tbody>
+</table>
+<p>Pas bij <strong>Gepubliceerd</strong> tellen bezoeken mee in de
+statistiek. Kijk je zelf als beheerder naar een pagina die nog niet
+openbaar is, dan zie je bovenaan een balk en telt je bezoek niet
+mee.</p>
+<p>Standaard staat een pagina op &quot;niet vindbaar via Google&quot;. Dat kun je
+per pagina aanzetten.</p>
+<hr />
+<h2 id="herkomst-bijhouden">Herkomst bijhouden</h2>
+<p>Elke pagina heeft een <strong>bron-code</strong>. Die reist mee tot
+in het dossier van de sollicitant, dus je ziet later precies welke
+pagina welke aanmeldingen heeft opgeleverd — en hoeveel daarvan
+uiteindelijk zijn aangenomen. Dat overzicht staat op het dashboard en
+onderaan het overzicht van landingspagina&#39;s.</p>
+<p>Gebruik je dezelfde pagina voor meerdere advertenties, dan kun je de
+bron ook in het adres meegeven:
+<code>.../aanmelden.php?bron=instagram-mei</code>.</p>
+<hr />
+<h2 id="wat-we-van-bezoekers-bijhouden">Wat we van bezoekers
+bijhouden</h2>
+<p>Zo min mogelijk. De pagina zet <strong>geen cookies</strong> en start
+geen sessie, dus er is geen cookiemelding nodig.</p>
+<p>Om unieke bezoekers te kunnen tellen wordt een versleutelde code
+bewaard die elke dag verandert en niet naar een persoon te herleiden is.
+Die code wordt na 30 dagen gewist; de aantallen blijven. De cijfers zelf
+verdwijnen na 13 maanden. Beide termijnen staan bij <strong>Instellingen
+› Bewaartermijnen</strong>.</p>
+<p>Dezelfde bezoeker telt hooguit <strong>eens per 30 minuten</strong>
+als bezoek op dezelfde pagina. Vernieuwen, de terug-knop en een tabblad
+dat door de browser in de slaapstand is gezet en daarna opnieuw laadt,
+tellen dus niet opnieuw mee. (Instelling
+<code>paginas.bezoek_venster_min</code>.)</p>
+<p>Let op: zet je ontwerp zelf een cookie of een tracker, dan gelden de
+gewone regels wél en is de brigade daarvoor verantwoordelijk. Het
+rapport waarschuwt daarvoor, en de browser blokkeert het tot je het
+toestaat.</p>
+<hr />
+<h2 id="het-adres-wijzigen">Het adres wijzigen</h2>
+<p>Wijzig je het adres van een pagina, dan verhuizen de afbeeldingen
+automatisch mee — maar <strong>bestaande links, QR-codes en advertenties
+werken dan niet meer</strong>. Kies het adres dus meteen goed.</p>
+<p>Oude adressen van vóór deze versie (<code>/l/&lt;naam&gt;</code>)
+sturen automatisch door naar <code>/p/&lt;naam&gt;</code>.</p>
+<hr />
+<h2 id="als-de-pagina-niet-laadt">Als de pagina niet laadt</h2>
+<ul>
+<li><strong>404 terwijl de pagina bestaat</strong> — staat de status op
+Gepubliceerd? En is er een bevestigde versie? Werkt
+<code>/p/&lt;naam&gt;</code> niet maar
+<code>/p.php?s=&lt;naam&gt;</code> wel, dan ontbreekt de rewrite-regel
+in <code>.htaccess</code>; het overzichtsscherm laat dan zien welke
+regels erin moeten.</li>
+<li><strong>De pagina ziet er kaal uit</strong> — waarschijnlijk wordt
+een externe bron geblokkeerd. Kijk in het rapport van de versie welke
+hosts erin zitten en sta ze toe, of zet de opmaak in het bestand
+zelf.</li>
+<li><strong>Het formulier staat er niet</strong> —
+<code>[[formulier]]</code> ontbreekt in het ontwerp, of het seizoen
+staat niet op &quot;open&quot;. In dat laatste geval verschijnt er een melding dat
+de aanmelding gesloten is.</li>
+</ul>
+</body>
+</html>
