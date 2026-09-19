@@ -244,18 +244,108 @@ function pag_scan_niveau_label(string $niveau): string {
 }
 
 /**
- * Upload verwerken: valideren, scannen en als nieuwe (nog inactieve) versie wegschrijven.
- * Retour: ['ok'=>bool, 'versie_id'=>int, 'scan'=>array, 'fout'=>string]
+ * Ingesloten afbeeldingen losmaken.
+ *
+ * Een ontwerp uit een ontwerptool heeft zijn foto's vaak als `data:image/...;base64,…`
+ * in de HTML staan. Dat werkt wel (de CSP staat `img-src data:` toe), maar het maakt het
+ * bestand tien keer zo groot en de bezoeker moet alles binnenhalen vóór hij iets ziet.
+ * Hier halen we elke data-URI eruit, zetten hem in de assets-map en laten alleen de
+ * bestandsnaam staan. Dat werkt overal waar zo'n URI kan staan — img src, srcset,
+ * background-image in CSS — omdat we de URI zelf vervangen en niet een heel tag.
+ *
+ * Dit is de enige plek waar een geüpload ontwerp wél wordt aangepast; daarom staat het
+ * achter een keuze van de beheerder en meldt het rapport precies wat er is gebeurd.
+ * Lukt iets niet (onbekend type, te groot, schrijffout), dan blijft die ene data-URI
+ * gewoon staan: het ontwerp blijft altijd werken.
+ *
+ * Retour: ['html'=>string, 'bestanden'=>[naam,…], 'overgeslagen'=>int,
+ *          'bytes_voor'=>int, 'bytes_na'=>int]
  */
-function pag_import_toepassen(array $pagina, array $upload): array {
+function pag_ontvlecht_afbeeldingen(string $html, string $slug, int $max_aantal = 100): array {
+    $uit = ['html' => $html, 'bestanden' => [], 'overgeslagen' => 0,
+            'bytes_voor' => strlen($html), 'bytes_na' => strlen($html)];
+
+    $gezien = [];   // sha256 => bestandsnaam, zodat dezelfde foto niet tien keer op schijf komt
+    $bestanden = [];
+    $over = 0;
+
+    // Possessief (++) zodat PCRE niet terugkrabbelt: een base64-blok is zo een paar MB.
+    // Witruimte hoort bij de match omdat base64 over meerdere regels verdeeld kan zijn.
+    $nieuw = @preg_replace_callback(
+        '~data:image/[a-z0-9.+-]{1,20};base64,([A-Za-z0-9+/=\s]++)~i',
+        function (array $m) use (&$gezien, &$bestanden, &$over, $slug, $max_aantal): string {
+            // Eerste lezing: alle witruimte eruit (base64 verdeeld over meerdere regels).
+            $staart = '';
+            $ruw = base64_decode((string)preg_replace('/\s+/', '', $m[1]), true);
+
+            // Mislukt dat, dan zit er waarschijnlijk een srcset-descriptor aan vast:
+            // `…base64,XXXX 1x, …`. Alleen het deel vóór de eerste witruimte is dan de
+            // afbeelding; de rest geven we onveranderd terug.
+            if ($ruw === false && preg_match('~^([A-Za-z0-9+/=]++)(\s[\s\S]*)$~', $m[1], $mm)) {
+                $ruw = base64_decode($mm[1], true);
+                $staart = $mm[2];
+            }
+            if ($ruw === false || $ruw === '') { $over++; return $m[0]; }
+
+            $sleutel = hash('sha256', $ruw);
+            if (isset($gezien[$sleutel])) return $gezien[$sleutel] . $staart;   // zelfde foto, zelfde bestand
+            if (count($bestanden) >= $max_aantal) { $over++; return $m[0]; }
+
+            $res = pag_asset_uit_bytes($slug, $ruw, 'ontwerp-' . (count($bestanden) + 1));
+            if (!$res['ok']) { $over++; return $m[0]; }
+
+            $gezien[$sleutel] = $res['naam'];
+            $bestanden[] = $res['naam'];
+            return $res['naam'] . $staart;
+        },
+        $html
+    );
+
+    // Loopt de vervanging vast, dan houden we het ontwerp zoals het was.
+    if ($nieuw === null) { $uit['overgeslagen'] = 1; return $uit; }
+
+    $uit['html'] = $nieuw;
+    $uit['bytes_na'] = strlen($nieuw);
+    $uit['bestanden'] = $bestanden;
+    $uit['overgeslagen'] = $over;
+    return $uit;
+}
+
+/**
+ * Upload verwerken: valideren, eventueel ingesloten afbeeldingen losmaken, scannen en
+ * als nieuwe (nog inactieve) versie wegschrijven.
+ * $opties: ['ontvlecht' => bool]
+ * Retour: ['ok'=>bool, 'versie_id'=>int, 'scan'=>array, 'ontvlecht'=>?array, 'fout'=>string]
+ */
+function pag_import_toepassen(array $pagina, array $upload, array $opties = []): array {
     $v = pag_upload_valideer($upload);
-    if (!$v['ok']) return ['ok' => false, 'versie_id' => 0, 'scan' => [], 'fout' => $v['fout']];
+    if (!$v['ok']) return ['ok' => false, 'versie_id' => 0, 'scan' => [], 'ontvlecht' => null, 'fout' => $v['fout']];
 
-    $scan = pag_scan_html($v['html']);
-    $res = pag_versie_opslaan($pagina, $v['html'], ['bron' => 'upload', 'bestandsnaam' => $v['naam'], 'scan' => $scan]);
-    if (!$res['ok']) return ['ok' => false, 'versie_id' => 0, 'scan' => $scan, 'fout' => $res['fout']];
+    $html = $v['html'];
+    $ontvlecht = null;
+    if (!empty($opties['ontvlecht'])) {
+        $ontvlecht = pag_ontvlecht_afbeeldingen($html, (string)$pagina['slug']);
+        $html = $ontvlecht['html'];
+    }
 
-    return ['ok' => true, 'versie_id' => $res['versie_id'], 'scan' => $scan, 'fout' => ''];
+    $scan = pag_scan_html($html);
+    if ($ontvlecht && $ontvlecht['bestanden']) {
+        array_unshift($scan['bevindingen'], [
+            'niveau' => 'info',
+            'titel'  => count($ontvlecht['bestanden']) . ' ingesloten afbeelding(en) losgemaakt',
+            'detail' => 'Het ontwerp ging van ' . pag_bytes_tekst($ontvlecht['bytes_voor']) . ' naar '
+                      . pag_bytes_tekst($ontvlecht['bytes_na']) . '. De afbeeldingen staan nu los bij de pagina ('
+                      . implode(', ', array_slice($ontvlecht['bestanden'], 0, 10))
+                      . (count($ontvlecht['bestanden']) > 10 ? ', …' : '') . ') en worden door de browser apart bewaard.'
+                      . ($ontvlecht['overgeslagen'] > 0 ? ' ' . $ontvlecht['overgeslagen'] . ' afbeelding(en) bleven in het bestand staan, bijvoorbeeld omdat het geen jpg, png, gif of webp was.' : ''),
+        ]);
+        $scan['telling']['info'] = ($scan['telling']['info'] ?? 0) + 1;
+    }
+
+    $res = pag_versie_opslaan($pagina, $html, ['bron' => 'upload', 'bestandsnaam' => $v['naam'], 'scan' => $scan]);
+    if (!$res['ok']) return ['ok' => false, 'versie_id' => 0, 'scan' => $scan, 'ontvlecht' => $ontvlecht, 'fout' => $res['fout']];
+
+    return ['ok' => true, 'versie_id' => $res['versie_id'], 'scan' => $scan, 'ontvlecht' => $ontvlecht, 'fout' => ''];
 }
 
 /** Scanrapport bevestigen en de versie in één keer live zetten. */

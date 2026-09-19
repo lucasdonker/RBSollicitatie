@@ -31,9 +31,12 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         if ($res['ok']) { $p = pag_via_id($id); $terug = APP_URL . '/admin/paginas_bewerk.php?id=' . $id; }
 
     } elseif ($actie === 'upload') {
-        $res = pag_import_toepassen($pagina, $_FILES['ontwerp'] ?? []);
+        $res = pag_import_toepassen($pagina, $_FILES['ontwerp'] ?? [], ['ontvlecht' => !empty($_POST['ontvlecht'])]);
         if ($res['ok']) {
-            flash('succes', 'Het ontwerp is ingelezen. Lees het rapport hieronder en bevestig om het live te zetten.');
+            $los = $res['ontvlecht']['bestanden'] ?? [];
+            flash('succes', 'Het ontwerp is ingelezen'
+                . ($los ? ', met ' . count($los) . ' losgemaakte afbeelding(en)' : '')
+                . '. Lees het rapport hieronder en bevestig om het live te zetten.');
             $terug .= '&versie=' . $res['versie_id'];
         } else {
             flash('fout', $res['fout']);
@@ -131,9 +134,15 @@ require __DIR__ . '/layout_top.php';
           <div class="ds-veld">
             <label class="ds-label" for="pg-ontwerp">HTML-bestand</label>
             <input class="ds-input pg-bestand" type="file" id="pg-ontwerp" name="ontwerp" accept=".html,.htm,text/html" required aria-describedby="pg-ontwerp-hint">
-            <p class="ds-veld-hint" id="pg-ontwerp-hint">Eén .html-bestand, maximaal <?= h(pag_bytes_tekst(pag_max_html_bytes())) ?>. Het ontwerp wordt niet aangepast; je krijgt eerst een rapport te zien.<br>
-              Is het bestand groter dan een paar honderd KB, dan zitten de afbeeldingen er waarschijnlijk in verwerkt. Upload die hieronder los: de pagina laadt dan een stuk sneller op een telefoon.</p>
+            <p class="ds-veld-hint" id="pg-ontwerp-hint">Eén .html-bestand, maximaal <?= h(pag_bytes_tekst(pag_max_html_bytes())) ?>. Je krijgt eerst een rapport te zien voordat er iets live gaat.</p>
           </div>
+
+          <div class="pg-vink">
+            <input type="checkbox" id="pg-ontvlecht" name="ontvlecht" value="1" checked aria-describedby="pg-ontvlecht-hint">
+            <label for="pg-ontvlecht">Ingesloten afbeeldingen losmaken</label>
+          </div>
+          <p class="ds-veld-hint" id="pg-ontvlecht-hint">Zitten de foto's in het HTML-bestand verwerkt (dat maakt het al snel tien keer zo groot), dan worden ze eruit gehaald en als losse afbeelding bij de pagina gezet. De pagina laadt daardoor veel sneller op een telefoon. Verder blijft het ontwerp ongewijzigd, en in het rapport zie je precies wat er is losgemaakt.</p>
+
           <button type="submit" class="ds-btn ds-btn-primair"><?= icoon('upload', 18) ?> Inlezen</button>
         </form>
         <?php endif; ?>

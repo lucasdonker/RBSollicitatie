@@ -50,15 +50,38 @@ de bestandsnaam:
 <img src="strand.jpg" alt="Het strand bij Paal 13">
 ```
 
+Gebruik namen met kleine letters en streepjes, zonder spaties. Bij het uploaden wordt de
+naam namelijk omgezet ("Strand Foto.JPG" wordt `strand-foto.jpg`), en dan klopt de
+verwijzing in je ontwerp niet meer. In de lijst onder het uploadveld zie je de namen zoals
+ze werkelijk zijn opgeslagen.
+
 Geef elke afbeelding een `alt`-tekst: een korte omschrijving als hij iets vertelt, of
 `alt=""` als hij alleen versiering is.
+
+**Zitten de foto's in het HTML-bestand verwerkt?** Dat gebeurt vanzelf als je een ontwerp
+uit een ontwerptool downloadt: de foto's staan er dan als een lange reeks tekens in
+(`data:image/jpeg;base64,…`) en het bestand wordt al snel tien keer zo groot. Laat het
+vinkje **"Ingesloten afbeeldingen losmaken"** dan aan staan. Bij het inlezen worden ze
+eruit gehaald en als losse afbeelding bij de pagina gezet (`ontwerp-1.jpg`, `ontwerp-2.jpg`
+…); in het rapport zie je precies wat er is losgemaakt. Dat scheelt bezoekers veel
+laadtijd, want de browser bewaart losse afbeeldingen en hoeft ze bij een volgend bezoek
+niet opnieuw op te halen.
+
+Wat niet als afbeelding herkend wordt (bijvoorbeeld een SVG-logo), blijft gewoon in het
+bestand staan. Het ontwerp blijft dus altijd werken.
+
+Wil je het liever zelf regelen, vraag dan in je ontwerptool om een export zonder
+ingesloten afbeeldingen — met `<img src="strand.jpg">` en `background-image: url(duinen.jpg)`,
+zonder `data:`-URI's en zonder verwijzingen naar andere websites. Die laatste worden
+namelijk geblokkeerd (zie "Externe bronnen").
 
 ---
 
 ## Het rapport
 
 Het ontwerp wordt niet aangepast bij het uploaden — animaties en interactie blijven dus
-werken. Maar daardoor kan er ook van alles in zitten wat je niet wilt. Daarom krijg je na
+werken. (De enige uitzondering is het losmaken van ingesloten afbeeldingen hierboven, en
+dat staat achter een vinkje dat je kunt uitzetten.) Maar daardoor kan er ook van alles in zitten wat je niet wilt. Daarom krijg je na
 het inlezen een rapport te zien, en gaat het ontwerp pas live als je dat bevestigt.
 
 Waar het rapport op let:

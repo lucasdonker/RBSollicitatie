@@ -107,7 +107,10 @@ function pag_map_verwijder(string $slug): void {
     $dir = pag_map($slug, false);
     if ($dir === null) return;
     foreach (['versies', 'assets'] as $sub) {
-        foreach (glob($dir . '/' . $sub . '/*') ?: [] as $f) { if (is_file($f)) @unlink($f); }
+        // Ook de .htaccess die pag_map() er zelf neerzet: zonder die regel blijft de map
+        // bestaan en laat een verwijderde pagina lege mappen achter op de server.
+        foreach (glob($dir . '/' . $sub . '/*') ?: [] as $f)  { if (is_file($f)) @unlink($f); }
+        foreach (glob($dir . '/' . $sub . '/.*') ?: [] as $f) { if (is_file($f)) @unlink($f); }
         @rmdir($dir . '/' . $sub);
     }
     foreach (glob($dir . '/{,.}*', GLOB_BRACE) ?: [] as $f) { if (is_file($f)) @unlink($f); }
@@ -250,6 +253,59 @@ function pag_asset_opslaan(string $slug, array $upload): array {
     }
     @chmod($dir . '/assets/' . $naam, 0644);
     if (function_exists('audit_log')) audit_log('asset_toegevoegd', 'pagina', 0, ['slug' => $slug, 'bestand' => $naam]);
+    return ['ok' => true, 'naam' => $naam, 'fout' => ''];
+}
+
+/**
+ * Een afbeelding opslaan die niet uit een upload komt maar uit het ontwerp zelf: een
+ * ingesloten data:-URI die we losmaken (zie pag_ontvlecht_afbeeldingen in import.php).
+ *
+ * Het type wordt bepaald uit de inhoud (magic bytes), niet uit wat de data-URI beweert —
+ * anders zou een ontwerp zelf kunnen bepalen met welke extensie een bestand in de
+ * publieke assets-map belandt. Alles wat niet herkenbaar jpg/png/gif/webp is, wordt
+ * geweigerd; de aanroeper laat de data-URI dan gewoon staan.
+ *
+ * Retour: ['ok'=>bool, 'naam'=>string, 'fout'=>string]
+ */
+function pag_asset_uit_bytes(string $slug, string $bytes, string $basisnaam = 'afbeelding'): array {
+    $dir = pag_map($slug);
+    if ($dir === null) return ['ok' => false, 'naam' => '', 'fout' => 'De opslagmap kon niet worden aangemaakt.'];
+
+    $lengte = strlen($bytes);
+    if ($lengte <= 0)                     return ['ok' => false, 'naam' => '', 'fout' => 'De afbeelding is leeg.'];
+    if ($lengte > pag_max_asset_bytes())  return ['ok' => false, 'naam' => '', 'fout' => 'De afbeelding is groter dan ' . pag_bytes_tekst(pag_max_asset_bytes()) . '.'];
+
+    // Eerst GD: die leest de afbeelding echt uit, dus een bestand dat alleen maar op een
+    // plaatje lijkt valt hier al af. Is finfo er ook, dan moeten beide hetzelfde zeggen.
+    $mime = '';
+    $info = @getimagesizefromstring($bytes);
+    if (is_array($info) && !empty($info['mime'])) $mime = (string)$info['mime'];
+
+    if (function_exists('finfo_open')) {
+        $fi = @finfo_open(FILEINFO_MIME_TYPE);
+        if ($fi) {
+            $fmime = (string)@finfo_buffer($fi, $bytes);
+            @finfo_close($fi);
+            if ($mime === '') {
+                $mime = $fmime;
+            } elseif ($fmime !== '' && strcasecmp($fmime, $mime) !== 0) {
+                return ['ok' => false, 'naam' => '', 'fout' => 'Het type is niet eenduidig (' . $mime . ' of ' . $fmime . ').'];
+            }
+        }
+    }
+
+    $ext = array_search(strtolower($mime), pag_asset_typen(), true);
+    if ($ext === false) return ['ok' => false, 'naam' => '', 'fout' => 'Dit is geen jpg, png, gif of webp (herkend als ' . ($mime ?: 'onbekend') . ').'];
+
+    $basis = pag_slug_maak($basisnaam) ?: 'afbeelding';
+    $naam  = $basis . '.' . $ext;
+    $n = 2;
+    while (is_file($dir . '/assets/' . $naam)) { $naam = $basis . '-' . $n . '.' . $ext; $n++; }
+
+    if (@file_put_contents($dir . '/assets/' . $naam, $bytes) === false) {
+        return ['ok' => false, 'naam' => '', 'fout' => 'Het bestand kon niet worden opgeslagen.'];
+    }
+    @chmod($dir . '/assets/' . $naam, 0644);
     return ['ok' => true, 'naam' => $naam, 'fout' => ''];
 }
 

@@ -3,10 +3,22 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.92.1');
+define('APP_VERSIE', '2.92.2');
 
 function app_changelog(): array {
     return [
+        '2.92.2' => [
+            'datum'  => '2026-09-19',
+            'titel'  => "Landingspagina's: foto's uit het ontwerp worden automatisch losgemaakt",
+            'punten' => [
+                'Download je een ontwerp uit een ontwerptool, dan zitten de foto\'s meestal ín het HTML-bestand verwerkt. Daardoor werd een pagina van een paar honderd KB er zomaar een van 10 MB, en moest een bezoeker dat hele bestand binnenhalen voordat hij iets zag',
+                'Bij het inlezen worden die foto\'s er nu uit gehaald en als losse afbeelding bij de pagina gezet. In een test ging een ontwerp van 16 MB terug naar 1 KB, met twaalf losse foto\'s ernaast. De browser bewaart die apart, dus een tweede bezoek is veel sneller',
+                'Dezelfde foto die vaker in het ontwerp staat, wordt één keer opgeslagen',
+                'In het rapport zie je precies wat er is losgemaakt en hoeveel kleiner het ontwerp is geworden. Wil je het niet, dan zet je het vinkje bij het uploaden uit',
+                'Wat geen gewone foto is (bijvoorbeeld een SVG-logo) blijft in het bestand staan, net als alles wat niet gelezen kan worden. Het ontwerp blijft dus altijd werken',
+                'Kleine opruiming: bij het verwijderen van een pagina bleven lege mappen op de server achter. Die gaan nu ook weg',
+            ],
+        ],
         '2.92.1' => [
             'datum'  => '2026-09-19',
             'titel'  => "Landingspagina's: grotere ontwerpen uploaden, en het rapport klopt weer",
