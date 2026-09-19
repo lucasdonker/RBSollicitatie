@@ -17,7 +17,8 @@ if (!$pagina) pagina_404();
 
 // Beheerder? Alleen nagaan als er al een sessiecookie is — anders starten we er ongevraagd een.
 $is_beheer = false;
-if (isset($_COOKIE[SESSION_NAME]) && function_exists('is_ingelogd')) {
+$cookie_naam = defined('SESSION_NAME') ? SESSION_NAME : 'p13sess';
+if (isset($_COOKIE[$cookie_naam]) && function_exists('is_ingelogd')) {
     $is_beheer = is_ingelogd() && mag('paginas', 'lezen');
 }
 

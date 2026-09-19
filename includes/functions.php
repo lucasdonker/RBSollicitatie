@@ -47,7 +47,6 @@ if (file_exists(__DIR__ . '/db_failsafe.php')) require_once __DIR__ . '/db_fails
 if (file_exists(__DIR__ . '/audit.php')) require_once __DIR__ . '/audit.php';
 if (file_exists(__DIR__ . '/toegang.php')) require_once __DIR__ . '/toegang.php';
 if (file_exists(__DIR__ . '/health.php')) require_once __DIR__ . '/health.php';
-if (file_exists(__DIR__ . '/landing.php')) require_once __DIR__ . '/landing.php';
 if (file_exists(__DIR__ . '/paginas.php')) require_once __DIR__ . '/paginas.php';
 if (file_exists(__DIR__ . '/kanalen.php')) require_once __DIR__ . '/kanalen.php';
 if (file_exists(__DIR__ . '/optout.php')) require_once __DIR__ . '/optout.php';

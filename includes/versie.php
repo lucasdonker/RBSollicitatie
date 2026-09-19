@@ -3,10 +3,28 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.91.2');
+define('APP_VERSIE', '2.92.0');
 
 function app_changelog(): array {
     return [
+        '2.92.0' => [
+            'datum'  => '2026-09-19',
+            'titel'  => "Landingspagina's opnieuw opgebouwd: eigen ontwerp uploaden",
+            'punten' => [
+                'Een landingspagina is nu een compleet HTML-bestand dat je uploadt, bijvoorbeeld een ontwerp uit Claude Design. De twee tekstvakken voor HTML en CSS zijn vervallen',
+                'Elke upload wordt een versie: je ziet de hele geschiedenis en kunt met één klik terug naar een eerdere versie',
+                'Na het inlezen krijg je een rapport van wat er in het ontwerp zit — externe scripts, trackers, formulieren naar andere websites, en punten rond toegankelijkheid. Het ontwerp gaat pas live als je dat rapport bevestigt',
+                'Externe bronnen (denk aan een lettertype of een script van een andere website) zijn standaard geblokkeerd en zet je per pagina bewust aan. Dat staat in het logboek',
+                'Het aanmeldformulier staat nu écht in de pagina in plaats van in een venster-in-een-venster. Daarmee klopt de hoogte altijd, past het bij het ontwerp en werkt het met toetsenbord en voorleessoftware',
+                'De pagina zet geen cookie meer en start geen sessie. Tegen misbruik zitten er een verborgen veld, een tijdmeting en een snelheidsbegrenzing op (maximaal 5 aanmeldingen per uur per adres)',
+                'Na een geslaagde aanmelding word je doorgestuurd, zodat vernieuwen geen tweede aanmelding oplevert',
+                'Afbeeldingen upload je los bij de pagina en gebruik je met alleen de bestandsnaam',
+                "Landingspagina's hebben een eigen plek in Rollen & rechten. Wie eerder sollicitanten mocht bewerken, houdt die toegang; het menu-item verbergt zich nu voor wie het recht niet heeft",
+                'Adressen zijn nu /p/<naam>. Oude /l/<naam>-links blijven werken en sturen automatisch door',
+                'De bezoekersstatistiek wordt opgeschoond: de herkenning van unieke bezoekers vervalt na 30 dagen, de cijfers zelf na 13 maanden (in te stellen bij Instellingen › Bewaartermijnen)',
+                'Bestaande landingspagina\'s zet je met één knop over; de statistiek gaat mee',
+            ],
+        ],
         '2.91.2' => [
             'datum'  => '2026-09-19',
             'titel'  => 'Fix: kapotte link in de ouder-mail en onterecht geblokkeerde berichten',
