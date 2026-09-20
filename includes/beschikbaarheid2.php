@@ -241,7 +241,7 @@ function beschikbaarheid2_effectief(int $sol_id, ?array $seizoen = null): array 
                 'pool'         => $pool,            // door sollicitant aangegeven beschikbare dagen bij verzoek
                 'voorkeur_vrij'=> $voorkeur_in_week, // wenst deze dag(en) vrij — planner beslist
                 'correctie'    => $corr ? ['soort'=>$corr['soort'], 'reden'=>$corr['reden']] : null,
-                'periode'      => $range['start']->format('j M').'–'.$range['eind']->format('j M'),
+                'periode'      => datum_kort_nl($range['start']) . '–' . datum_kort_nl($range['eind']),
                 'start'        => $range['start']->format('Y-m-d'),
             ];
         }
@@ -451,7 +451,7 @@ function beschikbaarheid2_verzoek_vars(int $verzoek_id): ?array {
     $seizoen = null;
     try { $sq = db()->prepare("SELECT * FROM seizoenen WHERE id=?"); $sq->execute([$v['seizoen_id']]); $seizoen = $sq->fetch() ?: null; } catch (\Exception $e) {}
     $wkd = seizoen_weken_datums($seizoen);
-    $lbl = function ($wn) use ($wkd) { $wn = (int)$wn; return isset($wkd[$wn]) ? 'week ' . $wn . ' (' . $wkd[$wn]['start']->format('j M') . ')' : 'week ' . $wn; };
+    $lbl = function ($wn) use ($wkd) { $wn = (int)$wn; return isset($wkd[$wn]) ? 'week ' . $wn . ' (' . datum_kort_nl($wkd[$wn]['start']) . ')' : 'week ' . $wn; };
     $weken = (int)$v['van_week'] === (int)$v['tot_week'] ? $lbl($v['van_week']) : $lbl($v['van_week']) . ' t/m ' . $lbl($v['tot_week']);
     return [
         'sollicitatie_id'    => (int)$v['sollicitatie_id'],

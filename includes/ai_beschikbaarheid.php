@@ -47,7 +47,7 @@ function ai_besch_verwerk(string $tekst, array $geldige_weken, ?array $seizoen =
     $wd = function_exists('seizoen_weken_datums') ? seizoen_weken_datums($seizoen) : [];
     foreach ($geldige_weken as $wn) {
         if (isset($wd[$wn])) {
-            $week_labels[] = "W$wn (" . $wd[$wn]['start']->format('j M') . "–" . $wd[$wn]['eind']->format('j M') . ")";
+            $week_labels[] = "W$wn (" . datum_kort_nl($wd[$wn]['start']) . "–" . datum_kort_nl($wd[$wn]['eind']) . ")";
         } else {
             $week_labels[] = "W$wn";
         }

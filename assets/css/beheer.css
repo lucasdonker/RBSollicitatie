@@ -1260,7 +1260,70 @@ button.bh-weekcel-klik:hover, button.bh-weekcel-klik:focus-visible { outline: 2p
 }
 .bh-snelkeuze:hover { border-color: var(--navy); }
 
+/* ============================================================
+   DEKKING — passen de mensen op de rollen?
+   ============================================================ */
+
+/* Blokkerende melding bovenaan: niet wegklikbaar, want zonder dit klopt de rest niet. */
+.bh-blokkade { margin-bottom: 14px; align-items: flex-start; }
+
+.bh-dekkop { padding: 16px 20px; margin-bottom: 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+.bh-dekkop-zin { font-size: 16px; font-weight: 600; }
+.bh-dekkop-zin .bh-stoplicht { font-size: 16px; }
+.bh-dekkop-legenda { margin-left: auto; display: flex; gap: 14px; flex-wrap: wrap; }
+.bh-dekkop-uitleg { flex-basis: 100%; margin: 0; font: var(--text-meta); color: var(--ink-soft); max-width: 92ch; order: 3; }
+
+.bh-dektegels { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 10px; margin-bottom: 18px; }
+.bh-dektegel {
+  display: flex; flex-direction: column; gap: 3px; text-decoration: none; color: var(--ink);
+  padding: 12px 14px; border-radius: var(--radius-md);
+  background: var(--f-vlak); border: 1px solid var(--f-rand);
+}
+.bh-dektegel:hover { border-color: var(--f-tekst); }
+.bh-dektegel.open { outline: 2px solid var(--navy); outline-offset: 1px; }
+.bh-dektegel-kop { display: flex; align-items: baseline; gap: 7px; font-size: 14px; font-weight: 700; color: var(--f-tekst); }
+.bh-dektegel-stand { margin-left: auto; font-size: 11px; font-weight: 600; }
+.bh-dektegel-datum { font: var(--text-meta); color: var(--ink-soft); margin-bottom: 5px; }
+.bh-dektegel-posten { display: flex; flex-direction: column; gap: 3px; }
+.bh-dektegel-post { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--f-tekst); }
+.bh-dektegel-post svg { flex: none; }
+
+.bh-dekdetail { padding: 16px 20px 20px; }
+.bh-dekdetail-kop { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+.bh-dekdetail-kop h2 { margin: 0; font-size: 17px; font-weight: 600; color: var(--ink); }
+.bh-dekdetail-datum { font: var(--text-meta); color: var(--ink-soft); }
+.bh-dekdetail-telling { margin-left: auto; font: var(--text-meta); color: var(--ink-muted); }
+.bh-dekdetail-kop .ds-btn { align-self: center; }
+
+.bh-dekpost { margin-top: 18px; }
+.bh-dekpost-kop { display: flex; align-items: center; gap: 9px; margin-bottom: 9px; }
+.bh-dekpost-kop h3 { margin: 0; font-size: 15px; font-weight: 600; color: var(--ink); }
+.bh-dekpost-kop svg { color: var(--ink-soft); flex: none; }
+
+.bh-rollijst { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+.bh-rolrij {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px;
+  padding: 8px 12px; border-radius: var(--radius-sm);
+  background: var(--f-vlak); border: 1px solid var(--f-rand); color: var(--ink);
+}
+.bh-rolrij-vink { display: flex; color: var(--f-tekst); flex: none; }
+.bh-rolrij-label { font-weight: 600; min-width: 140px; }
+.bh-rolrij-namen { flex: 1; min-width: 160px; color: var(--ink-soft); }
+.bh-rolrij-reserve { font: var(--text-meta); color: var(--ink-muted); margin-left: auto; white-space: nowrap; }
+
+.bh-tekort {
+  margin-top: 9px; padding: 11px 14px; border-radius: var(--radius-sm);
+  background: var(--fase-rood-vlak); border-left: 3px solid var(--fase-rood);
+}
+.bh-tekort-kop { margin: 0 0 4px; font-size: 13px; font-weight: 600; color: var(--fase-rood); }
+.bh-tekort-kop + .bh-tekort-cijfers { margin-bottom: 8px; }
+.bh-tekort-cijfers { margin: 0; font: var(--text-meta); color: var(--ink-soft); }
+.bh-tekort .bh-persoonchips { margin-top: 0; }
+
 @media (max-width: 720px) {
+  .bh-dekkop-legenda { margin-left: 0; }
+  .bh-dekdetail-telling { margin-left: 0; }
+  .bh-rolrij-reserve { margin-left: 0; }
   .bh-zijpaneel-overlay { align-items: flex-end; justify-content: stretch; }
   .bh-zijpaneel { width: 100%; height: auto; max-height: 88vh; border-left: none; border-radius: 16px 16px 0 0; }
   .bh-verzoek-knoppen { margin-left: 0; width: 100%; }

@@ -191,7 +191,7 @@ require __DIR__ . '/layout_top.php';
       <th class="fth">Functie</th>
       <?php foreach ($weken_datums as $wn => $wd): $per = loonplan_periode($wn, $seizoen); ?>
       <th class="<?= $per==='jun'?'jun-brd':'jul-brd' ?>">
-        W<?= $wn ?><br><span style="font-weight:400;font-size:10px;opacity:.8"><?= $wd['start']->format('j M') ?></span>
+        W<?= $wn ?><br><span style="font-weight:400;font-size:10px;opacity:.8"><?= h(datum_kort_nl($wd['start'])) ?></span>
       </th>
       <?php endforeach; ?>
       <th style="min-width:80px">Totaal</th>

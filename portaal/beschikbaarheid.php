@@ -42,7 +42,7 @@ $eff = function_exists('beschikbaarheid2_effectief') ? beschikbaarheid2_effectie
 $wkd = function_exists('seizoen_weken_datums') ? seizoen_weken_datums($seizoen) : [];
 $wk_label = function($wn) use ($wkd) {
     $wn = (int)$wn;
-    return isset($wkd[$wn]) ? 'week ' . $wn . ' (' . $wkd[$wn]['start']->format('j M') . ')' : 'week ' . $wn;
+    return isset($wkd[$wn]) ? 'week ' . $wn . ' (' . datum_kort_nl($wkd[$wn]['start']) . ')' : 'week ' . $wn;
 };
 $heeft_besch = $b2p && $b2['blokken'];
 $voorlopig = $heeft_besch && !empty($b2p['voorlopig']);

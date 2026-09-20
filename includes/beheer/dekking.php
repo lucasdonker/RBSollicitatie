@@ -106,4 +106,72 @@ function bh_dekking_max(array $dekking): int {
     return $max;
 }
 
+/* ── De postendekking (bezetting_dekking) ──────────────────────
+   Dat is een ándere vraag dan hierboven: niet "zijn er genoeg mensen" maar
+   "passen de mensen die er zijn op de rollen". Dezelfde drie standen, dus
+   dezelfde vertaling naar het stoplicht. */
+
+/** Vertaal de status van de bezettingsmodule naar de stand van bh_stoplicht(). */
+function bh_dek_stand(string $status): string {
+    return ['groen' => 'goed', 'oranje' => 'krap', 'rood' => 'slecht'][$status] ?? 'goed';
+}
+
+/** Het woord bij die stand. Kleur alleen is geen status, dus dit staat er altijd bij. */
+function bh_dek_woord(string $status): string {
+    return ['groen' => 'Gedekt', 'oranje' => 'Krap', 'rood' => 'Tekort'][$status] ?? 'Onbekend';
+}
+
+/**
+ * Icoonnaam voor een post.
+ *
+ * De sjablonen bewaarden hier een emoji. Die staan nog in de instelling van bestaande
+ * installaties, dus vertalen we ze in plaats van ze te negeren; nieuwe sjablonen
+ * bewaren meteen een naam uit includes/iconen.php.
+ */
+function bh_post_icoon(string $waarde): string {
+    $vertaling = [
+        '🏠' => 'huis', '🏖️' => 'strand', '🏖' => 'strand', '⛵' => 'golf', '🚑' => 'reddingsboei',
+        '🚩' => 'locatie', '⭐' => 'ster', '•' => 'locatie', '' => 'locatie',
+    ];
+    if (isset($vertaling[$waarde])) return $vertaling[$waarde];
+    // Al een naam? Dan doorgeven: icoon() valt zelf terug op een stip bij een onbekende naam.
+    return preg_match('/^[a-z_]+$/', $waarde) ? $waarde : 'locatie';
+}
+
+/** De weken met een tekort, op volgorde. */
+function bh_dek_probleemweken(array $dekking): array {
+    $uit = [];
+    foreach ($dekking as $wk => $d) if (($d['status'] ?? '') === 'rood') $uit[] = (int)$wk;
+    return $uit;
+}
+
+/** De weken die precies genoeg zijn (geen reserve). */
+function bh_dek_krappeweken(array $dekking): array {
+    $uit = [];
+    foreach ($dekking as $wk => $d) if (($d['status'] ?? '') === 'oranje') $uit[] = (int)$wk;
+    return $uit;
+}
+
+/**
+ * Eén zin over de stand van de hele reeks. Dit is de eerste regel van het scherm:
+ * de vraag "kunnen we de zomer bemannen" moet beantwoord zijn vóór je gaat kijken.
+ */
+function bh_dek_zin(array $dekking): array {
+    if (!$dekking) return ['goed', ''];
+    $rood  = bh_dek_probleemweken($dekking);
+    $oranje = bh_dek_krappeweken($dekking);
+    if ($rood) {
+        $lbl = array_map(fn($w) => 'W' . $w, $rood);
+        $zin = count($lbl) > 4
+            ? count($lbl) . ' weken met een tekort, vanaf ' . $lbl[0]
+            : 'Tekort in ' . implode(', ', $lbl);
+        return ['slecht', $zin];
+    }
+    if ($oranje) {
+        return ['krap', count($oranje) . ' ' . (count($oranje) === 1 ? 'week is' : 'weken zijn')
+                       . ' precies genoeg, zonder reserve'];
+    }
+    return ['goed', 'Alle ' . count($dekking) . ' weken gedekt, met reserve'];
+}
+
 } // function_exists

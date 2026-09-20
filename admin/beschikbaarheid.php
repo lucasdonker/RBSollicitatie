@@ -17,8 +17,6 @@ if (!$werk_start) {
     $werk_start = (new DateTime())->setISODate($jaar, 22, 1)->format('Y-m-d');
     $werk_eind  = (new DateTime())->setISODate($jaar, 35, 7)->format('Y-m-d');
 }
-$maand_kort = [1=>'jan',2=>'feb',3=>'mrt',4=>'apr',5=>'mei',6=>'jun',7=>'jul',8=>'aug',9=>'sep',10=>'okt',11=>'nov',12=>'dec'];
-
 $weken = [];
 $dag = new DateTime($werk_start);
 $eind_dag = new DateTime($werk_eind);
@@ -28,8 +26,8 @@ while ($dag <= $eind_dag) {
     $zo = (clone $dag)->modify('+6 days');
     $weken[$wn] = [
         'wn'       => $wn,
-        'kort'     => (int)$dag->format('j') . ' ' . $maand_kort[(int)$dag->format('n')],
-        'eind'     => (int)$zo->format('j') . ' ' . $maand_kort[(int)$zo->format('n')],
+        'kort'     => datum_kort_nl($dag),
+        'eind'     => datum_kort_nl($zo),
         'weektype' => function_exists('seizoen_weektype') ? seizoen_weektype($seizoen ?? [], $wn) : 'hoofd',
     ];
     $dag->modify('+7 days');
@@ -115,7 +113,7 @@ $open_verzoeken = function_exists('beschikbaarheid2_open_verzoeken') && $sid ? b
 $vz_wkd = function_exists('seizoen_weken_datums') ? seizoen_weken_datums($seizoen) : [];
 $vz_lbl = function ($wn) use ($vz_wkd) {
     $wn = (int)$wn;
-    return isset($vz_wkd[$wn]) ? 'W' . $wn . ' (' . $vz_wkd[$wn]['start']->format('j M') . ')' : 'W' . $wn;
+    return isset($vz_wkd[$wn]) ? 'W' . $wn . ' (' . datum_kort_nl($vz_wkd[$wn]['start']) . ')' : 'W' . $wn;
 };
 
 // Dekking: dezelfde norm als het dekkingsscherm, uit Posten & bezetting

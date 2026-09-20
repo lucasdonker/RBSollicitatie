@@ -463,10 +463,26 @@ function actief_seizoen(): ?array {
 function h(string $s): string { return htmlspecialchars($s, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); }
 function redirect(string $url): never { header('Location: ' . $url); exit; }
 
+/** De Nederlandse maandafkortingen, 1-gebaseerd. Eén bron: DateTime::format('M') is Engels. */
+function maanden_kort_nl(): array {
+    return [1=>'jan',2=>'feb',3=>'mrt',4=>'apr',5=>'mei',6=>'jun',7=>'jul',8=>'aug',9=>'sep',10=>'okt',11=>'nov',12=>'dec'];
+}
+
 function datum_nl(?string $d): string {
     if (!$d) return '—';
-    try { $dt = new DateTime($d); $m = ['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec']; return $dt->format('j') . ' ' . $m[(int)$dt->format('n') - 1] . ' ' . $dt->format('Y'); }
+    try { $dt = new DateTime($d); return $dt->format('j') . ' ' . maanden_kort_nl()[(int)$dt->format('n')] . ' ' . $dt->format('Y'); }
     catch (Exception $e) { return $d; }
+}
+
+/**
+ * "22 jun" — dag en maand zonder jaartal, voor weekranges en rasterkoppen.
+ * Neemt een DateTime of een datumstring; format('j M') gaf hier overal "22 Jun".
+ */
+function datum_kort_nl($d): string {
+    if (!$d) return '';
+    try { $dt = $d instanceof DateTimeInterface ? $d : new DateTime((string)$d); }
+    catch (Exception $e) { return (string)$d; }
+    return $dt->format('j') . ' ' . maanden_kort_nl()[(int)$dt->format('n')];
 }
 
 function volledige_naam(array $p): string {

@@ -19,9 +19,12 @@
 /** Standaard bezettingssjablonen (per weektype identiek; instelbaar via Instellingen). */
 function bezetting_default_sjablonen(): array {
     return [
+        // 'icoon' is een naam uit includes/iconen.php. Oudere installaties hebben hier
+        // nog een emoji staan; bh_post_icoon() vertaalt die, zodat de interface
+        // emoji-vrij blijft zonder dat er een migratie nodig is.
         'hoofdpost' => [
             'naam'  => 'Hoofdpost',
-            'icoon' => '🏠',
+            'icoon' => 'huis',
             'rollen' => [
                 // sleutel => [label, categorie, min_rang, aantal]
                 ['sleutel'=>'chauffeur',      'label'=>'Chauffeur',       'categorie'=>'rijden',    'min_rang'=>2, 'aantal'=>1],
@@ -33,7 +36,7 @@ function bezetting_default_sjablonen(): array {
         ],
         'gk' => [
             'naam'  => 'Tweede post (GK)',
-            'icoon' => '🏖️',
+            'icoon' => 'strand',
             'rollen' => [
                 ['sleutel'=>'gk_lifeguard', 'label'=>'Lifeguard GK', 'categorie'=>'lifeguard', 'min_rang'=>2, 'aantal'=>2],
             ],
