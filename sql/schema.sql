@@ -113,7 +113,7 @@ CREATE TABLE IF NOT EXISTS `otp_tokens` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `email` VARCHAR(200) NOT NULL,
   `code_hash` VARCHAR(64) NOT NULL,
-  `type` ENUM('portaal','beheerder') NOT NULL DEFAULT 'portaal',
+  `type` VARCHAR(30) NOT NULL DEFAULT 'portaal',  -- vrije sleutel: portaal | beheerder | ond<id> (2FA ondertekenen)
   `pogingen` TINYINT NOT NULL DEFAULT 0,
   `gebruikt` TINYINT(1) NOT NULL DEFAULT 0,
   `vervalt_op` DATETIME NOT NULL,
@@ -147,6 +147,5 @@ SET foreign_key_checks = 1;
 INSERT IGNORE INTO `seizoenen` (`naam`, `status`) VALUES ('Zomer 2026', 'gesloten');
 INSERT IGNORE INTO `migraties` (`versie`, `beschrijving`) VALUES ('0001', 'Basisschema installatie');
 
--- Standaard admin: wachtwoord = "Paal13Admin!" (wijzig direct na installatie)
-INSERT IGNORE INTO `beheerders` (`naam`, `email`, `wachtwoord`, `rol`)
-VALUES ('Beheerder', 'admin@paal13.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin');
+-- Geen standaard beheerder meer (2.94.0): de eerste beheerder logt in via Authentik (groep Sol-Admin).
+-- Zie docs/handleiding/runbook_systeembeheer.md.

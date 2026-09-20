@@ -90,9 +90,31 @@ function selectiedag_auto_setup(): void {
             `besluit` ENUM('door','twijfel','niet') DEFAULT NULL,
             `notitie` VARCHAR(300) DEFAULT NULL,
             `door` VARCHAR(100) DEFAULT NULL,
+            `gebeld_op` DATETIME DEFAULT NULL,
+            `gebeld_door` VARCHAR(100) DEFAULT NULL,
+            `gebeld_notitie` VARCHAR(300) DEFAULT NULL,
+            `doorgevoerd_op` DATETIME DEFAULT NULL,
             `bijgewerkt_op` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             INDEX (`seizoen_id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        // Bestaande databases: voeg de gebeld-kolommen toe als ze nog ontbreken
+        try {
+            $dbn = $db->query("SELECT DATABASE()")->fetchColumn();
+            $bestaand = $db->prepare("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=? AND TABLE_NAME='selectie_besluit'");
+            $bestaand->execute([$dbn]);
+            $kolommen = $bestaand->fetchAll(PDO::FETCH_COLUMN);
+            $toe_te_voegen = [
+                'gebeld_op'      => "ADD COLUMN `gebeld_op` DATETIME DEFAULT NULL",
+                'gebeld_door'    => "ADD COLUMN `gebeld_door` VARCHAR(100) DEFAULT NULL",
+                'gebeld_notitie' => "ADD COLUMN `gebeld_notitie` VARCHAR(300) DEFAULT NULL",
+                'doorgevoerd_op' => "ADD COLUMN `doorgevoerd_op` DATETIME DEFAULT NULL",
+            ];
+            foreach ($toe_te_voegen as $kol => $sql) {
+                if (!in_array($kol, $kolommen, true)) {
+                    try { $db->exec("ALTER TABLE `selectie_besluit` $sql"); } catch (\Exception $e) {}
+                }
+            }
+        } catch (\Exception $e) {}
     } catch (\Exception $e) { error_log('selectiedag_auto_setup: ' . $e->getMessage()); }
 }
 
@@ -101,7 +123,7 @@ function selectie_kandidaten(int $seizoen_id): array {
     selectiedag_auto_setup();
     try {
         $q = db()->prepare("
-            SELECT s.id AS sol_id, p.voornaam, p.tussenvoegsel, p.achternaam, p.geboortedatum, p.geslacht,
+            SELECT s.id AS sol_id, p.voornaam, p.tussenvoegsel, p.achternaam, p.geboortedatum, p.geslacht, p.telefoon,
                    si.groep_id, si.aanwezig,
                    blk.foto_url, blk.bijzonderheden
             FROM sollicitaties s
@@ -549,19 +571,76 @@ function selectie_besluit_doorvoeren(int $seizoen_id): int {
     selectiedag_auto_setup();
     $besluiten = selectie_besluiten($seizoen_id);
     $n = 0;
-    $db = db();
     foreach ($besluiten as $sol_id => $b) {
-        $naar = match ($b['besluit']) {
-            'door' => 'uitgenodigd_tw',
-            'niet' => 'afgewezen',
-            default => null,
-        };
-        if ($naar === null) continue;
-        // Alleen doorvoeren als de kandidaat nog in de selectiedag-fase zit
-        $r = $db->prepare("UPDATE sollicitaties SET fase=?, gewijzigd_op=NOW()
-                           WHERE id=? AND seizoen_id=? AND fase IN ('uitgenodigd_selectie','aangemeld_selectie','selectiedag_geweest')");
-        $r->execute([$naar, $sol_id, $seizoen_id]);
-        $n += $r->rowCount();
+        if (!in_array($b['besluit'] ?? '', ['door','niet'], true)) continue;
+        // Hergebruik de per-persoon functie zodat de uitnodigingsmail (bij 'door')
+        // ook hier meegaat — anders liepen de twee routes uit elkaar.
+        if (selectie_besluit_doorvoeren_een($seizoen_id, (int)$sol_id)) $n++;
+    }
+    return $n;
+}
+
+/**
+ * Markeer één kandidaat als gebeld (met optionele notitie).
+ * Als $meteen_doorvoeren true is, wordt de fase meteen doorgezet.
+ */
+function selectie_gebeld_zetten(int $seizoen_id, int $sol_id, string $notitie, string $door, bool $meteen_doorvoeren = false): array {
+    selectiedag_auto_setup();
+    $db = db();
+    $db->prepare("UPDATE selectie_besluit SET gebeld_op=NOW(), gebeld_door=?, gebeld_notitie=? WHERE sollicitatie_id=? AND seizoen_id=?")
+       ->execute([$door, mb_substr(trim($notitie), 0, 300), $sol_id, $seizoen_id]);
+    $doorgevoerd = false;
+    if ($meteen_doorvoeren) {
+        $doorgevoerd = selectie_besluit_doorvoeren_een($seizoen_id, $sol_id);
+    }
+    return ['gebeld' => true, 'doorgevoerd' => $doorgevoerd];
+}
+
+/** Verwijder de gebeld-markering (per ongeluk aangevinkt). */
+function selectie_gebeld_wissen(int $seizoen_id, int $sol_id): void {
+    selectiedag_auto_setup();
+    db()->prepare("UPDATE selectie_besluit SET gebeld_op=NULL, gebeld_door=NULL, gebeld_notitie=NULL WHERE sollicitatie_id=? AND seizoen_id=?")
+       ->execute([$sol_id, $seizoen_id]);
+}
+
+/** Voer één kandidaat door (door → uitgenodigd_tw, niet → afgewezen). Retourneert of het lukte. */
+function selectie_besluit_doorvoeren_een(int $seizoen_id, int $sol_id): bool {
+    selectiedag_auto_setup();
+    $db = db();
+    $q = $db->prepare("SELECT besluit FROM selectie_besluit WHERE sollicitatie_id=? AND seizoen_id=?");
+    $q->execute([$sol_id, $seizoen_id]);
+    $besluit = $q->fetchColumn();
+    $naar = match ($besluit) {
+        'door' => 'uitgenodigd_tw',
+        'niet' => 'afgewezen',
+        default => null,
+    };
+    if ($naar === null || !function_exists('fase_zetten')) return false;
+    // Centrale fase-functie: 'door' → uitnodiging trainingsweekend; 'niet' → meldingstype 'afgewezen'
+    // (staat standaard uit: dat doe je persoonlijk, telefonisch).
+    $res = fase_zetten($sol_id, $naar, 'bellijst', [
+        'seizoen_id' => $seizoen_id,
+        'alleen_van' => ['uitgenodigd_selectie', 'aangemeld_selectie', 'selectiedag_geweest'],
+    ]);
+    if ($res['ok'] && !$res['ongewijzigd']) {
+        $db->prepare("UPDATE selectie_besluit SET doorgevoerd_op=NOW() WHERE sollicitatie_id=? AND seizoen_id=?")
+           ->execute([$sol_id, $seizoen_id]);
+        return true;
+    }
+    return false;
+}
+
+/** Voer alle 'gebelde maar nog niet doorgevoerde' kandidaten in één keer door. */
+function selectie_gebelde_doorvoeren(int $seizoen_id): int {
+    selectiedag_auto_setup();
+    $db = db();
+    $q = $db->prepare("SELECT sollicitatie_id FROM selectie_besluit
+                       WHERE seizoen_id=? AND gebeld_op IS NOT NULL AND doorgevoerd_op IS NULL
+                       AND besluit IN ('door','niet')");
+    $q->execute([$seizoen_id]);
+    $n = 0;
+    foreach ($q->fetchAll(PDO::FETCH_COLUMN) as $sol_id) {
+        if (selectie_besluit_doorvoeren_een($seizoen_id, (int)$sol_id)) $n++;
     }
     return $n;
 }

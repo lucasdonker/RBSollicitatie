@@ -206,6 +206,40 @@ function opschoon_run(bool $dry_run = false, string $bron = 'cron'): array {
         }
     }
 
+    // ── 5a. Inhoud van berichten (body) leegmaken — de logregel zelf blijft ──
+    $mnd_body = instelling_int('bewaar.maillog_body_mnd', 3);
+    if ($grensdatum = $grens($mnd_body)) {
+        try {
+            if ($dry_run) {
+                $c = $db->prepare("SELECT COUNT(*) FROM mail_log WHERE body IS NOT NULL AND verstuurd_op < ?");
+                $c->execute([$grensdatum]);
+                $aantal = (int)$c->fetchColumn();
+            } else {
+                $upd = $db->prepare("UPDATE mail_log SET body=NULL WHERE body IS NOT NULL AND verstuurd_op < ?");
+                $upd->execute([$grensdatum]);
+                $aantal = $upd->rowCount();
+            }
+            $uit['categorieen']['berichtinhoud_geleegd'] = $aantal;
+            if (!$dry_run && $aantal) opschoon_log_schrijf('berichtinhoud_geleegd', $aantal, $bron);
+        } catch (\Exception $e) { $uit['categorieen']['berichtinhoud_geleegd'] = 0; }
+    }
+
+    // ── 5b. Bijlagen die nergens meer aan een sjabloon hangen en ouder zijn dan N maanden ──
+    $mnd_bijl = instelling_int('bewaar.bijlagen_mnd', 12);
+    if (($grensdatum = $grens($mnd_bijl)) && function_exists('bijlagen_lijst')) {
+        try {
+            $in_gebruik = function_exists('bijlagen_in_gebruik') ? bijlagen_in_gebruik() : [];
+            $aantal = 0;
+            foreach (bijlagen_lijst() as $b) {
+                if (in_array((int)$b['id'], $in_gebruik, true) || $b['aangemaakt_op'] >= $grensdatum) continue;
+                if ($dry_run) { $aantal++; continue; }
+                if (bijlage_verwijderen((int)$b['id'])) $aantal++;
+            }
+            $uit['categorieen']['bijlagen_verwijderd'] = $aantal;
+            if (!$dry_run && $aantal) opschoon_log_schrijf('bijlagen_verwijderd', $aantal, $bron);
+        } catch (\Exception $e) { $uit['categorieen']['bijlagen_verwijderd'] = 0; }
+    }
+
     // ── 5. Mail-/actielogboek verwijderen ────────────────────────────
     $mnd = instelling_int('bewaar.maillog_mnd', 0);
     if ($grensdatum = $grens($mnd)) {
@@ -225,6 +259,87 @@ function opschoon_run(bool $dry_run = false, string $bron = 'cron'): array {
             // Tabel bestaat mogelijk nog niet — dan is er niets op te schonen
             $uit['categorieen']['maillog_verwijderd'] = 0;
         }
+    }
+
+    // Auditlog opschonen (bewaartermijn, default 12 maanden)
+    try {
+        $audit_maanden = (int)instelling('bewaar.audit_maanden', '12');
+        if ($audit_maanden > 0) {
+            $audit_grens = date('Y-m-d H:i:s', strtotime("-$audit_maanden months"));
+            if ($dry_run) {
+                $c = $db->prepare("SELECT COUNT(*) FROM audit_log WHERE moment < ?");
+                $c->execute([$audit_grens]);
+                $aantal = (int)$c->fetchColumn();
+            } else {
+                $del = $db->prepare("DELETE FROM audit_log WHERE moment < ?");
+                $del->execute([$audit_grens]);
+                $aantal = $del->rowCount();
+            }
+            $uit['categorieen']['auditlog_verwijderd'] = $aantal;
+            if (!$dry_run) opschoon_log_schrijf('auditlog_verwijderd', $aantal, $bron);
+        }
+    } catch (\Exception $e) {
+        $uit['categorieen']['auditlog_verwijderd'] = 0;
+    }
+
+    // Bezoekersstatistiek van landingspagina's. Twee stappen: eerst het dag-pseudoniem wissen
+    // (tellingen blijven, herleidbaarheid verdwijnt), daarna de gebeurtenis zelf verwijderen.
+    if (function_exists('pag_events_opschonen')) {
+        try {
+            $r = pag_events_opschonen(0, 0, $dry_run);
+            $uit['categorieen']['pagina_hash_gewist']     = $r['gewist'];
+            $uit['categorieen']['pagina_events_verwijderd'] = $r['verwijderd'];
+            if (!$dry_run) {
+                if ($r['gewist'])     opschoon_log_schrijf('pagina_hash_gewist', $r['gewist'], $bron);
+                if ($r['verwijderd']) opschoon_log_schrijf('pagina_events_verwijderd', $r['verwijderd'], $bron);
+            }
+        } catch (\Exception $e) {
+            $uit['categorieen']['pagina_events_verwijderd'] = 0;
+        }
+    }
+
+    // ── 6. Loondocumenten (loonheffingsformulier + kopie ID): wettelijke bewaartermijn, jaren na einde dienstjaar ──
+    // Wet LB art. 28: bewaren tot 5 jaar na het einde van het kalenderjaar waarin het dienstverband eindigde.
+    // Het dienstjaar = het jaar van het seizoen (datum_werk_eind, anders het jaar van aanmelding).
+    $jaar_bewaar = instelling_int('bewaar.loondocumenten_jaar', 5);
+    if ($jaar_bewaar > 0 && function_exists('document_vernietigen')) {
+        try {
+            $grensjaar = (int)date('Y') - $jaar_bewaar; // dienstjaren t/m dit jaar mogen weg
+            $q = $db->prepare("
+                SELECT d.id FROM sollicitant_documenten d
+                JOIN sollicitaties s ON s.id = d.sollicitatie_id
+                LEFT JOIN seizoenen sz ON sz.id = s.seizoen_id
+                WHERE d.status IN ('ingediend','verwerkt')
+                  AND d.soort IN ('id_voor','id_achter','ondertekening_loonheffing')
+                  AND YEAR(COALESCE(sz.datum_werk_eind, s.aangemeld_op)) <= ?
+            ");
+            $q->execute([$grensjaar]);
+            $ids = $q->fetchAll(PDO::FETCH_COLUMN);
+            $aantal = 0;
+            foreach ($ids as $id) { if ($dry_run) { $aantal++; continue; } if (document_vernietigen((int)$id, 'bewaartermijn loondocumenten verstreken')) $aantal++; }
+            if (!$dry_run && $ids) {
+                // Het ondertekeningsrecord blijft (bewijs dat er getekend is), maar zonder BSN en handtekening
+                $db->prepare("UPDATE ondertekeningen o JOIN sollicitaties s ON s.id=o.sollicitatie_id LEFT JOIN seizoenen sz ON sz.id=s.seizoen_id
+                              SET o.vertrouwelijk=NULL, o.handtekening_beeld=NULL, o.pdf_document_id=NULL
+                              WHERE o.type='loonheffing' AND YEAR(COALESCE(sz.datum_werk_eind, s.aangemeld_op)) <= ?")->execute([$grensjaar]);
+            }
+            $uit['categorieen']['loondocumenten_vernietigd'] = $aantal;
+            if (!$dry_run && $aantal) opschoon_log_schrijf('loondocumenten_vernietigd', $aantal, $bron);
+        } catch (\Exception $e) { $uit['categorieen']['loondocumenten_vernietigd'] = ['fout' => $e->getMessage()]; error_log('opschoon loondocumenten: ' . $e->getMessage()); }
+    }
+
+    // ── 7. Kopie bankpas: vernietigen X dagen nadat de penningmeester het dossier heeft verwerkt ──
+    $dagen_bankpas = instelling_int('bewaar.bankpas_na_verwerking_dagen', 30);
+    if ($dagen_bankpas > 0 && function_exists('document_vernietigen')) {
+        try {
+            $q = $db->prepare("SELECT id FROM sollicitant_documenten WHERE soort='bankpas' AND status='verwerkt' AND verwerkt_op IS NOT NULL AND verwerkt_op < DATE_SUB(NOW(), INTERVAL ? DAY)");
+            $q->execute([$dagen_bankpas]);
+            $ids = $q->fetchAll(PDO::FETCH_COLUMN);
+            $aantal = 0;
+            foreach ($ids as $id) { if ($dry_run) { $aantal++; continue; } if (document_vernietigen((int)$id, 'bankpas na verwerking')) $aantal++; }
+            $uit['categorieen']['bankpas_vernietigd'] = $aantal;
+            if (!$dry_run && $aantal) opschoon_log_schrijf('bankpas_vernietigd', $aantal, $bron);
+        } catch (\Exception $e) { $uit['categorieen']['bankpas_vernietigd'] = ['fout' => $e->getMessage()]; }
     }
 
     instelling_opslaan('bewaar.laatste_run', date('Y-m-d H:i:s'));

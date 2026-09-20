@@ -4,13 +4,18 @@ $_config = __DIR__ . '/config.php';
 if (file_exists($_config)) {
     require_once $_config;
 } else {
-    $uri = $_SERVER['REQUEST_URI'] ?? '';
-    if (strpos($uri, '/setup/') === false) {
-        $base = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost');
-        header('Location: ' . $base . '/setup/');
-        exit;
+    // Geen config: de installatiewizard bestaat niet meer (2.94.0). Installeren gaat via het
+    // runbook: config.template.php kopiëren naar config.php en invullen.
+    if (php_sapi_name() !== 'cli') {
+        http_response_code(503);
+        header('Content-Type: text/html; charset=utf-8');
+        echo '<!DOCTYPE html><html lang="nl"><head><meta charset="UTF-8"><title>Nog niet ingesteld</title></head>'
+           . '<body style="font-family:sans-serif;max-width:520px;margin:60px auto;padding:0 20px;line-height:1.6;color:#1a2230">'
+           . '<h2 style="color:#054d8a">Systeem is nog niet ingesteld</h2>'
+           . '<p>Het configuratiebestand ontbreekt op de server. Zie het runbook voor systeembeheer '
+           . '(<code>docs/handleiding/runbook_systeembeheer.md</code>).</p></body></html>';
     }
-    return;
+    exit;
 }
 
 require_once __DIR__ . '/smtp.php';
@@ -18,22 +23,61 @@ if (file_exists(__DIR__ . '/versie.php'))        require_once __DIR__ . '/versie
 if (file_exists(__DIR__ . '/mail_render.php'))   require_once __DIR__ . '/mail_render.php';
 if (file_exists(__DIR__ . '/error_handler.php')) require_once __DIR__ . '/error_handler.php';
 if (file_exists(__DIR__ . '/instellingen.php'))  require_once __DIR__ . '/instellingen.php';
+if (file_exists(__DIR__ . '/validatie.php'))      require_once __DIR__ . '/validatie.php';
+if (file_exists(__DIR__ . '/ratelimit.php'))      require_once __DIR__ . '/ratelimit.php';
+if (file_exists(__DIR__ . '/kluis.php'))          require_once __DIR__ . '/kluis.php';
+if (file_exists(__DIR__ . '/upload.php'))         require_once __DIR__ . '/upload.php';
+if (file_exists(__DIR__ . '/documenten.php'))     require_once __DIR__ . '/documenten.php';
 if (file_exists(__DIR__ . '/ai_analyse.php'))      require_once __DIR__ . '/ai_analyse.php';
 if (file_exists(__DIR__ . '/kennismakingspakket.php')) require_once __DIR__ . '/kennismakingspakket.php';
+if (file_exists(__DIR__ . '/ondertekening_tekst.php')) require_once __DIR__ . '/ondertekening_tekst.php';
 if (file_exists(__DIR__ . '/ondertekeningen_auto.php')) require_once __DIR__ . '/ondertekeningen_auto.php';
-if (file_exists(__DIR__ . '/ondertekening_mails.php')) require_once __DIR__ . '/ondertekening_mails.php';
+if (file_exists(__DIR__ . '/ondertekening_bewijs.php')) require_once __DIR__ . '/ondertekening_bewijs.php';
+if (file_exists(__DIR__ . '/zegel.php')) require_once __DIR__ . '/zegel.php';
+if (file_exists(__DIR__ . '/ondertekening_pdf.php')) require_once __DIR__ . '/ondertekening_pdf.php';
+if (file_exists(__DIR__ . '/loonheffing_pdf.php')) require_once __DIR__ . '/loonheffing_pdf.php';
+if (file_exists(__DIR__ . '/lidmaatschap.php')) require_once __DIR__ . '/lidmaatschap.php';
+if (file_exists(__DIR__ . '/rechten.php')) require_once __DIR__ . '/rechten.php';
 if (file_exists(__DIR__ . '/beschikbaarheid_dagen.php')) require_once __DIR__ . '/beschikbaarheid_dagen.php';
 if (file_exists(__DIR__ . '/beschikbaarheid2.php')) require_once __DIR__ . '/beschikbaarheid2.php';
+if (file_exists(__DIR__ . '/beschikbaarheid_post.php')) require_once __DIR__ . '/beschikbaarheid_post.php';
+if (file_exists(__DIR__ . '/beschikbaarheid_dag.php')) require_once __DIR__ . '/beschikbaarheid_dag.php';
 if (file_exists(__DIR__ . '/competenties.php')) require_once __DIR__ . '/competenties.php';
 if (file_exists(__DIR__ . '/bezetting.php')) require_once __DIR__ . '/bezetting.php';
 if (file_exists(__DIR__ . '/loonplan.php')) require_once __DIR__ . '/loonplan.php';
 if (file_exists(__DIR__ . '/selectiedag.php')) require_once __DIR__ . '/selectiedag.php';
 if (file_exists(__DIR__ . '/ai_beschikbaarheid.php')) require_once __DIR__ . '/ai_beschikbaarheid.php';
 if (file_exists(__DIR__ . '/opschonen.php')) require_once __DIR__ . '/opschonen.php';
+if (file_exists(__DIR__ . '/db_failsafe.php')) require_once __DIR__ . '/db_failsafe.php';
+if (file_exists(__DIR__ . '/audit.php')) require_once __DIR__ . '/audit.php';
+// Logboek: leest de zes logbronnen uit als één tijdlijn (zie includes/logboek/bronnen.php).
+foreach (['bronnen', 'query', 'weergave'] as $__l) {
+    if (file_exists(__DIR__ . '/logboek/' . $__l . '.php')) require_once __DIR__ . '/logboek/' . $__l . '.php';
+}
+if (file_exists(__DIR__ . '/toegang.php')) require_once __DIR__ . '/toegang.php';
+if (file_exists(__DIR__ . '/health.php')) require_once __DIR__ . '/health.php';
+if (file_exists(__DIR__ . '/paginas.php')) require_once __DIR__ . '/paginas.php';
+if (file_exists(__DIR__ . '/kanalen.php')) require_once __DIR__ . '/kanalen.php';
+if (file_exists(__DIR__ . '/optout.php')) require_once __DIR__ . '/optout.php';
+// Centrale meldingen (register, sjablonen, verzendkern) — ná kanalen/optout/mail_render.
+foreach (['registry', 'sjablonen', 'verzend', 'bijlagen', 'herinneringen', 'gepland'] as $__m) {
+    if (file_exists(__DIR__ . '/meldingen/' . $__m . '.php')) require_once __DIR__ . '/meldingen/' . $__m . '.php';
+}
+if (file_exists(__DIR__ . '/fase.php')) require_once __DIR__ . '/fase.php';
+if (file_exists(__DIR__ . '/cron_taken.php')) require_once __DIR__ . '/cron_taken.php';
+if (file_exists(__DIR__ . '/export_dossier.php')) require_once __DIR__ . '/export_dossier.php';
+if (file_exists(__DIR__ . '/iconen.php')) require_once __DIR__ . '/iconen.php';
+if (file_exists(__DIR__ . '/ui.php')) require_once __DIR__ . '/ui.php';
+if (file_exists(__DIR__ . '/hulp.php')) require_once __DIR__ . '/hulp.php';
+if (file_exists(__DIR__ . '/blk.php')) require_once __DIR__ . '/blk.php';
+if (file_exists(__DIR__ . '/portaal_dossier.php')) require_once __DIR__ . '/portaal_dossier.php';
+if (file_exists(__DIR__ . '/portaal_taken.php')) require_once __DIR__ . '/portaal_taken.php';
+if (file_exists(__DIR__ . '/portaal_berichten.php')) require_once __DIR__ . '/portaal_berichten.php';
 
 // ── Database ──────────────────────────────────────────────────
 function db(): PDO {
     static $pdo = null;
+    static $failsafe_bezig = false;
     if ($pdo === null) {
         try {
             $dsn = sprintf('mysql:host=%s;dbname=%s;charset=%s', DB_HOST, DB_NAME, DB_CHARSET);
@@ -43,18 +87,86 @@ function db(): PDO {
                 PDO::ATTR_EMULATE_PREPARES   => false,
             ]);
         } catch (PDOException $e) {
-            http_response_code(500);
-            die('<html><body style="font-family:sans-serif;padding:40px"><h2 style="color:#c53030">Database fout</h2><p>' . htmlspecialchars($e->getMessage()) . '</p><p><a href="/setup/">Controleer de configuratie</a></p></body></html>');
+            // De echte oorzaak (host, databasenaam, gebruiker) hoort in het log, niet op het scherm.
+            error_log('P13-D001 databaseverbinding mislukt: ' . $e->getMessage());
+            if (php_sapi_name() === 'cli') { throw $e; }
+            if (!headers_sent()) { http_response_code(503); header('Retry-After: 60'); }
+            $foutcode_html = 'P13-D001';
+            include __DIR__ . '/../500.php';
+            exit;
+        }
+        // Zelfherstel: zorg dat het schema klopt zodra de connectie er is.
+        // $failsafe_bezig voorkomt oneindige recursie (db_failsafe roept db() aan).
+        if (!$failsafe_bezig && function_exists('db_failsafe')) {
+            $failsafe_bezig = true;
+            try { db_failsafe(); } catch (\Throwable $e) { error_log('db_failsafe trigger: ' . $e->getMessage()); }
         }
     }
     return $pdo;
 }
 
+// ── HTTPS en beveiligingsheaders ──────────────────────────────
+/**
+ * Draait dit verzoek over https? Achter de Plesk-proxy (nginx vóór Apache/FPM) is $_SERVER['HTTPS']
+ * niet altijd gezet; dan telt de X-Forwarded-Proto-header, en anders het schema van APP_URL.
+ */
+function is_https(): bool {
+    if (!empty($_SERVER['HTTPS']) && strtolower((string)$_SERVER['HTTPS']) !== 'off') return true;
+    if (strtolower((string)($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '')) === 'https') return true;
+    return defined('APP_URL') && str_starts_with(strtolower(APP_URL), 'https://');
+}
+
+/**
+ * Welke andere websites mogen dit systeem aanspreken of insluiten: de hoofdsite paal13.com plus
+ * wat het bestuur bij Instellingen › Website & API onder "origins" heeft gezet. Eén bron voor de
+ * API-CORS (api/_basis.php) en voor het insluiten van het aanmeldformulier in een iframe.
+ */
+function site_toegestane_origins(): array {
+    $ruw = function_exists('instelling') ? (string)instelling('api.origins', '') : '';
+    $lijst = array_filter(array_map('trim', explode("\n", str_replace(',', "\n", $ruw))));
+    $lijst[] = 'https://paal13.com';
+    $lijst[] = 'https://www.paal13.com';
+    return array_values(array_unique($lijst));
+}
+
+/**
+ * Beveiligingsheaders voor het beheer en het portaal. Eén keer per verzoek, vóór de eerste uitvoer;
+ * de eerste aanroep wint (sessie_start roept dit ook aan). Landingspagina's zetten hun eigen,
+ * strengere CSP (includes/paginas/render.php) en hebben geen sessie, dus die komen hier niet.
+ * Niet in .htaccess: onder PHP-FPM is niet zeker dat Apache-directieven doorkomen.
+ *
+ * @param array|null $frame_ancestors  Origins die deze pagina in een iframe mogen tonen (alleen het
+ *                                     aanmeldformulier op paal13.com); standaard alleen de eigen host.
+ */
+function security_headers(?array $frame_ancestors = null): void {
+    static $gedaan = false;
+    if ($gedaan || headers_sent() || php_sapi_name() === 'cli') return;
+    $gedaan = true;
+    header('X-Content-Type-Options: nosniff');
+    header('Referrer-Policy: strict-origin-when-cross-origin');
+    header('Permissions-Policy: camera=(self), microphone=(), geolocation=(), payment=()');
+    if (is_https()) header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
+    if ($frame_ancestors) {
+        $ancestors = "'self' " . implode(' ', array_map(fn($o) => preg_replace('/[^A-Za-z0-9:.\/\-*]/', '', $o), $frame_ancestors));
+    } else {
+        $ancestors = "'self'";
+        header('X-Frame-Options: SAMEORIGIN');
+    }
+    // Inline scripts en stijlen komen in het beheer en portaal nog veel voor (onclick, style=""),
+    // dus 'unsafe-inline' blijft; het echte slot is dat scripts en verbindingen alleen van de eigen
+    // host mogen komen. Camera-upload (blob:) en het handtekening-canvas (data:) hebben img-src nodig.
+    header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; "
+         . "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; "
+         . "img-src 'self' data: blob: https:; connect-src 'self'; frame-ancestors $ancestors; "
+         . "form-action 'self' https:; base-uri 'self'; object-src 'none'");
+}
+
 // ── Sessie ────────────────────────────────────────────────────
 function sessie_start(): void {
+    security_headers();
     if (session_status() === PHP_SESSION_NONE) {
         session_name(SESSION_NAME);
-        session_set_cookie_params(['lifetime' => 0, 'path' => '/', 'secure' => isset($_SERVER['HTTPS']), 'httponly' => true, 'samesite' => 'Lax']);
+        session_set_cookie_params(['lifetime' => 0, 'path' => '/', 'secure' => is_https(), 'httponly' => true, 'samesite' => 'Lax']);
         session_start();
         if (!isset($_SESSION['_t'])) { $_SESSION['_t'] = time(); }
         elseif (time() - $_SESSION['_t'] > 1800) { session_regenerate_id(true); $_SESSION['_t'] = time(); }
@@ -68,18 +180,33 @@ function vereist_login(): void {
     if (!is_ingelogd()) { header('Location: ' . APP_URL . '/admin/login.php?terug=' . urlencode($_SERVER['REQUEST_URI'] ?? '')); exit; }
 }
 
+/** Rang van een rol-sleutel; uit de database (nieuwe rollen), met terugval op de basis. */
+function rol_rang(string $sleutel): int {
+    static $cache = null;
+    if ($cache === null) {
+        $cache = ['begeleider' => 1, 'bestuur' => 2, 'admin' => 3]; // terugval
+        if (function_exists('rechten_auto_setup')) {
+            try {
+                rechten_auto_setup();
+                foreach (db()->query("SELECT sleutel, rang FROM rollen")->fetchAll() as $r) {
+                    $cache[$r['sleutel']] = (int)$r['rang'];
+                }
+            } catch (\Exception $e) {}
+        }
+    }
+    return $cache[$sleutel] ?? 0;
+}
+
 function vereist_rol(string $min): void {
     vereist_login();
-    $r = ['begeleider' => 1, 'bestuur' => 2, 'admin' => 3];
-    if (($r[$_SESSION['bhd_rol'] ?? 'begeleider'] ?? 0) < ($r[$min] ?? 99)) {
+    if (rol_rang($_SESSION['bhd_rol'] ?? 'begeleider') < rol_rang($min)) {
         http_response_code(403); die('<h2 style="font-family:sans-serif">Geen toegang</h2>');
     }
 }
 
 /** True als de ingelogde beheerder minstens de gevraagde rol heeft (zonder af te breken). */
 function huidige_gebruiker_rol_minstens(string $min): bool {
-    $r = ['begeleider' => 1, 'bestuur' => 2, 'admin' => 3];
-    return ($r[$_SESSION['bhd_rol'] ?? 'begeleider'] ?? 0) >= ($r[$min] ?? 99);
+    return rol_rang($_SESSION['bhd_rol'] ?? 'begeleider') >= rol_rang($min);
 }
 
 // ── Omgeving-detectie (test vs productie) ─────────────────────
@@ -110,6 +237,7 @@ function login_beheerder(array $b, string $via = 'wachtwoord'): void {
     $_SESSION['bhd_email'] = $b['email']; $_SESSION['bhd_rol'] = $b['rol'];
     $_SESSION['bhd_via'] = $via; $_SESSION['_t'] = time();
     try { db()->prepare("UPDATE beheerders SET laatste_login = NOW() WHERE id = ?")->execute([$b['id']]); } catch (Exception $e) {}
+    if (function_exists('audit_log')) audit_log('ingelogd', 'beheerder', (int)$b['id'], ['via' => $via]);
 }
 
 // ── Brute-force bescherming (login) ───────────────────────────
@@ -240,17 +368,57 @@ function huidige_beheerder(): array {
 // ── Portaal auth (sollicitant) ────────────────────────────────
 function portaal_ingelogd(): bool { sessie_start(); return !empty($_SESSION['portaal_sol_id']); }
 
+/** Elke portaal-pagina (behalve login/token-pagina's) begint hiermee: niet ingelogd → inlogscherm. */
+function portaal_vereis_login(): int {
+    if (!portaal_ingelogd()) redirect(APP_URL . '/portaal/');
+    return (int)$_SESSION['portaal_sol_id'];
+}
+
+/**
+ * Voor partials (portaal/_kop.php enz.): alleen via require te gebruiken. Direct opgevraagd in de
+ * browser → niet ingelogd: inlogscherm; ingelogd: de 404-pagina (een partial is geen pagina).
+ */
+function portaal_alleen_include(string $bestand): void {
+    $script = realpath((string)($_SERVER['SCRIPT_FILENAME'] ?? ''));
+    if (!$script || $script !== realpath($bestand)) return;
+    portaal_vereis_login();
+    pagina_404();
+}
+
+/** Eigen 404-pagina (404.php in de root, ook Apache's ErrorDocument) tonen en stoppen. */
+function pagina_404(): never {
+    http_response_code(404);
+    require __DIR__ . '/../404.php';
+    exit;
+}
+
 function login_portaal(int $sol_id, string $email): void {
     sessie_start(); session_regenerate_id(true);
     $_SESSION['portaal_sol_id'] = $sol_id; $_SESSION['portaal_email'] = $email; $_SESSION['_t'] = time();
 }
 
 // ── OTP ───────────────────────────────────────────────────────
+/**
+ * Nieuwe eenmalige code voor een sleutel ($type): 'portaal', 'beheerder' of 'ond<id>' (ondertekenen-2FA).
+ * De kolom otp_tokens.type was oorspronkelijk een ENUM; op zo'n database wordt een andere sleutel stil als
+ * lege string opgeslagen en is de code daarna nooit te verifiëren. db_failsafe() zet de kolom om naar
+ * VARCHAR; de controle hieronder zorgt dat het probleem anders meteen zichtbaar is in plaats van een code
+ * die niet werkt.
+ */
 function otp_genereer(string $email, string $type = 'portaal'): string {
     db()->prepare("DELETE FROM otp_tokens WHERE email = ? AND type = ?")->execute([$email, $type]);
     $code = str_pad((string)random_int(0, 999999), 6, '0', STR_PAD_LEFT);
     db()->prepare("INSERT INTO otp_tokens (email, code_hash, type, vervalt_op) VALUES (?, ?, ?, DATE_ADD(NOW(), INTERVAL 15 MINUTE))")
        ->execute([$email, hash('sha256', $code), $type]);
+    try {
+        $c = db()->prepare("SELECT `type` FROM otp_tokens WHERE id = ?");
+        $c->execute([(int)db()->lastInsertId()]);
+        $opgeslagen = $c->fetchColumn();
+        if ($opgeslagen !== false && (string)$opgeslagen !== $type) {
+            error_log("otp_genereer: type '$type' werd opgeslagen als '" . (string)$opgeslagen . "' — kolom otp_tokens.type te beperkt (ENUM?).");
+            throw new RuntimeException('otp_type_niet_opgeslagen');
+        }
+    } catch (PDOException $e) { error_log('otp_genereer controle: ' . $e->getMessage()); }
     return $code;
 }
 
@@ -281,7 +449,13 @@ function toon_flash(): void { $f = get_flash(); if ($f) echo '<div class="flash 
 // ── Seizoen ───────────────────────────────────────────────────
 function actief_seizoen(): ?array {
     static $s = null;
-    if ($s === null) { try { $s = db()->query("SELECT * FROM seizoenen ORDER BY id DESC LIMIT 1")->fetch() ?: null; } catch (Exception $e) { $s = null; } }
+    if ($s === null) {
+        try {
+            // Kies het GEOPENDE seizoen (het meest recente als er meerdere open zijn).
+            // Pas als er geen enkel seizoen open is, terugvallen op het nieuwste seizoen.
+            $s = db()->query("SELECT * FROM seizoenen ORDER BY (status='open') DESC, id DESC LIMIT 1")->fetch() ?: null;
+        } catch (Exception $e) { $s = null; }
+    }
     return $s;
 }
 
@@ -361,13 +535,18 @@ function authentik_email_bestaat(string $email): array|false {
  * Returns: 'admin' | 'bestuur' | 'sol-admin' | 'sol-begeleider' | null (geen admin)
  */
 function authentik_groups_naar_rol(array $groups): ?string {
-    // Volgorde = prioriteit (hoogste eerst)
+    // Nieuw: gebruik de rollen-tabel (door de gebruiker beheerd via de rechtenmatrix).
+    if (function_exists('rol_uit_authentik_groepen')) {
+        $r = rol_uit_authentik_groepen($groups);
+        if ($r !== null) return $r;
+    }
+    // Terugval op de oorspronkelijke hardcoded mapping (voor als de tabel nog leeg is).
     $map = [
         'admin'           => 'admin',
         'bestuur'         => 'bestuur',
-        'sol-admin'       => 'sol-admin',
-        'sol-begeleider'  => 'sol-begeleider',
-        'sol_begeleider'  => 'sol-begeleider',
+        'sol-admin'       => 'admin',
+        'sol-begeleider'  => 'begeleider',
+        'sol_begeleider'  => 'begeleider',
     ];
     foreach ($groups as $g) {
         $g_low = strtolower($g);
@@ -400,112 +579,6 @@ function site_favicon_url(): ?string {
 function stuur_mail(string $naar, string $naam, string $onderwerp, string $body, ?int $sol_id = null): bool {
     return Mailer::verstuur($naar, $naam, $onderwerp, $body, $sol_id);
 }
-
-/**
- * Stuur uitnodigingsmail VEILIG: dubbel-mail bescherming via mail_log.
- * Stuurt mail tenzij dezelfde sollicitant in afgelopen $minuten al een mail met
- * vergelijkbaar onderwerp heeft gekregen. Retourneert:
- *   - 'verstuurd' : mail is succesvol verstuurd
- *   - 'al_verstuurd' : binnen tijdvenster al verstuurd, skip
- *   - 'fout' : verzending mislukt (controleer mail_log voor details)
- *   - 'geen_email' : sollicitant heeft geen e-mailadres
- */
-function verstuur_fase_mail(
-    int $sol_id,
-    string $template_slug,
-    string $onderwerp_zoek_patroon,
-    array $seizoen = [],
-    int $window_minuten = 60
-): string {
-    try {
-        $db = db();
-        $r = $db->prepare("SELECT s.id,p.voornaam,p.email,p.tussenvoegsel,p.achternaam,p.telefoon FROM sollicitaties s JOIN personen p ON p.id=s.persoon_id WHERE s.id=?");
-        $r->execute([$sol_id]);
-        $row = $r->fetch();
-        if (!$row || empty($row['email'])) return 'geen_email';
-
-        // Dubbel-mail check
-        $recent = $db->prepare("SELECT 1 FROM mail_log WHERE sollicitatie_id=? AND onderwerp LIKE ? AND status='verstuurd' AND verstuurd_op > DATE_SUB(NOW(), INTERVAL ? MINUTE) LIMIT 1");
-        $recent->execute([$sol_id, $onderwerp_zoek_patroon, $window_minuten]);
-        if ($recent->fetch()) return 'al_verstuurd';
-
-        $sol_arr = [
-            'voornaam'      => $row['voornaam'],
-            'tussenvoegsel' => $row['tussenvoegsel'] ?? '',
-            'achternaam'    => $row['achternaam']    ?? '',
-            'email'         => $row['email'],
-            'telefoon'      => $row['telefoon'] ?? '',
-        ];
-        $ok = stuur_template_mail($template_slug, $row['email'], $sol_arr, $seizoen, [], $sol_id);
-        return $ok ? 'verstuurd' : 'fout';
-    } catch (\Exception $e) {
-        error_log("verstuur_fase_mail: " . $e->getMessage());
-        return 'fout';
-    }
-}
-
-// ─────────────────────────────────────────────────────────────
-//  Taak-meldingen (functioneel, wordt later herzien in mail-overhaul)
-// ─────────────────────────────────────────────────────────────
-
-/**
- * Stuur een simpele mail met dubbel-bescherming: skip als dezelfde sollicitant
- * in het tijdvenster al een mail met dit onderwerp kreeg. Gebruikt mail_log.
- * Retourneert: 'verstuurd' | 'al_verstuurd' | 'geen_email' | 'fout'.
- */
-if (!function_exists('stuur_taak_mail')) {
-function stuur_taak_mail(int $sol_id, string $onderwerp, string $body, int $window_minuten = 720): string {
-    try {
-        $db = db();
-        $r = $db->prepare("SELECT p.voornaam, p.tussenvoegsel, p.achternaam, p.email
-                           FROM sollicitaties s JOIN personen p ON p.id=s.persoon_id WHERE s.id=?");
-        $r->execute([$sol_id]);
-        $row = $r->fetch();
-        if (!$row || empty($row['email'])) return 'geen_email';
-
-        // Dubbel-mail check op onderwerp
-        try {
-            $recent = $db->prepare("SELECT 1 FROM mail_log WHERE sollicitatie_id=? AND onderwerp=? AND status='verstuurd'
-                                    AND verstuurd_op > DATE_SUB(NOW(), INTERVAL ? MINUTE) LIMIT 1");
-            $recent->execute([$sol_id, $onderwerp, $window_minuten]);
-            if ($recent->fetch()) return 'al_verstuurd';
-        } catch (\Exception $e) { /* mail_log kolomnaam kan afwijken — dan gewoon versturen */ }
-
-        $naam = trim($row['voornaam'] . ' ' . ($row['tussenvoegsel'] ? $row['tussenvoegsel'] . ' ' : '') . $row['achternaam']);
-        return stuur_mail($row['email'], $naam, $onderwerp, $body, $sol_id) ? 'verstuurd' : 'fout';
-    } catch (\Exception $e) {
-        error_log("stuur_taak_mail: " . $e->getMessage());
-        return 'fout';
-    }
-}
-}
-
-/** "Er staan taken voor je klaar" — bij uitnodiging selectiedag. */
-if (!function_exists('mail_taken_klaar')) {
-function mail_taken_klaar(int $sol_id): string {
-    $url = rtrim(APP_URL, '/') . '/portaal/';
-    $body = "<p>Hoi,</p>
-<p>Er staan een paar acties voor je klaar in je Paal 13 portaal. Log in om ze in te vullen — denk aan het \"Beter leren kennen\"-formulier en (als je nog geen 18 bent) de gegevens van je ouder/verzorger.</p>
-<p><a href=\"" . h($url) . "\">Ga naar je portaal &rarr;</a></p>
-<p>Groet,<br>Reddingsbrigade Paal 13</p>";
-    return stuur_taak_mail($sol_id, 'Er staan taken voor je klaar — Paal 13', $body);
-}
-}
-
-/** "Taak afgerond" — bevestiging na afronden van een taak (bijv. ondertekening). */
-if (!function_exists('mail_taak_afgerond')) {
-function mail_taak_afgerond(int $sol_id, string $taak_naam): string {
-    $url = rtrim(APP_URL, '/') . '/portaal/';
-    $body = "<p>Hoi,</p>
-<p>Goed nieuws: de taak <strong>" . h($taak_naam) . "</strong> is afgerond. ✅</p>
-<p>Je kunt in je portaal zien of er nog andere acties openstaan.</p>
-<p><a href=\"" . h($url) . "\">Ga naar je portaal &rarr;</a></p>
-<p>Groet,<br>Reddingsbrigade Paal 13</p>";
-    // Kort venster: elke afgeronde taak mag een eigen bevestiging sturen
-    return stuur_taak_mail($sol_id, 'Taak afgerond: ' . $taak_naam . ' — Paal 13', $body, 5);
-}
-}
-
 
 /** Zorgt dat personen de ouder/verzorger-velden hebben (naam, e-mail, telefoon). */
 if (!function_exists('personen_ouder_auto_setup')) {
@@ -562,9 +635,13 @@ function consent_auto_setup(): void {
 if (!function_exists('leeftijd_uit_datum')) {
 function leeftijd_uit_datum(?string $geboortedatum): ?int {
     if (empty($geboortedatum)) return null;
-    $ts = strtotime($geboortedatum);
-    if ($ts === false) return null;
-    return (int)floor((time() - $ts) / 31557600); // 31557600 = 365.25 dagen
+    try {
+        // Exacte leeftijd via echte kalenderdatums — de 365.25-benadering rekent
+        // sommige leeftijden een jaar te hoog door schrikkeljaar-afronding.
+        return (new DateTime($geboortedatum))->diff(new DateTime())->y;
+    } catch (Exception $e) {
+        return null;
+    }
 }
 }
 
@@ -598,256 +675,111 @@ function mail_queue_toevoegen(string $naar, string $naam, string $onderwerp, str
 }
 
 function mail_queue_verwerk(int $max = 20): array {
-    mail_queue_auto_setup();
-    $res = ['verwerkt'=>0, 'fouten'=>0];
-    try {
-        $rows = db()->prepare("SELECT * FROM mail_queue WHERE status='wacht' AND pogingen < 3 ORDER BY id ASC LIMIT ?");
-        $rows->execute([$max]);
-        $items = $rows->fetchAll();
-    } catch (\Exception $e) { return $res; }
-
-    foreach ($items as $m) {
-        db()->prepare("UPDATE mail_queue SET status='bezig', pogingen=pogingen+1 WHERE id=?")->execute([$m['id']]);
-        try {
-            $ok = Mailer::verstuur($m['naar_email'], $m['naar_naam'] ?? '', $m['onderwerp'], $m['body'], $m['sol_id'] ?? null);
-            if ($ok) {
-                db()->prepare("UPDATE mail_queue SET status='klaar', verwerkt_op=NOW(), fout=NULL WHERE id=?")->execute([$m['id']]);
-                $res['verwerkt']++;
-            } else {
-                $status = ($m['pogingen'] >= 2) ? 'fout' : 'wacht';
-                db()->prepare("UPDATE mail_queue SET status=?, fout='Mailer.verstuur gaf false' WHERE id=?")->execute([$status, $m['id']]);
-                $res['fouten']++;
-            }
-        } catch (\Exception $e) {
-            $status = ($m['pogingen'] >= 2) ? 'fout' : 'wacht';
-            db()->prepare("UPDATE mail_queue SET status=?, fout=? WHERE id=?")->execute([$status, $e->getMessage(), $m['id']]);
-            $res['fouten']++;
-        }
-        usleep(200000); // 0.2s tussen mails om SMTP niet te overstelpen
-    }
-    return $res;
+    // De centrale meldingen-kern verwerkt dezelfde wachtrij (alle kanalen); oude rijen zonder
+    // kanaalplan gaan als e-mail. Dit is nu alleen nog een doorgeefluik.
+    if (function_exists('melding_queue_verwerk')) return melding_queue_verwerk($max);
+    return ['verwerkt' => 0, 'fouten' => 0];
 }
 
-// ── Reminders: sollicitanten die ergens vastzitten ────────────
-function reminder_run(): array {
-    $res = ['blk_gemaild'=>0, 'sd_gemaild'=>0, 'sd_morgen_gemaild'=>0];
-    $seizoen = actief_seizoen();
-    if (!$seizoen) return $res;
-
-    // 1. Aangemeld + geen BLK na X dagen (herhaalt elke 14 dagen)
-    if (instelling('reminder.blk_aan', '1') === '1') {
-        $blk_dgn = max(1, instelling_int('reminder.blk_dagen', 7));
-        try {
-            $q = db()->prepare("
-                SELECT s.id, p.email, p.voornaam, p.tussenvoegsel, p.achternaam, p.telefoon
-                FROM sollicitaties s
-                JOIN personen p ON p.id = s.persoon_id
-                LEFT JOIN blk_formulieren b ON b.sollicitatie_id = s.id
-                WHERE s.seizoen_id = ?
-                  AND s.fase = 'aangemeld'
-                  AND b.id IS NULL
-                  AND s.aangemeld_op <= DATE_SUB(NOW(), INTERVAL ? DAY)
-                  AND NOT EXISTS (
-                    SELECT 1 FROM mail_log ml
-                    WHERE ml.sollicitatie_id = s.id AND ml.onderwerp LIKE '%BLK formulier%'
-                      AND ml.verstuurd_op > DATE_SUB(NOW(), INTERVAL 14 DAY)
-                  )
-            ");
-            $q->execute([$seizoen['id'], $blk_dgn]);
-            foreach ($q->fetchAll() as $k) {
-                $sol_arr = ['voornaam'=>$k['voornaam'], 'tussenvoegsel'=>$k['tussenvoegsel']??'', 'achternaam'=>$k['achternaam']??'', 'email'=>$k['email'], 'telefoon'=>$k['telefoon']??''];
-                $vars    = mail_variabelen($sol_arr, $seizoen);
-                $vars['portaal_url'] = APP_URL . '/portaal/';
-                $rendered = mail_template_render('reminder_blk', $vars);
-                if (!$rendered) continue;
-                $html = mail_html_wrapper($rendered['body_html'], $rendered['onderwerp'], $rendered['hero_titel'] ?? '');
-                if (mail_queue_toevoegen($k['email'], $k['voornaam'], $rendered['onderwerp'], $html, (int)$k['id'])) {
-                    $res['blk_gemaild']++;
-                }
-            }
-        } catch (\Exception $e) { error_log("reminder blk: " . $e->getMessage()); }
-    }
-
-    // 2. Selectiedag komt eraan ("bijna zover") — Y dagen vooraf
-    if (instelling('reminder.sd_aan', '1') === '1' && !empty($seizoen['datum_selectiedag'])) {
-        $sd_dgn_vooraf = max(1, instelling_int('reminder.sd_dagen', 3));
-        $dgn_tot_sd = (int)floor((strtotime($seizoen['datum_selectiedag']) - time()) / 86400);
-        // Verstuur als selectiedag nog komt EN binnen drempel valt (maar niet morgen = aparte mail)
-        if ($dgn_tot_sd > 1 && $dgn_tot_sd <= $sd_dgn_vooraf) {
-            try {
-                $q = db()->prepare("
-                    SELECT s.id, p.email, p.voornaam, p.tussenvoegsel, p.achternaam, p.telefoon
-                    FROM sollicitaties s
-                    JOIN personen p ON p.id = s.persoon_id
-                    WHERE s.seizoen_id = ?
-                      AND s.fase IN ('uitgenodigd_selectie','aangemeld_selectie')
-                      AND NOT EXISTS (
-                        SELECT 1 FROM mail_log ml
-                        WHERE ml.sollicitatie_id = s.id AND ml.onderwerp LIKE '%Bijna zover%'
-                          AND ml.verstuurd_op > DATE_SUB(NOW(), INTERVAL 10 DAY)
-                      )
-                ");
-                $q->execute([$seizoen['id']]);
-                foreach ($q->fetchAll() as $k) {
-                    $sol_arr = ['voornaam'=>$k['voornaam'], 'tussenvoegsel'=>$k['tussenvoegsel']??'', 'achternaam'=>$k['achternaam']??'', 'email'=>$k['email'], 'telefoon'=>$k['telefoon']??''];
-                    $vars    = mail_variabelen($sol_arr, $seizoen);
-                    $vars['portaal_url'] = APP_URL . '/portaal/';
-                    $rendered = mail_template_render('reminder_sd_aankomst', $vars);
-                    if (!$rendered) continue;
-                    $html = mail_html_wrapper($rendered['body_html'], $rendered['onderwerp'], $rendered['hero_titel'] ?? '');
-                    if (mail_queue_toevoegen($k['email'], $k['voornaam'], $rendered['onderwerp'], $html, (int)$k['id'])) {
-                        $res['sd_gemaild']++;
-                    }
-                }
-            } catch (\Exception $e) { error_log("reminder sd aankomst: " . $e->getMessage()); }
+if (!function_exists('ondertekeningen_auto_setup')) {
+/**
+ * Maakt de ondertekeningen-tabel aan als die nog niet bestaat.
+ * Voorheen kwam deze tabel alleen via migratie 0016 — op een verse database (bijv. test)
+ * ontbrak hij daardoor. Nu maakt het systeem hem zelf aan, net als de andere tabellen.
+ */
+function ondertekeningen_auto_setup(): void {
+    static $done = false; if ($done) return; $done = true;
+    try {
+        db()->exec("CREATE TABLE IF NOT EXISTS `ondertekeningen` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `sollicitatie_id` INT NOT NULL,
+            `type` VARCHAR(30) NOT NULL,
+            `token` VARCHAR(64) NOT NULL UNIQUE,
+            `ondertekenaar_rol` VARCHAR(20) NOT NULL DEFAULT 'sollicitant',
+            `ondertekenaar_naam` VARCHAR(150) DEFAULT NULL,
+            `ondertekenaar_email` VARCHAR(200) DEFAULT NULL,
+            `ondertekenaar_relatie` VARCHAR(30) DEFAULT NULL,
+            `ondertekenaar_geboortedatum` DATE DEFAULT NULL,
+            `ondertekenaar_geboorteplaats` VARCHAR(150) DEFAULT NULL,
+            `formulier_data` MEDIUMTEXT DEFAULT NULL,
+            `plaats` VARCHAR(150) DEFAULT NULL,
+            `ondertekend_op` DATETIME DEFAULT NULL,
+            `ondertekend_ip` VARCHAR(45) DEFAULT NULL,
+            `ondertekend_user_agent` VARCHAR(500) DEFAULT NULL,
+            `geldig_tot` DATE DEFAULT NULL,
+            `herinnerd_op` DATETIME DEFAULT NULL,
+            `aangemaakt_op` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            INDEX (`sollicitatie_id`),
+            INDEX (`type`),
+            INDEX (`token`),
+            INDEX (`ondertekend_op`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        // Handtekening-afbeelding (base64 PNG data-URL) — nieuw in de ontwerp-herbouw
+        if (function_exists('db_kolom_verzeker')) {
+            db_kolom_verzeker(db(), 'ondertekeningen', 'handtekening_beeld', 'MEDIUMTEXT DEFAULT NULL');
         }
-
-        // 3. Selectiedag morgen — laatste praktische info
-        if ($dgn_tot_sd === 1 && instelling('reminder.sd_morgen_aan', '1') === '1') {
-            try {
-                $q = db()->prepare("
-                    SELECT s.id, p.email, p.voornaam, p.tussenvoegsel, p.achternaam, p.telefoon
-                    FROM sollicitaties s
-                    JOIN personen p ON p.id = s.persoon_id
-                    WHERE s.seizoen_id = ?
-                      AND s.fase IN ('uitgenodigd_selectie','aangemeld_selectie')
-                      AND NOT EXISTS (
-                        SELECT 1 FROM mail_log ml
-                        WHERE ml.sollicitatie_id = s.id AND ml.onderwerp LIKE '%Morgen al%'
-                          AND ml.verstuurd_op > DATE_SUB(NOW(), INTERVAL 3 DAY)
-                      )
-                ");
-                $q->execute([$seizoen['id']]);
-                foreach ($q->fetchAll() as $k) {
-                    $sol_arr = ['voornaam'=>$k['voornaam'], 'tussenvoegsel'=>$k['tussenvoegsel']??'', 'achternaam'=>$k['achternaam']??'', 'email'=>$k['email'], 'telefoon'=>$k['telefoon']??''];
-                    $vars    = mail_variabelen($sol_arr, $seizoen);
-                    $vars['portaal_url']  = APP_URL . '/portaal/';
-                    $vars['laatste_info'] = instelling('reminder.sd_morgen_info', '');
-                    $rendered = mail_template_render('reminder_sd_morgen', $vars);
-                    if (!$rendered) continue;
-                    $html = mail_html_wrapper($rendered['body_html'], $rendered['onderwerp'], $rendered['hero_titel'] ?? '');
-                    if (mail_queue_toevoegen($k['email'], $k['voornaam'], $rendered['onderwerp'], $html, (int)$k['id'])) {
-                        $res['sd_morgen_gemaild']++;
-                    }
-                }
-            } catch (\Exception $e) { error_log("reminder sd morgen: " . $e->getMessage()); }
-        }
-    }
-
-    // 4. Open ondertekeningen na X dagen (max 1 herinnering per document)
-    if (instelling('reminder.ondertekening_aan', '1') === '1') {
-        $ond_dgn = max(1, instelling_int('reminder.ondertekening_dagen', 3));
-        try {
-            ondertekening_herinnerd_auto_setup();
-            $q = db()->prepare("
-                SELECT o.id, o.type, o.token, o.ondertekenaar_rol, o.ondertekenaar_naam, o.ondertekenaar_email,
-                       p.voornaam AS sol_voornaam
-                FROM ondertekeningen o
-                JOIN sollicitaties s ON s.id = o.sollicitatie_id
-                JOIN personen p ON p.id = s.persoon_id
-                WHERE o.ondertekend_op IS NULL
-                  AND o.herinnerd_op IS NULL
-                  AND o.ondertekenaar_email IS NOT NULL
-                  AND o.aangemaakt_op < DATE_SUB(NOW(), INTERVAL ? DAY)
-                  AND s.seizoen_id = ?
-            ");
-            $q->execute([$ond_dgn, $seizoen['id']]);
-            foreach ($q->fetchAll() as $o) {
-                $type_label = match($o['type']) {
-                    'gezondheid_ouder'  => 'Gezondheidsverklaring',
-                    'gezondheid_18plus' => 'Gezondheidsverklaring',
-                    'intake'            => 'Intakeformulier selectiedag',
-                    'intake_ouder'      => 'Intakeformulier selectiedag',
-                    default             => 'Formulier',
-                };
-                $is_ouder = ($o['ondertekenaar_rol'] === 'ouder');
-                $url = APP_URL . '/portaal/ondertekenen.php?token=' . urlencode($o['token']);
-                $ontvanger_naam = $o['ondertekenaar_naam'] ?: ($is_ouder ? 'ouder/verzorger' : $o['sol_voornaam']);
-                $vars_r = [
-                    'ontvanger_naam' => $ontvanger_naam,
-                    'voornaam'       => $o['sol_voornaam'],
-                    'document_naam'  => $type_label,
-                    'onderteken_url' => $url,
-                    'is_ouder'       => $is_ouder ? '1' : '0',
-                ];
-                $rendered_r = function_exists('ondertekening_mail_render') ? ondertekening_mail_render('reminder_ondertekening', $vars_r) : null;
-                if ($rendered_r) {
-                    $onderwerp = $rendered_r['onderwerp'];
-                    $html = $rendered_r['html'];
-                } else {
-                    $onderwerp = "Herinnering: $type_label — Paal 13";
-                    $html = '<p>Beste ' . htmlspecialchars($ontvanger_naam) . ',</p><p>Herinnering: <strong>' . $type_label . '</strong> staat nog open.</p><p><a href="' . htmlspecialchars($url) . '">Nu ondertekenen</a></p>';
-                    if (function_exists('mail_simple_wrapper')) $html = mail_simple_wrapper($html, $onderwerp);
-                }
-                if (stuur_mail_html($o['ondertekenaar_email'], $o['ondertekenaar_naam'] ?: '', $onderwerp, $html, null)) {
-                    db()->prepare("UPDATE ondertekeningen SET herinnerd_op=NOW() WHERE id=?")->execute([$o['id']]);
-                    $res['ondertekening_gemaild'] = ($res['ondertekening_gemaild'] ?? 0) + 1;
-                }
-            }
-        } catch (\Exception $e) { error_log("reminder ondertekening: " . $e->getMessage()); }
-    }
-
-    // 4. Beschikbaarheid nog voorlopig — deadline = 2 weken vóór trainingsweekend.
-    //    Herinneringen starten 2 weken VÓÓR de deadline (mensen zijn lastig), herhalen elke 4 dagen.
-    if (instelling('reminder.besch_aan', '1') === '1' && function_exists('beschikbaarheid2_deadline')) {
-        $deadline = beschikbaarheid2_deadline($seizoen);
-        if ($deadline) {
-            $nu = new DateTime('today');
-            $dgn_tot_deadline = (int)floor(($deadline->getTimestamp() - $nu->getTimestamp()) / 86400);
-            // Start 14 dagen vóór de deadline; blijf mailen tot en met de deadline-dag en erna
-            if ($dgn_tot_deadline <= 14) {
-                try {
-                    // Herhaal elke 4 dagen (na deadline: elke 2 dagen dringend)
-                    $herhaal_dagen = $dgn_tot_deadline < 0 ? 2 : 4;
-                    $q = db()->prepare("
-                        SELECT s.id, p.email, p.voornaam, p.tussenvoegsel, p.achternaam, p.telefoon
-                        FROM beschikbaarheid_profiel bp
-                        JOIN sollicitaties s ON s.id = bp.sollicitatie_id
-                        JOIN personen p ON p.id = s.persoon_id
-                        WHERE bp.voorlopig = 1
-                          AND s.seizoen_id = ?
-                          AND s.fase NOT IN ('afgewezen','afgehaakt')
-                          AND NOT EXISTS (
-                            SELECT 1 FROM mail_log ml
-                            WHERE ml.sollicitatie_id = s.id AND ml.onderwerp LIKE '%beschikbaarheid%definitief%'
-                              AND ml.verstuurd_op > DATE_SUB(NOW(), INTERVAL ? DAY)
-                          )
-                    ");
-                    $q->execute([$seizoen['id'], $herhaal_dagen]);
-                    foreach ($q->fetchAll() as $k) {
-                        $sol_arr = ['voornaam'=>$k['voornaam'], 'tussenvoegsel'=>$k['tussenvoegsel']??'', 'achternaam'=>$k['achternaam']??'', 'email'=>$k['email'], 'telefoon'=>$k['telefoon']??''];
-                        $vars = mail_variabelen($sol_arr, $seizoen);
-                        $vars['portaal_url']    = APP_URL . '/portaal/';
-                        $vars['deadline_datum'] = datum_nl($deadline->format('Y-m-d'));
-                        $vars['dagen_resterend']= max(0, $dgn_tot_deadline);
-                        $vars['deadline_voorbij']= $dgn_tot_deadline < 0 ? '1' : '0';
-                        $rendered = mail_template_render('reminder_beschikbaarheid', $vars);
-                        if (!$rendered) continue;
-                        $html = mail_html_wrapper($rendered['body_html'], $rendered['onderwerp'], $rendered['hero_titel'] ?? '');
-                        if (mail_queue_toevoegen($k['email'], $k['voornaam'], $rendered['onderwerp'], $html, (int)$k['id'])) {
-                            $res['besch_gemaild'] = ($res['besch_gemaild'] ?? 0) + 1;
-                        }
-                    }
-                } catch (\Exception $e) { error_log("reminder beschikbaarheid: " . $e->getMessage()); }
-            }
-        }
-    }
-
-    return $res;
+    } catch (\Exception $e) { error_log('ondertekeningen_auto_setup: ' . $e->getMessage()); }
+}
 }
 
-// Auto-setup: herinnerd_op kolom op ondertekeningen
-function ondertekening_herinnerd_auto_setup(): void {
-    static $done = false;
-    if ($done) return;
-    $done = true;
+// ── Overige tabellen die voorheen alleen via migraties kwamen ──
+// Op een verse database (bijv. testomgeving) ontbraken deze; nu maken ze zichzelf aan.
+if (!function_exists('extra_tabellen_auto_setup')) {
+function extra_tabellen_auto_setup(): void {
+    static $done = false; if ($done) return; $done = true;
+    $db = db();
     try {
-        $db = db();
-        $dbn = $db->query("SELECT DATABASE()")->fetchColumn();
-        $c = $db->prepare("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=? AND TABLE_NAME='ondertekeningen' AND COLUMN_NAME='herinnerd_op'");
-        $c->execute([$dbn]);
-        if (!$c->fetchColumn()) $db->exec("ALTER TABLE `ondertekeningen` ADD COLUMN `herinnerd_op` DATETIME DEFAULT NULL");
-    } catch (\Exception $e) {}
+        $db->exec("CREATE TABLE IF NOT EXISTS `sollicitant_notities` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `sollicitatie_id` INT NOT NULL,
+            `beheerder_id` INT NOT NULL,
+            `tekst` TEXT NOT NULL,
+            `aangemaakt_op` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            `gewijzigd_op` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            INDEX (`sollicitatie_id`), INDEX (`aangemaakt_op`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $db->exec("CREATE TABLE IF NOT EXISTS `sollicitant_taken` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `sollicitatie_id` INT NOT NULL,
+            `taak_slug` VARCHAR(50) NOT NULL,
+            `titel` VARCHAR(150) NOT NULL,
+            `omschrijving` TEXT DEFAULT NULL,
+            `link_url` VARCHAR(500) DEFAULT NULL,
+            `status` VARCHAR(20) NOT NULL DEFAULT 'open',
+            `verplicht` TINYINT(1) NOT NULL DEFAULT 1,
+            `soort` VARCHAR(20) NOT NULL DEFAULT 'afvinken',
+            `document_soort` VARCHAR(40) DEFAULT NULL,
+            `volgorde` INT NOT NULL DEFAULT 50,
+            `aangemaakt_op` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            `voltooid_op` DATETIME DEFAULT NULL,
+            INDEX (`sollicitatie_id`), INDEX (`status`),
+            UNIQUE KEY `uniek_taak_per_sol` (`sollicitatie_id`, `taak_slug`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $db->exec("CREATE TABLE IF NOT EXISTS `blk_wijzigingen` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `sollicitatie_id` INT NOT NULL,
+            `reden` TEXT NOT NULL,
+            `wijzigingen_json` JSON DEFAULT NULL,
+            `gewijzigd_op` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            INDEX (`sollicitatie_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        // `type` is een vrije sleutel: 'portaal', 'beheerder' of 'ond<id>' (2FA bij ondertekenen). Geen ENUM!
+        $db->exec("CREATE TABLE IF NOT EXISTS `otp_tokens` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `email` VARCHAR(200) NOT NULL,
+            `code_hash` VARCHAR(64) NOT NULL,
+            `type` VARCHAR(30) NOT NULL DEFAULT 'portaal',
+            `pogingen` TINYINT NOT NULL DEFAULT 0,
+            `gebruikt` TINYINT(1) NOT NULL DEFAULT 0,
+            `vervalt_op` DATETIME NOT NULL,
+            `aangemaakt_op` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            INDEX `idx_email_type` (`email`, `type`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    } catch (\Exception $e) { error_log('extra_tabellen_auto_setup: ' . $e->getMessage()); }
+}
 }
 
 // ── Lazy-cron: draait max 1x per uur bij admin-bezoek ─────────
@@ -855,11 +787,7 @@ function lazy_cron_tick(): void {
     try {
         $laatste = instelling('cron.laatste_run', '');
         if ($laatste && strtotime($laatste) > time() - 3600) return;
-        instelling_opslaan('cron.laatste_run', date('Y-m-d H:i:s'));
-        instelling_opslaan('cron.laatste_bron', 'lazy');
-        if (function_exists('reminder_run')) reminder_run();
-        if (function_exists('auto_invite_run')) auto_invite_run();
-        if (function_exists('mail_queue_verwerk')) mail_queue_verwerk(10);
+        if (function_exists('cron_taken_uitvoeren')) cron_taken_uitvoeren('lazy', ['queue' => 10, 'ai' => 3]);
     } catch (\Exception $e) { error_log('lazy_cron: ' . $e->getMessage()); }
 }
 
@@ -895,17 +823,13 @@ function auto_invite_run(): array {
 
         if (!$ok['voldoet']) { $res['overgeslagen']++; continue; }
 
-        // Verstuur uitnodiging via queue
-        $onderwerp = 'Uitnodiging selectiedag — Paal 13';
-        $datum = $seizoen['datum_selectiedag'] ? date('d-m-Y', strtotime($seizoen['datum_selectiedag'])) : 'binnenkort';
-        $body  = "<p>Hoi {$k['voornaam']},</p>
-<p>We zijn enthousiast over je aanmelding! We willen je graag uitnodigen voor onze selectiedag op <strong>$datum</strong>.</p>
-<p>Log in op het portaal voor meer informatie en om je deelname te bevestigen: <a href=\"" . APP_URL . "/portaal/\">" . APP_URL . "/portaal/</a></p>
-<p>Tot dan!<br>Reddingsbrigade Paal 13</p>";
-        if (mail_queue_toevoegen($k['email'], $k['voornaam'], $onderwerp, $body, (int)$k['id'])) {
-            // Update fase
-            db()->prepare("UPDATE sollicitaties SET fase='uitgenodigd_selectie' WHERE id=?")->execute([$k['id']]);
-            $res['uitgenodigd']++;
+        // Dezelfde centrale fase-functie als de handmatige route: documenten klaarzetten én de
+        // bewerkbare uitnodiging (via de meldingen-kern, in de wachtrij).
+        if (function_exists('fase_zetten')) {
+            try {
+                $fr = fase_zetten((int)$k['id'], 'uitgenodigd_selectie', 'auto_invite', ['alleen_van' => ['aangemeld'], 'prioriteit' => 'queue']);
+                if ($fr['ok'] && !$fr['ongewijzigd']) $res['uitgenodigd']++; else $res['overgeslagen']++;
+            } catch (\Exception $e) { error_log('auto-invite: ' . $e->getMessage()); $res['overgeslagen']++; }
         }
     }
     return $res;

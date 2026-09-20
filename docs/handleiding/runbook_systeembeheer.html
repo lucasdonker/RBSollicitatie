@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="nl" xml:lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc 3.11" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Runbook systeembeheer</title>
+  <style>
+
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+</style>
+  <style type="text/css">
+:root { --navy: #054d8a; --oranje: #D43D00; --tekst: #1a2230; --grijs: #5a6478; --rand: #e6e9ef; --bg: #f4f6f9; }
+html { font-size: 16px; }
+body { margin: 0; padding: 0 16px 48px; font-family: "Instrument Sans", -apple-system, "Segoe UI", Arial, sans-serif; color: var(--tekst); background: #fff; line-height: 1.6; max-width: 820px; margin-inline: auto; }
+header#title-block-header { border-bottom: 3px solid var(--navy); margin: 24px 0 16px; padding-bottom: 8px; }
+h1.title { color: var(--navy); font-size: 1.7rem; margin: 0; }
+
+h1 { color: var(--navy); font-size: 1.3rem; margin-top: 2em; padding-top: 0.6em; border-top: 1px solid var(--rand); }
+h2 { color: var(--tekst); font-size: 1.08rem; margin-top: 1.4em; }
+h3 { color: var(--tekst); font-size: 1rem; margin-top: 1.2em; }
+a { color: var(--oranje); }
+nav#TOC { background: var(--bg); border-radius: 10px; padding: 12px 16px; margin: 16px 0 24px; font-size: 0.95rem; }
+nav#TOC ul { margin: 0; padding-left: 18px; }
+table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 0.92rem; }
+th, td { border: 1px solid var(--rand); padding: 6px 8px; text-align: left; vertical-align: top; }
+th { background: var(--bg); color: var(--navy); }
+code { background: var(--bg); padding: 1px 4px; border-radius: 4px; font-size: 0.9em; }
+pre { background: var(--bg); padding: 10px 12px; border-radius: 8px; overflow-x: auto; }
+pre code { background: none; padding: 0; }
+blockquote { border-left: 3px solid var(--oranje); margin: 12px 0; padding: 4px 12px; color: var(--grijs); }
+hr { border: 0; border-top: 1px solid var(--rand); margin: 24px 0; }
+@media (max-width: 600px) { html { font-size: 15px; } table { display: block; overflow-x: auto; } }
+</style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Runbook systeembeheer — Sollicitatiesysteem Paal
+13</h1>
+</header>
+<p>Versie 2.94.0 · september 2026</p>
+<p>Dit document is voor wie de servers beheert: installeren, uitrollen
+naar productie, configuratie, back-ups, herstel en het lezen van de
+logs. Het is de enige plek waar de technische stappen staan. Wat het
+bestuur in het beheer doet, staat in de <a href="handleiding_beheer.md">handleiding beheer</a>.</p>
+<p>De handleidingen staan als Markdown in
+<code>docs/handleiding/</code>. De map <code>docs/</code> is op de
+server afgeschermd (<code>docs/.htaccess</code>); in het beheer lees je
+ze onder Instellingen › Handleidingen, wat de meegeleverde HTML-versie
+achter de login serveert. Na een tekstwijziging draai je
+<code>docs/handleiding/maak_export.ps1</code> (pandoc) om de HTML en de
+Word-versies bij te werken en commit je die mee.</p>
+<h1 id="inhoud">Inhoud</h1>
+<ol type="1">
+<li><a href="#omgevingen-en-branches">Omgevingen en branches</a></li>
+<li><a href="#hoe-het-systeem-in-elkaar-zit">Hoe het systeem in elkaar
+zit</a></li>
+<li><a href="#uitrollen-naar-productie-checklist">Uitrollen naar
+productie (checklist)</a></li>
+<li><a href="#nieuwe-server-installeren">Nieuwe server
+installeren</a></li>
+<li><a href="#configphp-alle-instellingen">config.php: alle
+instellingen</a></li>
+<li><a href="#geheimen-die-in-de-database-staan">Geheimen die in de
+database staan</a></li>
+<li><a href="#cron">Cron</a></li>
+<li><a href="#authentik-sso">Authentik (SSO)</a></li>
+<li><a href="#systeemcontrole-health-check">Systeemcontrole (health
+check)</a></li>
+<li><a href="#back-up-en-herstel">Back-up en herstel</a></li>
+<li><a href="#terugdraaien-rollback">Terugdraaien (rollback)</a></li>
+<li><a href="#logs-lezen">Logs lezen</a></li>
+<li><a href="#beveiligingsmaatregelen-in-het-kort">Beveiligingsmaatregelen in
+het kort</a></li>
+<li><a href="#bekende-beperkingen">Bekende beperkingen</a></li>
+</ol>
+<hr />
+<h1 id="omgevingen-en-branches">Omgevingen en branches</h1>
+<table>
+<thead>
+<tr>
+<th>Omgeving</th>
+<th>Adres</th>
+<th>Branch</th>
+<th>Uitrol</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Test</td>
+<td>test.sollicitatie.paal13.com</td>
+<td><code>Development</code></td>
+<td>automatisch bij elke push (Plesk Git)</td>
+</tr>
+<tr>
+<td>Productie</td>
+<td>sollicitatie.paal13.com</td>
+<td><code>main</code></td>
+<td>handmatig: merge naar <code>main</code>, dan in Plesk &quot;Deploy&quot;</td>
+</tr>
+</tbody>
+</table>
+<p>Elke omgeving heeft een <strong>eigen database</strong>, een
+<strong>eigen <code>includes/config.php</code></strong> en een
+<strong>eigen kluissleutel</strong>. Niets daarvan staat in Git. Het
+systeem herkent de omgeving aan <code>APP_URL</code>: op test staat een
+oranje label TESTOMGEVING in het beheer.</p>
+<p>Werkwijze: bouwen op <code>Development</code> → testen op de
+testomgeving → merge naar <code>main</code> → uitrollen volgens de
+checklist hieronder.</p>
+<h1 id="hoe-het-systeem-in-elkaar-zit">Hoe het systeem in elkaar
+zit</h1>
+<ul>
+<li><strong>PHP 8.3, MariaDB</strong>, Apache met PHP-FPM achter de
+Plesk-proxy (Cloud86). Geen framework, geen Composer: alles wat nodig is
+zit in de repo (<code>includes/lib/</code> bevat TCPDF en FPDI voor de
+PDF&#39;s).</li>
+<li><strong>Twee kanten:</strong> het portaal voor sollicitanten
+(<code>/portaal/</code>) en het beheer (<code>/admin/</code>). Daarnaast
+<code>/aanmelden.php</code> (het openbare aanmeldformulier),
+<code>/p/&lt;naam&gt;</code> (landingspagina&#39;s), <code>/api/</code>
+(voor de WordPress-plugin op paal13.com) en
+<code>/cron/run.php</code>.</li>
+<li><strong>Inloggen:</strong> beheerders via Authentik (OIDC);
+sollicitanten met een code per e-mail, WhatsApp of sms, of via Authentik
+als ze al lid zijn.</li>
+<li><strong>Meldingen:</strong> één verzendkern voor e-mail (SMTP),
+WhatsApp (WhatsReach) en sms. Alles gaat via een wachtrij die door de
+cron wordt geleegd.</li>
+<li><strong>Gevoelige gegevens</strong> (kopie ID, bankpas, BSN, IBAN,
+verzegelde PDF&#39;s) staan versleuteld in de <strong>kluis</strong>:
+bestanden in <code>DOCUMENTEN_MAP</code> buiten de webroot, sleutel in
+<code>config.php</code> plus een zout in de database. Zonder sleutel
+zijn ze voor niemand leesbaar.</li>
+<li><strong>Zelfherstel:</strong> bij de eerste pagina na een nieuwe
+versie maakt het systeem ontbrekende tabellen en kolommen zelf aan
+(<code>db_failsafe</code>). Grotere stappen staan als SQL-bestanden in
+<code>sql/</code> en draai je via Beheer › Instellingen › Systeem &amp;
+Updates › Migraties uitvoeren.</li>
+</ul>
+<h1 id="uitrollen-naar-productie-checklist">Uitrollen naar productie
+(checklist)</h1>
+<p>Doorloop dit bij <strong>elke</strong> release. De stappen met ★ zijn
+eenmalig bij de overgang naar 2.94.0 (de eerste productie-uitrol sinds
+augustus 2026).</p>
+<p><strong>Vooraf</strong></p>
+<ol type="1">
+<li>Alles is op de testomgeving getest volgens de checklist in
+<code>docs/ai/Toekomstige plannen/Nog te doen.md</code>.</li>
+<li>Maak een back-up van de productiedatabase (Plesk › Databases ›
+Exporteren) en van <code>DOCUMENTEN_MAP</code>.</li>
+<li>Merge <code>Development</code> naar <code>main</code> (GitHub
+Desktop of een pull request). Push.</li>
+</ol>
+<p><strong>Uitrollen</strong></p>
+<ol start="4" type="1">
+<li>Plesk › Git › productie-repository › <strong>Deploy</strong>. Wacht
+tot de deploy klaar is.</li>
+<li>★ Vul <code>includes/config.php</code> op productie aan met de
+sleutels die sinds augustus zijn bijgekomen (zie <a href="#configphp-alle-instellingen">config.php: alle instellingen</a>):
+<ul>
+<li><code>KLUIS_SLEUTEL</code> — genereer een nieuwe:
+<code>php -r &quot;echo base64_encode(random_bytes(32));&quot;</code>.
+<strong>Bewaar een kopie in de wachtwoordkluis van het bestuur.</strong>
+Kwijt = alle documenten kwijt.</li>
+<li><code>KLUIS_SLEUTEL_VERSIE</code> = <code>1</code>.</li>
+<li><code>DOCUMENTEN_MAP</code> = een map <strong>buiten</strong>
+<code>httpdocs</code>, bijvoorbeeld
+<code>/var/www/vhosts/paal13.com/private/sollicitatie-documenten</code>.
+Maak de map aan; de PHP-gebruiker van de site moet er kunnen schrijven
+(rechten 700).</li>
+<li>Controleer dat de laatste twee regels
+<code>error_reporting(0);</code> en
+<code>ini_set(&#39;display_errors&#39;, 0);</code> erin staan. De
+<code>.htaccess</code> regelt dit niet onder PHP-FPM.</li>
+</ul></li>
+<li>★ Verwijder op de productieserver de mappen <code>setup/</code> en
+<code>_backups/</code> als die er nog staan (<code>_backups/</code>
+bevat kopieën van oude configuraties met wachtwoorden).</li>
+<li>Open één willekeurige pagina, bijvoorbeeld
+<code>https://sollicitatie.paal13.com/portaal/</code>. Daarmee draait de
+zelfherstelronde voor deze versie.</li>
+<li>Log in op het beheer en ga naar <strong>Instellingen › Systeem &amp;
+Updates</strong>:
+<ul>
+<li>Klik <strong>Migraties uitvoeren</strong> (de SQL-bestanden in
+<code>sql/</code> die nog niet gedraaid zijn).</li>
+<li>Klik <strong>Systeemcontrole</strong> en kijk of alle acht checks
+groen zijn. Kluis en zegel horen groen te zijn; het zegelcertificaat
+wordt bij de eerste keer automatisch aangemaakt.</li>
+<li>★ Kijk in <strong>Instellingen › Foutenlog</strong> (of het
+serverlog) of de regel
+<code>otp_tokens.type omgezet van ENUM naar VARCHAR(30)</code> er
+<strong>één keer</strong> staat. Zonder die omzetting wordt elke
+verificatiecode bij het ondertekenen afgekeurd.</li>
+</ul></li>
+<li>★ Ga naar <strong>Beheerders</strong>. Staat er nog een account
+<code>admin@paal13.com</code> op non-actief, laat dat zo (of verwijder
+het). Dat was het installatie-account met een openbaar wachtwoord;
+2.94.0 zet het automatisch uit.</li>
+<li>Open <strong>Instellingen</strong> een keer (daarmee wordt de
+cron-token aangemaakt als die ontbreekt) en controleer de cron in Plesk
+(zie <a href="#cron">Cron</a>).</li>
+<li>★ Authentik: controleer de redirect-URI&#39;s en de groep
+<code>Sol-Penningmeester</code> (zie <a href="#authentik-sso">Authentik</a>).</li>
+<li>★ Instellingen › <strong>Algemeen</strong>: vul het
+penningmeester-adres en het ledenservice-adres in en plaats de
+huisregels-pdf onder &quot;Taken na aannemen&quot;. Laat &quot;loondossier-stukken als
+bijlage meesturen&quot; uit.</li>
+<li>Stuur vanuit <strong>Instellingen › Berichten</strong> een
+testbericht per e-mail en, als WhatsApp aan staat, via WhatsApp.
+Controleer de regel in Berichten › log.</li>
+<li>Test de inlog van een sollicitant (code per e-mail) en de inlog van
+een beheerder (Authentik).</li>
+<li>★ WordPress-plugin op paal13.com: de API-sleutel moet in de header
+<code>X-Paal13-Key</code> worden meegestuurd. De variant in het webadres
+(<code>?key=</code>) werkt sinds 2.94.0 niet meer.</li>
+</ol>
+<p><strong>Na afloop</strong></p>
+<ol start="16" type="1">
+<li>Noteer de versie en datum in het logboek van het bestuur. De
+changelog staat in Systeem &amp; Updates.</li>
+</ol>
+<h1 id="nieuwe-server-installeren">Nieuwe server installeren</h1>
+<p>Alleen nodig bij een verhuizing of een extra omgeving. De
+installatiewizard bestaat niet meer.</p>
+<ol type="1">
+<li>Maak in Plesk een database en een databasegebruiker met alle rechten
+op die database.</li>
+<li>Koppel de Git-repository aan het (sub)domein, branch
+<code>main</code> (productie) of <code>Development</code> (test),
+documentroot = de repo-root.</li>
+<li>Kopieer <code>includes/config.template.php</code> naar
+<code>includes/config.php</code> en vul alle waarden in (tabel
+hieronder). Elke omgeving krijgt een <strong>eigen</strong>
+kluissleutel.</li>
+<li>Importeer <code>sql/schema.sql</code> in de database (phpMyAdmin of
+<code>mysql &lt; sql/schema.sql</code>).</li>
+<li>Open een pagina; de zelfherstelronde maakt de rest van de tabellen
+aan. Draai daarna in Systeem &amp; Updates de migraties.</li>
+<li>Log in via Authentik met een account in de groep
+<code>Sol-Admin</code>; dat account wordt automatisch beheerder met rol
+admin. Er is geen standaardaccount met wachtwoord meer.</li>
+<li>Stel de cron in en doorloop de rest van de checklist hierboven vanaf
+stap 10.</li>
+</ol>
+<p>Maprechten: <code>uploads/</code> schrijfbaar voor PHP;
+<code>DOCUMENTEN_MAP</code> schrijfbaar en buiten de webroot. Alle
+andere mappen alleen-lezen is prima.</p>
+<h1 id="configphp-alle-instellingen">config.php: alle instellingen</h1>
+<table>
+<thead>
+<tr>
+<th>Constante</th>
+<th>Betekenis</th>
+<th>Let op</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DB_HOST</code>, <code>DB_NAME</code>, <code>DB_USER</code>,
+<code>DB_PASS</code>, <code>DB_CHARSET</code></td>
+<td>Databaseverbinding</td>
+<td>charset altijd <code>utf8mb4</code></td>
+</tr>
+<tr>
+<td><code>APP_URL</code></td>
+<td>Volledig webadres van deze omgeving, zonder slash aan het eind</td>
+<td>Bepaalt test/productie en alle links in mails</td>
+</tr>
+<tr>
+<td><code>MAIL_FROM</code>, <code>MAIL_FROM_NAME</code></td>
+<td>Afzender van alle e-mail</td>
+<td>Moet een adres op een domein zijn met geldige SPF/DKIM</td>
+</tr>
+<tr>
+<td><code>MAIL_BESTUUR</code></td>
+<td>Standaard bestuursadres (meldingen, terugval)</td>
+<td>Kan in het beheer per meldingstype worden overschreven</td>
+</tr>
+<tr>
+<td><code>SMTP_HOST</code>, <code>SMTP_PORT</code>,
+<code>SMTP_USER</code>, <code>SMTP_PASS</code>,
+<code>SMTP_ENCRYPT</code></td>
+<td>Mailserver</td>
+<td>Leeg = PHP <code>mail()</code>, alleen als noodoplossing</td>
+</tr>
+<tr>
+<td><code>OIDC_CLIENT_ID</code>, <code>OIDC_CLIENT_SECRET</code>,
+<code>OIDC_ISSUER</code>, <code>OIDC_SLUG</code></td>
+<td>Authentik-provider</td>
+<td>Leeg = SSO uit; alleen wachtwoordlogin voor beheerders</td>
+</tr>
+<tr>
+<td><code>OIDC_REDIRECT_URI</code></td>
+<td>Callback voor het beheer</td>
+<td><code>&lt;APP_URL&gt;/admin/auth_callback.php</code>; het portaal
+gebruikt vast
+<code>&lt;APP_URL&gt;/portaal/auth_callback.php</code></td>
+</tr>
+<tr>
+<td><code>KLUIS_SLEUTEL</code></td>
+<td>Hoofdsleutel van de kluis, base64 van 32 bytes</td>
+<td>Uniek per omgeving, kopie in de wachtwoordkluis</td>
+</tr>
+<tr>
+<td><code>KLUIS_SLEUTEL_VERSIE</code></td>
+<td>Nummer van de sleutel</td>
+<td>Alleen ophogen bij een sleutelwissel</td>
+</tr>
+<tr>
+<td><code>DOCUMENTEN_MAP</code></td>
+<td>Map voor versleutelde documenten</td>
+<td>Buiten de webroot; leeg = <code>uploads/documenten</code> (health
+waarschuwt)</td>
+</tr>
+<tr>
+<td><code>ZEGEL_MAP</code>, <code>ZEGEL_NAAM</code>,
+<code>ZEGEL_ORGANISATIE</code></td>
+<td>Documentzegel (optioneel)</td>
+<td>Standaard <code>&lt;DOCUMENTEN_MAP&gt;/zegel</code>, automatisch
+aangemaakt</td>
+</tr>
+<tr>
+<td><code>SESSION_NAME</code>, <code>SESSION_LIFETIME</code></td>
+<td>Sessiecookie</td>
+<td>Laten staan</td>
+</tr>
+<tr>
+<td><code>error_reporting(0)</code>, <code>display_errors=0</code></td>
+<td>Geen foutmeldingen op het scherm</td>
+<td>Verplicht op productie</td>
+</tr>
+</tbody>
+</table>
+<h1 id="geheimen-die-in-de-database-staan">Geheimen die in de database
+staan</h1>
+<p>Deze staan niet in <code>config.php</code> maar in de tabel
+<code>instellingen</code>, en vul je in het beheer in:</p>
+<table>
+<thead>
+<tr>
+<th>Sleutel</th>
+<th>Waar in het beheer</th>
+<th>Wat</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cron.token</code></td>
+<td>Instellingen › Mail &amp; herinneringen</td>
+<td>Token voor <code>/cron/run.php</code>; wordt automatisch
+aangemaakt</td>
+</tr>
+<tr>
+<td><code>api.sleutel</code>, <code>api.origins</code></td>
+<td>Instellingen › Website &amp; API</td>
+<td>Sleutel en toegestane websites voor de WordPress-plugin</td>
+</tr>
+<tr>
+<td><code>ai.api_key</code></td>
+<td>Instellingen › AI</td>
+<td>Sleutel voor de AI-hulp (Gemini)</td>
+</tr>
+<tr>
+<td><code>authentik.api_token</code>,
+<code>authentik.admin_groepen</code></td>
+<td>Instellingen › Authentik &amp; competenties</td>
+<td>Voor de competentie-sync en de groepen die beheerder mogen zijn</td>
+</tr>
+<tr>
+<td><code>sms.*</code>, <code>wa.*</code></td>
+<td>Instellingen › SMS, WhatsApp &amp; meldingen</td>
+<td>Sleutels van de sms-gateway en WhatsReach</td>
+</tr>
+<tr>
+<td><code>kluis.zout</code></td>
+<td>(automatisch)</td>
+<td>Zout van de kluis; samen met <code>KLUIS_SLEUTEL</code> nodig om
+documenten te lezen</td>
+</tr>
+</tbody>
+</table>
+<p>Een database-export bevat deze waarden. Behandel exports dus als
+geheim.</p>
+<h1 id="cron">Cron</h1>
+<p>Plesk › Geplande taken, <strong>elke 5 minuten</strong>, als de
+gebruiker van de site:</p>
+<pre><code>curl -s &quot;https://sollicitatie.paal13.com/cron/run.php?token=&lt;cron.token&gt;&quot; &gt; /dev/null</code></pre>
+<p>Wat de cron doet: berichtenwachtrij legen (max 8 per run),
+AI-wachtrij, herinneringen en geplande berichten, automatisch
+uitnodigen, Authentik-sync en één keer per dag de AVG-opschoning. Een
+lock van vier minuten voorkomt dubbel draaien.</p>
+<p>Zonder cron blijft het systeem werken via een vangnet: een bezoek aan
+het beheer of het portaal zet de wachtrij maximaal één keer per uur in
+gang. Dat vangnet doet <strong>geen</strong> AVG-opschoning en geen
+Authentik-sync. De systeemcontrole waarschuwt na 30 minuten zonder cron
+en meldt een fout na 2 uur.</p>
+<h1 id="authentik-sso">Authentik (SSO)</h1>
+<p>In Authentik (<code>auth.paal13.com</code>) hoort één
+OAuth2/OpenID-provider met:</p>
+<ul>
+<li>Redirect-URI&#39;s (allebei, per omgeving):
+<code>https://sollicitatie.paal13.com/admin/auth_callback.php</code> en
+<code>https://sollicitatie.paal13.com/portaal/auth_callback.php</code>.
+Ontbreekt de tweede, dan krijgen sollicitanten die via Authentik
+inloggen &quot;Redirect URI Error&quot;.</li>
+<li>Scopes <code>openid profile email</code>, en de groepen in het token
+(claim <code>groups</code>).</li>
+<li>Groepen: <code>Sol-Admin</code> (rol admin, alles),
+<code>Bestuur</code> (rol bestuur), <code>Sol-Penningmeester</code> (rol
+penningmeester: alleen loondossiers en sollicitanten lezen),
+<code>Sol-Begeleider</code> (rol begeleider: selectiedag en dekking
+lezen). De hoogste rang wint als iemand in meer groepen zit. Rechten per
+rol pas je aan in Beheer › Rollen &amp; rechten.</li>
+</ul>
+<p>Nieuwe beheerders maak je dus niet in het beheer aan: zet de persoon
+in Authentik in de juiste groep en laat hem één keer inloggen.
+Wachtwoordlogin (<code>/admin/login.php</code>) blijft bestaan als
+noodingang voor accounts waarvoor in het beheer een wachtwoord is
+gezet.</p>
+<h1 id="systeemcontrole-health-check">Systeemcontrole (health
+check)</h1>
+<p>Beheer › Instellingen › Systeem &amp; Updates › Systeemcontrole. Acht
+checks:</p>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Groen</th>
+<th>Waarschuwing / fout</th>
+<th>Wat te doen</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Database</td>
+<td>Alle tabellen en kolommen aanwezig</td>
+<td>Ontbrekend onderdeel</td>
+<td>Klik Repareren; anders migraties uitvoeren</td>
+</tr>
+<tr>
+<td>Cron</td>
+<td>Laatste run &lt; 30 min geleden</td>
+<td>&gt; 30 min waarschuwing, &gt; 2 uur fout</td>
+<td>Cron in Plesk controleren, token vergelijken</td>
+</tr>
+<tr>
+<td>Mailwachtrij</td>
+<td>Niets ouder dan 1 uur in &quot;wacht&quot;</td>
+<td>Berichten blijven hangen</td>
+<td>Cron en SMTP-instellingen; Berichten › log</td>
+</tr>
+<tr>
+<td>Opschoning</td>
+<td>AVG-opschoning &lt; 3 dagen geleden</td>
+<td>Langer geleden</td>
+<td>Cron draait niet als echte cron</td>
+</tr>
+<tr>
+<td>Mappen</td>
+<td><code>uploads/</code> schrijfbaar</td>
+<td>Niet schrijfbaar</td>
+<td>Maprechten</td>
+</tr>
+<tr>
+<td>Configuratie</td>
+<td>cron-token en bestuursadres gezet</td>
+<td>Iets ontbreekt</td>
+<td>Instellingen openen, <code>MAIL_BESTUUR</code> in config</td>
+</tr>
+<tr>
+<td>Kluis</td>
+<td>Werkt, documentenmap buiten webroot</td>
+<td>Sleutel ontbreekt/ongeldig, map in webroot</td>
+<td><code>KLUIS_SLEUTEL</code>, <code>DOCUMENTEN_MAP</code> in
+config</td>
+</tr>
+<tr>
+<td>Zegel</td>
+<td>Certificaat geldig &gt; 60 dagen</td>
+<td>Ontbreekt of verloopt</td>
+<td>Wordt automatisch aangemaakt; bij verlopen: zegelmap leegmaken en
+pagina openen</td>
+</tr>
+</tbody>
+</table>
+<h1 id="back-up-en-herstel">Back-up en herstel</h1>
+<p>Wat je nodig hebt om alles terug te zetten:</p>
+<ol type="1">
+<li><strong>Database</strong> (Plesk-back-up of <code>mysqldump</code>),
+dagelijks.</li>
+<li><strong><code>DOCUMENTEN_MAP</code></strong> (de versleutelde
+documenten en de zegelsleutel), dagelijks.</li>
+<li><strong><code>includes/config.php</code></strong> van elke omgeving,
+met daarin de <code>KLUIS_SLEUTEL</code>. Bewaar die sleutel óók los in
+de wachtwoordkluis van het bestuur.</li>
+<li><strong><code>uploads/</code></strong> (BLK-foto&#39;s, bijlagen,
+landingspagina-ontwerpen).</li>
+</ol>
+<p>De code zelf staat in Git en hoeft niet in de back-up.</p>
+<p>Herstel: code uitrollen via Plesk, <code>config.php</code>
+terugzetten, database importeren, <code>DOCUMENTEN_MAP</code> en
+<code>uploads/</code> terugzetten, pagina openen, systeemcontrole
+draaien. <strong>Zonder de originele <code>KLUIS_SLEUTEL</code> én het
+zout uit de database zijn de documenten definitief onleesbaar.</strong>
+Dat is bewust: een gelekte back-up zonder sleutel is waardeloos voor een
+aanvaller.</p>
+<p>Bewaartermijnen van back-ups: hanteer dezelfde termijn als de langste
+wettelijke bewaartermijn in het systeem (5 jaar voor loondocumenten) en
+vernietig back-ups die ouder zijn.</p>
+<h1 id="terugdraaien-rollback">Terugdraaien (rollback)</h1>
+<p>Blijkt een release kapot op productie:</p>
+<ol type="1">
+<li>Plesk › Git › kies de vorige commit op <code>main</code> (of zet in
+Git <code>main</code> terug met een revert en push).</li>
+<li>Deploy.</li>
+<li>Open een pagina. Nieuwe kolommen die de nieuwe versie heeft
+aangemaakt blijven staan; dat is onschadelijk, oudere code negeert
+ze.</li>
+<li>Meld het in <code>docs/ai/Toekomstige plannen/Nog te doen.md</code>
+zodat het in de volgende release wordt opgelost.</li>
+</ol>
+<p>Zet nooit een oudere database-back-up terug alleen om code terug te
+draaien: dan verlies je aanmeldingen en ondertekeningen van na de
+back-up.</p>
+<h1 id="logs-lezen">Logs lezen</h1>
+<table>
+<thead>
+<tr>
+<th>Waar</th>
+<th>Wat</th>
+<th>Voor wie</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Beheer › Logboek</td>
+<td>Alles in één tijdlijn: acties van beheerders, verstuurde berichten,
+fouten, ondertekenbewijs, opschoning, mislukte logins</td>
+<td>admin (bestuur na toekennen recht)</td>
+</tr>
+<tr>
+<td>Beheer › Instellingen › Foutenlog</td>
+<td>Technische fouten met code en referentie</td>
+<td>admin</td>
+</tr>
+<tr>
+<td>Plesk › Logs (PHP error_log)</td>
+<td>Regels die het systeem zelf schrijft (<code>db_failsafe: …</code>,
+<code>cron …</code>, <code>rate_limit: …</code>) en PHP-fouten</td>
+<td>systeembeheerder</td>
+</tr>
+<tr>
+<td>Foutmail</td>
+<td>Bij ernstige fouten gaat een mail naar <code>mail.fout_email</code>
+(standaard <a href="mailto:website@paal13.com">website@paal13.com</a>),
+maximaal één per code per vijf minuten</td>
+<td>systeembeheerder</td>
+</tr>
+</tbody>
+</table>
+<p>Een foutmelding op het scherm toont een code en een referentie
+(<code>P13-S000 · ref 1a2b3c4d</code>); zoek die referentie in het
+Foutenlog.</p>
+<h1 id="beveiligingsmaatregelen-in-het-kort">Beveiligingsmaatregelen in
+het kort</h1>
+<p>Voor de verantwoording (AVG, NIS2-zorgplicht) staat hier wat het
+systeem doet:</p>
+<ul>
+<li><strong>Toegang:</strong> SSO via Authentik met groepen; rollen en
+rechten per module; sessiecookie alleen via https, HttpOnly, SameSite;
+sessie-id vernieuwt na inloggen en elk half uur.</li>
+<li><strong>Brute force:</strong> 5 mislukte logins per 15 minuten per
+e-mail én per IP-adres; inlogcode voor sollicitanten maximaal 5 pogingen
+per code en 10 aanvragen per uur per IP; verificatiecode bij
+ondertekenen 5 per uur per document; aanmeldformulier 5 per uur per IP
+met honeypot; downloads van loondocumenten 30 per uur per sessie.</li>
+<li><strong>Headers:</strong> Content-Security-Policy (alleen eigen
+scripts en verbindingen), HSTS, X-Frame-Options, nosniff,
+Referrer-Policy, Permissions-Policy. Landingspagina&#39;s hebben een eigen,
+strengere CSP.</li>
+<li><strong>CSRF:</strong> elk formulier en elke beheer-API met
+token.</li>
+<li><strong>Uploads:</strong> typecontrole op inhoud, geen
+PHP-uitvoering in <code>uploads/</code>, gevoelige bestanden alleen
+versleuteld in de kluis buiten de webroot.</li>
+<li><strong>Versleuteling:</strong> XChaCha20-Poly1305 of AES-256-GCM
+per bestand, sleutel per bestand, hoofdsleutel uit config plus zout uit
+de database, hash-controle bij lezen.</li>
+<li><strong>Ondertekenen:</strong> bewijslog (IP, browser, tijd, kanaal
+van de verificatiecode), verzegelde PDF met eigen certificaat, PDF
+eenmalig gemaakt en versleuteld bewaard.</li>
+<li><strong>Logging:</strong> audit van alle beheeracties, downloads en
+rechtenwijzigingen; exports worden zelf gelogd; berichtinhoud komt nooit
+in het logboek.</li>
+<li><strong>Bewaartermijnen:</strong> automatische opschoning per
+categorie (instelbaar), verwerkingsregister in
+<code>docs/ai/PROJECT.md</code> §8.</li>
+<li><strong>Foutafhandeling:</strong> geen technische details op het
+scherm, wel een referentie; foutmail naar de beheerder.</li>
+</ul>
+<h1 id="bekende-beperkingen">Bekende beperkingen</h1>
+<ul>
+<li>Het zegelcertificaat is zelf uitgegeven: Acrobat toont &quot;geldigheid
+onbekend&quot; in plaats van een groen vinkje. Het bewijst wél dat de PDF na
+ondertekening niet is gewijzigd. Een AATL-certificaat kost geld en is
+bewust niet aangeschaft.</li>
+<li>WhatsApp loopt via WhatsReach (geen officiële Meta-koppeling). Het
+bestuur kan het per meldingstype uitzetten; bij storing valt alles terug
+op e-mail.</li>
+<li>Het aanmeldformulier op <code>/aanmelden.php</code> heeft nog de
+oude vormgeving; de landingspagina&#39;s zijn de bedoelde ingang.</li>
+<li>Er is geen automatische test-suite op de server; de harnassen in
+<code>docs/ai/harnas/</code> draaien lokaal en staan niet in Git.</li>
+</ul>
+</body>
+</html>

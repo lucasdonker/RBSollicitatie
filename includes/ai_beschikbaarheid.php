@@ -55,7 +55,18 @@ function ai_besch_verwerk(string $tekst, array $geldige_weken, ?array $seizoen =
     $min_week = $geldige_weken ? min($geldige_weken) : 22;
     $max_week = $geldige_weken ? max($geldige_weken) : 35;
 
-    $prompt = ai_besch_prompt($tekst, implode(', ', $week_labels), $min_week, $max_week);
+    // Seizoen bewaren voor de terugval-conversie (week → datum) in de validatie
+    $GLOBALS['ai_besch_seizoen'] = $seizoen;
+
+    // Datumbereik van het seizoen bepalen (eerste weekstart t/m laatste weekeind)
+    $seizoen_start = ''; $seizoen_eind = '';
+    if ($wd && $geldige_weken) {
+        $eerste = $wd[$min_week] ?? null; $laatste = $wd[$max_week] ?? null;
+        if ($eerste) $seizoen_start = $eerste['start']->format('Y-m-d');
+        if ($laatste) $seizoen_eind = $laatste['eind']->format('Y-m-d');
+    }
+
+    $prompt = ai_besch_prompt($tekst, implode(', ', $week_labels), $min_week, $max_week, $seizoen_start, $seizoen_eind);
 
     $payload = json_encode([
         'contents' => [['parts' => [['text' => $prompt]]]],
@@ -88,10 +99,14 @@ function ai_besch_verwerk(string $tekst, array $geldige_weken, ?array $seizoen =
 }
 
 /** De strikte prompt. Alleen beschikbaarheid; JSON-only; weigert off-topic. */
-function ai_besch_prompt(string $tekst, string $weken_context, int $min_week, int $max_week): string {
+function ai_besch_prompt(string $tekst, string $weken_context, int $min_week, int $max_week, string $seizoen_start = '', string $seizoen_eind = ''): string {
+    $datum_regel = ($seizoen_start && $seizoen_eind)
+        ? "Het seizoen loopt van $seizoen_start t/m $seizoen_eind (datums in YYYY-MM-DD)."
+        : "";
     return <<<PROMPT
 Je bent een hulpje dat ALLEEN beschikbaarheid voor vakantiewerk omzet naar gestructureerde data.
 Je vult een rooster in voor een reddingsbrigade. Het seizoen loopt van week $min_week t/m week $max_week.
+$datum_regel
 
 Beschikbare weken dit seizoen: $weken_context
 
@@ -105,6 +120,10 @@ STRIKTE REGELS:
 - Verzin nooit weken buiten $min_week–$max_week. Clamp naar dit bereik.
 - Een regime is "vijf" (hele werkweek, 5 dagen) of "weekend" (alleen weekenddagen).
 - Weekenddagen: 5=vrijdag, 6=zaterdag, 7=zondag. Als iemand "weekenden" zegt zonder specificatie: [6,7].
+- BELANGRIJK voor afwezigheid (vakantie): geef EXACTE datums (van_datum en tot_datum, YYYY-MM-DD), NIET hele weken. Als iemand zegt "3 t/m 16 augustus op vakantie", gebruik dan precies die datums. Zo blijven halve weken behouden en is het controleerbaar.
+- LOSSE DAGEN: als iemand één losse dag niet kan (bijv. "behalve 12 augustus", "maar die woensdag de 6e niet", "op 20 juli heb ik een afspraak"), zet die dan in "losse_dagen" als één datum — NIET als afwezigheidsperiode. Gebruik soort "niet_beschikbaar" als iemand echt niet kan, en "voorkeur_vrij" als iemand die dag liever vrij wil maar het geen must is. Reken losse weekdagen om naar de concrete datum binnen het seizoen.
+- VASTE VRIJE DAG: als iemand ELKE week een bepaalde weekdag vrij wil (bijv. "elke woensdag naar school", "op maandag heb ik altijd sport", "donderdags kan ik nooit"), zet die weekdag(en) in "vaste_vrije_dagen" als weekdagnummers (1=maandag, 2=dinsdag, 3=woensdag, 4=donderdag, 5=vrijdag, 6=zaterdag, 7=zondag) en zet de reden in "vaste_reden". Dit is iets anders dan een losse dag: een vaste vrije dag geldt ELKE week, een losse dag is één keer.
+- MINDER DAGEN (verzoek): als iemand in BEPAALDE WEKEN minder dagen wil werken dan normaal (bijv. "in juli maar 3 dagen per week", "week 30 tot 32 wil ik het rustig aan doen, hooguit 2 dagen"), zet dat in "verzoeken" met van_week, tot_week en dagen_aantal. Dit is een verzoek dat het bestuur beoordeelt. Een verzoek is GEEN aparte werkperiode: laat de werkperiode in "blokken" gewoon doorlopen over die weken en splits die niet op. Optioneel: welke dagen iemand die weken wél kan in "pool" (weekdagnummers). LET OP: als je een pool opgeeft, moet die MINSTENS zoveel dagen bevatten als dagen_aantal (je kunt geen 3 dagen werken als je er maar 2 aanvinkt). Weet je niet welke dagen? Laat pool dan leeg.
 
 ANTWOORD ALLEEN met JSON in dit exacte format:
 {
@@ -113,13 +132,21 @@ ANTWOORD ALLEEN met JSON in dit exacte format:
     {"van_week": <int>, "tot_week": <int>, "regime": "vijf"|"weekend", "weekend_dagen": [<int>,...]}
   ],
   "afwezig": [
-    {"van_week": <int>, "tot_week": <int>, "label": "<korte reden, bijv. vakantie>"}
+    {"van_datum": "<YYYY-MM-DD>", "tot_datum": "<YYYY-MM-DD>", "label": "<korte reden, bijv. vakantie>"}
+  ],
+  "losse_dagen": [
+    {"datum": "<YYYY-MM-DD>", "soort": "niet_beschikbaar"|"voorkeur_vrij", "reden": "<korte reden, optioneel>"}
+  ],
+  "vaste_vrije_dagen": [<int weekdagnummer 1-7>, ...],
+  "vaste_reden": "<korte reden voor de vaste vrije dag(en), optioneel>",
+  "verzoeken": [
+    {"van_week": <int>, "tot_week": <int>, "dagen_aantal": <int>, "toelichting": "<reden>", "pool": [<int weekdag 1-7>, ...]}
   ],
   "vraag": "<optionele vervolgvraag als iets onduidelijk is, anders leeg>",
   "samenvatting": "<één zin in gewone taal: zo heb ik het begrepen>"
 }
 
-Bij status "geweigerd": laat blokken en afwezig leeg, en leg in "samenvatting" kort uit waarom (bijv. "Ik kon geen beschikbaarheid herkennen").
+Bij status "geweigerd": laat alle lijsten leeg, en leg in "samenvatting" kort uit waarom (bijv. "Ik kon geen beschikbaarheid herkennen").
 
 GEBRUIKERSTEKST:
 """
@@ -129,6 +156,36 @@ PROMPT;
 }
 
 /** Valideer + saneer de AI-output. Nooit vertrouwen op rauwe AI-data. */
+/** Controleert of een string een geldige datum in YYYY-MM-DD is; retourneert de datum of ''. */
+function ai_besch_datum_geldig($d): string {
+    $d = trim((string)$d);
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $d)) return '';
+    [$y, $m, $dag] = array_map('intval', explode('-', $d));
+    return checkdate($m, $dag, $y) ? $d : '';
+}
+
+/**
+ * Aangrenzende of overlappende werkperiodes met hetzelfde regime (en dezelfde weekenddagen)
+ * samenvoegen. De AI splitst een periode soms rond een verzoek "minder dagen" (26–30, 31, 32–35);
+ * voor de sollicitant is dat één doorlopende periode met daarbinnen een verzoek.
+ */
+function ai_besch_blokken_samenvoegen(array $blokken): array {
+    usort($blokken, fn($a, $b) => $a['van_week'] <=> $b['van_week'] ?: $a['tot_week'] <=> $b['tot_week']);
+    $uit = [];
+    foreach ($blokken as $b) {
+        $sleutel = $b['regime'] . ':' . json_encode($b['weekend_dagen'] ?? null);
+        $laatste = $uit ? count($uit) - 1 : -1;
+        if ($laatste >= 0 && $uit[$laatste]['_sleutel'] === $sleutel && $b['van_week'] <= $uit[$laatste]['tot_week'] + 1) {
+            $uit[$laatste]['tot_week'] = max($uit[$laatste]['tot_week'], $b['tot_week']);
+            continue;
+        }
+        $b['_sleutel'] = $sleutel;
+        $uit[] = $b;
+    }
+    foreach ($uit as &$b) unset($b['_sleutel']);
+    return $uit;
+}
+
 function ai_besch_valideer(array $data, array $geldige_weken, int $min_week, int $max_week): array {
     $status = $data['status'] ?? 'geweigerd';
     if ($status === 'geweigerd') {
@@ -152,36 +209,97 @@ function ai_besch_valideer(array $data, array $geldige_weken, int $min_week, int
         }
         $blokken[] = $blok;
     }
+    $blokken = ai_besch_blokken_samenvoegen($blokken);
 
-    // Afwezigheid valideren
+    // Afwezigheid valideren — nu met exacte datums (van_datum/tot_datum, YYYY-MM-DD).
+    // Terugvalcompat: als de AI toch nog weken teruggeeft, zetten we die om naar datums.
     $afwezig = [];
     foreach ($data['afwezig'] ?? [] as $a) {
         if (!is_array($a)) continue;
-        $van = $clamp($a['van_week'] ?? 0);
-        $tot = $clamp($a['tot_week'] ?? 0);
-        if ($tot < $van) { $t = $van; $van = $tot; $tot = $t; }
-        $afwezig[] = ['van_week' => $van, 'tot_week' => $tot, 'label' => mb_substr(trim((string)($a['label'] ?? '')), 0, 60)];
+        $van_d = ai_besch_datum_geldig($a['van_datum'] ?? '');
+        $tot_d = ai_besch_datum_geldig($a['tot_datum'] ?? '');
+        // Terugval: oude week-notatie omzetten naar datums via de seizoen-weekdatums
+        if ((!$van_d || !$tot_d) && isset($a['van_week'], $a['tot_week'])) {
+            $vw = $clamp($a['van_week']); $tw = $clamp($a['tot_week']);
+            if ($tw < $vw) { $t=$vw; $vw=$tw; $tw=$t; }
+            $wd = function_exists('seizoen_weken_datums') ? seizoen_weken_datums($GLOBALS['ai_besch_seizoen'] ?? null) : [];
+            if (isset($wd[$vw])) $van_d = $van_d ?: $wd[$vw]['start']->format('Y-m-d');
+            if (isset($wd[$tw])) $tot_d = $tot_d ?: $wd[$tw]['eind']->format('Y-m-d');
+        }
+        if (!$van_d || !$tot_d) continue;
+        if ($tot_d < $van_d) { $t = $van_d; $van_d = $tot_d; $tot_d = $t; }
+        $afwezig[] = ['van_datum' => $van_d, 'tot_datum' => $tot_d, 'label' => mb_substr(trim((string)($a['label'] ?? '')), 0, 60)];
+    }
+
+    // Losse dagen valideren — concrete kalenderdatums die iemand niet kan / liever vrij wil.
+    $losse_dagen = [];
+    foreach ($data['losse_dagen'] ?? [] as $ld) {
+        if (!is_array($ld)) continue;
+        $d = ai_besch_datum_geldig($ld['datum'] ?? '');
+        if (!$d) continue;
+        $soort = in_array($ld['soort'] ?? '', ['niet_beschikbaar', 'voorkeur_vrij'], true) ? $ld['soort'] : 'niet_beschikbaar';
+        $losse_dagen[] = ['datum' => $d, 'soort' => $soort, 'reden' => mb_substr(trim((string)($ld['reden'] ?? '')), 0, 100)];
+    }
+
+    // Vaste vrije dagen valideren — weekdagnummers 1-7 die elke week vrij zijn.
+    $vaste_vrije_dagen = [];
+    foreach ($data['vaste_vrije_dagen'] ?? [] as $wd) {
+        $n = (int)$wd;
+        if ($n >= 1 && $n <= 7 && !in_array($n, $vaste_vrije_dagen, true)) $vaste_vrije_dagen[] = $n;
+    }
+    $vaste_reden = mb_substr(trim((string)($data['vaste_reden'] ?? '')), 0, 200);
+
+    // Verzoeken valideren — minder dagen in bepaalde weken.
+    $verzoeken = [];
+    foreach ($data['verzoeken'] ?? [] as $vz) {
+        if (!is_array($vz)) continue;
+        $vw = (int)($vz['van_week'] ?? 0);
+        $tw = (int)($vz['tot_week'] ?? 0);
+        if ($vw < $min_week) $vw = $min_week;  if ($vw > $max_week) $vw = $max_week;
+        if ($tw < $min_week) $tw = $min_week;  if ($tw > $max_week) $tw = $max_week;
+        if ($tw < $vw) { $t = $vw; $vw = $tw; $tw = $t; }
+        $aantal = (int)($vz['dagen_aantal'] ?? 0);
+        if ($aantal < 1 || $aantal > 6) continue;   // buiten 1-6 dagen is geen zinnig verzoek
+        $pool = [];
+        foreach ($vz['pool'] ?? [] as $pd) { $n = (int)$pd; if ($n >= 1 && $n <= 7 && !in_array($n, $pool, true)) $pool[] = $n; }
+        // Validatie: een pool moet minstens het gevraagde aantal dagen bevatten.
+        // Is de pool te klein (of leeg), dan laten we 'm weg — dan kiest de roosteraar
+        // zelf welke dagen, in plaats van een onmogelijk verzoek door te geven.
+        if (count($pool) < $aantal) $pool = [];
+        $verzoeken[] = [
+            'van_week'     => $vw,
+            'tot_week'     => $tw,
+            'dagen_aantal' => $aantal,
+            'toelichting'  => mb_substr(trim((string)($vz['toelichting'] ?? '')), 0, 200),
+            'pool'         => $pool,
+        ];
     }
 
     $vraag = mb_substr(trim((string)($data['vraag'] ?? '')), 0, 300);
     $samenvatting = mb_substr(trim((string)($data['samenvatting'] ?? '')), 0, 300);
 
+    $heeft_iets = $blokken || $afwezig || $losse_dagen || $vaste_vrije_dagen || $verzoeken;
+
     // Niets bruikbaars + geen vraag → behandel als geweigerd
-    if (!$blokken && !$afwezig && !$vraag) {
+    if (!$heeft_iets && !$vraag) {
         return ['status' => 'geweigerd', 'bericht' => $samenvatting ?: 'Ik kon geen beschikbaarheid herkennen. Probeer het iets concreter te beschrijven.'];
     }
 
     // Alleen een vraag, niets ingevuld
-    if (!$blokken && !$afwezig && $vraag) {
+    if (!$heeft_iets && $vraag) {
         return ['status' => 'vraag', 'vraag' => $vraag, 'samenvatting' => $samenvatting];
     }
 
     return [
-        'status'       => 'ok',
-        'blokken'      => $blokken,
-        'afwezig'      => $afwezig,
-        'vraag'        => $vraag,
-        'samenvatting' => $samenvatting,
+        'status'            => 'ok',
+        'blokken'           => $blokken,
+        'afwezig'           => $afwezig,
+        'losse_dagen'       => $losse_dagen,
+        'vaste_vrije_dagen' => $vaste_vrije_dagen,
+        'vaste_reden'       => $vaste_reden,
+        'verzoeken'         => $verzoeken,
+        'vraag'             => $vraag,
+        'samenvatting'      => $samenvatting,
     ];
 }
 

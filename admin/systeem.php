@@ -27,15 +27,37 @@ try {
     $db_fout = $e->getMessage();
 }
 
-// Migraties forceren (handig na een upload)
+// Migraties forceren / schema repareren (handig na een upload)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['actie'] ?? '') === 'migreer') {
     csrf_check();
-    $gedraaid = [];
-    foreach (['instellingen_auto_setup', 'beschikbaarheid2_auto_setup', 'competenties_auto_setup', 'loonplan_auto_setup'] as $fn) {
-        if (function_exists($fn)) { try { $fn(); $gedraaid[] = $fn; } catch (Exception $e) {} }
+    if (function_exists('db_failsafe')) {
+        try { db_failsafe(true); } catch (\Throwable $e) {}
     }
-    flash('succes', 'Migraties uitgevoerd: ' . (count($gedraaid) ?: 0) . ' setup-routines.');
+    flash('succes', 'Databasecontrole uitgevoerd: ontbrekende tabellen en kolommen zijn aangemaakt waar nodig.');
     redirect(APP_URL . '/admin/systeem.php');
+}
+
+// Schema-gezondheid ophalen (voor de statusweergave)
+$gezondheid = function_exists('db_gezondheid') ? db_gezondheid() : null;
+
+// Health check: volledige systeemcontrole (met optionele reparatie)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['actie'] ?? '') === 'health_repareer') {
+    csrf_check();
+    if (function_exists('health_check')) health_check(true);
+    flash('succes', 'Systeemcontrole uitgevoerd en waar mogelijk hersteld.');
+    redirect(APP_URL . '/admin/systeem.php');
+}
+$health = function_exists('health_check') ? health_check(false) : null;
+
+// Herinneringen: proefdraaien (niets versturen) of nu echt draaien
+$herinnering_resultaat = null; $herinnering_echt = false;
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($_POST['actie'] ?? '', ['herinneringen_proef', 'herinneringen_draai'], true)) {
+    csrf_check();
+    $herinnering_echt = ($_POST['actie'] === 'herinneringen_draai');
+    if (function_exists('herinnering_run')) {
+        $herinnering_resultaat = herinnering_run(null, !$herinnering_echt);
+        if ($herinnering_echt && function_exists('audit_log')) audit_log('herinneringen_gedraaid', 'systeem', null, ['via' => 'beheer']);
+    }
 }
 
 $changelog = function_exists('app_changelog') ? app_changelog() : [];
@@ -59,6 +81,91 @@ require __DIR__ . '/layout_top.php';
   </div>
 </div>
 
+<!-- Systeemgezondheid (health check) -->
+<?php if ($health !== null): ?>
+<div class="card" style="margin-bottom:14px">
+  <div class="card-header"><div class="card-title">Systeemgezondheid</div></div>
+  <div class="card-body">
+    <?php
+      $health_kleur = ['ok' => 'var(--groen)', 'waarschuwing' => 'var(--oranje)', 'fout' => 'var(--rood)'];
+      $health_bg    = ['ok' => 'var(--groen-bg)', 'waarschuwing' => 'var(--oranje-bg)', 'fout' => 'var(--rood-bg)'];
+      $health_icoon = ['ok' => '✓', 'waarschuwing' => '⚠', 'fout' => '✗'];
+      $health_label = ['ok' => 'Alles in orde', 'waarschuwing' => 'Aandachtspunten', 'fout' => 'Er is een probleem'];
+      $st = $health['status'];
+    ?>
+    <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:<?= $health_bg[$st] ?>;border:1px solid <?= $health_kleur[$st] ?>;border-radius:8px;margin-bottom:14px">
+      <span style="font-size:18px"><?= $health_icoon[$st] ?></span>
+      <span style="font-size:13px;color:<?= $health_kleur[$st] ?>"><strong><?= $health_label[$st] ?>.</strong></span>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <?php
+        $check_namen = [
+          'database' => 'Database', 'cron' => 'Cron (automatische taken)', 'mailwachtrij' => 'Mailwachtrij',
+          'opschoning' => 'AVG-opschoning', 'mappen' => 'Mappen & rechten', 'configuratie' => 'Configuratie',
+          'kluis' => 'Kluis (versleutelde documenten)', 'zegel' => 'Documentzegel (PDF)',
+        ];
+        foreach ($health['checks'] as $sleutel => $check):
+          $ck = $check['status'];
+      ?>
+      <div style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--rand)">
+        <span style="font-size:14px;color:<?= $health_kleur[$ck] ?>;min-width:16px"><?= $health_icoon[$ck] ?></span>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:600"><?= h($check_namen[$sleutel] ?? $sleutel) ?></div>
+          <div style="font-size:12px;color:var(--tekst-zacht)"><?= h($check['uitleg']) ?><?= !empty($check['hersteld']) ? ' <span style="color:var(--groen)">(automatisch hersteld)</span>' : '' ?></div>
+        </div>
+      </div>
+      <?php endforeach; ?>
+    </div>
+
+    <form method="post" style="margin-top:14px">
+      <?= csrf_input() ?>
+      <input type="hidden" name="actie" value="health_repareer">
+      <button type="submit" class="btn btn-primary btn-sm">Controleren &amp; repareren</button>
+    </form>
+  </div>
+</div>
+<?php endif; ?>
+
+<!-- Herinneringen: proefdraaien -->
+<?php if (function_exists('herinnering_run')): ?>
+<div class="card" style="margin-bottom:14px" id="herinneringen">
+  <div class="card-header"><div class="card-title">Herinneringen</div></div>
+  <div class="card-body">
+    <p style="font-size:13px;color:var(--tekst-zacht);margin:0 0 12px">
+      Laatste automatische run: <strong><?= h(instelling('cron.laatste_run', '') ?: 'nog niet') ?></strong>
+      (<?= h(instelling('cron.laatste_bron', '') ?: '-') ?>). Proefdraaien toont wie een herinnering zou krijgen zonder iets te versturen.
+    </p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <form method="post" style="margin:0"><?= csrf_input() ?><input type="hidden" name="actie" value="herinneringen_proef">
+        <button type="submit" class="btn btn-outline btn-sm">Proefdraaien (niets versturen)</button></form>
+      <form method="post" style="margin:0" onsubmit="return confirm('Herinneringen nu echt versturen (via de wachtrij)?')"><?= csrf_input() ?><input type="hidden" name="actie" value="herinneringen_draai">
+        <button type="submit" class="btn btn-primary btn-sm">Nu draaien</button></form>
+    </div>
+    <?php if ($herinnering_resultaat !== null): ?>
+    <div style="margin-top:14px;font-size:13px">
+      <div style="font-weight:600;margin-bottom:6px"><?= $herinnering_echt ? 'Gedraaid' : 'Proefrun' ?> op <?= date('d-m-Y H:i') ?></div>
+      <?php foreach ($herinnering_resultaat as $hs => $hr): ?>
+      <div style="padding:8px 0;border-bottom:1px solid var(--rand)">
+        <div><strong><?= h($hr['naam']) ?></strong>
+          <?php if (!$hr['aan']): ?><span class="badge">uit</span>
+          <?php else: ?> — <?= (int)$hr['kandidaten'] ?> kandidaat/-aten, <?= (int)$hr['verstuurd'] ?> <?= $herinnering_echt ? 'in de wachtrij' : 'zou versturen' ?>, <?= (int)$hr['overgeslagen'] ?> overgeslagen<?php endif; ?>
+        </div>
+        <?php if (!empty($hr['lijst'])): ?>
+        <div style="color:var(--tekst-zacht);margin-top:4px">
+          <?php foreach ($hr['lijst'] as $hl): ?>
+            <span style="display:inline-block;margin:2px 8px 2px 0"><?= h($hl['naam'] ?: ('#' . $hl['sol_id'])) ?>: <em><?= h($hl['actie']) ?></em></span>
+          <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
+      </div>
+      <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
+  </div>
+</div>
+<?php endif; ?>
+
 <!-- Tabelstatus -->
 <div class="card" style="margin-bottom:14px">
   <div class="card-header"><div class="card-title">Database</div></div>
@@ -66,9 +173,26 @@ require __DIR__ . '/layout_top.php';
     <?php if ($db_fout): ?>
       <div style="color:var(--rood)">Kan de database niet lezen: <?= h($db_fout) ?></div>
     <?php else: ?>
+      <?php if ($gezondheid !== null): ?>
+        <?php if ($gezondheid['ok']): ?>
+          <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--groen-bg);border:1px solid var(--groen);border-radius:8px;margin-bottom:12px">
+            <span style="font-size:18px">✓</span>
+            <span style="font-size:13px;color:var(--groen)"><strong>Database in orde.</strong> Alle verwachte tabellen en kolommen zijn aanwezig.</span>
+          </div>
+        <?php else: ?>
+          <div style="padding:10px 14px;background:var(--oranje-bg);border:1px solid var(--oranje);border-radius:8px;margin-bottom:12px">
+            <div style="font-size:13px;color:var(--oranje);font-weight:600;margin-bottom:4px">⚠ Er ontbreekt iets in de database</div>
+            <?php if (!empty($gezondheid['ontbrekende_kolommen'])): ?>
+              <div style="font-size:12px;color:var(--tekst-zacht)">Ontbrekende kolommen: <?= h(implode(', ', $gezondheid['ontbrekende_kolommen'])) ?></div>
+            <?php endif; ?>
+            <div style="font-size:12px;color:var(--tekst-zacht);margin-top:4px">Klik op "Databasecontrole uitvoeren" hieronder om dit automatisch te herstellen.</div>
+          </div>
+        <?php endif; ?>
+      <?php endif; ?>
       <p style="font-size:12.5px;color:var(--tekst-zacht);margin-bottom:12px">
-        Ontbrekende tabellen worden automatisch aangemaakt zodra de bijbehorende functie voor het eerst gebruikt wordt.
-        Klopt er iets niet na een upload? Klik dan op "Migraties uitvoeren".
+        Het systeem controleert en herstelt het databaseschema automatisch bij elk bezoek. Ontbrekende tabellen
+        en kolommen worden vanzelf aangemaakt. Klopt er toch iets niet na een upload? Klik dan op
+        "Databasecontrole uitvoeren".
       </p>
       <?php foreach ($verwacht as $groep => $tabellen): ?>
       <div style="margin-bottom:10px">
@@ -86,6 +210,18 @@ require __DIR__ . '/layout_top.php';
       </div>
       <?php endforeach; ?>
     <?php endif; ?>
+  </div>
+</div>
+
+<!-- Logboek -->
+<div class="card">
+  <div class="card-header"><div class="card-title">Logboek</div></div>
+  <div style="padding:0 0 4px">
+    <p style="font-size:12.5px;color:var(--tekst-zacht);margin-bottom:12px">
+      Alle sporen van het systeem in één tijdlijn: acties, verstuurde berichten, technische fouten,
+      het bewijsspoor van ondertekeningen, de AVG-opschoning en mislukte inlogpogingen.
+    </p>
+    <a href="<?= APP_URL ?>/admin/logboek.php" class="btn btn-outline btn-sm"><?= icoon('auditlog', 14) ?> Logboek openen</a>
   </div>
 </div>
 

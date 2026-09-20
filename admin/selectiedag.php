@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../includes/functions.php';
 $pagina_titel = 'Beoordelen';
 $actieve_nav  = 'selectiedag';
-vereist_rol('begeleider');
+vereis_recht('selectiedag', 'lezen');
 
 $seizoen = actief_seizoen();
 $sid = $seizoen ? (int)$seizoen['id'] : 0;

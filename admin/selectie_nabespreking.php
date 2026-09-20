@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../includes/functions.php';
 $pagina_titel = 'Nabespreking';
 $actieve_nav  = 'selectiedag';
-vereist_rol('bestuur');
+vereis_recht('selectiedag', 'bewerken');
 
 $seizoen = actief_seizoen();
 $sid = $seizoen ? (int)$seizoen['id'] : 0;
@@ -23,6 +23,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $sid) {
         $n = selectie_besluit_doorvoeren($sid);
         flash('succes', "$n sollicitant(en) doorgezet: 'door' → uitgenodigd voor het TW, 'niet' → afgewezen. Twijfelgevallen bleven staan.");
         redirect(APP_URL . '/admin/selectie_nabespreking.php');
+    }
+
+    if ($actie === 'gebeld') {
+        header('Content-Type: application/json');
+        $meteen = !empty($_POST['meteen_doorvoeren']);
+        $res = selectie_gebeld_zetten($sid, (int)$_POST['sol_id'], $_POST['gebeld_notitie'] ?? '', $ik, $meteen);
+        echo json_encode(['ok' => true] + $res);
+        exit;
+    }
+    if ($actie === 'gebeld_wissen') {
+        header('Content-Type: application/json');
+        selectie_gebeld_wissen($sid, (int)$_POST['sol_id']);
+        echo json_encode(['ok' => true]);
+        exit;
+    }
+    if ($actie === 'doorvoeren_een') {
+        header('Content-Type: application/json');
+        $ok = selectie_besluit_doorvoeren_een($sid, (int)$_POST['sol_id']);
+        echo json_encode(['ok' => $ok]);
+        exit;
+    }
+    if ($actie === 'gebelde_doorvoeren') {
+        $n = selectie_gebelde_doorvoeren($sid);
+        flash('succes', "$n gebelde sollicitant(en) doorgezet naar hun nieuwe fase.");
+        redirect(APP_URL . '/admin/selectie_nabespreking.php?tab=bellijst');
     }
 }
 
@@ -97,9 +122,33 @@ require __DIR__ . '/layout_top.php';
   <div class="card"><div class="card-body" style="text-align:center;padding:40px;color:var(--tekst-zacht)">Nog geen kandidaten.</div></div>
 <?php else: ?>
 
+<?php
+  $tab = $_GET['tab'] ?? 'nabespreken';
+  // Bellijst: kandidaten met een definitief besluit (door/niet), nog niet doorgevoerd
+  $bel_kandidaten = array_filter($kandidaten, function($k) use ($besluiten) {
+      $b = $besluiten[(int)$k['sol_id']] ?? null;
+      return $b && in_array($b['besluit'] ?? '', ['door','niet'], true) && empty($b['doorgevoerd_op']);
+  });
+  $tel_gebeld = 0; $tel_ongebeld = 0;
+  foreach ($bel_kandidaten as $k) {
+      $b = $besluiten[(int)$k['sol_id']] ?? [];
+      if (!empty($b['gebeld_op'])) $tel_gebeld++; else $tel_ongebeld++;
+  }
+?>
+
+<!-- Tab-toggle -->
+<div style="display:flex;gap:6px;margin-bottom:16px;border-bottom:1px solid var(--rand);padding-bottom:0">
+  <a href="?tab=nabespreken" style="padding:9px 18px;font-size:14px;font-weight:600;text-decoration:none;border-bottom:3px solid <?= $tab==='nabespreken'?'var(--navy)':'transparent' ?>;color:<?= $tab==='nabespreken'?'var(--navy)':'var(--tekst-zacht)' ?>">Nabespreken</a>
+  <a href="?tab=bellijst" style="padding:9px 18px;font-size:14px;font-weight:600;text-decoration:none;border-bottom:3px solid <?= $tab==='bellijst'?'var(--navy)':'transparent' ?>;color:<?= $tab==='bellijst'?'var(--navy)':'var(--tekst-zacht)' ?>">📞 Bellijst<?php if ($tel_ongebeld): ?> <span style="background:var(--oranje);color:#fff;border-radius:10px;padding:1px 7px;font-size:11px"><?= $tel_ongebeld ?></span><?php endif; ?></a>
+</div>
+
+<?php if ($tab === 'bellijst'): ?>
+  <?php require __DIR__ . '/selectie_bellijst_partial.php'; ?>
+<?php else: ?>
+
 <p style="font-size:12.5px;color:var(--tekst-zacht);margin:0 0 12px">
   Alles per kandidaat bij elkaar. De scores zijn indicatief — de observaties en jullie gesprek bepalen het besluit.
-  Zet per persoon een voorlopig besluit; onderaan kun je ze in één keer doorvoeren.
+  Zet per persoon een voorlopig besluit. Als je klaar bent, ga je naar de <a href="?tab=bellijst" style="color:var(--navy)">Bellijst</a> om iedereen te bellen en per persoon door te voeren.
 </p>
 
 <!-- Filter -->
@@ -123,7 +172,10 @@ require __DIR__ . '/layout_top.php';
 <div class="nb-kaart <?= $besluit ? 'b-' . $besluit : '' ?>" id="nb-<?= $sol_id ?>">
   <div class="nb-kop">
     <?php if ($foto): ?>
-      <img class="nb-foto" src="<?= h($foto) ?>" alt="" loading="lazy">
+      <img class="nb-foto" src="<?= h($foto) ?>" alt="" loading="lazy"
+           style="cursor:pointer"
+           data-foto="<?= h($foto) ?>" data-naam="<?= h(trim($k['voornaam'].' '.$k['achternaam'])) ?>"
+           onclick="fotoVergroten(this.dataset.foto, this.dataset.naam)">
     <?php else: ?>
       <span class="nb-foto-leeg"><?= h(mb_strtoupper(mb_substr($k['voornaam'],0,1) . mb_substr($k['achternaam'],0,1))) ?></span>
     <?php endif; ?>
@@ -212,13 +264,24 @@ require __DIR__ . '/layout_top.php';
         Twijfelgevallen (<?= $tel['twijfel'] ?>) en open (<?= $tel['open'] ?>) blijven staan.
       </div>
     </div>
-    <form method="POST" onsubmit="return confirm('Weet je het zeker? Dit past de fase van de sollicitanten aan.\n\n<?= $tel['door'] ?> → uitgenodigd TW\n<?= $tel['niet'] ?> → afgewezen')">
-      <?= csrf_input() ?>
-      <input type="hidden" name="actie" value="doorvoeren">
-      <button type="submit" class="btn btn-primary" <?= ($tel['door']+$tel['niet'])===0?'disabled':'' ?>>Doorvoeren →</button>
-    </form>
+    <div style="margin-top:20px">
+      <button type="button" onclick="document.getElementById('geavanceerd-doorvoeren').style.display='block';this.style.display='none'" style="background:none;border:none;color:var(--tekst-zacht);font-size:12.5px;cursor:pointer;text-decoration:underline">⚙ Geavanceerd: alles in één keer doorvoeren</button>
+      <div id="geavanceerd-doorvoeren" style="display:none;margin-top:12px;padding:14px;background:var(--grijs-bg);border-radius:10px">
+        <div style="font-size:12.5px;color:var(--tekst-zacht);margin-bottom:10px">
+          Zet <strong><?= $tel['door'] ?></strong> kandidaten ineens op "uitgenodigd voor TW" en wijs <strong><?= $tel['niet'] ?></strong> af, zónder de bellijst te gebruiken.
+          Twijfelgevallen (<?= $tel['twijfel'] ?>) en open (<?= $tel['open'] ?>) blijven staan. Handig bij heel veel sollicitanten.
+        </div>
+        <form method="POST" onsubmit="return confirm('Weet je het zeker? Dit past de fase van alle beoordeelde sollicitanten in één keer aan.\n\n<?= $tel['door'] ?> → uitgenodigd TW\n<?= $tel['niet'] ?> → afgewezen')">
+          <?= csrf_input() ?>
+          <input type="hidden" name="actie" value="doorvoeren">
+          <button type="submit" class="btn btn-primary" <?= ($tel['door']+$tel['niet'])===0?'disabled':'' ?>>Alles doorvoeren →</button>
+        </form>
+      </div>
+    </div>
   </div>
 </div>
+
+<?php endif; // einde tab nabespreken ?>
 
 <script>
 const CSRF = '<?= csrf_token() ?>';

@@ -9,7 +9,6 @@ $fout = '';
 // ── Verwerken ────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
-    csrf_check();
     $actie = $_POST['actie'] ?? '';
 
     if ($actie === 'nieuw') {
@@ -23,6 +22,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 $hash = password_hash($ww, PASSWORD_DEFAULT);
                 $db->prepare("INSERT INTO beheerders (naam,email,wachtwoord,rol) VALUES(?,?,?,?)")->execute([$naam,$email,$hash,$rol]);
+                // Wie toegang krijgt tot het beheer hoort herleidbaar te zijn. Nooit het wachtwoord.
+                audit_log('beheerder_aangemaakt', 'beheerder', (int)$db->lastInsertId(), ['naam' => $naam, 'email' => $email, 'rol' => $rol]);
                 flash('succes', "$naam toegevoegd.");
             } catch (Exception $e) { $fout = 'E-mailadres bestaat al.'; }
         }
@@ -34,24 +35,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (strlen($ww) < 8) { $fout = 'Wachtwoord minimaal 8 tekens.'; }
         else {
             $db->prepare("UPDATE beheerders SET wachtwoord=? WHERE id=?")->execute([password_hash($ww,PASSWORD_DEFAULT),$id]);
+            // Alleen dát het gebeurde, nooit het wachtwoord zelf of de hash.
+            audit_log('beheerder_gewijzigd', 'beheerder', $id, ['wachtwoord' => 'opnieuw ingesteld']);
             flash('succes','Wachtwoord bijgewerkt.');
         }
     }
 
     if ($actie === 'rol') {
-        $db->prepare("UPDATE beheerders SET rol=? WHERE id=?")->execute([$_POST['rol'],(int)$_POST['bid']]);
+        $id = (int)$_POST['bid'];
+        $nieuwe_rol = (string)$_POST['rol'];
+        $vq = $db->prepare("SELECT rol FROM beheerders WHERE id=?"); $vq->execute([$id]);
+        $oude_rol = (string)$vq->fetchColumn();
+        $db->prepare("UPDATE beheerders SET rol=? WHERE id=?")->execute([$nieuwe_rol,$id]);
+        if ($oude_rol !== $nieuwe_rol) {
+            audit_log('beheerder_gewijzigd', 'beheerder', $id, ['rol' => ['oud' => $oude_rol, 'nieuw' => $nieuwe_rol]]);
+        }
         flash('succes','Rol bijgewerkt.');
     }
 
     if ($actie === 'deactiveer') {
         $id = (int)$_POST['bid'];
-        $mij = sessie_beheerder()['id'];
+        $mij = (int)huidige_beheerder()['id'];
         if ($id === $mij) { $fout='Je kunt jezelf niet deactiveren.'; }
-        else { $db->prepare("UPDATE beheerders SET actief=0 WHERE id=?")->execute([$id]); flash('succes','Account gedeactiveerd.'); }
+        else {
+            $db->prepare("UPDATE beheerders SET actief=0 WHERE id=?")->execute([$id]);
+            audit_log('beheerder_gewijzigd', 'beheerder', $id, ['actief' => ['oud' => 'ja', 'nieuw' => 'nee']]);
+            flash('succes','Account gedeactiveerd.');
+        }
     }
 
     if ($actie === 'activeer') {
-        $db->prepare("UPDATE beheerders SET actief=1 WHERE id=?")->execute([(int)$_POST['bid']]);
+        $id = (int)$_POST['bid'];
+        $db->prepare("UPDATE beheerders SET actief=1 WHERE id=?")->execute([$id]);
+        audit_log('beheerder_gewijzigd', 'beheerder', $id, ['actief' => ['oud' => 'nee', 'nieuw' => 'ja']]);
         flash('succes','Account geactiveerd.');
     }
 
@@ -90,9 +106,9 @@ require __DIR__.'/layout_top.php';
             <input type="hidden" name="actie" value="rol">
             <input type="hidden" name="bid" value="<?= $b['id'] ?>">
             <select name="rol" onchange="this.form.submit()" style="font-size:12px;padding:3px 6px;width:auto">
-              <option value="begeleider" <?= $b['rol']==='begeleider'?'selected':'' ?>>Begeleider</option>
-              <option value="bestuur"    <?= $b['rol']==='bestuur'?'selected':'' ?>>Bestuur</option>
-              <option value="admin"      <?= $b['rol']==='admin'?'selected':'' ?>>Admin</option>
+              <?php foreach (rollen_alle() as $_rol): ?>
+                <option value="<?= h($_rol['sleutel']) ?>" <?= $b['rol']===$_rol['sleutel']?'selected':'' ?>><?= h($_rol['naam']) ?></option>
+              <?php endforeach; ?>
             </select>
           </form>
         </td>
@@ -145,9 +161,9 @@ require __DIR__.'/layout_top.php';
         <div class="form-groep"><label>Tijdelijk wachtwoord</label><input type="password" name="wachtwoord" required minlength="8" placeholder="Minimaal 8 tekens"><div class="form-hulp">Geef dit door aan de persoon — zij kunnen het later wijzigen.</div></div>
         <div class="form-groep"><label>Rol</label>
           <select name="rol">
-            <option value="begeleider">Begeleider — alleen selectiedag beoordelen</option>
-            <option value="bestuur" selected>Bestuur — alles beheren</option>
-            <option value="admin">Admin — inclusief beheerders beheren</option>
+            <?php foreach (rollen_alle() as $_rol): ?>
+              <option value="<?= h($_rol['sleutel']) ?>" <?= $_rol['sleutel']==='bestuur'?'selected':'' ?>><?= h($_rol['naam']) ?></option>
+            <?php endforeach; ?>
           </select>
         </div>
         <button type="submit" class="btn btn-primary">Account aanmaken</button>
@@ -166,7 +182,7 @@ require __DIR__.'/layout_top.php';
   <div class="card" style="margin-top:14px;border-left:3px solid var(--grijs)">
     <div class="card-body" style="padding:14px 16px">
       <div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:4px">Authentik SSO niet ingesteld</div>
-      <p style="font-size:12px;color:var(--tekst-zacht)">Configureer Authentik via <a href="<?= APP_URL ?>/setup/" style="color:var(--oranje)">de installatie wizard</a> om SSO in te schakelen.</p>
+      <p style="font-size:12px;color:var(--tekst-zacht)">Vul de OIDC-gegevens (OIDC_CLIENT_ID, OIDC_CLIENT_SECRET, OIDC_ISSUER) in <code>includes/config.php</code> in om SSO in te schakelen; zie het runbook voor systeembeheer.</p>
     </div>
   </div>
   <?php endif; ?>

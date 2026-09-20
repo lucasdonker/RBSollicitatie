@@ -72,7 +72,7 @@ $logo = function_exists('site_logo_url') ? (site_logo_url() ?: '') : '';
 
 <?php if (!$toegang): ?>
   <div class="geen-toegang">
-    <h1>🔒 Geen geldige toegangscode</h1>
+    <h1><?= icoon("slot", 22) ?> Geen geldige toegangscode</h1>
     <p>Deze incheck-pagina is alleen bereikbaar via de juiste link met code. Vraag het organisatieteam om de tablet klaar te zetten.</p>
   </div>
 <?php elseif (!$sid): ?>
@@ -91,7 +91,7 @@ $logo = function_exists('site_logo_url') ? (site_logo_url() ?: '') : '';
 
   <div id="stapBevestig" style="display:none">
     <div class="bevestig">
-      <div class="vink">✅</div>
+      <div class="vink"><?= icoon("vink-cirkel", 44) ?></div>
       <h2 id="bevNaam"></h2>
       <p>Je bent aangemeld! Je zit in:</p>
       <div class="groep" id="bevGroep"></div>

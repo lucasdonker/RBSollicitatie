@@ -1,6 +1,6 @@
 -- Migratie 0002: BLK formulier uitbreiden met extra velden uit FluentForms
 -- Voeg toe aan blk_formulieren: diploma's, werkervaring, strand_motivatie, social_media, bijzonderheden
--- Uitvoeren via: /setup/update.php
+-- Uitvoeren via: Beheer › Instellingen › Systeem & Updates › Migraties uitvoeren
 
 ALTER TABLE `blk_formulieren`
   ADD COLUMN IF NOT EXISTS `diplomas` TEXT DEFAULT NULL AFTER `zwemvaardigheid`,

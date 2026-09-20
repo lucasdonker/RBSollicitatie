@@ -1,0 +1,1624 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="nl" xml:lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc 3.11" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Handleiding beheer</title>
+  <style>
+
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+</style>
+  <style type="text/css">
+:root { --navy: #054d8a; --oranje: #D43D00; --tekst: #1a2230; --grijs: #5a6478; --rand: #e6e9ef; --bg: #f4f6f9; }
+html { font-size: 16px; }
+body { margin: 0; padding: 0 16px 48px; font-family: "Instrument Sans", -apple-system, "Segoe UI", Arial, sans-serif; color: var(--tekst); background: #fff; line-height: 1.6; max-width: 820px; margin-inline: auto; }
+header#title-block-header { border-bottom: 3px solid var(--navy); margin: 24px 0 16px; padding-bottom: 8px; }
+h1.title { color: var(--navy); font-size: 1.7rem; margin: 0; }
+
+h1 { color: var(--navy); font-size: 1.3rem; margin-top: 2em; padding-top: 0.6em; border-top: 1px solid var(--rand); }
+h2 { color: var(--tekst); font-size: 1.08rem; margin-top: 1.4em; }
+h3 { color: var(--tekst); font-size: 1rem; margin-top: 1.2em; }
+a { color: var(--oranje); }
+nav#TOC { background: var(--bg); border-radius: 10px; padding: 12px 16px; margin: 16px 0 24px; font-size: 0.95rem; }
+nav#TOC ul { margin: 0; padding-left: 18px; }
+table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 0.92rem; }
+th, td { border: 1px solid var(--rand); padding: 6px 8px; text-align: left; vertical-align: top; }
+th { background: var(--bg); color: var(--navy); }
+code { background: var(--bg); padding: 1px 4px; border-radius: 4px; font-size: 0.9em; }
+pre { background: var(--bg); padding: 10px 12px; border-radius: 8px; overflow-x: auto; }
+pre code { background: none; padding: 0; }
+blockquote { border-left: 3px solid var(--oranje); margin: 12px 0; padding: 4px 12px; color: var(--grijs); }
+hr { border: 0; border-top: 1px solid var(--rand); margin: 24px 0; }
+@media (max-width: 600px) { html { font-size: 15px; } table { display: block; overflow-x: auto; } }
+</style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Handleiding beheer — Sollicitatiesysteem Paal 13</h1>
+</header>
+<p>Versie 2.94.0 · september 2026</p>
+<p>Het sollicitatiesysteem regelt de hele werving van strandwachten voor
+Reddingsbrigade Paal 13: van de aanmelding op de website, via de
+selectiedag en het trainingsweekend, tot de aangenomen strandwacht met
+een compleet loondossier. Sollicitanten volgen hun eigen voortgang in
+het portaal; het bestuur overziet de hele lichting in het beheer. Deze
+handleiding beschrijft het beheer (het gedeelte onder
+<code>/admin/</code>), scherm voor scherm, in de volgorde van het menu.
+Waar het systeem iets automatisch doet (een mail sturen, taken
+klaarzetten, gegevens opruimen), staat dat er expliciet bij.</p>
+<p>Je vindt deze handleiding terug onder Beheer › Instellingen ›
+Handleidingen, samen met de uitleg voor de penningmeester, voor
+sollicitanten en voor het technisch beheer. Het vraagteken rechtsboven
+op elk scherm geeft de korte uitleg van dát scherm, met een link naar
+het bijbehorende hoofdstuk.</p>
+<h1 id="inhoud">Inhoud</h1>
+<ol type="1">
+<li><a href="#inloggen-en-rollen">Inloggen en rollen</a></li>
+<li><a href="#dashboard">Dashboard</a></li>
+<li><a href="#seizoen-opzetten">Seizoen opzetten</a></li>
+<li><a href="#landingspaginas">Landingspagina&#39;s</a></li>
+<li><a href="#sollicitanten">Sollicitanten</a></li>
+<li><a href="#de-fases-en-wat-er-automatisch-gebeurt">De fases en wat er
+automatisch gebeurt</a></li>
+<li><a href="#selectiedag">Selectiedag</a></li>
+<li><a href="#ondertekeningen">Ondertekeningen</a></li>
+<li><a href="#beschikbaarheid-dekking-en-loonplanning">Beschikbaarheid,
+dekking en loonplanning</a></li>
+<li><a href="#berichten-sturen">Berichten sturen</a></li>
+<li><a href="#sjablonen">Sjablonen</a></li>
+<li><a href="#geplande-berichten-en-herinneringen">Geplande berichten en
+herinneringen</a></li>
+<li><a href="#instellingen">Instellingen</a></li>
+<li><a href="#loondossiers">Loondossiers</a></li>
+<li><a href="#logboek">Logboek</a></li>
+<li><a href="#beheerders-en-rechten">Beheerders en rechten</a></li>
+<li><a href="#privacy-en-avg-verzoeken">Privacy en
+AVG-verzoeken</a></li>
+<li><a href="#systeem-en-foutenlog">Systeem en foutenlog</a></li>
+<li><a href="#veelgestelde-vragen">Veelgestelde vragen</a></li>
+</ol>
+<hr />
+<h1 id="inloggen-en-rollen">Inloggen en rollen</h1>
+<p><strong>Waar:</strong> het inlogscherm van het beheer
+(<code>/admin/</code>), daarna het menu links.<br />
+<strong>Wie:</strong> iedereen met een beheerdersaccount.</p>
+<h2 id="inloggen-via-authentik">Inloggen via Authentik</h2>
+<p>Het beheer gebruikt de centrale login van de brigade (Authentik). Op
+het inlogscherm &quot;Beheerders login&quot; staat de knop <strong>Inloggen via
+Authentik (SSO)</strong>. Klik daarop, log in bij Authentik en je komt
+terug in het beheer.</p>
+<p>Welke rol je krijgt, hangt af van de groep waar je in Authentik in
+zit. Standaard:</p>
+<table>
+<thead>
+<tr>
+<th>Authentik-groep</th>
+<th>Rol in het beheer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sol-Admin</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>Bestuur</td>
+<td>Bestuur</td>
+</tr>
+<tr>
+<td>Sol-Penningmeester</td>
+<td>Penningmeester</td>
+</tr>
+<tr>
+<td>Sol-Begeleider</td>
+<td>Begeleider</td>
+</tr>
+</tbody>
+</table>
+<p>Zit je in meerdere groepen, dan wint de hoogste rol. Zit je in geen
+van deze groepen en heb je nog nooit een account gehad, dan krijg je de
+melding &quot;Je Authentik-account heeft geen admin-toegang&quot;. Vraag dan een
+admin om je aan de juiste groep toe te voegen. Welke groepen toegang
+geven staat onder Beheer › Instellingen › Authentik SSO-login; welke
+groep welke rol krijgt staat onder Beheer › Rollen &amp; rechten.</p>
+<h2 id="wachtwoordlogin-als-noodingang">Wachtwoordlogin als
+noodingang</h2>
+<p>Onder de SSO-knop staat &quot;of met wachtwoord&quot;: e-mailadres en
+wachtwoord. Dit is bedoeld voor als Authentik niet bereikbaar is. Alleen
+accounts die een admin een wachtwoord heeft gegeven (zie <a href="#beheerders-en-rechten">Beheerders en rechten</a>) kunnen hiermee
+inloggen. Na te veel mislukte pogingen wordt het adres tijdelijk
+geblokkeerd; je ziet dan hoeveel minuten je moet wachten. Mislukte
+pogingen komen in het logboek.</p>
+<h2 id="wat-elke-rol-ziet">Wat elke rol ziet</h2>
+<p>Het menu laat alleen de onderdelen zien waar je rol leesrecht op
+heeft. Standaard:</p>
+<table>
+<thead>
+<tr>
+<th>Onderdeel</th>
+<th>Begeleider</th>
+<th>Bestuur</th>
+<th>Penningmeester</th>
+<th>Admin</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Dashboard</td>
+<td>ja</td>
+<td>ja</td>
+<td>ja</td>
+<td>ja</td>
+</tr>
+<tr>
+<td>Sollicitanten</td>
+<td>–</td>
+<td>bekijken, bewerken, verwijderen</td>
+<td>alleen bekijken</td>
+<td>alles</td>
+</tr>
+<tr>
+<td>BLK-formulieren en woonadres</td>
+<td>–</td>
+<td>ja</td>
+<td>–</td>
+<td>ja</td>
+</tr>
+<tr>
+<td>Landingspagina&#39;s</td>
+<td>–</td>
+<td>ja</td>
+<td>–</td>
+<td>ja</td>
+</tr>
+<tr>
+<td>Selectiedag</td>
+<td>inchecken en beoordelen</td>
+<td>alles, ook nabespreking</td>
+<td>–</td>
+<td>alles</td>
+</tr>
+<tr>
+<td>Ondertekeningen</td>
+<td>–</td>
+<td>ja</td>
+<td>–</td>
+<td>ja</td>
+</tr>
+<tr>
+<td>Loondossiers</td>
+<td>–</td>
+<td>–</td>
+<td>ja</td>
+<td>ja</td>
+</tr>
+<tr>
+<td>Beschikbaarheid, Loonplanning</td>
+<td>–</td>
+<td>ja</td>
+<td>–</td>
+<td>ja</td>
+</tr>
+<tr>
+<td>Dekking</td>
+<td>bekijken</td>
+<td>bekijken</td>
+<td>–</td>
+<td>ja</td>
+</tr>
+<tr>
+<td>Instellingen, Seizoenbeheer, Berichten, Sjablonen, Geplande
+berichten</td>
+<td>–</td>
+<td>ja</td>
+<td>–</td>
+<td>ja</td>
+</tr>
+<tr>
+<td>Logboek</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>ja</td>
+</tr>
+<tr>
+<td>Beheerders, Rollen &amp; rechten, Systeem &amp; Updates,
+Foutenlog</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>ja</td>
+</tr>
+</tbody>
+</table>
+<p>Admin heeft altijd alles en kan zichzelf nooit buitensluiten. Rechten
+zijn per rol aan te passen (zie <a href="#beheerders-en-rechten">Beheerders en rechten</a>).</p>
+<h2 id="je-eigen-profiel">Je eigen profiel</h2>
+<p>Klik linksonder op je naam voor <strong>Mijn profiel</strong>. Daar
+wijzig je je weergavenaam en, als je account een wachtwoord heeft, je
+wachtwoord. Ook staat daar de schakelaar <strong>Donker thema</strong>
+(wordt per apparaat onthouden). Heb je zelf ook een sollicitatie lopen,
+dan staat linksonder de link <strong>Naar mijn sollicitatie</strong> om
+naar het portaal te wisselen.</p>
+<p>Op elke pagina met een vraagteken-knop rechtsboven staat een korte
+uitleg van dat scherm.</p>
+<hr />
+<h1 id="dashboard">Dashboard</h1>
+<p><strong>Waar:</strong> Beheer › Dashboard<br />
+<strong>Wie:</strong> iedereen die is ingelogd.</p>
+<p>Het dashboard geeft in één oogopslag de stand van het seizoen:</p>
+<ul>
+<li><strong>Seizoenkaart</strong> bovenaan: naam en status van het
+huidige seizoen (Open voor aanmeldingen of Gesloten), met de knoppen
+<strong>Sluiten</strong> of <strong>Openen</strong> en
+<strong>Instellingen</strong>. Daaronder de datum van de selectiedag en
+het trainingsweekend, of &quot;Nog niet ingesteld&quot;.</li>
+<li><strong>Actie vereist</strong> (oranje kaart): hoeveel aanmeldingen
+wachten op een beslissing over de selectiedag en hoeveel kandidaten na
+de selectiedag wachten op een beslissing over het trainingsweekend. Klik
+op <strong>Bekijk</strong> om die groep te openen.</li>
+<li><strong>Tegels</strong>: Aanmeldingen, Uitgenodigd selectiedag,
+Trainingsweekend, Aangenomen, Afgewezen en Terugkerend. Elke tegel is
+klikbaar en opent de sollicitantenlijst met dat filter.</li>
+<li><strong>Systeem</strong>: mails in de wachtrij, mailfouten van de
+laatste 24 uur, ondertekeningen die langer dan 3 dagen openstaan en het
+tijdstip van de laatste automatische run (cron). Wordt de kaart rood,
+dan lopen mails vast of draaien de automatische taken niet; zie <a href="#systeem-en-foutenlog">Systeem en foutenlog</a>.</li>
+<li><strong>Recente aanmeldingen</strong>: de laatste acht, met
+<strong>Bekijk</strong> om het dossier te openen, plus de knoppen
+<strong>+ Toevoegen</strong> en <strong>Alle bekijken</strong>.</li>
+</ul>
+<hr />
+<h1 id="seizoen-opzetten">Seizoen opzetten</h1>
+<p><strong>Waar:</strong> Beheer › Instellingen › Seizoenbeheer<br />
+<strong>Wie:</strong> bestuur en admin. Verwijderen en heropenen van
+seizoenen: alleen admin.</p>
+<p>Alles in het beheer draait om het <strong>huidige seizoen</strong>:
+het seizoen dat je het laatst hebt aangemaakt. De lijst &quot;Alle seizoenen&quot;
+rechts toont welk seizoen &quot;Huidig&quot; is. Let op: zodra je een nieuw
+seizoen aanmaakt, is dát meteen het huidige seizoen, ook al staat het
+nog gesloten. Maak een nieuw seizoen dus pas aan als het vorige echt
+klaar is.</p>
+<h2 id="stap-voor-stap">Stap voor stap</h2>
+<ol type="1">
+<li><strong>Nieuw seizoen aanmaken.</strong> Vul bij &quot;Nieuw seizoen
+aanmaken&quot; een naam in (bijvoorbeeld &quot;Zomer 2027&quot;) en klik op
+<strong>Aanmaken</strong>. Het seizoen begint gesloten. Bestaande
+gegevens van vorige seizoenen blijven bewaard; sollicitanten die al
+eerder meededen worden automatisch als terugkerend herkend.</li>
+<li><strong>Datums instellen.</strong> Vul de kaart &quot;… instellen&quot; in en
+klik op <strong>Opslaan</strong>:
+<ul>
+<li><strong>Werkperiode</strong>: eerste en laatste werkdag.
+Sollicitanten zien in het portaal alle weken tussen deze datums als
+selecteerbare tegels bij hun beschikbaarheid. Zonder werkperiode werkt
+de beschikbaarheid niet goed.</li>
+<li><strong>Hoofdseizoen vanaf week / t/m week</strong>: weken
+daarbuiten tellen als voor- of naseizoen (weekend-focus in de
+bezettingsplanning). Leeg = alles is hoofdseizoen.</li>
+<li><strong>Selectiedag</strong>: datum, locatie, verzameltijd (wanneer
+kandidaten aanwezig moeten zijn), starttijd programma, eindtijd (het
+portaal toont &quot;tot ± 16:00&quot;), adres en &quot;Wat meenemen&quot;.</li>
+<li><strong>Trainingsweekend</strong>: start- en einddatum, locatie,
+verzameltijd, begintijd programma, eindtijd, adres en &quot;Wat
+meenemen&quot;.</li>
+</ul></li>
+<li><strong>Openen.</strong> Klik op <strong>Openen</strong> in de
+groene balk bovenaan (of op het dashboard). Vanaf dat moment is het
+aanmeldformulier actief en kunnen sollicitanten zich aanmelden. Met
+<strong>Aanmeldformulier</strong> open je het formulier zelf in een
+nieuw tabblad om te controleren.</li>
+<li><strong>Procedure doorlopen</strong>: uitnodigen, beoordelen,
+aannemen via Sollicitanten.</li>
+<li><strong>Sluiten.</strong> Aan het einde van het seizoen klik je op
+<strong>Sluiten</strong>. Het aanmeldformulier gaat dan dicht; alle
+gegevens blijven bewaard.</li>
+</ol>
+<h2 id="wat-de-sollicitant-hiervan-ziet">Wat de sollicitant hiervan
+ziet</h2>
+<p>In het portaal krijgt de sollicitant, zodra hij is uitgenodigd, een
+kaart met de datum, de verzameltijd, de starttijd, &quot;tot ± eindtijd&quot;, de
+locatie met het adres en de tekst &quot;Wat meenemen&quot;. Hetzelfde geldt voor
+het trainingsweekend. Dezelfde gegevens zijn als variabelen in mails te
+gebruiken (zie <a href="#sjablonen">Sjablonen</a>). Zolang een datum
+leeg is, ziet de sollicitant &quot;Nog niet ingesteld&quot; of geen kaart.</p>
+<h2 id="verwijderen">Verwijderen</h2>
+<p>Alleen admin ziet in de lijst &quot;Alle seizoenen&quot; de prullenbak. Heeft
+een seizoen nog sollicitaties, dan vraagt het systeem een extra
+bevestiging: alle sollicitaties van dat seizoen worden dan definitief
+verwijderd, inclusief formulieren, beoordelingen en beschikbaarheid. Dit
+kan niet ongedaan worden gemaakt.</p>
+<hr />
+<h1 id="landingspaginas">Landingspagina&#39;s</h1>
+<p><strong>Waar:</strong> Beheer › Landingspagina&#39;s<br />
+<strong>Wie:</strong> bestuur en admin.</p>
+<p>Een landingspagina is een eigen wervingspagina voor één doelgroep
+(bijvoorbeeld een Instagram-campagne of een school), met het
+aanmeldformulier erin. Je maakt het ontwerp in een ontwerptool en
+uploadt het als HTML-bestand; na een controlerapport bevestig je en zet
+je de status op <strong>Gepubliceerd</strong>. De pagina staat dan op
+<code>/p/&lt;adres&gt;</code>. Elke pagina heeft een
+<strong>bron-code</strong> die meereist tot in het dossier van de
+sollicitant, zodat je ziet welke pagina welke aanmeldingen (en
+aangenomen strandwachten) opleverde. De pagina zet geen cookies;
+bezoeken worden anoniem geteld.</p>
+<p>De volledige uitleg (ontwerp maken, markeringen zoals
+<code>[[formulier]]</code>, afbeeldingen, het rapport, versies,
+statussen en problemen oplossen) staat in de aparte handleiding
+<strong>Landingspagina&#39;s</strong> in dezelfde map als dit document.</p>
+<hr />
+<h1 id="sollicitanten">Sollicitanten</h1>
+<p><strong>Waar:</strong> Beheer › Sollicitanten<br />
+<strong>Wie:</strong> bestuur en admin (bekijken, bewerken,
+verwijderen); penningmeester alleen bekijken.</p>
+<p>Dit is het hart van het systeem. De lijst toont alle sollicitanten
+van het huidige seizoen.</p>
+<h2 id="de-lijst">De lijst</h2>
+<ul>
+<li><strong>Tabbladen per fase</strong> bovenaan (Alle, Aangemeld,
+Uitgenodigd SD, Aangemeld SD, SD geweest, Uitgenodigd TW, TW geweest,
+Aangenomen, Afgewezen) met het aantal per fase.</li>
+<li><strong>Filters</strong>: zoeken op naam of e-mail, &quot;Alle
+kandidaten&quot; of &quot;Alleen terugkerend&quot;, &quot;BLK: alle / ingevuld / niet
+ingevuld&quot; en, als Authentik gekoppeld is, &quot;Competentie&quot;. Met <strong>Wis
+filters</strong> ga je terug naar de volledige lijst.</li>
+<li><strong>Kolommen</strong>: standaard zie je naam, e-mail,
+aanmelddatum, status en acties. Via <strong>Kolommen</strong> zet je
+Telefoon, Leeftijd, BLK, Terugkerend en Foto erbij; die keuze wordt op
+je apparaat onthouden.</li>
+<li><strong>Per pagina</strong>: 15, 25, 50 of 100.</li>
+<li><strong>+ Toevoegen</strong> opent het scherm om handmatig een
+sollicitant in te voeren; <strong>Export alle (Excel)</strong> downloadt
+het hele seizoen.</li>
+</ul>
+<p>In de kolom Acties staat bij een sollicitant in fase Aangemeld de
+knop <strong>Uitnodigen SD</strong> en bij fase Selectiedag geweest
+<strong>Uitnodigen TW</strong>. Met <strong>···</strong> open je het
+dossier. Een groen label &quot;Uitnodigen&quot; naast de naam betekent dat de
+sollicitant binnen de ingestelde leeftijdsgrenzen valt (zie Instellingen
+› Uitnodiging &amp; automatisering).</p>
+<h2 id="het-detailpaneel">Het detailpaneel</h2>
+<p>Klik op een rij en het dossier schuift rechts in beeld. Van boven
+naar beneden:</p>
+<ul>
+<li><strong>Gegevens</strong>: telefoon, geboortedatum en leeftijd (met
+een oranje label als iemand binnenkort 16 wordt of bij aanmelding nog 15
+was), aanmelddatum, de vastgelegde privacy-toestemming en eventuele
+ouderlijke toestemming, woonadres (uit het BLK-formulier) en de huidige
+status.</li>
+<li><strong>Berichten via</strong>: de kanaalvoorkeur van de
+sollicitant: WhatsApp, Sms of Alleen e-mail. Je kunt dit hier wijzigen,
+bijvoorbeeld als iemand aangeeft geen WhatsApp te willen. De wijziging
+wordt gelogd.</li>
+<li><strong>Uitnodigen aanbevolen</strong>: bij fase Aangemeld, op basis
+van de leeftijdsgrenzen.</li>
+<li><strong>Competenties</strong> (alleen met Authentik-koppeling): de
+vaardigheden van terugkerende sollicitanten uit Authentik.
+<strong>Ververs</strong> haalt ze opnieuw op; is er geen automatische
+match, dan koppel je handmatig op Authentik-gebruikersnaam met
+<strong>Koppel</strong>.</li>
+<li><strong>Fase wijzigen</strong>: een knop per fase. De huidige fase
+is gemarkeerd. Je krijgt altijd een bevestigingsvraag; bij Uitgenodigd
+SD en Uitgenodigd TW staat erbij dat er automatisch een uitnodiging
+wordt verstuurd. Wat elke fase in gang zet, staat in <a href="#de-fases-en-wat-er-automatisch-gebeurt">De fases en wat er
+automatisch gebeurt</a>.</li>
+<li><strong>Voortgang</strong>: de tijdlijn van fases.</li>
+<li><strong>AI Analyse</strong>: als een AI-sleutel is ingesteld en het
+BLK-formulier is ingevuld, kun je met <strong>Analyseer nu</strong> een
+geanonimiseerde geschiktheidsanalyse laten maken. Die komt in een
+wachtrij en is binnen circa vijf minuten klaar. Er gaan geen naam, adres
+of contactgegevens naar de AI-dienst.</li>
+<li><strong>Notities</strong>: interne opmerkingen van het bestuur,
+zichtbaar voor iedereen met toegang tot het dossier. Alleen je eigen
+notities kun je bewerken of verwijderen. Typ een tekst en klik op
+<strong>+ Toevoegen</strong>.</li>
+<li><strong>Tijdlijn</strong>: alles wat er met dit dossier gebeurde
+(fasewijzigingen, berichten, notities), nieuwste bovenaan.</li>
+<li><strong>Ondertekening</strong>: de documenten die voor deze persoon
+klaarstaan of getekend zijn, met <strong>Bekijk</strong> (getekend) of
+<strong>Link</strong> (nog open; kopieert de ondertekenlink). Bij een
+minderjarige zie je de gegevens van de ouder/verzorger, of de
+waarschuwing dat die nog ontbreken. Met de knoppen <strong>+ Gezondheid
+(ouder)</strong>, <strong>+ Intake (ouder)</strong> of, bij 18+,
+<strong>+ Gezondheid 18+</strong> en <strong>+ Intake
+selectiedag</strong> zet je handmatig een document klaar en verstuur je
+meteen de mail. Zie <a href="#ondertekeningen">Ondertekeningen</a>.</li>
+<li><strong>Beter leren kennen</strong>: een samenvatting van het
+BLK-formulier (opleiding, diploma&#39;s, werkervaring, motivatie,
+bijzonderheden) en de foto. <strong>Volledig</strong> opent het hele
+formulier; met de prullenbak verwijder je het formulier (de sollicitant
+kan het dan opnieuw invullen).</li>
+<li><strong>Beschikbaarheid</strong>: voorlopig of definitief, de
+werkperiodes per week, afwezigheid, losse dagen, voorkeur vrije dagen en
+opmerkingen. Daaronder: <strong>Beschikbaarheid per dag
+bekijken</strong>, <strong>Beschikbaarheid aanpassen</strong>,
+openstaande <strong>verzoeken om minder dagen</strong> (Goedkeuren /
+Afwijzen; de sollicitant krijgt automatisch bericht), de
+<strong>Norm</strong> (standaard 5 dagen per week; afwijkend alleen na
+een bestuursbesluit, met reden) en de <strong>bestuurs-correctie per
+week</strong> (bijvoorbeeld na een telefoontje: &quot;kan deze week niet&quot; of
+&quot;alleen bepaalde dagen&quot;, altijd met reden). Zie <a href="#beschikbaarheid-dekking-en-loonplanning">Beschikbaarheid, dekking
+en loonplanning</a>.</li>
+<li><strong>Selectiedag</strong>: aanwezigheid, groep en scores als die
+er zijn.</li>
+<li><strong>Eerdere seizoenen</strong>: eerdere sollicitaties van
+dezelfde persoon met de fase waarin ze eindigden.</li>
+<li><strong>Acties</strong>: Uitnodigen selectiedag / Uitnodigen
+trainingsweekend (afhankelijk van de fase), <strong>Bericht
+sturen</strong> (opent Berichten met deze persoon voorgeselecteerd),
+<strong>E-mail</strong> en <strong>Bellen</strong>.</li>
+<li><strong>Verwijderen</strong>: verwijdert de sollicitatie van dit
+seizoen inclusief BLK, beoordeling en beschikbaarheid. Het
+persoonsaccount blijft bestaan, zodat iemand later opnieuw kan
+solliciteren. Zie <a href="#privacy-en-avg-verzoeken">Privacy en
+AVG-verzoeken</a>.</li>
+</ul>
+<h2 id="bulkacties">Bulkacties</h2>
+<p>Vink meerdere rijen aan (of gebruik het vinkje in de kop voor alle
+zichtbare rijen). Onderaan verschijnt een balk met:</p>
+<ul>
+<li><strong>Uitnodigen SD</strong>: alleen voor de aangevinkte personen
+die in fase Aangemeld staan; anderen worden overgeslagen.</li>
+<li><strong>Uitnodigen TW</strong>: alleen voor wie in fase Selectiedag
+geweest staat.</li>
+<li><strong>Aannemen</strong> en <strong>Afwijzen</strong>: voor alle
+aangevinkte personen, ongeacht hun fase.</li>
+<li><strong>Bericht sturen</strong>: opent Berichten met deze personen
+als ontvangers.</li>
+<li><strong>Export Excel</strong>: alleen de aangevinkte personen.</li>
+</ul>
+<p>Bij meer dan tien personen gaan de berichten via de wachtrij en
+worden ze de komende minuten verstuurd. Na afloop zie je een
+samenvatting: hoeveel bijgewerkt, hoeveel al in die fase, hoeveel
+berichten verstuurd, overgeslagen of mislukt.</p>
+<h2 id="handmatig-toevoegen">Handmatig toevoegen</h2>
+<p>Via <strong>+ Toevoegen</strong>. Verplicht zijn voornaam, achternaam
+en e-mailadres; verder telefoonnummer, geboortedatum, geslacht, het
+seizoen en de beginfase. Bestaat het e-mailadres al, dan wordt het
+profiel bijgewerkt en de sollicitatie eraan gekoppeld (terugkerend). Bij
+&quot;Interne notities&quot; komt de tekst als notitie in het dossier. Het vinkje
+<strong>Stuur welkomstmail naar sollicitant</strong> (standaard aan)
+verstuurt de bevestiging van aanmelding met de link naar het
+portaal.</p>
+<h2 id="importeren">Importeren</h2>
+<p>Alleen admin. Het importscherm staat niet in het menu; je bereikt het
+via het adres van het beheer gevolgd door <code>import.php</code>. Het
+leest een CSV-bestand zoals geëxporteerd uit het oude Google
+Sheets-systeem: naam, e-mail, telefoon, geboortedatum, geslacht,
+beschikbaarheid per week (23 t/m 35), motivatie, ervaring en diploma&#39;s.
+Je kiest het seizoen en de beginfase. Dubbele e-mailadressen worden
+overgeslagen, dus je kunt de import veilig meerdere keren draaien. Na
+afloop zie je hoeveel personen zijn aangemaakt, bijgewerkt en
+overgeslagen, plus eventuele fouten per rij.</p>
+<h2 id="blk-bekijken">BLK bekijken</h2>
+<p><strong>Volledig</strong> in het paneel opent het complete formulier
+&quot;Beter leren kennen&quot;: persoonsgegevens (woonadres alleen voor wie het
+BLK-recht heeft; anderen zien alleen de woonplaats), achtergrond,
+motivatie, beschikbaarheid, bijzonderheden of medicatie, de foto, de
+AI-analyse en de wijzigingsgeschiedenis als de sollicitant het formulier
+later aanpaste. Bovenaan staan <strong>Afdrukken</strong>,
+<strong>Dossier (PDF)</strong>, <strong>Excel</strong> en <strong>Open
+in paneel</strong>.</p>
+<hr />
+<h1 id="de-fases-en-wat-er-automatisch-gebeurt">De fases en wat er
+automatisch gebeurt</h1>
+<p>Elke fase-overgang gaat via dezelfde route, of je hem nu vanuit het
+paneel, de lijst, een bulkactie of de bellijst zet. Daardoor doet een
+overgang altijd hetzelfde. Welke melding er gaat en via welk kanaal,
+stel je in onder Instellingen › SMS, WhatsApp &amp; meldingen en bij de
+sjablonen.</p>
+<table>
+<thead>
+<tr>
+<th>Fase</th>
+<th>Wat het bestuur doet</th>
+<th>Wat het systeem doet</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Aangemeld</strong></td>
+<td>Niets; de aanmelding komt binnen via de website, een landingspagina
+of handmatig.</td>
+<td>Stuurt de &quot;Bevestiging van aanmelding&quot; (e-mail) en de
+bestuursmelding &quot;Nieuwe aanmelding&quot;. Toont in de lijst de suggestie
+&quot;Uitnodigen&quot; bij wie binnen de leeftijdsgrenzen valt; bij modus
+Automatisch nodigt het systeem na de ingestelde vertraging zelf
+uit.</td>
+</tr>
+<tr>
+<td><strong>Uitgenodigd selectiedag</strong></td>
+<td>Klikt op Uitnodigen SD (lijst, paneel of bulk).</td>
+<td>Zet de ondertekeningen klaar: bij 18+ de gezondheidsverklaring en
+het intakeformulier als taak in het portaal; bij minderjarigen wacht het
+systeem tot de sollicitant de gegevens van de ouder/verzorger invult en
+mailt dan de ouder. Stuurt de &quot;Uitnodiging selectiedag&quot; (standaard
+e-mail én WhatsApp/SMS).</td>
+</tr>
+<tr>
+<td><strong>Aangemeld selectiedag</strong></td>
+<td>Niets; de sollicitant levert het formulier &quot;Beter leren kennen&quot;
+in.</td>
+<td>Zet de fase, stuurt de &quot;Bevestiging aanmelding selectiedag&quot; (e-mail)
+en de bestuursmelding &quot;Formulier ingeleverd&quot; (standaard uit). Start de
+AI-analyse als die op automatisch staat.</td>
+</tr>
+<tr>
+<td><strong>Selectiedag geweest</strong></td>
+<td>Zet de kandidaat op Aanwezig bij Inchecken (of de kandidaat checkt
+zelf in op de tablet).</td>
+<td>Zet de fase. Geen melding.</td>
+</tr>
+<tr>
+<td><strong>Uitgenodigd trainingsweekend</strong></td>
+<td>Voert het besluit &quot;Door&quot; door via de bellijst, of klikt op
+Uitnodigen TW.</td>
+<td>Stuurt de &quot;Uitnodiging trainingsweekend&quot; (standaard e-mail én
+WhatsApp/SMS) met het verzoek de beschikbaarheid door te geven.</td>
+</tr>
+<tr>
+<td><strong>TW geweest</strong></td>
+<td>Zet de fase handmatig in het paneel.</td>
+<td>Zet de fase. Geen melding.</td>
+</tr>
+<tr>
+<td><strong>Aangenomen</strong></td>
+<td>Klikt op Aannemen (paneel of bulk).</td>
+<td>Activeert het kennismakingspakket: taken in het portaal voor de
+upload van identiteitsbewijs en bankpas, het loonheffingsformulier, de
+inschrijving als lid, de huisregels en het activeren van het
+verenigingsaccount. Stuurt &quot;Welkom: aangenomen&quot; (e-mail). Zodra
+loonheffing, ID en bankpas binnen zijn, gaat de melding &quot;Loondossier
+compleet&quot; naar de penningmeester.</td>
+</tr>
+<tr>
+<td><strong>Afgewezen</strong></td>
+<td>Voert het besluit &quot;Niet&quot; door via de bellijst, of klikt op
+Afwijzen.</td>
+<td>Zet de fase. De melding &quot;Niet geselecteerd&quot; staat standaard
+<strong>uit</strong>: het bestuur belt of mailt persoonlijk.</td>
+</tr>
+</tbody>
+</table>
+<p>Goed om te weten:</p>
+<ul>
+<li><strong>Terugzetten</strong> naar Aangemeld, Selectiedag geweest of
+TW geweest verstuurt nooit een bericht. Alleen de overgangen naar
+Uitgenodigd SD, Aangemeld SD, Uitgenodigd TW, Aangenomen en Afgewezen
+kunnen een melding sturen.</li>
+<li><strong>Geen dubbele uitnodiging</strong>: dezelfde melding gaat
+niet twee keer binnen een uur naar dezelfde persoon. Zet je iemand per
+ongeluk terug en meteen weer vooruit, dan zie je &quot;Bericht al eerder
+verstuurd (geen dubbele)&quot;.</li>
+<li><strong>Een fase &quot;stil&quot; zetten</strong> (zonder mail) kan niet met
+een knop. Wil je bijvoorbeeld iemand opnieuw op Uitgenodigd SD zetten
+zonder nieuwe uitnodiging, zet dan eerst onder Instellingen › SMS,
+WhatsApp &amp; meldingen het kanaal van dat meldingstype op
+<strong>Uit</strong>, doe de wijziging, en zet het kanaal daarna terug.
+Vergeet die laatste stap niet.</li>
+<li><strong>Automatiseringen uitzetten</strong>: onder Instellingen ›
+Uitnodiging &amp; automatisering kun je het klaarzetten van
+ondertekeningen bij de SD-uitnodiging en het kennismakingspakket bij
+aannemen uitschakelen.</li>
+<li>Na elke overgang laat het scherm zien wat er met het bericht
+gebeurde: verstuurd (via welk kanaal), in de wachtrij, mislukt (kijk in
+het berichtenlog), of overgeslagen omdat er geen adres of nummer bekend
+is.</li>
+</ul>
+<hr />
+<h1 id="selectiedag">Selectiedag</h1>
+<p><strong>Waar:</strong> Beheer › Selectiedag (vier stappen:
+Groepsindeling, Inchecken, Beoordelen, Nabespreking)
+<strong>Wie:</strong> begeleider (inchecken en beoordelen), bestuur en
+admin (alles, inclusief nabespreking en de bellijst).</p>
+<p>De selectiedag werkt met iedereen in de fases Uitgenodigd SD,
+Aangemeld SD en Selectiedag geweest. Staat er nog niemand in die fases,
+dan zie je &quot;Nog geen sollicitanten uitgenodigd voor de selectiedag&quot;.</p>
+<h2 id="1--groepsindeling">1 · Groepsindeling</h2>
+<ol type="1">
+<li>Vul het <strong>Aantal groepen</strong> in en klik op
+<strong>Instellen</strong>.</li>
+<li>Klik op <strong>Voorstel genereren</strong>. Het systeem verdeelt
+eerlijk (gelijke groepen, gemengd op leeftijd en geslacht) en houdt
+bekende koppels uit elkaar. Let op: dit overschrijft een bestaande
+indeling.</li>
+<li><strong>Sleep</strong> kaartjes tussen de groepen om te schuiven. De
+kolom &quot;Nog niet ingedeeld&quot; toont wie nog geen groep heeft.</li>
+<li>Klik op een naam om aan te vinken wie deze persoon kent en dus
+liever <strong>niet in dezelfde groep</strong> zit. Een
+waarschuwingsteken op een kaartje betekent dat zo&#39;n koppel toch samen
+staat.</li>
+</ol>
+<h2 id="2--inchecken">2 · Inchecken</h2>
+<p>Twee manieren, die door elkaar te gebruiken zijn:</p>
+<ul>
+<li><strong>Aanwezigheidslijst</strong>: per groep een rij per kandidaat
+met de knop <strong>Afwezig / Aanwezig</strong>. Klik om om te zetten;
+de teller &quot;x/y aanwezig&quot; loopt mee. Zoeken op naam kan bovenaan.</li>
+<li><strong>Tablet-inchecken</strong> (zelfservice): een bestuurslid
+klikt op <strong>Toegangscode aanmaken</strong> (of <strong>Nieuwe
+code</strong>, waarna de oude tablet-links niet meer werken). Kopieer of
+open de <strong>Tablet-link</strong> en zet die pagina klaar op de
+tablets bij de ingang. De kandidaat typt zijn naam, tikt zichzelf aan en
+ziet meteen in welke groep hij zit (&quot;Ga naar de tafel van je groep&quot;).
+Met <strong>Volgende persoon</strong> is de tablet klaar voor de
+volgende. Wie al is aangemeld, ziet &quot;al aangemeld&quot;. Staat iemand niet in
+de lijst, dan staat er &quot;Vraag het organisatieteam om hulp&quot;.</li>
+</ul>
+<p>Zodra iemand op Aanwezig staat, zet het systeem de fase op
+<strong>Selectiedag geweest</strong>.</p>
+<h2 id="3--beoordelen">3 · Beoordelen</h2>
+<p>Elke beoordelaar werkt onder zijn eigen naam (die staat bovenaan).
+Kies eventueel een groep en tik een naam open. Per kandidaat zie je de
+foto en eventuele bijzonderheden uit het BLK-formulier. Dan:</p>
+<ul>
+<li><strong>Observatie</strong> noteren: typ wat opviel, kies
+<strong>Positief</strong>, <strong>Neutraal</strong> of
+<strong>Aandacht</strong> en klik op <strong>Opslaan</strong>.
+Observaties mogen over iedereen gaan, ook buiten je eigen groep. Je
+eigen observaties kun je verwijderen; bestuur kan alle observaties
+verwijderen.</li>
+<li><strong>Sterren</strong> geven per criterium, gegroepeerd per test
+(standaard Sporttest en Zwemtest; de criteria stel je in onder
+Instellingen › Beoordelingscriteria). Klik op een ster voor 1 t/m 5;
+dezelfde ster nogmaals wist je score. Je ziet alleen je eigen sterren;
+rechts staat het gemiddelde van alle beoordelaars als er meer zijn.</li>
+</ul>
+<h2 id="4--nabespreking">4 · Nabespreking</h2>
+<p>Alleen bestuur en admin. Per kandidaat staan alle observaties en de
+gemiddelde scores bij elkaar. Filter op Iedereen, Nog open, Door,
+Twijfel of Niet.</p>
+<ol type="1">
+<li>Zet per persoon een voorlopig <strong>besluit</strong>: <strong>Door
+naar TW</strong>, <strong>Twijfel</strong> of <strong>Niet</strong>,
+eventueel met een notitie. Nogmaals klikken wist het besluit. Dit
+verandert nog niets aan de fase.</li>
+<li>Ga naar het tabblad <strong>Bellijst</strong>. Daar staat iedereen
+met een besluit Door of Niet die nog niet is doorgevoerd, met
+telefoonnummer. Bel iedereen persoonlijk met de uitslag en klik daarna
+op <strong>Gebeld</strong> (met notitie, bijvoorbeeld &quot;wil bedenktijd&quot;)
+of meteen op <strong>Gebeld + doorvoeren</strong>. Een vergissing
+herstel je met <strong>Ongedaan</strong>.</li>
+<li><strong>Doorvoeren</strong>, per persoon of in één keer met
+<strong>Alle gebelde doorvoeren</strong>. Door wordt Uitgenodigd
+trainingsweekend (met de uitnodigingsmail); Niet wordt Afgewezen (zonder
+mail, tenzij je dat meldingstype hebt aangezet). Twijfelgevallen blijven
+staan.</li>
+</ol>
+<p>Wil je de bellijst overslaan, dan staat onderaan de nabespreking
+onder <strong>Geavanceerd</strong> de knop <strong>Alles
+doorvoeren</strong>. Gebruik die alleen bij heel veel sollicitanten en
+na een bewuste keuze, want dan gaan de uitnodigingen direct de deur
+uit.</p>
+<hr />
+<h1 id="ondertekeningen">Ondertekeningen</h1>
+<p><strong>Waar:</strong> Beheer › Ondertekeningen (en per persoon in
+het detailpaneel)<br />
+<strong>Wie:</strong> bestuur en admin. Het loonheffingsformulier en de
+inschrijving als lid kunnen alleen penningmeester en admin openen.</p>
+<h2 id="welke-documenten">Welke documenten</h2>
+<table>
+<thead>
+<tr>
+<th>Document</th>
+<th>Wie tekent</th>
+<th>Wanneer klaargezet</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gezondheidsverklaring 18+</td>
+<td>Sollicitant zelf, in het portaal</td>
+<td>Bij de uitnodiging voor de selectiedag</td>
+</tr>
+<tr>
+<td>Gezondheidsverklaring (t/m 17)</td>
+<td>Ouder/verzorger, via een link per mail</td>
+<td>Zodra de minderjarige de gegevens van de ouder heeft ingevuld</td>
+</tr>
+<tr>
+<td>Intakeformulier selectiedag</td>
+<td>Sollicitant zelf</td>
+<td>Bij de uitnodiging voor de selectiedag</td>
+</tr>
+<tr>
+<td>Intakeformulier selectiedag (ouder)</td>
+<td>Ouder/verzorger</td>
+<td>Zodra de oudergegevens bekend zijn</td>
+</tr>
+<tr>
+<td>Opgaaf gegevens voor de loonheffingen</td>
+<td>Sollicitant zelf, ook onder de 18</td>
+<td>Bij aannemen (kennismakingspakket)</td>
+</tr>
+<tr>
+<td>Inschrijving lidmaatschap vereniging</td>
+<td>Sollicitant zelf, ook onder de 18</td>
+<td>Bij aannemen, als er nog geen verenigingsaccount is</td>
+</tr>
+</tbody>
+</table>
+<p>De grens van 18 jaar geldt voor het tekenen: jonger dan 18 tekent via
+een ouder of verzorger, behalve voor het loonheffingsformulier en het
+lidmaatschap, die de sollicitant altijd zelf tekent. De
+gezondheidsverklaring is één jaar geldig vanaf de ondertekening.</p>
+<h2 id="hoe-het-loopt">Hoe het loopt</h2>
+<ul>
+<li><strong>18+</strong>: de documenten verschijnen als taken in het
+portaal. De sollicitant tekent daar. Hij krijgt daarna een bevestiging
+met de getekende PDF als bijlage.</li>
+<li><strong>Minderjarig</strong>: de sollicitant vult in het portaal
+naam, e-mailadres en telefoonnummer van de ouder/verzorger in. De ouder
+ontvangt één mail met de links naar beide formulieren en tekent
+digitaal. De sollicitant krijgt bericht dat de ouder heeft getekend; de
+kopie-PDF gaat naar de ouder.</li>
+<li><strong>Verificatiecode</strong>: alleen bij het
+loonheffingsformulier moet de ondertekenaar eerst een code invoeren die
+per SMS (of WhatsApp of e-mail als SMS niet kan) wordt gestuurd. Dat
+staat als zekerheidsniveau op de certificaatpagina van de PDF. Voor de
+andere documenten is geen code nodig.</li>
+<li><strong>Herinneringen</strong>: staat een document na een paar dagen
+nog open, dan krijgt de ondertekenaar automatisch een herinnering
+(instelbaar, zie <a href="#geplande-berichten-en-herinneringen">Geplande
+berichten en herinneringen</a>).</li>
+</ul>
+<h2 id="het-overzicht">Het overzicht</h2>
+<p>Per persoon een kaart met een voortgangsbalk (&quot;2/2&quot;) en het label
+Compleet of &quot;x open&quot;. Filter op <strong>Iedereen</strong>, <strong>Nog
+open</strong> of <strong>Compleet</strong>. Klik op de kaart om de
+documenten uit te klappen. Per document:</p>
+<ul>
+<li>Getekend: datum en naam van de ondertekenaar, en
+<strong>Bekijk</strong> om de PDF te openen (in een nieuw tabblad) en te
+printen voor de administratie. Bij loonheffing en lidmaatschap zie je
+het label &quot;Loondossier&quot; als je daar geen recht op hebt.</li>
+<li>Nog open: <strong>Kopieer link</strong>. Plak die link in een mail
+of app als de automatische mail niet is aangekomen.</li>
+</ul>
+<p>Klik op de naam om het dossier te openen.</p>
+<h2 id="een-verkeerd-ouder-mailadres">Een verkeerd ouder-mailadres</h2>
+<p>Heeft de sollicitant een fout e-mailadres van de ouder ingevuld, dan
+komt de mail niet aan. Belangrijk: als de sollicitant in het portaal het
+adres corrigeert en op &quot;Opnieuw versturen&quot; klikt, worden de gegevens wel
+opgeslagen maar gaan de al klaargezette formulieren
+<strong>niet</strong> opnieuw de deur uit. Doe daarom het volgende:</p>
+<ol type="1">
+<li>Open het dossier, sectie Ondertekening.</li>
+<li>Klik op <strong>+ Gezondheid (ouder)</strong> en daarna op <strong>+
+Intake (ouder)</strong>. Je wordt gevraagd om het (juiste) e-mailadres
+en de naam van de ouder. Het systeem maakt nieuwe documenten aan en
+mailt de ouder meteen.</li>
+<li>Of: klik bij het openstaande document op <strong>Link</strong> /
+<strong>Kopieer link</strong> en stuur de link zelf naar het goede
+adres.</li>
+</ol>
+<p>De oude, niet-getekende documenten blijven in de lijst staan als
+&quot;wacht&quot;. Automatische herinneringen voor die oude documenten kunnen nog
+naar het foute adres gaan; wil je dat niet, zet dan de herinnering
+&quot;Document nog niet ondertekend&quot; tijdelijk uit of vraag de technisch
+beheerder de oude regels op te ruimen.</p>
+<hr />
+<h1 id="beschikbaarheid-dekking-en-loonplanning">Beschikbaarheid,
+dekking en loonplanning</h1>
+<p><strong>Waar:</strong> Beheer › Beschikbaarheid, Beheer › Dekking,
+Beheer › Loonplanning<br />
+<strong>Wie:</strong> Beschikbaarheid en Loonplanning: bestuur en admin.
+Dekking: begeleider, bestuur en admin (alleen bekijken).</p>
+<h2 id="beschikbaarheid">Beschikbaarheid</h2>
+<p>Het overzicht toont per sollicitant met een ingevuld BLK-formulier
+(behalve afgewezen) een matrix van de weken uit de werkperiode van het
+seizoen. Per cel zie je het aantal inzetbare dagen; de kleur betekent
+volledige week, alleen weekend, anders/in overleg of niet beschikbaar.
+De kolom &quot;wkn&quot; telt het aantal beschikbare weken per persoon. De
+onderste rij telt per week hoeveel mensen beschikbaar zijn en hoeveel
+daarvan het weekend dekken; in voor- en naseizoen kleurt dat getal rood
+bij minder dan drie. Heb je het hoofdseizoen nog niet ingesteld, dan
+staat daar een tip.</p>
+<p>Bovenaan staan twee kaarten als ze van toepassing zijn:</p>
+<ul>
+<li><strong>Nog voorlopig</strong>: wie de beschikbaarheid nog niet
+definitief heeft gemaakt, met de deadline (twee weken vóór het
+trainingsweekend). Deze mensen krijgen vanaf twee weken vóór de deadline
+automatisch herinneringen.</li>
+<li><strong>Openstaande verzoeken</strong>: verzoeken om in bepaalde
+weken minder dagen te werken. <strong>Goedkeuren</strong> of
+<strong>Afwijzen</strong> kan hier of in het dossier; de sollicitant
+krijgt automatisch bericht van het besluit.</li>
+</ul>
+<p>Klik op een cel om voor die week een
+<strong>bestuurs-correctie</strong> vast te leggen: &quot;Kan deze week niet&quot;
+of &quot;Alleen bepaalde dagen&quot;, altijd met reden. Dat overschrijft wat de
+sollicitant opgaf en is herleidbaar. Herstellen kan in het dossier met
+<strong>Herstel</strong>.</p>
+<p><strong>Beschikbaarheid aanpassen</strong> (knop in het dossier)
+opent een apart scherm met twee tabbladen:</p>
+<ul>
+<li><strong>Per dag</strong>: een kalender van de hele werkperiode. Klik
+op een dag en kies <strong>Beschikbaar maken</strong> of <strong>Niet
+beschikbaar maken</strong>, eventueel met reden. Een blauw randje
+betekent &quot;door het bestuur aangepast&quot;; met <strong>Aanpassing
+terugdraaien</strong> geldt de eigen invoer van de sollicitant
+weer.</li>
+<li><strong>Formulier (portaal-stijl)</strong>: werkperiodes (week t/m
+week, hele weken of alleen weekenden) namens de sollicitant invullen.
+Dit overschrijft de periode-invoer van de sollicitant; vakanties en
+verzoeken blijven staan.</li>
+</ul>
+<p>Aanpassingen worden de nieuwe waarheid, ook in het portaal van de
+sollicitant, en worden vastgelegd met wie en wanneer.</p>
+<p>Exports: <strong>Beschikbaarheid per dag bekijken</strong> (in het
+dossier of het aanpasscherm) toont per dag of iemand beschikbaar is,
+precies zoals het aan het rooster wordt doorgegeven. De Excel-export van
+de sollicitantenlijst bevat de beschikbaarheid als leesbare tekst.</p>
+<h2 id="dekking">Dekking</h2>
+<p>Dekking rekent uit of de posten per week te bemannen zijn met wie
+beschikbaar is. Dit werkt alleen als Authentik gekoppeld is
+(competenties) en de posten zijn ingesteld onder Instellingen › Posten
+&amp; bezetting. Per week zie je een tegel met Gedekt (groen), Krap
+(oranje, precies genoeg, geen reserve) of Tekort (rood). Klik op een
+week voor de details: per post en per rol wie erop kan staan, hoeveel
+reserve er is, en bij een tekort waarom. Onder &quot;Wel gekwalificeerd, niet
+beschikbaar deze week&quot; staat een bellijstje met telefoon en e-mail. Eén
+persoon telt maar één keer: een schipper kan niet tegelijk op een andere
+post staan. De postcommandant valt buiten deze berekening.</p>
+<h2 id="loonplanning">Loonplanning</h2>
+<p>Hier plan je wie welke week hoeveel dagen werkt en wat dat kost.</p>
+<ul>
+<li><strong>Scenario&#39;s</strong>: je werkt altijd in een scenario. Met
+<strong>+ Dupliceren</strong> maak je een kopie om een alternatief door
+te rekenen; met <strong>Maak actief</strong> wordt een scenario de
+actieve planning (ster). Een niet-actief scenario kun je verwijderen;
+het laatste scenario niet. <strong>CSV</strong> exporteert het scenario
+voor de penningmeester.</li>
+<li><strong>De tabel</strong>: per persoon de functie (keuzelijst; geldt
+voor alle weken) en per week een vinkje <strong>opnemen</strong> en het
+aantal dagen. Grijze cellen: niet beschikbaar die week. Een oranje rand
+op het dagenveld betekent meer dagen dan de persoon beschikbaar is.
+Rechts de totale kosten en dagen per persoon.</li>
+<li><strong>Dekking</strong> (onderste rij): rekent mee met wie je
+daadwerkelijk inplant. Plan je de schipper weg, dan wordt die week
+meteen rood.</li>
+<li><strong>Signalen</strong>: aandachtspunten boven de tabel (geen
+blokkades; jij beslist).</li>
+<li><strong>Loontabel</strong>: uitklapbaar, het dagloon per leeftijd en
+functie voor juni en juli–september.</li>
+<li><strong>Onderaan</strong>: totale loonkosten, mandagen en, als er
+een seizoensbudget is ingesteld (Instellingen › Vakantietoeslag &amp;
+lonen), de voortgangsbalk met het restant of &quot;Over budget&quot;.</li>
+</ul>
+<p>Alle wijzigingen worden direct opgeslagen.</p>
+<hr />
+<h1 id="berichten-sturen">Berichten sturen</h1>
+<p><strong>Waar:</strong> Beheer › Instellingen › Berichten<br />
+<strong>Wie:</strong> bestuur en admin (bekijken: leesrecht op Berichten
+&amp; sjablonen; versturen: bewerkrecht).</p>
+<h2 id="nieuw-bericht">Nieuw bericht</h2>
+<ol type="1">
+<li><strong>Kanaal</strong>: <strong>E-mail</strong> (volledige opmaak),
+<strong>WhatsApp/SMS</strong> (korte tekst; e-mail als terugval) of
+<strong>E-mail + WhatsApp/SMS</strong>. WhatsApp of SMS volgt de
+voorkeur van de sollicitant; zonder telefoonnummer of bij een mislukking
+gaat het bericht per e-mail. Wie zich heeft afgemeld voor berichten
+wordt overgeslagen. Elk handmatig bericht krijgt een afmeldvoet.</li>
+<li><strong>Inhoud</strong>: kies een eigen sjabloon uit de keuzelijst,
+of schrijf zelf: onderwerp, optioneel een hero-titel (grote tekst
+bovenin), de e-mailtekst in de editor, en de <strong>korte
+tekst</strong> voor WhatsApp/SMS (platte tekst, maximaal 400 tekens;
+verplicht als je een kort kanaal kiest). Onder <strong>Bijlagen</strong>
+voeg je bestanden toe (pdf, jpg, png, webp, docx, xlsx). Grote bestanden
+gaan als downloadknop mee; bij WhatsApp/SMS krijgt de ontvanger een
+downloadlink die 14 dagen geldig is en wordt er ook een e-mail
+gestuurd.</li>
+<li><strong>Ontvangers</strong>: rechts staan alle sollicitanten van het
+seizoen, gegroepeerd per fase. Vink personen of hele fases aan;
+<strong>Alles</strong> / <strong>Geen</strong> voor de hele lijst. Bij
+elke naam staat het e-mailadres en het kanaal (WhatsApp, sms, alleen
+e-mail of &quot;geen telefoon&quot;). Kom je vanuit het dossier of een bulkactie,
+dan staan die personen al aangevinkt.</li>
+<li><strong>Variabelen</strong>: klik op een chip (bijvoorbeeld
+voornaam, selectiedag_datum, portaal_url) om die in de tekst te zetten.
+Ze werken ook in het onderwerp en de korte tekst.</li>
+<li><strong>Voorbeeld</strong> toont de e-mail en het korte bericht
+zoals de eerste ontvanger ze krijgt. <strong>Testmail naar
+mijzelf</strong> stuurt de e-mail naar je eigen adres.
+<strong>Verzenden</strong> vraagt om bevestiging en verstuurt.</li>
+</ol>
+<p>Bij meer dan tien ontvangers gaat het bericht via de wachtrij en
+wordt het de komende minuten verstuurd. Na het verzenden zie je per
+persoon wat er gebeurde: verstuurd (via welk kanaal), in de wachtrij,
+overgeslagen (met reden) of mislukt.</p>
+<h2 id="berichtenlog">Berichtenlog</h2>
+<p>Het tabblad <strong>Berichtenlog</strong> toont de laatste 200
+berichten van alle kanalen, ook de automatische: datum, ontvanger,
+onderwerp, kanaal en status (verstuurd, wacht, mislukt, overgeslagen).
+Filter op naam of onderwerp, kanaal, status en type. Een sterretje
+achter het kanaal betekent dat het bericht is teruggevallen op dat
+kanaal nadat het eerste kanaal mislukte. Klik op een regel voor de
+details en, zolang de bewaartermijn niet is verstreken, de inhoud. Van
+inlogcodes en bestuursmeldingen wordt de inhoud nooit bewaard.</p>
+<hr />
+<h1 id="sjablonen">Sjablonen</h1>
+<p><strong>Waar:</strong> Beheer › Instellingen › Sjablonen<br />
+<strong>Wie:</strong> bestuur en admin.</p>
+<p>Elk automatisch bericht heeft een sjabloon. Links staan ze per
+categorie: Fase-overgangen, Taken en documenten, Herinneringen,
+Meldingen aan het bestuur, Systeem, Gepland en Eigen sjablonen. Klik op
+een sjabloon om het te bewerken.</p>
+<p>Per sjabloon bewerk je:</p>
+<ul>
+<li><strong>Onderwerpregel</strong> (verplicht),
+<strong>Hero-titel</strong> (leeg = onderwerp),
+<strong>Hero-subtitel</strong>, <strong>Hero-kleur</strong> (leeg =
+huisstijl-navy) en optioneel een <strong>Hero-afbeelding</strong>
+(upload of URL).</li>
+<li><strong>E-mailtekst</strong> in de editor. Opmaakblokken via de
+knoppen: Knop, Info-blok, Let op.</li>
+<li><strong>Korte tekst (WhatsApp/SMS)</strong>: platte tekst, maximaal
+400 tekens, geen opmaak. Bij typen die alleen per e-mail gaan (naar
+ouders en het bestuur) staat hier &quot;Dit type gaat alleen per
+e-mail&quot;.</li>
+<li><strong>Samenvatting (portaal)</strong>: één regel onder de titel in
+het berichtenoverzicht van de sollicitant.</li>
+<li><strong>Bijlagen</strong>: gaan mee met elke e-mail van dit type;
+uitvinken koppelt een bijlage los.</li>
+<li><strong>Kanaal</strong> (rechtsboven): E-mail, WhatsApp/SMS, E-mail
++ WhatsApp/SMS of Uit. Dit is dezelfde instelling als onder Instellingen
+› SMS, WhatsApp &amp; meldingen.</li>
+</ul>
+<p>Rechts staan de <strong>variabelen</strong>: eerst die speciaal voor
+dit type gelden (bijvoorbeeld document_naam of taken_aantal), daaronder
+de altijd beschikbare (voornaam, achternaam, volledige_naam,
+seizoen_naam, selectiedag_datum, selectiedag_tijd, selectiedag_locatie,
+selectiedag_adres, selectiedag_meenemen, tw_datum_start, tw_datum_eind,
+tw_locatie, tw_verzameltijd, tw_meenemen, portaal_url, bestuur_email,
+afmeld_url en meer). Klik op een chip om hem in de e-mailtekst te
+zetten.</p>
+<p>Knoppen: <strong>Opslaan</strong>, <strong>Voorbeeld e-mail</strong>
+en <strong>Voorbeeld kort bericht</strong> (openen in een nieuw tabblad
+met voorbeeldgegevens), en <strong>Terugzetten naar standaard</strong>
+(zet de ingebouwde tekst terug; je eigen wijzigingen gaan verloren).</p>
+<p><strong>Eigen sjablonen</strong> maak je links onder &quot;Nieuw eigen
+sjabloon&quot; met een naam. Die zijn te kiezen bij Berichten (handmatig) en
+bij Geplande berichten. Een eigen sjabloon kun je verwijderen; de
+ingebouwde typen niet. Onder &quot;Standaard hero-afbeelding&quot; stel je de foto
+in die bovenaan elke mail staat als een sjabloon geen eigen afbeelding
+heeft.</p>
+<hr />
+<h1 id="geplande-berichten-en-herinneringen">Geplande berichten en
+herinneringen</h1>
+<p><strong>Waar:</strong> Beheer › Instellingen › Geplande berichten
+(regels) en Beheer › Instellingen › Uitnodiging &amp; automatisering
+(herinneringen) <strong>Wie:</strong> bestuur en admin.</p>
+<h2 id="herinneringen-ingebouwd">Herinneringen (ingebouwd)</h2>
+<p>Het systeem stuurt automatisch herinneringen, gecontroleerd op wat er
+echt verstuurd is, zodat niemand twee keer hetzelfde krijgt. Per regel
+stel je in of hij aanstaat, na hoeveel dagen, hoe vaak hij herhaalt en
+het maximum:</p>
+<table>
+<thead>
+<tr>
+<th>Herinnering</th>
+<th>Standaard</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Nog niet aangemeld voor de selectiedag</td>
+<td>aan; 3 dagen na de uitnodiging, herhaal elke 4 dagen, max 3; alleen
+als de selectiedag binnen 14 dagen is</td>
+</tr>
+<tr>
+<td>Gegevens ouder/verzorger ontbreken</td>
+<td>aan; na 2 dagen, herhaal elke 4 dagen, max 3</td>
+</tr>
+<tr>
+<td>Document nog niet ondertekend</td>
+<td>aan; na 3 dagen, herhaal elke 5 dagen, max 2 per document; naar de
+ondertekenaar</td>
+</tr>
+<tr>
+<td>Beschikbaarheid nog voorlopig</td>
+<td>aan; vanaf 14 dagen vóór de deadline, herhaal elke 4 dagen, max 5;
+na de deadline elke 2 dagen</td>
+</tr>
+<tr>
+<td>Openstaande taken</td>
+<td>aan; 5 dagen na de laatste fasewijziging, herhaal elke 7 dagen, max
+3</td>
+</tr>
+<tr>
+<td>Selectiedag nadert</td>
+<td>aan; 3 dagen vooraf, één keer</td>
+</tr>
+<tr>
+<td>Selectiedag morgen</td>
+<td>aan; de dag ervoor, één keer, met een vrij in te vullen &quot;laatste
+info&quot;</td>
+</tr>
+<tr>
+<td>Trainingsweekend nadert</td>
+<td>aan; 3 dagen vooraf, één keer</td>
+</tr>
+</tbody>
+</table>
+<p>Daarnaast geldt een <strong>rustperiode</strong> (standaard 3 dagen):
+per sollicitant maximaal één &quot;zachte&quot; herinnering per zoveel dagen. De
+herinneringen draaien mee met de automatische taken (elke vijf minuten).
+Onder Beheer › Instellingen › Systeem &amp; Updates › Herinneringen kan
+een admin <strong>Proefdraaien (niets versturen)</strong> om te zien wie
+er een herinnering zou krijgen, of <strong>Nu draaien</strong>.</p>
+<h2 id="geplande-berichten-eigen-regels">Geplande berichten (eigen
+regels)</h2>
+<p>Een regel is: &quot;X dagen na (of vóór) gebeurtenis Y stuur sjabloon Z&quot;.
+Bijvoorbeeld: tien dagen na het inleveren van het formulier het magazine
+sturen.</p>
+<ol type="1">
+<li>Maak eerst een <strong>eigen sjabloon</strong> onder Sjablonen
+(inhoud, eventueel met bijlage).</li>
+<li>Klik op <strong>Nieuwe regel</strong> en vul in: naam (intern),
+<strong>Actief</strong>, de <strong>gebeurtenis</strong>, <strong>Dagen
+erna</strong> (negatief = ervoor, bijvoorbeeld -3 = drie dagen vóór de
+selectiedag), het <strong>sjabloon</strong>, het
+<strong>kanaal</strong>, eventueel <strong>alleen voor deze
+fases</strong>, <strong>Max per persoon</strong> en het
+<strong>venster</strong> in dagen (alleen gevallen waarvan het moment
+hoogstens zoveel dagen geleden was, zodat je niet na-zendt aan oude
+gevallen).</li>
+<li><strong>Opslaan</strong>. Met <strong>Proefdraaien</strong> zie je
+per regel wie het bericht zou krijgen, zonder iets te versturen.
+<strong>Bewerken</strong> en <strong>Verwijderen</strong> spreken voor
+zich.</li>
+</ol>
+<hr />
+<h1 id="instellingen">Instellingen</h1>
+<p><strong>Waar:</strong> Beheer › Instellingen (tabbladen links)<br />
+<strong>Wie:</strong> bestuur en admin.</p>
+<table>
+<thead>
+<tr>
+<th>Tabblad</th>
+<th>Wat je hier instelt</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Algemeen</strong></td>
+<td>Naam van de organisatie, logo en favicon (upload of URL), de
+welkomsttekst op de portaal-login, de huisregels-pdf voor de taak
+&quot;Huisregels lezen&quot; van aangenomen strandwachten (zonder document blijft
+de taak staan als &quot;volgt binnenkort&quot;), en de minimum- en maximumleeftijd
+voor het aanmeldformulier.</td>
+</tr>
+<tr>
+<td><strong>Functies &amp; factoren</strong></td>
+<td>Per functie (bijvoorbeeld lifeguard, postcommandant) de naam, de
+factor waarmee het dagloon wordt berekend, minimum- en maximumleeftijd
+en de volgorde. Daaronder het vakantietoeslagpercentage (standaard 8%),
+de werkuren per dag (standaard 8) en de vaste weekbedragen voor de
+postcommandant. Bij elke functie staat een voorbeeldberekening.</td>
+</tr>
+<tr>
+<td><strong>Uitnodiging &amp; automatisering</strong></td>
+<td>Auto-invite: modus Uit, Suggestie (markeert in de lijst) of
+Automatisch (nodigt uit na de ingestelde vertraging in uren), met de
+leeftijdsgrenzen. De automatiseringen bij een fasewijziging:
+ondertekeningen klaarzetten bij de SD-uitnodiging en het
+kennismakingspakket bij aannemen. Alle herinneringsregels (zie
+hierboven), de rustperiode, het anti-loop-plafond (hetzelfde
+automatische bericht maximaal zoveel keer per dag naar dezelfde
+ontvanger), tot welke grootte een bijlage als e-mailbijlage meegaat, en
+het maximum aantal WhatsApp-berichten per uur.</td>
+</tr>
+<tr>
+<td><strong>Beoordelingscriteria</strong></td>
+<td>De naam, het icoon en de criteria (één per regel) van de Sporttest
+en de Zwemtest waarop beoordelaars op de selectiedag sterren geven.
+<strong>Standaard uit draaiboek herstellen</strong> zet de ingebouwde
+lijst terug.</td>
+</tr>
+<tr>
+<td><strong>Posten &amp; bezetting</strong></td>
+<td>Welke posten er zijn en welke rollen per post bemand moeten zijn
+(rol, competentiecategorie, minimale rang uit Authentik, aantal
+personen). Per post het vinkje &quot;nooit 2 aspiranten samen&quot;. Dekking
+rekent hiermee. De postcommandant valt hier buiten.</td>
+</tr>
+<tr>
+<td><strong>Vakantietoeslag &amp; lonen</strong></td>
+<td>Het totaalbudget voor loonkosten dit seizoen (voor de voortgangsbalk
+in de loonplanning; leeg = zonder budget) en de minimumuurlonen per
+leeftijd (15 t/m 32) voor juni en voor juli–september, met het berekende
+dagloon ernaast.</td>
+</tr>
+<tr>
+<td><strong>Mail &amp; herinneringen</strong></td>
+<td>De e-mailadressen: foutmeldingen, bestuur (ontvangt de
+bestuursmeldingen), penningmeester (ontvangt &quot;loondossier compleet&quot;;
+leeg = bestuursadres) en ledenservice (ontvangt de ondertekende
+inschrijving als lid; leeg = bestuursadres). Het vinkje om
+loondossier-stukken als bijlage mee te sturen aan de penningmeester
+staat standaard uit; laat dat zo tenzij het mailpad vertrouwd is.
+Onderaan de cronjob-regel voor de hoster, een knop <strong>Handmatig
+uitvoeren</strong> en de stand van de AI- en mailwachtrij.</td>
+</tr>
+<tr>
+<td><strong>E-mailserver (SMTP)</strong></td>
+<td>De mailserver waarmee het systeem mailt: host, poort, beveiliging
+(STARTTLS, SSL/TLS of geen), gebruikersnaam, wachtwoord, afzenderadres
+en afzendernaam. Met <strong>Verstuur testmail</strong> controleer je of
+het werkt; sla eerst op.</td>
+</tr>
+<tr>
+<td><strong>AI-analyse</strong></td>
+<td>De Gemini API-sleutel en het model, de experimentele AI-hulp bij
+beschikbaarheid (sollicitanten typen hun beschikbaarheid in gewone
+taal), de prompt-instructie voor de BLK-analyse (met variabelen;
+<strong>Standaard terugzetten</strong> herstelt de ingebouwde tekst) en
+of er automatisch wordt geanalyseerd zodra een BLK-formulier
+binnenkomt.</td>
+</tr>
+<tr>
+<td><strong>Authentik &amp; competenties</strong></td>
+<td>De basis-URL en API-token van Authentik om competenties van
+terugkerende sollicitanten op te halen, <strong>Test
+verbinding</strong>, <strong>Nu alle sollicitanten verversen</strong>,
+en de groep-indeling: welke Authentik-groepen als competentie tellen en
+hun rangorde (alleen te bekijken).</td>
+</tr>
+<tr>
+<td><strong>Authentik SSO-login</strong></td>
+<td>Status van de SSO-koppeling, de API-token waarmee terugkerende
+sollicitanten via Authentik in het portaal kunnen inloggen (leeg =
+alleen inlogcode per mail) en de <strong>toegestane
+admin-groepen</strong>: de Authentik-groepen die toegang geven tot het
+beheer.</td>
+</tr>
+<tr>
+<td><strong>Website &amp; API</strong></td>
+<td>De geheime sleutel voor de WordPress-plugin op de website
+(<strong>Kopieer</strong>; <strong>Nieuwe sleutel genereren</strong>
+maakt de oude ongeldig), de toegestane websites (CORS) en de adressen
+die de plugin nodig heeft.</td>
+</tr>
+<tr>
+<td><strong>SMS, WhatsApp &amp; meldingen</strong></td>
+<td>SMS inschakelen met de gateway en bijbehorende gegevens; WhatsApp
+inschakelen via WhatsReach (staat standaard uit; lees de waarschuwing
+over blokkering van het nummer). Daaronder per meldingstype het kanaal:
+E-mail, WhatsApp/SMS, Beide of Uit. Ouders en het bestuur krijgen altijd
+e-mail. Onderaan <strong>Testbericht sturen</strong> naar een
+telefoonnummer of e-mailadres via het gekozen kanaal; het resultaat
+vertelt ook of er is teruggevallen op een ander kanaal.</td>
+</tr>
+<tr>
+<td><strong>Bewaartermijnen (AVG)</strong></td>
+<td>Automatisch opschonen inschakelen en de termijnen per categorie (zie
+<a href="#privacy-en-avg-verzoeken">Privacy en AVG-verzoeken</a>), plus
+het opschoon-logboek met de laatste runs.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="loondossiers">Loondossiers</h1>
+<p><strong>Waar:</strong> Beheer › Loondossiers<br />
+<strong>Wie:</strong> penningmeester en admin. Bestuur ziet dit scherm
+niet.</p>
+<p>Per aangenomen strandwacht staat hier het loondossier: het
+ondertekende loonheffingsformulier (digitaal verzegelde PDF), de kopie
+van het identiteitsbewijs (voor- en achterkant; bij een paspoort alleen
+de voorkant), de kopie bankpas en de inschrijving als lid. Elke download
+wordt vastgelegd (wie, wanneer) en op ID-kopieën komt een watermerk. Is
+een dossier compleet, dan markeer je het met <strong>Verwerkt in de
+loonadministratie</strong>; de sollicitant kan de documenten daarna niet
+meer wijzigen en de bankpasfoto wordt na de ingestelde termijn
+automatisch vernietigd (of direct met <strong>Vernietigen</strong>). Met
+<strong>Melding opnieuw naar de penningmeester</strong> stuur je de
+compleet-melding nog eens. Download alleen op een vertrouwd apparaat en
+verwijder de bestanden zodra ze in de loonadministratie staan. Er komt
+een aparte handleiding voor de penningmeester.</p>
+<hr />
+<h1 id="logboek">Logboek</h1>
+<p><strong>Waar:</strong> Beheer › Logboek<br />
+<strong>Wie:</strong> alleen admin.</p>
+<p>Het logboek toont alle sporen van het systeem in één tijdlijn: wie
+wat wanneer deed (inclusief inzage in persoonsgegevens en downloads uit
+het loondossier), verstuurde berichten, technische fouten, het
+bewijsspoor van ondertekeningen, wat de AVG-opschoning heeft opgeruimd
+en mislukte inlogpogingen. Gebruik het om een melding te herleiden of
+verantwoording af te leggen, niet om mensen te volgen.</p>
+<ul>
+<li><strong>Tabbladen per bron</strong>: Alles, of één van de zes
+bronnen, met het aantal regels.</li>
+<li><strong>Filters</strong>: vrij zoeken in de details,
+<strong>Wie</strong> (naam, e-mail of nummer), <strong>Actie</strong>,
+<strong>Ernst</strong>, en een periode van/tot. <strong>Wis
+filters</strong> haalt alles weg.</li>
+<li><strong>Kolommen</strong>: Wanneer, Wie (met het soort: beheerder,
+sollicitant, systeem, en het IP-adres), Wat (de actie met eventueel een
+ernst-label), Waar (het object, bijvoorbeeld een sollicitatie) en
+Details.</li>
+<li>Klik in de kolom <strong>Waar</strong> op een object om alles te
+zien wat daarmee gebeurd is.</li>
+<li><strong>Export (CSV)</strong> downloadt de huidige selectie; de
+export zelf wordt ook gelogd.</li>
+</ul>
+<p>Regels worden na de ingestelde termijn (standaard 12 maanden)
+automatisch opgeruimd.</p>
+<hr />
+<h1 id="beheerders-en-rechten">Beheerders en rechten</h1>
+<p><strong>Waar:</strong> Beheer › Beheerders en Beheer › Rollen &amp;
+rechten<br />
+<strong>Wie:</strong> alleen admin.</p>
+<h2 id="beheerders">Beheerders</h2>
+<p>De lijst toont per account naam, e-mailadres, rol (keuzelijst;
+wijzigen slaat direct op), hoe iemand inlogt (Wachtwoord, Authentik of
+beide) en de laatste login. Per account:</p>
+<ul>
+<li><strong>Sleutel-knop</strong>: een nieuw wachtwoord instellen
+(minimaal 8 tekens). Gebruik dit om iemand een noodingang te geven naast
+SSO.</li>
+<li><strong>Deactiveren</strong> / <strong>Activeren</strong>: een
+gedeactiveerd account kan niet meer inloggen; jezelf deactiveren kan
+niet.</li>
+</ul>
+<p>Rechts maak je een nieuw account aan met naam, e-mailadres, een
+tijdelijk wachtwoord (geef dit persoonlijk door; de ontvanger kan het
+onder Mijn profiel wijzigen) en een rol. Wie via Authentik inlogt,
+krijgt automatisch een account; de rol volgt dan uit de Authentik-groep.
+Alle wijzigingen aan accounts komen in het logboek, wachtwoorden zelf
+nooit.</p>
+<h2 id="rollen--rechten">Rollen &amp; rechten</h2>
+<p>Boven staan de rollen met hun Authentik-groep, rang en aantal
+gebruikers. Systeemrollen (Begeleider, Bestuur, Penningmeester, Admin)
+kun je niet verwijderen of hernoemen; de Authentik-groep wel aanpassen.
+Met <strong>+ Nieuwe rol toevoegen</strong> maak je een extra rol (naam,
+Authentik-groep, rang 1 of 2); die begint met alle rechten uit. Een rol
+verwijderen kan alleen als er geen beheerders meer aan gekoppeld
+zijn.</p>
+<p>De <strong>rechtenmatrix</strong> toont per onderdeel en per rol de
+vinkjes Lezen, Bewerken en Verwijderen. Bewerken of verwijderen zet
+automatisch ook lezen aan. Admin staat vast op alles. Klik op
+<strong>Rechten opslaan</strong> om de hele matrix in één keer op te
+slaan. Let op bij het onderdeel &quot;Loondossiers (ID, bankpas,
+loonheffing)&quot;: dat bevat BSN en identiteitsbewijzen en hoort alleen bij
+de penningmeester en admin. Hetzelfde geldt voor &quot;Logboek&quot;: daarin staat
+wie welke persoonsgegevens heeft ingezien.</p>
+<hr />
+<h1 id="privacy-en-avg-verzoeken">Privacy en AVG-verzoeken</h1>
+<p><strong>Waar:</strong> het detailpaneel van de sollicitant, Beheer ›
+Instellingen › Bewaartermijnen (AVG)<br />
+<strong>Wie:</strong> bestuur en admin; instellingen alleen wie
+Instellingen mag bewerken.</p>
+<h2 id="inzage-en-export">Inzage en export</h2>
+<p>Vraagt een sollicitant (of ouder) welke gegevens er zijn vastgelegd,
+open dan het dossier, klik bij Beter leren kennen op
+<strong>Volledig</strong> en gebruik <strong>Dossier (PDF)</strong> of
+<strong>Excel</strong>. De export bevat de persoonsgegevens, het
+BLK-formulier, de beschikbaarheid in gewone taal, welke documenten
+getekend zijn (datum, door wie, hoe geverifieerd) en de status van het
+loondossier. BSN, IBAN, kopieën van het identiteitsbewijs en de inhoud
+van de gezondheidsverklaring zitten er nooit in. Getekende documenten
+geef je via <strong>Bekijk</strong> bij Ondertekeningen; de sollicitant
+en de ouder hebben die ook zelf per mail ontvangen.</p>
+<h2 id="verwijderen-1">Verwijderen</h2>
+<p>Op verzoek van de sollicitant: open het dossier en klik onderaan op
+<strong>Verwijder sollicitatie</strong>. Dat verwijdert de sollicitatie
+van dit seizoen met het BLK-formulier, de beoordeling, de
+beschikbaarheid, de taken en de geüploade documenten. Het
+persoonsaccount (naam, e-mail) blijft bestaan, zodat iemand later
+opnieuw kan solliciteren; wil de persoon ook dat weg hebben, overleg dan
+met de technisch beheerder. De verwijdering komt in het logboek.</p>
+<p>Heeft de persoon een <strong>verwerkt loondossier</strong>, dan wordt
+het verwijderen geweigerd: het loonheffingsformulier en de ID-kopie
+vallen onder de wettelijke bewaarplicht van vijf jaar na het einde van
+het dienstjaar. Verwijderen kan dan alleen met de bevestiging dat het
+dienstverband niet is doorgegaan; daarvoor is op dit moment geen knop in
+het scherm, dus schakel de technisch beheerder in.</p>
+<p>Een sollicitant kan zichzelf ook terugtrekken via het portaal. Het
+bestuur krijgt dan de melding &quot;Sollicitant heeft zich
+teruggetrokken&quot;.</p>
+<h2 id="bewaartermijnen">Bewaartermijnen</h2>
+<p>Onder Instellingen › Bewaartermijnen (AVG) zet je <strong>Automatisch
+opschonen inschakelen</strong> aan; zolang dat uitstaat wordt er niets
+automatisch verwijderd. De opschoning draait dagelijks. Aangenomen
+kandidaten worden nooit automatisch verwijderd of geanonimiseerd. Een
+termijn op 0 betekent: die categorie niet opschonen (behalve bij
+gezondheidsgegevens, zie tabel).</p>
+<table>
+<thead>
+<tr>
+<th>Categorie</th>
+<th>Standaard</th>
+<th>Wat er gebeurt</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Afgewezen sollicitanten</td>
+<td>6 maanden</td>
+<td>Persoonsgegevens worden geanonimiseerd; de statistiek blijft.</td>
+</tr>
+<tr>
+<td>Gezondheidsgegevens</td>
+<td>0</td>
+<td>0 = verwijderen zodra de sollicitatie is afgewezen; anders zoveel
+maanden na ondertekening. Het feit dát er getekend is blijft.</td>
+</tr>
+<tr>
+<td>AI-invoertekst</td>
+<td>3 maanden</td>
+<td>De vrije beschikbaarheidstekst die naar de AI-dienst ging wordt
+gewist.</td>
+</tr>
+<tr>
+<td>Niet-voltooide aanmeldingen</td>
+<td>3 maanden</td>
+<td>Aanmeldingen die in Aangemeld bleven staan zonder formulier of
+beschikbaarheid worden verwijderd.</td>
+</tr>
+<tr>
+<td>Berichtenlog</td>
+<td>12 maanden</td>
+<td>Logregels verwijderen.</td>
+</tr>
+<tr>
+<td>Inhoud van berichten</td>
+<td>3 maanden</td>
+<td>Alleen de tekst wordt leeggemaakt; onderwerp en samenvatting
+blijven.</td>
+</tr>
+<tr>
+<td>Losse bijlagen</td>
+<td>12 maanden</td>
+<td>Bestanden die aan geen sjabloon meer hangen.</td>
+</tr>
+<tr>
+<td>Bezoekersstatistiek landingspagina&#39;s</td>
+<td>13 maanden</td>
+<td>Aantallen verwijderen.</td>
+</tr>
+<tr>
+<td>Herkenning unieke bezoekers</td>
+<td>30 dagen</td>
+<td>Het dag-pseudoniem wissen; aantallen blijven.</td>
+</tr>
+<tr>
+<td>Logboek</td>
+<td>12 maanden</td>
+<td>Auditregels verwijderen.</td>
+</tr>
+<tr>
+<td>Loondocumenten (loonheffing en ID-kopie)</td>
+<td>5 jaar na einde dienstjaar</td>
+<td>Wettelijke bewaarplicht; daarna vernietigd.</td>
+</tr>
+<tr>
+<td>Kopie bankpas</td>
+<td>30 dagen na verwerking</td>
+<td>Vernietigd nadat de penningmeester het dossier op verwerkt heeft
+gezet.</td>
+</tr>
+</tbody>
+</table>
+<p>Het opschoon-logboek onderaan toont per run wat er is opgeruimd.</p>
+<h2 id="wat-je-nooit-per-mail-doorstuurt">Wat je nooit per mail
+doorstuurt</h2>
+<p>Stuur nooit een BSN, een kopie identiteitsbewijs, een bankpas of de
+inhoud van een gezondheidsverklaring per e-mail door, ook niet intern.
+Verwijs de penningmeester naar Loondossiers en laat het vinkje
+&quot;loondossier-stukken als bijlage meesturen&quot; uit. Gezondheidsverklaringen
+bekijk je alleen in het beheer (bestuur en admin). Print alleen wat de
+administratie echt nodig heeft en bewaar het afgeschermd.</p>
+<hr />
+<h1 id="systeem-en-foutenlog">Systeem en foutenlog</h1>
+<p><strong>Waar:</strong> Beheer › Instellingen › Systeem &amp; Updates
+en Beheer › Instellingen › Foutenlog<br />
+<strong>Wie:</strong> alleen admin.</p>
+<h2 id="systeem--updates">Systeem &amp; Updates</h2>
+<p>Bovenaan de geïnstalleerde versie, <strong>Diagnose draaien</strong>
+(opent een technische controlepagina) en <strong>Migraties
+uitvoeren</strong>. Het systeem controleert en herstelt de database
+normaal gesproken zelf bij elk bezoek; klopt er na een update toch iets
+niet, klik dan op deze knop.</p>
+<p><strong>Systeemgezondheid</strong> toont acht controles met een groen
+vinkje, een oranje waarschuwing of een rood kruis:</p>
+<table>
+<thead>
+<tr>
+<th>Controle</th>
+<th>Betekenis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Database</td>
+<td>Zijn alle tabellen en kolommen aanwezig? Ontbreekt er iets, dan
+maakt <strong>Controleren &amp; repareren</strong> het aan.</td>
+</tr>
+<tr>
+<td>Cron (automatische taken)</td>
+<td>Wanneer draaiden de automatische taken (mailwachtrij, herinneringen,
+opschoning) voor het laatst. Hoort elke vijf minuten; langer dan 30
+minuten geleden is een waarschuwing, langer dan 2 uur een fout.
+Controleer dan de cronjob bij de hoster (de regel staat onder
+Instellingen › Mail &amp; herinneringen).</td>
+</tr>
+<tr>
+<td>Mailwachtrij</td>
+<td>Blijven er mails langer dan een uur hangen? Dan draait de cron niet
+of klopt de mailserver niet.</td>
+</tr>
+<tr>
+<td>AVG-opschoning</td>
+<td>Is de opschoning de laatste drie dagen gedraaid?</td>
+</tr>
+<tr>
+<td>Mappen &amp; rechten</td>
+<td>Kan het systeem bestanden wegschrijven (uploads)?</td>
+</tr>
+<tr>
+<td>Configuratie</td>
+<td>Zijn de basiszaken ingesteld (cron-token,
+bestuurs-e-mailadres)?</td>
+</tr>
+<tr>
+<td>Kluis</td>
+<td>Kan het systeem gevoelige documenten versleuteld opslaan? Zonder
+werkende kluis zijn uploads van ID en bankpas en het
+loonheffingsformulier geblokkeerd. Een waarschuwing over de
+documentenmap is voor de technisch beheerder.</td>
+</tr>
+<tr>
+<td>Zegel</td>
+<td>Kan het systeem PDF&#39;s digitaal verzegelen, en hoe lang is het
+certificaat nog geldig? Bij een fout worden getekende PDF&#39;s zonder zegel
+gemaakt.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Herinneringen</strong>: de laatste automatische run,
+<strong>Proefdraaien (niets versturen)</strong> en <strong>Nu
+draaien</strong> (verstuurt via de wachtrij). Daaronder de
+<strong>Database</strong>-tabelstatus per groep, een link naar het
+<strong>Logboek</strong> en de <strong>Changelog</strong> met per versie
+wat er veranderde.</p>
+<h2 id="foutenlog">Foutenlog</h2>
+<p>De laatste 200 technische fouten, nieuwste bovenaan, met foutcode,
+tijdstip, het bericht, het bestand en de regel, het adres en de
+gebruiker. Elke fout heeft een <strong>ref</strong>-nummer dat ook op de
+foutpagina aan de gebruiker wordt getoond: vraag dat nummer als iemand
+een foutmelding meldt, dan vind je hier de oorzaak. Fouten worden ook
+gemaild naar het adres onder Instellingen › Mail &amp; herinneringen.
+Met <strong>Log legen</strong> wis je het hele foutenlog.</p>
+<h2 id="testomgeving">Testomgeving</h2>
+<p>Op de testomgeving staat linksboven in de zijbalk het oranje label
+<strong>TESTOMGEVING</strong>. Alles wat je daar doet is oefenen; mails
+gaan wel echt naar de ingevulde adressen, dus gebruik daar geen adressen
+van echte sollicitanten. Zie je dat label niet, dan werk je in
+productie.</p>
+<hr />
+<h1 id="veelgestelde-vragen">Veelgestelde vragen</h1>
+<p><strong>Een sollicitant zegt dat hij geen inlogcode
+krijgt.</strong><br />
+De code gaat per e-mail (type &quot;Portaal-inlogcode&quot;) en is 15 minuten
+geldig. Controleer eerst het e-mailadres in het dossier: een tikfout is
+de meest voorkomende oorzaak. Kijk daarna in Berichten › Berichtenlog,
+filter op type &quot;Portaal-inlogcode&quot;: staat de regel op verstuurd, dan zit
+de mail waarschijnlijk in de spam. Staat hij op mislukt of wacht, dan is
+er iets mis met de mailserver of de cron (zie Systeem &amp; Updates).
+Per adres kan maar één code per minuut worden aangevraagd en per
+bezoeker een beperkt aantal per uur; laat de sollicitant even wachten en
+niet blijven klikken. Heeft de sollicitant een verenigingsaccount, dan
+logt hij in via Authentik en krijgt hij geen code.</p>
+<p><strong>De ouder-mail is naar een verkeerd adres
+gegaan.</strong><br />
+Zie <a href="#een-verkeerd-ouder-mailadres">Een verkeerd
+ouder-mailadres</a>: zet in het dossier met <strong>+ Gezondheid
+(ouder)</strong> en <strong>+ Intake (ouder)</strong> nieuwe documenten
+klaar op het juiste adres, of kopieer de link van het openstaande
+document en stuur die zelf.</p>
+<p><strong>WhatsApp komt niet aan.</strong><br />
+Controleer onder Instellingen › SMS, WhatsApp &amp; meldingen of
+WhatsApp is ingeschakeld en stuur een testbericht naar je eigen nummer.
+Kijk in het berichtenlog naar de status en de foutmelding; een sterretje
+betekent dat het bericht is teruggevallen op sms of e-mail. Controleer
+in het dossier of de kanaalvoorkeur van de sollicitant op WhatsApp staat
+en of er een geldig mobiel nummer is. Boven het ingestelde maximum per
+uur valt het systeem terug op sms of e-mail. Bedenk dat WhatsReach
+buiten de officiële WhatsApp-koppeling om werkt; een geblokkeerd nummer
+is een reëel risico.</p>
+<p><strong>Hoe zet ik iemand terug naar een eerdere fase zonder
+mail?</strong><br />
+Terugzetten naar Aangemeld, Selectiedag geweest of TW geweest stuurt
+nooit een mail: gewoon de fase-knop in het dossier gebruiken. Wil je
+iemand opnieuw op Uitgenodigd SD, Uitgenodigd TW, Aangenomen of
+Afgewezen zetten zonder bericht, zet dan eerst het kanaal van dat
+meldingstype op Uit (Instellingen › SMS, WhatsApp &amp; meldingen),
+wijzig de fase en zet het kanaal terug. Binnen een uur na een eerdere
+verzending gaat dezelfde melding sowieso niet nog een keer.</p>
+<p><strong>Ik heb per ongeluk iemand uitgenodigd.</strong><br />
+Zet de fase in het dossier terug naar Aangemeld (dat stuurt geen mail)
+en bel of mail de persoon persoonlijk. De uitnodiging zelf kun je niet
+terughalen. De klaargezette documenten blijven staan; dat is niet
+erg.</p>
+<p><strong>De sollicitant is 17 en wordt tijdens het seizoen 18. Wie
+tekent?</strong><br />
+De leeftijd op het moment van tekenen bepaalt het. Is de sollicitant bij
+de uitnodiging nog 17, dan tekent de ouder de gezondheidsverklaring en
+het intakeformulier. Het loonheffingsformulier en het lidmaatschap
+tekent de sollicitant altijd zelf. Het dossier toont een oranje label
+als iemand rond een leeftijdsgrens zit.</p>
+<p><strong>Iemand is 15 en wil meedoen.</strong><br />
+De minimumleeftijd voor het aanmeldformulier staat onder Instellingen ›
+Algemeen (standaard 15); de leeftijdsgrenzen voor de
+uitnodigingssuggestie staan onder Uitnodiging &amp; automatisering
+(standaard 16). Het dossier laat zien wanneer iemand 16 wordt. Dit zijn
+bewust twee aparte grenzen: de aanmeldleeftijd en de tekengrens van 18
+zijn juridisch verschillende dingen.</p>
+<p><strong>Een mail is &quot;mislukt&quot;. Wat nu?</strong><br />
+Open de regel in het berichtenlog; de foutmelding staat erbij. Meestal
+is het een verkeerd adres of een probleem met de mailserver. Controleer
+Instellingen › E-mailserver (SMTP) met een testmail en kijk in Systeem
+&amp; Updates of de cron en de mailwachtrij in orde zijn. Is het adres
+fout, verbeter het dan in het dossier en stuur het bericht opnieuw via
+Berichten.</p>
+<p><strong>Kan ik een bericht aan iedereen in een fase
+sturen?</strong><br />
+Ja. Ga naar Berichten, vink bij Ontvangers de hele fase aan (het vinkje
+bij de fasekop), schrijf het bericht of kies een eigen sjabloon en klik
+op Verzenden. Bij meer dan tien ontvangers gaat het via de wachtrij.</p>
+<p><strong>Waar zie ik wie een document heeft gedownload of een dossier
+heeft bekeken?</strong><br />
+In het Logboek (alleen admin). Filter op de persoon in de kolom Wie, of
+klik in een regel op het object om alles van dat dossier te zien.
+Downloads uit het loondossier staan ook bij het document zelf (&quot;Laatst
+gedownload&quot;).</p>
+<p><strong>De selectiedag-tablet zegt &quot;Geen geldige
+toegangscode&quot;.</strong><br />
+De link op de tablet hoort bij een oude code. Kopieer onder Selectiedag
+› Inchecken de huidige tablet-link opnieuw naar de tablet, of maak een
+nieuwe code en verspreid die link.</p>
+<p><strong>Een sollicitant zegt dat hij niet in de groepsindeling
+staat.</strong><br />
+Alleen sollicitanten in de fases Uitgenodigd SD, Aangemeld SD en
+Selectiedag geweest doen mee. Controleer de fase in het dossier. Staat
+hij wel goed maar zonder groep, dan staat hij in de kolom &quot;Nog niet
+ingedeeld&quot;: sleep hem naar een groep.</p>
+<p><strong>De dekking is rood terwijl er genoeg mensen
+zijn.</strong><br />
+Dekking kijkt naar competenties uit Authentik en de rollen onder
+Instellingen › Posten &amp; bezetting. Controleer of Authentik gekoppeld
+is, of de sollicitant in het dossier de juiste competenties heeft
+(Ververs of handmatig koppelen) en of de rol niet een te hoge minimale
+rang vraagt. Klik op de week: bij &quot;Waarom tekort&quot; staat precies welke
+rol niet te vervullen is en wie wel gekwalificeerd is maar niet
+beschikbaar.</p>
+<p><strong>Het seizoen staat open, maar het formulier op de website
+werkt niet.</strong><br />
+Controleer onder Instellingen › Website &amp; API of er een API-sleutel
+is en of die in de WordPress-plugin staat. Op een landingspagina moet
+bovendien de markering voor het formulier in het ontwerp staan en de
+status op Gepubliceerd; zie de handleiding Landingspagina&#39;s.</p>
+<p><strong>Ik zie een onderdeel niet in het menu.</strong><br />
+Dan heeft je rol daar geen leesrecht op. Vraag een admin om je rol te
+controleren onder Beheerders, of het recht aan te passen onder Rollen
+&amp; rechten. Loondossiers is bewust alleen voor penningmeester en
+admin; Logboek, Beheerders en Systeem alleen voor admin.</p>
+</body>
+</html>

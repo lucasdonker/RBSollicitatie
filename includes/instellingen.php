@@ -89,6 +89,14 @@ function instellingen_auto_setup(bool $forceer = false): void {
         ['site.favicon_url',       '',                          'URL van het favicon',                  'url'],
         ['mail.fout_email',        'website@paal13.com',        'E-mail voor foutmeldingen',            'email'],
         ['mail.bestuur_email',     'bestuur@paal13.com',        'E-mail bestuur',                       'email'],
+        ['mail.penningmeester_email', '',                       'E-mail penningmeester (loondossiers; leeg = bestuur)', 'email'],
+        ['mail.ledenservice_email',   '',                       'E-mail ledenservice (inschrijvingen lidmaatschap; leeg = bestuur)', 'email'],
+        ['documenten.penningmeester_bijlagen', '0',             'Loondossier-stukken (ID, bankpas, loonheffing) als bijlage mailen', 'checkbox'],
+        ['documenten.download_melding', '1',                    'Melding aan het bestuur bij elke download van een loondocument', 'checkbox'],
+        ['taken.huisregels_bijlage_id', '0',                    'Bijlage (bibliotheek) met de huisregels voor het takenpakket', 'getal'],
+        ['ondertekenen.2fa_typen', 'loonheffing',                'Ondertekentypen met verplichte verificatiecode (wettelijke documenten)', 'tekst'],
+        ['bewaar.loondocumenten_jaar', '5',                     'Loonheffingsformulier + kopie ID bewaren (jaren na einde dienstjaar)', 'getal'],
+        ['bewaar.bankpas_na_verwerking_dagen', '30',            'Kopie bankpas vernietigen na verwerking (dagen)', 'getal'],
         ['aanmeld.min_leeftijd',   '15',                        'Minimumleeftijd sollicitant',          'getal'],
         ['aanmeld.max_leeftijd',   '35',                        'Maximumleeftijd sollicitant',          'getal'],
         ['invite.modus',           'suggestie',                 'Auto-invite modus',                    'keuze'],
@@ -110,6 +118,16 @@ function instellingen_auto_setup(bool $forceer = false): void {
     ];
     $stmt = $db->prepare("INSERT IGNORE INTO `instellingen` (sleutel,waarde,beschrijving,type) VALUES (?,?,?,?)");
     foreach ($defaults as $r) $stmt->execute($r);
+
+    // Verouderde standaardwaarden bijwerken: alleen als de waarde nog exact de oude standaard is (dus niet
+    // handmatig aangepast). Zo krijgen bestaande installaties een gewijzigd besluit mee zonder eigen keuzes
+    // te overschrijven.
+    $correcties = [
+        // 2.91.0: de inschrijving als lid vraagt geen verificatiecode meer (alleen wettelijke documenten)
+        ['ondertekenen.2fa_typen', 'loonheffing,lidmaatschap', 'loonheffing'],
+    ];
+    $corr = $db->prepare("UPDATE `instellingen` SET waarde=? WHERE sleutel=? AND waarde=?");
+    foreach ($correcties as $c) { try { $corr->execute([$c[2], $c[0], $c[1]]); } catch (\Exception $e) {} }
 
     // Standaard functies
     $fstmt = $db->prepare("INSERT IGNORE INTO `functies` (sleutel,naam,factor,min_leeftijd,max_leeftijd,volgorde) VALUES (?,?,?,?,?,?)");

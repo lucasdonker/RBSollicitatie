@@ -1,50 +1,53 @@
 <?php
+/**
+ * Eigen 404-pagina in huisstijl. Komt op twee manieren in beeld:
+ *  - Apache: ErrorDocument 404 /404.php (root .htaccess) voor adressen die niet bestaan;
+ *  - PHP:    pagina_404() (includes/functions.php) vanuit code, bijv. een partial die direct wordt opgevraagd.
+ * Werkt ook zonder database/config: alles wat uit functions.php komt is optioneel.
+ */
 http_response_code(404);
-$is_admin = str_starts_with($_SERVER['REQUEST_URI'] ?? '', '/admin');
-$app_url = '';
+$pad      = (string)($_SERVER['REQUEST_URI'] ?? '');
+$is_admin = str_starts_with($pad, '/admin');
+$app_url  = '';
 if (file_exists(__DIR__ . '/includes/functions.php')) {
-    define('P13_NO_ERROR_HANDLER', 1);
+    if (!defined('P13_NO_ERROR_HANDLER')) define('P13_NO_ERROR_HANDLER', 1);
     @require_once __DIR__ . '/includes/functions.php';
     $app_url = defined('APP_URL') ? APP_URL : '';
 }
-?>
-<!DOCTYPE html>
+$esc  = fn(string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
+$ico  = fn(string $naam, int $g): string => function_exists('icoon') ? icoon($naam, $g)
+      : '<svg width="' . $g . '" height="' . $g . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>';
+$css  = $app_url . '/assets/css/stijl.css';
+$terug_url   = $app_url . ($is_admin ? '/admin/' : '/portaal/');
+$terug_label = $is_admin ? 'Naar het dashboard' : 'Naar het portaal';
+?><!DOCTYPE html>
 <html lang="nl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Pagina niet gevonden — Paal 13</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="<?= $esc($css) ?>">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-         background: #001530; color: #e2e8f0; min-height: 100vh;
-         display: flex; align-items: center; justify-content: center; padding: 20px; }
-  .kaart { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
-           border-radius: 16px; padding: 48px 40px; max-width: 480px; width: 100%; text-align: center; }
-  .golf { font-size: 64px; margin-bottom: 20px; display: block; }
-  h1 { font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 8px; }
-  p { font-size: 14px; color: rgba(255,255,255,.55); line-height: 1.7; margin-bottom: 24px; }
-  .code { font-size: 11px; color: rgba(255,255,255,.25); margin-bottom: 20px; font-family: monospace; }
-  .knoppen { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-  a.btn { display: inline-block; padding: 10px 22px; border-radius: 6px; font-size: 13px; font-weight: 500; text-decoration: none; }
-  .btn-primary { background: #FF6B35; color: #fff; }
-  .btn-outline { background: rgba(255,255,255,.08); color: rgba(255,255,255,.7); border: 1px solid rgba(255,255,255,.15); }
+  .p404-pad { font: var(--text-meta); color: var(--ink-muted); text-align: center; margin: 14px 0 0; word-break: break-all; }
 </style>
 </head>
-<body>
-<div class="kaart">
-  <span class="golf">🌊</span>
-  <h1>Pagina niet gevonden</h1>
-  <p>De pagina die je zoekt bestaat niet of is verplaatst. Misschien is de link verlopen of heb je een typfout gemaakt.</p>
-  <div class="code">Foutcode: P13-S003 · <?= htmlspecialchars($_SERVER['REQUEST_URI'] ?? '') ?></div>
-  <div class="knoppen">
-    <?php if ($is_admin): ?>
-    <a href="<?= $app_url ?>/admin/" class="btn btn-primary">← Naar dashboard</a>
-    <?php else: ?>
-    <a href="<?= $app_url ?>/portaal/" class="btn btn-primary">← Naar portaal</a>
-    <a href="<?= $app_url ?>/" class="btn btn-outline">Startpagina</a>
-    <?php endif; ?>
-  </div>
-</div>
+<body class="pt-body">
+  <header class="pt-topbar">
+    <span class="pt-merk-logo"><?= $ico('golf', 16) ?></span>
+    <div class="pt-merk-tekst">
+      <span class="pt-merk-naam">Paal 13</span>
+      <span class="pt-merk-sub"><?= $is_admin ? 'Beheer' : 'Sollicitatie' ?></span>
+    </div>
+  </header>
+  <main class="pt-main">
+    <div class="pt-leeg groot" role="main">
+      <span class="pt-leeg-icoon navy"><?= $ico('zoek', 26) ?></span>
+      <span class="pt-leeg-titel">Pagina niet gevonden</span>
+      <span class="pt-leeg-tekst">Deze pagina bestaat niet of is verplaatst. Controleer het adres, of ga terug naar de startpagina.</span>
+      <a href="<?= $esc($terug_url) ?>" class="ds-btn ds-btn-primair"><?= $esc($terug_label) ?></a>
+    </div>
+    <p class="p404-pad">Foutcode P13-S003 · <?= $esc($pad) ?></p>
+  </main>
 </body>
 </html>

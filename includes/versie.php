@@ -3,10 +3,1064 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.35.0');
+define('APP_VERSIE', '2.94.0');
 
 function app_changelog(): array {
     return [
+        '2.94.0' => [
+            'datum'  => '2026-09-19',
+            'titel'  => 'Klaar voor productie: beveiliging aangescherpt, opruiming en documentatie',
+            'punten' => [
+                'De installatiewizard (map setup/) is verwijderd. Hij kon met een verborgen parameter ook op een draaiend systeem worden geopend en dan de configuratie overschrijven; de map was alleen door een serverinstelling afgeschermd. Installeren en bijwerken staat nu beschreven in het runbook voor systeembeheer',
+                'Het standaard beheerdersaccount uit de installatie (admin@paal13.com met een vast, openbaar wachtwoord) wordt automatisch op non-actief gezet als het nog bestaat, en zit niet meer in het databaseschema. De eerste beheerder komt via Authentik',
+                'Elke pagina in het beheer en het portaal stuurt nu beveiligingsheaders mee: scripts en verbindingen alleen vanaf het eigen adres, niet in te sluiten op andere websites (behalve het aanmeldformulier op paal13.com), altijd https. Dit stond ooit in de serverconfiguratie maar was daar verdwenen',
+                'De sessiecookie krijgt achter de Plesk-proxy altijd de "alleen via https"-vlag; die hing eerder af van een serverwaarde die daar niet gegarandeerd is',
+                'De databasecontrole die ontbrekende tabellen en kolommen aanmaakt draaide bij élke pagina (tientallen vragen aan de database per klik). Hij draait nu één keer per versie; bij Systeem & Updates en de systeemcontrole kun je hem altijd nog geforceerd draaien',
+                'Het scherm Deploy & Versiebeheer (ZIP uploaden) is vervallen: uitrollen gaat via Git en Plesk. Het scherm zette bij elke deploy een kopie van de configuratie mét wachtwoorden en van alle uploads in een map binnen het webbereik. Verwijder de map _backups/ op de server',
+                'Mislukt inloggen via Authentik toonde technische details (waaronder het antwoord van de tokenserver) aan iedereen die de pagina opende. Die gaan nu naar het foutenlog; alleen op de testomgeving blijven ze op het scherm',
+                'Valt de database weg, dan zag een bezoeker de ruwe foutmelding met servernaam en gebruikersnaam. Nu een nette storingspagina; de oorzaak staat in het serverlog',
+                'Fatale fouten (bijvoorbeeld geheugen op) gaven een witte pagina; nu de gewone storingspagina met foutcode, en het beheer krijgt de melding',
+                'AVG: als een sollicitant zijn gegevens laat verwijderen en een van de stappen mislukt, wordt alles teruggedraaid en krijgt hij een eerlijke melding. Eerder kon "verwijderd" op het scherm staan terwijl er gegevens waren blijven staan',
+                'Het aanmeldformulier op sollicitatie.paal13.com heeft nu dezelfde bescherming tegen bots als het formulier op landingspagina\'s (verborgen veld en maximaal 5 aanmeldingen per uur per adres). Ook het aanvragen van een inlogcode is per adres begrensd (10 per uur), zodat niemand met veel e-mailadressen de mailserver kan laten volstromen',
+                'De API-sleutel voor de website-koppeling mag alleen nog in de header mee, niet meer in het webadres (waar hij in logboeken belandde). Controleer dat de WordPress-plugin de header X-Paal13-Key gebruikt',
+                'Vangnet voor de berichtenwachtrij: ook een portaalbezoek zet de geplande taken in gang als de echte cron te lang stil is (maximaal één keer per uur). De cron in Plesk blijft verplicht: alleen die doet ook de AVG-opschoning',
+                'Opgeruimd: een dood tweede dashboard, een niet meer gebruikte API voor verhinderingen, en negentien oude changelog-bestanden uit 2.17 t/m 2.29 (de changelog staat in Systeem & Updates)',
+'Nieuw: handleidingen voor het bestuur, de penningmeester, de sollicitant en het technisch beheer, te lezen onder Instellingen › Handleidingen. Het vraagteken rechtsboven werkt nu op élk scherm en brengt je naar het juiste hoofdstuk; eerder hadden maar acht schermen uitleg',
+                'Van elke handleiding is ook een Word-versie beschikbaar om uit te delen of af te drukken (in de map docs/handleiding/word van de broncode)',
+            ],
+        ],
+        '2.93.1' => [
+            'datum'  => '2026-09-19',
+            'titel'  => "Landingspagina's: afbeeldingen uploaden en het tellen van bezoeken",
+            'punten' => [
+                'Je kunt nu meerdere afbeeldingen tegelijk kiezen en in één keer uploaden (maximaal 20 per keer). Per bestand zie je of het gelukt is',
+                'Opgelost: lege plekken waar een foto hoorde te staan. Een ontwerp uit een ontwerptool verwijst naar zijn eigen mappen ("assets/Frame 12.png"), terwijl alle afbeeldingen van een pagina bij ons bij elkaar in één map staan. Bij het inlezen worden die verwijzingen nu rechtgezet — inclusief namen met hoofdletters of spaties — en in het rapport staat precies wat er is aangepast. Verwijst het ontwerp naar een afbeelding die er nog niet is, dan noemt het rapport de naam die hij verwacht',
+                'Ook zonder opnieuw inlezen werken adressen met een map erin nu gewoon, dus pagina\'s die al live stonden hoef je niet aan te raken',
+                'Opgelost: het aanmeldformulier op een landingspagina liep stuk op een interne fout en maakte de aanmelding niet aan',
+                'Opgelost: "de inhoud van het bestand past niet bij het type" bij een gewone foto. Veel foto\'s heten .jpg maar zijn in werkelijkheid een PNG (of andersom) — bijvoorbeeld na bewerken of hernoemen. Zo\'n bestand wordt nu gewoon geaccepteerd en houdt de naam die het had, zodat je ontwerp blijft kloppen. Zit er iets in wat helemaal geen afbeelding is, dan staat er voortaan bij wat het dan wél is',
+                'Dat geldt ook voor de andere uploads in het systeem: bijlagen bij berichten en de documenten van sollicitanten (identiteitsbewijs, bankpas, pasfoto)',
+                'Opgelost: het aantal bezoeken van een landingspagina liep op zodra je van tabblad wisselde. Edge en Chrome laden een tabblad dat even in de slaapstand stond namelijk opnieuw; dat telde als nieuw bezoek. Hetzelfde gebeurde bij vernieuwen of de terug-knop. Een bezoeker telt nu nog maar één keer per half uur per pagina',
+            ],
+        ],
+        '2.93.0' => [
+            'datum'  => '2026-09-19',
+            'titel'  => 'Logboek: alles wat er in het systeem gebeurt op één plek',
+            'punten' => [
+                'Nieuw menu-item "Logboek" onder Beheer. Daar staat in één tijdlijn wie wat wanneer deed: aanmeldingen, fasewijzigingen, downloads van loondocumenten, gewijzigde instellingen — met de nieuwste bovenaan',
+                'Naast die acties staan er vijf andere sporen in: verstuurde berichten (e-mail, WhatsApp, sms), technische fouten, het bewijsspoor van elke ondertekening, wat de bewaartermijnen hebben opgeruimd, en mislukte inlogpogingen. Die laatste waren nergens te zien; een reeks op hetzelfde adres wijst op iemand die probeert binnen te komen',
+                'Je filtert op persoon, soort actie, periode of ernst, en je kunt vrij zoeken. Klik op bijvoorbeeld "Sollicitatie #42" om alles te zien wat er met dat dossier is gebeurd — handig bij een vraag of een klacht',
+                'Het overzicht is te downloaden als Excel-bestand. Omdat daarmee persoonsgegevens het systeem verlaten, wordt elke download zelf ook vastgelegd',
+                'Alleen beheerders zien het logboek. Het bevat immers ook wie een kopie van een identiteitsbewijs heeft ingezien. Wil je het bestuur toegang geven, dan kan dat bij Rollen & rechten',
+                'Het oude auditlogboek stond in geen enkel menu — alleen verstopt onder Systeem & Updates — en liet maar 7 van de ongeveer 30 soorten acties filteren. Dat is hiermee vervangen; oude links werken gewoon door',
+                'Nieuw vastgelegd: wie een rol meer of minder rechten geeft, wie een beheerder toevoegt, van rol verandert of op non-actief zet, en wie uitlogt. Juist dat spoor heb je nodig als er iets misgaat',
+                'Opgelost: de gemiddelde doorlooptijd op het dashboard bleef altijd leeg, en verstuurde berichten verschenen nooit in de tijdlijn van een sollicitant. Beide kwamen door een verkeerde kolomnaam, waardoor de vraag aan de database stilletjes mislukte',
+                'Opgelost: een beheerder op non-actief zetten gaf een foutmelding in plaats van te werken',
+            ],
+        ],
+        '2.92.2' => [
+            'datum'  => '2026-09-19',
+            'titel'  => "Landingspagina's: foto's uit het ontwerp worden automatisch losgemaakt",
+            'punten' => [
+                'Download je een ontwerp uit een ontwerptool, dan zitten de foto\'s meestal ín het HTML-bestand verwerkt. Daardoor werd een pagina van een paar honderd KB er zomaar een van 10 MB, en moest een bezoeker dat hele bestand binnenhalen voordat hij iets zag',
+                'Bij het inlezen worden die foto\'s er nu uit gehaald en als losse afbeelding bij de pagina gezet. In een test ging een ontwerp van 16 MB terug naar 1 KB, met twaalf losse foto\'s ernaast. De browser bewaart die apart, dus een tweede bezoek is veel sneller',
+                'Dezelfde foto die vaker in het ontwerp staat, wordt één keer opgeslagen',
+                'In het rapport zie je precies wat er is losgemaakt en hoeveel kleiner het ontwerp is geworden. Wil je het niet, dan zet je het vinkje bij het uploaden uit',
+                'Wat geen gewone foto is (bijvoorbeeld een SVG-logo) blijft in het bestand staan, net als alles wat niet gelezen kan worden. Het ontwerp blijft dus altijd werken',
+                'Kleine opruiming: bij het verwijderen van een pagina bleven lege mappen op de server achter. Die gaan nu ook weg',
+            ],
+        ],
+        '2.92.1' => [
+            'datum'  => '2026-09-19',
+            'titel'  => "Landingspagina's: grotere ontwerpen uploaden, en het rapport klopt weer",
+            'punten' => [
+                'Een ontwerp mag nu 16 MB zijn in plaats van 2 MB. Exports uit een ontwerptool hebben afbeeldingen en lettertypen vaak in het bestand zelf zitten, en liepen daardoor tegen de oude grens aan',
+                'Het scherm toont de grens die er écht is: staat de server lager ingesteld (upload_max_filesize en post_max_size in Plesk), dan zie je díe waarde en niet een belofte die niet waargemaakt kan worden',
+                'Is een bestand te groot voor de server, dan krijg je nu een duidelijke melding met de maximale grootte in plaats van een onbegrijpelijke beveiligingsfout',
+                'Belangrijk voor de veiligheid: bij een ontwerp met een script van meer dan ongeveer 1 MB viel de waarschuwing "Scripts in het bestand zelf" stil uit het rapport weg. Het nalezen liep vast op een grens van PHP en meldde dat niet. Nu wordt zo\'n script wél gevonden, en loopt er toch iets vast, dan zegt het rapport dat het onvolledig is',
+                'Past een bestand niet in het werkgeheugen van de server, dan krijg je een melding met de benodigde instelling in plaats van een witte pagina',
+                'De uploadhulp wijst erop dat ingesloten afbeeldingen beter los geüpload kunnen worden: dat scheelt de bezoeker veel laadtijd op een telefoon',
+            ],
+        ],
+        '2.92.0' => [
+            'datum'  => '2026-09-19',
+            'titel'  => "Landingspagina's opnieuw opgebouwd: eigen ontwerp uploaden",
+            'punten' => [
+                'Een landingspagina is nu een compleet HTML-bestand dat je uploadt, bijvoorbeeld een ontwerp uit Claude Design. De twee tekstvakken voor HTML en CSS zijn vervallen',
+                'Elke upload wordt een versie: je ziet de hele geschiedenis en kunt met één klik terug naar een eerdere versie',
+                'Na het inlezen krijg je een rapport van wat er in het ontwerp zit — externe scripts, trackers, formulieren naar andere websites, en punten rond toegankelijkheid. Het ontwerp gaat pas live als je dat rapport bevestigt',
+                'Externe bronnen (denk aan een lettertype of een script van een andere website) zijn standaard geblokkeerd en zet je per pagina bewust aan. Dat staat in het logboek',
+                'Het aanmeldformulier staat nu écht in de pagina in plaats van in een venster-in-een-venster. Daarmee klopt de hoogte altijd, past het bij het ontwerp en werkt het met toetsenbord en voorleessoftware',
+                'De pagina zet geen cookie meer en start geen sessie. Tegen misbruik zitten er een verborgen veld, een tijdmeting en een snelheidsbegrenzing op (maximaal 5 aanmeldingen per uur per adres)',
+                'Na een geslaagde aanmelding word je doorgestuurd, zodat vernieuwen geen tweede aanmelding oplevert',
+                'Afbeeldingen upload je los bij de pagina en gebruik je met alleen de bestandsnaam',
+                "Landingspagina's hebben een eigen plek in Rollen & rechten. Wie eerder sollicitanten mocht bewerken, houdt die toegang; het menu-item verbergt zich nu voor wie het recht niet heeft",
+                'Adressen zijn nu /p/<naam>. Oude /l/<naam>-links blijven werken en sturen automatisch door',
+                'De bezoekersstatistiek wordt opgeschoond: de herkenning van unieke bezoekers vervalt na 30 dagen, de cijfers zelf na 13 maanden (in te stellen bij Instellingen › Bewaartermijnen)',
+                'Bestaande landingspagina\'s zet je met één knop over; de statistiek gaat mee',
+            ],
+        ],
+        '2.91.2' => [
+            'datum'  => '2026-09-19',
+            'titel'  => 'Fix: kapotte link in de ouder-mail en onterecht geblokkeerde berichten',
+            'punten' => [
+                'De link naar de gezondheidsverklaring in de mail aan ouders werkte soms niet: er verdween een punt uit het webadres. Oorzaak zat in het versturen zelf — begint een regel in een mail met een punt, dan moet die dubbel worden meegestuurd, anders haalt de mailserver hem weg. Lange links werden precies op zo\'n punt afgebroken. Dit gold voor élke mail met een lange link',
+                'De beveiliging tegen berichten-loops blokkeerde te snel: hij telde álle automatische berichten naar één adres samen (8 per dag). Nu telt hij per soort bericht, zodat een sollicitant op één dag gewoon meerdere verschillende berichten kan krijgen',
+                'Berichten aan het bestuur of de penningmeester tellen niet meer mee: die gaan altijd naar hetzelfde adres, waardoor bij drukte de meldingen aan het bestuur stilvielen',
+                'Zet het bestuur zelf een fase om (in het paneel, de lijst, de bellijst of via een bulkactie), dan gaat het bericht altijd de deur uit — dat is een bewuste keuze en geen loop. Bulk versturen werkt daarmee weer normaal',
+            ],
+        ],
+        '2.91.1' => [
+            'datum'  => '2026-09-19',
+            'titel'  => 'Ondertekenen: het geverifieerde telefoonnummer staat nu in het bewijs',
+            'punten' => [
+                'Op de certificaatpagina van een ondertekend document stond alleen dát er met een code op het eigen mobiele nummer is geverifieerd. Nu staat er ook welk nummer dat was ("SMS-code naar 06 12 34 56 78"), zodat later herleidbaar is welk middel is gebruikt',
+                'Het nummer wordt bij het ondertekenen vastgelegd bij de ondertekening zelf; wijzigt de sollicitant later zijn telefoonnummer, dan blijft het bewijs kloppen',
+                'De tijdlijn bij Beheer › Loondossiers toont per stap dezelfde gegevens als de certificaatpagina (kanaal, nummer, reden); op het scherm van de sollicitant blijft het nummer gemaskeerd',
+            ],
+        ],
+        '2.91.0' => [
+            'datum'  => '2026-09-19',
+            'titel'  => 'Ondertekenen: juiste bevestigingsmail en code alleen bij wettelijke documenten',
+            'punten' => [
+                'Wie zelf ondertekent (18 jaar of ouder) krijgt nu de mail "Je hebt … ondertekend" met de ondertekende pdf als bijlage. De mail "Je ouder heeft … ondertekend" gaat alleen nog naar minderjarigen van wie de ouder heeft getekend; dat waren twee teksten in één sjabloon, waardoor 18-plussers het verkeerde bericht kregen',
+                'Beide teksten zijn nu apart te bewerken in Instellingen › Sjablonen; een bestaand sjabloon met de oude oudertekst wordt eenmalig bijgewerkt',
+                'De verificatiecode per sms of WhatsApp geldt alleen nog voor documenten met persoonsgegevens die wettelijk vastgelegd moeten worden (loonheffingsformulier, later een contract). Inschrijven als lid van de vereniging gaat weer zonder code',
+                'Losse migratiebestanden opnieuw genummerd (0020 en 0021) omdat de nummers 0018 en 0019 al bestonden',
+            ],
+        ],
+        '2.90.9' => [
+            'datum'  => '2026-09-19',
+            'titel'  => 'Takenpakket: pasfoto vervallen, huisregels plaatsbaar, uitleg bij ondertekenen',
+            'punten' => [
+                'De taak "Pasfoto uploaden" is vervallen; de taak verdwijnt automatisch en een al geüploade pasfoto wordt vernietigd, omdat niemand hem nog nodig heeft',
+                'De huisregels kun je nu als pdf plaatsen bij Instellingen › Algemeen › Taken na aannemen; de taak "Huisregels lezen" krijgt dan automatisch een downloadlink en staat tot die tijd als "volgt binnenkort" klaar',
+                'Bij het zetten van je handtekening en bij de verificatiecode staat een info-bolletje met korte uitleg waarom dat zo werkt (op de telefoon opent de uitleg onderin, op de computer naast het bolletje)',
+                'Taken die niet meer bestaan worden bij aangenomen sollicitanten opgeruimd; afgeronde taken blijven staan',
+            ],
+        ],
+        '2.90.8' => [
+            'datum'  => '2026-09-19',
+            'titel'  => 'Fix: verificatiecode bij ondertekenen werd altijd afgekeurd',
+            'punten' => [
+                'De code die je per sms, WhatsApp of e-mail kreeg om het loonheffingsformulier te ondertekenen werd altijd als ongeldig gemeld. Oorzaak: de kolom waarin het soort code wordt bewaard liet alleen "portaal" en "beheerder" toe, waardoor de code onvindbaar werd opgeslagen. De kolom is verruimd en oude, onbruikbare codes zijn opgeruimd; dit herstelt zichzelf bij de eerste pagina-opvraag',
+                'Een code met spaties (zoals gekopieerd uit een sms) wordt nu ook geaccepteerd',
+                'Tweede kolom verruimd: de verzegelde PDF van een gezondheidsverklaring 18+ werd onder een afgekapte naam opgeslagen en was daardoor niet terug te vinden',
+                'Als een code onverhoopt niet bewaard kan worden, krijgt de sollicitant nu een duidelijke melding in plaats van een code die niet werkt; nieuwe controle in het testharnas vergelijkt alle kolombreedtes met de waarden die de code gebruikt',
+            ],
+        ],
+        '2.90.7' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Aangenomen-takenpakket, bundel 8: bewaartermijnen, verwijderen en export (AVG)',
+            'punten' => [
+                'Automatische opschoning kent twee nieuwe categorieën: loonheffingsformulier + kopie ID worden vernietigd na de wettelijke termijn (standaard 5 jaar na het einde van het dienstjaar), de bankpasfoto 30 dagen na verwerking',
+                'Een dossier met een verwerkt loondossier kan de sollicitant niet meer zelf verwijderen (wettelijke bewaarplicht, met uitleg); het beheer moet dan expliciet bevestigen dat het dienstverband niet is doorgegaan',
+                'Bij verwijderen worden alle kluis-documenten vernietigd en taken opgeruimd; de export en de AVG-inzage tonen ondertekeningen en de loondossier-status (zonder BSN of IBAN)',
+                'Verwerkingsregister voor de loonadministratie en het lidmaatschap toegevoegd aan de projectdocumentatie',
+            ],
+        ],
+        '2.90.6' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Aangenomen-takenpakket, bundel 7: penningmeester en loondossiers in het beheer',
+            'punten' => [
+                'Nieuwe rol "Penningmeester" (Authentik-groep Sol-Penningmeester) met een eigen recht "Loondossiers"; bestuur ziet deze stukken niet, admin wel',
+                'Beheer › Loondossiers: per aangenomen strandwacht de status van loonheffingsformulier, kopie ID (voor/achter), bankpas, pasfoto en lidmaatschap; downloaden (gelogd, met watermerk op ID-/bankpasfoto\'s, maximaal 30 per uur), "verwerkt" markeren, bankpas vernietigen, tijdlijn, melding opnieuw sturen',
+                'Zodra loonheffing + ID + bankpas binnen zijn krijgt de penningmeester automatisch één melding; met de instelling "bijlagen meesturen" gaan de stukken mee (pas op het verzendmoment uit de kluis gehaald, daarna gewist)',
+                'Optionele melding aan het bestuur bij elke download van een loondocument; loonheffing-/lidmaatschap-PDF in Ondertekeningen alleen met het loondossier-recht',
+            ],
+        ],
+        '2.90.5' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Aangenomen-takenpakket, bundel 6: inschrijving als lid van de vereniging',
+            'punten' => [
+                'Aangenomen strandwachten zonder verenigingsaccount schrijven zich in het portaal in als lid of donateur: dezelfde vragen als het formulier op paal13.com, vooringevuld uit het dossier (diploma\'s worden herkend uit het Beter Leren Kennen-formulier), met oudergegevens onder 18',
+                'Betaling per overschrijving of automatische incasso; bij incasso worden IBAN en tenaamstelling gecontroleerd en versleuteld bewaard en wordt de machtiging ondertekend',
+                'De ondertekende en verzegelde inschrijving gaat automatisch als PDF naar de ledenservice (instelling); nieuwe instellingen voor penningmeester- en ledenservice-adres en de bijlage-optie',
+            ],
+        ],
+        '2.90.4' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Aangenomen-takenpakket, bundel 5: het loonheffingsformulier',
+            'punten' => [
+                'Het officiële Belastingdienst-formulier "Model Opgaaf gegevens voor de loonheffingen" wordt in het portaal ingevuld en ondertekend: het origineel blijft exact, alleen de invulling (naam, BSN, adres, geboortedatum, loonheffingskorting ja/nee, datums, kruisjes) en de handtekening komen erop',
+                'Gegevens zijn vooringevuld uit het dossier; BSN wordt gecontroleerd (11-proef) en versleuteld in de kluis bewaard, nooit in de gewone formulierdata',
+                'Het formulier wordt klaargezet bij "aangenomen" (ook voor 15-17-jarigen, die tekenen zelf) en verschijnt als taak "Loonheffingsformulier invullen"; ondertekenen vereist de verificatiecode',
+                'Validatiehelpers op één plek (BSN, IBAN, postcode, voorletters)',
+            ],
+        ],
+        '2.90.3' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Aangenomen-takenpakket, bundel 4: sterk ondertekenen (2FA, bewijslog, verzegelde PDF)',
+            'punten' => [
+                'Ondertekende formulieren worden nu als PDF digitaal verzegeld met een eigen Paal 13-certificaat (PKCS#7/PAdES): elke wijziging achteraf is in Adobe Reader zichtbaar; het certificaat en de sleutel worden automatisch aangemaakt (sleutel in de kluis)',
+                'Elke PDF krijgt een "Certificaat van ondertekening" als laatste pagina: wie, wanneer, IP, browser, verificatiewijze, de volledige tijdlijn (geopend, code verstuurd, code geaccepteerd, ondertekend, verzegeld) en een bewijs-hash',
+                'Voor het loonheffingsformulier en het lidmaatschap (instelbaar) is vlak vóór het tekenen een verificatiecode nodig naar het eigen telefoonnummer (SMS, anders WhatsApp, anders e-mail)',
+                'De verzegelde PDF wordt éénmaal gemaakt en versleuteld bewaard; downloaden geeft altijd exact dat bestand. PDF-motor: TCPDF + FPDI (meegeleverd, geen composer)',
+            ],
+        ],
+        '2.90.2' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Aangenomen-takenpakket, bundel 3: documenten uploaden',
+            'punten' => [
+                'Nieuwe uploadpagina in het portaal voor kopie ID (paspoort of identiteitskaart voor/achter), kopie bankpas en pasfoto: foto maken of bestand kiezen, voorbeeld, vervangen en verwijderen zolang de penningmeester het nog niet heeft verwerkt',
+                'Bestanden worden in het geheugen gecontroleerd (type, inhoud, max 10 MB) en direct versleuteld in de kluis gezet; zonder werkende kluis is uploaden geblokkeerd met een duidelijke melding',
+                'De taak op Start en Taken springt automatisch op afgerond zodra de benodigde vakken gevuld zijn',
+            ],
+        ],
+        '2.90.1' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Aangenomen-takenpakket, bundel 2: takenlijst met uploaden en afvinken',
+            'punten' => [
+                'Het takenpakket op Start en Taken toont nu echte taken: uploads (kopie ID, kopie bankpas, pasfoto) openen een uploadpagina; huisregels en account-activatie vink je zelf af met "Gedaan" (en kun je ongedaan maken)',
+                'Huisregels komen als document uit de bijlagenbibliotheek (instelling), met een "Openen"-link in de taakrij',
+                'Titels van ondertekentaken staan op één plek (ook voor het loonheffingsformulier en het lidmaatschap die in de volgende bundels volgen)',
+            ],
+        ],
+        '2.90.0' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Aangenomen-takenpakket, bundel 1: kluis (versleutelde opslag) en fundament',
+            'punten' => [
+                'Nieuwe kluis voor gevoelige documenten en gegevens (kopie ID, bankpas, BSN, IBAN): per bestand een eigen sleutel, versleuteld met XChaCha20-Poly1305 of AES-256-GCM, hoofdsleutel uit config én database samen; zonder werkende kluis worden die uploads geweigerd (nooit onversleuteld)',
+                'Documenten van sollicitanten krijgen een eigen, afgeschermde opslag buiten het webbereik (DOCUMENTEN_MAP in config.php) met metadata en controlehash in de database; de health-check controleert de kluis en de map',
+                'Eén gedeelde upload-validatie (grootte, type, inhoud) voor de bijlagenbibliotheek en de nieuwe documenten',
+                'Het takenpakket bij "aangenomen" is opnieuw gedefinieerd (kopie ID, kopie bankpas, pasfoto, huisregels, account) en werkt oude taken automatisch bij; loonheffing en lidmaatschap volgen als ondertekeningen in de volgende bundels',
+            ],
+        ],
+        '2.89.0' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Portaal: ondertekenen exact volgens het ontwerp (18+ zelf en ouder-link)',
+            'punten' => [
+                'Het ondertekenscherm is herbouwd volgens het ontwerp: het document (in te klappen), de vragen in nette kaarten, het handtekeningvak met "Wissen", het akkoord-vinkje en één duidelijke knop onderaan; op desktop staat het document naast het ondertekenpaneel',
+                'Sollicitanten van 18 of ouder tekenen binnen het portaal (met navigatie en terugknop); de ouder/verzorger krijgt een eigen, kaal scherm via de persoonlijke link in de u-vorm',
+                'Na het ondertekenen een bevestiging met de ondertekende PDF om te downloaden (ook later, via dezelfde link); een ongeldige of gebruikte link toont een nette uitleg in plaats van een kale foutpagina',
+                'Bij een fout blijft alles staan, inclusief de gezette handtekening; verplichte velden worden ter plekke rood gemarkeerd',
+                'Documentnamen en -teksten staan nu op één plek (includes/ondertekening_tekst.php); het beheer en het portaal gebruiken dezelfde PDF-uitvoer',
+            ],
+        ],
+        '2.88.0' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Portaal: eigen 404-pagina, inloggen afgedwongen, BLK-autosave op de gedeelde helper',
+            'punten' => [
+                'Een adres onder het portaal (of beheer) dat niet bestaat toont nu een eigen 404-pagina in de huisstijl, met een knop terug naar het portaal of het dashboard',
+                'Elke portaal-pagina dwingt op één centrale plek het inloggen af; de losse bouwstenen van het portaal (kop, voet, taakrijen) zijn niet meer los op te vragen: niet ingelogd → inlogscherm, wel ingelogd → 404',
+                'De adres-opzoekfunctie (PDOK) werkt alleen nog voor ingelogde sollicitanten (was een open doorgeefluik)',
+                'Beter Leren Kennen gebruikt dezelfde autosave-helper als de beschikbaarheid (één stuk code voor het tussentijds bewaren); gedrag voor de sollicitant is ongewijzigd',
+                'Vangnet: wie in de selectiedag-fase zit zonder klaargezette intake/gezondheidsverklaring (uitgenodigd vóór 2.87.0) krijgt die alsnog bij het openen van het portaal; minderjarigen zodra de oudergegevens zijn ingevuld',
+            ],
+        ],
+        '2.87.10' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Meldingen: bijlagen blijven vaker echte bijlagen',
+            'punten' => [
+                'De grens waarboven een bestand als downloadknop gaat is verhoogd van 8 naar 15 MB (instelbaar tot 25)',
+                'Vangnet: weigert de mailserver een mail alsnog vanwege de grootte, dan wordt hij automatisch één keer opnieuw verstuurd zonder bijlage maar met downloadknoppen; dat staat dan in het berichtenlog',
+            ],
+        ],
+        '2.87.9' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Meldingen: grote bijlagen als downloadknop, nette downloadlinks in WhatsApp',
+            'punten' => [
+                'Is een bestand te groot voor de e-mail (standaard boven 8 MB, instelbaar bij Herinneringen), dan gaat het niet als bijlage mee maar als downloadknop in de mail met de bestandsgrootte erbij; kleinere bestanden blijven gewone bijlagen',
+                'WhatsApp/SMS: de downloadlink is nu kort (/d/…) en staat met een leesbare naam op een eigen regel ("Bijlage: Magazine 2026"), in plaats van de bestandsnaam met een lange adresregel',
+            ],
+        ],
+        '2.87.8' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Meldingen: bijlagen tot 25 MB; WhatsApp-uitleg alleen bij het eerste bericht',
+            'punten' => [
+                'Bijlagen mogen nu 25 MB zijn (was 10). Staat de server lager (upload_max_filesize/post_max_size in Plesk), dan toont het scherm die grens',
+                'De zin over afmelden staat niet meer onder elk WhatsApp/SMS-bericht. Alleen het allereerste korte bericht dat iemand krijgt eindigt met de uitleg dat we via WhatsApp/sms op de hoogte houden en hoe je overstapt naar alleen e-mail; bestaande sjabloonteksten zijn opgeschoond',
+            ],
+        ],
+        '2.87.7' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Meldingen: fixes uit de eerste test (Berichten verstuurde niets, inlogcode leeg in de mail)',
+            'punten' => [
+                'Berichten verstuurde niets: zonder ?tab= in het adres werd de verzending overgeslagen (tab was leeg) — opgelost; verzenden via e-mail, WhatsApp/SMS en beide getest',
+                'De inlogcode-mail toonde een lege code: het bestaande sjabloon gebruikte nog {{otp.code}} — oude en nieuwe variabelenamen worden nu allebei gevuld en het sjabloon is bijgewerkt; de kop is weer kort ("Inlogcode"), zodat mailapps van "Paal 13" geen adreslink meer maken',
+                'Variabelen in een handmatig bericht ({{voornaam}} in je eigen tekst) werden niet ingevuld — opgelost (ook in de korte WhatsApp/SMS-tekst)',
+                'Fouten bij het versturen komen nu met oorzaak in het Foutenlog en op het resultaatscherm van Berichten',
+            ],
+        ],
+        '2.87.6' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Meldingen: opruimen van de oude verzendwegen (bundel 7 van 7)',
+            'punten' => [
+                'De oude, losse mail-functies (fase-mail, taak-mail, herinneringen op onderwerp-tekst, notificatie-routering, aparte ondertekening-mailer) en drie dubbele mail-layouts zijn verwijderd; alles loopt via de centrale meldingen-kern en één huisstijl-layout',
+                'De WhatsApp-terugval bij een herhaalde poging gaat alleen nog per e-mail; korte kanalen worden nooit opnieuw geprobeerd (voorkomt dubbele berichten en WhatsApp-blokkering)',
+            ],
+        ],
+        '2.87.5' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Meldingen: bijlagen en geplande berichten (bundel 6 van 7)',
+            'punten' => [
+                'Bijlagen (pdf, jpg, png, webp, docx, xlsx; max 10 MB) bij sjablonen én handmatige berichten: gaan mee in de e-mail; WhatsApp/SMS krijgt een beveiligde downloadlink die 14 dagen geldig is. Bestanden staan buiten het webbereik',
+                'Geplande berichten (Instellingen › Geplande berichten): regels als "10 dagen na het inleveren van het formulier: stuur het magazine", ook vóór/na de selectiedag of het trainingsweekend, per fase, met kanaalkeuze, maximum per persoon en proefdraaien. Ze draaien mee met de herinneringen',
+                'Bij een bericht mét bijlage via WhatsApp/SMS wordt automatisch ook een e-mail gestuurd (het bestand kan alleen per e-mail mee)',
+                'AVG: losse bijlagen die aan geen sjabloon meer hangen worden na 12 maanden opgeruimd (instelbaar); downloads worden gelogd',
+            ],
+        ],
+        '2.87.4' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Meldingen: portaal — alle kanalen onder Berichten, bericht lezen, kanaalvoorkeur (bundel 5 van 7)',
+            'punten' => [
+                'Berichten in het portaal toont nu alle berichten aan jou (e-mail, WhatsApp, sms) met een icoon per kanaal en een samenvattingsregel, exact volgens het ontwerp; berichten aan je ouder/verzorger of het bestuur staan er niet meer tussen',
+                'Tik op een bericht om het volledig te lezen in het portaal (geen wisselen van apps meer); de inhoud blijft standaard 3 maanden beschikbaar (instelbaar), de regel zelf een seizoen',
+                'Mijn gegevens: kies hoe je korte berichten ontvangt (WhatsApp, sms of alleen e-mail). WhatsApp staat standaard aan zodra je nummer bekend is; afmelden kan hier altijd',
+                'Beheer: de kanaalvoorkeur is in het detailpaneel te zien en aan te passen (wordt gelogd)',
+                'AVG: bij het verwijderen van je account wordt ook de inhoud van je berichten gewist; de export bevat het kanaal per bericht',
+            ],
+        ],
+        '2.87.3' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Meldingen: beheer — sjablonen per kanaal, berichten sturen, kanaalkeuze (bundel 4 van 7)',
+            'punten' => [
+                'Nieuw scherm Berichten (vervangt Mailings): stuur een bericht naar één persoon, een selectie uit de sollicitantenlijst of hele fases, via e-mail, WhatsApp/SMS of beide, met voorbeeld, testmail naar jezelf en een resultaat per ontvanger',
+                'Berichtenlog van alle kanalen met filters (kanaal, status, type, zoeken) en de volledige inhoud per bericht; terugval op e-mail is zichtbaar',
+                'Sjablonen: per meldingstype bewerk je nu de e-mail, de korte WhatsApp/SMS-tekst (teller tot 400 tekens) en de samenvatting voor het portaal; voorbeeld per kanaal; kanaal per type direct instelbaar; eigen sjablonen aanmaken voor handmatige en geplande berichten',
+                'Instellingen › Berichten: per meldingstype één keuze (E-mail / WhatsApp-SMS / Beide / Uit), gegroepeerd per categorie met uitleg',
+                'Eén gedeelde tekst-editor voor alle beheerschermen (kop, vet, lijst, link, knop, info-blok, let op, afbeelding, lijn, HTML-tab)',
+                'Sollicitantenlijst: bulkactie "Bericht sturen"; de telefoonkolom toont weer het nummer; in het detailpaneel een knop "Bericht sturen"',
+                'Handmatige en geplande berichten krijgen automatisch een afmeldvoet (e-mail) en afmeldzin (WhatsApp/SMS); afgemelde personen worden overgeslagen',
+            ],
+        ],
+        '2.87.2' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Meldingen: herinneringen op basis van feiten, één cron-ingang (bundel 3 van 7)',
+            'punten' => [
+                'Herinneringen worden nu gecontroleerd op wat er echt verstuurd is (per type en per document), niet meer op de onderwerp-tekst. Een aangepaste sjabloontekst kan dus geen eindeloze herhaling meer veroorzaken',
+                'Nieuwe herinneringen: "nog niet aangemeld voor de selectiedag" (uitgenodigd, formulier niet ingeleverd, selectiedag binnen 14 dagen), "gegevens ouder/verzorger ontbreken", "openstaande taken" (alle open taken in één bericht) en "trainingsweekend nadert"',
+                'Per herinnering instelbaar: aan/uit, na hoeveel dagen, herhaal-interval en maximum. Plus een rustperiode: maximaal één zachte herinnering per sollicitant per 3 dagen',
+                'Systeem › Herinneringen: proefdraaien (toont wie wat zou krijgen zonder te versturen) en nu draaien',
+                'Cron en de lazy-cron vanuit het beheer gebruiken één ingang met een lock, zodat herinneringen nooit dubbel gaan als beide tegelijk draaien',
+                'De beschikbaarheidsherinnering was niet uit te zetten in het beheer — opgelost',
+            ],
+        ],
+        '2.87.1' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Meldingen: één fase-functie en alle meldingen via de kern (bundel 2 van 7)',
+            'punten' => [
+                'Elke fase-overgang (paneel, bulk, bellijst, automatisch uitnodigen, formulier inleveren) loopt via één functie die ook de documenten en het kennismakingspakket klaarzet. Opgelost: wie automatisch of via de lijst werd uitgenodigd, kreeg de intake- en gezondheidsverklaring niet klaargezet',
+                'Nieuwe meldingen: bevestiging na aanmelden voor de selectiedag (formulier ingeleverd), bevestiging als je beschikbaarheid definitief is, ondertekenverzoek aan een 18+ sollicitant, en bestuursmeldingen bij formulier ingeleverd, beschikbaarheid definitief, nieuw verzoek minder dagen, terugtrekken en ondertekening afgerond (per type aan/uit)',
+                'Aanmeldbevestiging, uitnodigingen, welkomstmail, ondertekenverzoeken, bevestigingen en het besluit over een verzoek gebruiken nu allemaal de bewerkbare sjablonen (geen vaste teksten meer in de code) en de kanaalkeuze per type',
+                'De portaal-inlogcode en de bevestigingen na een formulier worden ná het antwoord verstuurd: het inloggen en inleveren voelen sneller',
+                'Opgelost: na het corrigeren van het e-mailadres van een ouder werd het ondertekenverzoek niet opnieuw verstuurd; de fase-wissel via de lijst werkte zonder beveiliging (nu een beveiligd formulier)',
+                'Het bestuur wordt geïnformeerd als een sollicitant zichzelf terugtrekt (AVG-verzoek), vóórdat de gegevens geanonimiseerd worden',
+            ],
+        ],
+        '2.87.0' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Meldingen: één centrale verzendkern voor e-mail, WhatsApp en SMS (bundel 1 van 7)',
+            'punten' => [
+                'Alle meldingen lopen voortaan door één verzendkern: per soort melding kies je e-mail, WhatsApp/SMS of beide; bij een mislukt WhatsApp- of SMS-bericht gaat het bericht automatisch alsnog per e-mail',
+                'Sollicitanten krijgen korte berichten via WhatsApp (standaard aan zodra er een telefoonnummer is) of SMS; afmelden kan straks onder Mijn gegevens en in het beheer. Ouders en het bestuur krijgen altijd e-mail',
+                'Eén logboek voor alle kanalen: per bericht zie je het kanaal, of er is teruggevallen op e-mail, de status (wacht, verstuurd, mislukt, overgeslagen) en de reden bij overslaan',
+                'Elk meldingstype heeft nu naast de e-mailtekst ook een korte WhatsApp/SMS-tekst en een samenvatting voor het portaal (bewerkbaar in Mail templates; standaardteksten meegeleverd)',
+                'Beveiliging: maximaal 8 automatische meldingen per ontvanger per dag, WhatsApp-uurlimiet en automatische pauze na herhaalde fouten, geen e-mailadressen meer in het foutenlog',
+                'Het testbericht in Instellingen › Berichten loopt door de hele keten (kanaalkeuze, terugval, logboek)',
+                'Opgelost: het dashboard telde mislukte mails nooit mee (verkeerde statuswaarden); de health-check op de mailwachtrij keek naar een niet-bestaande kolom; MessageBird-sms werd bij een geldig antwoord soms als mislukt gezien; het bestuursadres in de mailfooter negeerde de instelling',
+            ],
+        ],
+        '2.86.0' => [
+            'datum'  => '2026-09-18',
+            'titel'  => 'Beschikbaarheid: compacter formulier, automatisch bewaard, terug naar waar je was',
+            'punten' => [
+                'De taak "Beschikbaarheid definitief maken" was niet af te ronden: de knop ontbrak op de overzichtspagina. Die staat er nu, ook na de deadline',
+                'Na het opslaan van je beschikbaarheid (of het BLK) kom je terug op de pagina waar je vandaan kwam (Start of Taken) met een bevestiging — niet meer opnieuw in de AI-invoer',
+                'Je invoer wordt automatisch bewaard als concept: breek je tussentijds af, dan ga je later verder waar je was (ook de getypte tekst voor slim invullen). Wie al beschikbaarheid heeft, komt direct in het ingevulde formulier; slim invullen blijft via een link beschikbaar',
+                'Werkperiodes zijn inklapbare kaarten met de datums en het aantal weken ("29 juni t/m 9 augustus · 6 weken"); de weekend-dagknoppen (za/zo) staan weer netjes',
+                'De secties "alleen als het van toepassing is" zijn één rustige rij met een samenvatting (bijv. "Elke woensdag", "23 aug – 1 sep · Vakantie Frankrijk"); tik om uit te klappen. "Uitzonderingen" heet nu "Vakanties"',
+                'Vakanties, losse dagen en verzoeken hebben nette, uitgelijnde velden; bij verzoeken staan de weken mét datum (W31 · 27 jul) en zie je de status (Verzoek / Goedgekeurd)',
+                'Bij "Aanpassen" stonden je opgeslagen werkperiodes niet in het formulier (opslaan overschreef ze met de standaardperiode) — opgelost',
+                'Een goedgekeurd verzoek werd bij opnieuw opslaan gedupliceerd als nieuw open verzoek — opgelost; wijzig je een goedgekeurd verzoek, dan beoordeelt het bestuur het opnieuw',
+                'Slim invullen: een verzoek voor minder dagen splitst je werkperiode niet meer in stukken; de vaste vrije dag wordt na het AI-voorstel correct getoond',
+                'Je krijgt nu bericht zodra het bestuur je verzoek om minder dagen goed- of afkeurt (nieuw meldingstype, kanalen instelbaar in het beheer; ook zichtbaar onder Berichten)',
+            ],
+        ],
+        '2.85.0' => [
+            'datum'  => '2026-09-17',
+            'titel'  => 'Startpagina en Taken-tab herbouwd volgens het ontwerp; berichten achter het belletje',
+            'punten' => [
+                'De startpagina toont nu eerst je status en de praktische info (voortgang "Stap N van 5", de selectiedag- of trainingsweekend-kaart met datum, tijden, locatie, adres en wat je meeneemt) en daaronder alleen de open taken met één hoofdactie — exact volgens het Claude Design-ontwerp, in alle fases (aangemeld, uitgenodigd, wachtend, trainingsweekend, aangenomen, afgewezen)',
+                'Het Taken-tabblad is een eigen pagina met "Nu te doen", "Wacht op je ouder/verzorger" en "Afgerond" (met datum en Bekijken/Wijzigen). Start, Taken en het telbolletje gebruiken één takenbron',
+                'Achter het belletje staat een berichtenoverzicht van de e-mails die we je stuurden, met ongelezen-markering (sms/WhatsApp volgt later)',
+                'Op desktop: witte paginakop met je status, en onderin de zijbalk je naam en stap; uitloggen zit daar en onderaan Mijn gegevens',
+                'De startpagina gebruikt nu de gedeelde kop en navigatie (geen eigen kopie meer); de oude inline stijl, banners en dode CSS zijn opgeruimd',
+                'Beheer › Seizoen: nieuwe velden voor selectiedag en trainingsweekend (eindtijd, adres, wat meenemen) — ook als mail-placeholders beschikbaar',
+                'Afgewezen sollicitanten zien een rustige pagina met alleen de AVG-acties (gegevens downloaden of laten verwijderen)',
+            ],
+        ],
+        '2.84.1' => [
+            'datum'  => '2026-09-17',
+            'titel'  => 'BLK: adres bleef leeg bij bewerken, social media per platform, tekst bijzonderheden',
+            'punten' => [
+                'Bij het bewerken van het formulier bleven postcode en huisnummer leeg (de losse adreskolommen ontbraken op de database, waardoor ze stil niet werden opgeslagen). De kolommen worden nu automatisch aangemaakt en oude rijen met alleen een samengesteld adres worden netjes uitgesplitst',
+                'Social media is nu per platform in te vullen (Instagram, TikTok, Facebook); een geplakte link wordt omgezet naar de gebruikersnaam. In het beheer staat het als één leesbare regel ("Instagram @naam · Facebook naam")',
+                'De uitleg bij "Bijzonderheden" zegt niet meer dat alleen het bestuur het ziet (ook begeleiders zien het), maar "alleen de mensen voor wie dit relevant is"',
+            ],
+        ],
+        '2.84.0' => [
+            'datum'  => '2026-09-17',
+            'titel'  => 'Beter Leren Kennen is een eigen pagina (losgekoppeld van de startpagina)',
+            'punten' => [
+                'Het "Beter Leren Kennen"-formulier staat niet meer inline op de startpagina, maar op een eigen pagina — precies zoals de beschikbaarheid al een eigen taak was',
+                'Op de startpagina staat het nu als taak "Beter Leren Kennen invullen"; na inleveren wordt het een afgeronde taak met "Bekijken" (bijwerken kan nog, met een reden)',
+                'De nieuwe pagina volgt exact het Claude Design-ontwerp (sectie 03): vier aanklikbare stappen, automatisch bewaard concept, adres-kaartje na het opzoeken, foto maken of kiezen, en op desktop een overzicht naast het formulier',
+                'Telefoonnummer is toegevoegd aan stap 1 (zoals in het ontwerp) en wordt bij je gegevens bijgewerkt',
+                'De startpagina is een stuk kleiner en eenvoudiger geworden (ruim 600 regels formulier, stijl en script eruit)',
+                'Losse links op de beschikbaarheidspagina wezen nog naar het oude inline formulier; die gaan nu naar de juiste pagina',
+            ],
+        ],
+        '2.83.1' => [
+            'datum'  => '2026-09-12',
+            'titel'  => 'Inlogscherm: uitlijning en e-mailveld',
+            'punten' => [
+                'Het inlogscherm staat op desktop weer netjes gecentreerd (stond scheef door de zijbalk-marge)',
+                'Het e-mailveld kan niet meer worden aangepast nadat je op versturen hebt geklikt',
+            ],
+        ],
+        '2.83.0' => [
+            'datum'  => '2026-09-11',
+            'titel'  => 'Beschikbaarheid AI-wizard exact volgens het ontwerp',
+            'punten' => [
+                'Het slim-invullen-scherm is nu exact zoals het ontwerp: navy uitlegkaart, wit invoervak met voorbeelden, en de oranje knop',
+                'Het voorstel-scherm toont nu per onderdeel (werkperiode, vaste dag, afwezig, verzoek) een aparte regel met een Wijzig-knop, precies zoals het ontwerp',
+            ],
+        ],
+        '2.82.0' => [
+            'datum'  => '2026-09-11',
+            'titel'  => 'Beschikbaarheidsformulier exact volgens het ontwerp',
+            'punten' => [
+                'Het hele beschikbaarheidsformulier is nu exact zoals het Claude Design-ontwerp: de navy samenvatting bovenaan, de werkperiode-kaart, en de uitzonderingen netjes gegroepeerd',
+                'Vaste vrije dag met dag-knoppen (maandag t/m zondag, weekenden uitgeschakeld)',
+                'Uitzonderingen, minder-dagen-verzoeken en losse dagen als nette rijen met toevoeg-knoppen',
+            ],
+        ],
+        '2.81.0' => [
+            'datum'  => '2026-09-11',
+            'titel'  => 'Beschikbaarheid: periode-kaart exact volgens het ontwerp',
+            'punten' => [
+                'De werkperiode-kaart is nu exact zoals het ontwerp: een nette kaart met "Week X t/m Y", de van/tot keuzes, en een schakelaar "Hele week / Alleen weekend"',
+                'Bij "Alleen weekend" verschijnen de weekenddag-keuzes als knoppen',
+            ],
+        ],
+        '2.80.0' => [
+            'datum'  => '2026-09-11',
+            'titel'  => 'Portaal-fundament exact volgens het ontwerp (font, kleuren, header, navigatie)',
+            'punten' => [
+                'Instrument Sans is nu overal het lettertype, zoals in het ontwerp',
+                'De header staat exact volgens het ontwerp: logo, "Paal 13" met "Sollicitatie 2026" eronder, en een uitlog-icoon rechts',
+                'De actieve tab in de onderbalk (mobiel) is nu oranje, precies zoals het ontwerp',
+                'Op desktop staat nu een navy zijbalk links (met logo en menu), zoals het ontwerp — de actieve tab is daar een witte balk',
+            ],
+        ],
+        '2.79.0' => [
+            'datum'  => '2026-09-11',
+            'titel'  => 'Beschikbaarheid: AI-wizard (slim invullen in stappen)',
+            'punten' => [
+                'Als de AI-hulp aan staat, begint de beschikbaarheid nu met een slim-invullen-scherm: typ het in eigen woorden, krijg een voorstel te zien (zo hebben we het begrepen), en neem het over of pas het zelf aan',
+                'Je kunt in het voorstel-scherm nog iets aanvullen; bij twijfel stelt de AI een korte vervolgvraag',
+                'Staat de AI-hulp uit in de instellingen, dan ga je meteen naar het gewone formulier met vinkjes',
+            ],
+        ],
+        '2.78.2' => [
+            'datum'  => '2026-09-11',
+            'titel'  => 'Beschikbaarheid: AI vult vaste dagen + voorkeursdagen, week maandag-eerst',
+            'punten' => [
+                'De AI-hulp vult nu ook vaste vrije dagen in en de voorkeursdagen bij een minder-dagen-verzoek',
+                'Alle dagkeuzes staan nu op volgorde van maandag t/m zondag',
+            ],
+        ],
+        '2.78.1' => [
+            'datum'  => '2026-09-11',
+            'titel'  => 'Beschikbaarheid: AI-dubbeling, opmaak en bovenbalk',
+            'punten' => [
+                'AI-voorstel vervangt nu de bestaande invoer in plaats van dubbel toe te voegen',
+                'De opmaak volgt nu het Claude Design-ontwerp: tekstveld met voorbeeld-chips en een duidelijke voorstel-knop',
+                'De blauwe bovenbalk is overal terug (was per ongeluk uit de stijl verdwenen)',
+            ],
+        ],
+        '2.78.0' => [
+            'datum'  => '2026-09-11',
+            'titel'  => 'Beschikbaarheidsformulier volledig herbouwd (schoon en modulair)',
+            'punten' => [
+                'Het hele formulier is opnieuw opgebouwd met schone, modulaire code — geen lappendeken van losse fixes meer',
+                '"Zo begrijpen wij het" toont nu meteen bij het openen een samenvatting, en neemt álle onderdelen mee (ook losse dagen en minder-dagen)',
+                'Alle uitzonderingen hebben nu hetzelfde uniforme uiterlijk (icoon, titel, chevron)',
+                'De AI-hulp werkt weer betrouwbaar; voorstellen vullen alle secties correct in',
+                'Opslaan is grondig getest: elke sectie (periodes, afwezig, losse dagen, minder-dagen, vaste dagen) wordt correct bewaard en weer getoond',
+            ],
+        ],
+        '2.77.0' => [
+            'datum'  => '2026-09-11',
+            'titel'  => 'Beschikbaarheidstaak volledig werkend (invullen + opslaan)',
+            'punten' => [
+                'De week-dropdowns bij "minder dagen"-verzoeken worden nu ook gevuld (de weeklijst werd niet aan de JS meegegeven)',
+                'De AI-hulp wist niet langer de dropdowns: na een AI-voorstel houden alle dropdowns hun weken en tonen ze de juiste periode',
+                'AI-weken die net buiten het seizoen vallen worden netjes binnen het seizoen gehouden (ook bij verzoeken)',
+                'Volledige opslag getest: periodes, weekend-dagen, afwezigheid, verzoeken met voorkeursdagen en vaste vrije dagen worden correct bewaard en weer getoond',
+                'De blauwe bovenbalk heeft weer de juiste, consistente hoogte',
+            ],
+        ],
+        '2.76.2' => [
+            'datum'  => '2026-09-11',
+            'titel'  => 'Beschikbaarheid: week-dropdowns nu echt gevuld (ontbrekende lus hersteld)',
+            'punten' => [
+                'De echte oorzaak gevonden: de lus die de seizoensweken opbouwt was weggevallen, waardoor de weeklijst leeg bleef en dus alle dropdowns leeg waren',
+                'Hersteld en getest met een echte database: de dropdowns lopen nu van de eerste tot de laatste seizoensweek',
+            ],
+        ],
+        '2.76.1' => [
+            'datum'  => '2026-09-11',
+            'titel'  => 'Beschikbaarheid: week-dropdowns definitief gevuld (ook na AI)',
+            'punten' => [
+                'De week-dropdowns worden nu gevuld met de seizoensweken (de weeklijst werd niet aan de losse pagina meegegeven)',
+                'Als de AI een week net buiten het seizoen voorstelt, wordt die nu netjes binnen het seizoensbereik gehouden in plaats van de dropdown leeg te laten',
+                'Getest in een echte browser: dropdowns, "Nog een periode", preview en AI-invulling werken',
+            ],
+        ],
+        '2.76.0' => [
+            'datum'  => '2026-09-11',
+            'titel'  => 'Beschikbaarheidsformulier gerepareerd (losse pagina)',
+            'punten' => [
+                'De week-dropdowns worden nu gevuld — ze bleven leeg doordat de weeklijst niet werd meegegeven aan het formulier',
+                'Hierdoor werkten ook "Nog een periode", de uitzonderingen en de live-preview ("wat we hebben begrepen") niet; die doen het nu weer',
+                'De AI-hulp ("typ je beschikbaarheid") bereikt nu de AI — de aanvraag werd naar een pagina gestuurd die er niets mee deed',
+                'Weeklabels netjes in het Nederlands (bijv. "W22 · 25 mei")',
+            ],
+        ],
+        '2.75.0' => [
+            'datum'  => '2026-09-11',
+            'titel'  => 'Statistieken gebundeld op het dashboard',
+            'punten' => [
+                'Vier kerncijfers bovenaan het dashboard: aanmeldingen, aangenomen, conversie en gemiddelde doorlooptijd',
+                'Nieuwe wervings-sectie: per bron/doelgroep hoeveel aanmeldingen en aangenomen, met conversie — voorheen zat dit apart bij de landingspaginas',
+                'Alles staat nu op een centrale plek, samen met de bestaande funnel, weekgrafiek en systeemstatus',
+            ],
+        ],
+        '2.74.0' => [
+            'datum'  => '2026-09-11',
+            'titel'  => 'Opschoning voor productie',
+            'punten' => [
+                'Dode code van de oude licht/donker-schakelaar verwijderd (de knop was al weg)',
+                'Laatste emoji in het portaal vervangen door nette lijn-iconen — het portaal is nu volledig consistent',
+                'Alle geautomatiseerde tests draaien groen; geen syntaxfouten in de hele codebase',
+            ],
+        ],
+        '2.73.0' => [
+            'datum'  => '2026-09-11',
+            'titel'  => 'P2-polish afgerond (tien verbeterpunten uit de testronde)',
+            'punten' => [
+                'Taken-tab heeft nu een telbolletje met het aantal openstaande taken in de navigatie',
+                'De voortgangsindicator verdwijnt zodra iemand is aangenomen (de reis is dan klaar)',
+                'Betere leesbaarheid van de informatieblokken (selectiedag/trainingsweekend) door meer contrast',
+                'De "er staan taken klaar"-mail heeft nu één persoonlijke begroeting (geen dubbele meer) en een duidelijkere tekst',
+                'Het logo laadt nu correct in alle mails (verwees naar een niet-bestaand bestand)',
+                'Foutmelding bij een onjuiste inlogcode verschijnt nog maar op één plek',
+                'Uitleg toegevoegd bij het "bijzonderheden"-veld (leeg laten als er niets is)',
+            ],
+        ],
+        '2.72.0' => [
+            'datum'  => '2026-09-11',
+            'titel'  => 'Meldingen-matrix hersteld + bevestiging bij zelf ondertekenen',
+            'punten' => [
+                'Belangrijke reparatie: de "welke melding via welk kanaal"-tabel was leeg doordat de lijst met meldingstypen per ongeluk uit de code was weggevallen — die is hersteld, de matrix toont nu weer alle typen met hun vinkjes',
+                'Wie zelf ondertekent (18+) krijgt nu óók een bevestigingsmail met de ondertekende PDF als bijlage — voorheen kreeg alleen de ouder die',
+                'Een automatische test bewaakt voortaan dat de meldingstypen aanwezig blijven',
+            ],
+        ],
+        '2.71.0' => [
+            'datum'  => '2026-09-11',
+            'titel'  => 'Ondertekenen afgemaakt: zichtbaar handtekening-vak, validatie, handtekening op PDF',
+            'punten' => [
+                'Het handtekening-vak is nu duidelijk zichtbaar (navy kader op een lichte achtergrond) — ook op de ouder-pagina, waar het eerder wit-op-wit was',
+                'De ondertekenpagina heeft nu overal de nieuwe stijl: nette invoervelden en knoppen in plaats van standaard-grijze',
+                'Duidelijke foutmelding bij ondertekenen: ontbrekende verplichte velden en vinkjes worden rood gemarkeerd, met een melding en scroll naar het probleem',
+                'De gezette handtekening staat nu ook op de geëxporteerde PDF, onder de getypte naam',
+            ],
+        ],
+        '2.70.0' => [
+            'datum'  => '2026-09-11',
+            'titel'  => 'Startpagina op de gedeelde header + navigatie bovenin op desktop',
+            'punten' => [
+                'De startpagina gebruikt nu dezelfde nette topbar als de rest van het portaal — de dubbele/gekke header en de losse licht/donker-knop zijn weg',
+                'Op desktop staat de navigatie nu bovenin (onder de topbar) in plaats van onderaan; op mobiel blijft het de app-balk onderaan',
+            ],
+        ],
+        '2.69.0' => [
+            'datum'  => '2026-09-11',
+            'titel'  => 'Meldingen per kanaal (incl. inlogcode), BLK-taak-fix, beschikbaarheid in nieuwe stijl',
+            'punten' => [
+                'Alle meldingen zijn nu per kanaal instelbaar (e-mail / SMS / WhatsApp) — inclusief de portaal-inlogcode, die je nu bijvoorbeeld via SMS kunt laten sturen',
+                'De BLK-taak wordt nu betrouwbaar als afgerond gemarkeerd; het "Vertel ons meer over jezelf"-blok verdwijnt zodra het formulier definitief is ingediend',
+                'Het beschikbaarheid-doorgeven scherm is nu volledig in de nieuwe ontwerpstijl (nette secties, kaarten, lijn-iconen)',
+                'Bijkomende fix: de beschikbaarheid-pagina toonde geen periode-labels bij de weken — nu wel',
+            ],
+        ],
+        '2.68.0' => [
+            'datum'  => '2026-09-11',
+            'titel'  => 'Blokkers uit testronde opgelost (beschikbaarheid, landingspagina, WhatsApp)',
+            'punten' => [
+                'Beschikbaarheid invullen werkt weer: de databasefout ("onbekende kolom eerste_week") is opgelost — de pagina bepaalt de weken nu op dezelfde manier als het BLK',
+                'Landingspagina\'s: nette /l/<slug>-URL werkt nu (rewrite toegevoegd), en het beheer waarschuwt duidelijk dat een pagina pas openbaar is als de status op "Gepubliceerd" staat',
+                'WhatsReach-koppeling gecorrigeerd naar de echte API (X-API-Key, juiste base-URL en verzend-endpoint, afzendernummer instelbaar)',
+                'Leeftijd in het kandidaatpaneel toont nu de actuele leeftijd, met een melding wanneer iemand pas later 16 wordt',
+            ],
+        ],
+        '2.67.0' => [
+            'datum'  => '2026-08-22',
+            'titel'  => 'Echt handtekening-vak bij ondertekenen',
+            'punten' => [
+                'Bij het digitaal ondertekenen zet je nu een echte handtekening in een tekenvak (met je vinger op mobiel, of met de muis op desktop)',
+                'Een "Wissen"-knop om opnieuw te beginnen; de handtekening wordt bij het versturen vastgelegd naast je naam, datum en IP',
+                'Werkt voor zowel de sollicitant (18+) als de ouder/verzorger (voor minderjarigen)',
+            ],
+        ],
+        '2.66.0' => [
+            'datum'  => '2026-08-22',
+            'titel'  => 'Beschikbaarheid is nu een losse taak (niet meer in het BLK)',
+            'punten' => [
+                'Beschikbaarheid doorgeven is een eigen taak met een eigen pagina geworden — precies zoals het ontwerp wil, los van het "Beter leren kennen"-formulier',
+                'Het BLK-formulier is teruggebracht van 5 naar 4 stappen (beschikbaarheid eruit)',
+                'De invul-logica (formuliervelden, opslag, en de slimme "typ je beschikbaarheid"-hulp) is gedeeld tussen oud en nieuw via herbruikbare onderdelen — geen dubbele code',
+                'Op de startpagina staat nu een aparte taak "Geef je beschikbaarheid door"',
+            ],
+        ],
+        '2.65.0' => [
+            'datum'  => '2026-08-22',
+            'titel'  => 'Beschikbaarheid-opslag als herbruikbare functie (voorbereiding losse taak)',
+            'punten' => [
+                'De opslaglogica van het beschikbaarheidsformulier is uit het BLK-formulier gehaald en in één geteste, herbruikbare functie gezet',
+                'Dit is de veilige eerste stap om beschikbaarheid een losse taak te maken; het BLK werkt ongewijzigd via dezelfde functie',
+                'Interne verbetering, geen zichtbare wijziging',
+            ],
+        ],
+        '2.64.7' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'BLK-formulier en trainingsweekend-info in de nieuwe stijl; portaal emoji-vrij',
+            'punten' => [
+                'Het "Beter Leren Kennen"-formulier is omgezet naar de nieuwe stijl: nette stapindicator, invoervelden en knoppen',
+                'Het trainingsweekend-infoblok staat nu in dezelfde nette info-kaart als de selectiedag',
+                'Alle emoji in het portaal zijn vervangen door consistente lijn-iconen — het hele portaal volgt nu het ontwerp',
+                'Alle knoppen in het portaal gebruiken nu de nieuwe knopstijl',
+            ],
+        ],
+        '2.64.6' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Beschikbaarheid en ondertekenen in de nieuwe stijl',
+            'punten' => [
+                'De beschikbaarheid-pagina gebruikt nu de gedeelde portaal-layout met navigatie, in de nieuwe stijl — het overzicht zelf blijft ongewijzigd',
+                'De ondertekenen-pagina is opgeschoond naar de nieuwe stijl (lijn-iconen, nette knoppen); het handtekening-vak volgt in een aparte stap',
+            ],
+        ],
+        '2.64.5' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Taken definitief in de ontwerpstijl',
+            'punten' => [
+                'De taken staan nu als rustige rijen in één kaart met dunne scheidingslijntjes, precies zoals het ontwerp — geen losse gekleurde blokken meer',
+                'Elke taak heeft een icoon-vierkantje, titel en meta-regel, en een chevron als je erop kunt tikken',
+                'Het inline oudergegevens-formulier is behouden en in de nieuwe stijl',
+            ],
+        ],
+        '2.64.4' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Mijn gegevens op de gedeelde layout',
+            'punten' => [
+                'De pagina "Mijn gegevens" gebruikt nu de gedeelde portaal-layout, met dezelfde topbar en navigatie als de rest',
+                'Omgezet naar de nieuwe stijl: lijn-iconen in plaats van emoji, nette knoppen en kaarten',
+                'De losse "terug naar portaal"-knop is weg — dat doet de navigatiebalk nu',
+            ],
+        ],
+        '2.64.3' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Startpagina: taken in de nieuwe stijl',
+            'punten' => [
+                'De taken op de startpagina zijn omgezet naar de nieuwe stijl: lijn-iconen in plaats van emoji, nette badges en een duidelijke "Openen"-knop',
+                'De "Jouw acties"-kop is nu "Nu te doen" met een telling van openstaande taken, passend bij het ontwerp',
+                'Het inline oudergegevens-formulier en het ouder-status-overzicht zijn behouden en emoji-vrij gemaakt',
+            ],
+        ],
+        '2.64.2' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Startpagina: begroeting en nieuwe voortgang',
+            'punten' => [
+                'De startpagina heeft nu een persoonlijke begroeting die past bij je fase ("Je bent uitgenodigd", "Welkom bij Paal 13", enzovoort)',
+                'De voortgang is vervangen door de rustige "stap X van 5"-weergave met een voortgangsbalk en de melding wat er hierna komt',
+            ],
+        ],
+        '2.64.1' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Portaal krijgt de globale navigatiebalk',
+            'punten' => [
+                'De startpagina van het portaal heeft nu de app-navigatie: een onderbalk (mobiel) / horizontale balk (desktop) met Start, Taken en Gegevens',
+                'De navigatie zit op één gedeelde plek en verschijnt precies één keer — geen dubbele of overlappende balken',
+                'De oude losse "Mijn gegevens"-link is weggehaald omdat die nu een navigatie-tab is; uitloggen en naar-beheer blijven bestaan',
+            ],
+        ],
+        '2.64.0' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Gedeelde portaal-layout + navigatie (fundament stap 3)',
+            'punten' => [
+                'Nieuwe gedeelde portaal-layout (kop + voet) zodat de navigatie op precies één plek bestaat en overal identiek verschijnt — nooit dubbel of uit elkaar',
+                'App-navigatie: een onderbalk met Start / Taken / Gegevens op mobiel, en een nette horizontale balk op desktop',
+                'De topbar met logo en seizoensnaam, in de nieuwe ontwerpstijl',
+                'Dit zijn de bouwstenen; de startpagina zelf wordt in de volgende stap op deze layout gezet',
+            ],
+        ],
+        '2.63.1' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Inlogscherm compleet: opnieuw-sturen en doorstuur-pagina',
+            'punten' => [
+                'Op het code-scherm zit nu een "opnieuw sturen"-teller (60 seconden), waarna je een nieuwe code kunt aanvragen',
+                'Bekende accounts krijgen nu een net doorstuur-scherm ("je hebt al een account, we sturen je door") met een uitweg "stuur mij toch een code", in plaats van een directe doorverwijzing',
+                'Interne herstelling: het code-scherm sloot zijn script-blok niet correct af; dat is gerepareerd',
+            ],
+        ],
+        '2.63.0' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Nieuw inlogscherm (stap 2 van de herbouw)',
+            'punten' => [
+                'Het inlogscherm van het portaal is opnieuw opgebouwd in de nieuwe ontwerpstijl: e-mailadres invoeren en de code van zes cijfers, rustig en app-achtig',
+                'Dezelfde werking als voorheen (e-mail bepaalt de route: code per mail of doorsturen naar het account); alleen de vormgeving is nieuw',
+                'Foutmelding bij een onjuiste code netjes in de nieuwe stijl',
+            ],
+        ],
+        '2.62.0' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Nieuw ontwerp-fundament (stap 1 van de herbouw)',
+            'punten' => [
+                'De officiële ontwerp-tokens (kleuren, typografie, ruimte, vorm) uit het goedgekeurde ontwerp zijn toegevoegd als basis voor alle nieuwe schermen',
+                'Een set herbruikbare componenten (knoppen, kaarten, statusbadges, formuliervelden, meldingen, taken, lege staten) in de nieuwe stijl',
+                'Het ontwerp-lettertype (Instrument Sans) toegevoegd; bestaande schermen blijven werken via compatibiliteits-aliassen',
+                'Dit raakt nog geen bestaand scherm inhoudelijk — het is de basis waarop het portaal en de rest opnieuw worden opgebouwd',
+            ],
+        ],
+        '2.61.0' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Foto-vergroter overal, wervingsoverzicht en mobiele verbeteringen',
+            'punten' => [
+                'Elke foto in het systeem (admin én portaal) is nu aanklikbaar om te vergroten — op desktop en mobiel, met sluiten via tik-buiten, kruisje of Escape',
+                'Nieuw wervingsoverzicht: per bron het aantal aanmeldingen en hoeveel daarvan zijn aangenomen',
+                'Mobiele verbeteringen: knoppen en velden groter en beter aan te raken, invoervelden zoomen niet meer ongewenst in op iPhone, brede tabellen scrollen netjes',
+                'Lange e-mailadressen breken nu netjes af in het kandidaatpaneel in plaats van de opmaak te verstoren',
+            ],
+        ],
+        '2.60.0' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Export van BLK-dossiers naar Excel en PDF',
+            'punten' => [
+                'Exporteer de gegevens van geselecteerde sollicitanten naar één Excel-bestand — inclusief de beschikbaarheid duidelijk uitgewerkt in gewone taal',
+                'Bulk-export via de selectie op de sollicitantenlijst, of in één klik het hele seizoen',
+                'Per sollicitant een netjes opgemaakt, printbaar dossier (PDF) via de afdrukfunctie',
+                'Alle exports worden vastgelegd in het auditlogboek (wie exporteerde wat)',
+            ],
+        ],
+        '2.59.0' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Meldingen overal via gekozen kanalen + afmelden voor mailings',
+            'punten' => [
+                'De uitnodigingen (selectiedag, trainingsweekend) gaan nu ook via SMS/WhatsApp als dat voor dat type is ingesteld — niet meer alleen de aanmeldbevestiging',
+                'Nieuwsbrieven/mailings hebben nu een afmeldlink (AVG-verplicht); afgemelde mensen worden automatisch overgeslagen',
+                'Belangrijke berichten (uitnodigingen, bevestigingen) blijven altijd doorgaan — een afmelding geldt alleen voor niet-essentiële mailings',
+                'Afmelden en weer aanmelden kan via een eigen pagina met een persoonlijke, veilige link',
+            ],
+        ],
+        '2.58.0' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Meldingen via SMS en WhatsApp, per kanaal instelbaar',
+            'punten' => [
+                'Meldingen kunnen nu naast e-mail ook via SMS en WhatsApp — beide los in- en uitschakelbaar',
+                'SMS werkt met meerdere gateways: van je eigen telefoon/VoIP-nummer (goedkoopst, alleen je eigen bundel) tot kant-en-klare providers (EasySendSMS, MessageBird)',
+                'WhatsApp via WhatsReach is beschikbaar, standaard uit, met een waarschuwing over het risico op nummerblokkade',
+                'Per soort melding is instelbaar via welke kanalen die verstuurd wordt (e-mail, SMS, WhatsApp of een combinatie)',
+                'Testknop om een proefbericht via SMS of WhatsApp te sturen',
+            ],
+        ],
+        '2.57.0' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Landingspagina\'s met werving-tracking',
+            'punten' => [
+                'Nieuw: maak eigen landingspagina\'s met vrije HTML en CSS, met een live voorbeeld en het aanmeldformulier op de plek van [[formulier]]',
+                'Elke pagina heeft een status: concept, alleen voor admins zichtbaar, of gepubliceerd — zo kun je pagina\'s voorbereiden of tijdelijk uitzetten',
+                'Anonieme tracking per pagina: unieke bezoekers, bezoeken, hoeveel het formulier starten en hoeveel het afmaken (met conversiepercentages)',
+                'Herkomst-attributie: bij een aanmelding wordt vastgelegd via welke pagina/bron iemand binnenkwam, zodat je aan het eind ziet waar aangenomen mensen vandaan kwamen — ongeacht of ze via de website of een platform-landingspagina kwamen',
+            ],
+        ],
+        '2.56.0' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Systeemgezondheid: zelfcontrole en -reparatie',
+            'punten' => [
+                'Nieuwe health check op het systeemscherm die de belangrijkste onderdelen controleert: database, cron, mailwachtrij, opschoning, mappen en configuratie',
+                'Waar mogelijk herstelt het systeem zichzelf: ontbrekende tabellen en kolommen worden automatisch aangemaakt met één klik',
+                'Duidelijke signalering als de cron niet meer draait of e-mails blijven hangen, zodat problemen op tijd opvallen',
+            ],
+        ],
+        '2.55.0' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Nieuwe inlogstroom: portaal als startpagina, keuze admin/portaal',
+            'punten' => [
+                'De oude landingspagina is vervangen: wie naar het systeem gaat, komt meteen op het inlogscherm',
+                'Sollicitanten en beheerders loggen in via hetzelfde scherm (e-mail); bekende mensen gaan via Authentik en OTP blijft de terugval',
+                'Wie zowel beheer- als portaaltoegang heeft, kiest na het inloggen waar hij heen wil — met een per-persoon voorkeur die onthouden wordt',
+                'Makkelijk wisselen tussen beheer en het eigen portaal via een knop, alleen zichtbaar als je beide rechten hebt',
+                'Beheerders kunnen nog steeds rechtstreeks naar /admin; alle wissels zijn beveiligd zodat niemand in een deel komt zonder recht',
+            ],
+        ],
+        '2.54.0' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Publieke API voor de website-koppeling (fase 1)',
+            'punten' => [
+                'Nieuwe beveiligde API waarmee de WordPress-plugin op de website kan koppelen: seizoensinfo ophalen en aanmeldingen versturen',
+                'De aanmeldlogica is samengebracht op één plek (bron van waarheid), gebruikt door zowel het eigen formulier als de API — zodat alle regels (leeftijd, oudertoestemming) overal identiek zijn',
+                'API beveiligd met een geheime sleutel; te beheren via Instellingen → Website & API (sleutel genereren, toegestane websites instellen)',
+                'Snelheidsbegrenzing tegen misbruik van het aanmeld-endpoint',
+            ],
+        ],
+        '2.53.0' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Auditlogboek: wie wat wanneer deed',
+            'punten' => [
+                'Nieuw auditlogboek dat vastlegt wie welke actie deed (inloggen, wijzigen, exporteren, en meer) — zonder het systeem trager te maken, doordat de registratie pas ná het laden van de pagina wordt weggeschreven',
+                'Doorzoekbaar inzage-scherm in het beheer (Systeem → Auditlogboek): filter op wie, actie, objecttype en periode',
+                'De beschikbaarheid-aanpassingen door het bestuur worden nu vastgelegd in het logboek, inclusief wat er veranderde',
+                'Beheerder-logins en beschikbaarheid-exports worden vastgelegd',
+                'Automatische opschoning: auditregels ouder dan 12 maanden worden opgeruimd (instelbaar), passend binnen de AVG-bewaartermijnen',
+            ],
+        ],
+        '2.52.0' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Beheer kan beschikbaarheid per dag aanpassen + verzoekdagen standaard aan',
+            'punten' => [
+                'Nieuw beheer-scherm: het bestuur kan de beschikbaarheid van een sollicitant per dag aanpassen (kalender met klik-om-te-wijzigen) én werkperiodes invullen in portaal-stijl',
+                'Bestuurs-aanpassingen worden de eindwaarheid, ook in het portaal van de sollicitant, met een duidelijke melding welke dagen zijn aangepast',
+                'Alles herleidbaar: elke bestuurs-wijziging legt vast wie het deed en wanneer',
+                'Een bestuurs-aanpassing per dag kan worden teruggedraaid; dan geldt weer de eigen invoer van de sollicitant',
+                'Bij verzoeken "minder dagen" staan de voorkeursdagen nu standaard allemaal aangevinkt (je vinkt uit wat niet kan), zodat niet onbewust "ik kan alle dagen" wordt gezegd; de waarschuwing verschijnt meteen bij te weinig dagen',
+            ],
+        ],
+        '2.51.1' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Verzoeken minder dagen: hardheid en validatie',
+            'punten' => [
+                'Verzoeken om minder dagen tellen nu als harde beperking: wie 2 dagen opgeeft, kan de andere dagen die week echt niet (stond eerst als voorkeur/zacht)',
+                'Nieuwe validatie: het aantal aangevinkte voorkeursdagen moet minstens gelijk zijn aan het gevraagde aantal dagen — meer mag (dan kiest de roosteraar), minder niet',
+                'De sollicitant krijgt direct een waarschuwing bij het verzoek als er te weinig dagen zijn aangevinkt, en het verzoek wordt niet opgeslagen tot het klopt',
+                'De AI houdt zich aan dezelfde regel: een te kleine selectie voorkeursdagen wordt weggelaten zodat de roosteraar kan kiezen',
+            ],
+        ],
+        '2.51.0' => [
+            'datum'  => '2026-08-21',
+            'titel'  => 'Zelfherstellende database + beschikbaarheid-export compleet',
+            'punten' => [
+                'Het systeem controleert en herstelt nu automatisch het databaseschema bij elk bezoek — ontbrekende tabellen én kolommen worden vanzelf aangemaakt, zodat vergeten migraties geen stille fouten meer geven',
+                'Nieuwe schema-gezondheidscheck op het systeemscherm: zie in één oogopslag of de database in orde is, met een knop om handmatig te controleren',
+                'Beschikbaarheid-export: "alleen weekenden" wordt nu correct verwerkt — wie alleen in het weekend werkt, staat doordeweeks terecht op niet-beschikbaar (stond eerst onterecht op beschikbaar)',
+                'Beschikbaarheid-export: dagen buiten alle werkperiodes staan nu correct op niet-beschikbaar',
+                'Beschikbaarheid-export: verzoeken om minder dagen per week worden nu meegenomen, inclusief de voorkeursdagen — de API krijgt door welke dagen die week wél kunnen',
+            ],
+        ],
+        '2.50.1' => [
+            'datum'  => '2026-08-20',
+            'titel'  => 'Herstel: seizoensinstellingen die leeg terugkwamen',
+            'punten' => [
+                'De werkperiode-datums en enkele andere seizoensvelden kwamen soms leeg terug na opslaan, doordat de bijbehorende database-kolommen ontbraken',
+                'De "begintijd programma TW" werd helemaal niet opgeslagen (ontbrak in de opslag) — nu opgelost',
+                'Er is nu een robuuste automatische migratie die alle benodigde seizoen-kolommen aanmaakt zodra het seizoenscherm wordt geopend',
+            ],
+        ],
+        '2.50.0' => [
+            'datum'  => '2026-08-20',
+            'titel'  => 'AI vollediger, betere preview, dag-export en leeftijdsfix',
+            'punten' => [
+                'Leeftijdsfix: de 18-grens werkt nu weer exact — 16- en 17-jarigen moeten de oudergegevens invullen, 18-plussers niet (de oude berekening rondde soms een jaar verkeerd af)',
+                'De AI-beschikbaarheidshulp vult nu ook een vaste vrije dag (met reden) en verzoeken om minder dagen in',
+                'Als de AI uitzonderingen invult, klappen die blokken meteen open in het formulier',
+                'De "zo begrijpen wij het"-samenvatting toont nu ook losse dagen en de verzoeken om minder dagen, en werkt live bij bij wijzigingen',
+                'Nieuw in het beheer: per kandidaat een dag-voor-dag export van de beschikbaarheid over het hele seizoen — als leesbare tabel én als JSON, precies zoals het aan de rooster-API zou worden doorgegeven',
+            ],
+        ],
+        '2.49.1' => [
+            'datum'  => '2026-08-20',
+            'titel'  => 'Herstel: kapotte JavaScript in het portaal',
+            'punten' => [
+                'Bij het herontwerp van het beschikbaarheidsformulier was een JavaScript-functie beschadigd geraakt, waardoor het hele script in het portaal niet meer werkte',
+                'Hierdoor reageerde de knop "Invullen" bij het BLK-formulier niet, en werkte het inline ouder-formulier bij 18-minners niet',
+                'De beschadigde functie is hersteld; alle knoppen en formulieren in het portaal werken weer',
+            ],
+        ],
+        '2.49.0' => [
+            'datum'  => '2026-08-19',
+            'titel'  => 'Beschikbaarheid-formulier vereenvoudigd',
+            'punten' => [
+                'Het beschikbaarheidsformulier is opnieuw ingedeeld: één duidelijke hoofdvraag ("wanneer kun je werken?") en alle uitzonderingen samengebracht onder één inklapbaar blok',
+                'De AI-hulp staat nu bovenaan als vriendelijke snelle route ("Liever gewoon typen?"), blijft experimenteel en uitschakelbaar',
+                'De werkperiode staat standaard voorgevuld op het hele seizoen — wie het hele seizoen kan hoeft alleen te bevestigen',
+                'Uitzonderingen (vakantie, losse dagen, vaste vrije dag, minder dagen) zijn standaard dichtgeklapt; bij een terugkerende sollicitant klappen de al ingevulde onderdelen automatisch open',
+            ],
+        ],
+        '2.48.1' => [
+            'datum'  => '2026-08-19',
+            'titel'  => 'AI-beschikbaarheid herkent nu ook losse dagen',
+            'punten' => [
+                'De AI-beschikbaarheidshulp herkent nu losse dagen: zeg "de hele zomer, behalve 12 augustus" en die dag wordt automatisch als losse vrije dag ingevuld',
+                'Onderscheid tussen "kan echt niet" en "liever vrij" wordt ook door de AI opgepikt',
+                'Een invoer met alleen een losse dag (zonder werkperiode) wordt correct verwerkt in plaats van geweigerd',
+            ],
+        ],
+        '2.48.0' => [
+            'datum'  => '2026-08-19',
+            'titel'  => 'Losse vrije dagen — klaar voor de rooster-API',
+            'punten' => [
+                'Sollicitanten kunnen nu losse dagen opgeven die ze niet kunnen (bijv. 12 augustus), of die ze liever vrij willen — ook één losse dag binnen een week die verder gewoon werkbaar is',
+                'Onderscheid tussen "kan echt niet" en "liever vrij", zodat de planner weet wat hard en wat zacht is',
+                'Het bestuur ziet de losse dagen terug in het detailpaneel van een kandidaat',
+                'Nieuwe functie die per datum teruggeeft of iemand beschikbaar is, met alle bronnen samengevoegd (vaste vrije dagen, vakanties én losse dagen) — de bouwsteen voor de latere rooster-API',
+            ],
+        ],
+        '2.47.0' => [
+            'datum'  => '2026-08-19',
+            'titel'  => 'Mails via templates, PDF-consistentie en overzichtelijker instellingen',
+            'punten' => [
+                'De welkomstmail na aanmelden gebruikt nu de bewerkbare template "welkomstmail" (Bevestiging aanmelding) — niet langer een vaste tekst',
+                'De auto-invite gebruikt nu dezelfde bewerkbare template "uitnodiging_selectie" als het handmatig uitnodigen; beide routes zijn nu gelijk',
+                'Ook het handmatig toevoegen van een sollicitant en het ondertekenverzoek gebruiken nu bewerkbare templates',
+                'Alle sollicitant-mails zijn nu template-gebaseerd; alleen als een template volledig ontbreekt is er nog een vaste vangnet-tekst',
+                'Een ondertekend formulier bekijken/printen in het beheer gebruikt nu exact dezelfde PDF als de ouders per mail ontvangen',
+                'Het instellingenscherm is logischer ingedeeld in zes groepen met consistente labels',
+            ],
+        ],
+        '2.46.0' => [
+            'datum'  => '2026-08-18',
+            'titel'  => 'Rollen & rechten: volledige rechtenmatrix + security-audit',
+            'punten' => [
+                'Nieuw scherm "Rollen & rechten": stel per rol in wie wat mag, per onderdeel en per actie (lezen, bewerken, verwijderen)',
+                'Rollen zijn nu vrij toe te voegen en te koppelen aan een Authentik-groep, zodat SSO-gebruikers automatisch de juiste rol krijgen',
+                'Veilige standaardrechten: een begeleider kan standaard niet meer bij persoonsgegevens; alleen wie het nodig heeft ziet gevoelige data',
+                'Het menu toont voortaan alleen onderdelen waar je rol toegang toe heeft — geen doodlopende "geen toegang"-klikken meer',
+                'Beveiliging: uploads-map beschermd tegen scriptuitvoering, en de autorisatie op BLK-details en beschikbaarheid rechtgetrokken (AVG)',
+                'De rol-keuze bij beheerders toont nu automatisch alle rollen die je hebt aangemaakt',
+            ],
+        ],
+        '2.45.0' => [
+            'datum'  => '2026-08-18',
+            'titel'  => 'Formulieren: inhoud, gezondheidsverklaring en PDF naar ouders',
+            'punten' => [
+                'Het intakeformulier heeft nu echte inhoud: gezondheid & veiligheid, fotobeleid, en verklaring & aansprakelijkheid met de bijbehorende vinkjes — niet langer alleen een handtekening',
+                'De gezondheidsverklaring is aangevuld met de huisarts-waarschuwing en de geldigheidstermijn (1 jaar), passend bij het officiële formulier',
+                'Na ondertekening door een ouder wordt nu een nette PDF (met logo) van het ondertekende document naar de ouder gemaild, zodat ze kunnen terugzien waar ze voor tekenden',
+                'De ondertekenmails (naar ouder, bevestiging, herinnering) zijn bewerkbaar via Instellingen → Mail templates',
+            ],
+        ],
+        '2.44.0' => [
+            'datum'  => '2026-08-18',
+            'titel'  => 'Welkomstmail, selectiedag-uitnodiging, bellijst-mail en meer',
+            'punten' => [
+                'De "aanmelding ontvangen"-mail gebruikt nu de aanpasbare welkom-template uit Mail templates (met terugval op de vaste tekst als de template leeg is)',
+                'De selectiedag-uitnodiging heeft nu een volwaardige tekst: datum en locatie, de melding dat er nog taken openstaan om deelname te bevestigen, en een link naar het portaal',
+                'Bellijst: bij "door" doorvoeren gaat nu ook de uitnodiging voor het trainingsweekend eruit (bij "niet"/afwijzen bewust geen automatische mail — dat doe je persoonlijk)',
+                'BLK-formulier: een tussentijdse pagina-refresh markeert de taak niet langer onterecht als volledig ingevuld',
+                'Foto van een kandidaat is nu ook klikbaar/vergrootbaar op de nabespreking-pagina',
+            ],
+        ],
+        '2.43.1' => [
+            'datum'  => '2026-08-18',
+            'titel'  => 'BLK opnieuw invullen gaf een foutmelding (+ foto)',
+            'punten' => [
+                'Het opnieuw invullen van het BLK-formulier gaf een "duplicate entry"-fout als er nog een oude formulierrij bestond (bijv. na verwijderen via de interface). Opslaan werkt nu altijd, of de rij nu bestaat of niet',
+                'Hierdoor werd ook de geüploade foto niet bewaard (de opslag crashte vóór het fotopad werd opgeslagen). Dat is nu opgelost',
+            ],
+        ],
+        '2.43.0' => [
+            'datum'  => '2026-08-18',
+            'titel'  => 'AI-beschikbaarheid: exacte data + invoer terugkijken',
+            'punten' => [
+                'Vakanties/afwezigheid uit de AI-hulp worden nu als exacte datums verwerkt in plaats van hele weken — halve weken blijven zo behouden en zijn controleerbaar',
+                'De vrije tekst die een sollicitant bij de AI-hulp invulde, is nu terug te zien bij het BLK-detail van die sollicitant',
+            ],
+        ],
+        '2.42.0' => [
+            'datum'  => '2026-08-18',
+            'titel'  => 'Bellijst voor de selectiedag-uitslag',
+            'punten' => [
+                'Nieuw tabblad "Bellijst" in de nabespreking: bel kandidaten persoonlijk met de uitslag en voer per persoon de statuswijziging door zodra je gebeld hebt',
+                'Per kandidaat: telefoonnummer (klikbaar), een "gebeld"-knop met optioneel notitieveld, en de keuze om meteen of later door te voeren',
+                'Meerdere gebelde kandidaten in één keer doorvoeren kan ook',
+                'De oude manier (alles ineens doorvoeren) blijft beschikbaar onder "Geavanceerd" — handig bij heel veel sollicitanten',
+                'Statussen wijzigen nooit meer automatisch: pas na jullie nabespreking en telefoontje wordt een kandidaat op "uitgenodigd TW" of "afgewezen" gezet',
+            ],
+        ],
+        '2.41.1' => [
+            'datum'  => '2026-08-17',
+            'titel'  => 'Beschikbaarheid werd niet opgeslagen',
+            'punten' => [
+                'De beschikbaarheid-tabel ontbrak op verse databases (zoals de testomgeving), waardoor het opslaan van beschikbaarheid stil mislukte — de tabel maakt zichzelf nu aan',
+                'Als het synchroniseren van beschikbaarheid toch mislukt, verschijnt de reden nu in het foutenlog in plaats van onzichtbaar te verdwijnen',
+            ],
+        ],
+        '2.41.0' => [
+            'datum'  => '2026-08-17',
+            'titel'  => 'Meerdere testbevindingen opgelost',
+            'punten' => [
+                'Beschikbaarheid, dekking én seizoen-instellingen werkten niet goed als er meerdere seizoenen waren: het systeem koos het seizoen met het hoogste id in plaats van het geopende seizoen. Nu wordt altijd het open seizoen gebruikt',
+                'Leeftijdscheck onder 15 toont nu de nette melding in plaats van een kale invulveld-fout',
+                'Ouder-ondertekenmail: de formulier-knoppen worden nu netjes weergegeven in plaats van als rauwe HTML-code',
+                'BLK-formulier: de onterechte melding "Vul een reden in voor de wijziging" bij de eerste indiening is weg (alleen bij een echte wijziging na aanmelding wordt nog een reden gevraagd)',
+                'Aangenomen-mail: de placeholders ({{seizoen_naam}} e.a.) worden nu correct ingevuld',
+                'AI-analyse wordt nu ook verwerkt als de reguliere cron niet draait (via de achtergrondtaak bij beheer-bezoek)',
+            ],
+        ],
+        '2.40.0' => [
+            'datum'  => '2026-08-12',
+            'titel'  => 'E-mailinstellingen (SMTP) instelbaar in het beheer',
+            'punten' => [
+                'Nieuw tabblad Instellingen → E-mail (SMTP): server, poort, beveiliging, gebruikersnaam, wachtwoord en afzender zijn nu in het beheer aan te passen',
+                'Testmail-knop: stuur direct een testmail en zie of de instellingen werken (met de foutmelding erbij als het misgaat)',
+                'De instellingen uit het beheer hebben voorrang; config.php blijft werken als terugval, zodat productie niet breekt',
+                'De beveiligingsinstelling (STARTTLS/SSL) is nu kiesbaar — dat lost de "Must issue a STARTTLS command first"-fout op',
+            ],
+        ],
+        '2.39.0' => [
+            'datum'  => '2026-08-12',
+            'titel'  => 'Ontbrekende tabellen + mailfouten zichtbaar in het foutenlog',
+            'punten' => [
+                'Vier tabellen die voorheen alleen via migraties kwamen (sollicitant_notities, sollicitant_taken, blk_wijzigingen, otp_tokens) maken zichzelf nu aan — voorheen gaven ze een foutmelding op een verse database zoals de testomgeving',
+                'Mislukte mails verschijnen nu in Instellingen → Foutenlog met de echte reden (bijv. "SMTP verbinding mislukt"), in plaats van alleen in het server-logbestand',
+            ],
+        ],
+        '2.38.0' => [
+            'datum'  => '2026-08-11',
+            'titel'  => 'Alle mails onder één centrale, aanpasbare template',
+            'punten' => [
+                'Nieuwe centrale mail-template: alle uitgaande mails gebruiken nu dezelfde opmaak (logo-balk, hero, knoppen, footer)',
+                'De opmaak van álle mails is op één plek aan te passen — includes/mail_thema.php bevat bovenaan een instellingenblok voor kleuren, logo, hero-stijl en footer',
+                'Logo staat nu in volle kleur op een eigen witte balk (was voorheen wit-gefilterd en vaak onzichtbaar); PNG-versie toegevoegd omdat mailclients geen SVG tonen',
+                'De drie losse mailsystemen (mail_render, smtp, ondertekening-mails) verwijzen nu allemaal naar deze ene template — consistent én makkelijker te onderhouden',
+                'Fotohero optioneel: zet in het thema hero_stijl op "foto" met een afbeelding voor een strandsfeer met leesbare witte tekst (donkere overlay)',
+            ],
+        ],
+        '2.37.0' => [
+            'datum'  => '2026-08-11',
+            'titel'  => 'Portaal dark mode: gekleurde vlakken schakelen nu mee',
+            'punten' => [
+                'De groene "gelukt"- en amber waarschuwing-vlakken in het sollicitantenportaal bleven in dark mode licht; ze gebruiken nu themavariabelen en passen zich aan aan light/dark mode',
+                'Nieuwe themavariabele --amber / --amber-bg toegevoegd voor waarschuwingen, met een leesbare variant in dark mode',
+            ],
+        ],
+        '2.36.1' => [
+            'datum'  => '2026-08-11',
+            'titel'  => 'Ondertekeningen-tabel maakt zichzelf aan',
+            'punten' => [
+                'De ondertekeningen-tabel wordt nu automatisch aangemaakt als die ontbreekt, net als de andere tabellen — voorheen kwam die alleen via een migratie, waardoor ondertekenen op een verse database (zoals de testomgeving) een foutmelding gaf',
+            ],
+        ],
+        '2.36.0' => [
+            'datum'  => '2026-08-02',
+            'titel'  => 'Fouten herleidbaar: referentienummers + foutenlog',
+            'punten' => [
+                'Onverwachte fouten krijgen nu de code P13-S000 ("onverwachte fout") in plaats van het misleidende P13-S001 ("configuratiebestand ontbreekt")',
+                'Elke fout krijgt een uniek referentienummer dat op de foutpagina aan de gebruiker wordt getoond én in het log staat — zo koppel je een melding aan de echte oorzaak',
+                'Nieuw tabblad Instellingen → Foutenlog: bekijk de laatste fouten met code, referentienummer, bestand, regel en de echte fouttekst',
+            ],
+        ],
         '2.35.0' => [
             'datum'  => '2026-08-02',
             'titel'  => 'Voorbereiding test- en productieomgeving (Git)',

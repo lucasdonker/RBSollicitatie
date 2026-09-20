@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/functions.php';
-vereist_rol('bestuur');
+ if (function_exists('extra_tabellen_auto_setup')) extra_tabellen_auto_setup();
+vereis_recht('sollicitanten', 'lezen');
 header('Content-Type: application/json');
 
 $sol_id = (int)($_GET['sol_id'] ?? 0);
@@ -35,7 +36,7 @@ try {
 // 2) Mail log
 try {
     $q = $db->prepare("
-        SELECT id, onderwerp, ontvanger, status, verstuurd_op, fout_melding
+        SELECT id, onderwerp, ontvanger, status, verstuurd_op, foutmelding
         FROM mail_log
         WHERE sollicitatie_id = ?
         ORDER BY verstuurd_op DESC
@@ -49,7 +50,7 @@ try {
             'icon'   => $ok ? '📧' : '⚠️',
             'titel'  => $ok ? 'Mail verstuurd' : 'Mail mislukt',
             'door'   => 'Systeem',
-            'inhoud' => $r['onderwerp'] . ($r['fout_melding'] ? ' — ' . $r['fout_melding'] : ''),
+            'inhoud' => $r['onderwerp'] . ($r['foutmelding'] ? ' — ' . $r['foutmelding'] : ''),
         ];
     }
 } catch (Exception $e) {}

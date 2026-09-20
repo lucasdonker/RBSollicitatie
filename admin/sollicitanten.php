@@ -11,100 +11,49 @@ $sid     = $seizoen ? (int)$seizoen['id'] : 0;
 // ── Bulk actie verwerken ──────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_actie'])) {
     csrf_check();
-    vereist_rol('bestuur');
+    vereis_recht('sollicitanten', 'lezen');
     $ids    = array_map('intval', $_POST['ids'] ?? []);
     $actie  = $_POST['bulk_actie'];
-    if (!empty($ids)) {
-        $ph = implode(',', array_fill(0, count($ids), '?'));
-        switch ($actie) {
-            case 'uitnodigen_selectie':
-                // 1) Update fase voor wie nog 'aangemeld' is
-                $db->prepare("UPDATE sollicitaties SET fase='uitgenodigd_selectie' WHERE id IN($ph) AND fase='aangemeld' AND seizoen_id=?")->execute([...$ids, $sid]);
-
-                // 2) Verstuur uitnodigingsmail aan ALLE geselecteerden — helper checkt dubbel
-                $verstuurd_n = 0; $skip_n = 0; $fout_n = 0;
-                foreach ($ids as $id) {
-                    if (function_exists('ondertekeningen_klaarzetten_sd')) ondertekeningen_klaarzetten_sd((int)$id);
-                    $resultaat = verstuur_fase_mail($id, 'uitnodiging_selectie', '%selectiedag%', $seizoen ?? [], 60);
-                    if ($resultaat === 'verstuurd')          $verstuurd_n++;
-                    elseif ($resultaat === 'al_verstuurd')   $skip_n++;
-                    elseif ($resultaat === 'fout')           $fout_n++;
-                }
-
-                $msg = "$verstuurd_n uitnodiging(en) verstuurd.";
-                if ($skip_n  > 0) $msg .= " ($skip_n overgeslagen — al verstuurd in afgelopen uur)";
-                if ($fout_n  > 0) $msg .= " ⚠ $fout_n mislukt — zie mail_log.";
-                flash($fout_n > 0 ? 'waarschuwing' : 'succes', $msg);
-                break;
-
-            case 'uitnodigen_tw':
-                $db->prepare("UPDATE sollicitaties SET fase='uitgenodigd_tw' WHERE id IN($ph) AND fase='selectiedag_geweest' AND seizoen_id=?")->execute([...$ids, $sid]);
-
-                $verstuurd_n = 0; $skip_n = 0; $fout_n = 0;
-                foreach ($ids as $id) {
-                    $resultaat = verstuur_fase_mail($id, 'uitnodiging_tw', '%trainingsweekend%', $seizoen ?? [], 60);
-                    if ($resultaat === 'verstuurd')        $verstuurd_n++;
-                    elseif ($resultaat === 'al_verstuurd') $skip_n++;
-                    elseif ($resultaat === 'fout')         $fout_n++;
-                }
-                $msg = "$verstuurd_n TW-uitnodiging(en) verstuurd.";
-                if ($skip_n > 0) $msg .= " ($skip_n overgeslagen)";
-                if ($fout_n > 0) $msg .= " ⚠ $fout_n mislukt — zie mail_log.";
-                flash($fout_n > 0 ? 'waarschuwing' : 'succes', $msg);
-                break;
-
-            case 'aangenomen':
-                $db->prepare("UPDATE sollicitaties SET fase='aangenomen' WHERE id IN($ph) AND seizoen_id=?")->execute([...$ids, $sid]);
-                // Kennismakingspakket per persoon activeren
-                if (function_exists('welkom_template_seed')) welkom_template_seed();
-                $kmp_totaal = 0;
-                if (function_exists('kennismakingspakket_activeren')) {
-                    foreach ($ids as $sol_id_kmp) {
-                        $r = kennismakingspakket_activeren((int)$sol_id_kmp);
-                        if ($r['mail_verstuurd']) $kmp_totaal++;
-                    }
-                }
-                flash('succes', count($ids) . ' aangenomen. Kennismakingspakket verstuurd naar ' . $kmp_totaal . '.');
-                break;
-
-            case 'afgewezen':
-                $db->prepare("UPDATE sollicitaties SET fase='afgewezen' WHERE id IN($ph) AND seizoen_id=?")->execute([...$ids, $sid]);
-                flash('succes', count($ids) . ' afgewezen.');
-                break;
+    if (!empty($ids) && $actie === 'bericht_sturen') {
+        redirect(APP_URL . '/admin/berichten.php?ids=' . implode(',', $ids));
+    }
+    if (!empty($ids) && function_exists('fase_zetten_bulk')) {
+        // Alle fase-overgangen via de centrale fase-functie (documenten, pakket en melding inbegrepen).
+        // Bij meer dan 10 personen gaan de berichten via de wachtrij (cron).
+        $bulk = [
+            'uitnodigen_selectie' => ['uitgenodigd_selectie', ['aangemeld'],           'uitnodiging(en)'],
+            'uitnodigen_tw'       => ['uitgenodigd_tw',       ['selectiedag_geweest'], 'TW-uitnodiging(en)'],
+            'aangenomen'          => ['aangenomen',           null,                    'welkomstbericht(en)'],
+            'afgewezen'           => ['afgewezen',            null,                    'bericht(en)'],
+        ];
+        if (isset($bulk[$actie])) {
+            $opties = ['seizoen_id' => $sid];
+            if ($bulk[$actie][1] !== null) $opties['alleen_van'] = $bulk[$actie][1];
+            $t = fase_zetten_bulk($ids, $bulk[$actie][0], 'bulk', $opties);
+            flash(($t['mislukt'] || $t['fout']) ? 'waarschuwing' : 'succes', fase_label($bulk[$actie][0]) . ': ' . fase_bulk_tekst($t, $bulk[$actie][2]));
         }
     }
     redirect(APP_URL . '/admin/sollicitanten.php');
 }
 
-// ── Individuele fase wisselen (GET fallback) ──────────────────
-if (isset($_GET['actie'], $_GET['id'], $_GET['naar'])) {
-    vereist_rol('bestuur');
-    $id   = (int)$_GET['id'];
-    $naar = $_GET['naar'];
-    $ok   = ['aangemeld','uitgenodigd_selectie','aangemeld_selectie','selectiedag_geweest','uitgenodigd_tw','tw_geweest','aangenomen','afgewezen'];
-    $mail_status = null;
-    if (in_array($naar, $ok, true)) {
-        $db->prepare("UPDATE sollicitaties SET fase=? WHERE id=? AND seizoen_id=?")->execute([$naar, $id, $sid]);
-
-        // Stuur automatisch uitnodigingsmail bij overgang naar uitgenodigd-fase
-        if ($naar === 'uitgenodigd_selectie' && function_exists('verstuur_fase_mail')) {
-            $mail_status = verstuur_fase_mail($id, 'uitnodiging_selectie', '%selectiedag%', $seizoen ?? [], 60);
-        } elseif ($naar === 'uitgenodigd_tw' && function_exists('verstuur_fase_mail')) {
-            $mail_status = verstuur_fase_mail($id, 'uitnodiging_tw', '%trainingsweekend%', $seizoen ?? [], 60);
+// ── Individuele fase wisselen (formulier-terugval zonder JavaScript; POST + CSRF) ──
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['fase_wissel'], $_POST['id'], $_POST['naar'])) {
+    csrf_check();
+    vereis_recht('sollicitanten', 'bewerken');
+    $id   = (int)$_POST['id'];
+    $naar = (string)$_POST['naar'];
+    if (function_exists('fase_zetten') && isset(fasen()[$naar])) {
+        $res   = fase_zetten($id, $naar, 'lijst', ['seizoen_id' => $sid]);
+        $label = fase_label($naar);
+        if (!$res['ok'])           flash('fout', 'Fase wijzigen mislukt: ' . ($res['fout'] ?? 'onbekend'));
+        elseif ($res['ongewijzigd']) flash('succes', "Fase was al '$label'.");
+        else {
+            $mt = fase_melding_tekst($res);
+            $slecht = in_array($res['melding']['status'] ?? '', ['mislukt'], true);
+            flash($slecht ? 'waarschuwing' : 'succes', "Fase bijgewerkt naar '$label'." . ($mt ? ' ' . $mt : ''));
         }
-    }
-
-    $label = fase_label($naar);
-    if ($mail_status === 'verstuurd') {
-        flash('succes', "Fase bijgewerkt naar '$label' en uitnodigingsmail verstuurd.");
-    } elseif ($mail_status === 'al_verstuurd') {
-        flash('succes', "Fase bijgewerkt naar '$label'. Mail al verzonden in afgelopen uur, geen dubbele mail.");
-    } elseif ($mail_status === 'fout') {
-        flash('waarschuwing', "Fase bijgewerkt naar '$label', maar mail mislukt. Zie mail_log.");
-    } elseif ($mail_status === 'geen_email') {
-        flash('waarschuwing', "Fase bijgewerkt naar '$label', maar sollicitant heeft geen e-mailadres.");
     } else {
-        flash('succes', "Fase bijgewerkt naar '$label'.");
+        flash('fout', 'Ongeldige fase.');
     }
     redirect(APP_URL . '/admin/sollicitanten.php');
 }
@@ -149,7 +98,7 @@ $offset     = ($pagina - 1) * $per_pagina;
 
 $stmt = $db->prepare("
     SELECT s.id, s.fase, s.terugkerend, s.aangemeld_op, s.persoon_id,
-           p.voornaam, p.tussenvoegsel, p.achternaam, p.email, p.geboortedatum,
+           p.voornaam, p.tussenvoegsel, p.achternaam, p.email, p.telefoon, p.geboortedatum,
            b.foto_url
     FROM sollicitaties s
     JOIN personen p ON p.id=s.persoon_id
@@ -197,6 +146,9 @@ function filter_url(string $fase, string $zoek, string $terug, string $blk, stri
   <div class="card-body" style="padding:12px 16px">
     <div class="filter-balk">
       <a href="<?= APP_URL ?>/admin/sollicitant_nieuw.php" class="btn btn-groen btn-sm">+ Toevoegen</a>
+      <?php if (!empty($sid)): ?>
+      <a href="<?= APP_URL ?>/admin/export_blk.php?formaat=excel&seizoen=<?= (int)$sid ?>" class="btn btn-outline btn-sm">📊 Export alle (Excel)</a>
+      <?php endif; ?>
       <div class="zoek-input">
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -510,7 +462,9 @@ function updateBulk() {
     if (fases.some(f => f === 'selectiedag_geweest'))
       html += `<button type="button" class="btn btn-primary btn-sm" onclick="bulkActie('uitnodigen_tw')">📧 Uitnodigen TW</button> `;
     html += `<button type="button" class="btn btn-groen btn-sm" onclick="bulkActie('aangenomen')">✓ Aannemen</button> `;
-    html += `<button type="button" class="btn btn-rood btn-sm" onclick="bulkActie('afgewezen')">✕ Afwijzen</button>`;
+    html += `<button type="button" class="btn btn-rood btn-sm" onclick="bulkActie('afgewezen')">✕ Afwijzen</button> `;
+    html += `<button type="button" class="btn btn-outline btn-sm" style="color:#fff;border-color:rgba(255,255,255,.3)" onclick="bulkActie('bericht_sturen')">Bericht sturen</button> `;
+    html += `<button type="button" class="btn btn-outline btn-sm" style="color:#fff;border-color:rgba(255,255,255,.3)" onclick="bulkExport()">📊 Export Excel</button>`;
     document.getElementById('bulkKnoppen').innerHTML = html;
   } else {
     balk.classList.remove('zichtbaar');
@@ -523,6 +477,13 @@ function wisSelectie() {
   updateBulk();
 }
 
+function bulkExport() {
+  const ids = [...document.querySelectorAll('.soll-cb:checked')].map(cb => cb.value).filter(Boolean);
+  if (!ids.length) return;
+  // Open de Excel-export met de geselecteerde sollicitanten
+  window.location.href = '<?= APP_URL ?>/admin/export_blk.php?formaat=excel&ids=' + ids.join(',');
+}
+
 function bulkActie(actie) {
   const labels = {
     uitnodigen_selectie: { tekst: 'uitnodigen voor selectiedag', mail: true },
@@ -532,6 +493,11 @@ function bulkActie(actie) {
   };
   const cfg = labels[actie] || { tekst: actie, mail: false };
   const n = document.querySelectorAll('.soll-cb:checked').length;
+  if (actie === 'bericht_sturen') {
+    document.getElementById('bulkActieVeld').value = actie;
+    document.getElementById('bulkForm').submit();
+    return;
+  }
   let bevestiging = n + ' persoon/personen ' + cfg.tekst + '?';
   if (cfg.mail) bevestiging += '\n\n⚠ Er wordt automatisch een uitnodigingsmail verstuurd.';
   if (!confirm(bevestiging)) return;

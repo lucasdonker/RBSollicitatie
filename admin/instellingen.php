@@ -67,7 +67,7 @@ Schrijf een beknopt assessment in dit exacte format (geen inleiding, direct begi
 }
 $pagina_titel = 'Instellingen';
 $actieve_nav  = 'instellingen';
-vereist_rol('bestuur');
+vereis_recht('instellingen', 'lezen');
 
 $db = db();
 // Triggers auto-setup van alle tabellen
@@ -78,7 +78,7 @@ $tab = $_GET['tab'] ?? 'algemeen';
 // ── Opslaan ───────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
-    vereist_rol('bestuur');
+    vereis_recht('instellingen', 'lezen');
 
     $actie = $_POST['actie'] ?? '';
 
@@ -104,6 +104,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
+        // Huisregels-PDF: in de bijlagenbibliotheek zetten en als taak-document koppelen (of losmaken)
+        if (!empty($_FILES['huisregels_upload']['tmp_name']) && function_exists('bijlage_opslaan')) {
+            $hu = bijlage_opslaan($_FILES['huisregels_upload'], (int)($_bhd['id'] ?? 0), 'Huisregels (taak aangenomen)');
+            if ($hu['ok']) {
+                $velden['taken.huisregels_bijlage_id'] = (string)$hu['id'];
+                if (function_exists('audit_log')) audit_log('gewijzigd', 'instelling', null, ['veld' => 'taken.huisregels_bijlage_id', 'bijlage' => $hu['id']]);
+            } else {
+                flash('waarschuwing', 'Huisregels niet opgeslagen: ' . $hu['fout']);
+            }
+        }
+        if (!empty($_POST['huisregels_los'])) $velden['taken.huisregels_bijlage_id'] = '0';
+
         foreach ($velden as $sleutel => $waarde) {
             // Saniteer sleutel (alleen letters, punten, underscores)
             if (!preg_match('/^[a-z0-9._]+$/', $sleutel)) continue;
@@ -117,6 +129,107 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $res = authentik_test();
         flash($res['ok'] ? 'succes' : 'fout', $res['melding']);
         redirect(APP_URL . '/admin/instellingen.php?tab=authentik');
+    }
+
+    if ($actie === 'api_sleutel_genereer') {
+        // Nieuwe geheime sleutel genereren (32 bytes, hex).
+        $nieuw = bin2hex(random_bytes(32));
+        instelling_opslaan('api.sleutel', $nieuw);
+        if (function_exists('audit_log')) audit_log('gewijzigd', 'instelling', null, ['veld' => 'api.sleutel', 'actie' => 'nieuwe sleutel gegenereerd']);
+        flash('succes', 'Nieuwe API-sleutel gegenereerd. Vergeet niet deze in de WordPress-plugin te zetten.');
+        redirect(APP_URL . '/admin/instellingen.php?tab=api');
+    }
+    if ($actie === 'api_opslaan') {
+        instelling_opslaan('api.origins', trim($_POST['api_origins'] ?? ''));
+        flash('succes', 'API-instellingen opgeslagen.');
+        redirect(APP_URL . '/admin/instellingen.php?tab=api');
+    }
+
+    if ($actie === 'berichten_opslaan') {
+        // SMS
+        instelling_opslaan('sms.actief', !empty($_POST['sms_actief']) ? '1' : '0');
+        instelling_opslaan('sms.gateway', $_POST['sms_gateway'] ?? '');
+        instelling_opslaan('sms.afzender', trim($_POST['sms_afzender'] ?? 'Paal13'));
+        instelling_opslaan('sms.http_url', trim($_POST['sms_http_url'] ?? ''));
+        instelling_opslaan('sms.http_method', $_POST['sms_http_method'] ?? 'POST');
+        instelling_opslaan('sms.http_token', trim($_POST['sms_http_token'] ?? ''));
+        instelling_opslaan('sms.easysendsms_key', trim($_POST['sms_easysendsms_key'] ?? ''));
+        instelling_opslaan('sms.messagebird_key', trim($_POST['sms_messagebird_key'] ?? ''));
+        // WhatsApp (WhatsReach)
+        instelling_opslaan('wa.actief', !empty($_POST['wa_actief']) ? '1' : '0');
+        instelling_opslaan('wa.api_sleutel', trim($_POST['wa_api_sleutel'] ?? ''));
+        instelling_opslaan('wa.base_url', trim($_POST['wa_base_url'] ?? '') ?: 'https://api.whatsreach.co/api/v1');
+        instelling_opslaan('wa.afzender_nummer', trim($_POST['wa_afzender_nummer'] ?? ''));
+        // Per-melding kanaalmodus (email | kort | beide | uit)
+        if (function_exists('meldingen_register')) {
+            $modi_ok = array_keys(meldingen_kanaalmodi());
+            foreach (meldingen_register() as $type => $mdef) {
+                $gekozen = $_POST['notif'][$type] ?? '';
+                if (!is_string($gekozen) || !in_array($gekozen, $modi_ok, true)) continue;
+                if (!$mdef['kort_toegestaan'] && $gekozen !== 'uit') $gekozen = 'email';
+                instelling_opslaan('notif.' . $type, $gekozen);
+            }
+        }
+        flash('succes', 'Bericht-instellingen opgeslagen.');
+        redirect(APP_URL . '/admin/instellingen.php?tab=berichten');
+    }
+
+    if ($actie === 'bericht_test') {
+        // Testbericht door de hele meldingen-keten (kanaalplan, terugval, log) sturen.
+        $naar_tel  = trim($_POST['test_nummer'] ?? '');
+        $naar_mail = trim($_POST['test_email'] ?? ($_SESSION['bhd_email'] ?? ''));
+        $via       = $_POST['test_kanaal'] ?? 'sms';
+        $voorkeur  = $via === 'wa' ? 'whatsapp' : ($via === 'sms' ? 'sms' : 'email');
+        $modus     = $via === 'email' ? 'email' : 'kort';
+        $res = ['status' => 'mislukt', 'reden' => 'meldingen-kern ontbreekt', 'kanaal' => null];
+        if (function_exists('melding_verstuur')) {
+            $res = melding_verstuur('handmatig', 0, [
+                'onderwerp'  => 'Testbericht Paal 13',
+                'body_html'  => '<p>Dit is een testbericht van het Paal 13 sollicitatiesysteem. Als je dit ontvangt, werkt het gekozen kanaal.</p>',
+                'tekst_kort' => 'Testbericht van het Paal 13 sollicitatiesysteem. Als je dit leest, werkt het kanaal.',
+            ], [
+                'ontvanger'   => ['email' => $naar_mail, 'naam' => 'Test', 'telefoon' => $naar_tel, 'rol' => 'direct', 'kanaal_voorkeur' => $voorkeur],
+                'kanaalmodus' => $modus, 'prioriteit' => 'direct', 'negeer_plafond' => true,
+            ]);
+        }
+        $ok = ($res['status'] === 'verstuurd');
+        $melding = $ok
+            ? 'Testbericht verstuurd via ' . ($res['kanaal'] ?? $via) . ($res['kanaal'] && $res['kanaal'] !== $voorkeur ? ' (terugval; het gekozen kanaal mislukte, zie het berichtenlog)' : '') . '.'
+            : 'Testbericht mislukt: ' . ($res['reden'] ?? 'onbekend') . ' — controleer de instellingen en het berichtenlog.';
+        flash($ok ? 'succes' : 'fout', $melding);
+        redirect(APP_URL . '/admin/instellingen.php?tab=berichten');
+    }
+
+    if ($actie === 'smtp_opslaan') {
+        $velden = [
+            'smtp.host'     => trim($_POST['smtp_host'] ?? ''),
+            'smtp.port'     => trim($_POST['smtp_port'] ?? '587'),
+            'smtp.user'     => trim($_POST['smtp_user'] ?? ''),
+            'smtp.encrypt'  => trim($_POST['smtp_encrypt'] ?? 'tls'),
+            'smtp.from'     => trim($_POST['smtp_from'] ?? ''),
+            'smtp.from_naam'=> trim($_POST['smtp_from_naam'] ?? ''),
+        ];
+        foreach ($velden as $sleutel => $waarde) {
+            instelling_opslaan($sleutel, $waarde);
+        }
+        // Wachtwoord alleen bijwerken als er een nieuwe is ingevuld (anders behouden)
+        $nieuw_ww = $_POST['smtp_pass'] ?? '';
+        if ($nieuw_ww !== '' && $nieuw_ww !== '••••••••') {
+            instelling_opslaan('smtp.pass', $nieuw_ww);
+        }
+        flash('succes', 'SMTP-instellingen opgeslagen.');
+        redirect(APP_URL . '/admin/instellingen.php?tab=smtp');
+    }
+
+    if ($actie === 'smtp_test') {
+        $naar = trim($_POST['smtp_test_naar'] ?? '');
+        if (!filter_var($naar, FILTER_VALIDATE_EMAIL)) {
+            flash('fout', 'Vul een geldig e-mailadres in voor de test.');
+        } else {
+            $res = smtp_test($naar);
+            flash($res['ok'] ? 'succes' : 'fout', $res['melding']);
+        }
+        redirect(APP_URL . '/admin/instellingen.php?tab=smtp');
     }
 
     if ($actie === 'authentik_bulk_sync') {
@@ -271,27 +384,32 @@ require __DIR__ . '/layout_top.php';
       <div class="inst-nav">
         <?php $nav_groepen = [
           'Organisatie' => [
-            ['algemeen', 'Algemeen',           '<circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>'],
-            ['functies', 'Functies & factoren','<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'],
-            ['loon',     'Minimumlonen',       '<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>'],
-            ['bezetting','Posten & bezetting',  '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>'],
+            ['algemeen', 'Algemeen',            '<circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>'],
+            ['functies', 'Functies & factoren', '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'],
           ],
-          'Proces' => [
+          'Selectie & seizoen' => [
             ['uitnodiging','Uitnodiging & automatisering', '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.15 12 19.79 19.79 0 0 1 1.08 3.4 2 2 0 0 1 3.06 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.09 8.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21 16"/>'],
+            ['selectie', 'Beoordelingscriteria', '<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>'],
+            ['bezetting','Posten & bezetting',   '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>'],
+          ],
+          'Loon & planning' => [
+            ['loon',     'Vakantietoeslag & lonen', '<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>'],
           ],
           'Communicatie' => [
-            ['mail',     'Mail & wachtrijen',  '<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>'],
+            ['mail',     'Mail & herinneringen',  '<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>'],
+            ['smtp',     'E-mailserver (SMTP)',   '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 5L2 7"/>'],
+          ],
+          'AI & koppelingen' => [
+            ['ai',       'AI-analyse',            '<circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 10v6m11-11h-6m-10 0H1"/>'],
+            ['authentik', 'Authentik & competenties', '<path d="M12 2l7 4v6c0 5-3.5 8-7 10-3.5-2-7-5-7-10V6z"/>'],
+            ['sso',      'Authentik SSO-login',   '<path d="M12 1l3 6 6 .75-4.12 4.62L18 19l-6-3.25L6 19l1.13-6.63L3 7.75 9 7z"/>'],
           ],
           'Koppelingen' => [
-            ['authentik', 'Authentik & competenties', '<path d="M12 2l7 4v6c0 5-3.5 8-7 10-3.5-2-7-5-7-10V6z"/>'],
-            ['ai',       'AI Analyse',         '<circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 10v6m11-11h-6m-10 0H1"/>'],
-            ['sso',      'Authentik SSO',      '<path d="M12 1l3 6 6 .75-4.12 4.62L18 19l-6-3.25L6 19l1.13-6.63L3 7.75 9 7z"/>'],
-          ],
-          'Selectiedag' => [
-            ['selectie', 'Beoordelingscriteria', '<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>'],
+            ['api', 'Website & API', '<path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/>'],
+            ['berichten', 'SMS, WhatsApp & meldingen', '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>'],
           ],
           'Privacy' => [
-            ['bewaren', 'Bewaartermijnen', '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>'],
+            ['bewaren', 'Bewaartermijnen (AVG)', '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>'],
           ],
         ]; ?>
         <?php foreach ($nav_groepen as $groep => $items): ?>
@@ -315,7 +433,7 @@ require __DIR__ . '/layout_top.php';
     <div class="card-body" style="padding:12px 14px;font-size:12px;color:var(--tekst-zacht);line-height:1.7">
       <strong style="display:block;margin-bottom:4px;color:var(--navy)">Versie</strong>
       <?= defined('APP_VERSIE') ? APP_VERSIE : instelling('app.versie', '1.0.0') ?><br>
-      <a href="<?= APP_URL ?>/admin/deploy.php" style="color:var(--oranje)">Deploy / versiebeheer ↗</a>
+      <a href="<?= APP_URL ?>/admin/systeem.php" style="color:var(--oranje)">Systeem &amp; Updates</a>
     </div>
   </div>
 </div>
@@ -362,6 +480,31 @@ require __DIR__ . '/layout_top.php';
         <div class="form-groep">
           <label>Welkomsttekst op portaal login <span class="tip" data-tip="Tekst die sollicitanten zien voordat ze inloggen via OTP-code."></span></label>
           <textarea name="inst[portaal.welkomst_tekst]" rows="3"><?= h(instelling('portaal.welkomst_tekst','Welkom op het sollicitantenportaal van Paal 13.')) ?></textarea>
+        </div>
+      </div>
+
+      <div class="inst-sectie">
+        <h3>Taken na aannemen</h3>
+        <?php
+          $_hr_id  = instelling_int('taken.huisregels_bijlage_id', 0);
+          $_hr_rij = ($_hr_id > 0 && function_exists('bijlage_rij')) ? bijlage_rij($_hr_id) : null;
+        ?>
+        <div class="form-groep">
+          <label>Huisregels (pdf) <span class="tip" data-tip="Aangenomen strandwachten krijgen de taak 'Huisregels lezen' met een link naar dit document. Zonder document blijft de taak staan als 'volgt binnenkort'."></span></label>
+          <?php if ($_hr_rij): ?>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+              <span class="badge badge-groen">In gebruik</span>
+              <a href="<?= h(bijlage_download_url((int)$_hr_rij['id'], 7)) ?>" target="_blank" rel="noopener" style="font-size:13px;color:var(--navy)"><?= h($_hr_rij['bestandsnaam']) ?></a>
+              <span style="font-size:12px;color:var(--tekst-zacht)"><?= round((int)$_hr_rij['grootte'] / 1024) ?> kB · geplaatst <?= h(datum_nl(substr((string)$_hr_rij['aangemaakt_op'], 0, 10))) ?></span>
+              <label style="font-size:12px;color:var(--tekst-zacht);display:inline-flex;align-items:center;gap:5px"><input type="checkbox" name="huisregels_los" value="1"> Losmaken van de taak</label>
+            </div>
+          <?php elseif ($_hr_id > 0): ?>
+            <div class="flash flash-fout" style="margin-bottom:8px">Het gekoppelde document (#<?= $_hr_id ?>) bestaat niet meer. Upload een nieuwe pdf.</div>
+          <?php else: ?>
+            <div class="form-hulp" style="margin-bottom:8px">Nog geen document. De taak "Huisregels lezen" staat bij aangenomen sollicitanten al klaar en krijgt automatisch een link zodra je hier een pdf plaatst.</div>
+          <?php endif; ?>
+          <input type="file" name="huisregels_upload" accept="application/pdf" style="font-size:12px">
+          <div class="form-hulp">Een nieuwe pdf vervangt de link in de taak. Het bestand komt in de bijlagenbibliotheek; de sollicitant opent het via een tijdelijke, persoonlijke downloadlink.</div>
         </div>
       </div>
 
@@ -604,68 +747,68 @@ require __DIR__ . '/layout_top.php';
       </div>
 
       <div class="inst-sectie">
-        <h3>🔔 Herinneringen</h3>
+        <h3>Herinneringen</h3>
         <p style="font-size:12px;color:var(--tekst-zacht);margin-bottom:10px">
-          Automatische herinneringen. Inhoud bewerken: <a href="<?= APP_URL ?>/admin/mail_templates.php" style="color:var(--oranje)">Mail templates</a>.
+          Automatische herinneringen, gecontroleerd op wat er echt verstuurd is (niet dubbel). Inhoud en kanaal per type:
+          <a href="<?= APP_URL ?>/admin/mail_templates.php" style="color:var(--oranje)">Mail templates</a> en
+          <a href="<?= APP_URL ?>/admin/instellingen.php?tab=berichten" style="color:var(--oranje)">Berichten</a>.
+          Proefdraaien zonder te versturen: <a href="<?= APP_URL ?>/admin/systeem.php#herinneringen" style="color:var(--oranje)">Systeem › Herinneringen</a>.
         </p>
 
-        <div class="form-rij">
-          <div class="form-groep">
+        <?php if (function_exists('herinnering_regels')): foreach (herinnering_regels() as $hslug => $hregel):
+          $h_aan = herinnering_instelling($hslug, 'aan') === '1'; ?>
+        <div class="form-rij" style="align-items:flex-start">
+          <div class="form-groep" style="flex:2">
             <label>
-              <input type="hidden" name="inst[reminder.blk_aan]" value="0">
-              <input type="checkbox" name="inst[reminder.blk_aan]" value="1" <?= instelling('reminder.blk_aan', '1') === '1' ? 'checked' : '' ?>>
-              BLK herinnering
+              <input type="hidden" name="inst[herinnering.<?= $hslug ?>.aan]" value="0">
+              <input type="checkbox" name="inst[herinnering.<?= $hslug ?>.aan]" value="1" <?= $h_aan ? 'checked' : '' ?>>
+              <?= h($hregel['naam']) ?>
             </label>
-            <div class="form-hulp">Geen BLK ingevuld → herinnering, herhaalt elke 14 dagen</div>
+            <div class="form-hulp"><?= h($hregel['uitleg']) ?></div>
+            <?php if ($hslug === 'selectiedag_morgen'): ?>
+            <input type="text" name="inst[herinnering.selectiedag_morgen.info]" value="<?= h(instelling('herinnering.selectiedag_morgen.info', '') ?: instelling('reminder.sd_morgen_info', '')) ?>" placeholder="Laatste info, bv: het wordt warm, neem water mee" style="margin-top:6px">
+            <?php endif; ?>
           </div>
-          <div class="form-groep">
-            <label>Dagen wachten na aanmelding</label>
-            <input type="number" name="inst[reminder.blk_dagen]" value="<?= instelling_int('reminder.blk_dagen', 7) ?>" min="1" max="60">
+          <?php if (empty($hregel['vast_na'])): ?>
+          <div class="form-groep" style="max-width:120px">
+            <label><?= in_array($hslug, ['selectiedag_nadert', 'trainingsweekend_nadert'], true) ? 'Dagen vooraf' : 'Na (dagen)' ?></label>
+            <input type="number" name="inst[herinnering.<?= $hslug ?>.na]" value="<?= (int)herinnering_instelling($hslug, 'na') ?>" min="0" max="60">
           </div>
+          <?php endif; ?>
+          <?php if ((int)$hregel['herhaal'] > 0): ?>
+          <div class="form-groep" style="max-width:120px">
+            <label>Herhaal elke</label>
+            <input type="number" name="inst[herinnering.<?= $hslug ?>.herhaal]" value="<?= (int)herinnering_instelling($hslug, 'herhaal') ?>" min="1" max="60">
+          </div>
+          <div class="form-groep" style="max-width:100px">
+            <label>Max</label>
+            <input type="number" name="inst[herinnering.<?= $hslug ?>.max]" value="<?= (int)herinnering_instelling($hslug, 'max') ?>" min="1" max="20">
+          </div>
+          <?php endif; ?>
         </div>
+        <?php endforeach; endif; ?>
 
         <div class="form-rij">
           <div class="form-groep">
-            <label>
-              <input type="hidden" name="inst[reminder.sd_aan]" value="0">
-              <input type="checkbox" name="inst[reminder.sd_aan]" value="1" <?= instelling('reminder.sd_aan', '1') === '1' ? 'checked' : '' ?>>
-              Selectiedag aankondiging vooraf
-            </label>
-            <div class="form-hulp">"Het is bijna zover" mail X dagen vóór de selectiedag</div>
+            <label>Rustperiode (dagen)</label>
+            <input type="number" name="inst[herinnering.rust_dagen]" value="<?= instelling_int('herinnering.rust_dagen', 3) ?>" min="0" max="30">
+            <div class="form-hulp">Maximaal één "zachte" herinnering per sollicitant per zoveel dagen.</div>
           </div>
           <div class="form-groep">
-            <label>Dagen vooraf</label>
-            <input type="number" name="inst[reminder.sd_dagen]" value="<?= instelling_int('reminder.sd_dagen', 3) ?>" min="1" max="30">
-          </div>
-        </div>
-
-        <div class="form-rij">
-          <div class="form-groep">
-            <label>
-              <input type="hidden" name="inst[reminder.sd_morgen_aan]" value="0">
-              <input type="checkbox" name="inst[reminder.sd_morgen_aan]" value="1" <?= instelling('reminder.sd_morgen_aan', '1') === '1' ? 'checked' : '' ?>>
-              Selectiedag morgen-mail
-            </label>
-            <div class="form-hulp">1 dag vóór selectiedag met laatste praktische info</div>
+            <label>Anti-loop: zelfde bericht per dag</label>
+            <input type="number" name="inst[melding.plafond_dag]" value="<?= instelling_int('melding.plafond_dag', 8) ?>" min="1" max="50">
+            <div class="form-hulp">Vaker hetzelfde automatische bericht naar dezelfde ontvanger in 24 uur wordt overgeslagen (zie foutenlog).
+              Andere berichtsoorten, bestuursmeldingen en wat je zelf in gang zet (fase omzetten, bulk, handmatig) tellen niet mee.</div>
           </div>
           <div class="form-groep">
-            <label>Laatste info <span style="color:var(--grijs);font-weight:400">(optioneel)</span></label>
-            <input type="text" name="inst[reminder.sd_morgen_info]" value="<?= h(instelling('reminder.sd_morgen_info', '')) ?>" placeholder="Bv: het wordt warm, neem water mee">
-          </div>
-        </div>
-
-        <div class="form-rij">
-          <div class="form-groep">
-            <label>
-              <input type="hidden" name="inst[reminder.ondertekening_aan]" value="0">
-              <input type="checkbox" name="inst[reminder.ondertekening_aan]" value="1" <?= instelling('reminder.ondertekening_aan', '1') === '1' ? 'checked' : '' ?>>
-              Herinnering open ondertekeningen
-            </label>
-            <div class="form-hulp">Eén herinnering per document naar de ondertekenaar (ouder of sollicitant) als het na X dagen nog openstaat</div>
+            <label>Bijlage als e-mailbijlage tot (MB)</label>
+            <input type="number" name="inst[bijlage.mail_max_mb]" value="<?= instelling_int('bijlage.mail_max_mb', 15) ?>" min="1" max="25">
+            <div class="form-hulp">Grotere bestanden gaan als downloadknop in de mail (link 14 dagen geldig). Weigert de mailserver een bijlage toch, dan gaat de mail automatisch opnieuw met een downloadknop.</div>
           </div>
           <div class="form-groep">
-            <label>Na hoeveel dagen</label>
-            <input type="number" name="inst[reminder.ondertekening_dagen]" value="<?= instelling_int('reminder.ondertekening_dagen', 3) ?>" min="1" max="30">
+            <label>WhatsApp per uur (max)</label>
+            <input type="number" name="inst[wa.max_per_uur]" value="<?= instelling_int('wa.max_per_uur', 30) ?>" min="1" max="500">
+            <div class="form-hulp">Boven dit aantal valt de kern terug op SMS/e-mail.</div>
           </div>
         </div>
       </div>
@@ -693,6 +836,22 @@ require __DIR__ . '/layout_top.php';
             <input type="email" name="inst[mail.bestuur_email]" value="<?= h(instelling('mail.bestuur_email','bestuur@paal13.com')) ?>">
             <div class="form-hulp">Ontvangt notificaties bij nieuwe aanmeldingen</div>
           </div>
+        </div>
+        <div class="form-rij">
+          <div class="form-groep">
+            <label>Penningmeester e-mail</label>
+            <input type="email" name="inst[mail.penningmeester_email]" value="<?= h(instelling('mail.penningmeester_email','')) ?>">
+            <div class="form-hulp">Ontvangt de melding "loondossier compleet" (loonheffing, kopie ID, bankpas). Leeg = bestuursadres</div>
+          </div>
+          <div class="form-groep">
+            <label>Ledenservice e-mail</label>
+            <input type="email" name="inst[mail.ledenservice_email]" value="<?= h(instelling('mail.ledenservice_email','')) ?>">
+            <div class="form-hulp">Ontvangt de ondertekende inschrijving als lid/donateur (met PDF). Leeg = bestuursadres</div>
+          </div>
+        </div>
+        <div class="form-groep">
+          <label class="checkbox-label"><input type="hidden" name="inst[documenten.penningmeester_bijlagen]" value="0"><input type="checkbox" name="inst[documenten.penningmeester_bijlagen]" value="1" <?= instelling('documenten.penningmeester_bijlagen','0') === '1' ? 'checked' : '' ?>> Loondossier-stukken als bijlage meesturen in de mail aan de penningmeester</label>
+          <div class="form-hulp">Standaard uit: de stukken (BSN, kopie identiteitsbewijs, bankpas) gaan dan alleen via de beveiligde inzage in het beheer. Aanzetten stuurt ze onversleuteld per e-mail; doe dat alleen als het mailpad vertrouwd is.</div>
         </div>
       </div>
       <div class="inst-sectie">
@@ -1213,11 +1372,32 @@ require __DIR__ . '/layout_top.php';
       </div>
       <div class="form-rij">
         <div class="form-groep">
-          <label>Mail- en actielogboek</label>
+          <label>Berichtenlog (alle kanalen)</label>
           <input type="number" name="inst[bewaar.maillog_mnd]" value="<?= instelling_int('bewaar.maillog_mnd',12) ?>" min="0" max="60">
+          <div class="form-hulp">Daarna de logregels verwijderen</div>
+        </div>
+        <div class="form-groep">
+          <label>Inhoud van berichten <span class="tip" data-tip="De volledige tekst van verstuurde berichten (leesbaar in het portaal en het berichtenlog). Daarna blijft alleen onderwerp + samenvatting over."></span></label>
+          <input type="number" name="inst[bewaar.maillog_body_mnd]" value="<?= instelling_int('bewaar.maillog_body_mnd',3) ?>" min="0" max="24">
+          <div class="form-hulp">Daarna de inhoud leegmaken</div>
+        </div>
+        <div class="form-groep">
+          <label>Losse bijlagen <span class="tip" data-tip="Geüploade bestanden die aan geen enkel sjabloon meer hangen."></span></label>
+          <input type="number" name="inst[bewaar.bijlagen_mnd]" value="<?= instelling_int('bewaar.bijlagen_mnd',12) ?>" min="0" max="60">
           <div class="form-hulp">Daarna verwijderen</div>
         </div>
-        <div class="form-groep"></div>
+      </div>
+      <div class="form-rij">
+        <div class="form-groep">
+          <label>Bezoekersstatistiek landingspagina's <span class="tip" data-tip="Aantallen bezoeken en aanmeldingen per landingspagina. Bevat geen persoonsgegevens."></span></label>
+          <input type="number" name="inst[bewaar.pagina_events_mnd]" value="<?= instelling_int('bewaar.pagina_events_mnd',13) ?>" min="0" max="60">
+          <div class="form-hulp">Daarna verwijderen (0 = bewaren)</div>
+        </div>
+        <div class="form-groep">
+          <label>Herkenning unieke bezoekers <span class="tip" data-tip="Een dag-gebonden pseudoniem om unieke bezoekers te tellen. Wordt hierna gewist; de aantallen blijven staan."></span></label>
+          <input type="number" name="inst[bewaar.pagina_hash_dagen]" value="<?= instelling_int('bewaar.pagina_hash_dagen',30) ?>" min="0" max="365">
+          <div class="form-hulp">Dagen, daarna wissen</div>
+        </div>
       </div>
 
       <button type="submit" class="btn btn-primary">Opslaan</button>
@@ -1258,6 +1438,304 @@ require __DIR__ . '/layout_top.php';
     <?php endif; ?>
   </div>
 </div>
+
+<?php elseif ($tab === 'smtp'): ?>
+  <?php
+    $s_host    = instelling('smtp.host', defined('SMTP_HOST') ? SMTP_HOST : '');
+    $s_port    = instelling('smtp.port', defined('SMTP_PORT') ? (string)SMTP_PORT : '587');
+    $s_user    = instelling('smtp.user', defined('SMTP_USER') ? SMTP_USER : '');
+    $s_encrypt = instelling('smtp.encrypt', defined('SMTP_ENCRYPT') ? SMTP_ENCRYPT : 'tls');
+    $s_from    = instelling('smtp.from', defined('MAIL_FROM') ? MAIL_FROM : '');
+    $s_fromnaam= instelling('smtp.from_naam', defined('MAIL_FROM_NAME') ? MAIL_FROM_NAME : 'Reddingsbrigade Paal 13');
+    $s_heeft_ww= instelling('smtp.pass', '') !== '' || (defined('SMTP_PASS') && SMTP_PASS !== '');
+  ?>
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-header"><div class="card-title">E-mailinstellingen (SMTP)</div></div>
+    <div class="card-body">
+      <p style="font-size:13px;color:var(--tekst-zacht);margin:0 0 16px">
+        Hiermee verstuurt het systeem e-mails. Vul de gegevens van je mailserver in. Weet je ze niet? Die vind je bij je hostingprovider (Cloud86) onder de e-mailinstellingen van dit adres.
+      </p>
+      <form method="POST">
+        <?= csrf_input() ?>
+        <input type="hidden" name="actie" value="smtp_opslaan">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div style="grid-column:1/-1">
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--tekst-zacht);margin-bottom:4px">SMTP-server (host)</label>
+            <input type="text" name="smtp_host" value="<?= h($s_host) ?>" placeholder="mail.paal13.com" style="width:100%;padding:9px 12px;border:1px solid var(--rand);border-radius:8px;font-size:14px">
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--tekst-zacht);margin-bottom:4px">Poort</label>
+            <input type="text" name="smtp_port" value="<?= h($s_port) ?>" placeholder="587" style="width:100%;padding:9px 12px;border:1px solid var(--rand);border-radius:8px;font-size:14px">
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--tekst-zacht);margin-bottom:4px">Beveiliging</label>
+            <select name="smtp_encrypt" style="width:100%;padding:9px 12px;border:1px solid var(--rand);border-radius:8px;font-size:14px">
+              <option value="tls" <?= $s_encrypt==='tls'?'selected':'' ?>>STARTTLS (poort 587) — meest gebruikt</option>
+              <option value="ssl" <?= $s_encrypt==='ssl'?'selected':'' ?>>SSL/TLS (poort 465)</option>
+              <option value="none" <?= $s_encrypt==='none'?'selected':'' ?>>Geen (afgeraden)</option>
+            </select>
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--tekst-zacht);margin-bottom:4px">Gebruikersnaam</label>
+            <input type="text" name="smtp_user" value="<?= h($s_user) ?>" placeholder="website@paal13.com" style="width:100%;padding:9px 12px;border:1px solid var(--rand);border-radius:8px;font-size:14px">
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--tekst-zacht);margin-bottom:4px">Wachtwoord</label>
+            <input type="password" name="smtp_pass" value="<?= $s_heeft_ww ? '••••••••' : '' ?>" autocomplete="new-password" style="width:100%;padding:9px 12px;border:1px solid var(--rand);border-radius:8px;font-size:14px">
+            <span style="font-size:11px;color:var(--grijs)"><?= $s_heeft_ww ? 'Laat ongewijzigd om het huidige wachtwoord te behouden.' : 'Nog geen wachtwoord ingesteld.' ?></span>
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--tekst-zacht);margin-bottom:4px">Afzender-adres</label>
+            <input type="text" name="smtp_from" value="<?= h($s_from) ?>" placeholder="no-reply@paal13.com" style="width:100%;padding:9px 12px;border:1px solid var(--rand);border-radius:8px;font-size:14px">
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--tekst-zacht);margin-bottom:4px">Afzender-naam</label>
+            <input type="text" name="smtp_from_naam" value="<?= h($s_fromnaam) ?>" placeholder="Reddingsbrigade Paal 13" style="width:100%;padding:9px 12px;border:1px solid var(--rand);border-radius:8px;font-size:14px">
+          </div>
+        </div>
+        <div style="margin-top:16px">
+          <button type="submit" class="btn btn-primary">Opslaan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-title">Testmail versturen</div></div>
+    <div class="card-body">
+      <p style="font-size:13px;color:var(--tekst-zacht);margin:0 0 14px">
+        Stuur een testmail om te controleren of je instellingen werken. Sla je wijzigingen eerst op. Lukt het niet, dan zie je de reden hier én in <a href="<?= APP_URL ?>/admin/foutenlog.php" style="color:var(--navy)">Foutenlog</a>.
+      </p>
+      <form method="POST" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+        <?= csrf_input() ?>
+        <input type="hidden" name="actie" value="smtp_test">
+        <div style="flex:1;min-width:220px">
+          <label style="display:block;font-size:12px;font-weight:600;color:var(--tekst-zacht);margin-bottom:4px">Stuur test naar</label>
+          <input type="email" name="smtp_test_naar" value="<?= h(huidige_beheerder()['email'] ?? '') ?>" placeholder="jouw@email.nl" style="width:100%;padding:9px 12px;border:1px solid var(--rand);border-radius:8px;font-size:14px">
+        </div>
+        <button type="submit" class="btn btn-outline">Verstuur testmail</button>
+      </form>
+    </div>
+  </div>
+
+<?php elseif ($tab === 'api'): ?>
+  <?php
+    $api_sleutel = instelling('api.sleutel', '');
+    $api_origins = instelling('api.origins', '');
+    $api_basis_url = APP_URL . '/api';
+  ?>
+  <div class="inst-sectie">
+    <h2 style="font-size:16px;margin:0 0 4px">Website &amp; API</h2>
+    <p style="color:var(--tekst-zacht);font-size:13.5px;margin:0 0 18px">
+      Hiermee koppelt de WordPress-plugin op de website met dit systeem: de plugin haalt de
+      seizoensinfo op en stuurt aanmeldingen hierheen. De verbinding is beveiligd met een geheime sleutel.
+    </p>
+
+    <div style="background:var(--bg-card,#fff);border:1px solid var(--rand);border-radius:10px;padding:16px;margin-bottom:16px">
+      <div style="font-weight:600;font-size:14px;margin-bottom:8px">API-sleutel</div>
+      <?php if ($api_sleutel): ?>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
+          <input type="text" readonly value="<?= h($api_sleutel) ?>" id="apiSleutel"
+                 style="flex:1;min-width:280px;font-family:monospace;font-size:12px;background:var(--bg)">
+          <button type="button" class="btn btn-outline btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('apiSleutel').value);this.textContent='Gekopieerd!'">Kopieer</button>
+        </div>
+        <p style="font-size:12px;color:var(--tekst-zacht);margin:0 0 10px">
+          Zet deze sleutel in de WordPress-plugin. Houd 'm geheim — wie de sleutel heeft, kan aanmeldingen versturen.
+        </p>
+      <?php else: ?>
+        <p style="font-size:13px;color:var(--oranje);margin:0 0 10px">Er is nog geen sleutel. Genereer er een om de koppeling te activeren.</p>
+      <?php endif; ?>
+      <form method="post" onsubmit="return confirm('<?= $api_sleutel ? 'Een nieuwe sleutel maakt de oude ongeldig. De plugin moet dan bijgewerkt worden. Doorgaan?' : 'Nieuwe sleutel genereren?' ?>')">
+        <?= csrf_input() ?>
+        <input type="hidden" name="actie" value="api_sleutel_genereer">
+        <button type="submit" class="btn btn-primary btn-sm"><?= $api_sleutel ? 'Nieuwe sleutel genereren' : 'Sleutel genereren' ?></button>
+      </form>
+    </div>
+
+    <form method="post">
+      <?= csrf_input() ?>
+      <input type="hidden" name="actie" value="api_opslaan">
+      <label style="display:block;font-weight:600;font-size:14px;margin-bottom:4px">Toegestane websites (CORS)</label>
+      <p style="font-size:12px;color:var(--tekst-zacht);margin:0 0 6px">
+        Eén per regel. De hoofdsite (paal13.com) is altijd toegestaan. Voeg hier extra domeinen toe als de plugin op een ander adres draait.
+      </p>
+      <textarea name="api_origins" rows="3" style="width:100%;font-family:monospace;font-size:12px" placeholder="https://paal13.com"><?= h($api_origins) ?></textarea>
+      <div style="margin-top:10px"><button type="submit" class="btn btn-primary btn-sm">Opslaan</button></div>
+    </form>
+
+    <div style="margin-top:20px;padding:14px;background:var(--bg);border:1px solid var(--rand);border-radius:10px">
+      <div style="font-weight:600;font-size:13px;margin-bottom:6px">Voor de plugin-instellingen</div>
+      <table style="font-size:12.5px;width:100%">
+        <tr><td style="padding:3px 8px;color:var(--tekst-zacht)">API-basis-URL</td><td style="padding:3px 8px;font-family:monospace"><?= h($api_basis_url) ?></td></tr>
+        <tr><td style="padding:3px 8px;color:var(--tekst-zacht)">Seizoensinfo</td><td style="padding:3px 8px;font-family:monospace">GET <?= h($api_basis_url) ?>/seizoen.php</td></tr>
+        <tr><td style="padding:3px 8px;color:var(--tekst-zacht)">Aanmelden</td><td style="padding:3px 8px;font-family:monospace">POST <?= h($api_basis_url) ?>/aanmelden.php</td></tr>
+      </table>
+    </div>
+  </div>
+
+<?php elseif ($tab === 'berichten'): ?>
+  <?php
+    $sms_gw = instelling('sms.gateway', '');
+  ?>
+  <div class="inst-sectie">
+    <h2 style="font-size:16px;margin:0 0 4px">SMS, WhatsApp &amp; meldingen</h2>
+    <p style="color:var(--tekst-zacht);font-size:13.5px;margin:0 0 18px">
+      Stuur meldingen naast e-mail ook via SMS of WhatsApp. Beide kanalen zijn los in- en uit te
+      schakelen. Onderaan bepaal je per soort melding via welke kanalen die verstuurd wordt.
+    </p>
+
+    <form method="post">
+      <?= csrf_input() ?>
+      <input type="hidden" name="actie" value="berichten_opslaan">
+
+      <!-- SMS -->
+      <div style="background:var(--bg-card,#fff);border:1px solid var(--rand);border-radius:10px;padding:16px;margin-bottom:16px">
+        <label class="inst-toggle" style="display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px;margin-bottom:12px">
+          <input type="checkbox" name="sms_actief" value="1" <?= instelling('sms.actief','0')==='1'?'checked':'' ?>>
+          SMS inschakelen
+        </label>
+
+        <label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px">Gateway (verzendmethode)</label>
+        <select name="sms_gateway" id="smsGateway" onchange="smsGatewayToon()" style="width:100%;max-width:360px;margin-bottom:6px">
+          <option value="">— kies —</option>
+          <option value="eigen_telefoon" <?= $sms_gw==='eigen_telefoon'?'selected':'' ?>>Eigen telefoon / VoIP (goedkoopst)</option>
+          <option value="http_gateway" <?= $sms_gw==='http_gateway'?'selected':'' ?>>Generieke HTTP-gateway</option>
+          <option value="easysendsms" <?= $sms_gw==='easysendsms'?'selected':'' ?>>EasySendSMS (pay-as-you-go)</option>
+          <option value="messagebird" <?= $sms_gw==='messagebird'?'selected':'' ?>>MessageBird / Bird (NL)</option>
+        </select>
+        <p style="font-size:12px;color:var(--tekst-zacht);margin:0 0 12px">
+          <strong>Goedkoopst:</strong> "Eigen telefoon / VoIP" — je gebruikt je eigen (VoIP- of Android-)nummer met
+          een app of dienst die een simpel webadres aanbiedt om een SMS te sturen. Je betaalt dan alleen je eigen
+          bundel, geen kosten per bericht. De andere opties rekenen per bericht (ca. 1 cent), maar zijn kant-en-klaar.
+        </p>
+
+        <div style="margin-bottom:10px">
+          <label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px">Afzendernaam</label>
+          <input type="text" name="sms_afzender" value="<?= h(instelling('sms.afzender','Paal13')) ?>" style="width:100%;max-width:200px" maxlength="11">
+          <span style="font-size:11px;color:var(--tekst-zacht)">max 11 tekens</span>
+        </div>
+
+        <!-- HTTP / eigen telefoon velden -->
+        <div class="sms-veld" data-voor="eigen_telefoon http_gateway" style="display:none">
+          <label style="display:block;font-size:13px;font-weight:600;margin:8px 0 4px">Webadres (URL) van de gateway</label>
+          <input type="text" name="sms_http_url" value="<?= h(instelling('sms.http_url','')) ?>" style="width:100%" placeholder="https://.../send?to={nummer}&text={tekst}">
+          <p style="font-size:11px;color:var(--tekst-zacht);margin:2px 0 8px">Je mag <code>{nummer}</code> en <code>{tekst}</code> als plek-houders gebruiken. Anders worden ze als POST-velden meegestuurd.</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <div>
+              <label style="display:block;font-size:12px;margin-bottom:2px">Methode</label>
+              <select name="sms_http_method" style="width:100px">
+                <option value="POST" <?= instelling('sms.http_method','POST')==='POST'?'selected':'' ?>>POST</option>
+                <option value="GET" <?= instelling('sms.http_method','POST')==='GET'?'selected':'' ?>>GET</option>
+              </select>
+            </div>
+            <div style="flex:1;min-width:180px">
+              <label style="display:block;font-size:12px;margin-bottom:2px">Token (optioneel)</label>
+              <input type="text" name="sms_http_token" value="<?= h(instelling('sms.http_token','')) ?>" style="width:100%">
+            </div>
+          </div>
+        </div>
+
+        <!-- EasySendSMS -->
+        <div class="sms-veld" data-voor="easysendsms" style="display:none">
+          <label style="display:block;font-size:13px;font-weight:600;margin:8px 0 4px">EasySendSMS API-sleutel</label>
+          <input type="text" name="sms_easysendsms_key" value="<?= h(instelling('sms.easysendsms_key','')) ?>" style="width:100%">
+        </div>
+
+        <!-- MessageBird -->
+        <div class="sms-veld" data-voor="messagebird" style="display:none">
+          <label style="display:block;font-size:13px;font-weight:600;margin:8px 0 4px">MessageBird API-sleutel</label>
+          <input type="text" name="sms_messagebird_key" value="<?= h(instelling('sms.messagebird_key','')) ?>" style="width:100%">
+        </div>
+      </div>
+
+      <!-- WhatsApp -->
+      <div style="background:var(--bg-card,#fff);border:1px solid var(--rand);border-radius:10px;padding:16px;margin-bottom:16px">
+        <label class="inst-toggle" style="display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px;margin-bottom:10px">
+          <input type="checkbox" name="wa_actief" value="1" <?= instelling('wa.actief','0')==='1'?'checked':'' ?>>
+          WhatsApp inschakelen (via WhatsReach)
+        </label>
+        <div style="padding:10px 14px;background:var(--oranje-bg);border:1px solid var(--oranje);border-radius:8px;font-size:12.5px;color:var(--oranje);margin-bottom:12px">
+          <strong>Let op:</strong> WhatsReach werkt buiten de officiële WhatsApp Business API om. Dit brengt een
+          reëel risico met zich mee dat het gebruikte WhatsApp-nummer door WhatsApp geblokkeerd wordt. Gebruik bij
+          voorkeur een apart nummer, en stuur alleen naar mensen die contact via WhatsApp verwachten. Dit kanaal
+          staat daarom standaard uit.
+        </div>
+        <label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px">WhatsReach API-sleutel <span style="font-weight:400;color:var(--ink-muted)">(X-API-Key)</span></label>
+        <input type="text" name="wa_api_sleutel" value="<?= h(instelling('wa.api_sleutel','')) ?>" style="width:100%;margin-bottom:8px" placeholder="je API-sleutel">
+        <label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px">Base URL</label>
+        <input type="text" name="wa_base_url" value="<?= h(instelling('wa.base_url','https://api.whatsreach.co/api/v1')) ?>" style="width:100%;margin-bottom:8px">
+        <label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px">Afzendernummer <span style="font-weight:400;color:var(--ink-muted)">(optioneel — bij meerdere gekoppelde apparaten)</span></label>
+        <input type="text" name="wa_afzender_nummer" value="<?= h(instelling('wa.afzender_nummer','')) ?>" style="width:100%" placeholder="+31612345678">
+        <p style="font-size:12px;color:var(--ink-muted);margin:6px 0 0">Het WhatsApp-nummer waarvandaan berichten verstuurd worden (het "from"-apparaat uit WhatsReach). Laat leeg als je maar één apparaat hebt gekoppeld.</p>
+      </div>
+
+      <!-- Kanaal per melding -->
+      <div style="background:var(--bg-card,#fff);border:1px solid var(--rand);border-radius:10px;padding:16px;margin-bottom:16px">
+        <div style="font-weight:600;font-size:15px;margin-bottom:6px">Welke melding via welk kanaal?</div>
+        <p style="font-size:12px;color:var(--tekst-zacht);margin:0 0 12px">
+          <strong>E-mail</strong> = alleen e-mail. <strong>WhatsApp/SMS</strong> = kort bericht via het kanaal dat de sollicitant koos (standaard WhatsApp; SMS als WhatsApp niet kan);
+          lukt dat niet, dan alsnog per e-mail. <strong>Beide</strong> = e-mail én kort bericht. <strong>Uit</strong> = niet versturen.
+          Ouders en het bestuur krijgen altijd e-mail. Teksten bewerken: <a href="<?= APP_URL ?>/admin/mail_templates.php" style="color:var(--oranje)">Sjablonen</a>.
+        </p>
+        <?php if (function_exists('meldingen_per_categorie')): $kmodi = meldingen_kanaalmodi(); foreach (meldingen_per_categorie() as $ck => $typen): if ($ck === 'handmatig') continue; ?>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--grijs);margin:12px 0 4px"><?= h(meldingen_categorieen()[$ck] ?? $ck) ?></div>
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <?php foreach ($typen as $type => $mdef): $mm = melding_kanaalmodus($type); ?>
+          <tr style="border-bottom:1px solid var(--rand)">
+            <td style="padding:7px 8px"><a href="<?= APP_URL ?>/admin/mail_templates.php?slug=<?= h($type) ?>" style="color:inherit;text-decoration:none"><?= h($mdef['naam']) ?></a>
+              <div style="font-size:11px;color:var(--tekst-zacht)"><?= h($mdef['beschrijving'] ?? '') ?></div></td>
+            <td style="padding:7px 8px;width:220px;text-align:right">
+              <select name="notif[<?= h($type) ?>]" style="font-size:12px;padding:5px 8px;width:200px">
+                <?php foreach ($kmodi as $mk => $ml): if (!$mdef['kort_toegestaan'] && $mk !== 'email' && $mk !== 'uit') continue; ?>
+                <option value="<?= $mk ?>" <?= $mm === $mk ? 'selected' : '' ?>><?= h($ml) ?></option>
+                <?php endforeach; ?>
+              </select>
+            </td>
+          </tr>
+          <?php endforeach; ?>
+        </table>
+        <?php endforeach; endif; ?>
+      </div>
+
+      <button type="submit" class="btn btn-primary">Opslaan</button>
+    </form>
+
+    <!-- Test -->
+    <div style="background:var(--bg);border:1px solid var(--rand);border-radius:10px;padding:16px;margin-top:16px">
+      <div style="font-weight:600;font-size:14px;margin-bottom:8px">Testbericht sturen</div>
+      <form method="post" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end">
+        <?= csrf_input() ?>
+        <input type="hidden" name="actie" value="bericht_test">
+        <div>
+          <label style="display:block;font-size:12px;margin-bottom:2px">Telefoonnummer</label>
+          <input type="text" name="test_nummer" placeholder="06..." style="width:160px">
+        </div>
+        <div>
+          <label style="display:block;font-size:12px;margin-bottom:2px">E-mail (terugval)</label>
+          <input type="email" name="test_email" value="<?= h($_SESSION['bhd_email'] ?? '') ?>" style="width:220px">
+        </div>
+        <div>
+          <label style="display:block;font-size:12px;margin-bottom:2px">Via</label>
+          <select name="test_kanaal" style="width:120px">
+            <option value="wa">WhatsApp</option>
+            <option value="sms">SMS</option>
+            <option value="email">E-mail</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-outline btn-sm">Test versturen</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function smsGatewayToon() {
+      var gw = document.getElementById('smsGateway').value;
+      document.querySelectorAll('.sms-veld').forEach(function(el){
+        el.style.display = el.dataset.voor.split(' ').includes(gw) ? '' : 'none';
+      });
+    }
+    smsGatewayToon();
+  </script>
 
 <?php endif; ?>
 

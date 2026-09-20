@@ -2,15 +2,17 @@
 vereist_login();
 $_bhd     = huidige_beheerder();
 // Zorg dat mail_template kolommen bestaan + seed defaults (idempotent, één keer per request)
-if (function_exists('mail_templates_auto_setup')) { mail_templates_auto_setup(); }
+if (function_exists('sjablonen_auto_setup')) { sjablonen_auto_setup(); }
 if (function_exists('lazy_cron_tick')) { lazy_cron_tick(); }
 $_seizoen = actief_seizoen();
 
 $_nav_items = [
     ['id'=>'dashboard',       'label'=>'Dashboard',       'url'=>'/admin/',                    'svg'=>'<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>'],
     ['id'=>'sollicitanten',   'label'=>'Sollicitanten',   'url'=>'/admin/sollicitanten.php',   'svg'=>'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'],
+    ['id'=>'paginas',         'label'=>'Landingspagina\'s', 'url'=>'/admin/paginas.php',        'svg'=>'<path d="M3 3h18v4H3z"/><path d="M3 11h8v10H3z"/><path d="M15 11h6v4h-6z"/><path d="M15 19h6v2h-6z"/>'],
     ['id'=>'selectiedag',     'label'=>'Selectiedag',     'url'=>'/admin/selectie_indeling.php', 'svg'=>'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>'],
     ['id'=>'ondertekeningen', 'label'=>'Ondertekeningen', 'url'=>'/admin/ondertekeningen.php', 'svg'=>'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>'],
+    ['id'=>'documenten',      'label'=>'Loondossiers',    'url'=>'/admin/documenten.php',      'svg'=>'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><line x1="12" y1="15" x2="12" y2="18"/>'],
     ['id'=>'beschikbaarheid', 'label'=>'Beschikbaarheid', 'url'=>'/admin/beschikbaarheid.php', 'svg'=>'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>'],
     ['id'=>'dekking',         'label'=>'Dekking',         'url'=>'/admin/dekking.php',         'svg'=>'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>'],
     ['id'=>'loonplanning',    'label'=>'Loonplanning',    'url'=>'/admin/loonplanning.php',    'svg'=>'<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>'],
@@ -20,19 +22,73 @@ $_nav_items = [
         'sub' => [
             ['id'=>'instellingen',    'label'=>'Algemeen',         'url'=>'/admin/instellingen.php?tab=algemeen'],
             ['id'=>'seizoen',         'label'=>'Seizoenbeheer',    'url'=>'/admin/seizoen.php'],
-            ['id'=>'mailing',         'label'=>'Mailings',         'url'=>'/admin/mailing.php'],
-            ['id'=>'mail_templates',  'label'=>'Mail templates',   'url'=>'/admin/mail_templates.php'],
+            ['id'=>'berichten',       'label'=>'Berichten',        'url'=>'/admin/berichten.php'],
+            ['id'=>'mail_templates',  'label'=>'Sjablonen',        'url'=>'/admin/mail_templates.php'],
+            ['id'=>'geplande_berichten', 'label'=>'Geplande berichten', 'url'=>'/admin/geplande_berichten.php'],
+            ['id'=>'handleiding',     'label'=>'Handleidingen',    'url'=>'/admin/handleiding.php'],
         ],
     ],
 ];
+// Logboek: eigen module-recht, dus buiten het admin-blok. Het filter hieronder verbergt het
+// item voor wie geen leesrecht heeft (standaard iedereen behalve admin).
+$_nav_items[] = ['id'=>'logboek','label'=>'Logboek','url'=>'/admin/logboek.php','svg'=>'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/>'];
+
 if ($_bhd['rol'] === 'admin') {
     $_nav_items[] = ['id'=>'beheerders','label'=>'Beheerders','url'=>'/admin/beheerders.php','svg'=>'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'];
+    $_nav_items[] = ['id'=>'rollen','label'=>'Rollen & rechten','url'=>'/admin/rollen.php','svg'=>'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>'];
     // Voeg systeem-link toe in instellingen submenu
     foreach ($_nav_items as &$_n) {
         if ($_n['id'] === 'instellingen') {
             $_n['sub'][] = ['id'=>'systeem', 'label'=>'Systeem & Updates', 'url'=>'/admin/systeem.php'];
-            $_n['sub'][] = ['id'=>'deploy', 'label'=>'Deploy & Versiebeheer', 'url'=>'/admin/deploy.php'];
+            $_n['sub'][] = ['id'=>'foutenlog', 'label'=>'Foutenlog', 'url'=>'/admin/foutenlog.php'];
             break;
+        }
+    }
+    unset($_n);
+}
+
+// Rol-bewust menu: verberg items waar de rol geen leesrecht op heeft.
+// Elk item koppelt aan een module; admin ziet alles (mag() geeft admin altijd true).
+$_nav_modules = [
+    'dashboard'       => null,               // dashboard altijd zichtbaar voor ingelogden
+    'sollicitanten'   => 'sollicitanten',
+    'paginas'         => 'paginas',
+    'selectiedag'     => 'selectiedag',
+    'ondertekeningen' => 'ondertekeningen',
+    'documenten'      => 'documenten',
+    'beschikbaarheid' => 'beschikbaarheid',
+    'dekking'         => 'dekking',
+    'loonplanning'    => 'loonplanning',
+    'instellingen'    => 'instellingen',
+    'logboek'         => 'logboek',
+    'beheerders'      => 'beheerders',
+    'rollen'          => 'beheerders',
+];
+if (function_exists('mag')) {
+    $_nav_items = array_values(array_filter($_nav_items, function($item) use ($_nav_modules) {
+        $mod = $_nav_modules[$item['id']] ?? null;
+        if ($mod === null) return true;            // geen module-koppeling → altijd tonen
+        return mag($mod, 'lezen');
+    }));
+    // Submenu-items ook filteren
+    $_sub_modules = [
+        'seizoen'        => 'seizoen',
+        'mailing'        => 'mailing',
+        'berichten'      => 'mailing',
+        'mail_templates' => 'mailing',
+        'geplande_berichten' => 'mailing',
+        'systeem'        => 'systeem',
+        'foutenlog'      => 'systeem',
+        'instellingen'   => 'instellingen',
+        // 'handleiding' staat er bewust niet in: de uitleg is voor iedereen met toegang.
+    ];
+    foreach ($_nav_items as &$_n) {
+        if (!empty($_n['sub'])) {
+            $_n['sub'] = array_values(array_filter($_n['sub'], function($s) use ($_sub_modules) {
+                $mod = $_sub_modules[$s['id']] ?? null;
+                if ($mod === null) return true;
+                return mag($mod, 'lezen');
+            }));
         }
     }
     unset($_n);
@@ -131,6 +187,21 @@ if ($_bhd['rol'] === 'admin') {
       <?= $_bhd['via'] === 'authentik' ? '🔐 Authentik SSO' : '🔑 Wachtwoord' ?>
     </div>
 
+    <?php
+      // Switch-knop naar het portaal — alleen als deze beheerder ook een sollicitatie heeft.
+      $_kan_portaal = false;
+      if (function_exists('toegang_bepaal') && !empty($_bhd['email'])) {
+          $_t = toegang_bepaal($_bhd['email']);
+          $_kan_portaal = $_t['portaal'];
+      }
+      if ($_kan_portaal):
+    ?>
+    <a href="<?= APP_URL ?>/wissel.php?naar=portaal"
+       style="display:block;color:rgba(255,255,255,.7);font-size:12px;text-decoration:none;margin-bottom:8px">
+      ↔ Naar mijn sollicitatie
+    </a>
+    <?php endif; ?>
+
     <a href="<?= APP_URL ?>/admin/uitloggen.php"
        style="color:rgba(255,255,255,.45);font-size:12px;text-decoration:none">Uitloggen</a>
   </div>
@@ -172,36 +243,29 @@ window.addEventListener('resize',function(){if(window.innerWidth>768)sluitSideba
       <?php if ($_seizoen): ?>
       <span class="seizoen-badge <?= $_seizoen['status'] === 'open' ? 'open' : '' ?>">
         <?= h($_seizoen['naam']) ?> &mdash;
-        <?= $_seizoen['status'] === 'open' ? '✅ Open' : '🔒 Gesloten' ?>
+        <?= $_seizoen['status'] === 'open' ? icoon('vink-cirkel', 13) . ' Open' : icoon('slot', 13) . ' Gesloten' ?>
       </span>
       <?php endif; ?>
 
       <?php
-      // Contextuele hulp per pagina
-      $_hulp_paginas = [
-          'dashboard'       => ['Dashboard', 'Hier zie je in één oogopslag hoe het seizoen loopt. Klik op een funnel-tegel om die sollicitanten te bekijken. De systeemstatus waarschuwt als mails vastlopen of ondertekeningen te lang openstaan.'],
-          'sollicitanten'   => ['Sollicitanten', 'Het hart van het systeem. Klik op een naam voor het detailpaneel met alle gegevens, notities en acties. Selecteer meerdere rijen voor bulk-acties (uitnodigen, aannemen). Fase wijzigen verstuurt automatisch de bijbehorende mail.'],
-          'selectiedag'     => ['Selectiedag', 'Beoordeel hier sollicitanten tijdens of na de selectiedag. Vul per persoon scores en aantekeningen in. Groepsindeling helpt bij het organiseren van de dag.'],
-          'ondertekeningen' => ['Ondertekeningen', 'Overzicht van alle digitale handtekeningen (gezondheidsverklaring, intake). Bij 18+ tekent de sollicitant zelf via het portaal; bij minderjarigen tekent de ouder via een maillink. "Bekijk / Print" opent een printbare versie voor je administratie.'],
-          'instellingen'    => ['Instellingen', 'Alles instelbaar: organisatie, functies, lonen, mails, automatiseringen, AI en SSO. Onder "Uitnodiging" vind je de automatiserings-toggles voor fase-wijzigingen.'],
-          'mail_templates'  => ['Mail templates', 'Bewerk hier de inhoud van alle automatische mails. Gebruik variabelen zoals {{voornaam}}. Elke template kan een eigen hero-afbeelding en kleur hebben.'],
-      ];
-      $_hulp = $_hulp_paginas[$actieve_nav ?? ''] ?? null;
+      // Contextuele hulp per pagina: teksten en links in includes/hulp.php (één plek).
+      $_hulp = function_exists('hulp_tekst') ? hulp_tekst((string)($actieve_nav ?? '')) : null;
       ?>
       <?php if ($_hulp): ?>
-      <button type="button" class="hulp-knop" onclick="document.getElementById('hulpPaneel').classList.toggle('open')" title="Uitleg over deze pagina" aria-label="Hulp">?</button>
+      <button type="button" class="hulp-knop" onclick="document.getElementById('hulpPaneel').classList.toggle('open')" title="Uitleg over deze pagina" aria-label="Hulp" aria-expanded="false" aria-controls="hulpPaneel">?</button>
       <?php endif; ?>
 
     </div>
   </div>
 
   <?php if ($_hulp): ?>
-  <div id="hulpPaneel" class="hulp-paneel">
+  <div id="hulpPaneel" class="hulp-paneel" role="region" aria-label="Uitleg over deze pagina">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-      <strong style="font-size:14px;color:var(--navy)">💡 <?= h($_hulp[0]) ?></strong>
-      <button type="button" onclick="document.getElementById('hulpPaneel').classList.remove('open')" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--grijs)">✕</button>
+      <strong style="font-size:14px;color:var(--navy);display:inline-flex;align-items:center;gap:6px"><?= icoon('info', 16) ?> <?= h($_hulp['titel']) ?></strong>
+      <button type="button" onclick="document.getElementById('hulpPaneel').classList.remove('open')" style="background:none;border:none;cursor:pointer;color:var(--grijs);display:inline-flex" aria-label="Sluiten"><?= icoon('kruis', 16) ?></button>
     </div>
-    <p style="margin:0;font-size:13px;line-height:1.7;color:var(--tekst-zacht)"><?= h($_hulp[1]) ?></p>
+    <p style="margin:0 0 8px;font-size:13px;line-height:1.7;color:var(--tekst-zacht)"><?= h($_hulp['tekst']) ?></p>
+    <a href="<?= h($_hulp['url']) ?>" target="_blank" rel="noopener" style="font-size:13px;color:var(--oranje);font-weight:600;display:inline-flex;align-items:center;gap:4px"><?= icoon('document', 14) ?> Lees meer in de handleiding</a>
   </div>
   <?php endif; ?>
 

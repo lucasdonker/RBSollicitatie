@@ -10,6 +10,7 @@ try {
     $stmt = $db->prepare("
         SELECT s.*, p.voornaam, p.tussenvoegsel, p.achternaam,
                p.email, p.geboortedatum, p.telefoon, p.geslacht, p.id AS pid,
+               COALESCE(p.kanaal_voorkeur, 'whatsapp') AS kanaal_voorkeur,
                sz.naam sz_naam, sz.datum_werk_start
         FROM sollicitaties s JOIN personen p ON p.id = s.persoon_id
         JOIN seizoenen sz ON sz.id = s.seizoen_id
@@ -35,10 +36,28 @@ $fases = ['aangemeld','uitgenodigd_selectie','aangemeld_selectie','selectiedag_g
 $fi    = array_search($sol['fase'], $fases);
 $alle_fases = ['aangemeld'=>'Aangemeld','uitgenodigd_selectie'=>'Uitgenodigd SD','aangemeld_selectie'=>'Aangemeld SD','selectiedag_geweest'=>'SD geweest','uitgenodigd_tw'=>'Uitgenodigd TW','tw_geweest'=>'TW geweest','aangenomen'=>'Aangenomen','afgewezen'=>'Afgewezen'];
 
-// Leeftijd en auto-invite check
+// Leeftijd op de HUIDIGE datum tonen (jouw keuze). Daarnaast: berekenen of/wanneer iemand
+// tijdens/voor het seizoen 16 wordt, zodat het bestuur dat als melding ziet.
+$lft = function_exists('leeftijd_uit_datum') ? leeftijd_uit_datum($sol['geboortedatum']) : null;
 $peil = $sol['datum_werk_start'] ?? date('Y-06-01');
-$lft  = leeftijd_op_datum($sol['geboortedatum'], $peil);
-$aanbeveling = function_exists('invite_aanbeveling') ? invite_aanbeveling($lft) : null;
+$lft_seizoen = ($sol['geboortedatum'] && function_exists('leeftijd_op_datum'))
+    ? leeftijd_op_datum($sol['geboortedatum'], $peil) : $lft;
+// Melding als de leeftijd nu en op de seizoensstart verschilt rond de 16-grens
+$wordt_16_melding = '';
+if ($sol['geboortedatum'] && $lft !== null) {
+    try {
+        $geb = new DateTime($sol['geboortedatum']);
+        $zestien = (clone $geb)->modify('+16 years');
+        $vandaag = new DateTime('today');
+        if ($lft < 16 && $zestien > $vandaag) {
+            $wordt_16_melding = 'Wordt 16 op ' . $zestien->format('d-m-Y');
+        } elseif ($lft >= 16 && $lft_seizoen < 16) {
+            // Nu 16, maar was op de seizoensstart nog 15
+            $wordt_16_melding = 'Was 15 bij aanmelding/seizoensstart, inmiddels 16';
+        }
+    } catch (\Exception $e) {}
+}
+$aanbeveling = function_exists('invite_aanbeveling') ? invite_aanbeveling($lft_seizoen) : null;
 
 // BLK weken
 $blk_weken = [];
@@ -76,7 +95,13 @@ $ai_analyse = $blk ? ($blk['ai_analyse'] ?? null) : null;
   <!-- NAW + basis -->
   <div class="info-grid">
     <div class="info-item"><label>Telefoon</label><span><?= h($sol['telefoon'] ?: '—') ?></span></div>
-    <div class="info-item"><label>Leeftijd</label><span><?= $lft ?> jaar</span></div>
+    <div class="info-item"><label>Berichten via</label>
+      <span><select onchange="kanaalVoorkeurZet(<?= (int)$sol['pid'] ?>, this.value, this)" style="font-size:12px;padding:3px 6px;width:auto">
+        <?php $kv = $sol['kanaal_voorkeur'] ?? 'whatsapp'; foreach (['whatsapp' => 'WhatsApp', 'sms' => 'Sms', 'email' => 'Alleen e-mail'] as $kk => $kl): ?>
+        <option value="<?= $kk ?>" <?= $kv === $kk ? 'selected' : '' ?>><?= $kl ?></option>
+        <?php endforeach; ?>
+      </select></span></div>
+    <div class="info-item"><label>Leeftijd</label><span><?= $lft ?> jaar<?php if ($wordt_16_melding): ?> <span title="<?= h($wordt_16_melding) ?>" style="display:inline-block;font-size:11px;font-weight:600;color:var(--oranje);background:var(--oranje-bg);padding:1px 7px;border-radius:9px;margin-left:4px"><?= h($wordt_16_melding) ?></span><?php endif; ?></span></div>
     <div class="info-item"><label>Geboortedatum</label><span><?= datum_nl($sol['geboortedatum']) ?></span></div>
     <div class="info-item"><label>Aangemeld</label><span><?= datum_nl($sol['aangemeld_op']) ?></span></div>
     <?php // Toestemming-vastlegging (AVG) — tonen zodra beschikbaar ?>
@@ -234,7 +259,8 @@ $ai_analyse = $blk ? ($blk['ai_analyse'] ?? null) : null;
   <!-- Ondertekeningen (gezondheidsverklaring + intake) -->
   <?php
     $geb = $sol['geboortedatum'] ?? null;
-    $leef = $geb ? (int)((strtotime('now') - strtotime($geb)) / 31557600) : null;
+    $leef = function_exists('leeftijd_uit_datum') ? leeftijd_uit_datum($geb)
+          : ($geb ? (new DateTime($geb))->diff(new DateTime())->y : null);
     $is_minderjarig = ($leef !== null && $leef < 18);
   ?>
   <div class="paneel-sectie">
@@ -398,6 +424,18 @@ $ai_analyse = $blk ? ($blk['ai_analyse'] ?? null) : null;
           ✈️ <strong>Afwezig:</strong> <?php echo implode(' · ', array_map(fn($a) => h(datum_nl($a['van_datum'])) . '–' . h(datum_nl($a['tot_datum'])) . ($a['label'] ? ' (' . h($a['label']) . ')' : ''), $b2data['afwezig'])); ?><br>
         <?php endif; ?>
 
+        <?php
+          $losse_dagen_p = function_exists('beschikbaarheid_dagen') ? beschikbaarheid_dagen($id) : [];
+          if ($losse_dagen_p): ?>
+          📅 <strong>Losse dagen:</strong>
+          <?php echo implode(' · ', array_map(function($ld) {
+              $lbl = h(datum_nl($ld['datum']));
+              if (($ld['soort'] ?? '') === 'voorkeur_vrij') $lbl .= ' (liever vrij)';
+              if (!empty($ld['reden'])) $lbl .= ' — ' . h($ld['reden']);
+              return $lbl;
+          }, $losse_dagen_p)); ?><br>
+        <?php endif; ?>
+
         <?php if (!empty($b2data['profiel']['vaste_dagen_uit'])): ?>
           ⭐ <strong>Voorkeur vrij:</strong> <?= implode(', ', array_map('dag_kort', $b2data['profiel']['vaste_dagen_uit'])) ?>
           <span style="color:var(--grijs);font-size:11px">(voorkeur, planner beslist)</span>
@@ -410,6 +448,19 @@ $ai_analyse = $blk ? ($blk['ai_analyse'] ?? null) : null;
         <?php if (!empty($b2data['profiel']['opmerking'])): ?>
           💬 <span style="color:var(--tekst-zacht)"><?= h($b2data['profiel']['opmerking']) ?></span>
         <?php endif; ?>
+
+        <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">
+          <a href="<?= APP_URL ?>/admin/export_dagbeschikbaarheid.php?id=<?= (int)$id ?>" target="_blank"
+             class="btn btn-outline btn-sm" style="font-size:11px">
+            📆 Beschikbaarheid per dag bekijken (API-check)
+          </a>
+          <?php if (function_exists('mag') && mag('beschikbaarheid', 'bewerken')): ?>
+          <a href="<?= APP_URL ?>/admin/beschikbaarheid_bewerken.php?id=<?= (int)$id ?>"
+             class="btn btn-outline btn-sm" style="font-size:11px">
+            ✏️ Beschikbaarheid aanpassen
+          </a>
+          <?php endif; ?>
+        </div>
       </div>
 
       <?php
@@ -554,6 +605,7 @@ $ai_analyse = $blk ? ($blk['ai_analyse'] ?? null) : null;
     <?php elseif($sol['fase']==='selectiedag_geweest'): ?>
     <button class="btn btn-groen" onclick="uitnodigVanUitPaneel(<?= $id ?>,'uitnodigen_tw')">📧 Uitnodigen trainingsweekend</button>
     <?php endif; ?>
+    <a href="<?= APP_URL ?>/admin/berichten.php?ids=<?= (int)$id ?>" class="btn btn-outline">Bericht sturen</a>
     <a href="mailto:<?= h($sol['email']) ?>" class="btn btn-outline">✉️ E-mail</a>
     <?php if($sol['telefoon']): ?><a href="tel:<?= h($sol['telefoon']) ?>" class="btn btn-outline">📞 Bellen</a><?php endif; ?>
   </div>

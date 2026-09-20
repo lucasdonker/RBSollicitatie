@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/functions.php';
-vereist_rol('bestuur');
+ if (function_exists('extra_tabellen_auto_setup')) extra_tabellen_auto_setup();
+vereis_recht('sollicitanten', 'bewerken');
 header('Content-Type: application/json');
 
 $db  = db();

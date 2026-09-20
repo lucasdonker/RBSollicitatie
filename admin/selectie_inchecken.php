@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../includes/functions.php';
 $pagina_titel = 'Inchecken';
 $actieve_nav  = 'selectiedag';
-vereist_rol('begeleider'); // begeleiders mogen ook afvinken
+vereis_recht('selectiedag', 'lezen'); // begeleiders mogen ook afvinken
 
 $seizoen = actief_seizoen();
 $sid = $seizoen ? (int)$seizoen['id'] : 0;
@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $sid) {
     $actie = $_POST['actie'] ?? '';
 
     if ($actie === 'code_genereren') {
-        vereist_rol('bestuur');
+        vereis_recht('selectiedag', 'bewerken');
         // Korte, leesbare code (geen verwarrende tekens)
         $alfabet = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
         $code = '';

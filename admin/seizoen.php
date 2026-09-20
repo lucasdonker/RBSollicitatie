@@ -2,18 +2,13 @@
 require_once __DIR__ . '/../includes/functions.php';
 $pagina_titel = 'Seizoenbeheer';
 $actieve_nav  = 'seizoen';
-vereist_rol('bestuur');
+vereis_recht('seizoen', 'bewerken');
 
 $db  = db();
 $bhd = huidige_beheerder();
 
-// Auto-migratie: voeg werkperiode kolommen toe als ze ontbreken
-try {
-    $db->exec("ALTER TABLE `seizoenen`
-        ADD COLUMN IF NOT EXISTS `datum_werk_start` DATE DEFAULT NULL AFTER `locatie_tw`,
-        ADD COLUMN IF NOT EXISTS `datum_werk_eind`  DATE DEFAULT NULL AFTER `datum_werk_start`
-    ");
-} catch (Exception $e) {}
+// Auto-migratie: alle seizoen-kolommen (één lijst, gedeeld met het portaal: includes/portaal_dossier.php)
+seizoen_kolommen_verzeker();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
@@ -32,8 +27,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $sid = (int)$_POST['seizoen_id'];
             try {
                 $db->prepare("UPDATE seizoenen SET naam=?, datum_selectiedag=?, locatie_selectiedag=?,
-                    selectiedag_verzameltijd=?, selectiedag_starttijd=?,
-                    datum_tw_start=?, datum_tw_eind=?, locatie_tw=?, tw_verzameltijd=?,
+                    selectiedag_verzameltijd=?, selectiedag_starttijd=?, selectiedag_eindtijd=?,
+                    adres_selectiedag=?, selectiedag_meenemen=?,
+                    datum_tw_start=?, datum_tw_eind=?, locatie_tw=?, tw_verzameltijd=?, tw_begintijd=?, tw_eindtijd=?,
+                    adres_tw=?, tw_meenemen=?,
                     datum_werk_start=?, datum_werk_eind=?,
                     hoofdseizoen_start_week=?, hoofdseizoen_eind_week=?
                     WHERE id=?")
@@ -43,10 +40,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                        $_POST['locatie_selectiedag'] ?: null,
                        $_POST['selectiedag_verzameltijd'] ?: null,
                        $_POST['selectiedag_starttijd'] ?: null,
+                       $_POST['selectiedag_eindtijd'] ?: null,
+                       trim($_POST['adres_selectiedag'] ?? '') ?: null,
+                       trim($_POST['selectiedag_meenemen'] ?? '') ?: null,
                        $_POST['datum_tw_start'] ?: null,
                        $_POST['datum_tw_eind'] ?: null,
                        $_POST['locatie_tw'] ?: null,
                        $_POST['tw_verzameltijd'] ?: null,
+                       $_POST['tw_begintijd'] ?: null,
+                       $_POST['tw_eindtijd'] ?: null,
+                       trim($_POST['adres_tw'] ?? '') ?: null,
+                       trim($_POST['tw_meenemen'] ?? '') ?: null,
                        $_POST['datum_werk_start'] ?: null,
                        $_POST['datum_werk_eind'] ?: null,
                        (int)($_POST['hoofdseizoen_start_week'] ?? 0) ?: null,
@@ -242,6 +246,15 @@ if ($sz_bevestig): ?>
           <div class="form-groep"><label>Verzameltijd</label><input type="time" name="selectiedag_verzameltijd" value="<?= h($huidig['selectiedag_verzameltijd'] ?? '') ?>"><div class="form-hulp">Wanneer moeten kandidaten aanwezig zijn</div></div>
           <div class="form-groep"><label>Starttijd programma</label><input type="time" name="selectiedag_starttijd" value="<?= h($huidig['selectiedag_starttijd'] ?? '') ?>"></div>
         </div>
+        <div class="form-rij">
+          <div class="form-groep"><label>Eindtijd (± )</label><input type="time" name="selectiedag_eindtijd" value="<?= h($huidig['selectiedag_eindtijd'] ?? '') ?>"><div class="form-hulp">Portaal toont "tot ± 16:00"</div></div>
+          <div class="form-groep"><label>Adres</label><input type="text" name="adres_selectiedag" value="<?= h($huidig['adres_selectiedag'] ?? '') ?>" placeholder="bijv. Strandweg 13, Callantsoog"></div>
+        </div>
+        <div class="form-groep">
+          <label>Wat meenemen</label>
+          <textarea name="selectiedag_meenemen" rows="2" placeholder="bijv. Neem zwemkleding, handdoek en broodjes mee."><?= h($huidig['selectiedag_meenemen'] ?? '') ?></textarea>
+          <div class="form-hulp">Staat onderaan de selectiedag-kaart in het portaal en is als {{selectiedag.meenemen}} in mails te gebruiken</div>
+        </div>
 
         <div style="font-weight:600;color:var(--navy);font-size:13px;margin:14px 0 8px;border-bottom:1px solid var(--rand);padding-bottom:5px">🏕️ Trainingsweekend</div>
         <div class="form-rij">
@@ -255,6 +268,15 @@ if ($sz_bevestig): ?>
         <div class="form-rij">
           <div class="form-groep"><label>Verzameltijd TW</label><input type="time" name="tw_verzameltijd" value="<?= h($huidig['tw_verzameltijd'] ?? '') ?>"></div>
           <div class="form-groep"><label>Begintijd programma TW</label><input type="time" name="tw_begintijd" value="<?= h($huidig['tw_begintijd'] ?? '') ?>"></div>
+        </div>
+        <div class="form-rij">
+          <div class="form-groep"><label>Eindtijd TW (± )</label><input type="time" name="tw_eindtijd" value="<?= h($huidig['tw_eindtijd'] ?? '') ?>"></div>
+          <div class="form-groep"><label>Adres TW</label><input type="text" name="adres_tw" value="<?= h($huidig['adres_tw'] ?? '') ?>" placeholder="bijv. Duinweg 1, Callantsoog"></div>
+        </div>
+        <div class="form-groep">
+          <label>Wat meenemen TW</label>
+          <textarea name="tw_meenemen" rows="2" placeholder="bijv. Slaapzak, matje, zwemkleding."><?= h($huidig['tw_meenemen'] ?? '') ?></textarea>
+          <div class="form-hulp">Staat onderaan de trainingsweekend-kaart in het portaal en is als {{tw.meenemen}} in mails te gebruiken</div>
         </div>
 
         <button type="submit" class="btn btn-primary">Opslaan</button>

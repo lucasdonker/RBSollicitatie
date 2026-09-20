@@ -133,6 +133,14 @@ function bouwActieKnoppen(solId, fase) {
 }
 
 /* ── Uitnodigen vanuit paneel ───────────────────────────────── */
+function kanaalVoorkeurZet(pid, keuze, el) {
+  const fd = new FormData(); fd.append('_csrf', CSRF); fd.append('persoon_id', pid); fd.append('kanaal_voorkeur', keuze);
+  fetch(APP_URL + '/admin/api_kanaal.php', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(j => toastMelding(j.ok ? 'Kanaalvoorkeur opgeslagen.' : ('Mislukt: ' + (j.fout || '')), j.ok ? 'succes' : 'fout'))
+    .catch(() => toastMelding('Opslaan mislukt.', 'fout'));
+}
+
 function uitnodigVanUitPaneel(solId, actie) {
   const labels = { uitnodigen_selectie: 'uitnodigen voor de selectiedag', uitnodigen_tw: 'uitnodigen voor het trainingsweekend' };
   if (!confirm('Deze persoon ' + (labels[actie] || actie) + '?')) return;
@@ -597,5 +605,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (panelId) openPaneel(parseInt(panelId));
 });
 </script>
+<script src="<?= APP_URL ?>/assets/js/app.js?v=<?= @filemtime(__DIR__.'/../assets/js/app.js') ?>"></script>
+<script src="<?= APP_URL ?>/assets/js/editor.js?v=<?= @filemtime(__DIR__.'/../assets/js/editor.js') ?>"></script>
 </body>
 </html>

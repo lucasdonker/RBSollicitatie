@@ -1,10 +1,19 @@
 <?php
 /**
  * Paal 13 — Adresvalidatie via PDOK (Kadaster).
- * Drie-stappen-fallback voor maximale coverage.
+ * Drie-stappen-fallback voor maximale coverage. Alleen voor ingelogde sollicitanten (anders is
+ * dit een open doorgeefluik naar PDOK).
  */
+require_once __DIR__ . '/../includes/functions.php';
+
 header('Content-Type: application/json');
 header('Cache-Control: no-store');
+
+if (!portaal_ingelogd()) {
+    http_response_code(401);
+    echo json_encode(['ok' => false, 'fout' => 'Niet ingelogd']);
+    exit;
+}
 
 $pc_raw = strtoupper(preg_replace('/\s+/', '', $_GET['postcode'] ?? ''));
 $hn_raw = trim($_GET['huisnummer'] ?? '');

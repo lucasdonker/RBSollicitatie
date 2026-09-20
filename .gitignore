@@ -28,3 +28,5 @@ Thumbs.db
 # Editor-mappen.
 .vscode/
 .idea/
+CLAUDE.md
+/docs/ai

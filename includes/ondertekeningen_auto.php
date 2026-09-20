@@ -27,10 +27,119 @@ function personen_ouder_auto_setup(): void {
     } catch (\Exception $e) { error_log('personen_ouder_auto_setup: ' . $e->getMessage()); }
 }
 
+// ondertekening_label() en de documentteksten staan in includes/ondertekening_tekst.php (één bron).
+
+/** Onderteken-URL voor een token. */
+function ondertekening_url(string $token): string {
+    return rtrim(APP_URL, '/') . '/portaal/ondertekenen.php?token=' . urlencode($token);
+}
+
+/**
+ * Het knoppenblok voor in een ondertekenverzoek: label => url. Tabel-layout voor Outlook.
+ * Wordt als {{formulieren_blok}} in het sjabloon gezet (niet ge-escaped).
+ */
+function ondertekening_formulieren_blok(array $links): string {
+    $uit = '';
+    foreach ($links as $label => $url) {
+        $uit .= '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 12px"><tr><td style="background:#f7f9fc;border:1px solid #dde5ef;border-radius:8px;padding:16px 20px">
+<p style="margin:0 0 10px;font-family:Arial,sans-serif;font-size:15px;font-weight:700;color:#054d8a">' . h($label) . '</p>
+<a href="' . h($url) . '" style="display:inline-block;background:#D43D00;color:#ffffff;padding:12px 24px;border-radius:6px;font-family:Arial,sans-serif;font-size:14px;font-weight:600;text-decoration:none">Openen en ondertekenen &rarr;</a>
+<p style="margin:10px 0 0;font-family:Arial,sans-serif;font-size:11px;color:#8a94a3;word-break:break-all">Of kopieer: ' . h($url) . '</p>
+</td></tr></table>';
+    }
+    return $uit;
+}
+
+/**
+ * Verstuur een ondertekenverzoek voor één of meer documenten.
+ * $ontvanger: ['email','naam','rol' => 'ouder'|'sollicitant']; $links: label => url.
+ */
+function ondertekening_verzoek_versturen(int $sol_id, array $ontvanger, array $links, string $referentie): array {
+    if (!function_exists('melding_verstuur') || !$links) return ['status' => 'overgeslagen', 'reden' => 'geen_kern'];
+    $labels = array_keys($links);
+    $extra  = ['formulieren_blok' => ondertekening_formulieren_blok($links), 'document_naam' => implode(' en ', $labels), 'onderteken_url' => reset($links)];
+    $opties = ['referentie' => $referentie, 'prioriteit' => 'direct'];
+    if (($ontvanger['rol'] ?? 'ouder') === 'ouder') {
+        $opties['ontvanger'] = ['email' => $ontvanger['email'], 'naam' => $ontvanger['naam'] ?: 'ouder/verzorger', 'telefoon' => '', 'rol' => 'ouder'];
+        $extra['ouder_naam'] = $ontvanger['naam'] ?: 'ouder/verzorger';
+        return melding_verstuur('ondertekening_verzoek_ouder', $sol_id, $extra, $opties);
+    }
+    return melding_verstuur('ondertekening_verzoek_zelf', $sol_id, $extra, $opties);
+}
+
+/**
+ * Eén ondertekening van een type klaarzetten voor de sollicitant zelf (idempotent). Retour: 'aangemaakt' | 'bestond' | 'fout'.
+ */
+function ondertekening_zelf_verzekeren(int $sol_id, string $type): string {
+    try {
+        $db = db();
+        $check = $db->prepare("SELECT 1 FROM ondertekeningen WHERE sollicitatie_id=? AND type=? LIMIT 1");
+        $check->execute([$sol_id, $type]);
+        if ($check->fetchColumn()) return 'bestond';
+        $q = $db->prepare("SELECT p.email FROM sollicitaties s JOIN personen p ON p.id=s.persoon_id WHERE s.id=?");
+        $q->execute([$sol_id]);
+        $email = (string)($q->fetchColumn() ?: '');
+        $token = bin2hex(random_bytes(24));
+        $db->prepare("INSERT INTO ondertekeningen (sollicitatie_id, type, token, ondertekenaar_rol, ondertekenaar_email) VALUES (?,?,?,'sollicitant',?)")
+           ->execute([$sol_id, $type, $token, $email ?: null]);
+        if (function_exists('ondertekening_gebeurtenis')) ondertekening_gebeurtenis((int)$db->lastInsertId(), 'aangemaakt', ['type' => $type]);
+        return 'aangemaakt';
+    } catch (\Throwable $e) { error_log("ondertekening_zelf_verzekeren($type): " . $e->getMessage()); return 'fout'; }
+}
+
+/** Aangenomen: het loonheffingsformulier (werknemer tekent altijd zelf, ook onder 18). */
+function loonheffing_verzekeren(int $sol_id): string {
+    return ondertekening_zelf_verzekeren($sol_id, 'loonheffing');
+}
+
+/**
+ * Aangenomen: inschrijving als lid — alleen voor wie nog geen Authentik-verenigingsaccount heeft
+ * (wie dat wel heeft, is vrijwel zeker al lid). Retour ook 'overgeslagen'.
+ */
+function lidmaatschap_verzekeren(int $sol_id): string {
+    try {
+        if (function_exists('authentik_actief') && authentik_actief() && function_exists('authentik_email_bestaat')) {
+            $q = db()->prepare("SELECT p.email FROM sollicitaties s JOIN personen p ON p.id=s.persoon_id WHERE s.id=?");
+            $q->execute([$sol_id]);
+            $email = (string)($q->fetchColumn() ?: '');
+            if ($email !== '' && authentik_email_bestaat($email)) {
+                if (function_exists('audit_log')) audit_log('lidmaatschap_overgeslagen', 'sollicitatie', $sol_id, ['reden' => 'Authentik-account bestaat']);
+                return 'overgeslagen';
+            }
+        }
+    } catch (\Throwable $e) { error_log('lidmaatschap_verzekeren authentik: ' . $e->getMessage()); }
+    return ondertekening_zelf_verzekeren($sol_id, 'lidmaatschap');
+}
+
 function sol_is_minderjarig(array $sol): bool {
     if (empty($sol['geboortedatum'])) return false;
-    $leeftijd = (int)floor((time() - strtotime($sol['geboortedatum'])) / 31557600);
-    return $leeftijd < 18;
+    if (function_exists('leeftijd_uit_datum')) {
+        $leeftijd = leeftijd_uit_datum($sol['geboortedatum']);
+        return $leeftijd !== null && $leeftijd < 18;
+    }
+    try {
+        return (new DateTime($sol['geboortedatum']))->diff(new DateTime())->y < 18;
+    } catch (Exception $e) { return false; }
+}
+
+/**
+ * Vangnet: zit de sollicitant in een selectiedag-fase zonder dat er ooit documenten zijn klaargezet
+ * (uitgenodigd vóór 2.87.0 toen dat bij automatisch/bulk uitnodigen niet gebeurde, of de instelling
+ * stond toen uit), dan alsnog klaarzetten. Idempotent: één controlequery per request; daarna doet
+ * ondertekeningen_klaarzetten_sd() alleen wat nog ontbreekt (18+: taken; <18: ouder mailen zodra
+ * de oudergegevens er zijn).
+ */
+function ondertekeningen_verzekeren_sd(int $sol_id, string $fase): void {
+    static $gedaan = [];
+    if (isset($gedaan[$sol_id])) return;
+    $gedaan[$sol_id] = true;
+    if (!in_array($fase, ['uitgenodigd_selectie', 'aangemeld_selectie'], true)) return;
+    try {
+        $q = db()->prepare("SELECT 1 FROM ondertekeningen WHERE sollicitatie_id=? LIMIT 1");
+        $q->execute([$sol_id]);
+        if ($q->fetchColumn()) return;
+        ondertekeningen_klaarzetten_sd($sol_id);
+    } catch (\Throwable $e) { error_log('ondertekeningen_verzekeren_sd: ' . $e->getMessage()); }
 }
 
 function ondertekeningen_klaarzetten_sd(int $sol_id): array {
@@ -64,8 +173,8 @@ function ondertekeningen_klaarzetten_sd(int $sol_id): array {
         }
 
         // Maak beide documenten aan; verzamel links voor één overzichtelijke mail
-        $nieuwe_links = [];
-        foreach (['gezondheid_ouder' => 'Gezondheidsverklaring', 'intake_ouder' => 'Intakeformulier selectiedag'] as $type => $label) {
+        $nieuwe_links = []; $nieuwe_ids = [];
+        foreach (['gezondheid_ouder', 'intake_ouder'] as $type) {
             $check = $db->prepare("SELECT 1 FROM ondertekeningen WHERE sollicitatie_id=? AND type=? LIMIT 1");
             $check->execute([$sol_id, $type]);
             if ($check->fetchColumn()) continue;
@@ -74,43 +183,15 @@ function ondertekeningen_klaarzetten_sd(int $sol_id): array {
             $db->prepare("INSERT INTO ondertekeningen (sollicitatie_id, type, token, ondertekenaar_rol, ondertekenaar_naam, ondertekenaar_email) VALUES (?,?,?,'ouder',?,?)")
                ->execute([$sol_id, $type, $token, $sol['ouder_naam'] ?: null, $sol['ouder_email']]);
             $res['aangemaakt'][] = $type;
-            $nieuwe_links[$label] = APP_URL . '/portaal/ondertekenen.php?token=' . urlencode($token);
+            $nieuwe_ids[] = (int)$db->lastInsertId();
+            $nieuwe_links[ondertekening_label($type)] = ondertekening_url($token);
         }
 
-        // Eén mail met beide formulieren + volledige context voor de ouder
-        if ($nieuwe_links && function_exists('stuur_mail_html')) {
-            // Formulieren-blok (knoppen) opbouwen — tabel-layout voor Outlook
-            $knoppen = '';
-            foreach ($nieuwe_links as $label => $url) {
-                $knoppen .= '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 12px"><tr><td style="background:#f7f9fc;border:1px solid #dde5ef;border-radius:8px;padding:16px 20px">
-<p style="margin:0 0 10px;font-family:Arial,sans-serif;font-size:15px;font-weight:700;color:#054d8a">' . h($label) . '</p>
-<a href="' . h($url) . '" style="display:inline-block;background:#D43D00;color:#ffffff;padding:12px 24px;border-radius:6px;font-family:Arial,sans-serif;font-size:14px;font-weight:600;text-decoration:none">Openen en ondertekenen &rarr;</a>
-<p style="margin:10px 0 0;font-family:Arial,sans-serif;font-size:11px;color:#8a94a3;word-break:break-all">Of kopieer: ' . h($url) . '</p>
-</td></tr></table>';
-            }
-
-            $seizoen_c = function_exists('actief_seizoen') ? (actief_seizoen() ?: []) : [];
-            $vars = [
-                'voornaam'          => $sol['voornaam'],
-                'ouder_naam'        => $sol['ouder_naam'] ?: 'ouder/verzorger',
-                'formulieren_blok'  => $knoppen,
-                'seizoen_naam'      => $seizoen_c['naam'] ?? '',
-                'portaal_url'       => APP_URL . '/portaal/',
-            ];
-
-            $rendered = function_exists('ondertekening_mail_render') ? ondertekening_mail_render('ondertekening_ouder', $vars) : null;
-            if ($rendered) {
-                stuur_mail_html($sol['ouder_email'], $sol['ouder_naam'] ?: 'Ouder/verzorger', $rendered['onderwerp'], $rendered['html'], $sol_id);
-            } else {
-                // Fallback: simpele wrapper
-                $vn = h($sol['voornaam']);
-                $begroet = $sol['ouder_naam'] ? "Beste " . h($sol['ouder_naam']) . "," : "Beste ouder/verzorger,";
-                $body = '<p>' . $begroet . '</p><p><strong>' . $vn . '</strong> is uitgenodigd voor de selectiedag van Reddingsbrigade Paal 13. Omdat ' . $vn . ' minderjarig is vragen wij uw handtekening op onderstaande formulieren:</p>' . $knoppen . '<p>Met vriendelijke groet,<br><strong>Reddingsbrigade Paal 13</strong></p>';
-                $ond = "Handtekening nodig: formulieren voor $vn — Paal 13";
-                $html = function_exists('mail_simple_wrapper') ? mail_simple_wrapper($body, $ond) : $body;
-                stuur_mail_html($sol['ouder_email'], $sol['ouder_naam'] ?: 'Ouder/verzorger', $ond, $html, $sol_id);
-            }
-            $res['ouder_gemaild'] = true;
+        // Eén mail met beide formulieren + volledige context voor de ouder (centrale meldingen-kern)
+        if ($nieuwe_links) {
+            $r = ondertekening_verzoek_versturen($sol_id, ['email' => $sol['ouder_email'], 'naam' => (string)($sol['ouder_naam'] ?? ''), 'rol' => 'ouder'],
+                                                 $nieuwe_links, 'ondertekening:' . implode(',', $nieuwe_ids));
+            $res['ouder_gemaild'] = in_array($r['status'] ?? '', ['verstuurd', 'wacht'], true);
         }
     } catch (\Exception $e) {
         error_log('ondertekeningen_klaarzetten_sd: ' . $e->getMessage());

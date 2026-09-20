@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../includes/functions.php';
 $pagina_titel = 'BLK Formulier';
 $actieve_nav  = 'sollicitanten';
-vereist_login();
+vereis_recht('blk', 'lezen');
 
 $sol_id = (int)($_GET['id'] ?? 0);
 if (!$sol_id) redirect(APP_URL . '/admin/sollicitanten.php');
@@ -21,7 +21,7 @@ try {
     $stmt->execute([$sol_id]);
     $sol = $stmt->fetch();
 } catch (Exception $e) {
-    die('Database fout: ' . h($e->getMessage()));
+    p13_fout('P13-D002', 'BLK-detail van sollicitatie ' . $sol_id, $e, true);
 }
 
 if (!$sol) redirect(APP_URL . '/admin/sollicitanten.php');
@@ -45,6 +45,14 @@ try {
 
 $weken_sol = $besch ? (json_decode($besch['weken_json'] ?? '[]', true) ?: []) : [];
 $weken_def = $besch ? (json_decode($besch['definitief_json'] ?? '[]', true) ?: []) : [];
+
+// AI-invoer van deze sollicitant (om terug te kunnen kijken wat er is ingevuld)
+$ai_besch_logs = [];
+try {
+    $alq = $db->prepare("SELECT invoer, status, aangemaakt_op FROM ai_beschikbaarheid_log WHERE sollicitatie_id=? ORDER BY aangemaakt_op DESC LIMIT 10");
+    $alq->execute([$sol_id]);
+    $ai_besch_logs = $alq->fetchAll();
+} catch (\Exception $e) { /* tabel bestaat nog niet of leeg */ }
 
 // BLK beschikbaarheid weken (uit stap 4 BLK)
 $blk_weken = [];
@@ -99,6 +107,8 @@ require __DIR__ . '/layout_top.php';
     <span class="badge badge-<?= fase_kleur($sol['fase']) ?>"><?= fase_label($sol['fase']) ?></span>
     <?php if ($sol['terugkerend']): ?><span class="badge badge-terugkerend">↩ Terugkerend</span><?php endif; ?>
     <button onclick="window.print()" class="btn btn-outline btn-sm">🖨️ Afdrukken</button>
+    <a href="<?= APP_URL ?>/admin/export_blk.php?formaat=pdf&id=<?= $sol_id ?>" target="_blank" class="btn btn-outline btn-sm">📄 Dossier (PDF)</a>
+    <a href="<?= APP_URL ?>/admin/export_blk.php?formaat=excel&ids=<?= $sol_id ?>" class="btn btn-outline btn-sm">📊 Excel</a>
     <a href="<?= APP_URL ?>/admin/sollicitanten.php?panel=<?= $sol_id ?>" class="btn btn-outline btn-sm">Open in paneel</a>
   </div>
 </div>
@@ -113,9 +123,8 @@ require __DIR__ . '/layout_top.php';
   <div class="card-body">
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">
       <?php
-      // AVG: begeleiders zien alleen woonplaats, niet volledig adres
-      $bhd_rol_d = huidige_beheerder()['rol'] ?? 'sol-begeleider';
-      $mag_adres = in_array($bhd_rol_d, ['admin','bestuur','sol-admin'], true);
+      // AVG: alleen wie de BLK-module mag lezen ziet het volledige adres; anders alleen woonplaats
+      $mag_adres = function_exists('mag') ? mag('blk', 'lezen') : true;
       $adres_volledig = trim(($blk['straat'] ?? '') . ' ' . ($blk['huisnummer'] ?? '') . ', ' . ($blk['postcode'] ?? '') . ' ' . ($blk['woonplaats'] ?? ''), ' ,');
       if (trim($adres_volledig, ' ,') === '') $adres_volledig = $blk['adres'] ?? '';
       $adres_toon = $mag_adres ? ($adres_volledig ?: '—') : ($blk['woonplaats'] ?? '—');
@@ -204,6 +213,22 @@ require __DIR__ . '/layout_top.php';
       </div>
     </div>
     <?php endif; ?>
+    <?php endif; ?>
+
+    <?php if (!empty($ai_besch_logs)): ?>
+    <hr style="border:none;border-top:1px solid var(--rand);margin:12px 0">
+    <div class="blk-veld">
+      <div class="blk-label">AI-invoer beschikbaarheid <span style="font-weight:400;color:var(--tekst-zacht)">(wat de sollicitant zelf typte)</span></div>
+      <?php foreach ($ai_besch_logs as $log): ?>
+      <div style="background:var(--grijs-bg);border:1px solid var(--rand);border-radius:8px;padding:8px 10px;margin-bottom:6px">
+        <div style="font-size:11px;color:var(--tekst-zacht);margin-bottom:3px">
+          <?= h(date('j-n-Y H:i', strtotime($log['aangemaakt_op']))) ?>
+          · <?= $log['status']==='ok' ? 'verwerkt' : h($log['status']) ?>
+        </div>
+        <div style="font-size:13px;white-space:pre-wrap"><?= h($log['invoer']) ?></div>
+      </div>
+      <?php endforeach; ?>
+    </div>
     <?php endif; ?>
   </div>
 </div>

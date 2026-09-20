@@ -1,0 +1,34 @@
+# Paal 13 sollicitatiesysteem — Apache-configuratie
+# Nette adressen voor landingspagina's (/p/<naam>) en korte downloadlinks.
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Landingspagina: /p/zomer-2027  →  p.php?s=zomer-2027
+    RewriteRule ^p/([a-z0-9\-]{1,80})/?$ p.php?s=$1 [L,QSA]
+
+    # Afbeeldingen bij een landingspagina: /p/zomer-2027/strand.jpg
+    # Komen uit de assets-map van die pagina; die map laat alleen afbeeldingen door.
+    #
+    # Een submap ervoor mag ook (/p/zomer-2027/assets/strand.jpg, /p/zomer-2027/img/logo.png):
+    # een ontwerp uit een ontwerptool verwijst naar zijn eigen mappen, terwijl bij ons alles
+    # plat in één map per pagina staat. Alleen de bestandsnaam telt dus. De import zet die
+    # verwijzingen ook recht (zie paginas/verwijzingen.php); deze regel vangt de rest op,
+    # bijvoorbeeld bij ontwerpen die al live stonden of adressen die script zelf opbouwt.
+    # Namen beginnen nooit met een punt: zo blijft .htaccess buiten bereik.
+    RewriteRule ^p/([a-z0-9\-]{1,80})/(?:[A-Za-z0-9._\-]+/)*([A-Za-z0-9_\-][A-Za-z0-9._\-]*)$ uploads/paginas/$1/assets/$2 [L]
+
+    # Oude landingspagina-adressen blijven werken (QR-codes, advertenties).
+    RewriteRule ^l/([a-zA-Z0-9\-]+)/?$ /p/$1 [R=301,L]
+
+    # Korte downloadlinks voor bijlagen: /d/<id>-<verloopt>-<token>  →  download.php?d=...
+    RewriteRule ^d/([0-9]+-[0-9]+-[a-f0-9]+)/?$ download.php?d=$1 [L]
+</IfModule>
+
+# Eigen 404-pagina (huisstijl) voor adressen die niet bestaan, ook onder /portaal/ en /admin/
+ErrorDocument 404 /404.php
+
+# Toon geen PHP-fouten aan bezoekers (fouten gaan naar het log)
+<IfModule mod_php.c>
+    php_flag display_errors Off
+</IfModule>

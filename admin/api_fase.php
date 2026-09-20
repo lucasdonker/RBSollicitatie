@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/functions.php';
-vereist_rol('bestuur');
+vereis_recht('sollicitanten', 'bewerken');
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -11,37 +11,20 @@ csrf_check();
 
 $sol_id = (int)($_POST['sol_id'] ?? 0);
 $naar   = $_POST['naar'] ?? '';
-$geldig = ['aangemeld','uitgenodigd_selectie','aangemeld_selectie','selectiedag_geweest','uitgenodigd_tw','tw_geweest','aangenomen','afgewezen'];
 
-if (!$sol_id || !in_array($naar, $geldig, true)) {
+if (!$sol_id || !function_exists('fase_zetten') || !isset(fasen()[$naar])) {
     echo json_encode(['ok' => false, 'fout' => 'Ongeldige invoer']); exit;
 }
 
 try {
-    db()->prepare("UPDATE sollicitaties SET fase = ?, gewijzigd_op = NOW() WHERE id = ?")->execute([$naar, $sol_id]);
+    // Eén centrale fase-functie: zet de fase, zet documenten/kennismakingspakket klaar en
+    // verstuurt de bijbehorende melding via de meldingen-kern.
+    $res = fase_zetten($sol_id, $naar, 'paneel');
+    if (!$res['ok']) { echo json_encode(['ok' => false, 'fout' => $res['fout'] ?? 'Fase wijzigen mislukt']); exit; }
 
-    // Actief seizoen ophalen voor mail variabelen
-    $seizoen = function_exists('actief_seizoen') ? (actief_seizoen() ?? []) : [];
-
-    // Stuur automatisch uitnodigingsmail bij overgang naar uitgenodigd-fase
-    $mail_status = null;
-    if ($naar === 'uitgenodigd_selectie' && function_exists('verstuur_fase_mail')) {
-        if (function_exists('ondertekeningen_klaarzetten_sd')) ondertekeningen_klaarzetten_sd($sol_id);
-        $mail_status = verstuur_fase_mail($sol_id, 'uitnodiging_selectie', '%selectiedag%', $seizoen, 60);
-    } elseif ($naar === 'uitgenodigd_tw' && function_exists('verstuur_fase_mail')) {
-        $mail_status = verstuur_fase_mail($sol_id, 'uitnodiging_tw', '%trainingsweekend%', $seizoen, 60);
-    } elseif ($naar === 'aangenomen' && function_exists('kennismakingspakket_activeren')) {
-        // Seed welkom template en activeer kennismakingspakket
-        if (function_exists('welkom_template_seed')) welkom_template_seed();
-        $kmp = kennismakingspakket_activeren($sol_id);
-        $mail_status = $kmp['mail_verstuurd'] ? 'verstuurd' : 'fout';
-    }
-
-    $mail_melding = null;
-    if     ($mail_status === 'verstuurd')    $mail_melding = '✉ Uitnodigingsmail verstuurd';
-    elseif ($mail_status === 'al_verstuurd') $mail_melding = '⏱ Mail al verstuurd in afgelopen uur (geen dubbele)';
-    elseif ($mail_status === 'fout')         $mail_melding = '⚠ Mail mislukt — zie mail_log';
-    elseif ($mail_status === 'geen_email')   $mail_melding = '⚠ Geen e-mailadres bekend';
+    $mail_status  = $res['melding']['status'] ?? null;
+    $mail_melding = fase_melding_tekst($res) ?: null;
+    if ($res['ongewijzigd']) $mail_melding = 'Fase was al ' . fase_label($naar) . '.';
 
     // Bepaal de volgende snelle actie voor in de tabel-rij
     $snelle_actie = match($naar) {
