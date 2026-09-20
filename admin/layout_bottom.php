@@ -36,15 +36,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /* Sidebar JS staat in layout_top.php */
 
-/* ── Detail paneel ──────────────────────────────────────────── */
+/* ── Detail paneel ──────────────────────────────────────────────
+   Het dossier is sinds de herbouw een eigen pagina (admin/sollicitant.php): deelbaar,
+   bookmarkbaar, de terugknop werkt. openPaneel() stuurt daarom door in plaats van een
+   paneel te openen. Het blijft bestaan zolang schermen die nog niet om zijn het
+   aanroepen; weg zodra `grep -rn "openPaneel" admin/` leeg is. */
 let huidigePaneelId = null;
 
 function openPaneel(id) {
-  huidigePaneelId = id;
-  document.getElementById('detailPaneel').classList.add('open');
-  document.getElementById('paneelOverlay').classList.add('open');
-  document.body.style.overflow = 'hidden';
-  laadPaneel(id);
+  window.location.href = APP_URL + '/admin/sollicitant.php?id=' + encodeURIComponent(id);
 }
 
 function laadPaneel(id) {
@@ -600,8 +600,9 @@ document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => el.remove(), 400);
     }, 5000);
   });
+  // Oude links met ?panel=<id> (bladwijzers, mails) gaan naar het dossier.
   const panelId = new URLSearchParams(window.location.search).get('panel');
-  if (panelId) openPaneel(parseInt(panelId));
+  if (panelId && /^\d+$/.test(panelId)) openPaneel(panelId);
 });
 </script>
 <script src="<?= APP_URL ?>/assets/js/app.js?v=<?= @filemtime(__DIR__.'/../assets/js/app.js') ?>"></script>

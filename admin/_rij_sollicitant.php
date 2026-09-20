@@ -17,7 +17,11 @@
  * Een naam is overal een link naar het dossier (ontwerpfilosofie §5) — nergens een
  * apart "Bekijk"-knopje.
  */
-$_url  = APP_URL . '/admin/sollicitant.php?id=' . (int)($rij['id'] ?? 0);
+// De filters gaan mee naar het dossier: daar loop je met ← → door dezelfde selectie
+// en staat eronder waar je vandaan kwam (ontwerpfilosofie §5).
+$_f_par = function_exists('bh_soll_filter_params') ? bh_soll_filter_params($_GET) : [];
+$_url   = APP_URL . '/admin/sollicitant.php?id=' . (int)($rij['id'] ?? 0)
+        . ($_f_par ? '&' . http_build_query($_f_par) : '');
 $_dim  = ($rij['fase'] ?? '') === 'afgewezen';
 $_att  = bh_rij_attentie($rij);
 $_act  = bh_fase_actie((string)($rij['fase'] ?? ''));

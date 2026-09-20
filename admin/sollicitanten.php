@@ -90,17 +90,12 @@ $stmt->execute([$sid]);
 foreach ($stmt->fetchAll() as $r) $ant[$r['fase']] = (int)$r['n'];
 $totaal_alle = array_sum($ant);
 
-$where  = "s.seizoen_id = ?";
-$params = [$sid];
-if ($fase_filter !== 'alle') { $where .= " AND s.fase = ?"; $params[] = $fase_filter; }
-if ($filter_terug === '1')   { $where .= " AND s.terugkerend = 1"; }
-if ($filter_blk === 'ja')    { $where .= " AND EXISTS (SELECT 1 FROM blk_formulieren bf_ja  WHERE bf_ja.sollicitatie_id=s.id)"; }
-if ($filter_blk === 'nee')   { $where .= " AND NOT EXISTS (SELECT 1 FROM blk_formulieren bf_nee WHERE bf_nee.sollicitatie_id=s.id)"; }
-if ($filter_comp !== '')     { $where .= " AND EXISTS (SELECT 1 FROM competenties cmp WHERE cmp.sollicitatie_id=s.id AND cmp.categorie=?)"; $params[] = $filter_comp; }
-if ($zoek !== '') {
-    $where .= " AND (p.voornaam LIKE ? OR p.achternaam LIKE ? OR p.email LIKE ?)";
-    $params[] = "%$zoek%"; $params[] = "%$zoek%"; $params[] = "%$zoek%";
-}
+// De WHERE komt uit includes/beheer/lijst.php, want de dossierpagina moet dezelfde
+// selectie kennen voor de ← →-navigatie. Zou dit scherm zijn eigen filter bouwen, dan
+// wijken die twee bij de eerste wijziging van elkaar af.
+$_f     = bh_soll_filter($_GET, $sid);
+$where  = $_f['where'];
+$params = $_f['params'];
 
 /* ── Kolommen ────────────────────────────────────────────────── */
 $tabel = bh_kolommen('sollicitanten', [
@@ -150,7 +145,7 @@ $stmt->execute($params);
 $soll = $stmt->fetchAll();
 
 $seizoen_fase = bh_seizoen_fase($seizoen);
-$heeft_filter = $fase_filter !== 'alle' || $filter_terug !== '' || $filter_blk !== '' || $filter_comp !== '' || $zoek !== '';
+$heeft_filter = $_f['actief'];
 
 $pagina_titel = 'Sollicitanten';
 $actieve_nav  = 'sollicitanten';
