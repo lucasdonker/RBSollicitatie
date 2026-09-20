@@ -29,7 +29,9 @@ function rechten_modules(): array {
         'dekking'         => ['label' => 'Dekking',                'groep' => 'Planning',       'acties' => ['lezen']],
         'loonplanning'    => ['label' => 'Loonplanning',           'groep' => 'Planning',       'acties' => ['lezen','bewerken']],
         'mailing'         => ['label' => 'Berichten & sjablonen',  'groep' => 'Communicatie',   'acties' => ['lezen','bewerken']],
-        'seizoen'         => ['label' => 'Seizoenbeheer',          'groep' => 'Beheer',         'acties' => ['lezen','bewerken']],
+        // 'verwijderen' bestaat hier apart omdat een seizoen wissen ook alle sollicitaties
+        // van dat jaar wist. Standaard heeft alleen de beheerder het; bestuur krijgt 'rw'.
+        'seizoen'         => ['label' => 'Seizoenbeheer',          'groep' => 'Beheer',         'acties' => ['lezen','bewerken','verwijderen']],
         'instellingen'    => ['label' => 'Instellingen',           'groep' => 'Beheer',         'acties' => ['lezen','bewerken']],
         'beheerders'      => ['label' => 'Beheerders & rollen',    'groep' => 'Beheer',         'acties' => ['lezen','bewerken']],
         'systeem'         => ['label' => 'Systeem, updates & logs','groep' => 'Beheer',         'acties' => ['lezen','bewerken']],

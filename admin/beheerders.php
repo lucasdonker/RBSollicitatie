@@ -1,193 +1,302 @@
 <?php
-require_once __DIR__.'/../includes/functions.php';
-$pagina_titel = 'Beheerders'; $actieve_nav = 'beheerders';
-vereist_rol('admin');
+/**
+ * Beheer — Beheerders: wie kan er in het beheer, en met welke rol?
+ *
+ * Twee manieren om binnen te komen, en dat moet zichtbaar zijn: via Authentik (SSO,
+ * de normale weg) of met een lokaal wachtwoord (de terugval als Authentik plat ligt).
+ * Een account met alleen SSO heeft geen wachtwoord — dat is goed nieuws en geen gat.
+ *
+ * Elke wijziging hier verandert wie bij persoonsgegevens kan. Daarom schrijft elke
+ * actie een auditregel, en gaat deactiveren via een bevestiging die zegt wat het doet.
+ */
+require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/beheer/laden.php';
+$pagina_titel = 'Beheerders';
+$actieve_nav  = 'beheerders';
+vereis_recht('beheerders', 'bewerken');
 
-$db = db();
-$fout = ''; 
+$db   = db();
+$fout = '';
+$mij  = (int)(huidige_beheerder()['id'] ?? 0);
+
+/** Eén beheerder, of null. */
+function beheerder_rij($db, int $id): ?array {
+    $q = $db->prepare("SELECT * FROM beheerders WHERE id=?");
+    $q->execute([$id]);
+    return $q->fetch() ?: null;
+}
 
 // ── Verwerken ────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
-    $actie = $_POST['actie'] ?? '';
+    $actie = (string)($_POST['actie'] ?? '');
+    $bid   = (int)($_POST['bid'] ?? 0);
 
     if ($actie === 'nieuw') {
-        $naam  = trim($_POST['naam']);
-        $email = strtolower(trim($_POST['email']));
-        $ww    = $_POST['wachtwoord'];
-        $rol   = $_POST['rol'];
-        if (!$naam||!$email||!$ww) { $fout='Vul alle velden in.'; }
-        elseif (!filter_var($email,FILTER_VALIDATE_EMAIL)) { $fout='Ongeldig e-mailadres.'; }
-        else {
+        $naam  = trim((string)($_POST['naam'] ?? ''));
+        $email = strtolower(trim((string)($_POST['email'] ?? '')));
+        $ww    = (string)($_POST['wachtwoord'] ?? '');
+        $rol   = (string)($_POST['rol'] ?? 'bestuur');
+        if ($naam === '' || $email === '' || $ww === '') {
+            $fout = 'Vul een naam, een e-mailadres en een tijdelijk wachtwoord in.';
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $fout = 'Dat e-mailadres klopt niet.';
+        } elseif (strlen($ww) < 8) {
+            $fout = 'Het wachtwoord moet minstens 8 tekens hebben.';
+        } else {
             try {
-                $hash = password_hash($ww, PASSWORD_DEFAULT);
-                $db->prepare("INSERT INTO beheerders (naam,email,wachtwoord,rol) VALUES(?,?,?,?)")->execute([$naam,$email,$hash,$rol]);
+                $db->prepare("INSERT INTO beheerders (naam,email,wachtwoord,rol) VALUES(?,?,?,?)")
+                   ->execute([$naam, $email, password_hash($ww, PASSWORD_DEFAULT), $rol]);
                 // Wie toegang krijgt tot het beheer hoort herleidbaar te zijn. Nooit het wachtwoord.
-                audit_log('beheerder_aangemaakt', 'beheerder', (int)$db->lastInsertId(), ['naam' => $naam, 'email' => $email, 'rol' => $rol]);
-                flash('succes', "$naam toegevoegd.");
-            } catch (Exception $e) { $fout = 'E-mailadres bestaat al.'; }
+                audit_log('beheerder_aangemaakt', 'beheerder', (int)$db->lastInsertId(),
+                          ['naam' => $naam, 'email' => $email, 'rol' => $rol]);
+                flash('succes', $naam . ' kan nu inloggen.');
+            } catch (Exception $e) {
+                $fout = 'Er bestaat al een account met dat e-mailadres.';
+            }
         }
     }
 
     if ($actie === 'wachtwoord') {
-        $id = (int)$_POST['bid'];
-        $ww = $_POST['nieuw_wachtwoord'];
-        if (strlen($ww) < 8) { $fout = 'Wachtwoord minimaal 8 tekens.'; }
-        else {
-            $db->prepare("UPDATE beheerders SET wachtwoord=? WHERE id=?")->execute([password_hash($ww,PASSWORD_DEFAULT),$id]);
+        $ww = (string)($_POST['nieuw_wachtwoord'] ?? '');
+        if (strlen($ww) < 8) {
+            $fout = 'Het wachtwoord moet minstens 8 tekens hebben.';
+        } else {
+            $db->prepare("UPDATE beheerders SET wachtwoord=? WHERE id=?")
+               ->execute([password_hash($ww, PASSWORD_DEFAULT), $bid]);
             // Alleen dát het gebeurde, nooit het wachtwoord zelf of de hash.
-            audit_log('beheerder_gewijzigd', 'beheerder', $id, ['wachtwoord' => 'opnieuw ingesteld']);
-            flash('succes','Wachtwoord bijgewerkt.');
+            audit_log('beheerder_gewijzigd', 'beheerder', $bid, ['wachtwoord' => 'opnieuw ingesteld']);
+            flash('succes', 'Het wachtwoord is opnieuw ingesteld. Geef het zelf door — het staat nergens anders.');
         }
     }
 
     if ($actie === 'rol') {
-        $id = (int)$_POST['bid'];
-        $nieuwe_rol = (string)$_POST['rol'];
-        $vq = $db->prepare("SELECT rol FROM beheerders WHERE id=?"); $vq->execute([$id]);
-        $oude_rol = (string)$vq->fetchColumn();
-        $db->prepare("UPDATE beheerders SET rol=? WHERE id=?")->execute([$nieuwe_rol,$id]);
-        if ($oude_rol !== $nieuwe_rol) {
-            audit_log('beheerder_gewijzigd', 'beheerder', $id, ['rol' => ['oud' => $oude_rol, 'nieuw' => $nieuwe_rol]]);
-        }
-        flash('succes','Rol bijgewerkt.');
-    }
-
-    if ($actie === 'deactiveer') {
-        $id = (int)$_POST['bid'];
-        $mij = (int)huidige_beheerder()['id'];
-        if ($id === $mij) { $fout='Je kunt jezelf niet deactiveren.'; }
-        else {
-            $db->prepare("UPDATE beheerders SET actief=0 WHERE id=?")->execute([$id]);
-            audit_log('beheerder_gewijzigd', 'beheerder', $id, ['actief' => ['oud' => 'ja', 'nieuw' => 'nee']]);
-            flash('succes','Account gedeactiveerd.');
+        $nieuw = (string)($_POST['rol'] ?? '');
+        $oud   = (string)(beheerder_rij($db, $bid)['rol'] ?? '');
+        if ($nieuw !== '' && $nieuw !== $oud) {
+            $db->prepare("UPDATE beheerders SET rol=? WHERE id=?")->execute([$nieuw, $bid]);
+            audit_log('beheerder_gewijzigd', 'beheerder', $bid, ['rol' => ['oud' => $oud, 'nieuw' => $nieuw]]);
+            flash('succes', 'Rol bijgewerkt.');
         }
     }
 
-    if ($actie === 'activeer') {
-        $id = (int)$_POST['bid'];
-        $db->prepare("UPDATE beheerders SET actief=1 WHERE id=?")->execute([$id]);
-        audit_log('beheerder_gewijzigd', 'beheerder', $id, ['actief' => ['oud' => 'nee', 'nieuw' => 'ja']]);
-        flash('succes','Account geactiveerd.');
+    if ($actie === 'deactiveer' || $actie === 'activeer') {
+        $aan = $actie === 'activeer';
+        if (!$aan && $bid === $mij) {
+            $fout = 'Je kunt je eigen account niet uitzetten — dan kom je er zelf niet meer in.';
+        } else {
+            $db->prepare("UPDATE beheerders SET actief=? WHERE id=?")->execute([$aan ? 1 : 0, $bid]);
+            audit_log('beheerder_gewijzigd', 'beheerder', $bid,
+                      ['actief' => ['oud' => $aan ? 'nee' : 'ja', 'nieuw' => $aan ? 'ja' : 'nee']]);
+            flash('succes', $aan ? 'Account weer actief.' : 'Account uitgezet — deze persoon kan niet meer inloggen.');
+        }
     }
 
-    if (!$fout) redirect(APP_URL.'/admin/beheerders.php');
+    if (!$fout) redirect(APP_URL . '/admin/beheerders.php');
+}
+
+// ── Bevestiging als tussenscherm ─────────────────────────────
+$bev_actie = (string)($_GET['bevestig'] ?? '');
+$bev_b     = null;
+if (in_array($bev_actie, ['deactiveer', 'activeer'], true)) {
+    $bev_b = beheerder_rij($db, (int)($_GET['id'] ?? 0));
+    if (!$bev_b) { $bev_actie = ''; }
 }
 
 $beheerders = $db->query("SELECT * FROM beheerders ORDER BY actief DESC, rol DESC, naam")->fetchAll();
-require __DIR__.'/layout_top.php';
+$rolnamen   = [];
+foreach (rollen_alle() as $_r) $rolnamen[$_r['sleutel']] = $_r['naam'];
+
+require __DIR__ . '/layout_top.php';
 ?>
 
-<?php if ($fout): ?><div class="flash flash-fout"><?= h($fout) ?></div><?php endif; ?>
+<?php if ($bev_b): $_uit = $bev_actie === 'deactiveer'; ?>
+  <?php
+  $bev = [
+      'titel'  => ($_uit ? 'Account van ' : 'Account van ') . $bev_b['naam'] . ($_uit ? ' uitzetten?' : ' weer aanzetten?'),
+      'regels' => $_uit
+          ? [$bev_b['naam'] . ' kan daarna niet meer inloggen, ook niet via Authentik.',
+             'Het account blijft bestaan; wat deze persoon eerder deed blijft in het logboek staan.',
+             'Je kunt het later weer aanzetten.']
+          : [$bev_b['naam'] . ' kan daarna weer inloggen met de rol ' . ($rolnamen[$bev_b['rol']] ?? $bev_b['rol']) . '.'],
+      'bericht'      => null,
+      'onomkeerbaar' => false,
+      'knop'         => $_uit ? 'Ja, uitzetten' : 'Ja, aanzetten',
+      'toon'         => $_uit ? 'gevaar' : 'primair',
+  ];
+  $bev_form  = ['actie' => APP_URL . '/admin/beheerders.php',
+                'velden' => ['actie' => $bev_actie, 'bid' => (int)$bev_b['id']]];
+  $bev_terug = APP_URL . '/admin/beheerders.php';
+  require __DIR__ . '/_bevestig.php';
+  ?>
+  <?php require __DIR__ . '/layout_bottom.php'; ?>
+  <?php return; ?>
+<?php endif; ?>
 
-<div style="display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start">
+<?php $bt_actief = 'beheerders'; require __DIR__ . '/_beheer_tabs.php'; ?>
 
-<!-- Beheerders lijst -->
-<div class="card">
-  <div class="card-header"><div class="card-title">Beheerders (<?= count($beheerders) ?>)</div></div>
-  <div class="tabel-wrap">
-    <table class="data-tabel">
-      <thead><tr><th>Naam</th><th>Rol</th><th>Login via</th><th>Laatste login</th><th style="width:140px">Acties</th></tr></thead>
-      <tbody>
-      <?php foreach ($beheerders as $b): ?>
-      <tr style="<?= !$b['actief']?'opacity:.55':'' ?>">
-        <td>
-          <div style="font-weight:600;font-size:13px">
-            <?= h($b['naam']) ?>
-            <?php if (!$b['actief']): ?>
-            <span class="badge badge-grijs" style="font-size:9px;margin-left:6px">INACTIEF</span>
+<?php if ($fout): ?>
+  <div class="ds-melding ds-melding-error bh-blokkade"><?= icoon('waarschuwing', 18) ?><span><?= h($fout) ?></span></div>
+<?php endif; ?>
+
+<div class="bh-beheerders-kolommen">
+  <div class="bh-beheerders-hoofd">
+    <section class="ds-kaart bh-beheerderslijst">
+      <div class="bh-loglijst-kop">
+        <h2>Beheerders</h2>
+        <span class="bh-meta"><?= count($beheerders) ?> <?= count($beheerders) === 1 ? 'account' : 'accounts' ?></span>
+      </div>
+
+      <ul class="bh-bhlijst">
+        <?php foreach ($beheerders as $b):
+          $_actief = !empty($b['actief']);
+          $_ik     = (int)$b['id'] === $mij;
+        ?>
+        <li class="bh-bhrij<?= $_actief ? '' : ' uit' ?>">
+          <span class="bh-bhrij-wie">
+            <?= bh_avatar(['voornaam' => (string)$b['naam'], 'achternaam' => ''], 34, ['dim' => !$_actief]) ?>
+            <span class="bh-bhrij-tekst">
+              <span class="bh-bhrij-naam">
+                <?= h((string)$b['naam']) ?>
+                <?php if ($_ik): ?><?= bh_chip('jij', 'blauw') ?><?php endif; ?>
+                <?php if (!$_actief): ?><?= bh_badge('Uitgezet', 'grijs') ?><?php endif; ?>
+              </span>
+              <span class="bh-bhrij-sub"><?= h((string)$b['email']) ?></span>
+            </span>
+          </span>
+
+          <span class="bh-bhrij-login">
+            <?php if (!empty($b['authentik_uid'])): ?>
+              <span class="bh-bhrij-via" title="Logt in via Authentik"><?= icoon('schild', 14) ?> Authentik</span>
             <?php endif; ?>
-          </div>
-          <div style="font-size:11px;color:var(--grijs)"><?= h($b['email']) ?></div>
-        </td>
-        <td>
-          <form method="POST" style="display:inline">
-      <?= csrf_input() ?>
+            <?php if (!empty($b['wachtwoord'])): ?>
+              <span class="bh-bhrij-via" title="Kan ook inloggen met een wachtwoord in dit systeem"><?= icoon('sleutel', 14) ?> Wachtwoord</span>
+            <?php endif; ?>
+            <?php if (empty($b['authentik_uid']) && empty($b['wachtwoord'])): ?>
+              <span class="bh-bhrij-via let-op" title="Dit account kan op geen enkele manier inloggen">
+                <?= icoon('waarschuwing', 14) ?> Geen inlogmethode
+              </span>
+            <?php endif; ?>
+            <span class="bh-bhrij-laatst">
+              <?= !empty($b['laatste_login']) ? 'laatst ' . h(datum_kort_nl(substr((string)$b['laatste_login'], 0, 10))) : 'nog nooit ingelogd' ?>
+            </span>
+          </span>
+
+          <form class="bh-bhrij-rol" method="POST">
+            <?= csrf_input() ?>
             <input type="hidden" name="actie" value="rol">
-            <input type="hidden" name="bid" value="<?= $b['id'] ?>">
-            <select name="rol" onchange="this.form.submit()" style="font-size:12px;padding:3px 6px;width:auto">
-              <?php foreach (rollen_alle() as $_rol): ?>
-                <option value="<?= h($_rol['sleutel']) ?>" <?= $b['rol']===$_rol['sleutel']?'selected':'' ?>><?= h($_rol['naam']) ?></option>
+            <input type="hidden" name="bid" value="<?= (int)$b['id'] ?>">
+            <label class="sr-only" for="rol-<?= (int)$b['id'] ?>">Rol van <?= h((string)$b['naam']) ?></label>
+            <select class="ds-select bh-veld-smal" id="rol-<?= (int)$b['id'] ?>" name="rol">
+              <?php foreach ($rolnamen as $_sl => $_nm): ?>
+                <option value="<?= h($_sl) ?>" <?= $b['rol'] === $_sl ? 'selected' : '' ?>><?= h($_nm) ?></option>
               <?php endforeach; ?>
             </select>
+            <button type="submit" class="ds-btn ds-btn-zacht ds-btn-sm">Rol opslaan</button>
           </form>
-        </td>
-        <td style="font-size:12px;color:var(--grijs)">
-          <?= $b['wachtwoord'] ? '🔑 Wachtwoord' : '' ?>
-          <?= $b['authentik_uid'] ? '🔐 Authentik' : '' ?>
-          <?= (!$b['wachtwoord'] && !$b['authentik_uid']) ? '—' : '' ?>
-        </td>
-        <td style="font-size:12px;color:var(--grijs)"><?= $b['laatste_login'] ? datum_nl(substr($b['laatste_login'],0,10)) : '—' ?></td>
-        <td>
-          <div style="display:flex;gap:4px;flex-wrap:wrap">
-            <button onclick="document.getElementById('ww-<?= $b['id'] ?>').style.display=document.getElementById('ww-<?= $b['id'] ?>').style.display==='none'?'block':'none'" class="btn btn-outline btn-sm">🔑</button>
-            <form method="POST" style="display:inline">
-      <?= csrf_input() ?>
-              <input type="hidden" name="actie" value="<?= $b['actief']?'deactiveer':'activeer' ?>">
-              <input type="hidden" name="bid" value="<?= $b['id'] ?>">
-              <button type="submit" class="btn btn-sm <?= $b['actief']?'btn-rood':'btn-groen' ?>" onclick="return confirm('<?= $b['actief']?'Deactiveren':'Activeren' ?>?')"><?= $b['actief']?'✕':'✓' ?></button>
-            </form>
-          </div>
-          <!-- Wachtwoord wijzigen inline -->
-          <div id="ww-<?= $b['id'] ?>" style="display:none;margin-top:8px">
-            <form method="POST">
-      <?= csrf_input() ?>
-              <input type="hidden" name="actie" value="wachtwoord">
-              <input type="hidden" name="bid" value="<?= $b['id'] ?>">
-              <div style="display:flex;gap:4px">
-                <input type="password" name="nieuw_wachtwoord" placeholder="Nieuw wachtwoord" minlength="8" style="font-size:12px;padding:5px 8px">
-                <button type="submit" class="btn btn-primary btn-sm">Sla op</button>
-              </div>
-            </form>
-          </div>
-        </td>
-      </tr>
-      <?php endforeach; ?>
-      </tbody>
-    </table>
+
+          <span class="bh-bhrij-acties">
+            <a class="ds-btn ds-btn-zacht ds-btn-sm" href="#ww-<?= (int)$b['id'] ?>"
+               onclick="bhWachtwoord(<?= (int)$b['id'] ?>); return false;">Wachtwoord</a>
+            <?php if ($_ik): ?>
+              <span class="bh-meta" title="Je kunt je eigen account niet uitzetten">jouw account</span>
+            <?php else: ?>
+              <a class="ds-btn <?= $_actief ? 'ds-btn-gevaar' : 'ds-btn-secundair' ?> ds-btn-sm"
+                 href="?bevestig=<?= $_actief ? 'deactiveer' : 'activeer' ?>&amp;id=<?= (int)$b['id'] ?>">
+                <?= $_actief ? 'Uitzetten' : 'Aanzetten' ?>
+              </a>
+            <?php endif; ?>
+          </span>
+
+          <form class="bh-bhrij-ww" id="ww-<?= (int)$b['id'] ?>" method="POST" hidden>
+            <?= csrf_input() ?>
+            <input type="hidden" name="actie" value="wachtwoord">
+            <input type="hidden" name="bid" value="<?= (int)$b['id'] ?>">
+            <label class="ds-label" for="wwv-<?= (int)$b['id'] ?>">Nieuw wachtwoord voor <?= h((string)$b['naam']) ?></label>
+            <div class="bh-bhrij-wwrij">
+              <input class="ds-input" type="password" id="wwv-<?= (int)$b['id'] ?>" name="nieuw_wachtwoord"
+                     minlength="8" autocomplete="new-password" placeholder="Minimaal 8 tekens" required>
+              <button type="submit" class="ds-btn ds-btn-primair ds-btn-sm">Opslaan</button>
+              <button type="button" class="ds-btn ds-btn-zacht ds-btn-sm" onclick="bhWachtwoord(<?= (int)$b['id'] ?>)">Annuleren</button>
+            </div>
+            <p class="ds-veld-hint">
+              Het systeem verstuurt dit niet. Geef het zelf door en laat de persoon het daarna wijzigen.
+            </p>
+          </form>
+        </li>
+        <?php endforeach; ?>
+      </ul>
+    </section>
   </div>
+
+  <aside class="bh-beheerders-zij">
+    <form method="POST" class="ds-kaart ds-kaart-p">
+      <?= csrf_input() ?>
+      <input type="hidden" name="actie" value="nieuw">
+      <div class="bh-kaartkop"><h2>Account aanmaken</h2></div>
+      <p class="ds-veld-hint">
+        Alleen nodig voor iemand die niet via Authentik binnenkomt. Wie wél in Authentik staat,
+        krijgt bij de eerste keer inloggen vanzelf een account.
+      </p>
+      <div class="ds-veld">
+        <label class="ds-label" for="nb_naam">Naam</label>
+        <input class="ds-input" type="text" id="nb_naam" name="naam" required placeholder="Jan de Vries">
+      </div>
+      <div class="ds-veld">
+        <label class="ds-label" for="nb_email">E-mailadres</label>
+        <input class="ds-input" type="email" id="nb_email" name="email" required placeholder="jan@paal13.com">
+      </div>
+      <div class="ds-veld">
+        <label class="ds-label" for="nb_ww">Tijdelijk wachtwoord</label>
+        <input class="ds-input" type="password" id="nb_ww" name="wachtwoord" required minlength="8"
+               autocomplete="new-password" placeholder="Minimaal 8 tekens">
+        <p class="ds-veld-hint">Geef dit zelf door; het systeem mailt het niet.</p>
+      </div>
+      <div class="ds-veld">
+        <label class="ds-label" for="nb_rol">Rol</label>
+        <select class="ds-select" id="nb_rol" name="rol">
+          <?php foreach ($rolnamen as $_sl => $_nm): ?>
+            <option value="<?= h($_sl) ?>" <?= $_sl === 'bestuur' ? 'selected' : '' ?>><?= h($_nm) ?></option>
+          <?php endforeach; ?>
+        </select>
+        <p class="ds-veld-hint">Wat elke rol precies mag, stel je in bij <a href="<?= APP_URL ?>/admin/rollen.php">Rollen</a>.</p>
+      </div>
+      <div class="bh-seizoenform-voet">
+        <button type="submit" class="ds-btn ds-btn-primair">Account aanmaken</button>
+      </div>
+    </form>
+
+    <?php if (authentik_geconfigureerd()): ?>
+    <section class="ds-kaart ds-kaart-p bh-ssokaart aan">
+      <div class="bh-kaartkop"><h2>Authentik is gekoppeld</h2></div>
+      <p class="bh-dossier-tekst">
+        Wie via Authentik inlogt krijgt automatisch een account met de rol Bestuur. Zit iemand daar
+        in de groep <code>paal13-admin</code>, dan wordt hij beheerder. Een andere rol geef je
+        hiernaast in de lijst.
+      </p>
+    </section>
+    <?php else: ?>
+    <section class="ds-kaart ds-kaart-p bh-ssokaart">
+      <div class="bh-kaartkop"><h2>Authentik is niet gekoppeld</h2></div>
+      <p class="bh-dossier-tekst">
+        Zonder koppeling kan er alleen met een wachtwoord uit dit systeem worden ingelogd. Zet de
+        OIDC-gegevens in <code>includes/config.php</code> om SSO aan te zetten; het runbook voor
+        systeembeheer beschrijft de stappen.
+      </p>
+    </section>
+    <?php endif; ?>
+  </aside>
 </div>
 
-<!-- Nieuw account -->
-<div>
-  <div class="card">
-    <div class="card-header"><div class="card-title">Nieuw account aanmaken</div></div>
-    <div class="card-body">
-      <form method="POST">
-      <?= csrf_input() ?>
-        <input type="hidden" name="actie" value="nieuw">
-        <div class="form-groep"><label>Naam</label><input type="text" name="naam" required placeholder="Jan de Vries"></div>
-        <div class="form-groep"><label>E-mailadres</label><input type="email" name="email" required placeholder="jan@paal13.com"></div>
-        <div class="form-groep"><label>Tijdelijk wachtwoord</label><input type="password" name="wachtwoord" required minlength="8" placeholder="Minimaal 8 tekens"><div class="form-hulp">Geef dit door aan de persoon — zij kunnen het later wijzigen.</div></div>
-        <div class="form-groep"><label>Rol</label>
-          <select name="rol">
-            <?php foreach (rollen_alle() as $_rol): ?>
-              <option value="<?= h($_rol['sleutel']) ?>" <?= $_rol['sleutel']==='bestuur'?'selected':'' ?>><?= h($_rol['naam']) ?></option>
-            <?php endforeach; ?>
-          </select>
-        </div>
-        <button type="submit" class="btn btn-primary">Account aanmaken</button>
-      </form>
-    </div>
-  </div>
+<script>
+/* Het wachtwoordformulier staat standaard dicht: het is een uitzonderingsactie, en
+   een open wachtwoordveld per rij maakt de lijst onleesbaar. */
+function bhWachtwoord(id) {
+  var f = document.getElementById('ww-' + id);
+  if (!f) return;
+  f.hidden = !f.hidden;
+  if (!f.hidden) { var v = f.querySelector('input[type=password]'); if (v) v.focus(); }
+}
+</script>
 
-  <?php if (authentik_geconfigureerd()): ?>
-  <div class="card" style="margin-top:14px;border-left:3px solid var(--groen)">
-    <div class="card-body" style="padding:14px 16px">
-      <div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:4px">🔐 Authentik SSO actief</div>
-      <p style="font-size:12px;color:var(--tekst-zacht)">Iemand die via Authentik inlogt krijgt automatisch een account (rol: bestuur). Geef ze admin via de tabel hierboven. Groep <code>paal13-admin</code> in Authentik → automatisch admin.</p>
-    </div>
-  </div>
-  <?php else: ?>
-  <div class="card" style="margin-top:14px;border-left:3px solid var(--grijs)">
-    <div class="card-body" style="padding:14px 16px">
-      <div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:4px">Authentik SSO niet ingesteld</div>
-      <p style="font-size:12px;color:var(--tekst-zacht)">Vul de OIDC-gegevens (OIDC_CLIENT_ID, OIDC_CLIENT_SECRET, OIDC_ISSUER) in <code>includes/config.php</code> in om SSO in te schakelen; zie het runbook voor systeembeheer.</p>
-    </div>
-  </div>
-  <?php endif; ?>
-</div>
-
-</div>
-
-<?php require __DIR__.'/layout_bottom.php'; ?>
+<?php require __DIR__ . '/layout_bottom.php'; ?>

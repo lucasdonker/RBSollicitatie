@@ -197,11 +197,46 @@ function rol_rang(string $sleutel): int {
     return $cache[$sleutel] ?? 0;
 }
 
+/**
+ * Eist een minimale rolrang.
+ *
+ * LET OP — rang is een hiërarchie, en niet elke rol staat in die hiërarchie op de plek
+ * die je zou verwachten: de penningmeester heeft dezelfde rang als het bestuur maar
+ * mag heel andere dingen. Gebruik daarom bij voorkeur mag()/vereis_recht() met een
+ * module; deze functie alleen waar het écht om "minstens deze rang" gaat.
+ *
+ * De weigering rendert dezelfde pagina als vereis_recht(): geen rechten is een keuze,
+ * geen storing (ontwerpfilosofie §8). Eerder stond hier een kale die() met een <h2>.
+ */
 function vereist_rol(string $min): void {
     vereist_login();
-    if (rol_rang($_SESSION['bhd_rol'] ?? 'begeleider') < rol_rang($min)) {
-        http_response_code(403); die('<h2 style="font-family:sans-serif">Geen toegang</h2>');
+    if (rol_rang($_SESSION['bhd_rol'] ?? 'begeleider') >= rol_rang($min)) return;
+
+    http_response_code(403);
+
+    $script = basename((string)($_SERVER['SCRIPT_NAME'] ?? ''));
+    if (str_starts_with($script, 'api_')) {
+        header('Content-Type: application/json; charset=utf-8');
+        die(json_encode(['ok' => false, 'fout' => 'geen_rechten', 'rol_minimaal' => $min]));
     }
+
+    $layout  = __DIR__ . '/../admin/layout_top.php';
+    $partial = __DIR__ . '/../admin/_geen_rechten.php';
+    if (is_file($layout) && is_file($partial)) {
+        $pagina_titel = 'Geen toegang';
+        $actieve_nav  = '';
+        require $layout;
+        $geen_module = null;
+        $geen_rol    = (string)($_SESSION['bhd_rol'] ?? '');
+        require $partial;
+        require __DIR__ . '/../admin/layout_bottom.php';
+        exit;
+    }
+
+    $terug = defined('APP_URL') ? APP_URL . '/admin/' : '/admin/';
+    die('<div style="font-family:sans-serif;max-width:520px;margin:80px auto;text-align:center">'
+      . '<h2>Geen toegang</h2><p>Je rol heeft hier geen inzage. Dat is een bewuste keuze, geen storing.</p>'
+      . '<p><a href="' . htmlspecialchars($terug) . '">Terug naar Vandaag</a></p></div>');
 }
 
 /** True als de ingelogde beheerder minstens de gevraagde rol heeft (zonder af te breken). */
