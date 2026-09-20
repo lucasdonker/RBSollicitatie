@@ -17,7 +17,7 @@ if (!defined('BH_GELADEN')) {
     $__bh_inc = dirname(__DIR__);
 
     // Beslissingen en tellingen — geen HTML
-    foreach (['fase_ui.php', 'tabel.php', 'nav.php', 'dossier.php', 'bevestig.php'] as $__bh_f) {
+    foreach (['fase_ui.php', 'tabel.php', 'nav.php', 'vandaag.php', 'dossier.php', 'bevestig.php'] as $__bh_f) {
         if (is_file(__DIR__ . '/' . $__bh_f)) require_once __DIR__ . '/' . $__bh_f;
     }
 

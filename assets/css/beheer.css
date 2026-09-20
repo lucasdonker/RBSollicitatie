@@ -155,6 +155,100 @@ html[data-theme="dark"] .bh-nav-link.actief { background: var(--surface); color:
   .bh-topbar-titel { font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
 
+/* ═══ VANDAAG ═══════════════════════════════════════════════════ */
+
+.bh-kaartkop { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; }
+.bh-kaartkop h2 { font: var(--text-subhead); font-size: 15px; color: var(--ink); margin: 0; }
+.bh-kaartkop .bh-meta { margin-left: auto; }
+
+/* Seizoensbalk */
+.bh-seizoenbalk { display: flex; padding: 16px 20px; gap: 14px; margin-bottom: 16px; }
+.bh-sb-stap { flex: 1; display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.bh-sb-stap.nu { flex: 1.3; }
+.bh-sb-lijn { height: 5px; border-radius: 3px; background: var(--border); display: block; }
+.bh-sb-stap.gehad .bh-sb-lijn { background: var(--ok); }
+.bh-sb-stap.nu .bh-sb-lijn { background: var(--accent); }
+.bh-sb-label { font-size: 12px; color: var(--ink-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bh-sb-stap.nu .bh-sb-label { color: var(--accent); font-weight: 700; }
+.bh-sb-stap.komt .bh-sb-label { color: var(--ink-muted); }
+.bh-sb-datum { color: var(--ink-muted); font-weight: 400; }
+
+/* Hoofdtaak */
+.bh-hoofdtaak {
+  background: var(--surface); border: 1px solid var(--fase-oranje-rand);
+  border-left: 3px solid var(--accent); border-radius: var(--radius-lg);
+  padding: 20px 22px; margin-bottom: 16px;
+  display: flex; align-items: center; gap: 22px; flex-wrap: wrap;
+}
+.bh-hoofdtaak.klaar { border-color: var(--fase-groen-rand); border-left-color: var(--ok); }
+.bh-hoofdtaak-tekst { flex: 1; min-width: 280px; display: flex; flex-direction: column; gap: 6px; }
+.bh-hoofdtaak-kop {
+  font-size: 11px; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--accent);
+}
+.bh-hoofdtaak.klaar .bh-hoofdtaak-kop { color: var(--ok); }
+.bh-hoofdtaak h2 { font: var(--text-title); font-size: 21px; color: var(--ink); margin: 0; }
+.bh-hoofdtaak p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--ink-soft); }
+.bh-hoofdtaak-rechts { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.bh-hoofdtaak-voortgang { display: flex; flex-direction: column; gap: 5px; }
+.bh-hoofdtaak-vink { color: var(--ok); display: flex; }
+.bh-blokjes { display: flex; gap: 3px; }
+.bh-blokje { width: 13px; height: 24px; border-radius: 3px; background: var(--border); }
+.bh-blokje.gedaan { background: var(--ok); }
+
+/* Waar staat iedereen */
+.bh-vandaag-kolommen { display: flex; gap: 14px; align-items: flex-start; flex-wrap: wrap; }
+.bh-stand { flex: 2; min-width: 380px; }
+.bh-vandaag-zij { flex: 1; min-width: 270px; display: flex; flex-direction: column; gap: 14px; }
+.bh-stand-balken { display: flex; gap: 6px; align-items: flex-end; }
+.bh-stand-balk {
+  flex: 1; display: flex; flex-direction: column; gap: 6px; align-items: center;
+  text-decoration: none; min-width: 0; padding: 4px 2px; border-radius: 8px;
+}
+.bh-stand-balk:hover { background: var(--bg-subtle); }
+.bh-stand-getal { font-size: 15px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+.bh-stand-staaf { width: 100%; border-radius: 3px; background: var(--f-tekst); display: block; }
+.bh-stand-label {
+  font-size: 11px; color: var(--ink-soft); text-align: center; line-height: 1.3;
+  overflow: hidden; text-overflow: ellipsis; width: 100%;
+}
+
+/* Loopt ondertussen */
+.bh-looptlijst { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 11px; }
+.bh-looptlijst li { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+.bh-loopt-stip { width: 7px; height: 7px; border-radius: 50%; background: var(--f-tekst); flex: none; }
+.bh-looptlijst a { color: var(--ink); }
+.bh-looptlijst a:hover { color: var(--navy); text-decoration: underline; }
+
+/* Systeemstatus */
+.bh-systeem {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 13px 16px;
+  font-size: 13px; color: var(--ink-soft);
+}
+.bh-systeem.alarm { border: 1.5px solid var(--error); background: var(--error-soft); }
+.bh-systeem-kop {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-weight: 700; color: var(--f-tekst); white-space: nowrap;
+}
+.bh-systeem-stip { width: 8px; height: 8px; border-radius: 50%; background: var(--f-tekst); }
+.bh-systeem-cijfers { display: flex; gap: 14px; flex-wrap: wrap; }
+.bh-systeem-cijfers .bh-num { color: var(--ink); font-variant-numeric: tabular-nums; }
+.bh-systeem-cijfers .slecht { color: var(--error); font-weight: 700; }
+.bh-systeem-cijfers .let-op { color: var(--warn); font-weight: 600; }
+.bh-systeem-ronde { margin-left: auto; color: var(--ink-muted); white-space: nowrap; }
+.bh-systeem.alarm .bh-systeem-ronde { color: var(--error); }
+.bh-systeem-knop { background: var(--error); color: var(--op-vol); border: none; }
+
+@media (max-width: 760px) {
+  .bh-seizoenbalk { flex-wrap: wrap; gap: 10px 14px; }
+  .bh-sb-stap, .bh-sb-stap.nu { flex: 1 1 30%; }
+  .bh-stand, .bh-vandaag-zij { min-width: 100%; }
+  .bh-hoofdtaak h2 { font-size: 19px; }
+  .bh-systeem-ronde { margin-left: 0; }
+}
+
 /* ── Stoplicht ── */
 .bh-stoplicht {
   display: inline-flex; align-items: center; gap: 7px;
