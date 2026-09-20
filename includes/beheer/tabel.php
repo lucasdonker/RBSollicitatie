@@ -24,7 +24,8 @@
  *   'uitlijn'   string   'links' (standaard) of 'rechts' (rechts = ook tabular-nums)
  *   'optioneel' bool     verschijnt in de kolommenkiezer
  *   'standaard' bool     staat aan als de gebruiker niets koos (standaard true)
- *   'mobiel'    string   'toon' (standaard) of 'verberg' — op telefoon weglaten
+ *   'mobiel'    string   'toon' (standaard), 'verberg' (op telefoon weglaten) of
+ *                        'titel' (op telefoon zonder labeltje, voor de naamkolom)
  *   'recht'     ?array   ['module','actie'] — zonder recht verdwijnt de kolom
  */
 
@@ -59,7 +60,7 @@ function bh_kolommen(string $tabel_id, array $def, array $opt = []): array {
             'uitlijn'   => ($k['uitlijn'] ?? 'links') === 'rechts' ? 'rechts' : 'links',
             'optioneel' => $optioneel,
             'standaard' => $k['standaard'] ?? true,
-            'mobiel'    => ($k['mobiel'] ?? 'toon') === 'verberg' ? 'verberg' : 'toon',
+            'mobiel'    => in_array($k['mobiel'] ?? 'toon', ['verberg', 'titel'], true) ? $k['mobiel'] : 'toon',
             'aan'       => $aan,
         ];
     }
@@ -81,6 +82,32 @@ function bh_kolommen(string $tabel_id, array $def, array $opt = []): array {
         'sort'      => $sort,
         'richting'  => $richting,
     ];
+}
+
+/**
+ * De openingstag van één cel, inclusief data-label en de klassen die uit de
+ * kolomdefinitie volgen (uitlijning, en of de kolom op telefoon verdwijnt).
+ *
+ * Waarom een helper en niet met de hand: de klasse bh-geen-mobiel moet op de <th>
+ * én op elke <td> staan, anders verdwijnt de kop wel en de cel niet. Dat is precies
+ * het soort detail dat je in tien rij-partials vergeet.
+ *
+ * Gebruik in een rij-partial:  <?= bh_td('leeftijd') ?>18 jr</td>
+ */
+function bh_td(string $sleutel, string $extra_klasse = '', string $extra_attr = ''): string {
+    $k = $GLOBALS['BH_TABEL_KOLOM'][$sleutel] ?? null;
+    $cls = trim(($k && $k['uitlijn'] === 'rechts' ? 'bh-rechts ' : '')
+              . ($k && $k['mobiel'] === 'verberg' ? 'bh-geen-mobiel ' : '')
+              . ($k && $k['mobiel'] === 'titel' ? 'bh-mobiel-titel ' : '')
+              . $extra_klasse);
+    // 'titel'-kolom krijgt op telefoon geen labeltje: boven een naam "NAAM" zetten is ruis.
+    if ($k && $k['mobiel'] === 'titel') {
+        return '<td' . ($cls !== '' ? ' class="' . h($cls) . '"' : '')
+             . ($extra_attr !== '' ? ' ' . $extra_attr : '') . '>';
+    }
+    return '<td data-label="' . h($k['kop'] ?? $sleutel) . '"'
+         . ($cls !== '' ? ' class="' . h($cls) . '"' : '')
+         . ($extra_attr !== '' ? ' ' . $extra_attr : '') . '>';
 }
 
 /**

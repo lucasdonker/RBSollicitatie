@@ -96,6 +96,8 @@ function bh_rij_attentie(array $rij): array {
 function bh_fase_tabs(array $aantallen, string $seizoen_fase = ''): array {
     $hoort_bij = bh_fases_in_seizoensfase($seizoen_fase);
 
+    // Vaste volgorde: de trechter van boven naar beneden. Hersorteren op "actueel"
+    // maakt het scherm onvoorspelbaar voor wie eens per week inlogt.
     $tabs = [];
     foreach (fasen() as $fase => $_label) {
         $n = (int)($aantallen[$fase] ?? 0);
@@ -108,8 +110,6 @@ function bh_fase_tabs(array $aantallen, string $seizoen_fase = ''): array {
             'actueel' => $hoort_bij === null || in_array($fase, $hoort_bij, true),
         ];
     }
-    // Fases die in deze seizoensfase niet aan de beurt zijn, achteraan.
-    usort($tabs, fn($a, $b) => ($b['actueel'] <=> $a['actueel']));
 
     $vreemd = array_values(array_filter($tabs, fn($t) => !$t['actueel']));
     return [
@@ -119,17 +119,80 @@ function bh_fase_tabs(array $aantallen, string $seizoen_fase = ''): array {
     ];
 }
 
-/** Welke kandidaatfases horen bij een seizoensfase? null = onbekend, toon alles. */
-function bh_fases_in_seizoensfase(string $seizoen_fase): ?array {
-    $kaart = [
-        'werving'           => ['aangemeld'],
-        'formulieren'       => ['aangemeld', 'uitgenodigd_selectie', 'aangemeld_selectie', 'afgewezen'],
-        'selectiedag'       => ['aangemeld_selectie', 'selectiedag_geweest', 'afgewezen'],
-        'bellijst'          => ['selectiedag_geweest', 'uitgenodigd_tw', 'afgewezen'],
-        'trainingsweekend'  => ['uitgenodigd_tw', 'tw_geweest', 'afgewezen'],
-        'aanname'           => ['tw_geweest', 'aangenomen', 'afgewezen'],
+/**
+ * In welke fase zit het seizoen? Afgeleid uit de datums die al in het seizoen staan,
+ * met een handmatige uitweg: de instelling seizoen.fase overrulet de afleiding. Die
+ * uitweg is er omdat een selectiedag verschoven kan worden of een belronde uitloopt —
+ * en dan klopt elk fase-gestuurd scherm niet meer (ontwerpfilosofie §3).
+ *
+ * @return string werving|formulieren|selectiedag|bellijst|trainingsweekend|aanname
+ */
+function bh_seizoen_fase(?array $seizoen = null): string {
+    $handmatig = function_exists('instelling') ? trim(instelling('seizoen.fase', '')) : '';
+    if ($handmatig !== '' && bh_fases_in_seizoensfase($handmatig) !== null) return $handmatig;
+
+    $s = $seizoen ?? (function_exists('actief_seizoen') ? actief_seizoen() : null);
+    if (!$s) return 'werving';
+
+    $vandaag = new DateTimeImmutable('today');
+    $datum = function (?string $d): ?DateTimeImmutable {
+        if (!$d) return null;
+        try { return new DateTimeImmutable($d); } catch (\Exception $e) { return null; }
+    };
+    $sd = $datum($s['datum_selectiedag'] ?? null);
+    $tw = $datum($s['datum_tw_start'] ?? null);
+    $we = $datum($s['datum_tw_eind'] ?? null) ?? $tw;
+
+    if ($we && $vandaag > $we)                          return 'aanname';
+    if ($tw && $vandaag >= $tw)                         return 'trainingsweekend';
+    // Tussen de selectiedag en het trainingsweekend wordt gebeld en besloten.
+    if ($sd && $vandaag > $sd)                          return 'bellijst';
+    if ($sd && $vandaag->format('Y-m-d') === $sd->format('Y-m-d')) return 'selectiedag';
+    if (($s['status'] ?? '') === 'open')                return 'werving';
+    return 'formulieren';
+}
+
+/** De zes seizoensfases met hun label, voor de keuzelijst in Instellingen. */
+function bh_seizoen_fases(): array {
+    return [
+        'werving'          => 'Werving — aanmeldingen komen binnen',
+        'formulieren'      => 'Formulieren — wachten op de kennismakingsformulieren',
+        'selectiedag'      => 'Selectiedag',
+        'bellijst'         => 'Bellijst — besluiten en bellen',
+        'trainingsweekend' => 'Trainingsweekend',
+        'aanname'          => 'Aanname — contracten en loondossiers',
     ];
-    return $kaart[$seizoen_fase] ?? null;
+}
+
+/**
+ * Welke kandidaatfases kunnen in deze seizoensfase bestaan? null = onbekend, toon alles.
+ *
+ * Cumulatief, en dat is met opzet: wie in de bellijst-fase nog in 'aangemeld' staat is
+ * blijven hangen, maar hij hoort wél bij dit seizoen. Alleen wie vóórloopt op het
+ * seizoen is echt vreemd — iemand die al is aangenomen terwijl de selectiedag nog moet
+ * komen wijst op een handmatige correctie of een import, en dat wil je zien.
+ * Afgewezen kan altijd.
+ */
+function bh_fases_in_seizoensfase(string $seizoen_fase): ?array {
+    // De trechter op volgorde; de seizoensfase bepaalt hoe ver je mag zijn.
+    $tot = [
+        'werving'          => 'uitgenodigd_selectie',
+        'formulieren'      => 'aangemeld_selectie',
+        'selectiedag'      => 'selectiedag_geweest',
+        'bellijst'         => 'uitgenodigd_tw',
+        'trainingsweekend' => 'tw_geweest',
+        'aanname'          => 'aangenomen',
+    ];
+    if (!isset($tot[$seizoen_fase])) return null;
+
+    $uit = [];
+    foreach (array_keys(fasen()) as $fase) {
+        if ($fase === 'afgewezen') continue;          // staat buiten de trechter, zie hieronder
+        $uit[] = $fase;
+        if ($fase === $tot[$seizoen_fase]) break;
+    }
+    $uit[] = 'afgewezen';                             // kan in elke seizoensfase
+    return $uit;
 }
 
 } // function_exists

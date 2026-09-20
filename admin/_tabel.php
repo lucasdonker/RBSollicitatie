@@ -14,6 +14,9 @@
  *   $tabel_rij_id callable  optioneel: fn(array $rij): int|string — vult data-id
  *   $tabel_rij_cls callable optioneel: fn(array $rij): string — extra rijklasse
  *                           ('bh-rij-gemarkeerd', 'bh-rij-gedempt')
+ *   $tabel_rij_data callable optioneel: fn(array $rij): array — data-attributen op de
+ *                           <tr>, bijv. ['fase' => 'aangemeld'] zodat de bulkbalk weet
+ *                           welke acties bij de selectie passen
  *   $tabel_selectie bool    optioneel: selectievakje per rij (name="ids[]")
  *   $tabel_leeg   array     optioneel: ['titel','tekst','toon','icoon'] voor de lege staat
  *
@@ -24,10 +27,13 @@ $tabel_rijen    = $tabel_rijen ?? [];
 $tabel_rij      = $tabel_rij ?? '';
 $tabel_rij_id   = $tabel_rij_id ?? null;
 $tabel_rij_cls  = $tabel_rij_cls ?? null;
+$tabel_rij_data = $tabel_rij_data ?? null;
 $tabel_selectie = $tabel_selectie ?? false;
 $tabel_leeg     = $tabel_leeg ?? [];
 
 if ($tabel && $tabel_rij !== ''):
+    // bh_td() in de rij-partial leest hieruit welke klassen een cel hoort te krijgen.
+    $GLOBALS['BH_TABEL_KOLOM'] = $tabel['kolommen'];
     $_zicht  = $tabel['zichtbaar'];
     $_tracks = ($tabel_selectie ? '34px ' : '') . $tabel['tracks'];
     $_rijen  = is_array($tabel_rijen) ? $tabel_rijen : iterator_to_array($tabel_rijen);
@@ -43,7 +49,10 @@ if ($tabel && $tabel_rij !== ''):
     ?>
   </div>
 <?php else: ?>
+<?php // Vangnet: past de tabel niet, dan schuiven in plaats van kolommen afsnijden. ?>
+<div class="bh-tabel-wrap">
 <table class="bh-tabel" id="tabel-<?= h($tabel['id']) ?>" data-tabel="<?= h($tabel['id']) ?>"
+       data-kolomcookie="<?= h(bh_kolomcookie($tabel['id'])) ?>"
        style="--bh-tracks:<?= h($_tracks) ?>">
   <thead>
     <tr>
@@ -76,9 +85,13 @@ if ($tabel && $tabel_rij !== ''):
     <?php foreach ($_rijen as $rij):
       $_id  = $tabel_rij_id ? $tabel_rij_id($rij) : ($rij['id'] ?? '');
       $_rcl = $tabel_rij_cls ? trim((string)$tabel_rij_cls($rij)) : '';
+      $_dat = '';
+      foreach (($tabel_rij_data ? (array)$tabel_rij_data($rij) : []) as $_dn => $_dv) {
+          $_dat .= ' data-' . h((string)$_dn) . '="' . h((string)$_dv) . '"';
+      }
       $tabel_kolommen = $_zicht;
     ?>
-    <tr<?= $_id !== '' ? ' data-id="' . h((string)$_id) . '"' : '' ?><?= $_rcl ? ' class="' . h($_rcl) . '"' : '' ?>>
+    <tr<?= $_id !== '' ? ' data-id="' . h((string)$_id) . '"' : '' ?><?= $_dat ?><?= $_rcl ? ' class="' . h($_rcl) . '"' : '' ?>>
       <?php if ($tabel_selectie): ?>
         <td class="bh-kol-kies">
           <input type="checkbox" name="ids[]" value="<?= h((string)$_id) ?>" class="bh-kies"
@@ -90,8 +103,9 @@ if ($tabel && $tabel_rij !== ''):
     <?php endforeach; ?>
   </tbody>
 </table>
+</div>
 <?php endif; ?>
 <?php endif; ?>
 <?php
 $tabel = null; $tabel_rijen = []; $tabel_rij = ''; $tabel_rij_id = null;
-$tabel_rij_cls = null; $tabel_selectie = false; $tabel_leeg = [];
+$tabel_rij_cls = null; $tabel_rij_data = null; $tabel_selectie = false; $tabel_leeg = [];

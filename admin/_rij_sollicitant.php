@@ -10,6 +10,10 @@
  *   $rij             array   de sollicitatie + persoon
  *   $tabel_kolommen  array   zichtbare kolomsleutels, in volgorde
  *
+ * bh_td() maakt de openingstag: die weet uit de kolomdefinitie of een cel rechts
+ * uitlijnt en of hij op telefoon verdwijnt. Zelf een <td> schrijven werkt ook, maar
+ * dan vergeet je die klassen — en dan verdwijnt de kolomkop wel en de cel niet.
+ *
  * Een naam is overal een link naar het dossier (ontwerpfilosofie §5) — nergens een
  * apart "Bekijk"-knopje.
  */
@@ -22,7 +26,7 @@ foreach ($tabel_kolommen as $_kol):
     switch ($_kol):
 
     case 'naam': ?>
-      <td data-label="Naam">
+      <?= bh_td('naam') ?>
         <a class="bh-naamcel" href="<?= h($_url) ?>">
           <?= bh_avatar($rij, 30, ['dim' => $_dim]) ?>
           <span class="bh-naamcel-tekst">
@@ -34,19 +38,22 @@ foreach ($tabel_kolommen as $_kol):
     <?php break;
 
     case 'leeftijd': ?>
-      <td data-label="Leeftijd" class="bh-num"><?= h(leeftijd($rij['geboortedatum'] ?? null)) ?></td>
+      <?= bh_td('leeftijd', 'bh-num') ?><?= h(leeftijd($rij['geboortedatum'] ?? null)) ?></td>
     <?php break;
 
     case 'woonplaats': ?>
-      <td data-label="Woonplaats"><?= h((string)($rij['woonplaats'] ?? '—')) ?></td>
+      <?php // title erbij: een lange plaatsnaam wordt afgekapt en moet dan wel te lezen zijn ?>
+      <?= bh_td('woonplaats', '', 'title="' . h((string)($rij['woonplaats'] ?? '')) . '"') ?>
+        <?= h((string)($rij['woonplaats'] ?: '—')) ?>
+      </td>
     <?php break;
 
     case 'telefoon': ?>
-      <td data-label="Telefoon" class="bh-num"><?= h((string)($rij['telefoon'] ?: '—')) ?></td>
+      <?= bh_td('telefoon', 'bh-num') ?><?= h((string)($rij['telefoon'] ?: '—')) ?></td>
     <?php break;
 
     case 'status': ?>
-      <td data-label="Status">
+      <?= bh_td('status') ?>
         <span class="bh-statuscel">
           <?= bh_fase_badge((string)($rij['fase'] ?? ''), ['lengte' => 'kort']) ?>
           <?php if (!empty($rij['terugkerend'])): ?><?= bh_chip('terug', 'paars') ?><?php endif; ?>
@@ -62,14 +69,14 @@ foreach ($tabel_kolommen as $_kol):
     <?php break;
 
     case 'aangemeld': ?>
-      <td data-label="Aangemeld" class="bh-num"><?= h(datum_nl($rij['aangemeld_op'] ?? null)) ?></td>
+      <?= bh_td('aangemeld', 'bh-num') ?><?= h(datum_nl($rij['aangemeld_op'] ?? null)) ?></td>
     <?php break;
 
     case 'actie': ?>
       <?php // Geen "Bekijk"-knop: de naam ís de link naar het dossier (ontwerpfilosofie §5,
             // "nergens een apart Bekijk-knopje dat op het ene scherm wel en het andere niet
             // bestaat"). Hier staat alleen wat je met deze kandidaat kunt dóen. ?>
-      <td data-label="Actie" class="bh-rechts">
+      <?= bh_td('actie') ?>
         <span class="bh-acties">
           <?php if ($_att): ?>
             <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm"
@@ -84,7 +91,7 @@ foreach ($tabel_kolommen as $_kol):
     <?php break;
 
     default: ?>
-      <td data-label="<?= h($_kol) ?>"><?= h((string)($rij[$_kol] ?? '')) ?></td>
+      <?= bh_td($_kol) ?><?= h((string)($rij[$_kol] ?? '')) ?></td>
     <?php break;
 
     endswitch;
