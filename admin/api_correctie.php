@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__ . '/../includes/functions.php';
-vereis_recht('selectiedag', 'bewerken');
+// Dit endpoint schrijft beschikbaarheid, niet de selectiedag. Stond eerder op
+// 'selectiedag' — dat sloot begeleiders toevallig óók uit, maar om de verkeerde reden.
+vereis_recht('beschikbaarheid', 'bewerken');
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); exit; }

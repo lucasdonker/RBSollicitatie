@@ -122,6 +122,29 @@ function bh_voortgang(int $gedaan, int $totaal, array $opt = []): string {
 }
 
 /**
+ * Eén cel in een weekraster (beschikbaarheid, dekking).
+ *
+ * @param string $tekst  wat er in de cel staat: "5", "wk", of "—" voor niets.
+ *                       Verplicht: een gekleurd vlakje zonder inhoud zegt niets tegen
+ *                       iemand die kleuren niet onderscheidt, en niets tegen een schermlezer.
+ * @param string $soort  vol | weekend | deels | correctie | leeg  (onbekend → leeg)
+ * @param array  $opt    titel:?string (tooltip, wordt ook aria-label) ·
+ *                       klik:?string (JS-aanroep; maakt er een <button> van)
+ */
+function bh_weekcel(string $tekst, string $soort = 'leeg', array $opt = []): string {
+    if (trim($tekst) === '') return '';
+    if (!in_array($soort, ['vol', 'weekend', 'deels', 'correctie', 'leeg'], true)) $soort = 'leeg';
+    $cls   = 'bh-weekcel bh-weekcel-' . $soort;
+    $titel = !empty($opt['titel']) ? (string)$opt['titel'] : '';
+    $attr  = $titel !== '' ? ' title="' . h($titel) . '" aria-label="' . h($titel) . '"' : '';
+    if (empty($opt['klik'])) {
+        return '<span class="' . $cls . '"' . $attr . '>' . h($tekst) . '</span>';
+    }
+    return '<button type="button" class="' . $cls . ' bh-weekcel-klik"' . $attr
+         . ' onclick="' . h((string)$opt['klik']) . '">' . h($tekst) . '</button>';
+}
+
+/**
  * Meta-regel: losse stukjes met een punt ertussen ("19 jaar · Den Haag · 06 …").
  * Lege delen vallen weg, zodat je geen "· ·" krijgt bij een ontbrekend veld.
  */

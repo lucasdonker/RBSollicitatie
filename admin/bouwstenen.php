@@ -156,6 +156,46 @@ require __DIR__ . '/_tabel.php';
   ?>
 </div>
 
+<div class="ds-sectie-titel">Weekcel — vijf standen, klikbaar en niet-klikbaar</div>
+<div class="ds-kaart ds-kaart-p">
+  <div class="bh-rastertabel" style="--bh-tracks:repeat(5,minmax(44px,84px))">
+    <div style="display:grid;grid-template-columns:var(--bh-tracks)">
+      <?= bh_weekcel('5',  'vol',       ['titel' => 'hele week']) ?>
+      <?= bh_weekcel('wk', 'weekend',   ['titel' => 'alleen het weekend']) ?>
+      <?= bh_weekcel('3',  'deels',     ['titel' => '3 van de 5 dagen']) ?>
+      <?= bh_weekcel('2',  'correctie', ['titel' => 'gecorrigeerd door het bestuur']) ?>
+      <?= bh_weekcel('—',  'leeg',      ['titel' => 'niet beschikbaar']) ?>
+    </div>
+  </div>
+  <p class="bh-meta" style="margin-top:10px">
+    <?= bh_weekcel('', 'vol') ?>Lege tekst geeft bewust niets: een gekleurd vlak zonder inhoud is
+    voor een kleurenblinde gebruiker en voor een schermlezer geen mededeling.
+  </p>
+  <p style="margin-top:12px">
+    <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm"
+            onclick="correctieOpen(1, 28, 'Jacob Donker')">Bewerkpaneel openen</button>
+  </p>
+</div>
+
+<div class="ds-sectie-titel">Dekkingsgrafiek — met en zonder norm</div>
+<?php
+$_vbweken = [];
+foreach ([26, 27, 28, 29, 30, 31] as $_i => $_w) {
+    $_vbweken[$_w] = ['wn' => $_w, 'kort' => (22 + $_i * 7) . ' jun', 'eind' => '', 'weektype' => $_i < 2 ? 'voor' : 'hoofd'];
+}
+$_vbtot = [26 => ['aantal' => 10, 'weekend' => 9], 27 => ['aantal' => 9, 'weekend' => 4],
+           28 => ['aantal' => 8, 'weekend' => 7],  29 => ['aantal' => 7, 'weekend' => 7],
+           30 => ['aantal' => 5, 'weekend' => 3],  31 => ['aantal' => 11, 'weekend' => 10]];
+$_dek   = bh_dekking_weken($_vbweken, $_vbtot, 7);
+$_weken = $_vbweken;
+require __DIR__ . '/_dekkinggrafiek.php';
+
+$_dek   = bh_dekking_weken($_vbweken, $_vbtot, 0);
+$_weken = $_vbweken;
+$_titel = 'Zelfde cijfers, geen norm ingesteld';
+require __DIR__ . '/_dekkinggrafiek.php';
+?>
+
 <div class="ds-sectie-titel">Laadstaat — de vorm van wat komt</div>
 <div class="ds-kaart" style="padding:8px 0">
   <?php $laden_rijen = 3; require __DIR__ . '/_laden.php'; ?>

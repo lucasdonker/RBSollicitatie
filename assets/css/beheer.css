@@ -379,17 +379,18 @@ html[data-theme="dark"] .bh-fasechip.nu { color: var(--bg); }
 .bh-ond-acties { margin-left: auto; display: flex; gap: 8px; align-items: center; }
 .bh-ond-slot { display: inline-flex; align-items: center; gap: 5px; font: var(--text-meta); color: var(--ink-muted); }
 
-/* Weekrij in het beschikbaarheid-tabblad */
+/* Weekrij in het beschikbaarheid-tabblad — losse tegels, niet het raster.
+   De rastercel van bh_weekcel() heet .bh-weekcel; dit is de grotere tegel. */
 .bh-weekrij { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 4px; }
-.bh-weekcel {
+.bh-weektegel {
   display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer;
   min-width: 52px; min-height: 52px; padding: 8px 6px; border-radius: var(--radius-sm);
   background: var(--f-vlak); border: 1px solid var(--f-rand); color: var(--f-tekst);
   font-family: inherit;
 }
-.bh-weekcel:hover { border-color: var(--f-tekst); }
-.bh-weekcel-nr { font-size: 11px; font-weight: 600; opacity: .8; }
-.bh-weekcel-dagen { font-size: 15px; font-weight: 700; }
+.bh-weektegel:hover { border-color: var(--f-tekst); }
+.bh-weektegel-nr { font-size: 11px; font-weight: 600; opacity: .8; }
+.bh-weektegel-dagen { font-size: 15px; font-weight: 700; }
 .bh-weeklegenda { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 12px; font: var(--text-meta); color: var(--ink-soft); }
 .bh-weeklegenda > span { display: inline-flex; align-items: center; gap: 6px; }
 .bh-legenda-blok { width: 12px; height: 12px; border-radius: 3px; background: var(--f-vlak); border: 1px solid var(--f-rand); }
@@ -1080,3 +1081,190 @@ a.bh-naamcel:hover .bh-naamcel-naam { color: var(--navy); text-decoration: under
 .bh-skelet-regels { flex: 1; display: flex; flex-direction: column; gap: 6px; }
 .bh-skelet-regel { height: 9px; border-radius: 4px; background: var(--bg); }
 .bh-skelet-regel.kort { height: 8px; background: var(--bg-subtle); }
+
+/* ============================================================
+   BESCHIKBAARHEID — dekking boven, raster eronder, cel bewerkt
+   ============================================================ */
+
+/* Kaart die om een besluit vraagt. Bewust geen rode rand: een openstaand
+   verzoek is geen storing, alleen iets dat op jou wacht (filosofie §8). */
+.bh-actiekaart { padding: 16px 20px; margin-bottom: 14px; border-left: 3px solid var(--accent); }
+.bh-actiekaart-zacht { border-left-color: var(--border-strong); }
+.bh-actiekaart-kop { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.bh-actiekaart-kop h2 { margin: 0; font-size: 16px; font-weight: 600; color: var(--ink); }
+.bh-actiekaart-kop svg { color: var(--ink-soft); flex: none; }
+.bh-actiekaart-kop .bh-stoplicht { margin-left: auto; }
+.bh-actiekaart-uitleg { margin: 6px 0 0; font: var(--text-meta); color: var(--ink-soft); max-width: 78ch; }
+
+.bh-verzoeklijst { list-style: none; margin: 13px 0 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+.bh-verzoek { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 11px 14px; }
+.bh-verzoek-kop { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.bh-verzoek-naam { font-size: 14px; font-weight: 600; color: var(--navy); text-decoration: none; }
+.bh-verzoek-naam:hover { text-decoration: underline; }
+.bh-verzoek-wat { font: var(--text-meta); color: var(--ink-soft); }
+.bh-verzoek-knoppen { margin-left: auto; display: flex; gap: 8px; }
+.bh-verzoek-regel { margin: 5px 0 0; font: var(--text-meta); color: var(--ink-soft); }
+
+.bh-persoonchips { list-style: none; margin: 11px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.bh-persoonchip {
+  display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: var(--ink);
+  background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 5px 12px;
+}
+.bh-persoonchip a { color: var(--ink-soft); display: inline-flex; }
+.bh-persoonchip a:hover { color: var(--accent); }
+
+.bh-tip {
+  display: flex; align-items: flex-start; gap: 8px; margin: 0 0 14px;
+  font: var(--text-meta); color: var(--ink-soft);
+}
+.bh-tip svg { flex: none; margin-top: 1px; }
+
+/* ── Dekkingsgrafiek ── */
+.bh-dekgrafiek { padding: 18px 22px; margin-bottom: 14px; }
+.bh-dekgrafiek-kop { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.bh-dekgrafiek-kop h2 { margin: 0; font-size: 16px; font-weight: 600; color: var(--ink); }
+.bh-dekgrafiek-norm { font: var(--text-meta); color: var(--ink-soft); }
+.bh-dekgrafiek-stand { margin-left: auto; }
+.bh-dekgrafiek-voet { margin: 12px 0 0; font: var(--text-meta); color: var(--ink-muted); max-width: 88ch; }
+
+.bh-dekstaven { display: flex; gap: 6px; align-items: flex-end; margin-top: 16px; }
+.bh-dekstaaf {
+  flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 6px;
+  background: none; border: none; padding: 0; font-family: inherit; color: inherit;
+}
+button.bh-dekstaaf { cursor: pointer; }
+button.bh-dekstaaf:hover .bh-dekstaaf-bak { outline: 2px solid var(--accent); outline-offset: 2px; }
+.bh-dekstaaf-getal { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--ink); }
+.bh-dekstaaf-bak {
+  position: relative; width: 100%; height: 58px; background: var(--bg-subtle); border-radius: 5px;
+  display: flex; flex-direction: column; justify-content: flex-end; overflow: hidden;
+}
+/* Normlijn: maakt "onder de norm" zichtbaar zonder dat je op de kleur hoeft af te gaan. */
+.bh-dekstaven.met-norm .bh-dekstaaf-bak::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: var(--bh-norm);
+  /* --ink keert mee met de modus, dus de lijn blijft over de gekleurde staaf leesbaar. */
+  border-top: 1px dashed var(--ink); opacity: .5;
+}
+.bh-dekstaaf-vul { display: block; background: var(--fase-groen); }
+.bh-dekstaaf-wk { font-size: 11px; color: var(--ink-soft); }
+.bh-dekstaaf-krap .bh-dekstaaf-vul { background: var(--fase-oranje); }
+.bh-dekstaaf-krap .bh-dekstaaf-getal { color: var(--fase-oranje); }
+.bh-dekstaaf-slecht .bh-dekstaaf-vul { background: var(--fase-rood); }
+.bh-dekstaaf-slecht .bh-dekstaaf-getal,
+.bh-dekstaaf-slecht .bh-dekstaaf-wk { color: var(--fase-rood); font-weight: 700; }
+.bh-dekstaaf-onbekend .bh-dekstaaf-vul { background: var(--border-strong); }
+
+/* ── Het raster ──
+   Een echte <table> met een grid erop: de koppeling kop↔cel blijft voor een
+   schermlezer bestaan, terwijl de kolommen uit één --bh-tracks komen. Let op:
+   elke <tr> is een eigen grid, dus alleen vaste of minmax()-tracks lijnen uit —
+   een `auto`-track wordt per rij anders berekend. */
+.bh-raster { overflow: hidden; }
+.bh-raster-kop {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 15px 20px 11px; border-bottom: 1px solid var(--border);
+}
+.bh-raster-kop h2 { margin: 0; font-size: 15px; font-weight: 600; color: var(--ink); }
+.bh-raster-uitleg { font: var(--text-meta); color: var(--ink-muted); }
+.bh-raster-legenda { margin-left: auto; display: flex; align-items: center; gap: 13px; flex-wrap: wrap; font: var(--text-meta); color: var(--ink-soft); }
+.bh-raster-legenda > span { display: inline-flex; align-items: center; gap: 6px; }
+/* Het blokje erft zijn kleur van de cel-klasse die erop staat; de rand maakt het ook
+   in de donkere modus zichtbaar, waar de vlakken half doorzichtig zijn. */
+.bh-raster-legenda .bh-legenda-blok { border: 1px solid currentColor; }
+
+.bh-rasterrol { overflow-x: auto; }
+.bh-rastertabel { display: block; width: 100%; border-collapse: collapse; }
+.bh-rastertabel thead, .bh-rastertabel tbody, .bh-rastertabel tfoot { display: block; }
+.bh-rastertabel tr { display: grid; grid-template-columns: var(--bh-tracks); align-items: stretch; }
+.bh-rastertabel thead tr { background: var(--bg-subtle); border-bottom: 1px solid var(--border); }
+.bh-rastertabel tbody tr { border-bottom: 1px solid var(--bg-subtle); }
+.bh-rastertabel tbody tr:nth-child(even) { background: var(--bg-subtle); }
+.bh-rastertabel tfoot tr { background: var(--bg-subtle); border-top: 1px solid var(--border); }
+
+/* Niet laten afbreken: één rij die twee regels hoog wordt, breekt de uitlijning met
+   de andere rijen — elke <tr> is immers een eigen grid. Liever de naam afkappen. */
+.bh-raster-naam {
+  padding: 9px 14px; text-align: left; font-size: 13px; font-weight: 600; color: var(--ink);
+  display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; min-width: 0; overflow: hidden;
+}
+.bh-raster-naam .bh-chip, .bh-raster-naam > span { flex: none; }
+.bh-rastertabel thead .bh-raster-naam { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); }
+.bh-raster-naam a { color: var(--navy); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bh-raster-naam a:hover { text-decoration: underline; }
+.bh-raster-totsub { font-weight: 400; color: var(--ink-soft); }
+
+.bh-raster-wkn { display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: var(--ink-soft); }
+.bh-rastertabel thead .bh-raster-wkn { font-size: 11px; }
+
+.bh-raster-wk { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 7px 2px; }
+.bh-raster-wknr { font-size: 11px; font-weight: 700; color: var(--ink-soft); }
+.bh-raster-wkdat { font-size: 10px; color: var(--ink-muted); }
+.bh-wk-voor, .bh-wk-na { background: var(--fase-blauw-vlak); }
+.bh-wk-laag .bh-raster-wknr { color: var(--fase-rood); }
+
+.bh-raster-cel { display: flex; padding: 0; }
+.bh-raster-tot { display: flex; align-items: center; justify-content: center; padding: 11px 2px; font-size: 13px; font-weight: 600; color: var(--ink); }
+.bh-raster-totwk { font-weight: 400; font-size: 11px; color: var(--ink-soft); }
+.bh-raster-tot-laag, .bh-raster-tot-laag .bh-raster-totwk { color: var(--fase-rood); font-weight: 700; }
+.bh-raster-voet { margin: 0; padding: 12px 20px 15px; font: var(--text-meta); color: var(--ink-muted); }
+
+/* ── De rastercel zelf (bh_weekcel) ── */
+.bh-weekcel {
+  flex: 1; min-height: 36px; display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums;
+  font-family: inherit; border: none; background: none; color: var(--ink-muted);
+}
+button.bh-weekcel-klik { cursor: pointer; }
+button.bh-weekcel-klik:hover, button.bh-weekcel-klik:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.bh-weekcel-vol       { background: var(--fase-groen-vlak);  color: var(--fase-groen); }
+.bh-weekcel-weekend   { background: var(--fase-oranje-vlak); color: var(--fase-oranje); font-size: 12px; }
+.bh-weekcel-deels     { background: var(--fase-teal-vlak);   color: var(--fase-teal); }
+.bh-weekcel-correctie { background: var(--fase-blauw-vlak);  color: var(--fase-blauw); }
+.bh-weekcel-leeg      { background: none; }
+
+/* ── Zijpaneel: één week van één persoon bewerken ──
+   Rechts op een groot scherm, onderin op een telefoon — daar is de duim. */
+.bh-zijpaneel-overlay {
+  position: fixed; inset: 0; z-index: 9999; background: rgba(6, 14, 24, .45);
+  display: flex; justify-content: flex-end;
+}
+.bh-zijpaneel {
+  background: var(--surface); width: 380px; max-width: 100%; height: 100%;
+  display: flex; flex-direction: column; border-left: 1px solid var(--border);
+  box-shadow: -10px 0 26px rgba(5, 77, 138, .12);
+}
+.bh-zijpaneel-kop { display: flex; align-items: center; gap: 11px; padding: 15px 18px; border-bottom: 1px solid var(--border); }
+.bh-zijpaneel-wie { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.bh-zijpaneel-wie strong { font-size: 15px; font-weight: 600; color: var(--ink); }
+.bh-zijpaneel-wie span { font: var(--text-meta); color: var(--ink-muted); }
+.bh-zijpaneel-sluit { background: none; border: none; cursor: pointer; font-size: 22px; line-height: 1; color: var(--ink-muted); padding: 4px 8px; }
+.bh-zijpaneel-body { flex: 1; min-height: 0; overflow-y: auto; padding: 16px 18px; display: flex; flex-direction: column; gap: 16px; }
+.bh-zijpaneel-blok { display: flex; flex-direction: column; gap: 9px; }
+.bh-zijpaneel-blok + .bh-zijpaneel-blok { padding-top: 15px; border-top: 1px solid var(--bg-subtle); }
+.bh-zijpaneel-blok h3 { margin: 0; font-size: 14px; font-weight: 600; color: var(--ink); }
+.bh-zijpaneel-hint { margin: 0; font: var(--text-meta); color: var(--ink-soft); }
+.bh-zijpaneel-voet { display: flex; gap: 8px; padding: 14px 18px; border-top: 1px solid var(--border); }
+.bh-zijpaneel-voet .ds-btn { flex: 1; }
+
+.bh-dagknoppen { display: flex; gap: 4px; }
+.bh-dagknop {
+  flex: 1; min-height: 44px; border-radius: 9px; cursor: pointer; font-family: inherit;
+  font-size: 13px; font-weight: 600; color: var(--ink-muted);
+  background: var(--bg-subtle); border: 1.5px solid var(--border);
+}
+.bh-dagknop[aria-pressed="true"] { background: var(--navy); border-color: var(--navy); color: var(--op-vol); }
+.bh-snelkeuzes { display: flex; gap: 5px; flex-wrap: wrap; }
+.bh-snelkeuze {
+  font-size: 12px; font-weight: 600; color: var(--navy); cursor: pointer; font-family: inherit;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 7px 11px;
+}
+.bh-snelkeuze:hover { border-color: var(--navy); }
+
+@media (max-width: 720px) {
+  .bh-zijpaneel-overlay { align-items: flex-end; justify-content: stretch; }
+  .bh-zijpaneel { width: 100%; height: auto; max-height: 88vh; border-left: none; border-radius: 16px 16px 0 0; }
+  .bh-verzoek-knoppen { margin-left: 0; width: 100%; }
+  .bh-verzoek-knoppen .ds-btn { flex: 1; }
+  .bh-dekgrafiek-stand { margin-left: 0; }
+  .bh-raster-legenda { margin-left: 0; }
+}

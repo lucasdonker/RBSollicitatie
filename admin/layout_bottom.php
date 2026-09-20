@@ -222,60 +222,120 @@ function verzoekBeslis(verzoekId, besluit, solId) {
   }).then(function (ja) { if (ja) doen(); });
 }
 
-/* ── Verhinderingen (beschikbaarheid dagen) ─────────────────── */
-/* ── Bestuurs-correctie per week (herontworpen verhindering) ── */
-function correctieOpen(solId, week) {
-  // Bouw een kleine inline modal
-  const bestaand = document.getElementById('corrModal');
-  if (bestaand) bestaand.remove();
-  const overlay = document.createElement('div');
-  overlay.id = 'corrModal';
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+/* ── Bestuurs-correctie per week ─────────────────────────────────
+   Eén paneel, twee klanten: een cel in het beschikbaarheidsraster en een weektegel
+   in het dossier. Daarom staat het hier en niet in een scherm.
+
+   De oude versie vroeg eerst "kan niet" of "alleen bepaalde dagen" en pas daarna de
+   dagen. Dat is één vraag te veel: de dagen zélf zeggen het al. Geen enkele dag
+   aangevinkt = die week niet. Dat is wat de server als soort 'niet' kent, dus de
+   opslag verandert niet mee — alleen de vraag die je gesteld wordt. */
+var CORR_DAGEN = [[1,'ma'],[2,'di'],[3,'wo'],[4,'do'],[5,'vr'],[6,'za'],[7,'zo']];
+
+function correctieOpen(solId, week, naam) {
+  var oud = document.getElementById('corrPaneel');
+  if (oud) oud.remove();
+
+  var dagknoppen = CORR_DAGEN.map(function (d) {
+    return '<button type="button" class="bh-dagknop" data-dag="' + d[0] + '" aria-pressed="false"' +
+           ' onclick="corrDagWissel(this)">' + d[1] + '</button>';
+  }).join('');
+
+  var overlay = document.createElement('div');
+  overlay.id = 'corrPaneel';
+  overlay.className = 'bh-zijpaneel-overlay';
   overlay.innerHTML =
-    '<div style="background:var(--bg-card);border-radius:12px;padding:20px;max-width:420px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.3)">' +
-      '<h3 style="margin:0 0 4px;font-size:16px">Correctie voor week ' + week + '</h3>' +
-      '<p style="font-size:12.5px;color:var(--tekst-zacht);margin:0 0 14px">Overschrijft wat de sollicitant zelf doorgaf. Gebruik dit bijvoorbeeld na een telefoontje.</p>' +
-      '<label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Wat is er aan de hand?</label>' +
-      '<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">' +
-        '<label style="flex:1;min-width:150px;display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid var(--rand);border-radius:6px;cursor:pointer;font-size:13px"><input type="radio" name="corrSoort" value="niet" checked onchange="corrSoortWissel()"> Kan deze week niet</label>' +
-        '<label style="flex:1;min-width:150px;display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid var(--rand);border-radius:6px;cursor:pointer;font-size:13px"><input type="radio" name="corrSoort" value="minder" onchange="corrSoortWissel()"> Alleen bepaalde dagen</label>' +
-      '</div>' +
-      '<div id="corrDagen" style="display:none;margin-bottom:12px">' +
-        '<label style="display:block;font-size:12.5px;color:var(--tekst-zacht);margin-bottom:6px">Welke dagen kan hij/zij dan wél?</label>' +
-        '<div style="display:flex;gap:4px;flex-wrap:wrap">' +
-          [[1,'ma'],[2,'di'],[3,'wo'],[4,'do'],[5,'vr'],[6,'za'],[7,'zo']].map(d =>
-            '<label style="display:inline-flex;align-items:center;gap:3px;padding:5px 10px;border:1px solid var(--rand);border-radius:5px;cursor:pointer;font-size:12.5px"><input type="checkbox" class="corrDag" value="'+d[0]+'"> '+d[1]+'</label>'
-          ).join('') +
+    '<div class="bh-zijpaneel" role="dialog" aria-modal="true" aria-labelledby="corrTitel">' +
+      '<header class="bh-zijpaneel-kop">' +
+        '<div class="bh-zijpaneel-wie">' +
+          '<strong id="corrTitel">' + (naam ? bhTekst(naam) : 'Beschikbaarheid') + '</strong>' +
+          '<span>week ' + week + ' · correctie door het bestuur</span>' +
         '</div>' +
+        '<button type="button" class="bh-zijpaneel-sluit" aria-label="Sluiten" onclick="corrSluit()">&times;</button>' +
+      '</header>' +
+      '<div class="bh-zijpaneel-body">' +
+        '<section class="bh-zijpaneel-blok">' +
+          '<h3>Welke dagen kan deze week wél?</h3>' +
+          '<div class="bh-dagknoppen">' + dagknoppen + '</div>' +
+          '<div class="bh-snelkeuzes">' +
+            '<button type="button" class="bh-snelkeuze" onclick="corrSnel(\'week\')">Hele week</button>' +
+            '<button type="button" class="bh-snelkeuze" onclick="corrSnel(\'weekend\')">Alleen weekend</button>' +
+            '<button type="button" class="bh-snelkeuze" onclick="corrSnel(\'geen\')">Deze week niet</button>' +
+          '</div>' +
+          '<p class="bh-zijpaneel-hint" id="corrSamenvatting">Niets geselecteerd — dat betekent: deze week helemaal niet beschikbaar.</p>' +
+        '</section>' +
+        '<section class="bh-zijpaneel-blok">' +
+          '<h3><label for="corrReden">Reden</label></h3>' +
+          '<input type="text" id="corrReden" class="ds-veld" maxlength="200"' +
+                ' placeholder="bijv. belde: die week op vakantie">' +
+          '<p class="bh-zijpaneel-hint">Verplicht. Deze regel komt in de tijdlijn van de sollicitant te staan,' +
+          ' zodat later terug te vinden is waarom dit is aangepast.</p>' +
+        '</section>' +
       '</div>' +
-      '<label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Reden <span style="color:var(--rood)">*</span></label>' +
-      '<input type="text" id="corrReden" placeholder="bijv. belde: die week op vakantie" style="width:100%;padding:9px;border:1px solid var(--rand);border-radius:6px;margin-bottom:16px;font-size:13px">' +
-      '<div style="display:flex;gap:8px;justify-content:flex-end">' +
-        '<button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById(\'corrModal\').remove()">Annuleren</button>' +
-        '<button type="button" class="btn btn-primary btn-sm" onclick="correctieOpslaan(' + solId + ',' + week + ')">Opslaan</button>' +
-      '</div>' +
+      '<footer class="bh-zijpaneel-voet">' +
+        '<button type="button" class="ds-btn ds-btn-zacht ds-btn-sm" onclick="corrSluit()">Annuleren</button>' +
+        '<button type="button" class="ds-btn ds-btn-primair ds-btn-sm" onclick="correctieOpslaan(' + solId + ',' + week + ')">Opslaan</button>' +
+      '</footer>' +
     '</div>';
+
   document.body.appendChild(overlay);
-  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  overlay.addEventListener('click', function (e) { if (e.target === overlay) corrSluit(); });
+  document.addEventListener('keydown', corrEscape);
+  var reden = document.getElementById('corrReden');
+  if (reden) reden.focus();
 }
 
-function corrSoortWissel() {
-  const minder = document.querySelector('input[name="corrSoort"]:checked')?.value === 'minder';
-  document.getElementById('corrDagen').style.display = minder ? '' : 'none';
+function corrEscape(e) { if (e.key === 'Escape') corrSluit(); }
+
+function corrSluit() {
+  var el = document.getElementById('corrPaneel');
+  if (el) el.remove();
+  document.removeEventListener('keydown', corrEscape);
+}
+
+function corrGekozen() {
+  return Array.from(document.querySelectorAll('#corrPaneel .bh-dagknop[aria-pressed="true"]'))
+              .map(function (b) { return b.dataset.dag; });
+}
+
+function corrSamenvatting() {
+  var n = corrGekozen().length;
+  var el = document.getElementById('corrSamenvatting');
+  if (!el) return;
+  el.textContent = n === 0
+    ? 'Niets geselecteerd — dat betekent: deze week helemaal niet beschikbaar.'
+    : n + (n === 1 ? ' dag' : ' dagen') + ' beschikbaar deze week.';
+}
+
+function corrDagWissel(knop) {
+  knop.setAttribute('aria-pressed', knop.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
+  corrSamenvatting();
+}
+
+function corrSnel(welke) {
+  var aan = welke === 'week' ? [1,2,3,4,5,6,7] : (welke === 'weekend' ? [5,6,7] : []);
+  document.querySelectorAll('#corrPaneel .bh-dagknop').forEach(function (b) {
+    b.setAttribute('aria-pressed', aan.indexOf(parseInt(b.dataset.dag, 10)) !== -1 ? 'true' : 'false');
+  });
+  corrSamenvatting();
 }
 
 function correctieOpslaan(solId, week) {
-  const soort = document.querySelector('input[name="corrSoort"]:checked')?.value || 'niet';
-  const reden = document.getElementById('corrReden').value.trim();
+  var reden = (document.getElementById('corrReden').value || '').trim();
   if (!reden) { bhToast('Vul een reden in — die komt in de tijdlijn te staan.', 'fout'); return; }
-  const dagen = Array.from(document.querySelectorAll('.corrDag:checked')).map(c => c.value);
-  if (soort === 'minder' && !dagen.length) { bhToast('Kies minstens één dag.', 'fout'); return; }
-  const body = new URLSearchParams({ sol_id: solId, week, soort, reden, _csrf: CSRF });
-  dagen.forEach(d => body.append('dagen[]', d));
-  fetch(APP_URL + '/admin/api_correctie.php', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body })
-    .then(r => r.json())
-    .then(data => { if (!data.ok) { bhToast(data.fout || 'Opslaan mislukt.', 'fout'); return; } location.reload(); })
-    .catch(() => bhToast('Verbindingsfout — probeer opnieuw.', 'fout'));
+  var dagen = corrGekozen();
+  var soort = dagen.length ? 'minder' : 'niet';
+  var body  = new URLSearchParams({ sol_id: solId, week: week, soort: soort, reden: reden, _csrf: CSRF });
+  dagen.forEach(function (d) { body.append('dagen[]', d); });
+  fetch(APP_URL + '/admin/api_correctie.php', {
+    method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body
+  })
+  .then(function (r) { return r.json(); })
+  .then(function (data) {
+    if (!data.ok) { bhToast(data.fout || 'Opslaan mislukt.', 'fout'); return; }
+    location.reload();
+  })
+  .catch(function () { bhToast('Verbindingsfout — probeer opnieuw.', 'fout'); });
 }
 
 function correctieWis(solId, week) {

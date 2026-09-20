@@ -10,6 +10,16 @@
 (function () {
   'use strict';
 
+  /* ── Tekst veilig in een HTML-string ────────────────────────────
+     Wie met innerHTML een blok opbouwt, moet elke waarde die van de server komt
+     hierdoorheen halen. Eén plek, zodat er niet per scherm een eigen (vergeten)
+     variant ontstaat. Liefst bouw je met textContent — maar niet alles kan dat. */
+  function bhTekst(waarde) {
+    var d = document.createElement('div');
+    d.textContent = waarde == null ? '' : String(waarde);
+    return d.innerHTML;
+  }
+
   /* ── Toast: bevestiging van wat je zelf net deed ────────────────
      Voor iets dat je moet wéten staat een vaste melding boven de pagina; die
      verdwijnt niet vanzelf (ontwerpfilosofie §8). Deze verdwijnt wel. */
@@ -129,6 +139,7 @@
     });
   }
 
+  window.bhTekst = bhTekst;
   window.bhToast = bhToast;
   window.bhBevestig = bhBevestig;
   window.bhVraag = bhVraag;

@@ -50,11 +50,11 @@ if (!$_b && !$_eff) {
             $_kleur = $_dagen >= 5 ? 'groen' : ($_dagen > 0 ? 'oranje' : 'grijs');
             if ($_corr) $_kleur = 'blauw';
           ?>
-            <button type="button" class="bh-weekcel ds-fase-<?= h($_kleur) ?>"
+            <button type="button" class="bh-weektegel ds-fase-<?= h($_kleur) ?>"
                     onclick="correctieOpen(<?= (int)$_s['id'] ?>, <?= (int)$_wn ?>)"
                     title="Week <?= (int)$_wn ?><?= $_corr ? ' — bestuurscorrectie' : '' ?>">
-              <span class="bh-weekcel-nr">W<?= (int)$_wn ?></span>
-              <span class="bh-weekcel-dagen bh-num"><?= $_dagen > 0 ? $_dagen : '—' ?></span>
+              <span class="bh-weektegel-nr">W<?= (int)$_wn ?></span>
+              <span class="bh-weektegel-dagen bh-num"><?= $_dagen > 0 ? $_dagen : '—' ?></span>
             </button>
           <?php endforeach; ?>
         </div>
