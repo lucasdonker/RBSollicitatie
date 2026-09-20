@@ -436,6 +436,87 @@ html[data-theme="dark"] .bh-fasechip.nu { color: var(--bg); }
   .bh-dossierkop-acties .ds-btn { flex: 1; }
 }
 
+/* ═══ SELECTIEDAG ═══════════════════════════════════════════════ */
+
+.bh-selectiekop {
+  display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 14px 20px; margin-bottom: 16px;
+}
+.bh-selectiekop-titel { display: flex; align-items: baseline; gap: 10px; }
+.bh-selectiekop-titel h2 { font: var(--text-heading); color: var(--navy); margin: 0; }
+.bh-substappen { display: flex; gap: 20px; flex-wrap: wrap; margin-left: auto; }
+.bh-substap {
+  padding: 0 2px 4px; font-size: 14px; color: var(--ink-soft); text-decoration: none;
+  border-bottom: 2px solid transparent; white-space: nowrap; min-height: 34px;
+  display: inline-flex; align-items: center;
+}
+.bh-substap:hover { color: var(--navy); }
+.bh-substap.actief { color: var(--navy); font-weight: 600; border-bottom-color: var(--accent); }
+
+/* ── Inchecken: tablet bij de ingang ────────────────────────────
+   Eén kolom, raakvlakken van 48px, hoog contrast. Dit wordt staand bediend met
+   natte handen (ontwerpfilosofie §6). */
+.bh-incheck { display: flex; flex-direction: column; gap: 14px; }
+.bh-incheck-coderij { display: flex; gap: 22px; align-items: flex-end; flex-wrap: wrap; }
+.bh-incheck-codeblok { display: flex; flex-direction: column; gap: 3px; }
+/* Alleen de code zelf gespatieerd — niet de kaart eromheen. De sectie heette eerder
+   ook .bh-incheck-code en erfde deze letter-spacing, waardoor de hele kaart uit
+   elkaar viel. */
+span.bh-incheck-code {
+  font-size: 26px; font-weight: 700; letter-spacing: .18em; color: var(--navy);
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+.bh-incheck-link { flex: 1; min-width: 260px; display: flex; flex-direction: column; gap: 3px; }
+.bh-incheck-linkrij { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.bh-incheck-linkrij .ds-input { flex: 1; min-width: 180px; height: 42px; font-size: 13px; }
+.bh-incheck-nieuw { margin-top: 10px; }
+
+.bh-incheck-kop {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 14px 18px; border-bottom: 1px solid var(--border);
+}
+.bh-incheck-teller { display: flex; align-items: baseline; gap: 7px; }
+.bh-incheck-getal { font-size: 22px; font-weight: 700; color: var(--ink); }
+.bh-incheck-kop .bh-zoek { flex: 1; min-width: 180px; height: 48px; }
+
+.bh-incheck-groep {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 9px 18px; background: var(--bg-subtle);
+  font-size: 12px; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--ink-soft);
+}
+.bh-incheck-rij {
+  display: flex; align-items: center; gap: 13px;
+  padding: 11px 18px; border-bottom: 1px solid var(--bg);
+}
+.bh-incheck-rij[hidden], .bh-incheck-groep[hidden] { display: none; }
+.bh-incheck-rij.aanwezig { background: var(--ok-soft); }
+.bh-incheck-rij.aanwezig .ds-avatar { background: var(--ok-soft); color: var(--ok); }
+.bh-incheck-naam { flex: 1; min-width: 0; font-size: 16px; font-weight: 600; color: var(--ink); }
+.bh-incheck-sub { display: block; font-size: 12px; font-weight: 400; color: var(--ink-muted); margin-top: 1px; }
+.bh-aanwezig {
+  flex: none; min-width: 124px; min-height: 48px; padding: 0 20px;
+  border-radius: var(--radius-md); border: 1.5px solid var(--border-strong);
+  background: var(--surface); color: var(--ink-soft);
+  font: var(--text-label); font-size: 15px; cursor: pointer; font-family: inherit;
+}
+.bh-aanwezig.ja { background: var(--ok); border-color: var(--ok); color: var(--op-vol); }
+.bh-aanwezig:disabled { opacity: .6; }
+.bh-incheck-voet {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 14px 18px; border-top: 1px solid var(--border);
+}
+.bh-incheck-voet .ds-btn { margin-left: auto; }
+
+@media (max-width: 760px) {
+  .bh-selectiekop { padding: 12px 14px; }
+  .bh-substappen { margin-left: 0; gap: 14px; width: 100%; overflow-x: auto; }
+  .bh-incheck-rij { padding: 11px 14px; }
+  .bh-aanwezig { min-width: 104px; padding: 0 14px; }
+  .bh-incheck-voet .ds-btn { margin-left: 0; width: 100%; }
+}
+
 /* ── Stoplicht ── */
 .bh-stoplicht {
   display: inline-flex; align-items: center; gap: 7px;
