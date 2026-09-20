@@ -1,5 +1,9 @@
 <?php
 require_once __DIR__ . '/../includes/functions.php';
+// Vóór de layout: vereis_recht() breekt af met die(), en dat mag niet halverwege een pagina
+// gebeuren. Deze lijst toont naam, e-mail, telefoon en geboortedatum — een begeleider heeft
+// daar bewust geen recht op (zie includes/rechten.php).
+vereis_recht('sollicitanten', 'lezen');
 $pagina_titel = 'Sollicitanten';
 $actieve_nav  = 'sollicitanten';
 require __DIR__ . '/layout_top.php';

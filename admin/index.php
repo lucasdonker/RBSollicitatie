@@ -27,9 +27,9 @@ if ($sid) {
     $stats = $st->fetch() ?: $stats;
 }
 
-// Recente aanmeldingen
+// Recente aanmeldingen — niet ophalen wat deze rol niet mag zien
 $recent = [];
-if ($sid) {
+if ($sid && mag('sollicitanten', 'lezen')) {
     $stmt = $db->prepare("
         SELECT s.id, s.fase, s.terugkerend, s.aangemeld_op,
                p.voornaam, p.tussenvoegsel, p.achternaam, p.email
@@ -169,7 +169,9 @@ $sys_issues = ($sys['mail_fout'] > 0) || !$sys['cron_ok'] || ($sys['mail_wacht']
   </div>
 </div>
 
-<!-- Recente aanmeldingen -->
+<!-- Recente aanmeldingen — alleen voor wie de sollicitanten mag lezen. Een begeleider hoort
+     geen persoonsgegevens te zien; wat je niet mag zien, staat er niet (ook niet leeg). -->
+<?php if (mag('sollicitanten', 'lezen')): ?>
 <div class="card">
   <div class="card-header">
     <div class="card-title">Recente aanmeldingen</div>
@@ -220,5 +222,6 @@ $sys_issues = ($sys['mail_fout'] > 0) || !$sys['cron_ok'] || ($sys['mail_wacht']
     </table>
   </div>
 </div>
+<?php endif; ?>
 
 <?php require __DIR__ . '/layout_bottom.php'; ?>
