@@ -336,6 +336,64 @@ html[data-theme="dark"] .bh-fasechip.nu { color: var(--bg); }
   font-size: 12px; font-weight: 600; color: var(--navy); font-family: inherit;
 }
 
+/* Scorebalken per test */
+.bh-scorebalken { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+.bh-scorebalk { display: flex; align-items: center; gap: 12px; }
+.bh-scorebalk-naam { flex: 0 0 120px; font-size: 14px; color: var(--ink-soft); }
+.bh-scorebalk-spoor { flex: 1; height: 7px; border-radius: 4px; background: var(--bg); overflow: hidden; }
+.bh-scorebalk-vul { display: block; height: 100%; background: var(--navy); border-radius: 4px; }
+.bh-scorebalk-getal { flex: 0 0 34px; text-align: right; font-size: 14px; font-weight: 600; }
+.bh-veldwaarde.let-op { color: var(--error); font-weight: 600; }
+
+.bh-scorebalk-wie {
+  display: flex; gap: 14px; flex-wrap: wrap; margin: -4px 0 4px 132px;
+  font: var(--text-meta); color: var(--ink-muted);
+}
+.bh-scorebalk-wie .bh-num { color: var(--ink); }
+.bh-grootgetal { font: var(--text-display); font-size: 34px; color: var(--ink); margin: 0; }
+
+/* Formulier-tabblad */
+.bh-formulier-kaarten { display: flex; flex-direction: column; gap: 14px; }
+.bh-kaart-let-op { border-color: var(--fase-rood-rand); }
+.bh-chiprij { display: flex; gap: 6px; flex-wrap: wrap; }
+.bh-formulier-voet { display: flex; justify-content: flex-end; }
+.bh-dossier-tekst.zacht { color: var(--ink-muted); }
+
+/* Observaties */
+.bh-observaties { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 13px; }
+.bh-observaties li { display: flex; gap: 11px; align-items: flex-start; }
+.bh-obs-stip { flex: none; margin-top: 6px; width: 8px; height: 8px; border-radius: 50%; background: var(--f-tekst); }
+.bh-obs-tekst { flex: 1; font-size: 14px; line-height: 1.55; color: var(--ink); }
+.bh-obs-wie { display: block; margin-top: 3px; font: var(--text-meta); color: var(--ink-muted); }
+
+/* Ondertekeningen-tabblad */
+.bh-ondlijst { list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-direction: column; }
+.bh-ondlijst li {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 13px 0; border-bottom: 1px solid var(--bg);
+}
+.bh-ondlijst li:last-child { border-bottom: none; }
+.bh-ond-status { flex: 0 0 120px; }
+.bh-ond-naam { flex: 1; min-width: 160px; font-size: 14px; color: var(--ink); }
+.bh-ond-sub { display: block; font: var(--text-meta); color: var(--ink-muted); margin-top: 2px; }
+.bh-ond-acties { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.bh-ond-slot { display: inline-flex; align-items: center; gap: 5px; font: var(--text-meta); color: var(--ink-muted); }
+
+/* Weekrij in het beschikbaarheid-tabblad */
+.bh-weekrij { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 4px; }
+.bh-weekcel {
+  display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer;
+  min-width: 52px; min-height: 52px; padding: 8px 6px; border-radius: var(--radius-sm);
+  background: var(--f-vlak); border: 1px solid var(--f-rand); color: var(--f-tekst);
+  font-family: inherit;
+}
+.bh-weekcel:hover { border-color: var(--f-tekst); }
+.bh-weekcel-nr { font-size: 11px; font-weight: 600; opacity: .8; }
+.bh-weekcel-dagen { font-size: 15px; font-weight: 700; }
+.bh-weeklegenda { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 12px; font: var(--text-meta); color: var(--ink-soft); }
+.bh-weeklegenda > span { display: inline-flex; align-items: center; gap: 6px; }
+.bh-legenda-blok { width: 12px; height: 12px; border-radius: 3px; background: var(--f-vlak); border: 1px solid var(--f-rand); }
+
 .bh-notitie-nieuw { display: flex; gap: 8px; align-items: flex-start; margin-top: 10px; }
 .bh-notitie-nieuw .ds-textarea { min-height: 54px; font-size: 14px; }
 

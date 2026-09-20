@@ -48,9 +48,13 @@ $_mag_blk = mag('blk', 'lezen');
         <span class="bh-veldlabel">Adres</span>
         <span class="bh-veldwaarde">
           <?php
-            $_adres = trim(($_blk['straat'] ?? '') . ' ' . ($_blk['huisnummer'] ?? ''));
-            $_plaats = (string)($_blk['woonplaats'] ?? '');
-            echo h($_adres || $_plaats ? trim($_adres . ($_adres && $_plaats ? ', ' : '') . $_plaats) : '—');
+            // straat/huisnummer/woonplaats zijn later toegevoegde kolommen; het oudere
+            // vrije veld `adres` is de terugval voor dossiers van vóór die splitsing.
+            $_str = trim(($_blk['straat'] ?? '') . ' ' . ($_blk['huisnummer'] ?? ''));
+            $_pl  = trim((string)($_blk['woonplaats'] ?? ''));
+            $_adres = trim($_str . ($_str !== '' && $_pl !== '' ? ', ' : '') . $_pl);
+            if ($_adres === '') $_adres = trim((string)($_blk['adres'] ?? ''));
+            echo $_adres !== '' ? h($_adres) : '—';
           ?>
         </span>
       </div>
@@ -79,6 +83,26 @@ $_mag_blk = mag('blk', 'lezen');
         <span class="bh-meta">advies, geen besluit</span>
       </div>
       <p class="bh-dossier-tekst"><?= h($_adv['reden']) ?></p>
+      <?php $_per_test = bh_dossier_score_per_test($tab_dossier); ?>
+      <?php if ($_per_test): ?>
+        <div class="bh-scorebalken">
+          <?php foreach ($_per_test as $_test => $_sc): ?>
+            <div class="bh-scorebalk">
+              <span class="bh-scorebalk-naam"><?= h(ucfirst((string)$_test)) ?></span>
+              <span class="bh-scorebalk-spoor">
+                <span class="bh-scorebalk-vul" style="width:<?= (int)round($_sc / 5 * 100) ?>%"></span>
+              </span>
+              <span class="bh-scorebalk-getal bh-num"><?= h(number_format($_sc, 1, ',', '')) ?></span>
+            </div>
+          <?php endforeach; ?>
+        </div>
+      <?php endif; ?>
+      <?php if (!empty($tab_dossier['besluit']['besluit'])): ?>
+        <p class="bh-meta" style="margin-top:10px">
+          Besluit van de nabespreking:
+          <strong><?= h(ucfirst((string)$tab_dossier['besluit']['besluit'])) ?></strong>
+        </p>
+      <?php endif; ?>
     </section>
     <?php endif; ?>
 
@@ -90,25 +114,35 @@ $_mag_blk = mag('blk', 'lezen');
       </div>
       <div class="bh-gegevensraster twee">
         <?php
-          $_velden = ['opleiding' => 'Opleiding', 'ervaring' => 'Ervaring',
-                      'bijzonderheden' => 'Bijzonderheden', 'medicatie' => 'Medicatie'];
+          // Veldnamen exact zoals in blk_formulieren; werkervaring en motivatie_*
+          // heten anders dan je zou gokken.
+          $_velden = ['opleiding' => 'Opleiding', 'werkervaring' => 'Werkervaring',
+                      'diplomas' => 'Diploma\'s', 'bijzonderheden' => 'Bijzonderheden'];
           foreach ($_velden as $_v => $_l):
             $_w = trim((string)($_blk[$_v] ?? ''));
+            $_bijz = $_v === 'bijzonderheden' && $_w !== '';
         ?>
           <div>
             <span class="bh-veldlabel"><?= h($_l) ?></span>
             <?php // "Niet ingevuld" is iets anders dan leeg: dat onderscheid moet zichtbaar blijven. ?>
-            <span class="bh-veldwaarde<?= $_w === '' ? ' zacht' : '' ?>"><?= $_w === '' ? 'Niet ingevuld' : h($_w) ?></span>
+            <span class="bh-veldwaarde<?= $_w === '' ? ' zacht' : ($_bijz ? ' let-op' : '') ?>">
+              <?= $_w === '' ? 'Niet ingevuld' : h($_w) ?>
+            </span>
           </div>
         <?php endforeach; ?>
       </div>
-      <?php $_mot = trim((string)($_blk['motivatie'] ?? '')); ?>
-      <?php if ($_mot !== ''): ?>
+      <?php
+        $_moties = ['motivatie_lifeguard' => 'Waarom strandwacht?',
+                    'motivatie_strand'    => 'Waarom juist dit strand?'];
+        foreach ($_moties as $_mv => $_ml):
+          $_mot = trim((string)($_blk[$_mv] ?? ''));
+          if ($_mot === '') continue;
+      ?>
         <div class="bh-dossier-motivatie">
-          <span class="bh-veldlabel">Motivatie</span>
+          <span class="bh-veldlabel"><?= h($_ml) ?></span>
           <p class="bh-dossier-tekst"><?= nl2br(h($_mot)) ?></p>
         </div>
-      <?php endif; ?>
+      <?php endforeach; ?>
     </section>
     <?php endif; ?>
 

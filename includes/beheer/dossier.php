@@ -49,8 +49,14 @@ function bh_dossier(int $sol_id): ?array {
         };
 
         $blk   = $een("SELECT * FROM blk_formulieren WHERE sollicitatie_id=?");
-        $beoor = $een("SELECT * FROM beoordelingen   WHERE sollicitatie_id=?");
         $besch = $een("SELECT * FROM beschikbaarheid WHERE sollicitatie_id=?");
+        // De selectiedag-gegevens komen uit includes/selectiedag.php en niet uit de
+        // oude tabel `beoordelingen`: scores staan per test/criterium/beoordelaar in
+        // selectie_score, met observaties en het besluit ernaast.
+        $szid    = (int)$sol['seizoen_id'];
+        $scores  = function_exists('selectie_scores_van')      ? selectie_scores_van($szid, $sol_id) : [];
+        $observ  = function_exists('selectie_observaties_van') ? selectie_observaties_van($szid, $sol_id) : [];
+        $besluit = function_exists('selectie_besluit_van')     ? selectie_besluit_van($szid, $sol_id) : null;
         $ond   = $alle("SELECT id, type, token, ondertekend_op, ondertekenaar_naam, ondertekenaar_rol,
                                aangemaakt_op
                         FROM ondertekeningen WHERE sollicitatie_id=? ORDER BY aangemaakt_op DESC", [$sol_id]);
@@ -70,8 +76,10 @@ function bh_dossier(int $sol_id): ?array {
     return $cache[$sol_id] = [
         'sol'             => $sol,
         'blk'             => $blk,
-        'beoordeling'     => $beoor,
         'beschikbaarheid' => $besch,
+        'scores'          => $scores,
+        'observaties'     => $observ,
+        'besluit'         => $besluit,
         'ondertekeningen' => $ond,
         'eerder'          => $eerder,
         'leeftijd'          => $lft,
@@ -146,6 +154,33 @@ function bh_dossier_documenten(array $dossier): array {
 }
 
 /**
+ * Het gemiddelde over alle criteria van alle tests, of null als er niets is beoordeeld.
+ * De scores staan per test/criterium/beoordelaar; selectie_scores_van() heeft het
+ * gemiddelde per criterium al berekend.
+ */
+function bh_dossier_score(array $dossier): ?float {
+    $waarden = [];
+    foreach (($dossier['scores'] ?? []) as $criteria) {
+        foreach ($criteria as $c) {
+            if (!empty($c['gem'])) $waarden[] = (float)$c['gem'];
+        }
+    }
+    if (!$waarden) return null;
+    return round(array_sum($waarden) / count($waarden), 1);
+}
+
+/** Het gemiddelde per test ("zwemtest 4,1 · sporttest 4,3"). */
+function bh_dossier_score_per_test(array $dossier): array {
+    $uit = [];
+    foreach (($dossier['scores'] ?? []) as $test => $criteria) {
+        $w = [];
+        foreach ($criteria as $c) if (!empty($c['gem'])) $w[] = (float)$c['gem'];
+        if ($w) $uit[$test] = round(array_sum($w) / count($w), 1);
+    }
+    return $uit;
+}
+
+/**
  * Het advies over deze kandidaat: door, twijfel of niet.
  *
  * Het systeem doet een voorstel, nooit een besluit (ontwerpfilosofie §3). Daarom geeft
@@ -154,11 +189,8 @@ function bh_dossier_documenten(array $dossier): array {
  * @return array{stand:string,label:string,kleur:string,reden:string}|null
  */
 function bh_dossier_advies(array $dossier): ?array {
-    $b = $dossier['beoordeling'];
-    if (!$b) return null;
-
-    $score = isset($b['gemiddelde']) ? (float)$b['gemiddelde'] : null;
-    if ($score === null || $score <= 0) return null;
+    $score = bh_dossier_score($dossier);
+    if ($score === null) return null;
 
     $drempel = function_exists('instelling') ? (float)instelling('selectie.drempel', '3.5') : 3.5;
     $twijfel = $drempel - 0.5;
@@ -191,11 +223,18 @@ function bh_dossier_tabs(array $dossier, string $actief = 'dossier'): array {
     if ($dossier['blk'] && $mag_blk) {
         $tabs[] = ['sleutel' => 'formulier', 'label' => 'Kennismakingsformulier', 'aantal' => null];
     }
-    if ($dossier['beschikbaarheid']) {
+    // Ook tonen als de oude beschikbaarheid-rij ontbreekt maar er wél effectieve weken
+    // zijn: die komen uit de nieuwe beschikbaarheid2-opzet. Anders is het tabblad
+    // bereikbaar via de URL maar staat het niet in de rij.
+    $_heeft_besch = $dossier['beschikbaarheid']
+        || (function_exists('beschikbaarheid2_effectief')
+            && beschikbaarheid2_effectief((int)$dossier['sol']['id']));
+    if ($_heeft_besch) {
         $tabs[] = ['sleutel' => 'beschikbaarheid', 'label' => 'Beschikbaarheid', 'aantal' => null];
     }
-    if ($dossier['beoordeling']) {
-        $tabs[] = ['sleutel' => 'beoordelingen', 'label' => 'Beoordelingen', 'aantal' => null];
+    if ($dossier['scores'] || $dossier['observaties']) {
+        $tabs[] = ['sleutel' => 'selectiedag', 'label' => 'Selectiedag',
+                   'aantal' => $dossier['observaties'] ? count($dossier['observaties']) : null];
     }
     if ($doc['totaal'] > 0) {
         $tabs[] = ['sleutel' => 'ondertekeningen', 'label' => 'Ondertekeningen',
