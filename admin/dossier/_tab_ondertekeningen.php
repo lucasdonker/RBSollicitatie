@@ -17,8 +17,6 @@ if (!$tab_dossier) return;
 $_s   = $tab_dossier['sol'];
 $_doc = bh_dossier_documenten($tab_dossier);
 $_mag_bewerken = mag('ondertekeningen', 'bewerken');
-$_mag_medisch  = function_exists('huidige_gebruiker_rol_minstens')
-               ? huidige_gebruiker_rol_minstens('bestuur') : mag('ondertekeningen', 'bewerken');
 ?>
 <div class="bh-dossier-kolommen">
   <div class="bh-dossier-hoofd">
@@ -69,9 +67,10 @@ $_mag_medisch  = function_exists('huidige_gebruiker_rol_minstens')
             </span>
             <span class="bh-ond-acties">
               <?php if ($_r['klaar'] && $_r['id']): ?>
-                <?php if ($_r['medisch'] && !$_mag_medisch): ?>
-                  <span class="bh-ond-slot" title="Gezondheidsverklaringen zijn alleen voor het bestuur">
-                    <?= icoon('slot', 14) ?> Alleen bestuur
+                <?php $_toegang = bh_mag_document((string)$_r['type']); ?>
+                <?php if (!$_toegang[0]): ?>
+                  <span class="bh-ond-slot" title="Dit document bevat gegevens die niet voor iedereen zijn">
+                    <?= icoon('slot', 14) ?> <?= h((string)$_toegang[1]) ?>
                   </span>
                 <?php else: ?>
                   <a class="ds-btn ds-btn-secundair ds-btn-sm"

@@ -154,6 +154,37 @@ function bh_dossier_documenten(array $dossier): array {
 }
 
 /**
+ * Wie mag een ondertekend document daadwerkelijk ópenen?
+ *
+ * Dit stond op twee plekken met twee antwoorden: het dossiertabblad liet een
+ * gezondheidsverklaring alleen aan bestuur en hoger zien, het overzichtsscherm aan
+ * iedereen met leesrecht op ondertekeningen. Eén regel, hier.
+ *
+ *   gezondheid*  medische gegevens  -> bestuur en hoger
+ *   loonheffing  BSN                -> alleen met het loondossier-recht (penningmeester/admin)
+ *   lidmaatschap IBAN               -> idem
+ *   intake*      gewone afspraken   -> iedereen met leesrecht op ondertekeningen
+ *
+ * @return array [bool $mag, ?string $reden]  De reden is bedoeld om te tónen: "je mag
+ *               dit niet" hoort te zeggen wie het wel mag (ontwerpfilosofie §9).
+ */
+function bh_mag_document(string $type): array {
+    if (str_starts_with($type, 'gezondheid')) {
+        // BEWUST het modulerecht en niet de rolrang. De penningmeester heeft rang 2,
+        // net als het bestuur, maar rechten.php geeft hem expliciet alleen de
+        // loonadministratie — met een rangvergelijking kon hij medische gegevens openen.
+        // Rang is een hiërarchie; penningmeester staat náást bestuur, niet erboven.
+        $mag = mag('ondertekeningen', 'lezen');
+        return [$mag, $mag ? null : 'Alleen ondertekeningen-recht'];
+    }
+    if (in_array($type, ['loonheffing', 'lidmaatschap'], true)) {
+        $mag = mag('documenten', 'bewerken');
+        return [$mag, $mag ? null : 'Alleen loondossier'];
+    }
+    return [true, null];
+}
+
+/**
  * Het gemiddelde over alle criteria van alle tests, of null als er niets is beoordeeld.
  * De scores staan per test/criterium/beoordelaar; selectie_scores_van() heeft het
  * gemiddelde per criterium al berekend.

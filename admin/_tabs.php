@@ -1,13 +1,17 @@
 <?php
 /**
- * Partial: fase-tabs met aantallen.
+ * Partial: filtertabs met aantallen.
  *
- * Een tab verdwijnt als er niemand in zit (bh_fase_tabs()). Staat er iemand in een
- * fase die in deze seizoensfase niet aan de beurt is, dan komt daar onder de tabs één
- * regel over — die mensen mogen niet stil uit beeld vallen.
+ * Meestal gevuld door bh_fase_tabs(): een tab verdwijnt als er niemand in zit, en staat
+ * er iemand in een fase die in deze seizoensfase niet aan de beurt is, dan komt daar
+ * onder de tabs één regel over — die mensen mogen niet stil uit beeld vallen.
+ *
+ * Elke lijst met dezelfde vorm werkt: het ondertekeningenscherm zet er zijn eigen
+ * twee tabs in. Bouw dus geen tweede tabbalk, vul deze.
  *
  * Verwacht:
- *   $tabs_data   array     uitkomst van bh_fase_tabs()
+ *   $tabs_data   array     ['tabs' => [ ['sleutel','label','aantal','kleur','actueel'], … ],
+ *                           'vreemd' => […], 'vreemd_aantal' => int] — bijv. uit bh_fase_tabs()
  *   $tabs_actief string    huidige sleutel ('alle' of een fase)
  *   $tabs_url    callable  fn(string $sleutel): string
  *   $tabs_totaal int       aantal achter "Alle"

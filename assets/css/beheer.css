@@ -379,6 +379,16 @@ html[data-theme="dark"] .bh-fasechip.nu { color: var(--bg); }
 .bh-ond-acties { margin-left: auto; display: flex; gap: 8px; align-items: center; }
 .bh-ond-slot { display: inline-flex; align-items: center; gap: 5px; font: var(--text-meta); color: var(--ink-muted); }
 
+/* Het overzichtsscherm: één kaart per persoon, met dezelfde .bh-ondlijst erin. */
+.bh-ondkaarten { display: flex; flex-direction: column; gap: 12px; }
+.bh-ondkaart { padding: 14px 18px 8px; border-left: 3px solid var(--fase-oranje); }
+.bh-ondkaart.compleet { border-left-color: var(--fase-groen); }
+.bh-ondkaart-kop { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.bh-ondkaart-naam { font-size: 15px; font-weight: 600; color: var(--navy); text-decoration: none; }
+.bh-ondkaart-naam:hover { text-decoration: underline; }
+.bh-ondkaart-voortgang { margin-left: auto; min-width: 150px; }
+.bh-ondkaart .bh-ondlijst { margin-top: 8px; }
+
 /* Weekrij in het beschikbaarheid-tabblad — losse tegels, niet het raster.
    De rastercel van bh_weekcel() heet .bh-weekcel; dit is de grotere tegel. */
 .bh-weekrij { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 4px; }
