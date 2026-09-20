@@ -18,7 +18,7 @@ if (!defined('BH_GELADEN')) {
 
     // Beslissingen en tellingen — geen HTML
     foreach (['fase_ui.php', 'tabel.php', 'nav.php', 'vandaag.php', 'lijst.php',
-              'dossier.php', 'bevestig.php', 'dekking.php'] as $__bh_f) {
+              'dossier.php', 'bevestig.php', 'dekking.php', 'berichten.php'] as $__bh_f) {
         if (is_file(__DIR__ . '/' . $__bh_f)) require_once __DIR__ . '/' . $__bh_f;
     }
 
