@@ -124,12 +124,65 @@
     });
   }
 
+  /* ── Zijbalk op mobiel ────────────────────────────────────────
+     Eén implementatie. Eerder stond deze twee keer — in layout_top én in
+     layout_bottom, met verschillende klassenamen en verschillende breekpunten
+     (768 tegen 900), waarbij de tweede de eerste stil overschreef. */
+
+  function zijbalkKoppelen() {
+    var balk = document.getElementById('zijbalk');
+    var knop = document.getElementById('hamburger');
+    var laag = document.getElementById('navoverlay');
+    if (!balk || !knop) return;
+
+    function zet(open) {
+      balk.classList.toggle('open', open);
+      knop.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (laag) {
+        laag.hidden = !open;
+        requestAnimationFrame(function () { laag.classList.toggle('zichtbaar', open); });
+      }
+      document.body.style.overflow = open ? 'hidden' : '';
+      if (open) balk.querySelector('a').focus();
+    }
+
+    knop.addEventListener('click', function () { zet(!balk.classList.contains('open')); });
+    if (laag) laag.addEventListener('click', function () { zet(false); });
+    balk.addEventListener('click', function (e) {
+      if (e.target.closest('[data-sluit-nav]')) zet(false);
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && balk.classList.contains('open')) { zet(false); knop.focus(); }
+    });
+    // Zelfde breekpunt als de media-query: anders blijft de balk op een tablet hangen.
+    window.addEventListener('resize', function () {
+      if (window.innerWidth > 900 && balk.classList.contains('open')) zet(false);
+    });
+  }
+
+  /* ── Hulppaneel in de topbalk ─────────────────────────────────── */
+
+  function hulpKoppelen() {
+    var knop = document.getElementById('hulpknop');
+    var paneel = document.getElementById('hulppaneel');
+    if (!knop || !paneel) return;
+    function zet(open) {
+      paneel.hidden = !open;
+      knop.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+    knop.addEventListener('click', function () { zet(paneel.hidden); });
+    paneel.addEventListener('click', function (e) {
+      if (e.target.closest('.bh-hulppaneel-sluit')) { zet(false); knop.focus(); }
+    });
+  }
+
   /* ── Start ───────────────────────────────────────────────────── */
 
   function start(wortel) {
     (wortel || document).querySelectorAll('.bh-tabel').forEach(tabelKoppelen);
     (wortel || document).querySelectorAll('[data-kolomkiezer]').forEach(kiezerKoppelen);
     (wortel || document).querySelectorAll('.bh-filterbalk').forEach(filterKoppelen);
+    if (!wortel || wortel === document) { zijbalkKoppelen(); hulpKoppelen(); }
   }
 
   if (document.readyState === 'loading') {

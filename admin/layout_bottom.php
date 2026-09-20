@@ -1,6 +1,6 @@
-</div><!-- /page-body -->
-  </div><!-- /main-content -->
-</div><!-- /admin-layout -->
+    </main>
+  </div><!-- /bh-hoofd -->
+</div><!-- /bh-kader -->
 
 <!-- Detail paneel (globaal) -->
 <div class="paneel-overlay" id="paneelOverlay" onclick="sluitPaneel()"></div>
@@ -511,17 +511,16 @@ function genereerAnalyse(solId) {
   });
 }
 
-/* ── Mobile sidebar toggle ─────────────────────────────────── */
+/* De zijbalk zit nu in assets/js/beheer.js (zijbalkKoppelen). Hij stond hier én in
+   layout_top.php, met verschillende klassenamen en breekpunten; de tweede overschreef
+   de eerste stil. Deze twee no-ops blijven staan zolang oude schermen ze nog in een
+   onclick hebben staan — weg zodra `grep -rn "toggleSidebar" admin/` leeg is. */
 window.toggleSidebar = function() {
-  const sb = document.getElementById('sidebar');
-  const ov = document.getElementById('sidebarOverlay');
-  if (!sb) return;
-  sb.classList.toggle('open');
-  if (ov) ov.classList.toggle('zichtbaar');
+  document.getElementById('hamburger')?.click();
 };
 window.sluitSidebar = function() {
-  document.getElementById('sidebar')?.classList.remove('open');
-  document.getElementById('sidebarOverlay')?.classList.remove('zichtbaar');
+  const b = document.getElementById('zijbalk');
+  if (b && b.classList.contains('open')) document.getElementById('hamburger')?.click();
 };
 
 /* ── Foto vergroten modaal ─────────────────────────────────── */

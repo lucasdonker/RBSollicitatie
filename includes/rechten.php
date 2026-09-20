@@ -207,17 +207,48 @@ function mag(string $module, string $actie = 'lezen'): bool {
     return !empty($r[$actie]);
 }
 
-/** Breekt af met 403 als de beheerder het recht niet heeft. Voor bovenaan pagina's. */
+/**
+ * Breekt af met 403 als de beheerder het recht niet heeft. Hoort bovenaan een pagina,
+ * vóór de layout: deze functie stopt met die(), en dat kan niet meer nadat er al HTML
+ * is uitgestuurd.
+ *
+ * Een mens krijgt de nette pagina binnen het gewone kader — geen rechten is een keuze,
+ * geen storing (ontwerpfilosofie §8). Een API-aanroep krijgt JSON, want daar zou HTML
+ * de aanroeper alleen maar in de war brengen.
+ */
 function vereis_recht(string $module, string $actie = 'lezen'): void {
     if (function_exists('vereist_login')) vereist_login();
-    if (!mag($module, $actie)) {
-        http_response_code(403);
-        $terug = defined('APP_URL') ? APP_URL . '/admin/' : '/admin/';
-        die('<div style="font-family:sans-serif;max-width:520px;margin:80px auto;text-align:center">
-             <h2>Geen toegang</h2>
-             <p style="color:#555">Je hebt geen rechten voor dit onderdeel. Neem contact op met een beheerder als je denkt dat dit niet klopt.</p>
-             <p><a href="' . htmlspecialchars($terug) . '" style="color:#054d8a">← Terug naar het dashboard</a></p></div>');
+    if (mag($module, $actie)) return;
+
+    http_response_code(403);
+
+    $script = basename((string)($_SERVER['SCRIPT_NAME'] ?? ''));
+    $is_api = str_starts_with($script, 'api_')
+           || str_contains(strtolower(implode(' ', headers_list())), 'application/json');
+
+    if ($is_api) {
+        header('Content-Type: application/json; charset=utf-8');
+        die(json_encode(['ok' => false, 'fout' => 'geen_rechten', 'module' => $module, 'actie' => $actie]));
     }
+
+    $layout = __DIR__ . '/../admin/layout_top.php';
+    $partial = __DIR__ . '/../admin/_geen_rechten.php';
+    if (is_file($layout) && is_file($partial)) {
+        $pagina_titel = 'Geen toegang';
+        $actieve_nav  = '';
+        require $layout;
+        $geen_module = $module;
+        $geen_rol    = (string)($_SESSION['bhd_rol'] ?? '');
+        require $partial;
+        require __DIR__ . '/../admin/layout_bottom.php';
+        exit;
+    }
+
+    // Terugval als de layout er niet is (losse scripts, tests).
+    $terug = defined('APP_URL') ? APP_URL . '/admin/' : '/admin/';
+    die('<div style="font-family:sans-serif;max-width:520px;margin:80px auto;text-align:center">'
+      . '<h2>Geen toegang</h2><p>Je rol heeft hier geen inzage. Dat is een bewuste keuze, geen storing.</p>'
+      . '<p><a href="' . htmlspecialchars($terug) . '">Terug naar Vandaag</a></p></div>');
 }
 
 /** Zet Authentik-groepen om naar een rol-sleutel op basis van de rollen-tabel. */
