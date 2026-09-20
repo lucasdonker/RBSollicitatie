@@ -1548,6 +1548,62 @@ button.bh-weekcel-klik:hover, button.bh-weekcel-klik:focus-visible { outline: 2p
 
 .bh-ssokaart { border-left: 3px solid var(--border-strong); }
 .bh-ssokaart.aan { border-left-color: var(--ok); }
+/* ============================================================
+   LOONDOSSIERS — gevoelig, dus zichtbaar anders, maar niet alarmerend
+   ============================================================ */
+
+/* Vast kader, geen wegklikbare melding: de regels gelden altijd, niet één keer. */
+.bh-avgkader {
+  display: flex; align-items: flex-start; gap: 11px; margin-bottom: 14px;
+  padding: 14px 18px; border-radius: var(--radius-md);
+  background: var(--bg-subtle); border: 1px solid var(--border);
+  border-left: 3px solid var(--navy);
+  font-size: 13px; line-height: 1.6; color: var(--ink-soft);
+}
+.bh-avgkader svg { flex: none; margin-top: 2px; color: var(--navy); }
+.bh-avgkader strong { color: var(--ink); }
+.bh-avgkader-regel { display: block; margin-top: 5px; font: var(--text-meta); color: var(--ink-muted); }
+
+.bh-dosstand { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 12px; }
+.bh-dosstand .bh-stoplicht { font-size: 15px; font-weight: 600; }
+
+.bh-doslijst { display: flex; flex-direction: column; gap: 10px; }
+.bh-doskaart { border-left: 3px solid var(--f-tekst); overflow: hidden; }
+.bh-doskaart-kop {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap; cursor: pointer;
+  padding: 13px 18px; min-height: 44px; list-style: none;
+}
+.bh-doskaart-kop::-webkit-details-marker { display: none; }
+.bh-doskaart-naam { flex: 1; min-width: 160px; font-size: 15px; font-weight: 600; color: var(--navy); }
+.bh-doskaart-body { padding: 0 18px 14px; border-top: 1px solid var(--bg-subtle); }
+.bh-doskaart-voet { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+
+.bh-dosstukken { list-style: none; margin: 0; padding: 0; }
+.bh-dosstukken li {
+  display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap;
+  padding: 11px 0; border-bottom: 1px solid var(--bg-subtle); font-size: 13px;
+}
+.bh-dosstukken li:last-child { border-bottom: none; }
+.bh-dosstuk-wat { flex: 0 0 220px; display: flex; flex-direction: column; gap: 2px; }
+.bh-dosstuk-wat strong { font-weight: 600; color: var(--ink); }
+.bh-dosstuk-wat span { font: var(--text-meta); color: var(--ink-muted); }
+.bh-dosstuk-stand { flex: 1; min-width: 200px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--ink-soft); }
+.bh-dosstuk-sub { flex-basis: 100%; font: var(--text-meta); color: var(--ink-muted); }
+.bh-dosstuk-hash {
+  flex-basis: 100%; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px; color: var(--ink-muted);
+}
+.bh-dosstuk-actie { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
+
+.bh-dostijdlijn { font: var(--text-meta); color: var(--ink-soft); }
+.bh-dostijdlijn > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; }
+.bh-dostijdlijn ul { margin: 6px 0 0 18px; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+
+@media (max-width: 720px) {
+  .bh-dosstuk-wat { flex-basis: 100%; }
+  .bh-dosstuk-actie { margin-left: 0; }
+}
+
 /* ── Rollen & rechten ── */
 .bh-rollijstje { list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
 .bh-rolkaart { border: 1px solid var(--border); border-radius: var(--radius-md); padding: 13px 16px; background: var(--bg); }
