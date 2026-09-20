@@ -70,8 +70,13 @@
   padding: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 /* min-width:0 + overflow: een grid-cel groeit anders mee met zijn inhoud en duwt de
-   buurcel weg. Een lange statusbadge liep zo over de datumkolom heen. */
-.bh-tabel td { padding: 0; font-size: 14px; color: var(--ink); min-width: 0; overflow: hidden; }
+   buurcel weg. Een lange statusbadge liep zo over de datumkolom heen.
+   Afkappen i.p.v. terugloop: de rijhoogte moet gelijk blijven (filosofie §7, "dicht
+   mag, vermoeiend niet"). De volle waarde staat in het dossier. */
+.bh-tabel td {
+  padding: 0; font-size: 14px; color: var(--ink); min-width: 0;
+  overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+}
 .bh-tabel td > * { max-width: 100%; }
 .bh-tabel tbody tr { border-bottom: 1px solid var(--bg); }
 .bh-tabel tbody tr:last-child { border-bottom: none; }
@@ -98,6 +103,19 @@
 }
 a.bh-naamcel:hover .bh-naamcel-naam { color: var(--navy); text-decoration: underline; }
 
+/* Statuscel: badge + eventueel een chip en een attentieregel.
+   Niet terugloopend — anders wordt één rij hoger dan de rest. */
+.bh-statuscel { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; min-width: 0; }
+.bh-statuscel > * { flex: none; }
+.bh-attentie {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; font-weight: 600; color: var(--error); white-space: nowrap;
+}
+
+/* Selectiekolom */
+.bh-kol-kies { display: flex; align-items: center; }
+.bh-kies, .bh-kies-alles { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
+
 /* Actiekolom */
 .bh-acties { display: flex; gap: 6px; justify-content: flex-end; align-items: center; }
 
@@ -109,6 +127,9 @@ a.bh-naamcel:hover .bh-naamcel-naam { color: var(--navy); text-decoration: under
     grid-template-columns: 1fr; gap: 6px;
     padding: 14px 16px; border-bottom: 1px solid var(--border);
   }
+  /* Op telefoon is er ruimte: daar mag een cel wél teruglopen. */
+  .bh-tabel td { white-space: normal; overflow: visible; }
+  .bh-statuscel { flex-wrap: wrap; }
   .bh-tabel td[data-label]::before {
     content: attr(data-label) " ";
     font-size: 11px; font-weight: 700; letter-spacing: .08em;

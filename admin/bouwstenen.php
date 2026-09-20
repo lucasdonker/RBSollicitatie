@@ -94,53 +94,49 @@ $_p = [
   <button class="ds-btn ds-btn-primair" disabled>Uitgeschakeld</button>
 </div>
 
-<div class="ds-sectie-titel">Tabel — op telefoon wordt elke rij een kaartje</div>
+<div class="ds-sectie-titel">Tabel — echte partial, op telefoon wordt elke rij een kaartje</div>
 <?php
-$_rijen = [
-    ['p' => ['voornaam' => 'Zoë', 'achternaam' => 'Meijer'], 'mail' => 'zoe.meijer@voorbeeld.nl',
-     'lft' => 18, 'plaats' => "'s-Gravenzande", 'fase' => 'selectiedag_geweest', 'datum' => '19 aug', 'mark' => true],
-    ['p' => ['voornaam' => 'Daan', 'achternaam' => 'Vermeer'], 'mail' => 'daan.vermeer@voorbeeld.nl',
-     'lft' => 19, 'plaats' => 'Julianadorp', 'fase' => 'uitgenodigd_tw', 'datum' => '18 aug', 'mark' => false],
-    ['p' => ['voornaam' => 'Mila', 'achternaam' => 'Bos'], 'mail' => 'mila.bos@voorbeeld.nl',
-     'lft' => 16, 'plaats' => 'Callantsoog', 'fase' => 'afgewezen', 'datum' => '19 aug', 'mark' => false, 'dim' => true],
+// Bewust via _tabel.php + _rij_sollicitant.php: zo toetst deze pagina het échte
+// contract en niet een nagebouwde tabel die toevallig goed staat.
+$_vb = [
+    ['id' => 1, 'voornaam' => 'Zoë', 'achternaam' => 'Meijer', 'tussenvoegsel' => '',
+     'email' => 'zoe.meijer@voorbeeld.nl', 'telefoon' => '0624881103', 'geboortedatum' => '2008-03-04',
+     'woonplaats' => "'s-Gravenzande", 'fase' => 'selectiedag_geweest', 'aangemeld_op' => '2026-08-19', 'terugkerend' => 0],
+    ['id' => 2, 'voornaam' => 'Sem', 'achternaam' => 'Bakker', 'tussenvoegsel' => '',
+     'email' => 'sem.bakker@voorbeeld.nl', 'telefoon' => '0612345678', 'geboortedatum' => '2007-03-04',
+     'woonplaats' => 'Den Haag', 'fase' => 'selectiedag_geweest', 'aangemeld_op' => '2026-08-19', 'terugkerend' => 1],
+    ['id' => 3, 'voornaam' => 'Noah', 'achternaam' => 'Groot', 'tussenvoegsel' => 'de',
+     'email' => 'noah.degroot@voorbeeld.nl', 'telefoon' => '0633021987', 'geboortedatum' => '2009-06-01',
+     'woonplaats' => 'Poeldijk', 'fase' => 'selectiedag_geweest', 'aangemeld_op' => '2026-09-12', 'terugkerend' => 0,
+     'mail_mislukt' => 1, 'mail_mislukt_reden' => 'Adres bestaat niet'],
+    ['id' => 4, 'voornaam' => 'Mila', 'achternaam' => 'Bos', 'tussenvoegsel' => '',
+     'email' => 'mila.bos@voorbeeld.nl', 'telefoon' => '', 'geboortedatum' => '2010-01-20',
+     'woonplaats' => 'Callantsoog', 'fase' => 'afgewezen', 'aangemeld_op' => '2026-08-19', 'terugkerend' => 0],
 ];
+$tabel = bh_kolommen('proef', [
+    'naam'       => ['kop' => 'Naam',       'track' => 'minmax(180px,2.2fr)', 'sorteer' => 'p.achternaam'],
+    'leeftijd'   => ['kop' => 'Lft',        'track' => '56px',  'uitlijn' => 'rechts', 'mobiel' => 'verberg'],
+    'woonplaats' => ['kop' => 'Woonplaats', 'track' => 'minmax(80px,1fr)'],
+    'status'     => ['kop' => 'Status',     'track' => 'minmax(205px,1.8fr)'],
+    'aangemeld'  => ['kop' => 'Aangemeld',  'track' => '104px', 'sorteer' => 's.aangemeld_op'],
+    'actie'      => ['kop' => 'Actie',      'track' => '290px', 'uitlijn' => 'rechts'],
+], ['sort' => $_GET['sort'] ?? null, 'richting' => $_GET['richting'] ?? null]);
+$tabel_rijen    = $_vb;
+$tabel_rij      = __DIR__ . '/_rij_sollicitant.php';
+$tabel_selectie = true;
+$tabel_rij_cls  = fn(array $r) => ($r['fase'] === 'afgewezen' ? 'bh-rij-gedempt' : '');
+require __DIR__ . '/_tabel.php';
 ?>
-<table class="bh-tabel" style="--bh-tracks:2.2fr .55fr 1fr 1.5fr .85fr 1.4fr">
-  <thead>
-    <tr>
-      <th scope="col">Naam</th><th scope="col">Lft</th><th scope="col">Woonplaats</th>
-      <th scope="col">Status</th><th scope="col">Aangemeld</th>
-      <th scope="col" class="bh-rechts">Actie</th>
-    </tr>
-  </thead>
-  <tbody>
-    <?php foreach ($_rijen as $_r): ?>
-    <tr class="<?= $_r['mark'] ? 'bh-rij-gemarkeerd' : '' ?><?= !empty($_r['dim']) ? ' bh-rij-gedempt' : '' ?>">
-      <td data-label="Naam">
-        <span class="bh-naamcel">
-          <?= bh_avatar($_r['p'], 30, ['dim' => !empty($_r['dim'])]) ?>
-          <span class="bh-naamcel-tekst">
-            <span class="bh-naamcel-naam"><?= h(volledige_naam($_r['p'])) ?></span>
-            <span class="bh-naamcel-sub"><?= h($_r['mail']) ?></span>
-          </span>
-        </span>
-      </td>
-      <td data-label="Leeftijd" class="bh-num"><?= (int)$_r['lft'] ?></td>
-      <td data-label="Woonplaats"><?= h($_r['plaats']) ?></td>
-      <td data-label="Status"><?= bh_fase_badge($_r['fase'], ['lengte' => 'kort']) ?></td>
-      <td data-label="Aangemeld" class="bh-num"><?= h($_r['datum']) ?></td>
-      <td data-label="Actie" class="bh-rechts">
-        <span class="bh-acties">
-          <?php if ($_r['fase'] === 'selectiedag_geweest'): ?>
-            <button class="ds-btn ds-btn-primair ds-btn-sm">Uitnodigen TW</button>
-          <?php endif; ?>
-          <button class="ds-btn ds-btn-zacht ds-btn-sm" aria-label="Meer">···</button>
-        </span>
-      </td>
-    </tr>
-    <?php endforeach; ?>
-  </tbody>
-</table>
+
+<div class="ds-sectie-titel">Zelfde tabel, geen rijen</div>
+<?php
+$tabel = bh_kolommen('proef_leeg', ['naam' => ['kop' => 'Naam'], 'status' => ['kop' => 'Status']]);
+$tabel_rijen = [];
+$tabel_rij   = __DIR__ . '/_rij_sollicitant.php';
+$tabel_leeg  = ['titel' => 'Geen kandidaten in deze fase',
+                'tekst' => 'Zodra er iemand doorschuift, staat hij hier.'];
+require __DIR__ . '/_tabel.php';
+?>
 
 <div class="ds-sectie-titel">Lege staat — leeg is vaak goed nieuws</div>
 <div class="ds-kaart" style="padding:16px">
