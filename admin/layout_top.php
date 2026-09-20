@@ -1,5 +1,8 @@
 <?php
 vereist_login();
+// Beheer-bouwstenen (bh_*). Bewust hier en niet in functions.php: het portaal
+// hoeft geen beheer-code te laden. Zie includes/beheer/laden.php.
+require_once __DIR__ . '/../includes/beheer/laden.php';
 $_bhd     = huidige_beheerder();
 // Zorg dat mail_template kolommen bestaan + seed defaults (idempotent, één keer per request)
 if (function_exists('sjablonen_auto_setup')) { sjablonen_auto_setup(); }
@@ -104,6 +107,7 @@ if (function_exists('mag')) {
 <link rel="icon" href="<?= h($_fav) ?>">
 <?php endif; ?>
 <link rel="stylesheet" href="<?= APP_URL ?>/assets/css/stijl.css?v=<?= filemtime(__DIR__.'/../assets/css/stijl.css') ?>">
+<link rel="stylesheet" href="<?= APP_URL ?>/assets/css/beheer.css?v=<?= filemtime(__DIR__.'/../assets/css/beheer.css') ?>">
 <meta name="robots" content="noindex">
 <script>
 // Pas dark mode direct toe (vóór render, geen flits)

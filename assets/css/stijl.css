@@ -914,6 +914,11 @@ table.tabel td, table.tabel th { overflow-wrap: normal; word-break: normal; }
   --warn:          #b7791f;   --warn-soft:  #fbf4e6;
   --error:         #b3261e;   --error-soft: #fdf0ef;
 
+  /* Tekstkleur óp een verzadigd vlak (gevulde knop, gevulde badge). In licht zijn
+     accent en navy donker, dus wit. In donker worden ze juist licht en zakt wit naar
+     2,3–2,8:1 — daar hoort donkere tekst. Eén token, twee waarden. */
+  --op-vol:        #ffffff;
+
   /* ── Zijbalk ── */
   --zijbalk:       #043d6e;   /* in licht dónkerder navy dan de pagina */
   --zijbalk-tekst: rgba(255,255,255,.92);
@@ -1015,6 +1020,7 @@ html[data-theme="dark"] {
   --ok:            #4fbf78;   --ok-soft:    rgba(79,191,120,.14);
   --warn:          #e0a944;   --warn-soft:  rgba(224,169,68,.14);
   --error:         #ef8078;   --error-soft: rgba(239,128,120,.14);
+  --op-vol:        #0b1420;   /* wit haalt hier 2,3–2,8:1; donkere tekst 6,5–8,0:1 */
 
   --zijbalk:       #081120;   /* donkerder dan de pagina — omgekeerd aan licht */
   --zijbalk-tekst: #c3d2e0;
@@ -1050,13 +1056,13 @@ html[data-theme="dark"] {
   border: 1px solid transparent; text-decoration: none; transition: .13s;
   white-space: nowrap;
 }
-.ds-btn-primair   { background: var(--accent); color: #fff; }
+.ds-btn-primair   { background: var(--accent); color: var(--op-vol); }
 .ds-btn-primair:hover { background: var(--accent-hover); }
 .ds-btn-secundair { background: var(--surface); color: var(--navy); border-color: var(--border-strong); }
 .ds-btn-secundair:hover { border-color: var(--navy); background: var(--bg-subtle); }
 .ds-btn-zacht     { background: var(--bg); color: var(--ink-soft); }
 .ds-btn-zacht:hover { background: var(--border); }
-.ds-btn-gevaar    { background: var(--error-soft); color: var(--error); border-color: #f0c9be; }
+.ds-btn-gevaar    { background: var(--error-soft); color: var(--error); border-color: var(--fase-rood-rand); }
 .ds-btn-sm { height: 40px; padding: 0 16px; font-size: 14px; }
 .ds-btn-vol { width: 100%; }
 .ds-btn:disabled { opacity: .55; cursor: default; }
@@ -1084,6 +1090,33 @@ html[data-theme="dark"] {
 .ds-badge-warn   { background: var(--warn-soft); color: var(--warn); }
 .ds-badge-error  { background: var(--error-soft); color: var(--error); }
 .ds-badge-grijs  { background: var(--border); color: var(--ink-soft); }
+
+/* Fasebadge — de acht fases in zeven kleurfamilies. De kleurklasse zet alleen drie
+   lokale variabelen, zodat dezelfde klasse ook op een chip, een rij-accent of een
+   filterknop kan. Altijd badge mét tekst; de stip is extra, nooit de drager. */
+.ds-badge-fase {
+  background: var(--f-vlak); color: var(--f-tekst); border: 1px solid var(--f-rand);
+  border-radius: 6px; padding: 4px 9px; font-size: 12px; font-weight: 600;
+  display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+}
+.ds-badge-fase .ds-stip { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: none; }
+.ds-fase-grijs  { --f-tekst: var(--fase-grijs);  --f-vlak: var(--fase-grijs-vlak);  --f-rand: var(--fase-grijs-rand); }
+.ds-fase-blauw  { --f-tekst: var(--fase-blauw);  --f-vlak: var(--fase-blauw-vlak);  --f-rand: var(--fase-blauw-rand); }
+.ds-fase-oranje { --f-tekst: var(--fase-oranje); --f-vlak: var(--fase-oranje-vlak); --f-rand: var(--fase-oranje-rand); }
+.ds-fase-teal   { --f-tekst: var(--fase-teal);   --f-vlak: var(--fase-teal-vlak);   --f-rand: var(--fase-teal-rand); }
+.ds-fase-paars  { --f-tekst: var(--fase-paars);  --f-vlak: var(--fase-paars-vlak);  --f-rand: var(--fase-paars-rand); }
+.ds-fase-groen  { --f-tekst: var(--fase-groen);  --f-vlak: var(--fase-groen-vlak);  --f-rand: var(--fase-groen-rand); }
+.ds-fase-rood   { --f-tekst: var(--fase-rood);   --f-vlak: var(--fase-rood-vlak);   --f-rand: var(--fase-rood-rand); }
+
+/* Avatar met terugval op initialen. Vierkant-met-ronding zoals het ontwerp, niet rond. */
+.ds-avatar {
+  flex: none; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 9px; background: #e8eef6; color: var(--navy);
+  font-weight: 600; overflow: hidden; text-transform: uppercase;
+}
+html[data-theme="dark"] .ds-avatar { background: var(--bg-subtle); color: var(--navy); }
+.ds-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ds-avatar-dim { background: var(--bg); color: var(--ink-muted); }
 
 /* ── Formuliervelden ── */
 .ds-veld { display: flex; flex-direction: column; gap: 6px; }

@@ -33,6 +33,33 @@ function fasen(): array {
 }
 
 /**
+ * Korte labels voor plekken waar de volle naam niet past: een tabelkolom, een
+ * filterchip, de fase-knoppenrij in het dossier. Bewust hier en niet per scherm —
+ * anders staat er op het ene scherm "Uitgenodigd TW" en op het andere "Uitg. TW".
+ *
+ * @param string $lengte 'kort' (tabel, chips) of 'mini' (knoppenrij dossier)
+ */
+function fase_label_kort(string $fase, string $lengte = 'kort'): string {
+    $kort = [
+        'aangemeld'            => 'Aangemeld',
+        'uitgenodigd_selectie' => 'Uitgenodigd SD',
+        'aangemeld_selectie'   => 'Aangemeld SD',
+        'selectiedag_geweest'  => 'SD geweest',
+        'uitgenodigd_tw'       => 'Uitgenodigd TW',
+        'tw_geweest'           => 'TW geweest',
+        'aangenomen'           => 'Aangenomen',
+        'afgewezen'            => 'Afgewezen',
+    ];
+    $mini = [
+        'uitgenodigd_selectie' => 'Uitg. SD',
+        'aangemeld_selectie'   => 'Aangem. SD',
+        'uitgenodigd_tw'       => 'Uitg. TW',
+    ];
+    if ($lengte === 'mini' && isset($mini[$fase])) return $mini[$fase];
+    return $kort[$fase] ?? fase_label($fase);
+}
+
+/**
  * @return array ['ok'=>bool,'oud'=>?string,'nieuw'=>string,'ongewijzigd'=>bool,'melding'=>?array,'neveneffecten'=>array,'fout'=>?string]
  */
 function fase_zetten(int $sol_id, string $naar, string $bron, array $opties = []): array {
