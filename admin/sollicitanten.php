@@ -37,13 +37,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $actie = (string)($_POST['bulk_actie'] ?? '');
 
-    if ($ids && $actie === 'bericht_sturen') {
+    // Tussenscherm: eerst laten zien wat er gebeurt, dan pas doen. Dat werkt zonder
+    // JavaScript en is daardoor ook te screenshotten in het harnas.
+    if ($ids && $actie !== '' && empty($_POST['bevestigd'])
+        && in_array($actie, ['uitnodigen_selectie', 'uitnodigen_tw', 'aannemen', 'aangenomen', 'afgewezen'], true)) {
+        $toon_bevestiging = ['actie' => $actie, 'ids' => $ids];
+    }
+
+    if (empty($toon_bevestiging) && $ids && $actie === 'bericht_sturen') {
         redirect(APP_URL . '/admin/berichten.php?ids=' . implode(',', $ids));
     }
-    if ($ids && $actie === 'exporteren') {
+    if (empty($toon_bevestiging) && $ids && $actie === 'exporteren') {
         redirect(APP_URL . '/admin/export_blk.php?formaat=excel&ids=' . implode(',', $ids));
     }
-    if ($ids && $actie !== '' && function_exists('fase_zetten_bulk')) {
+    if (empty($toon_bevestiging) && $ids && $actie !== '' && function_exists('fase_zetten_bulk')) {
         vereis_recht('sollicitanten', 'bewerken');
         // Bij meer dan 10 personen gaan de berichten via de wachtrij (cron).
         $bulk = [
@@ -61,7 +68,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                   fase_label($bulk[$actie][0]) . ': ' . fase_bulk_tekst($t, $bulk[$actie][2]));
         }
     }
-    redirect(APP_URL . '/admin/sollicitanten.php' . (empty($_GET) ? '' : '?' . http_build_query($_GET)));
+    if (empty($toon_bevestiging)) {
+        redirect(APP_URL . '/admin/sollicitanten.php' . (empty($_GET) ? '' : '?' . http_build_query($_GET)));
+    }
 }
 
 /* ── Filters ─────────────────────────────────────────────────── */
@@ -151,6 +160,27 @@ $pagina_titel = 'Sollicitanten';
 $actieve_nav  = 'sollicitanten';
 require __DIR__ . '/layout_top.php';
 ?>
+
+<?php if (!empty($toon_bevestiging)):
+    // Tussenscherm in plaats van de lijst: eerst zien wat er gebeurt.
+    $_bnamen = [];
+    $_bq = $db->prepare("SELECT p.voornaam, p.tussenvoegsel, p.achternaam
+                         FROM sollicitaties s JOIN personen p ON p.id=s.persoon_id
+                         WHERE s.id IN (" . implode(',', array_fill(0, count($toon_bevestiging['ids']), '?')) . ")");
+    $_bq->execute($toon_bevestiging['ids']);
+    foreach ($_bq->fetchAll() as $_r) $_bnamen[] = volledige_naam($_r);
+
+    $bev       = bh_gevolgen($toon_bevestiging['actie'], $toon_bevestiging['ids']);
+    $bev_form  = ['actie' => soll_url(),
+                  'velden' => ['bulk_actie' => $toon_bevestiging['actie'],
+                               'bevestigd'  => '1',
+                               'ids'        => $toon_bevestiging['ids']]];
+    $bev_terug = soll_url();
+    $bev_namen = $_bnamen;
+    require __DIR__ . '/_bevestig.php';
+    require __DIR__ . '/layout_bottom.php';
+    return;
+endif; ?>
 
 <?php
   $tabs_data   = bh_fase_tabs($ant, $seizoen_fase);

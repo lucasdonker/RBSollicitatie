@@ -394,6 +394,20 @@ html[data-theme="dark"] .bh-fasechip.nu { color: var(--bg); }
 .bh-weeklegenda > span { display: inline-flex; align-items: center; gap: 6px; }
 .bh-legenda-blok { width: 12px; height: 12px; border-radius: 3px; background: var(--f-vlak); border: 1px solid var(--f-rand); }
 
+/* Notities (opgebouwd in JS, daarom klassen en geen inline stijl) */
+.bh-notitie {
+  background: var(--bg-subtle); border-left: 3px solid var(--accent);
+  border-radius: 9px; padding: 10px 12px; margin-bottom: 8px; font-size: 13px;
+  line-height: 1.55; color: var(--ink);
+}
+.bh-notitie-wie { margin-top: 4px; font: var(--text-meta); color: var(--ink-muted); }
+.bh-notitie-acties { display: flex; gap: 10px; margin-top: 6px; }
+.bh-notitie-acties button {
+  background: none; border: none; padding: 0; cursor: pointer;
+  font: var(--text-meta); font-weight: 600; color: var(--navy); font-family: inherit;
+}
+.bh-notitie-acties button.gevaar { color: var(--error); }
+
 .bh-notitie-nieuw { display: flex; gap: 8px; align-items: flex-start; margin-top: 10px; }
 .bh-notitie-nieuw .ds-textarea { min-height: 54px; font-size: 14px; }
 
@@ -669,6 +683,64 @@ a.bh-naamcel:hover .bh-naamcel-naam { color: var(--navy); text-decoration: under
   .bh-filter-acties { margin-left: 0; width: 100%; }
   .bh-pag-per { margin-left: 0; }
   .bh-bulkbalk { bottom: 8px; }
+}
+
+/* ── Toast ──────────────────────────────────────────────────────
+   Donker blokje rechtsonder voor wat je zelf net deed. Wat je moet wéten staat als
+   vaste melding boven de pagina en verdwijnt niet vanzelf. */
+#bh-toasts {
+  position: fixed; right: 18px; bottom: 18px; z-index: 9000;
+  display: flex; flex-direction: column; gap: 8px; max-width: min(400px, calc(100vw - 36px));
+}
+.bh-toast {
+  display: flex; align-items: center; gap: 10px;
+  background: #1a2230; color: #fff; border-radius: 11px;
+  padding: 13px 16px; font-size: 14px; box-shadow: var(--shadow-modal);
+  border-left: 3px solid var(--ink-muted);
+  transition: opacity .4s, transform .4s;
+}
+.bh-toast.succes { border-left-color: #8fe0a8; }
+.bh-toast.fout   { border-left-color: var(--error); }
+.bh-toast.weg    { opacity: 0; transform: translateY(6px); }
+@media (max-width: 560px) {
+  #bh-toasts { left: 14px; right: 14px; bottom: 14px; max-width: none; }
+}
+
+/* ── Dialoog (bhBevestig) ── */
+.bh-dialoog {
+  border: 1px solid var(--border); border-radius: var(--radius-lg);
+  background: var(--surface); color: var(--ink);
+  padding: 22px; max-width: 460px; width: calc(100vw - 32px);
+  box-shadow: var(--shadow-modal);
+}
+.bh-dialoog::backdrop { background: rgba(9,18,32,.55); }
+.bh-dialoog h2 { font: var(--text-title); font-size: 18px; margin: 0 0 8px; }
+.bh-dialoog p { margin: 0; font-size: 14px; line-height: 1.6; color: var(--ink-soft); }
+.bh-dialoog-knoppen {
+  display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;
+  margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--bg);
+}
+.bh-dialoog.gevaar h2 { color: var(--error); }
+
+/* ── Bevestiging van iets onomkeerbaars ────────────────────────── */
+.bh-bevestig { display: flex; justify-content: center; padding: 20px 0 40px; }
+.bh-bevestig-kaart {
+  width: 100%; max-width: 560px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-float);
+  padding: 24px; display: flex; flex-direction: column; gap: 14px;
+}
+.bh-bevestig-kaart h2 { font: var(--text-title); font-size: 19px; color: var(--ink); margin: 0; }
+.bh-bevestig-regels { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.bh-bevestig-regels li { font-size: 14px; line-height: 1.55; color: var(--ink-soft); }
+.bh-bevestig-namen { margin: 0; font: var(--text-meta); color: var(--ink-muted); line-height: 1.6; }
+.bh-bevestig-knoppen {
+  display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;
+  padding-top: 14px; border-top: 1px solid var(--bg);
+}
+@media (max-width: 520px) {
+  .bh-bevestig-knoppen { flex-direction: column-reverse; }
+  .bh-bevestig-knoppen .ds-btn { width: 100%; }
 }
 
 /* ── Laadstaat: de vorm van wat komt ── */

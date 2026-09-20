@@ -33,6 +33,26 @@ function fasen(): array {
 }
 
 /**
+ * Welke meldingen horen bij een overgang naar deze fase?
+ *
+ * Eén bron, want de bevestigingsdialoog moet vóóraf kunnen zeggen of er bericht
+ * uitgaat en fase_zetten() moet het daarna daadwerkelijk sturen. Zouden die twee elk
+ * hun eigen lijstje hebben, dan bevestigt het bestuur iets anders dan er gebeurt — en
+ * bij een afwijsronde is dat geen cosmetisch probleem.
+ *
+ * @return string[] sleutels uit meldingen_register()
+ */
+function fase_meldingstypen(string $naar): array {
+    return [
+        'uitgenodigd_selectie' => ['uitnodiging_selectie'],
+        'aangemeld_selectie'   => ['selectie_aangemeld_bevestiging', 'bestuur_blk_ingediend'],
+        'uitgenodigd_tw'       => ['uitnodiging_tw'],
+        'aangenomen'           => ['aangenomen'],
+        'afgewezen'            => ['afgewezen'],
+    ][$naar] ?? [];
+}
+
+/**
  * Korte labels voor plekken waar de volle naam niet past: een tabelkolom, een
  * filterchip, de fase-knoppenrij in het dossier. Bewust hier en niet per scherm —
  * anders staat er op het ene scherm "Uitgenodigd TW" en op het andere "Uitg. TW".
@@ -97,32 +117,18 @@ function fase_zetten(int $sol_id, string $naar, string $bron, array $opties = []
             if ($uit['melding'] === null || ($r['status'] !== 'overgeslagen' && $uit['melding']['status'] === 'overgeslagen')) $uit['melding'] = $r;
         };
 
-        switch ($naar) {
-            case 'uitgenodigd_selectie':
-                if (function_exists('ondertekeningen_klaarzetten_sd')) {
-                    try { $uit['neveneffecten']['ondertekeningen'] = ondertekeningen_klaarzetten_sd($sol_id); }
-                    catch (\Throwable $e) { error_log('fase_zetten ondertekeningen: ' . $e->getMessage()); }
-                }
-                $stuur('uitnodiging_selectie');
-                break;
-            case 'aangemeld_selectie':
-                $stuur('selectie_aangemeld_bevestiging');
-                $stuur('bestuur_blk_ingediend');
-                break;
-            case 'uitgenodigd_tw':
-                $stuur('uitnodiging_tw');
-                break;
-            case 'aangenomen':
-                if (function_exists('kennismakingspakket_activeren')) {
-                    try { $uit['neveneffecten']['kennismakingspakket'] = kennismakingspakket_activeren($sol_id); }
-                    catch (\Throwable $e) { error_log('fase_zetten kennismakingspakket: ' . $e->getMessage()); }
-                }
-                $stuur('aangenomen');
-                break;
-            case 'afgewezen':
-                $stuur('afgewezen');
-                break;
+        // Neveneffecten die vóór de melding moeten gebeuren (de mail verwijst ernaar).
+        if ($naar === 'uitgenodigd_selectie' && function_exists('ondertekeningen_klaarzetten_sd')) {
+            try { $uit['neveneffecten']['ondertekeningen'] = ondertekeningen_klaarzetten_sd($sol_id); }
+            catch (\Throwable $e) { error_log('fase_zetten ondertekeningen: ' . $e->getMessage()); }
         }
+        if ($naar === 'aangenomen' && function_exists('kennismakingspakket_activeren')) {
+            try { $uit['neveneffecten']['kennismakingspakket'] = kennismakingspakket_activeren($sol_id); }
+            catch (\Throwable $e) { error_log('fase_zetten kennismakingspakket: ' . $e->getMessage()); }
+        }
+        // De meldingen zelf: uit fase_meldingstypen(), dezelfde bron die de
+        // bevestigingsdialoog vooraf raadpleegt.
+        foreach (fase_meldingstypen($naar) as $_type) $stuur($_type);
         return $uit;
     } catch (\Throwable $e) {
         error_log('fase_zetten: ' . $e->getMessage());

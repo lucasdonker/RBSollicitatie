@@ -106,6 +106,53 @@ $_mag_blk = mag('blk', 'lezen');
     </section>
     <?php endif; ?>
 
+    <?php
+      // Competenties komen uit Authentik (diploma's en bevoegdheden van de vereniging).
+      $_comp_aan = function_exists('competentie_sync_klaar') && competentie_sync_klaar();
+      $_comps = $_comp_aan && function_exists('competenties_van') ? competenties_van((int)$_s['id']) : [];
+      $_sync  = $_comp_aan && function_exists('competentie_sync_info') ? competentie_sync_info((int)$_s['id']) : [];
+    ?>
+    <?php if ($_comp_aan): ?>
+    <section class="ds-kaart ds-kaart-p">
+      <div class="bh-kaartkop">
+        <h2>Competenties</h2>
+        <?php if ($_mag_bewerken): ?>
+          <button type="button" class="bh-kaartkop-link" style="background:none;border:none;cursor:pointer;font-family:inherit"
+                  onclick="competentieVerversen(<?= (int)$_s['id'] ?>)">Synchroniseren</button>
+        <?php endif; ?>
+      </div>
+      <div id="compChips-<?= (int)$_s['id'] ?>">
+        <?php if ($_comps): ?>
+          <div class="bh-chiprij">
+            <?php foreach ($_comps as $_c): ?><?= bh_chip((string)$_c['groep'], 'blauw') ?><?php endforeach; ?>
+          </div>
+        <?php else: ?>
+          <p class="bh-dossier-tekst zacht">Geen competenties gevonden in Authentik.</p>
+        <?php endif; ?>
+      </div>
+      <span class="bh-meta" style="display:block;margin-top:8px" id="compStatus-<?= (int)$_s['id'] ?>">
+        <?php if (!empty($_sync['laatst_gesynct'])): ?>
+          Laatst opgehaald <?= h(datum_nl(substr((string)$_sync['laatst_gesynct'], 0, 10))) ?>
+          <?php if (($_sync['sync_status'] ?? '') === 'niet_gevonden'): ?> · geen match gevonden<?php endif; ?>
+        <?php else: ?>
+          Nog niet opgehaald.
+        <?php endif; ?>
+      </span>
+      <?php if ($_mag_bewerken && (($_sync['sync_status'] ?? '') === 'niet_gevonden' || !$_comps)): ?>
+        <div class="bh-comp-koppel">
+          <label class="bh-veldlabel" for="compUsername-<?= (int)$_s['id'] ?>">
+            Handmatig koppelen op Authentik-gebruikersnaam
+          </label>
+          <div class="bh-notitie-nieuw" style="margin-top:6px">
+            <input type="text" class="ds-input" id="compUsername-<?= (int)$_s['id'] ?>" placeholder="gebruikersnaam">
+            <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm"
+                    onclick="competentieKoppelen(<?= (int)$_s['id'] ?>)">Koppelen</button>
+          </div>
+        </div>
+      <?php endif; ?>
+    </section>
+    <?php endif; ?>
+
     <?php if ($_blk && $_mag_blk): ?>
     <section class="ds-kaart ds-kaart-p">
       <div class="bh-kaartkop">
@@ -168,7 +215,7 @@ $_mag_blk = mag('blk', 'lezen');
         logboek staan zonder inhoud. Dit kun je niet terugdraaien.
       </p>
       <button type="button" class="ds-btn ds-btn-gevaar"
-              onclick="verwijderActie(<?= (int)$_s['id'] ?>, 'alles', this)">Verwijderen…</button>
+              onclick="verwijderActie(<?= (int)$_s['id'] ?>, 'alles')">Verwijderen…</button>
     </section>
     <?php endif; ?>
   </div>

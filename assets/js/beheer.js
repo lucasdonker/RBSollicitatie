@@ -10,6 +10,131 @@
 (function () {
   'use strict';
 
+  /* ── Toast: bevestiging van wat je zelf net deed ────────────────
+     Voor iets dat je moet wéten staat een vaste melding boven de pagina; die
+     verdwijnt niet vanzelf (ontwerpfilosofie §8). Deze verdwijnt wel. */
+
+  function toastHost() {
+    var h = document.getElementById('bh-toasts');
+    if (!h) {
+      h = document.createElement('div');
+      h.id = 'bh-toasts';
+      h.setAttribute('aria-live', 'polite');
+      document.body.appendChild(h);
+    }
+    return h;
+  }
+
+  function bhToast(tekst, soort) {
+    var d = document.createElement('div');
+    d.className = 'bh-toast' + (soort ? ' ' + soort : '');
+    d.textContent = tekst;
+    toastHost().appendChild(d);
+    setTimeout(function () { d.classList.add('weg'); }, 4200);
+    setTimeout(function () { d.remove(); }, 4700);
+    return d;
+  }
+
+  /* ── Bevestiging ────────────────────────────────────────────────
+     Een <dialog>: focus-trap, Escape en de achtergrond-afdekking krijg je gratis van
+     de browser. confirm() kon dat niet, was niet te stylen en niet te screenshotten.
+     Geeft een Promise, zodat de aanroeper leest als een gesprek. */
+
+  function bhBevestig(opt) {
+    opt = opt || {};
+    return new Promise(function (klaar) {
+      var dlg = document.createElement('dialog');
+      dlg.className = 'bh-dialoog' + (opt.gevaar ? ' gevaar' : '');
+      var titel = document.createElement('h2');
+      titel.textContent = opt.titel || 'Weet je het zeker?';
+      dlg.appendChild(titel);
+
+      if (opt.tekst) {
+        var p = document.createElement('p');
+        p.textContent = opt.tekst;
+        dlg.appendChild(p);
+      }
+
+      var rij = document.createElement('div');
+      rij.className = 'bh-dialoog-knoppen';
+      var nee = document.createElement('button');
+      nee.type = 'button';
+      nee.className = 'ds-btn ds-btn-zacht';
+      nee.textContent = opt.annuleer || 'Annuleren';
+      var ja = document.createElement('button');
+      ja.type = 'button';
+      ja.className = 'ds-btn ' + (opt.gevaar ? 'ds-btn-gevaar' : 'ds-btn-primair');
+      ja.textContent = opt.knop || 'Doorgaan';
+      rij.appendChild(nee); rij.appendChild(ja);
+      dlg.appendChild(rij);
+      document.body.appendChild(dlg);
+
+      function sluit(antwoord) {
+        if (dlg.open) dlg.close();
+        dlg.remove();
+        klaar(antwoord);
+      }
+      nee.addEventListener('click', function () { sluit(false); });
+      ja.addEventListener('click', function () { sluit(true); });
+      dlg.addEventListener('cancel', function (e) { e.preventDefault(); sluit(false); });
+
+      if (typeof dlg.showModal === 'function') { dlg.showModal(); ja.focus(); }
+      else { sluit(window.confirm(titel.textContent)); }   // heel oude browser
+    });
+  }
+
+  /* Vraagt één waarde. Vervangt prompt(): die is niet te stylen, negeert de donkere
+     modus en geeft op mobiel een dialoog die niet bij de pagina hoort. */
+  function bhVraag(opt) {
+    opt = opt || {};
+    return new Promise(function (klaar) {
+      var dlg = document.createElement('dialog');
+      dlg.className = 'bh-dialoog';
+      var titel = document.createElement('h2');
+      titel.textContent = opt.titel || 'Invullen';
+      dlg.appendChild(titel);
+      if (opt.tekst) {
+        var p = document.createElement('p');
+        p.textContent = opt.tekst;
+        dlg.appendChild(p);
+      }
+      var veld = document.createElement(opt.lang ? 'textarea' : 'input');
+      veld.className = opt.lang ? 'ds-textarea' : 'ds-input';
+      if (!opt.lang) veld.type = opt.type || 'text';
+      veld.value = opt.waarde || '';
+      if (opt.plaatshouder) veld.placeholder = opt.plaatshouder;
+      veld.style.marginTop = '12px';
+      dlg.appendChild(veld);
+
+      var rij = document.createElement('div');
+      rij.className = 'bh-dialoog-knoppen';
+      var nee = document.createElement('button');
+      nee.type = 'button'; nee.className = 'ds-btn ds-btn-zacht'; nee.textContent = 'Annuleren';
+      var ja = document.createElement('button');
+      ja.type = 'button'; ja.className = 'ds-btn ds-btn-primair'; ja.textContent = opt.knop || 'Opslaan';
+      rij.appendChild(nee); rij.appendChild(ja);
+      dlg.appendChild(rij);
+      document.body.appendChild(dlg);
+
+      function sluit(waarde) { if (dlg.open) dlg.close(); dlg.remove(); klaar(waarde); }
+      nee.addEventListener('click', function () { sluit(null); });
+      ja.addEventListener('click', function () { sluit(veld.value.trim()); });
+      veld.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && !opt.lang) { e.preventDefault(); ja.click(); }
+      });
+      dlg.addEventListener('cancel', function (e) { e.preventDefault(); sluit(null); });
+
+      if (typeof dlg.showModal === 'function') { dlg.showModal(); veld.focus(); veld.select(); }
+      else { sluit(window.prompt(titel.textContent, veld.value)); }
+    });
+  }
+
+  window.bhToast = bhToast;
+  window.bhBevestig = bhBevestig;
+  window.bhVraag = bhVraag;
+  // Zolang oude schermen de oude naam nog aanroepen. Weg als grep 0 geeft.
+  window.toastMelding = function (t, s) { return bhToast(t, s === 'fout' ? 'fout' : (s === 'succes' ? 'succes' : '')); };
+
   /* ── Tabel: selectie en bulkbalk ─────────────────────────────── */
 
   function bulkVerversen(tabel) {
