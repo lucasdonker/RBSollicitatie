@@ -517,6 +517,130 @@ span.bh-incheck-code {
   .bh-incheck-voet .ds-btn { margin-left: 0; width: 100%; }
 }
 
+/* ── Beoordelen: telefoon, buiten, één duim ─────────────────────
+   Cijfers als knoppen van 48px in plaats van sterretjes: een ster van 26px raak je
+   met natte handen niet betrouwbaar. Alles hoog contrast (ontwerpfilosofie §6). */
+.bh-beoordeel { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+.bh-beoordeel-lijst {
+  flex: 0 0 320px; display: flex; flex-direction: column; gap: 10px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 14px;
+}
+.bh-groepkeuze { display: flex; gap: 6px; flex-wrap: wrap; }
+.bh-groepchip {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 38px;
+  padding: 7px 13px; border-radius: var(--radius-full);
+  background: var(--bg); border: 1px solid var(--border);
+  font-size: 13px; font-weight: 600; color: var(--ink-soft); text-decoration: none;
+}
+.bh-groepchip span { color: var(--ink-muted); }
+.bh-groepchip.actief { background: var(--navy); border-color: var(--navy); color: var(--op-vol); }
+.bh-groepchip.actief span { color: var(--op-vol); opacity: .75; }
+.bh-beoordeel-stand { display: flex; justify-content: space-between; font-size: 13px; color: var(--ink-soft); }
+.bh-beoordeel-klaar { color: var(--ok); font-weight: 600; }
+
+.bh-kandidaatlijst { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+.bh-kandidaat {
+  display: flex; align-items: center; gap: 12px; min-height: 60px;
+  padding: 10px 12px; border-radius: 12px; text-decoration: none;
+  background: var(--surface); border: 1px solid var(--border);
+}
+.bh-kandidaat:hover { border-color: var(--border-strong); }
+.bh-kandidaat.nu { border: 1.5px solid var(--accent); background: var(--accent-soft); }
+.bh-kandidaat.afwezig { opacity: .58; }
+.bh-kandidaat-tekst { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.bh-kandidaat-naam {
+  font-size: 15px; font-weight: 600; color: var(--ink);
+  display: flex; align-items: center; gap: 6px;
+}
+.bh-kandidaat-letop { color: var(--warn); display: inline-flex; }
+.bh-kandidaat-sub { font-size: 12px; color: var(--ink-muted); }
+.bh-kandidaat-nu {
+  flex: none; font-size: 12px; font-weight: 700; padding: 4px 11px;
+  border-radius: var(--radius-full); background: var(--accent); color: var(--op-vol);
+}
+.bh-kandidaat-vink { flex: none; color: var(--ok); display: flex; }
+
+.bh-beoordeel-kaart {
+  flex: 1; min-width: 300px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); overflow: hidden;
+}
+.bh-beoordeel-kop {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 15px 18px; border-bottom: 1px solid var(--border);
+}
+.bh-beoordeel-wie { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.bh-beoordeel-naam { font: var(--text-subhead); font-size: 17px; color: var(--ink); }
+.bh-beoordeel-bijz { margin: 14px 18px 0; }
+.bh-beoordeel-kaart > .ds-melding { margin: 14px 18px 0; }
+
+.bh-testblok { padding: 16px 18px 4px; }
+.bh-testblok h3 {
+  font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink-muted); margin: 0 0 10px;
+}
+.bh-criterium {
+  border: 1.5px solid var(--fase-oranje-rand); border-radius: 13px;
+  padding: 13px; margin-bottom: 11px; background: var(--surface);
+}
+.bh-criterium.gedaan { border-color: var(--border); }
+.bh-criterium-kop { display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px; }
+.bh-criterium-naam { font-size: 15px; font-weight: 600; color: var(--ink); }
+.bh-criterium-stand {
+  margin-left: auto; display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; font-weight: 600; color: var(--accent);
+}
+.bh-criterium.gedaan .bh-criterium-stand { color: var(--ok); }
+.bh-cijfers { display: flex; gap: 6px; }
+.bh-cijfer {
+  flex: 1; min-height: 52px; border-radius: 11px; cursor: pointer;
+  border: 1.5px solid var(--border); background: var(--bg-subtle);
+  font-size: 17px; font-weight: 600; color: var(--ink-muted); font-family: inherit;
+}
+.bh-cijfer:hover:not(:disabled) { border-color: var(--navy); color: var(--navy); }
+.bh-cijfer.gekozen { background: var(--navy); border-color: var(--navy); color: var(--op-vol); }
+.bh-cijfer:disabled { cursor: default; opacity: .65; }
+.bh-criterium-gem { display: block; margin-top: 8px; font: var(--text-meta); color: var(--ink-muted); }
+
+.bh-observatieblok { padding: 8px 18px 18px; display: flex; flex-direction: column; gap: 10px; }
+.bh-observatieblok h3 {
+  font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink-muted); margin: 6px 0 0;
+}
+.bh-soortkeuze { display: flex; gap: 6px; }
+.bh-soort {
+  flex: 1; min-height: 46px; border-radius: var(--radius-sm); cursor: pointer;
+  border: 1px solid var(--border); background: var(--bg-subtle);
+  font-size: 13px; font-weight: 600; color: var(--ink-soft); font-family: inherit;
+}
+.bh-soort.positief.gekozen { background: var(--ok); border-color: var(--ok); color: var(--op-vol); }
+.bh-soort.neutraal.gekozen { background: var(--navy); border-color: var(--navy); color: var(--op-vol); }
+.bh-soort.aandacht.gekozen { background: var(--error); border-color: var(--error); color: var(--op-vol); }
+.bh-obs-wis {
+  flex: none; background: none; border: none; cursor: pointer; padding: 6px;
+  color: var(--ink-muted); display: inline-flex; min-height: 34px;
+}
+.bh-obs-wis:hover { color: var(--error); }
+
+.bh-beoordeel-voet {
+  display: flex; gap: 8px; align-items: center;
+  padding: 13px 18px; border-top: 1px solid var(--border); background: var(--bg-subtle);
+}
+.bh-beoordeel-volgende { margin-left: auto; }
+.bh-beoordeel-voet [aria-disabled="true"] { opacity: .45; }
+
+@media (max-width: 900px) {
+  .bh-beoordeel-lijst { flex: 1 1 100%; }
+  .bh-beoordeel-kaart { min-width: 100%; }
+  .bh-kandidaatlijst { max-height: 260px; overflow-y: auto; }
+}
+@media (max-width: 560px) {
+  .bh-cijfer { min-height: 56px; font-size: 18px; }
+  .bh-beoordeel-voet { flex-wrap: wrap; }
+  .bh-beoordeel-volgende { margin-left: 0; width: 100%; text-align: center; }
+}
+
 /* ── Stoplicht ── */
 .bh-stoplicht {
   display: inline-flex; align-items: center; gap: 7px;
