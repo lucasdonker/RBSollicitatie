@@ -1121,16 +1121,25 @@ html[data-theme="dark"] .ds-avatar { background: var(--bg-subtle); color: var(--
 /* ── Formuliervelden ── */
 .ds-veld { display: flex; flex-direction: column; gap: 6px; }
 .ds-label { font: var(--text-label); color: var(--ink); }
-.ds-input, .ds-select, .ds-textarea {
+/* Een kaal veld binnen .ds-veld krijgt dezelfde opmaak als .ds-input. Zo hoeft niet
+   elk <input> van een formulier met tientallen velden een eigen klasse te dragen —
+   de wrapper zegt al wat het is. Selectievakjes en radio's blijven met rust. */
+.ds-input, .ds-select, .ds-textarea,
+.ds-veld > input:not([type=checkbox]):not([type=radio]),
+.ds-veld > select,
+.ds-veld > textarea {
   height: 48px; padding: 0 14px; border: 1px solid var(--border-strong);
   border-radius: var(--radius-md); font: var(--text-body); font-size: 16px;
   background: var(--surface); color: var(--ink); width: 100%;
 }
-.ds-textarea { height: auto; padding: 12px 14px; min-height: 90px; resize: vertical; }
-.ds-input:focus, .ds-select:focus, .ds-textarea:focus {
+.ds-textarea, .ds-veld > textarea { height: auto; padding: 12px 14px; min-height: 90px; resize: vertical; }
+.ds-input:focus, .ds-select:focus, .ds-textarea:focus,
+.ds-veld > input:focus, .ds-veld > select:focus, .ds-veld > textarea:focus {
   outline: none; border-color: var(--navy);
   box-shadow: 0 0 0 3px rgba(5,77,138,.12);
 }
+/* Idem voor het label: binnen .ds-veld is een <label> vanzelf het veldlabel. */
+.ds-veld > label { font: var(--text-label); color: var(--ink); }
 .ds-veld-hint { font: var(--text-meta); color: var(--ink-muted); }
 
 /* ── Meldingen ── */

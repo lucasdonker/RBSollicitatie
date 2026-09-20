@@ -314,10 +314,36 @@
 
   /* ── Start ───────────────────────────────────────────────────── */
 
+  /* ── Bevestiging op een gewoon formulier ──────────────────────
+     <form data-bevestig="Wat er gebeurt als je doorgaat."> vraagt het eerst.
+     Eén haak voor alle schermen, zodat er geen confirm() terugsluipt. Zonder
+     JavaScript verzendt het formulier gewoon — net als voorheen. Is de actie
+     onomkeerbaar én raakt hij persoonsgegevens, gebruik dan een tussenscherm
+     (_bevestig.php): dat is te screenshotten en werkt ook zonder JS. */
+  function bevestigFormKoppelen(form) {
+    if (form.dataset.bhBevestigGekoppeld) return;
+    form.dataset.bhBevestigGekoppeld = '1';
+    form.addEventListener('submit', function (e) {
+      if (form.dataset.bhAkkoord === '1') { form.dataset.bhAkkoord = ''; return; }
+      e.preventDefault();
+      bhBevestig({
+        titel: form.dataset.bevestigTitel || 'Weet je het zeker?',
+        tekst: form.dataset.bevestig,
+        knop:  form.dataset.bevestigKnop || 'Doorgaan',
+        gevaar: form.dataset.bevestigGevaar === '1'
+      }).then(function (ja) {
+        if (!ja) return;
+        form.dataset.bhAkkoord = '1';
+        if (typeof form.requestSubmit === 'function') form.requestSubmit(); else form.submit();
+      });
+    });
+  }
+
   function start(wortel) {
     (wortel || document).querySelectorAll('.bh-tabel').forEach(tabelKoppelen);
     (wortel || document).querySelectorAll('[data-kolomkiezer]').forEach(kiezerKoppelen);
     (wortel || document).querySelectorAll('.bh-filterbalk').forEach(filterKoppelen);
+    (wortel || document).querySelectorAll('form[data-bevestig]').forEach(bevestigFormKoppelen);
     if (!wortel || wortel === document) { zijbalkKoppelen(); hulpKoppelen(); }
   }
 

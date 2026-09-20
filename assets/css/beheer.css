@@ -1549,6 +1549,83 @@ button.bh-weekcel-klik:hover, button.bh-weekcel-klik:focus-visible { outline: 2p
 .bh-ssokaart { border-left: 3px solid var(--border-strong); }
 .bh-ssokaart.aan { border-left-color: var(--ok); }
 /* ============================================================
+   INSTELLINGEN — zes groepen links, één onderwerp tegelijk rechts
+   ============================================================ */
+
+.bh-instkolommen { display: flex; gap: 18px; align-items: flex-start; flex-wrap: wrap; }
+.bh-instzij { flex: 0 0 238px; display: flex; flex-direction: column; gap: 10px; }
+.bh-instinhoud { flex: 1; min-width: 380px; display: flex; flex-direction: column; gap: 14px; }
+
+.bh-instnav { padding: 8px; }
+.bh-instnav-groep {
+  font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--ink-muted); padding: 11px 12px 4px;
+}
+.bh-instnav-link {
+  display: flex; align-items: center; gap: 9px; min-height: 40px;
+  padding: 9px 12px; border-radius: var(--radius-sm); margin-bottom: 2px;
+  font-size: 13px; font-weight: 500; color: var(--ink-soft); text-decoration: none;
+}
+.bh-instnav-link:hover { background: var(--bg-subtle); color: var(--ink); }
+.bh-instnav-link svg { flex: none; }
+.bh-instnav-link.actief { background: var(--navy); color: var(--op-vol); }
+.bh-instnav-extra { margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--bg-subtle); }
+.bh-instversie { display: flex; flex-direction: column; gap: 3px; font: var(--text-meta); }
+.bh-instversie a { color: var(--accent); }
+
+/* Eén kaart per onderwerp, met secties eronder gescheiden door een lijn. */
+.bh-kaartbody { padding: var(--space-5); }
+.ds-kaart > .bh-kaartkop { padding: 16px 20px 0; margin-bottom: 0; }
+.ds-kaart > .bh-kaartkop + .bh-kaartbody { padding-top: 14px; }
+.bh-instsectie { border-bottom: 1px solid var(--bg-subtle); padding-bottom: 18px; margin-bottom: 18px; }
+.bh-instsectie:last-child { border: none; margin: 0; padding: 0; }
+.bh-instsectie h3 { font-size: 13px; font-weight: 600; color: var(--navy); margin: 0 0 12px; }
+.bh-instsectie .ds-veld + .ds-veld,
+.bh-instsectie .ds-veld + .bh-veldrij,
+.bh-instsectie .bh-veldrij + .ds-veld,
+.bh-instsectie .bh-veldrij + .bh-veldrij { margin-top: 12px; }
+.bh-loontabel { width: 100%; border-collapse: collapse; font-size: 13px; }
+.bh-loontabel th {
+  background: var(--bg-subtle); padding: 8px 12px; text-align: left;
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  color: var(--ink-soft); border-bottom: 1px solid var(--border);
+}
+.bh-loontabel td { padding: 7px 12px; border-bottom: 1px solid var(--bg-subtle); }
+.bh-loontabel th[scope=row] { font-weight: 600; color: var(--ink); }
+.bh-loontabel input { width: 96px; text-align: right; font-variant-numeric: tabular-nums; height: 40px; }
+.bh-euroveld { position: relative; display: inline-flex; align-items: center; }
+.bh-euroveld > span { position: absolute; left: 9px; font-size: 12px; color: var(--ink-muted); pointer-events: none; }
+.bh-euroveld input { padding-left: 22px; }
+.bh-knoprij { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; align-items: center; }
+.bh-testblok { flex: 1; min-width: 260px; border: none; margin: 0; padding: 0; }
+.bh-testblok legend { padding: 0 0 8px; font-size: 14px; font-weight: 600; color: var(--navy); }
+.bh-testblok .ds-veld + .ds-veld, .bh-testblok .bh-veldrij + .ds-veld { margin-top: 12px; }
+.bh-testicoon { flex: 0 0 170px; }
+.bh-testicoon-nu { display: inline-flex; vertical-align: -3px; margin-left: 4px; color: var(--ink-soft); }
+/* Kleine, veelgebruikte bouwstenen binnen een instellingenblok. */
+.bh-subkaart {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 16px; margin-bottom: 16px;
+}
+.bh-let-op { color: var(--accent); }
+.bh-mb { margin-bottom: 12px; }
+.bh-mt { margin-top: 8px; }
+.bh-code { padding: 3px 8px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+.bh-cel { padding: 8px 10px; }
+.bh-cel-zacht { padding: 3px 8px; color: var(--ink-soft); }
+.bh-compcel { padding: 8px 10px; font-weight: 600; white-space: nowrap; }
+.bh-compcel svg { vertical-align: -3px; margin-right: 6px; color: var(--ink-soft); }
+.bh-herstelform { margin-top: 8px; }
+
+@media (max-width: 860px) {
+  .bh-instzij { flex-basis: 100%; }
+  .bh-instnav { display: flex; flex-wrap: wrap; gap: 4px; }
+  .bh-instnav-groep { flex-basis: 100%; padding: 8px 4px 2px; }
+  .bh-instnav-link { margin-bottom: 0; }
+  .bh-instnav-extra { flex-basis: 100%; }
+}
+
+/* ============================================================
    LOONDOSSIERS — gevoelig, dus zichtbaar anders, maar niet alarmerend
    ============================================================ */
 

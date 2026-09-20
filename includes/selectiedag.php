@@ -382,9 +382,12 @@ function selectie_zoek_kandidaat(int $seizoen_id, string $term): array {
 /** Standaard beoordelingscriteria uit het draaiboek. Per test een lijst. */
 function selectie_default_criteria(): array {
     return [
+        // 'icoon' is een naam uit includes/iconen.php, geen emoji. Bestaande
+        // installaties hebben hier nog een emoji in de instelling staan; het scherm
+        // vangt dat op met bh_test_icoon().
         'sport' => [
             'naam' => 'Sporttest',
-            'icoon' => '🏃',
+            'icoon' => 'bliksem',
             'criteria' => [
                 ['sleutel'=>'warmup',     'label'=>'Warming-up'],
                 ['sleutel'=>'hardlopen',  'label'=>'Hardlopen'],
@@ -396,7 +399,7 @@ function selectie_default_criteria(): array {
         ],
         'zwem' => [
             'naam' => 'Zwemtest',
-            'icoon' => '🏊',
+            'icoon' => 'golf',
             'criteria' => [
                 ['sleutel'=>'schoolslag',  'label'=>'Schoolslag'],
                 ['sleutel'=>'polocrawl',   'label'=>'Polocrawl'],

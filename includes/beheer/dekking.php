@@ -122,20 +122,34 @@ function bh_dek_woord(string $status): string {
 }
 
 /**
- * Icoonnaam voor een post.
+ * Een opgeslagen icoon-waarde omzetten naar een naam uit includes/iconen.php.
  *
- * De sjablonen bewaarden hier een emoji. Die staan nog in de instelling van bestaande
- * installaties, dus vertalen we ze in plaats van ze te negeren; nieuwe sjablonen
- * bewaren meteen een naam uit includes/iconen.php.
+ * Op drie plekken bewaart het systeem een icoon in een instelling: de posten
+ * (bezetting), de tests van de selectiedag, en de competentiecategorieën. Dat was
+ * overal een emoji. Nieuwe waarden zijn een naam; bestaande installaties hebben nog
+ * een emoji in hun instellingen staan, en die vertalen we hier in plaats van ze te
+ * negeren — dan is er geen migratie nodig en verdwijnt er niets uit beeld.
+ *
+ * @param string $terugval  wat het wordt als er niets bruikbaars in staat
  */
-function bh_post_icoon(string $waarde): string {
+function bh_icoonnaam(string $waarde, string $terugval = 'punt'): string {
+    $waarde = trim($waarde);
     $vertaling = [
-        '🏠' => 'huis', '🏖️' => 'strand', '🏖' => 'strand', '⛵' => 'golf', '🚑' => 'reddingsboei',
-        '🚩' => 'locatie', '⭐' => 'ster', '•' => 'locatie', '' => 'locatie',
+        '🏠' => 'huis',     '🏡' => 'huis',        '🏖️' => 'strand',   '🏖' => 'strand',
+        '⛵' => 'golf',     '🚤' => 'golf',        '🌊' => 'golf',      '🏊' => 'golf',
+        '🚑' => 'reddingsboei', '🛟' => 'reddingsboei', '🏃' => 'bliksem', '⚡' => 'bliksem',
+        '🚗' => 'wissel',   '🚩' => 'locatie',     '📍' => 'locatie',   '⭐' => 'ster',
+        '★'  => 'ster',     '🎯' => 'schild',      '🛡️' => 'schild',    '🛡' => 'schild',
+        '•'  => $terugval,  ''   => $terugval,
     ];
     if (isset($vertaling[$waarde])) return $vertaling[$waarde];
     // Al een naam? Dan doorgeven: icoon() valt zelf terug op een stip bij een onbekende naam.
-    return preg_match('/^[a-z_]+$/', $waarde) ? $waarde : 'locatie';
+    return preg_match('/^[a-z_]+$/', $waarde) ? $waarde : $terugval;
+}
+
+/** De posten van de bezettingsmodule; terugval op een locatiespeld. */
+function bh_post_icoon(string $waarde): string {
+    return bh_icoonnaam($waarde, 'locatie');
 }
 
 /** De weken met een tekort, op volgorde. */
