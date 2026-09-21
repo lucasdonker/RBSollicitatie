@@ -262,14 +262,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_ondertekend) {
             try {
                 // Sollicitant: bevestiging. Zelf getekend → "je hebt ondertekend" mét PDF-kopie;
                 // door de ouder getekend → "je ouder heeft ondertekend" (de PDF gaat naar de ouder).
+                /* Ná het antwoord versturen. Dit is het langste wachtmoment in het hele
+                   portaal: je hebt net getekend en staat te kijken naar een pagina die
+                   niets doet terwijl er een PDF van een paar honderd kB door de
+                   mailserver gaat. De bevestiging op het scherm is niet afhankelijk van
+                   de uitkomst van die mail. */
                 melding_verstuur($is_ouder ? 'ondertekening_bevestiging_ouder' : 'ondertekening_bevestiging', $sol_id_o,
                     ['document_naam' => $doc_naam, 'ondertekenaar_naam' => $naam_getypt ?: (string)($rec['ondertekenaar_naam'] ?? 'je ouder/verzorger')],
-                    ['referentie' => $ref, 'prioriteit' => 'direct', 'bijlagen' => $is_ouder ? [] : $bijlagen]);
+                    ['referentie' => $ref, 'prioriteit' => 'na_antwoord', 'bijlagen' => $is_ouder ? [] : $bijlagen]);
                 // Ouder: kopie met PDF
                 if ($is_ouder && !empty($rec['ondertekenaar_email'])) {
                     melding_verstuur('ondertekening_kopie', $sol_id_o,
                         ['document_naam' => $doc_naam, 'ontvanger_naam' => $naam_getypt ?: ($rec['ondertekenaar_naam'] ?: 'ouder/verzorger')],
-                        ['referentie' => $ref, 'prioriteit' => 'direct', 'bijlagen' => $bijlagen,
+                        ['referentie' => $ref, 'prioriteit' => 'na_antwoord', 'bijlagen' => $bijlagen,
                          'ontvanger' => ['email' => $rec['ondertekenaar_email'], 'naam' => $naam_getypt ?: (string)$rec['ondertekenaar_naam'], 'telefoon' => '', 'rol' => 'ouder']]);
                 }
                 // Bestuur (standaard uit)
@@ -277,7 +282,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_ondertekend) {
                     ['document_naam' => $doc_naam, 'ontvanger_naam' => $is_ouder ? 'ouder/verzorger' : 'de sollicitant'],
                     ['referentie' => $ref, 'prioriteit' => 'queue']);
             } catch (\Throwable $e) { error_log('ondertekening meldingen: ' . $e->getMessage()); }
-            if ($pdf_pad) @unlink($pdf_pad);
+
+            /* Het tijdelijke PDF-bestand mag pas weg als de mail het heeft opgepakt.
+               De verzending gebeurt nu ná het antwoord (melding_flush, ook een
+               shutdown-functie), dus een @unlink hier zou het bestand weghalen vóórdat
+               de bijlage wordt gelezen — en dan komt de mail zonder PDF aan.
+               Shutdown-functies draaien op volgorde van registratie en melding_flush is
+               al geregistreerd, dus deze komt erna. */
+            if ($pdf_pad) {
+                $_pdf_weg = $pdf_pad;
+                register_shutdown_function(function () use ($_pdf_weg) { @unlink($_pdf_weg); });
+            }
         }
         // Lidmaatschap: inschrijving naar de ledenservice (later ook de hub)
         if ($type === 'lidmaatschap' && function_exists('lidmaatschap_na_ondertekening')) { try { lidmaatschap_na_ondertekening($rec_vers, $sol_pdf, $pdf_bytes); } catch (\Throwable $e) { error_log('lidmaatschap na ondertekening: ' . $e->getMessage()); } }

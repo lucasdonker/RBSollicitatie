@@ -11,11 +11,13 @@
  *   $bev_form    array   ['actie' => url, 'velden' => [naam => waarde]]  (csrf komt erbij)
  *   $bev_terug   string  url van de annuleerknop
  *   $bev_namen   array   optioneel: namen van de betrokken mensen
+ *   $bev_vink    array   optioneel: ['naam','label','hulp'] — een keuze in de bevestiging
  */
 $bev       = $bev ?? null;
 $bev_form  = $bev_form ?? ['actie' => '', 'velden' => []];
 $bev_terug = $bev_terug ?? '';
 $bev_namen = $bev_namen ?? [];
+$bev_vink  = $bev_vink ?? null;
 if (!$bev) return;
 ?>
 <div class="bh-bevestig">
@@ -60,6 +62,16 @@ if (!$bev) return;
       <?php endif; ?>
     <?php endif; ?>
 
+    <?php if ($bev_vink): ?>
+      <label class="bh-dialoog-vink">
+        <input type="checkbox" name="<?= h((string)$bev_vink['naam']) ?>" value="1">
+        <span><?= h((string)$bev_vink['label']) ?></span>
+      </label>
+      <?php if (!empty($bev_vink['hulp'])): ?>
+        <p class="bh-dialoog-vinkhulp"><?= h((string)$bev_vink['hulp']) ?></p>
+      <?php endif; ?>
+    <?php endif; ?>
+
     <div class="bh-bevestig-knoppen">
       <a class="ds-btn ds-btn-zacht" href="<?= h($bev_terug) ?>">Annuleren</a>
       <button type="submit" class="ds-btn ds-btn-<?= $bev['toon'] === 'gevaar' ? 'gevaar' : 'primair' ?>">
@@ -69,4 +81,4 @@ if (!$bev) return;
   </form>
 </div>
 <?php
-$bev = null; $bev_form = null; $bev_terug = ''; $bev_namen = [];
+$bev = null; $bev_form = null; $bev_terug = ''; $bev_namen = []; $bev_vink = null;

@@ -218,6 +218,11 @@ function melding_verstuur(string $type, int $sol_id, array $extra = [], array $o
         if (!$ids) { $uit['status'] = 'mislukt'; $uit['reden'] = 'queue'; return $uit; }
         $uit['log_id'] = $ids[0];
         $uit['status'] = 'wacht';
+        // Ook zonder te wachten op de verzending weten we via welk kanaal het gaat:
+        // het kanaalplan staat al vast. Zo kan het scherm "gaat via WhatsApp" zeggen
+        // in plaats van het vage "staat in de wachtrij".
+        $uit['prioriteit'] = $prio;
+        $uit['kanaal'] = $plannen[0][0] ?? null;
 
         if ($prio === 'direct') {
             $res = melding_queue_verwerk(count($ids), $ids);

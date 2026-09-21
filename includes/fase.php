@@ -107,7 +107,13 @@ function fase_zetten(int $sol_id, string $naar, string $bron, array $opties = []
         if (function_exists('portaal_sollicitant_cache_wissen')) portaal_sollicitant_cache_wissen($sol_id);
 
         $stil  = !empty($opties['stil']);
-        $mopt  = ['prioriteit' => $opties['prioriteit'] ?? 'direct'];
+        /* Standaard ná het antwoord versturen, niet tijdens. Een fasewijziging liet de
+           beheerder anders wachten op de mailserver — soms seconden, precies op het moment
+           dat je door een lijst heen werkt. De inhoudelijke uitkomsten (geen adres,
+           afgemeld, dubbel, plafond) worden vóór het verzenden bepaald en blijven dus
+           gewoon zichtbaar; alleen een mislukte SMTP-poging lees je nu in het logboek.
+           Onder CLI valt melding_verstuur() zelf terug op 'direct'. */
+        $mopt  = ['prioriteit' => $opties['prioriteit'] ?? 'na_antwoord'];
         // Zet een mens de fase om (paneel, lijst, bulk, bellijst), dan is dat een bewuste keuze:
         // het anti-loop-dagplafond mag zo'n bericht niet tegenhouden. Automatische bronnen wel.
         if (in_array($bron, ['paneel', 'lijst', 'bulk', 'bellijst'], true)) $mopt['negeer_plafond'] = true;
@@ -147,7 +153,12 @@ function fase_melding_tekst(array $res): string {
     $kanaal = ['email' => 'e-mail', 'whatsapp' => 'WhatsApp', 'sms' => 'sms'][$m['kanaal'] ?? ''] ?? '';
     return match ($m['status']) {
         'verstuurd'    => 'Bericht verstuurd' . ($kanaal ? " via $kanaal" : '') . '.',
-        'wacht'        => 'Bericht staat in de wachtrij.',
+        // 'na_antwoord' gaat direct na deze pagina de deur uit (binnen een seconde);
+        // 'queue' wacht op de cron. Dat is een ander bericht aan de beheerder, dus ook
+        // een andere zin — anders lijkt een snelle verzending op een ophoping.
+        'wacht'        => ($res['melding']['prioriteit'] ?? '') === 'na_antwoord'
+            ? 'Bericht gaat nu de deur uit' . ($kanaal ? " via $kanaal" : '') . '.'
+            : 'Bericht staat in de wachtrij.',
         'mislukt'      => 'Bericht mislukt — zie het berichtenlog.',
         'overgeslagen' => match ($m['reden'] ?? '') {
             'dubbel'     => 'Bericht al eerder verstuurd (geen dubbele).',

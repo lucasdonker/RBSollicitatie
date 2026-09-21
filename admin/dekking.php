@@ -181,6 +181,13 @@ require __DIR__ . '/layout_top.php';
 </section>
 <?php endif; ?>
 
+<?php /* Dekking is een afgeleide van de beschikbaarheid; de versheid van dít scherm is
+         dus de versheid van die gegevens. */ ?>
+<?= bh_versheid(bh_laatst(
+      "SELECT MAX(GREATEST(COALESCE(b.definitief_op,'1000-01-01'), COALESCE(b.ingevuld_op,'1000-01-01')))
+       FROM beschikbaarheid b JOIN sollicitaties s ON s.id = b.sollicitatie_id
+       WHERE s.seizoen_id = ?", [$sid]), 'Beschikbaarheid') ?>
+
 <?php endif; ?>
 
 <?php require __DIR__ . '/layout_bottom.php'; ?>

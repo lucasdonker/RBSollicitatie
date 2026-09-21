@@ -211,6 +211,14 @@ require __DIR__ . '/layout_top.php';
     </summary>
 
     <div class="bh-doskaart-body">
+      <?php /* De naam zelf is hier de knop om de kaart te openen, dus de weg naar het
+               dossier staat eronder. Zonder dit is dit scherm een doodlopend eind:
+               je ziet dat er iets ontbreekt maar kunt niet bij de persoon. */ ?>
+      <?php if (mag('sollicitanten', 'lezen')): ?>
+        <a class="bh-doskaart-dossier" href="<?= APP_URL ?>/admin/sollicitant.php?id=<?= $sol_id ?>&amp;tab=ondertekeningen">
+          <?= icoon('persoon', 14) ?> Naar het dossier van <?= h((string)$r['naam']) ?>
+        </a>
+      <?php endif; ?>
       <ul class="bh-dosstukken">
         <li>
           <span class="bh-dosstuk-wat">

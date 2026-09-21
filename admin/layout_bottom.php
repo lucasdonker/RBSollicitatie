@@ -90,11 +90,15 @@ function fasWijzigen(solId, naar, label) {
    dezelfde rij in PHP. Een herlaadactie houdt die twee per definitie gelijk. */
 
 function kanaalVoorkeurZet(pid, keuze, el) {
+  /* De keuze is al zichtbaar gezet door de browser; we bevestigen alleen of het
+     ook echt is opgeslagen. Tijdens het verzoek staat het bedieningselement in
+     laadstand, zodat je niet drie keer achter elkaar wisselt. */
+  const klaar = window.P13Actie ? window.P13Actie.bezig(null, el) : function () {};
   const fd = new FormData(); fd.append('_csrf', CSRF); fd.append('persoon_id', pid); fd.append('kanaal_voorkeur', keuze);
   fetch(APP_URL + '/admin/api_kanaal.php', { method: 'POST', body: fd })
     .then(r => r.json())
-    .then(j => toastMelding(j.ok ? 'Kanaalvoorkeur opgeslagen.' : ('Mislukt: ' + (j.fout || '')), j.ok ? 'succes' : 'fout'))
-    .catch(() => toastMelding('Opslaan mislukt.', 'fout'));
+    .then(j => { klaar(); bhToast(j.ok ? 'Kanaalvoorkeur opgeslagen.' : ('Mislukt: ' + (j.fout || '')), j.ok ? 'succes' : 'fout'); })
+    .catch(() => { klaar(); bhToast('Opslaan mislukt.', 'fout'); });
 }
 
 /* uitnodigVanUitPaneel() is weg: die vinkte een checkbox aan in de lijst ónder het
@@ -720,6 +724,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (panelId && /^\d+$/.test(panelId)) openPaneel(panelId);
 });
 </script>
+<script src="<?= APP_URL ?>/assets/js/actie.js?v=<?= @filemtime(__DIR__.'/../assets/js/actie.js') ?>"></script>
 <script src="<?= APP_URL ?>/assets/js/app.js?v=<?= @filemtime(__DIR__.'/../assets/js/app.js') ?>"></script>
 <script src="<?= APP_URL ?>/assets/js/editor.js?v=<?= @filemtime(__DIR__.'/../assets/js/editor.js') ?>"></script>
 <script src="<?= APP_URL ?>/assets/js/beheer.js?v=<?= @filemtime(__DIR__.'/../assets/js/beheer.js') ?>"></script>

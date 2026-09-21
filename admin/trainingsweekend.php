@@ -99,6 +99,10 @@ if ($stap === 'besluit' && !$mag_beslissen) $stap = 'weekend';
 $kandidaten = $sid ? tw_kandidaten($sid) : [];
 $stand      = tw_stand($kandidaten);
 $obs_alle   = $sid ? tw_observaties_alle($sid) : [];
+// Wat er op de selectiedag over dezelfde persoon is gezegd. De twee tabellen blijven
+// gescheiden — dit leest alleen mee, zodat je het besluit niet neemt zonder te weten
+// wat er eerder is opgevallen.
+$obs_sd     = ($sid && function_exists('selectie_observaties_alle')) ? selectie_observaties_alle($sid) : [];
 
 // Welke kandidaat staat open op het weekend-scherm?
 $huidig_id = (int)($_GET['k'] ?? 0);
@@ -483,6 +487,28 @@ if ($stand['te_beslissen'] > 0) {
         Niemand heeft iets opgeschreven. Dat hoeft niets te betekenen — maar het is wel
         weinig om een besluit op te baseren.
       </p>
+    <?php endif; ?>
+
+    <?php /* De selectiedag staat er ingeklapt bij: het is ouder materiaal over dezelfde
+             persoon, dus je mag het zien maar het hoort niet even zwaar te wegen als
+             wat er dit weekend is opgevallen. */ ?>
+    <?php $_osd = $obs_sd[$_id] ?? []; if ($_osd): ?>
+    <details class="bh-twkaart-sd">
+      <summary>Op de selectiedag gezegd (<?= count($_osd) ?>)</summary>
+      <ul class="bh-observaties">
+        <?php foreach ($_osd as $_o):
+          $_ok = ['positief' => 'groen', 'aandacht' => 'rood'][$_o['soort'] ?? ''] ?? 'grijs';
+        ?>
+        <li class="ds-fase-<?= h($_ok) ?>">
+          <span class="bh-obs-stip"></span>
+          <span class="bh-obs-tekst">
+            <?= nl2br(h((string)$_o['tekst'])) ?>
+            <span class="bh-obs-wie"><?= h((string)($_o['beoordelaar'] ?? '')) ?></span>
+          </span>
+        </li>
+        <?php endforeach; ?>
+      </ul>
+    </details>
     <?php endif; ?>
 
     <?php if ($_door): ?>

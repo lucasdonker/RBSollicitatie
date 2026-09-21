@@ -17,6 +17,10 @@ $top_hulp    = $top_hulp ?? null;
 
   <h1 class="bh-topbar-titel"><?= h($top_titel) ?></h1>
 
+  <?php /* Het venster hoort bij de knop en staat daarom hier; een geopende <dialog>
+           gaat naar de top layer en trekt zich niets van deze flexbalk aan. */ ?>
+  <?php require __DIR__ . '/_zoeker.php'; ?>
+
   <?php if ($top_seizoen): ?>
     <?php $_open = ($top_seizoen['status'] ?? '') === 'open'; ?>
     <span class="bh-seizoen ds-fase-<?= $_open ? 'groen' : 'grijs' ?>">

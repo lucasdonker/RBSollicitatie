@@ -198,7 +198,7 @@ require __DIR__ . '/layout_top.php';
         </span>
       </span>
       <a class="ds-btn ds-btn-secundair ds-btn-sm"
-         href="<?= APP_URL ?>/admin/sollicitant.php?id=<?= $hid ?>">Dossier</a>
+         href="<?= APP_URL ?>/admin/sollicitant.php?id=<?= $hid ?>&amp;tab=selectiedag">Dossier</a>
     </header>
 
     <?php if (!empty($huidig['bijzonderheden'])): ?>

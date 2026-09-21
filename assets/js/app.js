@@ -47,14 +47,17 @@
     });
   }
 
-  /* ── Portaal: formulier-feedback (knop → "Bezig…", geen dubbelklik) ── */
+  /* ── Portaal: formulier-feedback ──
+     Het werk zit in assets/js/actie.js, dat op élke submit reageert — in het portaal
+     én in het beheer. Deze functie blijft bestaan omdat schermen hem aanroepen via
+     onsubmit="return portaalSubmit(this)".
+
+     Wat hier stónd zette btn.disabled = true. Dat is stil gevaarlijk: een
+     uitgeschakelde submitknop stuurt zijn name/value niet mee, dus een formulier dat
+     op <button name="actie" value="..."> rekent verliest die waarde. */
   function portaalSubmit(form) {
-    var btn = form.querySelector('button[type="submit"]');
-    if (btn) {
-      btn.disabled = true;
-      var t = btn.querySelector('.btn-tekst'), s = btn.querySelector('.btn-spinner');
-      if (t && s) { t.hidden = true; s.hidden = false; }
-      else { btn.dataset.oud = btn.innerHTML; btn.innerHTML = 'Bezig…'; }
+    if (window.P13Actie) {
+      window.P13Actie.bezig(form, form.querySelector('button[type="submit"]'));
     }
     return true;
   }
@@ -82,11 +85,10 @@
   window.ouderValideer = ouderValideer;
 
   function initPortaalFormulieren() {
-    document.querySelectorAll('form').forEach(function (f) {
-      if (f.dataset.p13Submit || f.hasAttribute('onsubmit')) return;
-      f.dataset.p13Submit = '1';
-      f.addEventListener('submit', function () { portaalSubmit(f); });
-    });
+    /* Hier hing eerder aan élk formulier op de pagina een submit-handler — ook aan de
+       formulieren van het beheer, want app.js draait daar ook. Dat is nu weg: actie.js
+       doet dit één keer, voor beide kanten, zonder per formulier iets op te hangen. */
+
     // "Wijzigen" bij een afgeronde taakrij met inline formulier: formulier tonen/verbergen
     document.querySelectorAll('[data-toggle-inline]').forEach(function (knop) {
       if (knop.dataset.p13Toggle) return;

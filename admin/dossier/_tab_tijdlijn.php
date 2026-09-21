@@ -48,8 +48,14 @@ $_s = $tab_dossier['sol'];
         of downloadde staat in het logboek, niet hier.
       </p>
       <?php if (mag('logboek', 'lezen')): ?>
-        <a class="ds-btn ds-btn-secundair ds-btn-sm" style="margin-top:10px"
-           href="<?= APP_URL ?>/admin/logboek.php?sol=<?= (int)$_s['id'] ?>">Naar het logboek</a>
+        <?php /* object + object_id, niet ?sol= — die parameter kent het logboek niet, dus
+                 die knop opende het logboek ongefilterd en leek gewoon niets te doen.
+                 Zowel audit_log als mail_log vertalen naar objecttype 'sollicitatie'
+                 (includes/logboek/bronnen.php), dus dit vangt allebei. */ ?>
+        <a class="ds-btn ds-btn-secundair ds-btn-sm bh-dossier-knop"
+           href="<?= APP_URL ?>/admin/logboek.php?object=sollicitatie&amp;object_id=<?= (int)$_s['id'] ?>">
+          <?= icoon('auditlog', 15) ?> Alles over deze sollicitant
+        </a>
       <?php endif; ?>
     </section>
   </aside>

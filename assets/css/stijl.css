@@ -2545,24 +2545,48 @@ details.b2-uitz > div { padding: 0 16px 16px; }
   .blk-knop-volgende { flex: none; height: 44px; padding: 0 22px; font-size: 14px; }
 }
 
-/* ═══ P13-EDITOR (gedeelde e-mail-editor, admin/_editor.php + assets/js/editor.js) ═══ */
-.p13-editor { border: 1px solid var(--rand); border-radius: 8px; overflow: hidden; background: #fff; }
-.p13-etabs { display: flex; border-bottom: 1px solid var(--rand); background: #f7f8fa; }
-.p13-etab { padding: 7px 14px; font-size: 12px; font-weight: 500; cursor: pointer; border: none; background: none; color: var(--grijs); border-bottom: 2px solid transparent; }
-.p13-etab.actief { color: var(--navy); border-bottom-color: var(--oranje); background: #fff; }
-.p13-etoolbar { background: #f7f8fa; padding: 6px 8px; display: flex; flex-wrap: wrap; gap: 3px; border-bottom: 1px solid var(--rand); align-items: center; }
-.p13-ek { padding: 5px 8px; border: 1px solid transparent; background: none; border-radius: 4px; cursor: pointer; font-size: 12px; color: var(--tekst); white-space: nowrap; }
-.p13-ek:hover { background: #fff; border-color: var(--rand); }
-.p13-eblok { font-size: 12px; padding: 4px 6px; border: 1px solid var(--rand); border-radius: 4px; height: 28px; width: auto; }
-.p13-esep { width: 1px; background: var(--rand); margin: 3px 2px; align-self: stretch; }
-.p13-evis { padding: 14px 16px; outline: none; font-family: Arial, sans-serif; font-size: 14px; line-height: 1.7; color: #374151; overflow-y: auto; }
+/* ═══ P13-EDITOR (gedeelde e-mail-editor, admin/_editor.php + assets/js/editor.js) ═══
+   Het kader — tabs, werkbalk, HTML-weergave — volgt het thema. Het schrijfvlak zelf
+   blijft papierwit, want dat ís het papier: zo komt de mail bij de ontvanger aan.
+   Een donkere editor die een lichte mail maakt liegt over het resultaat. In de
+   donkere modus wordt dat vel iets gedempt, zodat het geen lamp is, en krijgt het een
+   duidelijke rand zodat je ziet dat het een vel op een donker bureau is. */
+.p13-editor { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.p13-etabs { display: flex; border-bottom: 1px solid var(--border); background: var(--bg-subtle); }
+.p13-etab { padding: 7px 14px; font-size: 12px; font-weight: 500; cursor: pointer; border: none; background: none; color: var(--ink-muted); border-bottom: 2px solid transparent; }
+.p13-etab.actief { color: var(--navy); border-bottom-color: var(--accent); background: var(--surface); }
+.p13-etoolbar { background: var(--bg-subtle); padding: 6px 8px; display: flex; flex-wrap: wrap; gap: 3px; border-bottom: 1px solid var(--border); align-items: center; }
+.p13-ek { padding: 5px 8px; border: 1px solid transparent; background: none; border-radius: 4px; cursor: pointer; font-size: 12px; color: var(--ink); white-space: nowrap; }
+.p13-ek:hover { background: var(--surface); border-color: var(--border); }
+.p13-eblok { font-size: 12px; padding: 4px 6px; border: 1px solid var(--border-strong); border-radius: 4px; height: 28px; width: auto; background: var(--surface); color: var(--ink); }
+.p13-esep { width: 1px; background: var(--border); margin: 3px 2px; align-self: stretch; }
+
+/* Het vel papier. Vaste kleuren, want dit is de mail zelf — niet de interface. */
+.p13-evis {
+  padding: 14px 16px; outline: none; font-family: Arial, sans-serif;
+  font-size: 14px; line-height: 1.7; overflow-y: auto;
+  background: var(--ed-papier, #ffffff); color: var(--ed-inkt, #374151);
+}
 .p13-evis:focus { box-shadow: inset 0 0 0 2px rgba(212, 61, 0, .15); }
-.p13-evis a { color: var(--oranje); }
+.p13-evis a { color: #D43D00; }
 .p13-evis p { margin: 0 0 12px; }
-.p13-evis h2 { font-size: 20px; margin: 18px 0 8px; color: var(--navy); }
-.p13-evis h3 { font-size: 16px; margin: 14px 0 6px; color: var(--navy); }
-.p13-evis:empty:before { content: attr(data-placeholder); color: var(--grijs); }
-.p13-ehtml { width: 100%; padding: 12px 14px; font-family: monospace; font-size: 12px; line-height: 1.6; border: none; resize: vertical; color: var(--tekst); background: #fafafa; }
+.p13-evis h2 { font-size: 20px; margin: 18px 0 8px; color: #054d8a; }
+.p13-evis h3 { font-size: 16px; margin: 14px 0 6px; color: #054d8a; }
+.p13-evis:empty:before { content: attr(data-placeholder); color: #8a93a6; }
+.p13-ehtml { width: 100%; padding: 12px 14px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; line-height: 1.6; border: none; resize: vertical; color: var(--ink); background: var(--bg-subtle); }
+
+/* In de donkere modus: het vel iets gedempt en met een rand, zodat het oogt als
+   papier op een donker bureau in plaats van als een schijnwerper. */
+:root[data-theme="dark"] .p13-evis,
+:root:not([data-theme="light"]) .p13-evis {
+  --ed-papier: #f2f4f7;
+  --ed-inkt: #2b3446;
+  border: 1px solid var(--border);
+  border-radius: 0 0 6px 6px;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) .p13-evis { --ed-papier: #ffffff; --ed-inkt: #374151; border: none; }
+}
 /* ═══ PORTAAL BERICHTEN: samenvatting + detail (2.87.4) ═══ */
 a.pt-bericht { text-decoration: none; color: inherit; }
 .pt-bericht-sam { font-size: 14px; line-height: 1.55; color: var(--ink-muted); }
@@ -2670,4 +2694,42 @@ a.pt-bericht { text-decoration: none; color: inherit; }
   .pg-titelrij { flex-direction: column; }
   .pg-niveau { flex-basis: 100%; }
   .pg-bevinding { flex-direction: column; gap: 4px; }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   BEZIG — zichtbare reactie op een actie (assets/js/actie.js)
+   Gedeeld door het portaal en het beheer: een druk op een knop moet
+   meteen ergens te zien zijn, anders druk je nog eens.
+   ══════════════════════════════════════════════════════════════════ */
+
+.p13-bezigbalk {
+  position: fixed; top: 0; left: 0; z-index: 9999; height: 3px; width: 0;
+  background: var(--accent, #D43D00); border-radius: 0 2px 2px 0;
+  transition: width .12s linear, opacity .3s ease;
+  box-shadow: 0 0 8px rgba(212,61,0,.45);
+  pointer-events: none;
+}
+.p13-bezigbalk.klaar { opacity: 0; }
+
+/* De knop houdt zijn tekst en breedte; er komt alleen een ring bij. Tekst
+   vervangen door "Bezig..." laat de knop verspringen precies op het moment dat
+   je ernaar kijkt. */
+.p13-bezig { position: relative; pointer-events: none; }
+.p13-bezig::after {
+  content: ""; display: inline-block; vertical-align: -2px; margin-left: 8px;
+  width: 13px; height: 13px; border-radius: 50%;
+  border: 2px solid currentColor; border-right-color: transparent; opacity: .8;
+  animation: p13-draai .6s linear infinite;
+}
+@keyframes p13-draai { to { transform: rotate(360deg); } }
+
+/* Het formulier wacht op antwoord: zichtbaar buiten bereik, maar nog leesbaar —
+   je moet kunnen nalezen wat je hebt ingevuld terwijl het verstuurt. */
+form[aria-busy="true"] { opacity: .72; transition: opacity .15s ease; cursor: progress; }
+form[aria-busy="true"] .p13-bezig { opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .p13-bezigbalk { transition: none; }
+  .p13-bezig::after { animation-duration: 2s; }
+  form[aria-busy="true"] { transition: none; }
 }

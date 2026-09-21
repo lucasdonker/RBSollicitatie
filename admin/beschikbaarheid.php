@@ -141,7 +141,10 @@ require __DIR__ . '/layout_top.php';
     ?>
     <li id="cvz-<?= (int)$vz['id'] ?>" class="bh-verzoek">
       <div class="bh-verzoek-kop">
-        <a class="bh-verzoek-naam" href="<?= APP_URL ?>/admin/sollicitant.php?id=<?= (int)$vz['sol_id'] ?>"><?= h($naam) ?></a>
+        <?php /* Naar het tabblad dat bij dít scherm hoort: je komt van de beschikbaarheid,
+                 dus daar wil je ook landen. sollicitant.php valt terug op 'dossier' als
+                 de persoon dat tabblad niet heeft. */ ?>
+        <a class="bh-verzoek-naam" href="<?= APP_URL ?>/admin/sollicitant.php?id=<?= (int)$vz['sol_id'] ?>&amp;tab=beschikbaarheid"><?= h($naam) ?></a>
         <span class="bh-verzoek-wat">
           <?= h($vz_lbl($vz['van_week'])) ?> t/m <?= h($vz_lbl($vz['tot_week'])) ?>:
           <strong><?= (int)$vz['dagen_aantal'] ?> dagen per week</strong>
@@ -269,7 +272,7 @@ require __DIR__ . '/_dekkinggrafiek.php';
         ?>
         <tr>
           <th scope="row" class="bh-raster-naam">
-            <a href="<?= APP_URL ?>/admin/sollicitant.php?id=<?= $sol_id ?>"><?= h($naam) ?></a>
+            <a href="<?= APP_URL ?>/admin/sollicitant.php?id=<?= $sol_id ?>&amp;tab=beschikbaarheid"><?= h($naam) ?></a>
             <?php if (!empty($p['terugkerend'])): ?><?= bh_chip('terug', 'blauw') ?><?php endif; ?>
             <?php if (!empty($p['norm_dagen'])): ?>
               <span title="Afwijkende norm: <?= (int)$p['norm_dagen'] ?> dagen per week"><?= bh_chip((int)$p['norm_dagen'] . 'd', 'oranje') ?></span>
@@ -321,6 +324,11 @@ require __DIR__ . '/_dekkinggrafiek.php';
     Onderaan per week: hoeveel mensen er beschikbaar zijn en hoeveel daarvan het <strong>weekend</strong>
     dekken. Rood betekent onder de norm van <?= $dek_norm > 0 ? $dek_norm . ' mensen' : 'de posten' ?>.
   </p>
+
+  <?= bh_versheid(bh_laatst(
+        "SELECT MAX(GREATEST(COALESCE(b.definitief_op,'1000-01-01'), COALESCE(b.ingevuld_op,'1000-01-01')))
+         FROM beschikbaarheid b JOIN sollicitaties s ON s.id = b.sollicitatie_id
+         WHERE s.seizoen_id = ?", [$sid]), 'Beschikbaarheid') ?>
 </section>
 
 <?php endif; ?>

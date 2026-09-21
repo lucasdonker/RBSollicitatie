@@ -450,6 +450,10 @@ function fmt(n, dec) {
 function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 </script>
 
+<?= bh_versheid(bh_laatst(
+      "SELECT MAX(lp.bijgewerkt_op) FROM loon_planning lp
+       JOIN sollicitaties s ON s.id = lp.sollicitatie_id WHERE s.seizoen_id = ?", [$sid]), 'Planning') ?>
+
 <?php endif; ?>
 
 <?php require __DIR__ . '/layout_bottom.php'; ?>

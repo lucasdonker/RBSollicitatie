@@ -380,54 +380,76 @@ require __DIR__ . '/layout_top.php';
 <div class="bh-instzij">
   <nav class="ds-kaart bh-instnav" aria-label="Instellingen">
     <?php
-    /* Ingedeeld naar wát je instelt, niet naar wélke techniek het gebruikt.
-       Dat was het probleem van de vorige indeling: drie tabbladen gingen over
-       Authentik, AI stond op twee plekken, "Mail" was een vergaarbak met de
-       cronjob erin, en "Communicatie" en "Koppelingen" hadden allebei een
-       tabblad over berichten. Nu geldt: één onderwerp, één tabblad. */
-    $nav_groepen = [
-      'Organisatie' => [
-        ['algemeen',   'Algemeen',                   'instellingen'],
-      ],
-      'Selectie & seizoen' => [
-        ['uitnodiging', 'Uitnodigen & automatisch',  'bliksem'],
-        ['selectie',    'Beoordelingscriteria',      'vink'],
-        ['bezetting',   'Posten & bezetting',        'schild'],
-      ],
-      'Inzet & loon' => [
-        ['functies',   'Functies',                   'mensen'],
-        ['loon',       'Lonen & budget',             'grafiek'],
-      ],
-      'Berichten' => [
-        ['berichten',  'Kanalen & meldingen',        'chat'],
-        ['mail',       'Afzender & adressen',        'mail'],
-        ['smtp',       'E-mailserver',               'systeem'],
-      ],
-      'Koppelingen' => [
-        ['authentik',  'Authentik',                  'schild'],
-        ['api',        'Website & API',              'koppeling'],
-        ['ai',         'AI-analyse',                 'ster'],
-      ],
-      'Privacy & onderhoud' => [
-        ['bewaren',    'Bewaren & opschonen',        'klok'],
-      ],
-    ];
+    /* De tabbladen staan in bh_inst_tabs() (includes/beheer/zoek.php) en niet meer
+       hier: de snelzoeker in de topbalk moet dezelfde lijst kennen, inclusief de
+       zoekwoorden per tabblad. Twee kopieën betekent dat de ene "vakantietoeslag"
+       vindt en de andere niet.
+
+       De indeling zelf gaat over wát je instelt, niet over wélke techniek het
+       gebruikt — dat was het probleem van de vorige: drie tabbladen over Authentik,
+       AI op twee plekken, "Mail" als vergaarbak met de cronjob erin. */
+    $nav_groepen = bh_inst_tabs();
     ?>
+    <div class="bh-instzoek">
+      <?= icoon('zoek', 15) ?>
+      <input type="text" id="instZoek" class="bh-instzoek-veld" autocomplete="off"
+             placeholder="Filter instellingen&hellip;" aria-label="Filter de instellingen"
+             aria-describedby="instZoekUitslag">
+    </div>
+    <p class="bh-instzoek-leeg" id="instZoekUitslag" role="status" hidden>
+      Geen tabblad met die term. Probeer een ander woord, of zoek met Ctrl&nbsp;K door het hele beheer.
+    </p>
+
     <?php foreach ($nav_groepen as $groep => $items): ?>
-      <div class="bh-instnav-groep"><?= h($groep) ?></div>
+      <div class="bh-instnav-groep" data-instgroep><?= h($groep) ?></div>
       <?php foreach ($items as $item): ?>
         <a class="bh-instnav-link<?= $tab === $item[0] ? ' actief' : '' ?>" href="?tab=<?= h($item[0]) ?>"
+           data-instzoek="<?= h(mb_strtolower($item[1] . ' ' . $groep . ' ' . ($item[3] ?? ''))) ?>"
            <?= $tab === $item[0] ? 'aria-current="page"' : '' ?>>
           <?= icoon($item[2], 16) ?><?= h($item[1]) ?>
         </a>
       <?php endforeach; ?>
     <?php endforeach; ?>
-    <div class="bh-instnav-extra">
-      <a class="bh-instnav-link" href="<?= APP_URL ?>/admin/mail_templates.php">
+    <div class="bh-instnav-extra" data-instgroep>
+      <a class="bh-instnav-link" href="<?= APP_URL ?>/admin/mail_templates.php"
+         data-instzoek="sjabloon template mail tekst bericht opmaak">
         <?= icoon('document', 16) ?>Sjablonen voor mails
       </a>
     </div>
   </nav>
+
+  <script>
+  /* Filtert de tabbladenlijst terwijl je typt. Een groepskop verdwijnt zodra er
+     geen zichtbaar tabblad meer onder staat — anders blijven er koppen zweven
+     boven niets. Zonder JavaScript staat de volledige lijst er gewoon. */
+  (function () {
+    var veld = document.getElementById('instZoek');
+    if (!veld) return;
+    var melding = document.getElementById('instZoekUitslag');
+    veld.addEventListener('input', function () {
+      var t = veld.value.trim().toLowerCase();
+      var raak = 0;
+      document.querySelectorAll('.bh-instnav-link[data-instzoek]').forEach(function (a) {
+        var aan = !t || a.dataset.instzoek.indexOf(t) !== -1;
+        a.hidden = !aan;
+        if (aan) raak++;
+      });
+      document.querySelectorAll('[data-instgroep]').forEach(function (g) {
+        var zichtbaar = false, n = g.nextElementSibling;
+        if (g.classList.contains('bh-instnav-extra')) {
+          zichtbaar = !!g.querySelector('.bh-instnav-link:not([hidden])');
+        } else {
+          while (n && !n.hasAttribute('data-instgroep')) {
+            if (n.classList.contains('bh-instnav-link') && !n.hidden) { zichtbaar = true; break; }
+            n = n.nextElementSibling;
+          }
+        }
+        g.hidden = !zichtbaar;
+      });
+      melding.hidden = raak !== 0;
+    });
+  })();
+  </script>
 
   <section class="ds-kaart ds-kaart-p bh-instversie">
     <span class="bh-veldlabel">Versie</span>

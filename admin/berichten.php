@@ -446,6 +446,34 @@ require __DIR__ . '/layout_top.php';
             <button type="button" class="ds-btn ds-btn-zacht ds-btn-sm" onclick="selAlles(false)">Geen</button>
           </span>
         </div>
+
+        <?php /* Het zoekveld met chips. Staat verborgen tot de JS het aanzet: zonder
+                 JavaScript blijft de lijst eronder het werkende formulier. De vinkjes
+                 in die lijst blijven in beide gevallen de bron van waarheid — de chips
+                 zijn er een weergave van, zodat er maar één stand bestaat. */ ?>
+        <div class="bh-aanveld" id="aanVeld" hidden>
+          <div class="bh-aanveld-vak" id="aanVak" onclick="aanFocus(event)">
+            <input type="text" id="aanZoek" class="bh-aanveld-zoek" placeholder="naam typen…"
+                   autocomplete="off" role="combobox" aria-expanded="false"
+                   aria-controls="aanLijst" aria-autocomplete="list"
+                   aria-label="Zoek een ontvanger op naam of e-mailadres"
+                   oninput="aanZoeken()" onkeydown="aanToets(event)" onfocus="aanZoeken()">
+          </div>
+          <ul class="bh-aanveld-lijst" id="aanLijst" role="listbox" aria-label="Gevonden mensen" hidden></ul>
+          <p class="bh-aanveld-leeg" id="aanLeeg" hidden>Niemand gevonden met die naam.</p>
+          <?php if ($alle): ?>
+          <div class="bh-aanveld-snel">
+            <?php foreach (array_keys($fases) as $f): if (empty($per_fase[$f])) continue; ?>
+              <button type="button" class="bh-aanchip-snel" onclick="selGroep('<?= h($f) ?>', true)">
+                + <?= h(fase_label_kort($f)) ?> (<?= count($per_fase[$f]) ?>)
+              </button>
+            <?php endforeach; ?>
+          </div>
+          <?php endif; ?>
+        </div>
+
+        <details class="bh-ontvlijst" id="aanAlles" open>
+          <summary class="bh-ontvlijst-kop">Of kies uit de volledige lijst</summary>
         <div class="bh-ontvangers">
           <?php if (!$alle): ?>
             <p class="bh-meta">Geen sollicitanten in dit seizoen.</p>
@@ -460,6 +488,9 @@ require __DIR__ . '/layout_top.php';
             <label class="bh-ontvrij">
               <input type="checkbox" name="ontvangers[]" value="<?= (int)$s['id'] ?>"
                      class="ontv-cb fase-<?= h($f) ?>" onchange="updateTeller()"
+                     data-naam="<?= h(volledige_naam($s)) ?>"
+                     data-zoek="<?= h(mb_strtolower(volledige_naam($s) . ' ' . (string)$s['email'])) ?>"
+                     data-fase="<?= h(fase_label_kort($f)) ?>"
                      <?= in_array((int)$s['id'], $voorsel, true) ? 'checked' : '' ?>>
               <span class="bh-ontvrij-tekst">
                 <span class="bh-ontvrij-naam">
@@ -480,6 +511,7 @@ require __DIR__ . '/layout_top.php';
           </div>
           <?php endforeach; endif; ?>
         </div>
+        </details>
       </section>
 
       <section class="ds-kaart ds-kaart-p">
@@ -502,6 +534,7 @@ function updateTeller() {
   var n = berAantal();
   var el = document.getElementById('verzendTeller');
   if (el) el.textContent = n === 0 ? 'niemand' : (n + ' ' + (n === 1 ? 'persoon' : 'personen'));
+  aanTeken();
 }
 function selGroep(f, aan) {
   document.querySelectorAll('.fase-' + f).forEach(function (c) { c.checked = aan; });
@@ -511,6 +544,140 @@ function selAlles(aan) {
   document.querySelectorAll('.ontv-cb,.groep-cb').forEach(function (c) { c.checked = aan; });
   updateTeller();
 }
+
+/* ── Het "Aan"-veld ───────────────────────────────────────────────────────────
+   De vinkjes in de lijst zijn de stand; dit tekent die stand als chips en laat
+   je erin zoeken. Er is dus niets dat uit de pas kan lopen: elke handeling hier
+   zet een checkbox om en vraagt daarna opnieuw te tekenen. Zonder JavaScript
+   draait dit blok niet en blijft de lijst gewoon een lijst. */
+var aanMarkeer = -1;                        // welke suggestie met de pijltjes is aangewezen
+
+function aanAan() {
+  var veld = document.getElementById('aanVeld');
+  if (!veld || !document.querySelector('.ontv-cb')) return;
+  veld.hidden = false;
+  document.getElementById('aanAlles').open = false;
+  aanTeken();
+}
+
+function aanTeken() {
+  var vak = document.getElementById('aanVak');
+  if (!vak || document.getElementById('aanVeld').hidden) return;
+  vak.querySelectorAll('.bh-aanchip').forEach(function (c) { c.remove(); });
+  var zoek = document.getElementById('aanZoek');
+  document.querySelectorAll('.ontv-cb:checked').forEach(function (cb) {
+    var chip = document.createElement('span');
+    chip.className = 'bh-aanchip';
+    chip.textContent = cb.dataset.naam || '';
+    var weg = document.createElement('button');
+    weg.type = 'button';
+    weg.className = 'bh-aanchip-weg';
+    weg.setAttribute('aria-label', 'Haal ' + (cb.dataset.naam || 'deze persoon') + ' weg');
+    weg.textContent = '×';
+    weg.onclick = function (e) { e.stopPropagation(); cb.checked = false; updateTeller(); };
+    chip.appendChild(weg);
+    vak.insertBefore(chip, zoek);
+  });
+  zoek.placeholder = vak.querySelector('.bh-aanchip') ? '' : 'naam typen…';
+}
+
+function aanFocus(e) {
+  if (e.target.closest('.bh-aanchip')) return;
+  document.getElementById('aanZoek').focus();
+}
+
+function aanZoeken() {
+  var zoek = document.getElementById('aanZoek');
+  var lijst = document.getElementById('aanLijst');
+  var leeg = document.getElementById('aanLeeg');
+  var term = zoek.value.trim().toLowerCase();
+  lijst.innerHTML = '';
+  aanMarkeer = -1;
+
+  if (!term) { aanSluit(); return; }
+
+  var treffers = [];
+  document.querySelectorAll('.ontv-cb').forEach(function (cb) {
+    if (cb.checked || treffers.length >= 8) return;
+    if ((cb.dataset.zoek || '').indexOf(term) !== -1) treffers.push(cb);
+  });
+
+  treffers.forEach(function (cb, i) {
+    var li = document.createElement('li');
+    li.className = 'bh-aansug';
+    li.id = 'aansug-' + i;
+    li.setAttribute('role', 'option');
+    li.setAttribute('aria-selected', 'false');
+    li.tabIndex = -1;
+    var naam = document.createElement('span');
+    naam.className = 'bh-aansug-naam';
+    naam.textContent = cb.dataset.naam || '';
+    var fase = document.createElement('span');
+    fase.className = 'bh-aansug-fase';
+    fase.textContent = cb.dataset.fase || '';
+    li.appendChild(naam); li.appendChild(fase);
+    li.onclick = function () { aanKies(cb); };
+    lijst.appendChild(li);
+  });
+
+  lijst.hidden = treffers.length === 0;
+  leeg.hidden = treffers.length !== 0;
+  zoek.setAttribute('aria-expanded', treffers.length ? 'true' : 'false');
+}
+
+function aanKies(cb) {
+  cb.checked = true;
+  var zoek = document.getElementById('aanZoek');
+  zoek.value = '';
+  aanSluit();
+  updateTeller();
+  zoek.focus();
+}
+
+function aanSluit() {
+  var lijst = document.getElementById('aanLijst');
+  lijst.hidden = true; lijst.innerHTML = '';
+  document.getElementById('aanLeeg').hidden = true;
+  document.getElementById('aanZoek').setAttribute('aria-expanded', 'false');
+  aanMarkeer = -1;
+}
+
+function aanToets(e) {
+  var opties = document.querySelectorAll('#aanLijst .bh-aansug');
+  var zoek = e.target;
+
+  /* Backspace in een leeg zoekveld haalt de laatste chip weg — hetzelfde gebaar
+     als in elke mailapp, en sneller dan het kruisje zoeken. */
+  if (e.key === 'Backspace' && !zoek.value) {
+    var gekozen = document.querySelectorAll('.ontv-cb:checked');
+    if (gekozen.length) { gekozen[gekozen.length - 1].checked = false; updateTeller(); }
+    return;
+  }
+  if (e.key === 'Escape') { zoek.value = ''; aanSluit(); return; }
+  if (!opties.length) return;
+
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    aanMarkeer += (e.key === 'ArrowDown' ? 1 : -1);
+    if (aanMarkeer < 0) aanMarkeer = opties.length - 1;
+    if (aanMarkeer >= opties.length) aanMarkeer = 0;
+    opties.forEach(function (o, i) {
+      var aan = i === aanMarkeer;
+      o.classList.toggle('aangewezen', aan);
+      o.setAttribute('aria-selected', aan ? 'true' : 'false');
+    });
+    zoek.setAttribute('aria-activedescendant', opties[aanMarkeer].id);
+    return;
+  }
+  if (e.key === 'Enter') {
+    e.preventDefault();                     // anders verstuurt Enter het formulier
+    opties[aanMarkeer < 0 ? 0 : aanMarkeer].click();
+  }
+}
+
+document.addEventListener('click', function (e) {
+  if (!e.target.closest('.bh-aanveld')) aanSluit();
+});
 function kortTeller() {
   var t = document.getElementById('tekstKort'), e = document.getElementById('kortTeller');
   if (t && e) e.textContent = '(' + t.value.length + '/400)';
@@ -548,7 +715,7 @@ function verzendBevestig(ev) {
   return false;
 }
 
-updateTeller(); kortTeller(); sjabloonWissel();
+aanAan(); updateTeller(); kortTeller(); sjabloonWissel();
 </script>
 <?php endif; ?>
 

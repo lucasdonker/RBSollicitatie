@@ -63,9 +63,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (isset($bulk[$actie])) {
             $opties = ['seizoen_id' => $sid];
             if ($bulk[$actie][1] !== null) $opties['alleen_van'] = $bulk[$actie][1];
+            // Zonder bericht: bij een afwijsronde van twintig man is dat precies het
+            // moment waarop je ze liever zelf belt. Het vinkje komt uit _bevestig.php.
+            $stil = !empty($_POST['stil']);
+            if ($stil) $opties['stil'] = true;
             $t = fase_zetten_bulk($ids, $bulk[$actie][0], 'bulk', $opties);
             flash(($t['mislukt'] || $t['fout']) ? 'waarschuwing' : 'succes',
-                  fase_label($bulk[$actie][0]) . ': ' . fase_bulk_tekst($t, $bulk[$actie][2]));
+                  fase_label($bulk[$actie][0]) . ': ' . fase_bulk_tekst($t, $bulk[$actie][2])
+                  . ($stil ? ' Er is geen bericht verstuurd.' : ''));
         }
     }
     if (empty($toon_bevestiging)) {
@@ -177,6 +182,11 @@ require __DIR__ . '/layout_top.php';
                                'ids'        => $toon_bevestiging['ids']]];
     $bev_terug = soll_url();
     $bev_namen = $_bnamen;
+    // Hetzelfde vinkje als bij een losse fasewijziging in het dossier. Juist bij een
+    // bulkactie telt het: dat is het moment waarop je twintig mensen tegelijk raakt.
+    $bev_vink  = ['naam' => 'stil', 'label' => 'Zonder bericht doorvoeren',
+                  'hulp' => 'De fase verandert wel, maar er gaat niets de deur uit. '
+                          . 'Gebruik dit als je ze zelf belt of het al besproken is.'];
     require __DIR__ . '/_bevestig.php';
     require __DIR__ . '/layout_bottom.php';
     return;
@@ -218,6 +228,10 @@ endif; ?>
   $filter_wissen = $heeft_filter ? APP_URL . '/admin/sollicitanten.php' : null;
   require __DIR__ . '/_filterbalk.php';
 ?>
+
+<div class="bh-tabelbalk">
+  <?php $kk_tabel = $tabel; require __DIR__ . '/_kolomkiezer.php'; ?>
+</div>
 
 <form method="post" id="sollForm">
 <?= csrf_input() ?>

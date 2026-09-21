@@ -154,4 +154,52 @@ function bh_meta(array $delen): string {
     return '<span class="bh-meta">' . implode(' <span class="bh-meta-punt">·</span> ', array_map('h', $schoon)) . '</span>';
 }
 
+/**
+ * Het laatste moment uit een MAX(...)-query, of null als het niet lukt.
+ *
+ * Elk scherm weet zelf uit welke tabel en welke kolom zijn cijfers komen — die
+ * verschillen echt (beschikbaarheid heeft ingevuld_op/definitief_op, loon_planning
+ * heeft bijgewerkt_op). Daarom geeft het scherm de query, en doet deze functie alleen
+ * het foutbestendige deel: een scherm mag nooit stukgaan op zijn eigen voettekst.
+ */
+function bh_laatst(string $sql, array $params = []): ?string {
+    try {
+        $st = db()->prepare($sql);
+        $st->execute($params);
+        $w = $st->fetchColumn();
+        return ($w === false || $w === null || $w === '') ? null : (string)$w;
+    } catch (\Throwable $e) {
+        return null;
+    }
+}
+
+/**
+ * "Bijgewerkt om 14:03" onder een scherm vol cijfers.
+ *
+ * Bij Beschikbaarheid, Dekking en Loonplanning kijk je naar getallen zonder te weten
+ * hoe vers ze zijn — en je weet dus ook niet of de wijziging die je net elders deed er
+ * al in zit. Eén regel lost dat op.
+ *
+ * $moment is het moment waarop de gegevens zelf voor het laatst veranderden (een
+ * MAX(bijgewerkt_op) uit de database), niet het moment van deze paginalading. Is dat
+ * onbekend, geef dan null: dan zegt de regel alleen wanneer het scherm is opgehaald.
+ */
+function bh_versheid(?string $moment = null, string $wat = 'Gegevens'): string {
+    $nu = 'opgehaald om ' . date('H:i');
+    if ($moment === null || $moment === '') {
+        return '<p class="bh-versheid">' . h($wat) . ' ' . h($nu) . '.</p>';
+    }
+    $ts = strtotime($moment);
+    if ($ts === false) return '<p class="bh-versheid">' . h($wat) . ' ' . h($nu) . '.</p>';
+
+    // Vandaag alleen de tijd, anders de datum erbij: "om 14:03" is nietszeggend als
+    // het gisteren was.
+    $zelfde_dag = date('Y-m-d', $ts) === date('Y-m-d');
+    $tekst = $zelfde_dag
+        ? 'bijgewerkt om ' . date('H:i', $ts)
+        : 'bijgewerkt op ' . datum_nl(date('Y-m-d', $ts)) . ' om ' . date('H:i', $ts);
+    return '<p class="bh-versheid">' . h($wat) . ' ' . h($tekst)
+         . ' <span class="bh-meta-punt">·</span> ' . h($nu) . '.</p>';
+}
+
 } // function_exists

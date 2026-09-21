@@ -506,6 +506,28 @@ function selectie_observaties_van(int $seizoen_id, int $sol_id): array {
     } catch (\Exception $e) { return []; }
 }
 
+/**
+ * Alle observaties van het seizoen, gegroepeerd per kandidaat.
+ *
+ * Nodig op de nabespreking van het trainingsweekend: daar wil je zien wat er op de
+ * selectiedag over dezelfde persoon is gezegd, en dat is precies het moment waarop het
+ * telt. Eén query in plaats van één per kandidaat.
+ *
+ * De twee tabellen blijven bewust gescheiden (zie includes/trainingsweekend.php) —
+ * dit leest alleen mee, het schrijft niets over.
+ */
+function selectie_observaties_alle(int $seizoen_id): array {
+    selectiedag_auto_setup();
+    $uit = [];
+    try {
+        $q = db()->prepare("SELECT * FROM selectie_observatie WHERE seizoen_id=?
+                            ORDER BY aangemaakt_op DESC, id DESC");
+        $q->execute([$seizoen_id]);
+        foreach ($q->fetchAll() as $o) $uit[(int)$o['sollicitatie_id']][] = $o;
+    } catch (\Exception $e) {}
+    return $uit;
+}
+
 /** Aantal observaties per kandidaat (voor telling in lijsten). */
 function selectie_observatie_tellingen(int $seizoen_id): array {
     selectiedag_auto_setup();

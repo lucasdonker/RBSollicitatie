@@ -182,7 +182,7 @@ require __DIR__ . '/layout_top.php';
     <header class="bh-nb-kop">
       <?= bh_avatar(['voornaam' => $k['voornaam'], 'achternaam' => $k['achternaam']], 46, ['dim' => empty($k['aanwezig'])]) ?>
       <span class="bh-nb-wie">
-        <a class="bh-nb-naam" href="<?= APP_URL ?>/admin/sollicitant.php?id=<?= $_id ?>"><?= h((string)$k['naam']) ?></a>
+        <a class="bh-nb-naam" href="<?= APP_URL ?>/admin/sollicitant.php?id=<?= $_id ?>&amp;tab=selectiedag"><?= h((string)$k['naam']) ?></a>
         <?= bh_meta([
             $k['leeftijd'] ? $k['leeftijd'] . ' jaar' : '',
             $k['groep_id'] ? ($groep_naam[$k['groep_id']] ?? '') : '',

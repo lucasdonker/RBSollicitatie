@@ -26,7 +26,12 @@ $_tijd = !empty($vandaag_systeem['ronde']) ? substr((string)$vandaag_systeem['ro
   </span>
 
   <span class="bh-systeem-cijfers">
-    <span>wachtrij <strong class="bh-num"><?= (int)$vandaag_systeem['wachtrij'] ?></strong></span>
+    <?php /* Getal vóór het woord, net als de twee regels hieronder: "wachtrij 0" leest
+             als een naam met een nummer, "0 berichten in de wachtrij" als een stand. */ ?>
+    <span<?= $vandaag_systeem['wachtrij'] > 20 ? ' class="let-op"' : '' ?>>
+      <strong class="bh-num"><?= (int)$vandaag_systeem['wachtrij'] ?></strong>
+      <?= (int)$vandaag_systeem['wachtrij'] === 1 ? 'bericht' : 'berichten' ?> in de wachtrij
+    </span>
     <span<?= $vandaag_systeem['fouten'] > 0 ? ' class="slecht"' : '' ?>>
       <?= (int)$vandaag_systeem['fouten'] ?> mailfouten in 24 uur
     </span>

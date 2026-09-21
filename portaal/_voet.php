@@ -53,6 +53,9 @@ $_open = isset($portaal_open_taken) ? (int)$portaal_open_taken
   </nav>
 <?php endif; ?>
 
+<?php /* actie.js eerst: hij hangt aan de document-fase en moet elke submit zien,
+         ook van een scherm dat zijn eigen handler eerder registreert. */ ?>
+<script src="<?= APP_URL ?>/assets/js/actie.js?v=<?= @filemtime(__DIR__.'/../assets/js/actie.js') ?>"></script>
 <script src="<?= APP_URL ?>/assets/js/app.js?v=<?= @filemtime(__DIR__.'/../assets/js/app.js') ?>"></script>
 </body>
 </html>

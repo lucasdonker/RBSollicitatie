@@ -168,7 +168,9 @@
   window.bhBevestig = bhBevestig;
   window.bhVraag = bhVraag;
   // Zolang oude schermen de oude naam nog aanroepen. Weg als grep 0 geeft.
-  window.toastMelding = function (t, s) { return bhToast(t, s === 'fout' ? 'fout' : (s === 'succes' ? 'succes' : '')); };
+  /* toastMelding was de naam van vóór de herbouw. De laatste aanroep is weg, dus de
+     alias ook — een tweede naam voor hetzelfde is precies hoe er weer twee varianten
+     ontstaan. */
 
   /* ── Tabel: selectie en bulkbalk ─────────────────────────────── */
 
@@ -363,12 +365,150 @@
     });
   }
 
+  /* ── Snelzoeker (Ctrl+K) ──────────────────────────────────────
+     Eén veld voor "waar staat die persoon" en "waar stond die instelling". De
+     server beslist wát je mag vinden (admin/api_zoek.php → bh_zoek()); hier staat
+     alleen hoe het zich gedraagt.
+
+     Tijdens het typen loopt er een verzoek; dat mag de invoer nooit ophouden. Elke
+     toetsaanslag breekt het vorige verzoek af (AbortController) en de uitslag van
+     een verlopen verzoek wordt weggegooid — anders knippert de lijst terug naar een
+     ouder antwoord dat toevallig later binnenkomt. */
+  var zoekTeller = 0, zoekAf = null, zoekWacht = null, zoekAangewezen = -1;
+
+  function zoekKoppelen() {
+    var knop = document.getElementById('zoekKnop');
+    var venster = document.getElementById('zoekVenster');
+    var veld = document.getElementById('zoekVeld');
+    if (!knop || !venster || !veld) return;
+
+    function open() {
+      if (!venster.open) venster.showModal();
+      veld.value = '';
+      zoekLeegmaken();
+      veld.focus();
+    }
+    knop.addEventListener('click', open);
+    venster.querySelectorAll('[data-zoeksluit]').forEach(function (b) {
+      b.addEventListener('click', function () { venster.close(); });
+    });
+    // Klikken naast het venster sluit het: bij een <dialog> vangt het element zelf
+    // de klik op de achtergrond op, dus we kijken of de klik buiten de inhoud viel.
+    venster.addEventListener('click', function (e) {
+      if (e.target === venster) venster.close();
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        venster.open ? venster.close() : open();
+      }
+    });
+
+    veld.addEventListener('input', function () {
+      clearTimeout(zoekWacht);
+      zoekWacht = setTimeout(zoekUitvoeren, 130);   // wacht tot je even stopt met typen
+    });
+    veld.addEventListener('keydown', zoekToets);
+  }
+
+  function zoekLeegmaken(bericht) {
+    var uit = document.getElementById('zoekUitslag');
+    uit.innerHTML = '<p class="bh-zoekhint">' + bhTekst(bericht ||
+      'Typ minstens twee letters.') + '</p>';
+    zoekAangewezen = -1;
+    document.getElementById('zoekVeld').setAttribute('aria-expanded', 'false');
+  }
+
+  function zoekUitvoeren() {
+    var veld = document.getElementById('zoekVeld');
+    var term = veld.value.trim();
+    if (term.length < 2) { zoekLeegmaken(); return; }
+
+    var mijn = ++zoekTeller;
+    if (zoekAf) zoekAf.abort();
+    zoekAf = new AbortController();
+
+    fetch('api_zoek.php?q=' + encodeURIComponent(term), {
+      signal: zoekAf.signal, credentials: 'same-origin'
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (mijn !== zoekTeller) return;            // een nieuwere zoekopdracht won
+        if (!d.ok) { zoekLeegmaken(d.fout || 'Zoeken lukte niet.'); return; }
+        zoekTonen(d, term);
+      })
+      .catch(function (e) {
+        if (e.name === 'AbortError' || mijn !== zoekTeller) return;
+        zoekLeegmaken('Zoeken lukte niet — is de verbinding weg?');
+      });
+  }
+
+  function zoekTonen(d, term) {
+    var uit = document.getElementById('zoekUitslag');
+    var html = '';
+
+    if (d.mensen && d.mensen.length) {
+      html += '<div class="bh-zoekgroep">Mensen</div>';
+      d.mensen.forEach(function (m) {
+        html += '<a class="bh-zoekrij" role="option" aria-selected="false" href="sollicitant.php?id=' + (+m.id) + '">'
+              + '<span class="bh-zoekrij-tekst">'
+              + '<span class="bh-zoekrij-titel">' + bhTekst(m.naam) + '</span>'
+              + '<span class="bh-zoekrij-sub">' + bhTekst(m.email) + '</span>'
+              + '</span>'
+              + '<span class="bh-zoekrij-zij">' + bhTekst(m.fase)
+              + (m.huidig ? '' : ' · ' + bhTekst(m.seizoen)) + '</span></a>';
+      });
+    }
+    if (d.plekken && d.plekken.length) {
+      html += '<div class="bh-zoekgroep">Schermen</div>';
+      d.plekken.forEach(function (p) {
+        html += '<a class="bh-zoekrij" role="option" aria-selected="false" href="' + bhTekst(p.url) + '">'
+              + '<span class="bh-zoekrij-tekst">'
+              + '<span class="bh-zoekrij-titel">' + bhTekst(p.titel) + '</span>'
+              + '<span class="bh-zoekrij-sub">' + bhTekst(p.waar) + '</span>'
+              + '</span></a>';
+      });
+    }
+    if (!html) {
+      zoekLeegmaken('Niets gevonden voor “' + term + '”.');
+      return;
+    }
+    uit.innerHTML = html;
+    zoekAangewezen = -1;
+    zoekWijzen(0);                                  // de eerste staat meteen klaar
+    document.getElementById('zoekVeld').setAttribute('aria-expanded', 'true');
+  }
+
+  function zoekWijzen(i) {
+    var rijen = document.querySelectorAll('#zoekUitslag .bh-zoekrij');
+    if (!rijen.length) return;
+    if (i < 0) i = rijen.length - 1;
+    if (i >= rijen.length) i = 0;
+    rijen.forEach(function (r, n) {
+      var aan = n === i;
+      r.classList.toggle('aangewezen', aan);
+      r.setAttribute('aria-selected', aan ? 'true' : 'false');
+      if (aan) r.scrollIntoView({ block: 'nearest' });
+    });
+    zoekAangewezen = i;
+  }
+
+  function zoekToets(e) {
+    if (e.key === 'ArrowDown') { e.preventDefault(); zoekWijzen(zoekAangewezen + 1); return; }
+    if (e.key === 'ArrowUp')   { e.preventDefault(); zoekWijzen(zoekAangewezen - 1); return; }
+    if (e.key === 'Enter') {
+      var rij = document.querySelector('#zoekUitslag .bh-zoekrij.aangewezen');
+      if (rij) { e.preventDefault(); rij.click(); }
+    }
+  }
+
   function start(wortel) {
     (wortel || document).querySelectorAll('.bh-tabel').forEach(tabelKoppelen);
     (wortel || document).querySelectorAll('[data-kolomkiezer]').forEach(kiezerKoppelen);
     (wortel || document).querySelectorAll('.bh-filterbalk').forEach(filterKoppelen);
     (wortel || document).querySelectorAll('form[data-bevestig]').forEach(bevestigFormKoppelen);
-    if (!wortel || wortel === document) { zijbalkKoppelen(); hulpKoppelen(); }
+    if (!wortel || wortel === document) { zijbalkKoppelen(); hulpKoppelen(); zoekKoppelen(); }
   }
 
   if (document.readyState === 'loading') {
