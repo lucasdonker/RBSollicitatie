@@ -1548,6 +1548,82 @@ button.bh-weekcel-klik:hover, button.bh-weekcel-klik:focus-visible { outline: 2p
 
 .bh-ssokaart { border-left: 3px solid var(--border-strong); }
 .bh-ssokaart.aan { border-left-color: var(--ok); }
+
+/* ============================================================
+   BLK-FORMULIER — het ingevulde formulier, ook om af te drukken
+   ============================================================ */
+
+.bh-blk { max-width: 880px; }
+.bh-blkkop { display: flex; align-items: flex-start; gap: 14px; flex-wrap: wrap; margin-bottom: 16px; }
+.bh-blkkop-wie { display: flex; gap: 14px; align-items: flex-start; flex: 1; min-width: 260px; }
+.bh-blkkop-tekst { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.bh-blkkop-tekst h2 { margin: 0; font-size: 19px; font-weight: 600; color: var(--navy); word-break: break-word; }
+.bh-blkkop-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
+.bh-blkkop-acties { display: flex; gap: 6px; flex-wrap: wrap; align-items: flex-start; }
+.bh-blkfoto {
+  width: 64px; height: 64px; border-radius: 50%; object-fit: cover; flex: none;
+  cursor: zoom-in; border: 2px solid var(--border);
+}
+.bh-blkveld { margin-bottom: 14px; }
+.bh-blkveld:last-child { margin-bottom: 0; }
+.bh-blkwaarde {
+  font-size: 14px; line-height: 1.7; white-space: pre-wrap; margin-top: 4px;
+  background: var(--bg-subtle); border-radius: var(--radius-sm); padding: 10px 12px; color: var(--ink);
+}
+.bh-blkleeg { font-size: 13px; color: var(--ink-muted); font-style: italic; margin-top: 4px; }
+
+/* ============================================================
+   AFDRUKKEN — één keer goed, voor elk beheerscherm
+   ============================================================
+   Stond eerder per scherm, met klassenamen van vóór de herbouw (.sidebar, .topbar,
+   .main-content). Die bestaan niet meer, dus de zijbalk ging gewoon mee op papier. */
+@media print {
+  .bh-zijbalk, .bh-topbar, .bh-overlay, .bh-hulppaneel,
+  .bh-tabs, .bh-substappen, .bh-filterbalk, .bh-bulkbalk, .bh-paginering,
+  .ds-btn, button, #bh-toasts, .detail-paneel, .paneel-overlay { display: none !important; }
+  .bh-hoofd { margin-left: 0 !important; }
+  .bh-inhoud { padding: 0 !important; max-width: none !important; }
+  .ds-kaart { box-shadow: none !important; border-color: #ccc !important; break-inside: avoid; }
+  body, .bh-body { background: #fff !important; }
+  /* Een link is op papier alleen tekst; de URL erachter zetten helpt niemand hier. */
+  a { color: inherit !important; text-decoration: none !important; }
+}
+
+/* ============================================================
+   MIJN PROFIEL — jouw gegevens, niet het werk
+   ============================================================ */
+
+.bh-profiel { display: grid; grid-template-columns: repeat(2, minmax(300px, 1fr)); gap: 16px; align-items: start; max-width: 860px; }
+.bh-profiel-breed { grid-column: 1 / -1; }
+.bh-profielform { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--bg-subtle); }
+.bh-profiel .ds-veld + .ds-veld { margin-top: 12px; }
+.bh-profiel .bh-gegevensraster { margin-bottom: 4px; }
+
+.bh-voorkeur { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.bh-voorkeur-tekst { flex: 1; min-width: 220px; display: flex; flex-direction: column; gap: 2px; }
+.bh-voorkeur-tekst strong { font-size: 14px; font-weight: 600; color: var(--ink); }
+.bh-voorkeur-tekst span { font: var(--text-meta); color: var(--ink-soft); }
+
+/* Schakelaar: de stand zit in aria-checked, niet in een inline stijl uit JS.
+   Zo leest een schermlezer hem ook, en werkt hij zonder dat script al goed. */
+.bh-schakelaar {
+  position: relative; flex: none; width: 48px; height: 28px; padding: 0; cursor: pointer;
+  border-radius: 14px; border: 1px solid var(--border-strong); background: var(--bg-subtle);
+  transition: background .2s, border-color .2s;
+}
+.bh-schakelaar-bol {
+  position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%;
+  background: var(--surface); box-shadow: 0 1px 3px rgba(0,0,0,.25);
+  transition: transform .2s; display: block;
+}
+.bh-schakelaar[aria-checked="true"] { background: var(--accent); border-color: var(--accent); }
+.bh-schakelaar[aria-checked="true"] .bh-schakelaar-bol { transform: translateX(20px); }
+.bh-schakelaar:focus-visible { outline: 2px solid var(--navy); outline-offset: 2px; }
+
+@media (max-width: 680px) {
+  .bh-profiel { grid-template-columns: 1fr; }
+}
+
 /* ============================================================
    TRAININGSWEEKEND — het weekend zelf, en daarna het besluit
    ============================================================ */
@@ -1621,9 +1697,11 @@ button.bh-weekcel-klik:hover, button.bh-weekcel-klik:focus-visible { outline: 2p
 .bh-instversie a { color: var(--accent); }
 
 /* Eén kaart per onderwerp, met secties eronder gescheiden door een lijn. */
+/* Een kaart zónder eigen padding (.ds-kaart-p) krijgt die van kop en body.
+   Mét .ds-kaart-p telt dat dubbel, dus die uitsluiten — anders springen de kopjes in. */
 .bh-kaartbody { padding: var(--space-5); }
-.ds-kaart > .bh-kaartkop { padding: 16px 20px 0; margin-bottom: 0; }
-.ds-kaart > .bh-kaartkop + .bh-kaartbody { padding-top: 14px; }
+.ds-kaart:not(.ds-kaart-p) > .bh-kaartkop { padding: 16px 20px 0; margin-bottom: 0; }
+.ds-kaart:not(.ds-kaart-p) > .bh-kaartkop + .bh-kaartbody { padding-top: 14px; }
 .bh-instsectie { border-bottom: 1px solid var(--bg-subtle); padding-bottom: 18px; margin-bottom: 18px; }
 .bh-instsectie:last-child { border: none; margin: 0; padding: 0; }
 .bh-instsectie h3 { font-size: 13px; font-weight: 600; color: var(--navy); margin: 0 0 12px; }

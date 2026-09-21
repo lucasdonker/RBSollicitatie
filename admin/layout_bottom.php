@@ -19,13 +19,11 @@ function toggleTheme() {
   updateThemeSwitch(isDark);
 }
 
+/* De stand staat in aria-checked, en de CSS tekent hem (.bh-schakelaar). Zo weet een
+   schermlezer het ook — die leest geen inline transform. */
 function updateThemeSwitch(isDark) {
-  const dot = document.getElementById('themeDot');
-  const sw  = document.getElementById('themeSwitch');
-  if (!dot || !sw) return;
-  // Profiel-toggle is 48x26 met dot 18px: schuift 22px naar rechts
-  dot.style.transform = isDark ? 'translateX(22px)' : 'translateX(0)';
-  sw.style.background = isDark ? 'var(--oranje)' : 'var(--grijs-bg)';
+  const sw = document.getElementById('themeSwitch');
+  if (sw) sw.setAttribute('aria-checked', isDark ? 'true' : 'false');
 }
 
 // Initialiseer switch state bij laden

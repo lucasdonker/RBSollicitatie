@@ -776,7 +776,7 @@ require __DIR__ . '/layout_top.php';
           <div class="ds-veld">
             <label>Anti-loop: zelfde bericht per dag</label>
             <input type="number" name="inst[melding.plafond_dag]" value="<?= instelling_int('melding.plafond_dag', 8) ?>" min="1" max="50">
-            <div class="ds-veld-hint">Vaker hetzelfde automatische bericht naar dezelfde ontvanger in 24 uur wordt overgeslagen (zie foutenlog).
+            <div class="ds-veld-hint">Vaker hetzelfde automatische bericht naar dezelfde ontvanger in 24 uur wordt overgeslagen (zie het logboek).
               Andere berichtsoorten, bestuursmeldingen en wat je zelf in gang zet (fase omzetten, bulk, handmatig) tellen niet mee.</div>
           </div>
           <div class="ds-veld">
@@ -1525,7 +1525,7 @@ require __DIR__ . '/layout_top.php';
     <div class="bh-kaartkop"><h2>Testmail versturen</h2></div>
     <div class="bh-kaartbody">
       <p style="font-size:13px;color:var(--tekst-zacht);margin:0 0 14px">
-        Stuur een testmail om te controleren of je instellingen werken. Sla je wijzigingen eerst op. Lukt het niet, dan zie je de reden hier én in <a href="<?= APP_URL ?>/admin/foutenlog.php" style="color:var(--navy)">Foutenlog</a>.
+        Stuur een testmail om te controleren of je instellingen werken. Sla je wijzigingen eerst op. Lukt het niet, dan zie je de reden hier én in <a href="<?= APP_URL ?>/admin/logboek.php?bron=fout">het logboek</a>.
       </p>
       <form method="POST" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
         <?= csrf_input() ?>

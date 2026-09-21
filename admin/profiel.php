@@ -1,18 +1,29 @@
 <?php
+/**
+ * Beheer — Mijn profiel: je eigen naam, wachtwoord en voorkeuren.
+ *
+ * Dit scherm hangt niet in de navigatie maar onder je naam in de zijbalk, want het
+ * gaat over jou en niet over het werk. Daarom staat $actieve_nav hier leeg: geen
+ * enkel nav-item hoort op te lichten.
+ */
 require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/beheer/laden.php';
 $pagina_titel = 'Mijn profiel';
-$actieve_nav  = 'profiel';
+$actieve_nav  = '';
 vereist_login();
-$b = huidige_beheerder();
+
+$b    = huidige_beheerder();
 $fout = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
-    $actie = $_POST['actie'] ?? '';
+    $actie = (string)($_POST['actie'] ?? '');
 
     if ($actie === 'naam') {
-        $naam = trim($_POST['naam'] ?? '');
-        if ($naam) {
+        $naam = trim((string)($_POST['naam'] ?? ''));
+        if ($naam === '') {
+            $fout = 'Vul een naam in.';
+        } else {
             db()->prepare("UPDATE beheerders SET naam=? WHERE id=?")->execute([$naam, $b['id']]);
             $_SESSION['bhd_naam'] = $naam;
             flash('succes', 'Naam bijgewerkt.');
@@ -21,107 +32,137 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($actie === 'wachtwoord') {
-        $oud     = $_POST['oud_wachtwoord'] ?? '';
-        $nieuw   = $_POST['nieuw_wachtwoord'] ?? '';
-        $herhaal = $_POST['herhaal_wachtwoord'] ?? '';
-        $stmt_rec = db()->prepare("SELECT * FROM beheerders WHERE id=?");
-        $stmt_rec->execute([$b['id']]);
-        $rec = $stmt_rec->fetch();
-        if (!$rec['wachtwoord']) {
-            $fout = 'Je account heeft geen wachtwoord (alleen SSO). Vraag een admin om er een in te stellen.';
+        $oud     = (string)($_POST['oud_wachtwoord'] ?? '');
+        $nieuw   = (string)($_POST['nieuw_wachtwoord'] ?? '');
+        $herhaal = (string)($_POST['herhaal_wachtwoord'] ?? '');
+
+        $q = db()->prepare("SELECT * FROM beheerders WHERE id=?");
+        $q->execute([$b['id']]);
+        $rec = $q->fetch();
+
+        if (empty($rec['wachtwoord'])) {
+            $fout = 'Je logt in via Authentik en hebt hier geen wachtwoord. Wil je er toch een, vraag dan een beheerder.';
         } elseif (!password_verify($oud, $rec['wachtwoord'])) {
-            $fout = 'Huidig wachtwoord onjuist.';
+            $fout = 'Het huidige wachtwoord klopt niet.';
         } elseif (strlen($nieuw) < 8) {
-            $fout = 'Nieuw wachtwoord minimaal 8 tekens.';
+            $fout = 'Het nieuwe wachtwoord moet minstens 8 tekens hebben.';
         } elseif ($nieuw !== $herhaal) {
-            $fout = 'Wachtwoorden komen niet overeen.';
+            $fout = 'De twee nieuwe wachtwoorden zijn niet hetzelfde.';
         } else {
-            db()->prepare("UPDATE beheerders SET wachtwoord=? WHERE id=?")->execute([password_hash($nieuw, PASSWORD_DEFAULT), $b['id']]);
-            flash('succes', 'Wachtwoord gewijzigd.');
+            db()->prepare("UPDATE beheerders SET wachtwoord=? WHERE id=?")
+                ->execute([password_hash($nieuw, PASSWORD_DEFAULT), $b['id']]);
+            // Wel dát het gebeurde, nooit het wachtwoord zelf.
+            if (function_exists('audit_log')) {
+                audit_log('beheerder_gewijzigd', 'beheerder', (int)$b['id'], ['wachtwoord' => 'zelf gewijzigd']);
+            }
+            flash('succes', 'Je wachtwoord is gewijzigd.');
             redirect(APP_URL . '/admin/profiel.php');
         }
     }
 }
 
-$rec = db()->query("SELECT * FROM beheerders WHERE id=" . (int)$b['id'])->fetch();
+$q = db()->prepare("SELECT * FROM beheerders WHERE id=?");
+$q->execute([$b['id']]);
+$rec = $q->fetch() ?: [];
+
 require __DIR__ . '/layout_top.php';
 ?>
 
-<?php if ($fout): ?><div class="flash flash-fout"><?= h($fout) ?></div><?php endif; ?>
+<?php if ($fout !== ''): ?>
+  <div class="ds-melding ds-melding-error bh-blokkade"><?= icoon('waarschuwing', 18) ?><span><?= h($fout) ?></span></div>
+<?php endif; ?>
 
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;max-width:700px;align-items:start">
+<div class="bh-profiel">
+  <section class="ds-kaart ds-kaart-p">
+    <div class="bh-kaartkop"><h2>Mijn gegevens</h2></div>
 
-<div class="card">
-  <div class="card-header"><div class="card-title">Mijn gegevens</div></div>
-  <div class="card-body">
-    <div style="margin-bottom:14px">
-      <div style="font-size:11px;color:var(--grijs);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">E-mailadres</div>
-      <div style="font-size:14px;font-weight:500"><?= h($rec['email']) ?></div>
+    <div class="bh-gegevensraster twee">
+      <div>
+        <span class="bh-veldlabel">E-mailadres</span>
+        <span class="bh-veldwaarde"><?= h((string)($rec['email'] ?? '')) ?></span>
+      </div>
+      <div>
+        <span class="bh-veldlabel">Rol</span>
+        <span class="bh-veldwaarde"><?= h(ucfirst((string)($rec['rol'] ?? ''))) ?></span>
+      </div>
+      <div>
+        <span class="bh-veldlabel">Hoe je inlogt</span>
+        <span class="bh-veldwaarde">
+          <?php if (!empty($rec['authentik_uid'])): ?>
+            <span class="bh-bhrij-via"><?= icoon('schild', 14) ?> Authentik</span>
+          <?php endif; ?>
+          <?php if (!empty($rec['wachtwoord'])): ?>
+            <span class="bh-bhrij-via"><?= icoon('sleutel', 14) ?> Wachtwoord</span>
+          <?php endif; ?>
+          <?php if (empty($rec['authentik_uid']) && empty($rec['wachtwoord'])): ?>
+            <span class="bh-bhrij-via let-op"><?= icoon('waarschuwing', 14) ?> Geen inlogmethode</span>
+          <?php endif; ?>
+        </span>
+      </div>
+      <div>
+        <span class="bh-veldlabel">Laatst ingelogd</span>
+        <span class="bh-veldwaarde">
+          <?= !empty($rec['laatste_login']) ? h(datum_nl(substr((string)$rec['laatste_login'], 0, 10))) : 'onbekend' ?>
+        </span>
+      </div>
     </div>
-    <div style="margin-bottom:14px">
-      <div style="font-size:11px;color:var(--grijs);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">Rol</div>
-      <div style="font-size:14px;font-weight:500"><?= h(ucfirst($rec['rol'])) ?></div>
-    </div>
-    <div style="margin-bottom:14px">
-      <div style="font-size:11px;color:var(--grijs);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">Login via</div>
-      <div style="font-size:14px"><?= $rec['authentik_uid'] ? '🔐 Authentik' : '' ?><?= $rec['wachtwoord'] ? '🔑 Wachtwoord' : '' ?></div>
-    </div>
-    <hr style="border:none;border-top:1px solid var(--rand);margin:14px 0">
-    <form method="POST">
+
+    <form method="POST" class="bh-profielform">
       <?= csrf_input() ?>
       <input type="hidden" name="actie" value="naam">
-      <div class="form-groep">
-        <label>Weergavenaam</label>
-        <input type="text" name="naam" value="<?= h($rec['naam']) ?>" required>
+      <div class="ds-veld">
+        <label class="ds-label" for="pf_naam">Weergavenaam</label>
+        <input class="ds-input" type="text" id="pf_naam" name="naam" value="<?= h((string)($rec['naam'] ?? '')) ?>" required>
+        <p class="ds-veld-hint">Deze naam staat bij je observaties en besluiten, zodat anderen zien wie wat zei.</p>
       </div>
-      <button type="submit" class="btn btn-primary btn-sm">Naam opslaan</button>
+      <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm">Naam opslaan</button>
     </form>
-  </div>
-</div>
+  </section>
 
-<div class="card">
-  <div class="card-header"><div class="card-title">Wachtwoord wijzigen</div></div>
-  <div class="card-body">
-    <?php if (!$rec['wachtwoord']): ?>
-    <div class="flash flash-info">Je account heeft (nog) geen wachtwoord. Vraag een admin om er een in te stellen.</div>
+  <section class="ds-kaart ds-kaart-p">
+    <div class="bh-kaartkop"><h2>Wachtwoord</h2></div>
+    <?php if (empty($rec['wachtwoord'])): ?>
+      <p class="bh-dossier-tekst">
+        Je logt in via Authentik, dus je hebt hier geen wachtwoord — je verandert het in Authentik zelf.
+        Dat is ook veiliger: er staat er hier dan geen.
+      </p>
     <?php else: ?>
-    <form method="POST">
-      <?= csrf_input() ?>
-      <input type="hidden" name="actie" value="wachtwoord">
-      <div class="form-groep"><label>Huidig wachtwoord</label><input type="password" name="oud_wachtwoord" required autocomplete="current-password"></div>
-      <div class="form-groep"><label>Nieuw wachtwoord</label><input type="password" name="nieuw_wachtwoord" required minlength="8" autocomplete="new-password"></div>
-      <div class="form-groep"><label>Herhaal nieuw wachtwoord</label><input type="password" name="herhaal_wachtwoord" required minlength="8" autocomplete="new-password"></div>
-      <button type="submit" class="btn btn-primary btn-sm">Wachtwoord wijzigen</button>
-    </form>
+      <form method="POST">
+        <?= csrf_input() ?>
+        <input type="hidden" name="actie" value="wachtwoord">
+        <div class="ds-veld">
+          <label class="ds-label" for="pf_oud">Huidig wachtwoord</label>
+          <input class="ds-input" type="password" id="pf_oud" name="oud_wachtwoord" required autocomplete="current-password">
+        </div>
+        <div class="ds-veld">
+          <label class="ds-label" for="pf_nieuw">Nieuw wachtwoord</label>
+          <input class="ds-input" type="password" id="pf_nieuw" name="nieuw_wachtwoord" required minlength="8" autocomplete="new-password">
+          <p class="ds-veld-hint">Minstens 8 tekens. Een zin is makkelijker te onthouden en moeilijker te raden dan een kort wachtwoord met tekens erin.</p>
+        </div>
+        <div class="ds-veld">
+          <label class="ds-label" for="pf_herhaal">Nieuw wachtwoord nog een keer</label>
+          <input class="ds-input" type="password" id="pf_herhaal" name="herhaal_wachtwoord" required minlength="8" autocomplete="new-password">
+        </div>
+        <div class="bh-knoprij">
+          <button type="submit" class="ds-btn ds-btn-primair ds-btn-sm">Wachtwoord wijzigen</button>
+        </div>
+      </form>
     <?php endif; ?>
-  </div>
-</div>
+  </section>
 
-<!-- Voorkeuren -->
-<div class="card" style="grid-column:1/-1">
-  <div class="card-header"><div class="card-title">Voorkeuren</div></div>
-  <div class="card-body">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap">
-      <div style="flex:1;min-width:200px">
-        <div style="font-size:14px;font-weight:500;color:var(--tekst);margin-bottom:2px">
-          Donker thema
-        </div>
-        <div style="font-size:12px;color:var(--tekst-zacht)">
-          Gebruik een donker kleurenpalet. Wordt lokaal opgeslagen per apparaat.
-        </div>
-      </div>
-      <button type="button" id="themeSwitch" onclick="toggleTheme()"
-              aria-label="Donker thema aan/uit"
-              style="position:relative;width:48px;height:26px;border-radius:13px;border:1px solid var(--rand);cursor:pointer;
-                     background:var(--grijs-bg);transition:background .25s;flex-shrink:0;padding:0">
-        <span id="themeDot"
-              style="position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;
-                     background:#fff;transition:transform .25s,background .25s;display:block;box-shadow:0 1px 3px rgba(0,0,0,.2)"></span>
+  <section class="ds-kaart ds-kaart-p bh-profiel-breed">
+    <div class="bh-kaartkop"><h2>Voorkeuren</h2></div>
+    <div class="bh-voorkeur">
+      <span class="bh-voorkeur-tekst">
+        <strong>Donker thema</strong>
+        <span>Een donker kleurenpalet. Dit wordt per apparaat onthouden, niet op je account.</span>
+      </span>
+      <button type="button" class="bh-schakelaar" id="themeSwitch" role="switch" aria-checked="false"
+              aria-label="Donker thema" onclick="toggleTheme()">
+        <span class="bh-schakelaar-bol" id="themeDot"></span>
       </button>
     </div>
-  </div>
-</div>
-
+  </section>
 </div>
 
 <?php require __DIR__ . '/layout_bottom.php'; ?>
