@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <?php if ($fout): ?>
-    <div class="flash flash-fout"><?= h($fout) ?></div>
+    <div class="ds-melding ds-melding-error"><?= h($fout) ?></div>
     <?php endif; ?>
     <?php toon_flash(); ?>
 
@@ -79,11 +79,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <form method="POST" novalidate>
       <?= csrf_input() ?>
       <?php if ($terug): ?><input type="hidden" name="terug" value="<?= h($terug) ?>"><?php endif; ?>
-      <div class="form-groep">
+      <div class="ds-veld">
         <label for="email">E-mailadres</label>
         <input type="email" id="email" name="email" value="<?= h($_POST['email'] ?? '') ?>" required autofocus autocomplete="email" placeholder="jou@paal13.com">
       </div>
-      <div class="form-groep">
+      <div class="ds-veld">
         <label for="wachtwoord">Wachtwoord</label>
         <input type="password" id="wachtwoord" name="wachtwoord" required autocomplete="current-password" placeholder="••••••••">
       </div>

@@ -37,8 +37,8 @@ $actieve_nav  = 'handleiding';
 require __DIR__ . '/layout_top.php';
 ?>
 <div class="container">
-  <div class="card">
-    <div class="card-body">
+  <div class="ds-kaart">
+    <div class="bh-kaartbody">
       <p style="font-size:13px;color:var(--tekst-zacht);line-height:1.7;margin-bottom:16px">
         De uitleg bij het systeem. Het vraagteken rechtsboven op elk scherm opent de korte uitleg
         van dat scherm met een link naar het juiste hoofdstuk hieronder. Van elke handleiding staat

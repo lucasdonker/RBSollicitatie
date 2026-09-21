@@ -117,7 +117,11 @@ require __DIR__ . '/layout_top.php';
 <div style="max-width:820px;margin:0 auto">
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px;flex-wrap:wrap">
     <h1 style="margin:0;font-size:22px"><?= h($naam) ?></h1>
-    <span style="font-size:13px;color:var(--tekst-zacht)">beschikbaarheid · seizoen <?= h($sol['seizoen_naam']) ?></span>
+    <span style="font-size:13px;color:var(--tekst-zacht)">beschikbaarheid<?php
+      // Het seizoen staat er alleen bij als de query het meegaf; de naam is een extraatje,
+      // geen reden om het scherm te laten struikelen.
+      if (!empty($sol['seizoen_naam'])) echo ' · seizoen ' . h((string)$sol['seizoen_naam']);
+    ?></span>
   </div>
   <p style="color:var(--tekst-zacht);font-size:13.5px;margin:0 0 18px">
     Aanpassingen die je hier maakt worden de nieuwe waarheid — ook in het eigen overzicht van de sollicitant (met melding).
@@ -135,11 +139,11 @@ require __DIR__ . '/layout_top.php';
   <div style="display:flex;gap:4px;border-bottom:2px solid var(--rand);margin-bottom:18px" role="tablist">
     <button type="button" class="bb-tab bb-tab-actief" data-tab="perdag" onclick="bbTab('perdag')"
             style="padding:10px 18px;border:none;background:none;font-size:14px;font-weight:600;cursor:pointer;border-bottom:2px solid var(--navy);margin-bottom:-2px;color:var(--navy)">
-      📅 Per dag
+      Per dag
     </button>
     <button type="button" class="bb-tab" data-tab="formulier" onclick="bbTab('formulier')"
             style="padding:10px 18px;border:none;background:none;font-size:14px;font-weight:500;cursor:pointer;color:var(--tekst-zacht)">
-      📝 Formulier (portaal-stijl)
+      Formulier (portaal-stijl)
     </button>
   </div>
 
@@ -173,7 +177,7 @@ require __DIR__ . '/layout_top.php';
                     border:2px solid <?= $is_bestuur ? 'var(--navy)' : 'transparent' ?>">
           <div style="font-size:10px;color:var(--tekst-zacht)"><?= h($dagen_nl[$weekdag]) ?></div>
           <div style="font-size:15px;font-weight:600"><?= h(date('d-m', $ts)) ?></div>
-          <div style="font-size:13px"><?= $info['beschikbaar'] ? '✓' : '✗' ?></div>
+          <div style="font-size:13px"><?= icoon($info['beschikbaar'] ? 'vink' : 'kruis', 14) ?></div>
         </div>
     <?php endforeach; ?>
     <?php if ($huidige_maand !== null) echo '</div>'; ?>
@@ -196,12 +200,12 @@ require __DIR__ . '/layout_top.php';
     <div id="bbDagPopover" style="display:none;position:fixed;z-index:100;background:#fff;border:1px solid var(--rand);border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.15);padding:16px;width:260px">
       <div id="bbPopDatum" style="font-weight:600;margin-bottom:10px"></div>
       <div style="display:flex;flex-direction:column;gap:8px">
-        <button type="button" class="btn btn-outline btn-sm" onclick="bbZet('beschikbaar')" style="justify-content:flex-start">✓ Beschikbaar maken</button>
-        <button type="button" class="btn btn-outline btn-sm" onclick="bbZet('niet_beschikbaar')" style="justify-content:flex-start">✗ Niet beschikbaar maken</button>
+        <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="bbZet('beschikbaar')" style="justify-content:flex-start"><?= icoon('vink', 14) ?> Beschikbaar maken</button>
+        <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="bbZet('niet_beschikbaar')" style="justify-content:flex-start"><?= icoon('kruis', 14) ?> Niet beschikbaar maken</button>
         <input type="text" id="bbPopReden" placeholder="reden (optioneel)" style="width:100%;font-size:13px">
         <button type="button" class="btn btn-sm" id="bbHerstelKnop" onclick="bbHerstel()" style="display:none;background:none;color:var(--tekst-zacht);border:1px solid var(--rand)">↩ Aanpassing terugdraaien</button>
       </div>
-      <button type="button" onclick="bbSluitPop()" style="position:absolute;top:8px;right:10px;border:none;background:none;font-size:16px;cursor:pointer;color:var(--grijs)">✕</button>
+      <button type="button" onclick="bbSluitPop()" style="position:absolute;top:8px;right:10px;border:none;background:none;font-size:16px;cursor:pointer;color:var(--grijs)"><?= icoon('kruis', 14) ?></button>
     </div>
     <?php endif; ?>
   </div>
@@ -240,7 +244,7 @@ require __DIR__ . '/layout_top.php';
               <option value="vijf" <?= !$is_wknd?'selected':'' ?>>hele weken</option>
               <option value="weekend" <?= $is_wknd?'selected':'' ?>>alleen weekenden</option>
             </select>
-            <button type="button" class="btn btn-outline btn-sm" onclick="this.parentElement.remove()" aria-label="Verwijderen">✕</button>
+            <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="this.parentElement.remove()" aria-label="Verwijderen"><?= icoon('kruis', 14) ?></button>
           </div>
           <?php endforeach; else: ?>
           <div class="bb-blok-rij" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
@@ -252,19 +256,19 @@ require __DIR__ . '/layout_top.php';
               <option value="vijf">hele weken</option>
               <option value="weekend">alleen weekenden</option>
             </select>
-            <button type="button" class="btn btn-outline btn-sm" onclick="this.parentElement.remove()" aria-label="Verwijderen">✕</button>
+            <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="this.parentElement.remove()" aria-label="Verwijderen"><?= icoon('kruis', 14) ?></button>
           </div>
           <?php endif; ?>
         </div>
-        <button type="button" class="btn btn-outline btn-sm" onclick="bbBlokToevoegen()">+ Periode toevoegen</button>
+        <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="bbBlokToevoegen()">+ Periode toevoegen</button>
       </div>
-      <button type="submit" class="btn btn-primary">Opslaan namens sollicitant</button>
+      <button type="submit" class="ds-btn ds-btn-primair">Opslaan namens sollicitant</button>
     </form>
   </div>
 
   <div style="margin-top:24px">
-    <a href="<?= APP_URL ?>/admin/export_dagbeschikbaarheid.php?id=<?= $id ?>" target="_blank" class="btn btn-outline btn-sm">
-      📆 Bekijk de dag-export (API-check)
+    <a href="<?= APP_URL ?>/admin/export_dagbeschikbaarheid.php?id=<?= $id ?>" target="_blank" class="ds-btn ds-btn-secundair ds-btn-sm">
+      Bekijk de dag-export (API-check)
     </a>
   </div>
 </div>
@@ -331,7 +335,7 @@ function bbBlokToevoegen() {
     '<span style="font-size:12px;color:var(--tekst-zacht)">t/m</span>' +
     '<input type="number" name="bb_tot[]" min="1" max="53" style="width:70px" aria-label="Tot week">' +
     '<select name="bb_regime[]" style="min-width:150px" aria-label="Regime"><option value="vijf">hele weken</option><option value="weekend">alleen weekenden</option></select>' +
-    '<button type="button" class="btn btn-outline btn-sm" onclick="this.parentElement.remove()" aria-label="Verwijderen">✕</button>';
+    '<button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="this.parentElement.remove()" aria-label="Verwijderen"><?= icoon('kruis', 14) ?></button>';
   document.getElementById('bbBlokLijst').appendChild(div);
 }
 </script>

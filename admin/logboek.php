@@ -73,8 +73,8 @@ require __DIR__ . '/layout_top.php';
 <?php endif; ?>
 
 <!-- Filters -->
-<div class="card" style="margin-bottom:14px">
-  <div class="card-body" style="padding:12px 16px">
+<div class="ds-kaart" style="margin-bottom:14px">
+  <div class="bh-kaartbody" style="padding:12px 16px">
     <form method="get" class="filter-balk" role="search" aria-label="Logboek doorzoeken">
       <?php if ($f['bron'] !== ''): ?><input type="hidden" name="bron" value="<?= h($f['bron']) ?>"><?php endif; ?>
 
@@ -116,17 +116,17 @@ require __DIR__ . '/layout_top.php';
       <?php if ($f['objecttype'] !== '' || $f['object_id'] > 0): ?>
         <input type="hidden" name="object" value="<?= h($f['objecttype']) ?>">
         <input type="hidden" name="object_id" value="<?= (int)$f['object_id'] ?>">
-        <span class="badge badge-blauw"><?= h(log_object_tekst(['objecttype' => $f['objecttype'], 'object_id' => $f['object_id']])) ?></span>
+        <span class="ds-badge-fase ds-fase-blauw"><?= h(log_object_tekst(['objecttype' => $f['objecttype'], 'object_id' => $f['object_id']])) ?></span>
       <?php endif; ?>
 
-      <button type="submit" class="btn btn-navy btn-sm">Filter</button>
+      <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm">Filter</button>
       <?php if ($heeft_filter): ?>
         <a href="<?= h($url(['wie' => '', 'actie' => '', 'object' => '', 'object_id' => '', 'van' => '', 'tot' => '', 'ernst' => '', 'zoek' => '', 'p' => 1])) ?>"
            style="font-size:12px;color:var(--oranje)">Wis filters</a>
       <?php endif; ?>
 
       <span style="flex:1"></span>
-      <a class="btn btn-outline btn-sm" href="<?= h($url(['p' => ''], 'logboek_export.php')) ?>">
+      <a class="ds-btn ds-btn-secundair ds-btn-sm" href="<?= h($url(['p' => ''], 'logboek_export.php')) ?>">
         <?= icoon('download', 14) ?> Export (CSV)
       </a>
     </form>
@@ -134,9 +134,9 @@ require __DIR__ . '/layout_top.php';
 </div>
 
 <!-- Tijdlijn -->
-<div class="card">
+<div class="ds-kaart">
   <?php if (!$regels): ?>
-    <div class="card-body">
+    <div class="bh-kaartbody">
       <div class="leeg-scherm">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
           <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
@@ -223,13 +223,13 @@ require __DIR__ . '/layout_top.php';
 <?php if ($max_pagina > 1): ?>
 <div style="display:flex;gap:8px;align-items:center;justify-content:center;margin-top:16px;font-size:13px">
   <?php if ($pagina > 1): ?>
-    <a href="<?= h($url(['p' => $pagina - 1])) ?>" class="btn btn-outline btn-sm">&larr; Vorige</a>
+    <a href="<?= h($url(['p' => $pagina - 1])) ?>" class="ds-btn ds-btn-secundair ds-btn-sm">&larr; Vorige</a>
   <?php endif; ?>
   <span style="color:var(--tekst-zacht)">
     Pagina <?= (int)$pagina ?> van <?= (int)$max_pagina ?> &middot; <?= number_format($totaal, 0, ',', '.') ?> gebeurtenissen
   </span>
   <?php if ($pagina < $max_pagina): ?>
-    <a href="<?= h($url(['p' => $pagina + 1])) ?>" class="btn btn-outline btn-sm">Volgende &rarr;</a>
+    <a href="<?= h($url(['p' => $pagina + 1])) ?>" class="ds-btn ds-btn-secundair ds-btn-sm">Volgende &rarr;</a>
   <?php endif; ?>
 </div>
 <?php endif; ?>

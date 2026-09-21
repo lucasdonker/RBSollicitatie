@@ -218,7 +218,7 @@ if ($fout && !$debug_tonen) {
            onerror="this.onerror=null;this.src='<?= APP_URL ?>/assets/img/logo.svg'">
       <h1>SSO Login mislukt</h1>
     </div>
-    <div class="flash flash-fout"><?= h($fout) ?></div>
+    <div class="ds-melding ds-melding-error"><?= h($fout) ?></div>
 
     <?php if (!empty($debug)): ?>
     <details style="margin-bottom:14px">
@@ -228,8 +228,8 @@ if ($fout && !$debug_tonen) {
     <?php endif; ?>
 
     <div style="display:flex;flex-direction:column;gap:8px">
-      <a href="<?= APP_URL ?>/admin/auth_sso.php" class="btn btn-primary" style="justify-content:center">↺ Opnieuw proberen via SSO</a>
-      <a href="<?= APP_URL ?>/admin/login.php" class="btn btn-outline" style="justify-content:center">🔑 Inloggen met wachtwoord</a>
+      <a href="<?= APP_URL ?>/admin/auth_sso.php" class="ds-btn ds-btn-primair" style="justify-content:center">↺ Opnieuw proberen via SSO</a>
+      <a href="<?= APP_URL ?>/admin/login.php" class="ds-btn ds-btn-secundair" style="justify-content:center">🔑 Inloggen met wachtwoord</a>
     </div>
   </div>
 </div>

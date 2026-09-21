@@ -49,9 +49,9 @@ $sjabloon_naam = []; foreach ($sjablonen as $t) $sjabloon_naam[$t['slug']] = $t[
 
 require __DIR__ . '/layout_top.php';
 ?>
-<div class="card" style="margin-bottom:14px">
-  <div class="card-header"><div class="card-title">Regels</div><a href="?nieuw=1" class="btn btn-primary btn-sm">Nieuwe regel</a></div>
-  <div class="card-body" style="padding:0">
+<div class="ds-kaart" style="margin-bottom:14px">
+  <div class="bh-kaartkop"><h2>Regels</h2><a href="?nieuw=1" class="ds-btn ds-btn-primair ds-btn-sm">Nieuwe regel</a></div>
+  <div class="bh-kaartbody" style="padding:0">
     <?php if (!$regels): ?><p style="padding:16px;color:var(--grijs);font-size:13px">Nog geen geplande berichten. Voorbeeld: "10 dagen na het inleveren van het formulier: stuur het magazine".</p>
     <?php else: ?>
     <?php foreach ($regels as $r): ?>
@@ -66,9 +66,9 @@ require __DIR__ . '/layout_top.php';
           · max <?= (int)$r['max_per_sollicitatie'] ?>x per persoon
         </div>
       </div>
-      <form method="post" style="margin:0"><?= csrf_input() ?><input type="hidden" name="actie" value="proef"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>"><button class="btn btn-outline btn-sm">Proefdraaien</button></form>
-      <a href="?id=<?= (int)$r['id'] ?>" class="btn btn-outline btn-sm">Bewerken</a>
-      <form method="post" style="margin:0" onsubmit="return confirm('Deze regel verwijderen?')"><?= csrf_input() ?><input type="hidden" name="actie" value="verwijder"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>"><button class="btn btn-rood btn-sm">Verwijderen</button></form>
+      <form method="post" style="margin:0"><?= csrf_input() ?><input type="hidden" name="actie" value="proef"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>"><button class="ds-btn ds-btn-secundair ds-btn-sm">Proefdraaien</button></form>
+      <a href="?id=<?= (int)$r['id'] ?>" class="ds-btn ds-btn-secundair ds-btn-sm">Bewerken</a>
+      <form method="post" style="margin:0" onsubmit="return confirm('Deze regel verwijderen?')"><?= csrf_input() ?><input type="hidden" name="actie" value="verwijder"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>"><button class="ds-btn ds-btn-gevaar ds-btn-sm">Verwijderen</button></form>
     </div>
     <?php endforeach; ?>
     <?php endif; ?>
@@ -76,9 +76,9 @@ require __DIR__ . '/layout_top.php';
 </div>
 
 <?php if ($proef !== null): ?>
-<div class="card" style="margin-bottom:14px;border-left:4px solid var(--navy)">
-  <div class="card-header"><div class="card-title">Proefrun (niets verstuurd)</div></div>
-  <div class="card-body" style="font-size:13px">
+<div class="ds-kaart" style="margin-bottom:14px;border-left:4px solid var(--navy)">
+  <div class="bh-kaartkop"><h2>Proefrun (niets verstuurd)</h2></div>
+  <div class="bh-kaartbody" style="font-size:13px">
     <?php foreach ($proef as $pr): ?>
     <div><strong><?= h($pr['naam']) ?></strong>: <?= (int)$pr['kandidaten'] ?> kandidaat/-aten, <?= (int)$pr['verstuurd'] ?> zou versturen, <?= (int)$pr['overgeslagen'] ?> overgeslagen<?= !empty($pr['fout']) ? ' — ' . h($pr['fout']) : '' ?></div>
     <div style="color:var(--tekst-zacht);margin-top:4px"><?php foreach ($pr['lijst'] as $hl): ?><span style="display:inline-block;margin:2px 8px 2px 0"><?= h($hl['naam']) ?>: <em><?= h($hl['actie']) ?></em></span><?php endforeach; ?></div>
@@ -89,42 +89,42 @@ require __DIR__ . '/layout_top.php';
 <?php endif; ?>
 
 <?php if ($bewerk || $nieuw): ?>
-<div class="card">
-  <div class="card-header"><div class="card-title"><?= $bewerk ? 'Regel bewerken' : 'Nieuwe regel' ?></div></div>
-  <div class="card-body">
+<div class="ds-kaart">
+  <div class="bh-kaartkop"><h2><?= $bewerk ? 'Regel bewerken' : 'Nieuwe regel' ?></h2></div>
+  <div class="bh-kaartbody">
     <?php if (!$sjablonen): ?>
-    <div class="flash flash-waarschuwing">Maak eerst een eigen sjabloon aan onder <a href="<?= APP_URL ?>/admin/mail_templates.php">Sjablonen</a> (inhoud van het bericht, eventueel met bijlage).</div>
+    <div class="ds-melding ds-melding-warn">Maak eerst een eigen sjabloon aan onder <a href="<?= APP_URL ?>/admin/mail_templates.php">Sjablonen</a> (inhoud van het bericht, eventueel met bijlage).</div>
     <?php endif; ?>
     <form method="post">
       <?= csrf_input() ?>
       <input type="hidden" name="actie" value="opslaan">
       <input type="hidden" name="id" value="<?= (int)$form['id'] ?>">
-      <div class="form-rij">
-        <div class="form-groep" style="flex:2"><label>Naam (intern)</label><input type="text" name="naam" value="<?= h($form['naam']) ?>" required placeholder="Bijv. Magazine na formulier"></div>
-        <div class="form-groep"><label><input type="checkbox" name="aan" value="1" <?= (int)$form['aan'] ? 'checked' : '' ?>> Actief</label></div>
+      <div class="bh-veldrij">
+        <div class="ds-veld" style="flex:2"><label>Naam (intern)</label><input type="text" name="naam" value="<?= h($form['naam']) ?>" required placeholder="Bijv. Magazine na formulier"></div>
+        <div class="ds-veld"><label><input type="checkbox" name="aan" value="1" <?= (int)$form['aan'] ? 'checked' : '' ?>> Actief</label></div>
       </div>
-      <div class="form-rij">
-        <div class="form-groep" style="flex:2"><label>Gebeurtenis</label>
+      <div class="bh-veldrij">
+        <div class="ds-veld" style="flex:2"><label>Gebeurtenis</label>
           <select name="gebeurtenis"><?php foreach ($gebeurtenissen as $gk => $gl): ?><option value="<?= h($gk) ?>" <?= $form['gebeurtenis'] === $gk ? 'selected' : '' ?>><?= h($gl) ?></option><?php endforeach; ?></select></div>
-        <div class="form-groep"><label>Dagen erna (negatief = ervoor)</label><input type="number" name="offset_dagen" value="<?= (int)$form['offset_dagen'] ?>" min="-60" max="365">
-          <div class="form-hulp">Bijv. 10 = tien dagen na de gebeurtenis; -3 = drie dagen vóór de selectiedag.</div></div>
+        <div class="ds-veld"><label>Dagen erna (negatief = ervoor)</label><input type="number" name="offset_dagen" value="<?= (int)$form['offset_dagen'] ?>" min="-60" max="365">
+          <div class="ds-veld-hint">Bijv. 10 = tien dagen na de gebeurtenis; -3 = drie dagen vóór de selectiedag.</div></div>
       </div>
-      <div class="form-rij">
-        <div class="form-groep" style="flex:2"><label>Sjabloon (inhoud)</label>
+      <div class="bh-veldrij">
+        <div class="ds-veld" style="flex:2"><label>Sjabloon (inhoud)</label>
           <select name="sjabloon_slug" required><option value="">— kies —</option><?php foreach ($sjablonen as $t): ?><option value="<?= h($t['slug']) ?>" <?= $form['sjabloon_slug'] === $t['slug'] ? 'selected' : '' ?>><?= h($t['naam']) ?></option><?php endforeach; ?></select></div>
-        <div class="form-groep"><label>Kanaal</label>
+        <div class="ds-veld"><label>Kanaal</label>
           <select name="kanaalmodus"><?php foreach ($modi as $mk => $ml): ?><option value="<?= $mk ?>" <?= $form['kanaalmodus'] === $mk ? 'selected' : '' ?>><?= h($ml) ?></option><?php endforeach; ?></select></div>
       </div>
-      <div class="form-groep"><label>Alleen voor deze fases <span style="font-weight:400;color:var(--grijs)">(leeg = alle fases)</span></label>
+      <div class="ds-veld"><label>Alleen voor deze fases <span style="font-weight:400;color:var(--grijs)">(leeg = alle fases)</span></label>
         <div style="display:flex;flex-wrap:wrap;gap:8px 14px;font-size:13px">
           <?php foreach ($fases as $fk => $fl): ?><label style="display:inline-flex;gap:5px;align-items:center;font-weight:400"><input type="checkbox" name="fases[]" value="<?= h($fk) ?>" <?= in_array($fk, $form_fases, true) ? 'checked' : '' ?>> <?= h($fl) ?></label><?php endforeach; ?>
         </div></div>
-      <div class="form-rij">
-        <div class="form-groep"><label>Max per persoon</label><input type="number" name="max_per_sollicitatie" value="<?= (int)$form['max_per_sollicitatie'] ?>" min="1" max="10"></div>
-        <div class="form-groep"><label>Venster (dagen)</label><input type="number" name="venster_dagen" value="<?= (int)$form['venster_dagen'] ?>" min="1" max="60">
-          <div class="form-hulp">Alleen gevallen waarvan het moment hoogstens zoveel dagen geleden was (voorkomt na-zenden aan oude gevallen).</div></div>
+      <div class="bh-veldrij">
+        <div class="ds-veld"><label>Max per persoon</label><input type="number" name="max_per_sollicitatie" value="<?= (int)$form['max_per_sollicitatie'] ?>" min="1" max="10"></div>
+        <div class="ds-veld"><label>Venster (dagen)</label><input type="number" name="venster_dagen" value="<?= (int)$form['venster_dagen'] ?>" min="1" max="60">
+          <div class="ds-veld-hint">Alleen gevallen waarvan het moment hoogstens zoveel dagen geleden was (voorkomt na-zenden aan oude gevallen).</div></div>
       </div>
-      <div style="display:flex;gap:8px"><button type="submit" class="btn btn-primary">Opslaan</button><a href="<?= APP_URL ?>/admin/geplande_berichten.php" class="btn btn-outline">Annuleren</a></div>
+      <div style="display:flex;gap:8px"><button type="submit" class="ds-btn ds-btn-primair">Opslaan</button><a href="<?= APP_URL ?>/admin/geplande_berichten.php" class="ds-btn ds-btn-secundair">Annuleren</a></div>
     </form>
   </div>
 </div>

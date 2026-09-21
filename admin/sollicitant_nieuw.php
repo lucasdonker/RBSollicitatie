@@ -88,32 +88,32 @@ require __DIR__ . '/layout_top.php';
 ?>
 
 <div style="max-width:600px">
-<?php if ($fout): ?><div class="flash flash-fout"><?= h($fout) ?></div><?php endif; ?>
+<?php if ($fout): ?><div class="ds-melding ds-melding-error"><?= h($fout) ?></div><?php endif; ?>
 
-<div class="card">
-  <div class="card-header"><div class="card-title">Nieuwe sollicitant toevoegen</div></div>
-  <div class="card-body">
+<div class="ds-kaart">
+  <div class="bh-kaartkop"><h2>Nieuwe sollicitant toevoegen</h2></div>
+  <div class="bh-kaartbody">
     <form method="POST">
       <?= csrf_input() ?>
 
-      <div class="form-rij">
-        <div class="form-groep"><label>Voornaam <span class="vereist">*</span></label><input type="text" name="voornaam" value="<?= h($_POST['voornaam'] ?? '') ?>" required autofocus></div>
-        <div class="form-groep"><label>Tussenvoegsel</label><input type="text" name="tussenvoegsel" value="<?= h($_POST['tussenvoegsel'] ?? '') ?>"></div>
+      <div class="bh-veldrij">
+        <div class="ds-veld"><label>Voornaam <span class="vereist">*</span></label><input type="text" name="voornaam" value="<?= h($_POST['voornaam'] ?? '') ?>" required autofocus></div>
+        <div class="ds-veld"><label>Tussenvoegsel</label><input type="text" name="tussenvoegsel" value="<?= h($_POST['tussenvoegsel'] ?? '') ?>"></div>
       </div>
-      <div class="form-groep"><label>Achternaam <span class="vereist">*</span></label><input type="text" name="achternaam" value="<?= h($_POST['achternaam'] ?? '') ?>" required></div>
+      <div class="ds-veld"><label>Achternaam <span class="vereist">*</span></label><input type="text" name="achternaam" value="<?= h($_POST['achternaam'] ?? '') ?>" required></div>
 
-      <div class="form-rij">
-        <div class="form-groep">
+      <div class="bh-veldrij">
+        <div class="ds-veld">
           <label>E-mailadres <span class="vereist">*</span></label>
           <input type="email" name="email" value="<?= h($_POST['email'] ?? '') ?>" required>
-          <div class="form-hulp">Als dit adres al bestaat, wordt het profiel bijgewerkt</div>
+          <div class="ds-veld-hint">Als dit adres al bestaat, wordt het profiel bijgewerkt</div>
         </div>
-        <div class="form-groep"><label>Telefoonnummer</label><input type="tel" name="telefoon" value="<?= h($_POST['telefoon'] ?? '') ?>" placeholder="06-12345678"></div>
+        <div class="ds-veld"><label>Telefoonnummer</label><input type="tel" name="telefoon" value="<?= h($_POST['telefoon'] ?? '') ?>" placeholder="06-12345678"></div>
       </div>
 
-      <div class="form-rij">
-        <div class="form-groep"><label>Geboortedatum</label><input type="date" name="geboortedatum" value="<?= h($_POST['geboortedatum'] ?? '') ?>"></div>
-        <div class="form-groep"><label>Geslacht</label>
+      <div class="bh-veldrij">
+        <div class="ds-veld"><label>Geboortedatum</label><input type="date" name="geboortedatum" value="<?= h($_POST['geboortedatum'] ?? '') ?>"></div>
+        <div class="ds-veld"><label>Geslacht</label>
           <select name="geslacht">
             <option value="onbekend">Zeg ik liever niet</option>
             <option value="man">Man</option>
@@ -125,8 +125,8 @@ require __DIR__ . '/layout_top.php';
 
       <hr style="border:none;border-top:1px solid var(--rand);margin:16px 0">
 
-      <div class="form-rij">
-        <div class="form-groep"><label>Seizoen <span class="vereist">*</span></label>
+      <div class="bh-veldrij">
+        <div class="ds-veld"><label>Seizoen <span class="vereist">*</span></label>
           <select name="seizoen_id" required>
             <option value="">— kies seizoen —</option>
             <?php foreach ($seizoenen as $s): ?>
@@ -134,7 +134,7 @@ require __DIR__ . '/layout_top.php';
             <?php endforeach; ?>
           </select>
         </div>
-        <div class="form-groep"><label>Fase</label>
+        <div class="ds-veld"><label>Fase</label>
           <select name="fase">
             <option value="aangemeld">Aangemeld</option>
             <option value="uitgenodigd_selectie">Uitgenodigd selectiedag</option>
@@ -146,11 +146,11 @@ require __DIR__ . '/layout_top.php';
         </div>
       </div>
 
-      <div class="form-groep"><label>Interne notities</label>
+      <div class="ds-veld"><label>Interne notities</label>
         <textarea name="notities" rows="2" placeholder="Bijv: aangemeld via telefonisch contact"><?= h($_POST['notities'] ?? '') ?></textarea>
       </div>
 
-      <div class="form-groep">
+      <div class="ds-veld">
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:400">
           <input type="checkbox" name="stuur_mail" value="1" checked style="width:auto">
           Stuur welkomstmail naar sollicitant (met portaal link)
@@ -158,8 +158,8 @@ require __DIR__ . '/layout_top.php';
       </div>
 
       <div style="display:flex;gap:10px;margin-top:8px">
-        <button type="submit" class="btn btn-primary">Toevoegen</button>
-        <a href="<?= APP_URL ?>/admin/sollicitanten.php" class="btn btn-outline">Annuleer</a>
+        <button type="submit" class="ds-btn ds-btn-primair">Toevoegen</button>
+        <a href="<?= APP_URL ?>/admin/sollicitanten.php" class="ds-btn ds-btn-secundair">Annuleer</a>
       </div>
     </form>
   </div>

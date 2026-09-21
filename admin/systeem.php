@@ -65,27 +65,27 @@ $changelog = function_exists('app_changelog') ? app_changelog() : [];
 require __DIR__ . '/layout_top.php';
 ?>
 
-<div class="card" style="margin-bottom:14px">
-  <div class="card-body" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+<div class="ds-kaart" style="margin-bottom:14px">
+  <div class="bh-kaartbody" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
     <div>
       <div style="font-size:12px;color:var(--tekst-zacht)">Geïnstalleerde versie</div>
       <div style="font-size:24px;font-weight:700;color:var(--navy)"><?= h(APP_VERSIE) ?></div>
     </div>
     <div style="flex:1"></div>
-    <a href="<?= APP_URL ?>/diagnose.php" class="btn btn-outline btn-sm" target="_blank"> Diagnose draaien</a>
+    <a href="<?= APP_URL ?>/diagnose.php" class="ds-btn ds-btn-secundair ds-btn-sm" target="_blank"> Diagnose draaien</a>
     <form method="POST" style="margin:0">
       <?= csrf_input() ?>
       <input type="hidden" name="actie" value="migreer">
-      <button type="submit" class="btn btn-outline btn-sm" title="Voer alle automatische database-migraties uit">Migraties uitvoeren</button>
+      <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm" title="Voer alle automatische database-migraties uit">Migraties uitvoeren</button>
     </form>
   </div>
 </div>
 
 <!-- Systeemgezondheid (health check) -->
 <?php if ($health !== null): ?>
-<div class="card" style="margin-bottom:14px">
-  <div class="card-header"><div class="card-title">Systeemgezondheid</div></div>
-  <div class="card-body">
+<div class="ds-kaart" style="margin-bottom:14px">
+  <div class="bh-kaartkop"><h2>Systeemgezondheid</h2></div>
+  <div class="bh-kaartbody">
     <?php
       $health_kleur = ['ok' => 'var(--groen)', 'waarschuwing' => 'var(--oranje)', 'fout' => 'var(--rood)'];
       $health_bg    = ['ok' => 'var(--groen-bg)', 'waarschuwing' => 'var(--oranje-bg)', 'fout' => 'var(--rood-bg)'];
@@ -121,7 +121,7 @@ require __DIR__ . '/layout_top.php';
     <form method="post" style="margin-top:14px">
       <?= csrf_input() ?>
       <input type="hidden" name="actie" value="health_repareer">
-      <button type="submit" class="btn btn-primary btn-sm">Controleren &amp; repareren</button>
+      <button type="submit" class="ds-btn ds-btn-primair ds-btn-sm">Controleren &amp; repareren</button>
     </form>
   </div>
 </div>
@@ -129,18 +129,18 @@ require __DIR__ . '/layout_top.php';
 
 <!-- Herinneringen: proefdraaien -->
 <?php if (function_exists('herinnering_run')): ?>
-<div class="card" style="margin-bottom:14px" id="herinneringen">
-  <div class="card-header"><div class="card-title">Herinneringen</div></div>
-  <div class="card-body">
+<div class="ds-kaart" style="margin-bottom:14px" id="herinneringen">
+  <div class="bh-kaartkop"><h2>Herinneringen</h2></div>
+  <div class="bh-kaartbody">
     <p style="font-size:13px;color:var(--tekst-zacht);margin:0 0 12px">
       Laatste automatische run: <strong><?= h(instelling('cron.laatste_run', '') ?: 'nog niet') ?></strong>
       (<?= h(instelling('cron.laatste_bron', '') ?: '-') ?>). Proefdraaien toont wie een herinnering zou krijgen zonder iets te versturen.
     </p>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <form method="post" style="margin:0"><?= csrf_input() ?><input type="hidden" name="actie" value="herinneringen_proef">
-        <button type="submit" class="btn btn-outline btn-sm">Proefdraaien (niets versturen)</button></form>
+        <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm">Proefdraaien (niets versturen)</button></form>
       <form method="post" style="margin:0" onsubmit="return confirm('Herinneringen nu echt versturen (via de wachtrij)?')"><?= csrf_input() ?><input type="hidden" name="actie" value="herinneringen_draai">
-        <button type="submit" class="btn btn-primary btn-sm">Nu draaien</button></form>
+        <button type="submit" class="ds-btn ds-btn-primair ds-btn-sm">Nu draaien</button></form>
     </div>
     <?php if ($herinnering_resultaat !== null): ?>
     <div style="margin-top:14px;font-size:13px">
@@ -167,9 +167,9 @@ require __DIR__ . '/layout_top.php';
 <?php endif; ?>
 
 <!-- Tabelstatus -->
-<div class="card" style="margin-bottom:14px">
-  <div class="card-header"><div class="card-title">Database</div></div>
-  <div class="card-body">
+<div class="ds-kaart" style="margin-bottom:14px">
+  <div class="bh-kaartkop"><h2>Database</h2></div>
+  <div class="bh-kaartbody">
     <?php if ($db_fout): ?>
       <div style="color:var(--rood)">Kan de database niet lezen: <?= h($db_fout) ?></div>
     <?php else: ?>
@@ -214,21 +214,21 @@ require __DIR__ . '/layout_top.php';
 </div>
 
 <!-- Logboek -->
-<div class="card">
-  <div class="card-header"><div class="card-title">Logboek</div></div>
+<div class="ds-kaart">
+  <div class="bh-kaartkop"><h2>Logboek</h2></div>
   <div style="padding:0 0 4px">
     <p style="font-size:12.5px;color:var(--tekst-zacht);margin-bottom:12px">
       Alle sporen van het systeem in één tijdlijn: acties, verstuurde berichten, technische fouten,
       het bewijsspoor van ondertekeningen, de AVG-opschoning en mislukte inlogpogingen.
     </p>
-    <a href="<?= APP_URL ?>/admin/logboek.php" class="btn btn-outline btn-sm"><?= icoon('auditlog', 14) ?> Logboek openen</a>
+    <a href="<?= APP_URL ?>/admin/logboek.php" class="ds-btn ds-btn-secundair ds-btn-sm"><?= icoon('auditlog', 14) ?> Logboek openen</a>
   </div>
 </div>
 
 <!-- Changelog -->
-<div class="card">
-  <div class="card-header"><div class="card-title">Changelog</div></div>
-  <div class="card-body">
+<div class="ds-kaart">
+  <div class="bh-kaartkop"><h2>Changelog</h2></div>
+  <div class="bh-kaartbody">
     <?php if (!$changelog): ?>
       <div style="color:var(--tekst-zacht)">Geen changelog beschikbaar.</div>
     <?php else: ?>

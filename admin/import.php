@@ -170,10 +170,10 @@ require __DIR__ . '/layout_top.php';
 
   <?php if ($stap === 'overzicht'): ?>
 
-  <div class="card" style="margin-bottom:14px">
-    <div class="card-header"><div class="card-title">⚠️ Vóór je importeert</div></div>
-    <div class="card-body">
-      <div class="flash flash-waarschuwing">
+  <div class="ds-kaart" style="margin-bottom:14px">
+    <div class="bh-kaartkop"><h2>Vóór je importeert</h2></div>
+    <div class="bh-kaartbody">
+      <div class="ds-melding ds-melding-warn">
         <strong>Eenmalige actie.</strong> Het systeem controleert op e-mailadres — dubbelen worden automatisch overgeslagen. Veilig om meerdere keren te draaien.
       </div>
       <ul style="font-size:13px;color:var(--tekst-zacht);line-height:2;padding-left:18px;margin-bottom:0">
@@ -185,16 +185,16 @@ require __DIR__ . '/layout_top.php';
     </div>
   </div>
 
-  <div class="card">
-    <div class="card-header"><div class="card-title">CSV uploaden</div></div>
-    <div class="card-body">
+  <div class="ds-kaart">
+    <div class="bh-kaartkop"><h2>CSV uploaden</h2></div>
+    <div class="bh-kaartbody">
       <?php if (isset($fout_upload)): ?>
-      <div class="flash flash-fout"><?= h($fout_upload) ?></div>
+      <div class="ds-melding ds-melding-error"><?= h($fout_upload) ?></div>
       <?php endif; ?>
       <form method="POST" enctype="multipart/form-data">
         <input type="hidden" name="start_import" value="1">
         <?= csrf_input() ?>
-        <div class="form-groep">
+        <div class="ds-veld">
           <label>Seizoen</label>
           <select name="seizoen_id" required>
             <?php foreach ($seizoenen as $s): ?>
@@ -204,7 +204,7 @@ require __DIR__ . '/layout_top.php';
             <?php endforeach; ?>
           </select>
         </div>
-        <div class="form-groep">
+        <div class="ds-veld">
           <label>Beginfase</label>
           <select name="fase">
             <option value="aangemeld">Aangemeld (nieuw)</option>
@@ -214,24 +214,24 @@ require __DIR__ . '/layout_top.php';
             <option value="uitgenodigd_tw">Uitgenodigd trainingsweekend</option>
             <option value="aangenomen">Aangenomen</option>
           </select>
-          <div class="form-hulp">Kies de juiste fase voor de te importeren sollicitanten. Als ze allemaal al een selectiedag hebben gehad, kies dan "Selectiedag geweest".</div>
+          <div class="ds-veld-hint">Kies de juiste fase voor de te importeren sollicitanten. Als ze allemaal al een selectiedag hebben gehad, kies dan "Selectiedag geweest".</div>
         </div>
-        <div class="form-groep">
+        <div class="ds-veld">
           <label>CSV bestand</label>
           <input type="file" name="csv_bestand" accept=".csv" required style="padding:6px">
-          <div class="form-hulp">Exporteer uit Google Sheets als CSV (kommagescheiden, UTF-8)</div>
+          <div class="ds-veld-hint">Exporteer uit Google Sheets als CSV (kommagescheiden, UTF-8)</div>
         </div>
-        <button type="submit" class="btn btn-primary" onclick="return confirm('Import starten?')">Import starten</button>
-        <a href="<?= APP_URL ?>/admin/" class="btn btn-outline" style="margin-left:8px">Annuleer</a>
+        <button type="submit" class="ds-btn ds-btn-primair">Import starten</button>
+        <a href="<?= APP_URL ?>/admin/" class="ds-btn ds-btn-secundair" style="margin-left:8px">Annuleer</a>
       </form>
     </div>
   </div>
 
   <?php elseif ($stap === 'resultaat'): ?>
 
-  <div class="card">
-    <div class="card-header"><div class="card-title">✅ Import voltooid</div></div>
-    <div class="card-body">
+  <div class="ds-kaart">
+    <div class="bh-kaartkop"><h2>✅ Import voltooid</h2></div>
+    <div class="bh-kaartbody">
       <div class="imp-stat-rij">
         <div class="imp-stat-box"><div class="n"><?= $import_stats['aangemaakt'] ?></div><div class="l">Aangemaakt</div></div>
         <div class="imp-stat-box"><div class="n"><?= $import_stats['bijgewerkt'] ?></div><div class="l">Bijgewerkt</div></div>
@@ -259,8 +259,8 @@ require __DIR__ . '/layout_top.php';
       <?php endif; ?>
 
       <div style="margin-top:16px;display:flex;gap:8px">
-        <a href="<?= APP_URL ?>/admin/sollicitanten.php" class="btn btn-primary">Naar sollicitanten →</a>
-        <a href="<?= APP_URL ?>/admin/import.php" class="btn btn-outline">Nog een import</a>
+        <a href="<?= APP_URL ?>/admin/sollicitanten.php" class="ds-btn ds-btn-primair">Naar sollicitanten →</a>
+        <a href="<?= APP_URL ?>/admin/import.php" class="ds-btn ds-btn-secundair">Nog een import</a>
       </div>
     </div>
   </div>

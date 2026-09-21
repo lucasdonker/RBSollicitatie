@@ -111,12 +111,12 @@ require __DIR__ . '/layout_top.php';
 </style>
 
 <?php if (!$sid): ?>
-  <div class="flash flash-fout">Geen actief seizoen. <a href="<?= APP_URL ?>/admin/seizoen.php">Stel een seizoen in ↗</a></div>
+  <div class="ds-melding ds-melding-error">Geen actief seizoen. <a href="<?= APP_URL ?>/admin/seizoen.php">Stel een seizoen in ↗</a></div>
 <?php else: ?>
 
 <!-- Scenario's -->
-<div class="card" style="margin-bottom:12px">
-  <div class="card-body" style="padding:12px 16px">
+<div class="ds-kaart" style="margin-bottom:12px">
+  <div class="bh-kaartbody" style="padding:12px 16px">
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <span style="font-size:12px;font-weight:600;color:var(--tekst-zacht)">Scenario:</span>
       <?php foreach ($scenarios as $sc): ?>
@@ -126,21 +126,21 @@ require __DIR__ . '/layout_top.php';
       <?php endforeach; ?>
       <span style="flex:1"></span>
       <a href="<?= APP_URL ?>/admin/export_beschikbaarheid.php?scenario=<?= $scenario_id ?>"
-         class="btn btn-outline btn-sm" title="Exporteer dit scenario als CSV">CSV</a>
-      <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('dupForm').style.display='flex'">+ Dupliceren</button>
+         class="ds-btn ds-btn-secundair ds-btn-sm" title="Exporteer dit scenario als CSV">CSV</a>
+      <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="document.getElementById('dupForm').style.display='flex'">+ Dupliceren</button>
       <?php $huidig_actief = false; foreach ($scenarios as $sc) if ((int)$sc['id']===$scenario_id && !empty($sc['actief'])) $huidig_actief = true; ?>
       <?php if (!$huidig_actief && $scenario_id): ?>
       <form method="POST" style="margin:0">
         <?= csrf_input() ?>
         <input type="hidden" name="sc_actie" value="activeer">
         <input type="hidden" name="scenario_id" value="<?= $scenario_id ?>">
-        <button type="submit" class="btn btn-primary btn-sm">★ Maak actief</button>
+        <button type="submit" class="ds-btn ds-btn-primair ds-btn-sm">★ Maak actief</button>
       </form>
       <form method="POST" style="margin:0" onsubmit="return confirm('Dit scenario en alle planningsregels erin verwijderen?')">
         <?= csrf_input() ?>
         <input type="hidden" name="sc_actie" value="verwijder">
         <input type="hidden" name="scenario_id" value="<?= $scenario_id ?>">
-        <button type="submit" class="btn btn-outline btn-sm" title="Scenario verwijderen">Verwijderen</button>
+        <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm" title="Scenario verwijderen">Verwijderen</button>
       </form>
       <?php endif; ?>
     </div>
@@ -150,22 +150,22 @@ require __DIR__ . '/layout_top.php';
       <input type="hidden" name="bron_id" value="<?= $scenario_id ?>">
       <input type="text" name="naam" placeholder="Naam van het nieuwe scenario" required
              style="flex:1;min-width:200px;padding:7px 10px;border:1px solid var(--rand);border-radius:6px;font-size:13px">
-      <button type="submit" class="btn btn-primary btn-sm">Dupliceren</button>
-      <button type="button" class="btn btn-outline btn-sm" onclick="this.closest('form').style.display='none'">Annuleren</button>
+      <button type="submit" class="ds-btn ds-btn-primair ds-btn-sm">Dupliceren</button>
+      <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="this.closest('form').style.display='none'">Annuleren</button>
     </form>
   </div>
 </div>
 
 <?php if (empty($analyse['mensen'])): ?>
-  <div class="card"><div class="card-body" style="text-align:center;color:var(--tekst-zacht);padding:40px">
+  <div class="ds-kaart"><div class="bh-kaartbody" style="text-align:center;color:var(--tekst-zacht);padding:40px">
     Nog niemand met beschikbaarheid dit seizoen — er valt nog niets te plannen.
   </div></div>
 <?php else: ?>
 
 <div id="signaalBox">
 <?php if ($analyse['signalen']): ?>
-  <div class="card" style="margin-bottom:12px;border-left:4px solid var(--oranje)">
-    <div class="card-body" style="padding:12px 16px">
+  <div class="ds-kaart" style="margin-bottom:12px;border-left:4px solid var(--oranje)">
+    <div class="bh-kaartbody" style="padding:12px 16px">
       <div style="font-size:13.5px;font-weight:600;margin-bottom:6px">Signalen (<?= count($analyse['signalen']) ?>)</div>
       <div style="font-size:12px;color:var(--tekst-zacht);margin-bottom:8px">Aandachtspunten, geen blokkades — jij beslist.</div>
       <ul style="margin:0;padding-left:18px;font-size:12.5px;line-height:1.7">
@@ -271,7 +271,7 @@ require __DIR__ . '/layout_top.php';
 
 <details style="margin-top:14px">
   <summary style="cursor:pointer;font-size:13px;color:var(--tekst-zacht)">Loontabel (dagloon per leeftijd &amp; functie)</summary>
-  <div class="card" style="margin-top:8px;overflow-x:auto">
+  <div class="ds-kaart" style="margin-top:8px;overflow-x:auto">
     <table style="font-size:11px;border-collapse:collapse;width:100%">
       <thead>
         <tr style="background:var(--grijs-bg)">
@@ -432,7 +432,7 @@ function werkBij(d) {
       const items = d.signalen.slice(0, 12).map(s => '<li>' + esc(s.tekst) + '</li>').join('');
       const meer = d.signalen.length > 12 ? '<li style="color:var(--grijs)">\u2026 en ' + (d.signalen.length - 12) + ' meer</li>' : '';
       box.innerHTML =
-        '<div class="card" style="margin-bottom:12px;border-left:4px solid var(--oranje)"><div class="card-body" style="padding:12px 16px">' +
+        '<div class="ds-kaart" style="margin-bottom:12px;border-left:4px solid var(--oranje)"><div class="bh-kaartbody" style="padding:12px 16px">' +
         '<div style="font-size:13.5px;font-weight:600;margin-bottom:6px">\u26a0\ufe0f Signalen (' + d.signalen.length + ')</div>' +
         '<div style="font-size:12px;color:var(--tekst-zacht);margin-bottom:8px">Aandachtspunten, geen blokkades \u2014 jij beslist.</div>' +
         '<ul style="margin:0;padding-left:18px;font-size:12.5px;line-height:1.7">' + items + meer + '</ul></div></div>';

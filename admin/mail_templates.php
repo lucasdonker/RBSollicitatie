@@ -220,7 +220,7 @@ require __DIR__ . '/layout_top.php';
     <?= csrf_input() ?><input type="hidden" name="actie" value="nieuw">
     <div class="veld-label">Nieuw eigen sjabloon</div>
     <input type="text" name="naam" placeholder="Naam, bv. Magazine seizoen" required style="width:100%;font-size:12px;padding:6px 8px;margin-bottom:6px">
-    <button type="submit" class="btn btn-outline btn-sm" style="width:100%;justify-content:center">Aanmaken</button>
+    <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm" style="width:100%;justify-content:center">Aanmaken</button>
     <div style="font-size:10px;color:var(--grijs);margin-top:6px">Voor handmatige en geplande berichten.</div>
   </form>
 
@@ -229,17 +229,17 @@ require __DIR__ . '/layout_top.php';
     <div class="veld-label">Standaard hero-afbeelding (URL)</div>
     <input type="text" name="hero_url" value="<?= h($hero_row['body_html'] ?? '') ?>" placeholder="https://.../foto.jpg" style="width:100%;font-size:11px;padding:6px 8px;margin-bottom:5px">
     <div style="font-size:10px;color:var(--grijs);margin-bottom:6px">Leeg = standaard strandfoto</div>
-    <button type="submit" class="btn btn-outline btn-sm" style="width:100%;justify-content:center">Opslaan</button>
+    <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm" style="width:100%;justify-content:center">Opslaan</button>
   </form>
 </div>
 
 <!-- 2: Editor -->
 <?php if ($actief): ?>
 <div>
-<div class="card">
-  <div class="card-header" style="align-items:flex-start">
+<div class="ds-kaart">
+  <div class="bh-kaartkop" style="align-items:flex-start">
     <div>
-      <div class="card-title"><?= h($actief['naam'] ?? $actief_slug) ?></div>
+      <h2><?= h($actief['naam'] ?? $actief_slug) ?></h2>
       <div style="font-size:12px;color:var(--tekst-zacht);margin-top:2px"><?= h($def['beschrijving'] ?? ($actief['beschrijving'] ?? '')) ?></div>
       <div style="font-size:11px;color:var(--grijs);margin-top:4px">
         Type: <code><?= h($actief_slug) ?></code>
@@ -259,7 +259,7 @@ require __DIR__ . '/layout_top.php';
     </form>
     <?php endif; ?>
   </div>
-  <div class="card-body" style="padding:0">
+  <div class="bh-kaartbody" style="padding:0">
     <form method="POST" enctype="multipart/form-data" id="tmplForm">
       <?= csrf_input() ?>
       <input type="hidden" name="actie" value="opslaan">
@@ -329,9 +329,9 @@ require __DIR__ . '/layout_top.php';
       </div>
 
       <div style="padding:12px 16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <button type="submit" class="btn btn-primary">Opslaan</button>
-        <a href="?preview=<?= h($actief_slug) ?>" target="_blank" class="btn btn-outline btn-sm">Voorbeeld e-mail</a>
-        <a href="?preview=<?= h($actief_slug) ?>&kanaal=kort" target="_blank" class="btn btn-outline btn-sm">Voorbeeld kort bericht</a>
+        <button type="submit" class="ds-btn ds-btn-primair">Opslaan</button>
+        <a href="?preview=<?= h($actief_slug) ?>" target="_blank" class="ds-btn ds-btn-secundair ds-btn-sm">Voorbeeld e-mail</a>
+        <a href="?preview=<?= h($actief_slug) ?>&kanaal=kort" target="_blank" class="ds-btn ds-btn-secundair ds-btn-sm">Voorbeeld kort bericht</a>
         <div style="flex:1"></div>
         <?php if (!empty($actief['gewijzigd_op'])): ?><span style="font-size:11px;color:var(--grijs)">Bijgewerkt: <?= datum_nl(substr($actief['gewijzigd_op'], 0, 10)) ?></span><?php endif; ?>
       </div>
@@ -340,10 +340,10 @@ require __DIR__ . '/layout_top.php';
     <div style="padding:0 16px 14px;display:flex;gap:8px">
       <?php if ($def): ?>
       <form method="POST"><?= csrf_input() ?><input type="hidden" name="actie" value="reset"><input type="hidden" name="slug" value="<?= h($actief_slug) ?>">
-        <button type="submit" class="btn btn-outline btn-sm" onclick="return confirm('Terug naar de standaardtekst? Je wijzigingen gaan verloren.')">Terugzetten naar standaard</button></form>
+        <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="return confirm('Terug naar de standaardtekst? Je wijzigingen gaan verloren.')">Terugzetten naar standaard</button></form>
       <?php else: ?>
       <form method="POST"><?= csrf_input() ?><input type="hidden" name="actie" value="verwijder"><input type="hidden" name="slug" value="<?= h($actief_slug) ?>">
-        <button type="submit" class="btn btn-rood btn-sm" onclick="return confirm('Dit sjabloon verwijderen?')">Verwijderen</button></form>
+        <button type="submit" class="ds-btn ds-btn-gevaar ds-btn-sm" onclick="return confirm('Dit sjabloon verwijderen?')">Verwijderen</button></form>
       <?php endif; ?>
     </div>
   </div>
@@ -352,9 +352,9 @@ require __DIR__ . '/layout_top.php';
 
 <!-- 3: Variabelen -->
 <div>
-<div class="card">
-  <div class="card-header"><div class="card-title">Variabelen</div></div>
-  <div class="card-body" style="padding:12px 14px">
+<div class="ds-kaart">
+  <div class="bh-kaartkop"><h2>Variabelen</h2></div>
+  <div class="bh-kaartbody" style="padding:12px 14px">
     <p style="font-size:12px;color:var(--tekst-zacht);margin-bottom:8px">Klik om in te voegen in de e-mailtekst (of typ ze in de korte tekst).</p>
     <?php if ($vars_type): ?>
     <div style="margin-bottom:10px">

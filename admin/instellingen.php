@@ -472,13 +472,13 @@ require __DIR__ . '/layout_top.php';
           <label>Huisregels (pdf) <span class="tip" data-tip="Aangenomen strandwachten krijgen de taak 'Huisregels lezen' met een link naar dit document. Zonder document blijft de taak staan als 'volgt binnenkort'."></span></label>
           <?php if ($_hr_rij): ?>
             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
-              <span class="badge badge-groen">In gebruik</span>
+              <span class="ds-badge-fase ds-fase-groen">In gebruik</span>
               <a href="<?= h(bijlage_download_url((int)$_hr_rij['id'], 7)) ?>" target="_blank" rel="noopener" style="font-size:13px;color:var(--navy)"><?= h($_hr_rij['bestandsnaam']) ?></a>
               <span class="ds-veld-hint"><?= round((int)$_hr_rij['grootte'] / 1024) ?> kB · geplaatst <?= h(datum_nl(substr((string)$_hr_rij['aangemaakt_op'], 0, 10))) ?></span>
               <label style="font-size:12px;color:var(--tekst-zacht);display:inline-flex;align-items:center;gap:5px"><input type="checkbox" name="huisregels_los" value="1"> Losmaken van de taak</label>
             </div>
           <?php elseif ($_hr_id > 0): ?>
-            <div class="flash flash-fout" style="margin-bottom:8px">Het gekoppelde document (#<?= $_hr_id ?>) bestaat niet meer. Upload een nieuwe pdf.</div>
+            <div class="ds-melding ds-melding-error" style="margin-bottom:8px">Het gekoppelde document (#<?= $_hr_id ?>) bestaat niet meer. Upload een nieuwe pdf.</div>
           <?php else: ?>
             <div class="ds-veld-hint" style="margin-bottom:8px">Nog geen document. De taak "Huisregels lezen" staat bij aangenomen sollicitanten al klaar en krijgt automatisch een link zodra je hier een pdf plaatst.</div>
           <?php endif; ?>
@@ -1347,7 +1347,7 @@ require __DIR__ . '/layout_top.php';
 <div class="ds-kaart">
   <div class="bh-kaartkop"><h2>Bewaartermijnen</h2></div>
   <div class="bh-kaartbody">
-    <div class="flash flash-info" style="margin-bottom:16px">
+    <div class="ds-melding ds-melding-info" style="margin-bottom:16px">
       <strong>Automatisch opschonen.</strong> Volgens de AVG mag je persoonsgegevens niet langer bewaren dan nodig.
       Hieronder stel je in na hoeveel tijd welke gegevens worden opgeschoond. Aangenomen kandidaten worden nooit
       automatisch verwijderd. Zet een termijn op <code>0</code> om die categorie niet automatisch op te schonen.
