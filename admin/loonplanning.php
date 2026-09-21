@@ -2,6 +2,8 @@
 require_once __DIR__ . '/../includes/functions.php';
 $pagina_titel = 'Loonplanning';
 $actieve_nav  = 'loonplanning';
+// Weken naast elkaar: geen tekstbreedte, maar de ruimte die er is.
+$pagina_breed = true;
 vereis_recht('loonplanning', 'lezen');
 
 $db = db();

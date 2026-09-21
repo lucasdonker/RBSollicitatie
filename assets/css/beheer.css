@@ -1410,6 +1410,19 @@ body.bh-paneel-open .bh-inhoud { transition: padding-right .15s ease; }
 
 .bh-zijpaneel-status { margin: 0; font-size: 13px; color: var(--ink-soft); }
 
+/* Een dag die de sollicitant liever vrij heeft. Geen blokkade — de planner beslist —
+   maar wel iets dat je moet zien voordat je hem inroostert. Niet alleen kleur: er
+   staat ook een stipje onder. */
+.bh-dagknop.voorkeur-vrij { position: relative; }
+.bh-dagknop.voorkeur-vrij::after {
+  content: ""; position: absolute; left: 50%; bottom: 5px; transform: translateX(-50%);
+  width: 4px; height: 4px; border-radius: 50%; background: var(--fase-paars, var(--accent));
+}
+.bh-dagknop[aria-pressed="true"].voorkeur-vrij::after { background: #fff; }
+
+/* Terugdraaien staat links, los van annuleren/opslaan: het is een andere soort actie. */
+.bh-zijpaneel-voet .bh-zijpaneel-wis { margin-right: auto; flex: 0 0 auto; }
+
 /* Vrije toelichting onder de redenkeuze. */
 .bh-zijpaneel-redenvrij { margin-top: 2px; }
 

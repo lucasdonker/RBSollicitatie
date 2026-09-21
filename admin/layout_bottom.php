@@ -321,6 +321,7 @@ function corrPaneelNeerzetten(naam, week) {
             '<button type="button" class="bh-snelkeuze" onclick="corrSnel(\'geen\')">Deze week niet</button>' +
           '</div>' +
           '<p class="bh-zijpaneel-hint" id="corrSamenvatting">Niets geselecteerd — dat betekent: deze week helemaal niet beschikbaar.</p>' +
+          '<p class="bh-zijpaneel-hint" id="corrNorm" hidden></p>' +
           '<label class="bh-zijpaneel-vink" id="corrKopieerRegel" hidden>' +
             '<input type="checkbox" id="corrKopieer">' +
             '<span id="corrKopieerTekst">Ook de volgende weken</span>' +
@@ -352,6 +353,10 @@ function corrPaneelNeerzetten(naam, week) {
 
       '</div>' +
       '<footer class="bh-zijpaneel-voet">' +
+        // Alleen zichtbaar als er iets terug te draaien ís: dan valt de week terug op
+        // wat de sollicitant zelf opgaf.
+        '<button type="button" class="ds-btn ds-btn-zacht ds-btn-sm bh-zijpaneel-wis" id="corrWis"' +
+              ' onclick="correctieWis()" hidden>Correctie ongedaan maken</button>' +
         '<button type="button" class="ds-btn ds-btn-zacht ds-btn-sm" onclick="corrSluit()">Annuleren</button>' +
         '<button type="button" class="ds-btn ds-btn-primair ds-btn-sm" id="corrOpslaan"' +
               ' onclick="correctieOpslaan()">Opslaan</button>' +
@@ -373,12 +378,41 @@ function corrVullen(d) {
   zet('corrPeriode', 'week ' + d.week + (d.periode ? ' · ' + d.periode : ''));
   zet('corrBerichtTekst', (d.naam ? d.naam.split(' ')[0] : 'De sollicitant') + ' hierover berichten');
 
-  // Dagen zoals ze nu staan
+  /* De dagen zoals ze nu gelden — niet alleen een eerdere correctie. Klik je op een
+     cel waar "4" staat, dan zie je die vier dagen aangevinkt en weet je wat je
+     verandert. Een dag die de sollicitant liever vrij heeft krijgt een merkteken: de
+     planner beslist, maar moet het wel weten. */
   var aan = d.dagen || [];
+  var vrij = d.voorkeur_vrij || [];
   document.querySelectorAll('#corrPaneel .bh-dagknop').forEach(function (b) {
-    b.setAttribute('aria-pressed', aan.indexOf(parseInt(b.dataset.dag, 10)) !== -1 ? 'true' : 'false');
+    var nr = parseInt(b.dataset.dag, 10);
+    b.setAttribute('aria-pressed', aan.indexOf(nr) !== -1 ? 'true' : 'false');
+    if (vrij.indexOf(nr) !== -1) {
+      b.classList.add('voorkeur-vrij');
+      b.title = 'Heeft deze dag liever vrij (voorkeur, jij beslist)';
+    }
   });
   corrSamenvatting();
+
+  /* Het getal in de cel is begrensd door de norm; er kunnen dus méér dagen aanstaan
+     dan de cel laat zien. Zonder deze regel lijkt het paneel iets anders te zeggen
+     dan het raster. */
+  var normregel = document.getElementById('corrNorm');
+  if (!d.ingevuld) {
+    normregel.hidden = false;
+    normregel.textContent = 'Deze sollicitant heeft voor deze week nog niets ingevuld. '
+                          + 'Wat je hier kiest geldt als correctie van het bestuur.';
+  } else if (d.norm && aan.length > d.norm) {
+    normregel.hidden = false;
+    normregel.textContent = 'In het raster staat ' + d.norm + ': dat is de norm van deze persoon, '
+                          + 'niet het aantal dagen dat hij kan.';
+  } else if (d.regime === 'weekend') {
+    normregel.hidden = false;
+    normregel.textContent = 'Deze week telt als weekendweek — alleen de weekenddagen tellen mee.';
+  }
+
+  var wis = document.getElementById('corrWis');
+  if (wis && d.heeft_correctie) wis.hidden = false;
 
   // Doorzetten naar de rest van het seizoen
   corrLaatsteWeek = d.laatste_week || 0;
@@ -503,23 +537,27 @@ function correctieOpslaan() {
   .catch(function () { klaar(); bhToast('Verbindingsfout — probeer opnieuw.', 'fout'); });
 }
 
+/** Zonder argumenten: de week die op dat moment in het paneel staat. */
 function correctieWis(solId, week) {
+  solId = solId || corrSol;
+  week  = week  || corrWeek;
   bhBevestig({
     titel: 'Correctie voor week ' + week + ' ongedaan maken?',
     tekst: 'De beschikbaarheid valt dan terug op wat de sollicitant zelf opgaf.',
     knop: 'Ja, herstellen'
   }).then(function (ja) {
     if (!ja) return;
+    var klaar = window.P13Actie ? window.P13Actie.bezig(null, document.getElementById('corrWis')) : function () {};
     fetch(APP_URL + '/admin/api_correctie.php', {
       method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({ sol_id: solId, week: week, soort: '', _csrf: CSRF })
     })
     .then(function (r) { return r.json(); })
     .then(function (data) {
-      if (!data.ok) { bhToast(data.fout || 'Herstellen mislukt.', 'fout'); return; }
+      if (!data.ok) { klaar(); bhToast(data.fout || 'Herstellen mislukt.', 'fout'); return; }
       location.reload();
     })
-    .catch(function () { bhToast('Verbindingsfout — probeer opnieuw.', 'fout'); });
+    .catch(function () { klaar(); bhToast('Verbindingsfout — probeer opnieuw.', 'fout'); });
   });
 }
 

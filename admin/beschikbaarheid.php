@@ -3,6 +3,9 @@ require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/beheer/laden.php';
 $pagina_titel = 'Beschikbaarheid';
 $actieve_nav  = 'beschikbaarheid';
+// Een raster met een kolom per week is geen tekst: de leesbreedte van 1400px zou het
+// laten schuiven terwijl er rechts ruimte over is.
+$pagina_breed = true;
 vereis_recht('beschikbaarheid', 'lezen');
 
 $db      = db();

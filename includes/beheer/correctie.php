@@ -75,6 +75,27 @@ function bh_corr_week(int $sol_id, int $week): array {
         if ((int)$c['week'] === $week) { $corr = $c; break; }
     }
 
+    /* Wat geldt er nu voor deze week? Niet alleen de correctie — die is er meestal
+       niet. Klik je op een cel waar "4" staat, dan moet je die vier dagen aangevinkt
+       zien staan; anders begin je bij niets en weet je niet wat je verandert.
+       beschikbaarheid2_effectief() rekent alles mee: het regime (hele week of alleen
+       weekend), afwezigheden, goedgekeurde verzoeken én een eventuele correctie. */
+    $eff = function_exists('beschikbaarheid2_effectief') ? beschikbaarheid2_effectief($sol_id) : [];
+    $nu  = $eff[$week] ?? null;
+
+    if ($corr && (string)$corr['soort'] === 'niet') {
+        $dagen_nu = [];                       // hele week geschrapt door het bestuur
+    } elseif ($corr && is_array($corr['dagen']) && $corr['dagen']) {
+        $dagen_nu = array_map('intval', $corr['dagen']);
+    } else {
+        $dagen_nu = array_map('intval', $nu['dagen'] ?? []);
+    }
+
+    /* Het getal in de cel is dagen_max: de norm kan lager liggen dan het aantal dagen
+       dat iemand kán. Dan staan er meer vinkjes dan het getal in de cel, en dat moet
+       het paneel uitleggen in plaats van het te verbergen. */
+    $norm = (int)($nu['dagen_max'] ?? count($dagen_nu));
+
     // Reden terugvertalen naar de keuzelijst: staat er een bekende reden voor de
     // liggende streep, dan was die gekozen; anders is het vrije tekst.
     $reden = (string)($corr['reden'] ?? '');
@@ -90,18 +111,23 @@ function bh_corr_week(int $sol_id, int $week): array {
     if ($sleutel === '' && $reden !== '') $sleutel = 'anders';
 
     return [
-        'ok'           => true,
-        'naam'         => $naam,
-        'initialen'    => bh_corr_initialen($rij),
-        'week'         => $week,
-        'periode'      => $periode,
-        'soort'        => $corr ? (string)$corr['soort'] : null,
-        'dagen'        => $corr && is_array($corr['dagen']) ? array_map('intval', $corr['dagen']) : [],
-        'reden'        => $reden,
-        'redensleutel' => $sleutel,
-        'voorlopig'    => !empty($data['profiel']['voorlopig']),
-        'laatste_week' => $weken ? (int)array_key_last($weken) : $week,
-        'historie'     => bh_corr_historie($sol_id, $week, $corr, $data),
+        'ok'             => true,
+        'naam'           => $naam,
+        'initialen'      => bh_corr_initialen($rij),
+        'week'           => $week,
+        'periode'        => $periode,
+        'soort'          => $corr ? (string)$corr['soort'] : null,
+        'dagen'          => $dagen_nu,
+        'norm'           => $norm,
+        'regime'         => (string)($nu['regime'] ?? ''),
+        'voorkeur_vrij'  => array_map('intval', $nu['voorkeur_vrij'] ?? []),
+        'heeft_correctie'=> $corr !== null,
+        'ingevuld'       => $nu !== null || $corr !== null,
+        'reden'          => $reden,
+        'redensleutel'   => $sleutel,
+        'voorlopig'      => !empty($data['profiel']['voorlopig']),
+        'laatste_week'   => $weken ? (int)array_key_last($weken) : $week,
+        'historie'       => bh_corr_historie($sol_id, $week, $corr, $data),
     ];
 }
 

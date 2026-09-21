@@ -4,6 +4,14 @@
    Paal 13 — Stijl  |  Light + Dark mode  |  Responsive
 ═══════════════════════════════════════════════════════════════ */
 
+/* hidden betekent: dit hoort er niet te staan.
+   De browser zet daar display:none voor, maar dat komt uit de UA-stylesheet en
+   verliest van élke eigen regel die display zet — een .ds-btn met display:inline-flex
+   bleef dus gewoon staan mét hidden erop. Vandaar een losse [hidden]-regel bij .ond,
+   .blk, .pt-taakrij-inline, .ui-info-paneel, .bs-uitz-body en .pg-paneel: allemaal
+   hetzelfde lapmiddel. Eén keer hier, dan hoeft dat nergens meer. */
+[hidden] { display: none !important; }
+
 /* ── CSS Custom Properties ─────────────────────────────────── */
 :root {
   /* Merk (paal13-stijlgids) */

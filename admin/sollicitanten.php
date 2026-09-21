@@ -192,6 +192,11 @@ $heeft_filter = $_f['actief'];
 
 $pagina_titel = 'Sollicitanten';
 $actieve_nav  = 'sollicitanten';
+/* De leesbreedte van 1400px is er voor schermen met tekst; een lijst is dat niet. Hij
+   liet rechts een strook wit staan terwijl de kolommen werden samengeperst, en zodra
+   je er formuliervelden bij aanzette ging de tabel binnen die 1400px schuiven terwijl
+   er een half scherm leeg was. */
+$pagina_breed = true;
 require __DIR__ . '/layout_top.php';
 ?>
 

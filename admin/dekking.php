@@ -15,6 +15,8 @@ vereis_recht('dekking', 'lezen');
 
 $pagina_titel = 'Dekking';
 $actieve_nav  = 'dekking';
+// Weken naast elkaar: geen tekstbreedte, maar de ruimte die er is.
+$pagina_breed = true;
 
 $seizoen = function_exists('actief_seizoen') ? actief_seizoen() : null;
 $sid     = $seizoen ? (int)$seizoen['id'] : 0;
