@@ -65,6 +65,28 @@
         dlg.appendChild(p);
       }
 
+      /* Eén optioneel vinkje in de dialoog, bijvoorbeeld "zonder bericht versturen".
+         De keuze hoort bij het moment van besluiten, niet in een instelling die
+         iedereen raakt. Bij ja krijgt de aanroeper true of {vink:true}. */
+      var vink = null;
+      if (opt.vink) {
+        var lab = document.createElement('label');
+        lab.className = 'bh-dialoog-vink';
+        vink = document.createElement('input');
+        vink.type = 'checkbox';
+        if (opt.vink.aan) vink.checked = true;
+        var sp = document.createElement('span');
+        sp.textContent = opt.vink.label;
+        lab.appendChild(vink); lab.appendChild(sp);
+        dlg.appendChild(lab);
+        if (opt.vink.uitleg) {
+          var hu = document.createElement('p');
+          hu.className = 'bh-dialoog-vinkhulp';
+          hu.textContent = opt.vink.uitleg;
+          dlg.appendChild(hu);
+        }
+      }
+
       var rij = document.createElement('div');
       rij.className = 'bh-dialoog-knoppen';
       var nee = document.createElement('button');
@@ -85,7 +107,9 @@
         klaar(antwoord);
       }
       nee.addEventListener('click', function () { sluit(false); });
-      ja.addEventListener('click', function () { sluit(true); });
+      ja.addEventListener('click', function () {
+        sluit(vink ? { vink: vink.checked } : true);
+      });
       dlg.addEventListener('cancel', function (e) { e.preventDefault(); sluit(false); });
 
       if (typeof dlg.showModal === 'function') { dlg.showModal(); ja.focus(); }

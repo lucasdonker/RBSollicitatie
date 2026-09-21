@@ -135,6 +135,16 @@ html[data-theme="dark"] .bh-nav-link.actief { background: var(--surface); color:
    kinderen: een kaart in een flex- of gridkolom krijgt zijn ruimte van de gap. */
 .bh-inhoud > .ds-kaart { margin-bottom: 14px; }
 .bh-inhoud > .ds-kaart:last-child { margin-bottom: 0; }
+
+/* Eén keuze in een bevestiging, bijvoorbeeld "zonder bericht versturen". */
+.bh-dialoog-vink {
+  display: flex; align-items: center; gap: 9px; cursor: pointer;
+  margin-top: 14px; padding: 10px 12px; min-height: 44px;
+  background: var(--bg-subtle); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  font-size: 14px; color: var(--ink);
+}
+.bh-dialoog-vink input { width: 17px; height: 17px; accent-color: var(--navy); flex: none; }
+.bh-dialoog-vinkhulp { margin: 5px 2px 0; font: var(--text-meta); color: var(--ink-soft); }
 .bh-inhoud.breed { max-width: none; }
 
 .bh-overlay {

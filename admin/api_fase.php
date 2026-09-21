@@ -16,14 +16,21 @@ if (!$sol_id || !function_exists('fase_zetten') || !isset(fasen()[$naar])) {
     echo json_encode(['ok' => false, 'fout' => 'Ongeldige invoer']); exit;
 }
 
+// "Zonder bericht": soms heb je al gebeld, of gaat het om een correctie van een fase
+// die per ongeluk verkeerd stond. Tot nu toe was de enige uitweg het kanaal van dat
+// meldingstype tijdelijk uitzetten bij Instellingen — dat raakte iedereen, niet alleen
+// deze persoon. Het blijft in het logboek staan dát het stil ging.
+$stil = !empty($_POST['stil']);
+
 try {
     // Eén centrale fase-functie: zet de fase, zet documenten/kennismakingspakket klaar en
     // verstuurt de bijbehorende melding via de meldingen-kern.
-    $res = fase_zetten($sol_id, $naar, 'paneel');
+    $res = fase_zetten($sol_id, $naar, 'paneel', ['stil' => $stil]);
     if (!$res['ok']) { echo json_encode(['ok' => false, 'fout' => $res['fout'] ?? 'Fase wijzigen mislukt']); exit; }
 
     $mail_status  = $res['melding']['status'] ?? null;
     $mail_melding = fase_melding_tekst($res) ?: null;
+    if ($stil) $mail_melding = 'Fase gewijzigd zonder bericht — je stuurt zelf iets, of het is al besproken.';
     if ($res['ongewijzigd']) $mail_melding = 'Fase was al ' . fase_label($naar) . '.';
 
     // Bepaal de volgende snelle actie voor in de tabel-rij

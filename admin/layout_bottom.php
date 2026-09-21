@@ -56,13 +56,19 @@ function fasWijzigen(solId, naar, label) {
   bhBevestig({
     titel: 'Fase wijzigen naar "' + label + '"?',
     tekst: 'Hoort bij deze overgang een bericht, dan gaat dat automatisch de deur uit.',
-    knop:  'Ja, wijzigen'
+    knop:  'Ja, wijzigen',
+    // Heb je al gebeld, of corrigeer je een fase die verkeerd stond? Dan hoeft er
+    // geen standaardbericht uit. Tot nu toe kon dat alleen door het hele kanaal
+    // tijdelijk uit te zetten bij Instellingen — en dat raakte iedereen.
+    vink: { label: 'Zonder bericht versturen',
+            uitleg: 'De fase verandert wel; er gaat alleen geen automatisch bericht naar deze persoon.' }
   }).then(function (ja) {
     if (!ja) return;
+    var stil = (typeof ja === 'object' && ja.vink) ? '1' : '';
     fetch(APP_URL + '/admin/api_fase.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ sol_id: solId, naar: naar, _csrf: CSRF })
+      body: new URLSearchParams({ sol_id: solId, naar: naar, stil: stil, _csrf: CSRF })
     })
     .then(function (r) { return r.json(); })
     .then(function (data) {
@@ -100,38 +106,60 @@ function kanaalVoorkeurZet(pid, keuze, el) {
    herhaalt de kern en vraagt om een bewuste tweede klik. */
 function verwijderActie(solId, actie, bevestiging) {
   var knop = event && event.target ? event.target : null;
-  bhBevestig({
-    titel: 'Dit dossier verwijderen?',
-    tekst: bevestiging || 'Het formulier, de beschikbaarheid, de notities en de ondertekende '
-         + 'documenten gaan mee. Dit kun je niet terugdraaien.',
-    knop: 'Ja, verwijderen', gevaar: true
-  }).then(function (ja) {
-    if (!ja) return;
-    var oud = knop ? knop.textContent : '';
+  var oud = knop ? knop.textContent : '';
+
+  function stuur(ookLoondocs) {
     if (knop) { knop.disabled = true; knop.textContent = 'Bezig…'; }
+    var body = { sol_id: solId, actie: actie, _csrf: CSRF };
+    if (ookLoondocs) body.ook_loondocs = '1';
     fetch(APP_URL + '/admin/api_verwijder.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ sol_id: solId, actie: actie, _csrf: CSRF })
+      body: new URLSearchParams(body)
     })
     .then(function (r) { return r.json(); })
     .then(function (data) {
+      if (knop) { knop.disabled = false; knop.textContent = oud; }
       if (!data.ok) {
+        /* Verwerkt loondossier: de server vraagt om een expliciete tweede keuze, omdat
+           de loonheffing en de ID-kopie onder de bewaarplicht van vijf jaar vallen.
+           Eerder toonde het scherm alleen de foutmelding en kwam je niet verder — de
+           parameter die de server verwacht werd nergens meegestuurd. */
+        if (data.loondossier) { vraagLoondossier(data.fout); return; }
         bhToast(data.fout || 'Verwijderen mislukt.', 'fout');
-        if (knop) { knop.disabled = false; knop.textContent = oud; }
         return;
       }
-      if (data.verwijderd) {
-        window.location.href = APP_URL + '/admin/sollicitanten.php';
-      } else {
-        location.reload();
-      }
+      if (data.verwijderd) window.location.href = APP_URL + '/admin/sollicitanten.php';
+      else location.reload();
     })
     .catch(function () {
       bhToast('Verbindingsfout — probeer opnieuw.', 'fout');
       if (knop) { knop.disabled = false; knop.textContent = oud; }
     });
-  });
+  }
+
+  function vraagLoondossier(reden) {
+    bhBevestig({
+      titel: 'Er ligt een verwerkt loondossier',
+      tekst: (reden || '') + ' Het loonheffingsformulier en de kopie van het identiteitsbewijs '
+           + 'moeten vijf jaar bewaard blijven na afloop van het dienstjaar. Is het dienstverband '
+           + 'nooit doorgegaan, dan vervalt die plicht en mag alles weg.',
+      vink: { label: 'Het dienstverband is niet doorgegaan',
+              uitleg: 'Vink dit alleen aan als deze persoon nooit heeft gewerkt. De stukken worden dan ook vernietigd.' },
+      knop: 'Verwijderen', gevaar: true
+    }).then(function (ja) {
+      if (!ja) return;
+      if (!ja.vink) { bhToast('Niets verwijderd — zonder die bevestiging blijft het loondossier staan.', 'info'); return; }
+      stuur(true);
+    });
+  }
+
+  bhBevestig({
+    titel: 'Dit dossier verwijderen?',
+    tekst: bevestiging || 'Het formulier, de beschikbaarheid, de notities en de ondertekende '
+         + 'documenten gaan mee. Dit kun je niet terugdraaien.',
+    knop: 'Ja, verwijderen', gevaar: true
+  }).then(function (ja) { if (ja) stuur(false); });
 }
 
 /* ── AI Analyse (via wachtrij) ─────────────────────────────── */

@@ -175,9 +175,27 @@ function ondertekeningen_klaarzetten_sd(int $sol_id): array {
         // Maak beide documenten aan; verzamel links voor één overzichtelijke mail
         $nieuwe_links = []; $nieuwe_ids = [];
         foreach (['gezondheid_ouder', 'intake_ouder'] as $type) {
-            $check = $db->prepare("SELECT 1 FROM ondertekeningen WHERE sollicitatie_id=? AND type=? LIMIT 1");
+            $check = $db->prepare("SELECT id, ondertekenaar_email, ondertekend_op FROM ondertekeningen
+                                   WHERE sollicitatie_id=? AND type=? ORDER BY id DESC LIMIT 1");
             $check->execute([$sol_id, $type]);
-            if ($check->fetchColumn()) continue;
+            $bestaand = $check->fetch();
+
+            if ($bestaand) {
+                // Staat er al een rij, maar is het adres van de ouder intussen gecorrigeerd?
+                // Dan het adres bijwerken en de link opnieuw meesturen. Eerder werd hier
+                // alleen `continue` gedaan: de herinnering bleef daardoor naar het oude,
+                // verkeerde adres gaan en "opnieuw versturen" deed zichtbaar niets.
+                if (empty($bestaand['ondertekend_op'])
+                    && strcasecmp((string)$bestaand['ondertekenaar_email'], (string)$sol['ouder_email']) !== 0) {
+                    $db->prepare("UPDATE ondertekeningen SET ondertekenaar_email=?, ondertekenaar_naam=? WHERE id=?")
+                       ->execute([$sol['ouder_email'], $sol['ouder_naam'] ?: null, (int)$bestaand['id']]);
+                    $tq = $db->prepare("SELECT token FROM ondertekeningen WHERE id=?");
+                    $tq->execute([(int)$bestaand['id']]);
+                    $nieuwe_ids[] = (int)$bestaand['id'];
+                    $nieuwe_links[ondertekening_label($type)] = ondertekening_url((string)$tq->fetchColumn());
+                }
+                continue;
+            }
 
             $token = bin2hex(random_bytes(24));
             $db->prepare("INSERT INTO ondertekeningen (sollicitatie_id, type, token, ondertekenaar_rol, ondertekenaar_naam, ondertekenaar_email) VALUES (?,?,?,'ouder',?,?)")
