@@ -17,7 +17,7 @@ $_besl   = $tab_dossier['besluit'] ?? null;
 $_gem    = bh_dossier_score($tab_dossier);
 
 if (!$_scores && !$_obs) {
-    echo '<div class="ds-kaart" style="padding:16px">';
+    echo '<div class="ds-kaart ds-kaart-p">';
     $leeg_titel = 'Nog niet beoordeeld';
     $leeg_tekst = 'Zodra er op de selectiedag scores of observaties zijn vastgelegd, staan ze hier.';
     $leeg_icoon = 'ster';

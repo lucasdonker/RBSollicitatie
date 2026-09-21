@@ -18,7 +18,7 @@ $_eff = function_exists('beschikbaarheid2_effectief') ? beschikbaarheid2_effecti
 $_prof = function_exists('beschikbaarheid2_van') ? (beschikbaarheid2_van((int)$_s['id'])['profiel'] ?? null) : null;
 
 if (!$_b && !$_eff) {
-    echo '<div class="ds-kaart" style="padding:16px">';
+    echo '<div class="ds-kaart ds-kaart-p">';
     $leeg_titel = 'Nog geen beschikbaarheid';
     $leeg_tekst = h($_s['voornaam']) . ' heeft nog niet doorgegeven welke weken hij kan.';
     $leeg_icoon = 'kalender';

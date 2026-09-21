@@ -73,7 +73,7 @@ require __DIR__ . '/layout_top.php';
 <?php endif; ?>
 
 <!-- Filters -->
-<div class="ds-kaart" style="margin-bottom:14px">
+<div class="ds-kaart">
   <div class="bh-kaartbody" style="padding:12px 16px">
     <form method="get" class="filter-balk" role="search" aria-label="Logboek doorzoeken">
       <?php if ($f['bron'] !== ''): ?><input type="hidden" name="bron" value="<?= h($f['bron']) ?>"><?php endif; ?>

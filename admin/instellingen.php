@@ -23,7 +23,13 @@ ANONIEME SOLLICITANTGEGEVENS:
 
 Schrijf een beknopt assessment in dit exacte format (geen inleiding, direct beginnen):
 
-**Geschiktheid:** [★ t/m ★★★★★] — [één eerlijke zin: waarom wel of niet geschikt, zonder omhaal]
+**Geschiktheid:** [�
+ t/m �
+�
+�
+�
+�
+] — [één eerlijke zin: waarom wel of niet geschikt, zonder omhaal]
 
 **Bijdrage aan de groep:** [2-3 zinnen: wat voegt deze persoon concreet toe aan het team? Denk aan: leeftijd t.o.v. groep, werkstijl die je verwacht op basis van opleiding/motivatie, ervaring die anderen missen of juist al hebben. Wees realistisch — ook 'weinig toegevoegde waarde' is een geldige conclusie.]
 
@@ -54,7 +60,13 @@ ANONIEME SOLLICITANTGEGEVENS:
 
 Schrijf een beknopt assessment in dit exacte format (geen inleiding, direct beginnen):
 
-**Geschiktheid:** [★ t/m ★★★★★] — [één eerlijke zin: waarom wel of niet geschikt, zonder omhaal]
+**Geschiktheid:** [�
+ t/m �
+�
+�
+�
+�
+] — [één eerlijke zin: waarom wel of niet geschikt, zonder omhaal]
 
 **Bijdrage aan de groep:** [2-3 zinnen: wat voegt deze persoon concreet toe aan het team? Denk aan: leeftijd t.o.v. groep, werkstijl die je verwacht op basis van opleiding/motivatie, ervaring die anderen missen of juist al hebben. Wees realistisch — ook 'weinig toegevoegde waarde' is een geldige conclusie.]
 
@@ -73,7 +85,10 @@ $db = db();
 // Triggers auto-setup van alle tabellen
 instellingen_laden();
 
-$tab = $_GET['tab'] ?? 'algemeen';
+$tab = (string)($_GET['tab'] ?? 'algemeen');
+// Oude tabbladnamen blijven werken: er liggen links naar in mails, in de handleiding
+// en in bladwijzers. 'sso' is opgegaan in 'authentik'.
+$tab = ['sso' => 'authentik'][$tab] ?? $tab;
 
 // ── Opslaan ───────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -364,36 +379,40 @@ require __DIR__ . '/layout_top.php';
      item een losse SVG-string, waardoor dit scherm een eigen icoonset had. -->
 <div class="bh-instzij">
   <nav class="ds-kaart bh-instnav" aria-label="Instellingen">
-    <?php $nav_groepen = [
+    <?php
+    /* Ingedeeld naar wát je instelt, niet naar wélke techniek het gebruikt.
+       Dat was het probleem van de vorige indeling: drie tabbladen gingen over
+       Authentik, AI stond op twee plekken, "Mail" was een vergaarbak met de
+       cronjob erin, en "Communicatie" en "Koppelingen" hadden allebei een
+       tabblad over berichten. Nu geldt: één onderwerp, één tabblad. */
+    $nav_groepen = [
       'Organisatie' => [
         ['algemeen',   'Algemeen',                   'instellingen'],
-        ['functies',   'Functies & factoren',        'mensen'],
       ],
       'Selectie & seizoen' => [
-        ['uitnodiging', 'Uitnodiging & automatisering', 'bliksem'],
-        ['selectie',    'Beoordelingscriteria',        'vink'],
-        ['bezetting',   'Posten & bezetting',          'schild'],
+        ['uitnodiging', 'Uitnodigen & automatisch',  'bliksem'],
+        ['selectie',    'Beoordelingscriteria',      'vink'],
+        ['bezetting',   'Posten & bezetting',        'schild'],
       ],
-      'Loon & planning' => [
-        ['loon',       'Vakantietoeslag & lonen',    'grafiek'],
+      'Inzet & loon' => [
+        ['functies',   'Functies',                   'mensen'],
+        ['loon',       'Lonen & budget',             'grafiek'],
       ],
-      'Communicatie' => [
-        ['mail',       'Mail & herinneringen',       'mail'],
-        ['smtp',       'E-mailserver (SMTP)',        'systeem'],
-      ],
-      'AI & koppelingen' => [
-        ['ai',         'AI-analyse',                 'ster'],
-        ['authentik',  'Authentik & competenties',   'schild'],
-        ['sso',        'Authentik SSO-login',        'sleutel'],
+      'Berichten' => [
+        ['berichten',  'Kanalen & meldingen',        'chat'],
+        ['mail',       'Afzender & adressen',        'mail'],
+        ['smtp',       'E-mailserver',               'systeem'],
       ],
       'Koppelingen' => [
+        ['authentik',  'Authentik',                  'schild'],
         ['api',        'Website & API',              'koppeling'],
-        ['berichten',  'SMS, WhatsApp & meldingen',  'chat'],
+        ['ai',         'AI-analyse',                 'ster'],
       ],
-      'Privacy' => [
-        ['bewaren',    'Bewaartermijnen (AVG)',      'klok'],
+      'Privacy & onderhoud' => [
+        ['bewaren',    'Bewaren & opschonen',        'klok'],
       ],
-    ]; ?>
+    ];
+    ?>
     <?php foreach ($nav_groepen as $groep => $items): ?>
       <div class="bh-instnav-groep"><?= h($groep) ?></div>
       <?php foreach ($items as $item): ?>
@@ -555,8 +574,36 @@ require __DIR__ . '/layout_top.php';
     </form>
     <?php endforeach; ?>
 
-    <div class="bh-instsectie" style="margin-top:16px">
-      <h3>Vakantietoeslag & werkuren</h3>
+  </div>
+</div>
+
+<?php elseif ($tab === 'loon'): ?>
+<div class="ds-kaart">
+  <div class="bh-kaartkop">
+    <h2>Seizoensbudget</h2>
+    <div class="ds-veld-hint">Voor de voortgangsbalk op de loonplanning</div>
+  </div>
+  <div class="bh-kaartbody">
+    <form method="POST" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+      <?= csrf_input() ?>
+      <input type="hidden" name="actie" value="instellingen">
+      <div class="ds-veld" style="margin:0">
+        <label for="budget_seizoen">Totaalbudget loonkosten dit seizoen (€)</label>
+        <input type="number" step="100" min="0" id="budget_seizoen" name="inst[loon.budget_seizoen]"
+               value="<?= h(instelling('loon.budget_seizoen', '')) ?>" placeholder="bijv. 25000" style="max-width:200px">
+      </div>
+      <button type="submit" class="ds-btn ds-btn-primair">Opslaan</button>
+      <div style="font-size:12px;color:var(--tekst-zacht);flex:1;min-width:200px">
+        Laat leeg om zonder budget te werken — de loonplanning toont dan alleen de kosten.
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Vakantietoeslag stond bij Functies; alles over geld hoort bij elkaar. -->
+<div class="ds-kaart">
+  <div class="bh-kaartkop"><h2>Vakantietoeslag &amp; werkuren</h2></div>
+  <div class="bh-kaartbody">
       <form method="POST">
         <?= csrf_input() ?><input type="hidden" name="actie" value="instellingen">
         <div class="bh-veldrij">
@@ -585,30 +632,6 @@ require __DIR__ . '/layout_top.php';
         </div>
         <button type="submit" class="ds-btn ds-btn-primair">Opslaan</button>
       </form>
-    </div>
-  </div>
-</div>
-
-<?php elseif ($tab === 'loon'): ?>
-<div class="ds-kaart" style="margin-bottom:14px">
-  <div class="bh-kaartkop">
-    <h2>Seizoensbudget</h2>
-    <div class="ds-veld-hint">Voor de voortgangsbalk op de loonplanning</div>
-  </div>
-  <div class="bh-kaartbody">
-    <form method="POST" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
-      <?= csrf_input() ?>
-      <input type="hidden" name="actie" value="instellingen">
-      <div class="ds-veld" style="margin:0">
-        <label for="budget_seizoen">Totaalbudget loonkosten dit seizoen (€)</label>
-        <input type="number" step="100" min="0" id="budget_seizoen" name="inst[loon.budget_seizoen]"
-               value="<?= h(instelling('loon.budget_seizoen', '')) ?>" placeholder="bijv. 25000" style="max-width:200px">
-      </div>
-      <button type="submit" class="ds-btn ds-btn-primair">Opslaan</button>
-      <div style="font-size:12px;color:var(--tekst-zacht);flex:1;min-width:200px">
-        Laat leeg om zonder budget te werken — de loonplanning toont dan alleen de kosten.
-      </div>
-    </form>
   </div>
 </div>
 
@@ -833,111 +856,9 @@ require __DIR__ . '/layout_top.php';
           <div class="ds-veld-hint">Standaard uit: de stukken (BSN, kopie identiteitsbewijs, bankpas) gaan dan alleen via de beveiligde inzage in het beheer. Aanzetten stuurt ze onversleuteld per e-mail; doe dat alleen als het mailpad vertrouwd is.</div>
         </div>
       </div>
-      <div class="bh-instsectie">
-        <h3>AI Analyse (BLK)</h3>
-        <div class="ds-veld-hint" style="padding:12px 16px;background:var(--blauw-bg);border-left:3px solid var(--blauw);border-radius:6px">
-          AI-instellingen (Gemini API key, model, prompt template) zijn verplaatst naar het aparte tabblad <a href="?tab=ai" style="font-weight:500">AI Analyse</a>.
-        </div>
-      </div>
       <button type="submit" class="ds-btn ds-btn-primair">Opslaan</button>
     </form>
 
-    <!-- ── Cronjob ───────────────────────────────────────────── -->
-    <div style="border-top:1px solid var(--rand);padding-top:18px;margin-top:24px">
-      <h3 style="font-size:14px;color:var(--navy);margin-bottom:10px">Cronjob (automatische taken)</h3>
-      <?php
-      $cron_token = instelling('cron.token');
-      if (empty($cron_token)) {
-          $cron_token = bin2hex(random_bytes(24));
-          instelling_opslaan('cron.token', $cron_token);
-      }
-      $cron_url = APP_URL . '/cron/run.php?token=' . $cron_token;
-      ?>
-      <p class="ds-veld-hint bh-mb">
-        Voer de cronjob in cPanel in om de wachtrijen (AI, mail, auto-invite) elke 5 minuten te verwerken.
-      </p>
-      <div style="background:var(--grijs-bg);border:1px solid var(--rand);border-radius:6px;padding:12px;font-family:monospace;font-size:12px;word-break:break-all;margin-bottom:10px">
-        */5 * * * * curl -s "<?= h($cron_url) ?>" &gt; /dev/null 2&gt;&amp;1
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
-        <a href="<?= h($cron_url) ?>" target="_blank" class="ds-btn ds-btn-secundair ds-btn-sm">Handmatig uitvoeren</a>
-      </div>
-
-      <?php
-      // Wachtrij status
-      $q_stats = ['ai'=>[], 'mail'=>[]];
-      try {
-          if (function_exists('ai_queue_auto_setup'))   { ai_queue_auto_setup();   $q_stats['ai']   = db()->query("SELECT status,COUNT(*) n FROM ai_queue   GROUP BY status")->fetchAll(PDO::FETCH_KEY_PAIR); }
-          if (function_exists('mail_queue_auto_setup')) { mail_queue_auto_setup(); $q_stats['mail'] = db()->query("SELECT status,COUNT(*) n FROM mail_queue GROUP BY status")->fetchAll(PDO::FETCH_KEY_PAIR); }
-      } catch (\Exception $e) {}
-      $kleuren = ['wacht'=>'badge-blauw','bezig'=>'badge-oranje','klaar'=>'badge-groen','fout'=>'badge-rood'];
-      ?>
-      <?php foreach (['ai'=>'AI analyses', 'mail'=>'Mail wachtrij'] as $sleutel => $label): if (!empty($q_stats[$sleutel])): ?>
-      <div style="margin-bottom:8px">
-        <div style="font-size:12px;font-weight:600;color:var(--tekst-zacht);margin-bottom:4px"><?= h($label) ?></div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <?php foreach ($q_stats[$sleutel] as $st => $n): ?>
-          <span class="badge <?= $kleuren[$st] ?? 'badge-grijs' ?>" style="font-size:11px"><?= h($st) ?>: <?= $n ?></span>
-          <?php endforeach; ?>
-        </div>
-      </div>
-      <?php endif; endforeach; ?>
-    </div>
-  </div>
-</div>
-
-<?php elseif ($tab === 'sso'): ?>
-<div class="ds-kaart">
-  <div class="bh-kaartkop"><h2>Authentik SSO</h2></div>
-  <div class="bh-kaartbody">
-    <p style="font-size:13px;color:var(--tekst-zacht);margin-bottom:14px">
-      Authentik is geconfigureerd via <code>includes/config.php</code> (OIDC_ISSUER, OIDC_CLIENT_ID).
-      Met een extra API-token kunnen <strong>terugkerende sollicitanten</strong> inloggen via Authentik
-      (in plaats van per-e-mail OTP code).
-    </p>
-
-    <div class="info-blok" style="background:var(--grijs-bg);padding:12px;border-radius:6px;margin-bottom:14px;font-size:12px">
-      <div style="font-weight:600;color:var(--tekst);margin-bottom:6px">Status</div>
-      <div>OIDC config: <?= authentik_actief() ? '<span style="color:var(--groen)">aanwezig</span>' : '<span style="color:var(--rood)">ontbreekt</span>' ?></div>
-      <div>API-token: <?= instelling('authentik.api_token') ? '<span style="color:var(--groen)">ingesteld</span>' : '<span style="color:var(--grijs)">— geen (alleen OTP)</span>' ?></div>
-      <div>Issuer: <code><?= defined('OIDC_ISSUER') ? h(OIDC_ISSUER) : '—' ?></code></div>
-    </div>
-
-    <form method="POST">
-      <?= csrf_input() ?>
-      <input type="hidden" name="inst_tab" value="sso">
-
-      <div class="ds-veld">
-        <label>Authentik API token <span class="tip" data-tip="Maak in Authentik → Directory → Tokens een long-lived token aan. Dit gebruiken we om te checken of een sollicitant een Authentik-account heeft."></span></label>
-        <input type="text" name="inst[authentik.api_token]" value="<?= h(instelling('authentik.api_token', '')) ?>"
-               placeholder="ak_xxx..." autocomplete="off">
-        <div class="ds-veld-hint">
-          Vereist scope: <code>core/users</code> view. Laat leeg om SSO voor portaal uit te schakelen (OTP blijft werken).
-        </div>
-      </div>
-
-      <div class="ds-veld">
-        <label>Toegestane admin-groepen <span class="tip" data-tip="Authentik group namen die admin-toegang krijgen. Andere gebruikers kunnen alleen via portaal inloggen."></span></label>
-        <input type="text" name="inst[authentik.admin_groepen]" value="<?= h(instelling('authentik.admin_groepen', 'Bestuur,Sol-Admin,Sol-Begeleider')) ?>"
-               placeholder="Bestuur,Sol-Admin,Sol-Begeleider">
-        <div class="ds-veld-hint">
-          Comma-separated. Gebruikers met een van deze groepen krijgen toegang tot <code>/admin</code>.
-        </div>
-      </div>
-
-      <button type="submit" name="actie" value="instellingen" class="ds-btn ds-btn-primair">Opslaan</button>
-    </form>
-
-    <div style="border-top:1px solid var(--rand);padding-top:14px;margin-top:18px">
-      <div style="font-weight:600;font-size:13px;margin-bottom:8px">Werking</div>
-      <ul style="font-size:12px;color:var(--tekst-zacht);line-height:1.7;padding-left:18px">
-        <li>Sollicitant vult email in op <code>/portaal/</code></li>
-        <li>Bestaat dit email in Authentik? → SSO-login (geen OTP nodig)</li>
-        <li>Niet in Authentik? → Code per mail (fallback, blijft werken)</li>
-        <li>Admin-login via <code>/admin/</code> werkt onveranderd</li>
-      </ul>
-    </div>
-  </div>
 </div>
 
 <?php elseif ($tab === 'ai'): ?>
@@ -1061,6 +982,63 @@ require __DIR__ . '/layout_top.php';
   </form>
 
 <?php elseif ($tab === 'authentik'): ?>
+
+  <!-- Inloggen: stond eerder als apart tabblad "Authentik SSO-login". Twee tabbladen
+       over dezelfde koppeling is één te veel. -->
+<div class="ds-kaart">
+  <div class="bh-kaartkop"><h2>Authentik SSO</h2></div>
+  <div class="bh-kaartbody">
+    <p style="font-size:13px;color:var(--tekst-zacht);margin-bottom:14px">
+      Authentik is geconfigureerd via <code>includes/config.php</code> (OIDC_ISSUER, OIDC_CLIENT_ID).
+      Met een extra API-token kunnen <strong>terugkerende sollicitanten</strong> inloggen via Authentik
+      (in plaats van per-e-mail OTP code).
+    </p>
+
+    <div class="info-blok" style="background:var(--grijs-bg);padding:12px;border-radius:6px;margin-bottom:14px;font-size:12px">
+      <div style="font-weight:600;color:var(--tekst);margin-bottom:6px">Status</div>
+      <div>OIDC config: <?= authentik_actief() ? '<span style="color:var(--groen)">aanwezig</span>' : '<span style="color:var(--rood)">ontbreekt</span>' ?></div>
+      <div>API-token: <?= instelling('authentik.api_token') ? '<span style="color:var(--groen)">ingesteld</span>' : '<span style="color:var(--grijs)">— geen (alleen OTP)</span>' ?></div>
+      <div>Issuer: <code><?= defined('OIDC_ISSUER') ? h(OIDC_ISSUER) : '—' ?></code></div>
+    </div>
+
+    <form method="POST">
+      <?= csrf_input() ?>
+      <input type="hidden" name="inst_tab" value="sso">
+
+      <div class="ds-veld">
+        <label>Authentik API token <span class="tip" data-tip="Maak in Authentik → Directory → Tokens een long-lived token aan. Dit gebruiken we om te checken of een sollicitant een Authentik-account heeft."></span></label>
+        <input type="text" name="inst[authentik.api_token]" value="<?= h(instelling('authentik.api_token', '')) ?>"
+               placeholder="ak_xxx..." autocomplete="off">
+        <div class="ds-veld-hint">
+          Vereist scope: <code>core/users</code> view. Laat leeg om SSO voor portaal uit te schakelen (OTP blijft werken).
+        </div>
+      </div>
+
+      <div class="ds-veld">
+        <label>Toegestane admin-groepen <span class="tip" data-tip="Authentik group namen die admin-toegang krijgen. Andere gebruikers kunnen alleen via portaal inloggen."></span></label>
+        <input type="text" name="inst[authentik.admin_groepen]" value="<?= h(instelling('authentik.admin_groepen', 'Bestuur,Sol-Admin,Sol-Begeleider')) ?>"
+               placeholder="Bestuur,Sol-Admin,Sol-Begeleider">
+        <div class="ds-veld-hint">
+          Comma-separated. Gebruikers met een van deze groepen krijgen toegang tot <code>/admin</code>.
+        </div>
+      </div>
+
+      <button type="submit" name="actie" value="instellingen" class="ds-btn ds-btn-primair">Opslaan</button>
+    </form>
+
+    <div style="border-top:1px solid var(--rand);padding-top:14px;margin-top:18px">
+      <div style="font-weight:600;font-size:13px;margin-bottom:8px">Werking</div>
+      <ul style="font-size:12px;color:var(--tekst-zacht);line-height:1.7;padding-left:18px">
+        <li>Sollicitant vult email in op <code>/portaal/</code></li>
+        <li>Bestaat dit email in Authentik? → SSO-login (geen OTP nodig)</li>
+        <li>Niet in Authentik? → Code per mail (fallback, blijft werken)</li>
+        <li>Admin-login via <code>/admin/</code> werkt onveranderd</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+
 
   <?php
     competenties_auto_setup();
@@ -1460,6 +1438,52 @@ require __DIR__ . '/layout_top.php';
   </div>
 </div>
 
+
+<!-- Automatische taken. Stond eerder onderaan het mail-tabblad; de cron doet
+     ook de AVG-opschoning hierboven, dus hij hoort hier. -->
+    <!-- ── Cronjob ───────────────────────────────────────────── -->
+    <div style="border-top:1px solid var(--rand);padding-top:18px;margin-top:24px">
+      <h3 style="font-size:14px;color:var(--navy);margin-bottom:10px">Cronjob (automatische taken)</h3>
+      <?php
+      $cron_token = instelling('cron.token');
+      if (empty($cron_token)) {
+          $cron_token = bin2hex(random_bytes(24));
+          instelling_opslaan('cron.token', $cron_token);
+      }
+      $cron_url = APP_URL . '/cron/run.php?token=' . $cron_token;
+      ?>
+      <p class="ds-veld-hint bh-mb">
+        Voer de cronjob in cPanel in om de wachtrijen (AI, mail, auto-invite) elke 5 minuten te verwerken.
+      </p>
+      <div style="background:var(--grijs-bg);border:1px solid var(--rand);border-radius:6px;padding:12px;font-family:monospace;font-size:12px;word-break:break-all;margin-bottom:10px">
+        */5 * * * * curl -s "<?= h($cron_url) ?>" &gt; /dev/null 2&gt;&amp;1
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+        <a href="<?= h($cron_url) ?>" target="_blank" class="ds-btn ds-btn-secundair ds-btn-sm">Handmatig uitvoeren</a>
+      </div>
+
+      <?php
+      // Wachtrij status
+      $q_stats = ['ai'=>[], 'mail'=>[]];
+      try {
+          if (function_exists('ai_queue_auto_setup'))   { ai_queue_auto_setup();   $q_stats['ai']   = db()->query("SELECT status,COUNT(*) n FROM ai_queue   GROUP BY status")->fetchAll(PDO::FETCH_KEY_PAIR); }
+          if (function_exists('mail_queue_auto_setup')) { mail_queue_auto_setup(); $q_stats['mail'] = db()->query("SELECT status,COUNT(*) n FROM mail_queue GROUP BY status")->fetchAll(PDO::FETCH_KEY_PAIR); }
+      } catch (\Exception $e) {}
+      $kleuren = ['wacht'=>'badge-blauw','bezig'=>'badge-oranje','klaar'=>'badge-groen','fout'=>'badge-rood'];
+      ?>
+      <?php foreach (['ai'=>'AI analyses', 'mail'=>'Mail wachtrij'] as $sleutel => $label): if (!empty($q_stats[$sleutel])): ?>
+      <div style="margin-bottom:8px">
+        <div style="font-size:12px;font-weight:600;color:var(--tekst-zacht);margin-bottom:4px"><?= h($label) ?></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <?php foreach ($q_stats[$sleutel] as $st => $n): ?>
+          <span class="badge <?= $kleuren[$st] ?? 'badge-grijs' ?>" style="font-size:11px"><?= h($st) ?>: <?= $n ?></span>
+          <?php endforeach; ?>
+        </div>
+      </div>
+      <?php endif; endforeach; ?>
+    </div>
+  </div>
+
 <?php elseif ($tab === 'smtp'): ?>
   <?php
     $s_host    = instelling('smtp.host', defined('SMTP_HOST') ? SMTP_HOST : '');
@@ -1470,7 +1494,7 @@ require __DIR__ . '/layout_top.php';
     $s_fromnaam= instelling('smtp.from_naam', defined('MAIL_FROM_NAME') ? MAIL_FROM_NAME : 'Reddingsbrigade Paal 13');
     $s_heeft_ww= instelling('smtp.pass', '') !== '' || (defined('SMTP_PASS') && SMTP_PASS !== '');
   ?>
-  <div class="ds-kaart" style="margin-bottom:14px">
+  <div class="ds-kaart">
     <div class="bh-kaartkop"><h2>E-mailinstellingen (SMTP)</h2></div>
     <div class="bh-kaartbody">
       <p style="font-size:13px;color:var(--tekst-zacht);margin:0 0 16px">

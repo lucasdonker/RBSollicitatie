@@ -139,7 +139,7 @@ require __DIR__ . '/_tabel.php';
 ?>
 
 <div class="ds-sectie-titel">Lege staat — leeg is vaak goed nieuws</div>
-<div class="ds-kaart" style="padding:16px">
+<div class="ds-kaart ds-kaart-p">
   <?php
     $leeg_titel = 'Bellijst is leeg';
     $leeg_tekst = 'Alle 12 kandidaten hebben een besluit. De berichten zijn verstuurd om 20:14.';

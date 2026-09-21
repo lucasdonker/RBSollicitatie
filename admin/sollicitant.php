@@ -133,7 +133,7 @@ if (is_file($_bestand)) {
     $tab_dossier = $d;
     require $_bestand;
 } else {
-    echo '<div class="ds-kaart" style="padding:16px">';
+    echo '<div class="ds-kaart ds-kaart-p">';
     $leeg_titel = 'Dit tabblad komt nog';
     $leeg_tekst = 'Deze sectie wordt in een volgende stap omgebouwd.';
     require __DIR__ . '/_leeg.php';

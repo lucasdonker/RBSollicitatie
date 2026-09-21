@@ -128,6 +128,13 @@ html[data-theme="dark"] .bh-nav-link.actief { background: var(--surface); color:
 .bh-hulppaneel a { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 600; color: var(--accent); }
 
 .bh-inhoud { flex: 1; padding: 20px 24px 40px; max-width: 1400px; width: 100%; }
+
+/* Ruimte tussen kaarten hoort bij de pagina, niet bij het scherm. Eenentwintig
+   schermen zetten hier hun eigen margin-bottom:14px neer, en net niet allemaal
+   dezelfde — vandaar dat kaarten soms net anders uitlijnden. Alleen directe
+   kinderen: een kaart in een flex- of gridkolom krijgt zijn ruimte van de gap. */
+.bh-inhoud > .ds-kaart { margin-bottom: 14px; }
+.bh-inhoud > .ds-kaart:last-child { margin-bottom: 0; }
 .bh-inhoud.breed { max-width: none; }
 
 .bh-overlay {
@@ -1571,6 +1578,12 @@ button.bh-weekcel-klik:hover, button.bh-weekcel-klik:focus-visible { outline: 2p
   background: var(--bg-subtle); border-radius: var(--radius-sm); padding: 10px 12px; color: var(--ink);
 }
 .bh-blkleeg { font-size: 13px; color: var(--ink-muted); font-style: italic; margin-top: 4px; }
+/* Een waarde die opvalt (bijzonderheid, uitzondering): kleur uit de fasetokens, dus
+   ook in de donkere modus goed. Stond eerder als #fffbeb/#fde68a hard in de HTML. */
+.bh-blkwaarde.bh-blk-let-op { background: var(--f-vlak); border: 1px solid var(--f-rand); color: var(--ink); }
+/* Kader om de AI-analyse. Was een paarse gradiënt met vaste rgba-waarden, dus in de
+   donkere modus een lichte vlek. Nu de paarse fasekleur, die wél meebeweegt. */
+.bh-aikader { background: var(--fase-paars-vlak); border: 1px solid var(--fase-paars-rand); }
 
 /* Statusicoon op het systeemscherm; de kleur komt van de omliggende inline stijl. */
 .bh-healthicoon { display: inline-flex; flex: none; min-width: 18px; }

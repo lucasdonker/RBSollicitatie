@@ -160,7 +160,7 @@ require __DIR__ . '/layout_top.php';
 <style>
 .imp-result-rij{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--rand);font-size:13px}
 .imp-result-rij:last-child{border-bottom:none}
-.imp-fout-rij{background:var(--rood-bg);border-radius:5px;padding:8px 10px;font-size:12px;color:#c53030;margin-bottom:6px}
+.imp-fout-rij{background:var(--rood-bg);border-radius:5px;padding:8px 10px;font-size:12px;color:var(--error);margin-bottom:6px}
 .imp-stat-rij{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
 .imp-stat-box{background:var(--grijs-bg);border-radius:8px;padding:12px;text-align:center}
 .imp-stat-box .n{font-size:24px;font-weight:700;color:var(--navy)}
@@ -170,7 +170,7 @@ require __DIR__ . '/layout_top.php';
 
   <?php if ($stap === 'overzicht'): ?>
 
-  <div class="ds-kaart" style="margin-bottom:14px">
+  <div class="ds-kaart">
     <div class="bh-kaartkop"><h2>Vóór je importeert</h2></div>
     <div class="bh-kaartbody">
       <div class="ds-melding ds-melding-warn">
@@ -240,7 +240,7 @@ require __DIR__ . '/layout_top.php';
 
       <?php if (!empty($fouten)): ?>
       <div style="margin-bottom:14px">
-        <div style="font-size:12px;font-weight:600;color:#c53030;margin-bottom:6px">Fouten (<?= count($fouten) ?>):</div>
+        <div style="font-size:12px;font-weight:600;color:var(--error);margin-bottom:6px">Fouten (<?= count($fouten) ?>):</div>
         <?php foreach ($fouten as $f): ?>
         <div class="imp-fout-rij">Rij <?= $f['rij'] ?>: <?= h($f['naam']) ?> — <?= h($f['fout']) ?></div>
         <?php endforeach; ?>

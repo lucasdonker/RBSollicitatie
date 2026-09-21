@@ -185,7 +185,7 @@ require __DIR__ . '/_kop.php';
 .avg-rij:last-child{border-bottom:none}
 .avg-label{color:var(--ink-soft);flex-shrink:0}
 .avg-waarde{color:var(--ink);font-weight:500;text-align:right;word-break:break-word}
-.gevaar{border:1px solid #f0c9be;background:var(--error-soft);padding:18px;border-radius:var(--radius-md);margin-top:14px}
+.gevaar{border:1px solid var(--fase-rood-rand);background:var(--error-soft);padding:18px;border-radius:var(--radius-md);margin-top:14px}
 .gevaar h3{color:var(--error);margin-top:0;font-size:15px}
 .gevaar-input{width:100%;margin-top:8px;padding:10px;border:1px solid var(--error);border-radius:var(--radius-sm);font-family:monospace;background:var(--surface);color:var(--ink)}
 </style>

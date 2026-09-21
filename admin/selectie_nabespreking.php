@@ -112,7 +112,7 @@ require __DIR__ . '/layout_top.php';
 ?>
 
 <?php if (!$sid || !$kandidaten): ?>
-  <div class="ds-kaart" style="padding:16px">
+  <div class="ds-kaart ds-kaart-p">
     <?php
       $leeg_titel = $sid ? 'Nog geen kandidaten' : 'Geen actief seizoen';
       $leeg_tekst = $sid ? 'Zodra er kandidaten op de selectiedag zijn geweest, bespreek je ze hier na.' : '';
@@ -160,7 +160,7 @@ require __DIR__ . '/layout_top.php';
   </div>
 
   <?php if (!$zichtbaar): ?>
-    <div class="ds-kaart" style="padding:16px">
+    <div class="ds-kaart ds-kaart-p">
       <?php
         $leeg_titel = 'Niemand in deze selectie';
         $leeg_tekst = 'Kies een ander filter om de rest te zien.';

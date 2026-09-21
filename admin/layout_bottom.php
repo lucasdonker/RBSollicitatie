@@ -642,7 +642,7 @@ document.addEventListener('keydown', e => {
 document.addEventListener('DOMContentLoaded', () => {
   const tooltipEl = document.createElement('div');
   tooltipEl.id = 'p13-tooltip';
-  tooltipEl.style.cssText = 'position:absolute;background:var(--navy);color:#fff;padding:8px 12px;border-radius:6px;font-size:12px;line-height:1.5;max-width:260px;z-index:10000;pointer-events:none;opacity:0;transition:opacity .15s;box-shadow:0 4px 12px rgba(0,0,0,.3)';
+  tooltipEl.style.cssText = 'position:absolute;background:var(--navy);color:var(--op-vol);padding:8px 12px;border-radius:6px;font-size:12px;line-height:1.5;max-width:260px;z-index:10000;pointer-events:none;opacity:0;transition:opacity .15s;box-shadow:0 4px 12px rgba(0,0,0,.3)';
   document.body.appendChild(tooltipEl);
   let huidige = null;
 

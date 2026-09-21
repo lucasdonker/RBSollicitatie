@@ -14,7 +14,7 @@ $_s   = $tab_dossier['sol'];
 $_blk = $tab_dossier['blk'];
 
 if (!$_blk) {
-    echo '<div class="ds-kaart" style="padding:16px">';
+    echo '<div class="ds-kaart ds-kaart-p">';
     $leeg_titel = 'Het formulier is nog niet ingevuld';
     $leeg_tekst = 'Zodra ' . h($_s['voornaam']) . ' het kennismakingsformulier indient, staat het hier.';
     $leeg_icoon = 'document';

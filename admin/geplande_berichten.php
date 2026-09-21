@@ -49,7 +49,7 @@ $sjabloon_naam = []; foreach ($sjablonen as $t) $sjabloon_naam[$t['slug']] = $t[
 
 require __DIR__ . '/layout_top.php';
 ?>
-<div class="ds-kaart" style="margin-bottom:14px">
+<div class="ds-kaart">
   <div class="bh-kaartkop"><h2>Regels</h2><a href="?nieuw=1" class="ds-btn ds-btn-primair ds-btn-sm">Nieuwe regel</a></div>
   <div class="bh-kaartbody" style="padding:0">
     <?php if (!$regels): ?><p style="padding:16px;color:var(--grijs);font-size:13px">Nog geen geplande berichten. Voorbeeld: "10 dagen na het inleveren van het formulier: stuur het magazine".</p>

@@ -29,7 +29,7 @@ require __DIR__ . '/layout_top.php';
 ?>
 
 <?php if (!$sz): ?>
-  <div class="ds-kaart" style="padding:16px">
+  <div class="ds-kaart ds-kaart-p">
     <?php
       $leeg_titel = 'Er is nog geen seizoen';
       $leeg_tekst = 'Maak een seizoen aan en zet de datums; daarna komt hier te staan wat er te doen is.';

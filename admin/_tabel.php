@@ -39,7 +39,7 @@ if ($tabel && $tabel_rij !== ''):
     $_rijen  = is_array($tabel_rijen) ? $tabel_rijen : iterator_to_array($tabel_rijen);
 ?>
 <?php if (!$_rijen): ?>
-  <div class="ds-kaart" style="padding:16px">
+  <div class="ds-kaart ds-kaart-p">
     <?php
       $leeg_titel = $tabel_leeg['titel'] ?? 'Niets gevonden';
       $leeg_tekst = $tabel_leeg['tekst'] ?? '';

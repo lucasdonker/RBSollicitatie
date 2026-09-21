@@ -188,14 +188,14 @@ require __DIR__ . '/layout_top.php';
 <style>
 .tmpl-grid{display:grid;grid-template-columns:230px 1fr 300px;gap:14px;align-items:start}
 @media (max-width:1100px){.tmpl-grid{grid-template-columns:1fr}}
-.tmpl-lijst{background:#fff;border-radius:var(--radius);border:1px solid var(--rand);overflow:hidden}
+.tmpl-lijst{background:var(--surface);border-radius:var(--radius);border:1px solid var(--rand);overflow:hidden}
 .tmpl-item{display:block;padding:9px 14px;border-bottom:1px solid var(--rand);text-decoration:none;color:var(--tekst)}
 .tmpl-item:hover{background:var(--grijs-bg)}
-.tmpl-item.actief{background:var(--navy);color:#fff}
+.tmpl-item.actief{background:var(--navy);color:var(--op-vol)}
 .tmpl-item .tn{font-weight:600;font-size:13px}
 .tmpl-kop{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--grijs);padding:10px 12px 4px}
-.var-chip{display:inline-block;background:var(--blauw-bg,#eff8ff);color:#1a56a0;font-size:11px;font-family:monospace;padding:2px 7px;border-radius:4px;margin:2px;cursor:pointer;border:1px solid #bee3f8}
-.var-chip:hover{background:#bee3f8}
+.var-chip{display:inline-block;background:var(--fase-blauw-vlak);color:var(--fase-blauw);font-size:11px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;padding:2px 7px;border-radius:4px;margin:2px;cursor:pointer;border:1px solid var(--fase-blauw-rand)}
+.var-chip:hover{border-color:var(--fase-blauw)}
 .veld-label{font-size:11px;font-weight:600;color:var(--grijs);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;display:block}
 .tmpl-velden{padding:14px 16px;border-bottom:1px solid var(--rand);display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .tmpl-velden input[type=text]{width:100%;font-size:13px;padding:8px 11px}
@@ -216,7 +216,7 @@ require __DIR__ . '/layout_top.php';
     <?php endforeach; ?>
   </div>
 
-  <form method="POST" style="margin-top:10px;background:#fff;border-radius:var(--radius);border:1px solid var(--rand);padding:12px">
+  <form method="POST" style="margin-top:10px;background:var(--surface);border-radius:var(--radius);border:1px solid var(--rand);padding:12px">
     <?= csrf_input() ?><input type="hidden" name="actie" value="nieuw">
     <div class="veld-label">Nieuw eigen sjabloon</div>
     <input type="text" name="naam" placeholder="Naam, bv. Magazine seizoen" required style="width:100%;font-size:12px;padding:6px 8px;margin-bottom:6px">
@@ -224,7 +224,7 @@ require __DIR__ . '/layout_top.php';
     <div style="font-size:10px;color:var(--grijs);margin-top:6px">Voor handmatige en geplande berichten.</div>
   </form>
 
-  <form method="POST" style="margin-top:10px;background:#fff;border-radius:var(--radius);border:1px solid var(--rand);padding:12px">
+  <form method="POST" style="margin-top:10px;background:var(--surface);border-radius:var(--radius);border:1px solid var(--rand);padding:12px">
     <?= csrf_input() ?><input type="hidden" name="actie" value="hero_image">
     <div class="veld-label">Standaard hero-afbeelding (URL)</div>
     <input type="text" name="hero_url" value="<?= h($hero_row['body_html'] ?? '') ?>" placeholder="https://.../foto.jpg" style="width:100%;font-size:11px;padding:6px 8px;margin-bottom:5px">

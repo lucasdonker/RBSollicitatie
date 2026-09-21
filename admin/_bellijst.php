@@ -26,7 +26,7 @@ $bel_gebeld     = (int)($bel_gebeld ?? 0);
 $bel_ongebeld   = (int)($bel_ongebeld ?? 0);
 
 if (!$bel_lijst) {
-    echo '<div class="ds-kaart" style="padding:16px">';
+    echo '<div class="ds-kaart ds-kaart-p">';
     $leeg_titel = 'De bellijst is leeg';
     $leeg_tekst = 'Iedereen met een definitief besluit is doorgevoerd. Staat er nog een twijfelgeval open, '
                 . 'dan vind je die op het tabblad Nabespreking.';

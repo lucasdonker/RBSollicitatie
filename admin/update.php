@@ -72,12 +72,12 @@ require __DIR__ . '/layout_top.php';
 .upd-mig-rij:last-child{border:none}
 .upd-nr{font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px}
 </style>
-<div class="page-body">
+<div class="bh-blk">
 
-<?php if(!empty($uitgevoerd)): ?><div class="ds-melding ds-melding-ok">✅ Uitgevoerd: <?=implode(', ', $uitgevoerd)?></div><?php endif; ?>
-<?php foreach($fouten as $f): ?><div class="ds-melding ds-melding-error">❌ <?=htmlspecialchars($f)?></div><?php endforeach; ?>
+<?php if(!empty($uitgevoerd)): ?><div class="ds-melding ds-melding-ok"><?= icoon('vink', 15) ?> Uitgevoerd: <?=implode(', ', $uitgevoerd)?></div><?php endif; ?>
+<?php foreach($fouten as $f): ?><div class="ds-melding ds-melding-error"><?= icoon('waarschuwing', 15) ?> <?=htmlspecialchars($f)?></div><?php endforeach; ?>
 
-<div class="ds-kaart" style="margin-bottom:14px">
+<div class="ds-kaart">
   <div class="bh-kaartkop"><h2>Systeeminfo</h2></div>
   <div class="bh-kaartbody">
     <div class="upd-stat-rij"><?php foreach($info as $k=>$v): ?><div class="upd-stat-box"><div class="l"><?=$k?></div><div class="n"><?=htmlspecialchars((string)$v)?></div></div><?php endforeach; ?></div>
@@ -89,9 +89,9 @@ require __DIR__ . '/layout_top.php';
   <div class="bh-kaartbody">
 <?php foreach($bestanden as $bf): preg_match('/migratie_(\d+)_(.+)\.sql$/',basename($bf),$mx); $v=$mx[1]??'?'; $ok=in_array($v,$gedaan)||in_array($v.':', array_map(fn($s)=>explode(':',$s)[0].':',$uitgevoerd)); ?>
     <div class="upd-mig-rij">
-      <span class="upd-nr" style="background:<?=$ok?'var(--groen-bg)':'var(--oranje-bg)'?>;color:<?=$ok?'#085041':'#c05a1a'?>"><?=$v?></span>
+      <span class="upd-nr" style="background:<?=$ok?'var(--groen-bg)':'var(--oranje-bg)'?>;color:<?=$ok?'var(--ok)':'var(--fase-oranje)'?>"><?=$v?></span>
       <span style="flex:1"><?=htmlspecialchars(str_replace('_',' ',$mx[2]??''))?></span>
-      <span style="font-size:11px;color:<?=$ok?'#085041':'#c05a1a'?>"><?=$ok?'✓ Klaar':'⏳ Pending'?></span>
+      <span style="font-size:11px;color:<?=$ok?'var(--ok)':'var(--fase-oranje)'?>"><?= $ok ? 'Klaar' : 'Nog uit te voeren' ?></span>
     </div>
 <?php endforeach; if(empty($bestanden)): ?><p style="font-size:13px;color:var(--tekst-zacht)">Geen migratiebestanden gevonden in sql/</p><?php endif; ?>
   </div>

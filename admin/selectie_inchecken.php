@@ -70,7 +70,7 @@ require __DIR__ . '/layout_top.php';
 ?>
 
 <?php if (!$sid): ?>
-  <div class="ds-kaart" style="padding:16px">
+  <div class="ds-kaart ds-kaart-p">
     <?php
       $leeg_titel = 'Geen actief seizoen';
       $leeg_tekst = 'Maak eerst een seizoen aan en zet de datum van de selectiedag.';

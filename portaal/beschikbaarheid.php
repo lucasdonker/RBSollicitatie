@@ -63,7 +63,7 @@ require __DIR__ . '/_kop.php';
 .bk-card h2{margin-top:0;font:var(--text-subhead)}
 .bk-rij{padding:8px 0;border-bottom:1px solid var(--rand-2);font-size:14px;line-height:1.6}
 .bk-rij:last-child{border-bottom:none}
-.badge{display:inline-block;font-size:11px;font-weight:700;color:#fff;padding:3px 10px;border-radius:var(--radius-sm)}
+.badge{display:inline-block;font-size:11px;font-weight:700;color:var(--op-vol);padding:3px 10px;border-radius:var(--radius-sm)}
 </style>
 
   <h1 style="font:var(--text-title);margin-bottom:6px">Mijn beschikbaarheid</h1>

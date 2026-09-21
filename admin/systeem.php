@@ -67,7 +67,7 @@ $changelog = function_exists('app_changelog') ? app_changelog() : [];
 require __DIR__ . '/layout_top.php';
 ?>
 
-<div class="ds-kaart" style="margin-bottom:14px">
+<div class="ds-kaart">
   <div class="bh-kaartbody" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
     <div>
       <div style="font-size:12px;color:var(--tekst-zacht)">Geïnstalleerde versie</div>
@@ -85,7 +85,7 @@ require __DIR__ . '/layout_top.php';
 
 <!-- Systeemgezondheid (health check) -->
 <?php if ($health !== null): ?>
-<div class="ds-kaart" style="margin-bottom:14px">
+<div class="ds-kaart">
   <div class="bh-kaartkop"><h2>Systeemgezondheid</h2></div>
   <div class="bh-kaartbody">
     <?php
@@ -171,7 +171,7 @@ require __DIR__ . '/layout_top.php';
 <?php endif; ?>
 
 <!-- Tabelstatus -->
-<div class="ds-kaart" style="margin-bottom:14px">
+<div class="ds-kaart">
   <div class="bh-kaartkop"><h2>Database</h2></div>
   <div class="bh-kaartbody">
     <?php if ($db_fout): ?>
@@ -241,7 +241,7 @@ require __DIR__ . '/layout_top.php';
         <summary style="cursor:pointer;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
           <span style="font-weight:700;color:var(--navy);font-size:14px"><?= h($versie) ?></span>
           <?php if ($versie === APP_VERSIE): ?>
-            <span style="font-size:10px;font-weight:700;color:#fff;background:var(--groen);padding:2px 8px;border-radius:4px">HUIDIG</span>
+            <span style="font-size:10px;font-weight:700;color:var(--op-vol);background:var(--groen);padding:2px 8px;border-radius:4px">HUIDIG</span>
           <?php endif; ?>
           <span style="font-size:13px;color:var(--tekst)"><?= h($c['titel'] ?? '') ?></span>
           <span style="flex:1"></span>

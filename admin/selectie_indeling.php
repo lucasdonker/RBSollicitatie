@@ -77,7 +77,7 @@ require __DIR__ . '/layout_top.php';
 ?>
 
 <?php if (!$sid || !$kandidaten): ?>
-  <div class="ds-kaart" style="padding:16px">
+  <div class="ds-kaart ds-kaart-p">
     <?php
       $leeg_titel = $sid ? 'Nog niemand uitgenodigd' : 'Geen actief seizoen';
       $leeg_tekst = $sid ? 'Zodra er kandidaten voor de selectiedag zijn uitgenodigd, verdeel je ze hier in groepen.' : '';

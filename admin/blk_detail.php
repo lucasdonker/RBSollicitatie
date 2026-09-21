@@ -116,7 +116,7 @@ require __DIR__ . '/layout_top.php';
 <?php else: ?>
 
 <!-- NAW + gegevens -->
-<div class="ds-kaart" style="margin-bottom:14px">
+<div class="ds-kaart">
   <div class="bh-kaartkop"><h2>Persoonsgegevens</h2></div>
   <div class="bh-kaartbody">
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">
@@ -143,7 +143,7 @@ require __DIR__ . '/layout_top.php';
 </div>
 
 <!-- Achtergrond -->
-<div class="ds-kaart" style="margin-bottom:14px">
+<div class="ds-kaart">
   <div class="bh-kaartkop"><h2>Achtergrond</h2></div>
   <div class="bh-kaartbody">
     <?php foreach (['Opleiding'=>'opleiding',"Diploma's"=>'diplomas','Werkervaring'=>'werkervaring'] as $l=>$k): ?>
@@ -157,7 +157,7 @@ require __DIR__ . '/layout_top.php';
 </div>
 
 <!-- Motivatie -->
-<div class="ds-kaart" style="margin-bottom:14px">
+<div class="ds-kaart">
   <div class="bh-kaartkop"><h2>Motivatie</h2></div>
   <div class="bh-kaartbody">
     <?php foreach (['Motivatie lifeguard'=>'motivatie_lifeguard','Strand motivatie'=>'motivatie_strand'] as $l=>$k): ?>
@@ -171,7 +171,7 @@ require __DIR__ . '/layout_top.php';
 </div>
 
 <!-- Beschikbaarheid -->
-<div class="ds-kaart" style="margin-bottom:14px">
+<div class="ds-kaart">
   <div class="bh-kaartkop"><h2>Beschikbaarheid</h2></div>
   <div class="bh-kaartbody">
     <?php if (!empty($blk_weken)): ?>
@@ -190,7 +190,7 @@ require __DIR__ . '/layout_top.php';
     <?php if ($blk['beschikbaarheid_uitzonderingen']): ?>
     <div class="bh-blkveld">
       <div class="bh-veldlabel">Kan niet op</div>
-      <div class="bh-blkwaarde" style="background:#fffbeb;border:1px solid #fde68a"><?= h($blk['beschikbaarheid_uitzonderingen']) ?></div>
+      <div class="bh-blkwaarde" class="bh-blkwaarde ds-fase-oranje bh-blk-let-op"><?= h($blk['beschikbaarheid_uitzonderingen']) ?></div>
     </div>
     <?php endif; ?>
     <?php if (!empty($weken_sol) || !empty($weken_def)): ?>
@@ -232,7 +232,7 @@ require __DIR__ . '/layout_top.php';
 </div>
 
 <!-- Bijzonderheden + foto -->
-<div class="ds-kaart" style="margin-bottom:14px">
+<div class="ds-kaart">
   <div class="bh-kaartkop"><h2>Overig</h2></div>
   <div class="bh-kaartbody">
     <div style="display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start">
@@ -240,7 +240,7 @@ require __DIR__ . '/layout_top.php';
         <?php if ($blk['bijzonderheden']): ?>
         <div class="bh-blkveld">
           <div class="bh-veldlabel">Bijzonderheden / medicatie</div>
-          <div class="bh-blkwaarde" style="background:#fff5f5;border:1px solid #feb2b2"><?= h($blk['bijzonderheden']) ?></div>
+          <div class="bh-blkwaarde" class="bh-blkwaarde ds-fase-rood bh-blk-let-op"><?= h($blk['bijzonderheden']) ?></div>
         </div>
         <?php endif; ?>
         <div style="font-size:11px;color:var(--grijs);margin-top:8px">
@@ -265,7 +265,7 @@ require __DIR__ . '/layout_top.php';
 <!-- Wijzigingslog -->
 <!-- AI Analyse sectie -->
 <?php if ($ai_tekst || instelling('ai.api_key')): ?>
-<div class="ds-kaart" style="margin-bottom:14px">
+<div class="ds-kaart">
   <div class="bh-kaartkop">
     <div style="display:flex;align-items:center;gap:10px">
       <h2>AI Geschiktheidsanalyse</h2>
@@ -280,7 +280,7 @@ require __DIR__ . '/layout_top.php';
   </div>
   <div class="bh-kaartbody">
     <?php if ($ai_tekst): ?>
-    <div style="background:linear-gradient(135deg,rgba(99,102,241,.06),rgba(168,85,247,.04));border:1px solid rgba(99,102,241,.15);border-radius:8px;padding:16px;line-height:1.8;font-size:14px;color:var(--tekst)">
+    <div class="bh-aikader" style=";border-radius:8px;padding:16px;line-height:1.8;font-size:14px;color:var(--tekst)">
       <?= function_exists('ai_render') ? ai_render($ai_tekst) : nl2br(h($ai_tekst)) ?>
     </div>
     <?php if ($ai_datum): ?>
@@ -308,7 +308,7 @@ require __DIR__ . '/layout_top.php';
 <?php endif; ?>
 
 <?php if (!empty($wijzigingen)): ?>
-<div class="ds-kaart" style="margin-bottom:14px">
+<div class="ds-kaart">
   <div class="bh-kaartkop"><h2>Wijzigingsgeschiedenis</h2></div>
   <div style="padding:0">
     <?php foreach ($wijzigingen as $wij):

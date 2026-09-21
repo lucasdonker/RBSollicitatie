@@ -153,7 +153,7 @@ require __DIR__ . '/layout_top.php';
 </div>
 
 <?php if (!$sid || !$kandidaten): ?>
-  <div class="ds-kaart" style="padding:16px">
+  <div class="ds-kaart ds-kaart-p">
     <?php
     $leeg_titel = !$sid ? 'Geen actief seizoen' : 'Nog niemand uitgenodigd';
     $leeg_tekst = !$sid

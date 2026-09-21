@@ -86,28 +86,28 @@ require __DIR__ . '/layout_top.php';
 <style>
 .lt { font-size:12px; border-collapse:collapse; min-width:100%; }
 .lt th, .lt td { padding:5px 7px; border:1px solid var(--rand); white-space:nowrap; vertical-align:middle; }
-.lt thead th { background:var(--navy); color:#fff; text-align:center; font-size:11px; }
-.lt thead th.sth { position:sticky; left:0; z-index:3; background:var(--navy); text-align:left; min-width:170px; }
-.lt thead th.fth { position:sticky; left:170px; z-index:3; background:var(--navy); min-width:110px; }
+.lt thead th { background:var(--navy); color:var(--op-vol); text-align:center; font-size:11px; }
+.lt thead th.sth { position:sticky; left:0; z-index:3; background:var(--navy); color:var(--op-vol); text-align:left; min-width:170px; }
+.lt thead th.fth { position:sticky; left:170px; z-index:3; background:var(--navy); color:var(--op-vol); min-width:110px; }
 .lt td.scol { position:sticky; left:0; background:var(--bg-card); z-index:1; }
 .lt td.fcol { position:sticky; left:170px; background:var(--bg-card); z-index:1; }
-.lt tfoot td { background:var(--navy); color:#fff; font-weight:700; text-align:center; }
-.lt tfoot td.scol, .lt tfoot td.fcol { background:var(--navy); color:#fff; text-align:left; }
+.lt tfoot td { background:var(--navy); color:var(--op-vol); font-weight:700; text-align:center; }
+.lt tfoot td.scol, .lt tfoot td.fcol { background:var(--navy); color:var(--op-vol); text-align:left; }
 .wcel { text-align:center; min-width:66px; }
-.wcel.op  { background:rgba(29,158,117,.12); }
+.wcel.op  { background:var(--ok-soft); }
 .wcel.nb  { background:var(--grijs-bg); }
 .di { width:34px; text-align:center; border:1px solid var(--rand); border-radius:4px; padding:3px; font-size:11px; font-family:monospace; background:var(--bg-card); color:var(--tekst); }
 .di:disabled { background:var(--grijs-bg); color:var(--grijs); }
-.di.waarschuw { border-color:var(--oranje); background:#fff7ed; }
+.di.waarschuw { border-color:var(--accent); background:var(--accent-soft); }
 .kl { font-size:10px; color:var(--grijs); display:block; margin-top:1px; }
 .fs { font-size:11px; padding:3px 5px; width:100%; border:1px solid var(--rand); border-radius:4px; background:var(--bg-card); color:var(--tekst); }
-.totb { position:sticky; bottom:0; background:var(--bg-card); border-top:3px solid var(--oranje); padding:12px 20px; display:flex; gap:20px; align-items:center; flex-wrap:wrap; box-shadow:0 -3px 12px rgba(0,0,0,.08); z-index:5; }
+.totb { position:sticky; bottom:0; background:var(--bg-card); border-top:3px solid var(--oranje); padding:12px 20px; display:flex; gap:20px; align-items:center; flex-wrap:wrap; box-shadow:var(--shadow-float); z-index:5; }
 .budget-balk { flex:1; min-width:180px; height:10px; background:var(--grijs-bg); border-radius:5px; overflow:hidden; }
 .budget-vul { height:100%; transition:width .3s, background .3s; }
 .sc-tab { display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border:1px solid var(--rand); border-radius:20px; font-size:12.5px; text-decoration:none; color:var(--tekst); background:var(--bg-card); }
-.sc-tab.actief { background:var(--navy); color:#fff; border-color:var(--navy); }
-.jun-brd { border-left:3px solid #3182ce !important; }
-.jul-brd { border-left:3px solid #f59e0b !important; }
+.sc-tab.actief { background:var(--navy); color:var(--op-vol); border-color:var(--navy); }
+.jun-brd { border-left:3px solid var(--fase-blauw) !important; }
+.jul-brd { border-left:3px solid var(--fase-oranje) !important; }
 </style>
 
 <?php if (!$sid): ?>
@@ -115,7 +115,7 @@ require __DIR__ . '/layout_top.php';
 <?php else: ?>
 
 <!-- Scenario's -->
-<div class="ds-kaart" style="margin-bottom:12px">
+<div class="ds-kaart">
   <div class="bh-kaartbody" style="padding:12px 16px">
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <span style="font-size:12px;font-weight:600;color:var(--tekst-zacht)">Scenario:</span>

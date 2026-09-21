@@ -197,7 +197,7 @@ require __DIR__ . '/layout_top.php';
     </form>
 
     <!-- Popover voor een dag (verschijnt bij klik) -->
-    <div id="bbDagPopover" style="display:none;position:fixed;z-index:100;background:#fff;border:1px solid var(--rand);border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.15);padding:16px;width:260px">
+    <div id="bbDagPopover" style="display:none;position:fixed;z-index:100;background:var(--surface);border:1px solid var(--rand);border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.15);padding:16px;width:260px">
       <div id="bbPopDatum" style="font-weight:600;margin-bottom:10px"></div>
       <div style="display:flex;flex-direction:column;gap:8px">
         <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="bbZet('beschikbaar')" style="justify-content:flex-start"><?= icoon('vink', 14) ?> Beschikbaar maken</button>
@@ -230,7 +230,7 @@ require __DIR__ . '/layout_top.php';
     <form method="post" action="<?= APP_URL ?>/admin/beschikbaarheid_bewerken.php?id=<?= $id ?>">
       <?= csrf_input() ?>
       <input type="hidden" name="actie" value="formulier_opslaan">
-      <div style="background:var(--bg-card,#fff);border:1px solid var(--rand);border-radius:12px;padding:16px;margin-bottom:14px">
+      <div style="background:var(--surface);border:1px solid var(--rand);border-radius:12px;padding:16px;margin-bottom:14px">
         <div style="font-weight:600;font-size:14px;margin-bottom:10px">Werkperiodes</div>
         <div id="bbBlokLijst">
           <?php if ($bb_blokken): foreach ($bb_blokken as $bi => $blok):

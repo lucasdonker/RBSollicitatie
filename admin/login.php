@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <style>
 .sso-btn { display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:12px;border-radius:8px;border:1.5px solid var(--rand);background:#fff;font-size:14px;font-weight:500;cursor:pointer;text-decoration:none;color:var(--tekst);transition:all .15s; }
 .sso-btn:hover { border-color:var(--oranje);background:var(--oranje-bg); }
-.sso-icoon { width:24px;height:24px;border-radius:5px;background:#fd4b2d;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700;flex-shrink:0; }
+.sso-icoon { width:24px;height:24px;border-radius:5px;background:var(--accent);display:flex;align-items:center;justify-content:center;color:var(--op-vol);font-size:13px;font-weight:700;flex-shrink:0; }
 .scheiding { display:flex;align-items:center;gap:10px;margin:16px 0;color:var(--grijs);font-size:12px; }
 .scheiding::before,.scheiding::after { content:'';flex:1;height:1px;background:var(--rand); }
 </style>
