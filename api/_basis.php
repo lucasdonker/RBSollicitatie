@@ -23,7 +23,7 @@ function api_json($data, int $status = 200): never {
         header('Vary: Origin');
     }
     header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-    header('Access-Control-Allow-Headers: Content-Type, X-Paal13-Key');
+    header('Access-Control-Allow-Headers: Content-Type, X-Paal13-Key, X-Paal13-Bezoeker');
     echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
     exit;
 }

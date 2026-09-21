@@ -3,10 +3,25 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.97.0');
+define('APP_VERSIE', '2.98.0');
 
 function app_changelog(): array {
     return [
+        '2.98.0' => [
+            'datum'  => '2026-09-21',
+            'titel'  => 'Het aanmeldformulier opnieuw, en een echte WordPress-plugin',
+            'punten' => [
+                'Het aanmeldformulier gaat in drie korte stappen in plaats van negen velden tegelijk: eerst je naam, dan je geboortedatum, dan hoe we je bereiken. Er is niets bijgekomen of afgegaan — het zijn dezelfde vragen, alleen niet meer allemaal in één keer in beeld. Zonder JavaScript staan de stappen gewoon onder elkaar, dus het werkt overal',
+                'Fouten staan nu bij het veld zelf en in gewone taal ("Dit lijkt geen geldig e-mailadres. Controleer of er een @ en een punt in staan"), en je ziet ze vóór het versturen in plaats van erna. Ga je terug naar een eerdere stap, dan staat alles er nog',
+                'Er was maar één formulier, maar het stond op drie plekken in de code: op /aanmelden.php, op een landingspagina en straks op de website. Nu is er één bron. Een veld of een tekst wijzigen gebeurt op één plek en verandert overal mee',
+                'Nieuwe WordPress-plugin voor paal13.com. Die haalt het formulier op bij het sollicitatiesysteem in plaats van een eigen kopie mee te dragen, dus de website loopt nooit meer achter. Alle seizoensgegevens zijn als shortcode te gebruiken in teksten — datums, locaties, tijden, wat je meeneemt — met Nederlandse datums in zes vormen. Verandert het bestuur een datum in het beheer, dan verandert de website mee',
+                'Bij Landingspagina\'s staat nu een trechter: van bezoekers naar wie begon met invullen, per stap, tot de verstuurde aanmelding. Daarmee is te zien wáár mensen afhaken in plaats van alleen dát ze afhaken',
+                'Opgelost: een aanmelding via de website legde bij de privacytoestemming het adres van de webserver vast in plaats van dat van de sollicitant. Dat is precies het gegeven waar dat bewijs zijn waarde aan ontleent. Bovendien telde iedereen mee in dezelfde limiet, zodat na tien aanmeldingen per uur niemand er meer doorheen kwam',
+                'Opgelost: vernieuwen na een geslaagde aanmelding op /aanmelden.php stuurde het formulier nog een keer in. Nu volgt er een doorverwijzing, zoals op een landingspagina al gebeurde',
+                'Het aanmeldformulier laadt geen lettertype van buitenaf meer en heeft zijn eigen, kleine opmaak — dat scheelt op een telefoon met slecht bereik een paar seconden, en er gaat geen gegeven meer naar een andere partij voordat iemand iets heeft ingevuld',
+                'Het formulier onthoudt tijdens het invullen wat je hebt ingetypt, op je eigen apparaat, zodat een vergissing of de terugknop niet betekent dat je opnieuw kunt beginnen. Toestemmingsvinkjes worden bewust niet onthouden: toestemming hoor je zelf te geven',
+            ],
+        ],
         '2.95.0' => [
             'datum'  => '2026-09-21',
             'titel'  => 'De beheeromgeving opnieuw gebouwd',

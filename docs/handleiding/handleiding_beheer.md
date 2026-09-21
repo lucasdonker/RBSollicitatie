@@ -1014,8 +1014,19 @@ wel gekwalificeerd is maar niet beschikbaar.
 
 **Het seizoen staat open, maar het formulier op de website werkt niet.**  
 Controleer onder Instellingen › Website & API of er een API-sleutel is en of die in de
-WordPress-plugin staat. Op een landingspagina moet bovendien de markering voor het formulier in
-het ontwerp staan en de status op Gepubliceerd; zie de handleiding Landingspagina's.
+WordPress-plugin staat. In WordPress staat bij Instellingen › Paal 13 Aanmelden een knop
+**Verbinding testen** die meteen zegt wat er mis is. Op een landingspagina moet bovendien de
+markering voor het formulier in het ontwerp staan en de status op Gepubliceerd; zie de
+handleiding Landingspagina's.
+
+**Bezoekers krijgen "Deze pagina stond te lang open" op de website.**  
+Dan bewaart een cache-plugin de pagina met het formulier als kant-en-klare HTML. Daar zit een
+code in die maar een paar uur geldig is. Sluit de aanmeldpagina uit van de paginacache; de
+plugin geeft dat zelf al aan, dus meestal gaat het vanzelf goed.
+
+**Ik wil zien waar mensen afhaken in het formulier.**  
+Open bij Landingspagina's de betreffende pagina. Onder **Waar haken mensen af?** staat van
+bezoek tot verstuurde aanmelding hoeveel mensen elke stap haalden.
 
 **Ik zie een onderdeel niet in het menu.**  
 Dan heeft je rol daar geen leesrecht op. Vraag een admin om je rol te controleren onder

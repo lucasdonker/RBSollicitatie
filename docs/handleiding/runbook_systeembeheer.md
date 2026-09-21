@@ -51,7 +51,12 @@ volgens de checklist hieronder.
   Composer: alles wat nodig is zit in de repo (`includes/lib/` bevat TCPDF en FPDI voor de PDF's).
 - **Twee kanten:** het portaal voor sollicitanten (`/portaal/`) en het beheer (`/admin/`).
   Daarnaast `/aanmelden.php` (het openbare aanmeldformulier), `/p/<naam>` (landingspagina's),
-  `/api/` (voor de WordPress-plugin op paal13.com) en `/cron/run.php`.
+  `/api/` (voor de WordPress-plugin op paal13.com), `/track.php` (anonieme tellingen van het
+  aanmeldformulier) en `/cron/run.php`.
+- **Het aanmeldformulier staat op drie plekken maar bestaat één keer:** de HTML komt uit
+  `includes/aanmeldformulier.php`. `/aanmelden.php` en de landingspagina's roepen die functie
+  aan; de WordPress-plugin haalt hem op via `GET /api/formulier.php` en bewaart hem een paar
+  minuten. Een veld toevoegen gebeurt daar én in `includes/aanmelden_kern.php`, nergens anders.
 - **Inloggen:** beheerders via Authentik (OIDC); sollicitanten met een code per e-mail, WhatsApp
   of sms, of via Authentik als ze al lid zijn.
 - **Meldingen:** één verzendkern voor e-mail (SMTP), WhatsApp (WhatsReach) en sms. Alles gaat via
@@ -111,8 +116,14 @@ Doorloop dit bij **elke** release. De stappen met ★ zijn eenmalig bij de overg
 13. Stuur vanuit **Instellingen › Berichten** een testbericht per e-mail en, als WhatsApp aan
     staat, via WhatsApp. Controleer de regel in Berichten › log.
 14. Test de inlog van een sollicitant (code per e-mail) en de inlog van een beheerder (Authentik).
-15. ★ WordPress-plugin op paal13.com: de API-sleutel moet in de header `X-Paal13-Key` worden
-    meegestuurd. De variant in het webadres (`?key=`) werkt sinds 2.94.0 niet meer.
+15. ★ WordPress-plugin op paal13.com: bouw de ZIP met `wordpress-plugin\bouw-zip.ps1`, upload hem
+    bij Plugins › Nieuwe plugin, en vul bij **Instellingen › Paal 13 Aanmelden** het adres en de
+    API-sleutel in. Klik op **Verbinding testen** — er hoort te staan welk seizoen actief is.
+    Stond er een oudere Paal 13-plugin op de site, verwijder die dan eerst.
+    De sleutel gaat mee in de header `X-Paal13-Key`; de variant in het webadres (`?key=`) werkt
+    sinds 2.94.0 niet meer. De pagina met het formulier mag niet in een paginacache staan: de
+    plugin geeft dat zelf aan met `DONOTCACHEPAGE`, controleer het als je een exotische cache
+    gebruikt.
 
 **Na afloop**
 
@@ -299,7 +310,10 @@ Voor de verantwoording (AVG, NIS2-zorgplicht) staat hier wat het systeem doet:
   kost geld en is bewust niet aangeschaft.
 - WhatsApp loopt via WhatsReach (geen officiële Meta-koppeling). Het bestuur kan het per
   meldingstype uitzetten; bij storing valt alles terug op e-mail.
-- Het aanmeldformulier op `/aanmelden.php` heeft nog de oude vormgeving; de landingspagina's zijn
-  de bedoelde ingang.
+- "Halverwege weggegaan" in de trechter bij Landingspagina's is een aanwijzing, geen telling:
+  het signaal komt van een tabblad dat naar de achtergrond gaat, en sommigen komen terug.
+- Het formulier bewaart tijdens het invullen wat iemand intypt in `sessionStorage` van de eigen
+  browser, zodat de terugknop niet alles wist. Dat verdwijnt zodra het tabblad sluit en bij het
+  verzenden; toestemmingsvinkjes worden er bewust niet in bewaard.
 - Er is geen automatische test-suite op de server; de harnassen in `docs/ai/harnas/` draaien
   lokaal en staan niet in Git.

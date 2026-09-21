@@ -15,6 +15,12 @@ _backups/
 # Losse ZIP-bundels en archieven.
 *.zip
 
+# De opmaak en het script van de WordPress-plugin zijn kopieën van assets/css en assets/js.
+# Twee kopieën van hetzelfde bestand in één repository lopen uit elkaar; wordpress-plugin/
+# bouw-zip.ps1 zet er verse in bij het maken van de ZIP. Zie assets/LEESMIJ.txt daar.
+wordpress-plugin/paal13-aanmelden/assets/aanmeldformulier.css
+wordpress-plugin/paal13-aanmelden/assets/aanmeldformulier.js
+
 # Logbestanden.
 *.log
 error_log
