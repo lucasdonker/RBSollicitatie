@@ -40,6 +40,14 @@ try {
         default              => null,
     };
 
+    /* De melding gaat mee als flash, niet als toast. Het scherm herlaadt toch (de fase
+       staat op vier plekken), en een toast overleeft dat niet — vandaar dat de pagina
+       eerst 900 ms stil bleef staan zodat je hem kon lezen. Als flash is hij er ná het
+       herladen nog, blijft hij staan tot je hem wegklikt, en kan het herladen meteen. */
+    if ($mail_melding && function_exists('flash')) {
+        flash($mail_status === 'mislukt' ? 'waarschuwing' : 'succes', $mail_melding);
+    }
+
     echo json_encode([
         'ok'           => true,
         'fase'         => $naar,

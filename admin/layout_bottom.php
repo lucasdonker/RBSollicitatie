@@ -65,6 +65,8 @@ function fasWijzigen(solId, naar, label) {
   }).then(function (ja) {
     if (!ja) return;
     var stil = (typeof ja === 'object' && ja.vink) ? '1' : '';
+    // Meteen zichtbaar dat er iets loopt: anders gebeurt er tot het herladen niets.
+    var klaar = window.P13Actie ? window.P13Actie.bezig(null, null) : function () {};
     fetch(APP_URL + '/admin/api_fase.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -72,16 +74,14 @@ function fasWijzigen(solId, naar, label) {
     })
     .then(function (r) { return r.json(); })
     .then(function (data) {
-      if (!data.ok) { bhToast(data.fout || 'Opslaan mislukt.', 'fout'); return; }
-      if (data.mail_melding) {
-        bhToast(data.mail_melding, data.mail_status === 'verstuurd' ? 'succes'
-               : (data.mail_status === 'fout' ? 'fout' : 'info'));
-      }
-      // De pagina toont de fase op vier plekken; opnieuw laden is eerlijker dan die
-      // met de hand bijwerken (zo stond de rij-rendering eerder twee keer in de code).
-      setTimeout(function () { location.reload(); }, data.mail_melding ? 900 : 0);
+      if (!data.ok) { klaar(); bhToast(data.fout || 'Opslaan mislukt.', 'fout'); return; }
+      /* De pagina toont de fase op vier plekken; opnieuw laden is eerlijker dan die met
+         de hand bijwerken (zo stond de rij-rendering eerder twee keer in de code).
+         De melding over het bericht zet api_fase.php als flash, dus die staat er ná
+         het herladen nog — vandaar dat hier geen pauze meer inzit. */
+      location.reload();
     })
-    .catch(function () { bhToast('Verbindingsfout — probeer opnieuw.', 'fout'); });
+    .catch(function () { klaar(); bhToast('Verbindingsfout — probeer opnieuw.', 'fout'); });
   });
 }
 
