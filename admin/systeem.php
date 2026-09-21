@@ -5,7 +5,9 @@
  * Handig direct na een upload: draaien de automatische migraties?
  */
 require_once __DIR__ . '/../includes/functions.php';
-vereist_rol('admin');
+// Dit scherm draait migraties en repareert het schema, dus 'bewerken' en niet 'lezen'.
+// In de standaardmatrix heeft alleen de beheerder de module 'systeem'.
+vereis_recht('systeem', 'bewerken');
 
 $pagina_titel = 'Systeem & Updates';
 $actieve_nav  = 'systeem';

@@ -206,6 +206,14 @@ function rol_rang(string $sleutel): int {
  * mag heel andere dingen. Gebruik daarom bij voorkeur mag()/vereis_recht() met een
  * module; deze functie alleen waar het écht om "minstens deze rang" gaat.
  *
+ * Wat er na de herbouw nog op deze functie staat, en waarom:
+ *   bouwstenen.php  — gereedschap voor wie het systeem bouwt, geen beheerscherm
+ *   update.php      — draait migraties met een eigen databaseverbinding, hoort bij deployen
+ *   import.php      — massa-import van personen. Zou 'sollicitanten.bewerken' kunnen zijn,
+ *                     maar dat geeft het bestuur er een bevoegdheid bij die het nu niet
+ *                     heeft. Dat is een keuze voor Lucas, geen opruimklus.
+ * De rest is omgezet naar vereis_recht() met een module.
+ *
  * De weigering rendert dezelfde pagina als vereis_recht(): geen rechten is een keuze,
  * geen storing (ontwerpfilosofie §8). Eerder stond hier een kale die() met een <h2>.
  */

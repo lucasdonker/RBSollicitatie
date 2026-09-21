@@ -3,10 +3,28 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.94.0');
+define('APP_VERSIE', '2.95.0');
 
 function app_changelog(): array {
     return [
+        '2.95.0' => [
+            'datum'  => '2026-09-21',
+            'titel'  => 'De beheeromgeving opnieuw gebouwd',
+            'punten' => [
+                'Het hele beheer is omgezet naar het nieuwe ontwerp: één set bouwstenen in plaats van vijfendertig schermen die elk hun eigen kaarten, knoppen en tabellen meebrachten. Een wijziging aan een badge of een tabel gebeurt voortaan op één plek',
+                'Nieuw scherm Trainingsweekend. Het menu wees daar al naar, maar het scherm bestond niet — dat was een foutpagina. Tijdens het weekend vink je op je telefoon af wie er is en schrijf je op wat opvalt; na afloop leg je per kandidaat het besluit vast. Dat besluit verandert nog niets: pas als je het doorvoert gaat de fase om en vertrekt het bericht. Twijfel blijft staan, want dat is een telefoontje',
+                'Elk scherm werkt nu ook in de donkere modus, en op een telefoon of tablet. Afdrukken werkt weer: dat was stuk sinds de vorige herbouw, de zijbalk ging mee op papier',
+                'Geen enkel scherm gebruikt nog de kale vensters van de browser voor een vraag of een waarschuwing. Elke bevestiging zegt nu wát er gebeurt in plaats van "weet je het zeker" — bij het verwijderen van een seizoen bijvoorbeeld precies welke gegevens verdwijnen, met de suggestie om het seizoen te sluiten als je ze wilt bewaren',
+                'Het berichtenlog zegt bij elk bericht waarom iets niet aankwam, in woorden: "Adres bestaat niet", "Geen WhatsApp op dit nummer", "Dagplafond bereikt". Bij een mislukt adres staat er een link naar het veld waar je het corrigeert',
+                'Opgelost: de penningmeester kon gezondheidsverklaringen openen. De controle keek naar de rangorde van rollen, en de penningmeester heeft dezelfde rang als het bestuur — terwijl hij alleen de loonadministratie hoort te zien',
+                'Opgelost: de rol van een beheerder werd opgeslagen zodra je met het toetsenbord door de keuzelijst liep. Er is nu een knop',
+                'Opgelost: in het beschikbaarheidsraster kreeg iemand die maar drie dagen kon dezelfde groene cel als iemand die de hele week beschikbaar was',
+                'Opgelost: op acht plekken stond de maand in het Engels ("22 Jun")',
+                'De rechtenmatrix is bruikbaar met een schermlezer: elk vinkje zegt nu waar het over gaat ("Bestuur mag Sollicitanten bewerken"). Eerder hoorde je alleen "aankruisvakje"',
+                'Het foutenlog is geen apart scherm meer; die fouten staan al in het logboek, met hetzelfde referentienummer',
+                'Alle iconen komen uit één set. De selectiedag-tests en de posten hadden nog een tekstveld waar je zelf een emoji in typte; dat is nu een keuze uit de iconen',
+            ],
+        ],
         '2.94.0' => [
             'datum'  => '2026-09-19',
             'titel'  => 'Klaar voor productie: beveiliging aangescherpt, opruiming en documentatie',

@@ -13,7 +13,10 @@ require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/beheer/laden.php';
 $pagina_titel = 'Rollen & rechten';
 $actieve_nav  = 'rollen';
-vereist_rol('admin');
+// Via het modulerecht en niet via de rolrang, net als beheerders.php. In de
+// standaardmatrix heeft alleen de beheerder 'beheerders', dus wie er nu in kan
+// verandert niet — maar het is voortaan instelbaar in plaats van hardgecodeerd.
+vereis_recht('beheerders', 'bewerken');
 
 rechten_auto_setup();
 $db   = db();

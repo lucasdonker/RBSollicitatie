@@ -15,6 +15,8 @@
  * Instellingen › Bewaartermijnen, en het opschonen gebeurt daar automatisch.
  */
 require_once __DIR__ . '/../includes/functions.php';
-vereist_rol('admin');
+// Hetzelfde recht als het scherm waar we heen sturen: anders krijgt iemand die het
+// logboek wél mag lezen hier een weigering op een link die daarna gewoon werkt.
+vereis_recht('logboek', 'lezen');
 
 redirect(APP_URL . '/admin/logboek.php?bron=fout');
