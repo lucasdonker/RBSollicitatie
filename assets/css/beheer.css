@@ -1549,6 +1549,53 @@ button.bh-weekcel-klik:hover, button.bh-weekcel-klik:focus-visible { outline: 2p
 .bh-ssokaart { border-left: 3px solid var(--border-strong); }
 .bh-ssokaart.aan { border-left-color: var(--ok); }
 /* ============================================================
+   TRAININGSWEEKEND — het weekend zelf, en daarna het besluit
+   ============================================================ */
+
+/* Aanwezig of niet: twee grote knoppen. Dit gebeurt buiten, met een telefoon in
+   één hand, dus minstens 56px hoog (ontwerpfilosofie §6). */
+.bh-aanwezigkeuze { display: flex; gap: 8px; }
+.bh-aanwezig {
+  flex: 1; min-height: 56px; display: flex; align-items: center; justify-content: center; gap: 8px;
+  border-radius: var(--radius-md); cursor: pointer; font-family: inherit;
+  font-size: 15px; font-weight: 600; color: var(--ink-soft);
+  background: var(--bg-subtle); border: 2px solid var(--border);
+}
+.bh-aanwezig:disabled { cursor: default; opacity: .55; }
+.bh-aanwezig.ja.gekozen { background: var(--fase-groen-vlak); border-color: var(--fase-groen); color: var(--fase-groen); }
+.bh-aanwezig.nee.gekozen { background: var(--fase-rood-vlak); border-color: var(--fase-rood); color: var(--fase-rood); }
+
+/* Het besluit: één kaart per kandidaat, met de observaties erboven. Je leest eerst
+   wat er is gezien en kiest dan — niet andersom. */
+.bh-twbesluiten { display: flex; flex-direction: column; gap: 12px; }
+.bh-twkaart { padding: 14px 18px 16px; border-left: 3px solid var(--f-tekst); }
+.bh-twkaart.doorgevoerd { background: var(--bg-subtle); }
+.bh-twkaart-kop { display: flex; align-items: center; gap: 11px; flex-wrap: wrap; }
+.bh-twkaart-wie { flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 2px; }
+.bh-twkaart-naam { font-size: 15px; font-weight: 600; color: var(--navy); text-decoration: none; }
+.bh-twkaart-naam:hover { text-decoration: underline; }
+.bh-twkaart-obs { margin-top: 12px; }
+.bh-twkaart-geenobs { margin: 12px 0 0; }
+.bh-twkaart-form { margin-top: 13px; padding-top: 13px; border-top: 1px solid var(--bg-subtle); }
+.bh-twkaart-form .ds-veld { margin: 10px 0; }
+
+.bh-twkeuze { display: flex; gap: 6px; flex-wrap: wrap; }
+.bh-twoptie { flex: 1; min-width: 110px; position: relative; }
+.bh-twoptie input {
+  position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;
+}
+.bh-twoptie span {
+  display: flex; align-items: center; justify-content: center; min-height: 44px;
+  border-radius: var(--radius-md); cursor: pointer;
+  font-size: 14px; font-weight: 600; color: var(--ink-soft);
+  background: var(--bg); border: 2px solid var(--border);
+}
+.bh-twoptie input:focus-visible + span { outline: 2px solid var(--navy); outline-offset: 2px; }
+.bh-twoptie.aannemen input:checked + span { background: var(--fase-groen-vlak); border-color: var(--fase-groen); color: var(--fase-groen); }
+.bh-twoptie.twijfel  input:checked + span { background: var(--fase-oranje-vlak); border-color: var(--fase-oranje); color: var(--fase-oranje); }
+.bh-twoptie.afwijzen input:checked + span { background: var(--fase-rood-vlak); border-color: var(--fase-rood); color: var(--fase-rood); }
+
+/* ============================================================
    INSTELLINGEN — zes groepen links, één onderwerp tegelijk rechts
    ============================================================ */
 
@@ -1597,9 +1644,11 @@ button.bh-weekcel-klik:hover, button.bh-weekcel-klik:focus-visible { outline: 2p
 .bh-euroveld > span { position: absolute; left: 9px; font-size: 12px; color: var(--ink-muted); pointer-events: none; }
 .bh-euroveld input { padding-left: 22px; }
 .bh-knoprij { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; align-items: center; }
-.bh-testblok { flex: 1; min-width: 260px; border: none; margin: 0; padding: 0; }
-.bh-testblok legend { padding: 0 0 8px; font-size: 14px; font-weight: 600; color: var(--navy); }
-.bh-testblok .ds-veld + .ds-veld, .bh-testblok .bh-veldrij + .ds-veld { margin-top: 12px; }
+/* LET OP: .bh-testblok bestaat al, als blok op het beoordeelscherm van de selectiedag.
+   Dit is het instellingenveld vóór diezelfde test en dus een andere naam. */
+.bh-testveld { flex: 1; min-width: 260px; border: none; margin: 0; padding: 0; }
+.bh-testveld legend { padding: 0 0 8px; font-size: 14px; font-weight: 600; color: var(--navy); }
+.bh-testveld .ds-veld + .ds-veld, .bh-testveld .bh-veldrij + .ds-veld { margin-top: 12px; }
 .bh-testicoon { flex: 0 0 170px; }
 .bh-testicoon-nu { display: inline-flex; vertical-align: -3px; margin-left: 4px; color: var(--ink-soft); }
 /* Kleine, veelgebruikte bouwstenen binnen een instellingenblok. */

@@ -1288,7 +1288,7 @@ require __DIR__ . '/layout_top.php';
         <?php foreach (['sport'=>'Sporttest', 'zwem'=>'Zwemtest'] as $tk => $default):
           $_ic = bh_icoonnaam((string)($crit[$tk]['icoon'] ?? ''), $tk === 'zwem' ? 'golf' : 'bliksem');
         ?>
-        <fieldset class="bh-testblok">
+        <fieldset class="bh-testveld">
           <legend><?= h($default) ?></legend>
           <div class="bh-veldrij">
             <div class="ds-veld bh-testicoon">
