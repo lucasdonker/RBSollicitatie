@@ -1572,6 +1572,9 @@ button.bh-weekcel-klik:hover, button.bh-weekcel-klik:focus-visible { outline: 2p
 }
 .bh-blkleeg { font-size: 13px; color: var(--ink-muted); font-style: italic; margin-top: 4px; }
 
+/* Statusicoon op het systeemscherm; de kleur komt van de omliggende inline stijl. */
+.bh-healthicoon { display: inline-flex; flex: none; min-width: 18px; }
+
 /* ============================================================
    AFDRUKKEN — één keer goed, voor elk beheerscherm
    ============================================================

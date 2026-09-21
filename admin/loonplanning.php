@@ -75,7 +75,10 @@ $analyse = ($sid && $scenario_id)
 $weken_datums = function_exists('seizoen_weken_datums') ? seizoen_weken_datums($seizoen) : [];
 $functies = function_exists('functies_ophalen') ? functies_ophalen() : [];
 $budget = (float)$analyse['totaal']['budget'];
-$status_icoon = ['groen'=>'🟢', 'oranje'=>'🟠', 'rood'=>'🔴'];
+// Van de status van de bezettingsmodule naar de stand van bh_stoplicht(). Het woord
+// staat er altijd bij: een gekleurd bolletje alleen zegt niets tegen wie kleur niet ziet.
+$dek_stand = ['groen' => 'goed', 'oranje' => 'krap', 'rood' => 'slecht'];
+$dek_woord = ['groen' => 'Gedekt', 'oranje' => 'Krap', 'rood' => 'Tekort'];
 
 require __DIR__ . '/layout_top.php';
 ?>
@@ -123,7 +126,7 @@ require __DIR__ . '/layout_top.php';
       <?php endforeach; ?>
       <span style="flex:1"></span>
       <a href="<?= APP_URL ?>/admin/export_beschikbaarheid.php?scenario=<?= $scenario_id ?>"
-         class="btn btn-outline btn-sm" title="Exporteer dit scenario als CSV">⬇ CSV</a>
+         class="btn btn-outline btn-sm" title="Exporteer dit scenario als CSV">CSV</a>
       <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('dupForm').style.display='flex'">+ Dupliceren</button>
       <?php $huidig_actief = false; foreach ($scenarios as $sc) if ((int)$sc['id']===$scenario_id && !empty($sc['actief'])) $huidig_actief = true; ?>
       <?php if (!$huidig_actief && $scenario_id): ?>
@@ -137,7 +140,7 @@ require __DIR__ . '/layout_top.php';
         <?= csrf_input() ?>
         <input type="hidden" name="sc_actie" value="verwijder">
         <input type="hidden" name="scenario_id" value="<?= $scenario_id ?>">
-        <button type="submit" class="btn btn-outline btn-sm" title="Scenario verwijderen">✕</button>
+        <button type="submit" class="btn btn-outline btn-sm" title="Scenario verwijderen">Verwijderen</button>
       </form>
       <?php endif; ?>
     </div>
@@ -163,7 +166,7 @@ require __DIR__ . '/layout_top.php';
 <?php if ($analyse['signalen']): ?>
   <div class="card" style="margin-bottom:12px;border-left:4px solid var(--oranje)">
     <div class="card-body" style="padding:12px 16px">
-      <div style="font-size:13.5px;font-weight:600;margin-bottom:6px">⚠️ Signalen (<?= count($analyse['signalen']) ?>)</div>
+      <div style="font-size:13.5px;font-weight:600;margin-bottom:6px">Signalen (<?= count($analyse['signalen']) ?>)</div>
       <div style="font-size:12px;color:var(--tekst-zacht);margin-bottom:8px">Aandachtspunten, geen blokkades — jij beslist.</div>
       <ul style="margin:0;padding-left:18px;font-size:12.5px;line-height:1.7">
         <?php foreach (array_slice($analyse['signalen'], 0, 12) as $s): ?>
@@ -247,7 +250,9 @@ require __DIR__ . '/layout_top.php';
       <td class="fcol" style="font-weight:400;font-size:10px">o.b.v. ingeplande mensen</td>
       <?php foreach ($weken_datums as $wn => $wd): $dk = $analyse['dekking'][$wn] ?? null; ?>
       <td id="dek-<?= $wn ?>" title="<?= $dk ? h(ucfirst($dk['status'])) . ' — ' . (int)$dk['ingezet'] . ' ingezet' : 'Niemand ingepland' ?>">
-        <?= $dk ? ($status_icoon[$dk['status']] ?? '') : '<span style="opacity:.4">–</span>' ?>
+        <?= $dk
+              ? bh_stoplicht($dek_stand[$dk['status']] ?? 'goed', $dek_woord[$dk['status']] ?? '—')
+              : '<span class="bh-meta">—</span>' ?>
       </td>
       <?php endforeach; ?>
       <td></td>
@@ -265,7 +270,7 @@ require __DIR__ . '/layout_top.php';
 </div>
 
 <details style="margin-top:14px">
-  <summary style="cursor:pointer;font-size:13px;color:var(--tekst-zacht)">📋 Loontabel (dagloon per leeftijd &amp; functie)</summary>
+  <summary style="cursor:pointer;font-size:13px;color:var(--tekst-zacht)">Loontabel (dagloon per leeftijd &amp; functie)</summary>
   <div class="card" style="margin-top:8px;overflow-x:auto">
     <table style="font-size:11px;border-collapse:collapse;width:100%">
       <thead>
@@ -335,7 +340,15 @@ require __DIR__ . '/layout_top.php';
 <script>
 const SCENARIO_ID = <?= (int)$scenario_id ?>;
 const BUDGET = <?= (float)$budget ?>;
-const STATUS_ICOON = {groen:'🟢', oranje:'🟠', rood:'🔴'};
+/* Zelfde stoplicht als de server rendert: stand voor de kleur, woord voor de tekst. */
+const DEK_STAND = {groen:'goed', oranje:'krap', rood:'slecht'};
+const DEK_WOORD = {groen:'Gedekt', oranje:'Krap', rood:'Tekort'};
+function dekStoplicht(status) {
+  const stand = DEK_STAND[status] || 'goed';
+  const kleur = stand === 'goed' ? 'groen' : (stand === 'krap' ? 'oranje' : 'rood');
+  return '<span class="bh-stoplicht ds-fase-' + kleur + '"><span class="bh-stoplicht-bol"></span>'
+       + (DEK_WOORD[status] || '') + '</span>';
+}
 
 function functieWijzig(solId) {
   // Functie geldt voor alle weken van deze persoon: elke ingevulde week opnieuw opslaan
@@ -405,10 +418,10 @@ function werkBij(d) {
     const wk = td.id.split('-')[1];
     const dk = d.dekking[wk];
     if (dk) {
-      td.textContent = STATUS_ICOON[dk.status] || '';
-      td.title = dk.status.charAt(0).toUpperCase() + dk.status.slice(1) + ' \u2014 ' + dk.ingezet + ' ingezet';
+      td.innerHTML = dekStoplicht(dk.status);
+      td.title = (DEK_WOORD[dk.status] || dk.status) + ' \u2014 ' + dk.ingezet + ' ingezet';
     } else {
-      td.innerHTML = '<span style="opacity:.4">\u2013</span>';
+      td.innerHTML = '<span class="bh-meta">\u2014</span>';
       td.title = 'Niemand ingepland';
     }
   });

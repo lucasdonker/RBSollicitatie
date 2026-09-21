@@ -72,11 +72,11 @@ require __DIR__ . '/layout_top.php';
       <div style="font-size:24px;font-weight:700;color:var(--navy)"><?= h(APP_VERSIE) ?></div>
     </div>
     <div style="flex:1"></div>
-    <a href="<?= APP_URL ?>/diagnose.php" class="btn btn-outline btn-sm" target="_blank">🔍 Diagnose draaien</a>
+    <a href="<?= APP_URL ?>/diagnose.php" class="btn btn-outline btn-sm" target="_blank"> Diagnose draaien</a>
     <form method="POST" style="margin:0">
       <?= csrf_input() ?>
       <input type="hidden" name="actie" value="migreer">
-      <button type="submit" class="btn btn-outline btn-sm" title="Voer alle automatische database-migraties uit">⚙️ Migraties uitvoeren</button>
+      <button type="submit" class="btn btn-outline btn-sm" title="Voer alle automatische database-migraties uit">Migraties uitvoeren</button>
     </form>
   </div>
 </div>
@@ -89,12 +89,12 @@ require __DIR__ . '/layout_top.php';
     <?php
       $health_kleur = ['ok' => 'var(--groen)', 'waarschuwing' => 'var(--oranje)', 'fout' => 'var(--rood)'];
       $health_bg    = ['ok' => 'var(--groen-bg)', 'waarschuwing' => 'var(--oranje-bg)', 'fout' => 'var(--rood-bg)'];
-      $health_icoon = ['ok' => '✓', 'waarschuwing' => '⚠', 'fout' => '✗'];
+      $health_icoon = ['ok' => 'vink', 'waarschuwing' => 'waarschuwing', 'fout' => 'kruis'];
       $health_label = ['ok' => 'Alles in orde', 'waarschuwing' => 'Aandachtspunten', 'fout' => 'Er is een probleem'];
       $st = $health['status'];
     ?>
     <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:<?= $health_bg[$st] ?>;border:1px solid <?= $health_kleur[$st] ?>;border-radius:8px;margin-bottom:14px">
-      <span style="font-size:18px"><?= $health_icoon[$st] ?></span>
+      <span class="bh-healthicoon"><?= icoon($health_icoon[$st], 18) ?></span>
       <span style="font-size:13px;color:<?= $health_kleur[$st] ?>"><strong><?= $health_label[$st] ?>.</strong></span>
     </div>
 
@@ -109,7 +109,7 @@ require __DIR__ . '/layout_top.php';
           $ck = $check['status'];
       ?>
       <div style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--rand)">
-        <span style="font-size:14px;color:<?= $health_kleur[$ck] ?>;min-width:16px"><?= $health_icoon[$ck] ?></span>
+        <span class="bh-healthicoon" style="color:<?= $health_kleur[$ck] ?>"><?= icoon($health_icoon[$ck], 15) ?></span>
         <div style="flex:1">
           <div style="font-size:13px;font-weight:600"><?= h($check_namen[$sleutel] ?? $sleutel) ?></div>
           <div style="font-size:12px;color:var(--tekst-zacht)"><?= h($check['uitleg']) ?><?= !empty($check['hersteld']) ? ' <span style="color:var(--groen)">(automatisch hersteld)</span>' : '' ?></div>
@@ -176,12 +176,12 @@ require __DIR__ . '/layout_top.php';
       <?php if ($gezondheid !== null): ?>
         <?php if ($gezondheid['ok']): ?>
           <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--groen-bg);border:1px solid var(--groen);border-radius:8px;margin-bottom:12px">
-            <span style="font-size:18px">✓</span>
+            <span class="bh-healthicoon"><?= icoon('vink', 18) ?></span>
             <span style="font-size:13px;color:var(--groen)"><strong>Database in orde.</strong> Alle verwachte tabellen en kolommen zijn aanwezig.</span>
           </div>
         <?php else: ?>
           <div style="padding:10px 14px;background:var(--oranje-bg);border:1px solid var(--oranje);border-radius:8px;margin-bottom:12px">
-            <div style="font-size:13px;color:var(--oranje);font-weight:600;margin-bottom:4px">⚠ Er ontbreekt iets in de database</div>
+            <div style="font-size:13px;color:var(--oranje);font-weight:600;margin-bottom:4px">Er ontbreekt iets in de database</div>
             <?php if (!empty($gezondheid['ontbrekende_kolommen'])): ?>
               <div style="font-size:12px;color:var(--tekst-zacht)">Ontbrekende kolommen: <?= h(implode(', ', $gezondheid['ontbrekende_kolommen'])) ?></div>
             <?php endif; ?>
@@ -203,7 +203,7 @@ require __DIR__ . '/layout_top.php';
                        background:<?= $ok ? 'var(--groen-bg)' : 'var(--grijs-bg)' ?>;
                        color:<?= $ok ? 'var(--groen)' : 'var(--grijs)' ?>;
                        border:1px solid <?= $ok ? 'var(--groen)' : 'var(--rand)' ?>">
-            <?= $ok ? '✓' : '○' ?> <?= h($t) ?>
+            <?= icoon($ok ? 'vink' : 'punt', 13) ?> <?= h($t) ?>
           </span>
           <?php endforeach; ?>
         </div>
