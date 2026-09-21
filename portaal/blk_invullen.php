@@ -333,7 +333,8 @@ require __DIR__ . '/_kop.php';
         </div>
         <div class="blk-kaart">
           <label class="blk-veld"><span class="blk-lbl">Wat doe je het liefst op het strand?</span>
-            <textarea class="blk-textarea" name="motivatie_strand" rows="4" placeholder="Bijv: zwemmen, volleybal, mensen helpen..."><?= $v('motivatie_strand') ?></textarea></label>
+            <span class="blk-hint">Eén of twee zinnen is genoeg.</span>
+            <textarea class="blk-textarea" name="motivatie_strand" rows="3" placeholder="Bijv: zwemmen, volleybal, mensen helpen..."><?= $v('motivatie_strand') ?></textarea></label>
         </div>
       </section>
 

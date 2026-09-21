@@ -58,7 +58,11 @@ function ondertekening_verzoek_versturen(int $sol_id, array $ontvanger, array $l
     if (!function_exists('melding_verstuur') || !$links) return ['status' => 'overgeslagen', 'reden' => 'geen_kern'];
     $labels = array_keys($links);
     $extra  = ['formulieren_blok' => ondertekening_formulieren_blok($links), 'document_naam' => implode(' en ', $labels), 'onderteken_url' => reset($links)];
-    $opties = ['referentie' => $referentie, 'prioriteit' => 'direct'];
+    /* Ná het antwoord: dit bericht bevat alleen links, geen bijlage vanaf schijf, dus
+       er is niets dat op de verzending moet wachten. Het scheelde de sollicitant een
+       paar seconden staren naar een pagina die niets deed nadat hij de gegevens van
+       zijn ouder had ingevuld. De aanroepers kijken naar status 'verstuurd' óf 'wacht'. */
+    $opties = ['referentie' => $referentie, 'prioriteit' => 'na_antwoord'];
     if (($ontvanger['rol'] ?? 'ouder') === 'ouder') {
         $opties['ontvanger'] = ['email' => $ontvanger['email'], 'naam' => $ontvanger['naam'] ?: 'ouder/verzorger', 'telefoon' => '', 'rol' => 'ouder'];
         $extra['ouder_naam'] = $ontvanger['naam'] ?: 'ouder/verzorger';

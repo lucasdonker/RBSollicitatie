@@ -14,8 +14,27 @@ $_nav = $portaal_nav ?? '';
 $_toon_nav = !$portaal_geen_nav && function_exists('portaal_ingelogd') && portaal_ingelogd();
 $_open = isset($portaal_open_taken) ? (int)$portaal_open_taken
        : (($_toon_nav && function_exists('portaal_taken_open_aantal')) ? portaal_taken_open_aantal((int)$_SESSION['portaal_sol_id']) : 0);
+
+/* Eén adres voor als iets niet lukt, op élke pagina. Dat ontbrak: wie vastliep op het
+   ondertekenen of het formulier had nergens iets om naartoe te gaan, behalve terug.
+   portaal_contact_email() is de bestaande bron (mail.bestuur_email); geen tweede
+   instelling erbij verzinnen. */
+$_contact_mail = function_exists('portaal_contact_email') ? portaal_contact_email() : '';
+$_contact_tel  = function_exists('instelling') ? trim((string)instelling('org.telefoon', '')) : '';
 ?>
   </main>
+
+<?php if ($_contact_mail !== '' || $_contact_tel !== ''): ?>
+  <p class="pt-hulpvoet">
+    Loopt iets niet?
+    <?php if ($_contact_mail !== ''): ?>
+      Mail <a href="mailto:<?= h($_contact_mail) ?>"><?= h($_contact_mail) ?></a><?= $_contact_tel !== '' ? ' of bel ' : '.' ?>
+    <?php endif; ?>
+    <?php if ($_contact_tel !== ''): ?>
+      <a href="tel:<?= h(preg_replace('/[^0-9+]/', '', $_contact_tel)) ?>"><?= h($_contact_tel) ?></a>.
+    <?php endif; ?>
+  </p>
+<?php endif; ?>
 
 <?php if ($_toon_nav): ?>
   <nav class="pt-nav" aria-label="Hoofdnavigatie">

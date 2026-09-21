@@ -6,8 +6,25 @@
 // Centrale mail-opmaak (het "jasje" om elke mail). Alle wrappers gebruiken dit.
 if (file_exists(__DIR__ . '/mail_thema.php')) require_once __DIR__ . '/mail_thema.php';
 
+/**
+ * Een datum zoals je hem zou zeggen: "zaterdag 11 april" in plaats van "11 apr 2026".
+ *
+ * In een uitnodiging is de dág van de week het eerste wat iemand wil weten — dan pas
+ * de datum. datum_nl() blijft wat het is (tabellen, logboek, beheer); dit is de vorm
+ * voor berichten aan sollicitanten. portaal_datum_lang() doet hetzelfde in het portaal;
+ * die wordt hier gebruikt als hij beschikbaar is, zodat beide dezelfde zin opleveren.
+ */
+function mail_datum_lang(?string $d): string {
+    if (!$d) return '';
+    if (function_exists('portaal_datum_lang')) {
+        $lang = portaal_datum_lang($d);
+        if ($lang !== '') return lcfirst($lang);
+    }
+    return datum_nl($d);
+}
+
 function mail_variabelen(array $sol, array $seizoen = []): array {
-    $sd_datum = !empty($seizoen['datum_selectiedag']) ? datum_nl($seizoen['datum_selectiedag']) : 'Nader te bepalen';
+    $sd_datum = !empty($seizoen['datum_selectiedag']) ? mail_datum_lang($seizoen['datum_selectiedag']) : 'Nader te bepalen';
     $sd_tijd  = !empty($seizoen['selectiedag_verzameltijd']) ? ' om ' . substr($seizoen['selectiedag_verzameltijd'], 0, 5) : '';
     $sd_loc   = $seizoen['locatie_selectiedag'] ?? 'Nader te bepalen';
 
@@ -46,8 +63,8 @@ function mail_variabelen(array $sol, array $seizoen = []): array {
         'selectiedag_datum'           => $sd_datum,
         'selectiedag_tijd'            => $sd_tijd,
         'selectiedag_locatie'         => $sd_loc,
-        'tw_datum_start'              => datum_nl($seizoen['datum_tw_start'] ?? null),
-        'tw_datum_eind'               => datum_nl($seizoen['datum_tw_eind'] ?? null),
+        'tw_datum_start'              => mail_datum_lang($seizoen['datum_tw_start'] ?? null) ?: datum_nl($seizoen['datum_tw_start'] ?? null),
+        'tw_datum_eind'               => mail_datum_lang($seizoen['datum_tw_eind'] ?? null) ?: datum_nl($seizoen['datum_tw_eind'] ?? null),
         'tw_locatie'                  => $seizoen['locatie_tw'] ?? 'Nader te bepalen',
         'tw_verzameltijd'             => $seizoen['tw_verzameltijd'] ?? 'Nader te bepalen',
         'bestuur_email'               => defined('MAIL_BESTUUR') ? MAIL_BESTUUR : '',

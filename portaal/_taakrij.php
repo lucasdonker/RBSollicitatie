@@ -40,6 +40,16 @@ $_extern = !empty($_t['extern']);
         <button type="submit" class="pt-taakrij-gedaan"><?= icoon('vink', 16) ?>Gedaan</button>
       <?php endif; ?>
     </form>
+  <?php elseif (!empty($_t['herinner_ond'])): ?>
+    <?php /* De ouder is aan zet en heeft de mail niet (meer). Dit stuurt de link
+             opnieuw, zodat de sollicitant daarvoor niet hoeft te bellen. */ ?>
+    <form method="POST" class="pt-taakrij-afvink">
+      <?= csrf_input() ?>
+      <input type="hidden" name="ouder_herinner" value="1">
+      <input type="hidden" name="ond_id" value="<?= (int)$_t['herinner_ond'] ?>">
+      <input type="hidden" name="terug" value="<?= h($taak_terug ?? 'start') ?>">
+      <button type="submit" class="pt-taakrij-actie"><?= icoon('mail', 15) ?> Link opnieuw sturen</button>
+    </form>
   <?php elseif ($_inline && !empty($_t['done'])): ?>
     <button type="button" class="pt-taakrij-actie" data-toggle-inline>Wijzigen</button>
   <?php elseif ($_klik && !empty($_t['done']) && !empty($_t['actie_label'])): ?>

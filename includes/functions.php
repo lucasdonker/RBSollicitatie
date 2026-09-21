@@ -851,11 +851,35 @@ function extra_tabellen_auto_setup(): void {
 }
 
 // ── Lazy-cron: draait max 1x per uur bij admin-bezoek ─────────
+/**
+ * Vangnet voor als de echte cron een uur niet heeft gedraaid.
+ *
+ * Dit stond vóór het renderen van de pagina: tien berichten versturen, drie
+ * AI-verzoeken, herinneringen en auto-invite — terwijl een sollicitant op zijn portaal
+ * stond te wachten. Eén ongelukkig bezoek betaalde zo de rekening van het hele systeem.
+ *
+ * Nu wordt het werk pas gedaan nadat de pagina bij de bezoeker is: fastcgi_finish_request()
+ * sluit de verbinding, daarna draait de rest. De bezoeker merkt er niets van.
+ * Onder CLI (harnas, scripts) bestaat die functie niet; dan draait het gewoon direct.
+ */
 function lazy_cron_tick(): void {
     try {
         $laatste = instelling('cron.laatste_run', '');
         if ($laatste && strtotime($laatste) > time() - 3600) return;
-        if (function_exists('cron_taken_uitvoeren')) cron_taken_uitvoeren('lazy', ['queue' => 10, 'ai' => 3]);
+        if (!function_exists('cron_taken_uitvoeren')) return;
+
+        if (PHP_SAPI === 'cli' || !function_exists('fastcgi_finish_request')) {
+            cron_taken_uitvoeren('lazy', ['queue' => 10, 'ai' => 3]);
+            return;
+        }
+        // Eén keer per request registreren, ook als _kop.php en layout_top.php allebei aankloppen.
+        if (!empty($GLOBALS['_lazy_cron_gepland'])) return;
+        $GLOBALS['_lazy_cron_gepland'] = true;
+        register_shutdown_function(function () {
+            @fastcgi_finish_request();
+            try { cron_taken_uitvoeren('lazy', ['queue' => 10, 'ai' => 3]); }
+            catch (\Throwable $e) { error_log('lazy_cron (na antwoord): ' . $e->getMessage()); }
+        });
     } catch (\Exception $e) { error_log('lazy_cron: ' . $e->getMessage()); }
 }
 

@@ -18,7 +18,7 @@ $vraag_sol   = $vraag_sol ?? null;
 $vraag_flash = $vraag_flash ?? null;
 $vraag_fout  = $vraag_fout ?? null;
 if (!$vraag_sol) return;
-$_contact = function_exists('instelling') ? (string)instelling('contact.email', '') : '';
+$_contact = function_exists('portaal_contact_email') ? portaal_contact_email() : '';
 ?>
 <div class="pt-kaart pt-vraag">
   <h2 class="pt-kaart-titel"><?= icoon('chat', 18) ?> Een vraag?</h2>

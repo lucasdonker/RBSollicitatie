@@ -1226,6 +1226,13 @@ html[data-theme="dark"] .ds-avatar { background: var(--bg-subtle); color: var(--
 }
 .ond-klaar-hierna { display: block; margin-top: 8px; }
 
+/* Eén regel onderaan elke portaalpagina met waar je heen kunt als iets niet lukt. */
+.pt-hulpvoet {
+  max-width: 560px; margin: 26px auto 18px; padding: 0 16px;
+  text-align: center; font: var(--text-meta); color: var(--ink-soft);
+}
+.pt-hulpvoet a { color: var(--accent); font-weight: 600; }
+
 /* "Stel een vraag": de uitweg uit het portaal. */
 .pt-vraag-form { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
 .pt-vraag-form .ds-textarea { width: 100%; }

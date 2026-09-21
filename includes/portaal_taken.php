@@ -122,6 +122,8 @@ function portaal_taken(array $sol, ?array $blk = null): array {
             'urgent'   => false,
             'volgorde' => 25,
             'wacht'    => !$d['klaar'],   // niet de sollicitant maar de ouder is aan zet
+            // Mail kwijt? Dan hoef je daarvoor niet bij het bestuur aan te kloppen.
+            'herinner_ond' => !$d['klaar'] && !empty($d['email']) ? (int)$d['id'] : null,
         ]);
     }
 
@@ -412,6 +414,42 @@ function portaal_taken_post_afhandelen(int $sol_id): void {
                     }
                 }
             } catch (\Throwable $e) {}
+        }
+        redirect($terug);
+    }
+
+    /* De ouder heeft de mail niet gekregen of kwijtgemaakt. Tot nu toe moest de
+       sollicitant daarvoor bij het bestuur aankloppen; nu staat er een knop bij de
+       wachtende taak. Eén keer per kwartier per document — genoeg om een verdwaalde
+       mail opnieuw te sturen, te weinig om iemands inbox vol te zetten. */
+    if (isset($_POST['ouder_herinner'])) {
+        csrf_check();
+        $ond_id = (int)($_POST['ond_id'] ?? 0);
+        if ($ond_id) {
+            if (function_exists('rate_limit') && !rate_limit('ouder_herinner', $sol_id . ':' . $ond_id, 1, 900)) {
+                $_SESSION['flash_portaal'] = 'We hebben net al een link gestuurd. Kijk ook in de spam-map; over een kwartier kun je het opnieuw proberen.';
+                redirect($terug);
+            }
+            try {
+                $oq = db()->prepare("SELECT type, token, ondertekenaar_naam, ondertekenaar_email
+                                     FROM ondertekeningen
+                                     WHERE id=? AND sollicitatie_id=? AND ondertekenaar_rol='ouder' AND ondertekend_op IS NULL");
+                $oq->execute([$ond_id, $sol_id]);
+                $o = $oq->fetch();
+                if ($o && !empty($o['ondertekenaar_email']) && function_exists('ondertekening_verzoek_versturen')) {
+                    ondertekening_verzoek_versturen($sol_id,
+                        ['email' => $o['ondertekenaar_email'], 'naam' => $o['ondertekenaar_naam'] ?: 'ouder/verzorger', 'rol' => 'ouder'],
+                        [ondertekening_label((string)$o['type']) => ondertekening_url((string)$o['token'])],
+                        'ondertekening:' . $ond_id);
+                    $_SESSION['flash_portaal'] = 'De link is opnieuw gestuurd naar ' . $o['ondertekenaar_email'] . '.';
+                    if (function_exists('audit_log')) audit_log('ouder_link_opnieuw', 'sollicitatie', $sol_id, ['ondertekening' => $ond_id, 'via' => 'portaal']);
+                } else {
+                    $_SESSION['flash_portaal'] = 'Versturen lukte niet. Controleer het e-mailadres van je ouder/verzorger.';
+                }
+            } catch (\Throwable $e) {
+                error_log('ouder_herinner: ' . $e->getMessage());
+                $_SESSION['flash_portaal'] = 'Versturen lukte niet. Probeer het later opnieuw.';
+            }
         }
         redirect($terug);
     }
