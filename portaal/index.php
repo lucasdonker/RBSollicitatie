@@ -406,7 +406,11 @@ require __DIR__ . '/_kop.php';
   </div>
   <?php endif; ?>
 
-  <?php if ($vg): $vg_toelichting = portaal_voortgang_toelichting($fase); require __DIR__ . '/_voortgang.php'; endif; ?>
+  <?php if ($vg):
+    $vg_toelichting = portaal_voortgang_toelichting($fase);
+    $vg_open = count($open_taken);   // "Stap 2 van 5 — nu even niets te doen"
+    require __DIR__ . '/_voortgang.php';
+  endif; ?>
 
   <div class="pt-start-grid">
     <?php require __DIR__ . '/_start_info.php'; ?>

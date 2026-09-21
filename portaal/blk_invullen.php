@@ -175,9 +175,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['blk_submit'])) {
             try { ai_queue_toevoegen($sol_id, 'blk_analyse'); } catch (\Exception $e) {}
         }
 
-        flash('succes', $is_edit
+        /* Niet alleen "gelukt", maar ook wat er nu gebeurt. Zonder die zin eindigt de
+           taak in stilte en weet je niet of er nog iets van je wordt verwacht. */
+        $hierna = '';
+        if (function_exists('portaal_hierna')) {
+            $_sol_na  = portaal_sollicitant_laden($sol_id) ?: $sol;
+            $_open_na = function_exists('portaal_taken')
+                ? count(portaal_taken_open(portaal_taken($_sol_na, blk_van($sol_id))))
+                : 0;
+            $hierna = ' ' . portaal_hierna($_sol_na, $_open_na);
+        }
+        flash('succes', ($is_edit
             ? 'Je wijzigingen aan het Beter Leren Kennen-formulier zijn opgeslagen.'
-            : 'Je Beter Leren Kennen-formulier is ingeleverd. Bedankt!');
+            : 'Je Beter Leren Kennen-formulier is ingeleverd. Bedankt!') . $hierna);
         redirect(portaal_terug_url());
     }
 }

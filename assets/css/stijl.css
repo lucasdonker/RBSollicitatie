@@ -1218,6 +1218,20 @@ html[data-theme="dark"] .ds-avatar { background: var(--bg-subtle); color: var(--
 .pt-code-uitleg { margin-top: 6px; font: var(--text-meta); color: var(--ink-soft); }
 .pt-login-fout { margin-bottom: 14px; }
 
+/* "Stap 2 van 5 — nu even niets te doen": de stand achter de stap, want dát is wat je
+   wilt weten als je het portaal opent. */
+.pt-voortgang-stand {
+  display: inline-block; margin-left: 8px; font-weight: 500;
+  font-size: 12px; color: var(--ink-soft);
+}
+.ond-klaar-hierna { display: block; margin-top: 8px; }
+
+/* "Stel een vraag": de uitweg uit het portaal. */
+.pt-vraag-form { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
+.pt-vraag-form .ds-textarea { width: 100%; }
+.pt-vraag-voet { margin: 12px 0 0; font: var(--text-meta); color: var(--ink-soft); }
+.pt-vraag-voet a { color: var(--accent); }
+
 /* Uitklappen vóór een knop die iets terugdraait: twee bewuste handelingen, zonder JS. */
 .pt-bevestig > summary {
   cursor: pointer; font-size: 14px; font-weight: 600; color: var(--accent);

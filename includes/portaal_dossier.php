@@ -174,6 +174,43 @@ function portaal_begroeting(array $sol, int $open): array {
 }
 
 /**
+ * Wat er gebeurt nu je dit hebt ingeleverd — de zin die na "gelukt" hoort te volgen.
+ *
+ * Zonder dit eindigt elke taak in stilte: je vult iets in, ziet een vinkje, en weet
+ * niet of er nog iets van je wordt verwacht of wanneer je iets hoort. Wachten is prima
+ * zolang je weet waarop en hoelang.
+ *
+ * Eén plek, want dezelfde zin hoort op de bevestigingspagina van het formulier, in de
+ * taakrij én in de mail te staan.
+ *
+ * @param int $open aantal taken dat hierna nog openstaat
+ */
+function portaal_hierna(array $sol, int $open = 0): string {
+    $sd = !empty($sol['datum_selectiedag']) ? portaal_datum_lang($sol['datum_selectiedag']) : '';
+    $tw = !empty($sol['datum_tw_start'])    ? portaal_datum_lang($sol['datum_tw_start'])    : '';
+
+    if ($open > 0) {
+        return $open === 1
+            ? 'Er staat hierna nog één ding open.'
+            : 'Er staan hierna nog ' . $open . ' dingen open.';
+    }
+    return match ($sol['fase'] ?? '') {
+        'aangemeld'            => 'Dat was het voor nu. Word je uitgenodigd, dan krijg je bericht en verschijnen hier je taken.',
+        'uitgenodigd_selectie',
+        'aangemeld_selectie'   => $sd !== ''
+            ? 'Dat was het voor nu. We zien je op ' . lcfirst($sd) . ' — je krijgt daarvoor nog een herinnering.'
+            : 'Dat was het voor nu. Je krijgt bericht met de details van de selectiedag.',
+        'selectiedag_geweest'  => 'Dat was het voor nu. Het bestuur bespreekt de selectiedag; je hoort binnen twee weken of je door mag.',
+        'uitgenodigd_tw'       => $tw !== ''
+            ? 'Dat was het voor nu. We zien je op ' . lcfirst($tw) . '.'
+            : 'Dat was het voor nu. Je krijgt bericht met de details van het trainingsweekend.',
+        'tw_geweest'           => 'Dat was het voor nu. Je hoort binnen twee weken of je bent aangenomen.',
+        'aangenomen'           => 'Dat was het — je bent helemaal rond. Tot op het strand.',
+        default                => 'Dat was het voor nu. Je hoort van ons zodra er nieuws is.',
+    };
+}
+
+/**
  * Waar een taakpagina (beschikbaarheid, BLK, overzicht) na afloop naar terugkeert: de Taken-tab als
  * de sollicitant daar vandaan kwam (?terug=taken in de link, of het hidden veld 'terug' in het
  * formulier), anders de startpagina. Whitelist, dus nooit een open redirect.

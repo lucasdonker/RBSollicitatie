@@ -9,6 +9,10 @@ $sol_id = portaal_vereis_login();
 $sol = portaal_sollicitant_laden($sol_id);
 if (!$sol) { unset($_SESSION['portaal_sol_id']); redirect(APP_URL . '/portaal/'); }
 
+// "Stel een vraag" staat onder de berichtenlijst: dit is de plek waar iemand zit die
+// net iets heeft gelezen en wil reageren.
+$vr = portaal_vraag_verwerk($sol);
+
 $gezien_op = portaal_berichten_gezien_op($sol_id);
 $berichten = portaal_berichten($sol_id, $gezien_op);
 $ongelezen = count(array_filter($berichten, fn($b) => $b['ongelezen']));
@@ -48,6 +52,13 @@ require __DIR__ . '/_kop.php';
     <?php endforeach; ?>
     <span class="pt-hulp">Berichten blijven een seizoen bewaard.</span>
   <?php endif; ?>
+
+  <?php
+    $vraag_sol   = $sol;
+    $vraag_flash = $vr['flash'];
+    $vraag_fout  = $vr['fout'];
+    require __DIR__ . '/_vraag.php';
+  ?>
 </div>
 
 <?php require __DIR__ . '/_voet.php'; ?>

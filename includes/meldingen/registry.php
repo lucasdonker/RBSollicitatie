@@ -220,6 +220,24 @@ function meldingen_register(): array {
             ],
         ]),
 
+        /* Een vraag vanuit het portaal. Tot nu toe was het portaal een doodlopend eind:
+           je las een bericht en kon niet antwoorden, dus elke vraag kwam via een kanaal
+           waar hij kwijtraakte (privé-WhatsApp, een los mailadres). Nu komt hij bij het
+           bestuur binnen mét naam en fase erbij, zodat meteen duidelijk is wie het
+           vraagt en waar hij in het proces zit. */
+        'sollicitant_vraag' => array_merge($std, [
+            'naam' => 'Vraag vanuit het portaal', 'categorie' => 'systeem', 'ontvanger' => 'bestuur',
+            'kanaal_standaard' => 'email', 'kort_toegestaan' => false, 'dedup_min' => 0,
+            'beschrijving' => 'Als een sollicitant via het portaal een vraag stelt.',
+            'vars' => ['vraag', 'fase_label'],
+            'seed' => [
+                'onderwerp' => 'Vraag van {{volledige_naam}} ({{fase_label}})',
+                'hero_titel' => 'Vraag uit het portaal', 'hero_subtitel' => '{{volledige_naam}} · {{fase_label}}',
+                'body_html' => "<p><strong>{{volledige_naam}}</strong> ({{fase_label}}) stelde deze vraag via het portaal:</p>\n[info]{{vraag}}[/info]\n<p>Antwoorden kan rechtstreeks op {{email}}.</p>",
+                'tekst_kort' => '', 'samenvatting' => 'Vraag van {{volledige_naam}}: {{vraag}}',
+            ],
+        ]),
+
         /* Het bestuur past de beschikbaarheid van iemand aan. Gaat alleen uit als de
            beheerder dat bij de correctie aanvinkt: een invoerfout rechtzetten is geen
            nieuws, een vakantieweek schrappen wel. Categorie 'taak', want het gaat over

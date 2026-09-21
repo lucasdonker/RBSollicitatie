@@ -359,6 +359,16 @@ require __DIR__ . '/_kop.php';
       <?php else: ?>
         Dit document is rond. Je krijgt een kopie per e-mail; in je portaal staat de taak op afgerond.
       <?php endif; ?>
+      <?php /* En wat er nu gebeurt — anders eindigt het hier zonder dat je weet of er
+               nog iets van je wordt verwacht. */ ?>
+      <?php if ($eigen_ingelogd && function_exists('portaal_hierna')):
+        $_s_na = portaal_sollicitant_laden((int)$rec['sollicitatie_id']);
+        if ($_s_na):
+          $_o_na = function_exists('portaal_taken')
+            ? count(portaal_taken_open(portaal_taken($_s_na, blk_van((int)$rec['sollicitatie_id'])))) : 0;
+      ?>
+        <span class="ond-klaar-hierna"><?= h(portaal_hierna($_s_na, $_o_na)) ?></span>
+      <?php endif; endif; ?>
     </span>
     <a class="ond-bestand" href="<?= h($basis_url) ?>&amp;pdf=1" target="_blank" rel="noopener">
       <span class="ond-bestand-icoon"><?= icoon('document', 20) ?></span>

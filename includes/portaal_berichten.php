@@ -92,6 +92,52 @@ function portaal_bericht_laden(int $sol_id, int $id): ?array {
 }
 
 /**
+ * Een vraag vanuit het portaal afhandelen. Eén plek, zodat elke pagina die het
+ * vraagblok toont hem op dezelfde manier verwerkt.
+ *
+ * Begrenzing: drie vragen per uur per sollicitant. Genoeg voor wie iets wil weten,
+ * te weinig om er een verzendkanaal van te maken.
+ *
+ * @return array{gedaan:bool,flash:?string,fout:?string}
+ */
+function portaal_vraag_verwerk(array $sol): array {
+    $uit = ['gedaan' => false, 'flash' => null, 'fout' => null];
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST' || empty($_POST['vraag_versturen'])) return $uit;
+
+    csrf_check();
+    $sol_id = (int)($sol['id'] ?? 0);
+    $vraag  = trim((string)($_POST['vraag'] ?? ''));
+    $uit['gedaan'] = true;
+
+    if (mb_strlen($vraag) < 5) { $uit['fout'] = 'Schrijf even op wat je wilt weten.'; return $uit; }
+    if (mb_strlen($vraag) > 1500) $vraag = mb_substr($vraag, 0, 1500);
+
+    if (function_exists('rate_limit') && !rate_limit('portaal_vraag', (string)$sol_id, 3, 3600)) {
+        $uit['fout'] = 'Je hebt net al een paar vragen gestuurd. Wacht even, of mail ons rechtstreeks.';
+        return $uit;
+    }
+
+    if (!function_exists('melding_verstuur')) { $uit['fout'] = 'Versturen lukt nu niet. Probeer het later opnieuw.'; return $uit; }
+
+    try {
+        $res = melding_verstuur('sollicitant_vraag', $sol_id, [
+            'vraag'      => $vraag,
+            'fase_label' => function_exists('fase_label') ? fase_label((string)($sol['fase'] ?? '')) : (string)($sol['fase'] ?? ''),
+        ], ['prioriteit' => 'na_antwoord', 'dedup_min' => 0]);
+        if (($res['status'] ?? '') === 'mislukt') {
+            $uit['fout'] = 'Versturen lukte niet. Probeer het later opnieuw, of mail ons rechtstreeks.';
+            return $uit;
+        }
+        if (function_exists('audit_log')) audit_log('vraag_gesteld', 'sollicitatie', $sol_id, ['lengte' => mb_strlen($vraag)]);
+        $uit['flash'] = 'Je vraag is verstuurd. Je krijgt antwoord per e-mail — meestal binnen een paar dagen.';
+    } catch (\Throwable $e) {
+        error_log('portaal_vraag: ' . $e->getMessage());
+        $uit['fout'] = 'Versturen lukte niet. Probeer het later opnieuw.';
+    }
+    return $uit;
+}
+
+/**
  * Maak de opgeslagen e-mailinhoud veilig om in het portaal te tonen: alleen opmaak-tags,
  * geen scripts, geen event-attributen, geen externe formulieren.
  */

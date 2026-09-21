@@ -118,8 +118,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['besch_submit'])) {
         }
         if (function_exists('audit_log')) audit_log('beschikbaarheid_ingevuld', 'sollicitatie', $sol_id, ['via' => 'losse taak']);
         if (empty($waarschuwingen)) {
-            // Klaar: terug naar Start of Taken (waar de sollicitant vandaan kwam) met de melding daar.
-            $_SESSION['flash_portaal'] = 'Je beschikbaarheid is opgeslagen. Bedankt!';
+            // Klaar: terug naar Start of Taken (waar de sollicitant vandaan kwam) met de melding
+            // daar — inclusief wat er hierna gebeurt, zodat de taak niet in stilte eindigt.
+            $hierna = '';
+            if (function_exists('portaal_hierna')) {
+                $_sol_na  = portaal_sollicitant_laden($sol_id);
+                $_open_na = ($_sol_na && function_exists('portaal_taken'))
+                    ? count(portaal_taken_open(portaal_taken($_sol_na, blk_van($sol_id)))) : 0;
+                if ($_sol_na) $hierna = ' ' . portaal_hierna($_sol_na, $_open_na);
+            }
+            $_SESSION['flash_portaal'] = 'Je beschikbaarheid is opgeslagen. Bedankt!' . $hierna;
             redirect(portaal_terug_url());
         }
         $_SESSION['flash_besch_ok'] = 'Je beschikbaarheid is opgeslagen. Bedankt!';
