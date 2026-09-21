@@ -268,7 +268,12 @@ require __DIR__ . '/_dekkinggrafiek.php';
         <?php foreach ($lijst as $p):
           $sol_id = (int)$p['sol_id'];
           $naam   = trim($p['voornaam'] . ' ' . ($p['tussenvoegsel'] ? $p['tussenvoegsel'] . ' ' : '') . $p['achternaam']);
-          $naam_js = htmlspecialchars(json_encode($naam), ENT_QUOTES);
+          /* Alleen JS-escapen, niet HTML-escapen: bh_weekcel() haalt de hele onclick
+             door h(). Stond hier htmlspecialchars() omheen, dan werd " eerst &quot; en
+             daarna &amp;quot;, en kreeg de browser "Unexpected token &" — het paneel
+             ging dan bij geen enkele cel open. JSON_HEX_QUOT/APOS houden de string
+             zonder aanhalingstekens, zodat h() er niets meer aan kan bederven. */
+          $naam_js = json_encode($naam, JSON_UNESCAPED_UNICODE | JSON_HEX_QUOT | JSON_HEX_APOS | JSON_HEX_TAG | JSON_HEX_AMP);
         ?>
         <tr>
           <th scope="row" class="bh-raster-naam">

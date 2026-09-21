@@ -1352,6 +1352,22 @@ button.bh-weekcel-klik:hover, button.bh-weekcel-klik:focus-visible { outline: 2p
   position: fixed; inset: 0; z-index: 9999; background: rgba(6, 14, 24, .45);
   display: flex; justify-content: flex-end;
 }
+
+/* Naast het werk in plaats van eroverheen (Beheer ontwerp.dc.html r.854). Je past een
+   week aan terwijl je naar het raster kijkt; een paneel dat dat raster afdekt neemt
+   precies weg waarop je je besluit baseert. De inhoud schuift op zodat er niets onder
+   het paneel verdwijnt, en de rest van de pagina blijft gewoon bruikbaar. */
+.bh-zijpaneel-overlay.bh-zijpaneel-naast { background: none; pointer-events: none; }
+.bh-zijpaneel-overlay.bh-zijpaneel-naast .bh-zijpaneel {
+  pointer-events: auto; border-left: 1.5px solid var(--navy);
+}
+body.bh-paneel-open .bh-inhoud { transition: padding-right .15s ease; }
+@media (min-width: 1280px) {
+  body.bh-paneel-open .bh-inhoud { padding-right: 398px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.bh-paneel-open .bh-inhoud { transition: none; }
+}
 .bh-zijpaneel {
   background: var(--surface); width: 380px; max-width: 100%; height: 100%;
   display: flex; flex-direction: column; border-left: 1px solid var(--border);
@@ -1369,6 +1385,33 @@ button.bh-weekcel-klik:hover, button.bh-weekcel-klik:focus-visible { outline: 2p
 .bh-zijpaneel-hint { margin: 0; font: var(--text-meta); color: var(--ink-soft); }
 .bh-zijpaneel-voet { display: flex; gap: 8px; padding: 14px 18px; border-top: 1px solid var(--border); }
 .bh-zijpaneel-voet .ds-btn { flex: 1; }
+/* De opslaanknop krijgt meer ruimte dan annuleren: dat is de knop waar je heen wilt. */
+.bh-zijpaneel-voet .ds-btn-primair { flex: 1.3; }
+
+/* Initialen in de kop — je ziet meteen of je de juiste persoon te pakken hebt. */
+.bh-zijpaneel-avatar {
+  flex: none; width: 34px; height: 34px; border-radius: 10px;
+  background: var(--fase-blauw-vlak); color: var(--fase-blauw);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 600;
+}
+.bh-zijpaneel-avatar:empty { background: var(--bg-subtle); }
+
+.bh-zijpaneel-status { margin: 0; font-size: 13px; color: var(--ink-soft); }
+
+/* Vrije toelichting onder de redenkeuze. */
+.bh-zijpaneel-redenvrij { margin-top: 2px; }
+
+.bh-zijpaneel-vink {
+  display: flex; align-items: center; gap: 9px; cursor: pointer;
+  font-size: 13px; color: var(--ink); min-height: 36px;
+}
+.bh-zijpaneel-vink input { width: 17px; height: 17px; flex: none; cursor: pointer; }
+
+.bh-zijpaneel-historie { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+.bh-zijpaneel-historie li { display: flex; gap: 9px; font: var(--text-meta); color: var(--ink-soft); line-height: 1.5; }
+.bh-zijpaneel-hwanneer { flex: 0 0 58px; color: var(--ink-muted); }
+.bh-zijpaneel-hwat { flex: 1; min-width: 0; }
 
 .bh-dagknoppen { display: flex; gap: 4px; }
 .bh-dagknop {

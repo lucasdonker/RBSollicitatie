@@ -220,6 +220,24 @@ function meldingen_register(): array {
             ],
         ]),
 
+        /* Het bestuur past de beschikbaarheid van iemand aan. Gaat alleen uit als de
+           beheerder dat bij de correctie aanvinkt: een invoerfout rechtzetten is geen
+           nieuws, een vakantieweek schrappen wel. Categorie 'taak', want het gaat over
+           de eigen sollicitatie en niet over werving — dus geen afmeldvoet. */
+        'beschikbaarheid_gecorrigeerd' => array_merge($std, [
+            'naam' => 'Beschikbaarheid aangepast door het bestuur', 'categorie' => 'taak',
+            'kanaal_standaard' => 'beide', 'dedup_min' => 0,
+            'beschrijving' => 'Als het bestuur je beschikbaarheid voor een of meer weken aanpast.',
+            'vars' => ['weken', 'reden'],
+            'seed' => [
+                'onderwerp' => 'Je beschikbaarheid is aangepast ({{weken}}) — Paal 13',
+                'hero_titel' => 'Beschikbaarheid aangepast', 'hero_subtitel' => '{{weken}}',
+                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>We hebben je beschikbaarheid voor <strong>{{weken}}</strong> aangepast.</p>\n<p><strong>Reden:</strong> {{reden}}</p>\n<p>Klopt dit niet? Laat het ons weten, dan zetten we het terug.</p>\n[knop href=\"{{portaal_url}}beschikbaarheid.php\"]Bekijk je beschikbaarheid[/knop]",
+                'tekst_kort' => "Hoi {{voornaam}}, we hebben je beschikbaarheid voor {{weken}} aangepast ({{reden}}). Klopt dat niet? Laat het weten. {{portaal_url}}beschikbaarheid.php",
+                'samenvatting' => 'Je beschikbaarheid voor {{weken}} is aangepast: {{reden}}.',
+            ],
+        ]),
+
         // ── Herinneringen ─────────────────────────────────────────────
         'herinnering_taken_open' => array_merge($std, [
             'naam' => 'Herinnering: openstaande taken', 'categorie' => 'herinnering', 'kanaal_standaard' => 'email', 'dedup_min' => 0,
