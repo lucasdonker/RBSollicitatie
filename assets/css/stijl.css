@@ -2716,6 +2716,26 @@ a.pt-bericht { text-decoration: none; color: inherit; }
 .pg-tabel th { font: var(--text-label); font-size: 13px; color: var(--ink-soft); }
 .pg-rechts { text-align: right; }
 
+/* ── Trechter: waar haken mensen af? ── */
+.pg-trechter { margin-bottom: 16px; }
+.pg-tr-lijst { list-style: none; margin: 16px 0 0; padding: 0; display: flex; flex-direction: column; gap: 14px; counter-reset: trede; }
+.pg-tr-trede { min-width: 0; }
+.pg-tr-kop { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 5px; }
+.pg-tr-label { font: var(--text-label); font-size: 14px; color: var(--ink); min-width: 0; }
+.pg-tr-cijfer { flex: 0 0 auto; display: flex; align-items: baseline; gap: 8px; }
+.pg-tr-cijfer strong { font-size: 17px; color: var(--ink); }
+.pg-tr-pct { font: var(--text-meta); color: var(--ink-muted); min-width: 34px; text-align: right; }
+.pg-tr-balk { height: 10px; background: var(--bg-subtle); border: 1px solid var(--border); border-radius: var(--radius-full); overflow: hidden; }
+.pg-tr-vul { display: block; height: 100%; background: var(--navy); border-radius: var(--radius-full); }
+.pg-tr-vul-eind { background: var(--groen, #1f7a45); }
+.pg-tr-verloop { margin: 5px 0 0; font: var(--text-meta); color: var(--ink-muted); }
+
+.pg-tr-weg { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+.pg-tr-h3 { font: var(--text-label); font-size: 15px; color: var(--ink); margin: 0 0 3px; }
+.pg-tr-weglijst { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+.pg-tr-weglijst li { display: flex; justify-content: space-between; gap: 12px; font-size: 14px;
+  padding: 8px 12px; background: var(--bg-subtle); border-radius: var(--radius-md); }
+
 /* ── Scanrapport ── */
 .pg-rapport { border-left: 4px solid var(--accent); }
 .pg-telling { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 14px; }

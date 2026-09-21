@@ -130,6 +130,8 @@ require __DIR__ . '/layout_top.php';
     <?php require __DIR__ . '/_paginas_scan.php'; ?>
   <?php endif; ?>
 
+  <?php require __DIR__ . '/_paginas_trechter.php'; ?>
+
   <div class="pg-kolommen">
     <div class="pg-kolom">
 

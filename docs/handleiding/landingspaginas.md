@@ -179,6 +179,19 @@ Dezelfde bezoeker telt hooguit **eens per 30 minuten** als bezoek op dezelfde pa
 Vernieuwen, de terug-knop en een tabblad dat door de browser in de slaapstand is gezet en
 daarna opnieuw laadt, tellen dus niet opnieuw mee. (Instelling `paginas.bezoek_venster_min`.)
 
+Naast het bezoek houden we bij hoever iemand in het formulier kwam: begonnen met invullen,
+stap 2 bereikt, stap 3 bereikt, verstuurd. Daarvan staat alleen het stapnummer geregistreerd
+— nooit iets wat iemand heeft ingetypt. Dat is te zien bij een pagina onder **Waar haken
+mensen af?**.
+
+Eén regel daar leest anders dan de rest: **Halverwege weggegaan**. Dat is geen telling maar
+een aanwijzing. Het signaal komt van een tabblad dat naar de achtergrond gaat, en dat gebeurt
+ook als iemand even iets opzoekt en daarna gewoon doorgaat. Gebruik het om te zien bij welke
+stap het vaakst gebeurt, niet als aantal afhakers.
+
+Wil je helemaal niets meten, dan zet je **Instellingen › tracking** uit; dan schrijft het
+systeem geen enkele gebeurtenis meer weg en verdwijnt ook het meetadres uit de pagina.
+
 Let op: zet je ontwerp zelf een cookie of een tracker, dan gelden de gewone regels wél en is
 de brigade daarvoor verantwoordelijk. Het rapport waarschuwt daarvoor, en de browser
 blokkeert het tot je het toestaat.

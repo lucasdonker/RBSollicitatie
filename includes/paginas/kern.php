@@ -68,17 +68,24 @@ function pag_auto_setup(): void {
             KEY `idx_pagina` (`pagina_id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+        // De waarden van 'type' komen uit pag_event_typen(); pag_events_enum_bij() houdt de
+        // ENUM daarmee gelijk op een database die al bestond.
+        $typen = "'" . implode("','", pag_event_typen()) . "'";
         $db->exec("CREATE TABLE IF NOT EXISTS `pagina_events` (
             `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
             `pagina_id` INT DEFAULT NULL,
             `bron_code` VARCHAR(80) DEFAULT NULL,
-            `type` ENUM('bezoek','formulier_start','formulier_klaar','formulier_geweigerd') NOT NULL,
+            `type` ENUM($typen) NOT NULL,
+            `detail` VARCHAR(40) DEFAULT NULL,
             `bezoeker_hash` CHAR(64) DEFAULT NULL,
             `moment` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             KEY `idx_pagina` (`pagina_id`, `type`),
             KEY `idx_moment` (`moment`),
             KEY `idx_bezoeker` (`bezoeker_hash`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        if (function_exists('db_kolom_verzeker')) db_kolom_verzeker($db, 'pagina_events', 'detail', 'VARCHAR(40) DEFAULT NULL');
+        pag_events_enum_bij($db);
 
         pag_rechten_seed();
     } catch (\Throwable $e) { error_log('pag_auto_setup: ' . $e->getMessage()); }
