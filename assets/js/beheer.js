@@ -233,42 +233,106 @@
       delen.push(th.classList.contains('bh-kol-kies') ? '34px' : (th.dataset.track || '1fr'));
     });
     tabel.style.setProperty('--bh-tracks', delen.join(' '));
+
+    /* En hoe smal de tabel mag worden voordat hij gaat schuiven. Dezelfde optelling
+       als bh_kolommen() in PHP: zonder dit zou de tabel na het aanzetten van een paar
+       kolommen weer kolommen afsnijden tot je de pagina herlaadt. */
+    var min = 0;
+    delen.forEach(function (track) {
+      var m = /minmax\(\s*(\d+)px/i.exec(track) || /^\s*(\d+)px\s*$/.exec(track);
+      min += m ? parseInt(m[1], 10) : 90;
+    });
+    min += Math.max(0, delen.length - 1) * 14 + 32;
+    tabel.style.setProperty('--bh-min', min + 'px');
   }
 
+  /**
+   * Zet een kolom aan of uit. Geeft false terug als de kolom niet in de HTML staat —
+   * dan moet de server hem eerst leveren.
+   */
   function kolomZetten(tabel, sleutel, aan) {
     var i = -1;
     var koppen = tabel.querySelectorAll('thead th');
     Array.prototype.forEach.call(koppen, function (th, idx) {
       if (th.dataset.kolom === sleutel) i = idx;
     });
-    if (i < 0) return;
+    if (i < 0) return false;
     koppen[i].hidden = !aan;
     Array.prototype.forEach.call(tabel.querySelectorAll('tbody tr'), function (rij) {
       var cellen = rij.children;
       if (cellen[i]) cellen[i].hidden = !aan;
     });
     tracksHerberekenen(tabel);
+    return true;
   }
 
-  function kolomkeuzeBewaren(tabel) {
-    var aan = [];
+  /* De keuze gaat in een cookie met het seizoen-id erin, zodat de server hem al bij de
+     eerste render kent en de kolommen niet verspringen. Een kolom die uitstaat wordt
+     server-side niet gerenderd: de gegevens staan dan ook niet in de HTML. Dat is
+     bewust — een uitgezette kolom "Bijzonderheden" hoort niet onzichtbaar in de pagina
+     mee te reizen. */
+  function kolomkeuzeBewaren(tabel, ookAan) {
+    var aan = ookAan ? ookAan.slice() : [];
     Array.prototype.forEach.call(tabel.querySelectorAll('thead th[data-kolom]'), function (th) {
-      if (!th.hidden) aan.push(th.dataset.kolom);
+      if (!th.hidden && aan.indexOf(th.dataset.kolom) === -1) aan.push(th.dataset.kolom);
     });
     var naam = tabel.dataset.kolomcookie;
     if (!naam) return;
-    // Vervalt na dit seizoen; de servernaam bevat het seizoen-id.
     document.cookie = naam + '=' + aan.join(',') + ';path=/;max-age=15552000;samesite=lax';
   }
 
   function kiezerKoppelen(kiezer) {
     var tabel = document.getElementById(kiezer.dataset.voor);
     if (!tabel) return;
+
+    /* Kolommen die de server nog moet leveren. Ze worden verzameld en pas opgehaald
+       als je de kiezer dichtklapt: vink je er vier aan, dan is dat één keer wachten
+       in plaats van vier keer. */
+    var wachtend = [];
+
     kiezer.addEventListener('change', function (e) {
       if (!e.target.matches('input[type=checkbox][data-kolom]')) return;
-      kolomZetten(tabel, e.target.dataset.kolom, e.target.checked);
-      kolomkeuzeBewaren(tabel);
+      var sleutel = e.target.dataset.kolom;
+
+      if (kolomZetten(tabel, sleutel, e.target.checked)) {
+        kolomkeuzeBewaren(tabel, wachtend);
+        tellerBijwerken(kiezer);
+        return;
+      }
+      // Staat niet in de HTML: hij stond uit, dus de server stuurde hem niet mee.
+      var i = wachtend.indexOf(sleutel);
+      if (e.target.checked) { if (i === -1) wachtend.push(sleutel); }
+      else if (i !== -1) { wachtend.splice(i, 1); }
+      kolomkeuzeBewaren(tabel, wachtend);
+      toonWachtend(kiezer, wachtend.length);
+      tellerBijwerken(kiezer);
     });
+
+    kiezer.addEventListener('toggle', function () {
+      if (kiezer.open || !wachtend.length) return;
+      if (window.P13Actie) window.P13Actie.balkStart();
+      location.reload();
+    });
+  }
+
+  /** "Kolommen 6/16" op de knop, zodat het getal klopt met wat je net aanvinkte. */
+  function tellerBijwerken(kiezer) {
+    var getal = kiezer.querySelector('.bh-kolomkiezer-getal');
+    if (!getal) return;
+    var vinkjes = kiezer.querySelectorAll('input[type=checkbox][data-kolom]');
+    var aan = 0;
+    Array.prototype.forEach.call(vinkjes, function (v) { if (v.checked) aan++; });
+    getal.textContent = aan + '/' + vinkjes.length;
+  }
+
+  /** Zegt in de kiezer dat er nog iets opgehaald moet worden. */
+  function toonWachtend(kiezer, aantal) {
+    var regel = kiezer.querySelector('[data-kolomwacht]');
+    if (!regel) return;
+    regel.hidden = aantal === 0;
+    regel.textContent = aantal === 0 ? ''
+      : (aantal === 1 ? 'Eén kolom wordt opgehaald' : aantal + ' kolommen worden opgehaald')
+        + ' zodra je dit lijstje sluit.';
   }
 
   /* ── Filterbalk: direct filteren zodra JS er is ──────────────── */

@@ -31,6 +31,10 @@ $_aan = count(array_filter($_opties, fn($k) => $k['aan']));
   </summary>
   <div class="bh-kolomkiezer-paneel">
     <p class="bh-kolomkiezer-hulp">Wat je hier kiest blijft staan tot het einde van het seizoen.</p>
+    <?php /* Een kolom die uitstaat wordt niet meegestuurd — de gegevens staan dan ook niet
+             onzichtbaar in de pagina. Aanzetten betekent dus even ophalen; dat gebeurt in
+             één keer zodra je dit lijstje sluit, en deze regel zegt dat vooraf. */ ?>
+    <p class="bh-kolomkiezer-wacht" data-kolomwacht role="status" hidden></p>
     <?php foreach ($_opties as $_k): ?>
       <label class="bh-kolomkiezer-optie">
         <input type="checkbox" data-kolom="<?= h((string)$_k['sleutel']) ?>" <?= $_k['aan'] ? 'checked' : '' ?>>

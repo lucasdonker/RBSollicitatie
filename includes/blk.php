@@ -75,6 +75,73 @@ function blk_van(int $sol_id): ?array {
 }
 
 /**
+ * De velden uit het kennismakingsformulier die je als kolom in de sollicitantenlijst
+ * kunt aanzetten. Eén bron: de lijst, de kolommenkiezer en de SELECT lezen hier.
+ *
+ * 'sql' is de uitdrukking in de query (b.<veld>, of een samenstelling), 'recht' beperkt
+ * wie de kolom überhaupt te zien krijgt, en 'lang' zegt dat de waarde wordt afgekapt met
+ * de volledige tekst als tooltip — een motivatie van tien regels hoort niet in een
+ * tabelcel, maar je wilt er wel op kunnen scannen.
+ *
+ * AVG: het volledige adres (straat, huisnummer, postcode) zit achter het recht
+ * `blk:lezen`, net als op blk_detail.php. Woonplaats alleen mag iedereen met
+ * sollicitanten-leesrecht zien — dat is hoe het daar ook geregeld is, en die twee
+ * moeten niet uit elkaar lopen. `bijzonderheden` kan medische informatie bevatten en
+ * zit daarom óók achter dat recht.
+ *
+ * @return array<string,array{kop:string,sql:string,track:string,lang?:bool,recht?:array,standaard?:bool}>
+ */
+function blk_kolom_velden(): array {
+    return [
+        // Adres. 'woonplaats' zit al vast in de lijst; deze drie komen erbij.
+        'straat'     => ['kop' => 'Straat',      'sql' => 'b.straat',     'track' => 'minmax(110px,1.2fr)', 'recht' => ['blk', 'lezen']],
+        'huisnummer' => ['kop' => 'Huisnr.',     'sql' => 'b.huisnummer', 'track' => '78px',                'recht' => ['blk', 'lezen']],
+        'postcode'   => ['kop' => 'Postcode',    'sql' => 'b.postcode',   'track' => '92px',                'recht' => ['blk', 'lezen']],
+
+        'opleiding'                      => ['kop' => 'Opleiding',     'sql' => 'b.opleiding',                      'track' => 'minmax(120px,1.4fr)', 'lang' => true],
+        'werkervaring'                   => ['kop' => 'Werkervaring',  'sql' => 'b.werkervaring',                   'track' => 'minmax(120px,1.4fr)', 'lang' => true],
+        'diplomas'                       => ['kop' => "Diploma's",     'sql' => 'b.diplomas',                       'track' => 'minmax(120px,1.4fr)', 'lang' => true],
+        'motivatie_lifeguard'            => ['kop' => 'Motivatie',     'sql' => 'b.motivatie_lifeguard',            'track' => 'minmax(140px,1.8fr)', 'lang' => true],
+        'motivatie_strand'               => ['kop' => 'Waarom strand', 'sql' => 'b.motivatie_strand',               'track' => 'minmax(140px,1.8fr)', 'lang' => true],
+        'beschikbaarheid_intentie'       => ['kop' => 'Beschikbaar',   'sql' => 'b.beschikbaarheid_intentie',       'track' => 'minmax(120px,1.4fr)', 'lang' => true],
+        'beschikbaarheid_uitzonderingen' => ['kop' => 'Uitzonderingen','sql' => 'b.beschikbaarheid_uitzonderingen', 'track' => 'minmax(120px,1.4fr)', 'lang' => true],
+        'social_media'                   => ['kop' => 'Social media',  'sql' => 'b.social_media',                   'track' => 'minmax(110px,1.2fr)'],
+        'bijzonderheden'                 => ['kop' => 'Bijzonderheden','sql' => 'b.bijzonderheden',                 'track' => 'minmax(140px,1.6fr)', 'lang' => true, 'recht' => ['blk', 'lezen']],
+
+        'blk_ingevuld' => ['kop' => 'Formulier', 'sql' => 'b.ingevuld_op', 'track' => '104px', 'sorteer' => 'b.ingevuld_op'],
+    ];
+}
+
+/**
+ * Woonplaats van een sollicitant, met terugval op het oude vrije adresveld.
+ *
+ * `woonplaats` is een later toegevoegde kolom (migratie 0008). Formulieren van vóór die
+ * splitsing hebben alles in één `adres`-veld staan, dus daar is `woonplaats` leeg —
+ * terwijl er wél een adres is. De lijst toonde dan een streepje bij mensen die gewoon
+ * een adres hadden ingevuld. blk_detail.php en de dossierpagina deden die terugval al;
+ * dit is dezelfde regel, op één plek.
+ */
+function blk_woonplaats(array $rij): string {
+    $plaats = trim((string)($rij['woonplaats'] ?? ''));
+    if ($plaats !== '') return $plaats;
+
+    $adres = trim((string)($rij['adres'] ?? ''));
+    if ($adres === '') return '';
+
+    $delen = blk_adres_splitsen($adres);
+    if ($delen['woonplaats'] !== '') return $delen['woonplaats'];
+
+    /* Het adres staat er wel, maar niet in de vorm die de splitser herkent. Dan liever
+       het stuk na de laatste komma dan niets: bij "Duinweg 42, Callantsoog" is dat
+       precies goed, en bij iets onherkenbaars zie je tenminste dát er een adres is. */
+    $pos = mb_strrpos($adres, ',');
+    $staart = $pos === false ? $adres : trim(mb_substr($adres, $pos + 1));
+    // Een postcode ervoor hoort er niet bij: "1759 GA Callantsoog" → "Callantsoog".
+    $staart = trim(preg_replace('/^\d{4}\s?[A-Za-z]{2}\s+/', '', $staart));
+    return $staart;
+}
+
+/**
  * Splits een samengesteld adres ("Duinweg 42, 1759 GA Callantsoog") in losse delen.
  * Voor oude rijen waarin alleen `adres` gevuld is. Geeft lege strings terug als het niet lukt.
  */

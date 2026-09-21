@@ -916,10 +916,16 @@ span.bh-incheck-code {
    toch rijen, dus daar speelt dit niet. */
 .bh-tabel-wrap { overflow-x: auto; }
 .bh-tabel {
-  width: 100%; background: var(--surface);
+  width: 100%; min-width: var(--bh-min, 0); background: var(--surface);
   border: 1px solid var(--border); border-radius: 12px;
-  border-collapse: separate; border-spacing: 0; overflow: hidden;
+  border-collapse: separate; border-spacing: 0;
 }
+/* De ronde hoeken zaten eerder op de tabel met overflow:hidden. Dat knipte de
+   rechterkant af zodra er meer kolommen aanstonden dan er pasten — inclusief de
+   actiekolom — in plaats van de wrapper te laten schuiven. Nu ronden de kop- en
+   voetrij zelf af, zodat de tabel mag overlopen. */
+.bh-tabel thead tr:first-child { border-radius: 12px 12px 0 0; }
+.bh-tabel tbody tr:last-child { border-radius: 0 0 12px 12px; }
 .bh-tabel thead, .bh-tabel tbody, .bh-tabel tr { display: block; }
 .bh-tabel tr {
   display: grid; grid-template-columns: var(--bh-tracks); align-items: center;
@@ -1151,6 +1157,11 @@ a.bh-naamcel:hover .bh-naamcel-naam { color: var(--navy); text-decoration: under
   border-radius: var(--radius-md); box-shadow: var(--shadow-float); padding: 10px;
 }
 .bh-kolomkiezer-hulp { margin: 0 4px 8px; font: var(--text-meta); color: var(--ink-muted); }
+.bh-kolomkiezer-wacht {
+  margin: 0 4px 8px; padding: 7px 9px; border-radius: var(--radius-sm);
+  font: var(--text-meta); color: var(--accent); background: var(--accent-soft);
+}
+.bh-kolomkiezer-wacht[hidden] { display: none; }
 .bh-kolomkiezer-optie {
   display: flex; align-items: center; gap: 9px; cursor: pointer;
   padding: 7px 8px; min-height: 40px; border-radius: var(--radius-sm); font-size: 13px; color: var(--ink);
@@ -1600,6 +1611,13 @@ body.bh-paneel-open .bh-inhoud { transition: padding-right .15s ease; }
   font-size: 13px; color: var(--navy); text-decoration: none;
 }
 .bh-doskaart-dossier:hover { text-decoration: underline; }
+
+/* Een cel met vrije tekst uit het kennismakingsformulier: één regel, de rest onder de
+   tooltip. Zonder deze regel rekt één motivatie de hele rij uit. */
+.bh-langcel {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: var(--ink-soft); cursor: help;
+}
 
 /* Versheid: hoe oud zijn de cijfers die je nu leest? (bh_versheid()) */
 .bh-versheid {

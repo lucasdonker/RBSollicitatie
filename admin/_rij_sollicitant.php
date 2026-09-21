@@ -46,9 +46,15 @@ foreach ($tabel_kolommen as $_kol):
     <?php break;
 
     case 'woonplaats': ?>
+      <?php
+        /* Niet rechtstreeks $rij['woonplaats']: dat is een later toegevoegde kolom en
+           formulieren van vóór die splitsing hebben alles in één `adres`-veld staan.
+           Die stonden hier op een streepje terwijl er wél een adres was. */
+        $_plaats = function_exists('blk_woonplaats') ? blk_woonplaats($rij) : (string)($rij['woonplaats'] ?? '');
+      ?>
       <?php // title erbij: een lange plaatsnaam wordt afgekapt en moet dan wel te lezen zijn ?>
-      <?= bh_td('woonplaats', '', 'title="' . h((string)($rij['woonplaats'] ?? '')) . '"') ?>
-        <?= h((string)($rij['woonplaats'] ?: '—')) ?>
+      <?= bh_td('woonplaats', '', 'title="' . h($_plaats) . '"') ?>
+        <?= h($_plaats !== '' ? $_plaats : '—') ?>
       </td>
     <?php break;
 
@@ -94,9 +100,35 @@ foreach ($tabel_kolommen as $_kol):
       </td>
     <?php break;
 
-    default: ?>
-      <?= bh_td($_kol) ?><?= h((string)($rij[$_kol] ?? '')) ?></td>
+    // ── Velden uit het kennismakingsformulier ──────────────────
+    // Die zijn er twaalf en ze gedragen zich hetzelfde, dus ze krijgen geen twaalf
+    // losse takken. Wat per veld verschilt (kop, breedte, recht, of de tekst lang is)
+    // staat in blk_kolom_velden().
+    case 'blk_ingevuld': ?>
+      <?= bh_td('blk_ingevuld', 'bh-num') ?><?= h(datum_nl($rij['blk_ingevuld'] ?? null) ?: '—') ?></td>
     <?php break;
+
+    default:
+      $_blkveld = function_exists('blk_kolom_velden') ? (blk_kolom_velden()[$_kol] ?? null) : null;
+      $_waarde  = trim((string)($rij[$_kol] ?? ''));
+      if ($_blkveld && !empty($_blkveld['lang'])): ?>
+        <?php
+          /* Een motivatie van tien regels hoort niet in een tabelcel. Afkappen op één
+             regel met de volle tekst als tooltip: zo kun je de kolom scannen en toch
+             lezen wat er staat. De regelafbrekingen worden spaties, anders staat er
+             midden in de cel een lege regel. */
+          $_kort = preg_replace('/\s+/u', ' ', $_waarde);
+          $_kort = mb_strlen($_kort) > 90 ? mb_substr($_kort, 0, 88) . '…' : $_kort;
+        ?>
+        <?= bh_td($_kol, 'bh-langcel', $_waarde !== '' ? 'title="' . h($_waarde) . '"' : '') ?>
+          <?= h($_kort !== '' ? $_kort : '—') ?>
+        </td>
+      <?php else: ?>
+        <?= bh_td($_kol, '', $_waarde !== '' ? 'title="' . h($_waarde) . '"' : '') ?>
+          <?= h($_waarde !== '' ? $_waarde : '—') ?>
+        </td>
+      <?php endif;
+    break;
 
     endswitch;
 endforeach;

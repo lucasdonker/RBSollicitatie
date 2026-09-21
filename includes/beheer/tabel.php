@@ -68,6 +68,20 @@ function bh_kolommen(string $tabel_id, array $def, array $opt = []): array {
     $zichtbaar = array_values(array_filter($kolommen, fn($k) => $k['aan']));
     $tracks    = implode(' ', array_column($zichtbaar, 'track'));
 
+    /* Hoe smal mag de tabel worden voordat hij moet gaan schuiven?
+       De tabel stond op width:100% met overflow:hidden. Zet je er veel kolommen bij aan,
+       dan werden ze niet smaller maar viel de rechterkant er stil af — precies de
+       kolommen met de acties. Met deze breedte gaat .bh-tabel-wrap echt scrollen.
+       De minima staan al in de tracks; hier worden ze alleen opgeteld. */
+    $min = 0;
+    foreach ($zichtbaar as $k) {
+        if (preg_match('/minmax\(\s*(\d+)px/i', $k['track'], $m))      $min += (int)$m[1];
+        elseif (preg_match('/^\s*(\d+)px\s*$/i', $k['track'], $m))     $min += (int)$m[1];
+        else                                                            $min += 90;   // fr zonder minimum
+    }
+    // 14px gap tussen de kolommen, 32px padding links+rechts, 34px voor de selectiecel.
+    $min += max(0, count($zichtbaar) - 1) * 14 + 32 + 34;
+
     // Sorteren: uitsluitend tegen de whitelist uit de definitie. Nooit $_GET in de ORDER BY.
     $toegestaan = array_filter(array_column($kolommen, 'sorteer'));
     $sort       = in_array($opt['sort'] ?? '', $toegestaan, true) ? $opt['sort'] : null;
@@ -77,6 +91,7 @@ function bh_kolommen(string $tabel_id, array $def, array $opt = []): array {
         'id'        => $tabel_id,
         'kolommen'  => $kolommen,
         'tracks'    => $tracks !== '' ? $tracks : '1fr',
+        'minbreed'  => $min,
         'zichtbaar' => array_column($zichtbaar, 'sleutel'),
         'optioneel' => array_values(array_filter($kolommen, fn($k) => $k['optioneel'])),
         'sort'      => $sort,

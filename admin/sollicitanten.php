@@ -111,7 +111,24 @@ $_f     = bh_soll_filter($_GET, $sid);
 $where  = $_f['where'];
 $params = $_f['params'];
 
-/* ── Kolommen ────────────────────────────────────────────────── */
+/* ── Kolommen ──────────────────────────────────────────────────
+   De vaste kolommen hieronder, plus alles uit het kennismakingsformulier als
+   optionele kolom. Die laatste komen uit blk_kolom_velden() — één bron, zodat de
+   kiezer, de SELECT en de cel niet uit elkaar kunnen lopen. Ze staan standaard uit:
+   twaalf extra kolommen aanzetten is een keuze, geen beginsituatie. */
+$blk_velden = blk_kolom_velden();
+$blk_kolommen = [];
+foreach ($blk_velden as $_sleutel => $_v) {
+    $blk_kolommen[$_sleutel] = [
+        'kop'       => $_v['kop'],
+        'track'     => $_v['track'],
+        'mobiel'    => 'verberg',          // op telefoon is er geen ruimte voor
+        'optioneel' => true,
+        'standaard' => false,
+        'sorteer'   => $_v['sorteer'] ?? null,
+    ] + (isset($_v['recht']) ? ['recht' => $_v['recht']] : []);
+}
+
 $tabel = bh_kolommen('sollicitanten', [
     'naam'       => ['kop' => 'Naam',       'track' => 'minmax(165px,2.2fr)', 'sorteer' => 'p.achternaam',
                      'mobiel' => 'titel'],
@@ -123,6 +140,7 @@ $tabel = bh_kolommen('sollicitanten', [
                      'optioneel' => true, 'standaard' => true],
     'telefoon'   => ['kop' => 'Telefoon',   'track' => '125px', 'mobiel' => 'verberg',
                      'optioneel' => true, 'standaard' => false],
+] + $blk_kolommen + [
     'status'     => ['kop' => 'Status',     'track' => 'minmax(185px,1.6fr)'],
     'aangemeld'  => ['kop' => 'Aangemeld',  'track' => '104px', 'sorteer' => 's.aangemeld_op'],
     // Zonder bewerkrecht valt de hele kolom weg in plaats van leeg te blijven staan.
@@ -145,10 +163,21 @@ $offset  = ($pagina - 1) * $per;
 // ORDER BY komt uit de whitelist in de kolomdefinitie, nooit rechtstreeks uit $_GET.
 $order = bh_order_by($tabel, 's.aangemeld_op DESC');
 
+/* Alleen de BLK-velden ophalen die ook echt aanstaan: twaalf TEXT-kolommen voor
+   honderd rijen meeslepen terwijl er niet één wordt getoond is zonde. De sleutels
+   komen uit blk_kolom_velden() en niet uit $_GET, dus er kan niets vreemds in de
+   SELECT belanden. `b.adres` gaat altijd mee — dat is de terugval voor woonplaats. */
+$extra_sql = '';
+foreach ($tabel['kolommen'] as $_sleutel => $_k) {
+    if (!$_k['aan'] || !isset($blk_velden[$_sleutel])) continue;
+    $extra_sql .= ', ' . $blk_velden[$_sleutel]['sql'] . ' AS `' . $_sleutel . '`';
+}
+
 $stmt = $db->prepare("
     SELECT s.id, s.fase, s.terugkerend, s.aangemeld_op, s.persoon_id,
            p.voornaam, p.tussenvoegsel, p.achternaam, p.email, p.telefoon, p.geboortedatum,
-           b.foto_url, b.woonplaats, (b.id IS NOT NULL) AS heeft_blk
+           b.foto_url, b.woonplaats, b.adres, (b.id IS NOT NULL) AS heeft_blk
+           $extra_sql
     FROM sollicitaties s
     JOIN personen p ON p.id=s.persoon_id
     LEFT JOIN blk_formulieren b ON b.sollicitatie_id=s.id

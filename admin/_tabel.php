@@ -51,9 +51,12 @@ if ($tabel && $tabel_rij !== ''):
 <?php else: ?>
 <?php // Vangnet: past de tabel niet, dan schuiven in plaats van kolommen afsnijden. ?>
 <div class="bh-tabel-wrap">
+<?php /* --bh-min is de breedte waaronder de tabel gaat schuiven in plaats van kolommen
+         af te snijden. bh_kolommen() telt hem op uit de tracks; de kolommenkiezer
+         herberekent hem in JavaScript zodra je een kolom aan- of uitzet. */ ?>
 <table class="bh-tabel" id="tabel-<?= h($tabel['id']) ?>" data-tabel="<?= h($tabel['id']) ?>"
        data-kolomcookie="<?= h(bh_kolomcookie($tabel['id'])) ?>"
-       style="--bh-tracks:<?= h($_tracks) ?>">
+       style="--bh-tracks:<?= h($_tracks) ?>;--bh-min:<?= (int)($tabel['minbreed'] ?? 0) ?>px">
   <thead>
     <tr>
       <?php if ($tabel_selectie): ?>
