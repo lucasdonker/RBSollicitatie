@@ -3,7 +3,7 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.95.0');
+define('APP_VERSIE', '2.96.0');
 
 function app_changelog(): array {
     return [
