@@ -25,10 +25,14 @@ function pag_publieke_url(array $pagina): string {
  * 'unsafe-inline' is onvermijdelijk: een geüpload ontwerp heeft zijn opmaak en scripts in
  * het bestand zelf staan, en we schonen bewust niets op.
  *
- * connect-src 'none' is de belangrijkste regel en géén detail: die voorkomt dat script uit
- * een ontwerp op de achtergrond verzoeken doet naar /admin/ of /portaal/ met de cookie van
- * een beheerder die de pagina toevallig bekijkt. Versoepel hem niet zonder daarover na te
- * denken — hosts die een pagina echt nodig heeft, worden hieronder per pagina toegevoegd.
+ * connect-src is de belangrijkste regel en géén detail: die voorkomt dat script uit een
+ * ontwerp op de achtergrond verzoeken doet naar /admin/ of /portaal/ met de cookie van een
+ * beheerder die de pagina toevallig bekijkt.
+ *
+ * Er staat precies één adres van onszelf in: /track.php, waar het aanmeldformulier zijn
+ * anonieme stap-tellingen naartoe stuurt. Let op het verschil met 'self': dat zou de héle
+ * site openzetten, terwijl dit één pad is dat niets anders doet dan een teller ophogen.
+ * Zet hier dus nooit 'self' neer — dan is het slot weg.
  */
 function pag_csp_regel(array $pagina): string {
     $hosts = [];
@@ -38,13 +42,18 @@ function pag_csp_regel(array $pagina): string {
     }
     $extra = $hosts ? ' ' . implode(' ', array_unique($hosts)) : '';
 
+    // Alleen dit ene pad, en alleen als tracking überhaupt aanstaat.
+    $track = function_exists('aanmeld_track_url') ? aanmeld_track_url() : '';
+    $connect = trim(($track !== '' ? $track : '') . $extra);
+    if ($connect === '') $connect = "'none'";
+
     return implode('; ', [
         "default-src 'none'",
         "img-src 'self' data:" . $extra,
         "style-src 'self' 'unsafe-inline'" . $extra,
         "script-src 'self' 'unsafe-inline'" . $extra,
         "font-src 'self' data:" . $extra,
-        "connect-src " . ($hosts ? trim($extra) : "'none'"),
+        "connect-src " . $connect,
         "frame-src " . ($hosts ? trim($extra) : "'none'"),
         "form-action 'self'",
         "frame-ancestors 'self'",
@@ -103,7 +112,7 @@ function pag_injecteer_head(string $html, array $pagina, bool $met_formulier): s
         $blok .= "<meta name=\"robots\" content=\"noindex,nofollow\">\n";
     }
     if ($met_formulier) {
-        $css = (defined('APP_URL') ? APP_URL : '') . '/assets/css/paginaformulier.css?v=' . pag_asset_versie('assets/css/paginaformulier.css');
+        $css = (defined('APP_URL') ? APP_URL : '') . '/assets/css/aanmeldformulier.css?v=' . pag_asset_versie('assets/css/aanmeldformulier.css');
         $blok .= '<link rel="stylesheet" href="' . h($css) . "\">\n";
     }
 

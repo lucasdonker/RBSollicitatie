@@ -1,0 +1,515 @@
+/**
+ * Paal 13 — Aanmeldformulier (prefix af-).
+ *
+ * Eén stylesheet voor alle drie de plekken waar het formulier staat: /aanmelden.php,
+ * een landingspagina en de WordPress-plugin. Op een landingspagina komt hij terecht in
+ * een ontwerp dat iemand anders heeft gemaakt, dus:
+ *  - alles staat achter .af-kaart, niets lekt naar buiten
+ *  - eigen kleur- en typografietokens, zodat het ontwerp eromheen ons niet omver duwt
+ *  - focus-outline met !important, want veel ontwerpen zetten outline:none op alles
+ *
+ * Donkere modus alleen bij .af-zelfstandig (onze eigen pagina). Op een landingspagina
+ * weten we niet of het ontwerp licht of donker is; een witte kaart is daar voorspelbaar.
+ */
+
+.af-kaart {
+  /* Huisstijl */
+  --af-navy: #054d8a;
+  --af-navy-diep: #033761;
+  --af-oranje: #d43d00;
+  --af-oranje-diep: #b03200;
+  --af-oranje-zacht: #fdf1ec;
+
+  /* Vlakken en tekst */
+  --af-vlak: #ffffff;
+  --af-vlak-zacht: #f6f8fa;
+  --af-tekst: #16202c;
+  --af-zacht: #55616f;
+  --af-rand: #d5dbe3;
+  --af-rand-sterk: #aab4c0;
+
+  /* Status */
+  --af-fout: #b3261e;
+  --af-fout-vlak: #fdecea;
+  --af-goed: #1f7a45;
+  --af-goed-vlak: #eef7f1;
+
+  --af-radius: 14px;
+  --af-radius-klein: 10px;
+
+  box-sizing: border-box;
+  max-width: 560px;
+  margin: 32px auto;
+  padding: 30px 28px;
+  background: var(--af-vlak);
+  color: var(--af-tekst);
+  border: 1px solid var(--af-rand);
+  border-radius: var(--af-radius);
+  box-shadow: 0 1px 2px rgba(16, 32, 48, .04), 0 12px 32px rgba(16, 32, 48, .07);
+  font-family: "Instrument Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 16px;
+  line-height: 1.55;
+  text-align: left;
+  scroll-margin-top: 20px;
+}
+
+.af-kaart *,
+.af-kaart *::before,
+.af-kaart *::after { box-sizing: border-box; }
+
+/* ── Kop ─────────────────────────────────────────────────────────── */
+
+.af-top { margin-bottom: 22px; }
+.af-titel {
+  margin: 0;
+  font-size: 25px;
+  line-height: 1.22;
+  font-weight: 700;
+  letter-spacing: -.015em;
+  color: var(--af-navy);
+}
+.af-sub { margin: 7px 0 0; font-size: 14.5px; color: var(--af-zacht); }
+
+/* ── Voortgang ───────────────────────────────────────────────────── */
+/* Staat op hidden tot het script de stappen echt aanzet; anders belooft hij iets
+   wat er niet is (zonder JS staan alle stappen gewoon onder elkaar). */
+
+.af-voortgang[hidden] { display: none; }
+.af-voortgang { margin: 0 0 24px; }
+
+.af-balk {
+  height: 6px;
+  background: var(--af-vlak-zacht);
+  border: 1px solid var(--af-rand);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.af-balk-vul {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--af-oranje);
+  border-radius: 99px;
+  transition: width .32s cubic-bezier(.4, 0, .2, 1);
+}
+
+.af-bollen {
+  display: flex;
+  gap: 4px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.af-bol {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--af-zacht);
+}
+.af-bol-cijfer {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--af-zacht);
+  background: var(--af-vlak-zacht);
+  border: 1px solid var(--af-rand);
+  border-radius: 50%;
+}
+.af-bol-tekst { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.af-bol.is-nu { color: var(--af-navy); font-weight: 600; }
+.af-bol.is-nu .af-bol-cijfer { color: #fff; background: var(--af-oranje); border-color: var(--af-oranje); }
+.af-bol.is-klaar .af-bol-cijfer { color: #fff; background: var(--af-goed); border-color: var(--af-goed); }
+
+.af-stapteller { margin: 10px 0 0; font-size: 13px; color: var(--af-zacht); }
+
+/* ── Stappen ─────────────────────────────────────────────────────── */
+
+.af-stap {
+  min-width: 0;          /* fieldset krijgt anders een eigen minimumbreedte van de inhoud */
+  margin: 0 0 26px;
+  padding: 0;
+  border: 0;
+}
+.af-stap[hidden] { display: none; }
+
+.af-legend {
+  display: block;
+  width: 100%;
+  margin: 0 0 14px;
+  padding: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--af-navy);
+}
+/* Bij de stapsgewijze weergave staat de titel al in de voortgangsbalk. */
+.af-form.is-stapsgewijs .af-legend { font-size: 19px; }
+
+/* Bij een stapwissel krijgt de kop focus, zodat voorleessoftware meldt waar je bent.
+   Dat is geen focus die iemand zelf verplaatste, dus er hoort geen kader omheen — de
+   toetsenbord-outline hieronder blijft wel gewoon staan. */
+.af-legend:focus:not(:focus-visible) { outline: none; }
+
+/* ── Velden ──────────────────────────────────────────────────────── */
+
+.af-rij { display: flex; flex-wrap: wrap; gap: 0 16px; }
+.af-groep { flex: 1 1 100%; min-width: 0; margin-bottom: 16px; }
+.af-vol { flex: 1 1 100%; }              /* eigen regel, ook al is het de standaard */
+.af-rij > .af-breed { flex: 1 1 200px; }
+.af-rij > .af-smal { flex: 0 1 190px; }   /* ruim genoeg dat "Tussenvoegsel (optioneel)" op één regel past */
+
+.af-groep > label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--af-tekst);
+}
+.af-ster { color: var(--af-oranje); }
+.af-optioneel { font-weight: 400; color: var(--af-zacht); }
+
+.af-kaart input[type="text"],
+.af-kaart input[type="email"],
+.af-kaart input[type="tel"],
+.af-kaart input[type="date"],
+.af-kaart select {
+  width: 100%;
+  min-height: 50px;                 /* ruim boven de 44px voor aanraakbediening */
+  padding: 12px 14px;
+  font: inherit;
+  font-size: 16px;                  /* onder 16px zoomt iOS in bij focus */
+  color: var(--af-tekst);
+  background: var(--af-vlak);
+  border: 1.5px solid var(--af-rand);
+  border-radius: var(--af-radius-klein);
+  appearance: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+.af-kaart input::placeholder { color: var(--af-rand-sterk); }
+
+.af-kaart input:hover,
+.af-kaart select:hover { border-color: var(--af-rand-sterk); }
+
+.af-kaart input:focus,
+.af-kaart select:focus {
+  border-color: var(--af-navy);
+  box-shadow: 0 0 0 3px rgba(5, 77, 138, .13);
+}
+
+/* Met !important: een geüpload ontwerp zet vaak outline:none op alles. */
+.af-kaart input:focus-visible,
+.af-kaart select:focus-visible,
+.af-kaart button:focus-visible,
+.af-kaart a:focus-visible {
+  outline: 3px solid var(--af-oranje) !important;
+  outline-offset: 2px !important;
+}
+
+/* Het pijltje van de keuzelijst zelf tekenen, want appearance staat uit. */
+.af-select { position: relative; }
+.af-select::after {
+  content: "";
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  margin-top: -6px;
+  border-right: 2px solid var(--af-zacht);
+  border-bottom: 2px solid var(--af-zacht);
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+.af-select select { padding-right: 40px; }
+
+.af-hulp { margin: 6px 0 0; font-size: 13px; line-height: 1.45; color: var(--af-zacht); }
+
+/* ── Veldfouten ──────────────────────────────────────────────────── */
+
+.af-veldfout { margin: 0; font-size: 0; }               /* leeg = onzichtbaar, zonder marge */
+.af-veldfout:not(:empty) {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  margin-top: 6px;
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--af-fout);
+}
+.af-veldfout:not(:empty)::before {
+  content: "!";
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--af-fout);
+  border-radius: 50%;
+}
+
+.af-kaart input[aria-invalid="true"],
+.af-kaart select[aria-invalid="true"] { border-color: var(--af-fout); }
+.af-kaart input[aria-invalid="true"]:focus { box-shadow: 0 0 0 3px rgba(179, 38, 30, .15); }
+
+/* ── Vinkjes ─────────────────────────────────────────────────────── */
+
+.af-vink {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 4px 12px;
+  margin: 16px 0;
+}
+.af-vink input[type="checkbox"] {
+  width: 24px;
+  height: 24px;
+  margin: 1px 0 0;
+  accent-color: var(--af-oranje);
+  cursor: pointer;
+}
+.af-vink label {
+  font-size: 14.5px;
+  font-weight: 400;
+  line-height: 1.5;
+  cursor: pointer;
+}
+.af-vink .af-veldfout { grid-column: 2; }
+
+.af-akkoord {
+  padding: 14px 16px;
+  background: var(--af-vlak-zacht);
+  border: 1px solid var(--af-rand);
+  border-radius: var(--af-radius-klein);
+}
+
+.af-kaart a { color: var(--af-oranje); text-underline-offset: 2px; }
+
+/* ── Toestemming ouder ───────────────────────────────────────────── */
+
+.af-ouder {
+  margin: 4px 0 18px;
+  padding: 16px 18px;
+  background: var(--af-oranje-zacht);
+  border: 1px solid rgba(212, 61, 0, .28);
+  border-left: 3px solid var(--af-oranje);
+  border-radius: var(--af-radius-klein);
+}
+.af-ouder[hidden] { display: none; }
+.af-ouder > .af-hulp { margin-bottom: 15px; }
+.af-ouder .af-groep { margin-bottom: 4px; }
+.af-ouder .af-vink { margin-bottom: 2px; }
+.af-subkop { margin: 0 0 4px; font-size: 15.5px; font-weight: 700; color: var(--af-oranje-diep); }
+
+/* ── Knoppen ─────────────────────────────────────────────────────── */
+
+.af-acties { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 4px; }
+
+.af-knop,
+.af-terug {
+  min-height: 52px;
+  padding: 14px 24px;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: var(--af-radius-klein);
+  cursor: pointer;
+  transition: background .15s, border-color .15s, transform .06s;
+}
+.af-knop {
+  flex: 1 1 200px;
+  color: #fff;
+  background: var(--af-oranje);
+  border: 1.5px solid var(--af-oranje);
+}
+.af-knop:hover { background: var(--af-oranje-diep); border-color: var(--af-oranje-diep); }
+.af-knop:active { transform: translateY(1px); }
+
+.af-terug {
+  flex: 0 0 auto;
+  color: var(--af-navy);
+  background: transparent;
+  border: 1.5px solid var(--af-rand);
+}
+.af-terug:hover { border-color: var(--af-navy); background: var(--af-vlak-zacht); }
+
+/* Bezig met verzenden: knop blijft klikbaar-ogend maar meldt wat er gebeurt.
+   Nooit disabled — een uitgeschakelde knop stuurt zijn name/value niet mee. */
+.af-knop[aria-busy="true"] { background: var(--af-oranje-diep); border-color: var(--af-oranje-diep); cursor: progress; }
+.af-knop[aria-busy="true"]::before {
+  content: "";
+  display: inline-block;
+  width: 15px;
+  height: 15px;
+  margin-right: 9px;
+  vertical-align: -2px;
+  border: 2px solid rgba(255, 255, 255, .45);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: af-draai .7s linear infinite;
+}
+@keyframes af-draai { to { transform: rotate(360deg); } }
+
+.af-gerust { margin: 14px 0 0; font-size: 13px; color: var(--af-zacht); text-align: center; }
+
+/* Losse knop die naar de aanmeldpagina wijst (shortcode [paal13_aanmeldknop]).
+   Staat buiten een kaart, dus hij neemt de tokens hier zelf mee. */
+.af-knopregel { margin: 20px 0; text-align: center; }
+.af-knop-link {
+  display: inline-block;
+  min-height: 52px;
+  padding: 15px 30px;
+  color: #fff !important;
+  background: #d43d00;
+  border: 1.5px solid #d43d00;
+  border-radius: 10px;
+  font-family: "Instrument Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.3;
+  text-decoration: none;
+}
+.af-knop-link:hover { background: #b03200; border-color: #b03200; }
+.af-knop-link:focus-visible { outline: 3px solid #054d8a !important; outline-offset: 2px !important; }
+
+/* ── Meldingen ───────────────────────────────────────────────────── */
+
+.af-fout {
+  margin: 0 0 20px;
+  padding: 14px 16px;
+  background: var(--af-fout-vlak);
+  border: 1px solid rgba(179, 38, 30, .25);
+  border-left: 4px solid var(--af-fout);
+  border-radius: var(--af-radius-klein);
+  font-size: 14.5px;
+  color: #7a1b15;
+}
+.af-fout p { margin: 4px 0 0; }
+.af-fout:focus-visible { outline: 3px solid var(--af-fout) !important; outline-offset: 2px !important; }
+
+.af-melding { text-align: center; }
+.af-melding p { margin: 8px 0 0; color: var(--af-zacht); font-size: 15px; }
+.af-klein { font-size: 13.5px; }
+
+.af-succes { border-color: rgba(31, 122, 69, .35); }
+.af-succes .af-titel { color: var(--af-goed); }
+.af-succes-vink {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 14px;
+  color: var(--af-goed);
+  background: var(--af-goed-vlak);
+  border-radius: 50%;
+}
+
+.af-gesloten { border-left: 4px solid #a1740b; background: #fffdf6; }
+.af-gesloten .af-titel { color: #7a5a08; }
+
+/* Losse foutkaart bóven het formulier. Nodig op de WordPress-site: daar komt het formulier
+   uit een cache en kan de melding er niet in worden meegebakken. */
+.af-foutkaart {
+  margin-bottom: 0;
+  text-align: left;
+  background: var(--af-fout-vlak);
+  border-color: rgba(179, 38, 30, .3);
+  border-left: 4px solid var(--af-fout);
+  color: #7a1b15;
+}
+.af-foutkaart + .af-kaart { margin-top: 16px; }
+.af-foutkaart p { margin: 4px 0 0; color: inherit; }
+
+/* Honeypot: uit beeld, maar niet display:none — bots slaan verborgen velden vaak over. */
+.af-vangnet { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+/* ── Klein scherm ────────────────────────────────────────────────── */
+
+@media (max-width: 520px) {
+  .af-kaart { margin: 20px 14px; padding: 24px 20px; border-radius: 12px; }
+  .af-titel { font-size: 22px; }
+  .af-rij { gap: 0; }
+  .af-rij > .af-breed,
+  .af-rij > .af-smal { flex: 1 1 100%; }
+  .af-bol-tekst { display: none; }
+  .af-bol { flex: 0 0 auto; }
+  .af-bollen { gap: 8px; }
+  .af-acties { flex-direction: column-reverse; align-items: stretch; }
+  /* flex-basis is in een kolom de hóógte: zonder deze regel wordt de knop 200px hoog. */
+  .af-knop, .af-terug { flex: 0 0 auto; width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .af-balk-vul { transition: none; }
+  .af-knop[aria-busy="true"]::before { animation-duration: 2.4s; }
+  .af-kaart * { scroll-behavior: auto !important; }
+}
+
+/* ── Zelfstandige pagina (/aanmelden.php) ────────────────────────── */
+/* Alleen hier bezitten we de hele pagina en weten we dus wat de achtergrond is. */
+
+.af-pagina {
+  margin: 0;
+  padding: 0;
+  background: var(--af-pagina-vlak, #eef2f6);
+  color: #16202c;
+  font-family: "Instrument Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.af-hero {
+  padding: 34px 20px 78px;
+  background: linear-gradient(170deg, #054d8a 0%, #03365f 100%);
+  text-align: center;
+}
+.af-hero img { height: 46px; width: auto; }
+.af-hero h1 {
+  margin: 16px 0 4px;
+  font-size: 26px;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -.02em;
+  color: #fff;
+}
+.af-hero p { margin: 0; font-size: 14.5px; color: rgba(255, 255, 255, .72); }
+
+.af-zelfstandig { margin-top: -58px; position: relative; }
+.af-voet { padding: 22px 20px 40px; text-align: center; font-size: 13px; color: #55616f; }
+.af-voet a { color: #054d8a; }
+
+@media (prefers-color-scheme: dark) {
+  .af-pagina { --af-pagina-vlak: #0b1622; color: #e7edf4; }
+  .af-voet { color: #93a1b1; }
+  .af-voet a { color: #8ab6e3; }
+
+  .af-zelfstandig.af-kaart {
+    --af-vlak: #152435;
+    --af-vlak-zacht: #1c2e42;
+    --af-tekst: #e7edf4;
+    --af-zacht: #a3b1c2;
+    --af-rand: #2c4056;
+    --af-rand-sterk: #47607d;
+    --af-navy: #8ab6e3;
+    --af-oranje: #ff7a45;
+    --af-oranje-diep: #e86530;
+    --af-oranje-zacht: #2c1c14;
+    --af-fout: #ff8a80;
+    --af-fout-vlak: #2a1513;
+    --af-goed: #6ddf9f;
+    --af-goed-vlak: #12291d;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 12px 32px rgba(0, 0, 0, .35);
+  }
+  .af-zelfstandig .af-knop { color: #1a0e08; }
+  .af-zelfstandig .af-fout { color: #ffc9c4; }
+  .af-zelfstandig .af-succes-vink { color: var(--af-goed); }
+}

@@ -57,6 +57,10 @@ foreach (['bronnen', 'query', 'weergave'] as $__l) {
 }
 if (file_exists(__DIR__ . '/toegang.php')) require_once __DIR__ . '/toegang.php';
 if (file_exists(__DIR__ . '/health.php')) require_once __DIR__ . '/health.php';
+// Het aanmeldformulier (alleen de presentatie) vóór paginas.php: includes/paginas/formulier.php
+// en render.php leunen erop. De verwerking (aanmelden_kern.php) blijft bewust los — die laadt
+// alleen wie hem echt nodig heeft.
+if (file_exists(__DIR__ . '/aanmeldformulier.php')) require_once __DIR__ . '/aanmeldformulier.php';
 if (file_exists(__DIR__ . '/paginas.php')) require_once __DIR__ . '/paginas.php';
 if (file_exists(__DIR__ . '/kanalen.php')) require_once __DIR__ . '/kanalen.php';
 if (file_exists(__DIR__ . '/optout.php')) require_once __DIR__ . '/optout.php';
