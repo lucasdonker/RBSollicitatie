@@ -65,23 +65,44 @@
     e.tabHtml.classList.toggle('actief', modus === 'html');
   }
 
+  /* Vragen via bhVraag() als dat er is (beheerkant), anders via prompt(). Het portaal
+     laadt beheer.js niet, dus de terugval blijft staan; hij is geen dode code. */
+  function vraag(opt) {
+    if (typeof bhVraag === 'function') return bhVraag(opt);
+    return Promise.resolve(window.prompt(opt.titel, opt.waarde || ''));
+  }
+
   function actie(e, naam) {
-    var url, tekst;
     if (naam === 'link') {
-      url = prompt('Webadres (URL):'); if (!url) return;
-      tekst = prompt('Linktekst:', 'Klik hier'); if (!tekst) return;
-      insert(e.id, '<a href="' + esc(url) + '">' + esc(tekst) + '</a>');
+      vraag({ titel: 'Waar moet de link naartoe?', tekst: 'Een volledig webadres, dus met https:// ervoor.', knop: 'Volgende' })
+        .then(function (url) {
+          if (!url) return;
+          return vraag({ titel: 'Wat komt er te staan?', tekst: 'De tekst waar iemand op klikt. "Klik hier" zegt niets; schrijf liever waar het heen gaat.', waarde: 'Klik hier', knop: 'Invoegen' })
+            .then(function (tekst) {
+              if (!tekst) return;
+              insert(e.id, '<a href="' + esc(url) + '">' + esc(tekst) + '</a>');
+            });
+        });
     } else if (naam === 'knop') {
-      url = prompt('Webadres van de knop (URL):', '{{portaal_url}}'); if (!url) return;
-      tekst = prompt('Knoptekst:', 'Naar mijn portaal'); if (!tekst) return;
-      insert(e.id, '<p>[knop href="' + esc(url) + '"]' + esc(tekst) + '[/knop]</p>');
+      vraag({ titel: 'Waar moet de knop naartoe?', tekst: 'Laat {{portaal_url}} staan om naar het portaal van de sollicitant te linken.', waarde: '{{portaal_url}}', knop: 'Volgende' })
+        .then(function (url) {
+          if (!url) return;
+          return vraag({ titel: 'Wat staat er op de knop?', waarde: 'Naar mijn portaal', knop: 'Invoegen' })
+            .then(function (tekst) {
+              if (!tekst) return;
+              insert(e.id, '<p>[knop href="' + esc(url) + '"]' + esc(tekst) + '[/knop]</p>');
+            });
+        });
     } else if (naam === 'info') {
       insert(e.id, '<p>[info]<strong>Goed om te weten</strong><br>Tekst...[/info]</p>');
     } else if (naam === 'letop') {
       insert(e.id, '<p>[let op]Tekst...[/let op]</p>');
     } else if (naam === 'afbeelding') {
-      url = prompt('Webadres van de afbeelding (URL, jpg/png):'); if (!url) return;
-      insert(e.id, '<p><img src="' + esc(url) + '" alt="" style="max-width:100%;height:auto;border-radius:8px"></p>');
+      vraag({ titel: 'Webadres van de afbeelding', tekst: 'Een jpg of png die al online staat. De afbeelding moet publiek bereikbaar zijn, anders zien ontvangers hem niet.', knop: 'Invoegen' })
+        .then(function (url) {
+          if (!url) return;
+          insert(e.id, '<p><img src="' + esc(url) + '" alt="" style="max-width:100%;height:auto;border-radius:8px"></p>');
+        });
     } else if (naam === 'lijn') {
       insert(e.id, '<hr>');
     }

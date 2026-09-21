@@ -68,7 +68,9 @@ require __DIR__ . '/layout_top.php';
       </div>
       <form method="post" style="margin:0"><?= csrf_input() ?><input type="hidden" name="actie" value="proef"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>"><button class="ds-btn ds-btn-secundair ds-btn-sm">Proefdraaien</button></form>
       <a href="?id=<?= (int)$r['id'] ?>" class="ds-btn ds-btn-secundair ds-btn-sm">Bewerken</a>
-      <form method="post" style="margin:0" onsubmit="return confirm('Deze regel verwijderen?')"><?= csrf_input() ?><input type="hidden" name="actie" value="verwijder"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>"><button class="ds-btn ds-btn-gevaar ds-btn-sm">Verwijderen</button></form>
+      <form method="post" style="margin:0" data-bevestig-titel="Regel verwijderen?"
+                data-bevestig="Deze automatische regel wordt gewist. Berichten die er eerder uit zijn gegaan blijven in het log staan."
+                data-bevestig-knop="Ja, verwijderen" data-bevestig-gevaar="1"><?= csrf_input() ?><input type="hidden" name="actie" value="verwijder"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>"><button class="ds-btn ds-btn-gevaar ds-btn-sm">Verwijderen</button></form>
     </div>
     <?php endforeach; ?>
     <?php endif; ?>

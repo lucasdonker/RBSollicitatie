@@ -136,7 +136,9 @@ require __DIR__ . '/layout_top.php';
         <input type="hidden" name="scenario_id" value="<?= $scenario_id ?>">
         <button type="submit" class="ds-btn ds-btn-primair ds-btn-sm">★ Maak actief</button>
       </form>
-      <form method="POST" style="margin:0" onsubmit="return confirm('Dit scenario en alle planningsregels erin verwijderen?')">
+      <form method="POST" style="margin:0" data-bevestig-titel="Scenario verwijderen?"
+            data-bevestig="Alle ingeplande dagen in dit scenario verdwijnen mee. De beschikbaarheid van de sollicitanten blijft ongemoeid."
+            data-bevestig-knop="Ja, verwijderen" data-bevestig-gevaar="1">
         <?= csrf_input() ?>
         <input type="hidden" name="sc_actie" value="verwijder">
         <input type="hidden" name="scenario_id" value="<?= $scenario_id ?>">

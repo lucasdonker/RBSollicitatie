@@ -339,11 +339,19 @@ require __DIR__ . '/layout_top.php';
 
     <div style="padding:0 16px 14px;display:flex;gap:8px">
       <?php if ($def): ?>
-      <form method="POST"><?= csrf_input() ?><input type="hidden" name="actie" value="reset"><input type="hidden" name="slug" value="<?= h($actief_slug) ?>">
-        <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="return confirm('Terug naar de standaardtekst? Je wijzigingen gaan verloren.')">Terugzetten naar standaard</button></form>
+      <form method="POST"
+            data-bevestig-titel="Terug naar de standaardtekst?"
+            data-bevestig="Je eigen tekst voor dit sjabloon gaat verloren en het bericht gaat er weer uitzien zoals het systeem het bedoeld heeft."
+            data-bevestig-knop="Ja, terugzetten">
+        <?= csrf_input() ?><input type="hidden" name="actie" value="reset"><input type="hidden" name="slug" value="<?= h($actief_slug) ?>">
+        <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm">Terugzetten naar standaard</button></form>
       <?php else: ?>
-      <form method="POST"><?= csrf_input() ?><input type="hidden" name="actie" value="verwijder"><input type="hidden" name="slug" value="<?= h($actief_slug) ?>">
-        <button type="submit" class="ds-btn ds-btn-gevaar ds-btn-sm" onclick="return confirm('Dit sjabloon verwijderen?')">Verwijderen</button></form>
+      <form method="POST"
+            data-bevestig-titel="Dit sjabloon verwijderen?"
+            data-bevestig="Berichten die je hiermee hebt verstuurd blijven in het log staan; alleen het sjabloon zelf verdwijnt."
+            data-bevestig-knop="Ja, verwijderen" data-bevestig-gevaar="1">
+        <?= csrf_input() ?><input type="hidden" name="actie" value="verwijder"><input type="hidden" name="slug" value="<?= h($actief_slug) ?>">
+        <button type="submit" class="ds-btn ds-btn-gevaar ds-btn-sm">Verwijderen</button></form>
       <?php endif; ?>
     </div>
   </div>

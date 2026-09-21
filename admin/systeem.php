@@ -139,7 +139,9 @@ require __DIR__ . '/layout_top.php';
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <form method="post" style="margin:0"><?= csrf_input() ?><input type="hidden" name="actie" value="herinneringen_proef">
         <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm">Proefdraaien (niets versturen)</button></form>
-      <form method="post" style="margin:0" onsubmit="return confirm('Herinneringen nu echt versturen (via de wachtrij)?')"><?= csrf_input() ?><input type="hidden" name="actie" value="herinneringen_draai">
+      <form method="post" style="margin:0" data-bevestig-titel="Herinneringen nu versturen?"
+            data-bevestig="Iedereen die volgens de regels een herinnering hoort te krijgen, krijgt hem ook echt. Wil je eerst zien wie dat zijn, gebruik dan Proefdraaien."
+            data-bevestig-knop="Ja, versturen"><?= csrf_input() ?><input type="hidden" name="actie" value="herinneringen_draai">
         <button type="submit" class="ds-btn ds-btn-primair ds-btn-sm">Nu draaien</button></form>
     </div>
     <?php if ($herinnering_resultaat !== null): ?>

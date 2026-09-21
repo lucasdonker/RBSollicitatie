@@ -352,13 +352,13 @@ function genereerAnalyse(solId) {
     } else {
       if (btn) { btn.disabled = false; btn.textContent = 'Analyseer nu'; }
       if (loadEl) loadEl.style.display = 'none';
-      alert(data.fout || 'Analyse mislukt. Controleer de API key in Instellingen.');
+      bhToast(data.fout || 'De analyse lukte niet. Controleer de API-sleutel bij Instellingen › AI-analyse.', 'fout');
     }
   })
   .catch(() => {
     if (btn) { btn.disabled = false; }
     if (loadEl) loadEl.style.display = 'none';
-    alert('Verbindingsfout.');
+    bhToast('Verbindingsfout — probeer het opnieuw.', 'fout');
   });
 }
 </script>

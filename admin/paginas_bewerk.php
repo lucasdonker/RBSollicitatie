@@ -176,7 +176,10 @@ require __DIR__ . '/layout_top.php';
             <div class="pg-knoprij">
               <a class="ds-btn ds-btn-zacht ds-btn-sm" href="<?= APP_URL ?>/p/<?= h((string)$pagina['slug']) ?>?preview=<?= (int)$v['id'] ?>" target="_blank" rel="noopener">Bekijken</a>
               <?php if ($mag_bewerken && (int)$v['id'] !== $actief && $v['scan_bevestigd_op'] !== null): ?>
-              <form method="post" onsubmit="return confirm('Versie <?= (int)$v['versie'] ?> weer live zetten?')">
+              <form method="post"
+                    data-bevestig-titel="Versie <?= (int)$v['versie'] ?> weer live zetten?"
+                    data-bevestig="Bezoekers zien vanaf dat moment deze versie. De huidige versie blijft bewaard en kun je later terugzetten."
+                    data-bevestig-knop="Ja, terugzetten">
                 <?= csrf_input() ?><input type="hidden" name="actie" value="terugrollen"><input type="hidden" name="versie_id" value="<?= (int)$v['id'] ?>">
                 <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm">Terugzetten</button>
               </form>
@@ -214,7 +217,10 @@ require __DIR__ . '/layout_top.php';
             <code><?= h($a['naam']) ?></code>
             <span class="pg-rij-meta"><?= (int)round($a['grootte'] / 1024) ?> KB</span>
             <?php if ($mag_bewerken): ?>
-            <form method="post" onsubmit="return confirm('<?= h($a['naam']) ?> verwijderen?')">
+            <form method="post"
+                  data-bevestig-titel="Bestand verwijderen?"
+                  data-bevestig="<?= h($a['naam']) ?> wordt gewist. Verwijst de pagina ernaar, dan is dat vanaf nu een kapotte link."
+                  data-bevestig-knop="Ja, verwijderen" data-bevestig-gevaar="1">
               <?= csrf_input() ?><input type="hidden" name="actie" value="asset_weg"><input type="hidden" name="naam" value="<?= h($a['naam']) ?>">
               <button type="submit" class="ds-btn ds-btn-zacht ds-btn-sm">Verwijderen</button>
             </form>
@@ -298,7 +304,10 @@ require __DIR__ . '/layout_top.php';
       <section class="ds-kaart ds-kaart-p">
         <h2 class="pg-h2">Verwijderen</h2>
         <p class="pg-sub">De pagina, alle versies en de afbeeldingen worden verwijderd. De statistiek blijft anoniem bewaard.</p>
-        <form method="post" action="<?= APP_URL ?>/admin/paginas.php" onsubmit="return confirm('<?= h((string)$pagina['titel']) ?> definitief verwijderen?')">
+        <form method="post" action="<?= APP_URL ?>/admin/paginas.php"
+              data-bevestig-titel="<?= h((string)$pagina['titel']) ?> verwijderen?"
+              data-bevestig="De pagina verdwijnt van het web, samen met alle versies en geüploade bestanden. Aanmeldingen die er ooit via binnenkwamen blijven staan. Dit is niet terug te draaien."
+              data-bevestig-knop="Ja, verwijderen" data-bevestig-gevaar="1">
           <?= csrf_input() ?><input type="hidden" name="actie" value="verwijder"><input type="hidden" name="id" value="<?= $id ?>">
           <button type="submit" class="ds-btn ds-btn-gevaar"><?= icoon('prullenbak', 18) ?> Pagina verwijderen</button>
         </form>

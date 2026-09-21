@@ -98,9 +98,17 @@ require __DIR__ . '/layout_top.php';
 </div>
 
 <?php if(!empty($pending)): ?>
-<form method="POST" style="margin-top:14px"><?= csrf_input() ?><button type="submit" name="uitvoer" value="1" class="ds-btn ds-btn-primair" onclick="return confirm('<?=count($pending)?> migratie(s) uitvoeren?')">▶ Voer <?=count($pending)?> migratie(s) uit</button></form>
+<form method="POST" style="margin-top:14px"
+      data-bevestig-titel="<?= count($pending) ?> <?= count($pending) === 1 ? 'migratie' : 'migraties' ?> uitvoeren?"
+      data-bevestig="Deze wijzigen de structuur van de database. Maak eerst een back-up als die er nog niet is; terugdraaien kan alleen vanaf een back-up."
+      data-bevestig-knop="Ja, uitvoeren">
+  <?= csrf_input() ?>
+  <button type="submit" name="uitvoer" value="1" class="ds-btn ds-btn-primair">
+    Voer <?= count($pending) ?> <?= count($pending) === 1 ? 'migratie' : 'migraties' ?> uit
+  </button>
+</form>
 <?php else: ?>
-<div style="margin-top:14px;color:var(--tekst-zacht);font-size:13px">✓ Alles up-to-date</div>
+<div style="margin-top:14px;color:var(--tekst-zacht);font-size:13px">Alles is bijgewerkt.</div>
 <?php endif; ?>
 
 </div>
