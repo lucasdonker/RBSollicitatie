@@ -432,16 +432,22 @@ function meldingen_register(): array {
         ]),
 
         // ── Systeem ───────────────────────────────────────────────────
+        /* De inloglink staat bovenaan en de code eronder. Eén tik scheelt zes cijfers
+           overtypen en het heen-en-weer tussen mailapp en browser; wie liever typt of
+           de link niet kan openen gebruikt de code. Zelfde adres, zelfde kwartier
+           geldig, zelfde eenmaligheid — dus geen zwakker slot, alleen minder werk.
+           'beide' als standaardkanaal: via WhatsApp komt de link sneller aan en staat
+           hij in de app waar de sollicitant toch al is. */
         'portaal_code' => array_merge($std, [
             'naam' => 'Portaal-inlogcode', 'categorie' => 'systeem', 'ontvanger' => 'direct',
-            'kanaal_standaard' => 'email', 'dedup_min' => 0, 'body_loggen' => false,
-            'beschrijving' => 'De eenmalige inlogcode voor het portaal. De inhoud wordt nooit gelogd.',
-            'vars' => ['otp_code'],
+            'kanaal_standaard' => 'beide', 'dedup_min' => 0, 'body_loggen' => false,
+            'beschrijving' => 'De inloglink én de eenmalige code voor het portaal. De inhoud wordt nooit gelogd.',
+            'vars' => ['otp_code', 'inloglink', 'inlogknop'],
             'seed' => [
-                'onderwerp' => 'Jouw inlogcode voor het Paal 13 portaal',
-                'hero_titel' => 'Inlogcode', 'hero_subtitel' => 'Geldig 15 minuten',
-                'body_html' => "<p>Je hebt een inlogcode aangevraagd voor het sollicitantenportaal van Reddingsbrigade Paal 13.</p>\n[code]{{otp_code}}[/code]\n<p>Deze code is <strong>15 minuten</strong> geldig. Vul hem in op de inlogpagina.</p>\n[info]Heb jij deze code niet aangevraagd? Dan kun je dit bericht negeren.[/info]",
-                'tekst_kort' => 'Je inlogcode voor het Paal 13 portaal is: {{otp_code}} (geldig 15 minuten).',
+                'onderwerp' => 'Inloggen bij het Paal 13 portaal',
+                'hero_titel' => 'Inloggen', 'hero_subtitel' => 'Geldig 15 minuten',
+                'body_html' => "<p>Hoi {{voornaam}}, hier kom je binnen bij het sollicitantenportaal van Reddingsbrigade Paal 13.</p>\n{{inlogknop}}\n<p>Werkt de knop niet? Vul dan deze code in op de inlogpagina:</p>\n[code]{{otp_code}}[/code]\n<p>De knop en de code zijn <strong>15 minuten</strong> geldig en werken één keer.</p>\n[info]Heb jij dit niet aangevraagd? Dan kun je dit bericht negeren — er gebeurt niets.[/info]",
+                'tekst_kort' => 'Hoi {{voornaam}}, hier log je in bij Paal 13: {{inloglink}} — liever typen? Je code is {{otp_code}}. Beide 15 minuten geldig.',
                 'samenvatting' => '',
             ],
         ]),

@@ -666,14 +666,21 @@ function melding_wa_fout_registreer(): void {
  * Portaal-inlogcode versturen (type 'portaal_code'): kanaalmodus + persoonsvoorkeur, e-mail als
  * terugval, inhoud wordt nooit gelogd, verzending ná het antwoord zodat het inlogscherm snel is.
  */
-function portaal_code_versturen(string $email, string $voornaam, string $code, ?string $telefoon = null): void {
+function portaal_code_versturen(string $email, string $voornaam, string $code, ?string $telefoon = null, string $inloglink = ''): void {
     $pid = null; $voorkeur = 'email';
     try {
         $q = db()->prepare("SELECT id, kanaal_voorkeur FROM personen WHERE email=? LIMIT 1");
         $q->execute([$email]);
         if ($p = $q->fetch()) { $pid = (int)$p['id']; $voorkeur = (string)($p['kanaal_voorkeur'] ?: 'whatsapp'); }
     } catch (\Throwable $e) {}
-    melding_verstuur('portaal_code', 0, ['otp_code' => $code, 'voornaam' => $voornaam], [
+    melding_verstuur('portaal_code', 0, [
+        'otp_code'  => $code,
+        'voornaam'  => $voornaam,
+        // De sjablonen gebruiken deze twee. Zonder link blijven ze leeg en valt het
+        // bericht terug op alleen de code — dat is precies hoe het eerder werkte.
+        'inloglink' => $inloglink,
+        'inlogknop' => $inloglink !== '' ? '[knop href="' . $inloglink . '"]Open mijn portaal[/knop]' : '',
+    ], [
         'ontvanger'  => ['email' => $email, 'naam' => $voornaam, 'telefoon' => (string)$telefoon, 'persoon_id' => $pid, 'kanaal_voorkeur' => $voorkeur, 'rol' => 'direct'],
         'prioriteit' => 'na_antwoord', 'dedup_min' => 0,
     ]);

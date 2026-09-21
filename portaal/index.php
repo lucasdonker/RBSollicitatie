@@ -5,7 +5,54 @@ sessie_start();
 
 $stap = $_GET['stap'] ?? 'login';
 $fout = '';
+
+/* "Blijf ingelogd": is er een geldig apparaat-token, dan hoeft er niets gevraagd te
+   worden. Moet vóór de ingelogd-check, anders staat de sollicitant alsnog op het
+   inlogscherm terwijl zijn telefoon hem kent. */
+if (!portaal_ingelogd() && function_exists('portaal_onthoud_controleren')) {
+    portaal_onthoud_controleren();
+}
 if (portaal_ingelogd()) $stap = 'dossier';
+
+/* ── Inloglink uit de mail of WhatsApp ────────────────────────
+   De GET verbruikt het token bewust NIET: mailscanners bezoeken links vooraf, en dan
+   zou de link op zijn voordat de sollicitant klikt. Hier wordt alleen gekeken of hij
+   geldig is; de knop op dat scherm post en verzilvert hem dan. */
+if (!portaal_ingelogd() && isset($_GET['inlog'])) {
+    $link_email = portaal_inloglink_controleren((string)$_GET['inlog']);
+    if ($link_email) {
+        $stap = 'inloglink';
+        $link_token = (string)$_GET['inlog'];
+        $lv = db()->prepare("SELECT voornaam FROM personen WHERE email=? LIMIT 1");
+        $lv->execute([$link_email]);
+        $link_voornaam = (string)($lv->fetchColumn() ?: '');
+    } else {
+        $stap = 'login';
+        $fout = 'Deze inloglink werkt niet meer. Vraag hieronder een nieuwe aan — dat kost een paar seconden.';
+    }
+}
+
+// De knop op dat scherm: nu pas verzilveren en inloggen.
+if (!portaal_ingelogd() && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['inloglink_submit'])) {
+    csrf_check();
+    $link_email = portaal_inloglink_controleren((string)($_POST['inlog_token'] ?? ''), true);
+    if (!$link_email) {
+        $stap = 'login';
+        $fout = 'Deze inloglink werkt niet meer. Vraag hieronder een nieuwe aan.';
+    } else {
+        $st = db()->prepare("SELECT s.id FROM sollicitaties s JOIN personen p ON p.id=s.persoon_id WHERE p.email=? ORDER BY s.aangemeld_op DESC LIMIT 1");
+        $st->execute([$link_email]);
+        $sol_link = $st->fetch();
+        if ($sol_link) {
+            login_portaal((int)$sol_link['id'], $link_email);
+            if (!empty($_POST['onthoud'])) portaal_onthoud_zetten((int)$sol_link['id'], $link_email);
+            unset($_SESSION['otp_email']);
+            redirect(APP_URL . '/portaal/');
+        }
+        $stap = 'login';
+        $fout = 'Geen sollicitatie gevonden bij dit adres.';
+    }
+}
 
 // ── OTP/SSO stap 1: email-submit ──────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['email_submit'])) {
@@ -38,7 +85,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['email_submit'])) {
             if (!$recent_otp) {
                 try {
                     $code = otp_genereer($email, 'portaal');
-                    portaal_code_versturen($email, $persoon['voornaam'], $code, $persoon['telefoon'] ?? null);
+                    // De link gaat mee in hetzelfde bericht als de code: één tik in
+                    // plaats van zes cijfers overtypen, met de code eronder voor wie
+                    // liever typt of de link niet kan openen.
+                    $link = portaal_inloglink_maken($email);
+                    portaal_code_versturen($email, $persoon['voornaam'], $code, $persoon['telefoon'] ?? null, $link);
                 } catch (\Throwable $e) { error_log('portaal login otp: ' . $e->getMessage()); }
             }
             // Als wel recent: bestaande code blijft geldig, geen nieuwe mail
@@ -61,7 +112,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toch_code'])) {
             if (!$recent_otp) {
                 try {
                     $code = otp_genereer($email, 'portaal');
-                    portaal_code_versturen($email, $persoon['voornaam'], $code, $persoon['telefoon'] ?? null);
+                    $link = portaal_inloglink_maken($email);
+                    portaal_code_versturen($email, $persoon['voornaam'], $code, $persoon['telefoon'] ?? null, $link);
                 } catch (\Throwable $e) { error_log('portaal login otp: ' . $e->getMessage()); }
             }
         }
@@ -83,12 +135,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['code_submit'])) {
     else {
         $st = db()->prepare("SELECT s.id FROM sollicitaties s JOIN personen p ON p.id=s.persoon_id WHERE p.email=? ORDER BY s.aangemeld_op DESC LIMIT 1");
         $st->execute([$email]); $sol = $st->fetch();
-        if ($sol) { login_portaal((int)$sol['id'], $email); unset($_SESSION['otp_email']); redirect(APP_URL . '/portaal/'); }
+        if ($sol) {
+            login_portaal((int)$sol['id'], $email);
+            if (!empty($_POST['onthoud'])) portaal_onthoud_zetten((int)$sol['id'], $email);
+            unset($_SESSION['otp_email']);
+            redirect(APP_URL . '/portaal/');
+        }
         else { $fout = 'Geen sollicitatie gevonden.'; $stap = 'login'; }
     }
 }
 
-if (isset($_GET['uitloggen'])) { unset($_SESSION['portaal_sol_id'], $_SESSION['portaal_email']); redirect(APP_URL . '/portaal/'); }
+if (isset($_GET['uitloggen'])) {
+    // Uitloggen moet ook het apparaat-token intrekken; anders ben je bij de volgende
+    // pagina gewoon weer ingelogd en lijkt uitloggen stuk.
+    if (function_exists('portaal_onthoud_intrekken_dit')) portaal_onthoud_intrekken_dit();
+    unset($_SESSION['portaal_sol_id'], $_SESSION['portaal_email'], $_SESSION['portaal_via_apparaat']);
+    redirect(APP_URL . '/portaal/');
+}
 
 // Oude links naar het Taken-tabblad (?tab=taken) → eigen pagina
 if ($stap === 'dossier' && ($_GET['tab'] ?? '') === 'taken') redirect(APP_URL . '/portaal/taken.php');
@@ -156,15 +219,48 @@ require __DIR__ . '/_kop.php';
     <?php unset($_SESSION['flash_portaal_fout']); ?>
   <?php endif; ?>
 
-<?php if ($stap === 'login'): ?>
+<?php if ($stap === 'inloglink'): ?>
+  <?php /* De link uit de mail of WhatsApp. Eén knop en je bent binnen — maar wel een
+           knop: een mailscanner die de link vooraf opent mag hem niet opmaken, en
+           inloggen hoort een handeling te zijn, geen bijwerking van het bezoeken van
+           een URL. */ ?>
+  <div class="ds-login">
+    <div class="ds-login-kop">
+      <div class="ds-login-logo"><?= icoon('golf', 26) ?></div>
+      <h1><?= $link_voornaam !== '' ? 'Hoi ' . h($link_voornaam) . '!' : 'Welkom terug' ?></h1>
+      <p>Je bent één tik verwijderd van je portaal.</p>
+    </div>
+    <form method="POST" class="ds-login-form">
+      <?= csrf_input() ?>
+      <input type="hidden" name="inloglink_submit" value="1">
+      <input type="hidden" name="inlog_token" value="<?= h($link_token) ?>">
+      <label class="pt-onthoud">
+        <input type="checkbox" name="onthoud" value="1">
+        <span>
+          <strong>Blijf ingelogd op dit apparaat</strong>
+          <span class="pt-onthoud-uitleg">Dan hoef je dit <?= (int)PORTAAL_ONTHOUD_DAGEN ?> dagen niet meer te doen.
+          Doe dit niet op een gedeelde of geleende telefoon.</span>
+        </span>
+      </label>
+      <button type="submit" class="ds-btn ds-btn-primair ds-btn-vol">Open mijn portaal</button>
+    </form>
+    <div class="ds-login-voet">
+      Niet jij? <a href="<?= APP_URL ?>/portaal/">Log in met een ander adres</a>
+    </div>
+  </div>
+
+<?php elseif ($stap === 'login'): ?>
   <div class="ds-login">
     <div class="ds-login-kop">
       <div class="ds-login-logo"><?= icoon('golf', 26) ?></div>
       <h1>Welkom terug</h1>
       <p>Vul je e-mailadres in. <?= authentik_actief()
-        ? 'Heb je al een Paal 13-account, dan sturen we je automatisch door. Anders krijg je een code van zes cijfers.'
-        : 'Je krijgt een code van zes cijfers om in te loggen.' ?></p>
+        ? 'Heb je al een Paal 13-account, dan sturen we je automatisch door. Anders krijg je een inloglink.'
+        : 'Je krijgt een inloglink — één tik en je bent binnen.' ?></p>
     </div>
+    <?php if (!empty($fout)): ?>
+    <div class="ds-melding ds-melding-error pt-login-fout"><?= icoon('let-op', 18) ?> <div><?= h($fout) ?></div></div>
+    <?php endif; ?>
     <form method="POST" class="ds-login-form" onsubmit="var b=this.querySelector('button[type=submit]'); b.disabled=true; b.innerHTML='Versturen…'; this.querySelector('input[name=email]').readOnly=true;">
       <?= csrf_input() ?>
       <input type="hidden" name="email_submit" value="1">
@@ -185,8 +281,10 @@ require __DIR__ . '/_kop.php';
   <div class="ds-login">
     <div class="ds-login-kop">
       <div class="ds-login-logo"><?= icoon('mail', 26) ?></div>
-      <h1>Code invoeren</h1>
-      <p>We hebben zes cijfers gestuurd naar <strong><?= h($_SESSION['otp_email'] ?? '') ?></strong>. Check ook je spam-map.</p>
+      <h1>Kijk in je berichten</h1>
+      <p>We stuurden een <strong>inloglink</strong> naar <?= h($_SESSION['otp_email'] ?? '') ?>.
+         Eén tik en je bent binnen. Check ook je spam-map.</p>
+      <p class="pt-code-uitleg">Liever typen? De code uit datzelfde bericht kan hieronder.</p>
     </div>
     <?php if (!empty($fout)): ?>
     <div class="ds-melding ds-melding-error" style="margin-bottom:14px"><?= icoon('let-op', 18) ?> <div><strong>Code onjuist.</strong> <?= h($fout) ?></div></div>
@@ -201,6 +299,14 @@ require __DIR__ . '/_kop.php';
                autocomplete="<?= $i === 0 ? 'one-time-code' : 'off' ?>">
         <?php endfor; ?>
       </div>
+      <label class="pt-onthoud">
+        <input type="checkbox" name="onthoud" value="1">
+        <span>
+          <strong>Blijf ingelogd op dit apparaat</strong>
+          <span class="pt-onthoud-uitleg">Dan hoef je dit <?= (int)PORTAAL_ONTHOUD_DAGEN ?> dagen niet meer te doen.
+          Doe dit niet op een gedeelde of geleende telefoon.</span>
+        </span>
+      </label>
       <button type="submit" class="ds-btn ds-btn-primair ds-btn-vol" id="submitBtn" disabled>Inloggen</button>
     </form>
     <div class="ds-login-voet">

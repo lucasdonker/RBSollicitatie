@@ -74,6 +74,7 @@ if (file_exists(__DIR__ . '/blk.php')) require_once __DIR__ . '/blk.php';
 if (file_exists(__DIR__ . '/portaal_dossier.php')) require_once __DIR__ . '/portaal_dossier.php';
 if (file_exists(__DIR__ . '/portaal_taken.php')) require_once __DIR__ . '/portaal_taken.php';
 if (file_exists(__DIR__ . '/portaal_berichten.php')) require_once __DIR__ . '/portaal_berichten.php';
+if (file_exists(__DIR__ . '/portaal_login.php')) require_once __DIR__ . '/portaal_login.php';
 
 // ── Database ──────────────────────────────────────────────────
 function db(): PDO {
@@ -167,7 +168,14 @@ function sessie_start(): void {
     security_headers();
     if (session_status() === PHP_SESSION_NONE) {
         session_name(SESSION_NAME);
-        session_set_cookie_params(['lifetime' => 0, 'path' => '/', 'secure' => is_https(), 'httponly' => true, 'samesite' => 'Lax']);
+        /* lifetime stond op 0: de sessie verviel zodra de browser dichtging. Op een
+           telefoon is dat zo'n beetje elk bezoek, dus moest een sollicitant telkens
+           opnieuw de hele inlogprocedure door. Nu leeft de cookie acht uur, lang
+           genoeg voor een dag portaalgebruik.
+           Wie langer ingelogd wil blijven vinkt "blijf ingelogd" aan; dat gaat via een
+           eigen token (includes/portaal_login.php) en niet via deze cookie — een
+           sessiecookie van zestig dagen zou óók voor het beheer gelden. */
+        session_set_cookie_params(['lifetime' => 8 * 3600, 'path' => '/', 'secure' => is_https(), 'httponly' => true, 'samesite' => 'Lax']);
         session_start();
         if (!isset($_SESSION['_t'])) { $_SESSION['_t'] = time(); }
         elseif (time() - $_SESSION['_t'] > 1800) { session_regenerate_id(true); $_SESSION['_t'] = time(); }

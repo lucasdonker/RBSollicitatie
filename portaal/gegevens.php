@@ -36,6 +36,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['kanaal_opslaan'])) {
     } catch (Exception $e) { $kanaal_flash = null; }
 }
 
+/* "Blijf ingelogd" moet je ook kunnen terugdraaien — bijvoorbeeld als je je telefoon
+   kwijt bent. Dit trekt álle apparaten in, ook het huidige; daarna moet overal opnieuw
+   worden ingelogd. Dat is de bedoeling. */
+$apparaten_flash = null;
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['apparaten_vergeten'])) {
+    csrf_check();
+    if (function_exists('portaal_onthoud_intrekken_alle')) {
+        portaal_onthoud_intrekken_alle($sol_id);
+        portaal_onthoud_cookie('');
+        if (function_exists('audit_log')) audit_log('apparaten_vergeten', 'sollicitatie', $sol_id, ['via' => 'portaal']);
+        $apparaten_flash = 'Klaar — op elk apparaat moet nu opnieuw worden ingelogd.';
+    }
+}
+$apparaten_aantal = function_exists('portaal_onthoud_aantal') ? portaal_onthoud_aantal($sol_id) : 0;
+
 // ── Download data (JSON) ────────────────────────────────────
 if (isset($_GET['download'])) {
     $data = ['persoon' => array_diff_key($mij, ['persoon_id' => 1])];
@@ -297,6 +312,33 @@ require __DIR__ . '/_kop.php';
       </form>
     </div>
   </div>
+
+  <?php if ($apparaten_aantal > 0 || $apparaten_flash): ?>
+  <div class="pt-kaart">
+    <h2 class="pt-kaart-titel"><?= icoon('slot', 18) ?> Ingelogd blijven</h2>
+    <?php if ($apparaten_flash): ?>
+      <div class="ds-melding ds-melding-ok"><?= icoon('vink-cirkel', 18) ?> <div><?= h($apparaten_flash) ?></div></div>
+    <?php else: ?>
+      <p class="pt-kaart-tekst">
+        <?= $apparaten_aantal === 1
+            ? 'Eén apparaat onthoudt je, zodat je daar niet steeds opnieuw hoeft in te loggen.'
+            : h((string)$apparaten_aantal) . ' apparaten onthouden je, zodat je daar niet steeds opnieuw hoeft in te loggen.' ?>
+        Telefoon kwijt of op een vreemde computer ingelogd? Vergeet ze dan allemaal.
+      </p>
+      <?php /* Uitklappen en dan pas de knop: twee bewuste handelingen, en het werkt
+               zonder JavaScript. De data-bevestig-haak uit het beheer draait hier niet. */ ?>
+      <details class="pt-bevestig">
+        <summary>Vergeet alle apparaten</summary>
+        <p>Op elk apparaat — ook dit — moet daarna opnieuw worden ingelogd met een link uit je mail.</p>
+        <form method="POST">
+          <?= csrf_input() ?>
+          <input type="hidden" name="apparaten_vergeten" value="1">
+          <button type="submit" class="ds-btn ds-btn-secundair">Ja, vergeet ze allemaal</button>
+        </form>
+      </details>
+    <?php endif; ?>
+  </div>
+  <?php endif; ?>
 
   <?php
     // Uitloggen / naar beheer (alleen als deze sollicitant ook beheertoegang heeft).

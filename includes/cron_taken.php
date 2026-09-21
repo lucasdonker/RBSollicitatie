@@ -40,6 +40,11 @@ function cron_taken_uitvoeren(string $bron, array $limieten = []): array {
         // Zwaardere taken alleen vanuit de echte cron
         if ($bron === 'cron') {
             if (function_exists('competenties_cron_sync')) $stap('authentik_sync', fn() => competenties_cron_sync());
+            // Verlopen "blijf ingelogd"-tokens weggooien. Ze werken na de vervaldatum
+            // toch niet meer, maar ze hoeven er ook niet te blijven staan.
+            if (function_exists('portaal_onthoud_opschonen')) {
+                $stap('apparaten', fn() => ['verwijderd' => portaal_onthoud_opschonen()]);
+            }
             if (function_exists('opschoon_run')) {
                 $laatste = instelling('bewaar.laatste_run', '');
                 if (substr($laatste, 0, 10) !== date('Y-m-d')) $stap('opschonen', fn() => opschoon_run(false, 'cron'));

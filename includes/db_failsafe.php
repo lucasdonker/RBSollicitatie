@@ -142,6 +142,7 @@ function db_failsafe(bool $forceer = false): void {
         'gepland_auto_setup',
         'documenten_auto_setup',
         'ondertekening_bewijs_auto_setup',
+        'portaal_login_setup',
     ];
     foreach ($setups as $fn) {
         if (function_exists($fn)) {
