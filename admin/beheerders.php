@@ -261,7 +261,7 @@ require __DIR__ . '/layout_top.php';
         </select>
         <p class="ds-veld-hint">Wat elke rol precies mag, stel je in bij <a href="<?= APP_URL ?>/admin/rollen.php">Rollen</a>.</p>
       </div>
-      <div class="bh-seizoenform-voet">
+      <div class="bh-veldform-voet">
         <button type="submit" class="ds-btn ds-btn-primair">Account aanmaken</button>
       </div>
     </form>

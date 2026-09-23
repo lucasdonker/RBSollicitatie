@@ -147,12 +147,7 @@ if (function_exists('meldingen_register')) foreach (meldingen_register() as $k =
 require __DIR__ . '/layout_top.php';
 ?>
 
-<div class="bh-tabs" role="tablist" aria-label="Berichten">
-  <a class="bh-tab<?= $tab === 'nieuw' ? ' actief' : '' ?>" href="?tab=nieuw" role="tab"
-     aria-selected="<?= $tab === 'nieuw' ? 'true' : 'false' ?>">Nieuw bericht</a>
-  <a class="bh-tab<?= $tab === 'log' ? ' actief' : '' ?>" href="?tab=log" role="tab"
-     aria-selected="<?= $tab === 'log' ? 'true' : 'false' ?>">Verzonden</a>
-</div>
+<?php $bt_actief = $tab; require __DIR__ . '/_berichten_tabs.php'; ?>
 
 <?php if ($tab === 'log'): ?>
 

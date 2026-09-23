@@ -184,7 +184,7 @@ require __DIR__ . '/layout_top.php';
   <div class="bh-seizoen-hoofd">
 
     <?php if ($huidig): ?>
-    <form method="POST" class="ds-kaart ds-kaart-p bh-seizoenform">
+    <form method="POST" class="ds-kaart ds-kaart-p bh-veldform">
       <?= csrf_input() ?>
       <input type="hidden" name="actie" value="update">
       <input type="hidden" name="seizoen_id" value="<?= (int)$huidig['id'] ?>">
@@ -320,7 +320,7 @@ require __DIR__ . '/layout_top.php';
         </div>
       </fieldset>
 
-      <div class="bh-seizoenform-voet">
+      <div class="bh-veldform-voet">
         <button type="submit" class="ds-btn ds-btn-primair">Opslaan</button>
       </div>
     </form>
@@ -338,7 +338,7 @@ require __DIR__ . '/layout_top.php';
         <label class="ds-label" for="sz_nieuw">Naam</label>
         <input class="ds-input" type="text" id="sz_nieuw" name="naam" placeholder="bijv. Zomer 2027" required>
       </div>
-      <div class="bh-seizoenform-voet">
+      <div class="bh-veldform-voet">
         <button type="submit" class="ds-btn ds-btn-secundair">Aanmaken</button>
       </div>
     </form>
