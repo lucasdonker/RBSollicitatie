@@ -52,11 +52,16 @@ function openPaneel(id) {
    De bevestiging komt uit bhBevestig(): die haalt de tekst bij de server, zodat wat
    er staat uit dezelfde bron komt als wat er gebeurt. Het oude confirm() somde zelf
    op welke fases mail sturen — een tweede lijstje naast fase_meldingstypen(). */
-function fasWijzigen(solId, naar, label) {
+/* afwijkend = de stap is niet de gewone volgende (bh_fase_afwijkend() in PHP bepaalt dat).
+   Dan volgt na de bevestiging één vraag om een reden. Die is optioneel — een lege reden
+   blokkeert niets — en komt als notitie in de tijdlijn. Annuleren bij die vraag breekt
+   de hele wijziging af. */
+function fasWijzigen(solId, naar, label, afwijkend) {
   bhBevestig({
     titel: 'Fase wijzigen naar "' + label + '"?',
-    tekst: 'Hoort bij deze overgang een bericht, dan gaat dat automatisch de deur uit.',
-    knop:  'Ja, wijzigen',
+    tekst: 'Hoort bij deze overgang een bericht, dan gaat dat automatisch de deur uit.'
+         + (afwijkend ? ' Deze stap wijkt af van de gewone volgorde; hierna kun je een reden opgeven.' : ''),
+    knop:  afwijkend ? 'Verder' : 'Ja, wijzigen',
     // Heb je al gebeld, of corrigeer je een fase die verkeerd stond? Dan hoeft er
     // geen standaardbericht uit. Tot nu toe kon dat alleen door het hele kanaal
     // tijdelijk uit te zetten bij Instellingen — en dat raakte iedereen.
@@ -65,24 +70,36 @@ function fasWijzigen(solId, naar, label) {
   }).then(function (ja) {
     if (!ja) return;
     var stil = (typeof ja === 'object' && ja.vink) ? '1' : '';
-    // Meteen zichtbaar dat er iets loopt: anders gebeurt er tot het herladen niets.
-    var klaar = window.P13Actie ? window.P13Actie.bezig(null, null) : function () {};
-    fetch(APP_URL + '/admin/api_fase.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ sol_id: solId, naar: naar, stil: stil, _csrf: CSRF })
-    })
-    .then(function (r) { return r.json(); })
-    .then(function (data) {
-      if (!data.ok) { klaar(); bhToast(data.fout || 'Opslaan mislukt.', 'fout'); return; }
-      /* De pagina toont de fase op vier plekken; opnieuw laden is eerlijker dan die met
-         de hand bijwerken (zo stond de rij-rendering eerder twee keer in de code).
-         De melding over het bericht zet api_fase.php als flash, dus die staat er ná
-         het herladen nog — vandaar dat hier geen pauze meer inzit. */
-      location.reload();
-    })
-    .catch(function () { klaar(); bhToast('Verbindingsfout — probeer opnieuw.', 'fout'); });
+    if (!afwijkend) { fasVersturen(solId, naar, stil, ''); return; }
+    bhVraag({
+      titel: 'Waarom wijk je af? (optioneel)',
+      tekst: 'Komt als notitie in de tijdlijn, zodat later terug te lezen is waarom. Leeg laten mag.',
+      lang: true, plaatshouder: 'Bijvoorbeeld: verkeerd gezet, gebeld en besproken', knop: 'Ja, wijzigen'
+    }).then(function (reden) {
+      if (reden === null) return;          // Annuleren: niets wijzigen
+      fasVersturen(solId, naar, stil, reden);
+    });
   });
+}
+
+function fasVersturen(solId, naar, stil, reden) {
+  // Meteen zichtbaar dat er iets loopt: anders gebeurt er tot het herladen niets.
+  var klaar = window.P13Actie ? window.P13Actie.bezig(null, null) : function () {};
+  fetch(APP_URL + '/admin/api_fase.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ sol_id: solId, naar: naar, stil: stil, reden: reden || '', _csrf: CSRF })
+  })
+  .then(function (r) { return r.json(); })
+  .then(function (data) {
+    if (!data.ok) { klaar(); bhToast(data.fout || 'Opslaan mislukt.', 'fout'); return; }
+    /* De pagina toont de fase op vier plekken; opnieuw laden is eerlijker dan die met
+       de hand bijwerken (zo stond de rij-rendering eerder twee keer in de code).
+       De melding over het bericht zet api_fase.php als flash, dus die staat er ná
+       het herladen nog — vandaar dat hier geen pauze meer inzit. */
+    location.reload();
+  })
+  .catch(function () { klaar(); bhToast('Verbindingsfout — probeer opnieuw.', 'fout'); });
 }
 
 /* toastMelding, updateTabelRij en bouwActieKnoppen zijn weg. De eerste zit nu als
@@ -105,66 +122,10 @@ function kanaalVoorkeurZet(pid, keuze, el) {
    paneel en submitte dat formulier. Het dossier heeft nu een eigen knop met een
    gewone POST naar zichzelf. */
 
-/* ── Verwijderen ────────────────────────────────────────────────
-   Wat er precies meegaat staat in het rode blok op de dossierpagina; de dialoog
-   herhaalt de kern en vraagt om een bewuste tweede klik. */
-function verwijderActie(solId, actie, bevestiging) {
-  var knop = event && event.target ? event.target : null;
-  var oud = knop ? knop.textContent : '';
-
-  function stuur(ookLoondocs) {
-    if (knop) { knop.disabled = true; knop.textContent = 'Bezig…'; }
-    var body = { sol_id: solId, actie: actie, _csrf: CSRF };
-    if (ookLoondocs) body.ook_loondocs = '1';
-    fetch(APP_URL + '/admin/api_verwijder.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams(body)
-    })
-    .then(function (r) { return r.json(); })
-    .then(function (data) {
-      if (knop) { knop.disabled = false; knop.textContent = oud; }
-      if (!data.ok) {
-        /* Verwerkt loondossier: de server vraagt om een expliciete tweede keuze, omdat
-           de loonheffing en de ID-kopie onder de bewaarplicht van vijf jaar vallen.
-           Eerder toonde het scherm alleen de foutmelding en kwam je niet verder — de
-           parameter die de server verwacht werd nergens meegestuurd. */
-        if (data.loondossier) { vraagLoondossier(data.fout); return; }
-        bhToast(data.fout || 'Verwijderen mislukt.', 'fout');
-        return;
-      }
-      if (data.verwijderd) window.location.href = APP_URL + '/admin/sollicitanten.php';
-      else location.reload();
-    })
-    .catch(function () {
-      bhToast('Verbindingsfout — probeer opnieuw.', 'fout');
-      if (knop) { knop.disabled = false; knop.textContent = oud; }
-    });
-  }
-
-  function vraagLoondossier(reden) {
-    bhBevestig({
-      titel: 'Er ligt een verwerkt loondossier',
-      tekst: (reden || '') + ' Het loonheffingsformulier en de kopie van het identiteitsbewijs '
-           + 'moeten vijf jaar bewaard blijven na afloop van het dienstjaar. Is het dienstverband '
-           + 'nooit doorgegaan, dan vervalt die plicht en mag alles weg.',
-      vink: { label: 'Het dienstverband is niet doorgegaan',
-              uitleg: 'Vink dit alleen aan als deze persoon nooit heeft gewerkt. De stukken worden dan ook vernietigd.' },
-      knop: 'Verwijderen', gevaar: true
-    }).then(function (ja) {
-      if (!ja) return;
-      if (!ja.vink) { bhToast('Niets verwijderd — zonder die bevestiging blijft het loondossier staan.', 'info'); return; }
-      stuur(true);
-    });
-  }
-
-  bhBevestig({
-    titel: 'Dit dossier verwijderen?',
-    tekst: bevestiging || 'Het formulier, de beschikbaarheid, de notities en de ondertekende '
-         + 'documenten gaan mee. Dit kun je niet terugdraaien.',
-    knop: 'Ja, verwijderen', gevaar: true
-  }).then(function (ja) { if (ja) stuur(false); });
-}
+/* verwijderActie() is weg. Verwijderen is onomkeerbaar én raakt persoonsgegevens, dus
+   het gaat via het tussenscherm in admin/sollicitant.php (_bevestig.php): werkt zonder
+   JavaScript, met de keuze "alleen deze sollicitatie" of "alles van deze persoon" en —
+   bij een verwerkt loondossier — het vinkje voor het dienstverband. */
 
 /* ── AI Analyse (via wachtrij) ─────────────────────────────── */
 /* ── Competenties (Authentik) ───────────────────────────────── */
@@ -210,23 +171,30 @@ function competentieKoppelen(solId) {
   .catch(() => { if (status) status.textContent = 'Verbindingsfout'; });
 }
 
-/* ── Afwijkende norm (bestuursbesluit) ──────────────────────── */
-function normOpslaan(solId) {
-  const dagen = document.getElementById('normDagen-' + solId).value;
-  const notitie = document.getElementById('normNotitie-' + solId).value;
+/* ── Afwijkende norm (bestuursbesluit) ──────────────────────────
+   Het formulier staat in het tabblad Beschikbaarheid van het dossier
+   (admin/dossier/_norm.php) en roept dit aan via onsubmit. De knop gaat in laadstand
+   tijdens het verzoek; daarna staat de nieuwe norm in het label. */
+function normOpslaan(solId, form) {
+  var dagen   = document.getElementById('normDagen-' + solId).value;
+  var notitie = document.getElementById('normNotitie-' + solId).value;
+  var knop = form ? form.querySelector('button[type=submit]') : null;
+  var klaar = window.P13Actie ? window.P13Actie.bezig(form || null, knop) : function () {};
   fetch(APP_URL + '/admin/api_norm.php', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({ sol_id: solId, norm_dagen: dagen, norm_notitie: notitie, _csrf: CSRF })
   })
-  .then(r => r.json())
-  .then(data => {
+  .then(function (r) { return r.json(); })
+  .then(function (data) {
+    klaar();
     if (!data.ok) { bhToast(data.fout || 'Opslaan mislukt.', 'fout'); return; }
-    const lbl = document.getElementById('normLabel-' + solId);
-    if (lbl) lbl.textContent = data.norm_dagen ? data.norm_dagen + ' dagen/week (afwijkend)' : '5 dagen/week (standaard)';
-    document.getElementById('normEdit-' + solId).style.display = 'none';
+    var lbl = document.getElementById('normLabel-' + solId);
+    if (lbl) lbl.textContent = data.norm_dagen ? data.norm_dagen + ' dagen per week (afwijkend)' : '5 dagen per week (standaard)';
+    bhToast('Norm opgeslagen.', 'succes');
   })
-  .catch(() => bhToast('Verbindingsfout — probeer opnieuw.', 'fout'));
+  .catch(function () { klaar(); bhToast('Verbindingsfout — probeer opnieuw.', 'fout'); });
+  return false;
 }
 
 /* ── Verzoek afwijkend aantal dagen (bestuur beslist) ───────── */
@@ -405,7 +373,7 @@ function corrVullen(d) {
   } else if (d.norm && aan.length > d.norm) {
     normregel.hidden = false;
     normregel.textContent = 'In het raster staat ' + d.norm + ': dat is de norm van deze persoon, '
-                          + 'niet het aantal dagen dat hij kan.';
+                          + 'niet het aantal dagen dat die persoon kan.';
   } else if (d.regime === 'weekend') {
     normregel.hidden = false;
     normregel.textContent = 'Deze week telt als weekendweek — alleen de weekenddagen tellen mee.';
@@ -577,54 +545,9 @@ function kopieerOndertekenlink(tokenOfUrl) {
   }
 }
 
-function startOndertekening(solId, type) {
-  const labels = {
-    'gezondheid_ouder':  'Gezondheidsverklaring t/m 17 (ouder ondertekent)',
-    'gezondheid_18plus': 'Gezondheidsverklaring 18+ (sollicitant zelf)',
-    'intake':            'Intakeformulier selectiedag',
-    'intake_ouder':      'Intakeformulier selectiedag (ouder ondertekent)',
-  };
-  const isOuder = (type === 'gezondheid_ouder' || type === 'intake_ouder');
-
-  function versturen(email, naam) {
-    fetch(APP_URL + '/admin/api_ondertekening.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        sol_id: solId, type: type, naar_email: email || '', naar_naam: naam || '', _csrf: CSRF
-      })
-    })
-    .then(function (r) { return r.json(); })
-    .then(function (data) {
-      if (!data.ok) { bhToast(data.fout || 'Versturen mislukt.', 'fout'); return; }
-      bhToast('Uitnodiging verstuurd.', 'succes');
-      setTimeout(function () { location.reload(); }, 900);
-    })
-    .catch(function () { bhToast('Verbindingsfout — probeer opnieuw.', 'fout'); });
-  }
-
-  if (!isOuder) {
-    bhBevestig({
-      titel: labels[type] + ' klaarzetten?',
-      tekst: 'De sollicitant krijgt een bericht met een persoonlijke ondertekenlink.',
-      knop: 'Ja, versturen'
-    }).then(function (ja) { if (ja) versturen('', ''); });
-    return;
-  }
-  // Onder de 18 tekent een ouder mee; daarvoor is een adres nodig.
-  bhVraag({
-    titel: 'Naar welk adres van de ouder of verzorger?',
-    tekst: labels[type] + ' gaat naar dit adres, niet naar de sollicitant zelf.',
-    type: 'email', plaatshouder: 'naam@voorbeeld.nl', knop: 'Volgende'
-  }).then(function (email) {
-    if (!email) return;
-    bhVraag({
-      titel: 'Naam van de ouder of verzorger',
-      tekst: 'Mag leeg blijven; de naam komt in de aanhef van het bericht.',
-      plaatshouder: 'optioneel', knop: 'Versturen'
-    }).then(function (naam) { versturen(email, naam || ''); });
-  });
-}
+/* startOndertekening() is weg: niets riep hem nog aan. De documenten zet fase_zetten()
+   klaar bij de uitnodiging, en een verkeerd ouder-adres wordt bij "Opnieuw versturen"
+   bijgewerkt (includes/ondertekeningen_auto.php). */
 
 /* ── Notities beheer ────────────────────────────────────────── */
 function laadNotities(solId) {
@@ -865,7 +788,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /* ── Flash berichten ────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.flash').forEach(el => {
+  // Alleen succes vervaagt; een fout of waarschuwing moet je kunnen lezen (zie toon_flash()).
+  document.querySelectorAll('.flash.flash-succes').forEach(el => {
     setTimeout(() => {
       el.style.transition = 'opacity .4s';
       el.style.opacity = '0';

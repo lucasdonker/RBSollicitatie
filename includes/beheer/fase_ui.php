@@ -67,16 +67,56 @@ function bh_fase_actie_kort(array $actie): string {
  */
 function bh_rij_attentie(array $rij): array {
     // 'kort' is wat er in een tabelcel past, 'uitleg' de volle reden (tooltip, dossier).
+    // De url wijst naar de kaart Gegevens corrigeren in het dossier: daar pas je het aan.
+    $url = !empty($rij['id']) ? bh_gegevens_url((int)$rij['id']) : null;
     if (!empty($rij['mail_mislukt'])) {
         return ['label' => 'Adres corrigeren', 'toon' => 'secundair', 'kort' => 'mail mislukt',
                 'uitleg' => (string)($rij['mail_mislukt_reden'] ?? 'Bericht kon niet bezorgd worden'),
-                'url' => null];
+                'url' => $url];
     }
     if (empty($rij['email']) && empty($rij['telefoon'])) {
         return ['label' => 'Adres invullen', 'toon' => 'secundair', 'kort' => 'geen adres',
-                'uitleg' => 'Geen e-mail en geen telefoonnummer', 'url' => null];
+                'uitleg' => 'Geen e-mail en geen telefoonnummer', 'url' => $url];
     }
     return [];
+}
+
+/** Het dossier met de kaart Gegevens corrigeren open. Eén plek voor dit adres. */
+function bh_gegevens_url(int $sol_id): string {
+    return APP_URL . '/admin/sollicitant.php?id=' . $sol_id . '&corrigeer=1#gegevens';
+}
+
+/**
+ * Wijkt deze faseovergang af van de gewone volgorde van de trechter?
+ *
+ * Gewoon is: één stap vooruit, of afwijzen (kan altijd). Al het andere — terug, een
+ * stap overslaan, een afwijzing terugdraaien — is een correctie, en daar hoort een reden
+ * bij die later terug te lezen is.
+ */
+function bh_fase_afwijkend(string $van, string $naar): bool {
+    if ($naar === 'afgewezen' || $van === $naar) return false;
+    $trechter = array_values(array_filter(array_keys(fasen()), fn($f) => $f !== 'afgewezen'));
+    $i = array_search($van, $trechter, true);
+    return $i === false || ($trechter[$i + 1] ?? null) !== $naar;
+}
+
+/**
+ * Suggestie "Uitnodigen?" in de lijst, als de uitnodig-modus op Suggestie staat.
+ *
+ * Alleen bij aangemeld, en alleen als de leeftijd bij de start van het werkseizoen binnen
+ * de grenzen van Instellingen › Uitnodigen & automatisch valt — dezelfde regel als de
+ * automatische uitnodiging (invite_aanbeveling), zodat Suggestie en Automatisch nooit
+ * verschillend oordelen. Een suggestie, geen besluit: de knop blijft een mensenklik.
+ */
+function bh_uitnodig_suggestie(array $rij): bool {
+    if (($rij['fase'] ?? '') !== 'aangemeld' || empty($rij['geboortedatum'])) return false;
+    if (!function_exists('instelling') || instelling('invite.modus', 'suggestie') !== 'suggestie') return false;
+    if (!function_exists('invite_aanbeveling') || !function_exists('leeftijd_op_datum')) return false;
+    $s = function_exists('actief_seizoen') ? actief_seizoen() : null;
+    try {
+        $lft = leeftijd_op_datum((string)$rij['geboortedatum'], (string)($s['datum_werk_start'] ?? (date('Y') . '-06-01')));
+    } catch (\Throwable $e) { return false; }
+    return !empty(invite_aanbeveling($lft)['voldoet']);
 }
 
 /**

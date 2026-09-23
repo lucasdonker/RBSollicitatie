@@ -358,4 +358,243 @@ function bh_dossier_tabs(array $dossier, string $actief = 'dossier'): array {
     return $tabs;
 }
 
+/* ── Verwijderen ────────────────────────────────────────────────── */
+
+/**
+ * Over welke sollicitaties gaat een verwijderactie? Alleen deze, of (bij een
+ * AVG-verwijderverzoek) alle sollicitaties van dezelfde persoon.
+ *
+ * @return int[]
+ */
+function bh_verwijder_ids(int $sol_id, string $omvang): array {
+    if ($omvang !== 'persoon') return [$sol_id];
+    try {
+        $q = db()->prepare("SELECT s2.id FROM sollicitaties s
+                            JOIN sollicitaties s2 ON s2.persoon_id = s.persoon_id
+                            WHERE s.id = ? ORDER BY s2.id");
+        $q->execute([$sol_id]);
+        $ids = array_map('intval', array_column($q->fetchAll(), 'id'));
+    } catch (\Throwable $e) { $ids = []; }
+    return $ids ?: [$sol_id];
+}
+
+/** Ligt er bij een van deze sollicitaties een loondossier dat al verwerkt is (bewaarplicht)? */
+function bh_loon_verwerkt(array $ids): bool {
+    if (!function_exists('documenten_loondossier')) return false;
+    foreach ($ids as $id) {
+        try { if (!empty(documenten_loondossier((int)$id)['verwerkt'])) return true; }
+        catch (\Throwable $e) {}
+    }
+    return false;
+}
+
+/**
+ * Een dossier verwijderen. De enige route: het tussenscherm in admin/sollicitant.php en
+ * admin/api_verwijder.php roepen allebei deze functie aan.
+ *
+ * Wat er verdwijnt komt uit includes/avg_wissen.php — dezelfde lijst als het portaal
+ * ("Gegevens laten verwijderen") en het automatisch opschonen gebruiken. Eerder had deze
+ * route een eigen, kortere lijst.
+ *
+ *   sollicitatie  leegmaken en de rij verwijderen; de persoon blijft.
+ *   persoon       alle sollicitaties leegmaken en de persoon anonimiseren (AVG art. 17).
+ *                 De lege sollicitaties blijven voor de telling, net als in het portaal.
+ *
+ * Loondossier: loonheffing en ID-kopie vallen onder de fiscale bewaarplicht zodra ze
+ * verwerkt zijn (AVG art. 17 lid 3 sub b gaat dan voor). Dan gaat er alleen iets weg met
+ * $ook_loondocs — de verklaring dat het dienstverband nooit is doorgegaan. Het recht
+ * daarvoor controleert de aanroeper.
+ *
+ * @return array{ok:bool,fout:?string,tekst:string,loondossier:bool}
+ */
+function bh_dossier_verwijderen(int $sol_id, string $omvang, bool $ook_loondocs): array {
+    $omvang = $omvang === 'persoon' ? 'persoon' : 'sollicitatie';
+    $uit = ['ok' => false, 'fout' => null, 'tekst' => '', 'loondossier' => false];
+    $db = db();
+    try {
+        $q = $db->prepare("SELECT s.persoon_id, p.voornaam, p.tussenvoegsel, p.achternaam
+                           FROM sollicitaties s JOIN personen p ON p.id = s.persoon_id WHERE s.id = ?");
+        $q->execute([$sol_id]);
+        $rij = $q->fetch();
+    } catch (\Throwable $e) { $rij = null; }
+    if (!$rij) { $uit['fout'] = 'Deze sollicitatie bestaat niet (meer).'; return $uit; }
+    $naam = volledige_naam($rij);
+    $pid  = (int)$rij['persoon_id'];
+    $ids  = bh_verwijder_ids($sol_id, $omvang);
+
+    if (bh_loon_verwerkt($ids) && !$ook_loondocs) {
+        $uit['loondossier'] = true;
+        $uit['fout'] = 'Niets verwijderd: ' . $naam . ' heeft een verwerkt loondossier (wettelijke bewaarplicht). '
+                     . 'Dat kan alleen met de verklaring dat het dienstverband niet is doorgegaan.';
+        return $uit;
+    }
+
+    try {
+        $db->beginTransaction();
+        foreach ($ids as $id) {
+            // Loondocumenten gaan mee: niet verwerkt (geen bewaarplicht) of expliciet verklaard.
+            avg_sollicitatie_leegmaken($db, $id, true);
+            avg_maillog_anonimiseren($db, $id, 'verwijderd_' . $id . '@anoniem.local');
+        }
+        if ($omvang === 'persoon') {
+            avg_persoon_anonimiseren($db, $pid, 'Verwijderd', '(verzoek AVG)', 'verwijderd_' . $sol_id . '@anoniem.local');
+        } else {
+            $db->prepare("DELETE FROM sollicitaties WHERE id = ?")->execute([$sol_id]);
+        }
+        $db->commit();
+    } catch (\Throwable $e) {
+        if ($db->inTransaction()) $db->rollBack();
+        error_log('bh_dossier_verwijderen ' . $sol_id . ': ' . $e->getMessage());
+        $uit['fout'] = 'Verwijderen is niet gelukt; er is niets gewist. De fout staat in het logboek.';
+        return $uit;
+    }
+
+    // Onthouden apparaten: eigen tabel, buiten de transactie (faalt stil). Anders blijft er
+    // een token liggen dat naar een leeg of verdwenen dossier wijst.
+    if (function_exists('portaal_onthoud_intrekken_alle')) {
+        foreach ($ids as $id) portaal_onthoud_intrekken_alle($id);
+    }
+    foreach ($ids as $id) {
+        if (function_exists('portaal_sollicitant_cache_wissen')) portaal_sollicitant_cache_wissen($id);
+    }
+    if (function_exists('audit_log')) {
+        // Geen naam in het logboek bij een AVG-verzoek: die is juist gewist.
+        audit_log($omvang === 'persoon' ? 'persoon_gewist_avg' : 'sollicitatie_verwijderd',
+                  $omvang === 'persoon' ? 'persoon' : 'sollicitatie',
+                  $omvang === 'persoon' ? $pid : $sol_id,
+                  array_filter(['naam' => $omvang === 'persoon' ? null : $naam,
+                                'sollicitaties' => count($ids), 'ook_loondocs' => $ook_loondocs]));
+    }
+    $uit['ok'] = true;
+    $uit['tekst'] = $omvang === 'persoon'
+        ? 'Alle gegevens van deze persoon zijn gewist (' . count($ids) . ' ' . (count($ids) === 1 ? 'sollicitatie' : 'sollicitaties') . ').'
+        : $naam . ' is verwijderd uit dit seizoen.';
+    return $uit;
+}
+
+/* ── Gegevens corrigeren (AVG art. 16) ──────────────────────────── */
+
+/**
+ * De velden die het bestuur mag corrigeren, met hun label. Eén bron voor het formulier,
+ * de validatie en het logboek.
+ */
+function bh_gegevens_velden(): array {
+    return ['voornaam' => 'Voornaam', 'tussenvoegsel' => 'Tussenvoegsel', 'achternaam' => 'Achternaam',
+            'email' => 'E-mailadres', 'telefoon' => 'Telefoon', 'geboortedatum' => 'Geboortedatum'];
+}
+
+/**
+ * Corrigeer naam, e-mail, telefoon of geboortedatum van de persoon achter een sollicitatie.
+ *
+ * De persoon is gedeeld over seizoenen: een correctie geldt dus ook voor eerdere
+ * sollicitaties — dat is juist, het is dezelfde mens. E-mail is uniek per persoon.
+ *
+ * Geboortedatum raakt twee grenzen die BEWUST apart blijven: 16 (aanmeldleeftijd en
+ * AVG-grens) en 18 (ondertekenen via een ouder). Er verandert niets automatisch aan de
+ * documenten; wel een waarschuwing per grens die wordt overschreden.
+ *
+ * In het logboek: welke velden, en bij de naam oud → nieuw. Nooit de waarden van e-mail,
+ * telefoon of geboortedatum — die zijn na de correctie nergens meer nodig.
+ *
+ * @return array{ok:bool,fout:?string,gewijzigd:string[],waarschuwingen:string[]}
+ */
+function bh_gegevens_corrigeren(int $sol_id, array $invoer): array {
+    $uit = ['ok' => false, 'fout' => null, 'gewijzigd' => [], 'waarschuwingen' => []];
+    $db = db();
+    try {
+        $q = $db->prepare("SELECT p.* FROM sollicitaties s JOIN personen p ON p.id = s.persoon_id WHERE s.id = ?");
+        $q->execute([$sol_id]);
+        $oud = $q->fetch();
+    } catch (\Throwable $e) { $oud = null; }
+    if (!$oud) { $uit['fout'] = 'Deze sollicitatie bestaat niet (meer).'; return $uit; }
+
+    $t = fn(string $k) => trim((string)($invoer[$k] ?? ''));
+    $nieuw = [
+        'voornaam'      => $t('voornaam'),
+        'tussenvoegsel' => $t('tussenvoegsel') !== '' ? $t('tussenvoegsel') : null,
+        'achternaam'    => $t('achternaam'),
+        'email'         => mb_strtolower($t('email')),
+        'telefoon'      => $t('telefoon') !== '' ? $t('telefoon') : null,
+        'geboortedatum' => $t('geboortedatum') !== '' ? $t('geboortedatum') : null,
+    ];
+
+    if ($nieuw['voornaam'] === '' || $nieuw['achternaam'] === '') { $uit['fout'] = 'Voornaam en achternaam zijn verplicht.'; return $uit; }
+    if (mb_strlen($nieuw['voornaam']) > 100 || mb_strlen($nieuw['achternaam']) > 100 || mb_strlen((string)$nieuw['tussenvoegsel']) > 30) {
+        $uit['fout'] = 'Een naamveld is te lang.'; return $uit;
+    }
+    if (!filter_var($nieuw['email'], FILTER_VALIDATE_EMAIL) || mb_strlen($nieuw['email']) > 200) {
+        $uit['fout'] = 'Dit is geen geldig e-mailadres.'; return $uit;
+    }
+    if ($nieuw['telefoon'] !== null) {
+        $cijfers = strlen(preg_replace('/\D+/', '', $nieuw['telefoon']));
+        if ($cijfers < 10 || $cijfers > 15 || mb_strlen($nieuw['telefoon']) > 30 || !preg_match('/^[0-9+()\s\-]+$/', $nieuw['telefoon'])) {
+            $uit['fout'] = 'Dit is geen geldig telefoonnummer (10 tot 15 cijfers).'; return $uit;
+        }
+    }
+    if ($nieuw['geboortedatum'] !== null) {
+        $dt = DateTime::createFromFormat('!Y-m-d', $nieuw['geboortedatum']);
+        if (!$dt || $dt->format('Y-m-d') !== $nieuw['geboortedatum'] || $dt > new DateTime('today') || (int)$dt->format('Y') < 1900) {
+            $uit['fout'] = 'Deze geboortedatum klopt niet.'; return $uit;
+        }
+    }
+
+    foreach ($nieuw as $k => $v) {
+        $was = $oud[$k] ?? null;
+        $was = ($was === '' ? null : $was);
+        if ($k === 'email') $was = mb_strtolower((string)$was);
+        if ((string)$was !== (string)$v) $uit['gewijzigd'][] = $k;
+    }
+    if (!$uit['gewijzigd']) { $uit['ok'] = true; return $uit; }
+
+    if (in_array('email', $uit['gewijzigd'], true)) {
+        $d = $db->prepare("SELECT COUNT(*) FROM personen WHERE LOWER(email) = ? AND id <> ?");
+        $d->execute([$nieuw['email'], (int)$oud['id']]);
+        if ((int)$d->fetchColumn() > 0) {
+            $uit['gewijzigd'] = [];
+            $uit['fout'] = 'Dit e-mailadres hoort al bij een ander dossier. Een e-mailadres kan maar bij één persoon horen.';
+            return $uit;
+        }
+    }
+
+    $set = []; $par = [];
+    foreach ($uit['gewijzigd'] as $k) { $set[] = "`$k` = ?"; $par[] = $nieuw[$k]; }
+    $par[] = (int)$oud['id'];
+    try {
+        $db->prepare("UPDATE personen SET " . implode(', ', $set) . " WHERE id = ?")->execute($par);
+    } catch (\Throwable $e) {
+        error_log('bh_gegevens_corrigeren ' . $sol_id . ': ' . $e->getMessage());
+        $uit['gewijzigd'] = [];
+        $uit['fout'] = 'Opslaan is niet gelukt; er is niets gewijzigd.';
+        return $uit;
+    }
+    if (function_exists('portaal_sollicitant_cache_wissen')) portaal_sollicitant_cache_wissen($sol_id);
+
+    // Twee aparte grenzen, twee aparte waarschuwingen. Niet samenvoegen.
+    if (in_array('geboortedatum', $uit['gewijzigd'], true) && function_exists('leeftijd_uit_datum')) {
+        $l_oud = leeftijd_uit_datum($oud['geboortedatum'] ?? null);
+        $l_new = leeftijd_uit_datum($nieuw['geboortedatum']);
+        if ($l_oud !== null && $l_new !== null && ($l_oud < 18) !== ($l_new < 18)) {
+            $uit['waarschuwingen'][] = $l_new < 18
+                ? 'Volgens de nieuwe geboortedatum is deze persoon jonger dan 18: ondertekenen gaat voortaan via een ouder of verzorger. Documenten die al klaarstaan veranderen niet vanzelf; kijk bij Ondertekeningen of er iets opnieuw moet.'
+                : 'Volgens de nieuwe geboortedatum is deze persoon 18 of ouder: voortaan tekent die zelf. Documenten die al via een ouder klaarstaan veranderen niet vanzelf; kijk bij Ondertekeningen of er iets opnieuw moet.';
+        }
+        if ($l_new !== null && $l_new < 16 && ($l_oud === null || $l_oud >= 16)) {
+            $uit['waarschuwingen'][] = 'Volgens de nieuwe geboortedatum is deze persoon jonger dan 16: dat is onder de aanmeldleeftijd en de AVG-grens. Controleer of de aanmelding en de toestemming nog kloppen.';
+        }
+    }
+    if (in_array('email', $uit['gewijzigd'], true)) {
+        $uit['waarschuwingen'][] = 'Inloggen op het portaal gaat voortaan met het nieuwe e-mailadres.';
+    }
+
+    if (function_exists('audit_log')) {
+        $details = ['velden' => $uit['gewijzigd'], 'persoon_id' => (int)$oud['id']];
+        foreach (['voornaam', 'tussenvoegsel', 'achternaam'] as $k) {
+            if (in_array($k, $uit['gewijzigd'], true)) $details[$k] = ['oud' => $oud[$k] ?? null, 'nieuw' => $nieuw[$k]];
+        }
+        audit_log('gegevens_gecorrigeerd', 'sollicitatie', $sol_id, $details);
+    }
+    $uit['ok'] = true;
+    return $uit;
+}
+
 } // function_exists

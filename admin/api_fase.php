@@ -28,6 +28,21 @@ try {
     $res = fase_zetten($sol_id, $naar, 'paneel', ['stil' => $stil]);
     if (!$res['ok']) { echo json_encode(['ok' => false, 'fout' => $res['fout'] ?? 'Fase wijzigen mislukt']); exit; }
 
+    /* Reden bij afwijken van de gewone volgorde (optioneel, uit fasWijzigen()). Die komt
+       als notitie in het dossier en daarmee in de tijdlijn, naast de fasewissel zelf —
+       zo is later terug te lezen waarom iemand terug is gezet. */
+    $reden = trim((string)($_POST['reden'] ?? ''));
+    if ($reden !== '' && !$res['ongewijzigd']) {
+        $reden = mb_substr($reden, 0, 1000);
+        $bhd = function_exists('huidige_beheerder') ? huidige_beheerder() : null;
+        try {
+            if (function_exists('extra_tabellen_auto_setup')) extra_tabellen_auto_setup();
+            db()->prepare("INSERT INTO sollicitant_notities (sollicitatie_id, beheerder_id, tekst) VALUES (?,?,?)")
+                ->execute([$sol_id, (int)($bhd['id'] ?? 0),
+                           'Fase van ' . fase_label((string)$res['oud']) . ' naar ' . fase_label($naar) . ': ' . $reden]);
+        } catch (\Throwable $e) { error_log('api_fase reden: ' . $e->getMessage()); }
+    }
+
     $mail_status  = $res['melding']['status'] ?? null;
     $mail_melding = fase_melding_tekst($res) ?: null;
     if ($stil) $mail_melding = 'Fase gewijzigd zonder bericht — je stuurt zelf iets, of het is al besproken.';

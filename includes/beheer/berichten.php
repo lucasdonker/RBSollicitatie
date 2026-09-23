@@ -98,7 +98,7 @@ function bh_bericht_actie(array $rij): ?array {
     $sol = (int)($rij['sollicitatie_id'] ?? 0);
     if (!$sol) return null;
     return ['tekst' => 'Gegevens corrigeren',
-            'url'   => APP_URL . '/admin/sollicitant.php?id=' . $sol . '&tab=gegevens'];
+            'url'   => bh_gegevens_url($sol)];   // de kaart Gegevens corrigeren, opengeklapt
 }
 
 /**

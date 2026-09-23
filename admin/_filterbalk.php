@@ -12,7 +12,8 @@
  *                                 'waarde', 'opties'=>[waarde=>label], 'breed'=>bool]
  *   $filter_verborgen array optioneel: [naam => waarde] die in de URL moet blijven
  *                           (bijv. de actieve fase-tab)
- *   $filter_acties  array   optioneel: knoppen rechts, elk ['label','url'|'submit','toon','icoon']
+ *   $filter_acties  array   optioneel: knoppen rechts, elk ['label','url'|'submit','toon','icoon','titel']
+ *                           ('titel' = tooltip op een link-knop)
  *   $filter_wissen  ?string optioneel: URL van "wis alle filters"
  */
 $filter_actie     = $filter_actie ?? '';
@@ -60,7 +61,7 @@ $filter_wissen    = $filter_wissen ?? null;
         $_cls = 'ds-btn ds-btn-' . ($_a['toon'] ?? 'secundair') . ' ds-btn-sm';
       ?>
         <?php if (!empty($_a['url'])): ?>
-          <a class="<?= $_cls ?>" href="<?= h($_a['url']) ?>">
+          <a class="<?= $_cls ?>" href="<?= h($_a['url']) ?>"<?= !empty($_a['titel']) ? ' title="' . h($_a['titel']) . '"' : '' ?>>
             <?php if (!empty($_a['icoon'])) echo icoon($_a['icoon'], 15); ?><?= h($_a['label']) ?>
           </a>
         <?php else: ?>

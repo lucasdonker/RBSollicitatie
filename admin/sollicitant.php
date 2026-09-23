@@ -17,28 +17,65 @@ vereis_recht('sollicitanten', 'lezen');
 
 $id = (int)($_GET['id'] ?? 0);
 
-/* ── POST: de hoofdactie uit de dossierkop ───────────────────────
-   Vóór de layout, want redirect() stuurt een header. Loopt via dezelfde
-   fase-functie als de lijst en de bulkbalk. */
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['fase_actie'])) {
+/* ── POST: hoofdactie uit de kop en verwijderen ──────────────────
+   Vóór de layout, want redirect() stuurt een header. Allebei eerst via het
+   tussenscherm (admin/_bevestig.php), net als in de lijst en de bulkbalk: dat werkt
+   zonder JavaScript en zegt vóóraf wat er gebeurt. Pas met bevestigd=1 gebeurt het. */
+$toon_bevestiging = null;
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
-    vereis_recht('sollicitanten', 'bewerken');
-    $_d0 = bh_dossier((int)($_POST['id'] ?? 0));
-    if ($_d0) {
+    $_pid = (int)($_POST['id'] ?? 0);
+    $_d0  = bh_dossier($_pid);
+    $_hier = APP_URL . '/admin/sollicitant.php?' . http_build_query(
+        array_merge(bh_soll_filter_params($_GET), ['id' => $_pid]));
+
+    if ($_d0 && !empty($_POST['fase_actie'])) {
+        vereis_recht('sollicitanten', 'bewerken');
+        // Dezelfde fase-functie als de lijst en de bulkbalk.
         $_a = bh_fase_actie((string)$_d0['sol']['fase']);
-        if ($_a && $_a['actie'] === $_POST['fase_actie'] && function_exists('fase_zetten')) {
-            $_r = fase_zetten((int)$_d0['sol']['id'], $_a['naar'], 'paneel',
-                              ['seizoen_id' => (int)$_d0['sol']['seizoen_id']]);
-            if (!$_r['ok']) {
-                flash('fout', 'Fase wijzigen mislukt: ' . ($_r['fout'] ?? 'onbekend'));
-            } else {
-                $_mt = function_exists('fase_melding_tekst') ? fase_melding_tekst($_r) : '';
-                flash('succes', 'Fase bijgewerkt naar ' . fase_label($_a['naar']) . '.' . ($_mt ? ' ' . $_mt : ''));
+        if ($_a && $_a['actie'] === $_POST['fase_actie']) {
+            if (empty($_POST['bevestigd'])) {
+                $toon_bevestiging = ['soort' => 'fase', 'actie' => $_a['actie'], 'id' => $_pid];
+            } elseif (function_exists('fase_zetten')) {
+                $_stil = !empty($_POST['stil']);
+                $_r = fase_zetten($_pid, $_a['naar'], 'paneel',
+                                  ['seizoen_id' => (int)$_d0['sol']['seizoen_id'], 'stil' => $_stil]);
+                if (!$_r['ok']) {
+                    flash('fout', 'Fase wijzigen mislukt: ' . ($_r['fout'] ?? 'onbekend'));
+                } else {
+                    $_mt = $_stil ? 'Er is geen bericht verstuurd.'
+                                  : (function_exists('fase_melding_tekst') ? fase_melding_tekst($_r) : '');
+                    flash('succes', 'Fase bijgewerkt naar ' . fase_label($_a['naar']) . '.' . ($_mt ? ' ' . $_mt : ''));
+                }
             }
         }
+    } elseif ($_d0 && !empty($_POST['verwijder'])) {
+        vereis_recht('sollicitanten', 'verwijderen');
+        $_omvang = $_POST['verwijder'] === 'persoon' ? 'persoon' : 'sollicitatie';
+        // Het loondossier mag alleen mee met het recht om loondossiers te verwijderen.
+        $_mag_loon = mag('documenten', 'verwijderen');
+        $_ids = bh_verwijder_ids($_pid, $_omvang);
+        $_verwerkt = bh_loon_verwerkt($_ids);
+        if (empty($_POST['bevestigd'])) {
+            if ($_verwerkt && !$_mag_loon) {
+                // Zonder dat recht kan het niet; dan ook geen tussenscherm met een knop die toch weigert.
+                flash('fout', 'Er ligt een verwerkt loondossier (wettelijke bewaarplicht). Verwijderen kan alleen '
+                            . 'iemand met het recht Loondossiers verwijderen, met de verklaring dat het dienstverband '
+                            . 'niet is doorgegaan.');
+            } else {
+                $toon_bevestiging = ['soort' => 'verwijder', 'omvang' => $_omvang, 'id' => $_pid,
+                                     'aantal' => count($_ids), 'verwerkt' => $_verwerkt];
+            }
+        } else {
+            $_r = bh_dossier_verwijderen($_pid, $_omvang, $_mag_loon && !empty($_POST['ook_loondocs']));
+            if ($_r['ok']) {
+                flash('succes', $_r['tekst']);
+                redirect(APP_URL . '/admin/sollicitanten.php');
+            }
+            flash('fout', (string)$_r['fout']);
+        }
     }
-    redirect(APP_URL . '/admin/sollicitant.php?' . http_build_query(
-        array_merge(bh_soll_filter_params($_GET), ['id' => (int)($_POST['id'] ?? 0)])));
+    if (!$toon_bevestiging) redirect($_hier);
 }
 
 $d = bh_dossier($id);
@@ -83,6 +120,29 @@ $pagina_titel = $naam;
 $actieve_nav  = 'sollicitant';   // eigen hulptekst; bh_nav_actief() laat Sollicitanten oplichten
 $pagina_breed = true;
 require __DIR__ . '/layout_top.php';
+
+/* Tussenscherm in plaats van het dossier: eerst zien wat er gebeurt. */
+if ($toon_bevestiging):
+    $_bid = (int)$toon_bevestiging['id'];
+    $_bd  = bh_dossier($_bid);
+    $bev_form = ['actie' => $_hier, 'velden' => ['id' => $_bid, 'bevestigd' => '1']];
+    if ($toon_bevestiging['soort'] === 'fase') {
+        $bev = bh_gevolgen($toon_bevestiging['actie'], [$_bid]);
+        $bev_form['velden']['fase_actie'] = $toon_bevestiging['actie'];
+        $bev_vink = bh_bevestig_stil_vink();
+    } else {
+        $bev = bh_gevolgen_verwijderen($toon_bevestiging['omvang'], (int)$toon_bevestiging['aantal'],
+                                       (bool)$toon_bevestiging['verwerkt']);
+        $bev_form['velden']['verwijder'] = $toon_bevestiging['omvang'];
+        // Alleen bij een verwerkt loondossier is er iets te kiezen; het recht is al getoetst.
+        $bev_vink = $toon_bevestiging['verwerkt'] ? bh_bevestig_loon_vink() : null;
+    }
+    $bev_terug = dossier_url($_bid);
+    $bev_namen = $_bd ? [volledige_naam($_bd['sol'])] : [];
+    require __DIR__ . '/_bevestig.php';
+    require __DIR__ . '/layout_bottom.php';
+    return;
+endif;
 ?>
 
 <nav class="bh-kruimels" aria-label="Kruimelpad">

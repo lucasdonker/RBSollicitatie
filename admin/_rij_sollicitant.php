@@ -67,6 +67,10 @@ foreach ($tabel_kolommen as $_kol):
         <span class="bh-statuscel">
           <?= bh_fase_badge((string)($rij['fase'] ?? ''), ['lengte' => 'kort']) ?>
           <?php if (!empty($rij['terugkerend'])): ?><?= bh_chip('terug', 'paars') ?><?php endif; ?>
+          <?php // Uitnodig-modus "Suggestie": een voorstel, de knop blijft een mensenklik. ?>
+          <?php if (bh_uitnodig_suggestie($rij)): ?>
+            <?= bh_badge('Uitnodigen?', 'groen', ['titel' => 'Valt binnen de leeftijdsgrenzen voor uitnodigen (Instellingen › Uitnodigen & automatisch)']) ?>
+          <?php endif; ?>
           <?php if ($_att): ?>
             <?php // Kort in de cel, de volle reden als tooltip — anders duwt deze regel de
                   // datumkolom weg. Hij staat voluit in het dossier en in het berichtenlog. ?>
@@ -88,9 +92,10 @@ foreach ($tabel_kolommen as $_kol):
             // bestaat"). Hier staat alleen wat je met deze kandidaat kunt dóen. ?>
       <?= bh_td('actie') ?>
         <span class="bh-acties">
-          <?php if ($_att): ?>
-            <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm"
-                    title="<?= h($_att['uitleg']) ?>"><?= h($_att['label']) ?></button>
+          <?php if ($_att && !empty($_att['url'])): ?>
+            <?php // Naar de kaart Gegevens corrigeren in het dossier: daar staat het veld. ?>
+            <a class="ds-btn ds-btn-secundair ds-btn-sm" href="<?= h($_att['url']) ?>"
+               title="<?= h($_att['uitleg']) ?>"><?= h($_att['label']) ?></a>
           <?php endif; ?>
           <?php if ($_act): ?>
             <button type="submit" name="rij_actie" value="<?= h($_act['actie'] . ':' . (int)$rij['id']) ?>"

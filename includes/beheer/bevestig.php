@@ -27,6 +27,8 @@ if (!function_exists('bh_gevolgen')) {
 function bh_gevolgen(string $actie, array $ids): array {
     $n = count($ids);
     $mensen = $n === 1 ? 'één persoon' : $n . ' mensen';
+    // Aan het begin van een zin; ucfirst() kent geen multibyte-é en liet "één" klein.
+    $Mensen = $n === 1 ? 'Eén persoon' : $n . ' mensen';
 
     $naar = [
         'uitnodigen_selectie' => 'uitgenodigd_selectie',
@@ -39,9 +41,9 @@ function bh_gevolgen(string $actie, array $ids): array {
     if ($naar === null) {
         // Geen faseovergang: bericht sturen, exporteren. Die zijn niet onomkeerbaar.
         $titels = ['bericht_sturen' => 'Bericht opstellen voor ' . $mensen,
-                   'exporteren'     => $mensen . ' exporteren'];
+                   'exporteren'     => $Mensen . ' exporteren'];
         return [
-            'titel' => $titels[$actie] ?? ($mensen . ': ' . $actie),
+            'titel' => $titels[$actie] ?? ($Mensen . ': ' . $actie),
             'regels' => [], 'bericht' => null, 'onomkeerbaar' => false,
             'knop' => 'Doorgaan', 'toon' => 'primair',
         ];
@@ -71,8 +73,8 @@ function bh_gevolgen(string $actie, array $ids): array {
 
     $onomkeerbaar = in_array($naar, ['afgewezen', 'aangenomen'], true) || $aan !== [];
     if ($onomkeerbaar) {
-        $regels[] = 'Een verstuurd bericht kun je niet terugnemen. De fase kun je wel terugzetten, '
-                  . 'met een reden die in de tijdlijn komt.';
+        $regels[] = 'Een verstuurd bericht kun je niet terugnemen. De fase kun je wel terugzetten in het '
+                  . 'dossier; een reden die je daarbij opgeeft komt in de tijdlijn.';
     }
 
     $knoppen = ['uitnodigen_selectie' => 'Ja, uitnodigen', 'uitnodigen_tw' => 'Ja, uitnodigen',
@@ -80,7 +82,7 @@ function bh_gevolgen(string $actie, array $ids): array {
                 'afgewezen' => 'Ja, afwijzen'];
 
     return [
-        'titel'        => ucfirst($mensen) . ' ' . [
+        'titel'        => $Mensen . ' ' . [
                               'uitnodigen_selectie' => 'uitnodigen voor de selectiedag',
                               'uitnodigen_tw'       => 'uitnodigen voor het trainingsweekend',
                               'aannemen'            => 'aannemen',
@@ -93,6 +95,69 @@ function bh_gevolgen(string $actie, array $ids): array {
         'knop'         => $knoppen[$actie] ?? 'Doorgaan',
         'toon'         => $actie === 'afgewezen' ? 'gevaar' : 'primair',
     ];
+}
+
+/**
+ * Het vinkje "zonder bericht" op het tussenscherm van een fasestap. Eén definitie voor
+ * de lijst, de bulkbalk en de hoofdactie in de dossierkop, zodat het overal hetzelfde
+ * heet en hetzelfde belooft.
+ */
+function bh_bevestig_stil_vink(): array {
+    return ['naam' => 'stil', 'label' => 'Zonder bericht doorvoeren',
+            'hulp' => 'De fase verandert wel, maar er gaat niets de deur uit. '
+                    . 'Gebruik dit als je zelf belt of het al besproken is.'];
+}
+
+/**
+ * De gevolgen van een dossier verwijderen, voor het tussenscherm (admin/_bevestig.php).
+ *
+ * Twee soorten, bewust gescheiden:
+ *   sollicitatie  alleen deze sollicitatie weg; de persoon (naam, e-mail, telefoon)
+ *                 blijft voor andere seizoenen.
+ *   persoon       een AVG-verwijderverzoek (art. 17): alle sollicitaties van deze
+ *                 persoon worden leeggemaakt en de persoon geanonimiseerd, precies zoals
+ *                 bij "Gegevens laten verwijderen" in het portaal (includes/avg_wissen.php).
+ *
+ * @param int  $aantal_sol     hoeveel sollicitaties deze persoon heeft (bij 'persoon')
+ * @param bool $loon_verwerkt  er ligt een verwerkt loondossier (bewaarplicht)
+ */
+function bh_gevolgen_verwijderen(string $omvang, int $aantal_sol, bool $loon_verwerkt): array {
+    if ($omvang === 'persoon') {
+        $regels = [
+            $aantal_sol > 1
+                ? 'Alle ' . $aantal_sol . ' sollicitaties van deze persoon worden leeggemaakt: formulier, foto, beschikbaarheid, notities, beoordelingen, taken en documenten.'
+                : 'De sollicitatie wordt leeggemaakt: formulier, foto, beschikbaarheid, notities, beoordelingen, taken en documenten.',
+            'Naam, e-mail, telefoon, geboortedatum en adres worden vervangen door "Verwijderd (verzoek AVG)". De lege sollicitatie blijft alleen voor de telling staan.',
+            'In het berichtenlog verdwijnen het adres en de inhoud van de berichten.',
+            'Ingelogde apparaten in het portaal worden uitgelogd.',
+        ];
+        $titel = 'Alles van deze persoon wissen?';
+        $knop  = 'Ja, alles wissen';
+    } else {
+        $regels = [
+            'Het formulier, de foto, de beschikbaarheid, de notities, de beoordelingen, de taken en de documenten van deze sollicitatie verdwijnen.',
+            'In het berichtenlog verdwijnen de inhoud en het adres van de berichten van deze sollicitatie.',
+            'Naam, e-mail en telefoon blijven bewaard, voor andere seizoenen. Vraagt iemand om verwijdering van alles, kies dan "Alles van deze persoon wissen".',
+        ];
+        $titel = 'Deze sollicitatie verwijderen?';
+        $knop  = 'Ja, verwijderen';
+    }
+    $bericht = 'Dit kun je niet terugdraaien.';
+    if ($loon_verwerkt) {
+        $bericht = 'Er ligt een verwerkt loondossier. Het loonheffingsformulier en de kopie van het '
+                 . 'identiteitsbewijs moeten vijf jaar bewaard blijven na het einde van het jaar waarin het '
+                 . 'dienstverband eindigde. '
+                 . 'Alleen als het dienstverband nooit is doorgegaan mogen ze mee. Dit kun je niet terugdraaien.';
+    }
+    return ['titel' => $titel, 'regels' => $regels, 'bericht' => $bericht,
+            'onomkeerbaar' => true, 'knop' => $knop, 'toon' => 'gevaar'];
+}
+
+/** Het vinkje voor het loondossier op het verwijder-tussenscherm. */
+function bh_bevestig_loon_vink(): array {
+    return ['naam' => 'ook_loondocs', 'label' => 'Het dienstverband is niet doorgegaan',
+            'hulp' => 'Vink dit alleen aan als deze persoon nooit heeft gewerkt. Het loonheffingsformulier '
+                    . 'en de kopie van het identiteitsbewijs worden dan ook vernietigd. Zonder vinkje wordt niets verwijderd.'];
 }
 
 } // function_exists

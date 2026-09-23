@@ -129,11 +129,13 @@ foreach ($blk_velden as $_sleutel => $_v) {
     ] + (isset($_v['recht']) ? ['recht' => $_v['recht']] : []);
 }
 
+// Sorteerbare kolommen uit één bron: het dossier loopt met ← → in dezelfde volgorde.
+$_sorteer = bh_soll_sorteringen();
 $tabel = bh_kolommen('sollicitanten', [
-    'naam'       => ['kop' => 'Naam',       'track' => 'minmax(165px,2.2fr)', 'sorteer' => 'p.achternaam',
+    'naam'       => ['kop' => 'Naam',       'track' => 'minmax(165px,2.2fr)', 'sorteer' => $_sorteer['naam'],
                      'mobiel' => 'titel'],
     'leeftijd'   => ['kop' => 'Lft',        'track' => '52px',  'uitlijn' => 'rechts', 'mobiel' => 'verberg',
-                     'optioneel' => true, 'standaard' => true, 'sorteer' => 'p.geboortedatum'],
+                     'optioneel' => true, 'standaard' => true, 'sorteer' => $_sorteer['leeftijd']],
     // Op telefoon blijft er weinig over: naam, status, aangemeld, actie. De rest zou
     // het kaartje een scherm lang maken zonder dat je er iets aan hebt.
     'woonplaats' => ['kop' => 'Woonplaats', 'track' => 'minmax(80px,1fr)', 'mobiel' => 'verberg',
@@ -142,7 +144,7 @@ $tabel = bh_kolommen('sollicitanten', [
                      'optioneel' => true, 'standaard' => false],
 ] + $blk_kolommen + [
     'status'     => ['kop' => 'Status',     'track' => 'minmax(185px,1.6fr)'],
-    'aangemeld'  => ['kop' => 'Aangemeld',  'track' => '104px', 'sorteer' => 's.aangemeld_op'],
+    'aangemeld'  => ['kop' => 'Aangemeld',  'track' => '104px', 'sorteer' => $_sorteer['aangemeld']],
     // Zonder bewerkrecht valt de hele kolom weg in plaats van leeg te blijven staan.
     'actie'      => ['kop' => 'Actie',      'track' => '250px', 'uitlijn' => 'rechts',
                      'recht' => ['sollicitanten', 'bewerken']],
@@ -160,8 +162,9 @@ $paginas = max(1, (int)ceil($totaal / $per));
 $pagina  = min(max(1, (int)($_GET['pagina'] ?? 1)), $paginas);
 $offset  = ($pagina - 1) * $per;
 
-// ORDER BY komt uit de whitelist in de kolomdefinitie, nooit rechtstreeks uit $_GET.
-$order = bh_order_by($tabel, 's.aangemeld_op DESC');
+// ORDER BY komt uit de whitelist (bh_soll_sorteringen), nooit rechtstreeks uit $_GET —
+// en uit dezelfde functie als de ← →-navigatie in het dossier.
+$order = bh_soll_order($_GET);
 
 /* Alleen de BLK-velden ophalen die ook echt aanstaan: twaalf TEXT-kolommen voor
    honderd rijen meeslepen terwijl er niet één wordt getoond is zonde. De sleutels
@@ -216,11 +219,9 @@ require __DIR__ . '/layout_top.php';
                                'ids'        => $toon_bevestiging['ids']]];
     $bev_terug = soll_url();
     $bev_namen = $_bnamen;
-    // Hetzelfde vinkje als bij een losse fasewijziging in het dossier. Juist bij een
-    // bulkactie telt het: dat is het moment waarop je twintig mensen tegelijk raakt.
-    $bev_vink  = ['naam' => 'stil', 'label' => 'Zonder bericht doorvoeren',
-                  'hulp' => 'De fase verandert wel, maar er gaat niets de deur uit. '
-                          . 'Gebruik dit als je ze zelf belt of het al besproken is.'];
+    // Hetzelfde vinkje als bij de hoofdactie in het dossier. Juist bij een bulkactie
+    // telt het: dat is het moment waarop je twintig mensen tegelijk raakt.
+    $bev_vink  = bh_bevestig_stil_vink();
     require __DIR__ . '/_bevestig.php';
     require __DIR__ . '/layout_bottom.php';
     return;
@@ -256,7 +257,13 @@ endif; ?>
                           'url' => APP_URL . '/admin/sollicitant_nieuw.php'];
   }
   if ($sid) {
-      $filter_acties[] = ['label' => 'Exporteren', 'icoon' => 'export', 'toon' => 'secundair',
+      // Zonder recht op het kennismakingsformulier bevat de export alleen de basisgegevens
+      // (export_dossier_van); de knop zegt dat, zodat niemand een half bestand verwacht.
+      $_blk_export = mag('blk', 'lezen');
+      $filter_acties[] = ['label' => $_blk_export ? 'Exporteren' : 'Exporteren (basis)', 'icoon' => 'export',
+                          'toon' => 'secundair',
+                          'titel' => $_blk_export ? 'Alle kandidaten van dit seizoen, met formulier en adres'
+                                                  : 'Alle kandidaten van dit seizoen, zonder adres en formuliervelden',
                           'url' => APP_URL . '/admin/export_blk.php?formaat=excel&seizoen=' . $sid];
   }
   $filter_wissen = $heeft_filter ? APP_URL . '/admin/sollicitanten.php' : null;
@@ -278,7 +285,7 @@ endif; ?>
   $tabel_rij_data = fn(array $r) => ['fase' => $r['fase']];   // de bulkbalk leest dit
   $tabel_leeg     = $heeft_filter
       ? ['titel' => 'Niemand gevonden', 'tekst' => 'Geen kandidaat voldoet aan deze filters. Wis ze om iedereen te zien.']
-      : ['titel' => 'Nog geen aanmeldingen', 'tekst' => 'Zodra iemand zich via een wervingspagina aanmeldt, staat hij hier.'];
+      : ['titel' => 'Nog geen aanmeldingen', 'tekst' => 'Zodra iemand zich via een wervingspagina aanmeldt, verschijnt de aanmelding hier.'];
   require __DIR__ . '/_tabel.php';
 ?>
 

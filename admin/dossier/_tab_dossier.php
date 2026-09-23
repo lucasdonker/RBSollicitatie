@@ -46,15 +46,21 @@ $_mag_blk = mag('blk', 'lezen');
         <?php endif; ?>
       </div>
       <div>
-        <span class="bh-veldlabel">Adres</span>
+        <?php // AVG (dataminimalisatie): het volledige adres alleen met het recht op het
+              // kennismakingsformulier, net als blk_detail.php en de lijstkolommen; anders de woonplaats. ?>
+        <span class="bh-veldlabel"><?= $_mag_blk ? 'Adres' : 'Woonplaats' ?></span>
         <span class="bh-veldwaarde">
           <?php
-            // straat/huisnummer/woonplaats zijn later toegevoegde kolommen; het oudere
-            // vrije veld `adres` is de terugval voor dossiers van vóór die splitsing.
-            $_str = trim(($_blk['straat'] ?? '') . ' ' . ($_blk['huisnummer'] ?? ''));
-            $_pl  = trim((string)($_blk['woonplaats'] ?? ''));
-            $_adres = trim($_str . ($_str !== '' && $_pl !== '' ? ', ' : '') . $_pl);
-            if ($_adres === '') $_adres = trim((string)($_blk['adres'] ?? ''));
+            if ($_mag_blk) {
+                // straat/huisnummer/woonplaats zijn later toegevoegde kolommen; het oudere
+                // vrije veld `adres` is de terugval voor dossiers van vóór die splitsing.
+                $_str = trim(($_blk['straat'] ?? '') . ' ' . ($_blk['huisnummer'] ?? ''));
+                $_pl  = trim((string)($_blk['woonplaats'] ?? ''));
+                $_adres = trim($_str . ($_str !== '' && $_pl !== '' ? ', ' : '') . $_pl);
+                if ($_adres === '') $_adres = trim((string)($_blk['adres'] ?? ''));
+            } else {
+                $_adres = $_blk ? blk_woonplaats($_blk) : '';
+            }
             echo $_adres !== '' ? h($_adres) : '—';
           ?>
         </span>
@@ -75,6 +81,8 @@ $_mag_blk = mag('blk', 'lezen');
         </span>
       </div>
     </section>
+
+    <?php if ($_mag_bewerken) { $geg_dossier = $tab_dossier; require __DIR__ . '/_gegevens.php'; } ?>
 
     <?php if ($_adv): ?>
     <section class="ds-kaart ds-kaart-p">
@@ -208,16 +216,27 @@ $_mag_blk = mag('blk', 'lezen');
     </section>
     <?php endif; ?>
 
-    <?php if ($_mag_bewerken && mag('sollicitanten', 'verwijderen')): ?>
+    <?php if (mag('sollicitanten', 'verwijderen')): ?>
+    <?php // Onomkeerbaar én persoonsgegevens: een gewone POST naar het tussenscherm in
+          // admin/sollicitant.php (werkt zonder JavaScript), niet een dialoog. ?>
     <section class="bh-gevaarblok">
       <h2>Sollicitant verwijderen</h2>
       <p>
         Hiermee verdwijnen het kennismakingsformulier, de beschikbaarheid, alle notities en
         observaties, de ondertekende documenten en het loondossier. Berichten blijven in het
-        logboek staan zonder inhoud. Dit kun je niet terugdraaien.
+        logboek staan zonder inhoud en zonder adres. Dit kun je niet terugdraaien.
       </p>
-      <button type="button" class="ds-btn ds-btn-gevaar"
-              onclick="verwijderActie(<?= (int)$_s['id'] ?>, 'alles')">Verwijderen…</button>
+      <p>
+        <strong>Alleen deze sollicitatie</strong> laat naam, e-mail en telefoon staan voor andere
+        seizoenen. <strong>Alles van deze persoon</strong> is voor een verwijderverzoek (AVG): alle
+        sollicitaties worden leeggemaakt en de persoon wordt geanonimiseerd.
+      </p>
+      <form method="post" class="bh-gevaarblok-knoppen">
+        <?= csrf_input() ?>
+        <input type="hidden" name="id" value="<?= (int)$_s['id'] ?>">
+        <button type="submit" name="verwijder" value="sollicitatie" class="ds-btn ds-btn-gevaar">Alleen deze sollicitatie…</button>
+        <button type="submit" name="verwijder" value="persoon" class="ds-btn ds-btn-secundair">Alles van deze persoon…</button>
+      </form>
     </section>
     <?php endif; ?>
   </div>
@@ -227,7 +246,7 @@ $_mag_blk = mag('blk', 'lezen');
     <section class="ds-kaart ds-kaart-p">
       <div class="bh-kaartkop">
         <h2>Fase</h2>
-        <span class="bh-meta">afwijken vraagt een reden</span>
+        <span class="bh-meta">bij afwijken kun je een reden opgeven</span>
       </div>
       <div class="bh-fasekeuze">
         <?php foreach (fasen() as $_f => $_lbl):
@@ -238,8 +257,10 @@ $_mag_blk = mag('blk', 'lezen');
               <?= icoon('vink', 11) ?><?= h(fase_label_kort($_f, 'mini')) ?>
             </span>
           <?php elseif ($_mag_bewerken): ?>
+            <?php // Wijkt de stap af van de gewone volgorde, dan vraagt fasWijzigen() om een
+                  // (optionele) reden; die komt als notitie in de tijdlijn. ?>
             <button type="button" class="bh-fasechip ds-fase-<?= h(fase_kleur($_f)) ?>"
-                    onclick="fasWijzigen(<?= (int)$_s['id'] ?>, '<?= h($_f) ?>', '<?= h(fase_label($_f)) ?>')">
+                    onclick="fasWijzigen(<?= (int)$_s['id'] ?>, '<?= h($_f) ?>', '<?= h(fase_label($_f)) ?>', <?= bh_fase_afwijkend((string)$_s['fase'], $_f) ? 'true' : 'false' ?>)">
               <?= h(fase_label_kort($_f, 'mini')) ?>
             </button>
           <?php else: ?>
@@ -288,7 +309,7 @@ $_mag_blk = mag('blk', 'lezen');
     <section class="ds-kaart ds-kaart-p">
       <div class="bh-kaartkop">
         <h2>Notities</h2>
-        <span class="bh-meta">alleen bestuur en begeleiding</span>
+        <span class="bh-meta">alleen zichtbaar in het beheer</span>
       </div>
       <?php // De id's zijn die van laadNotities()/laadTimeline() in layout_bottom.php;
             // die JS wordt in een volgende stap naar beheer.js verhuisd. ?>

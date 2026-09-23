@@ -63,21 +63,51 @@ function bh_soll_filter(array $q, int $sid): array {
 }
 
 /**
+ * De sorteerbare kolommen van de sollicitantenlijst: kolomsleutel => SQL-uitdrukking.
+ * Eén bron voor de kolomdefinitie in sollicitanten.php én de ← →-navigatie in het
+ * dossier. De uitdrukkingen gaan uit van de aliassen s (sollicitaties), p (personen)
+ * en b (blk_formulieren).
+ */
+function bh_soll_sorteringen(): array {
+    return [
+        'naam'         => 'p.achternaam',
+        'leeftijd'     => 'p.geboortedatum',
+        'aangemeld'    => 's.aangemeld_op',
+        'blk_ingevuld' => blk_ingediend_op_sql(),
+    ];
+}
+
+/**
+ * De ORDER BY van de lijst uit sort/richting in de URL, getoetst aan de whitelist.
+ * Met s.id als laatste sleutel: bij gelijke waarden (dezelfde achternaam) ligt de
+ * volgorde dan vast, zodat lijst en ← → dezelfde buren zien.
+ */
+function bh_soll_order(array $q): string {
+    $sort = (string)($q['sort'] ?? '');
+    $richting = strtolower((string)($q['richting'] ?? '')) === 'asc' ? 'ASC' : 'DESC';
+    if (!in_array($sort, bh_soll_sorteringen(), true)) return 's.aangemeld_op DESC, s.id DESC';
+    return $sort . ' ' . $richting . ', s.id ' . $richting;
+}
+
+/**
  * Waar zit deze sollicitant in de gefilterde lijst, en wie staan ernaast?
  *
  * Eén query over de hele selectie. Bij een lijst van deze omvang (tientallen tot
  * honderd) is dat goedkoper en eenvoudiger dan twee grensquery's met LIMIT.
+ * De volgorde is die van de lijst (bh_soll_order), dus ook als je op naam sorteerde.
  *
  * @return array{positie:int,totaal:int,vorige:?int,volgende:?int,omschrijving:string}
  */
-function bh_soll_buren(int $sol_id, array $q, int $sid, string $order = 's.aangemeld_op DESC'): array {
+function bh_soll_buren(int $sol_id, array $q, int $sid): array {
     $leeg = ['positie' => 0, 'totaal' => 0, 'vorige' => null, 'volgende' => null, 'omschrijving' => ''];
     if ($sol_id <= 0 || $sid <= 0) return $leeg;
 
     $f = bh_soll_filter($q, $sid);
+    $order = bh_soll_order($q);
     try {
         $st = db()->prepare("SELECT s.id FROM sollicitaties s
                              JOIN personen p ON p.id = s.persoon_id
+                             LEFT JOIN blk_formulieren b ON b.sollicitatie_id = s.id
                              WHERE {$f['where']} ORDER BY $order");
         $st->execute($f['params']);
         $ids = array_map('intval', array_column($st->fetchAll(), 'id'));

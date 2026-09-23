@@ -112,8 +112,10 @@
       });
       dlg.addEventListener('cancel', function (e) { e.preventDefault(); sluit(false); });
 
-      if (typeof dlg.showModal === 'function') { dlg.showModal(); ja.focus(); }
-      else { sluit(window.confirm(titel.textContent)); }   // heel oude browser
+      // Zonder showModal() (heel oude browser) gewoon open zetten: nooit terugvallen op
+      // confirm(), die afspraak geldt ook hier (CLAUDE.md).
+      if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
+      ja.focus();
     });
   }
 
@@ -133,11 +135,10 @@
         dlg.appendChild(p);
       }
       var veld = document.createElement(opt.lang ? 'textarea' : 'input');
-      veld.className = opt.lang ? 'ds-textarea' : 'ds-input';
+      veld.className = (opt.lang ? 'ds-textarea' : 'ds-input') + ' bh-dialoog-veld';
       if (!opt.lang) veld.type = opt.type || 'text';
       veld.value = opt.waarde || '';
       if (opt.plaatshouder) veld.placeholder = opt.plaatshouder;
-      veld.style.marginTop = '12px';
       dlg.appendChild(veld);
 
       var rij = document.createElement('div');
@@ -158,8 +159,8 @@
       });
       dlg.addEventListener('cancel', function (e) { e.preventDefault(); sluit(null); });
 
-      if (typeof dlg.showModal === 'function') { dlg.showModal(); veld.focus(); veld.select(); }
-      else { sluit(window.prompt(titel.textContent, veld.value)); }
+      if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
+      veld.focus(); veld.select();
     });
   }
 

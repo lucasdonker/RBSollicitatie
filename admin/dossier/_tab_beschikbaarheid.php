@@ -2,8 +2,8 @@
 /**
  * Tabblad: de beschikbaarheid van deze sollicitant.
  *
- * Drie lagen naast elkaar, want die zeggen elk iets anders: wat hij in het
- * kennismakingsformulier als voorkeur opgaf, wat hij daarna definitief indiende, en
+ * Drie lagen naast elkaar, want die zeggen elk iets anders: wat de sollicitant in het
+ * kennismakingsformulier als voorkeur opgaf, wat daarna definitief is ingediend, en
  * wat het bestuur uiteindelijk corrigeerde. Zonder dat onderscheid lijkt een correctie
  * van het bestuur op een keuze van de sollicitant.
  *
@@ -16,11 +16,14 @@ $_s = $tab_dossier['sol'];
 $_b = $tab_dossier['beschikbaarheid'];
 $_eff = function_exists('beschikbaarheid2_effectief') ? beschikbaarheid2_effectief((int)$_s['id']) : [];
 $_prof = function_exists('beschikbaarheid2_van') ? (beschikbaarheid2_van((int)$_s['id'])['profiel'] ?? null) : null;
+// Corrigeren per week mag alleen met bewerkrecht; zonder dat recht een gewone cel,
+// geen knop die daarna door de server wordt geweigerd.
+$_mag_corr = mag('beschikbaarheid', 'bewerken');
 
 if (!$_b && !$_eff) {
     echo '<div class="ds-kaart ds-kaart-p">';
     $leeg_titel = 'Nog geen beschikbaarheid';
-    $leeg_tekst = h($_s['voornaam']) . ' heeft nog niet doorgegeven welke weken hij kan.';
+    $leeg_tekst = h($_s['voornaam']) . ' heeft nog niet doorgegeven welke weken beschikbaar zijn.';
     $leeg_icoon = 'kalender';
     require __DIR__ . '/../_leeg.php';
     echo '</div>';
@@ -37,7 +40,7 @@ if (!$_b && !$_eff) {
         <?php elseif ($_prof) : ?>
           <?= bh_badge('Definitief', 'groen') ?>
         <?php endif; ?>
-        <span class="bh-meta">klik een week om te corrigeren</span>
+        <?php if ($_mag_corr): ?><span class="bh-meta">klik een week om te corrigeren</span><?php endif; ?>
       </div>
 
       <?php if (!$_eff): ?>
@@ -50,12 +53,20 @@ if (!$_b && !$_eff) {
             $_kleur = $_dagen >= 5 ? 'groen' : ($_dagen > 0 ? 'oranje' : 'grijs');
             if ($_corr) $_kleur = 'blauw';
           ?>
+            <?php $_titel = 'Week ' . (int)$_wn . ($_corr ? ' — bestuurscorrectie' : ''); ?>
+            <?php if ($_mag_corr): ?>
             <button type="button" class="bh-weektegel ds-fase-<?= h($_kleur) ?>"
                     onclick="correctieOpen(<?= (int)$_s['id'] ?>, <?= (int)$_wn ?>)"
-                    title="Week <?= (int)$_wn ?><?= $_corr ? ' — bestuurscorrectie' : '' ?>">
+                    title="<?= h($_titel) ?>">
               <span class="bh-weektegel-nr">W<?= (int)$_wn ?></span>
               <span class="bh-weektegel-dagen bh-num"><?= $_dagen > 0 ? $_dagen : '—' ?></span>
             </button>
+            <?php else: ?>
+            <span class="bh-weektegel bh-weektegel-vast ds-fase-<?= h($_kleur) ?>" title="<?= h($_titel) ?>">
+              <span class="bh-weektegel-nr">W<?= (int)$_wn ?></span>
+              <span class="bh-weektegel-dagen bh-num"><?= $_dagen > 0 ? $_dagen : '—' ?></span>
+            </span>
+            <?php endif; ?>
           <?php endforeach; ?>
         </div>
         <div class="bh-weeklegenda">
@@ -93,14 +104,16 @@ if (!$_b && !$_eff) {
       <?php endif; ?>
     </section>
 
-    <?php if (mag('beschikbaarheid', 'bewerken')): ?>
+    <?php $norm_sol = (int)$_s['id']; $norm_profiel = $_prof; require __DIR__ . '/_norm.php'; ?>
+
+    <?php if ($_mag_corr): ?>
     <section class="ds-kaart ds-kaart-p">
       <div class="bh-kaartkop"><h2>Aanpassen</h2></div>
       <p class="bh-dossier-tekst">
         Een correctie van het bestuur overschrijft wat de sollicitant opgaf. De reden
         komt in de tijdlijn te staan.
       </p>
-      <a class="ds-btn ds-btn-secundair ds-btn-sm" style="margin-top:10px"
+      <a class="ds-btn ds-btn-secundair ds-btn-sm bh-knop-onder"
          href="<?= APP_URL ?>/admin/beschikbaarheid_bewerken.php?id=<?= (int)$_s['id'] ?>">
         Volledig bewerken
       </a>

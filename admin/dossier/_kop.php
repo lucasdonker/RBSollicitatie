@@ -1,9 +1,11 @@
 <?php
 /**
- * Partial: de kop van het dossier — wie is dit, en wat kun je nu met hem.
+ * Partial: de kop van het dossier — wie is dit, en wat kun je nu doen.
  *
  * De hoofdactie is de stap vooruit in de trechter en komt uit bh_fase_actie(), zodat
- * hij hier hetzelfde is als in de lijstrij en in de bulkbalk.
+ * die hier hetzelfde is als in de lijstrij en in de bulkbalk. De knop post naar
+ * admin/sollicitant.php, dat eerst het tussenscherm toont (met "Zonder bericht
+ * doorvoeren") — net als de lijst. Pas na die bevestiging gaat er iets de deur uit.
  *
  * Verwacht:
  *   $kop_dossier  array  uitkomst van bh_dossier()

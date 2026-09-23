@@ -2,9 +2,22 @@
 /**
  * Paal 13 — Adresvalidatie via PDOK (Kadaster).
  * Drie-stappen-fallback voor maximale coverage.
+ *
+ * Alleen voor ingelogde beheerders: zonder login was dit een open doorgeefluik naar
+ * PDOK. Het is een opzoeking (GET, verandert niets), dus geen CSRF; wel een
+ * snelheidsgrens per beheerder. Het portaal heeft een eigen endpoint
+ * (portaal/api_adres.php).
  */
+require_once __DIR__ . '/../includes/functions.php';
+vereist_login();
 header('Content-Type: application/json');
 header('Cache-Control: no-store');
+
+if (!rate_limit('admin_adres', 'bhd' . (int)($_SESSION['bhd_id'] ?? 0) . ':' . rate_identiteit(), 30, 60)) {
+    http_response_code(429);
+    echo json_encode(['ok' => false, 'fout' => 'Te veel opzoekingen achter elkaar. Probeer het over een minuut opnieuw.']);
+    exit;
+}
 
 $pc_raw = strtoupper(preg_replace('/\s+/', '', $_GET['postcode'] ?? ''));
 $hn_raw = trim($_GET['huisnummer'] ?? '');
