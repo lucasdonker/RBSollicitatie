@@ -130,6 +130,10 @@
 
 .af-stapteller { margin: 10px 0 0; font-size: 13px; color: var(--af-zacht); }
 
+/* De stapnaam in de teller is er voor het kleine scherm, waar de bollen verdwijnen.
+   Naast de bollen zou hij hetzelfde twee keer zeggen. */
+.af-stapnaam { display: none; }
+
 /* ── Stappen ─────────────────────────────────────────────────────── */
 
 .af-stap {
@@ -437,14 +441,23 @@
 /* ── Klein scherm ────────────────────────────────────────────────── */
 
 @media (max-width: 520px) {
-  .af-kaart { margin: 20px 14px; padding: 24px 20px; border-radius: 12px; }
+  /* Geen eigen zijmarge. De ruimte links en rechts komt van de pagina eromheen, zodat de
+     kaart uitlijnt met de tekst van het ontwerp; een eigen marge kwam daar bovenop en zette
+     de kaart net iets verder naar binnen dan al het andere. Onze eigen pagina heeft geen
+     container en zet hem daarom zelf (zie .af-zelfstandig onderaan). */
+  .af-kaart { margin: 20px 0; padding: 24px 20px; border-radius: 12px; }
   .af-titel { font-size: 22px; }
   .af-rij { gap: 0; }
   .af-rij > .af-breed,
   .af-rij > .af-smal { flex: 1 1 100%; }
-  .af-bol-tekst { display: none; }
-  .af-bol { flex: 0 0 auto; }
-  .af-bollen { gap: 8px; }
+
+  /* Zonder hun tekst zijn de bollen drie kale cijfers die niets zeggen, met daaronder nog
+     eens een teller die hetzelfde vertelt. Hier dus één regel onder de balk, mét de naam
+     van de stap erin. */
+  .af-bollen { display: none; }
+  .af-stapnaam { display: inline; }
+  .af-stapteller { margin-top: 9px; font-weight: 600; color: var(--af-navy); }
+
   .af-acties { flex-direction: column-reverse; align-items: stretch; }
   /* flex-basis is in een kolom de hóógte: zonder deze regel wordt de knop 200px hoog. */
   .af-knop, .af-terug { flex: 0 0 auto; width: 100%; }
@@ -486,6 +499,12 @@
 .af-zelfstandig { margin-top: -58px; position: relative; }
 .af-voet { padding: 22px 20px 40px; text-align: center; font-size: 13px; color: #55616f; }
 .af-voet a { color: #054d8a; }
+
+/* Hier is geen ontwerp omheen dat ruimte geeft, dus die zetten we zelf. Staat bewust ná de
+   media query hierboven, die de zijmarge juist weghaalt voor een kaart in andermans pagina. */
+@media (max-width: 520px) {
+  .af-zelfstandig { margin-left: 14px; margin-right: 14px; }
+}
 
 @media (prefers-color-scheme: dark) {
   .af-pagina { --af-pagina-vlak: #0b1622; color: #e7edf4; }

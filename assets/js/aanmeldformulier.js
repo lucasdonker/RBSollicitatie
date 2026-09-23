@@ -276,7 +276,15 @@
       // nog moet verzenden.
       var pct = Math.round(((nu - 0.5) / stappen.length) * 100);
       if (balkVul) balkVul.style.width = pct + '%';
-      if (teller) teller.textContent = 'Stap ' + nu + ' van ' + stappen.length;
+      // Op een klein scherm staan de bollen uit; dan is deze regel het enige dat vertelt
+      // waar je bent, dus gaat de naam van de stap erin mee. De CSS toont hem alleen daar.
+      if (teller) {
+        teller.textContent = 'Stap ' + nu + ' van ' + stappen.length;
+        var bolNu = kaart.querySelector('[data-af-bol="' + nu + '"]');
+        var kort = bolNu ? bolNu.querySelector('.af-bol-tekst') : null;
+        var naam = kort ? (kort.textContent || '').trim() : '';
+        if (naam) teller.appendChild(maakEl('span', 'af-stapnaam', ' · ' + naam));
+      }
       bollen.forEach(function (bol) {
         var n = parseInt(bol.getAttribute('data-af-bol'), 10);
         bol.classList.toggle('is-nu', n === nu);
