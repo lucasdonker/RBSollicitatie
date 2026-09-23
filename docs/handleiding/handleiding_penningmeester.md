@@ -1,6 +1,6 @@
 # Handleiding penningmeester — Loondossiers
 
-Versie 2.99 · september 2026
+Versie 2.101 · september 2026
 
 Deze handleiding is voor de penningmeester. Je werkt vooral op één scherm in het beheer:
 **Loondossiers**. Daar staat per aangenomen strandwacht alles wat de loonadministratie nodig
@@ -26,8 +26,8 @@ scherm niet.
 ## Aan de slag
 
 > **In het kort:** jij zet de gegevens van aangenomen strandwachten in de loonadministratie. Je
-> downloadt de stukken uit Loondossiers, verwerkt ze en markeert het dossier als verwerkt. De rest
-> gaat automatisch.
+> downloadt de stukken uit Loondossiers, verwerkt ze en markeert het dossier als verwerkt. Na de
+> wettelijke bewaarplicht vernietig je de loondocumenten zelf; het systeem zet ze voor je klaar.
 
 **Jouw rol.** Na het trainingsweekend neemt het bestuur strandwachten aan. Vanaf dat moment
 leveren zij in het portaal hun loonheffingsformulier, een kopie van hun identiteitsbewijs en een
@@ -45,12 +45,15 @@ het dossier daarna als verwerkt. Je beslist niet over aannemen of afwijzen; dat 
 - [ ] **Zodra er een mail "Loondossier compleet" komt:** klik op de knop in de mail. Je komt direct
   bij het juiste dossier. Download de stukken en zet ze in de loonadministratie.
 - [ ] **Direct daarna:** markeer het dossier als verwerkt en verwijder de gedownloade bestanden
-  van je computer.
+  van je computer. Staat automatisch opschonen uit (dat zegt het kader bovenaan Loondossiers),
+  vernietig dan ook de bankpasfoto zelf (zie [Bankpas vernietigen](#bankpas-vernietigen)).
 - [ ] **Elke week, tot alles verwerkt is:** kijk in Loondossiers. De balk bovenaan zegt hoeveel
   dossiers nog op verwerking wachten. Staat een dossier lang op oranje, laat het bestuur de
   strandwacht dan herinneren.
-- [ ] **Na het seizoen:** niets. Het bewaren en vernietigen gaat automatisch (zie
-  [Bewaartermijnen en verwijderen](#bewaartermijnen-en-verwijderen)).
+- [ ] **Elk jaar, bijvoorbeeld in januari:** kijk onderaan Loondossiers of de kaart **Te beoordelen
+  voor vernietiging** er staat. Controleer die namen in de loonadministratie en vernietig wat over
+  de bewaarplicht is (zie
+  [Loondossiers vernietigen na de bewaarplicht](#loondossiers-vernietigen-na-de-bewaarplicht)).
 
 **Rondleiding.** In het beheer staat een interactieve rondleiding "Penningmeester: loondossiers".
 Die loopt met je langs de echte schermen en wijst aan wat waar staat en wat jij moet doen. De
@@ -73,8 +76,8 @@ Kies "Inloggen via Authentik". In het menu zie je:
 - **Sollicitanten**: alleen lezen, zodat je bij een dossier kunt kijken wie iemand is;
 - **Loondossiers**: jouw werkscherm.
 
-Zie je meer of minder, dan staat je account in Authentik in de verkeerde groep. Meld dat bij de
-admin.
+Zie je meer of minder, of krijg je de melding "Je Authentik-account heeft geen admin-toegang", dan
+staat je account in Authentik in de verkeerde groep. Meld dat bij de admin.
 
 ## Wat er in een loondossier zit
 
@@ -88,7 +91,7 @@ Per aangenomen strandwacht verzamelt het portaal:
 |---|---|---|
 | Loonheffingsformulier | De strandwacht vult het officiële formulier van de Belastingdienst in het portaal in en ondertekent digitaal met een verificatiecode | Verzegelde PDF; het BSN staat alleen in de PDF en versleuteld in de kluis |
 | Kopie identiteitsbewijs | Foto of scan (JPG, PNG of PDF). Bij een identiteitskaart voor- én achterkant, bij een paspoort alleen de fotopagina | Wettelijk verplicht, volledig en niet afgeschermd |
-| Kopie bankpas | Foto van de voorkant (naam en rekeningnummer) | Alleen om het rekeningnummer te controleren; wordt na verwerking vernietigd |
+| Kopie bankpas | Foto van de voorkant (naam en rekeningnummer) | Alleen om het rekeningnummer te controleren; wordt na verwerking vernietigd (automatisch, of door jou als opschonen uit staat) |
 | Inschrijving als lid | Alleen voor wie nog geen Paal 13-account heeft; gaat na het ondertekenen als PDF naar de ledenservice | Ter informatie. Telt niet mee voor "compleet" |
 
 Alles staat versleuteld in de kluis. Een dossier is **compleet** als het loonheffingsformulier is
@@ -107,10 +110,8 @@ De stukken zitten standaard **niet** in de mail; je haalt ze op via het beheer. 
 instellen dat ze wél meegaan, maar dan gaan een BSN en een kopie identiteitsbewijs onversleuteld
 per e-mail. Dat raden we af.
 
-**Let op:** de mail wordt verstuurd op het moment dat de strandwacht het loonheffingsformulier
-ondertekent. Uploadt iemand de kopie van het identiteitsbewijs of de bankpas pas daarna, dan komt
-er geen automatische mail, ook al is het dossier dan wel compleet. Kijk daarom ook zelf af en toe
-in Loondossiers.
+De mail komt zodra het laatste stuk binnen is, of dat nu het ondertekende loonheffingsformulier is
+of een upload van de kopie ID of de bankpas. Per loonheffingsformulier krijg je hem één keer.
 
 Mail kwijt of niet gekregen? Klik in het dossier op **Melding opnieuw naar de penningmeester**.
 Die knop staat er zodra het dossier compleet is.
@@ -119,14 +120,21 @@ Die knop staat er zodra het dossier compleet is.
 
 > **In het kort:** bovenaan de regels voor deze stukken en de stand, daaronder per strandwacht een
 > kaart die je openklapt. Oranje is nog niet compleet, groen wacht op jou, grijs is verwerkt.
+> Onderaan staat, als dat nodig is, wie in aanmerking komt voor vernietiging.
 
 **Waar:** Beheer › Loondossiers (in de menugroep Inzet & loon).  
 
 Het scherm toont de aangenomen strandwachten van het actieve seizoen.
 
 **Bovenaan** staat een vast kader met de regels: hier staan een BSN en kopieën van
-identiteitsbewijzen, elke download wordt vastgelegd, en de bewaartermijnen. Dat kader staat er
-altijd; het is geen waarschuwing.
+identiteitsbewijzen, elke download wordt vastgelegd, wat er met de bankpasfoto gebeurt en hoe lang
+het loonheffingsformulier en de kopie ID blijven. Komen er dossiers in aanmerking voor
+vernietiging, dan staat daar ook een link naar **Te beoordelen voor vernietiging**. Dat kader staat
+er altijd; het is geen waarschuwing.
+
+Let op de zin over de bankpasfoto. Staat daar "De bankpasfoto wordt ... dagen na "verwerkt"
+automatisch vernietigd", dan hoef je niets te doen. Staat daar "Automatisch opschonen staat uit",
+dan vernietig je de bankpasfoto zelf na het verwerken.
 
 Daaronder de stand, bijvoorbeeld "2 dossiers wachten op verwerking", met de tellers aangenomen,
 compleet en verwerkt.
@@ -144,8 +152,9 @@ In een opengeklapte kaart zie je:
 - het **loonheffingsformulier**: wanneer het is ondertekend, hoe (verificatiecode, naar welk
   nummer) en een vingerafdruk van het bestand (sha256), met de knop **PDF**;
 - **identiteitsbewijs voorkant** (met paspoort of identiteitskaart), **achterkant** ("Niet nodig
-  bij een paspoort") en **kopie bankpas**: per stuk de bestandsnaam, de uploaddatum, de grootte en
-  wanneer het voor het laatst is ingezien, met de knop **Download**;
+  bij een paspoort") en **kopie bankpas** ("Vernietigd ... dagen na verwerking" of "Na verwerking
+  zelf vernietigen"): per stuk de bestandsnaam, de uploaddatum, de grootte en wanneer het voor het
+  laatst is ingezien, met de knop **Download**;
 - **lid van de vereniging**: wanneer de inschrijving naar de ledenservice is gemaild, met de knop
   **PDF**, of "Niet van toepassing" als iemand al een verenigingsaccount heeft;
 - onderaan de knoppen **Verwerkt in de loonadministratie** en **Melding opnieuw naar de
@@ -160,6 +169,10 @@ bestaande documenten blijven geldig. Ook dan de admin waarschuwen.
 
 Staat er nog niemand op "Aangenomen", dan zie je "Nog geen loondossiers".
 
+**Onderaan** verschijnt de kaart **Te beoordelen voor vernietiging** zodra er iemand is van wie
+de bewaarplicht mogelijk voorbij is. Zie
+[Loondossiers vernietigen na de bewaarplicht](#loondossiers-vernietigen-na-de-bewaarplicht).
+
 ## Stukken downloaden
 
 > **In het kort:** download via de knoppen in de kaart, alleen op een vertrouwd apparaat. Elke
@@ -170,8 +183,8 @@ Staat er nog niemand op "Aangenomen", dan zie je "Nog geen loondossiers".
    loonadministratie Reddingsbrigade Paal 13", de datum en jouw naam. Het origineel in de kluis
    blijft ongewijzigd. Een kopie die als PDF is geüpload krijgt geen watermerk.
 3. Elke download wordt vastgelegd (wie, wanneer, welk stuk). Bij het identiteitsbewijs, de bankpas
-   en het loonheffingsformulier krijgt het bestuur standaard een mail dat jij iets hebt gedownload.
-   Dat is normaal en hoort zo.
+   en het loonheffingsformulier krijgt het bestuur standaard een mail dat jij iets hebt gedownload,
+   met de naam van het document. Dat is normaal en hoort zo.
 4. Je kunt maximaal 30 stukken per uur downloaden.
 5. Een downloadlink werkt alleen vanuit het beheer. Een link doorsturen heeft geen zin.
 
@@ -190,9 +203,11 @@ computer, ook uit je downloadmap en de prullenbak.
 Wat er dan gebeurt:
 
 - De strandwacht kan de stukken niet meer vervangen of verwijderen.
-- De kopie van de bankpas wordt na de bewaartermijn (standaard 30 dagen) automatisch vernietigd.
-- Het loonheffingsformulier en de kopie van het identiteitsbewijs blijven bewaard tot de wettelijke
-  termijn voorbij is (zie [Bewaartermijnen en verwijderen](#bewaartermijnen-en-verwijderen)).
+- De kopie van de bankpas wordt na de ingestelde termijn (standaard 30 dagen) automatisch
+  vernietigd, als automatisch opschonen aanstaat. Het tussenscherm zegt welke van de twee geldt.
+  Staat opschonen uit, vernietig de bankpasfoto dan zelf (zie [Bankpas vernietigen](#bankpas-vernietigen)).
+- Het loonheffingsformulier en de kopie van het identiteitsbewijs blijven staan tot jij ze na de
+  bewaarplicht vernietigt (zie [Bewaartermijnen en verwijderen](#bewaartermijnen-en-verwijderen)).
 - De strandwacht kan het account niet meer zelf verwijderen, omdat de wettelijke bewaarplicht
   voorgaat. Het portaal legt dat uit.
 
@@ -201,41 +216,76 @@ dan de admin.
 
 ## Bankpas vernietigen
 
-> **In het kort:** de bankpasfoto verdwijnt normaal vanzelf. Moet hij eerder weg, klik dan op
-> "Vernietigen" en bevestig.
+> **In het kort:** de bankpasfoto verdwijnt vanzelf als automatisch opschonen aanstaat. Staat dat
+> uit, of moet hij eerder weg, klik dan op "Vernietigen" en bevestig.
 
 Klik op **Vernietigen** achter de kopie van de bankpas. Op het volgende scherm lees je wat er
 gebeurt en klik je op **Ja, vernietigen**. Het bestand wordt uit de kluis gewist en is niet terug
 te halen. Dat het er was en wie het vernietigde, blijft in het logboek staan. De rest van het
 dossier blijft ongemoeid.
 
-Dit kan alleen bij de bankpas; de andere stukken vallen onder de bewaarplicht.
+Dit kan per stuk alleen bij de bankpas. De andere stukken vallen onder de bewaarplicht; die
+vernietig je pas daarna, in één keer per persoon (zie
+[Loondossiers vernietigen na de bewaarplicht](#loondossiers-vernietigen-na-de-bewaarplicht)).
 
 ## Bewaartermijnen en verwijderen
 
-> **In het kort:** loonheffing en kopie ID blijven 5 jaar na het einde van het dienstjaar, de
-> bankpasfoto 30 dagen na verwerking. Het systeem ruimt dat automatisch op, maar alleen als het
-> bestuur het automatisch opschonen heeft aangezet.
+> **In het kort:** loonheffing en kopie ID moeten blijven tot 5 jaar na het einde van het jaar
+> waarin het dienstverband eindigde. Het systeem wist ze niet zelf: jij vernietigt ze daarna, vanuit
+> een lijst die het systeem klaarzet. De bankpasfoto verdwijnt 30 dagen na verwerking vanzelf, maar
+> alleen als het bestuur het automatisch opschonen heeft aangezet.
 
-| Stuk | Termijn | Grond |
+| Stuk | Termijn | Wie ruimt op |
 |---|---|---|
-| Loonheffingsformulier en kopie identiteitsbewijs | 5 jaar na het einde van het kalenderjaar waarin de strandwacht werkte | Wettelijke bewaarplicht loonadministratie |
-| Kopie bankpas | 30 dagen nadat jij het dossier als verwerkt hebt gemarkeerd | Alleen nodig om het rekeningnummer over te nemen |
-| Inschrijving als lid | Volgt het dossier: 2 jaar na het laatste seizoen | Geen wettelijke termijn |
+| Loonheffingsformulier en kopie identiteitsbewijs | 5 jaar na het einde van het kalenderjaar waarin het dienstverband eindigde (wettelijke bewaarplicht loonadministratie) | Jij, met de hand (zie hieronder) |
+| Kopie bankpas | 30 dagen nadat jij het dossier als verwerkt hebt gemarkeerd (instelbaar) | Het systeem, als automatisch opschonen aanstaat; anders jij |
+| Inschrijving als lid | Volgt het dossier: 2 jaar na het laatste seizoen | Het systeem, als automatisch opschonen aanstaat |
 
-Het opruimen gebeurt één keer per dag automatisch, **maar alleen als "Automatisch opschonen
-inschakelen" aan staat** bij Instellingen › Bewaren & opschonen. Dat staat standaard uit. Vraag
-het bestuur of dat aan staat; anders blijft alles staan, ook de bankpasfoto's.
+Het automatische opruimen gebeurt één keer per dag, **maar alleen als "Automatisch opschonen
+inschakelen" aan staat** bij Instellingen › Bewaren & opschonen. Dat staat standaard uit. Je ziet
+op Loondossiers in het kader bovenaan welke van de twee geldt. De termijn voor de bankpas stelt het
+bestuur in op hetzelfde tabblad (**Kopie bankpas**). Wat er is vernietigd, ziet de admin in het
+Logboek.
 
-De termijnen van 5 jaar en 30 dagen zijn standaardwaarden. Ze staan niet als veld op het scherm
-Bewaren & opschonen; aanpassen kan alleen de technisch beheerder. Wat er is vernietigd, ziet de
-admin in het Logboek.
+### Loondossiers vernietigen na de bewaarplicht
 
-**Terugtrekken.** Trekt een strandwacht zich terug vóórdat het dossier verwerkt is, dan kan die
-de gegevens zelf verwijderen in het portaal; de stukken worden dan meteen vernietigd. Is het
-dossier al verwerkt en gaat het dienstverband toch niet door, dan kan alleen iemand met het recht
-om sollicitanten te verwijderen (standaard bestuur en admin) het dossier verwijderen. Het systeem
-vraagt dan apart om te bevestigen dat het dienstverband niet is doorgegaan.
+Het systeem weet tot welk seizoen iemand hier voorkwam, maar niet wanneer het dienstverband
+eindigde. Iemand kan na een pauze terugkomen. Daarom vernietigt het systeem het
+loonheffingsformulier en de kopie ID nooit zelf. Het zet wel klaar wie in aanmerking komt, onderaan
+Loondossiers in de kaart **Te beoordelen voor vernietiging**.
+
+Daarin staat iedereen van wie het laatste seizoen als aangenomen (of met loonstukken) minstens vijf
+volle kalenderjaren terug ligt. Wie in 2020 voor het laatst werkte, verschijnt op 1 januari 2026.
+Per persoon zie je "Laatste seizoen hier" en "Nog aanwezig" met de stukken die er nog zijn. Staat
+er niemand in aanmerking, dan is de kaart er niet.
+
+1. Controleer in de loonadministratie of het dienstverband toen echt eindigde. Werkte iemand daarna
+   nog, vernietig dan niets.
+2. Klik op **Vernietigen…** bij de naam.
+3. Het tussenscherm noemt precies wat onherroepelijk weggaat. Klik op **Ja, loondossier
+   vernietigen**.
+
+Wat er dan gebeurt:
+
+- De stukken worden uit de kluis gewist en zijn niet meer terug te halen, ook niet door een
+  beheerder.
+- Van het loonheffingsformulier verdwijnen ook het BSN, de handtekening en de ingevulde gegevens.
+  Als bewijs blijft staan dát er getekend en geüpload is.
+- De rest van het dossier blijft staan: gegevens, sollicitaties en andere ondertekeningen.
+- In het logboek komt "Loondossier vernietigd (na de bewaarplicht)", met wie het deed, zonder de
+  inhoud.
+
+Doe deze controle één keer per jaar, bijvoorbeeld in januari. Zie de afvinklijst in
+[Aan de slag](#aan-de-slag).
+
+### Terugtrekken
+
+Trekt een strandwacht zich terug vóórdat het dossier verwerkt is, dan kan die de gegevens zelf
+verwijderen in het portaal; de stukken worden dan meteen vernietigd. Is het dossier al verwerkt en
+gaat het dienstverband toch niet door, dan kan alleen iemand met zowel het recht om sollicitanten
+te verwijderen als het recht om loondossiers te verwijderen het dossier verwijderen (standaard
+alleen de admin). Het systeem vraagt dan met een apart vinkje om te bevestigen dat het
+dienstverband niet is doorgegaan.
 
 ## Wat je nooit doet
 
@@ -260,9 +310,10 @@ bij een paspoort niet. Het loonheffingsformulier telt pas mee na het ondertekene
 verificatiecode.
 
 **Het dossier is groen, maar ik heb geen mail gekregen.**  
-Dat kan: de mail gaat alleen mee op het moment dat het loonheffingsformulier wordt ondertekend.
-Kwam een kopie later binnen, dan komt er geen mail. Verwerk het dossier gewoon, of klik op
-"Melding opnieuw naar de penningmeester" als je de mail toch wilt hebben.
+De mail gaat uit zodra het laatste stuk binnen is. Kijk eerst in je ongewenste mail en of het
+penningmeester-adres in Instellingen › Afzender & adressen klopt (leeg is: het bestuursadres).
+Verwerk het dossier gewoon, of klik op "Melding opnieuw naar de penningmeester" als je de mail toch
+wilt hebben.
 
 **De strandwacht krijgt geen verificatiecode.**  
 De code gaat per sms naar het telefoonnummer uit het dossier; staat sms uit, dan via WhatsApp,
@@ -275,7 +326,7 @@ is een kopie mét watermerk gewoon geldig.
 
 **Het formulier van vorig jaar staat er niet meer.**  
 Het scherm toont alleen het actieve seizoen. Stukken van eerdere seizoenen blijven in de kluis tot
-de bewaartermijn voorbij is; vraag de admin als je ze nodig hebt.
+jij ze na de bewaarplicht vernietigt; vraag de admin als je ze nodig hebt.
 
 **Is de PDF echt door de strandwacht ondertekend?**  
 De laatste pagina van de PDF is het certificaat van ondertekening: wie, wanneer, vanaf welk
@@ -285,4 +336,14 @@ lijst van Adobe staat. Dat is normaal voor een eigen zegel.
 
 **Waarom krijgt het bestuur een mail als ik iets download?**  
 Zo ziet iemand anders mee dat deze stukken worden ingezien. Dat beschermt de strandwacht en
-jou. Alleen de technisch beheerder kan die melding uitzetten, en dat raden we af.
+jou. Het bestuur kan die melding uitzetten onder Instellingen › Bewaren & opschonen, maar dat
+raden we af.
+
+**Ik zie een naam bij "Te beoordelen voor vernietiging" die nog bij ons werkt.**  
+Vernietig dan niets. Het systeem kijkt alleen naar het laatste seizoen waarin iemand hier als
+aangenomen voorkwam. Werkte die persoon later nog, bijvoorbeeld zonder nieuwe sollicitatie, dan
+loopt de bewaarplicht langer. De naam blijft in de lijst staan; dat is geen probleem.
+
+**Ik wil de loonplanning als CSV downloaden, maar dat mag niet.**  
+Die download vraagt het recht Loonplanning, en dat heeft de penningmeester standaard niet. Vraag
+de admin om dat recht als je het nodig hebt.

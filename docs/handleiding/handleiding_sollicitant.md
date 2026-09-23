@@ -1,6 +1,6 @@
 # Jouw sollicitatie bij Paal 13 — hoe werkt het portaal?
 
-Versie 2.99 · september 2026
+Versie 2.101 · september 2026
 
 Je wilt strandwacht worden bij Reddingsbrigade Paal 13. Na je aanmelding regel je alles in je
 eigen portaal: `https://sollicitatie.paal13.com/portaal/`. Hier lees je hoe dat werkt. Deze uitleg
@@ -92,7 +92,8 @@ vijf pogingen om de code goed in te vullen; daarna vraag je een nieuwe aan.
   een knop naar de eerste taak.
 - **Taken:** al je taken bij elkaar: "Nu te doen", "Wacht op je ouder/verzorger" en "Afgerond".
   Het getal bij Taken zegt hoeveel er nog open staan. Bij een afgeronde taak kun je vaak nog op
-  **Bekijken** of **Wijzigen** klikken.
+  **Bekijken** of **Wijzigen** klikken. Na de selectiedag staat bij Beter Leren Kennen alleen nog
+  "Ingeleverd" met de datum.
 - **Gegevens:** wat we van je weten, hoe je berichten wilt krijgen, je gegevens downloaden of
   laten verwijderen, en uitloggen.
 
@@ -139,7 +140,10 @@ ga je later verder waar je was.
 
 Na het inleveren kun je het formulier nog aanpassen. Je schrijft dan kort op waarom. Dat kan
 zolang je uitgenodigd bent voor de selectiedag. Daarna gaat het formulier dicht. Klopt er dan nog
-iets niet, mail het bestuur.
+iets niet, stel dan een vraag via Berichten.
+
+Je e-mailadres kun je hier niet veranderen. Klopt het niet? Stel een vraag via Berichten, dan past
+het bestuur het aan.
 
 ## Beschikbaarheid doorgeven
 
@@ -246,7 +250,7 @@ iets niet klopt.
 **Hoe veilig is dat?** Je kopie ID, je bankpas, je BSN en je rekeningnummer worden meteen
 versleuteld opgeslagen. Alleen de penningmeester en de beheerder van het systeem kunnen ze
 openen. Elke keer dat iemand ze bekijkt, wordt vastgelegd, en op een gedownloade foto komt een
-watermerk. Na de wettelijke bewaartermijn worden ze vanzelf vernietigd.
+watermerk. De wet zegt hoe lang we ze moeten bewaren. Daarna vernietigt de penningmeester ze.
 
 ## Berichten en een vraag stellen
 
@@ -255,8 +259,8 @@ watermerk. Na de wettelijke bewaartermijn worden ze vanzelf vernietigd.
 > per e-mail wilt.
 
 Alles wat we je sturen (e-mail, WhatsApp, sms) staat ook bij **Berichten**, achter het belletje.
-Zo raak je niets kwijt. Tik op een bericht om het helemaal te lezen. De volledige tekst kun je
-ongeveer drie maanden teruglezen.
+Zo raak je niets kwijt. Tik op een bericht om het helemaal te lezen. Onder je berichten staat hoe
+lang je ze kunt teruglezen, meestal 3 maanden.
 
 **Een vraag?** Onder je berichten staat een vak **Een vraag?**. Typ je vraag en klik op
 **Versturen**. Je vraag komt bij het bestuur binnen met je naam erbij, dus je hoeft niet uit te
@@ -297,16 +301,23 @@ Op deze pagina kun je ook je gegevens downloaden of meteen laten verwijderen.
 Op de pagina **Gegevens**:
 
 - **Wat we van je weten:** je naam, e-mailadres, telefoonnummer, geboortedatum, wanneer je je
-  aanmeldde en waar je sollicitatie nu staat. Klopt er iets niet? Mail het bestuur, dan passen
-  zij het aan. Je telefoonnummer en adres kun je zelf aanpassen in Beter Leren Kennen, zolang dat
+  aanmeldde en waar je sollicitatie nu staat. Klopt je naam, e-mailadres of telefoonnummer niet?
+  Klik op **Stel een vraag via Berichten** en schrijf wat er anders moet. Het bestuur past het dan
+  aan. Je telefoonnummer en adres kun je ook zelf aanpassen in Beter Leren Kennen, zolang dat
   formulier open is.
 - **Al mijn gegevens downloaden:** je krijgt een bestand (JSON) met alles wat we van je hebben
   (recht op inzage).
-- **Mijn account verwijderen:** typ `VERWIJDER` en klik op **Definitief verwijderen**. Je naam en
-  contactgegevens worden dan onherkenbaar gemaakt, en je formulieren, beschikbaarheid, foto en
-  documenten worden gewist. Het bestuur krijgt daar bericht van. Dit kun je niet terugdraaien.
-  Is je loondossier al verwerkt, dan kan dit niet meer zelf: de wet verplicht ons het
-  loonheffingsformulier en de kopie ID vijf jaar te bewaren. Mail in dat geval het bestuur.
+- **Mijn account verwijderen:** zo gaat het:
+  1. Klik op **Definitief verwijderen**. Er klapt een stuk tekst open.
+  2. Lees wat er gebeurt: je naam, e-mail, telefoon en adres worden onherkenbaar gemaakt, en je
+     formulieren, beschikbaarheid, foto en documenten worden gewist. Je kunt daarna niet meer
+     inloggen.
+  3. Typ `VERWIJDER` in het vak.
+  4. Klik op **Ja, verwijder mijn account**.
+
+  Het bestuur krijgt daar bericht van. Dit kun je niet terugdraaien. Is je loondossier al verwerkt,
+  dan kan dit niet meer zelf: de wet verplicht ons het loonheffingsformulier en de kopie ID vijf jaar
+  te bewaren. Mail in dat geval het bestuur.
 - **Ingelogd blijven:** als een of meer apparaten je onthouden, zie je hier hoeveel. Telefoon kwijt
   of ingelogd op een vreemde computer? Klik op **Vergeet alle apparaten** en daarna op **Ja, vergeet
   ze allemaal**. Op elk apparaat moet je dan opnieuw inloggen.
@@ -320,8 +331,9 @@ Op de pagina **Gegevens**:
 | Aanmelding niet afgemaakt | 3 maanden |
 | Aangenomen | Zolang je bij ons werkt, en daarna nog 2 jaar na je laatste seizoen |
 | Gezondheidsverklaring | Eén seizoen; bij een afwijzing meteen weg |
-| Loonheffingsformulier en kopie ID | 5 jaar na het jaar waarin je voor het laatst bij ons werkte (wettelijke termijn) |
+| Loonheffingsformulier en kopie ID | 5 jaar na het einde van het jaar waarin je voor het laatst bij ons werkte (dat zegt de wet); de penningmeester vernietigt ze daarna |
 | Kopie bankpas | 30 dagen nadat de penningmeester je rekeningnummer heeft verwerkt |
+| Berichten in het portaal | Je kunt ze 3 maanden teruglezen |
 | "Blijf ingelogd" | 60 dagen, of korter als je uitlogt |
 
 De privacyverklaring vind je onderaan elke pagina van het portaal en bij het aanmeldformulier.
@@ -348,13 +360,14 @@ ouder/verzorger".
 
 **Ik heb een fout gemaakt in Beter Leren Kennen.**  
 Zolang je uitgenodigd bent voor de selectiedag: open het formulier opnieuw, pas het aan en
-schrijf kort op wat je hebt veranderd. Daarna kan het niet meer zelf; mail het bestuur.
+schrijf kort op wat je hebt veranderd. Daarna kan het niet meer zelf; stel een vraag via Berichten.
 
 **Kan ik mijn beschikbaarheid nog wijzigen na "definitief"?**  
 Ja. Open Mijn beschikbaarheid en klik op "Aanpassen".
 
-**Ik heb een nieuw telefoonnummer of e-mailadres.**  
-Mail het bestuur, dan passen zij het aan. Je telefoonnummer kun je ook zelf aanpassen in Beter
+**Ik heb een nieuw telefoonnummer of e-mailadres, of mijn naam klopt niet.**  
+Stel een vraag via Berichten (het belletje), dan past het bestuur het aan. Na een nieuw
+e-mailadres log je voortaan met dat adres in. Je telefoonnummer kun je ook zelf aanpassen in Beter
 Leren Kennen, zolang dat formulier open is.
 
 **Mijn foto wordt geweigerd.**  
@@ -363,7 +376,8 @@ Kennen: maximaal 5 MB. Foto's van een iPhone (HEIC) kun je als jpg laten opslaan
 instellingen van de camera "Meest compatibel" aan.
 
 **Wie ziet mijn bijzonderheden (bijvoorbeeld medische informatie)?**  
-Alleen de mensen voor wie het nodig is: het bestuur en de selectiecommissie.
+Alleen de mensen voor wie het nodig is: het bestuur. Begeleiders op de selectiedag zien alleen
+dát er iets is, zodat ze het aan het bestuur kunnen vragen. Wat er staat, zien ze niet.
 
 **Ik ben 17 en heb het loonheffingsformulier zelf ondertekend. Klopt dat?**  
 Ja. Dat formulier onderteken je zelf. De gezondheidsverklaring en het intakeformulier ondertekent

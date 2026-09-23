@@ -1,6 +1,6 @@
 # Handleiding beheer — Sollicitatiesysteem Paal 13
 
-Versie 2.99 · september 2026
+Versie 2.101 · september 2026
 
 Het sollicitatiesysteem regelt de hele werving van strandwachten voor Reddingsbrigade Paal 13:
 van de aanmelding op de website, via de selectiedag en het trainingsweekend, tot de aangenomen
@@ -72,7 +72,8 @@ het technisch beheer zijn er aparte handleidingen.
 4. Na het trainingsweekend neemt het bestuur aan of wijst af; wie is aangenomen krijgt in het
    portaal de taken voor het loondossier en het lidmaatschap.
 5. Aan het eind van het seizoen gaat het aanmeldformulier dicht en ruimt het systeem gegevens
-   op volgens de bewaartermijnen.
+   op volgens de bewaartermijnen. Alleen loondocumenten vernietigt de penningmeester zelf, na de
+   wettelijke bewaarplicht.
 
 Elke stap vooruit heet een **fase**. Welke fases er zijn en wat er bij elke overgang automatisch
 gebeurt, staat in [De fases en wat er automatisch gebeurt](#de-fases-en-wat-er-automatisch-gebeurt).
@@ -86,16 +87,19 @@ beheerder kan ze per rol aanpassen (zie [Beheerders en rechten](#beheerders-en-r
 
 | Rol (zo staat hij onderin de zijbalk) | Authentik-groep | Wat je doet | Wat je in het menu ziet |
 |---|---|---|---|
-| **Begeleider** | Sol-Begeleider | Meekijken op de selectiedag, in het trainingsweekend aanwezigheid afvinken en observaties noteren. Geen toegang tot persoonsgegevens of dossiers. | Vandaag, Selectiedag, Trainingsweekend, Dekking |
+| **Begeleider** | Sol-Begeleider | Op de selectiedag inchecken en beoordelen (cijfers en observaties), in het trainingsweekend aanwezigheid afvinken en observaties noteren. Geen toegang tot persoonsgegevens of dossiers. | Vandaag, Selectiedag, Trainingsweekend, Dekking |
 | **Bestuur** | Bestuur | De hele werving: uitnodigen, selectiedag indelen en beoordelen, nabespreken en bellen, aannemen, berichten, seizoen en instellingen. | Alles behalve Loondossiers, Beheerders & rechten en Logboek |
-| **Penningmeester** | Sol-Penningmeester | Het loondossier: loonheffing, kopie ID en bankpas inzien, downloaden en als verwerkt markeren. Sollicitanten alleen bekijken. | Vandaag, Sollicitanten, Loondossiers |
+| **Penningmeester** | Sol-Penningmeester | Het loondossier: loonheffing, kopie ID en bankpas inzien, downloaden, als verwerkt markeren en na de bewaarplicht vernietigen. Sollicitanten alleen bekijken. | Vandaag, Sollicitanten, Loondossiers |
 | **Beheerder** (technisch: admin) | Sol-Admin | Alles, ook beheerders, rechten, logboek en systeem. Kan zichzelf nooit buitensluiten. | Alles |
 
 Goed om te weten over de begeleider: met de standaardrechten (Selectiedag: alleen lezen) kan een
-begeleider op de selectiedag wel de groepen, de aanwezigheidslijst en de beoordelingen zien, maar
-**niet** zelf inchecken of cijfers en observaties invoeren. In het trainingsweekend kan dat wel.
-Wil je dat begeleiders op de selectiedag meebeoordelen, dan moet een beheerder de rol Begeleider
-bewerkrecht op Selectiedag geven. Let op: dan zien ze ook Nabespreking en Bellijst.
+begeleider op de selectiedag de groepen bekijken, kandidaten inchecken (**Aanwezig** en
+**Ongedaan**), cijfers geven en wissen, observaties plaatsen en de eigen observaties verwijderen.
+In het trainingsweekend vinkt een begeleider af en observeert. De toegangscode voor de tablet, de
+groepsindeling, de nabespreking, de bellijst en het besluit na het trainingsweekend blijven bij het
+bestuur. Bijzonderheden uit het kennismakingsformulier (vaak medisch) ziet een begeleider niet; wel
+de melding "Let op: er is een bijzonderheid bekend bij het bestuur" met het verzoek het na te
+vragen. De knop naar het dossier en telefoonnummers ziet alleen wie Sollicitanten mag lezen.
 
 ### Je eerste keer inloggen
 
@@ -154,16 +158,19 @@ groep die toegang geeft. Zie [Inloggen en rollen](#inloggen-en-rollen).
 Alles van het bestuurslid, plus:
 
 - [ ] Controleer onder [Instellingen](#instellingen) › Authentik welke groepen toegang geven.
-   Standaard staat daar "Bestuur,Sol-Admin,Sol-Begeleider": voeg **Sol-Penningmeester** toe als de
-   penningmeester via Authentik moet kunnen inloggen.
+   Standaard staat daar "Bestuur,Sol-Admin,Sol-Begeleider,Sol-Penningmeester". Controleer dat
+   **Sol-Penningmeester** in de toegestane groepen staat; heeft iemand de lijst eerder zelf
+   aangepast, dan kan die groep ontbreken.
 - [ ] Loop bij [Beheerders en rechten](#beheerders-en-rechten) na wie er toegang heeft en welke rol
-   bij welke Authentik-groep hoort. Beslis bewust over de rechten van de begeleider op de
-   selectiedag (zie [De rollen](#de-rollen)).
+   bij welke Authentik-groep hoort. Staat de penningmeester (of iemand met een eigen rol) als
+   Begeleider in de lijst, zet de rol dan eenmalig goed.
 - [ ] Kijk op [Vandaag](#vandaag) of de systeemstatus op "Systeem in orde" staat en de taakronde
    recent heeft gedraaid; zo niet, zie [Systeem en foutenlog](#systeem-en-foutenlog).
 - [ ] Zet bij [Bewaartermijnen](#bewaartermijnen) het automatisch opschonen aan. Het staat
    standaard **uit**, en dan klopt de belofte in de afwijzing ("zonder seintje verwijderen we je
-   gegevens binnen vier weken") niet.
+   gegevens binnen vier weken") niet. Zolang het uit staat, is de systeemstatus op Vandaag rood.
+   Controleer eerst de termijnen: bij de eerste run verdwijnt alles wat al over de termijn is, en
+   dat is niet terug te draaien.
 - [ ] Bekijk het [Logboek](#logboek) één keer, zodat je weet waar je moet zoeken als iemand vraagt
    wat er met een dossier is gebeurd.
 - [ ] Lees [Privacy en AVG-verzoeken](#privacy-en-avg-verzoeken): een verzoek om inzage of
@@ -260,7 +267,7 @@ Hoe Vandaag de seizoensfase bepaalt:
 
 | Wat jij doet | Wat het systeem doet | Scherm |
 |---|---|---|
-| (Penningmeester) Complete dossiers verwerken en als verwerkt markeren. | Zodra loonheffing, kopie ID en kopie bankpas binnen zijn, krijgt de penningmeester "Loondossier compleet". De kopie bankpas wordt 30 dagen na verwerking vernietigd; loonheffing en ID blijven 5 jaar na het dienstjaar bewaard. | [Loondossiers](#loondossiers) |
+| (Penningmeester) Complete dossiers verwerken en als verwerkt markeren. | Zodra loonheffing, kopie ID en kopie bankpas binnen zijn, krijgt de penningmeester "Loondossier compleet", ongeacht wat het laatst binnenkwam. De kopie bankpas wordt 30 dagen na verwerking vernietigd (als automatisch opschonen aanstaat). Loonheffing en ID blijven staan tot de penningmeester ze na de bewaarplicht vernietigt. | [Loondossiers](#loondossiers) |
 | (Bestuur) Openstaande handtekeningen nalopen. | De inschrijving als lid gaat na ondertekening naar de ledenservice. | [Ondertekeningen](#ondertekeningen) |
 
 ### Moment 9: seizoen sluiten en opruimen
@@ -268,7 +275,8 @@ Hoe Vandaag de seizoensfase bepaalt:
 | Wat jij doet | Wat het systeem doet | Scherm |
 |---|---|---|
 | Het seizoen sluiten als dat nog niet gebeurd is. Alle gegevens blijven staan. | | [Seizoen](#seizoen-opzetten) |
-| (Beheerder) Controleren dat automatisch opschonen aanstaat. | Eén keer per dag ruimt de taakronde op volgens de ingestelde termijnen, onder meer: afgewezen sollicitanten zonder seintje 4 weken na de afwijzing; een seintje vervalt na maximaal 12 maanden; oud-strandwachten 2 jaar na hun laatste seizoen. | [Bewaartermijnen](#bewaartermijnen) |
+| (Beheerder) Controleren dat automatisch opschonen aanstaat. | Eén keer per dag ruimt de taakronde op volgens de ingestelde termijnen, onder meer: afgewezen sollicitanten zonder seintje 4 weken na de afwijzing; een seintje vervalt na maximaal 12 maanden; het dossier van oud-strandwachten 2 jaar na hun laatste seizoen. Loondocumenten ruimt het systeem niet zelf op. | [Bewaartermijnen](#bewaartermijnen) |
+| (Penningmeester, jaarlijks) Op Loondossiers de kaart **Te beoordelen voor vernietiging** nalopen. | Toont wie hier minstens vijf volle kalenderjaren niet meer voorkwam. | [Loondossiers](#loondossiers) |
 | Volgend jaar: wie om een seintje vroeg en oud-strandwachten benaderen. | | [Seintje bij de volgende werving](#seintje-bij-de-volgende-werving), [Berichten sturen](#berichten-sturen) |
 
 ---
@@ -284,20 +292,23 @@ Hoe Vandaag de seizoensfase bepaalt:
 
 ### Inloggen via Authentik
 
-Klik op **Inloggen via Authentik (SSO)**, log in bij Authentik en je komt terug op het scherm waar
-je heen wilde, of op Vandaag.
+Klik op **Inloggen via Authentik (SSO)**, log in bij Authentik en je komt terug op het scherm
+binnen het beheer waar je heen wilde, of op Vandaag. Een adres buiten het beheer volgt het systeem
+na het inloggen nooit.
 
 Twee instellingen bepalen of en hoe je binnenkomt:
 
 - **Welke groepen toegang geven** staat onder Instellingen › Authentik (standaard
-  "Bestuur,Sol-Admin,Sol-Begeleider"). Zit je in geen van die groepen en heb je nog nooit een
-  account gehad, dan zie je "Je Authentik-account heeft geen admin-toegang". De groep
-  Sol-Penningmeester staat er standaard niet in; voeg die toe als de penningmeester via Authentik
-  inlogt.
+  "Bestuur,Sol-Admin,Sol-Begeleider,Sol-Penningmeester"). Zit je in geen van die groepen, dan zie
+  je "Je Authentik-account heeft geen admin-toegang". Dat geldt ook als je eerder al een account
+  had: wie in Authentik uit alle toegestane groepen wordt gehaald, komt niet meer binnen via SSO.
+  Zo'n geweigerde poging staat in het logboek als "Inloggen via Authentik geweigerd".
 - **Welke groep welke rol krijgt** staat bij Beheerders & rechten (standaard Sol-Admin =
   Beheerder, Bestuur = Bestuur, Sol-Penningmeester = Penningmeester, Sol-Begeleider = Begeleider).
   Zit je in meerdere groepen, dan wint de hoogste rol. Bij elke login wordt je rol opnieuw uit
-  Authentik overgenomen.
+  Authentik overgenomen. Zit je wel in een toegestane groep, maar is die aan geen rol gekoppeld,
+  dan blijft de rol staan die een beheerder voor je koos; een nieuw account krijgt dan de rol
+  Begeleider.
 
 ### Wachtwoord als noodingang
 
@@ -372,15 +383,17 @@ seizoensfase:
 | Seizoensfase | De taak | Knop |
 |---|---|---|
 | Werving | "... aanmeldingen uitnodigen" (fase Aangemeld) | **Naar de aanmeldingen** |
-| Formulieren | "... wachten nog op hun formulier" (fase Uitgenodigd selectiedag) | **Bekijk wie** |
+| Formulieren | "... wachten nog op hun formulier" (fase Uitgenodigd selectiedag), met hoe de automatische herinnering nu is ingesteld | **Bekijk wie** |
 | Selectiedag | "Vandaag is de selectiedag" | **Naar inchecken** |
-| Bellijst | "De bellijst afwerken" | **Bellijst openen** |
-| Trainingsweekend | "Het trainingsweekend" | **Naar het trainingsweekend** |
-| Aanname | "... wachten op een besluit" (fase TW geweest) | **Bekijk wie** |
+| Bellijst | "... kandidaten zonder besluit" zolang er nog niemand op de bellijst staat, daarna "De bellijst afwerken" met hoeveel er nog niet gebeld, gebeld maar niet doorgevoerd of op twijfel staan | **Naar de nabespreking** of **Bellijst openen** |
+| Trainingsweekend | "Het trainingsweekend", met hoeveel kandidaten nog niet zijn afgevinkt | **Naar het trainingsweekend** |
+| Aanname | "... wachten op een besluit", daarna "... besluiten nog doorvoeren" en "... op twijfel" (uit het trainingsweekend) | **Naar het besluit** |
 
 Naast de taak staan blokjes en "x gedaan · y open". Is er niets te doen, dan zegt het blok dat
-ook, bijvoorbeeld "Iedereen heeft een besluit" of "De lichting is rond". Het getal bij Vandaag in
-het menu is het aantal open stappen van deze taak.
+ook, bijvoorbeeld "De bellijst is leeg" of "De lichting is rond". "De lichting is rond" verschijnt
+pas als op het trainingsweekend iedereen een besluit heeft en alles is doorgevoerd. Het getal bij
+Vandaag in het menu is het aantal open stappen van deze taak. Een knop staat er alleen als je dat
+scherm ook mag openen.
 
 ### Waar staat iedereen
 
@@ -404,10 +417,13 @@ Een balk met twee standen:
 - **Systeem in orde** (groen): het aantal berichten in de wachtrij, mailfouten in 24 uur,
   ondertekeningen die langer dan 3 dagen openstaan en het tijdstip van de laatste taakronde.
 - **Aandacht nodig** (rood, met een waarschuwingsteken): er zijn mailfouten in de laatste 24 uur,
-  er staan meer dan 20 berichten in de wachtrij, of de taakronde heeft meer dan twee uur niet
-  gedraaid ("taakronde vastgelopen" of "taakronde nooit gedraaid"). Met **Bekijk het logboek**
-  ga je naar de fouten; dat logboek kan standaard alleen een beheerder openen. Zie
-  [Systeem en foutenlog](#systeem-en-foutenlog).
+  er staan meer dan 20 berichten in de wachtrij, de taakronde heeft meer dan twee uur niet
+  gedraaid ("taakronde vastgelopen" of "taakronde nooit gedraaid"), of automatisch opschonen staat
+  uit ("Automatisch opschonen staat uit — er wordt niets verwijderd"). Met **Bekijk het logboek**
+  ga je naar de fouten; die knop zie je alleen als je het logboek mag lezen (standaard alleen een
+  beheerder). Staat opschonen uit en mag je Instellingen bewerken, dan staat er ook de knop
+  **Opschonen aanzetten**. Zie [Systeem en foutenlog](#systeem-en-foutenlog) en
+  [Bewaartermijnen](#bewaartermijnen).
 
 ---
 
@@ -425,18 +441,22 @@ alleen de beheerder.
 
 Het hele beheer werkt met één seizoen tegelijk: het seizoen dat **open** staat. Staat er geen
 seizoen open, dan is het nieuwste seizoen het huidige. De topbalk toont altijd welk seizoen dat
-is. Dit scherm laat het nieuwste seizoen zien (met het label **huidig** in de lijst "Alle
-seizoenen").
+is, en dit scherm opent ook op dat seizoen, met het label **huidig**. Een ander seizoen bewerk je
+via **Bewerken** in de lijst "Alle seizoenen"; bovenaan staat dan "Je bewerkt ..." met welk
+seizoen de rest van het beheer gebruikt.
 
-Daarom: **sluit het oude seizoen voordat je een nieuw seizoen aanmaakt.** Maak je een nieuw
-seizoen aan terwijl het oude nog open staat, dan bewerk je hier het nieuwe, terwijl de rest van
-het beheer nog met het oude werkt.
+Sluit het oude seizoen bij voorkeur voordat je een nieuw seizoen aanmaakt. Staat er nog een
+seizoen open, dan waarschuwt het formulier "Nieuw seizoen aanmaken" daarvoor: je kunt het nieuwe
+seizoen alvast aanmaken en de datums invullen, maar het beheer en het aanmeldformulier blijven
+met het open seizoen werken tot je dat sluit en het nieuwe opent. Open je een tweede seizoen
+terwijl het oude nog open staat, dan zegt het tussenscherm dat het beheer met het nieuwste open
+seizoen gaat werken.
 
 ### Stap voor stap
 
 1. **Nieuw seizoen aanmaken.** Vul bij "Nieuw seizoen aanmaken" een **Naam** in (bijvoorbeeld
    "Zomer 2027") en klik op **Aanmaken**. Het seizoen begint gesloten; gegevens van vorige
-   seizoenen blijven staan.
+   seizoenen blijven staan. Je komt meteen in het nieuwe seizoen terecht om de datums in te vullen.
 2. **Datums invullen** in de kaart "... instellen" en klik op **Opslaan**:
    - **Werkperiode**: **Eerste werkdag** en **Laatste werkdag**. Sollicitanten zien in het portaal
      elke week daartussen als tegel. Zonder werkperiode kunnen ze hun beschikbaarheid niet invullen.
@@ -474,8 +494,10 @@ geen kaart.
 ### Alle seizoenen en verwijderen
 
 De lijst "Alle seizoenen" toont per seizoen het aantal sollicitaties, de datum van de selectiedag
-en de werkperiode. Een beheerder ziet per seizoen de knoppen **Sluiten** of **Heropenen** (niet bij
-het huidige seizoen) en **Verwijderen**. Anderen zien "Een seizoen verwijderen of heropenen kan
+en de werkperiode, en het label **huidig** bij het seizoen waarmee het beheer werkt. Bij elk
+seizoen dat je nu niet bewerkt staat **Bewerken**; bij het seizoen dat open staat op dit scherm
+"je bewerkt dit seizoen". Een beheerder ziet daarnaast **Sluiten** of **Heropenen** (niet bij het
+seizoen dat je bewerkt) en **Verwijderen**. Anderen zien "Een seizoen verwijderen of heropenen kan
 alleen een beheerder."
 
 Verwijderen is onomkeerbaar. Het tussenscherm noemt precies wat er verdwijnt: alle sollicitaties
@@ -488,13 +510,13 @@ het seizoen leeg is).
 
 ## Wervingspagina's
 
-**Waar:** Communicatie › Wervingspagina's (op het scherm zelf heet het nog "Landingspagina's")  
+**Waar:** Communicatie › Wervingspagina's  
 **Wie:** bestuur en beheerder.
 
 > **In het kort:** een wervingspagina is een eigen pagina voor één doelgroep met het
 > aanmeldformulier erin, op `/p/<adres>`. Je uploadt een HTML-ontwerp, controleert het rapport en
 > zet de pagina op Gepubliceerd. Per pagina zie je bezoekers, aanmeldingen en waar mensen afhaken.
-> De volledige uitleg staat in de aparte handleiding voor landingspagina's.
+> De volledige uitleg staat in de aparte handleiding voor wervingspagina's.
 
 ### Het overzicht van de pagina's
 
@@ -510,10 +532,10 @@ het seizoen leeg is).
 In het beheerscherm van een pagina staat onder meer "Waar haken mensen af?": per stap van het
 aanmeldformulier hoeveel mensen verder gingen, en los daarvan "Halverwege weggegaan". Elke pagina
 heeft een bron-code die meereist tot in het dossier. De pagina zet geen cookies; bezoeken worden
-anoniem geteld.
+anoniem geteld. Die telling zet je uit onder Instellingen › Bewaren & opschonen.
 
 Het ontwerp maken, de markeringen zoals `[[formulier]]`, afbeeldingen, het scanrapport, versies en
-problemen oplossen staan in de handleiding **Landingspagina's** (overzicht Handleidingen).
+problemen oplossen staan in de **Handleiding wervingspagina's** (overzicht Handleidingen).
 
 ---
 
@@ -546,14 +568,17 @@ correctie), dan staat onder de tabs "... in een fase die nu niet aan de beurt is
 - **Competentie** (alleen als de koppeling met Authentik is ingericht).
 - **Wis filters** verschijnt zodra er een filter aanstaat.
 - Rechts: **Toevoegen** (handmatig een sollicitant invoeren) en **Exporteren** (het hele seizoen
-  als Excel-bestand).
+  als Excel-bestand). Zonder het recht op de kennismakingsformulieren heet de knop **Exporteren
+  (basis)**: dan staan adres en formuliervelden er niet in.
 
 ### Kolommen kiezen en sorteren
 
 Standaard zie je Naam (met e-mailadres eronder), Lft, Woonplaats, Status, Aangemeld en Actie. In
 de kolom Status staat de fase, het label **terug** bij een terugkerende kandidaat, en een
 waarschuwing als er iets mis is ("mail mislukt" of "geen adres"; houd je muis erop voor de reden).
-Afgewezen kandidaten staan gedempt.
+Staat de uitnodig-modus op Suggestie, dan krijgt een aanmelding die binnen de leeftijdsgrenzen valt
+het groene label **Uitnodigen?**. Dat is een voorstel; uitnodigen doe je zelf. Afgewezen
+kandidaten staan gedempt.
 
 Met **Kolommen** zet je extra kolommen aan of uit: Telefoon en de velden uit het
 kennismakingsformulier (Straat, Huisnr., Postcode, Opleiding, Werkervaring, Diploma's, Motivatie,
@@ -563,7 +588,8 @@ kennismakingsformulieren. Een kolom die je aanzet, wordt opgehaald zodra je het 
 keuze blijft staan tot het einde van het seizoen.
 
 Klik op een kolomkop om te sorteren. Onderaan kies je 15, 25, 50 of 100 regels per pagina en blader
-je met **Vorige** en **Volgende**.
+je met **Vorige** en **Volgende**. Open je vanuit de lijst een dossier, dan volgen **← Vorige** en
+**Volgende →** in het dossier dezelfde sortering.
 
 ### De kolom Actie
 
@@ -577,8 +603,9 @@ Per fase is er hooguit één knop, voor iedereen dezelfde:
 
 In de andere fases wacht het systeem op de sollicitant of op de selectiedag, en is er dus niets
 te doen. Staat er een probleem bij de kandidaat, dan staat ervoor **Adres corrigeren** of **Adres
-invullen**; die knop toont alleen de reden, het corrigeren zelf doe je in het dossier of via de
-sollicitant. De kolom Actie ontbreekt als je geen bewerkrecht hebt.
+invullen** (houd je muis erop voor de reden). Die knop opent het dossier met de kaart
+[Gegevens corrigeren](#gegevens-corrigeren) open. De kolom Actie ontbreekt als je geen bewerkrecht
+hebt.
 
 Een knop in de kolom Actie opent eerst het tussenscherm (zie hieronder).
 
@@ -609,20 +636,26 @@ je een samenvatting: hoeveel zijn bijgewerkt, hoeveel stonden al in die fase, ho
 verstuurd, overgeslagen (al verstuurd of geen adres) of mislukt. Bij meer dan tien mensen gaan de
 berichten via de wachtrij en worden ze de komende minuten verstuurd.
 
+Een melding dat iets gelukt is, verdwijnt na vijf seconden. Een fout of waarschuwing blijft staan
+tot je verder gaat, zodat je hem kunt lezen.
+
 ### Handmatig toevoegen
 
-Via **Toevoegen**. Verplicht zijn **Voornaam**, **Achternaam**, **E-mailadres** en **Seizoen**;
-verder **Tussenvoegsel**, **Telefoonnummer**, **Geboortedatum**, **Geslacht** en de **Fase**
-waarin de persoon begint. Bestaat het e-mailadres al, dan wordt dat profiel bijgewerkt en telt de
-persoon als terugkerend. Tekst bij **Interne notities** komt als notitie in het dossier. Het
-vinkje **Stuur welkomstmail naar sollicitant (met portaal link)** staat standaard aan en stuurt de
-bevestiging van aanmelding. Klik op **Toevoegen**.
+Via **Toevoegen**. Verplicht zijn **Voornaam**, **Achternaam**, **E-mailadres** en **Seizoen**
+(standaard het huidige seizoen); verder **Tussenvoegsel**, **Telefoonnummer**, **Geboortedatum**,
+**Geslacht** en de **Beginfase**. Tekst bij **Interne notities** komt als notitie in het dossier.
+Het vinkje **Stuur welkomstmail naar de sollicitant (met portaallink)** staat standaard aan en
+stuurt de bevestiging van aanmelding. Klik op **Toevoegen**; daarna opent het dossier van de nieuwe
+sollicitant.
 
-Twee dingen om te weten:
+Goed om te weten:
 
-- Kies je hier een andere beginfase dan Aangemeld, dan wordt alleen de fase gezet: het systeem
-  zet dan géén formulieren klaar en stuurt geen uitnodiging. Voeg iemand daarom toe als Aangemeld
-  en nodig daarna uit via de knop.
+- Een latere beginfase dan Aangemeld doet hetzelfde als een fasewijziging in het dossier: het
+  systeem zet de formulieren of het kennismakingspakket klaar en stuurt het bijbehorende bericht.
+  Wil je dat bericht niet, vink dan **Geen bericht bij de beginfase** aan.
+- Bestaat het e-mailadres al, dan komt de sollicitatie bij die persoon en telt die als
+  terugkerend. Heeft die persoon in dit seizoen al een sollicitatie, dan zie je een melding en wordt
+  er niets gewijzigd. Een leeg veld wist geen bekend telefoonnummer of geboortedatum.
 - Wie handmatig is toegevoegd, heeft zelf nog geen privacytoestemming gegeven; in het dossier
   staat dan "Nog niet gegeven".
 
@@ -651,7 +684,7 @@ personen zijn aangemaakt, bijgewerkt en overgeslagen, plus eventuele fouten per 
 
 - Het **kruimelpad** "Sollicitanten / naam" brengt je terug naar de lijst, met je filters nog aan.
   Kwam je uit een lijst met meer mensen, dan staat er "4 van 12 in ..." met **← Vorige** en
-  **Volgende →**.
+  **Volgende →**. Die volgen de filters en de sortering van de lijst.
 - De **kop** toont foto of initialen, naam, fase, het label **Eerder gesolliciteerd** bij een
   terugkerende kandidaat, en leeftijd, woonplaats, e-mail en telefoon. Een oranje melding
   waarschuwt rond de leeftijdsgrens van 16: "Wordt pas 16 op ..." of "Was 15 bij de start van het
@@ -660,9 +693,9 @@ personen zijn aangemaakt, bijgewerkt en overgeslagen, plus eventuele fouten per 
   selectiedag**, **Uitnodigen trainingsweekend** of **Aannemen**, afhankelijk van de fase),
   **Bericht** (opent Berichten met deze persoon) en **Bellen** (als er een telefoonnummer is).
 
-Let op: de knop voor de volgende stap in de kop voert de stap meteen uit, zonder tussenscherm en
-zonder de keuze "zonder bericht". Wil je eerst zien wat er gebeurt, of zonder bericht doorvoeren,
-gebruik dan de knop in de lijst of de fasekaart hieronder.
+De knop voor de volgende stap opent eerst hetzelfde tussenscherm als in de lijst: je ziet wat er
+gebeurt en of er bericht uitgaat, en je kunt **Zonder bericht doorvoeren** aanvinken. Pas na
+**Ja, uitnodigen** of **Ja, aannemen** gebeurt het.
 
 ### De tabbladen
 
@@ -683,7 +716,10 @@ Een tabblad dat niets te tonen heeft, verschijnt niet.
   bewerkrecht kies je hier een ander kanaal, bijvoorbeeld als iemand geen WhatsApp wil; de wijziging
   wordt opgeslagen en gelogd), Adres, **Toestemming privacy** ("Gegeven" met datum, of "Nog niet
   gegeven") en **Ouderlijke toestemming** ("Nodig — tekent via een ouder" onder de 18, anders
-  "Niet nodig — 18 of ouder").
+  "Niet nodig — 18 of ouder"). Het volledige adres zie je alleen met het recht op de
+  kennismakingsformulieren; zonder dat recht staat er alleen de **Woonplaats**.
+- **Gegevens corrigeren** (met bewerkrecht): een uitklapper om naam, e-mail, telefoon of
+  geboortedatum te verbeteren. Zie [Gegevens corrigeren](#gegevens-corrigeren).
 - **Advies**: zodra er cijfers zijn, een advies Door, Twijfel of Niet met de reden ("Score ... ligt
   boven de drempel van 3,5"), en een balk per test. Het label zegt het al: advies, geen besluit.
   Is er een besluit uit de nabespreking, dan staat dat eronder.
@@ -700,15 +736,18 @@ Een tabblad dat niets te tonen heeft, verschijnt niet.
 
 - **Fase**: een knop per fase; de huidige heeft een vinkje. Klik op een andere fase om die te
   zetten: je krijgt de vraag "Fase wijzigen naar ...?" met het vinkje **Zonder bericht versturen**
-  en de knop **Ja, wijzigen**. Zo zet je ook terug of corrigeer je een fase. Wat een overgang in
-  gang zet, staat in [De fases en wat er automatisch gebeurt](#de-fases-en-wat-er-automatisch-gebeurt).
+  en de knop **Ja, wijzigen**. Zo zet je ook terug of corrigeer je een fase. Wijkt de stap af van de
+  gewone volgorde (terugzetten of een stap overslaan), dan heet de knop **Verder** en volgt de vraag
+  "Waarom wijk je af? (optioneel)". Wat je daar typt, komt als notitie in de tijdlijn; leeg laten
+  mag. Wat een overgang in gang zet, staat in
+  [De fases en wat er automatisch gebeurt](#de-fases-en-wat-er-automatisch-gebeurt).
 - **Taken**: de taken precies zoals de sollicitant ze in het portaal ziet, met "x / y afgerond"
   en per taak Afgerond, Open of Wacht op ouder. Bij een open ondertekening staat **Link kopiëren**:
   plak die link in een mail of app als de automatische mail niet aankwam. Onderaan de link naar het
   tabblad Ondertekeningen.
-- **Notities**: interne opmerkingen, zichtbaar voor iedereen met toegang tot het dossier. Typ en
-  klik op **Plaatsen**. Je eigen notities kun je bewerken en verwijderen; een beheerder kan dat bij
-  alle notities.
+- **Notities**: interne opmerkingen, alleen zichtbaar in het beheer, voor iedereen die het dossier
+  mag lezen (ook de penningmeester). Plaatsen vraagt bewerkrecht: typ en klik op **Plaatsen**. Je
+  eigen notities kun je bewerken en verwijderen; een beheerder kan dat bij alle notities.
 - **Tijdlijn**: de laatste gebeurtenissen.
 - **Eerdere seizoenen**: eerdere sollicitaties van dezelfde persoon, met de fase waarin die eindigden.
 
@@ -727,7 +766,12 @@ naam, adres of contactgegevens naar de AI-dienst.
 Een tegel per week (W23, W24 ...) met het aantal dagen, en het label **Voorlopig** of
 **Definitief**. Groen is de hele week, oranje deels, blauw een correctie van het bestuur, grijs niet
 beschikbaar. Klik op een week om die te corrigeren; **Volledig bewerken** opent alle weken. Rechts
-staat wat de sollicitant bij de aanmelding als voorkeur opgaf. Zie
+staat wat de sollicitant bij de aanmelding als voorkeur opgaf.
+
+In de kaart **Norm** staat hoeveel dagen per week deze persoon werkt: "5 dagen per week
+(standaard)" of een afwijkende norm. Met bewerkrecht op Beschikbaarheid kies je bij **Norm (dagen
+per week)** een ander aantal (1 tot en met 6), vul je een **Reden** in en klik je op **Norm
+opslaan**. Zonder dat recht zijn de weektegels en de norm alleen te bekijken. Zie
 [Beschikbaarheid, dekking en loonplanning](#beschikbaarheid-dekking-en-loonplanning).
 
 ### Tabblad Selectiedag
@@ -754,12 +798,52 @@ logboek gefilterd op deze persoon, inclusief wie welk document opende).
 ### Verwijderen uit het dossier
 
 Onderaan het tabblad Dossier staat het rode blok **Sollicitant verwijderen** (alleen met
-verwijderrecht). Klik op **Verwijderen…** en bevestig met **Ja, verwijderen**. Het
-kennismakingsformulier, de beschikbaarheid, notities en observaties, ondertekende documenten en het
-loondossier verdwijnen; berichten blijven in het logboek staan zonder inhoud. Dit is niet terug te
-draaien. Ligt er een verwerkt loondossier, dan vraagt het systeem een tweede bevestiging met het
-vinkje **Het dienstverband is niet doorgegaan**: loonheffing en kopie ID moeten anders vijf jaar
-bewaard blijven. Zie [Privacy en AVG-verzoeken](#privacy-en-avg-verzoeken).
+verwijderrecht op Sollicitanten). Er zijn twee knoppen:
+
+- **Alleen deze sollicitatie…**: het formulier, de foto, de beschikbaarheid, notities,
+  beoordelingen, taken en documenten van deze sollicitatie verdwijnen. Naam, e-mail en telefoon
+  blijven bewaard voor andere seizoenen.
+- **Alles van deze persoon…**: voor een verwijderverzoek (AVG). Alle sollicitaties van deze persoon
+  worden leeggemaakt en naam, e-mail, telefoon, geboortedatum en adres worden vervangen door
+  "Verwijderd (verzoek AVG)". Ingelogde apparaten in het portaal worden uitgelogd.
+
+Beide knoppen openen eerst een tussenscherm dat opsomt wat er verdwijnt. Bevestig met **Ja,
+verwijderen** of **Ja, alles wissen**. In het berichtenlog verdwijnen de inhoud en het adres van de
+berichten. Dit is niet terug te draaien.
+
+Ligt er een verwerkt loondossier, dan staat op het tussenscherm het vinkje **Het dienstverband is
+niet doorgegaan**. Vink dat alleen aan als deze persoon nooit heeft gewerkt; dan gaan ook het
+loonheffingsformulier en de kopie ID mee. Zonder vinkje wordt er niets verwijderd, want die stukken
+vallen onder de wettelijke bewaarplicht. Dit kan alleen wie ook het recht Loondossiers verwijderen
+heeft (standaard alleen de beheerder); anderen krijgen een melding en geen tussenscherm. Zie
+[Privacy en AVG-verzoeken](#privacy-en-avg-verzoeken).
+
+### Gegevens corrigeren
+
+Klopt de naam, het e-mailadres, het telefoonnummer of de geboortedatum niet, dan pas je dat aan in
+de uitklapper **Gegevens corrigeren** op het tabblad Dossier (bewerkrecht op Sollicitanten). Je
+komt er ook direct via **Adres corrigeren** of **Adres invullen** in de lijst, en via de link
+**Gegevens corrigeren** bij een mislukt bericht.
+
+1. Klap **Gegevens corrigeren** open.
+2. Pas **Voornaam**, **Tussenvoegsel**, **Achternaam**, **E-mailadres**, **Telefoon** of
+   **Geboortedatum** aan.
+3. Klik op **Gegevens opslaan**.
+
+Goed om te weten:
+
+- Een e-mailadres hoort bij één persoon. Staat het adres al bij een ander dossier, dan wordt er
+  niets opgeslagen. De sollicitant logt daarna met het nieuwe adres in op het portaal.
+- De correctie geldt voor de persoon, dus ook voor eerdere seizoenen.
+- Gaat iemand door een nieuwe geboortedatum over de grens van 18 jaar (ondertekenen via een ouder
+  of zelf) of onder de 16 jaar (aanmeldleeftijd en AVG-grens), dan zie je na het opslaan een
+  waarschuwing. Documenten die al klaarstaan veranderen niet vanzelf; kijk bij Ondertekeningen of
+  er iets opnieuw moet.
+- In het logboek komt "Gegevens gecorrigeerd" met welke velden zijn gewijzigd, niet het nieuwe
+  e-mailadres of nummer.
+
+Een sollicitant kan dit niet zelf aanpassen, maar vraagt het aan via een vraag in Berichten in het
+portaal.
 
 ---
 
@@ -809,8 +893,11 @@ Hoe je die mensen later benadert, staat in
 
 Soms heb je al gebeld of corrigeer je een fase die verkeerd stond. Dan wil je geen standaardbericht.
 
-- In de lijst en de bulkbalk: vink op het tussenscherm **Zonder bericht doorvoeren** aan.
-- In het dossier: vink in de vraag "Fase wijzigen naar ...?" **Zonder bericht versturen** aan.
+- In de lijst, de bulkbalk en met de knop in de kop van het dossier: vink op het tussenscherm
+  **Zonder bericht doorvoeren** aan.
+- In de fasekaart van het dossier: vink in de vraag "Fase wijzigen naar ...?" **Zonder bericht
+  versturen** aan.
+- Bij handmatig toevoegen: vink **Geen bericht bij de beginfase** aan.
 
 De fase verandert wel, en de neveneffecten (formulieren klaarzetten, kennismakingspakket) gebeuren
 ook; alleen het bericht aan de sollicitant blijft achterwege. In het logboek blijft zichtbaar dát
@@ -821,7 +908,8 @@ altijd het ingestelde bericht uit.
 
 - **Terugzetten** naar Aangemeld, Selectiedag geweest of TW geweest stuurt nooit een bericht. Alleen
   de overgangen naar Uitgenodigd selectiedag, Aangemeld selectiedag, Uitgenodigd trainingsweekend,
-  Aangenomen en Afgewezen kunnen een melding sturen.
+  Aangenomen en Afgewezen kunnen een melding sturen. Bij terugzetten of een stap overslaan in de
+  fasekaart kun je een reden opgeven die in de tijdlijn komt.
 - **Geen dubbele berichten**: dezelfde melding gaat niet twee keer binnen een uur naar dezelfde
   persoon. Zet je iemand per ongeluk terug en meteen weer vooruit, dan zie je "Bericht al eerder
   verstuurd (geen dubbele)".
@@ -841,8 +929,8 @@ altijd het ingestelde bericht uit.
 
 **Waar:** Kandidaten › Selectiedag, met bovenaan de stappen Groepen, Inchecken, Beoordelen,
 Nabespreking en Bellijst.  
-**Wie:** bestuur en beheerder alles. Begeleider standaard alleen meekijken bij Groepen, Inchecken
-en Beoordelen; Nabespreking en Bellijst ziet een begeleider niet.
+**Wie:** bestuur en beheerder alles. Een begeleider bekijkt de groepen, checkt in en beoordeelt;
+de tabletcode, de groepsindeling, Nabespreking en Bellijst blijven bij het bestuur.
 
 > **In het kort:** vijf stappen voor één dag. Vooraf deel je groepen in en maak je de
 > toegangscode voor de tablet. Op de dag check je in (of kandidaten doen dat zelf) en beoordeel je
@@ -859,15 +947,14 @@ Het beste op een laptop.
 1. Vul het **Aantal groepen** in en klik op **Instellen**.
 2. Klik op **Voorstel maken** en bevestig met **Ja, opnieuw verdelen**. Het systeem maakt gelijke
    groepen, gemengd op leeftijd en geslacht, en houdt koppels uit elkaar die je hebt aangegeven.
-   Let op: dit overschrijft de bestaande indeling, ook wat je zelf versleepte.
-3. **Sleep** kaartjes tussen de groepen. De kolom "Nog niet ingedeeld" toont wie nog geen groep
-   heeft; bovenaan staat "x van y ingedeeld".
+   Let op: dit overschrijft de bestaande indeling, ook wat je zelf verplaatste.
+3. **Verplaats** kaartjes tussen de groepen: sleep ze met de muis, of kies op het kaartje bij
+   "Naar groep" een groep (of "Nog niet ingedeeld") en klik op **Verplaats**. Die keuzelijst werkt
+   ook op een tablet en met alleen het toetsenbord. De kolom "Nog niet ingedeeld" toont wie nog
+   geen groep heeft; bovenaan staat "x van y ingedeeld".
 4. Klik op een naam om in "Wie mogen niet bij elkaar?" aan te vinken wie deze persoon kent en dus
    liever niet in dezelfde groep zit. Klik op **Klaar**. Zit zo'n koppel toch samen, dan staat op het
    kaartje **botst**.
-
-Slepen werkt met een muis; op een tablet of met alleen het toetsenbord kun je kaartjes niet
-verplaatsen. Maak de indeling daarom op een computer.
 
 ### Stap 2: inchecken
 
@@ -885,7 +972,8 @@ Gemaakt voor een tablet bij de ingang. Twee manieren, door elkaar te gebruiken:
      meer en moet je opnieuw openen met de nieuwe link.
 - **Aanwezigheidslijst**: per groep een rij per kandidaat met de knop **Aanwezig** (na aantikken
   wordt het **Ongedaan**). De teller "x/y aanwezig" loopt mee; met **Zoek op naam** vind je iemand
-  snel. Tikken is opslaan.
+  snel. Tikken is opslaan. Ook begeleiders kunnen hier inchecken; de toegangscode aanmaken kan
+  alleen het bestuur.
 
 Zodra iemand is ingecheckt, zet het systeem de fase op **Selectiedag geweest**. Wie na afloop niet
 is ingecheckt, telt als niet verschenen. Onderaan brengt **Naar beoordelen** je naar stap 3.
@@ -893,22 +981,27 @@ is ingecheckt, telt als niet verschenen. Onderaan brengt **Naar beoordelen** je 
 ### Stap 3: beoordelen
 
 Gemaakt voor een telefoon, met één kandidaat tegelijk. Je werkt onder je eigen weergavenaam.
+Bestuur, beheerder en begeleiders kunnen beoordelen; niemand overschrijft de cijfers van een ander.
 
 1. Kies bovenaan eventueel een groep (**Alle** of een groepsnaam). Links (op een telefoon erboven)
    staat de lijst met per kandidaat "nog niet begonnen", "x van y criteria", "klaar" of "niet
    verschenen", en het aantal observaties.
 2. Het systeem opent de eerste kandidaat die jij nog niet af hebt. Een waarschuwing toont
    bijzonderheden uit het kennismakingsformulier; een melding zegt het als de kandidaat niet is
-   ingecheckt.
+   ingecheckt. Zonder het recht op de kennismakingsformulieren (zoals een begeleider) staat daar
+   alleen "Let op: er is een bijzonderheid bekend bij het bestuur" met het verzoek bij een
+   bestuurslid na te vragen waar je op moet letten.
 3. Geef per criterium een cijfer van 1 tot en met 5 door op het cijfer te tikken; er verschijnt
-   "opgeslagen". De criteria staan per test (standaard Sporttest en Zwemtest) en stel je in bij
-   Instellingen › Beoordelingscriteria. Je ziet je eigen cijfers; bij meer beoordelaars staat
-   eronder het gemiddelde.
+   "opgeslagen". Tik je nog een keer op hetzelfde cijfer, dan wordt het gewist. De criteria staan
+   per test (standaard Sporttest en Zwemtest) en stel je in bij Instellingen ›
+   Beoordelingscriteria. Je ziet je eigen cijfers; bij meer beoordelaars staat eronder het
+   gemiddelde.
 4. Een **observatie** plaats je door **Positief**, **Neutraal** of **Aandacht** te kiezen, te typen
    wat opviel en op **Observatie opslaan** te tikken. Observaties mogen over iedereen gaan, ook
    buiten je eigen groep. Je eigen observaties kun je verwijderen; bestuur en beheerder kunnen alle
    observaties verwijderen.
-5. Ga verder met **Volgende: naam** of terug met **Vorige**. **Dossier** opent het dossier.
+5. Ga verder met **Volgende: naam** of terug met **Vorige**. **Dossier** opent het dossier; die
+   knop zie je alleen als je Sollicitanten mag lezen.
 
 ### Stap 4: nabespreken
 
@@ -918,8 +1011,8 @@ bepaalt het besluit. Filter op **Iedereen**, **Nog open**, **Door**, **Twijfel**
 
 1. Klik per kandidaat op **Door**, **Twijfel** of **Niet**, en typ eventueel een korte reden in het
    veld ernaast. Dit wordt direct opgeslagen ("opgeslagen") en verandert nog niets aan de fase.
-2. Een ander besluit kies je door op een andere knop te klikken. Een besluit helemaal wissen kan
-   hier niet.
+2. Een ander besluit kies je door op een andere knop te klikken. Klik je nog een keer op het
+   besluit dat al gekozen is, dan wordt het gewist, samen met de reden ("besluit gewist").
 3. Heeft iemand een besluit Door of Niet, dan staat onderaan **Naar de bellijst**.
 
 ### Stap 5: de bellijst
@@ -970,23 +1063,26 @@ observaties.
 
 1. Tik een kandidaat aan.
 2. Bij "Is ... er?" tik je **Aanwezig**, of **Niet gekomen**. Bij niet gekomen vraagt het systeem
-   waarom ("Niet gekomen — waarom?"); vul altijd een reden in, zoals "ziek" of "niet komen
-   opdagen", dan ziet het bestuur dat verschil bij het besluit. Laat je de reden leeg, dan blijft
-   de kandidaat op "nog niet afgevinkt" staan.
+   waarom ("Niet gekomen — waarom?"). Die reden is verplicht, bijvoorbeeld "ziek" of "niet komen
+   opdagen", zodat het bestuur dat verschil bij het besluit ziet. Laat je hem leeg, dan vraagt het
+   systeem opnieuw.
 3. Onder "Wat valt op?" kies je **Positief**, **Neutraal** of **Aandacht**, typ je de observatie en
    tik je op **Observatie opslaan**. De sollicitant ziet observaties niet. Je eigen observaties kun
    je verwijderen; die van anderen blijven staan.
 4. Ga verder met **Volgende: naam**. Bij de laatste kandidaat brengt **Naar het besluit** het
    bestuur naar de tweede stand.
 
-Afvinken zet de fase niet op TW geweest en stuurt geen bericht.
+Afvinken zet de fase niet op TW geweest en stuurt geen bericht. Net als op de selectiedag ziet
+wie de kennismakingsformulieren niet mag lezen geen bijzonderheden, alleen dat er iets is om na te
+vragen; de knop **Dossier** en het telefoonnummer ziet alleen wie Sollicitanten mag lezen.
 
 ### Stand 2: het besluit
 
 Bovenaan een regel die zegt hoe het ervoor staat, bijvoorbeeld "3 kandidaten wachten op een
 besluit", "5 besluiten staan klaar om door te voeren", "2 op twijfel — daar moet iemand over
 bellen" of "Alles is besloten en doorgevoerd". Het tabblad Besluit toont tussen haakjes hoeveel
-aanwezigen nog een besluit nodig hebben.
+kandidaten nog een besluit nodig hebben. Dat telt iedereen zonder besluit, ook wie niet is
+afgevinkt of niet kwam.
 
 Per kandidaat een kaart met de aanwezigheid ("het hele weekend erbij", "niet gekomen" of
 "aanwezigheid niet afgevinkt"), de observaties van het weekend, en ingeklapt "Op de selectiedag
@@ -999,6 +1095,9 @@ gezegd". Heeft niemand iets opgeschreven, dan zegt de kaart dat ook.
 3. Klik op **... besluiten doorvoeren** en bevestig met **Ja, doorvoeren**. Aannemen wordt
    Aangenomen (met het kennismakingspakket en de welkomstmail), Afwijzen wordt Afgewezen (met de
    afwijzingsmail als die aan staat). De kaart toont daarna "Doorgevoerd" met de nieuwe fase.
+   Lukt het bij iemand niet, dan zegt de melding hoeveel er niet gelukt zijn; kijk dan in het
+   logboek en voer opnieuw door. Wie intussen via een ander scherm al een andere fase kreeg, krijgt
+   hier geen tweede bericht.
 4. Twijfel gaat nooit vanzelf de deur uit. Bel de kandidaat, zet daarna het besluit om naar
    Aannemen of Afwijzen en voer opnieuw door.
 
@@ -1180,8 +1279,8 @@ bewerken**. Die opent het scherm "Beschikbaarheid aanpassen" met twee tabbladen:
 
 Onderaan staat **Bekijk de dag-export (API-check)**: per dag of iemand beschikbaar is, precies zoals
 het naar het rooster gaat. Een afwijkende norm (bijvoorbeeld drie dagen per week na een
-bestuursbesluit) zie je als oranje label in het raster. Instellen kan op dit moment niet via het
-beheer; vraag daarvoor de technisch beheerder.
+bestuursbesluit) zie je als oranje label in het raster. Je stelt die in het dossier in, tabblad
+Beschikbaarheid, kaart **Norm**, met een reden (bewerkrecht op Beschikbaarheid).
 
 ### Het dekkingsscherm
 
@@ -1213,13 +1312,14 @@ staat niet tegelijk op een andere post. De postcommandant valt buiten deze berek
 ### De loonplanning
 
 In de loonplanning zet je per persoon en per week wie je inplant, en je ziet meteen wat dat kost.
-Elke wijziging wordt direct opgeslagen.
+Elke wijziging wordt direct opgeslagen. Met alleen leesrecht op Loonplanning zie je bovenaan "Je
+bekijkt deze planning alleen" en kun je niets wijzigen.
 
-- **Scenario's**: bovenaan staan de scenario's. De ster (★) wijst de actieve planning aan.
-  **+ Dupliceren** maakt een kopie van het getoonde scenario, zodat je een alternatief kunt
-  doorrekenen. Bij een scenario dat niet actief is staan **★ Maak actief** en **Verwijderen**
-  (met bevestiging; de beschikbaarheid van de sollicitanten blijft staan). **CSV** downloadt het
-  getoonde scenario.
+- **Scenario's**: bovenaan staan de scenario's. Een ster-icoon met het woord **Actief** wijst de
+  actieve planning aan. **+ Dupliceren** maakt een kopie van het getoonde scenario, zodat je een
+  alternatief kunt doorrekenen. Bij een scenario dat niet actief is staan **Maak actief** en
+  **Verwijderen** (met bevestiging; de beschikbaarheid van de sollicitanten blijft staan). Die
+  knoppen zie je alleen met bewerkrecht. **CSV** downloadt het getoonde scenario.
 - **Signalen (N)**: aandachtspunten boven de tabel, zoals iemand die meer dagen staat
   ingepland dan die kan. Het zijn geen blokkades; jij beslist.
 - **De tabel**: per persoon de **Functie** (keuzelijst, geldt voor alle weken) en per week een
@@ -1233,7 +1333,9 @@ Elke wijziging wordt direct opgeslagen.
 - **Onderaan**: de totale loonkosten, de mandagen en, als er een budget is, een balk met
   "Restant" of "Over budget". Zonder budget staat er een link naar Instellingen › Lonen & budget.
 
-Let op: de CSV-download vraagt leesrecht op Beschikbaarheid, niet op Loonplanning.
+De CSV-download vraagt leesrecht op Loonplanning. De penningmeester heeft dat standaard niet; geef
+het de rol Penningmeester onder [Beheerders en rechten](#beheerders-en-rechten) als die de
+planning moet kunnen downloaden.
 
 ---
 
@@ -1263,8 +1365,9 @@ Let op: de CSV-download vraagt leesrecht op Beschikbaarheid, niet op Loonplannin
 
 ### Wat er op het scherm staat
 
-- Een vast kader "Hier staan een BSN en kopieën van identiteitsbewijzen." met de regels en de
-  bewaartermijn.
+- Een vast kader "Hier staan een BSN en kopieën van identiteitsbewijzen." met de regels, wat er
+  met de bankpasfoto gebeurt (automatisch na het ingestelde aantal dagen als opschonen aanstaat,
+  anders zelf vernietigen) en de bewaarplicht van de loondocumenten.
 - Een regel met de stand, bijvoorbeeld "2 dossiers wachten op verwerking", en de telling
   "aangenomen · compleet · verwerkt".
 - Een kaart per persoon met het label **Verwerkt …**, **Compleet — klaar om te verwerken** of
@@ -1274,19 +1377,49 @@ Let op: de CSV-download vraagt leesrecht op Beschikbaarheid, niet op Loonplannin
   (alleen met verwijderrecht).
 - Onderaan de kaart **Verwerkt in de loonadministratie** (met een tussenscherm en **Ja,
   verwerkt**), **Melding opnieuw naar de penningmeester** en **Tijdlijn van de ondertekening**.
+- Onderaan het scherm, zodra er iemand voor in aanmerking komt, de kaart **Te beoordelen voor
+  vernietiging** (zie hieronder).
+
+### Te beoordelen voor vernietiging
+
+Het loonheffingsformulier en de kopie ID moeten bewaard blijven tot vijf jaar na het einde van het
+kalenderjaar waarin het dienstverband eindigde. Het systeem weet alleen tot welk seizoen iemand
+hier voorkwam, niet wanneer het dienstverband eindigde. Daarom wist het deze stukken niet zelf,
+maar zet het ze klaar.
+
+De kaart toont iedereen van wie het laatste seizoen als aangenomen (of met loonstukken) minstens
+vijf volle kalenderjaren terug ligt. Wie in 2020 voor het laatst werkte, verschijnt dus op
+1 januari 2026. Per persoon staan "Laatste seizoen hier" en "Nog aanwezig" (welke stukken er nog
+zijn). De kaart ziet alleen wie Loondossiers mag bewerken.
+
+1. Controleer in de loonadministratie of het dienstverband toen echt eindigde. Werkte iemand daarna
+   nog, vernietig dan niets.
+2. Klik op **Vernietigen…** (alleen met het recht Loondossiers verwijderen).
+3. Het tussenscherm noemt wat er onherroepelijk weggaat. Klik op **Ja, loondossier vernietigen**.
+
+De stukken worden uit de kluis gewist, en van het loonheffingsformulier verdwijnen ook het BSN, de
+handtekening en de formuliergegevens. Als bewijs blijft staan dát er getekend en geüpload is. De
+rest van het dossier (gegevens, sollicitaties, andere ondertekeningen) blijft staan. In het logboek
+komt "Loondossier vernietigd (na de bewaarplicht)". Zijn de loondocumenten van een oud-strandwacht
+weg, dan anonimiseert de dagelijkse opschoning daarna ook de persoon (als automatisch opschonen
+aanstaat).
 
 ### Wat automatisch gebeurt
 
 - Zodra loonheffing, ID en bankpas binnen zijn, gaat de melding "Loondossier compleet
-  (penningmeester)" uit.
+  (penningmeester)" uit. Dat gebeurt ook als het laatste stuk een upload is, niet alleen na het
+  ondertekenen.
 - Elke download komt in het logboek als "Document gedownload", met wie en wanneer. Bij het stuk
-  staat "Laatst ingezien". Op een ID-kopie komt een watermerk.
+  staat "Laatst ingezien". Op een foto (JPG of PNG) van de ID-kopie of de bankpas komt een
+  watermerk; op een PDF niet.
 - Bij elke download van een ID-kopie, bankpas of loonheffingsformulier krijgt het bestuursadres
-  een mail "Loondocument gedownload: …". Verwacht je die niet, kijk dan in het
-  [Logboek](#logboek).
-- De kopie van de bankpas wordt 30 dagen na verwerking vernietigd, en loonheffing en ID-kopie na
-  de wettelijke termijn. Dat gebeurt alleen als automatisch opschonen aanstaat (zie
-  [Bewaartermijnen](#bewaartermijnen)).
+  een mail "Loondocument gedownload: …" met de naam van het document. Verwacht je die niet, kijk
+  dan in het [Logboek](#logboek). Die mail staat standaard aan en zet je uit onder Instellingen ›
+  Bewaren & opschonen (raden we af).
+- De kopie van de bankpas wordt na het ingestelde aantal dagen (standaard 30) na verwerking
+  vernietigd, alleen als automatisch opschonen aanstaat (zie [Bewaartermijnen](#bewaartermijnen)).
+  Staat het uit, dan vernietigt de penningmeester de bankpasfoto zelf.
+- Loonheffing en ID-kopie worden nooit automatisch vernietigd; zie hierboven.
 
 ---
 
@@ -1580,19 +1713,28 @@ eronder, en die zet het systeem er zelf onder.
 ## Instellingen
 
 **Waar:** zijbalk › Systeem › Instellingen (tabbladen links, in groepen)  
-**Wie:** bestuur en admin.
+**Wie:** bestuur en admin. Opslaan vraagt bewerkrecht op Instellingen.
 
 > **In het kort:** Links staan de tabbladen in zes groepen, met een filterveld "Filter
-> instellingen…". Elk tabblad heeft een eigen knop **Opslaan**; die bewaart alleen dat
-> tabblad. Onder de tabbladen staat de link **Sjablonen voor mails**, en in de kaart **Versie**
-> de link **Systeem & updates**. Zoeken door het hele beheer kan met Ctrl K.
+> instellingen…". Elk tabblad heeft een eigen knop **Opslaan**; die bewaart alleen de velden van
+> dat tabblad. Wachtwoorden en sleutels worden nooit getoond. Onder de tabbladen staat de link
+> **Sjablonen voor mails**, en in de kaart **Versie** de link **Systeem & updates** (voor wie
+> Systeem mag bewerken). Zoeken door het hele beheer kan met Ctrl K.
+
+### Wachtwoorden en sleutels
+
+Een geheim veld (de AI-sleutel, de Authentik-tokens, het wachtwoord van de mailserver, de sleutels
+voor sms en WhatsApp) toont nooit de waarde zelf, alleen het label **Ingesteld** of **Nog niet
+ingesteld**. Laat je het veld leeg, dan blijft de huidige waarde staan. Plak een nieuwe waarde om
+hem te vervangen, of vink **Huidige waarde verwijderen** aan om hem te wissen. In het logboek komt
+alleen welk veld is gewijzigd, nooit de waarde.
 
 ### De tabbladen
 
 | Groep | Tabblad | Wat je hier instelt |
 |---|---|---|
-| Organisatie | **Algemeen** | Naam van de organisatie; logo en favicon (upload of pad/URL); de welkomsttekst op de portaal-login; de huisregels (pdf) voor de taak "Huisregels lezen" van aangenomen strandwachten (zonder document blijft de taak staan als "volgt binnenkort"; **Losmaken van de taak** koppelt hem los); de minimum- en maximumleeftijd voor het aanmeldformulier (standaard 15 en 35). |
-| Selectie & seizoen | **Uitnodigen & automatisch** | Auto-invite: modus Uit, Suggestie (markeert in de lijst) of Automatisch (nodigt uit na de vertraging in uren), met de leeftijdsgrenzen (standaard 16 tot 30). De automatisering bij een fasewijziging: **Ondertekeningen bij SD-uitnodiging** en **Kennismakingspakket bij aangenomen**. De ingebouwde herinneringen, de rustperiode, het anti-loop-plafond, de grens voor e-mailbijlagen en het maximum aantal WhatsApp-berichten per uur (zie [Geplande berichten en herinneringen](#geplande-berichten-en-herinneringen)). |
+| Organisatie | **Algemeen** | Naam van de organisatie; logo (PNG, JPG of WebP) en favicon (PNG of ICO), als upload of pad/URL; SVG wordt geweigerd, want daar kan script in zitten; de welkomsttekst op de portaal-login; de huisregels (pdf) voor de taak "Huisregels lezen" van aangenomen strandwachten (zonder document blijft de taak staan als "volgt binnenkort"; **Losmaken van de taak** koppelt hem los). Bij Aanmeldformulier staat de vaste tekst "De minimumleeftijd is 15 jaar"; die is niet in te stellen. |
+| Selectie & seizoen | **Uitnodigen & automatisch** | **Seizoen en selectie**: de **Seizoensfase** (standaard "Automatisch (uit de datums van het seizoen)"; kies alleen een vaste fase als de datums niet kloppen, en zet hem daarna terug) en de **Advies-drempel selectiedag** (1 tot 5, standaard 3,5), vanaf waar het dossier "Door" adviseert. Auto-invite: modus Uit, Suggestie (markeert in de lijst met **Uitnodigen?**) of Automatisch (nodigt uit na de vertraging in uren), met de leeftijdsgrenzen (standaard 16 tot 30). De automatisering bij een fasewijziging: **Ondertekeningen bij SD-uitnodiging** en **Kennismakingspakket bij aangenomen**. De ingebouwde herinneringen, de rustperiode, het anti-loop-plafond, de grens voor e-mailbijlagen en het maximum aantal WhatsApp-berichten per uur (zie [Geplande berichten en herinneringen](#geplande-berichten-en-herinneringen)). |
 | Selectie & seizoen | **Beoordelingscriteria** | Per test (Sporttest en Zwemtest) het icoon, de naam en de criteria, één per regel. Beoordelaars scoren elk criterium van 1 tot 5. **Standaard uit het draaiboek herstellen** zet de ingebouwde lijst terug. |
 | Selectie & seizoen | **Posten & bezetting** | De posten en per post de rollen: naam, competentie, minimale rang uit Authentik en aantal personen. Per post het vinkje "nooit 2 aspiranten samen". **+ Post toevoegen**, **+ Rol**, **Opslaan**, **Standaard herstellen**. Dekking en de norm in het beschikbaarheidsraster rekenen hiermee. De postcommandant valt erbuiten. |
 | Inzet & loon | **Functies** | Per functie de naam, de factor voor het dagloon, de minimum- en maximumleeftijd en de volgorde, met **Sla op** en een voorbeeldberekening. |
@@ -1600,17 +1742,17 @@ eronder, en die zet het systeem er zelf onder.
 | Berichten | **Kanalen & meldingen** | SMS inschakelen met de gateway en de gegevens daarvan; WhatsApp inschakelen via WhatsReach (staat standaard uit; lees de waarschuwing over blokkering van het nummer); per meldingstype het kanaal (E-mail, WhatsApp/SMS, E-mail + WhatsApp/SMS of Uit). Ouders en het bestuur krijgen altijd e-mail. Onderaan **Testbericht sturen** met een telefoonnummer, een e-mailadres als terugval en het kanaal, en **Test versturen**. |
 | Berichten | **Afzender & adressen** | De adressen voor foutmeldingen, het bestuur (ontvangt de bestuursmeldingen), de penningmeester ("loondossier compleet"; leeg is het bestuursadres) en de ledenservice (de ondertekende inschrijving als lid; leeg is het bestuursadres). Het vinkje voor loondossier-stukken als bijlage: laat dat uit. |
 | Berichten | **E-mailserver** | Host, poort, beveiliging (STARTTLS, SSL/TLS of Geen), gebruikersnaam, wachtwoord, afzenderadres en afzendernaam. Daaronder **Testmail versturen**: sla eerst op, vul het adres in en klik op **Verstuur testmail**. |
-| Koppelingen | **Authentik** | De status van de SSO-koppeling, het API-token voor het inloggen van terugkerende sollicitanten via Authentik (leeg is alleen inloggen per mail), de **Toegestane admin-groepen**, de koppeling voor competenties (basis-URL en API-token, **Test verbinding**, **Nu alle sollicitanten verversen**) en de groep-indeling van de competenties (alleen te bekijken). |
-| Koppelingen | **Website & API** | De geheime sleutel voor de WordPress-plugin (**Kopieer**; **Nieuwe sleutel genereren** maakt de oude meteen ongeldig), de toegestane websites (CORS, één per regel) en de adressen die de plugin nodig heeft. |
-| Koppelingen | **AI-analyse** | De Gemini API-sleutel en het model; het vinkje **AI-hulp bij beschikbaarheid** (experimenteel); de prompt voor de analyse van het kennismakingsformulier, met de beschikbare variabelen en **Standaardtekst terugzetten**; en **Automatisch analyseren na ontvangst BLK**. |
-| Privacy & onderhoud | **Bewaren & opschonen** | **Automatisch opschonen inschakelen**, de termijnen per soort gegeven en het **Opschoon-logboek**. Daaronder de cronjob-regel voor de hoster, **Handmatig uitvoeren** en de stand van de AI- en mailwachtrij. Zie [Bewaartermijnen](#bewaartermijnen). |
+| Koppelingen | **Authentik** | De status van de SSO-koppeling, het **Authentik API-token** voor het inloggen van terugkerende sollicitanten via Authentik (verwijderd is alleen inloggen per mail), de **Toegestane admin-groepen** (standaard "Bestuur,Sol-Admin,Sol-Begeleider,Sol-Penningmeester"), de koppeling voor competenties (basis-URL en **API-token (service-account)**, **Test verbinding**, **Nu alle sollicitanten verversen**) en de groep-indeling van de competenties (alleen te bekijken). De tokens zijn geheime velden. |
+| Koppelingen | **Website & API** | De geheime sleutel voor de WordPress-plugin (**Kopieer**; **Nieuwe sleutel genereren** maakt de oude meteen ongeldig), de toegestane websites (CORS, één per regel) en de adressen die de plugin nodig heeft. De sleutel zelf zien, kopiëren en vernieuwen kan alleen wie Systeem mag bewerken (standaard admin); anderen zien **Ingesteld**. |
+| Koppelingen | **AI-analyse** | De **Gemini API-sleutel** (geheim veld) en het model; het vinkje **AI-hulp bij beschikbaarheid** (experimenteel); de prompt voor de analyse van het kennismakingsformulier, met de beschikbare variabelen en **Standaardtekst terugzetten**; en **Automatisch analyseren na ontvangst BLK**. |
+| Privacy & onderhoud | **Bewaren & opschonen** | Een rode waarschuwing zolang automatisch opschonen uit staat. **Automatisch opschonen inschakelen**, de termijnen per soort gegeven (ook het logboek, het foutenlog en de kopie bankpas), de schakelaars voor de downloadmail aan het bestuur en de bezoekersstatistiek, en het **Opschoon-logboek**. Daaronder de cronjob-regel voor Plesk met **Handmatig uitvoeren** en **Nieuw token maken** (alleen voor wie Systeem mag bewerken) en de stand van de AI- en mailwachtrij. Zie [Bewaartermijnen](#bewaartermijnen). |
 
 Onder de tabbladen:
 
 - **Sjablonen voor mails** opent [Sjablonen](#sjablonen).
-- De kaart **Versie** toont de geïnstalleerde versie met de link **Systeem & updates** (alleen
-  bruikbaar voor wie Systeem mag bewerken, standaard admin; zie
-  [Systeem en foutenlog](#systeem-en-foutenlog)).
+- De kaart **Versie** toont de geïnstalleerde versie, met de link **Systeem & updates** voor wie
+  Systeem mag bewerken (standaard admin; zie [Systeem en foutenlog](#systeem-en-foutenlog)). Ook
+  de link naar het proefdraaien van herinneringen staat er alleen voor hen.
 
 Het seizoen zelf (datums, openen en sluiten) staat niet hier maar onder het eigen menu-item
 Seizoen; zie [Seizoen opzetten](#seizoen-opzetten).
@@ -1633,13 +1775,14 @@ Een nieuwe installatie werkt pas goed als je deze tabbladen hebt nagelopen:
 1. **Afzender & adressen**: het bestuursadres, en als je die hebt het adres van de penningmeester
    en de ledenservice.
 2. **E-mailserver**: vul de gegevens in, klik op **Opslaan** en daarna op **Verstuur testmail**.
-3. **Website & API**: genereer de sleutel en zet hem in de WordPress-plugin.
+3. **Website & API** (admin): genereer de sleutel en zet hem in de WordPress-plugin.
 4. **Kanalen & meldingen**: zet SMS en eventueel WhatsApp aan, kies per melding het kanaal en
    stuur een testbericht naar je eigen nummer.
 5. **Bewaren & opschonen**: zet **Automatisch opschonen inschakelen** aan. Zonder dit vinkje wordt
    er nooit iets opgeruimd; zie [Bewaartermijnen](#bewaartermijnen).
 6. **Posten & bezetting** en **Lonen & budget**: vóór je gaat plannen.
-7. **Bewaren & opschonen**, onderaan: laat de hoster de cronjob-regel instellen (elke vijf minuten).
+7. **Bewaren & opschonen**, onderaan (admin): zet de cronjob-regel als geplande taak in Plesk
+   (elke vijf minuten), of laat de technisch beheerder dat doen.
 
 ---
 
@@ -1659,16 +1802,29 @@ Een nieuwe installatie werkt pas goed als je deze tabbladen hebt nagelopen:
    voor Admin, **Bestuur** voor Bestuur, **Sol-Penningmeester** voor Penningmeester en
    **Sol-Begeleider** voor Begeleider (te controleren onder Rollen & rechten).
 2. Controleer onder Instellingen › Authentik het veld **Toegestane admin-groepen**. Standaard staat
-   daar "Bestuur,Sol-Admin,Sol-Begeleider". **Sol-Penningmeester staat er standaard niet in.** Een
-   nieuwe penningmeester komt er dus pas in als je die groep toevoegt, of als je eerst met de hand
-   een account aanmaakt.
+   daar "Bestuur,Sol-Admin,Sol-Begeleider,Sol-Penningmeester". Heeft iemand die lijst eerder zelf
+   aangepast, dan blijft die eigen lijst staan; controleer dan of de groep van de nieuwe persoon
+   erin staat.
 3. Laat de persoon één keer inloggen met **Inloggen via Authentik (SSO)**. Het account verschijnt
    dan vanzelf in de lijst.
 
-Goed om te weten: bij elke inlog via Authentik zet het systeem de rol opnieuw op basis van de
-groepen. Zit iemand in een groep die aan een rol gekoppeld is, dan overschrijft de volgende inlog
-een rol die je met de hand hebt gekozen. Zit iemand in meer groepen, dan wint de hoogste rang. Wil
-je de rol blijvend wijzigen, doe dat dan in Authentik.
+Goed om te weten:
+
+- Bij elke inlog via Authentik zet het systeem de rol opnieuw op basis van de groepen. Zit iemand
+  in een groep die aan een rol gekoppeld is, dan overschrijft de volgende inlog een rol die je met
+  de hand hebt gekozen. Zit iemand in meer groepen, dan wint de hoogste rang. Wil je de rol
+  blijvend wijzigen, doe dat dan in Authentik.
+- Zit iemand wel in een toegestane groep, maar is die groep aan geen rol gekoppeld, dan blijft de
+  rol staan die je met de hand koos. Een nieuw account krijgt dan de rol Begeleider.
+- In eerdere versies werd de rol Penningmeester (en elke eigen rol) stil leeg opgeslagen. Zo'n
+  account staat nu op Begeleider. Zie je dat bij de penningmeester, zet de rol dan eenmalig op
+  Penningmeester.
+
+### Iemand de toegang afnemen
+
+Haal de persoon in Authentik uit de groep (of uit alle toegestane groepen). Daarna kan die niet
+meer via Authentik inloggen, ook niet met een bestaand account. Heeft het account ook een
+wachtwoord als noodingang, zet het account dan hier ook uit met **Uitzetten**.
 
 ### Het tabblad Beheerders
 
@@ -1721,7 +1877,7 @@ Zo staat het op een nieuwe installatie (l = lezen, b = bewerken, v = verwijderen
 | Onderdeel | Begeleider | Bestuur | Penningmeester | Admin |
 |---|---|---|---|---|
 | Sollicitanten | – | l b v | l | alles |
-| Landingspagina's | – | l b v | – | alles |
+| Wervingspagina's | – | l b v | – | alles |
 | BLK-formulieren & details | – | l b | – | alles |
 | Selectiedag | l | l b | – | alles |
 | Ondertekeningen | – | l b | – | alles |
@@ -1735,6 +1891,10 @@ Zo staat het op een nieuwe installatie (l = lezen, b = bewerken, v = verwijderen
 | Beheerders & rollen | – | – | – | alles |
 | Systeem, updates & logs | – | – | – | alles |
 | Logboek (alle logs) | – | – | – | alles |
+
+Wat Selectiedag lezen voor de begeleider betekent: groepen bekijken, inchecken, cijfers en
+observaties geven en de eigen observaties verwijderen. Bewerken (bestuur) voegt de tabletcode, de
+groepsindeling, de nabespreking, de bellijst en het besluit na het trainingsweekend toe.
 
 Twee onderdelen vragen extra zorg. **Loondossiers** bevat BSN en identiteitsbewijzen en hoort
 alleen bij de penningmeester en admin. **Logboek** laat zien wie welke persoonsgegevens heeft
@@ -1783,17 +1943,17 @@ Een foutmelding op het scherm van een gebruiker heeft een referentienummer. Zoek
 
 ### Hoe lang regels blijven
 
-De auditregels blijven 12 maanden (de regel bovenaan noemt de termijn). Het berichtenlog volgt de
-bewaartermijn onder Bewaren & opschonen, en mislukte inlogpogingen worden na 24 uur opgeruimd.
-Voor fouten, het bewijsspoor van ondertekeningen en het opschoon-logboek geldt geen automatische
-termijn. Zie [Bewaartermijnen](#bewaartermijnen).
+De auditregels blijven standaard 12 maanden (de regel bovenaan noemt de termijn) en de fouten 90
+dagen; je stelt beide in onder Bewaren & opschonen, net als de termijn van het berichtenlog.
+Mislukte inlogpogingen worden na 24 uur opgeruimd. Voor het bewijsspoor van ondertekeningen en het
+opschoon-logboek geldt geen automatische termijn. Zie [Bewaartermijnen](#bewaartermijnen).
 
 ---
 
 ## Privacy en AVG-verzoeken
 
 **Waar:** het dossier van de sollicitant (Sollicitanten › naam), het portaal (Mijn gegevens), en de privacyverklaring op `/privacy.php`  
-**Wie:** bestuur en admin. Een dossier verwijderen vraagt verwijderrecht op Sollicitanten.
+**Wie:** bestuur en admin. Een dossier verwijderen vraagt verwijderrecht op Sollicitanten, gegevens corrigeren bewerkrecht.
 
 > **In het kort:** Een sollicitant kan veel zelf in het portaal: alle gegevens downloaden, het account
 > verwijderen, het berichtkanaal kiezen, onthouden apparaten vergeten en een seintje geven of
@@ -1805,15 +1965,17 @@ termijn. Zie [Bewaartermijnen](#bewaartermijnen).
 
 Onder **Mijn gegevens** in het portaal:
 
-- **Wat we van je weten**: naam, e-mail, telefoon, geboortedatum, aanmelddatum en status.
+- **Wat we van je weten**: naam, e-mail, telefoon, geboortedatum, aanmelddatum en status. Klopt
+  iets niet, dan stelt de sollicitant een vraag via Berichten en past het bestuur het aan (zie
+  [Een verzoek om correctie](#een-verzoek-om-correctie)).
 - **Hoe wil je berichten ontvangen?**: WhatsApp, Sms of Alleen e-mail, met **Voorkeur opslaan**.
 - **Al mijn gegevens downloaden** met **Download als JSON**: de persoonsgegevens, het
   kennismakingsformulier (zonder de AI-analyse), de beschikbaarheid, de berichtgeschiedenis (alleen
   onderwerp, datum, stand en kanaal) en van ondertekeningen en documenten alleen de gegevens erover,
   geen BSN, IBAN of handtekening.
-- **Mijn account verwijderen**: de sollicitant typt VERWIJDER en klikt op **Definitief
-  verwijderen**. Naam, contactgegevens, formulier, beschikbaarheid, taken en documenten worden
-  meteen gewist of geanonimiseerd. Het bestuur krijgt de melding "Sollicitant heeft zich
+- **Mijn account verwijderen**: de sollicitant klapt **Definitief verwijderen** open, leest wat er
+  gebeurt, typt VERWIJDER en klikt op **Ja, verwijder mijn account**. Naam, contactgegevens,
+  formulier, beschikbaarheid, taken en documenten worden meteen gewist of geanonimiseerd. Het bestuur krijgt de melding "Sollicitant heeft zich
   teruggetrokken". Is het loondossier al verwerkt, dan wordt dit geweigerd vanwege de wettelijke
   bewaarplicht.
 - **Ingelogd blijven**: als er apparaten onthouden worden, staat hier **Vergeet alle apparaten**.
@@ -1826,7 +1988,10 @@ seintje-vraag (zie [Seintje bij de volgende werving](#seintje-bij-de-volgende-we
 De privacyverklaring staat op `/privacy.php`. Het aanmeldformulier, de wervingspagina's en de
 WordPress-plugin linken ernaar. De bewaartermijnen in de tekst komen uit dezelfde instellingen als
 het opschonen, en een alinea over AI, WhatsApp of SMS verschijnt alleen als die dienst aanstaat.
-Bij elke aanmelding wordt vastgelegd welke versie iemand las. Het vinkje op het formulier betekent
+Bij elke aanmelding wordt vastgelegd welke versie iemand las (nu 2026-09b). Daarin staan de
+gezondheidsverklaring en de intake bij de uitnodiging voor de selectiedag, en voor de loondocumenten
+"5 jaar na het einde van het jaar waarin je voor het laatst bij ons werkte; de penningmeester
+vernietigt ze daarna". Het vinkje op het formulier betekent
 "ik heb dit gelezen", geen toestemming: een sollicitatie verwerken we omdat dat nodig is om een
 overeenkomst te kunnen sluiten.
 
@@ -1847,9 +2012,11 @@ overeenkomst te kunnen sluiten.
 
 Gegevens uit het kennismakingsformulier kan de sollicitant zelf aanpassen in het portaal; de
 wijzigingen zie je in de wijzigingsgeschiedenis. De kanaalvoorkeur zet je in het dossier bij
-**Berichten via**, of de sollicitant doet het zelf. Een verkeerde naam, een verkeerd e-mailadres of
-een verkeerd telefoonnummer corrigeren kan op dit moment niet in het beheer. Vraag daarvoor de
-technisch beheerder en noteer in het dossier wat er is aangepast.
+**Berichten via**, of de sollicitant doet het zelf. Een verkeerde naam, een verkeerd e-mailadres,
+een verkeerd telefoonnummer of een verkeerde geboortedatum corrigeer je in het dossier met de kaart
+[Gegevens corrigeren](#gegevens-corrigeren). De sollicitant vraagt dat aan via een vraag in
+Berichten. Controleer eerst of het verzoek echt van de sollicitant komt. De correctie komt in het
+logboek als "Gegevens gecorrigeerd". Antwoord binnen een maand.
 
 ### Een dossier verwijderen
 
@@ -1858,19 +2025,21 @@ geanonimiseerd. Moet het bestuur het doen:
 
 1. Open het dossier, tabblad **Dossier**. Onderaan staat het rode blok **Sollicitant verwijderen**
    met wat er meegaat.
-2. Klik op **Verwijderen…** en bevestig met **Ja, verwijderen**.
-3. Heeft de persoon een verwerkt loondossier, dan vraagt het systeem of het dienstverband niet is
-   doorgegaan. Vink dat alleen aan als deze persoon nooit heeft gewerkt: dan gaan ook het
-   loonheffingsformulier en de ID-kopie weg. Anders blijven die vijf jaar bewaard (wettelijke
-   bewaarplicht) en wordt er niets verwijderd.
+2. Kies **Alles van deze persoon…** bij een verwijderverzoek (AVG), of **Alleen deze
+   sollicitatie…** als alleen dit seizoen weg moet.
+3. Lees op het tussenscherm wat er verdwijnt en bevestig met **Ja, alles wissen** of **Ja,
+   verwijderen**.
+4. Heeft de persoon een verwerkt loondossier, dan staat op het tussenscherm het vinkje **Het
+   dienstverband is niet doorgegaan**. Vink dat alleen aan als deze persoon nooit heeft gewerkt: dan
+   gaan ook het loonheffingsformulier en de ID-kopie weg. Zonder vinkje wordt er niets verwijderd,
+   want die stukken vallen onder de wettelijke bewaarplicht. Het vinkje zie je alleen met het recht
+   Loondossiers verwijderen (standaard alleen de beheerder); zonder dat recht krijg je een melding.
 
-Het verwijderen haalt de sollicitatie van dit seizoen weg met het formulier, de beschikbaarheid, de
-taken, de documenten, de foto en de onthouden apparaten. Het persoonsaccount (naam en e-mail)
-blijft bestaan. De verwijdering komt in het logboek als "Sollicitatie verwijderd".
-
-Krijg je na de bevestiging de melding "Onbekende actie", dan werkt deze knop in jouw versie nog niet.
-Er is dan niets verwijderd. Schakel de technisch beheerder in, of laat de sollicitant de knop in
-het portaal gebruiken.
+**Alles van deze persoon** maakt alle sollicitaties leeg en anonimiseert de persoon, precies zoals
+de knop in het portaal; in het logboek staat "Alle gegevens gewist (AVG-verzoek)", zonder naam.
+**Alleen deze sollicitatie** haalt de sollicitatie van dit seizoen weg met het formulier, de
+beschikbaarheid, de taken, de documenten, de foto en de onthouden apparaten; naam en e-mail blijven
+bestaan voor andere seizoenen. Dat komt in het logboek als "Sollicitatie verwijderd".
 
 ### Wat je nooit per mail doorstuurt
 
@@ -1890,14 +2059,19 @@ nodig heeft en bewaar het afgeschermd.
 > verstreken is, maar **alleen als Automatisch opschonen inschakelen aanstaat**. Op een nieuwe
 > installatie staat dat vinkje uit, en dan wordt er niets opgeruimd, ook niet wat de
 > privacyverklaring belooft. Zet het dus aan. De opschoning draait één keer per dag mee met de
-> automatische taken. Wat er is opgeruimd zie je in het opschoon-logboek en in het Logboek onder
-> AVG-opschoning.
+> automatische taken. Loondocumenten zijn de uitzondering: die vernietigt de penningmeester met de
+> hand. Wat er is opgeruimd zie je in het opschoon-logboek en in het Logboek onder AVG-opschoning.
 
 ### Opschonen aanzetten
 
+Zolang automatisch opschonen uit staat, zie je een rode waarschuwing: bovenaan dit tabblad, in de
+systeemstatus op Vandaag (met de knop **Opschonen aanzetten** voor wie Instellingen mag bewerken) en
+als fout in de systeemcontrole. Het staat bewust standaard uit, want aanzetten is niet terug te
+draaien: bij de eerstvolgende dagelijkse run verdwijnt alles wat al over de termijn is.
+
 1. Open Instellingen › **Bewaren & opschonen**.
-2. Vink **Automatisch opschonen inschakelen** aan.
-3. Controleer de termijnen en klik op **Opslaan**.
+2. Controleer eerst de termijnen.
+3. Vink **Automatisch opschonen inschakelen** aan en klik op **Opslaan**.
 4. Controleer de volgende dag onder **Opschoon-logboek** of er "Laatst uitgevoerd" staat, en onder
    [Systeem & Updates](#systeem-en-foutenlog) of de controle **AVG-opschoning** groen is.
 
@@ -1910,24 +2084,38 @@ uitzondering: daar heeft 0 een eigen betekenis (zie de tabel).
 |---|---|---|
 | Afgewezen sollicitanten | **Afgewezen sollicitanten, in weken** (4) | Gerekend vanaf de laatste wijziging van de sollicitatie, bij een afwijzing het moment van afwijzen. De persoon wordt geanonimiseerd: formulier, foto, beschikbaarheid, notities, beoordelingen, taken en documenten weg, adressen en inhoud in het berichtenlog weg. De statistiek blijft. Alleen als élke sollicitatie van die persoon is afgewezen; wie om een seintje vroeg, blijft tot dat verloopt. |
 | Seintje bij de volgende werving | **Seintje bij de volgende werving** (12 maanden, maximaal 12) | Zo lang geldt de toestemming. Daarna wordt de persoon geanonimiseerd zoals hierboven. |
-| Oud-strandwachten | **Oud-lifeguards, in jaren** (2) | Gerekend vanaf het einde van het laatste seizoen waarin iemand werkte. Het dossier wordt leeggemaakt; loonheffing en ID-kopie blijven tot hun eigen termijn, en pas daarna wordt ook de naam geanonimiseerd. Wie een nieuwe sollicitatie heeft lopen, valt erbuiten. |
+| Oud-strandwachten | **Oud-lifeguards, in jaren** (2) | Gerekend vanaf het einde van het laatste seizoen waarin iemand werkte. Het dossier wordt leeggemaakt; loonheffing en ID-kopie blijven staan tot de penningmeester ze vernietigt, en pas daarna wordt ook de naam geanonimiseerd. Wie een nieuwe sollicitatie heeft lopen, valt erbuiten. |
 | Gezondheidsgegevens | **Gezondheidsgegevens** (0) | 0 betekent: na afloop van het seizoen, en meteen bij afwijzen. Een ander getal betekent zoveel maanden na ondertekening. Het gaat om de gezondheidsverklaring en de gezondheidsvragen in de intake, ook in de verzegelde PDF. Het feit dát er getekend is blijft. |
 | AI-invoertekst | **AI-invoertekst** (3 maanden) | De vrije beschikbaarheidstekst die naar de AI-dienst ging wordt gewist. |
 | Niet-voltooide aanmeldingen | **Niet-voltooide aanmeldingen** (3 maanden) | Aanmeldingen die op Aangemeld bleven staan zonder formulier of beschikbaarheid worden verwijderd. |
 | Berichtenlog | **Berichtenlog (alle kanalen)** (12 maanden) | De logregels worden verwijderd. |
 | Inhoud van berichten | **Inhoud van berichten** (3 maanden) | Alleen de tekst wordt leeggemaakt; onderwerp en samenvatting blijven. |
 | Losse bijlagen | **Losse bijlagen** (12 maanden) | Bestanden die aan geen sjabloon meer hangen worden verwijderd. |
-| Bezoekersstatistiek | **Bezoekersstatistiek landingspagina's** (13 maanden) | De aantallen worden verwijderd. |
+| Bezoekersstatistiek | **Bezoekersstatistiek wervingspagina's** (13 maanden) | De aantallen worden verwijderd. |
 | Herkenning unieke bezoekers | **Herkenning unieke bezoekers** (30 dagen) | Het dag-pseudoniem wordt gewist; de aantallen blijven. |
-| Auditregels (logboek) | niet in het scherm (12 maanden) | De regels worden verwijderd. |
-| Loonheffingsformulier en ID-kopie | niet in het scherm (5 jaar na het dienstjaar) | Wettelijke bewaarplicht; daarna vernietigd. Het ondertekenrecord blijft, zonder BSN en handtekening. |
-| Kopie bankpas | niet in het scherm (30 dagen na verwerking) | Vernietigd nadat de penningmeester het dossier op verwerkt heeft gezet. Handmatig kan eerder met **Vernietigen** bij Loondossiers. |
+| Auditregels (logboek) | **Auditlog (wie deed wat)** (12 maanden) | De regels worden verwijderd. |
+| Foutenlog | **Foutenlog** (90 dagen) | Technische foutmeldingen, waarin een e-mailadres of een webadres kan staan, worden verwijderd. |
+| Berichtenwachtrij | vast (30 dagen) | Afgehandelde en mislukte berichten in de wachtrij worden verwijderd; het overzicht staat in het berichtenlog. |
+| Kopie bankpas | **Kopie bankpas** (30 dagen na verwerking) | Vernietigd nadat de penningmeester het dossier op verwerkt heeft gezet. Handmatig kan eerder met **Vernietigen** bij Loondossiers. Staat opschonen uit, dan moet de penningmeester dit zelf doen. |
+| Loonheffingsformulier en ID-kopie | geen automatische termijn | Wettelijke bewaarplicht: 5 jaar na het einde van het kalenderjaar waarin het dienstverband eindigde. Het systeem weet niet wanneer dat was en wist ze daarom niet zelf. De penningmeester vernietigt ze met de hand via de kaart **Te beoordelen voor vernietiging** bij [Loondossiers](#loondossiers). |
+
+Onder de termijnen staan nog twee schakelaars, allebei standaard aan:
+
+- **Mail naar het bestuur bij elke download van een loondocument**: zo valt onverwachte inzage op.
+  De mail bevat geen document.
+- **Bezoekersstatistiek op de wervingspagina's en het aanmeldformulier**: telt bezoeken en bij
+  welke stap mensen afhaken, zonder cookies en persoonsgegevens. Uit is: er wordt niets meer
+  geteld.
 
 Los van het vinkje ruimt het systeem ook dit op:
 
 - mislukte inlogpogingen na 24 uur;
+- gebruikte of verlopen inlog- en verificatiecodes, en oude tellers van de snelheidsbegrenzing;
 - verlopen "blijf ingelogd"-tokens van het portaal (60 dagen);
 - fotobestanden van dossiers die al verwijderd zijn.
+
+Een AVG-verzoek ("Alles van deze persoon" in het dossier, of de knop in het portaal) neemt ook de
+berichten van die persoon in de wachtrij mee.
 
 De privacyverklaring noemt dezelfde getallen, want die komen uit deze instellingen. Pas je een
 termijn aan, lees de verklaring dan even na.
@@ -1941,7 +2129,8 @@ termijn aan, lees de verklaring dan even na.
   sollicitaties geanonimiseerd", "Gezondheidsgegevens verwijderd", "Berichtinhoud geleegd" of "Kopie
   bankpas vernietigd".
 - **Systeem & Updates › AVG-opschoning**: oranje als de opschoning meer dan drie dagen niet draaide.
-  Staat automatisch opschonen uit, dan blijft deze controle oranje met "heeft nog niet gedraaid".
+  Staat automatisch opschonen uit, dan is deze controle rood met "Automatisch opschonen staat uit —
+  er wordt niets verwijderd".
 
 ---
 
@@ -1959,8 +2148,8 @@ termijn aan, lees de verklaring dan even na.
 
 Bovenaan staat de **geïnstalleerde versie** met **Migraties uitvoeren**. Het systeem controleert en
 herstelt de database normaal zelf bij elk bezoek. Klopt er na een update toch iets niet, klik dan
-op deze knop. De knop **Diagnose draaien** verwijst naar een pagina die niet meer bestaat; gebruik
-hem niet.
+op deze knop. Daarnaast opent **SQL-migraties** de losse SQL-migraties uit de map `sql/`, om te
+bekijken en uit te voeren; dat is werk voor de technisch beheerder.
 
 **Systeemgezondheid** geeft een totaaloordeel (Alles in orde, Aandachtspunten of Er is een probleem)
 en per onderdeel een vinkje, een waarschuwing of een kruis met uitleg:
@@ -1968,11 +2157,11 @@ en per onderdeel een vinkje, een waarschuwing of een kruis met uitleg:
 | Controle | Wat er wordt gecontroleerd |
 |---|---|
 | Database | Zijn alle tabellen en kolommen aanwezig? |
-| Cron (automatische taken) | Wanneer draaiden de automatische taken voor het laatst? Hoort elke vijf minuten. Langer dan 30 minuten is een waarschuwing, langer dan 2 uur een fout: controleer dan de cronjob bij de hoster (de regel staat onder Instellingen › Bewaren & opschonen). |
+| Cron (automatische taken) | Wanneer draaiden de automatische taken voor het laatst? Hoort elke vijf minuten. Langer dan 30 minuten is een waarschuwing, langer dan 2 uur een fout: controleer dan de cronjob in Plesk (de regel staat onder Instellingen › Bewaren & opschonen). Een waarschuwing volgt ook als alleen het vangnet bij een bezoek aan het beheer draait en de echte cronjob langer dan 30 minuten stil ligt: dan gebeuren opschonen en opruimen niet. |
 | Mailwachtrij | Wachten er mails langer dan een uur? Dan draait de cron niet of klopt de mailserver niet. |
-| AVG-opschoning | Is de opschoning de laatste drie dagen gedraaid? |
+| AVG-opschoning | Is de opschoning de laatste drie dagen gedraaid? Staat automatisch opschonen uit, dan is dit een fout. |
 | Mappen & rechten | Kan het systeem uploads wegschrijven? |
-| Configuratie | Zijn het cron-token en het bestuursadres ingesteld? |
+| Configuratie | Zijn het cron-token en het bestuursadres (Instellingen › Afzender & adressen, of de terugval in de configuratie) ingesteld? |
 | Kluis (versleutelde documenten) | Kan het systeem gevoelige documenten versleuteld opslaan? Zonder kluis zijn uploads van ID en bankpas en het loonheffingsformulier geblokkeerd. |
 | Documentzegel (PDF) | Kan het systeem PDF's verzegelen, en hoe lang is het certificaat nog geldig? Onder 60 dagen komt er een waarschuwing. |
 
@@ -1993,8 +2182,9 @@ Daaronder staan:
 3. Je ziet de foutcode, het bericht, het bestand, de regel, het adres en de gebruiker.
 4. Komt dezelfde fout vaker terug, meld hem dan bij de technisch beheerder.
 
-Fouten worden ook gemaild naar het adres voor foutmeldingen onder Instellingen › Afzender & adressen.
-Oude links naar het foutenlog komen vanzelf uit bij Logboek › Fouten.
+Fouten worden ook gemaild naar het adres voor foutmeldingen onder Instellingen › Afzender & adressen,
+hooguit één mail per foutcode per vijf minuten. Oude links naar het foutenlog komen vanzelf uit bij
+Logboek › Fouten.
 
 ### Testomgeving
 
@@ -2055,8 +2245,9 @@ benaderen, daarvoor ontbreekt de toestemming. Oud-strandwachten mag je wel benad
 
 **Worden oude gegevens echt opgeruimd?**  
 Alleen als onder Instellingen › Bewaren & opschonen het vinkje **Automatisch opschonen
-inschakelen** aanstaat. Op een nieuwe installatie staat het uit. Zie
-[Bewaartermijnen](#bewaartermijnen).
+inschakelen** aanstaat. Op een nieuwe installatie staat het uit, en dan is de systeemstatus op
+Vandaag rood. Loondocumenten worden nooit automatisch opgeruimd; die vernietigt de penningmeester.
+Zie [Bewaartermijnen](#bewaartermijnen).
 
 **Een sollicitant wil al zijn of haar gegevens zien, of weg hebben.**  
 Wijs op **Mijn gegevens** in het portaal: daar staan **Download als JSON** en **Mijn account
@@ -2075,7 +2266,9 @@ tekort" staat welke rol niet te vullen is en wie wel gekwalificeerd is maar niet
 
 **Een nieuwe penningmeester komt niet binnen via Authentik.**  
 Controleer onder Instellingen › Authentik of **Toegestane admin-groepen** de groep Sol-Penningmeester
-bevat; standaard staat die er niet in. Of maak eerst met de hand een account aan onder Beheerders.
+bevat. Die staat er standaard in, maar een eerder zelf aangepaste lijst blijft staan zoals die was.
+Controleer ook in Authentik of de persoon echt in die groep zit. Komt de penningmeester wel binnen
+maar als Begeleider, zet de rol dan onder Beheerders op Penningmeester.
 
 **Ik heb iemands rol gewijzigd, maar na het inloggen staat de oude rol er weer.**  
 Bij elke inlog via Authentik volgt de rol de groep in Authentik. Wijzig de groep in Authentik, of
@@ -2112,11 +2305,11 @@ Onderin het menu onder **Hulp en handleidingen**. Ook via het vraagteken rechtsb
 
 **Kluis** — de versleutelde opslag voor gevoelige stukken: BSN, IBAN, kopie identiteitsbewijs en bankpas. Zonder werkende kluis zijn die uploads geblokkeerd.
 
-**Loondossier** — per aangenomen strandwacht het loonheffingsformulier, de ID-kopie, de bankpas en de inschrijving als lid. Alleen voor penningmeester en admin.
+**Loondossier** — per aangenomen strandwacht het loonheffingsformulier, de ID-kopie, de bankpas en de inschrijving als lid. Alleen voor penningmeester en admin. Na de bewaarplicht vernietigt de penningmeester het met de hand.
 
 **Noodingang** — inloggen met een wachtwoord in dit systeem in plaats van via Authentik, voor als Authentik niet bereikbaar is. Alleen accounts met een wachtwoord kunnen dat.
 
-**Norm** — het aantal mensen dat per dienst nodig is, de optelsom van alle rollen onder Posten & bezetting. Daarnaast bestaat de norm per persoon: standaard vijf dagen per week.
+**Norm** — het aantal mensen dat per dienst nodig is, de optelsom van alle rollen onder Posten & bezetting. Daarnaast bestaat de norm per persoon: standaard vijf dagen per week, aan te passen in het dossier (tabblad Beschikbaarheid).
 
 **Oud-strandwacht** — iemand die in een eerder seizoen is aangenomen. Die mag je bij een nieuwe werving benaderen, met een afmeldlink.
 

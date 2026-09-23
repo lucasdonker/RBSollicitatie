@@ -53,7 +53,7 @@ hr { border: 0; border-top: 1px solid var(--rand); margin: 24px 0; }
 <h1 class="title">Runbook systeembeheer — Sollicitatiesysteem Paal
 13</h1>
 </header>
-<p>Versie 2.99 · september 2026</p>
+<p>Versie 2.101 · september 2026</p>
 <p>Dit document is voor wie de servers beheert: installeren, uitrollen
 naar productie, configuratie, back-ups, herstel, toegangsbeheer,
 incidenten en het lezen van de logs. Het is de enige plek waar de
@@ -133,8 +133,9 @@ controleer of alle acht checks van de <a href="#systeemcontrole-health-check">sy
 Kijk bij Cron of er &quot;via cron&quot; staat en niet &quot;via lazy&quot;.</label></li>
 <li><label><input type="checkbox"></input>Open <strong>Instellingen › Bewaren
 &amp; opschonen</strong> op productie en controleer dat &quot;Automatisch
-opschonen&quot; aan staat (zie <a href="#bewaartermijnen-en-privacy">Bewaartermijnen en
-privacy</a>).</label></li>
+opschonen&quot; aan staat; staat het uit, dan staat daar een rode
+waarschuwing (zie <a href="#bewaartermijnen-en-privacy">Bewaartermijnen
+en privacy</a>).</label></li>
 <li><label><input type="checkbox"></input>Open <strong>Logboek</strong>,
 filter op bron Fouten, en kijk wat er de afgelopen week
 gebeurde.</label></li>
@@ -174,9 +175,10 @@ adressen</strong> (<code>mail.fout_email</code>, standaard <a href="mailto:websi
 <td>nee</td>
 </tr>
 <tr>
-<td>Overige uploads (logo, landingspagina&#39;s, bijlagen)</td>
+<td>Overige uploads (logo, wervingspagina&#39;s, bijlagen)</td>
 <td><code>uploads/</code> in de webroot</td>
-<td>nee</td>
+<td>nee, behalve <code>uploads/.htaccess</code> en
+<code>uploads/branding/.htaccess</code></td>
 </tr>
 <tr>
 <td>Geplande taak</td>
@@ -246,6 +248,9 @@ plan de overstap op tijd en test eerst op de testomgeving.</label></li>
 Plesk) verlengen automatisch; controleer de vervaldatum.</label></li>
 <li><label><input type="checkbox"></input>Beheer › Beheerders: staat er iemand
 op actief die geen rol meer heeft in de brigade?</label></li>
+<li><label><input type="checkbox"></input>Logboek, bron Audit: pogingen
+&quot;Inloggen via Authentik geweigerd&quot; van iemand die er nog in hoort? Dan
+klopt de groep in Authentik niet.</label></li>
 </ul>
 <p>Per seizoen, vóór de aanmelding opengaat en na afloop:</p>
 <ul class="task-list">
@@ -348,7 +353,7 @@ bezoeker tot het werk klaar is.</li>
 (<code>/portaal/</code>) en het beheer (<code>/admin/</code>). Daarnaast
 de openbare adressen <code>/aanmelden.php</code> (aanmeldformulier),
 <code>/privacy.php</code> (privacyverklaring),
-<code>/p/&lt;naam&gt;</code> (landingspagina&#39;s), <code>/foto.php</code>
+<code>/p/&lt;naam&gt;</code> (wervingspagina&#39;s), <code>/foto.php</code>
 (foto van een sollicitant, alleen met toegang),
 <code>/d/&lt;code&gt;</code> (tijdelijke downloadlink van een bijlage),
 <code>/track.php</code> (anonieme tellingen van het aanmeldformulier),
@@ -357,7 +362,7 @@ de openbare adressen <code>/aanmelden.php</code> (aanmeldformulier),
 <li><strong>Het aanmeldformulier bestaat één keer:</strong> de HTML komt
 uit <code>includes/aanmeldformulier.php</code>, de verwerking uit
 <code>includes/aanmelden_kern.php</code>. <code>/aanmelden.php</code> en
-de landingspagina&#39;s roepen die aan; de WordPress-plugin haalt het
+de wervingspagina&#39;s roepen die aan; de WordPress-plugin haalt het
 formulier op via <code>GET /api/formulier.php</code> en post via
 <code>POST /api/aanmelden.php</code>.</li>
 <li><strong>Inloggen:</strong> beheerders via Authentik (OIDC).
@@ -441,10 +446,12 @@ Updates</strong>:
 <li>Klik <strong>Migraties uitvoeren</strong>. Dat forceert de
 zelfherstelronde nog eens (<code>db_failsafe</code>) en is veilig om
 vaker te doen.</li>
-<li>Open <code>/admin/update.php</code> (niet in het menu, alleen admin)
-en kijk of er losse SQL-migraties uit <code>sql/</code> op &quot;pending&quot;
-staan. Normaal is dat nul; de laatste is
-<code>migratie_0021</code>.</li>
+<li>Klik <strong>SQL-migraties</strong> (opent
+<code>/admin/update.php</code>; vraagt het recht Systeem bewerken) en
+kijk of er losse SQL-migraties uit <code>sql/</code> op &quot;pending&quot; staan.
+Normaal is dat nul; de laatste is
+<code>migratie_0022_blk_uitbreiding</code> (vroeger dubbel genummerd als
+<code>0002</code>; die naam bestaat niet meer).</li>
 <li>Kijk bij <strong>Systeemgezondheid</strong> of alle acht checks
 groen zijn. Kluis en zegel horen groen te zijn; het zegelcertificaat
 wordt bij de eerste keer automatisch aangemaakt.</li>
@@ -466,15 +473,23 @@ wachtwoord; sinds 2.94.0 zet het systeem het automatisch uit.</li>
 <li>Controleer de cron in Plesk (zie <a href="#cron">Cron</a>) en kijk
 na tien minuten of de systeemcontrole bij Cron &quot;via cron&quot; meldt.</li>
 <li>(eenmalig) Authentik: controleer de redirect-URI&#39;s en de groep
-<code>Sol-Penningmeester</code>, en zet die groep bij
+<code>Sol-Penningmeester</code>, en controleer dat die groep bij
 <strong>Instellingen › Authentik</strong> in de lijst met toegestane
-groepen (zie <a href="#authentik-sso">Authentik</a>).</li>
-<li>(eenmalig) <strong>Instellingen › Algemeen</strong>: vul het
-penningmeester-adres en het ledenservice-adres in en plaats de
-huisregels-pdf onder &quot;Taken na aannemen&quot;. Laat &quot;loondossier-stukken als
-bijlage meesturen&quot; uit.</li>
+groepen staat (standaard sinds 2.101; een eerder zelf aangepaste lijst
+blijft ongewijzigd). Kijk bij <strong>Beheerders</strong> of de
+penningmeester als Begeleider staat: vóór 2.101 werd die rol stil leeg
+opgeslagen (de kolom was een ENUM), en <code>db_failsafe</code> zet een
+lege rol nu op <code>begeleider</code>. Zet de rol eenmalig goed. Zie <a href="#authentik-sso">Authentik</a>.</li>
+<li>(eenmalig) <strong>Instellingen › Afzender &amp; adressen</strong>:
+vul het penningmeester-adres en het ledenservice-adres in en laat
+&quot;loondossier-stukken als bijlage meesturen&quot; uit. Plaats onder
+<strong>Instellingen › Algemeen</strong> de huisregels-pdf.</li>
 <li>(eenmalig) <strong>Instellingen › Bewaren &amp; opschonen</strong>:
-zet &quot;Automatisch opschonen&quot; aan en controleer de termijnen (zie <a href="#bewaartermijnen-en-privacy">Bewaartermijnen en privacy</a>).</li>
+controleer eerst de termijnen en zet daarna &quot;Automatisch opschonen&quot; aan.
+De eerste dagelijkse run wist alles wat al over de termijn is,
+onomkeerbaar (zie <a href="#bewaartermijnen-en-privacy">Bewaartermijnen
+en privacy</a>). Vervang de cronjob-regel in Plesk door de nieuwe met de
+header <code>X-Cron-Token</code> (zie <a href="#cron">Cron</a>).</li>
 <li>Stuur vanuit <strong>Instellingen › Kanalen &amp; meldingen</strong>
 een testbericht per e-mail en, als WhatsApp aan staat, via WhatsApp.
 Controleer de regel in Logboek › Berichten.</li>
@@ -515,15 +530,20 @@ kluissleutel.</p></li>
 of <code>mysql &lt; sql/schema.sql</code>).</p></li>
 <li><p>Maak <code>DOCUMENTEN_MAP</code> aan buiten de webroot (rechten
 700, eigenaar de PHP-gebruiker).</p></li>
-<li><p><strong>Zet <code>uploads/.htaccess</code> terug.</strong> De map
-<code>uploads/</code> staat niet in Git, en daarmee ook dit bestand
-niet. Het blokkeert het uitvoeren van scripts in de uploadmap. Neem het
-uit de back-up, of maak het aan met minimaal:</p>
-<pre><code>&lt;FilesMatch &quot;\.(php|php3|php4|php5|php7|php8|phtml|phar|pht|cgi|pl|py|asp|aspx|sh|shtml)$&quot;&gt;
-    Require all denied
-&lt;/FilesMatch&gt;
-RemoveHandler .php .phtml .php3 .php4 .php5 .php7 .php8 .phar
-RemoveType .php .phtml .php3 .php4 .php5 .php7 .php8 .phar</code></pre></li>
+<li><p><strong>Controleer de <code>.htaccess</code>-bestanden in
+<code>uploads/</code>.</strong> De inhoud van <code>uploads/</code>
+staat niet in Git, maar <code>uploads/.htaccess</code> (blokkeert het
+uitvoeren van scripts in de uploadmap) en
+<code>uploads/branding/.htaccess</code> (logo en favicon: alleen
+afbeeldingen, eigen CSP met <code>sandbox</code>) wel. Ze komen dus mee
+met de deploy; controleer dat ze er staan. Serveert nginx in Plesk
+statische bestanden rechtstreeks, dan negeert het
+<code>.htaccess</code>: zet in dat geval de headers voor
+<code>uploads/branding/</code>
+(<code>X-Content-Type-Options: nosniff</code> en
+<code>Content-Security-Policy: default-src &#39;none&#39;; img-src &#39;self&#39; data:; style-src &#39;unsafe-inline&#39;; sandbox</code>)
+in de nginx-instellingen van het domein, of zet het statisch serveren
+door nginx uit.</p></li>
 <li><p>Open een pagina; de zelfherstelronde maakt de rest van de
 tabellen aan.</p></li>
 <li><p>Log in via Authentik met een account in de groep
@@ -572,7 +592,7 @@ DMARC</td>
 <td><code>MAIL_BESTUUR</code></td>
 <td>Terugval voor het bestuursadres</td>
 <td>Het adres in Instellingen › Afzender &amp; adressen gaat voor; de
-systeemcontrole kijkt wel naar deze constante</td>
+systeemcontrole kijkt in dezelfde volgorde</td>
 </tr>
 <tr>
 <td><code>SMTP_HOST</code>, <code>SMTP_PORT</code>,
@@ -630,13 +650,10 @@ Cloud86 niet</td>
 <tr>
 <td><code>SESSION_NAME</code></td>
 <td>Naam van de sessiecookie</td>
-<td>Laten staan (<code>p13sess</code>)</td>
-</tr>
-<tr>
-<td><code>SESSION_LIFETIME</code></td>
-<td>Staat nog in het voorbeeld</td>
-<td>Wordt niet meer gebruikt: de sessiecookie leeft vast acht uur
-(<code>sessie_start()</code>)</td>
+<td>Laten staan (<code>p13sess</code>). De sessie leeft vast acht uur
+(<code>sessie_start()</code>); daar is geen constante voor. Staat er in
+een oude <code>config.php</code> nog <code>SESSION_LIFETIME</code>, dan
+mag die regel weg</td>
 </tr>
 <tr>
 <td><code>date_default_timezone_set(&#39;Europe/Amsterdam&#39;)</code></td>
@@ -656,9 +673,17 @@ nog niet ingesteld&quot; (HTTP 503).</p>
 staan</h1>
 <blockquote>
 <p><strong>In het kort:</strong> Sleutels van koppelingen staan in de
-tabel <code>instellingen</code> en vul je in het beheer in. Een
-database-export bevat ze dus: behandel exports als geheim.</p>
+tabel <code>instellingen</code> en vul je in het beheer in. Het beheer
+toont ze nooit terug, maar een database-export bevat ze wel: behandel
+exports als geheim.</p>
 </blockquote>
+<p>In het beheer staat bij een geheim alleen <strong>Ingesteld</strong>
+of <strong>Nog niet ingesteld</strong>. Een leeg veld laat de waarde
+staan; met <strong>Huidige waarde verwijderen</strong> maak je hem leeg.
+Opslaan vraagt bewerkrecht op Instellingen en neemt alleen de velden van
+het open tabblad aan; andere sleutels worden geweigerd en gelogd. De
+API-sleutel en het cron-token zijn alleen zichtbaar, kopieerbaar en te
+vernieuwen voor wie Systeem mag bewerken.</p>
 <table>
 <thead>
 <tr>
@@ -694,9 +719,10 @@ config</td>
 </tr>
 <tr>
 <td><code>authentik.url</code>, <code>authentik.api_token</code>,
-<code>authentik.admin_groepen</code></td>
+<code>authentik.token</code>, <code>authentik.admin_groepen</code></td>
 <td>Instellingen › Authentik</td>
-<td>Competentie-sync en de groepen die het beheer in mogen</td>
+<td>Portaal-SSO, competentie-sync en de groepen die het beheer in
+mogen</td>
 </tr>
 <tr>
 <td><code>sms.*</code>, <code>wa.*</code></td>
@@ -713,11 +739,11 @@ documenten te lezen</td>
 </table>
 <p>Een sleutel vervangen: API-sleutel met de knop in Website &amp; API
 (en meteen in de plugin invullen); AI-, sms- en WhatsApp-sleutels bij de
-leverancier vernieuwen en in het beheer plakken. Het cron-token heeft
-geen knop: maak de waarde leeg in phpMyAdmin
-(<code>UPDATE instellingen SET waarde = &#39;&#39; WHERE sleutel = &#39;cron.token&#39;</code>),
-open het tabblad Bewaren &amp; opschonen voor een nieuw token en zet dat
-in de Plesk-taak.</p>
+leverancier vernieuwen en in het beheer plakken. Het cron-token vernieuw
+je met <strong>Nieuw token maken</strong> onder Instellingen › Bewaren
+&amp; opschonen › Cronjob; de oude regel werkt daarna niet meer, dus zet
+meteen de nieuwe regel in de Plesk-taak. Doe dat ook als iemand met
+toegang tot Plesk vertrekt.</p>
 <h1 id="cron">Cron</h1>
 <blockquote>
 <p><strong>In het kort:</strong> Eén geplande taak in Plesk, elke 5
@@ -726,17 +752,23 @@ die taak blijven berichten hangen en draait de AVG-opschoning niet.</p>
 </blockquote>
 <p>Plesk › Geplande taken, <strong>elke 5 minuten</strong>, type &quot;URL
 ophalen&quot; of een opdracht als de gebruiker van de site:</p>
-<pre><code>curl -s &quot;https://sollicitatie.paal13.com/cron/run.php?token=&lt;cron.token&gt;&quot; &gt; /dev/null</code></pre>
-<p>De volledige regel met het token staat in het beheer bij Instellingen
-› Bewaren &amp; opschonen › Cronjob, met een knop &quot;Handmatig uitvoeren&quot;.
-Het antwoord is JSON met per taak wat er gebeurde.</p>
+<pre><code>curl -s -H &quot;X-Cron-Token: &lt;cron.token&gt;&quot; &quot;https://sollicitatie.paal13.com/cron/run.php&quot; &gt; /dev/null 2&gt;&amp;1</code></pre>
+<p>Het token gaat als header mee, zodat het niet in de access-log van de
+server belandt. Een oude regel met <code>?token=</code> in het adres
+werkt nog, maar vervang hem door deze. De volledige regel met het token
+staat in het beheer bij Instellingen › Bewaren &amp; opschonen › Cronjob
+(alleen zichtbaar voor wie Systeem mag bewerken), met de knoppen
+&quot;Handmatig uitvoeren&quot; en &quot;Nieuw token maken&quot;. Het antwoord is JSON met
+per taak wat er gebeurde.</p>
 <p>Wat de cron doet (<code>includes/cron_taken.php</code>):</p>
 <ul>
 <li>elke run: berichtenwachtrij legen (max 8 per run), AI-wachtrij (max
 3), herinneringen en geplande berichten, automatisch uitnodigen;</li>
 <li>alleen vanuit de echte cron: Authentik-sync, verlopen &quot;blijf
-ingelogd&quot;-tokens opruimen, fotobestanden zonder dossier opruimen, en één
-keer per dag de AVG-opschoning.</li>
+ingelogd&quot;-tokens opruimen, fotobestanden zonder dossier opruimen,
+gebruikte en verlopen inlogcodes (<code>otp_tokens</code>) en oude
+rate-limit-tellers (<code>api_rate</code>) opruimen (ook als opschonen
+uit staat), en één keer per dag de AVG-opschoning.</li>
 </ul>
 <p>Een lock van vier minuten (<code>cron.lock_tot</code>) voorkomt
 dubbel draaien.</p>
@@ -744,10 +776,11 @@ dubbel draaien.</p>
 het beheer of het portaal zet de wachtrij maximaal één keer per uur in
 gang, ná het antwoord aan de bezoeker. Dat vangnet doet
 <strong>geen</strong> AVG-opschoning, geen Authentik-sync en geen
-opruiming van tokens en foto&#39;s. Omdat het vangnet ook als &quot;laatste run&quot;
-telt, kan de systeemcontrole groen zijn terwijl de echte cron stilligt:
-kijk of er &quot;via cron&quot; staat. Na 30 minuten zonder run volgt een
-waarschuwing, na 2 uur een fout.</p>
+opruiming van tokens en foto&#39;s. De echte cron houdt daarom een eigen
+tijdstip bij (<code>cron.laatste_run_cron</code>): draait alleen het
+vangnet en ligt de echte cron langer dan 30 minuten stil, dan waarschuwt
+de systeemcontrole &quot;Alleen de lazy-cron draait&quot;. Na 30 minuten zonder
+enige run volgt een waarschuwing, na 2 uur een fout.</p>
 <h1 id="authentik-sso">Authentik (SSO)</h1>
 <blockquote>
 <p><strong>In het kort:</strong> Eén OAuth2/OpenID-provider in
@@ -773,9 +806,21 @@ in Beheer › Rollen &amp; rechten.</li>
 <li><strong>Toegestane groepen:</strong> Instellingen › Authentik, veld
 met groepen die het beheer in mogen
 (<code>authentik.admin_groepen</code>, standaard
-<code>Bestuur,Sol-Admin,Sol-Begeleider</code>). Voeg
-<code>Sol-Penningmeester</code> toe, anders wordt een nieuwe
-penningmeester bij de eerste inlog geweigerd.</li>
+<code>Bestuur,Sol-Admin,Sol-Begeleider,Sol-Penningmeester</code>). Stond
+daar nog de oude standaardwaarde zonder <code>Sol-Penningmeester</code>,
+dan werkt het systeem die vanzelf bij; een eigen waarde blijft staan
+zoals die was. De groepsnamen moeten exact kloppen (hoofdletters maken
+niet uit): <code>oud-bestuur</code> telt niet als
+<code>Bestuur</code>.</li>
+<li><strong>Geen toegestane groep = geen toegang via SSO</strong>, ook
+voor een bestaand account. De poging komt in het logboek als &quot;Inloggen
+via Authentik geweigerd (geen toegestane groep)&quot;. Zit iemand wel in een
+toegestane groep die aan geen rol gekoppeld is, dan blijft de rol die
+een admin koos; een nieuw account krijgt dan de rol
+<code>begeleider</code>.</li>
+<li><strong>Terug na het inloggen</strong> gaat alleen naar een pad
+binnen <code>/admin/</code>; een extern adres in <code>terug=</code>
+wordt genegeerd.</li>
 <li>Zet in Authentik <strong>tweestapsverificatie verplicht</strong>
 voor iedereen in deze groepen. Het sollicitatiesysteem zelf vraagt bij
 een Authentik-inlog geen tweede factor.</li>
@@ -787,10 +832,11 @@ noodingang voor accounts waarvoor in het beheer een wachtwoord is gezet
 (zie <a href="#toegangsbeheer">Toegangsbeheer</a>).</p>
 <h1 id="toegangsbeheer">Toegangsbeheer</h1>
 <blockquote>
-<p><strong>In het kort:</strong> Toegang loopt via Authentik-groepen,
-maar iemand weghalen vraagt twee stappen: uit de groep én op non-actief
-in Beheerders. Controleer de toegang elk seizoen en houd de noodingang
-met wachtwoord tot één account.</p>
+<p><strong>In het kort:</strong> Toegang loopt via Authentik-groepen:
+uit alle toegestane groepen halen trekt de SSO-toegang in. Heeft het
+account ook een wachtwoord, zet het dan daarnaast op non-actief in
+Beheerders. Controleer de toegang elk seizoen en houd de noodingang met
+wachtwoord tot één account.</p>
 </blockquote>
 <p><strong>Iemand erbij</strong></p>
 <ol type="1">
@@ -802,13 +848,14 @@ Beheer › Beheerders dat de rol klopt.</li>
 <p><strong>Iemand eraf</strong> (vertrek uit het bestuur, einde
 functie)</p>
 <ol type="1">
-<li>Authentik: uit de groep halen of het account uitschakelen.</li>
-<li><strong>Beheer › Beheerders: het account op non-actief
-zetten.</strong> Dit is nodig: een bestaand account dat bij het inloggen
-geen passende groep meer heeft, houdt de rol die het had.</li>
-<li>Staat er een wachtwoord op het account, verwijder dat.</li>
-<li>Zijn er sleutels die de persoon kende (API-sleutel, SMTP-wachtwoord,
-wachtwoordkluis), vervang die.</li>
+<li>Authentik: uit de groep halen of het account uitschakelen. Daarmee
+is inloggen via SSO meteen voorbij, ook voor het bestaande account.</li>
+<li>Staat er een wachtwoord op het account (noodingang), zet het account
+dan in <strong>Beheer › Beheerders</strong> op non-actief; de
+wachtwoordlogin kijkt niet naar Authentik. Voor een account zonder
+wachtwoord is dit niet nodig, maar het kan geen kwaad.</li>
+<li>Zijn er sleutels die de persoon kende (API-sleutel, cron-token,
+SMTP-wachtwoord, wachtwoordkluis), vervang die.</li>
 </ol>
 <p><strong>Seizoensreview</strong></p>
 <ul class="task-list">
@@ -819,11 +866,16 @@ een reden.</label></li>
 <li><label><input type="checkbox"></input>Hoogstens één account met
 wachtwoordlogin (noodingang), met een lang wachtwoord dat in de
 wachtwoordkluis staat. Die inlog heeft geen tweede factor.</label></li>
-<li><label><input type="checkbox"></input>Wie mag Instellingen bewerken? Dat
-recht (standaard bestuur en admin) geeft ook zicht op de API-sleutel en
-het cron-token.</label></li>
+<li><label><input type="checkbox"></input>Wie mag Systeem bewerken? Dat recht
+(standaard alleen admin) geeft zicht op de API-sleutel en het
+cron-token, en toegang tot de SQL-migraties. Instellingen bewerken
+(standaard bestuur en admin) toont geen geheimen, maar kan ze wel
+vervangen of wissen.</label></li>
 <li><label><input type="checkbox"></input>Wie heeft de module Documenten (BSN,
 IBAN, ID)? Standaard alleen penningmeester en admin.</label></li>
+<li><label><input type="checkbox"></input>Staat de penningmeester (of iemand
+met een eigen rol) in Beheerders als Begeleider? Dat is een restant van
+vóór 2.101; zet de rol goed.</label></li>
 </ul>
 <p><strong>Sollicitanten op het portaal</strong></p>
 <ul>
@@ -882,9 +934,18 @@ ongebruikelijke cache gebruikt.</li>
 <li>De plugin geeft het IP-adres van de bezoeker door in
 <code>X-Paal13-Bezoeker</code>. Dat adres wordt vastgelegd bij de
 aanmelding en telt voor de limiet van 10 aanmeldingen per uur. De plugin
-leest het uit proxyheaders (Cloudflare, <code>X-Forwarded-For</code>);
-staat paal13.com niet achter zo&#39;n proxy, dan kan een bezoeker die
-headers zelf invullen.</li>
+gebruikt alleen het echte verbindingsadres (<code>REMOTE_ADDR</code>);
+proxyheaders zoals <code>X-Forwarded-For</code> of die van Cloudflare
+negeert hij, want die kan een bezoeker zelf invullen. Staat paal13.com
+wel achter een proxy of CDN, zet dan in <code>wp-config.php</code> de
+adressen van die proxy als lijst van IP-adressen of CIDR-blokken,
+bijvoorbeeld
+<code>define(&#39;P13_VERTROUWDE_PROXY&#39;, &#39;203.0.113.10, 173.245.48.0/20&#39;);</code>.
+Alleen als het verbindingsadres in die lijst valt, leest de plugin de
+proxyheader.</li>
+<li>De map <code>wordpress-plugin/</code> in de repo heeft een eigen
+<code>.htaccess</code> (<code>Require all denied</code>), zodat de
+broncode op de sollicitatieserver niet via het web op te vragen is.</li>
 <li>Een nieuwe sleutel werkt meteen en de oude niet meer. Genereer hem
 dus pas als je de WordPress-instellingen open hebt, en test direct.</li>
 </ul>
@@ -899,9 +960,19 @@ dezelfde instellingen.</p>
 <ul>
 <li>Instellingen › Bewaren &amp; opschonen › &quot;Automatisch opschonen
 inschakelen&quot; (<code>bewaar.actief</code>). Standaard staat dit
-<strong>uit</strong>; zolang het uit staat wordt er niets verwijderd of
-geanonimiseerd en meldt de systeemcontrole &quot;opschoning heeft nog niet
-gedraaid&quot;.</li>
+<strong>uit</strong>, bewust: aanzetten wist bij de eerste dagelijkse
+run alles wat al over de termijn is, en dat is onomkeerbaar. Zolang het
+uit staat wordt er niets verwijderd of geanonimiseerd, en staat er een
+rode waarschuwing op het tabblad, op Vandaag en als fout in de
+systeemcontrole (&quot;Automatisch opschonen staat uit&quot;).</li>
+<li><strong>Loondocumenten</strong> (loonheffing en kopie ID) worden
+nooit automatisch gewist: de bewaarplicht loopt tot 5 jaar na het einde
+van het jaar waarin het dienstverband eindigde, en dat weet het systeem
+niet. De penningmeester vernietigt ze op Loondossiers via de kaart &quot;Te
+beoordelen voor vernietiging&quot; (<code>documenten_te_vernietigen()</code>,
+<code>documenten_loondossier_vernietigen()</code>); in het logboek staat
+dan <code>loondossier_vernietigd</code>. Een oud-lifeguard wordt pas
+geanonimiseerd als die stukken weg zijn.</li>
 <li>De opschoning draait één keer per dag via de echte cron
 (<code>includes/opschonen.php</code>). Wat er is opgeschoond staat in
 het Opschoon-logboek onderaan hetzelfde tabblad en in Logboek, bron
@@ -963,13 +1034,26 @@ eerst zien werken, zet hem dan eerst op de testomgeving.</li>
 <tr>
 <td>Auditlog (acties van beheerders)</td>
 <td>12 maanden</td>
-<td><code>bewaar.audit_maanden</code> (niet in het beheer; alleen in de
-database te wijzigen)</td>
+<td><code>bewaar.audit_maanden</code></td>
+</tr>
+<tr>
+<td>Foutenlog (<code>error_log</code>)</td>
+<td>90 dagen</td>
+<td><code>bewaar.foutenlog_dagen</code></td>
+</tr>
+<tr>
+<td>Berichtenwachtrij (<code>mail_queue</code>, afgehandeld of
+mislukt)</td>
+<td>30 dagen</td>
+<td>vast</td>
 </tr>
 <tr>
 <td>Loonheffing en kopie ID</td>
-<td>5 jaar na het dienstjaar (wettelijk)</td>
-<td><code>bewaar.loondocumenten_jaar</code></td>
+<td>niet automatisch; de penningmeester vernietigt na 5 jaar na het
+einde van het jaar waarin het dienstverband eindigde</td>
+<td><code>bewaar.loondocumenten_jaar</code> (5, nooit lager) bepaalt
+alleen wanneer iemand op de lijst &quot;Te beoordelen voor vernietiging&quot;
+komt</td>
 </tr>
 <tr>
 <td>Kopie bankpas</td>
@@ -982,12 +1066,27 @@ database te wijzigen)</td>
 <td>vast</td>
 </tr>
 <tr>
+<td>Gebruikte en verlopen inlogcodes (<code>otp_tokens</code>),
+rate-limit-tellers (<code>api_rate</code>)</td>
+<td>1 uur na verlopen, tellers na 24 uur</td>
+<td>vast; ook als opschonen uit staat</td>
+</tr>
+<tr>
 <td>&quot;Blijf ingelogd&quot;-tokens</td>
 <td>60 dagen</td>
 <td>vast</td>
 </tr>
 </tbody>
 </table>
+<p>Alles in deze tabel staat nu als veld op het tabblad Bewaren &amp;
+opschonen, behalve wat &quot;vast&quot; is en
+<code>bewaar.loondocumenten_jaar</code>. Daar staan ook de schakelaars
+<code>documenten.download_melding</code> (mail aan het bestuur bij elke
+download van een loondocument, standaard aan) en
+<code>paginas.tracking</code> (bezoekersstatistiek van wervingspagina&#39;s
+en aanmeldformulier, standaard aan). Een AVG-verzoek
+(<code>includes/avg_wissen.php</code>) neemt ook de rijen van die
+persoon in <code>mail_queue</code> mee.</p>
 <p><strong>Privacyverklaring</strong></p>
 <ul>
 <li>De tekst staat in <code>includes/privacy_verklaring.php</code> en is
@@ -997,8 +1096,8 @@ verschijnen alleen als die dienst aanstaat. Een termijn wijzigen = de
 verklaring verandert mee.</li>
 <li>Verandert de tekst zelf (in code), dan hoort
 <code>PRIVACY_VERSIE</code> in <code>includes/functions.php</code>
-omhoog. Bij elke aanmelding wordt vastgelegd welke versie iemand
-las.</li>
+omhoog (nu <code>2026-09b</code>). Bij elke aanmelding wordt vastgelegd
+welke versie iemand las.</li>
 <li>Schakel je een nieuwe dienst in (bijvoorbeeld sms of een andere
 mailprovider), controleer dan of die als verwerker in de verklaring
 staat en of er een verwerkersovereenkomst is.</li>
@@ -1010,13 +1109,15 @@ check)</h1>
 <blockquote>
 <p><strong>In het kort:</strong> Beheer › Systeem &amp; Updates ›
 Systeemgezondheid voert acht checks uit en kan een deel zelf herstellen.
-Groen betekent niet altijd dat de echte cron draait: lees de uitleg bij
-Cron.</p>
+Draait alleen het vangnet en niet de echte cron, dan waarschuwt de check
+Cron daarvoor.</p>
 </blockquote>
 <p>Knop <strong>Controleren &amp; repareren</strong> draait de checks
-opnieuw en herstelt waar dat kan (vooral de database). De knop &quot;Diagnose
-draaien&quot; op hetzelfde scherm verwijst naar een pagina die niet meer
-bestaat; gebruik hem niet.</p>
+opnieuw en herstelt waar dat kan (vooral de database). Bovenaan het
+scherm staan daarnaast <strong>Migraties uitvoeren</strong> (de
+zelfherstelronde) en <strong>SQL-migraties</strong>
+(<code>/admin/update.php</code>, losse migraties uit <code>sql/</code>;
+vraagt het recht Systeem bewerken).</p>
 <table>
 <thead>
 <tr>
@@ -1036,10 +1137,11 @@ serverlog lezen</td>
 </tr>
 <tr>
 <td>Cron</td>
-<td>Laatste run &lt; 30 min geleden</td>
-<td>&gt; 30 min waarschuwing, &gt; 2 uur fout</td>
-<td>Plesk-taak en token controleren. Staat er &quot;via lazy&quot;, dan draait de
-echte cron niet</td>
+<td>Laatste run &lt; 30 min geleden, ook van de echte cron</td>
+<td>&gt; 30 min waarschuwing, &gt; 2 uur fout; waarschuwing &quot;Alleen de
+lazy-cron draait&quot; als de echte cron &gt; 30 min stil ligt</td>
+<td>Plesk-taak, header <code>X-Cron-Token</code> en token
+controleren</td>
 </tr>
 <tr>
 <td>Mailwachtrij</td>
@@ -1050,8 +1152,9 @@ echte cron niet</td>
 <tr>
 <td>Opschoning</td>
 <td>AVG-opschoning &lt; 3 dagen geleden</td>
-<td>Nog nooit of langer geleden</td>
-<td>&quot;Automatisch opschonen&quot; aan? Draait de echte cron?</td>
+<td>Fout als &quot;Automatisch opschonen&quot; uit staat; waarschuwing als hij nog
+nooit of langer geleden draaide</td>
+<td>Opschonen aanzetten; draait de echte cron?</td>
 </tr>
 <tr>
 <td>Mappen</td>
@@ -1061,10 +1164,11 @@ echte cron niet</td>
 </tr>
 <tr>
 <td>Configuratie</td>
-<td>Cron-token en <code>MAIL_BESTUUR</code> gezet</td>
+<td>Cron-token en bestuursadres gezet</td>
 <td>Iets ontbreekt</td>
-<td>Tabblad Bewaren &amp; opschonen openen; <code>MAIL_BESTUUR</code> in
-config</td>
+<td>Tabblad Bewaren &amp; opschonen openen; bestuursadres in
+Instellingen › Afzender &amp; adressen (of <code>MAIL_BESTUUR</code> in
+config)</td>
 </tr>
 <tr>
 <td>Kluis</td>
@@ -1105,9 +1209,10 @@ versleutelde documenten, de foto&#39;s (<code>fotos/</code>) en het zegel
 <li><strong><code>includes/config.php</code></strong> van elke omgeving,
 met daarin de <code>KLUIS_SLEUTEL</code>. Bewaar die sleutel óók los in
 de wachtwoordkluis van het bestuur, niet in dezelfde back-up.</li>
-<li><strong><code>uploads/</code></strong>: logo,
-landingspagina-ontwerpen, bijlagen van sjablonen, en
-<code>uploads/.htaccess</code> (die staat niet in Git).</li>
+<li><strong><code>uploads/</code></strong>: logo, ontwerpen van
+wervingspagina&#39;s en bijlagen van sjablonen. De
+<code>.htaccess</code>-bestanden in <code>uploads/</code> en
+<code>uploads/branding/</code> staan in Git.</li>
 </ol>
 <p>De code zelf staat in Git en hoeft niet in de back-up.</p>
 <p><strong>Bewaartermijn van back-ups:</strong> houd een rollend venster
@@ -1115,7 +1220,8 @@ van ongeveer 30 dagen aan en laat oudere back-ups automatisch vervallen
 (Plesk › Back-up › Instellingen). Bewaar back-ups niet jaren: dan
 blijven gegevens van afgewezen sollicitanten veel langer bestaan dan de
 privacyverklaring belooft. De wettelijke bewaarplicht van loondocumenten
-wordt gedekt door het systeem zelf, niet door oude back-ups.</p>
+wordt gedekt door het systeem zelf (ze blijven staan tot de
+penningmeester ze vernietigt), niet door oude back-ups.</p>
 <p><strong>Herstel</strong></p>
 <p>Code uitrollen via Plesk, <code>config.php</code> terugzetten,
 database importeren, <code>DOCUMENTEN_MAP</code> en
@@ -1216,9 +1322,11 @@ verwijderverzoek van een sollicitant mislukt en teruggedraaid.</p>
 <p>Werk dat ná het antwoord draait (mails, audit, lazy-cron) kan de
 bezoeker niet meer laten zien dat het misging; dat vind je alleen in het
 serverlog, met <code>(na antwoord)</code> in de regel.</p>
-<p>De foutmail begrenst zichzelf alleen binnen één verzoek. Gaat een
-veelbezochte pagina stuk, dan kun je veel mails tegelijk krijgen; kijk
-dan eerst in Logboek › Fouten welke code het is.</p>
+<p>De foutmail gaat hooguit één keer per foutcode per vijf minuten uit,
+ook over verzoeken heen (de logregel krijgt
+<code>mail_verstuurd = 1</code>; werkt de database niet, dan houdt een
+bestand in de tijdelijke map het bij). Krijg je een foutmail, kijk dan
+in Logboek › Fouten hoe vaak dezelfde code voorkomt.</p>
 <h1 id="datalek-of-beveiligingsincident">Datalek of
 beveiligingsincident</h1>
 <blockquote>
@@ -1330,17 +1438,25 @@ watermerk op ID- en bankpasfoto&#39;s.</li>
 verbindingen alleen van de eigen host), HSTS, X-Frame-Options, nosniff,
 Referrer-Policy, Permissions-Policy, gezet in PHP
 (<code>security_headers()</code>), niet in <code>.htaccess</code>.
-Landingspagina&#39;s hebben een eigen, strengere CSP met
-<code>connect-src &#39;none&#39;</code>.</li>
+Wervingspagina&#39;s hebben een eigen, strengere CSP met
+<code>connect-src &#39;none&#39;</code>. Logo en favicon in
+<code>uploads/branding/</code> krijgen via hun eigen
+<code>.htaccess</code> een CSP met <code>sandbox</code>.</li>
 <li><strong>CSRF:</strong> elk formulier en elke beheer-API met
 token.</li>
 <li><strong>API:</strong> sleutel alleen in de header
 <code>X-Paal13-Key</code>, vergeleken in constante tijd; CORS alleen
 voor paal13.com en de ingestelde websites.</li>
-<li><strong>Uploads:</strong> typecontrole op inhoud, geen
-PHP-uitvoering in <code>uploads/</code>, gevoelige bestanden alleen
-versleuteld in de kluis buiten de webroot, foto&#39;s buiten de webroot met
-willekeurige naam en toegangscontrole.</li>
+<li><strong>Toegang na inloggen:</strong> terugsturen alleen naar een
+pad binnen <code>/admin/</code> (geen open redirect); SSO weigert wie in
+geen toegestane groep meer zit.</li>
+<li><strong>Instellingen:</strong> opslaan vraagt bewerkrecht en neemt
+alleen de velden van het open tabblad aan; geheimen gaan nooit terug
+naar het scherm.</li>
+<li><strong>Uploads:</strong> typecontrole op inhoud, geen SVG als logo
+of favicon, geen PHP-uitvoering in <code>uploads/</code>, gevoelige
+bestanden alleen versleuteld in de kluis buiten de webroot, foto&#39;s
+buiten de webroot met willekeurige naam en toegangscontrole.</li>
 <li><strong>Versleuteling:</strong> XChaCha20-Poly1305 of AES-256-GCM
 per bestand, sleutel per bestand, hoofdsleutel uit config plus zout uit
 de database, gebonden aan het dossier (AAD).</li>
@@ -1351,10 +1467,11 @@ eenmalig gemaakt en versleuteld bewaard.</li>
 rechtenwijzigingen; exports worden zelf gelogd; berichtinhoud komt nooit
 in het logboek.</li>
 <li><strong>Bewaartermijnen:</strong> automatische opschoning per
-categorie (instelbaar, moet aan staan), privacyverklaring die dezelfde
-termijnen toont. Het verwerkingsregister houdt de ontwikkelaar bij in
-<code>docs/ai/PROJECT.md</code> §8 (niet in Git); het bestuur hoort een
-actuele kopie te hebben.</li>
+categorie (instelbaar, moet aan staan; rode waarschuwing zolang het uit
+staat), handmatige vernietiging van loondocumenten na de bewaarplicht,
+privacyverklaring die dezelfde termijnen toont. Het verwerkingsregister
+houdt de ontwikkelaar bij in <code>docs/ai/PROJECT.md</code> §8 (niet in
+Git); het bestuur hoort een actuele kopie te hebben.</li>
 <li><strong>Foutafhandeling:</strong> geen technische details op het
 scherm, wel een referentie; foutmail naar de beheerder.</li>
 </ul>
@@ -1372,14 +1489,19 @@ bewust niet aangeschaft.</li>
 bestaande documenten opnieuw versleutelt.</li>
 <li>Foto&#39;s van sollicitanten zijn afgeschermd, maar niet versleuteld
 opgeslagen.</li>
-<li>Het cron-token staat in het webadres van de cron en dus in de
-access-log van de server. Houd die logs afgeschermd; vervangen kan
-alleen via de database.</li>
+<li>Een oude cronjob-regel met <code>?token=</code> in het adres werkt
+nog, en zet het token dan in de access-log van de server. Vervang hem
+door de regel met de header <code>X-Cron-Token</code>, en maak een nieuw
+token als het oude in logs heeft gestaan.</li>
+<li>Het systeem weet niet wanneer een dienstverband eindigde. De lijst
+&quot;Te beoordelen voor vernietiging&quot; rekent vanaf het laatste seizoen; de
+penningmeester controleert in de loonadministratie voordat er iets wordt
+vernietigd.</li>
 <li>De AVG-opschoning heeft geen proefdraaistand in het beheer.</li>
 <li>WhatsApp loopt via WhatsReach (geen officiële Meta-koppeling). Het
 bestuur kan het per meldingstype uitzetten; bij storing valt alles terug
 op e-mail.</li>
-<li>&quot;Halverwege weggegaan&quot; in de trechter bij Landingspagina&#39;s is een
+<li>&quot;Halverwege weggegaan&quot; in de trechter bij Wervingspagina&#39;s is een
 aanwijzing, geen telling: het signaal komt van een tabblad dat naar de
 achtergrond gaat, en sommigen komen terug.</li>
 <li>Het formulier bewaart tijdens het invullen wat iemand intypt in

@@ -1,14 +1,13 @@
 # Wervingspagina's — handleiding
 
-Versie 2.99 · september 2026
+Versie 2.101 · september 2026
 
 Een wervingspagina (ook wel landingspagina) is een eigen pagina voor één doelgroep, met het
 aanmeldformulier erin. Je maakt het ontwerp waar je wilt (bijvoorbeeld in Claude Design) en
 uploadt het hier als HTML-bestand.
 
-Te vinden onder **Beheer › Wervingspagina's** (menugroep Communicatie). Op de schermen zelf heet
-het onderdeel nog "Landingspagina's"; het is hetzelfde. Je hebt het recht `paginas` nodig; dat
-hebben standaard het bestuur en de admin.
+Te vinden onder **Beheer › Wervingspagina's** (menugroep Communicatie). Je hebt het recht
+Wervingspagina's (`paginas`) nodig; dat hebben standaard het bestuur en de admin.
 
 ## Inhoud
 
@@ -308,7 +307,7 @@ Om unieke bezoekers te kunnen tellen wordt een versleutelde code bewaard die elk
 verandert en niet naar een persoon te herleiden is. Die code wordt na 30 dagen gewist; de
 aantallen blijven. De cijfers zelf verdwijnen na 13 maanden. Beide termijnen staan bij
 **Instellingen › Bewaren & opschonen** ("Herkenning unieke bezoekers" en "Bezoekersstatistiek
-landingspagina's"). Het wissen gebeurt alleen als daar "Automatisch opschonen inschakelen" aan
+wervingspagina's"). Het wissen gebeurt alleen als daar "Automatisch opschonen inschakelen" aan
 staat.
 
 Dezelfde bezoeker telt hooguit **eens per 30 minuten** als bezoek op dezelfde pagina.
@@ -320,9 +319,10 @@ Naast het bezoek houden we bij hoever iemand in het formulier kwam: begonnen met
 stap 2 bereikt, stap 3 bereikt, verstuurd. Daarvan staat alleen het stapnummer geregistreerd,
 nooit iets wat iemand heeft ingetypt.
 
-Wil je helemaal niets meten, dan kan de technisch beheerder de meting uitzetten (instelling
-`paginas.tracking`; er is daar nog geen schakelaar voor in het scherm Instellingen). Dan schrijft
-het systeem geen enkele gebeurtenis meer weg en verdwijnt ook het meetadres uit de pagina.
+Wil je helemaal niets meten, zet dan onder **Instellingen › Bewaren & opschonen** het vinkje
+**Bezoekersstatistiek op de wervingspagina's en het aanmeldformulier** uit (standaard staat het
+aan). Dan schrijft het systeem geen enkele gebeurtenis meer weg en verdwijnt ook het meetadres uit
+de pagina. Wat al geteld is, blijft staan volgens de termijnen hierboven.
 
 Let op: zet je ontwerp zelf een cookie of een tracker, dan gelden de gewone regels wél en is
 de brigade daarvoor verantwoordelijk. Het rapport waarschuwt daarvoor, en de browser

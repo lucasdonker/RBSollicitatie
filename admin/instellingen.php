@@ -1493,7 +1493,7 @@ require __DIR__ . '/layout_top.php';
       </div>
       <div class="bh-veldrij">
         <div class="ds-veld">
-          <label>Bezoekersstatistiek landingspagina's <span class="tip" data-tip="Aantallen bezoeken en aanmeldingen per landingspagina. Bevat geen persoonsgegevens."></span></label>
+          <label>Bezoekersstatistiek wervingspagina's <span class="tip" data-tip="Aantallen bezoeken en aanmeldingen per wervingspagina. Bevat geen persoonsgegevens."></span></label>
           <input type="number" name="inst[bewaar.pagina_events_mnd]" value="<?= instelling_int('bewaar.pagina_events_mnd',13) ?>" min="0" max="60">
           <div class="ds-veld-hint">Daarna verwijderen (0 = bewaren)</div>
         </div>
