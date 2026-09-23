@@ -47,6 +47,7 @@ function bh_nav_groepen(array $tellers = [], bool $alles = false): array {
             ['id' => 'paginas',   'label' => "Wervingspagina's", 'url' => $basis . 'paginas.php',   'icoon' => 'paginas', 'module' => 'paginas'],
         ],
         'Systeem' => [
+            ['id' => 'seizoen',      'label' => 'Seizoen',             'url' => $basis . 'seizoen.php',      'icoon' => 'strand',       'module' => 'seizoen'],
             ['id' => 'instellingen', 'label' => 'Instellingen',        'url' => $basis . 'instellingen.php', 'icoon' => 'instellingen', 'module' => 'instellingen'],
             ['id' => 'beheerders',   'label' => 'Beheerders & rechten', 'url' => $basis . 'beheerders.php',  'icoon' => 'sleutel',      'module' => 'beheerders'],
             ['id' => 'logboek',      'label' => 'Logboek',             'url' => $basis . 'logboek.php',      'icoon' => 'auditlog',     'module' => 'logboek'],
@@ -79,14 +80,14 @@ function bh_nav_groepen(array $tellers = [], bool $alles = false): array {
 /**
  * Welk nav-item hoort bij deze $actieve_nav?
  *
- * Schermen zetten een vrije string en die is niet altijd een nav-id: seizoen.php en
- * mail_templates.php horen onder Instellingen, foutenlog onder Logboek. Onbekende
+ * Schermen zetten een vrije string en die is niet altijd een nav-id: mail_templates.php
+ * hoort onder Instellingen, foutenlog onder Logboek. Onbekende
  * sleutels worden gelogd — anders is een typefout onzichtbaar en licht er gewoon geen
  * enkel item op.
  */
 function bh_nav_actief(string $nav): string {
     $alias = [
-        'seizoen' => 'instellingen', 'mail_templates' => 'instellingen',
+        'mail_templates' => 'instellingen',
         'geplande_berichten' => 'berichten', 'mailing' => 'berichten',
         'handleiding' => 'instellingen', 'systeem' => 'instellingen', 'update' => 'instellingen',
         'foutenlog' => 'logboek', 'audit' => 'logboek',
