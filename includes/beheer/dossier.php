@@ -88,6 +88,8 @@ function bh_dossier(int $sol_id): ?array {
     return $cache[$sol_id] = [
         'sol'             => $sol,
         'blk'             => $blk,
+        // null zolang het formulier een concept is (de autosave maakt de rij al aan).
+        'blk_ingediend_op' => function_exists('blk_ingediend_op') ? blk_ingediend_op($sol, $blk) : ($blk['ingevuld_op'] ?? null),
         'beschikbaarheid' => $besch,
         'scores'          => $scores,
         'observaties'     => $observ,

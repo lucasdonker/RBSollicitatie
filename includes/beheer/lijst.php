@@ -32,11 +32,13 @@ function bh_soll_filter(array $q, int $sid): array {
         $where .= " AND s.terugkerend = 1";
         $delen[] = 'terugkerend';
     }
+    // Ingediend telt, niet het bestaan van een rij: de autosave maakt al een conceptrij.
+    $_blk_in = "EXISTS (SELECT 1 FROM blk_formulieren bf WHERE bf.sollicitatie_id=s.id AND " . blk_ingediend_sql('bf', 's') . ")";
     if ((string)($q['blk'] ?? '') === 'ja') {
-        $where .= " AND EXISTS (SELECT 1 FROM blk_formulieren bf WHERE bf.sollicitatie_id=s.id)";
-        $delen[] = 'formulier ingevuld';
+        $where .= " AND $_blk_in";
+        $delen[] = 'formulier ingediend';
     } elseif ((string)($q['blk'] ?? '') === 'nee') {
-        $where .= " AND NOT EXISTS (SELECT 1 FROM blk_formulieren bf WHERE bf.sollicitatie_id=s.id)";
+        $where .= " AND NOT $_blk_in";
         $delen[] = 'formulier open';
     }
     $comp = (string)($q['comp'] ?? '');

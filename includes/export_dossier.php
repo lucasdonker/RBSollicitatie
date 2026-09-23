@@ -84,6 +84,8 @@ function export_dossier_van(int $sol_id): array {
     $bq = $db->prepare("SELECT * FROM blk_formulieren WHERE sollicitatie_id = ?");
     $bq->execute([$sol_id]);
     $blk = $bq->fetch() ?: [];
+    // Ingediend, niet "er staat een rij": de autosave maakt al een concept aan.
+    $blk_op = function_exists('blk_ingediend_op') ? blk_ingediend_op($s, $blk ?: null) : ($blk['ingevuld_op'] ?? null);
 
     $naam = trim($s['voornaam'] . ' ' . ($s['tussenvoegsel'] ? $s['tussenvoegsel'] . ' ' : '') . $s['achternaam']);
     $leeftijd = (function_exists('leeftijd_uit_datum') && $s['geboortedatum']) ? leeftijd_uit_datum($s['geboortedatum']) : '';
@@ -108,7 +110,8 @@ function export_dossier_van(int $sol_id): array {
         'Motivatie strand'     => $blk['motivatie_strand'] ?? '',
         'Bijzonderheden'  => $blk['bijzonderheden'] ?? '',
         'Beschikbaarheid' => export_beschikbaarheid_tekst($sol_id),
-        'BLK ingevuld op' => !empty($blk['ingevuld_op']) ? date('d-m-Y H:i', strtotime($blk['ingevuld_op'])) : '(nog niet ingevuld)',
+        'BLK ingediend op' => $blk_op ? date('d-m-Y H:i', strtotime($blk_op))
+                                      : ($blk ? '(concept, nog niet ingediend)' : '(nog niet ingevuld)'),
         'Ondertekeningen' => export_ondertekeningen_tekst($sol_id),
         'Loondossier'     => export_loondossier_tekst($sol_id),
     ];

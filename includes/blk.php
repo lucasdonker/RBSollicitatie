@@ -28,6 +28,27 @@ function blk_is_ingediend(array $sol, ?array $blk): bool {
     return in_array($sol['fase'] ?? '', blk_fases_ingediend(), true);
 }
 
+/**
+ * blk_is_ingediend() als SQL, voor lijsten en filters. $b is de alias van
+ * blk_formulieren (via LEFT JOIN), $s die van sollicitaties. Het bestaan van de rij
+ * zegt niets: de autosave maakt hem al bij het eerste woord.
+ */
+function blk_ingediend_sql(string $b = 'b', string $s = 's'): string {
+    $fases = "'" . implode("','", blk_fases_ingediend()) . "'";
+    return "($b.sollicitatie_id IS NOT NULL AND ($b.definitief_op IS NOT NULL OR $s.fase IN ($fases)))";
+}
+
+/** Datum van indienen als SQL (NULL zolang het een concept is). */
+function blk_ingediend_op_sql(string $b = 'b', string $s = 's'): string {
+    return "(CASE WHEN " . blk_ingediend_sql($b, $s) . " THEN COALESCE($b.definitief_op, $b.ingevuld_op) END)";
+}
+
+/** Datum van indienen voor één rij, of null zolang het een concept is. */
+function blk_ingediend_op(array $sol, ?array $blk): ?string {
+    if (!blk_is_ingediend($sol, $blk)) return null;
+    return $blk['definitief_op'] ?? ($blk['ingevuld_op'] ?? null);
+}
+
 /** Leesbare labels per veld, voor het wijzigingslog. */
 function blk_veld_labels(): array {
     return [
@@ -108,7 +129,8 @@ function blk_kolom_velden(): array {
         'social_media'                   => ['kop' => 'Social media',  'sql' => 'b.social_media',                   'track' => 'minmax(110px,1.2fr)'],
         'bijzonderheden'                 => ['kop' => 'Bijzonderheden','sql' => 'b.bijzonderheden',                 'track' => 'minmax(140px,1.6fr)', 'lang' => true, 'recht' => ['blk', 'lezen']],
 
-        'blk_ingevuld' => ['kop' => 'Formulier', 'sql' => 'b.ingevuld_op', 'track' => '104px', 'sorteer' => 'b.ingevuld_op'],
+        // Ingediend, niet "er staat een rij": een concept laat hier een streepje zien.
+        'blk_ingevuld' => ['kop' => 'Formulier', 'sql' => blk_ingediend_op_sql(), 'track' => '104px', 'sorteer' => blk_ingediend_op_sql()],
     ];
 }
 

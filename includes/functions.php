@@ -405,7 +405,7 @@ function dashboard_meldingen(int $sid): array {
         $q = $db->prepare("SELECT COUNT(DISTINCT s.id) FROM sollicitaties s
                            JOIN blk_formulieren b ON b.sollicitatie_id=s.id
                            WHERE s.seizoen_id=? AND s.fase='aangemeld'
-                             AND b.motivatie_lifeguard IS NOT NULL AND b.motivatie_lifeguard <> ''");
+                             AND " . blk_ingediend_sql('b', 's'));
         $q->execute([$sid]);
         $n = (int)$q->fetchColumn();
         if ($n > 0) $m[] = ['type'=>'info', 'aantal'=>$n,

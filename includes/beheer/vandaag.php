@@ -26,6 +26,29 @@ function bh_fase_tellingen(int $seizoen_id): array {
 }
 
 /**
+ * Ondertekeningen die langer dan drie dagen openstaan, in dit seizoen.
+ *
+ * Eén telling voor het dashboard, de systeemstatus en het menubolletje. Die telden
+ * eerder elk apart over álle seizoenen en inclusief afgewezen kandidaten, terwijl
+ * admin/ondertekeningen.php (waar ze naartoe linken) alleen dit seizoen toont — het
+ * getal klopte dan nooit met de lijst.
+ */
+function bh_ondertekeningen_te_lang_open(int $seizoen_id): int {
+    static $cache = [];
+    if (isset($cache[$seizoen_id])) return $cache[$seizoen_id];
+    if ($seizoen_id <= 0) return 0;
+    try {
+        $q = db()->prepare("SELECT COUNT(*) FROM ondertekeningen o
+                            JOIN sollicitaties s ON s.id = o.sollicitatie_id
+                            WHERE s.seizoen_id = ? AND s.fase NOT IN ('afgewezen','afgehaakt')
+                              AND o.ondertekend_op IS NULL
+                              AND o.aangemaakt_op < DATE_SUB(NOW(), INTERVAL 3 DAY)");
+        $q->execute([$seizoen_id]);
+        return $cache[$seizoen_id] = (int)$q->fetchColumn();
+    } catch (\Throwable $e) { return $cache[$seizoen_id] = 0; }
+}
+
+/**
  * De ene taak die nu telt.
  *
  * De seizoensfase bepaalt wélke vraag er speelt; de tellingen bepalen of er nog iets
@@ -124,20 +147,23 @@ function bh_vandaag_loopt(?array $seizoen): array {
     $sid = $seizoen ? (int)$seizoen['id'] : 0;
     if (!$sid) return $uit;
 
-    try {
-        $n = (int)db()->query("SELECT COUNT(*) FROM ondertekeningen
-                               WHERE ondertekend_op IS NULL
-                                 AND aangemaakt_op < DATE_SUB(NOW(), INTERVAL 3 DAY)")->fetchColumn();
-        if ($n > 0) {
-            $uit[] = ['tekst' => $n === 1 ? 'Eén ondertekening staat langer dan 3 dagen open'
-                                          : $n . ' ondertekeningen staan langer dan 3 dagen open',
-                      'toon' => 'oranje', 'extra' => null,
-                      'url' => APP_URL . '/admin/ondertekeningen.php'];
-        }
-    } catch (\Throwable $e) {}
+    $n = bh_ondertekeningen_te_lang_open($sid);
+    if ($n > 0) {
+        $uit[] = ['tekst' => $n === 1 ? 'Eén ondertekening staat langer dan 3 dagen open'
+                                      : $n . ' ondertekeningen staan langer dan 3 dagen open',
+                  'toon' => 'oranje', 'extra' => null,
+                  'url' => APP_URL . '/admin/ondertekeningen.php'];
+    }
 
+    // Zelfde selectie als de lijst "nog voorlopig" (beschikbaarheid2_voorlopigen) en de
+    // herinneringen: dit seizoen, en alleen wie echt weken heeft ingevuld.
     try {
-        $n = (int)db()->query("SELECT COUNT(*) FROM beschikbaarheid_profiel WHERE voorlopig=1")->fetchColumn();
+        $q = db()->prepare("SELECT COUNT(*) FROM beschikbaarheid_profiel bp
+                            JOIN sollicitaties s ON s.id = bp.sollicitatie_id
+                            WHERE bp.voorlopig = 1 AND s.seizoen_id = ? AND s.fase NOT IN ('afgewezen','afgehaakt')
+                              AND EXISTS (SELECT 1 FROM beschikbaarheid_blok bb WHERE bb.sollicitatie_id = bp.sollicitatie_id)");
+        $q->execute([$sid]);
+        $n = (int)$q->fetchColumn();
         if ($n > 0) {
             $uit[] = ['tekst' => $n . ' beschikbaarheden zijn nog voorlopig', 'toon' => 'grijs',
                       'extra' => null, 'url' => APP_URL . '/admin/beschikbaarheid.php'];
@@ -163,8 +189,8 @@ function bh_systeemstatus(): array {
     $wachtrij = $tel("SELECT COUNT(*) FROM mail_queue WHERE status='wacht'");
     $fouten   = $tel("SELECT COUNT(*) FROM mail_queue WHERE status='fout'
                       AND aangemaakt_op > DATE_SUB(NOW(), INTERVAL 24 HOUR)");
-    $open     = $tel("SELECT COUNT(*) FROM ondertekeningen WHERE ondertekend_op IS NULL
-                      AND aangemaakt_op < DATE_SUB(NOW(), INTERVAL 3 DAY)");
+    $sz       = function_exists('actief_seizoen') ? actief_seizoen() : null;
+    $open     = bh_ondertekeningen_te_lang_open((int)($sz['id'] ?? 0));
     $ronde    = function_exists('instelling') ? instelling('cron.laatste_run', '') : '';
     $ronde_ok = $ronde !== '' && strtotime($ronde) > time() - 7200;
 
@@ -185,11 +211,8 @@ function bh_nav_tellers(?array $seizoen): array {
     if (!$taak['klaar'] && $taak['totaal'] > 0) {
         $uit['dashboard'] = max(0, $taak['totaal'] - $taak['gedaan']);
     }
-    try {
-        $n = (int)db()->query("SELECT COUNT(*) FROM ondertekeningen WHERE ondertekend_op IS NULL
-                               AND aangemaakt_op < DATE_SUB(NOW(), INTERVAL 3 DAY)")->fetchColumn();
-        if ($n > 0) $uit['ondertekeningen'] = $n;
-    } catch (\Throwable $e) {}
+    $n = bh_ondertekeningen_te_lang_open($sid);
+    if ($n > 0) $uit['ondertekeningen'] = $n;
 
     return $uit;
 }

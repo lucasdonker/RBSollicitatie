@@ -737,13 +737,15 @@ function laadTimeline(solId) {
       }
       box.innerHTML = '<div class="timeline-lijn" style="position:relative;padding-left:14px;border-left:2px solid var(--rand)">'
         + data.events.map(e => {
-            const inhoud = String(e.inhoud || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            // Tekst altijd escapen (namen en titels komen uit de database); het icoon
+            // is een SVG die de server zelf maakt met icoon().
+            const esc = s => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
             return `
               <div class="timeline-event" style="position:relative;margin-bottom:12px;padding-left:10px">
-                <span style="position:absolute;left:-22px;top:0;font-size:13px;background:var(--bg-card);padding:0 2px">${e.icon}</span>
-                <div style="font-size:12.5px;font-weight:500">${e.titel}</div>
-                <div style="font-size:11.5px;color:var(--tekst-zacht);margin-top:1px">${inhoud}</div>
-                <div style="font-size:10.5px;color:var(--grijs);margin-top:2px">${formatDatum(e.tijd)} · ${e.door}</div>
+                <span style="position:absolute;left:-22px;top:0;font-size:13px;background:var(--bg-card);padding:0 2px;color:var(--navy)">${e.icon || ''}</span>
+                <div style="font-size:12.5px;font-weight:500">${esc(e.titel)}</div>
+                <div style="font-size:11.5px;color:var(--tekst-zacht);margin-top:1px">${esc(e.inhoud)}</div>
+                <div style="font-size:10.5px;color:var(--grijs);margin-top:2px">${formatDatum(e.tijd)} · ${esc(e.door)}</div>
               </div>`;
           }).join('') + '</div>';
     })

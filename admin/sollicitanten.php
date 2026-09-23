@@ -240,7 +240,7 @@ endif; ?>
       ['soort' => 'keuze', 'naam' => 'terug', 'label' => 'Terugkerend', 'waarde' => $filter_terug,
        'opties' => ['' => 'Alle kandidaten', '1' => 'Alleen terugkerend']],
       ['soort' => 'keuze', 'naam' => 'blk', 'label' => 'Kennismakingsformulier', 'waarde' => $filter_blk,
-       'opties' => ['' => 'Formulier: alle', 'ja' => 'Formulier ingevuld', 'nee' => 'Formulier open']],
+       'opties' => ['' => 'Formulier: alle', 'ja' => 'Formulier ingediend', 'nee' => 'Formulier open']],
   ];
   if (function_exists('competentie_sync_klaar') && competentie_sync_klaar()) {
       $_opties = ['' => 'Competentie: alle'];

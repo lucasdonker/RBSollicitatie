@@ -158,6 +158,7 @@ $_mag_blk = mag('blk', 'lezen');
     <section class="ds-kaart ds-kaart-p">
       <div class="bh-kaartkop">
         <h2>Uit het kennismakingsformulier</h2>
+        <?php if (empty($tab_dossier['blk_ingediend_op'])): ?><?= bh_badge('Concept', 'oranje') ?><?php endif; ?>
         <a class="bh-kaartkop-link" href="<?= h(dossier_url((int)$_s['id'], 'formulier')) ?>">Volledig formulier →</a>
       </div>
       <div class="bh-gegevensraster twee">

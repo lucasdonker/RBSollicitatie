@@ -36,9 +36,13 @@ while ($dag <= $eind_dag) {
     $dag->modify('+7 days');
 }
 
-// ── Sollicitanten met BLK (niet afgewezen) ───────────────────
+// ── Sollicitanten met een formulier of een beschikbaarheid ───
+// Eerder alleen wie een BLK-rij had: wie eerst zijn beschikbaarheid doorgaf, stond
+// hier niet, terwijl het dekkingsscherm (bezetting.php) hem wel meetelde. Zelfde
+// uitsluiting als daar: afgewezen en afgehaakt.
 $lijst = [];
 if ($sid) {
+    if (function_exists('beschikbaarheid2_auto_setup')) beschikbaarheid2_auto_setup(); // beschikbaarheid_blok moet bestaan
     $q = $db->prepare("
         SELECT s.id sol_id, s.fase, s.terugkerend,
                p.voornaam, p.tussenvoegsel, p.achternaam,
@@ -46,10 +50,12 @@ if ($sid) {
                prof.norm_dagen
         FROM sollicitaties s
         JOIN personen p ON p.id = s.persoon_id
-        JOIN blk_formulieren bl ON bl.sollicitatie_id = s.id
         LEFT JOIN beschikbaarheid bsch ON bsch.sollicitatie_id = s.id
         LEFT JOIN beschikbaarheid_profiel prof ON prof.sollicitatie_id = s.id
-        WHERE s.seizoen_id = ? AND s.fase NOT IN ('afgewezen')
+        WHERE s.seizoen_id = ? AND s.fase NOT IN ('afgewezen','afgehaakt')
+          AND (bsch.sollicitatie_id IS NOT NULL
+               OR EXISTS (SELECT 1 FROM blk_formulieren bl WHERE bl.sollicitatie_id = s.id)
+               OR EXISTS (SELECT 1 FROM beschikbaarheid_blok bb WHERE bb.sollicitatie_id = s.id))
         ORDER BY p.achternaam, p.voornaam
     ");
     $q->execute([$sid]);

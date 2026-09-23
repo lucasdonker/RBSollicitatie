@@ -244,12 +244,13 @@ require __DIR__ . '/layout_top.php';
         <?php if ($blk['bijzonderheden']): ?>
         <div class="bh-blkveld">
           <div class="bh-veldlabel">Bijzonderheden / medicatie</div>
-          <div class="bh-blkwaarde" class="bh-blkwaarde ds-fase-rood bh-blk-let-op"><?= h($blk['bijzonderheden']) ?></div>
+          <div class="bh-blkwaarde ds-fase-rood bh-blk-let-op"><?= h($blk['bijzonderheden']) ?></div>
         </div>
         <?php endif; ?>
         <div style="font-size:11px;color:var(--grijs);margin-top:8px">
-          Ingevuld: <?= datum_nl(substr($blk['ingevuld_op'] ?? '', 0, 10)) ?>
-          <?php if ($blk['bijgewerkt_op'] && substr($blk['bijgewerkt_op'],0,10) !== substr($blk['ingevuld_op']??'',0,10)): ?>
+          <?php $_blk_op = blk_ingediend_op($sol, $blk); ?>
+          <?= $_blk_op ? 'Ingediend: ' . h(datum_nl(substr($_blk_op, 0, 10))) : 'Concept, nog niet ingediend' ?>
+          <?php if ($blk['bijgewerkt_op'] && substr($blk['bijgewerkt_op'],0,10) !== substr((string)$_blk_op,0,10)): ?>
           · Bijgewerkt: <?= datum_nl(substr($blk['bijgewerkt_op'],0,10)) ?>
           <?php endif; ?>
         </div>

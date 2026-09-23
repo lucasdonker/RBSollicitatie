@@ -36,9 +36,12 @@ $_veld = function (string $label, ?string $waarde, string $toon = '') {
   <section class="ds-kaart ds-kaart-p">
     <div class="bh-kaartkop">
       <h2>Persoonsgegevens</h2>
-      <span class="bh-meta">
-        ingevuld <?= h(datum_nl(substr((string)($_blk['ingevuld_op'] ?? ''), 0, 10))) ?>
-      </span>
+      <?php if (!empty($tab_dossier['blk_ingediend_op'])): ?>
+        <span class="bh-meta">ingediend <?= h(datum_nl(substr((string)$tab_dossier['blk_ingediend_op'], 0, 10))) ?></span>
+      <?php else: ?>
+        <?php // De autosave bewaart tussentijds; dit is wat er nu staat, niet wat is ingeleverd. ?>
+        <?= bh_badge('Concept · nog niet ingediend', 'oranje') ?>
+      <?php endif; ?>
     </div>
     <div class="bh-gegevensraster">
       <?php

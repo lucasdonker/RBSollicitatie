@@ -67,7 +67,7 @@ $q = $db->prepare("
     FROM ondertekeningen o
     JOIN sollicitaties s ON s.id = o.sollicitatie_id
     JOIN personen p ON p.id = s.persoon_id
-    WHERE s.seizoen_id = ?
+    WHERE s.seizoen_id = ? AND s.fase NOT IN ('afgewezen','afgehaakt')
     ORDER BY p.achternaam, p.voornaam, o.aangemaakt_op
 ");
 $q->execute([$sid]);
