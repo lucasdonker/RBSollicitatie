@@ -349,10 +349,11 @@ Goed om te weten:
 - **Geen dubbele uitnodiging**: dezelfde melding gaat niet twee keer binnen een uur naar
   dezelfde persoon. Zet je iemand per ongeluk terug en meteen weer vooruit, dan zie je "Bericht
   al eerder verstuurd (geen dubbele)".
-- **Een fase "stil" zetten** (zonder mail) kan niet met een knop. Wil je bijvoorbeeld iemand
-  opnieuw op Uitgenodigd SD zetten zonder nieuwe uitnodiging, zet dan eerst onder Instellingen ›
-  SMS, WhatsApp & meldingen het kanaal van dat meldingstype op **Uit**, doe de wijziging, en zet
-  het kanaal daarna terug. Vergeet die laatste stap niet.
+- **Een fase "stil" zetten** (zonder bericht) kan met een vinkje. Wijzig je de fase in het dossier,
+  dan staat in het bevestigingsvenster **Zonder bericht doorvoeren**; doe je het als bulkactie vanuit
+  de sollicitantenlijst, dan staat hetzelfde vinkje op het tussenscherm dat eerst laat zien wat er
+  gaat gebeuren. De fase verandert wel, er gaat alleen niets de deur uit. Gebruik dit als je ze zelf
+  belt of het al besproken is. In het logboek blijft zichtbaar dát het stil ging.
 - **Automatiseringen uitzetten**: onder Instellingen › Uitnodiging & automatisering kun je het
   klaarzetten van ondertekeningen bij de SD-uitnodiging en het kennismakingspakket bij aannemen
   uitschakelen.
