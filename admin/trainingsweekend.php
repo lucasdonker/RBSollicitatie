@@ -77,7 +77,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $sid) {
             $naar = tw_besluit_fase((string)$k['besluit']);
             // Twijfel leidt nergens heen: daar moet iemand over bellen, niet over mailen.
             if ($naar === null) { $over++; continue; }
-            fase_zetten((int)$k['sol_id'], $naar, ['bron' => 'trainingsweekend', 'door' => $ik]);
+            // $bron is een string; een array hier gaf een TypeError en voerde niemand door.
+            fase_zetten((int)$k['sol_id'], $naar, 'trainingsweekend', ['seizoen_id' => $sid]);
             tw_doorgevoerd_markeren($sid, (int)$k['sol_id']);
             $gedaan++;
         }

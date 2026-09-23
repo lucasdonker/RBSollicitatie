@@ -282,7 +282,9 @@ require __DIR__ . '/layout_top.php';
 <?php endif; ?>
 
 <script>
-const CSRF = '<?= csrf_token() ?>';
+// window.CSRF, geen const: layout_bottom.php declareert CSRF ook, en een tweede const
+// brak dat hele script af (SyntaxError) — thema, meldingen en fase wijzigen deden niets.
+window.CSRF = window.CSRF || '<?= csrf_token() ?>';
 
 /* Besluit en notitie gaan samen de deur uit: de notitie hoort bij het besluit, en
    los opslaan zou een notitie zonder besluit kunnen achterlaten. */

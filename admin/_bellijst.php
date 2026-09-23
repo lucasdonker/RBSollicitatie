@@ -201,7 +201,9 @@ foreach ($bel_lijst as $_k) if ((int)$_k['sol_id'] === $_open) $_huidig = $_k;
 </div>
 
 <script>
-const CSRF = '<?= csrf_token() ?>';
+// window.CSRF, geen const: layout_bottom.php declareert CSRF ook, en een tweede const
+// brak dat hele script af (SyntaxError) — thema, meldingen en fase wijzigen deden niets.
+window.CSRF = window.CSRF || '<?= csrf_token() ?>';
 
 function belPost(body) {
   return fetch(location.pathname, {

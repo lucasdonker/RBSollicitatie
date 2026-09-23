@@ -305,7 +305,9 @@ require __DIR__ . '/layout_top.php';
 </div>
 
 <script>
-const CSRF = '<?= csrf_token() ?>';
+// window.CSRF, geen const: layout_bottom.php declareert CSRF ook, en een tweede const
+// brak dat hele script af (SyntaxError) — thema, meldingen en fase wijzigen deden niets.
+window.CSRF = window.CSRF || '<?= csrf_token() ?>';
 const soortKeuze = {};
 
 /* Tikken ís opslaan. De knop springt meteen aan en het vinkje verschijnt; gaat het

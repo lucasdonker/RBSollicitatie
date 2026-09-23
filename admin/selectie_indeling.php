@@ -173,7 +173,9 @@ require __DIR__ . '/layout_top.php';
 <?php endif; ?>
 
 <script>
-const CSRF = '<?= csrf_token() ?>';
+// window.CSRF, geen const: layout_bottom.php declareert CSRF ook, en een tweede const
+// brak dat hele script af (SyntaxError) — thema, meldingen en fase wijzigen deden niets.
+window.CSRF = window.CSRF || '<?= csrf_token() ?>';
 const MAG_BEWERKEN = <?= $mag_bewerken ? 'true' : 'false' ?>;
 const KANDIDATEN = <?= json_encode(array_map(fn($k) => ['id' => (int)$k['sol_id'], 'naam' => $k['naam']], $kandidaten)) ?>;
 let RELATIES = <?= json_encode(array_map(fn($l) => array_values(array_unique($l)), $relaties)) ?: '{}' ?>;
