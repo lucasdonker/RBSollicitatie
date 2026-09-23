@@ -1,7 +1,7 @@
 <?php
 /**
- * Paal 13 — Documenten van sollicitanten (aangenomen-takenpakket): kopie ID (voor/achter), kopie bankpas,
- * pasfoto en de verzegelde PDF's van ondertekeningen (loonheffing, lidmaatschap).
+ * Paal 13 — Documenten van sollicitanten (aangenomen-takenpakket): kopie ID (voor/achter), kopie bankpas
+ * en de verzegelde PDF's van ondertekeningen (loonheffing, lidmaatschap). Een pasfoto vragen we niet meer.
  *
  * Alles staat versleuteld in de kluis (includes/kluis.php), in een map buiten het webbereik
  * (DOCUMENTEN_MAP in config.php; anders uploads/documenten met een deny-.htaccess). De rij in
@@ -393,6 +393,128 @@ function documenten_overzicht(int $seizoen_id): array {
         }
     } catch (\Throwable $e) {}
     return $uit;
+}
+
+// ── Loondossier vernietigen (handmatig, penningmeester) ───────
+//
+// Fiscale bewaarplicht: vijf jaar na het einde van het kalenderjaar waarin het dienstverband
+// eindigde. Het systeem weet niet wanneer dat was — alleen tot welk seizoen iemand hier voorkwam.
+// Daarom wist het systeem loonstukken niet zelf, maar zet het ze klaar ter beoordeling; de
+// penningmeester controleert in de loonadministratie en vernietigt dan met de hand.
+
+/** Soorten die bij het loondossier horen: de wettelijk te bewaren stukken plus een achtergebleven bankpas. */
+function documenten_loonsoorten(): array {
+    $uit = [];
+    foreach (document_soorten() as $soort => $d) {
+        if (in_array($d['bewaren'] ?? '', ['loon', 'verwerkt_dan_weg'], true)) $uit[] = $soort;
+    }
+    return $uit;
+}
+
+/** Bewaarplicht in volle kalenderjaren na het laatste seizoen. Nooit korter dan de wettelijke vijf. */
+function documenten_loon_bewaarjaren(): int {
+    $j = function_exists('instelling_int') ? instelling_int('bewaar.loondocumenten_jaar', 5) : 5;
+    return max(5, $j);
+}
+
+/**
+ * Loondossiers die in aanmerking komen voor vernietiging, per persoon.
+ *
+ * Laatste seizoen = het hoogste jaar van YEAR(COALESCE(seizoen.datum_werk_eind, aangemeld_op)) over alle
+ * sollicitaties van die persoon die op 'aangenomen' staan of loonstukken dragen (dat laatste kan het jaar
+ * alleen later maken, nooit eerder). In aanmerking als laatste_jaar + bewaarjaren < huidig jaar:
+ * seizoen 2020 komt dus op 1-1-2026 in beeld. Alleen personen met nog iets te vernietigen.
+ *
+ * Retour: lijst van ['persoon_id', 'naam', 'laatste_jaar', 'stukken' => [leesbare titels]], oudste eerst.
+ */
+function documenten_te_vernietigen(?int $alleen_persoon = null): array {
+    documenten_auto_setup();
+    $soorten = documenten_loonsoorten();
+    if (!$soorten) return [];
+    $in    = implode(',', array_fill(0, count($soorten), '?'));
+    $grens = (int)date('Y') - documenten_loon_bewaarjaren(); // laatste_jaar moet hier onder liggen
+    $uit   = [];
+    try {
+        $db = db();
+        $sql = "SELECT s.persoon_id, p.voornaam, p.tussenvoegsel, p.achternaam,
+                       MAX(YEAR(COALESCE(sz.datum_werk_eind, s.aangemeld_op))) AS laatste_jaar
+                FROM sollicitaties s
+                JOIN personen p ON p.id = s.persoon_id
+                LEFT JOIN seizoenen sz ON sz.id = s.seizoen_id
+                WHERE (s.fase = 'aangenomen'
+                   OR EXISTS (SELECT 1 FROM sollicitant_documenten d WHERE d.sollicitatie_id = s.id
+                              AND d.status IN ('ingediend','verwerkt') AND d.soort IN ($in))
+                   OR EXISTS (SELECT 1 FROM ondertekeningen o WHERE o.sollicitatie_id = s.id AND o.type = 'loonheffing'))"
+             . ($alleen_persoon !== null ? " AND s.persoon_id = ?" : '') . "
+                GROUP BY s.persoon_id, p.voornaam, p.tussenvoegsel, p.achternaam
+                HAVING laatste_jaar < ?
+                ORDER BY laatste_jaar, p.achternaam, p.voornaam";
+        $params = $soorten;
+        if ($alleen_persoon !== null) $params[] = $alleen_persoon;
+        $params[] = $grens;
+        $q = $db->prepare($sql);
+        $q->execute($params);
+
+        $docs = $db->prepare("SELECT d.soort FROM sollicitant_documenten d JOIN sollicitaties s ON s.id = d.sollicitatie_id
+                              WHERE s.persoon_id = ? AND d.status IN ('ingediend','verwerkt') AND d.soort IN ($in) ORDER BY d.id");
+        $lh   = $db->prepare("SELECT COUNT(*) FROM ondertekeningen o JOIN sollicitaties s ON s.id = o.sollicitatie_id
+                              WHERE s.persoon_id = ? AND o.type = 'loonheffing'
+                                AND (o.vertrouwelijk IS NOT NULL OR o.handtekening_beeld IS NOT NULL OR o.formulier_data IS NOT NULL)");
+        $titels = document_soorten();
+        foreach ($q->fetchAll() as $r) {
+            $pid = (int)$r['persoon_id'];
+            $stukken = [];
+            $docs->execute(array_merge([$pid], $soorten));
+            foreach ($docs->fetchAll(PDO::FETCH_COLUMN) as $s) $stukken[$s] = (string)($titels[$s]['titel'] ?? $s);
+            $lh->execute([$pid]);
+            if ((int)$lh->fetchColumn() > 0) $stukken['loonheffing_gegevens'] = 'Gegevens van het loonheffingsformulier (BSN, handtekening, adres)';
+            if (!$stukken) continue; // niets meer te vernietigen
+            $uit[] = [
+                'persoon_id'   => $pid,
+                'naam'         => trim($r['voornaam'] . ' ' . trim(($r['tussenvoegsel'] ?? '') . ' ' . $r['achternaam'])),
+                'laatste_jaar' => (int)$r['laatste_jaar'],
+                'stukken'      => array_values($stukken),
+            ];
+        }
+    } catch (\Throwable $e) { error_log('documenten_te_vernietigen: ' . $e->getMessage()); }
+    return $uit;
+}
+
+/**
+ * Vernietig het loondossier van één persoon: de loonstukken uit de kluis (rij blijft als bewijs met status
+ * 'vernietigd') en BSN, handtekening en formuliergegevens van de loonheffing-ondertekening. De rest van het
+ * dossier blijft. Controleert zelf opnieuw of de persoon in aanmerking komt.
+ * Retour: ['ok' => bool, 'aantal' => int, 'fout' => ?string].
+ */
+function documenten_loondossier_vernietigen(int $persoon_id, string $door): array {
+    if ($persoon_id <= 0 || !documenten_te_vernietigen($persoon_id)) {
+        return ['ok' => false, 'aantal' => 0, 'fout' => 'dit dossier komt (nog) niet in aanmerking voor vernietiging'];
+    }
+    $soorten = documenten_loonsoorten();
+    $in = implode(',', array_fill(0, count($soorten), '?'));
+    $aantal = 0; $mislukt = 0;
+    try {
+        $db = db();
+        $q = $db->prepare("SELECT d.id FROM sollicitant_documenten d JOIN sollicitaties s ON s.id = d.sollicitatie_id
+                           WHERE s.persoon_id = ? AND d.status IN ('ingediend','verwerkt') AND d.soort IN ($in)");
+        $q->execute(array_merge([$persoon_id], $soorten));
+        foreach ($q->fetchAll(PDO::FETCH_COLUMN) as $id) {
+            if (document_vernietigen((int)$id, 'bewaarplicht verstreken, handmatig')) $aantal++; else $mislukt++;
+        }
+        // Het ondertekeningsrecord blijft (bewijs dát er getekend is), zonder BSN, handtekening en formulierinhoud.
+        $u = $db->prepare("UPDATE ondertekeningen o JOIN sollicitaties s ON s.id = o.sollicitatie_id
+                           SET o.vertrouwelijk = NULL, o.handtekening_beeld = NULL, o.pdf_document_id = NULL, o.formulier_data = NULL
+                           WHERE s.persoon_id = ? AND o.type = 'loonheffing'");
+        $u->execute([$persoon_id]);
+        $aantal += $u->rowCount();
+    } catch (\Throwable $e) {
+        error_log('documenten_loondossier_vernietigen: ' . $e->getMessage());
+        return ['ok' => false, 'aantal' => $aantal, 'fout' => 'vernietigen is halverwege mislukt; probeer het opnieuw'];
+    }
+    // Alleen aantallen en wie — nooit inhoud of titels van wat er stond.
+    if (function_exists('audit_log')) audit_log('loondossier_vernietigd', 'persoon', $persoon_id, ['aantal' => $aantal, 'door' => $door]);
+    if ($mislukt) return ['ok' => false, 'aantal' => $aantal, 'fout' => $mislukt . ' bestand(en) konden niet worden vernietigd; probeer het opnieuw'];
+    return ['ok' => true, 'aantal' => $aantal, 'fout' => null];
 }
 
 /** Rechtenmodule die nodig is om een document te downloaden. */

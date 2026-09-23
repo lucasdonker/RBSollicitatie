@@ -3,7 +3,8 @@
  * Paal 13 — Lidmaatschap van de vereniging (ondertekeningstype 'lidmaatschap').
  *
  * Dezelfde velden als het inschrijfformulier op paal13.com/vereniging/lid-worden, maar vooringevuld uit het
- * dossier en ondertekend in het portaal (met 2FA en verzegelde PDF). Na het tekenen gaat de inschrijving
+ * dossier en ondertekend in het portaal (verzegelde PDF; een verificatiecode vraagt standaard alleen de loonheffing, zie
+ * instelling ondertekenen.2fa_typen). Na het tekenen gaat de inschrijving
  * als e-mail met de PDF naar de ledenservice (instelling mail.ledenservice_email). IBAN + tenaamstelling
  * staan versleuteld in de kluis (ondertekeningen.vertrouwelijk), niet in formulier_data.
  * Later: dezelfde data naar de Paal 13-hub (lidmaatschap_na_ondertekening() is de plek voor die hook).

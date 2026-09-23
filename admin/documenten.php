@@ -21,15 +21,29 @@ $bhd = huidige_beheerder();
 $mag_bewerken    = mag('documenten', 'bewerken');
 $mag_verwijderen = mag('documenten', 'verwijderen');
 
+// Wat er met de bankpasfoto gebeurt, eerlijk: automatisch alleen als opschonen aanstaat én er een termijn is.
+$bp_dagen = instelling_int('bewaar.bankpas_na_verwerking_dagen', 30);
+$bp_auto  = instelling_bool('bewaar.actief', false) && $bp_dagen > 0;
+$bp_zin   = $bp_auto
+    ? 'De bankpasfoto wordt ' . $bp_dagen . ' dagen na "verwerkt" automatisch vernietigd.'
+    : 'Automatisch opschonen staat uit: vernietig de bankpasfoto na het verwerken zelf (knop Vernietigen bij de bankpas).';
+
 // ── Acties ────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
     $sol_id = (int)($_POST['sol_id'] ?? 0);
     $actie  = (string)($_POST['actie'] ?? '');
 
+    if ($actie === 'loondossier_vernietigen' && $mag_bewerken && $mag_verwijderen) {
+        $res = documenten_loondossier_vernietigen((int)($_POST['persoon_id'] ?? 0), (string)($bhd['naam'] ?: 'beheerder #' . $bhd['id']));
+        if ($res['ok']) flash('succes', 'Het loondossier is vernietigd. De rest van het dossier staat er nog.');
+        else flash('fout', 'Vernietigen lukte niet: ' . $res['fout'] . '.');
+        redirect(APP_URL . '/admin/documenten.php');
+    }
+
     if ($actie === 'verwerkt' && $sol_id > 0 && $mag_bewerken) {
         documenten_verwerkt_markeren($sol_id, (int)$bhd['id']);
-        flash('succes', 'Loondossier gemarkeerd als verwerkt. De bankpasfoto wordt na de ingestelde termijn automatisch vernietigd.');
+        flash('succes', 'Loondossier gemarkeerd als verwerkt. ' . $bp_zin);
     } elseif ($actie === 'melding_opnieuw' && $sol_id > 0 && $mag_bewerken) {
         if (documenten_dossier_compleet_check($sol_id, true)) {
             flash('succes', 'Melding opnieuw verstuurd naar de penningmeester.');
@@ -87,9 +101,16 @@ if ($bev_actie === 'vernietig' && $mag_verwijderen) {
     $_id = (int)($_GET['sol'] ?? 0);
     foreach ($rijen as $r) if ((int)$r['sol']['id'] === $_id) { $bev_sol = $r; break; }
     if (!$bev_sol) { $bev_actie = ''; }
+} elseif ($bev_actie === 'loondossier' && $mag_bewerken && $mag_verwijderen) {
+    $_lijst  = documenten_te_vernietigen((int)($_GET['persoon'] ?? 0));
+    $bev_sol = $_lijst[0] ?? null;
+    if (!$bev_sol) { $bev_actie = ''; }
 } else {
     $bev_actie = '';
 }
+
+// Kandidaten voor handmatige vernietiging (alleen wie het loondossier mag bewerken ziet de kaart)
+$te_vernietigen = $mag_bewerken ? documenten_te_vernietigen() : [];
 
 require __DIR__ . '/layout_top.php';
 ?>
@@ -103,7 +124,9 @@ require __DIR__ . '/layout_top.php';
           'Dat het er is geweest en wie het heeft vernietigd blijft in het logboek staan.',
           'De rest van het loondossier blijft ongemoeid.',
       ],
-      'bericht'      => 'Normaal gaat dit vanzelf: na het verwerken van het dossier wordt de bankpasfoto automatisch vernietigd. Handmatig hoeft alleen als dat eerder moet.',
+      'bericht'      => $bp_auto
+          ? 'Normaal gaat dit vanzelf: ' . $bp_dagen . ' dagen na het verwerken wordt de bankpasfoto automatisch vernietigd. Handmatig hoeft alleen als dat eerder moet.'
+          : 'Automatisch opschonen staat uit, dus dit gebeurt niet vanzelf. Vernietig de bankpasfoto zodra het dossier is verwerkt.',
       'onomkeerbaar' => true,
       'knop'         => 'Ja, vernietigen',
       'toon'         => 'gevaar',
@@ -123,8 +146,8 @@ require __DIR__ . '/layout_top.php';
       'titel'  => 'Loondossier van ' . $bev_sol['naam'] . ' als verwerkt markeren?',
       'regels' => [
           $bev_sol['naam'] . ' kan de documenten daarna niet meer wijzigen of opnieuw uploaden.',
-          'De kopie van de bankpas wordt na de ingestelde bewaartermijn automatisch vernietigd.',
-          'Het loonheffingsformulier en de ID-kopie blijven staan; daar geldt een bewaarplicht van vijf jaar voor.',
+          $bp_zin,
+          'Het loonheffingsformulier en de ID-kopie blijven staan tot je ze zelf vernietigt; de bewaarplicht is vijf jaar na het einde van het kalenderjaar waarin het dienstverband eindigde.',
       ],
       'bericht'      => 'Doe dit pas als de gegevens echt in de loonadministratie staan.',
       'onomkeerbaar' => true,
@@ -134,6 +157,30 @@ require __DIR__ . '/layout_top.php';
   $bev_form  = ['actie' => APP_URL . '/admin/documenten.php',
                 'velden' => ['actie' => 'verwerkt', 'sol_id' => (int)$bev_sol['sol']['id']]];
   $bev_terug = APP_URL . '/admin/documenten.php';
+  require __DIR__ . '/_bevestig.php';
+  ?>
+  <?php require __DIR__ . '/layout_bottom.php'; ?>
+  <?php return; ?>
+<?php endif; ?>
+
+<?php if ($bev_actie === 'loondossier'): ?>
+  <?php
+  $bev = [
+      'titel'  => 'Loondossier van ' . $bev_sol['naam'] . ' vernietigen?',
+      'regels' => [
+          'Onherroepelijk weg: ' . implode(', ', $bev_sol['stukken']) . '.',
+          'De bestanden worden uit de kluis gewist en zijn daarna niet meer terug te halen, ook niet door een beheerder.',
+          'Als bewijs blijft staan, zonder inhoud: dát er getekend en geüpload is, en in het logboek dat jij dit hebt vernietigd.',
+          'De rest van het dossier (gegevens, sollicitaties, andere ondertekeningen) blijft staan.',
+      ],
+      'bericht'      => 'Laatste seizoen hier: ' . $bev_sol['laatste_jaar'] . '. Het systeem weet niet wanneer het dienstverband eindigde. Vernietig alleen als je in de loonadministratie hebt gecontroleerd dat de bewaarplicht echt voorbij is.',
+      'onomkeerbaar' => true,
+      'knop'         => 'Ja, loondossier vernietigen',
+      'toon'         => 'gevaar',
+  ];
+  $bev_form  = ['actie' => APP_URL . '/admin/documenten.php',
+                'velden' => ['actie' => 'loondossier_vernietigen', 'persoon_id' => (int)$bev_sol['persoon_id']]];
+  $bev_terug = APP_URL . '/admin/documenten.php#vernietigen';
   require __DIR__ . '/_bevestig.php';
   ?>
   <?php require __DIR__ . '/layout_bottom.php'; ?>
@@ -160,12 +207,20 @@ require __DIR__ . '/layout_top.php';
   <?= icoon('slot', 18) ?>
   <div>
     <strong>Hier staan een BSN en kopieën van identiteitsbewijzen.</strong>
-    Elke download wordt vastgelegd — wie, wat en wanneer — en op een ID-kopie komt automatisch
-    een watermerk. Download alleen op een apparaat dat je vertrouwt en verwijder het bestand
-    zodra het in de loonadministratie staat.
+    Elke download wordt vastgelegd — wie, wat en wanneer. Op een foto (JPG of PNG) van het
+    identiteitsbewijs of de bankpas komt automatisch een watermerk; op een PDF niet. Download
+    alleen op een apparaat dat je vertrouwt en verwijder het bestand zodra het in de
+    loonadministratie staat.
+    <span class="bh-avgkader-regel"><?= h($bp_zin) ?></span>
     <span class="bh-avgkader-regel">
-      Bewaartermijn: het loonheffingsformulier en de ID-kopie vijf jaar na afloop van het
-      dienstjaar, de bankpasfoto tot het dossier is verwerkt.
+      Het loonheffingsformulier en de ID-kopie blijven staan tot jij ze vernietigt: de bewaarplicht
+      loopt tot vijf jaar na het einde van het kalenderjaar waarin het dienstverband eindigde.
+      <?php if ($te_vernietigen): ?>
+        Er <?= count($te_vernietigen) === 1 ? 'komt 1 dossier' : 'komen ' . count($te_vernietigen) . ' dossiers' ?> daarvoor
+        in aanmerking: zie <a href="#vernietigen">Te beoordelen voor vernietiging</a> onderaan.
+      <?php else: ?>
+        Komt een dossier daarvoor in aanmerking, dan verschijnt het onderaan dit scherm.
+      <?php endif; ?>
     </span>
   </div>
 </section>
@@ -173,7 +228,7 @@ require __DIR__ . '/layout_top.php';
 <?php if (!$rijen): ?>
   <?php
   $leeg_titel = 'Nog geen loondossiers';
-  $leeg_tekst = 'Zodra iemand op "Aangenomen" staat, zet het systeem zijn loondossier klaar en verschijnt hij hier.';
+  $leeg_tekst = 'Zodra iemand op "Aangenomen" staat, zet het systeem een loondossier klaar en verschijnt het hier.';
   $leeg_icoon = 'slot';
   require __DIR__ . '/_leeg.php';
   ?>
@@ -263,7 +318,7 @@ require __DIR__ . '/layout_top.php';
             <?php if ($soort === 'id_voor' && $doc && !empty($doc['extra'])): ?>
               <span><?= $doc['extra'] === 'paspoort' ? 'Paspoort' : 'Identiteitskaart' ?></span>
             <?php elseif ($soort === 'bankpas'): ?>
-              <span>Wordt na verwerking vernietigd</span>
+              <span><?= $bp_auto ? 'Vernietigd ' . $bp_dagen . ' dagen na verwerking' : 'Na verwerking zelf vernietigen' ?></span>
             <?php endif; ?>
           </span>
           <span class="bh-dosstuk-stand">
@@ -367,5 +422,12 @@ require __DIR__ . '/layout_top.php';
 </div>
 
 <?php endif; ?>
+
+<?php
+$tv_lijst      = $te_vernietigen;
+$tv_jaren      = documenten_loon_bewaarjaren();
+$tv_mag_wissen = $mag_verwijderen;
+require __DIR__ . '/_loon_vernietigen.php';
+?>
 
 <?php require __DIR__ . '/layout_bottom.php'; ?>

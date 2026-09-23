@@ -2,10 +2,11 @@
 /**
  * CSV-export van de loonplanning (actief of gekozen scenario).
  * Bedoeld voor de penningmeester: wie werkt hoeveel weken/dagen en wat kost dat.
+ * Het bestand heet naar de beschikbaarheid, maar exporteert alleen de loonplanning — vandaar dat recht.
  */
 require_once __DIR__ . '/../includes/functions.php';
 vereist_login();
-vereis_recht('beschikbaarheid', 'lezen');
+vereis_recht('loonplanning', 'lezen');
 
 $seizoen = actief_seizoen();
 $sid     = $seizoen ? (int)$seizoen['id'] : 0;

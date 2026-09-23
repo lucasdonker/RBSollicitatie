@@ -1,7 +1,7 @@
 <?php
 /**
- * Documenten uploaden (aangenomen-takenpakket): kopie ID (voor/achter), kopie bankpas, pasfoto.
- * ?taak=id_kopie|bankpas_kopie|pasfoto — definities in includes/documenten.php (document_taken()).
+ * Documenten uploaden (aangenomen-takenpakket): kopie ID (voor/achter) en kopie bankpas.
+ * ?taak=id_kopie|bankpas_kopie — definities in includes/documenten.php (document_taken()).
  *
  * Per vak één klein formulier (bestand kiezen → uploaden). Bestanden gaan versleuteld de kluis in
  * (nooit onversleuteld op schijf) en zijn daarna alleen voor de bevoegde beheerder (penningmeester)
@@ -43,8 +43,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             if ($fout === '') {
                 $res = document_opslaan($sol_id, $soort, $_FILES['bestand'] ?? [], $extra, $_SERVER['REMOTE_ADDR'] ?? null);
-                if ($res['ok']) $succes = $taak['soorten'][$soort] . ' is veilig ontvangen.';
-                else $fout = 'Uploaden lukte niet: ' . $res['fout'] . '.';
+                if ($res['ok']) {
+                    $succes = $taak['soorten'][$soort] . ' is veilig ontvangen.';
+                    // Ook hier, niet alleen na het tekenen: de volgorde tekenen/uploaden mag niet uitmaken.
+                    // De check mailt één keer per loonheffing (gebeurtenis 'penningmeester_gemeld').
+                    try { documenten_dossier_compleet_check($sol_id); } catch (\Throwable $e) {}
+                } else {
+                    $fout = 'Uploaden lukte niet: ' . $res['fout'] . '.';
+                }
             }
         }
     }
