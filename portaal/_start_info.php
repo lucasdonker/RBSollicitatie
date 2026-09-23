@@ -103,6 +103,8 @@ if (in_array($_fase, ['uitgenodigd_selectie', 'aangemeld_selectie'], true) && !e
       <span class="pt-taakrij-chevron"><?= icoon('chevron', 18) ?></span>
     </a>
   </div>
-  <span class="pt-hulp">We bewaren je gegevens maximaal 2 jaar na het seizoen.</span>
+  <span class="pt-hulp"><?= $_seintje
+    ? 'Je gegevens blijven maximaal een jaar bewaard, alleen voor dat seintje.'
+    : 'Zonder seintje verwijderen we je gegevens ' . h(function_exists('seintje_afwijs_termijn_tekst') ? seintje_afwijs_termijn_tekst() : 'vier weken') . ' na de afwijzing.' ?></span>
 </div>
 <?php endif; ?>

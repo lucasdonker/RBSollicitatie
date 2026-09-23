@@ -110,23 +110,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verwijder'])) {
     } else {
         try {
             $db->beginTransaction();
-            // Documenten in de kluis (ID, bankpas, pasfoto, verzegelde PDF's) vernietigen; taken en vertrouwelijke ondertekengegevens weg
-            if (function_exists('documenten_bij_dossier_verwijderen')) documenten_bij_dossier_verwijderen($sol_id, true);
-            // Elke stap moet echt slagen: een fout hier rolt de hele verwijdering terug en de
-            // sollicitant krijgt een eerlijke melding. Alleen een tabel die (nog) niet bestaat
-            // (SQLSTATE 42S02, oudere installaties) mag stil worden overgeslagen.
-            $avg_stappen = [
-                "DELETE FROM sollicitant_taken WHERE sollicitatie_id = ?",
-                "UPDATE ondertekeningen SET vertrouwelijk=NULL, handtekening_beeld=NULL, pdf_document_id=NULL, formulier_data=NULL WHERE sollicitatie_id = ?",
-                "DELETE FROM blk_formulieren WHERE sollicitatie_id = ?",
-                "DELETE FROM beschikbaarheid WHERE sollicitatie_id = ?",
-                "DELETE FROM sollicitant_notities WHERE sollicitatie_id = ?",
-                "DELETE FROM beoordelingen WHERE sollicitatie_id = ?",
-            ];
-            foreach ($avg_stappen as $sql) {
-                try { $db->prepare($sql)->execute([$sol_id]); }
-                catch (\PDOException $e) { if (($e->getCode() ?: '') !== '42S02') throw $e; }
-            }
+            // Kluis, taken, ondertekengegevens, BLK, beschikbaarheid, notities, beoordelingen
+            // (includes/avg_wissen.php). Een echte fout rolt alles terug; de sollicitant krijgt
+            // dan een eerlijke melding.
+            avg_sollicitatie_leegmaken($db, $sol_id);
 
             // Bestuur informeren vóór de anonimisering (de naam is daarna weg); verzending ná het antwoord.
             if (function_exists('melding_verstuur')) {
@@ -136,45 +123,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verwijder'])) {
             // Anonimiseer sollicitatie (statistiek blijft)
             $db->prepare("UPDATE sollicitaties SET fase='verwijderd_door_sollicitant' WHERE id = ?")->execute([$sol_id]);
 
-            // Dynamische kolom-anonimisering: check welke bestaan in personen
-            $dbn = $db->query("SELECT DATABASE()")->fetchColumn();
-            $cols_stmt = $db->prepare("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=? AND TABLE_NAME='personen'");
-            $cols_stmt->execute([$dbn]);
-            $bestaande = array_column($cols_stmt->fetchAll(), 'COLUMN_NAME');
             $anon_email = 'verwijderd_' . $sol_id . '@anoniem.local';
-
-            $anon_map = [
-                'voornaam'      => 'Verwijderd',
-                'tussenvoegsel' => null,
-                'achternaam'    => '(verzoek AVG)',
-                'email'         => $anon_email,
-                'telefoon'      => null,
-                'geboortedatum' => null,
-                'adres'         => null,
-                'straat'        => null,
-                'huisnummer'    => null,
-                'postcode'      => null,
-                'woonplaats'    => null,
-                'geslacht'      => null,
-            ];
-            $set_delen = [];
-            $params = [];
-            foreach ($anon_map as $kol => $waarde) {
-                if (in_array($kol, $bestaande, true)) {
-                    $set_delen[] = "`$kol`=?";
-                    $params[] = $waarde;
-                }
-            }
-            if ($set_delen) {
-                $sql = "UPDATE personen SET " . implode(', ', $set_delen)
-                     . " WHERE id=(SELECT persoon_id FROM sollicitaties WHERE id=?)";
-                $params[] = $sol_id;
-                $db->prepare($sql)->execute($params);
-            }
-
-            // Mail-log ontvanger anonimiseren
-            try { $db->prepare("UPDATE mail_log SET ontvanger=?, body=NULL, samenvatting=NULL WHERE sollicitatie_id = ?")->execute([$anon_email, $sol_id]); }
-            catch (\Exception $e) { try { $db->prepare("UPDATE mail_log SET ontvanger=? WHERE sollicitatie_id = ?")->execute([$anon_email, $sol_id]); } catch (\Exception $e2) {} }
+            $pq = $db->prepare("SELECT persoon_id FROM sollicitaties WHERE id=?");
+            $pq->execute([$sol_id]);
+            avg_persoon_anonimiseren($db, (int)$pq->fetchColumn(), 'Verwijderd', '(verzoek AVG)', $anon_email);
+            avg_maillog_anonimiseren($db, $sol_id, $anon_email);
 
             $db->commit();
             session_destroy();

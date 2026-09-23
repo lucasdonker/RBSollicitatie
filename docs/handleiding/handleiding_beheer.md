@@ -591,7 +591,7 @@ Alle wijzigingen worden direct opgeslagen.
 
 ## Berichten sturen
 
-**Waar:** Beheer › Instellingen › Berichten  
+**Waar:** Beheer › Berichten (tabbladen Nieuw bericht, Verzonden en Gepland)  
 **Wie:** bestuur en admin (bekijken: leesrecht op Berichten & sjablonen; versturen:
 bewerkrecht).
 
@@ -611,8 +611,15 @@ bewerkrecht).
    personen of hele fases aan; **Alles** / **Geen** voor de hele lijst. Bij elke naam staat het
    e-mailadres en het kanaal (WhatsApp, sms, alleen e-mail of "geen telefoon"). Kom je vanuit
    het dossier of een bulkactie, dan staan die personen al aangevinkt.
+   Onder de fases staan twee groepen uit **vorige seizoenen**: **Oud-strandwachten** (ooit
+   aangenomen) en **Seintje gevraagd** (afgewezen, maar zelf om bericht bij de volgende werving
+   gevraagd, zie [Seintje bij de volgende werving](#seintje-bij-de-volgende-werving)). Afgewezen
+   mensen zónder seintje staan er bewust niet in: die mag je geen wervingsbericht sturen. Wie zich
+   al voor dit seizoen heeft aangemeld of zich heeft afgemeld, staat er ook niet in. In een
+   bericht aan deze groepen is {{seizoen_naam}} het huidige seizoen.
 4. **Variabelen**: klik op een chip (bijvoorbeeld voornaam, selectiedag_datum, portaal_url) om
-   die in de tekst te zetten. Ze werken ook in het onderwerp en de korte tekst.
+   die in de tekst te zetten. Ze werken ook in het onderwerp en de korte tekst. {{aanmeld_url}}
+   is de link naar het aanmeldformulier, handig voor een wervingsbericht.
 5. **Voorbeeld** toont de e-mail en het korte bericht zoals de eerste ontvanger ze krijgt.
    **Testmail naar mijzelf** stuurt de e-mail naar je eigen adres. **Verzenden** vraagt om
    bevestiging en verstuurt.
@@ -675,7 +682,7 @@ mail staat als een sjabloon geen eigen afbeelding heeft.
 
 ## Geplande berichten en herinneringen
 
-**Waar:** Beheer › Instellingen › Geplande berichten (regels) en Beheer › Instellingen ›
+**Waar:** Beheer › Berichten › Gepland (regels) en Beheer › Instellingen ›
 Uitnodiging & automatisering (herinneringen)
 **Wie:** bestuur en admin.
 
@@ -861,7 +868,8 @@ betekent: die categorie niet opschonen (behalve bij gezondheidsgegevens, zie tab
 
 | Categorie | Standaard | Wat er gebeurt |
 |---|---|---|
-| Afgewezen sollicitanten | 6 maanden | Persoonsgegevens worden geanonimiseerd; de statistiek blijft. |
+| Afgewezen sollicitanten | 4 weken na de afwijzing | Persoonsgegevens, formulier, beschikbaarheid, notities, beoordelingen, documenten en adressen in het berichtenlog worden gewist; de statistiek blijft. Geldt ook voor afgehaakt. Wie om een seintje vroeg, blijft tot dat verloopt. |
+| Seintje bij de volgende werving | 12 maanden | Zo lang geldt de toestemming; daarna wordt de persoon geanonimiseerd zoals hierboven. Maximaal 12, want dat beloven de mail en het portaal. |
 | Gezondheidsgegevens | 0 | 0 = verwijderen zodra de sollicitatie is afgewezen; anders zoveel maanden na ondertekening. Het feit dát er getekend is blijft. |
 | AI-invoertekst | 3 maanden | De vrije beschikbaarheidstekst die naar de AI-dienst ging wordt gewist. |
 | Niet-voltooide aanmeldingen | 3 maanden | Aanmeldingen die in Aangemeld bleven staan zonder formulier of beschikbaarheid worden verwijderd. |
@@ -875,6 +883,26 @@ betekent: die categorie niet opschonen (behalve bij gezondheidsgegevens, zie tab
 | Kopie bankpas | 30 dagen na verwerking | Vernietigd nadat de penningmeester het dossier op verwerkt heeft gezet. |
 
 Het opschoon-logboek onderaan toont per run wat er is opgeruimd.
+
+### Seintje bij de volgende werving
+
+Een afgewezen sollicitant mag je niet zomaar een bericht sturen als de werving weer opent: de
+gegevens zijn alleen voor die ene sollicitatie gegeven, en voor zo'n bericht is vooraf
+toestemming nodig (AVG en Telecommunicatiewet). Een zin in de algemene voorwaarden is daarvoor
+niet genoeg. Daarom vraagt het systeem het zelf, op het moment dat het logisch is:
+
+- **In de afwijzingsmail** staat altijd de knop **Stuur me een seintje**, onder je eigen tekst.
+  Let op: die mail staat standaard uit (het bestuur belt of mailt persoonlijk). Zet je hem aan
+  onder Sjablonen › Niet geselecteerd, dan gaat de knop vanzelf mee.
+- **In het portaal** ziet een afgewezen sollicitant op de startpagina **Seintje bij de volgende
+  werving?** met de knop **Ja, graag**. Dat werkt dus ook als het bestuur persoonlijk belt.
+
+Wie ja zegt, staat in Berichten in de groep **Seintje gevraagd**. De toestemming geldt twaalf
+maanden en is altijd in te trekken: met **Toch niet** in het portaal of op de pagina achter de
+knop, en met de afmeldlink onder elk bericht. Geven en intrekken komen in het logboek.
+
+Oud-strandwachten hebben geen seintje nodig: die mag je als vereniging benaderen, met de
+afmeldlink eronder (die staat er automatisch onder).
 
 ### Wat je nooit per mail doorstuurt
 

@@ -40,7 +40,14 @@ function seintje_auto_setup(): void {
  */
 function seintje_termijn_mnd(): int {
     $m = function_exists('instelling_int') ? instelling_int('bewaar.seintje_mnd', 12) : 12;
-    return $m > 0 ? $m : 12;
+    return ($m > 0 && $m <= 12) ? $m : 12;   // de teksten beloven "maximaal een jaar"
+}
+
+/** "vier weken" / "6 weken": hoe snel gegevens van een afgewezen sollicitant zonder seintje weg zijn. */
+function seintje_afwijs_termijn_tekst(): string {
+    $w = function_exists('instelling_int') ? instelling_int('bewaar.afgewezen_weken', 4) : 4;
+    $woord = [1 => 'een week', 2 => 'twee weken', 3 => 'drie weken', 4 => 'vier weken', 5 => 'vijf weken', 6 => 'zes weken', 8 => 'acht weken'];
+    return $woord[$w] ?? ($w . ' weken');
 }
 
 /** Heeft deze persoon om een seintje gevraagd? */
@@ -110,7 +117,7 @@ function seintje_mailblok(string $url): string {
     if ($url === '') return '';
     return "\n[info]<strong>Volgend jaar weer?</strong><br>Wil je een seintje als de werving weer opent? "
          . "Dan bewaren we je naam en contactgegevens daarvoor maximaal een jaar. Zonder seintje "
-         . "verwijderen we je gegevens binnen vier weken.[/info]\n"
+         . "verwijderen we je gegevens binnen " . seintje_afwijs_termijn_tekst() . ".[/info]\n"
          . '[knop href="' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '"]Stuur me een seintje[/knop]';
 }
 

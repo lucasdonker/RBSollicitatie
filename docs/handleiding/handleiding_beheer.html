@@ -606,12 +606,14 @@ kunnen een melding sturen.</li>
 niet twee keer binnen een uur naar dezelfde persoon. Zet je iemand per
 ongeluk terug en meteen weer vooruit, dan zie je &quot;Bericht al eerder
 verstuurd (geen dubbele)&quot;.</li>
-<li><strong>Een fase &quot;stil&quot; zetten</strong> (zonder mail) kan niet met
-een knop. Wil je bijvoorbeeld iemand opnieuw op Uitgenodigd SD zetten
-zonder nieuwe uitnodiging, zet dan eerst onder Instellingen › SMS,
-WhatsApp &amp; meldingen het kanaal van dat meldingstype op
-<strong>Uit</strong>, doe de wijziging, en zet het kanaal daarna terug.
-Vergeet die laatste stap niet.</li>
+<li><strong>Een fase &quot;stil&quot; zetten</strong> (zonder bericht) kan met een
+vinkje. Wijzig je de fase in het dossier, dan staat in het
+bevestigingsvenster <strong>Zonder bericht doorvoeren</strong>; doe je
+het als bulkactie vanuit de sollicitantenlijst, dan staat hetzelfde
+vinkje op het tussenscherm dat eerst laat zien wat er gaat gebeuren. De
+fase verandert wel, er gaat alleen niets de deur uit. Gebruik dit als je
+ze zelf belt of het al besproken is. In het logboek blijft zichtbaar dát
+het stil ging.</li>
 <li><strong>Automatiseringen uitzetten</strong>: onder Instellingen ›
 Uitnodiging &amp; automatisering kun je het klaarzetten van
 ondertekeningen bij de SD-uitnodiging en het kennismakingspakket bij
@@ -905,7 +907,8 @@ lonen), de voortgangsbalk met het restant of &quot;Over budget&quot;.</li>
 <p>Alle wijzigingen worden direct opgeslagen.</p>
 <hr />
 <h1 id="berichten-sturen">Berichten sturen</h1>
-<p><strong>Waar:</strong> Beheer › Instellingen › Berichten<br />
+<p><strong>Waar:</strong> Beheer › Berichten (tabbladen Nieuw bericht,
+Verzonden en Gepland)<br />
 <strong>Wie:</strong> bestuur en admin (bekijken: leesrecht op Berichten
 &amp; sjablonen; versturen: bewerkrecht).</p>
 <h2 id="nieuw-bericht">Nieuw bericht</h2>
@@ -930,10 +933,20 @@ seizoen, gegroepeerd per fase. Vink personen of hele fases aan;
 <strong>Alles</strong> / <strong>Geen</strong> voor de hele lijst. Bij
 elke naam staat het e-mailadres en het kanaal (WhatsApp, sms, alleen
 e-mail of &quot;geen telefoon&quot;). Kom je vanuit het dossier of een bulkactie,
-dan staan die personen al aangevinkt.</li>
+dan staan die personen al aangevinkt. Onder de fases staan twee groepen
+uit <strong>vorige seizoenen</strong>:
+<strong>Oud-strandwachten</strong> (ooit aangenomen) en <strong>Seintje
+gevraagd</strong> (afgewezen, maar zelf om bericht bij de volgende
+werving gevraagd, zie <a href="#seintje-bij-de-volgende-werving">Seintje
+bij de volgende werving</a>). Afgewezen mensen zónder seintje staan er
+bewust niet in: die mag je geen wervingsbericht sturen. Wie zich al voor
+dit seizoen heeft aangemeld of zich heeft afgemeld, staat er ook niet
+in. In een bericht aan deze groepen is {{seizoen_naam}} het huidige
+seizoen.</li>
 <li><strong>Variabelen</strong>: klik op een chip (bijvoorbeeld
 voornaam, selectiedag_datum, portaal_url) om die in de tekst te zetten.
-Ze werken ook in het onderwerp en de korte tekst.</li>
+Ze werken ook in het onderwerp en de korte tekst. {{aanmeld_url}} is de
+link naar het aanmeldformulier, handig voor een wervingsbericht.</li>
 <li><strong>Voorbeeld</strong> toont de e-mail en het korte bericht
 zoals de eerste ontvanger ze krijgt. <strong>Testmail naar
 mijzelf</strong> stuurt de e-mail naar je eigen adres.
@@ -1002,9 +1015,9 @@ heeft.</p>
 <hr />
 <h1 id="geplande-berichten-en-herinneringen">Geplande berichten en
 herinneringen</h1>
-<p><strong>Waar:</strong> Beheer › Instellingen › Geplande berichten
-(regels) en Beheer › Instellingen › Uitnodiging &amp; automatisering
-(herinneringen) <strong>Wie:</strong> bestuur en admin.</p>
+<p><strong>Waar:</strong> Beheer › Berichten › Gepland (regels) en
+Beheer › Instellingen › Uitnodiging &amp; automatisering (herinneringen)
+<strong>Wie:</strong> bestuur en admin.</p>
 <h2 id="herinneringen-ingebouwd">Herinneringen (ingebouwd)</h2>
 <p>Het systeem stuurt automatisch herinneringen, gecontroleerd op wat er
 echt verstuurd is, zodat niemand twee keer hetzelfde krijgt. Per regel
@@ -1351,8 +1364,18 @@ gezondheidsgegevens, zie tabel).</p>
 <tbody>
 <tr>
 <td>Afgewezen sollicitanten</td>
-<td>6 maanden</td>
-<td>Persoonsgegevens worden geanonimiseerd; de statistiek blijft.</td>
+<td>4 weken na de afwijzing</td>
+<td>Persoonsgegevens, formulier, beschikbaarheid, notities,
+beoordelingen, documenten en adressen in het berichtenlog worden gewist;
+de statistiek blijft. Geldt ook voor afgehaakt. Wie om een seintje
+vroeg, blijft tot dat verloopt.</td>
+</tr>
+<tr>
+<td>Seintje bij de volgende werving</td>
+<td>12 maanden</td>
+<td>Zo lang geldt de toestemming; daarna wordt de persoon geanonimiseerd
+zoals hierboven. Maximaal 12, want dat beloven de mail en het
+portaal.</td>
 </tr>
 <tr>
 <td>Gezondheidsgegevens</td>
@@ -1417,6 +1440,33 @@ gezet.</td>
 </tbody>
 </table>
 <p>Het opschoon-logboek onderaan toont per run wat er is opgeruimd.</p>
+<h2 id="seintje-bij-de-volgende-werving">Seintje bij de volgende
+werving</h2>
+<p>Een afgewezen sollicitant mag je niet zomaar een bericht sturen als
+de werving weer opent: de gegevens zijn alleen voor die ene sollicitatie
+gegeven, en voor zo&#39;n bericht is vooraf toestemming nodig (AVG en
+Telecommunicatiewet). Een zin in de algemene voorwaarden is daarvoor
+niet genoeg. Daarom vraagt het systeem het zelf, op het moment dat het
+logisch is:</p>
+<ul>
+<li><strong>In de afwijzingsmail</strong> staat altijd de knop
+<strong>Stuur me een seintje</strong>, onder je eigen tekst. Let op: die
+mail staat standaard uit (het bestuur belt of mailt persoonlijk). Zet je
+hem aan onder Sjablonen › Niet geselecteerd, dan gaat de knop vanzelf
+mee.</li>
+<li><strong>In het portaal</strong> ziet een afgewezen sollicitant op de
+startpagina <strong>Seintje bij de volgende werving?</strong> met de
+knop <strong>Ja, graag</strong>. Dat werkt dus ook als het bestuur
+persoonlijk belt.</li>
+</ul>
+<p>Wie ja zegt, staat in Berichten in de groep <strong>Seintje
+gevraagd</strong>. De toestemming geldt twaalf maanden en is altijd in
+te trekken: met <strong>Toch niet</strong> in het portaal of op de
+pagina achter de knop, en met de afmeldlink onder elk bericht. Geven en
+intrekken komen in het logboek.</p>
+<p>Oud-strandwachten hebben geen seintje nodig: die mag je als
+vereniging benaderen, met de afmeldlink eronder (die staat er
+automatisch onder).</p>
 <h2 id="wat-je-nooit-per-mail-doorstuurt">Wat je nooit per mail
 doorstuurt</h2>
 <p>Stuur nooit een BSN, een kopie identiteitsbewijs, een bankpas of de
@@ -1612,9 +1662,22 @@ beschikbaar.</p>
 <p><strong>Het seizoen staat open, maar het formulier op de website
 werkt niet.</strong><br />
 Controleer onder Instellingen › Website &amp; API of er een API-sleutel
-is en of die in de WordPress-plugin staat. Op een landingspagina moet
-bovendien de markering voor het formulier in het ontwerp staan en de
-status op Gepubliceerd; zie de handleiding Landingspagina&#39;s.</p>
+is en of die in de WordPress-plugin staat. In WordPress staat bij
+Instellingen › Paal 13 Aanmelden een knop <strong>Verbinding
+testen</strong> die meteen zegt wat er mis is. Op een landingspagina
+moet bovendien de markering voor het formulier in het ontwerp staan en
+de status op Gepubliceerd; zie de handleiding Landingspagina&#39;s.</p>
+<p><strong>Bezoekers krijgen &quot;Deze pagina stond te lang open&quot; op de
+website.</strong><br />
+Dan bewaart een cache-plugin de pagina met het formulier als
+kant-en-klare HTML. Daar zit een code in die maar een paar uur geldig
+is. Sluit de aanmeldpagina uit van de paginacache; de plugin geeft dat
+zelf al aan, dus meestal gaat het vanzelf goed.</p>
+<p><strong>Ik wil zien waar mensen afhaken in het
+formulier.</strong><br />
+Open bij Landingspagina&#39;s de betreffende pagina. Onder <strong>Waar
+haken mensen af?</strong> staat van bezoek tot verstuurde aanmelding
+hoeveel mensen elke stap haalden.</p>
 <p><strong>Ik zie een onderdeel niet in het menu.</strong><br />
 Dan heeft je rol daar geen leesrecht op. Vraag een admin om je rol te
 controleren onder Beheerders, of het recht aan te passen onder Rollen

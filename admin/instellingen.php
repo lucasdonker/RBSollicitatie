@@ -1366,13 +1366,20 @@ require __DIR__ . '/layout_top.php';
         <div class="ds-veld-hint">Zolang dit uitstaat, wordt er niets automatisch verwijderd of geanonimiseerd.</div>
       </div>
 
-      <h3>Termijnen (in maanden)</h3>
+      <h3>Termijnen (in maanden, tenzij anders vermeld)</h3>
       <div class="bh-veldrij">
         <div class="ds-veld">
-          <label>Afgewezen sollicitanten <span class="tip" data-tip="Na deze termijn worden de persoonsgegevens geanonimiseerd. Geanonimiseerde statistiek blijft behouden. AP-advies is 4 weken (~1 maand); langer mag mits gemotiveerd."></span></label>
-          <input type="number" name="inst[bewaar.afgewezen_mnd]" value="<?= instelling_int('bewaar.afgewezen_mnd',6) ?>" min="0" max="60">
-          <div class="ds-veld-hint">Daarna anonimiseren</div>
+          <label>Afgewezen sollicitanten, in weken <span class="tip" data-tip="Gerekend vanaf de afwijzing. Daarna worden persoonsgegevens, formulier, beschikbaarheid, notities en documenten gewist; de geanonimiseerde statistiek blijft. De Autoriteit Persoonsgegevens gaat uit van 4 weken."></span></label>
+          <input type="number" name="inst[bewaar.afgewezen_weken]" value="<?= instelling_int('bewaar.afgewezen_weken',4) ?>" min="0" max="52">
+          <div class="ds-veld-hint">Daarna anonimiseren. Wie om een seintje vroeg, blijft tot dat verloopt.</div>
         </div>
+        <div class="ds-veld">
+          <label>Seintje bij de volgende werving <span class="tip" data-tip="Zo lang geldt de toestemming die een afgewezen sollicitant gaf via &quot;Stuur me een seintje&quot;. Daarna vervalt die en worden de gegevens geanonimiseerd. De tekst in de mail en het portaal zegt &quot;maximaal een jaar&quot;: ga daar niet boven."></span></label>
+          <input type="number" name="inst[bewaar.seintje_mnd]" value="<?= instelling_int('bewaar.seintje_mnd',12) ?>" min="1" max="12">
+          <div class="ds-veld-hint">Maximaal 12, want dat beloven we</div>
+        </div>
+      </div>
+      <div class="bh-veldrij">
         <div class="ds-veld">
           <label>Gezondheidsgegevens <span class="tip" data-tip="0 = verwijderen zodra de sollicitatie is afgewezen. Anders: zoveel maanden na ondertekening."></span></label>
           <input type="number" name="inst[bewaar.gezondheid_mnd]" value="<?= instelling_int('bewaar.gezondheid_mnd',0) ?>" min="0" max="60">

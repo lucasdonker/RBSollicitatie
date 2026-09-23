@@ -44,7 +44,7 @@ require __DIR__ . '/_kop.php';
       <?php else: ?>
         <h1><?= $klaar === 'uit' ? 'Geen seintje' : 'Volgend jaar weer?' ?></h1>
         <p><?= $klaar === 'uit'
-            ? 'We sturen je geen bericht bij een nieuwe werving. Je gegevens verwijderen we binnen vier weken na de afwijzing.'
+            ? 'We sturen je geen bericht bij een nieuwe werving. Je gegevens verwijderen we binnen ' . seintje_afwijs_termijn_tekst() . ' na de afwijzing.'
             : 'Wil je een bericht als de werving voor een nieuw seizoen opent? Dan bewaren we je naam en contactgegevens daarvoor maximaal een jaar.' ?></p>
       <?php endif; ?>
     </div>

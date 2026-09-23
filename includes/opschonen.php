@@ -10,7 +10,9 @@
  *  - Elke categorie heeft een eigen termijn; 0 maanden = die categorie NIET opschonen.
  *  - Aangenomen kandidaten worden nooit automatisch verwijderd/geanonimiseerd.
  *  - Afgewezen sollicitanten worden geANONIMISEERD (persoonsgegevens weg, geanonimiseerde
- *    statistiek blijft), niet hard verwijderd.
+ *    statistiek blijft), niet hard verwijderd. Wat er dan precies verdwijnt staat op één
+ *    plek, gedeeld met "gegevens laten verwijderen" in het portaal: includes/avg_wissen.php.
+ *    Een seintje (includes/seintje.php) stelt dat uit tot de toestemming verloopt.
  *  - Alles wordt gelogd in de tabel `opschoon_log`.
  */
 
@@ -63,44 +65,54 @@ function opschoon_run(bool $dry_run = false, string $bron = 'cron'): array {
         return date('Y-m-d H:i:s', strtotime("-{$maanden} months"));
     };
 
-    // ── 1. Afgewezen sollicitanten anonimiseren ──────────────────────
-    $mnd = instelling_int('bewaar.afgewezen_mnd', 0);
-    if ($grensdatum = $grens($mnd)) {
+    // ── 1. Afgewezen en afgehaakte sollicitanten anonimiseren ────────
+    // Termijn in weken, gerekend vanaf de laatste wijziging van de sollicitatie (bij een
+    // afwijzing is dat het moment van afwijzen; zie fase_zetten). De AP gaat uit van vier
+    // weken. Wie om een seintje vroeg (includes/seintje.php) blijft tot die toestemming
+    // verloopt. Alleen personen bij wie élke sollicitatie zo is afgelopen: iemand die ooit
+    // is aangenomen of nog loopt, valt hierbuiten.
+    $weken = instelling_int('bewaar.afgewezen_weken', 4);
+    if ($weken > 0) {
         try {
-            // Zoek afgewezen sollicitaties ouder dan de grens die nog niet geanonimiseerd zijn.
-            // We anonimiseren de gekoppelde persoon, mits die GEEN andere actieve/aangenomen
-            // sollicitatie heeft.
+            if (function_exists('seintje_auto_setup')) seintje_auto_setup();
+            $seintje_mnd = function_exists('seintje_termijn_mnd') ? seintje_termijn_mnd() : 12;
             $q = $db->prepare("
-                SELECT DISTINCT p.id
+                SELECT p.id
                 FROM personen p
-                JOIN sollicitaties s ON s.persoon_id = p.id
-                WHERE s.fase = 'afgewezen'
-                  AND s.aangemeld_op < ?
-                  AND p.email NOT LIKE 'geanonimiseerd+%'
+                WHERE p.email NOT LIKE 'geanonimiseerd+%' AND p.email NOT LIKE '%@anoniem.local'
+                  AND EXISTS (SELECT 1 FROM sollicitaties s WHERE s.persoon_id = p.id)
                   AND NOT EXISTS (
                       SELECT 1 FROM sollicitaties s2
                       WHERE s2.persoon_id = p.id
-                        AND s2.fase NOT IN ('afgewezen')
+                        AND (s2.fase NOT IN ('afgewezen','afgehaakt')
+                             OR COALESCE(s2.gewijzigd_op, s2.aangemeld_op) >= DATE_SUB(NOW(), INTERVAL ? WEEK))
                   )
+                  AND (p.seintje_op IS NULL OR p.seintje_op < DATE_SUB(NOW(), INTERVAL ? MONTH))
             ");
-            $q->execute([$grensdatum]);
+            $q->execute([$weken, $seintje_mnd]);
             $ids = $q->fetchAll(PDO::FETCH_COLUMN);
             $aantal = 0;
             if ($ids && !$dry_run) {
-                $upd = $db->prepare("
-                    UPDATE personen SET
-                        voornaam = 'Geanonimiseerd',
-                        tussenvoegsel = NULL,
-                        achternaam = '',
-                        email = CONCAT('geanonimiseerd+', id, '@paal13.local'),
-                        telefoon = NULL,
-                        geboortedatum = NULL,
-                        ouder_naam = NULL,
-                        ouder_email = NULL,
-                        ouder_telefoon = NULL
-                    WHERE id = ?
-                ");
-                foreach ($ids as $pid) { $upd->execute([$pid]); $aantal++; }
+                $sols = $db->prepare("SELECT id FROM sollicitaties WHERE persoon_id = ?");
+                foreach ($ids as $pid) {
+                    $pid = (int)$pid;
+                    $email = 'geanonimiseerd+' . $pid . '@paal13.local';
+                    // Per persoon een eigen transactie: één fout houdt de rest niet tegen.
+                    $db->beginTransaction();
+                    try {
+                        $sols->execute([$pid]);
+                        foreach ($sols->fetchAll(PDO::FETCH_COLUMN) as $sid) {
+                            avg_sollicitatie_leegmaken($db, (int)$sid);
+                            avg_maillog_anonimiseren($db, (int)$sid, $email);
+                        }
+                        avg_persoon_anonimiseren($db, $pid, 'Geanonimiseerd', '', $email);
+                        $db->commit();
+                        $aantal++;
+                    } catch (\Throwable $e) {
+                        if ($db->inTransaction()) $db->rollBack();
+                        error_log("opschoon afgewezen persoon $pid: " . $e->getMessage());
+                    }
+                }
             } else {
                 $aantal = count($ids);
             }

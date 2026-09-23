@@ -110,7 +110,8 @@ function instellingen_auto_setup(bool $forceer = false): void {
         ['portaal.welkomst_tekst', 'Welkom op het sollicitantenportaal van Paal 13.', 'Portaal tekst', 'textarea'],
         // Bewaartermijnen (AVG opslagbeperking). 0 = niet automatisch opschonen.
         ['bewaar.actief',          '0',                         'Automatisch opschonen aan/uit',        'checkbox'],
-        ['bewaar.afgewezen_mnd',   '6',                         'Afgewezen sollicitanten anonimiseren na (maanden)', 'getal'],
+        ['bewaar.afgewezen_weken', '4',                         'Afgewezen sollicitanten anonimiseren na (weken)', 'getal'],
+        ['bewaar.seintje_mnd',     '12',                        'Seintje bij volgende werving geldig (maanden)', 'getal'],
         ['bewaar.gezondheid_mnd',  '0',                         'Gezondheidsgegevens verwijderen na (maanden, 0=einde seizoen)', 'getal'],
         ['bewaar.ai_invoer_mnd',   '3',                         'AI-invoertekst verwijderen na (maanden)', 'getal'],
         ['bewaar.onvoltooid_mnd',  '3',                         'Niet-voltooide aanmeldingen verwijderen na (maanden)', 'getal'],

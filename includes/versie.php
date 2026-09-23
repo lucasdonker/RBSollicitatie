@@ -3,10 +3,23 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.98.1');
+define('APP_VERSIE', '2.99.0');
 
 function app_changelog(): array {
     return [
+        '2.99.0' => [
+            'datum'  => '2026-09-23',
+            'titel'  => 'Oud-sollicitanten weer bereiken, en netjes opruimen wie dat niet wil',
+            'punten' => [
+                'In Berichten staan twee nieuwe groepen uit vorige seizoenen: oud-strandwachten, en afgewezen sollicitanten die zelf om een seintje bij de volgende werving vroegen. Zo stuur je "je kunt weer solliciteren" naar wie dat mag ontvangen. Afgewezen mensen zonder seintje staan er bewust niet in: daar is geen toestemming voor. De nieuwe variabele {{aanmeld_url}} linkt naar het aanmeldformulier',
+                'Een afgewezen sollicitant kan om dat seintje vragen met één knop: onder de afwijzingsmail en op de startpagina van het portaal. Intrekken kan net zo makkelijk, ook via de afmeldlink. Een vinkje bij het aanmelden of een zin in de voorwaarden is hiervoor niet genoeg, en daarom is het zo gebouwd',
+                'Afgewezen sollicitanten worden nu vier weken na de afwijzing opgeschoond in plaats van zes maanden na de aanmelding, zoals de Autoriteit Persoonsgegevens aanhoudt. Wie om een seintje vroeg, blijft maximaal een jaar. Het opschonen wist nu ook het kennismakingsformulier, de beschikbaarheid, notities, beoordelingen en documenten; eerder bleef dat na het anonimiseren gewoon staan. Afgehaakte sollicitanten vielen er helemaal buiten',
+                'Gegevens laten verwijderen in het portaal en het automatisch opschonen wissen nu op dezelfde manier, vanuit één plek. Daarbij verdwijnen ook de gegevens van de ouder en het IP-adres van de privacytoestemming, die bleven eerst staan',
+                'Seizoen staat weer in het menu, onder Systeem. Het scherm bestond nog, maar was sinds de herbouw alleen te vinden als er nog geen seizoen was',
+                'Geplande berichten staat als tab Gepland onder Berichten en is omgezet naar het nieuwe ontwerp. Het was sinds de herbouw alleen via het zoekveld te vinden',
+                'Opgelost: in formulieren met twee velden naast elkaar (Seizoen, Beheerders) stond het rechterveld een stukje lager dan het linker',
+            ],
+        ],
         '2.98.1' => [
             'datum'  => '2026-09-23',
             'titel'  => 'De foto van een sollicitant, terug waar je hem nodig hebt',
