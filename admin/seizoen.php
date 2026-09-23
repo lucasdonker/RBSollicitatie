@@ -45,7 +45,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $naam = trim((string)($_POST['naam'] ?? ''));
             if ($naam !== '') {
                 $db->prepare("INSERT INTO seizoenen (naam, status) VALUES (?, 'gesloten')")->execute([$naam]);
-                flash('succes', 'Seizoen "' . $naam . '" aangemaakt. Vul nu de datums in.');
+                $nieuw_id = (int)$db->lastInsertId();
+                $open_nu  = actief_seizoen();
+                flash('succes', 'Seizoen "' . $naam . '" aangemaakt. Vul nu de datums in.'
+                    . ($open_nu && ($open_nu['status'] ?? '') === 'open'
+                        ? ' Het beheer blijft werken met "' . $open_nu['naam'] . '" tot je dat sluit en dit seizoen opent.'
+                        : ''));
+                // Meteen het nieuwe seizoen bewerken: daar ga je de datums invullen.
+                if ($nieuw_id > 0) redirect(APP_URL . '/admin/seizoen.php?id=' . $nieuw_id);
             } else {
                 flash('fout', 'Geef het seizoen een naam.');
             }
@@ -93,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                               $_POST['datum_tw_start'] ?: null, $_POST['datum_tw_eind'] ?: null, $_POST['locatie_tw'] ?: null, $sid]);
                 flash('succes', 'Seizoen bijgewerkt — niet alle velden konden worden opgeslagen.');
             }
-            break;
+            redirect(APP_URL . '/admin/seizoen.php?id=' . $sid);
 
         case 'open':
         case 'sluit':
@@ -102,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('succes', $actie === 'open'
                 ? 'Seizoen geopend — het aanmeldformulier is nu actief.'
                 : 'Seizoen gesloten — er kan niet meer worden aangemeld.');
-            break;
+            redirect(APP_URL . '/admin/seizoen.php?id=' . $sid);
 
         case 'verwijder':
             if (!$mag_verwijderen) { http_response_code(403); exit('Alleen een beheerder kan een seizoen verwijderen.'); }
@@ -139,8 +146,31 @@ $seizoenen = $db->query("
     FROM seizoenen s ORDER BY s.id DESC
 ")->fetchAll();
 
-$huidig  = $seizoenen[0] ?? null;
+// "Huidig" betekent hier hetzelfde als in de rest van het beheer: actief_seizoen() (het
+// open seizoen, anders het nieuwste). Eerder was dat hier altijd het nieuwste, zodat een
+// net aangemaakt, nog gesloten seizoen "huidig" heette terwijl Vandaag, Sollicitanten en
+// de selectiedag nog met het open seizoen werkten.
+$actief    = actief_seizoen();
+$actief_id = $actief ? (int)$actief['id'] : 0;
+
+// Welk seizoen bewerk je? Standaard het actieve; ?id= kiest een ander (Alle seizoenen).
+$bewerk_id = (int)($_GET['id'] ?? 0) ?: $actief_id;
+$huidig    = null;
+foreach ($seizoenen as $_sz) if ((int)$_sz['id'] === $bewerk_id) { $huidig = $_sz; break; }
+if (!$huidig) {
+    foreach ($seizoenen as $_sz) if ((int)$_sz['id'] === $actief_id) { $huidig = $_sz; break; }
+}
+if (!$huidig) $huidig = $seizoenen[0] ?? null;
+$bewerkt_actief = $huidig && (int)$huidig['id'] === $actief_id;
 $stappen = bh_seizoen_stappen($huidig);
+
+/** Een ánder seizoen dat open staat dan $id (of null). */
+$ander_open = function (int $id) use ($seizoenen): ?array {
+    foreach ($seizoenen as $_sz) {
+        if ((int)$_sz['id'] !== $id && ($_sz['status'] ?? '') === 'open') return $_sz;
+    }
+    return null;
+};
 
 /** Link naar het bevestigingsscherm van een actie. */
 $bev_url = fn(string $a, int $id) => '?bevestig=' . $a . '&id=' . $id;
@@ -150,20 +180,32 @@ require __DIR__ . '/layout_top.php';
 
 <?php if ($bevestig_sz): ?>
   <?php
-  $bev = bh_seizoen_gevolgen($bevestig_actie, $bevestig_sz);
+  $bev = bh_seizoen_gevolgen($bevestig_actie, $bevestig_sz, $ander_open((int)$bevestig_sz['id']));
   $bev_form = ['actie' => APP_URL . '/admin/seizoen.php',
                'velden' => ['actie' => $bevestig_actie, 'seizoen_id' => (int)$bevestig_sz['id']]];
-  $bev_terug = APP_URL . '/admin/seizoen.php';
+  $bev_terug = APP_URL . '/admin/seizoen.php?id=' . (int)$bevestig_sz['id'];
   require __DIR__ . '/_bevestig.php';
   ?>
   <?php require __DIR__ . '/layout_bottom.php'; ?>
   <?php return; ?>
 <?php endif; ?>
 
+<?php if ($huidig && !$bewerkt_actief && $actief): ?>
+  <div class="ds-melding ds-melding-info bh-seizoen-anders" role="status">
+    <?= icoon('info', 16) ?>
+    <span>
+      Je bewerkt <strong><?= h((string)$huidig['naam']) ?></strong>. De rest van het beheer
+      (Vandaag, Sollicitanten, de selectiedag) werkt met <strong><?= h((string)$actief['naam']) ?></strong>:
+      dat is het seizoen dat <?= ($actief['status'] ?? '') === 'open' ? 'open staat' : 'het nieuwst is, omdat er geen seizoen open staat' ?>.
+      <a href="<?= APP_URL ?>/admin/seizoen.php">Naar <?= h((string)$actief['naam']) ?></a>
+    </span>
+  </div>
+<?php endif; ?>
+
 <?php if ($huidig): $_open = ($huidig['status'] ?? '') === 'open'; ?>
 <section class="ds-kaart bh-seizoenkaart<?= $_open ? ' open' : '' ?>">
   <div class="bh-seizoenkaart-wie">
-    <h2><?= h((string)$huidig['naam']) ?></h2>
+    <h2><?= h((string)$huidig['naam']) ?> <?php if ($bewerkt_actief): ?><?= bh_chip('huidig', 'blauw') ?><?php endif; ?></h2>
     <?= bh_stoplicht($_open ? 'goed' : 'krap',
           $_open ? 'Open — sollicitanten kunnen zich aanmelden'
                  : 'Gesloten — het aanmeldformulier staat uit') ?>
@@ -334,6 +376,16 @@ require __DIR__ . '/layout_top.php';
         Het nieuwe seizoen begint gesloten. Bestaande gegevens blijven staan, en wie eerder
         heeft gesolliciteerd wordt vanzelf herkend als terugkerend.
       </p>
+      <?php $_nu_open = $ander_open(0); if ($_nu_open): ?>
+        <div class="ds-melding ds-melding-warn">
+          <?= icoon('waarschuwing', 16) ?>
+          <span>
+            <strong><?= h((string)$_nu_open['naam']) ?></strong> staat nog open. Het nieuwe seizoen
+            maak je wel alvast aan, maar het beheer en het aanmeldformulier blijven met
+            <?= h((string)$_nu_open['naam']) ?> werken tot je dat sluit en het nieuwe opent.
+          </span>
+        </div>
+      <?php endif; ?>
       <div class="ds-veld">
         <label class="ds-label" for="sz_nieuw">Naam</label>
         <input class="ds-input" type="text" id="sz_nieuw" name="naam" placeholder="bijv. Zomer 2027" required>
@@ -369,12 +421,13 @@ require __DIR__ . '/layout_top.php';
       <ul class="bh-seizoenlijst">
         <?php foreach ($seizoenen as $sz):
           $_is_open = ($sz['status'] ?? '') === 'open';
-          $_huidig  = $huidig && (int)$sz['id'] === (int)$huidig['id'];
+          $_huidig  = $huidig && (int)$sz['id'] === (int)$huidig['id'];   // het seizoen dat je nu bewerkt
+          $_actief  = (int)$sz['id'] === $actief_id;                      // het seizoen van de rest van het beheer
         ?>
         <li class="bh-seizoenrij">
           <span class="bh-seizoenrij-naam">
             <?= h((string)$sz['naam']) ?>
-            <?php if ($_huidig): ?><?= bh_chip('huidig', 'blauw') ?><?php endif; ?>
+            <?php if ($_actief): ?><?= bh_chip('huidig', 'blauw') ?><?php endif; ?>
             <?= bh_badge($_is_open ? 'Open' : 'Gesloten', $_is_open ? 'groen' : 'grijs') ?>
           </span>
           <span class="bh-seizoenrij-sub">
@@ -386,16 +439,23 @@ require __DIR__ . '/layout_top.php';
               · <?= h(datum_kort_nl($sz['datum_werk_start'])) ?>–<?= h(datum_kort_nl($sz['datum_werk_eind'] ?? '')) ?>
             <?php endif; ?>
           </span>
-          <?php if ($mag_verwijderen): ?>
           <span class="bh-seizoenrij-acties">
-            <?php if (!$_huidig): ?>
-              <a class="ds-btn ds-btn-zacht ds-btn-sm" href="<?= h($bev_url($_is_open ? 'sluit' : 'open', (int)$sz['id'])) ?>">
-                <?= $_is_open ? 'Sluiten' : 'Heropenen' ?>
+            <?php if ($_huidig): ?>
+              <span class="bh-meta">je bewerkt dit seizoen</span>
+            <?php else: ?>
+              <a class="ds-btn ds-btn-secundair ds-btn-sm" href="<?= APP_URL ?>/admin/seizoen.php?id=<?= (int)$sz['id'] ?>">
+                Bewerken<span class="bh-vw"> — <?= h((string)$sz['naam']) ?></span>
               </a>
             <?php endif; ?>
-            <a class="ds-btn ds-btn-gevaar ds-btn-sm" href="<?= h($bev_url('verwijder', (int)$sz['id'])) ?>">Verwijderen</a>
+            <?php if ($mag_verwijderen): ?>
+              <?php if (!$_huidig): ?>
+                <a class="ds-btn ds-btn-zacht ds-btn-sm" href="<?= h($bev_url($_is_open ? 'sluit' : 'open', (int)$sz['id'])) ?>">
+                  <?= $_is_open ? 'Sluiten' : 'Heropenen' ?>
+                </a>
+              <?php endif; ?>
+              <a class="ds-btn ds-btn-gevaar ds-btn-sm" href="<?= h($bev_url('verwijder', (int)$sz['id'])) ?>">Verwijderen</a>
+            <?php endif; ?>
           </span>
-          <?php endif; ?>
         </li>
         <?php endforeach; ?>
       </ul>

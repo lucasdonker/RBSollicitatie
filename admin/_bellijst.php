@@ -256,7 +256,7 @@ function doorvoerenEen(solId, isDoor) {
 function alleGebeldeDoorvoeren(n) {
   bhBevestig({
     titel: n + ' gebelde kandidaten doorvoeren?',
-    tekst: 'Iedereen die je als gebeld hebt gemarkeerd gaat naar zijn nieuwe fase, en de bijbehorende '
+    tekst: 'Iedereen die je als gebeld hebt gemarkeerd gaat naar de nieuwe fase, en de bijbehorende '
          + 'berichten gaan uit. Dat kun je niet terugnemen.',
     knop: 'Ja, doorvoeren'
   }).then(function (ja) { if (ja) document.getElementById('alleDoorForm').submit(); });

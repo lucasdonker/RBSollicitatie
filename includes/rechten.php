@@ -20,7 +20,7 @@ if (!function_exists('rechten_modules')) {
 function rechten_modules(): array {
     return [
         'sollicitanten'   => ['label' => 'Sollicitanten',          'groep' => 'Werving',        'acties' => ['lezen','bewerken','verwijderen']],
-        'paginas'         => ['label' => "Landingspagina's",       'groep' => 'Werving',        'acties' => ['lezen','bewerken','verwijderen']],
+        'paginas'         => ['label' => "Wervingspagina's", 'groep' => 'Werving',        'acties' => ['lezen','bewerken','verwijderen']],
         'blk'             => ['label' => 'BLK-formulieren & details','groep' => 'Werving',       'acties' => ['lezen','bewerken']],
         'selectiedag'     => ['label' => 'Selectiedag',            'groep' => 'Selectie',       'acties' => ['lezen','bewerken']],
         'ondertekeningen' => ['label' => 'Ondertekeningen',        'groep' => 'Selectie',       'acties' => ['lezen','bewerken']],
@@ -73,7 +73,17 @@ function rechten_standaard_rollen(): array {
             'rang' => 1,
             'rechten' => [
                 // Begeleider: alleen wat nodig is op de selectiedag. GEEN persoonsgegevens.
-                'selectiedag'     => 'r',       // mag inchecken/meedraaien, niet bewerken
+                //
+                // Wat 'lezen' op selectiedag betekent (het scherm bepaalt wat meedraaien is):
+                //   - Groepsindeling bekijken (niet wijzigen).
+                //   - Inchecken: Aanwezig/Ongedaan tikken (niet de tablet-code aanmaken).
+                //   - Beoordelen: eigen cijfers geven/wissen, observaties plaatsen, en de
+                //     eígen observaties verwijderen (niet die van anderen).
+                //   - Trainingsweekend: afvinken en observeren (niet besluiten of doorvoeren).
+                // Nabespreking en bellijst zijn 'bewerken' (bestuur). BLK-bijzonderheden
+                // (medisch) ziet een begeleider niet, alleen een neutrale "let op"-vlag; het
+                // dossier en telefoonnummers ook niet (daar horen 'blk' en 'sollicitanten' bij).
+                'selectiedag'     => 'r',
                 'dekking'         => 'r',
             ],
         ],

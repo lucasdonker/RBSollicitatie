@@ -114,9 +114,10 @@ function fase_zetten(int $sol_id, string $naar, string $bron, array $opties = []
            gewoon zichtbaar; alleen een mislukte SMTP-poging lees je nu in het logboek.
            Onder CLI valt melding_verstuur() zelf terug op 'direct'. */
         $mopt  = ['prioriteit' => $opties['prioriteit'] ?? 'na_antwoord'];
-        // Zet een mens de fase om (paneel, lijst, bulk, bellijst), dan is dat een bewuste keuze:
-        // het anti-loop-dagplafond mag zo'n bericht niet tegenhouden. Automatische bronnen wel.
-        if (in_array($bron, ['paneel', 'lijst', 'bulk', 'bellijst'], true)) $mopt['negeer_plafond'] = true;
+        // Zet een mens de fase om (paneel, lijst, bulk, bellijst, trainingsweekend-doorvoeren),
+        // dan is dat een bewuste keuze: het anti-loop-dagplafond mag zo'n bericht niet
+        // tegenhouden. Automatische bronnen wel.
+        if (in_array($bron, ['paneel', 'lijst', 'bulk', 'bellijst', 'trainingsweekend'], true)) $mopt['negeer_plafond'] = true;
         $stuur = function (string $type, array $extra = []) use ($sol_id, $stil, $mopt, &$uit) {
             if ($stil || !function_exists('melding_verstuur')) return;
             $r = melding_verstuur($type, $sol_id, $extra, $mopt);

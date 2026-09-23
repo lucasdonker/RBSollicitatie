@@ -18,16 +18,32 @@ vereis_recht('selectiedag', 'lezen');
 $seizoen = actief_seizoen();
 $sid = $seizoen ? (int)$seizoen['id'] : 0;
 $ik  = $_SESSION['bhd_naam'] ?? 'onbekend';
-$mag_alles    = function_exists('huidige_gebruiker_rol_minstens') && huidige_gebruiker_rol_minstens('bestuur');
-$mag_bewerken = mag('selectiedag', 'bewerken');
+
+// Zelfde niveaus als het trainingsweekend (admin/trainingsweekend.php):
+//   beoordelen — cijfers geven/wissen en observaties plaatsen, en je eígen observaties
+//                verwijderen. Dat is het werk van de begeleider op de dag, dus 'lezen'.
+//   bewerken   — observaties van anderen verwijderen: bestuur.
+// Scores en observaties zijn per beoordelaar ($ik): niemand overschrijft een ander.
+$mag_beoordelen = mag('selectiedag', 'lezen');
+$mag_alles      = mag('selectiedag', 'bewerken');
+// Dataminimalisatie (AVG art. 5 lid 1c): de BLK-bijzonderheden (vaak medisch) alleen met
+// BLK-recht; de begeleider ziet dat er iets is, niet wat. Het dossier alleen met dossierrecht.
+$mag_blk     = mag('blk', 'lezen');
+$mag_dossier = mag('sollicitanten', 'lezen');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $sid) {
     header('Content-Type: application/json');
     csrf_check();
-    if (!$mag_bewerken) { echo json_encode(['ok' => false, 'fout' => 'geen_rechten']); exit; }
+    if (!$mag_beoordelen) { echo json_encode(['ok' => false, 'fout' => 'geen_rechten']); exit; }
     $actie = (string)($_POST['actie'] ?? '');
+    if (in_array($actie, ['score', 'observatie'], true) && !selectie_is_kandidaat($sid, (int)($_POST['sol_id'] ?? 0))) {
+        echo json_encode(['ok' => false, 'fout' => 'geen_kandidaat']); exit;
+    }
 
     if ($actie === 'score') {
+        if (!selectie_criterium_bestaat((string)($_POST['test'] ?? ''), (string)($_POST['criterium'] ?? ''))) {
+            echo json_encode(['ok' => false, 'fout' => 'onbekend_criterium']); exit;
+        }
         selectie_score_opslaan($sid, (int)$_POST['sol_id'], (string)$_POST['test'],
                                (string)$_POST['criterium'], (int)$_POST['score'], $ik);
         $sc = selectie_scores_van($sid, (int)$_POST['sol_id'], $ik);
@@ -161,7 +177,7 @@ require __DIR__ . '/layout_top.php';
               <span class="bh-kandidaat-naam">
                 <?= h((string)$_k['naam']) ?>
                 <?php if (!empty($_k['bijzonderheden'])): ?>
-                  <span class="bh-kandidaat-letop" title="Bijzonderheid gemeld"><?= icoon('waarschuwing', 14) ?></span>
+                  <span class="bh-kandidaat-letop" title="Bijzonderheid gemeld"><?= icoon('waarschuwing', 14) ?><span class="bh-vw">bijzonderheid gemeld</span></span>
                 <?php endif; ?>
               </span>
               <span class="bh-kandidaat-sub">
@@ -197,22 +213,33 @@ require __DIR__ . '/layout_top.php';
           <?= (int)($voortgang[$hid] ?? 0) ?> van <?= (int)$totaal_criteria ?> criteria
         </span>
       </span>
-      <a class="ds-btn ds-btn-secundair ds-btn-sm"
-         href="<?= APP_URL ?>/admin/sollicitant.php?id=<?= $hid ?>&amp;tab=selectiedag">Dossier</a>
+      <?php if ($mag_dossier): ?>
+        <a class="ds-btn ds-btn-secundair ds-btn-sm"
+           href="<?= APP_URL ?>/admin/sollicitant.php?id=<?= $hid ?>&amp;tab=selectiedag">Dossier</a>
+      <?php endif; ?>
     </header>
 
     <?php if (!empty($huidig['bijzonderheden'])): ?>
       <div class="ds-melding ds-melding-warn bh-beoordeel-bijz">
         <?= icoon('waarschuwing', 16) ?>
-        <span><strong>Bijzonderheid gemeld:</strong> <?= nl2br(h((string)$huidig['bijzonderheden'])) ?></span>
+        <?php if ($mag_blk): ?>
+          <span><strong>Bijzonderheid gemeld:</strong> <?= nl2br(h((string)$huidig['bijzonderheden'])) ?></span>
+        <?php else: ?>
+          <span><strong>Let op:</strong> er is een bijzonderheid bekend bij het bestuur. Vraag vóór de
+            zwem- of sporttest bij een bestuurslid na waar je op moet letten.</span>
+        <?php endif; ?>
       </div>
     <?php endif; ?>
 
     <?php if (empty($huidig['aanwezig'])): ?>
       <div class="ds-melding ds-melding-info">
         <?= icoon('info', 16) ?>
-        <span>Deze kandidaat is niet ingecheckt. Beoordelen kan, maar controleer eerst of hij er is.</span>
+        <span>Deze kandidaat is niet ingecheckt. Beoordelen kan, maar controleer eerst of de kandidaat er is.</span>
       </div>
+    <?php endif; ?>
+
+    <?php if ($mag_beoordelen): ?>
+      <p class="bh-zijpaneel-hint">Tikken is opslaan. Tik nog een keer op hetzelfde cijfer om het te wissen.</p>
     <?php endif; ?>
 
     <?php foreach ($criteria as $_ts => $_test): ?>
@@ -233,7 +260,7 @@ require __DIR__ . '/layout_top.php';
             <div class="bh-cijfers" role="group" aria-label="<?= h($_crit['label']) ?>">
               <?php for ($_s = 1; $_s <= 5; $_s++): ?>
                 <button type="button" class="bh-cijfer<?= $_s === $_eigen ? ' gekozen' : '' ?>"
-                        <?= $mag_bewerken ? '' : 'disabled' ?>
+                        <?= $mag_beoordelen ? '' : 'disabled' ?>
                         aria-pressed="<?= $_s === $_eigen ? 'true' : 'false' ?>"
                         onclick="zetScore(this, <?= $hid ?>, '<?= h($_ts) ?>', '<?= h($_crit['sleutel']) ?>', <?= $_s ?>)"><?= $_s ?></button>
               <?php endfor; ?>
@@ -250,15 +277,16 @@ require __DIR__ . '/layout_top.php';
 
     <div class="bh-observatieblok">
       <h3>Observatie plaatsen</h3>
-      <?php if ($mag_bewerken): ?>
-        <div class="bh-soortkeuze" id="soort-<?= $hid ?>">
-          <button type="button" class="bh-soort positief" data-soort="positief"
+      <?php if ($mag_beoordelen): ?>
+        <div class="bh-soortkeuze" id="soort-<?= $hid ?>" role="group" aria-label="Soort observatie">
+          <button type="button" class="bh-soort positief" data-soort="positief" aria-pressed="false"
                   onclick="kiesSoort(<?= $hid ?>, 'positief', this)">Positief</button>
-          <button type="button" class="bh-soort neutraal gekozen" data-soort="neutraal"
+          <button type="button" class="bh-soort neutraal gekozen" data-soort="neutraal" aria-pressed="true"
                   onclick="kiesSoort(<?= $hid ?>, 'neutraal', this)">Neutraal</button>
-          <button type="button" class="bh-soort aandacht" data-soort="aandacht"
+          <button type="button" class="bh-soort aandacht" data-soort="aandacht" aria-pressed="false"
                   onclick="kiesSoort(<?= $hid ?>, 'aandacht', this)">Aandacht</button>
         </div>
+        <label class="bh-vw" for="obs-<?= $hid ?>">Observatie over <?= h((string)$huidig['naam']) ?></label>
         <textarea class="ds-textarea" id="obs-<?= $hid ?>" rows="2" placeholder="Wat viel je op…"></textarea>
         <button type="button" class="ds-btn ds-btn-primair ds-btn-vol" onclick="obsToevoegen(<?= $hid ?>)">
           Observatie opslaan
@@ -318,31 +346,36 @@ function zetScore(knop, solId, test, crit, score) {
   const key = solId + '-' + test + '-' + crit;
   const stand = document.getElementById('stand-' + key);
   const kaart = document.getElementById('crit-' + key);
+  // Nogmaals op het gekozen cijfer tikken wist je score (de server wist bij 0).
+  const wissen = knop === vorige;
 
-  rij.querySelectorAll('.bh-cijfer').forEach(function (b) {
-    b.classList.remove('gekozen'); b.setAttribute('aria-pressed', 'false');
-  });
-  knop.classList.add('gekozen'); knop.setAttribute('aria-pressed', 'true');
-  if (kaart) kaart.classList.add('gedaan');
-  if (stand) stand.textContent = 'opslaan…';
+  function toon(actief) {
+    rij.querySelectorAll('.bh-cijfer').forEach(function (b) {
+      b.classList.toggle('gekozen', b === actief);
+      b.setAttribute('aria-pressed', b === actief ? 'true' : 'false');
+    });
+    if (kaart) kaart.classList.toggle('gedaan', !!actief);
+  }
+
+  toon(wissen ? null : knop);
+  if (stand) stand.textContent = wissen ? 'wissen…' : 'opslaan…';
 
   fetch(location.pathname, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ actie: 'score', sol_id: solId, test: test, criterium: crit, score: score, _csrf: CSRF })
+    body: new URLSearchParams({ actie: 'score', sol_id: solId, test: test, criterium: crit,
+                                score: wissen ? 0 : score, _csrf: CSRF })
   })
   .then(r => r.json())
   .then(d => {
     if (!d.ok) throw new Error(d.fout || 'mislukt');
-    if (stand) stand.textContent = 'opgeslagen';
+    if (stand) stand.textContent = wissen ? 'gewist' : 'opgeslagen';
     const gem = document.getElementById('gem-' + key);
-    if (gem && d.aantal > 1) gem.textContent = 'gemiddelde van ' + d.aantal + ' beoordelaars: ' + d.gem;
+    if (gem) gem.textContent = d.aantal > 1 ? 'gemiddelde van ' + d.aantal + ' beoordelaars: ' + d.gem : '';
   })
   .catch(() => {
-    knop.classList.remove('gekozen'); knop.setAttribute('aria-pressed', 'false');
-    if (vorige) { vorige.classList.add('gekozen'); vorige.setAttribute('aria-pressed', 'true'); }
-    if (!vorige && kaart) kaart.classList.remove('gedaan');
-    if (stand) stand.textContent = 'niet opgeslagen';
+    toon(vorige);
+    if (stand) stand.textContent = wissen ? 'niet gewist' : 'niet opgeslagen';
     bhToast('Score niet opgeslagen — probeer opnieuw.', 'fout');
   });
 }
@@ -350,8 +383,10 @@ function zetScore(knop, solId, test, crit, score) {
 function kiesSoort(solId, soort, knop) {
   soortKeuze[solId] = soort;
   document.getElementById('soort-' + solId).querySelectorAll('.bh-soort')
-    .forEach(function (b) { b.classList.remove('gekozen'); });
-  knop.classList.add('gekozen');
+    .forEach(function (b) {
+      b.classList.toggle('gekozen', b === knop);
+      b.setAttribute('aria-pressed', b === knop ? 'true' : 'false');
+    });
 }
 
 function obsToevoegen(solId) {

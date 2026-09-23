@@ -3,8 +3,8 @@
  * Groepsindeling — bestuur, op een laptop.
  *
  * Het systeem doet een voorstel, de mens beslist (ontwerpfilosofie §3): een knop
- * genereert een eerlijke verdeling op leeftijd en geslacht, daarna sleep je met de
- * hand. Wie niet bij elkaar mag, geef je per persoon aan; zit zo'n koppel toch samen,
+ * genereert een eerlijke verdeling op leeftijd en geslacht, daarna verplaats je met de
+ * hand (slepen, of de keuzelijst op het kaartje). Wie niet bij elkaar mag, geef je per persoon aan; zit zo'n koppel toch samen,
  * dan zegt de kaart dat.
  */
 require_once __DIR__ . '/../includes/functions.php';
@@ -38,9 +38,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $sid) {
         redirect(APP_URL . '/admin/selectie_indeling.php');
     }
     if ($actie === 'verplaats') {
+        // Eén endpoint voor slepen (fetch, JSON) en de keuzelijst "Naar groep" op het
+        // kaartje (gewoon formulier met terug=1, redirect terug naar dat kaartje).
+        $formulier = !empty($_POST['terug']);
+        $sol_id    = (int)($_POST['sol_id'] ?? 0);
+        $groep_raw = (string)($_POST['groep_id'] ?? '');
+        $groep_id  = $groep_raw !== '' ? (int)$groep_raw : null;
+        $geldig    = selectie_is_kandidaat($sid, $sol_id)
+                  && ($groep_id === null || in_array($groep_id, array_map(fn($g) => (int)$g['id'], selectie_groepen($sid)), true));
+        if ($geldig) selectie_indeel($sid, $sol_id, $groep_id);
+        if ($formulier) {
+            flash($geldig ? 'succes' : 'fout', $geldig ? 'Verplaatst.' : 'Verplaatsen niet gelukt: onbekende kandidaat of groep.');
+            redirect(APP_URL . '/admin/selectie_indeling.php#kaart-' . $sol_id);
+        }
         header('Content-Type: application/json');
-        selectie_indeel($sid, (int)$_POST['sol_id'], $_POST['groep_id'] !== '' ? (int)$_POST['groep_id'] : null);
-        echo json_encode(['ok' => true]);
+        echo json_encode(['ok' => $geldig]);
         exit;
     }
     if ($actie === 'relatie') {
@@ -82,7 +94,7 @@ require __DIR__ . '/layout_top.php';
       $leeg_titel = $sid ? 'Nog niemand uitgenodigd' : 'Geen actief seizoen';
       $leeg_tekst = $sid ? 'Zodra er kandidaten voor de selectiedag zijn uitgenodigd, verdeel je ze hier in groepen.' : '';
       $leeg_icoon = 'mensen';
-      $leeg_knop  = $sid ? ['tekst' => 'Naar sollicitanten', 'url' => APP_URL . '/admin/sollicitanten.php'] : null;
+      $leeg_knop  = $sid && mag('sollicitanten', 'lezen') ? ['tekst' => 'Naar sollicitanten', 'url' => APP_URL . '/admin/sollicitanten.php'] : null;
       require __DIR__ . '/_leeg.php';
     ?>
   </div>
@@ -118,7 +130,8 @@ require __DIR__ . '/layout_top.php';
 
   <p class="bh-indeel-uitleg">
     Het voorstel maakt gelijke groepen, gemengd op leeftijd en geslacht, en houdt koppels
-    uit elkaar die je hebt aangegeven. Daarna sleep je zelf.
+    uit elkaar die je hebt aangegeven. Daarna verplaats je zelf: slepen, of per kaartje met
+    de keuzelijst "Naar groep".
     <?php if ($mag_bewerken): ?>Klik op een naam om aan te geven wie níét bij elkaar mogen.<?php endif; ?>
   </p>
 </section>
@@ -202,7 +215,12 @@ if (MAG_BEWERKEN) {
         method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({ actie: 'verplaats', sol_id: solId, groep_id: zone.dataset.groep, _csrf: CSRF })
       })
-      .then(function () { setTimeout(function () { location.reload(); }, 120); })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (!d.ok) bhToast('Verplaatsen niet opgeslagen.', 'fout');
+        // Bij een fout wat langer wachten, zodat de melding te lezen is vóór het kaartje terugspringt.
+        setTimeout(function () { location.reload(); }, d.ok ? 120 : 1800);
+      })
       .catch(function () { bhToast('Verplaatsen niet opgeslagen.', 'fout'); });
     });
   });

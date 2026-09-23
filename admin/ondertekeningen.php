@@ -126,7 +126,7 @@ require __DIR__ . '/layout_top.php';
 <?php if (empty($per_persoon)): ?>
   <?php
   $leeg_titel = 'Nog geen ondertekeningen klaargezet';
-  $leeg_tekst = 'Zodra iemand wordt uitgenodigd voor het trainingsweekend, zet het systeem de formulieren klaar en verschijnt hij hier.';
+  $leeg_tekst = 'Zodra iemand wordt uitgenodigd voor de selectiedag, zet het systeem de formulieren klaar en verschijnen ze hier.';
   $leeg_icoon = 'ondertekenen';
   require __DIR__ . '/_leeg.php';
   ?>
@@ -147,7 +147,7 @@ require __DIR__ . '/_tabs.php';
   <?php
   $leeg_titel = $filter === 'compleet' ? 'Nog niemand is helemaal rond' : 'Iedereen heeft getekend';
   $leeg_tekst = $filter === 'compleet'
-      ? 'Zodra iemand al zijn formulieren terug heeft, staat hij hier.'
+      ? 'Zodra alle formulieren van iemand terug zijn, staat die persoon hier.'
       : 'Alle ' . $aantal_compleet . ' sollicitanten hebben hun formulieren terug. Er is hier niets meer te doen.';
   $leeg_toon  = $filter === 'compleet' ? 'grijs' : 'groen';
   $leeg_icoon = $filter === 'compleet' ? 'lijst' : 'vink';

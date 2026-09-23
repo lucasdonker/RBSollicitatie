@@ -142,6 +142,31 @@ function selectie_kandidaten(int $seizoen_id): array {
     } catch (\Exception $e) { return []; }
 }
 
+/**
+ * Hoort deze sollicitatie bij de selectiedag van dit seizoen?
+ *
+ * Begeleiders (alleen 'lezen') mogen inchecken en beoordelen. Dan hoort de server ook
+ * te controleren dat het om een kandidaat van déze selectiedag gaat, en niet om een
+ * willekeurig id uit een ander seizoen of een andere fase.
+ */
+function selectie_is_kandidaat(int $seizoen_id, int $sol_id): bool {
+    if ($seizoen_id <= 0 || $sol_id <= 0) return false;
+    try {
+        $q = db()->prepare("SELECT 1 FROM sollicitaties WHERE id=? AND seizoen_id=?
+                            AND fase IN ('uitgenodigd_selectie','aangemeld_selectie','selectiedag_geweest')");
+        $q->execute([$sol_id, $seizoen_id]);
+        return (bool)$q->fetchColumn();
+    } catch (\Exception $e) { return false; }
+}
+
+/** Bestaat dit criterium in de actieve criteria? (Zie selectie_criteria().) */
+function selectie_criterium_bestaat(string $test, string $criterium): bool {
+    foreach (selectie_criteria()[$test]['criteria'] ?? [] as $c) {
+        if (($c['sleutel'] ?? null) === $criterium) return true;
+    }
+    return false;
+}
+
 /** Groepen van een seizoen. */
 function selectie_groepen(int $seizoen_id): array {
     selectiedag_auto_setup();
@@ -569,7 +594,9 @@ function selectie_besluiten(int $seizoen_id): array {
 /**
  * Eindbesluit opslaan. 'door' | 'twijfel' | 'niet' | '' (wissen).
  * Het besluit is indicatief; de fase wordt NIET automatisch aangepast —
- * dat doet het bestuur bewust met selectie_besluit_doorvoeren().
+ * dat doet het bestuur bewust op de bellijst, met selectie_besluit_doorvoeren_een() of
+ * selectie_gebelde_doorvoeren(). Alles-in-één-keer doorvoeren bestaat bewust niet meer:
+ * dan ging er bericht uit vóórdat er gebeld was.
  */
 function selectie_besluit_zetten(int $seizoen_id, int $sol_id, string $besluit, string $notitie, string $door): void {
     selectiedag_auto_setup();
@@ -583,26 +610,6 @@ function selectie_besluit_zetten(int $seizoen_id, int $sol_id, string $besluit, 
         VALUES (?,?,?,?,?)
         ON DUPLICATE KEY UPDATE besluit=VALUES(besluit), notitie=VALUES(notitie), door=VALUES(door), bijgewerkt_op=NOW()
     ")->execute([$sol_id, $seizoen_id, $besluit, mb_substr(trim($notitie), 0, 300), $door]);
-}
-
-/**
- * De besluiten doorvoeren in de fase van de sollicitanten.
- *  - 'door'    → uitgenodigd_tw
- *  - 'niet'    → afgewezen
- *  - 'twijfel' → blijft staan (geen fasewijziging)
- * Retourneert het aantal gewijzigde sollicitanten.
- */
-function selectie_besluit_doorvoeren(int $seizoen_id): int {
-    selectiedag_auto_setup();
-    $besluiten = selectie_besluiten($seizoen_id);
-    $n = 0;
-    foreach ($besluiten as $sol_id => $b) {
-        if (!in_array($b['besluit'] ?? '', ['door','niet'], true)) continue;
-        // Hergebruik de per-persoon functie zodat de uitnodigingsmail (bij 'door')
-        // ook hier meegaat — anders liepen de twee routes uit elkaar.
-        if (selectie_besluit_doorvoeren_een($seizoen_id, (int)$sol_id)) $n++;
-    }
-    return $n;
 }
 
 /**

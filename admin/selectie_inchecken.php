@@ -12,17 +12,27 @@
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/beheer/laden.php';
 
-vereis_recht('selectiedag', 'lezen');   // begeleiders mogen ook afvinken
+vereis_recht('selectiedag', 'lezen');
 
 $seizoen = actief_seizoen();
 $sid = $seizoen ? (int)$seizoen['id'] : 0;
 
+// Zelfde niveaus als het trainingsweekend (admin/trainingsweekend.php):
+//   meedraaien — aanwezig/ongedaan tikken: begeleiderswerk, dus 'lezen' (zie rechten.php).
+//   bewerken   — de tablet-code aanmaken of vernieuwen: bestuur.
+$mag_meedraaien = mag('selectiedag', 'lezen');
+$mag_bewerken   = mag('selectiedag', 'bewerken');
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $sid) {
-    csrf_check();
     $actie = (string)($_POST['actie'] ?? '');
+    if ($actie === 'aanwezig') header('Content-Type: application/json');
+    csrf_check();
 
     if ($actie === 'aanwezig') {
-        header('Content-Type: application/json');
+        if (!$mag_meedraaien) { echo json_encode(['ok' => false, 'fout' => 'geen_rechten']); exit; }
+        if (!selectie_is_kandidaat($sid, (int)($_POST['sol_id'] ?? 0))) {
+            echo json_encode(['ok' => false, 'fout' => 'geen_kandidaat']); exit;
+        }
         $res = selectie_aanwezig_zetten($sid, (int)$_POST['sol_id'], ($_POST['aanwezig'] ?? '') === '1');
         echo json_encode(['ok' => true] + $res);
         exit;
@@ -41,7 +51,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $sid) {
 
 $code        = function_exists('instelling') ? instelling('selectie.incheck_code', '') : '';
 $incheck_url = APP_URL . '/portaal/selectie_incheck.php?code=' . urlencode($code);
-$mag_bewerken = mag('selectiedag', 'bewerken');
 
 $kandidaten = $sid ? selectie_kandidaten($sid) : [];
 $groepen    = $sid ? selectie_groepen($sid) : [];
@@ -136,7 +145,7 @@ require __DIR__ . '/layout_top.php';
     </div>
 
     <?php if (!$kandidaten): ?>
-      <div style="padding:16px">
+      <div class="bh-incheck-leeg">
         <?php
           $leeg_titel = 'Nog niemand uitgenodigd';
           $leeg_tekst = 'Zodra er kandidaten zijn uitgenodigd voor de selectiedag, staan ze hier.';
@@ -164,7 +173,7 @@ require __DIR__ . '/layout_top.php';
                   <?= $_k['aanwezig'] ? 'ingecheckt' : h($_groepnaam) ?>
                 </span>
               </span>
-              <?php if ($mag_bewerken): ?>
+              <?php if ($mag_meedraaien): ?>
                 <button type="button" class="bh-aanwezig<?= $_k['aanwezig'] ? ' ja' : '' ?>"
                         id="knop-<?= (int)$_k['sol_id'] ?>"
                         onclick="aanwezigWissel(<?= (int)$_k['sol_id'] ?>)">

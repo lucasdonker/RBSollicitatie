@@ -195,7 +195,10 @@ function tw_doorgevoerd_markeren(int $seizoen_id, int $sol_id): void {
 /**
  * De stand van het weekend in getallen.
  *
- * 'te_beslissen'            — aanwezig geweest, nog geen besluit.
+ * 'te_beslissen'            — nog geen besluit, ongeacht de aanwezigheid. Ook wie niet is
+ *                             afgevinkt of niet kwam heeft een besluit nodig; telden alleen
+ *                             aanwezigen, dan zei het stoplicht "alles besloten" terwijl er
+ *                             nog kandidaten zonder besluit in uitgenodigd_tw stonden.
  * 'klaar_om_door_te_voeren' — besluiten die ergens toe leiden en nog niet zijn uitgevoerd.
  * 'twijfel_open'            — vastgelegd als twijfel, dus wachtend op een telefoontje.
  *
@@ -222,7 +225,7 @@ function tw_stand(array $kandidaten): array {
                 if (tw_besluit_fase($besluit) !== null) $s['klaar_om_door_te_voeren']++;
                 else                                    $s['twijfel_open']++;
             }
-        } elseif (!empty($k['aanwezig'])) {
+        } else {
             $s['te_beslissen']++;
         }
         if (!empty($k['doorgevoerd_op'])) $s['doorgevoerd']++;

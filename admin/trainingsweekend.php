@@ -34,6 +34,10 @@ $ik      = (string)($_SESSION['bhd_naam'] ?? 'onbekend');
 //   beslissen  — aannemen of afwijzen: bestuurswerk.
 $mag_meedraaien = mag('selectiedag', 'lezen');
 $mag_beslissen  = mag('selectiedag', 'bewerken');
+// Dataminimalisatie, net als op de selectiedag: BLK-bijzonderheden (vaak medisch) alleen
+// met BLK-recht, dossier en telefoonnummer alleen met dossierrecht.
+$mag_blk     = mag('blk', 'lezen');
+$mag_dossier = mag('sollicitanten', 'lezen');
 
 // ── POST: JSON voor het weekend-scherm, gewone formulieren voor het besluit ──
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $sid) {
@@ -47,8 +51,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $sid) {
         http_response_code(403); exit('Geen rechten.');
     }
 
+    if ($json && $actie !== 'observatie_wis'
+        && !in_array((int)($_POST['sol_id'] ?? 0), array_map(fn($k) => (int)$k['sol_id'], tw_kandidaten($sid)), true)) {
+        echo json_encode(['ok' => false, 'fout' => 'geen_kandidaat']); exit;
+    }
+
     if ($actie === 'aanwezig') {
-        tw_aanwezig_zetten($sid, (int)$_POST['sol_id'], !empty($_POST['aan']), (string)($_POST['reden'] ?? ''));
+        $aan   = !empty($_POST['aan']);
+        $reden = trim((string)($_POST['reden'] ?? ''));
+        // Zonder reden viel "niet gekomen" terug op "nog niet afgevinkt" (aanwezig=0 en
+        // geen tijd, geen reden). De reden is dus ook wat "niet gekomen" vastlegt.
+        if (!$aan && $reden === '') {
+            echo json_encode(['ok' => false, 'fout' => 'reden_verplicht',
+                              'melding' => 'Vul in waarom de kandidaat er niet is.']); exit;
+        }
+        tw_aanwezig_zetten($sid, (int)$_POST['sol_id'], $aan, $reden);
         echo json_encode(['ok' => true]); exit;
     }
     if ($actie === 'observatie') {
@@ -71,22 +88,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $sid) {
     }
 
     if ($actie === 'doorvoeren') {
-        $gedaan = 0; $over = 0;
+        $gedaan = 0; $over = 0; $mis = 0;
         foreach (tw_kandidaten($sid) as $k) {
             if (empty($k['besluit']) || !empty($k['doorgevoerd_op'])) continue;
             $naar = tw_besluit_fase((string)$k['besluit']);
             // Twijfel leidt nergens heen: daar moet iemand over bellen, niet over mailen.
             if ($naar === null) { $over++; continue; }
             // $bron is een string; een array hier gaf een TypeError en voerde niemand door.
-            fase_zetten((int)$k['sol_id'], $naar, 'trainingsweekend', ['seizoen_id' => $sid]);
+            // 'alleen_van': wie intussen via een ander scherm al een andere fase kreeg,
+            // krijgt hier geen tweede bericht.
+            $res = fase_zetten((int)$k['sol_id'], $naar, 'trainingsweekend', [
+                'seizoen_id' => $sid,
+                'alleen_van' => ['uitgenodigd_tw', 'tw_geweest'],
+            ]);
+            if (empty($res['ok'])) { $mis++; continue; }
             tw_doorgevoerd_markeren($sid, (int)$k['sol_id']);
             $gedaan++;
         }
         if (function_exists('audit_log')) {
-            audit_log('tw_besluiten_doorgevoerd', 'seizoen', $sid, ['aantal' => $gedaan, 'twijfel' => $over]);
+            audit_log('tw_besluiten_doorgevoerd', 'seizoen', $sid, ['aantal' => $gedaan, 'twijfel' => $over, 'mislukt' => $mis]);
         }
-        flash('succes', $gedaan . ' ' . ($gedaan === 1 ? 'besluit' : 'besluiten') . ' doorgevoerd.'
-            . ($over > 0 ? ' ' . $over . ' op twijfel: die blijven staan tot er gebeld is.' : ''));
+        flash($mis > 0 ? 'fout' : 'succes', $gedaan . ' ' . ($gedaan === 1 ? 'besluit' : 'besluiten') . ' doorgevoerd.'
+            . ($over > 0 ? ' ' . $over . ' op twijfel: die blijven staan tot er gebeld is.' : '')
+            . ($mis > 0 ? ' ' . $mis . ' niet gelukt — zie het logboek en probeer opnieuw.' : ''));
         redirect(APP_URL . '/admin/trainingsweekend.php?stap=besluit');
     }
 
@@ -197,7 +221,7 @@ require __DIR__ . '/layout_top.php';
             <span class="bh-kandidaat-naam">
               <?= h((string)$_k['naam']) ?>
               <?php if (!empty($_k['bijzonderheden'])): ?>
-                <span class="bh-kandidaat-letop" title="Bijzonderheid gemeld"><?= icoon('waarschuwing', 14) ?></span>
+                <span class="bh-kandidaat-letop" title="Bijzonderheid gemeld"><?= icoon('waarschuwing', 14) ?><span class="bh-vw">bijzonderheid gemeld</span></span>
               <?php endif; ?>
             </span>
             <span class="bh-kandidaat-sub">
@@ -223,16 +247,24 @@ require __DIR__ . '/layout_top.php';
       <span class="bh-beoordeel-wie">
         <span class="bh-beoordeel-naam"><?= h((string)$huidig['naam']) ?></span>
         <span class="bh-meta">
-          <?= bh_meta([$huidig['leeftijd'] ? $huidig['leeftijd'] . ' jaar' : '', (string)($huidig['telefoon'] ?? '')]) ?>
+          <?= bh_meta([$huidig['leeftijd'] ? $huidig['leeftijd'] . ' jaar' : '',
+                       $mag_dossier ? (string)($huidig['telefoon'] ?? '') : '']) ?>
         </span>
       </span>
-      <a class="ds-btn ds-btn-secundair ds-btn-sm" href="<?= APP_URL ?>/admin/sollicitant.php?id=<?= $hid ?>">Dossier</a>
+      <?php if ($mag_dossier): ?>
+        <a class="ds-btn ds-btn-secundair ds-btn-sm" href="<?= APP_URL ?>/admin/sollicitant.php?id=<?= $hid ?>">Dossier</a>
+      <?php endif; ?>
     </header>
 
     <?php if (!empty($huidig['bijzonderheden'])): ?>
       <div class="ds-melding ds-melding-warn bh-beoordeel-bijz">
         <?= icoon('waarschuwing', 16) ?>
-        <span><strong>Bijzonderheid gemeld:</strong> <?= nl2br(h((string)$huidig['bijzonderheden'])) ?></span>
+        <?php if ($mag_blk): ?>
+          <span><strong>Bijzonderheid gemeld:</strong> <?= nl2br(h((string)$huidig['bijzonderheden'])) ?></span>
+        <?php else: ?>
+          <span><strong>Let op:</strong> er is een bijzonderheid bekend bij het bestuur. Vraag bij een
+            bestuurslid na waar je dit weekend op moet letten.</span>
+        <?php endif; ?>
       </div>
     <?php endif; ?>
 
@@ -343,17 +375,19 @@ function twAanwezig(id, aan) {
 }
 
 /* Bij "niet gekomen" vragen we waarom. Ziek is iets anders dan niet komen opdagen,
-   en dat verschil telt bij het besluit. */
+   en dat verschil telt bij het besluit. De reden is verplicht: zonder reden legt de
+   server niets vast (dan viel de kandidaat terug op "nog niet afgevinkt"). */
 function twAfwezig(id) {
   bhVraag({
     titel: 'Niet gekomen — waarom?',
-    tekst: 'Eén regel is genoeg. Dit staat straks bij het besluit, zodat je het verschil ziet tussen afgemeld en niet komen opdagen.',
+    tekst: 'Verplicht, één regel is genoeg (bijvoorbeeld "ziek" of "niet komen opdagen"). Dit staat straks bij het besluit.',
     knop: 'Opslaan'
   }).then(function (reden) {
     if (reden === null) return;
+    if (reden === '') { bhToast('Vul in waarom de kandidaat er niet is.', 'fout'); twAfwezig(id); return; }
     var body = new URLSearchParams({ actie: 'aanwezig', sol_id: id, aan: '', reden: reden });
     twPost(body).then(function (d) {
-      if (!d.ok) { bhToast('Opslaan mislukt.', 'fout'); return; }
+      if (!d.ok) { bhToast(d.melding || 'Opslaan mislukt.', 'fout'); return; }
       location.reload();
     }).catch(function () { bhToast('Verbindingsfout — probeer opnieuw.', 'fout'); });
   });
@@ -450,7 +484,11 @@ if ($stand['te_beslissen'] > 0) {
     <header class="bh-twkaart-kop">
       <?= bh_avatar(['voornaam' => $_k['voornaam'], 'achternaam' => $_k['achternaam']], 38, ['dim' => $_door]) ?>
       <span class="bh-twkaart-wie">
-        <a class="bh-twkaart-naam" href="<?= APP_URL ?>/admin/sollicitant.php?id=<?= $_id ?>"><?= h((string)$_k['naam']) ?></a>
+        <?php if ($mag_dossier): ?>
+          <a class="bh-twkaart-naam" href="<?= APP_URL ?>/admin/sollicitant.php?id=<?= $_id ?>"><?= h((string)$_k['naam']) ?></a>
+        <?php else: ?>
+          <span class="bh-twkaart-naam"><?= h((string)$_k['naam']) ?></span>
+        <?php endif; ?>
         <span class="bh-meta">
           <?php if ($_af): ?>
             niet gekomen<?= !empty($_k['afgemeld_reden']) ? ' — ' . h((string)$_k['afgemeld_reden']) : '' ?>

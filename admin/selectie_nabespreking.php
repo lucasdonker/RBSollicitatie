@@ -45,12 +45,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $sid) {
         echo json_encode(['ok' => selectie_besluit_doorvoeren_een($sid, (int)$_POST['sol_id'])]);
         exit;
     }
-    if ($actie === 'doorvoeren') {
-        $n = selectie_besluit_doorvoeren($sid);
-        flash('succes', $n . ' kandidaten doorgezet: "door" naar het trainingsweekend, "niet" afgewezen. '
-                      . 'Twijfelgevallen bleven staan.');
-        redirect(APP_URL . '/admin/selectie_nabespreking.php');
-    }
+    // Alles in één keer doorvoeren (actie 'doorvoeren') is bewust weg: dan gaat er bericht
+    // uit vóórdat er gebeld is. Doorvoeren gaat via de bellijst, per persoon of per gebelde.
     if ($actie === 'gebelde_doorvoeren') {
         $n = selectie_gebelde_doorvoeren($sid);
         flash('succes', $n . ' gebelde kandidaten doorgezet naar hun nieuwe fase.');
@@ -200,7 +196,11 @@ require __DIR__ . '/layout_top.php';
     <?php if (!empty($k['bijzonderheden'])): ?>
       <div class="ds-melding ds-melding-warn">
         <?= icoon('waarschuwing', 16) ?>
-        <span><strong>Bijzonderheid:</strong> <?= nl2br(h((string)$k['bijzonderheden'])) ?></span>
+        <?php if (mag('blk', 'lezen')): ?>
+          <span><strong>Bijzonderheid:</strong> <?= nl2br(h((string)$k['bijzonderheden'])) ?></span>
+        <?php else: ?>
+          <span><strong>Let op:</strong> er is een bijzonderheid bekend; die staat in het formulier.</span>
+        <?php endif; ?>
       </div>
     <?php endif; ?>
 
@@ -271,8 +271,8 @@ require __DIR__ . '/layout_top.php';
     <div>
       <strong><?= $tel['door'] + $tel['niet'] ?> kandidaten hebben een definitief besluit.</strong>
       <span class="bh-meta">
-        Bellen doe je op de bellijst; daar voer je per persoon door. Alles in één keer doorvoeren
-        kan ook, maar dan gaat er bericht uit vóórdat je hebt gebeld.
+        Bellen doe je op de bellijst; daar voer je per persoon door, zodat er pas bericht uitgaat
+        nadat je hebt gebeld.
       </span>
     </div>
     <a class="ds-btn ds-btn-primair" href="?tab=bellijst">Naar de bellijst</a>
@@ -287,14 +287,19 @@ require __DIR__ . '/layout_top.php';
 window.CSRF = window.CSRF || '<?= csrf_token() ?>';
 
 /* Besluit en notitie gaan samen de deur uit: de notitie hoort bij het besluit, en
-   los opslaan zou een notitie zonder besluit kunnen achterlaten. */
+   los opslaan zou een notitie zonder besluit kunnen achterlaten.
+   Nogmaals klikken op het actieve besluit wist het (besluit '' — de server verwijdert
+   dan de rij, notitie inbegrepen). */
 function besluitZet(solId, besluit) {
   const rij = document.getElementById('besluit-' + solId);
+  const aan = rij.querySelector('.aan');
+  const huidig = !aan ? '' : aan.classList.contains('door') ? 'door'
+               : (aan.classList.contains('twijfel') ? 'twijfel' : 'niet');
   if (besluit === null) {
-    const aan = rij.querySelector('.aan');
-    if (!aan) return;                       // nog geen besluit: notitie heeft geen huis
-    besluit = aan.classList.contains('door') ? 'door'
-            : (aan.classList.contains('twijfel') ? 'twijfel' : 'niet');
+    if (!huidig) return;                    // nog geen besluit: notitie heeft geen huis
+    besluit = huidig;
+  } else if (besluit === huidig) {
+    besluit = '';                           // zelfde knop nogmaals: wissen
   }
   const notitie = document.getElementById('notitie-' + solId).value;
   const stand = document.getElementById('stand-' + solId);
@@ -309,15 +314,16 @@ function besluitZet(solId, besluit) {
   .then(d => {
     if (!d.ok) throw new Error();
     rij.querySelectorAll('.bh-besluitknop').forEach(function (b) {
-      const aan = b.classList.contains(besluit);
+      const aan = besluit !== '' && b.classList.contains(besluit);
       b.classList.toggle('aan', aan);
       b.setAttribute('aria-pressed', aan ? 'true' : 'false');
     });
     const kaart = document.getElementById('nb-' + solId);
     kaart.className = kaart.className.replace(/ds-fase-\w+/, 'ds-fase-' +
-      (besluit === 'door' ? 'groen' : besluit === 'twijfel' ? 'oranje' : 'rood'));
-    kaart.classList.add('besloten');
-    if (stand) stand.textContent = 'opgeslagen';
+      (besluit === 'door' ? 'groen' : besluit === 'twijfel' ? 'oranje' : besluit === 'niet' ? 'rood' : 'grijs'));
+    kaart.classList.toggle('besloten', besluit !== '');
+    if (besluit === '') document.getElementById('notitie-' + solId).value = '';
+    if (stand) stand.textContent = besluit === '' ? 'besluit gewist' : 'opgeslagen';
   })
   .catch(() => { if (stand) stand.textContent = 'niet opgeslagen'; bhToast('Opslaan mislukt.', 'fout'); });
 }

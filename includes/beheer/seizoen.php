@@ -56,19 +56,27 @@ function bh_seizoen_stappen(?array $sz): array {
  * Wat gebeurt er als je deze seizoensactie uitvoert?
  * Zelfde vorm als bh_gevolgen(), zodat admin/_bevestig.php hem zonder aanpassing rendert.
  *
- * @param array $sz  de seizoensrij, inclusief 'n' (aantal sollicitaties)
+ * @param array      $sz          de seizoensrij, inclusief 'n' (aantal sollicitaties)
+ * @param array|null $ander_open  een ánder seizoen dat nu open staat (of null)
  */
-function bh_seizoen_gevolgen(string $actie, array $sz): array {
+function bh_seizoen_gevolgen(string $actie, array $sz, ?array $ander_open = null): array {
     $naam = (string)($sz['naam'] ?? 'dit seizoen');
     $n    = (int)($sz['n'] ?? 0);
 
     if ($actie === 'open') {
+        $regels = [
+            'Het aanmeldformulier op de website wordt meteen actief.',
+            'Wie zich aanmeldt komt in dit seizoen terecht.',
+        ];
+        // Twee open seizoenen: actief_seizoen() kiest dan het nieuwste open seizoen, en
+        // daarmee werkt het hele beheer. Dat moet je weten vóór je klikt.
+        if ($ander_open) {
+            $regels[] = 'Let op: ' . ($ander_open['naam'] ?? 'een ander seizoen') . ' staat ook nog open. '
+                      . 'Het beheer werkt dan met het nieuwste open seizoen. Sluit het oude seizoen als je daar klaar mee bent.';
+        }
         return [
             'titel'  => 'Seizoen ' . $naam . ' openen?',
-            'regels' => [
-                'Het aanmeldformulier op de website wordt meteen actief.',
-                'Wie zich aanmeldt komt in dit seizoen terecht.',
-            ],
+            'regels' => $regels,
             'bericht'      => 'Controleer eerst of de datums van de selectiedag en het trainingsweekend kloppen — die staan in de bevestigingsmail die elke aanmelder krijgt.',
             'onomkeerbaar' => false,
             'knop'         => 'Ja, openen',

@@ -57,7 +57,34 @@ function bh_ondertekeningen_te_lang_open(int $seizoen_id): int {
  * @return array{titel:string,tekst:string,knop:?string,url:?string,gedaan:int,totaal:int,klaar:bool}
  */
 function bh_vandaag_hoofdtaak(?array $seizoen, string $seizoen_fase): array {
+    // Het menubolletje (bh_nav_tellers) vraagt dit op elke pagina; Vandaag nog een keer.
+    static $cache = [];
     $sid = $seizoen ? (int)$seizoen['id'] : 0;
+    $sleutel = $sid . '|' . $seizoen_fase;
+    if (isset($cache[$sleutel])) return $cache[$sleutel];
+    return $cache[$sleutel] = bh_vandaag_hoofdtaak_bepalen($sid, $seizoen_fase);
+}
+
+/**
+ * De tekst over automatische herinneringen, zoals ze echt lopen
+ * (includes/meldingen/herinneringen.php, regel herinnering_selectie_aanmelden).
+ * Leeg als dat niet te bepalen is: liever niets zeggen dan iets wat niet klopt.
+ */
+function bh_vandaag_herinnering_tekst(): string {
+    $slug = 'herinnering_selectie_aanmelden';
+    if (!function_exists('herinnering_aan') || !function_exists('herinnering_int')) return '';
+    if (!herinnering_aan($slug)) return 'De automatische herinnering staat uit (Instellingen › Uitnodigen & automatisch).';
+    $na      = herinnering_int($slug, 'na');
+    $herhaal = herinnering_int($slug, 'herhaal');
+    $max     = herinnering_int($slug, 'max');
+    $zin = 'Vanaf 14 dagen vóór de selectiedag krijgen ze automatisch een herinnering, '
+         . 'de eerste ' . $na . ' ' . ($na === 1 ? 'dag' : 'dagen') . ' na de uitnodiging';
+    if ($herhaal > 0 && $max > 1) $zin .= ', daarna elke ' . $herhaal . ' dagen, hooguit ' . $max . ' keer';
+    return $zin . '.';
+}
+
+/** @see bh_vandaag_hoofdtaak() — zonder cache. */
+function bh_vandaag_hoofdtaak_bepalen(int $sid, string $seizoen_fase): array {
     $t   = $sid ? bh_fase_tellingen($sid) : [];
     $s   = APP_URL . '/admin/sollicitanten.php?fase=';
 
@@ -67,18 +94,24 @@ function bh_vandaag_hoofdtaak(?array $seizoen, string $seizoen_fase): array {
         'titel' => $titel, 'tekst' => $tekst, 'knop' => null, 'url' => null,
         'gedaan' => 0, 'totaal' => 0, 'klaar' => true,
     ];
+    // Een knop naar een scherm dat je rol niet mag openen is een belofte die op "Geen
+    // toegang" eindigt. Dan de taak wel tonen, maar zonder knop.
+    $taak = function (array $tk, string $module, string $actie = 'lezen'): array {
+        if (function_exists('mag') && !mag($module, $actie)) { $tk['knop'] = null; $tk['url'] = null; }
+        return $tk;
+    };
 
     switch ($seizoen_fase) {
         case 'werving':
             $n = (int)($t['aangemeld'] ?? 0);
             if ($n === 0) {
                 return $niets('Nog geen nieuwe aanmeldingen',
-                              'Zodra iemand zich via een wervingspagina aanmeldt, staat hij hier.');
+                              'Zodra iemand zich via een wervingspagina aanmeldt, staat die hier.');
             }
-            return ['titel' => $n === 1 ? 'Eén aanmelding uitnodigen' : $n . ' aanmeldingen uitnodigen',
+            return $taak(['titel' => $n === 1 ? 'Eén aanmelding uitnodigen' : $n . ' aanmeldingen uitnodigen',
                     'tekst'  => 'Deze mensen hebben zich aangemeld en wachten op een uitnodiging voor de selectiedag.',
                     'knop'   => 'Naar de aanmeldingen', 'url' => $s . 'aangemeld',
-                    'gedaan' => 0, 'totaal' => $n, 'klaar' => false];
+                    'gedaan' => 0, 'totaal' => $n, 'klaar' => false], 'sollicitanten');
 
         case 'formulieren':
             $n = (int)($t['uitgenodigd_selectie'] ?? 0);
@@ -87,54 +120,121 @@ function bh_vandaag_hoofdtaak(?array $seizoen, string $seizoen_fase): array {
                 return $niets('Alle formulieren zijn binnen',
                               'Iedereen die is uitgenodigd heeft zich aangemeld voor de selectiedag.');
             }
-            return ['titel' => $n . ' wachten nog op hun formulier',
-                    'tekst'  => 'Zij zijn uitgenodigd maar hebben zich nog niet aangemeld voor de selectiedag. '
-                              . 'Herinneringen gaan automatisch na 3 en 7 dagen.',
+            return $taak(['titel' => $n . ' wachten nog op hun formulier',
+                    'tekst'  => trim('Zij zijn uitgenodigd maar hebben zich nog niet aangemeld voor de selectiedag. '
+                              . bh_vandaag_herinnering_tekst()),
                     'knop'   => 'Bekijk wie', 'url' => $s . 'uitgenodigd_selectie',
-                    'gedaan' => $klaar, 'totaal' => $klaar + $n, 'klaar' => false];
+                    'gedaan' => $klaar, 'totaal' => $klaar + $n, 'klaar' => false], 'sollicitanten');
 
         case 'selectiedag':
             $n = (int)($t['aangemeld_selectie'] ?? 0);
-            return ['titel' => 'Vandaag is de selectiedag',
+            return $taak(['titel' => 'Vandaag is de selectiedag',
                     'tekst'  => $n > 0 ? $n . ' kandidaten worden verwacht. Inchecken gaat op de tablet bij de ingang.'
                                        : 'Inchecken gaat op de tablet bij de ingang.',
                     'knop'   => 'Naar inchecken', 'url' => APP_URL . '/admin/selectie_inchecken.php',
                     'gedaan' => (int)($t['selectiedag_geweest'] ?? 0), 'totaal' => $n + (int)($t['selectiedag_geweest'] ?? 0),
-                    'klaar'  => false];
+                    'klaar'  => false], 'selectiedag');
 
         case 'bellijst':
+            // De stand van de bellijst zelf (selectie_besluit), niet alleen de fase: wie
+            // "SD geweest" is kan nog zonder besluit zijn, gebeld maar niet doorgevoerd, of
+            // op twijfel staan. Dat zijn drie verschillende taken.
+            if ($sid && function_exists('selectie_besluiten') && function_exists('selectie_kandidaten')) {
+                $besluiten = selectie_besluiten($sid);
+                $zonder = $ongebeld = $gebeld = $twijfel = 0;
+                foreach (selectie_kandidaten($sid) as $k) {
+                    $b = $besluiten[(int)$k['sol_id']] ?? null;
+                    $w = (string)($b['besluit'] ?? '');
+                    if ($w === '')             $zonder++;
+                    elseif ($w === 'twijfel')  $twijfel++;
+                    elseif (empty($b['doorgevoerd_op'])) { if (empty($b['gebeld_op'])) $ongebeld++; else $gebeld++; }
+                }
+                $doorgevoerd = 0;
+                foreach ($besluiten as $b) if (!empty($b['doorgevoerd_op'])) $doorgevoerd++;
+                $open = $ongebeld + $gebeld;
+
+                if ($zonder > 0 && $open === 0) {
+                    return $taak(['titel' => $zonder === 1 ? 'Eén kandidaat zonder besluit' : $zonder . ' kandidaten zonder besluit',
+                            'tekst'  => 'Leg eerst in de nabespreking per kandidaat een besluit vast; daarna bel je.',
+                            'knop'   => 'Naar de nabespreking', 'url' => APP_URL . '/admin/selectie_nabespreking.php?filter=open',
+                            'gedaan' => $doorgevoerd, 'totaal' => $doorgevoerd + $zonder + $twijfel, 'klaar' => false],
+                        'selectiedag', 'bewerken');
+                }
+                if ($open === 0) {
+                    return $niets($twijfel > 0 ? 'Alleen twijfelgevallen over' : 'De bellijst is leeg',
+                        ($twijfel > 0 ? $twijfel . ' op twijfel: daar moet iemand over bellen. ' : '')
+                        . (int)($t['uitgenodigd_tw'] ?? 0) . ' kandidaten zijn uitgenodigd voor het trainingsweekend.');
+                }
+                $tekst = $ongebeld . ' nog niet gebeld';
+                if ($gebeld > 0)  $tekst .= ', ' . $gebeld . ' gebeld maar nog niet doorgevoerd';
+                if ($zonder > 0)  $tekst .= ', ' . $zonder . ' nog zonder besluit';
+                if ($twijfel > 0) $tekst .= ', ' . $twijfel . ' op twijfel';
+                return $taak(['titel' => 'De bellijst afwerken', 'tekst' => $tekst . '.',
+                        'knop'   => 'Bellijst openen', 'url' => APP_URL . '/admin/selectie_nabespreking.php?tab=bellijst',
+                        'gedaan' => $doorgevoerd, 'totaal' => $doorgevoerd + $open, 'klaar' => false],
+                    'selectiedag', 'bewerken');
+            }
+            // Terugval zonder selectiedag-module: de oude telling op fase.
             $n = (int)($t['selectiedag_geweest'] ?? 0);
             $door = (int)($t['uitgenodigd_tw'] ?? 0);
             if ($n === 0) {
                 return $niets('Iedereen heeft een besluit',
                               'De bellijst is leeg. ' . $door . ' kandidaten zijn uitgenodigd voor het trainingsweekend.');
             }
-            return ['titel' => 'De bellijst afwerken',
-                    'tekst'  => $n . ' van de ' . ($n + $door) . ' nog niet gebeld.',
+            return $taak(['titel' => 'De bellijst afwerken',
+                    'tekst'  => $n . ' kandidaten van de selectiedag zijn nog niet doorgevoerd.',
                     'knop'   => 'Bellijst openen', 'url' => APP_URL . '/admin/selectie_nabespreking.php?tab=bellijst',
-                    'gedaan' => $door, 'totaal' => $n + $door, 'klaar' => false];
+                    'gedaan' => $door, 'totaal' => $n + $door, 'klaar' => false], 'selectiedag', 'bewerken');
 
         case 'trainingsweekend':
             $n = (int)($t['uitgenodigd_tw'] ?? 0);
-            return ['titel' => 'Het trainingsweekend',
-                    'tekst'  => $n . ' kandidaten zijn uitgenodigd.',
+            // Afvinken op het weekend zet geen fase; de voortgang komt dus uit tw_deelname.
+            $st = ($sid && function_exists('tw_kandidaten') && function_exists('tw_stand')) ? tw_stand(tw_kandidaten($sid)) : null;
+            return $taak(['titel' => 'Het trainingsweekend',
+                    'tekst'  => $n . ' kandidaten zijn uitgenodigd.'
+                              . ($st && $st['onbekend'] > 0 ? ' ' . $st['onbekend'] . ' nog niet afgevinkt.' : ''),
                     'knop'   => 'Naar het trainingsweekend', 'url' => APP_URL . '/admin/trainingsweekend.php',
-                    'gedaan' => (int)($t['tw_geweest'] ?? 0), 'totaal' => $n + (int)($t['tw_geweest'] ?? 0),
-                    'klaar'  => false];
+                    'gedaan' => $st ? (int)$st['aanwezig'] + (int)$st['afwezig'] : (int)($t['tw_geweest'] ?? 0),
+                    'totaal' => $st ? (int)$st['totaal'] : $n + (int)($t['tw_geweest'] ?? 0),
+                    'klaar'  => false], 'selectiedag');
 
         case 'aanname':
         default:
+            // De besluiten staan in tw_deelname, niet in de fase: afvinken op het weekend zet
+            // niemand op tw_geweest. Telden we alleen tw_geweest, dan stond hier "De lichting
+            // is rond" terwijl er nog besluiten openstonden.
+            $aan = (int)($t['aangenomen'] ?? 0);
+            if ($sid && function_exists('tw_kandidaten') && function_exists('tw_stand')) {
+                $st = tw_stand(tw_kandidaten($sid));
+                $besluit_url = APP_URL . '/admin/trainingsweekend.php?stap=besluit';
+                $voortgang = ['gedaan' => (int)$st['doorgevoerd'], 'totaal' => (int)$st['totaal'], 'klaar' => false];
+                if ($st['te_beslissen'] > 0) {
+                    return $taak(['titel' => $st['te_beslissen'] . ' wachten op een besluit',
+                            'tekst' => 'Zij waren uitgenodigd voor het trainingsweekend en moeten nog worden aangenomen of afgewezen.',
+                            'knop' => 'Naar het besluit', 'url' => $besluit_url] + $voortgang, 'selectiedag', 'bewerken');
+                }
+                if ($st['klaar_om_door_te_voeren'] > 0) {
+                    $k = (int)$st['klaar_om_door_te_voeren'];
+                    return $taak(['titel' => $k . ' ' . ($k === 1 ? 'besluit' : 'besluiten') . ' nog doorvoeren',
+                            'tekst' => 'Het besluit staat vast, maar de fase is nog niet gezet en er is nog geen bericht verstuurd.',
+                            'knop' => 'Naar het besluit', 'url' => $besluit_url] + $voortgang, 'selectiedag', 'bewerken');
+                }
+                if ($st['twijfel_open'] > 0) {
+                    return $taak(['titel' => $st['twijfel_open'] . ' op twijfel',
+                            'tekst' => 'Daar moet iemand over bellen; twijfel gaat nooit vanzelf de deur uit.',
+                            'knop' => 'Naar het besluit', 'url' => $besluit_url] + $voortgang, 'selectiedag', 'bewerken');
+                }
+            }
             $n = (int)($t['tw_geweest'] ?? 0);
             if ($n === 0) {
-                $aan = (int)($t['aangenomen'] ?? 0);
                 return $niets('De lichting is rond',
                                 $aan . ' strandwachten zijn aangenomen. De loondossiers lopen verder.');
             }
-            return ['titel' => $n . ' wachten op een besluit',
+            return $taak(['titel' => $n . ' wachten op een besluit',
                     'tekst'  => 'Zij waren op het trainingsweekend en moeten nog worden aangenomen of afgewezen.',
                     'knop'   => 'Bekijk wie', 'url' => $s . 'tw_geweest',
-                    'gedaan' => (int)($t['aangenomen'] ?? 0), 'totaal' => $n + (int)($t['aangenomen'] ?? 0),
-                    'klaar'  => false];
+                    'gedaan' => $aan, 'totaal' => $n + $aan,
+                    'klaar'  => false], 'sollicitanten');
     }
 }
 
