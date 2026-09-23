@@ -61,6 +61,7 @@ if (file_exists(__DIR__ . '/health.php')) require_once __DIR__ . '/health.php';
 // Het aanmeldformulier (alleen de presentatie) vóór paginas.php: includes/paginas/formulier.php
 // en render.php leunen erop. De verwerking (aanmelden_kern.php) blijft bewust los — die laadt
 // alleen wie hem echt nodig heeft.
+if (file_exists(__DIR__ . '/privacy_verklaring.php')) require_once __DIR__ . '/privacy_verklaring.php';
 if (file_exists(__DIR__ . '/aanmeldformulier.php')) require_once __DIR__ . '/aanmeldformulier.php';
 if (file_exists(__DIR__ . '/paginas.php')) require_once __DIR__ . '/paginas.php';
 if (file_exists(__DIR__ . '/kanalen.php')) require_once __DIR__ . '/kanalen.php';
@@ -673,11 +674,11 @@ function personen_ouder_auto_setup(): void {
 }
 
 /**
- * Versie van de privacyverklaring waarmee sollicitanten akkoord gaan.
- * Verhoog dit nummer zodra de inhoud van de privacyverklaring wijzigt,
- * zodat vastgelegd blijft op welke versie iemand akkoord is gegaan.
+ * Versie van de privacyverklaring (includes/privacy_verklaring.php) die een sollicitant
+ * bij het aanmelden heeft gelezen. Verhoog dit nummer zodra de inhoud wijzigt,
+ * zodat vastgelegd blijft welke versie iemand te zien kreeg.
  */
-if (!defined('PRIVACY_VERSIE')) define('PRIVACY_VERSIE', '2026-08');
+if (!defined('PRIVACY_VERSIE')) define('PRIVACY_VERSIE', '2026-09');
 
 if (!function_exists('consent_auto_setup')) {
 /**

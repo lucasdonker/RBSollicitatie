@@ -28,7 +28,7 @@
     toekomst:    'Deze datum ligt in de toekomst.',
     teJong:      'Je moet minimaal 15 jaar zijn om je aan te melden.',
     teOud:       'Controleer je geboortedatum even.',
-    akkoord:     'Zet een vinkje om akkoord te gaan met de privacyverklaring.',
+    akkoord:     'Zet een vinkje om te laten weten dat je de privacyverklaring hebt gelezen.',
     ouderNaam:   'Vul de naam van je ouder of verzorger in.',
     ouderVink:   'Je ouder of verzorger moet hier toestemming geven.'
   };

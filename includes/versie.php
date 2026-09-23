@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.99.1');
+define('APP_VERSIE', '2.99.2');
 
 function app_changelog(): array {
     return [
+        '2.99.2' => [
+            'datum'  => '2026-09-23',
+            'titel'  => 'Een eigen privacyverklaring voor sollicitanten',
+            'punten' => [
+                'Nieuwe pagina /privacy.php: welke gegevens we gebruiken, waarom dat mag, wie ze ziet, hoe lang we ze bewaren en welke rechten je hebt. Het aanmeldformulier linkte eerst naar een algemene pagina op paal13.com',
+                'De bewaartermijnen en het contactadres in de verklaring komen uit de instellingen. Alinea\'s over AI, WhatsApp en sms staan er alleen als die aanstaan. Zo loopt de tekst niet uit de pas met wat het systeem doet',
+                'Het vinkje bij het aanmelden zegt nu "Ik heb de privacyverklaring gelezen". Een sollicitatie verwerken we omdat dat nodig is voor een arbeidsovereenkomst, niet op basis van toestemming. Waar wél toestemming nodig is (foto\'s, seintje, gezondheid) vragen we die apart. Versie van de verklaring: 2026-09',
+                'Het portaal linkt onderaan elke pagina naar de privacyverklaring',
+            ],
+        ],
         '2.99.1' => [
             'datum'  => '2026-09-23',
             'titel'  => 'Formulieren controleren eerst en zijn weer snel',

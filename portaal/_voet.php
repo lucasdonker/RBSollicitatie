@@ -33,6 +33,9 @@ $_contact_tel  = function_exists('instelling') ? trim((string)instelling('org.te
     <?php if ($_contact_tel !== ''): ?>
       <a href="tel:<?= h(preg_replace('/[^0-9+]/', '', $_contact_tel)) ?>"><?= h($_contact_tel) ?></a>.
     <?php endif; ?>
+    <?php if (function_exists('privacy_url')): ?>
+      <a href="<?= h(privacy_url()) ?>">Privacyverklaring</a>
+    <?php endif; ?>
   </p>
 <?php endif; ?>
 
@@ -72,8 +75,8 @@ $_contact_tel  = function_exists('instelling') ? trim((string)instelling('org.te
   </nav>
 <?php endif; ?>
 
-<?php /* actie.js eerst: hij hangt aan de document-fase en moet elke submit zien,
-         ook van een scherm dat zijn eigen handler eerder registreert. */ ?>
+<?php /* actie.js hangt aan document en ziet elke submit ná de eigen controle van het
+         formulier; de volgorde van de scripts maakt daarvoor niet uit. */ ?>
 <script src="<?= APP_URL ?>/assets/js/actie.js?v=<?= @filemtime(__DIR__.'/../assets/js/actie.js') ?>"></script>
 <script src="<?= APP_URL ?>/assets/js/app.js?v=<?= @filemtime(__DIR__.'/../assets/js/app.js') ?>"></script>
 </body>

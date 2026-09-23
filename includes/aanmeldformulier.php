@@ -87,11 +87,9 @@ function aanmeld_veld_stap(string $naam): int {
     return 0;
 }
 
-/** De privacyverklaring; instelbaar omdat de website-URL kan veranderen. */
+/** De privacyverklaring (includes/privacy_verklaring.php). */
 function aanmeld_privacy_url(): string {
-    return function_exists('instelling')
-        ? instelling('privacy.url', 'https://paal13.com/privacy-beleid/')
-        : 'https://paal13.com/privacy-beleid/';
+    return function_exists('privacy_url') ? privacy_url() : APP_URL . '/privacy.php';
 }
 
 /** De URL van het tracking-endpoint, of '' als tracking uitstaat. */
@@ -326,7 +324,7 @@ function aanmeld_formulier_html(array $opties = []): string {
           <div class="af-vink af-akkoord" data-af-veld="akkoord">
             <input type="checkbox" id="<?= h($p) ?>-akkoord" name="akkoord" value="1" required aria-required="true"
                    aria-describedby="<?= h($p) ?>-akkoord-fout"<?= $foutveld === 'akkoord' ? ' aria-invalid="true"' : '' ?><?= !empty($waarden['akkoord']) ? ' checked' : '' ?>>
-            <label for="<?= h($p) ?>-akkoord">Ik ga akkoord met de <a href="<?= h($privacy) ?>" target="_blank" rel="noopener">privacyverklaring</a>.</label>
+            <label for="<?= h($p) ?>-akkoord">Ik heb de <a href="<?= h($privacy) ?>" target="_blank" rel="noopener">privacyverklaring</a> gelezen.</label>
             <p class="af-veldfout" id="<?= h($p) ?>-akkoord-fout" data-af-veldfout></p>
           </div>
           <?php endif; ?>

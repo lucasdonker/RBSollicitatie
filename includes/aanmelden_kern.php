@@ -38,7 +38,7 @@ function sollicitatie_aanmaken(array $in, array $context = []): array {
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) return ['ok'=>false,'fout'=>'Ongeldig e-mailadres.','code'=>'email_ongeldig'];
     if ($leeftijd === null) return ['ok'=>false,'fout'=>'Vul een geldige geboortedatum in.','code'=>'dob_ongeldig'];
     if ($leeftijd < 15) return ['ok'=>false,'fout'=>'Je moet minimaal 15 jaar zijn om je aan te melden.','code'=>'te_jong'];
-    if (!$akkoord) return ['ok'=>false,'fout'=>'Ga akkoord met de privacyverklaring.','code'=>'geen_akkoord'];
+    if (!$akkoord) return ['ok'=>false,'fout'=>'Zet een vinkje om te laten weten dat je de privacyverklaring hebt gelezen.','code'=>'geen_akkoord'];
     if ($leeftijd < 16 && (!$ouder_akkoord || $ouder_naam === '')) {
         return ['ok'=>false,'fout'=>'Omdat je nog geen 16 bent, hebben we de toestemming en naam van je ouder/verzorger nodig.','code'=>'ouder_nodig'];
     }
