@@ -225,7 +225,7 @@ require __DIR__ . '/layout_top.php';
   $leeg_titel = 'Geen berichten gevonden';
   $leeg_tekst = ($f_q !== '' || $f_kanaal || $f_status || $f_type)
       ? 'Met deze filters staat er niets in het log. Ruim het filter op om alles te zien.'
-      : 'Er is dit seizoen nog niets verstuurd.';
+      : 'Er is nog niets verstuurd.';   // Verzonden toont alle seizoenen, dus geen "dit seizoen"
   $leeg_icoon = 'mail';
   require __DIR__ . '/_leeg.php';
   ?>

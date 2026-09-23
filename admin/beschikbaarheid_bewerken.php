@@ -116,7 +116,7 @@ require __DIR__ . '/layout_top.php';
 
 <div style="max-width:820px;margin:0 auto">
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px;flex-wrap:wrap">
-    <h1 style="margin:0;font-size:22px"><?= h($naam) ?></h1>
+    <h2 style="margin:0;font-size:22px"><?= h($naam) ?></h2>
     <span style="font-size:13px;color:var(--tekst-zacht)">beschikbaarheid<?php
       // Het seizoen staat er alleen bij als de query het meegaf; de naam is een extraatje,
       // geen reden om het scherm te laten struikelen.

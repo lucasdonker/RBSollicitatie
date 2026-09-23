@@ -177,17 +177,60 @@ class P13_Formulier {
     }
 
     /**
-     * Het adres van de bezoeker. Achter een proxy of CDN (Cloudflare) staat het echte
-     * adres in een header; zonder dat zou iedereen hetzelfde adres hebben.
+     * Het adres van de bezoeker.
+     *
+     * Standaard alleen REMOTE_ADDR. Proxyheaders (CF-Connecting-IP, X-Real-IP,
+     * X-Forwarded-For) vult de bezoeker zonder proxy gewoon zelf in: dan omzeil je
+     * de limiet hierboven en de limiet in de API, en is het vastgelegde IP bij de
+     * toestemming vervalsbaar. Staat de site echt achter een proxy of CDN, zet dan in
+     * wp-config.php bijvoorbeeld:
+     *   define('P13_VERTROUWDE_PROXY', '203.0.113.10, 173.245.48.0/20');
+     * Pas als REMOTE_ADDR in die lijst valt, lezen we de header.
      */
     public static function bezoeker_ip(): string {
-        foreach (['HTTP_CF_CONNECTING_IP', 'HTTP_X_REAL_IP', 'HTTP_X_FORWARDED_FOR', 'REMOTE_ADDR'] as $sleutel) {
-            if (empty($_SERVER[$sleutel])) continue;
-            // X-Forwarded-For kan een rijtje zijn; de eerste is de bezoeker.
-            $eerste = trim(explode(',', (string)$_SERVER[$sleutel])[0]);
-            if (filter_var($eerste, FILTER_VALIDATE_IP)) return $eerste;
+        $direct = trim((string)($_SERVER['REMOTE_ADDR'] ?? ''));
+        if (!filter_var($direct, FILTER_VALIDATE_IP)) return '';
+
+        $lijst = defined('P13_VERTROUWDE_PROXY')
+            ? array_filter(array_map('trim', explode(',', (string)P13_VERTROUWDE_PROXY)))
+            : [];
+        if (!$lijst || !self::ip_in_lijst($direct, $lijst)) return $direct;
+
+        foreach (['HTTP_CF_CONNECTING_IP', 'HTTP_X_REAL_IP'] as $sleutel) {
+            $ip = trim((string)($_SERVER[$sleutel] ?? ''));
+            if (filter_var($ip, FILTER_VALIDATE_IP)) return $ip;
         }
-        return '';
+        // X-Forwarded-For: van rechts lezen. Links kan de bezoeker zelf iets voorzetten;
+        // het eerste adres van rechts dat geen vertrouwde proxy is, is de echte bezoeker.
+        $keten = array_reverse(array_map('trim', explode(',', (string)($_SERVER['HTTP_X_FORWARDED_FOR'] ?? ''))));
+        foreach ($keten as $ip) {
+            if (!filter_var($ip, FILTER_VALIDATE_IP)) break;
+            if (!self::ip_in_lijst($ip, $lijst)) return $ip;
+        }
+        return $direct;
+    }
+
+    /** Valt $ip in een van de adressen of CIDR-blokken (IPv4 of IPv6) uit $lijst? */
+    private static function ip_in_lijst(string $ip, array $lijst): bool {
+        $bin = @inet_pton($ip);
+        if ($bin === false) return false;
+        foreach ($lijst as $regel) {
+            $delen  = explode('/', $regel, 2);
+            $netbin = @inet_pton($delen[0]);
+            if ($netbin === false || strlen($netbin) !== strlen($bin)) continue;
+            $max  = strlen($bin) * 8;
+            $bits = isset($delen[1]) ? $delen[1] : (string)$max;
+            // Een kapot prefix ("/abc", "/-1") zou als /0 alles vertrouwen: overslaan.
+            if (!ctype_digit($bits) || (int)$bits < 1 || (int)$bits > $max) continue;
+            $bits = (int)$bits;
+            $heel = intdiv($bits, 8);
+            $rest = $bits % 8;
+            if (substr($bin, 0, $heel) !== substr($netbin, 0, $heel)) continue;
+            if ($rest === 0) return true;
+            $masker = (0xFF << (8 - $rest)) & 0xFF;
+            if ((ord($bin[$heel]) & $masker) === (ord($netbin[$heel]) & $masker)) return true;
+        }
+        return false;
     }
 
     // ── Verwerken ────────────────────────────────────────────────────────

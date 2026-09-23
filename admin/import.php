@@ -154,7 +154,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['start_import'])) {
 $seizoenen = db()->query("SELECT * FROM seizoenen ORDER BY id DESC")->fetchAll();
 
 $pagina_titel = 'Sollicitanten importeren';
-$actieve_nav  = 'systeem';
+$actieve_nav  = 'import';   // eigen hulptekst; bh_nav_actief() laat Sollicitanten oplichten
 require __DIR__ . '/layout_top.php';
 ?>
 <style>
@@ -230,7 +230,7 @@ require __DIR__ . '/layout_top.php';
   <?php elseif ($stap === 'resultaat'): ?>
 
   <div class="ds-kaart">
-    <div class="bh-kaartkop"><h2>✅ Import voltooid</h2></div>
+    <div class="bh-kaartkop"><h2><?= icoon('vink', 18) ?> Import voltooid</h2></div>
     <div class="bh-kaartbody">
       <div class="imp-stat-rij">
         <div class="imp-stat-box"><div class="n"><?= $import_stats['aangemaakt'] ?></div><div class="l">Aangemaakt</div></div>

@@ -3,13 +3,14 @@
  * Beheer — Mijn profiel: je eigen naam, wachtwoord en voorkeuren.
  *
  * Dit scherm hangt niet in de navigatie maar onder je naam in de zijbalk, want het
- * gaat over jou en niet over het werk. Daarom staat $actieve_nav hier leeg: geen
- * enkel nav-item hoort op te lichten.
+ * gaat over jou en niet over het werk. Daarom is $actieve_nav 'profiel': bh_nav_actief()
+ * maakt daar '' van (geen enkel nav-item licht op), en hulp_tekst('profiel') geeft het
+ * vraagteken zijn eigen uitleg.
  */
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/beheer/laden.php';
 $pagina_titel = 'Mijn profiel';
-$actieve_nav  = '';
+$actieve_nav  = 'profiel';
 vereist_login();
 
 $b    = huidige_beheerder();
@@ -83,7 +84,9 @@ require __DIR__ . '/layout_top.php';
       </div>
       <div>
         <span class="bh-veldlabel">Rol</span>
-        <span class="bh-veldwaarde"><?= h(ucfirst((string)($rec['rol'] ?? ''))) ?></span>
+        <?php /* Zelfde woord als in de zijbalk (_nav.php): de rol admin heet daar "Beheerder". */
+              $_rol = (string)($rec['rol'] ?? ''); ?>
+        <span class="bh-veldwaarde"><?= h($_rol === 'admin' ? 'Beheerder' : ucfirst($_rol)) ?></span>
       </div>
       <div>
         <span class="bh-veldlabel">Hoe je inlogt</span>

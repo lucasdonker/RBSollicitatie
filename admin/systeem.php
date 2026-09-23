@@ -74,7 +74,8 @@ require __DIR__ . '/layout_top.php';
       <div style="font-size:24px;font-weight:700;color:var(--navy)"><?= h(APP_VERSIE) ?></div>
     </div>
     <div style="flex:1"></div>
-    <a href="<?= APP_URL ?>/diagnose.php" class="ds-btn ds-btn-secundair ds-btn-sm" target="_blank"> Diagnose draaien</a>
+    <?php /* Hele scherm eist al systeem-bewerken; update.php zelf eist rol admin. */ ?>
+    <a href="<?= APP_URL ?>/admin/update.php" class="ds-btn ds-btn-secundair ds-btn-sm" title="Losse SQL-migraties uit de map sql/ bekijken en uitvoeren">SQL-migraties</a>
     <form method="POST" style="margin:0">
       <?= csrf_input() ?>
       <input type="hidden" name="actie" value="migreer">
@@ -189,14 +190,14 @@ require __DIR__ . '/layout_top.php';
             <?php if (!empty($gezondheid['ontbrekende_kolommen'])): ?>
               <div style="font-size:12px;color:var(--tekst-zacht)">Ontbrekende kolommen: <?= h(implode(', ', $gezondheid['ontbrekende_kolommen'])) ?></div>
             <?php endif; ?>
-            <div style="font-size:12px;color:var(--tekst-zacht);margin-top:4px">Klik op "Databasecontrole uitvoeren" hieronder om dit automatisch te herstellen.</div>
+            <div style="font-size:12px;color:var(--tekst-zacht);margin-top:4px">Klik bovenaan op "Migraties uitvoeren" om dit automatisch te herstellen.</div>
           </div>
         <?php endif; ?>
       <?php endif; ?>
       <p style="font-size:12.5px;color:var(--tekst-zacht);margin-bottom:12px">
         Het systeem controleert en herstelt het databaseschema automatisch bij elk bezoek. Ontbrekende tabellen
-        en kolommen worden vanzelf aangemaakt. Klopt er toch iets niet na een upload? Klik dan op
-        "Databasecontrole uitvoeren".
+        en kolommen worden vanzelf aangemaakt. Klopt er toch iets niet na een upload? Klik dan bovenaan op
+        "Migraties uitvoeren".
       </p>
       <?php foreach ($verwacht as $groep => $tabellen): ?>
       <div style="margin-bottom:10px">

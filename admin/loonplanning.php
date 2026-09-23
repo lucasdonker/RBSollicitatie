@@ -5,6 +5,8 @@ $actieve_nav  = 'loonplanning';
 // Weken naast elkaar: geen tekstbreedte, maar de ruimte die er is.
 $pagina_breed = true;
 vereis_recht('loonplanning', 'lezen');
+// Lezen mag de planning zien; alles wat schrijft (scenario's, cellen) vraagt bewerkrecht.
+$mag_bewerken = mag('loonplanning', 'bewerken');
 
 $db = db();
 try { instellingen_laden(); } catch (Exception $e) {}
@@ -24,6 +26,10 @@ if (!$geldig && $scenarios) $scenario_id = (int)$scenarios[0]['id'];
 // ── Scenario-acties ──────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['sc_actie'])) {
     csrf_check();
+    if (!$mag_bewerken) {
+        flash('fout', 'Je hebt geen bewerkrecht op de loonplanning.');
+        redirect(APP_URL . '/admin/loonplanning.php?scenario=' . $scenario_id);
+    }
     $a = $_POST['sc_actie'];
     if ($a === 'dupliceer') {
         $nieuw = loonplan_scenario_dupliceer($sid, (int)$_POST['bron_id'], trim($_POST['naam'] ?? 'Kopie'));
@@ -46,6 +52,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_loon'])) {
     header('Content-Type: application/json');
     try {
         csrf_check();
+        if (!$mag_bewerken) {
+            http_response_code(403);
+            echo json_encode(['ok' => false, 'fout' => 'Je hebt geen bewerkrecht op de loonplanning.']);
+            exit;
+        }
         loonplan_cel_opslaan(
             (int)$_POST['scenario_id'], (int)$_POST['sol_id'], (int)$_POST['week_nr'], $jaar,
             (int)$_POST['dagen'], ($_POST['opgenomen'] ?? '0') === '1' ? 1 : 0,
@@ -123,12 +134,13 @@ require __DIR__ . '/layout_top.php';
       <span style="font-size:12px;font-weight:600;color:var(--tekst-zacht)">Scenario:</span>
       <?php foreach ($scenarios as $sc): ?>
         <a href="?scenario=<?= (int)$sc['id'] ?>" class="sc-tab <?= (int)$sc['id']===$scenario_id?'actief':'' ?>">
-          <?= h($sc['naam']) ?><?php if (!empty($sc['actief'])): ?> <span title="Actieve planning">★</span><?php endif; ?>
+          <?= h($sc['naam']) ?><?php if (!empty($sc['actief'])): ?> <?= icoon('ster', 13) ?> <span class="bh-meta">Actief</span><?php endif; ?>
         </a>
       <?php endforeach; ?>
       <span style="flex:1"></span>
       <a href="<?= APP_URL ?>/admin/export_beschikbaarheid.php?scenario=<?= $scenario_id ?>"
          class="ds-btn ds-btn-secundair ds-btn-sm" title="Exporteer dit scenario als CSV">CSV</a>
+      <?php if ($mag_bewerken): ?>
       <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="document.getElementById('dupForm').style.display='flex'">+ Dupliceren</button>
       <?php $huidig_actief = false; foreach ($scenarios as $sc) if ((int)$sc['id']===$scenario_id && !empty($sc['actief'])) $huidig_actief = true; ?>
       <?php if (!$huidig_actief && $scenario_id): ?>
@@ -136,7 +148,7 @@ require __DIR__ . '/layout_top.php';
         <?= csrf_input() ?>
         <input type="hidden" name="sc_actie" value="activeer">
         <input type="hidden" name="scenario_id" value="<?= $scenario_id ?>">
-        <button type="submit" class="ds-btn ds-btn-primair ds-btn-sm">★ Maak actief</button>
+        <button type="submit" class="ds-btn ds-btn-primair ds-btn-sm"><?= icoon('ster', 14) ?> Maak actief</button>
       </form>
       <form method="POST" style="margin:0" data-bevestig-titel="Scenario verwijderen?"
             data-bevestig="Alle ingeplande dagen in dit scenario verdwijnen mee. De beschikbaarheid van de sollicitanten blijft ongemoeid."
@@ -147,7 +159,9 @@ require __DIR__ . '/layout_top.php';
         <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm" title="Scenario verwijderen">Verwijderen</button>
       </form>
       <?php endif; ?>
+      <?php endif; /* $mag_bewerken */ ?>
     </div>
+    <?php if ($mag_bewerken): ?>
     <form method="POST" id="dupForm" style="display:none;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap">
       <?= csrf_input() ?>
       <input type="hidden" name="sc_actie" value="dupliceer">
@@ -157,6 +171,7 @@ require __DIR__ . '/layout_top.php';
       <button type="submit" class="ds-btn ds-btn-primair ds-btn-sm">Dupliceren</button>
       <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="this.closest('form').style.display='none'">Annuleren</button>
     </form>
+    <?php endif; ?>
   </div>
 </div>
 
@@ -185,9 +200,14 @@ require __DIR__ . '/layout_top.php';
 <?php endif; ?>
 </div>
 
+<?php $alleen_lezen = $mag_bewerken ? '' : ' disabled'; ?>
 <p style="font-size:12.5px;color:var(--tekst-zacht);margin-bottom:10px">
+  <?php if (!$mag_bewerken): ?>
+  Je bekijkt deze planning alleen. Dagen invullen of scenario's wijzigen vraagt bewerkrecht op Loonplanning.
+  <?php else: ?>
   Vul per week het aantal dagen in en vink aan wie je <strong>opneemt</strong>. De dekkingsrij onderaan rekent mee met
   wie je daadwerkelijk inplant — plan je de schipper weg, dan zie je die week meteen rood worden.
+  <?php endif; ?>
 </p>
 
 <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%;border-radius:var(--radius-lg);border:1px solid var(--rand)">
@@ -213,7 +233,7 @@ require __DIR__ . '/layout_top.php';
       </td>
       <td class="fcol">
         <?php $std_fn = 'lifeguard'; foreach ($m['weken'] as $w) { if (!empty($w['functie'])) { $std_fn = $w['functie']; break; } } ?>
-        <select class="fs" id="fn-<?= $sol_id ?>" onchange="functieWijzig(<?= $sol_id ?>)">
+        <select class="fs" id="fn-<?= $sol_id ?>" onchange="functieWijzig(<?= $sol_id ?>)"<?= $alleen_lezen ?>>
           <?php foreach ($functies as $f): ?>
             <option value="<?= h($f['sleutel']) ?>" <?= $std_fn===$f['sleutel']?'selected':'' ?>><?= h($f['naam']) ?></option>
           <?php endforeach; ?>
@@ -231,10 +251,10 @@ require __DIR__ . '/layout_top.php';
           title="<?= $beschikbaar ? 'Max ' . $max . ' dagen beschikbaar · €' . number_format($w['dagloon'],2,',','.') . '/dag' : 'Niet beschikbaar deze week' ?>">
         <?php if ($beschikbaar): ?>
           <input type="checkbox" <?= $opgen ? 'checked' : '' ?> id="c-<?= $sol_id ?>-<?= $wn ?>"
-                 onchange="celWijzig(<?= $sol_id ?>, <?= $wn ?>)" title="Opnemen in de planning" style="margin-bottom:2px">
+                 onchange="celWijzig(<?= $sol_id ?>, <?= $wn ?>)" title="Opnemen in de planning" style="margin-bottom:2px"<?= $alleen_lezen ?>>
           <br>
           <input type="number" class="di <?= $teveel?'waarschuw':'' ?>" min="0" max="7" value="<?= $dagen ?>"
-                 id="d-<?= $sol_id ?>-<?= $wn ?>" onchange="celWijzig(<?= $sol_id ?>, <?= $wn ?>)" <?= $opgen ? '' : 'disabled' ?>>
+                 id="d-<?= $sol_id ?>-<?= $wn ?>" onchange="celWijzig(<?= $sol_id ?>, <?= $wn ?>)" <?= ($opgen && $mag_bewerken) ? '' : 'disabled' ?>>
           <span class="kl" id="k-<?= $sol_id ?>-<?= $wn ?>"><?= $opgen && $w['kosten'] > 0 ? '€' . number_format($w['kosten'],0,',','.') : '' ?></span>
         <?php else: ?>
           <span style="color:var(--grijs);font-size:14px">–</span>
@@ -344,6 +364,8 @@ require __DIR__ . '/layout_top.php';
 <script>
 const SCENARIO_ID = <?= (int)$scenario_id ?>;
 const BUDGET = <?= (float)$budget ?>;
+/* Alleen UI: de server weigert zelf ook elke opslag zonder bewerkrecht. */
+const MAG_BEWERKEN = <?= $mag_bewerken ? 'true' : 'false' ?>;
 /* Zelfde stoplicht als de server rendert: stand voor de kleur, woord voor de tekst. */
 const DEK_STAND = {groen:'goed', oranje:'krap', rood:'slecht'};
 const DEK_WOORD = {groen:'Gedekt', oranje:'Krap', rood:'Tekort'};
@@ -366,7 +388,7 @@ function celWijzig(solId, week) {
   const chk  = document.getElementById('c-' + solId + '-' + week);
   const dagI = document.getElementById('d-' + solId + '-' + week);
   const fnS  = document.getElementById('fn-' + solId);
-  if (!chk || !dagI) return;
+  if (!MAG_BEWERKEN || !chk || !dagI) return;
 
   dagI.disabled = !chk.checked;
   if (chk.checked && (!dagI.value || parseInt(dagI.value) === 0)) dagI.value = 5;
@@ -437,7 +459,7 @@ function werkBij(d) {
       const meer = d.signalen.length > 12 ? '<li style="color:var(--grijs)">\u2026 en ' + (d.signalen.length - 12) + ' meer</li>' : '';
       box.innerHTML =
         '<div class="ds-kaart" style="margin-bottom:12px;border-left:4px solid var(--oranje)"><div class="bh-kaartbody" style="padding:12px 16px">' +
-        '<div style="font-size:13.5px;font-weight:600;margin-bottom:6px">\u26a0\ufe0f Signalen (' + d.signalen.length + ')</div>' +
+        '<div style="font-size:13.5px;font-weight:600;margin-bottom:6px">Signalen (' + d.signalen.length + ')</div>' +
         '<div style="font-size:12px;color:var(--tekst-zacht);margin-bottom:8px">Aandachtspunten, geen blokkades \u2014 jij beslist.</div>' +
         '<ul style="margin:0;padding-left:18px;font-size:12.5px;line-height:1.7">' + items + meer + '</ul></div></div>';
     } else {

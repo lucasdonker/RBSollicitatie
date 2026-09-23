@@ -11,9 +11,10 @@ if (!file_exists($config_path)) {
 }
 require_once $config_path;
 
-// Beveiliging: alleen een ingelogde admin mag database-updates draaien.
+// Beveiliging: zelfde recht als Systeem & Updates, dat hierheen linkt (in de standaardmatrix
+// alleen de beheerder). Via de rechtenmodule, zodat link en toegang niet uit elkaar lopen.
 require_once __DIR__ . '/../includes/functions.php';
-vereist_rol('admin');
+vereis_recht('systeem', 'bewerken');
 
 // Inline DB connectie
 function upd_db(): PDO {

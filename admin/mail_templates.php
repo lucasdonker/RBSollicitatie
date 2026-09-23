@@ -28,7 +28,8 @@ function sjabloon_voorbeeld_vars(): array {
 
 // ── Preview: vóór alles, geen layout nodig ────────────────────
 if (isset($_GET['preview'])) {
-    vereist_login();
+    // Voorbeeldgegevens, maar wel sjablooninhoud: alleen wie berichten mag zien.
+    vereis_recht('mailing', 'lezen');
     $slug   = preg_replace('/[^a-z0-9_-]/i', '', (string)$_GET['preview']);
     $kanaal = ($_GET['kanaal'] ?? 'email') === 'kort' ? 'kort' : 'email';
     $r = function_exists('melding_render') ? melding_render($slug, sjabloon_voorbeeld_vars()) : null;

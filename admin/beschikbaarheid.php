@@ -142,7 +142,7 @@ require __DIR__ . '/layout_top.php';
     <h2>Openstaande verzoeken: <?= count($open_verzoeken) ?></h2>
   </header>
   <p class="bh-actiekaart-uitleg">
-    Verzoeken om minder dagen per week te werken. Beoordeel ze hier, of in het dossier van de sollicitant.
+    Verzoeken om minder dagen per week te werken. Je beoordeelt ze hier; de naam opent het dossier van de sollicitant.
   </p>
   <ul class="bh-verzoeklijst">
     <?php foreach ($open_verzoeken as $vz):

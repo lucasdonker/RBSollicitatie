@@ -10,7 +10,7 @@
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/beheer/laden.php';
 $pagina_titel = 'Berichten';
-$actieve_nav  = 'berichten';
+$actieve_nav  = 'geplande_berichten';   // eigen hulptekst; bh_nav_actief() laat Berichten oplichten
 vereis_recht('mailing', 'bewerken');
 $db = db();
 
