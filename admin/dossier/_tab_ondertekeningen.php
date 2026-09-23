@@ -54,7 +54,8 @@ $_mag_bewerken = mag('ondertekeningen', 'bewerken');
         <?php foreach ($_doc['rijen'] as $_r): ?>
           <li class="<?= $_r['klaar'] ? 'klaar' : 'open' ?>">
             <span class="bh-ond-status">
-              <?= $_r['klaar'] ? bh_badge('Ondertekend', 'groen') : bh_badge('Wacht', 'oranje') ?>
+              <?= $_r['klaar'] ? bh_badge('Ondertekend', 'groen')
+                               : bh_badge(($_r['rol'] ?? '') === 'ouder' ? 'Wacht op ouder' : 'Wacht', 'oranje') ?>
             </span>
             <span class="bh-ond-naam">
               <?= h($_r['label']) ?>

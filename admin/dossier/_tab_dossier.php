@@ -15,6 +15,7 @@ $_s   = $tab_dossier['sol'];
 $_blk = $tab_dossier['blk'];
 $_adv = bh_dossier_advies($tab_dossier);
 $_doc = bh_dossier_documenten($tab_dossier);
+$_taken = bh_dossier_taken($tab_dossier);
 $_mag_bewerken = mag('sollicitanten', 'bewerken');
 $_mag_blk = mag('blk', 'lezen');
 ?>
@@ -247,29 +248,39 @@ $_mag_blk = mag('blk', 'lezen');
       </div>
     </section>
 
-    <?php if ($_doc['totaal'] > 0): ?>
+    <?php if ($_taken['totaal'] > 0): ?>
     <section class="ds-kaart ds-kaart-p">
       <div class="bh-kaartkop">
-        <h2>Documenten</h2>
-        <span class="bh-meta bh-num"><?= $_doc['gedaan'] ?> / <?= $_doc['totaal'] ?></span>
+        <h2>Taken</h2>
+        <span class="bh-meta">zoals de sollicitant ze in het portaal ziet</span>
       </div>
-      <?= bh_voortgang($_doc['gedaan'], $_doc['totaal'], ['label' => $_doc['gedaan'] . ' / ' . $_doc['totaal']]) ?>
+      <?= bh_voortgang($_taken['gedaan'], $_taken['totaal'], ['label' => $_taken['gedaan'] . ' / ' . $_taken['totaal'] . ' afgerond']) ?>
       <ul class="bh-doclijst">
-        <?php foreach ($_doc['rijen'] as $_r): ?>
-          <li class="<?= $_r['klaar'] ? 'klaar' : 'open' ?>">
+        <?php foreach ($_taken['rijen'] as $_r):
+          $_stand = $_r['done'] ? 'klaar' : ($_r['wacht'] ? 'wacht' : 'open');
+        ?>
+          <li class="<?= $_stand ?>">
             <span class="bh-doc-vink">
-              <?= $_r['klaar'] ? icoon('vink', 14) : '<span class="bh-doc-stip"></span>' ?>
+              <?= $_r['done'] ? icoon('vink', 14) : '<span class="bh-doc-stip"></span>' ?>
             </span>
-            <span class="bh-doc-naam"><?= h($_r['label']) ?></span>
-            <?php if (!$_r['klaar'] && $_r['token'] && $_mag_bewerken): ?>
+            <span class="bh-doc-naam">
+              <?= h($_r['titel']) ?>
+              <?php if ($_r['sub'] !== ''): ?><span class="bh-doc-sub"><?= h($_r['sub']) ?></span><?php endif; ?>
+            </span>
+            <?php // Status altijd ook in woorden, niet alleen met kleur. ?>
+            <span class="bh-doc-datum"><?= $_r['done'] ? 'Afgerond' : ($_r['wacht'] ? 'Wacht op ouder' : 'Open') ?></span>
+            <?php if (!$_r['done'] && $_r['token'] && $_mag_bewerken): ?>
               <button type="button" class="bh-doc-actie"
                       onclick="kopieerOndertekenlink('<?= h($_r['token']) ?>', this)">Link kopiëren</button>
-            <?php elseif ($_r['klaar'] && $_r['op']): ?>
-              <span class="bh-doc-datum"><?= h(datum_nl(substr((string)$_r['op'], 0, 10))) ?></span>
             <?php endif; ?>
           </li>
         <?php endforeach; ?>
       </ul>
+      <?php if ($_doc['totaal'] > 0): ?>
+        <a class="bh-kaartkop-link bh-taken-voet" href="<?= h(dossier_url((int)$_s['id'], 'ondertekeningen')) ?>">
+          Ondertekeningen · <?= $_doc['gedaan'] ?> van <?= $_doc['totaal'] ?> →
+        </a>
+      <?php endif; ?>
     </section>
     <?php endif; ?>
 

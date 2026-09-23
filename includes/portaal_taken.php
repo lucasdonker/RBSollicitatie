@@ -40,8 +40,12 @@ function portaal_taken_fases_ouder(): array {
 
 /**
  * Alle taken van deze sollicitant, open eerst (urgent bovenaan), daarna afgerond (nieuwste eerst).
+ *
+ * $vangnet: zet ontbrekende ondertekeningen/pakkettaken alsnog klaar. Het beheer leest
+ * deze lijst ook (bh_dossier_taken) en zet hem uit: het openen van een dossier mag geen
+ * documenten aanmaken of een ouder mailen.
  */
-function portaal_taken(array $sol, ?array $blk = null): array {
+function portaal_taken(array $sol, ?array $blk = null, bool $vangnet = true): array {
     $sol_id = (int)$sol['id'];
     $fase   = $sol['fase'] ?? '';
     $taken  = [];
@@ -81,9 +85,9 @@ function portaal_taken(array $sol, ?array $blk = null): array {
     // 2) Eigen ondertekeningen (gezondheidsverklaring 18+, intakeformulier). Worden klaargezet bij de
     //    selectiedag-uitnodiging (fase_zetten → ondertekeningen_klaarzetten_sd); het vangnet hieronder
     //    herstelt dossiers waar dat destijds niet gebeurde.
-    if (function_exists('ondertekeningen_verzekeren_sd')) ondertekeningen_verzekeren_sd($sol_id, $fase);
+    if ($vangnet && function_exists('ondertekeningen_verzekeren_sd')) ondertekeningen_verzekeren_sd($sol_id, $fase);
     // Aangenomen: het takenpakket (uploads, huisregels, account) + de ondertekeningen loonheffing/lidmaatschap
-    if (function_exists('kennismakingspakket_verzekeren')) kennismakingspakket_verzekeren($sol_id, $fase);
+    if ($vangnet && function_exists('kennismakingspakket_verzekeren')) kennismakingspakket_verzekeren($sol_id, $fase);
     try {
         $q = db()->prepare("SELECT id, type, token, ondertekend_op FROM ondertekeningen WHERE sollicitatie_id=? AND ondertekenaar_rol='sollicitant' ORDER BY aangemaakt_op");
         $q->execute([$sol_id]);

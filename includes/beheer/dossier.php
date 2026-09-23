@@ -57,6 +57,11 @@ function bh_dossier(int $sol_id): ?array {
         // wél toonde. Hier neerzetten en niet in elk scherm apart: alles wat met
         // $dossier['sol'] werkt heeft de foto nu vanzelf.
         $sol['foto_url'] = $blk['foto_url'] ?? null;
+        // De oudergegevens staan op de persoon en kwamen hier niet mee, waardoor het
+        // tabblad Ondertekeningen bij elke minderjarige "nog geen ouder bekend" zei, ook
+        // als de sollicitant ze allang had ingevuld. Via dezelfde functie als het portaal,
+        // die ook een database zonder de ouderkolommen overleeft.
+        if (function_exists('portaal_ouder_gegevens')) $sol += portaal_ouder_gegevens($sol_id);
         // De selectiedag-gegevens komen uit includes/selectiedag.php en niet uit de
         // oude tabel `beoordelingen`: scores staan per test/criterium/beoordelaar in
         // selectie_score, met observaties en het besluit ernaast.
@@ -121,21 +126,23 @@ function bh_leeftijd_melding(?string $geboortedatum, ?int $nu, ?int $bij_start):
 }
 
 /**
- * De zes documenten die een dossier compleet maken, met hun stand.
- * Welke zes het zijn hangt van de leeftijd af: onder de 18 tekent een ouder mee.
+ * De documenten die bij deze sollicitant horen, met hun stand.
+ *
+ * Wat er staat, volgt wat includes/ondertekeningen_auto.php en kennismakingspakket.php
+ * werkelijk klaarzetten — niet een vaste lijst. Eerder stond hier voor iedereen
+ * loonheffing en lidmaatschap (die komen pas bij aangenomen), en bij een minderjarige
+ * een "intake sollicitant" die het systeem nooit aanmaakt. Een dossier kwam daardoor
+ * nooit op compleet, ook als de sollicitant alles had gedaan.
+ *
+ *   - alles wat er in `ondertekeningen` staat, telt mee;
+ *   - vanaf de selectiedag-uitnodiging worden de selectiedag-documenten verwacht
+ *     (onder de 18 tekent de ouder: gezondheid_ouder + intake_ouder);
+ *   - bij aangenomen het loonheffingsformulier. Lidmaatschap alleen als het er staat:
+ *     wie al een verenigingsaccount heeft, krijgt het bewust niet.
  *
  * @return array{gedaan:int,totaal:int,rijen:array}
  */
 function bh_dossier_documenten(array $dossier): array {
-    $soorten = $dossier['minderjarig']
-        ? ['gezondheid_ouder' => 'Gezondheidsverklaring (ouder)',
-           'intake'           => 'Intake sollicitant',
-           'intake_ouder'     => 'Intake ouder']
-        : ['gezondheid_18plus' => 'Gezondheidsverklaring 18+',
-           'intake'            => 'Intake sollicitant'];
-    $soorten['loonheffing']  = 'Loonheffingsformulier';
-    $soorten['lidmaatschap'] = 'Inschrijving als lid';
-
     $stand = [];
     foreach ($dossier['ondertekeningen'] as $o) {
         $t = (string)$o['type'];
@@ -143,18 +150,82 @@ function bh_dossier_documenten(array $dossier): array {
         if (!isset($stand[$t])) $stand[$t] = $o;
     }
 
+    $fase = (string)($dossier['sol']['fase'] ?? '');
+    $volgorde = ['gezondheid_18plus', 'intake', 'gezondheid_ouder', 'intake_ouder', 'loonheffing', 'lidmaatschap'];
+    $verwacht = [];
+    $sd_fases = ['uitgenodigd_selectie', 'aangemeld_selectie', 'selectiedag_geweest', 'uitgenodigd_tw', 'tw_geweest', 'aangenomen'];
+    $sd_types = ['gezondheid_18plus', 'intake', 'gezondheid_ouder', 'intake_ouder'];
+    // Staat er al een selectiedag-document, dan is de keuze ouder/zelf al gemaakt:
+    // niet ook de andere set verwachten (iemand kan intussen 18 zijn geworden).
+    if (in_array($fase, $sd_fases, true) && !array_intersect($sd_types, array_keys($stand))) {
+        $verwacht = $dossier['minderjarig'] ? ['gezondheid_ouder', 'intake_ouder'] : ['gezondheid_18plus', 'intake'];
+    }
+    if ($fase === 'aangenomen') $verwacht[] = 'loonheffing';
+
+    $soorten = array_values(array_unique(array_merge(array_keys($stand), $verwacht)));
+    usort($soorten, function ($a, $b) use ($volgorde) {
+        $ia = array_search($a, $volgorde, true); $ib = array_search($b, $volgorde, true);
+        return ($ia === false ? 99 : $ia) <=> ($ib === false ? 99 : $ib);
+    });
+
     $rijen = [];
     $gedaan = 0;
-    foreach ($soorten as $type => $label) {
+    foreach ($soorten as $type) {
         $o = $stand[$type] ?? null;
         $klaar = $o && !empty($o['ondertekend_op']);
         if ($klaar) $gedaan++;
+        $label = function_exists('ondertekening_label') ? ondertekening_label($type) : $type;
         $rijen[] = [
             'type' => $type, 'label' => $label, 'klaar' => $klaar,
+            'rol' => $o['ondertekenaar_rol'] ?? null,
             'op' => $o['ondertekend_op'] ?? null, 'door' => $o['ondertekenaar_naam'] ?? null,
             'token' => $o['token'] ?? null, 'id' => $o['id'] ?? null,
             // Gezondheidsverklaringen bevatten medische gegevens: alleen bestuur en hoger.
             'medisch' => str_starts_with($type, 'gezondheid'),
+        ];
+    }
+    return ['gedaan' => $gedaan, 'totaal' => count($rijen), 'rijen' => $rijen];
+}
+
+/**
+ * De taken zoals de sollicitant ze in het portaal ziet — uit dezelfde bron
+ * (portaal_taken), zodat beheer en portaal nooit iets anders zeggen over wat af is.
+ * Eerder kende het beheer alleen de ondertekeningen; het BLK, de beschikbaarheid, de
+ * oudergegevens en het hele takenpakket (uploads, huisregels) waren er onzichtbaar.
+ *
+ * Zonder vangnet: een dossier bekijken mag niets klaarzetten of versturen.
+ *
+ * @return array{gedaan:int,totaal:int,rijen:array}  rijen: titel, sub, done, wacht,
+ *         urgent, token (alleen bij een open ondertekening, voor "Link kopiëren")
+ */
+function bh_dossier_taken(array $dossier): array {
+    $leeg = ['gedaan' => 0, 'totaal' => 0, 'rijen' => []];
+    if (!function_exists('portaal_taken')) return $leeg;
+    $sol_id = (int)$dossier['sol']['id'];
+    try {
+        // Het portaal-formaat heeft o.a. de selectiedagdatum nodig voor de subregels.
+        $sol = (function_exists('portaal_sollicitant_laden') ? portaal_sollicitant_laden($sol_id) : null) ?: $dossier['sol'];
+        $taken = portaal_taken($sol, $dossier['blk'], false);
+    } catch (\Throwable $e) { return $leeg; }
+
+    $tokens = [];
+    foreach ($dossier['ondertekeningen'] as $o) {
+        if (empty($o['ondertekend_op'])) $tokens[(int)$o['id']] = (string)$o['token'];
+    }
+
+    $rijen = [];
+    $gedaan = 0;
+    foreach ($taken as $t) {
+        if (!empty($t['done'])) $gedaan++;
+        $token = null;
+        if (preg_match('/^(ond|oud)_(\d+)$/', (string)$t['id'], $m)) $token = $tokens[(int)$m[2]] ?? null;
+        $rijen[] = [
+            'titel'  => (string)$t['titel'],
+            'sub'    => (string)$t['sub'],
+            'done'   => !empty($t['done']),
+            'wacht'  => !empty($t['wacht']),
+            'urgent' => !empty($t['urgent']),
+            'token'  => $token,
         ];
     }
     return ['gedaan' => $gedaan, 'totaal' => count($rijen), 'rijen' => $rijen];
