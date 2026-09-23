@@ -50,7 +50,8 @@ require __DIR__ . '/_kop.php';
       </div>
     </a>
     <?php endforeach; ?>
-    <span class="pt-hulp">Berichten blijven een seizoen bewaard.</span>
+    <?php $_bewaar_mnd = function_exists('instelling_int') ? instelling_int('bewaar.maillog_body_mnd', 3) : 3; ?>
+    <span class="pt-hulp">Berichten zie je hier <?= $_bewaar_mnd === 1 ? '1 maand' : (int)$_bewaar_mnd . ' maanden' ?> terug.</span>
   <?php endif; ?>
 
   <?php

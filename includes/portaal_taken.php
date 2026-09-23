@@ -143,7 +143,9 @@ function portaal_taken(array $sol, ?array $blk = null, bool $vangnet = true): ar
                 : '± 8 minuten' . (!empty($sol['datum_selectiedag']) ? ' · vóór ' . portaal_datum_kort($sol['datum_selectiedag']) : ''),
             'done'        => $klaar,
             'done_op'     => $op,
-            'url'         => APP_URL . '/portaal/blk_invullen.php',
+            // Buiten de selectiedag-fases weigert blk_invullen.php; dan geen link maar alleen
+            // "Ingeleverd <datum>" (_taakrij.php toont een rij zonder url als gewone div).
+            'url'         => in_array($fase, blk_fases_zichtbaar(), true) ? APP_URL . '/portaal/blk_invullen.php' : '',
             'icoon'       => 'document',
             'kleur'       => $klaar ? 'ok' : 'accent',
             'actie_label' => $klaar ? 'Bekijken' : null,

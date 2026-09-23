@@ -202,6 +202,11 @@ require __DIR__ . '/_kop.php';
       <span class="avg-label">Huidige status</span>
       <span class="avg-waarde"><?= h(fase_label($mij['fase'])) ?></span>
     </div>
+    <?php /* AVG art. 16 (rectificatie): zelf wijzigen kan niet, het bestuur past het aan. */ ?>
+    <p style="font-size:13px;color:var(--tekst-zacht);margin:12px 0 0">
+      Klopt je naam, e-mailadres of telefoonnummer niet?
+      <a href="<?= APP_URL ?>/portaal/berichten.php#vraagTekst">Stel een vraag via Berichten</a>, dan past het bestuur het aan.
+    </p>
   </div>
 
   <!-- Berichten: kanaalvoorkeur -->
@@ -231,7 +236,7 @@ require __DIR__ . '/_kop.php';
   </div>
 
   <!-- Downloaden -->
-  <div class="avg-card">
+  <div class="avg-card" id="download">
     <h2><?= icoon("download", 18) ?> Al mijn gegevens downloaden</h2>
     <p style="font-size:13px;color:var(--tekst-zacht)">
       Volgens de AVG (artikel 15) heb je recht op inzage. Je krijgt hieronder een JSON-bestand met alles wat we van je hebben: persoon, BLK-formulier, beschikbaarheid en mail-geschiedenis.
@@ -240,7 +245,7 @@ require __DIR__ . '/_kop.php';
   </div>
 
   <!-- Verwijderen -->
-  <div class="avg-card">
+  <div class="avg-card" id="verwijderen">
     <h2><?= icoon("prullenbak", 18) ?> Mijn account verwijderen</h2>
     <p style="font-size:13px;color:var(--tekst-zacht)">
       Volgens de AVG (artikel 17) heb je recht op vergetelheid. Bij verwijdering:
@@ -252,18 +257,21 @@ require __DIR__ . '/_kop.php';
       <li>Deze actie is <strong>onomkeerbaar</strong>.</li>
     </ul>
 
-    <div class="gevaar">
-      <h3><?= icoon('waarschuwing', 16) ?> Definitief verwijderen</h3>
-      <p style="font-size:12.5px;color:var(--rood);margin-bottom:10px">
-        Typ <strong>VERWIJDER</strong> in het veld en klik op de knop.
-      </p>
-      <form method="POST" onsubmit="return confirm('Weet je het echt zeker? Dit is definitief.');">
+    <?php /* Zelfde patroon als "Vergeet alle apparaten": eerst uitklappen, dan pas de knop.
+             Werkt zonder JavaScript; na een fout staat hij meteen open. */ ?>
+    <details class="pt-bevestig gevaar"<?= ($fout && isset($_POST['verwijder'])) ? ' open' : '' ?>>
+      <summary><?= icoon('waarschuwing', 16) ?> Definitief verwijderen</summary>
+      <p>Je naam, e-mail, telefoon en adres worden onherkenbaar gemaakt. Je formulieren en beschikbaarheid verdwijnen.
+        Je kunt daarna niet meer inloggen. Dit kun je niet terugdraaien.</p>
+      <p>Weet je het zeker? Typ <strong>VERWIJDER</strong> in het veld en klik op de knop.</p>
+      <form method="POST">
         <?= csrf_input() ?>
         <input type="hidden" name="verwijder" value="1">
-        <input type="text" name="bevestig" placeholder="VERWIJDER" autocomplete="off" class="gevaar-input" required>
-        <button type="submit" class="ds-btn ds-btn-gevaar ds-btn-vol" style="margin-top:10px">Definitief verwijderen</button>
+        <label for="bevestigVerwijder" class="sr-only">Typ VERWIJDER om te bevestigen</label>
+        <input type="text" id="bevestigVerwijder" name="bevestig" placeholder="VERWIJDER" autocomplete="off" class="gevaar-input" required>
+        <button type="submit" class="ds-btn ds-btn-gevaar ds-btn-vol" style="margin-top:10px">Ja, verwijder mijn account</button>
       </form>
-    </div>
+    </details>
   </div>
 
   <?php if ($apparaten_aantal > 0 || $apparaten_flash): ?>

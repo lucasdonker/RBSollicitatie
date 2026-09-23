@@ -2841,3 +2841,9 @@ form[aria-busy="true"] .p13-bezig { opacity: 1; }
   form[aria-busy="true"] { transition: none; }
   .wiz-stap { animation: none; }
 }
+
+/* ═══ PORTAAL — fixes 2.100 ═══
+   "Definitief verwijderen" in Mijn gegevens gebruikt het uitklap-patroon (.pt-bevestig)
+   binnen het rode gevaar-vlak; de kop krijgt daar de foutkleur en ruimte voor het icoon. */
+.pt-bevestig.gevaar > summary { color: var(--error); gap: 6px; }
+.pt-bevestig.gevaar > p { color: var(--ink); }
