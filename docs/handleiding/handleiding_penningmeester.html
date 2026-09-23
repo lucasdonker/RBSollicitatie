@@ -52,14 +52,15 @@ hr { border: 0; border-top: 1px solid var(--rand); margin: 24px 0; }
 <header id="title-block-header">
 <h1 class="title">Handleiding penningmeester — Loondossiers</h1>
 </header>
-<p>Versie 2.94.0 · september 2026</p>
-<p>Deze handleiding is voor de penningmeester. Je gebruikt één scherm in
-het beheer: <strong>Loondossiers</strong>. Daar staat per aangenomen
-strandwacht alles wat de loonadministratie nodig heeft. De rest van het
-beheer zie je niet, en dat is de bedoeling: alleen jij en de admin
-kunnen deze stukken inzien.</p>
+<p>Versie 2.99 · september 2026</p>
+<p>Deze handleiding is voor de penningmeester. Je werkt vooral op één
+scherm in het beheer: <strong>Loondossiers</strong>. Daar staat per
+aangenomen strandwacht alles wat de loonadministratie nodig heeft.
+Alleen de penningmeester en de admin kunnen deze stukken inzien; het
+bestuur ziet dit scherm niet.</p>
 <h1 id="inhoud">Inhoud</h1>
 <ol type="1">
+<li><a href="#aan-de-slag">Aan de slag</a></li>
 <li><a href="#inloggen">Inloggen</a></li>
 <li><a href="#wat-er-in-een-loondossier-zit">Wat er in een loondossier
 zit</a></li>
@@ -75,17 +76,82 @@ verwijderen</a></li>
 <li><a href="#veelgestelde-vragen">Veelgestelde vragen</a></li>
 </ol>
 <hr />
+<h1 id="aan-de-slag">Aan de slag</h1>
+<blockquote>
+<p><strong>In het kort:</strong> jij zet de gegevens van aangenomen
+strandwachten in de loonadministratie. Je downloadt de stukken uit
+Loondossiers, verwerkt ze en markeert het dossier als verwerkt. De rest
+gaat automatisch.</p>
+</blockquote>
+<p><strong>Jouw rol.</strong> Na het trainingsweekend neemt het bestuur
+strandwachten aan. Vanaf dat moment leveren zij in het portaal hun
+loonheffingsformulier, een kopie van hun identiteitsbewijs en een kopie
+van hun bankpas in. Jij haalt die stukken op, zet ze in de
+loonadministratie en markeert het dossier daarna als verwerkt. Je
+beslist niet over aannemen of afwijzen; dat doet het bestuur.</p>
+<p><strong>Wat je doet, en wanneer:</strong></p>
+<ul class="task-list">
+<li><label><input type="checkbox"></input><strong>Vóór het seizoen:</strong>
+log één keer in (zie <a href="#inloggen">Inloggen</a>) en controleer dat
+je het menu-item Loondossiers ziet. Vraag het bestuur om jouw
+e-mailadres in te vullen als penningmeester-adres (Instellingen ›
+Afzender &amp; adressen). Anders gaan de meldingen naar het
+bestuursadres.</label></li>
+<li><label><input type="checkbox"></input><strong>Na het trainingsweekend (de
+aannames):</strong> open Loondossiers. Elke aangenomen strandwacht staat
+er, ook als er nog niets is ingeleverd.</label></li>
+<li><label><input type="checkbox"></input><strong>Zodra er een mail
+&quot;Loondossier compleet&quot; komt:</strong> klik op de knop in de mail. Je
+komt direct bij het juiste dossier. Download de stukken en zet ze in de
+loonadministratie.</label></li>
+<li><label><input type="checkbox"></input><strong>Direct daarna:</strong>
+markeer het dossier als verwerkt en verwijder de gedownloade bestanden
+van je computer.</label></li>
+<li><label><input type="checkbox"></input><strong>Elke week, tot alles
+verwerkt is:</strong> kijk in Loondossiers. De balk bovenaan zegt
+hoeveel dossiers nog op verwerking wachten. Staat een dossier lang op
+oranje, laat het bestuur de strandwacht dan herinneren.</label></li>
+<li><label><input type="checkbox"></input><strong>Na het seizoen:</strong>
+niets. Het bewaren en vernietigen gaat automatisch (zie <a href="#bewaartermijnen-en-verwijderen">Bewaartermijnen en
+verwijderen</a>).</label></li>
+</ul>
+<p><strong>Rondleiding.</strong> In het beheer staat een interactieve
+rondleiding &quot;Penningmeester: loondossiers&quot;. Die loopt met je langs de
+echte schermen en wijst aan wat waar staat en wat jij moet doen. De
+eerste keer staat hij op Vandaag klaar in het blok <strong>Nieuw in het
+beheer?</strong>; daarna vind je hem onder <strong>Hulp en
+handleidingen</strong> onderin het menu (of via het vraagteken
+rechtsboven › <strong>Alle rondleidingen</strong>). Op het scherm
+Loondossiers kun je in het vraagteken ook <strong>Rondleiding van dit
+scherm</strong> kiezen. Stoppen kan altijd met <strong>Stoppen</strong>
+of Esc.</p>
 <h1 id="inloggen">Inloggen</h1>
+<blockquote>
+<p><strong>In het kort:</strong> log in via Authentik op het beheer. Je
+ziet drie menu-items: Vandaag, Sollicitanten en Loondossiers.</p>
+</blockquote>
 <p><strong>Waar:</strong>
 <code>https://sollicitatie.paal13.com/admin/</code><br />
 <strong>Wie:</strong> je Authentik-account zit in de groep
 <code>Sol-Penningmeester</code>.</p>
-<p>Kies &quot;Inloggen via Authentik&quot;. Je komt in het beheer met alleen het
-menu-item <strong>Loondossiers</strong> en (alleen lezen)
-<strong>Sollicitanten</strong>. Zie je meer of minder, dan klopt je
-groep in Authentik niet; meld dat bij de admin.</p>
+<p>Kies &quot;Inloggen via Authentik&quot;. In het menu zie je:</p>
+<ul>
+<li><strong>Vandaag</strong>: het startscherm met de stand van het
+seizoen;</li>
+<li><strong>Sollicitanten</strong>: alleen lezen, zodat je bij een
+dossier kunt kijken wie iemand is;</li>
+<li><strong>Loondossiers</strong>: jouw werkscherm.</li>
+</ul>
+<p>Zie je meer of minder, dan staat je account in Authentik in de
+verkeerde groep. Meld dat bij de admin.</p>
 <h1 id="wat-er-in-een-loondossier-zit">Wat er in een loondossier
 zit</h1>
+<blockquote>
+<p><strong>In het kort:</strong> het loonheffingsformulier, een kopie
+van het identiteitsbewijs en een kopie van de bankpas. Het dossier is
+compleet als die drie binnen zijn. De inschrijving als lid staat er ter
+informatie bij.</p>
+</blockquote>
 <p>Per aangenomen strandwacht verzamelt het portaal:</p>
 <table>
 <thead>
@@ -98,168 +164,284 @@ zit</h1>
 <tbody>
 <tr>
 <td>Loonheffingsformulier</td>
-<td>De strandwacht vult het officiële Belastingdienst-formulier in het
-portaal in en ondertekent digitaal met een verificatiecode
-(sms/WhatsApp/e-mail)</td>
-<td>Verzegelde PDF; het BSN staat alleen in de PDF en in de kluis,
-nergens anders</td>
+<td>De strandwacht vult het officiële formulier van de Belastingdienst
+in het portaal in en ondertekent digitaal met een verificatiecode</td>
+<td>Verzegelde PDF; het BSN staat alleen in de PDF en versleuteld in de
+kluis</td>
 </tr>
 <tr>
 <td>Kopie identiteitsbewijs</td>
-<td>Foto of scan; bij een ID-kaart voor- én achterkant, bij een paspoort
-alleen de fotopagina</td>
-<td>Wettelijk verplicht, volledig en onafgeschermd</td>
+<td>Foto of scan (JPG, PNG of PDF). Bij een identiteitskaart voor- én
+achterkant, bij een paspoort alleen de fotopagina</td>
+<td>Wettelijk verplicht, volledig en niet afgeschermd</td>
 </tr>
 <tr>
 <td>Kopie bankpas</td>
-<td>Foto van de voorkant (naam en IBAN)</td>
+<td>Foto van de voorkant (naam en rekeningnummer)</td>
 <td>Alleen om het rekeningnummer te controleren; wordt na verwerking
 vernietigd</td>
 </tr>
 <tr>
-<td>Inschrijving lidmaatschap</td>
-<td>Alleen voor wie nog geen verenigingsaccount heeft; gaat als PDF naar
-de ledenservice</td>
-<td>Staat ter info in het dossier</td>
+<td>Inschrijving als lid</td>
+<td>Alleen voor wie nog geen Paal 13-account heeft; gaat na het
+ondertekenen als PDF naar de ledenservice</td>
+<td>Ter informatie. Telt niet mee voor &quot;compleet&quot;</td>
 </tr>
 </tbody>
 </table>
 <p>Alles staat versleuteld in de kluis. Een dossier is
-<strong>compleet</strong> als loonheffingsformulier, kopie ID en kopie
-bankpas binnen zijn.</p>
+<strong>compleet</strong> als het loonheffingsformulier is ondertekend
+en de kopie van het identiteitsbewijs en de kopie van de bankpas binnen
+zijn.</p>
 <h1 id="wanneer-je-een-melding-krijgt">Wanneer je een melding
 krijgt</h1>
-<p>Zodra een dossier compleet is, krijg je één e-mail &quot;Loondossier
-compleet&quot; op het adres dat bij Instellingen › Algemeen als
-penningmeester-adres staat. De stukken zitten <strong>niet</strong> in
-die mail; je haalt ze op via het beheer. (Het bestuur kan instellen dat
-ze wél meegaan, maar dat raden we af.)</p>
-<p>Krijg je de melding niet, dan kan een beheerder hem opnieuw sturen
-met de knop &quot;Melding opnieuw naar de penningmeester&quot;.</p>
+<blockquote>
+<p><strong>In het kort:</strong> je krijgt één mail &quot;Loondossier
+compleet&quot; als alle stukken binnen zijn. De stukken zitten niet in die
+mail. Komt er geen mail, kijk dan zelf in Loondossiers.</p>
+</blockquote>
+<p>De mail gaat naar het penningmeester-adres uit Instellingen ›
+Afzender &amp; adressen (is dat leeg, dan naar het bestuursadres). In de
+mail staat welke stukken er zijn, met een knop &quot;Openen in het beheer&quot;
+die direct het juiste dossier openklapt.</p>
+<p>De stukken zitten standaard <strong>niet</strong> in de mail; je
+haalt ze op via het beheer. Het bestuur kan instellen dat ze wél
+meegaan, maar dan gaan een BSN en een kopie identiteitsbewijs
+onversleuteld per e-mail. Dat raden we af.</p>
+<p><strong>Let op:</strong> de mail wordt verstuurd op het moment dat de
+strandwacht het loonheffingsformulier ondertekent. Uploadt iemand de
+kopie van het identiteitsbewijs of de bankpas pas daarna, dan komt er
+geen automatische mail, ook al is het dossier dan wel compleet. Kijk
+daarom ook zelf af en toe in Loondossiers.</p>
+<p>Mail kwijt of niet gekregen? Klik in het dossier op <strong>Melding
+opnieuw naar de penningmeester</strong>. Die knop staat er zodra het
+dossier compleet is.</p>
 <h1 id="het-scherm-loondossiers">Het scherm Loondossiers</h1>
-<p><strong>Waar:</strong> Beheer › Loondossiers.</p>
-<p>Bovenaan drie tellers: aangenomen, compleet, verwerkt. Daaronder per
-strandwacht een kaart:</p>
+<blockquote>
+<p><strong>In het kort:</strong> bovenaan de regels voor deze stukken en
+de stand, daaronder per strandwacht een kaart die je openklapt. Oranje
+is nog niet compleet, groen wacht op jou, grijs is verwerkt.</p>
+</blockquote>
+<p><strong>Waar:</strong> Beheer › Loondossiers (in de menugroep Inzet
+&amp; loon).</p>
+<p>Het scherm toont de aangenomen strandwachten van het actieve
+seizoen.</p>
+<p><strong>Bovenaan</strong> staat een vast kader met de regels: hier
+staan een BSN en kopieën van identiteitsbewijzen, elke download wordt
+vastgelegd, en de bewaartermijnen. Dat kader staat er altijd; het is
+geen waarschuwing.</p>
+<p>Daaronder de stand, bijvoorbeeld &quot;2 dossiers wachten op verwerking&quot;,
+met de tellers aangenomen, compleet en verwerkt.</p>
+<p><strong>Per strandwacht</strong> een kaart. Klik op de naam om hem
+open of dicht te klappen. Rechts van de naam staat de status:</p>
 <ul>
-<li><strong>Oranje rand:</strong> dossier nog niet compleet; er
-ontbreken stukken.</li>
-<li><strong>Groene rand:</strong> compleet, wacht op verwerking. Deze
-kaarten staan standaard opengeklapt.</li>
-<li><strong>Grijze rand:</strong> verwerkt.</li>
+<li><strong>Oranje, &quot;Ontbreekt nog: …&quot;:</strong> er ontbreken stukken;
+je ziet welke.</li>
+<li><strong>Groen, &quot;Compleet — klaar om te verwerken&quot;:</strong> wacht op
+jou. Deze kaarten staan standaard open.</li>
+<li><strong>Grijs, &quot;Verwerkt&quot; met datum:</strong> klaar.</li>
 </ul>
-<p>In een kaart zie je per stuk de bestandsnaam, de uploaddatum, de
-grootte en wanneer het voor het laatst is gedownload. Onder &quot;Tijdlijn
-loonheffing&quot; staat het bewijsspoor van de ondertekening: geopend, code
-verstuurd, code geaccepteerd, ondertekend, verzegeld, met tijdstip en
-kanaal.</p>
-<p>Staat er bovenaan een rode melding over de kluis of het zegel, dan
-werkt het systeem niet goed; waarschuw de admin. Zolang die melding
-staat kunnen strandwachten niets uploaden.</p>
+<p>In een opengeklapte kaart zie je:</p>
+<ul>
+<li>een link <strong>Naar het dossier van …</strong>, als je meer over
+de persoon wilt weten;</li>
+<li>het <strong>loonheffingsformulier</strong>: wanneer het is
+ondertekend, hoe (verificatiecode, naar welk nummer) en een vingerafdruk
+van het bestand (sha256), met de knop <strong>PDF</strong>;</li>
+<li><strong>identiteitsbewijs voorkant</strong> (met paspoort of
+identiteitskaart), <strong>achterkant</strong> (&quot;Niet nodig bij een
+paspoort&quot;) en <strong>kopie bankpas</strong>: per stuk de bestandsnaam,
+de uploaddatum, de grootte en wanneer het voor het laatst is ingezien,
+met de knop <strong>Download</strong>;</li>
+<li><strong>lid van de vereniging</strong>: wanneer de inschrijving naar
+de ledenservice is gemaild, met de knop <strong>PDF</strong>, of &quot;Niet
+van toepassing&quot; als iemand al een verenigingsaccount heeft;</li>
+<li>onderaan de knoppen <strong>Verwerkt in de
+loonadministratie</strong> en <strong>Melding opnieuw naar de
+penningmeester</strong>, en de uitklapbare <strong>Tijdlijn van de
+ondertekening</strong>. Daarin staat het bewijsspoor: klaargezet,
+geopend, verificatiecode verstuurd, code geaccepteerd, ondertekend, PDF
+verzegeld, gedownload en verwerkt, met tijdstip en IP-adres.</li>
+</ul>
+<p>Staat er bovenaan een <strong>rode melding</strong> &quot;De kluis is niet
+bereikbaar&quot;, dan kunnen strandwachten niets uploaden en geen
+loonheffingsformulier ondertekenen. Waarschuw de admin. Een
+<strong>oranje melding</strong> &quot;Het documentzegel werkt niet&quot; betekent
+dat nieuwe PDF&#39;s geen digitaal zegel krijgen; bestaande documenten
+blijven geldig. Ook dan de admin waarschuwen.</p>
+<p>Staat er nog niemand op &quot;Aangenomen&quot;, dan zie je &quot;Nog geen
+loondossiers&quot;.</p>
 <h1 id="stukken-downloaden">Stukken downloaden</h1>
+<blockquote>
+<p><strong>In het kort:</strong> download via de knoppen in de kaart,
+alleen op een vertrouwd apparaat. Elke download wordt vastgelegd en
+foto&#39;s krijgen een watermerk met jouw naam.</p>
+</blockquote>
 <ol type="1">
-<li>Klik op <strong>Download</strong> achter het stuk.</li>
-<li>Op ID-kopieën en de bankpas staat een watermerk met je naam en de
-datum. Dat is bedoeld om doorsturen te ontmoedigen; verwijder het
-niet.</li>
-<li>Elke download wordt vastgelegd (wie, wanneer, welk stuk) en het
-bestuur krijgt daar standaard een melding van. Dat is normaal en hoort
-zo.</li>
-<li>Er geldt een grens van 30 downloads per uur.</li>
+<li>Klik op <strong>Download</strong> of <strong>PDF</strong> achter het
+stuk.</li>
+<li>Op foto&#39;s (JPG of PNG) van het identiteitsbewijs en de bankpas staat
+een watermerk: &quot;Kopie voor loonadministratie Reddingsbrigade Paal 13&quot;,
+de datum en jouw naam. Het origineel in de kluis blijft ongewijzigd. Een
+kopie die als PDF is geüpload krijgt geen watermerk.</li>
+<li>Elke download wordt vastgelegd (wie, wanneer, welk stuk). Bij het
+identiteitsbewijs, de bankpas en het loonheffingsformulier krijgt het
+bestuur standaard een mail dat jij iets hebt gedownload. Dat is normaal
+en hoort zo.</li>
+<li>Je kunt maximaal 30 stukken per uur downloaden.</li>
+<li>Een downloadlink werkt alleen vanuit het beheer. Een link doorsturen
+heeft geen zin.</li>
 </ol>
-<p>Download alleen op een vertrouwd apparaat. Zet de stukken direct in
-de loonadministratie en verwijder de gedownloade bestanden daarna van je
-computer en uit je downloadmap.</p>
+<p>Zet de stukken direct in de loonadministratie. Verwijder daarna de
+gedownloade bestanden van je computer, ook uit je downloadmap en de
+prullenbak.</p>
 <h1 id="een-dossier-verwerken">Een dossier verwerken</h1>
-<p>Zodra de gegevens in de loonadministratie staan:</p>
+<blockquote>
+<p><strong>In het kort:</strong> staan de gegevens in de
+loonadministratie, klik dan op &quot;Verwerkt in de loonadministratie&quot; en
+bevestig. Dat is niet terug te draaien.</p>
+</blockquote>
 <ol type="1">
 <li>Klik in de kaart op <strong>Verwerkt in de
-loonadministratie</strong>.</li>
-<li>Bevestig.</li>
+loonadministratie</strong>. Die knop staat er alleen bij een compleet
+dossier.</li>
+<li>Je krijgt een apart scherm dat uitlegt wat er gebeurt. Klik op
+<strong>Ja, verwerkt</strong>.</li>
 </ol>
 <p>Wat er dan gebeurt:</p>
 <ul>
-<li>De strandwacht kan de stukken niet meer wijzigen of
+<li>De strandwacht kan de stukken niet meer vervangen of
 verwijderen.</li>
-<li>De bankpasfoto wordt na de ingestelde termijn (standaard 30 dagen)
-automatisch vernietigd.</li>
-<li>Het loonheffingsformulier en de ID-kopie blijven bewaard tot de
-wettelijke termijn is verstreken (standaard 5 jaar na het einde van het
-dienstjaar) en worden dan automatisch vernietigd.</li>
-<li>De strandwacht kan zijn account niet meer zelf verwijderen
-(wettelijke bewaarplicht gaat voor); het portaal legt dat uit.</li>
+<li>De kopie van de bankpas wordt na de bewaartermijn (standaard 30
+dagen) automatisch vernietigd.</li>
+<li>Het loonheffingsformulier en de kopie van het identiteitsbewijs
+blijven bewaard tot de wettelijke termijn voorbij is (zie <a href="#bewaartermijnen-en-verwijderen">Bewaartermijnen en
+verwijderen</a>).</li>
+<li>De strandwacht kan het account niet meer zelf verwijderen, omdat de
+wettelijke bewaarplicht voorgaat. Het portaal legt dat uit.</li>
 </ul>
-<p>Markeer een dossier pas als verwerkt als het écht verwerkt is.
-Terugdraaien kan niet zelf; vraag dan de admin.</p>
+<p>Markeer een dossier pas als verwerkt als het echt verwerkt is. Zelf
+terugdraaien kan niet; vraag dan de admin.</p>
 <h1 id="bankpas-vernietigen">Bankpas vernietigen</h1>
-<p>Wil je de bankpasfoto eerder weg dan de automatische termijn, klik
-dan op <strong>Vernietigen</strong> achter de bankpas en bevestig. Dit
-kan alleen voor de bankpas; de andere stukken vallen onder de
+<blockquote>
+<p><strong>In het kort:</strong> de bankpasfoto verdwijnt normaal
+vanzelf. Moet hij eerder weg, klik dan op &quot;Vernietigen&quot; en bevestig.</p>
+</blockquote>
+<p>Klik op <strong>Vernietigen</strong> achter de kopie van de bankpas.
+Op het volgende scherm lees je wat er gebeurt en klik je op <strong>Ja,
+vernietigen</strong>. Het bestand wordt uit de kluis gewist en is niet
+terug te halen. Dat het er was en wie het vernietigde, blijft in het
+logboek staan. De rest van het dossier blijft ongemoeid.</p>
+<p>Dit kan alleen bij de bankpas; de andere stukken vallen onder de
 bewaarplicht.</p>
 <h1 id="bewaartermijnen-en-verwijderen">Bewaartermijnen en
 verwijderen</h1>
+<blockquote>
+<p><strong>In het kort:</strong> loonheffing en kopie ID blijven 5 jaar
+na het einde van het dienstjaar, de bankpasfoto 30 dagen na verwerking.
+Het systeem ruimt dat automatisch op, maar alleen als het bestuur het
+automatisch opschonen heeft aangezet.</p>
+</blockquote>
 <table>
 <thead>
 <tr>
 <th>Stuk</th>
 <th>Termijn</th>
-<th>Wie stelt in</th>
+<th>Grond</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Loonheffingsformulier en kopie ID</td>
-<td>5 jaar na einde van het dienstjaar</td>
-<td>Bestuur, Instellingen › Bewaartermijnen</td>
+<td>Loonheffingsformulier en kopie identiteitsbewijs</td>
+<td>5 jaar na het einde van het kalenderjaar waarin de strandwacht
+werkte</td>
+<td>Wettelijke bewaarplicht loonadministratie</td>
 </tr>
 <tr>
 <td>Kopie bankpas</td>
-<td>30 dagen na &quot;verwerkt&quot;</td>
-<td>Bestuur, Instellingen › Bewaartermijnen</td>
+<td>30 dagen nadat jij het dossier als verwerkt hebt gemarkeerd</td>
+<td>Alleen nodig om het rekeningnummer over te nemen</td>
+</tr>
+<tr>
+<td>Inschrijving als lid</td>
+<td>Volgt het dossier: 2 jaar na het laatste seizoen</td>
+<td>Geen wettelijke termijn</td>
 </tr>
 </tbody>
 </table>
-<p>De opschoning draait automatisch. Wat is vernietigd staat in het
-Logboek onder &quot;opschoning&quot;.</p>
-<p>Trekt een strandwacht zich terug vóórdat het dossier verwerkt is, dan
-kan hij zijn gegevens zelf verwijderen en verdwijnen de stukken mee.
-Gaat het dienstverband niet door nádat je het dossier verwerkt hebt, dan
-kan alleen een beheerder het dossier verwijderen, met een aparte
-bevestiging.</p>
+<p>Het opruimen gebeurt één keer per dag automatisch, <strong>maar
+alleen als &quot;Automatisch opschonen inschakelen&quot; aan staat</strong> bij
+Instellingen › Bewaren &amp; opschonen. Dat staat standaard uit. Vraag
+het bestuur of dat aan staat; anders blijft alles staan, ook de
+bankpasfoto&#39;s.</p>
+<p>De termijnen van 5 jaar en 30 dagen zijn standaardwaarden. Ze staan
+niet als veld op het scherm Bewaren &amp; opschonen; aanpassen kan
+alleen de technisch beheerder. Wat er is vernietigd, ziet de admin in
+het Logboek.</p>
+<p><strong>Terugtrekken.</strong> Trekt een strandwacht zich terug
+vóórdat het dossier verwerkt is, dan kan die de gegevens zelf
+verwijderen in het portaal; de stukken worden dan meteen vernietigd. Is
+het dossier al verwerkt en gaat het dienstverband toch niet door, dan
+kan alleen iemand met het recht om sollicitanten te verwijderen
+(standaard bestuur en admin) het dossier verwijderen. Het systeem vraagt
+dan apart om te bevestigen dat het dienstverband niet is doorgegaan.</p>
 <h1 id="wat-je-nooit-doet">Wat je nooit doet</h1>
+<blockquote>
+<p><strong>In het kort:</strong> stukken blijven in het beheer en in de
+loonadministratie. Niet mailen, niet kopiëren, niet delen.</p>
+</blockquote>
 <ul>
 <li>Stukken per e-mail of WhatsApp doorsturen, ook niet naar jezelf.
 Gebruik het beheer.</li>
-<li>Een BSN of IBAN in een spreadsheet, notitie of chat zetten buiten de
-loonadministratie.</li>
+<li>Een BSN of rekeningnummer in een spreadsheet, notitie of chat zetten
+buiten de loonadministratie.</li>
 <li>Je inlog delen. Elke download staat op jouw naam.</li>
-<li>Screenshots maken van ID-kopieën.</li>
+<li>Screenshots maken van kopieën van identiteitsbewijzen.</li>
+<li>Gedownloade bestanden laten staan op je computer.</li>
 </ul>
 <h1 id="veelgestelde-vragen">Veelgestelde vragen</h1>
+<blockquote>
+<p><strong>In het kort:</strong> de meeste vragen gaan over een dossier
+dat oranje blijft, een verificatiecode die niet aankomt of het
+watermerk.</p>
+</blockquote>
 <p><strong>Een dossier blijft oranje terwijl de strandwacht zegt dat
 alles is geüpload.</strong><br />
-Kijk welk stuk ontbreekt. Bij een ID-kaart moet ook de achterkant erbij;
-bij een paspoort niet. Het loonheffingsformulier telt pas mee na de
-ondertekening met verificatiecode.</p>
+Kijk achter &quot;Ontbreekt nog&quot; welk stuk mist. Bij een identiteitskaart
+moet ook de achterkant erbij; bij een paspoort niet. Het
+loonheffingsformulier telt pas mee na het ondertekenen met de
+verificatiecode.</p>
+<p><strong>Het dossier is groen, maar ik heb geen mail
+gekregen.</strong><br />
+Dat kan: de mail gaat alleen mee op het moment dat het
+loonheffingsformulier wordt ondertekend. Kwam een kopie later binnen,
+dan komt er geen mail. Verwerk het dossier gewoon, of klik op &quot;Melding
+opnieuw naar de penningmeester&quot; als je de mail toch wilt hebben.</p>
 <p><strong>De strandwacht krijgt geen verificatiecode.</strong><br />
-De code gaat naar het telefoonnummer uit het dossier (sms, anders
-WhatsApp, anders e-mail). Laat het nummer controleren bij &quot;Mijn
-gegevens&quot; in het portaal. Blijft het misgaan, dan is dat iets voor de
-admin (foutenlog).</p>
+De code gaat per sms naar het telefoonnummer uit het dossier; staat sms
+uit, dan via WhatsApp, en anders per e-mail. Klopt het nummer niet, laat
+het bestuur het dan aanpassen in het dossier. Blijft het misgaan, dan is
+het iets voor de admin (foutenlog).</p>
 <p><strong>Ik zie een watermerk op de ID-kopie. Kan dat
 weg?</strong><br />
 Nee. Het watermerk is bewust en beschermt tegen misbruik van de kopie.
 Voor de loonadministratie is een kopie mét watermerk gewoon geldig.</p>
 <p><strong>Het formulier van vorig jaar staat er niet
 meer.</strong><br />
-Het scherm toont het actieve seizoen. Stukken van eerdere seizoenen
-blijven in de kluis tot de bewaartermijn is verstreken; vraag de admin
-als je ze nodig hebt.</p>
+Het scherm toont alleen het actieve seizoen. Stukken van eerdere
+seizoenen blijven in de kluis tot de bewaartermijn voorbij is; vraag de
+admin als je ze nodig hebt.</p>
 <p><strong>Is de PDF echt door de strandwacht
 ondertekend?</strong><br />
 De laatste pagina van de PDF is het certificaat van ondertekening: wie,
 wanneer, vanaf welk IP-adres, met welke code naar welk nummer, en een
 controlegetal. Acrobat toont bij het zegel dat het document sinds de
-ondertekening niet is gewijzigd (met een melding dat de uitgever niet in
-de lijst van Adobe staat; dat is normaal voor een eigen zegel).</p>
+ondertekening niet is gewijzigd, met een melding dat de uitgever niet in
+de lijst van Adobe staat. Dat is normaal voor een eigen zegel.</p>
+<p><strong>Waarom krijgt het bestuur een mail als ik iets
+download?</strong><br />
+Zo ziet iemand anders mee dat deze stukken worden ingezien. Dat
+beschermt de strandwacht en jou. Alleen de technisch beheerder kan die
+melding uitzetten, en dat raden we af.</p>
 </body>
 </html>

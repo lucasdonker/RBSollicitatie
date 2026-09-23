@@ -3,10 +3,23 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.99.4');
+define('APP_VERSIE', '2.100.0');
 
 function app_changelog(): array {
     return [
+        '2.100.0' => [
+            'datum'  => '2026-09-23',
+            'titel'  => 'Rondleidingen door het beheer, en alle handleidingen bijgewerkt',
+            'punten' => [
+                'Nieuw: rondleidingen die op de echte schermen aanwijzen wat waar staat en wat je er moet doen. Per rol een route (bestuur in twee delen, begeleider, penningmeester, beheerder), en op elk scherm via het vraagteken "Rondleiding van dit scherm". Blader met de pijltjestoetsen, stop met Esc',
+                'Op Vandaag staat voor nieuwe beheerders een blok "Nieuw in het beheer?" met de rondleiding die bij hun rol past. Wegklikken wordt per apparaat onthouden',
+                'Onderin het menu staat nu "Hulp en handleidingen": de rondleidingen, de handleidingen en de hoofdstukken die je het vaakst nodig hebt',
+                'De handleidingen lees je nu in het beheer zelf, met een zoekveld dat de treffers markeert, een inhoudsopgave die meeloopt, afvinklijsten en bij veel hoofdstukken een knop "Laat zien op het scherm". De Word-versie download je vanaf dezelfde pagina',
+                'Alle vijf handleidingen zijn nagelopen tegen de huidige versie. Nieuw in de handleiding beheer: Aan de slag, Het seizoen in stappen (wat moet je wanneer doen), Het dossier, Trainingsweekend, Bewaartermijnen en een woordenlijst. Het runbook heeft nu een onderhoudskalender en een draaiboek voor een datalek',
+                'Trainingsweekend: "Doorvoeren" gaf een fout en voerde niemand door. Opgelost',
+                'Selectiedag: op de vier schermen en de bellijst deed het algemene script van het beheer niets (thema, meldingen, fase wijzigen), door een dubbele declaratie. Opgelost',
+            ],
+        ],
         '2.99.4' => [
             'datum'  => '2026-09-23',
             'titel'  => 'Donkere modus: ook de knoppen die de browser zelf tekent',

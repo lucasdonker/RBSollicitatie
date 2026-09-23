@@ -53,20 +53,24 @@ hr { border: 0; border-top: 1px solid var(--rand); margin: 24px 0; }
 <h1 class="title">Runbook systeembeheer — Sollicitatiesysteem Paal
 13</h1>
 </header>
-<p>Versie 2.94.0 · september 2026</p>
+<p>Versie 2.99 · september 2026</p>
 <p>Dit document is voor wie de servers beheert: installeren, uitrollen
-naar productie, configuratie, back-ups, herstel en het lezen van de
-logs. Het is de enige plek waar de technische stappen staan. Wat het
-bestuur in het beheer doet, staat in de <a href="handleiding_beheer.md">handleiding beheer</a>.</p>
+naar productie, configuratie, back-ups, herstel, toegangsbeheer,
+incidenten en het lezen van de logs. Het is de enige plek waar de
+technische stappen staan. Wat het bestuur in het beheer doet, staat in
+de <a href="handleiding_beheer.md">handleiding beheer</a>.</p>
 <p>De handleidingen staan als Markdown in
 <code>docs/handleiding/</code>. De map <code>docs/</code> is op de
 server afgeschermd (<code>docs/.htaccess</code>); in het beheer lees je
-ze onder Instellingen › Handleidingen, wat de meegeleverde HTML-versie
-achter de login serveert. Na een tekstwijziging draai je
+ze via het vraagteken rechtsboven of
+<code>/admin/handleiding.php</code>, dat de meegeleverde HTML-versie
+achter de login serveert. Dit runbook is alleen zichtbaar voor wie de
+module Systeem mag lezen. Na een tekstwijziging draai je
 <code>docs/handleiding/maak_export.ps1</code> (pandoc) om de HTML en de
 Word-versies bij te werken en commit je die mee.</p>
-<h1 id="inhoud">Inhoud</h1>
+<p><strong>Inhoud</strong></p>
 <ol type="1">
+<li><a href="#aan-de-slag">Aan de slag</a></li>
 <li><a href="#omgevingen-en-branches">Omgevingen en branches</a></li>
 <li><a href="#hoe-het-systeem-in-elkaar-zit">Hoe het systeem in elkaar
 zit</a></li>
@@ -80,17 +84,207 @@ instellingen</a></li>
 database staan</a></li>
 <li><a href="#cron">Cron</a></li>
 <li><a href="#authentik-sso">Authentik (SSO)</a></li>
+<li><a href="#toegangsbeheer">Toegangsbeheer</a></li>
+<li><a href="#wordpress-plugin">WordPress-plugin</a></li>
+<li><a href="#bewaartermijnen-en-privacy">Bewaartermijnen en
+privacy</a></li>
 <li><a href="#systeemcontrole-health-check">Systeemcontrole (health
 check)</a></li>
 <li><a href="#back-up-en-herstel">Back-up en herstel</a></li>
 <li><a href="#terugdraaien-rollback">Terugdraaien (rollback)</a></li>
 <li><a href="#logs-lezen">Logs lezen</a></li>
+<li><a href="#datalek-of-beveiligingsincident">Datalek of
+beveiligingsincident</a></li>
 <li><a href="#beveiligingsmaatregelen-in-het-kort">Beveiligingsmaatregelen in
 het kort</a></li>
 <li><a href="#bekende-beperkingen">Bekende beperkingen</a></li>
 </ol>
 <hr />
+<h1 id="aan-de-slag">Aan de slag</h1>
+<blockquote>
+<p><strong>In het kort:</strong> Nieuw als technisch beheerder? Regel in
+je eerste uur je toegang, leer de vijf plekken waar alles staat en draai
+één keer de systeemcontrole op test en productie. Daarna houdt de
+onderhoudskalender hieronder het systeem gezond.</p>
+</blockquote>
+<p><strong>Je eerste uur</strong></p>
+<ul class="task-list">
+<li><label><input type="checkbox"></input>Toegang tot <strong>Plesk</strong>
+(Cloud86) voor het domein <code>sollicitatie.paal13.com</code>,
+inclusief de subdomeinen voor test.</label></li>
+<li><label><input type="checkbox"></input>Een
+<strong>Authentik-account</strong> in de groep <code>Sol-Admin</code>.
+Log één keer in op
+<code>https://test.sollicitatie.paal13.com/admin/</code> en op
+productie.</label></li>
+<li><label><input type="checkbox"></input>Toegang tot de
+<strong>Git-repository</strong> (branches <code>Development</code> en
+<code>main</code>).</label></li>
+<li><label><input type="checkbox"></input>Toegang tot de
+<strong>wachtwoordkluis van het bestuur</strong>. Daar horen per
+omgeving te staan: de <code>KLUIS_SLEUTEL</code>, het
+databasewachtwoord, het SMTP-wachtwoord en het OIDC client secret.
+Ontbreekt de kluissleutel van productie daar, meld dat dezelfde dag:
+zonder die sleutel is een back-up van de documenten
+waardeloos.</label></li>
+<li><label><input type="checkbox"></input>Open op beide omgevingen
+<strong>Beheer › Systeem &amp; Updates</strong>: noteer de versie en
+controleer of alle acht checks van de <a href="#systeemcontrole-health-check">systeemcontrole</a> groen zijn.
+Kijk bij Cron of er &quot;via cron&quot; staat en niet &quot;via lazy&quot;.</label></li>
+<li><label><input type="checkbox"></input>Open <strong>Instellingen › Bewaren
+&amp; opschonen</strong> op productie en controleer dat &quot;Automatisch
+opschonen&quot; aan staat (zie <a href="#bewaartermijnen-en-privacy">Bewaartermijnen en
+privacy</a>).</label></li>
+<li><label><input type="checkbox"></input>Open <strong>Logboek</strong>,
+filter op bron Fouten, en kijk wat er de afgelopen week
+gebeurde.</label></li>
+<li><label><input type="checkbox"></input>Zorg dat je de foutmails ontvangt:
+het adres staat bij <strong>Instellingen › Afzender &amp;
+adressen</strong> (<code>mail.fout_email</code>, standaard <a href="mailto:website@paal13.com">website@paal13.com</a>).</label></li>
+</ul>
+<p><strong>Waar staat wat</strong></p>
+<table>
+<thead>
+<tr>
+<th>Wat</th>
+<th>Waar</th>
+<th>In Git?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Code</td>
+<td>Git-repository; test volgt <code>Development</code>, productie
+<code>main</code></td>
+<td>ja</td>
+</tr>
+<tr>
+<td>Configuratie per omgeving</td>
+<td><code>includes/config.php</code> op de server</td>
+<td>nee, nooit</td>
+</tr>
+<tr>
+<td>Geheimen van koppelingen (API, AI, WhatsApp, sms, SMTP)</td>
+<td>tabel <code>instellingen</code> in de database</td>
+<td>nee</td>
+</tr>
+<tr>
+<td>Versleutelde documenten, foto&#39;s, zegelcertificaat</td>
+<td><code>DOCUMENTEN_MAP</code> op de server, buiten de webroot</td>
+<td>nee</td>
+</tr>
+<tr>
+<td>Overige uploads (logo, landingspagina&#39;s, bijlagen)</td>
+<td><code>uploads/</code> in de webroot</td>
+<td>nee</td>
+</tr>
+<tr>
+<td>Geplande taak</td>
+<td>Plesk › Geplande taken</td>
+<td>nee</td>
+</tr>
+<tr>
+<td>Versie en changelog</td>
+<td>Beheer › Systeem &amp; Updates (bron:
+<code>includes/versie.php</code>)</td>
+<td>ja</td>
+</tr>
+<tr>
+<td>Logboek (acties, berichten, fouten)</td>
+<td>Beheer › Logboek</td>
+<td>nee (database)</td>
+</tr>
+<tr>
+<td>Serverlog (PHP-fouten, <code>db_failsafe</code>,
+<code>cron</code>)</td>
+<td>Plesk › Logs</td>
+<td>nee</td>
+</tr>
+<tr>
+<td>WordPress-plugin</td>
+<td><code>wordpress-plugin/</code> in de repo; geïnstalleerd op
+paal13.com</td>
+<td>ja</td>
+</tr>
+<tr>
+<td>Ontwikkelnotities, testharnassen, verwerkingsregister</td>
+<td><code>docs/ai/</code> op de machine van de ontwikkelaar</td>
+<td>nee (staat in <code>.gitignore</code>)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Onderhoudskalender</strong></p>
+<p>Dagelijks, in het seizoen (maart tot en met september):</p>
+<ul class="task-list">
+<li><label><input type="checkbox"></input>Foutmails lezen. Eén foutmail is een
+signaal, een reeks dezelfde is een storing.</label></li>
+<li><label><input type="checkbox"></input>Het scherm Vandaag in het beheer
+toont de berichtenwachtrij en mislukte berichten; staan daar mislukte
+berichten, kijk in Logboek › Berichten waarom.</label></li>
+</ul>
+<p>Wekelijks:</p>
+<ul class="task-list">
+<li><label><input type="checkbox"></input>Systeemcontrole op productie: alle
+acht groen, Cron &quot;via cron&quot;.</label></li>
+<li><label><input type="checkbox"></input>Logboek, bron Fouten: nieuwe
+foutcodes? Zoek de referentie op (zie <a href="#logs-lezen">Logs
+lezen</a>).</label></li>
+<li><label><input type="checkbox"></input>Logboek, bron Mislukte logins: een
+piek van mislukte logins op één adres of één e-mailadres wijst op raden
+van wachtwoorden of codes.</label></li>
+<li><label><input type="checkbox"></input>Plesk › Back-up: is de nachtelijke
+back-up van database én <code>DOCUMENTEN_MAP</code> gelukt?</label></li>
+<li><label><input type="checkbox"></input>Plesk: schijfruimte en of de
+PHP-versie van het domein nog 8.3 of hoger is.</label></li>
+</ul>
+<p>Maandelijks:</p>
+<ul class="task-list">
+<li><label><input type="checkbox"></input>Plesk-updates en PHP-updates door
+Cloud86 bijgehouden? PHP 8.3 krijgt beveiligingsupdates tot eind 2027;
+plan de overstap op tijd en test eerst op de testomgeving.</label></li>
+<li><label><input type="checkbox"></input>TLS-certificaten (Let&#39;s Encrypt in
+Plesk) verlengen automatisch; controleer de vervaldatum.</label></li>
+<li><label><input type="checkbox"></input>Beheer › Beheerders: staat er iemand
+op actief die geen rol meer heeft in de brigade?</label></li>
+</ul>
+<p>Per seizoen, vóór de aanmelding opengaat en na afloop:</p>
+<ul class="task-list">
+<li><label><input type="checkbox"></input><strong>Hersteltest</strong> van een
+back-up (zie <a href="#back-up-en-herstel">Back-up en
+herstel</a>).</label></li>
+<li><label><input type="checkbox"></input><strong>Toegangsreview</strong>:
+Authentik-groepen, Beheerders en Rollen &amp; rechten naast elkaar
+leggen (zie <a href="#toegangsbeheer">Toegangsbeheer</a>).</label></li>
+<li><label><input type="checkbox"></input><strong>Privacyverklaring</strong>
+(<code>/privacy.php</code>) lezen: kloppen de verwerkers en de termijnen
+nog? Zie <a href="#bewaartermijnen-en-privacy">Bewaartermijnen en
+privacy</a>.</label></li>
+<li><label><input type="checkbox"></input>Verwerkersovereenkomsten aanwezig
+voor Cloud86, de e-mailprovider en, als ze aanstaan, WhatsReach, de
+sms-dienst en Google (Gemini). Het bestuur bewaart ze; jij controleert
+dat de lijst klopt met wat er in Instellingen aanstaat.</label></li>
+<li><label><input type="checkbox"></input>Opschoon-logboek (Instellingen ›
+Bewaren &amp; opschonen): draait de opschoning dagelijks en verdwijnen
+afgewezen sollicitanten na de ingestelde termijn? (Ook zichtbaar in
+Logboek, bron AVG-opschoning.)</label></li>
+<li><label><input type="checkbox"></input>WordPress-plugin: <strong>Verbinding
+testen</strong> op paal13.com en één proefaanmelding op
+test.</label></li>
+<li><label><input type="checkbox"></input>Overweeg de API-sleutel te
+vernieuwen (zie <a href="#wordpress-plugin">WordPress-plugin</a>).</label></li>
+<li><label><input type="checkbox"></input>Testomgeving: staan er echte
+persoonsgegevens op? Verwijder die.</label></li>
+</ul>
+<p>Per release: de <a href="#uitrollen-naar-productie-checklist">checklist</a>.</p>
+<p>Jaarlijks: de <a href="#datalek-of-beveiligingsincident">incidentprocedure</a> met het
+bestuur doorlopen en de contactgegevens daarin bijwerken.</p>
 <h1 id="omgevingen-en-branches">Omgevingen en branches</h1>
+<blockquote>
+<p><strong>In het kort:</strong> Er is een test- en een
+productieomgeving, elk met een eigen database, <code>config.php</code>
+en kluissleutel. Test volgt <code>Development</code> automatisch;
+productie gaat handmatig vanaf <code>main</code>.</p>
+</blockquote>
 <table>
 <thead>
 <tr>
@@ -118,50 +312,96 @@ het kort</a></li>
 <p>Elke omgeving heeft een <strong>eigen database</strong>, een
 <strong>eigen <code>includes/config.php</code></strong> en een
 <strong>eigen kluissleutel</strong>. Niets daarvan staat in Git. Het
-systeem herkent de omgeving aan <code>APP_URL</code>: op test staat een
-oranje label TESTOMGEVING in het beheer.</p>
+systeem herkent de omgeving aan <code>APP_URL</code>
+(<code>omgeving()</code> in <code>includes/functions.php</code>): een
+host met <code>test</code>, <code>staging</code>, <code>dev</code> of
+<code>acc</code> erin, of <code>localhost</code>, is test. Op test staat
+een oranje label TESTOMGEVING in het beheer.</p>
 <p>Werkwijze: bouwen op <code>Development</code> → testen op de
 testomgeving → merge naar <code>main</code> → uitrollen volgens de
-checklist hieronder.</p>
+checklist.</p>
+<p>Zet geen echte persoonsgegevens op de testomgeving. Test met
+verzonnen sollicitanten en je eigen e-mailadres.</p>
 <h1 id="hoe-het-systeem-in-elkaar-zit">Hoe het systeem in elkaar
 zit</h1>
+<blockquote>
+<p><strong>In het kort:</strong> Eén PHP-applicatie zonder framework met
+twee kanten (portaal en beheer), een publieke API voor de
+WordPress-plugin en een cron. Gevoelige stukken staan versleuteld in de
+kluis; het schema herstelt zichzelf na elke nieuwe versie.</p>
+</blockquote>
 <ul>
-<li><strong>PHP 8.3, MariaDB</strong>, Apache met PHP-FPM achter de
-Plesk-proxy (Cloud86). Geen framework, geen Composer: alles wat nodig is
-zit in de repo (<code>includes/lib/</code> bevat TCPDF en FPDI voor de
-PDF&#39;s).</li>
+<li><strong>PHP 8.3, MariaDB</strong>, Apache met
+<strong>PHP-FPM</strong> achter de Plesk-proxy (Cloud86). Geen
+framework, geen Composer: alles zit in de repo
+(<code>includes/lib/</code> bevat TCPDF en FPDI voor de PDF&#39;s).
+Benodigde PHP-extensies: <code>pdo_mysql</code>, <code>openssl</code>,
+<code>sodium</code>, <code>curl</code>, <code>mbstring</code>,
+<code>gd</code>, <code>fileinfo</code>.</li>
+<li><strong>PHP-FPM is een eis, geen voorkeur.</strong> Mails, WhatsApp,
+het auditlog en de lazy-cron draaien ná het antwoord aan de bezoeker
+(<code>includes/na_antwoord.php</code>, via
+<code>fastcgi_finish_request</code>). Zet de PHP-handler in Plesk dus op
+een FPM-variant. Onder een andere handler werkt alles nog, maar wacht de
+bezoeker tot het werk klaar is.</li>
 <li><strong>Twee kanten:</strong> het portaal voor sollicitanten
 (<code>/portaal/</code>) en het beheer (<code>/admin/</code>). Daarnaast
-<code>/aanmelden.php</code> (het openbare aanmeldformulier),
-<code>/p/&lt;naam&gt;</code> (landingspagina&#39;s), <code>/api/</code>
-(voor de WordPress-plugin op paal13.com) en
+de openbare adressen <code>/aanmelden.php</code> (aanmeldformulier),
+<code>/privacy.php</code> (privacyverklaring),
+<code>/p/&lt;naam&gt;</code> (landingspagina&#39;s), <code>/foto.php</code>
+(foto van een sollicitant, alleen met toegang),
+<code>/d/&lt;code&gt;</code> (tijdelijke downloadlink van een bijlage),
+<code>/track.php</code> (anonieme tellingen van het aanmeldformulier),
+<code>/api/</code> (voor de WordPress-plugin) en
 <code>/cron/run.php</code>.</li>
-<li><strong>Inloggen:</strong> beheerders via Authentik (OIDC);
-sollicitanten met een code per e-mail, WhatsApp of sms, of via Authentik
-als ze al lid zijn.</li>
+<li><strong>Het aanmeldformulier bestaat één keer:</strong> de HTML komt
+uit <code>includes/aanmeldformulier.php</code>, de verwerking uit
+<code>includes/aanmelden_kern.php</code>. <code>/aanmelden.php</code> en
+de landingspagina&#39;s roepen die aan; de WordPress-plugin haalt het
+formulier op via <code>GET /api/formulier.php</code> en post via
+<code>POST /api/aanmelden.php</code>.</li>
+<li><strong>Inloggen:</strong> beheerders via Authentik (OIDC).
+Sollicitanten met een code of een eenmalige inloglink per e-mail,
+WhatsApp of sms, of via Authentik als ze al lid zijn. &quot;Blijf ingelogd&quot;
+op het portaal is een apart token (zie <a href="#toegangsbeheer">Toegangsbeheer</a>).</li>
 <li><strong>Meldingen:</strong> één verzendkern voor e-mail (SMTP),
-WhatsApp (WhatsReach) en sms. Alles gaat via een wachtrij die door de
-cron wordt geleegd.</li>
+WhatsApp (WhatsReach) en sms. Berichten gaan meteen na het antwoord de
+deur uit of via de wachtrij (<code>mail_queue</code>) die de cron
+leegt.</li>
 <li><strong>Gevoelige gegevens</strong> (kopie ID, bankpas, BSN, IBAN,
 verzegelde PDF&#39;s) staan versleuteld in de <strong>kluis</strong>:
-bestanden in <code>DOCUMENTEN_MAP</code> buiten de webroot, sleutel in
-<code>config.php</code> plus een zout in de database. Zonder sleutel
-zijn ze voor niemand leesbaar.</li>
-<li><strong>Zelfherstel:</strong> bij de eerste pagina na een nieuwe
-versie maakt het systeem ontbrekende tabellen en kolommen zelf aan
-(<code>db_failsafe</code>). Grotere stappen staan als SQL-bestanden in
-<code>sql/</code> en draai je via Beheer › Instellingen › Systeem &amp;
-Updates › Migraties uitvoeren.</li>
+bestanden in <code>DOCUMENTEN_MAP</code> buiten de webroot, hoofdsleutel
+in <code>config.php</code> plus een zout in de database. <strong>Foto&#39;s
+van sollicitanten</strong> staan sinds 2.99.3 ook in
+<code>DOCUMENTEN_MAP</code> (submap <code>fotos/</code>), met een
+willekeurige naam en alleen op te vragen via <code>/foto.php</code>; ze
+zijn afgeschermd maar niet versleuteld.</li>
+<li><strong>Zelfherstel:</strong> bij het eerste verzoek na een nieuwe
+versie maakt <code>db_failsafe()</code> ontbrekende tabellen en kolommen
+aan en doet het eenmalige verhuizingen (bijvoorbeeld de foto&#39;s uit
+<code>uploads/fotos/</code>). Daarna slaat hij zichzelf over tot de
+volgende versie (instelling <code>db.failsafe_versie</code>).</li>
+<li><strong>Beheerschermen</strong> zijn opgebouwd uit gedeelde
+bouwstenen (<code>includes/ui_beheer.php</code>,
+<code>admin/_*.php</code>, <code>assets/css/beheer.css</code>). Voor jou
+betekent dat: een weergavefout zit bijna altijd op één plek en geldt dan
+voor alle schermen tegelijk.</li>
 </ul>
 <h1 id="uitrollen-naar-productie-checklist">Uitrollen naar productie
 (checklist)</h1>
-<p>Doorloop dit bij <strong>elke</strong> release. De stappen met ★ zijn
-eenmalig bij de overgang naar 2.94.0 (de eerste productie-uitrol sinds
-augustus 2026).</p>
+<blockquote>
+<p><strong>In het kort:</strong> Doorloop dit bij elke release, van
+back-up tot rooktest. Stappen met &quot;(eenmalig)&quot; horen bij de eerste
+productie-uitrol sinds augustus 2026 en kun je daarna overslaan.</p>
+</blockquote>
 <p><strong>Vooraf</strong></p>
 <ol type="1">
-<li>Alles is op de testomgeving getest volgens de checklist in
-<code>docs/ai/Toekomstige plannen/Nog te doen.md</code>.</li>
+<li>Alles is op de testomgeving getest. Minimaal deze rooktest:
+aanmelden via <code>/aanmelden.php</code> en via de WordPress-plugin,
+inloggen op het portaal met code en met inloglink, een formulier
+invullen, een fase wijzigen in het beheer, een bericht versturen, en de
+systeemcontrole groen. De uitgebreide testlijst houdt de ontwikkelaar
+bij in <code>docs/ai/</code> (niet in Git).</li>
 <li>Maak een back-up van de productiedatabase (Plesk › Databases ›
 Exporteren) en van <code>DOCUMENTEN_MAP</code>.</li>
 <li>Merge <code>Development</code> naar <code>main</code> (GitHub
@@ -171,8 +411,8 @@ Desktop of een pull request). Push.</li>
 <ol start="4" type="1">
 <li>Plesk › Git › productie-repository › <strong>Deploy</strong>. Wacht
 tot de deploy klaar is.</li>
-<li>★ Vul <code>includes/config.php</code> op productie aan met de
-sleutels die sinds augustus zijn bijgekomen (zie <a href="#configphp-alle-instellingen">config.php: alle instellingen</a>):
+<li>(eenmalig) Vul <code>includes/config.php</code> op productie aan met
+de sleutels die sinds augustus zijn bijgekomen (zie <a href="#configphp-alle-instellingen">config.php: alle instellingen</a>):
 <ul>
 <li><code>KLUIS_SLEUTEL</code> — genereer een nieuwe:
 <code>php -r &quot;echo base64_encode(random_bytes(32));&quot;</code>.
@@ -184,85 +424,124 @@ Kwijt = alle documenten kwijt.</li>
 <code>/var/www/vhosts/paal13.com/private/sollicitatie-documenten</code>.
 Maak de map aan; de PHP-gebruiker van de site moet er kunnen schrijven
 (rechten 700).</li>
-<li>Controleer dat de laatste twee regels
-<code>error_reporting(0);</code> en
+<li>Controleer dat de laatste regels <code>error_reporting(0);</code> en
 <code>ini_set(&#39;display_errors&#39;, 0);</code> erin staan. De
 <code>.htaccess</code> regelt dit niet onder PHP-FPM.</li>
 </ul></li>
-<li>★ Verwijder op de productieserver de mappen <code>setup/</code> en
-<code>_backups/</code> als die er nog staan (<code>_backups/</code>
-bevat kopieën van oude configuraties met wachtwoorden).</li>
+<li>(eenmalig) Verwijder op de productieserver de mappen
+<code>setup/</code> en <code>_backups/</code> als die er nog staan
+(<code>_backups/</code> bevat kopieën van oude configuraties met
+wachtwoorden).</li>
 <li>Open één willekeurige pagina, bijvoorbeeld
 <code>https://sollicitatie.paal13.com/portaal/</code>. Daarmee draait de
 zelfherstelronde voor deze versie.</li>
-<li>Log in op het beheer en ga naar <strong>Instellingen › Systeem &amp;
+<li>Log in op het beheer en ga naar <strong>Systeem &amp;
 Updates</strong>:
 <ul>
-<li>Klik <strong>Migraties uitvoeren</strong> (de SQL-bestanden in
-<code>sql/</code> die nog niet gedraaid zijn).</li>
-<li>Klik <strong>Systeemcontrole</strong> en kijk of alle acht checks
+<li>Klik <strong>Migraties uitvoeren</strong>. Dat forceert de
+zelfherstelronde nog eens (<code>db_failsafe</code>) en is veilig om
+vaker te doen.</li>
+<li>Open <code>/admin/update.php</code> (niet in het menu, alleen admin)
+en kijk of er losse SQL-migraties uit <code>sql/</code> op &quot;pending&quot;
+staan. Normaal is dat nul; de laatste is
+<code>migratie_0021</code>.</li>
+<li>Kijk bij <strong>Systeemgezondheid</strong> of alle acht checks
 groen zijn. Kluis en zegel horen groen te zijn; het zegelcertificaat
 wordt bij de eerste keer automatisch aangemaakt.</li>
-<li>★ Kijk in <strong>Instellingen › Foutenlog</strong> (of het
-serverlog) of de regel
-<code>otp_tokens.type omgezet van ENUM naar VARCHAR(30)</code> er
-<strong>één keer</strong> staat. Zonder die omzetting wordt elke
-verificatiecode bij het ondertekenen afgekeurd.</li>
+<li>(eenmalig) Zoek in het serverlog (Plesk › Logs) of Logboek › Fouten
+de regel <code>otp_tokens.type omgezet van ENUM naar VARCHAR(30)</code>.
+Die hoort er <strong>één keer</strong> te staan. Zonder die omzetting
+wordt elke verificatiecode bij het ondertekenen afgekeurd.</li>
+<li>(eenmalig, 2.99.3) Controleer via Plesk › Bestandsbeheer dat
+<code>uploads/fotos/</code> leeg is (op een <code>.htaccess</code> na)
+en dat <code>&lt;DOCUMENTEN_MAP&gt;/fotos/</code> de foto&#39;s bevat.
+Blijft er iets staan, dan kon de verhuizing niet schrijven: controleer
+de rechten van <code>DOCUMENTEN_MAP</code> en klik nog eens Migraties
+uitvoeren.</li>
 </ul></li>
-<li>★ Ga naar <strong>Beheerders</strong>. Staat er nog een account
-<code>admin@paal13.com</code> op non-actief, laat dat zo (of verwijder
-het). Dat was het installatie-account met een openbaar wachtwoord;
-2.94.0 zet het automatisch uit.</li>
-<li>Open <strong>Instellingen</strong> een keer (daarmee wordt de
-cron-token aangemaakt als die ontbreekt) en controleer de cron in Plesk
-(zie <a href="#cron">Cron</a>).</li>
-<li>★ Authentik: controleer de redirect-URI&#39;s en de groep
-<code>Sol-Penningmeester</code> (zie <a href="#authentik-sso">Authentik</a>).</li>
-<li>★ Instellingen › <strong>Algemeen</strong>: vul het
+<li>(eenmalig) Ga naar <strong>Beheerders</strong>. Staat er nog een
+account <code>admin@paal13.com</code> op non-actief, laat dat zo (of
+verwijder het). Dat was het installatie-account met een openbaar
+wachtwoord; sinds 2.94.0 zet het systeem het automatisch uit.</li>
+<li>Controleer de cron in Plesk (zie <a href="#cron">Cron</a>) en kijk
+na tien minuten of de systeemcontrole bij Cron &quot;via cron&quot; meldt.</li>
+<li>(eenmalig) Authentik: controleer de redirect-URI&#39;s en de groep
+<code>Sol-Penningmeester</code>, en zet die groep bij
+<strong>Instellingen › Authentik</strong> in de lijst met toegestane
+groepen (zie <a href="#authentik-sso">Authentik</a>).</li>
+<li>(eenmalig) <strong>Instellingen › Algemeen</strong>: vul het
 penningmeester-adres en het ledenservice-adres in en plaats de
 huisregels-pdf onder &quot;Taken na aannemen&quot;. Laat &quot;loondossier-stukken als
 bijlage meesturen&quot; uit.</li>
-<li>Stuur vanuit <strong>Instellingen › Berichten</strong> een
-testbericht per e-mail en, als WhatsApp aan staat, via WhatsApp.
-Controleer de regel in Berichten › log.</li>
-<li>Test de inlog van een sollicitant (code per e-mail) en de inlog van
-een beheerder (Authentik).</li>
-<li>★ WordPress-plugin op paal13.com: de API-sleutel moet in de header
-<code>X-Paal13-Key</code> worden meegestuurd. De variant in het webadres
-(<code>?key=</code>) werkt sinds 2.94.0 niet meer.</li>
+<li>(eenmalig) <strong>Instellingen › Bewaren &amp; opschonen</strong>:
+zet &quot;Automatisch opschonen&quot; aan en controleer de termijnen (zie <a href="#bewaartermijnen-en-privacy">Bewaartermijnen en privacy</a>).</li>
+<li>Stuur vanuit <strong>Instellingen › Kanalen &amp; meldingen</strong>
+een testbericht per e-mail en, als WhatsApp aan staat, via WhatsApp.
+Controleer de regel in Logboek › Berichten.</li>
+<li>Test de inlog van een sollicitant (code én inloglink per e-mail) en
+de inlog van een beheerder (Authentik).</li>
+<li>Open <code>https://sollicitatie.paal13.com/privacy.php</code>: de
+pagina laadt en de termijnen kloppen met wat je bij stap 13 zag.</li>
+<li>WordPress-plugin op paal13.com: alleen als de plugin in deze release
+is veranderd, of (eenmalig) bij de eerste installatie. Zie <a href="#wordpress-plugin">WordPress-plugin</a>. Klik daarna in WordPress
+op <strong>Verbinding testen</strong> — er hoort te staan welk seizoen
+actief is.</li>
 </ol>
 <p><strong>Na afloop</strong></p>
-<ol start="16" type="1">
+<ol start="18" type="1">
 <li>Noteer de versie en datum in het logboek van het bestuur. De
 changelog staat in Systeem &amp; Updates.</li>
+<li>Kijk de volgende ochtend in Logboek › Fouten of er sinds de uitrol
+iets nieuws bij is.</li>
 </ol>
 <h1 id="nieuwe-server-installeren">Nieuwe server installeren</h1>
-<p>Alleen nodig bij een verhuizing of een extra omgeving. De
-installatiewizard bestaat niet meer.</p>
+<blockquote>
+<p><strong>In het kort:</strong> Alleen bij een verhuizing of een extra
+omgeving. Database aanmaken, repo koppelen, <code>config.php</code>
+invullen, <code>schema.sql</code> importeren, één pagina openen en
+inloggen via Authentik. Een installatiewizard is er niet meer.</p>
+</blockquote>
 <ol type="1">
-<li>Maak in Plesk een database en een databasegebruiker met alle rechten
-op die database.</li>
-<li>Koppel de Git-repository aan het (sub)domein, branch
+<li><p>Maak in Plesk een database en een databasegebruiker met alle
+rechten op die database.</p></li>
+<li><p>Koppel de Git-repository aan het (sub)domein, branch
 <code>main</code> (productie) of <code>Development</code> (test),
-documentroot = de repo-root.</li>
-<li>Kopieer <code>includes/config.template.php</code> naar
+documentroot = de repo-root. Zet de PHP-handler op PHP 8.3 FPM.</p></li>
+<li><p>Kopieer <code>includes/config.template.php</code> naar
 <code>includes/config.php</code> en vul alle waarden in (tabel
 hieronder). Elke omgeving krijgt een <strong>eigen</strong>
-kluissleutel.</li>
-<li>Importeer <code>sql/schema.sql</code> in de database (phpMyAdmin of
-<code>mysql &lt; sql/schema.sql</code>).</li>
-<li>Open een pagina; de zelfherstelronde maakt de rest van de tabellen
-aan. Draai daarna in Systeem &amp; Updates de migraties.</li>
-<li>Log in via Authentik met een account in de groep
+kluissleutel.</p></li>
+<li><p>Importeer <code>sql/schema.sql</code> in de database (phpMyAdmin
+of <code>mysql &lt; sql/schema.sql</code>).</p></li>
+<li><p>Maak <code>DOCUMENTEN_MAP</code> aan buiten de webroot (rechten
+700, eigenaar de PHP-gebruiker).</p></li>
+<li><p><strong>Zet <code>uploads/.htaccess</code> terug.</strong> De map
+<code>uploads/</code> staat niet in Git, en daarmee ook dit bestand
+niet. Het blokkeert het uitvoeren van scripts in de uploadmap. Neem het
+uit de back-up, of maak het aan met minimaal:</p>
+<pre><code>&lt;FilesMatch &quot;\.(php|php3|php4|php5|php7|php8|phtml|phar|pht|cgi|pl|py|asp|aspx|sh|shtml)$&quot;&gt;
+    Require all denied
+&lt;/FilesMatch&gt;
+RemoveHandler .php .phtml .php3 .php4 .php5 .php7 .php8 .phar
+RemoveType .php .phtml .php3 .php4 .php5 .php7 .php8 .phar</code></pre></li>
+<li><p>Open een pagina; de zelfherstelronde maakt de rest van de
+tabellen aan.</p></li>
+<li><p>Log in via Authentik met een account in de groep
 <code>Sol-Admin</code>; dat account wordt automatisch beheerder met rol
-admin. Er is geen standaardaccount met wachtwoord meer.</li>
-<li>Stel de cron in en doorloop de rest van de checklist hierboven vanaf
-stap 10.</li>
+admin. Er is geen standaardaccount met wachtwoord meer.</p></li>
+<li><p>Stel de cron in en doorloop de rest van de checklist vanaf stap
+8.</p></li>
 </ol>
 <p>Maprechten: <code>uploads/</code> schrijfbaar voor PHP;
 <code>DOCUMENTEN_MAP</code> schrijfbaar en buiten de webroot. Alle
 andere mappen alleen-lezen is prima.</p>
 <h1 id="configphp-alle-instellingen">config.php: alle instellingen</h1>
+<blockquote>
+<p><strong>In het kort:</strong> <code>includes/config.php</code> bevat
+de databasegegevens, het webadres, de mailserver, Authentik en de kluis.
+Het staat nooit in Git; <code>includes/config.template.php</code> is het
+voorbeeld.</p>
+</blockquote>
 <table>
 <thead>
 <tr>
@@ -281,24 +560,28 @@ andere mappen alleen-lezen is prima.</p>
 <tr>
 <td><code>APP_URL</code></td>
 <td>Volledig webadres van deze omgeving, zonder slash aan het eind</td>
-<td>Bepaalt test/productie en alle links in mails</td>
+<td>Bepaalt test/productie, https-detectie en alle links in mails</td>
 </tr>
 <tr>
 <td><code>MAIL_FROM</code>, <code>MAIL_FROM_NAME</code></td>
 <td>Afzender van alle e-mail</td>
-<td>Moet een adres op een domein zijn met geldige SPF/DKIM</td>
+<td>Moet een adres zijn op een domein met geldige SPF, DKIM en
+DMARC</td>
 </tr>
 <tr>
 <td><code>MAIL_BESTUUR</code></td>
-<td>Standaard bestuursadres (meldingen, terugval)</td>
-<td>Kan in het beheer per meldingstype worden overschreven</td>
+<td>Terugval voor het bestuursadres</td>
+<td>Het adres in Instellingen › Afzender &amp; adressen gaat voor; de
+systeemcontrole kijkt wel naar deze constante</td>
 </tr>
 <tr>
 <td><code>SMTP_HOST</code>, <code>SMTP_PORT</code>,
 <code>SMTP_USER</code>, <code>SMTP_PASS</code>,
 <code>SMTP_ENCRYPT</code></td>
 <td>Mailserver</td>
-<td>Leeg = PHP <code>mail()</code>, alleen als noodoplossing</td>
+<td>Worden overschreven door Instellingen › E-mailserver als daar een
+host staat. Allebei leeg = PHP <code>mail()</code>, alleen als
+noodoplossing</td>
 </tr>
 <tr>
 <td><code>OIDC_CLIENT_ID</code>, <code>OIDC_CLIENT_SECRET</code>,
@@ -316,18 +599,20 @@ gebruikt vast
 <tr>
 <td><code>KLUIS_SLEUTEL</code></td>
 <td>Hoofdsleutel van de kluis, base64 van 32 bytes</td>
-<td>Uniek per omgeving, kopie in de wachtwoordkluis</td>
+<td>Uniek per omgeving, kopie in de wachtwoordkluis. Nooit vervangen
+zolang er documenten zijn</td>
 </tr>
 <tr>
 <td><code>KLUIS_SLEUTEL_VERSIE</code></td>
 <td>Nummer van de sleutel</td>
-<td>Alleen ophogen bij een sleutelwissel</td>
+<td>Laat op <code>1</code>. Er is geen herversleutel-functie: ophogen
+maakt alle bestaande documenten onleesbaar</td>
 </tr>
 <tr>
 <td><code>DOCUMENTEN_MAP</code></td>
-<td>Map voor versleutelde documenten</td>
-<td>Buiten de webroot; leeg = <code>uploads/documenten</code> (health
-waarschuwt)</td>
+<td>Map voor versleutelde documenten, foto&#39;s en het zegel</td>
+<td>Buiten de webroot. Leeg = <code>uploads/documenten</code>
+(afgeschermd, maar de systeemcontrole waarschuwt)</td>
 </tr>
 <tr>
 <td><code>ZEGEL_MAP</code>, <code>ZEGEL_NAAM</code>,
@@ -337,9 +622,26 @@ waarschuwt)</td>
 aangemaakt</td>
 </tr>
 <tr>
-<td><code>SESSION_NAME</code>, <code>SESSION_LIFETIME</code></td>
-<td>Sessiecookie</td>
-<td>Laten staan</td>
+<td><code>ZEGEL_OPENSSL_CNF</code></td>
+<td>Pad naar <code>openssl.cnf</code> (optioneel)</td>
+<td>Alleen nodig als openssl zijn configuratie niet zelf vindt; op
+Cloud86 niet</td>
+</tr>
+<tr>
+<td><code>SESSION_NAME</code></td>
+<td>Naam van de sessiecookie</td>
+<td>Laten staan (<code>p13sess</code>)</td>
+</tr>
+<tr>
+<td><code>SESSION_LIFETIME</code></td>
+<td>Staat nog in het voorbeeld</td>
+<td>Wordt niet meer gebruikt: de sessiecookie leeft vast acht uur
+(<code>sessie_start()</code>)</td>
+</tr>
+<tr>
+<td><code>date_default_timezone_set(&#39;Europe/Amsterdam&#39;)</code></td>
+<td>Tijdzone</td>
+<td>Laten staan; bewaartermijnen en de cron rekenen ermee</td>
 </tr>
 <tr>
 <td><code>error_reporting(0)</code>, <code>display_errors=0</code></td>
@@ -348,10 +650,15 @@ aangemaakt</td>
 </tr>
 </tbody>
 </table>
+<p>Ontbreekt <code>config.php</code>, dan toont elke pagina &quot;Systeem is
+nog niet ingesteld&quot; (HTTP 503).</p>
 <h1 id="geheimen-die-in-de-database-staan">Geheimen die in de database
 staan</h1>
-<p>Deze staan niet in <code>config.php</code> maar in de tabel
-<code>instellingen</code>, en vul je in het beheer in:</p>
+<blockquote>
+<p><strong>In het kort:</strong> Sleutels van koppelingen staan in de
+tabel <code>instellingen</code> en vul je in het beheer in. Een
+database-export bevat ze dus: behandel exports als geheim.</p>
+</blockquote>
 <table>
 <thead>
 <tr>
@@ -363,81 +670,353 @@ staan</h1>
 <tbody>
 <tr>
 <td><code>cron.token</code></td>
-<td>Instellingen › Mail &amp; herinneringen</td>
-<td>Token voor <code>/cron/run.php</code>; wordt automatisch
-aangemaakt</td>
+<td>Instellingen › Bewaren &amp; opschonen (onderaan, &quot;Cronjob&quot;)</td>
+<td>Token voor <code>/cron/run.php</code>; wordt aangemaakt zodra dat
+tabblad opent en hij ontbreekt</td>
 </tr>
 <tr>
 <td><code>api.sleutel</code>, <code>api.origins</code></td>
 <td>Instellingen › Website &amp; API</td>
-<td>Sleutel en toegestane websites voor de WordPress-plugin</td>
+<td>Sleutel en toegestane websites voor de WordPress-plugin.
+<code>api.origins</code> bepaalt ook wie het aanmeldformulier in een
+iframe mag tonen</td>
+</tr>
+<tr>
+<td><code>smtp.*</code></td>
+<td>Instellingen › E-mailserver</td>
+<td>Mailserver en wachtwoord; gaat voor op <code>SMTP_*</code> in
+config</td>
 </tr>
 <tr>
 <td><code>ai.api_key</code></td>
-<td>Instellingen › AI</td>
+<td>Instellingen › AI-analyse</td>
 <td>Sleutel voor de AI-hulp (Gemini)</td>
 </tr>
 <tr>
-<td><code>authentik.api_token</code>,
+<td><code>authentik.url</code>, <code>authentik.api_token</code>,
 <code>authentik.admin_groepen</code></td>
-<td>Instellingen › Authentik &amp; competenties</td>
-<td>Voor de competentie-sync en de groepen die beheerder mogen zijn</td>
+<td>Instellingen › Authentik</td>
+<td>Competentie-sync en de groepen die het beheer in mogen</td>
 </tr>
 <tr>
 <td><code>sms.*</code>, <code>wa.*</code></td>
-<td>Instellingen › SMS, WhatsApp &amp; meldingen</td>
+<td>Instellingen › Kanalen &amp; meldingen</td>
 <td>Sleutels van de sms-gateway en WhatsReach</td>
 </tr>
 <tr>
 <td><code>kluis.zout</code></td>
-<td>(automatisch)</td>
+<td>(automatisch, niet wijzigen)</td>
 <td>Zout van de kluis; samen met <code>KLUIS_SLEUTEL</code> nodig om
 documenten te lezen</td>
 </tr>
 </tbody>
 </table>
-<p>Een database-export bevat deze waarden. Behandel exports dus als
-geheim.</p>
+<p>Een sleutel vervangen: API-sleutel met de knop in Website &amp; API
+(en meteen in de plugin invullen); AI-, sms- en WhatsApp-sleutels bij de
+leverancier vernieuwen en in het beheer plakken. Het cron-token heeft
+geen knop: maak de waarde leeg in phpMyAdmin
+(<code>UPDATE instellingen SET waarde = &#39;&#39; WHERE sleutel = &#39;cron.token&#39;</code>),
+open het tabblad Bewaren &amp; opschonen voor een nieuw token en zet dat
+in de Plesk-taak.</p>
 <h1 id="cron">Cron</h1>
-<p>Plesk › Geplande taken, <strong>elke 5 minuten</strong>, als de
-gebruiker van de site:</p>
+<blockquote>
+<p><strong>In het kort:</strong> Eén geplande taak in Plesk, elke 5
+minuten, roept <code>/cron/run.php</code> aan met het cron-token. Zonder
+die taak blijven berichten hangen en draait de AVG-opschoning niet.</p>
+</blockquote>
+<p>Plesk › Geplande taken, <strong>elke 5 minuten</strong>, type &quot;URL
+ophalen&quot; of een opdracht als de gebruiker van de site:</p>
 <pre><code>curl -s &quot;https://sollicitatie.paal13.com/cron/run.php?token=&lt;cron.token&gt;&quot; &gt; /dev/null</code></pre>
-<p>Wat de cron doet: berichtenwachtrij legen (max 8 per run),
-AI-wachtrij, herinneringen en geplande berichten, automatisch
-uitnodigen, Authentik-sync en één keer per dag de AVG-opschoning. Een
-lock van vier minuten voorkomt dubbel draaien.</p>
+<p>De volledige regel met het token staat in het beheer bij Instellingen
+› Bewaren &amp; opschonen › Cronjob, met een knop &quot;Handmatig uitvoeren&quot;.
+Het antwoord is JSON met per taak wat er gebeurde.</p>
+<p>Wat de cron doet (<code>includes/cron_taken.php</code>):</p>
+<ul>
+<li>elke run: berichtenwachtrij legen (max 8 per run), AI-wachtrij (max
+3), herinneringen en geplande berichten, automatisch uitnodigen;</li>
+<li>alleen vanuit de echte cron: Authentik-sync, verlopen &quot;blijf
+ingelogd&quot;-tokens opruimen, fotobestanden zonder dossier opruimen, en één
+keer per dag de AVG-opschoning.</li>
+</ul>
+<p>Een lock van vier minuten (<code>cron.lock_tot</code>) voorkomt
+dubbel draaien.</p>
 <p>Zonder cron blijft het systeem werken via een vangnet: een bezoek aan
 het beheer of het portaal zet de wachtrij maximaal één keer per uur in
-gang. Dat vangnet doet <strong>geen</strong> AVG-opschoning en geen
-Authentik-sync. De systeemcontrole waarschuwt na 30 minuten zonder cron
-en meldt een fout na 2 uur.</p>
+gang, ná het antwoord aan de bezoeker. Dat vangnet doet
+<strong>geen</strong> AVG-opschoning, geen Authentik-sync en geen
+opruiming van tokens en foto&#39;s. Omdat het vangnet ook als &quot;laatste run&quot;
+telt, kan de systeemcontrole groen zijn terwijl de echte cron stilligt:
+kijk of er &quot;via cron&quot; staat. Na 30 minuten zonder run volgt een
+waarschuwing, na 2 uur een fout.</p>
 <h1 id="authentik-sso">Authentik (SSO)</h1>
-<p>In Authentik (<code>auth.paal13.com</code>) hoort één
-OAuth2/OpenID-provider met:</p>
+<blockquote>
+<p><strong>In het kort:</strong> Eén OAuth2/OpenID-provider in
+<code>auth.paal13.com</code> met twee redirect-URI&#39;s per omgeving. De
+groep in Authentik bepaalt of iemand het beheer in mag en met welke
+rol.</p>
+</blockquote>
+<p>In Authentik hoort per omgeving één OAuth2/OpenID-provider met:</p>
 <ul>
-<li>Redirect-URI&#39;s (allebei, per omgeving):
+<li>Redirect-URI&#39;s (allebei):
 <code>https://sollicitatie.paal13.com/admin/auth_callback.php</code> en
-<code>https://sollicitatie.paal13.com/portaal/auth_callback.php</code>.
-Ontbreekt de tweede, dan krijgen sollicitanten die via Authentik
-inloggen &quot;Redirect URI Error&quot;.</li>
+<code>https://sollicitatie.paal13.com/portaal/auth_callback.php</code>
+(op test met het testadres). Ontbreekt de tweede, dan krijgen
+sollicitanten die via Authentik inloggen &quot;Redirect URI Error&quot;.</li>
 <li>Scopes <code>openid profile email</code>, en de groepen in het token
 (claim <code>groups</code>).</li>
-<li>Groepen: <code>Sol-Admin</code> (rol admin, alles),
+<li>Groepen en rollen: <code>Sol-Admin</code> (rol admin, alles),
 <code>Bestuur</code> (rol bestuur), <code>Sol-Penningmeester</code> (rol
-penningmeester: alleen loondossiers en sollicitanten lezen),
+penningmeester: loondossiers en sollicitanten lezen),
 <code>Sol-Begeleider</code> (rol begeleider: selectiedag en dekking
-lezen). De hoogste rang wint als iemand in meer groepen zit. Rechten per
-rol pas je aan in Beheer › Rollen &amp; rechten.</li>
+lezen). Welke groep bij welke rol hoort en wat een rol mag, pas je aan
+in Beheer › Rollen &amp; rechten.</li>
+<li><strong>Toegestane groepen:</strong> Instellingen › Authentik, veld
+met groepen die het beheer in mogen
+(<code>authentik.admin_groepen</code>, standaard
+<code>Bestuur,Sol-Admin,Sol-Begeleider</code>). Voeg
+<code>Sol-Penningmeester</code> toe, anders wordt een nieuwe
+penningmeester bij de eerste inlog geweigerd.</li>
+<li>Zet in Authentik <strong>tweestapsverificatie verplicht</strong>
+voor iedereen in deze groepen. Het sollicitatiesysteem zelf vraagt bij
+een Authentik-inlog geen tweede factor.</li>
 </ul>
-<p>Nieuwe beheerders maak je dus niet in het beheer aan: zet de persoon
-in Authentik in de juiste groep en laat hem één keer inloggen.
-Wachtwoordlogin (<code>/admin/login.php</code>) blijft bestaan als
-noodingang voor accounts waarvoor in het beheer een wachtwoord is
-gezet.</p>
+<p>Nieuwe beheerders maak je niet in het beheer aan: zet de persoon in
+Authentik in de juiste groep en laat hem één keer inloggen.
+Wachtwoordlogin (<code>/admin/login.php</code>) bestaat nog als
+noodingang voor accounts waarvoor in het beheer een wachtwoord is gezet
+(zie <a href="#toegangsbeheer">Toegangsbeheer</a>).</p>
+<h1 id="toegangsbeheer">Toegangsbeheer</h1>
+<blockquote>
+<p><strong>In het kort:</strong> Toegang loopt via Authentik-groepen,
+maar iemand weghalen vraagt twee stappen: uit de groep én op non-actief
+in Beheerders. Controleer de toegang elk seizoen en houd de noodingang
+met wachtwoord tot één account.</p>
+</blockquote>
+<p><strong>Iemand erbij</strong></p>
+<ol type="1">
+<li>Authentik: account aanmaken, tweestapsverificatie aan, in de juiste
+groep zetten.</li>
+<li>Laat de persoon inloggen op <code>/admin/</code>. Controleer in
+Beheer › Beheerders dat de rol klopt.</li>
+</ol>
+<p><strong>Iemand eraf</strong> (vertrek uit het bestuur, einde
+functie)</p>
+<ol type="1">
+<li>Authentik: uit de groep halen of het account uitschakelen.</li>
+<li><strong>Beheer › Beheerders: het account op non-actief
+zetten.</strong> Dit is nodig: een bestaand account dat bij het inloggen
+geen passende groep meer heeft, houdt de rol die het had.</li>
+<li>Staat er een wachtwoord op het account, verwijder dat.</li>
+<li>Zijn er sleutels die de persoon kende (API-sleutel, SMTP-wachtwoord,
+wachtwoordkluis), vervang die.</li>
+</ol>
+<p><strong>Seizoensreview</strong></p>
+<ul class="task-list">
+<li><label><input type="checkbox"></input>Leg Authentik-groepen
+<code>Sol-*</code> en <code>Bestuur</code>, Beheer › Beheerders en
+Beheer › Rollen &amp; rechten naast elkaar. Iedereen die actief is heeft
+een reden.</label></li>
+<li><label><input type="checkbox"></input>Hoogstens één account met
+wachtwoordlogin (noodingang), met een lang wachtwoord dat in de
+wachtwoordkluis staat. Die inlog heeft geen tweede factor.</label></li>
+<li><label><input type="checkbox"></input>Wie mag Instellingen bewerken? Dat
+recht (standaard bestuur en admin) geeft ook zicht op de API-sleutel en
+het cron-token.</label></li>
+<li><label><input type="checkbox"></input>Wie heeft de module Documenten (BSN,
+IBAN, ID)? Standaard alleen penningmeester en admin.</label></li>
+</ul>
+<p><strong>Sollicitanten op het portaal</strong></p>
+<ul>
+<li>Inlogcode en inloglink zijn 15 minuten geldig en eenmalig. De
+inloglink logt niet in bij het openen maar pas na een klik op een knop,
+omdat mailscanners links vooraf bezoeken.</li>
+<li>&quot;Blijf ingelogd&quot; (60 dagen, standaard uit) staat in de tabel
+<code>portaal_apparaten</code> en in de cookie
+<code>p13_apparaat</code>. Het token wisselt bij elk gebruik; wordt een
+oud token opnieuw aangeboden, dan trekt het systeem alle apparaten van
+die sollicitant in. Uitloggen, &quot;vergeet alle apparaten&quot; in Mijn gegevens
+en het verwijderen van een dossier trekken ze ook in; de cron ruimt
+verlopen tokens op.</li>
+<li>Moet je bij een vermoed misbruik alle apparaten van iedereen
+uitloggen: leeg de tabel <code>portaal_apparaten</code> in phpMyAdmin.
+Sollicitanten loggen daarna gewoon opnieuw in met een code.</li>
+</ul>
+<h1 id="wordpress-plugin">WordPress-plugin</h1>
+<blockquote>
+<p><strong>In het kort:</strong> De plugin &quot;Paal 13 Aanmelden&quot; zet het
+aanmeldformulier en seizoensdata op paal13.com. Hij praat met
+<code>/api/</code> met een geheime sleutel in de header
+<code>X-Paal13-Key</code>; de sleutel staat alleen op de
+WordPress-server, nooit in de pagina.</p>
+</blockquote>
+<p><strong>Installeren of bijwerken</strong></p>
+<ol type="1">
+<li>Zet in het sollicitatiesysteem een API-sleutel klaar:
+<strong>Instellingen › Website &amp; API</strong>. Controleer daar ook
+de toegestane websites (<code>https://paal13.com</code> en
+<code>https://www.paal13.com</code> staan er altijd in).</li>
+<li>Bouw de ZIP op een Windows-machine met de repo:
+<code>wordpress-plugin\bouw-zip.ps1</code>. Er komt
+<code>paal13-aanmelden-&lt;versie&gt;.zip</code> naast te staan (ZIP&#39;s
+staan niet in Git).</li>
+<li>WordPress › Plugins › Nieuwe plugin › Plugin uploaden, ZIP kiezen,
+activeren. Stond er een oudere Paal 13-plugin op de site, deactiveer en
+verwijder die eerst.</li>
+<li>WordPress › Instellingen › Paal 13 Aanmelden: adres
+(<code>https://sollicitatie.paal13.com</code>) en sleutel invullen,
+<strong>Verbinding testen</strong>.</li>
+<li>Zet <code>[paal13_aanmeldformulier]</code> op de aanmeldpagina. De
+overige shortcodes staan in <code>wordpress-plugin/README.md</code> en
+op de instellingenpagina van de plugin.</li>
+</ol>
+<p><strong>Goed om te weten</strong></p>
+<ul>
+<li>De sleutel gaat alleen in de header <code>X-Paal13-Key</code> mee;
+<code>?key=</code> in het webadres werkt sinds 2.94.0 niet meer.</li>
+<li>De plugin bewaart het formulier en de seizoensdata een paar minuten
+(instelbaar) en valt bij een storing terug op het laatste goede
+antwoord.</li>
+<li>De pagina met het formulier mag niet in een paginacache staan. De
+plugin zet zelf <code>DONOTCACHEPAGE</code>; controleer het als je een
+ongebruikelijke cache gebruikt.</li>
+<li>De plugin geeft het IP-adres van de bezoeker door in
+<code>X-Paal13-Bezoeker</code>. Dat adres wordt vastgelegd bij de
+aanmelding en telt voor de limiet van 10 aanmeldingen per uur. De plugin
+leest het uit proxyheaders (Cloudflare, <code>X-Forwarded-For</code>);
+staat paal13.com niet achter zo&#39;n proxy, dan kan een bezoeker die
+headers zelf invullen.</li>
+<li>Een nieuwe sleutel werkt meteen en de oude niet meer. Genereer hem
+dus pas als je de WordPress-instellingen open hebt, en test direct.</li>
+</ul>
+<h1 id="bewaartermijnen-en-privacy">Bewaartermijnen en privacy</h1>
+<blockquote>
+<p><strong>In het kort:</strong> De AVG-opschoning doet niets tot
+&quot;Automatisch opschonen&quot; aan staat. Zet dat aan op productie en houd de
+termijnen gelijk aan wat de privacyverklaring belooft; die leest
+dezelfde instellingen.</p>
+</blockquote>
+<p><strong>Aanzetten en controleren</strong></p>
+<ul>
+<li>Instellingen › Bewaren &amp; opschonen › &quot;Automatisch opschonen
+inschakelen&quot; (<code>bewaar.actief</code>). Standaard staat dit
+<strong>uit</strong>; zolang het uit staat wordt er niets verwijderd of
+geanonimiseerd en meldt de systeemcontrole &quot;opschoning heeft nog niet
+gedraaid&quot;.</li>
+<li>De opschoning draait één keer per dag via de echte cron
+(<code>includes/opschonen.php</code>). Wat er is opgeschoond staat in
+het Opschoon-logboek onderaan hetzelfde tabblad en in Logboek, bron
+AVG-opschoning.</li>
+<li>Er is geen proefdraaistand in het beheer. Wil je een nieuwe termijn
+eerst zien werken, zet hem dan eerst op de testomgeving.</li>
+</ul>
+<p><strong>Standaardtermijnen</strong></p>
+<table>
+<thead>
+<tr>
+<th>Wat</th>
+<th>Termijn</th>
+<th>Instelling</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Afgewezen of afgehaakte sollicitanten (anonimiseren)</td>
+<td>4 weken na het besluit</td>
+<td><code>bewaar.afgewezen_weken</code></td>
+</tr>
+<tr>
+<td>Seintje bij de volgende werving</td>
+<td>max 12 maanden</td>
+<td><code>bewaar.seintje_mnd</code></td>
+</tr>
+<tr>
+<td>Oud-lifeguards</td>
+<td>2 jaar na het laatste seizoen</td>
+<td><code>bewaar.aangenomen_jaar</code></td>
+</tr>
+<tr>
+<td>Gezondheidsgegevens</td>
+<td>einde seizoen, direct bij afwijzing</td>
+<td><code>bewaar.gezondheid_mnd</code> (0)</td>
+</tr>
+<tr>
+<td>AI-invoertekst</td>
+<td>3 maanden</td>
+<td><code>bewaar.ai_invoer_mnd</code></td>
+</tr>
+<tr>
+<td>Niet-voltooide aanmeldingen</td>
+<td>3 maanden</td>
+<td><code>bewaar.onvoltooid_mnd</code></td>
+</tr>
+<tr>
+<td>Berichtenlog / inhoud van berichten</td>
+<td>12 / 3 maanden</td>
+<td><code>bewaar.maillog_mnd</code>,
+<code>bewaar.maillog_body_mnd</code></td>
+</tr>
+<tr>
+<td>Losse bijlagen</td>
+<td>12 maanden</td>
+<td><code>bewaar.bijlagen_mnd</code></td>
+</tr>
+<tr>
+<td>Auditlog (acties van beheerders)</td>
+<td>12 maanden</td>
+<td><code>bewaar.audit_maanden</code> (niet in het beheer; alleen in de
+database te wijzigen)</td>
+</tr>
+<tr>
+<td>Loonheffing en kopie ID</td>
+<td>5 jaar na het dienstjaar (wettelijk)</td>
+<td><code>bewaar.loondocumenten_jaar</code></td>
+</tr>
+<tr>
+<td>Kopie bankpas</td>
+<td>30 dagen na verwerking</td>
+<td><code>bewaar.bankpas_na_verwerking_dagen</code></td>
+</tr>
+<tr>
+<td>Mislukte inlogpogingen</td>
+<td>24 uur</td>
+<td>vast</td>
+</tr>
+<tr>
+<td>&quot;Blijf ingelogd&quot;-tokens</td>
+<td>60 dagen</td>
+<td>vast</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Privacyverklaring</strong></p>
+<ul>
+<li>De tekst staat in <code>includes/privacy_verklaring.php</code> en is
+openbaar op <code>/privacy.php</code>. De termijnen in de tabel komen
+uit de instellingen hierboven; de alinea&#39;s over AI, WhatsApp en sms
+verschijnen alleen als die dienst aanstaat. Een termijn wijzigen = de
+verklaring verandert mee.</li>
+<li>Verandert de tekst zelf (in code), dan hoort
+<code>PRIVACY_VERSIE</code> in <code>includes/functions.php</code>
+omhoog. Bij elke aanmelding wordt vastgelegd welke versie iemand
+las.</li>
+<li>Schakel je een nieuwe dienst in (bijvoorbeeld sms of een andere
+mailprovider), controleer dan of die als verwerker in de verklaring
+staat en of er een verwerkersovereenkomst is.</li>
+<li>De verklaring belooft dat back-ups na verloop van tijd automatisch
+verdwijnen. Houd de back-uptermijn daarom kort (zie <a href="#back-up-en-herstel">Back-up en herstel</a>).</li>
+</ul>
 <h1 id="systeemcontrole-health-check">Systeemcontrole (health
 check)</h1>
-<p>Beheer › Instellingen › Systeem &amp; Updates › Systeemcontrole. Acht
-checks:</p>
+<blockquote>
+<p><strong>In het kort:</strong> Beheer › Systeem &amp; Updates ›
+Systeemgezondheid voert acht checks uit en kan een deel zelf herstellen.
+Groen betekent niet altijd dat de echte cron draait: lees de uitleg bij
+Cron.</p>
+</blockquote>
+<p>Knop <strong>Controleren &amp; repareren</strong> draait de checks
+opnieuw en herstelt waar dat kan (vooral de database). De knop &quot;Diagnose
+draaien&quot; op hetzelfde scherm verwijst naar een pagina die niet meer
+bestaat; gebruik hem niet.</p>
 <table>
 <thead>
 <tr>
@@ -452,94 +1031,142 @@ checks:</p>
 <td>Database</td>
 <td>Alle tabellen en kolommen aanwezig</td>
 <td>Ontbrekend onderdeel</td>
-<td>Klik Repareren; anders migraties uitvoeren</td>
+<td>Controleren &amp; repareren; anders Migraties uitvoeren en het
+serverlog lezen</td>
 </tr>
 <tr>
 <td>Cron</td>
 <td>Laatste run &lt; 30 min geleden</td>
 <td>&gt; 30 min waarschuwing, &gt; 2 uur fout</td>
-<td>Cron in Plesk controleren, token vergelijken</td>
+<td>Plesk-taak en token controleren. Staat er &quot;via lazy&quot;, dan draait de
+echte cron niet</td>
 </tr>
 <tr>
 <td>Mailwachtrij</td>
 <td>Niets ouder dan 1 uur in &quot;wacht&quot;</td>
 <td>Berichten blijven hangen</td>
-<td>Cron en SMTP-instellingen; Berichten › log</td>
+<td>Cron en E-mailserver-instellingen; Logboek › Berichten</td>
 </tr>
 <tr>
 <td>Opschoning</td>
 <td>AVG-opschoning &lt; 3 dagen geleden</td>
-<td>Langer geleden</td>
-<td>Cron draait niet als echte cron</td>
+<td>Nog nooit of langer geleden</td>
+<td>&quot;Automatisch opschonen&quot; aan? Draait de echte cron?</td>
 </tr>
 <tr>
 <td>Mappen</td>
 <td><code>uploads/</code> schrijfbaar</td>
 <td>Niet schrijfbaar</td>
-<td>Maprechten</td>
+<td>Maprechten in Plesk</td>
 </tr>
 <tr>
 <td>Configuratie</td>
-<td>cron-token en bestuursadres gezet</td>
+<td>Cron-token en <code>MAIL_BESTUUR</code> gezet</td>
 <td>Iets ontbreekt</td>
-<td>Instellingen openen, <code>MAIL_BESTUUR</code> in config</td>
+<td>Tabblad Bewaren &amp; opschonen openen; <code>MAIL_BESTUUR</code> in
+config</td>
 </tr>
 <tr>
 <td>Kluis</td>
 <td>Werkt, documentenmap buiten webroot</td>
-<td>Sleutel ontbreekt/ongeldig, map in webroot</td>
-<td><code>KLUIS_SLEUTEL</code>, <code>DOCUMENTEN_MAP</code> in
-config</td>
+<td>Sleutel ontbreekt/ongeldig, map niet schrijfbaar of in webroot</td>
+<td><code>KLUIS_SLEUTEL</code>, <code>DOCUMENTEN_MAP</code> in config;
+rechten van de map</td>
 </tr>
 <tr>
 <td>Zegel</td>
 <td>Certificaat geldig &gt; 60 dagen</td>
-<td>Ontbreekt of verloopt</td>
-<td>Wordt automatisch aangemaakt; bij verlopen: zegelmap leegmaken en
-pagina openen</td>
+<td>Ontbreekt, verloopt of verlopen</td>
+<td>Wordt automatisch aangemaakt (10 jaar geldig); bij verlopen:
+<code>cert.pem</code> en <code>key.enc</code> in de zegelmap weghalen en
+een pagina openen</td>
 </tr>
 </tbody>
 </table>
+<p>Let op bij het zegel: een nieuw certificaat heeft een andere
+vingerafdruk. Eerder verzegelde PDF&#39;s blijven geldig; noteer de nieuwe
+vingerafdruk (staat in het Logboek bij
+<code>zegel_certificaat_aangemaakt</code>).</p>
 <h1 id="back-up-en-herstel">Back-up en herstel</h1>
-<p>Wat je nodig hebt om alles terug te zetten:</p>
+<blockquote>
+<p><strong>In het kort:</strong> Database, <code>DOCUMENTEN_MAP</code>,
+<code>config.php</code> en <code>uploads/</code> dagelijks, met een
+korte bewaartermijn. De kluissleutel staat los in de wachtwoordkluis.
+Test het herstel elk seizoen, want een back-up die nooit is teruggezet
+is een aanname.</p>
+</blockquote>
+<p><strong>Wat je nodig hebt om alles terug te zetten</strong></p>
 <ol type="1">
 <li><strong>Database</strong> (Plesk-back-up of <code>mysqldump</code>),
-dagelijks.</li>
-<li><strong><code>DOCUMENTEN_MAP</code></strong> (de versleutelde
-documenten en de zegelsleutel), dagelijks.</li>
+dagelijks. Bevat ook het kluis-zout en de sleutels van koppelingen.</li>
+<li><strong><code>DOCUMENTEN_MAP</code></strong>, dagelijks: de
+versleutelde documenten, de foto&#39;s (<code>fotos/</code>) en het zegel
+(<code>zegel/</code>).</li>
 <li><strong><code>includes/config.php</code></strong> van elke omgeving,
 met daarin de <code>KLUIS_SLEUTEL</code>. Bewaar die sleutel óók los in
-de wachtwoordkluis van het bestuur.</li>
-<li><strong><code>uploads/</code></strong> (BLK-foto&#39;s, bijlagen,
-landingspagina-ontwerpen).</li>
+de wachtwoordkluis van het bestuur, niet in dezelfde back-up.</li>
+<li><strong><code>uploads/</code></strong>: logo,
+landingspagina-ontwerpen, bijlagen van sjablonen, en
+<code>uploads/.htaccess</code> (die staat niet in Git).</li>
 </ol>
 <p>De code zelf staat in Git en hoeft niet in de back-up.</p>
-<p>Herstel: code uitrollen via Plesk, <code>config.php</code>
-terugzetten, database importeren, <code>DOCUMENTEN_MAP</code> en
+<p><strong>Bewaartermijn van back-ups:</strong> houd een rollend venster
+van ongeveer 30 dagen aan en laat oudere back-ups automatisch vervallen
+(Plesk › Back-up › Instellingen). Bewaar back-ups niet jaren: dan
+blijven gegevens van afgewezen sollicitanten veel langer bestaan dan de
+privacyverklaring belooft. De wettelijke bewaarplicht van loondocumenten
+wordt gedekt door het systeem zelf, niet door oude back-ups.</p>
+<p><strong>Herstel</strong></p>
+<p>Code uitrollen via Plesk, <code>config.php</code> terugzetten,
+database importeren, <code>DOCUMENTEN_MAP</code> en
 <code>uploads/</code> terugzetten, pagina openen, systeemcontrole
 draaien. <strong>Zonder de originele <code>KLUIS_SLEUTEL</code> én het
 zout uit de database zijn de documenten definitief onleesbaar.</strong>
 Dat is bewust: een gelekte back-up zonder sleutel is waardeloos voor een
 aanvaller.</p>
-<p>Bewaartermijnen van back-ups: hanteer dezelfde termijn als de langste
-wettelijke bewaartermijn in het systeem (5 jaar voor loondocumenten) en
-vernietig back-ups die ouder zijn.</p>
+<p><strong>Hersteltest, elk seizoen</strong></p>
+<ol type="1">
+<li>Maak in Plesk een tijdelijke database en zet de productie-back-up
+daarin terug.</li>
+<li>Koppel die aan een tijdelijk subdomein met een kopie van de
+productie-<code>config.php</code>, met eigen <code>DB_NAME</code> en
+<code>APP_URL</code>, en een kopie van <code>DOCUMENTEN_MAP</code> op
+een eigen pad.</li>
+<li><strong>Zet vóór je een pagina opent de mail uit:</strong> laat
+<code>SMTP_HOST</code> leeg, en stel géén cron in. Het vangnet verstuurt
+anders wachtende berichten aan echte sollicitanten.</li>
+<li>Log in, draai de systeemcontrole (kluis moet groen zijn) en open als
+admin één document in een loondossier. Lukt dat, dan kloppen sleutel,
+zout en bestanden samen.</li>
+<li>Verwijder daarna database, subdomein en kopieën. Noteer datum en
+uitkomst voor het bestuur.</li>
+</ol>
 <h1 id="terugdraaien-rollback">Terugdraaien (rollback)</h1>
+<blockquote>
+<p><strong>In het kort:</strong> Code terugzetten via Plesk en een
+pagina openen. Nooit een oude database-back-up terugzetten alleen om
+code terug te draaien.</p>
+</blockquote>
 <p>Blijkt een release kapot op productie:</p>
 <ol type="1">
 <li>Plesk › Git › kies de vorige commit op <code>main</code> (of zet in
 Git <code>main</code> terug met een revert en push).</li>
 <li>Deploy.</li>
-<li>Open een pagina. Nieuwe kolommen die de nieuwe versie heeft
-aangemaakt blijven staan; dat is onschadelijk, oudere code negeert
-ze.</li>
-<li>Meld het in <code>docs/ai/Toekomstige plannen/Nog te doen.md</code>
-zodat het in de volgende release wordt opgelost.</li>
+<li>Open een pagina. De zelfherstelronde draait opnieuw voor de oudere
+versie; nieuwe kolommen die de nieuwe versie heeft aangemaakt blijven
+staan, en dat is onschadelijk.</li>
+<li>Meld het aan de ontwikkelaar, zodat het in de volgende release wordt
+opgelost.</li>
 </ol>
 <p>Zet nooit een oudere database-back-up terug alleen om code terug te
 draaien: dan verlies je aanmeldingen en ondertekeningen van na de
 back-up.</p>
 <h1 id="logs-lezen">Logs lezen</h1>
+<blockquote>
+<p><strong>In het kort:</strong> Het Logboek in het beheer toont alle
+logbronnen als één tijdlijn. Technische details die daar niet in passen
+staan in het serverlog in Plesk.</p>
+</blockquote>
 <table>
 <thead>
 <tr>
@@ -551,58 +1178,172 @@ back-up.</p>
 <tbody>
 <tr>
 <td>Beheer › Logboek</td>
-<td>Alles in één tijdlijn: acties van beheerders, verstuurde berichten,
-fouten, ondertekenbewijs, opschoning, mislukte logins</td>
-<td>admin (bestuur na toekennen recht)</td>
+<td>Eén tijdlijn uit zes bronnen: acties van beheerders
+(<code>audit_log</code>), verstuurde berichten (<code>mail_log</code>),
+fouten (<code>error_log</code>), ondertekenbewijs, AVG-opschoning en
+mislukte logins. Filteren, exporteren (de export wordt zelf gelogd)</td>
+<td>module Logboek (standaard alleen admin)</td>
 </tr>
 <tr>
-<td>Beheer › Instellingen › Foutenlog</td>
-<td>Technische fouten met code en referentie</td>
-<td>admin</td>
+<td>Logboek, bron Fouten</td>
+<td>Technische fouten met code, referentie, bestand en regel. Het oude
+scherm Foutenlog verwijst hierheen</td>
+<td>idem</td>
 </tr>
 <tr>
-<td>Plesk › Logs (PHP error_log)</td>
-<td>Regels die het systeem zelf schrijft (<code>db_failsafe: …</code>,
-<code>cron …</code>, <code>rate_limit: …</code>) en PHP-fouten</td>
+<td>Plesk › Logs</td>
+<td>PHP-fouten en regels die het systeem zelf schrijft:
+<code>db_failsafe: …</code>, <code>cron &lt;taak&gt;: …</code>,
+<code>rate_limit: …</code>, <code>… (na antwoord): …</code></td>
 <td>systeembeheerder</td>
 </tr>
 <tr>
 <td>Foutmail</td>
-<td>Bij ernstige fouten gaat een mail naar <code>mail.fout_email</code>
-(standaard <a href="mailto:website@paal13.com">website@paal13.com</a>),
-maximaal één per code per vijf minuten</td>
+<td>Bij fouten via <code>p13_fout()</code> gaat een mail naar
+<code>mail.fout_email</code> (standaard <a href="mailto:website@paal13.com">website@paal13.com</a>)</td>
 <td>systeembeheerder</td>
 </tr>
 </tbody>
 </table>
 <p>Een foutmelding op het scherm toont een code en een referentie
-(<code>P13-S000 · ref 1a2b3c4d</code>); zoek die referentie in het
-Foutenlog.</p>
+(<code>P13-S000 · ref 1a2b3c4d</code>); zoek die referentie in Logboek ›
+Fouten. De inhoud van berichten komt nooit in het Logboek.</p>
+<p>Veelvoorkomende codes: <code>P13-D001</code> database niet bereikbaar
+(config of MariaDB), <code>P13-M001/M002</code> mail (SMTP),
+<code>P13-M005</code> WhatsApp tijdelijk gepauzeerd na herhaalde fouten
+(valt terug op e-mail, gaat vanzelf weer aan), <code>P13-P004</code>
+verwijderverzoek van een sollicitant mislukt en teruggedraaid.</p>
+<p>Werk dat ná het antwoord draait (mails, audit, lazy-cron) kan de
+bezoeker niet meer laten zien dat het misging; dat vind je alleen in het
+serverlog, met <code>(na antwoord)</code> in de regel.</p>
+<p>De foutmail begrenst zichzelf alleen binnen één verzoek. Gaat een
+veelbezochte pagina stuk, dan kun je veel mails tegelijk krijgen; kijk
+dan eerst in Logboek › Fouten welke code het is.</p>
+<h1 id="datalek-of-beveiligingsincident">Datalek of
+beveiligingsincident</h1>
+<blockquote>
+<p><strong>In het kort:</strong> Beperk de schade, leg vast wat je ziet,
+en laat het bestuur binnen 72 uur na ontdekking beslissen over een
+melding bij de Autoriteit Persoonsgegevens. Registreer elk datalek, ook
+als je het niet meldt.</p>
+</blockquote>
+<p>Een datalek is elke inbreuk waarbij persoonsgegevens verloren gaan of
+bij iemand terechtkomen die ze niet mag hebben: een gestolen laptop met
+een export, een mail aan de verkeerde ontvanger, een gelekte back-up,
+een beheerder die meer zag dan mocht.</p>
+<p><strong>Wie doet wat</strong></p>
+<table>
+<thead>
+<tr>
+<th>Rol</th>
+<th>Taak</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Wie het ontdekt</td>
+<td>Direct melden bij de technisch beheerder en het bestuur. Niets
+wissen</td>
+</tr>
+<tr>
+<td>Technisch beheerder</td>
+<td>Beperken, vastleggen, feiten aanleveren</td>
+</tr>
+<tr>
+<td>Bestuur (verwerkingsverantwoordelijke)</td>
+<td>Beslist over melden, meldt bij de AP, informeert betrokkenen, houdt
+het datalekregister bij</td>
+</tr>
+<tr>
+<td>Cloud86 en andere verwerkers</td>
+<td>Moeten een lek bij hen zonder onnodige vertraging aan ons
+melden</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Stappen</strong></p>
+<ol type="1">
+<li><strong>Tijdstip noteren</strong> van ontdekking. De termijn van 72
+uur loopt vanaf dat moment.</li>
+<li><strong>Beperken</strong>, wat van toepassing is:
+<ul>
+<li>account op non-actief in Beheerders en uit de Authentik-groep;</li>
+<li>API-sleutel vernieuwen (Website &amp; API) en in de plugin
+zetten;</li>
+<li>cron-token, SMTP-, AI-, sms- en WhatsApp-sleutels vervangen (zie <a href="#geheimen-die-in-de-database-staan">Geheimen die in de database
+staan</a>);</li>
+<li>databasewachtwoord en OIDC client secret vernieuwen in
+Plesk/Authentik en in <code>config.php</code>;</li>
+<li>bij misbruik van het portaal: tabel <code>portaal_apparaten</code>
+leegmaken;</li>
+<li>site tijdelijk uit (Plesk: domein uitschakelen) als het lek nog
+doorloopt. Vervang <code>KLUIS_SLEUTEL</code> niet: dat maakt alle
+documenten onleesbaar en lost niets op. Is de sleutel samen met de
+database gelekt, overleg dan met de ontwikkelaar.</li>
+</ul></li>
+<li><strong>Vastleggen</strong>: Logboek-export van de periode,
+Plesk-logs (access en error) downloaden, screenshots, een tijdlijn van
+wat er gebeurde. Doe dit voor de logs roteren.</li>
+<li><strong>Beoordelen</strong> met het bestuur: welke gegevens, hoeveel
+mensen, welk risico. BSN, kopie ID, gezondheidsgegevens en gegevens van
+minderjarigen wegen zwaar.</li>
+<li><strong>Melden</strong>: tenzij het lek waarschijnlijk geen risico
+oplevert, meldt het bestuur binnen 72 uur na ontdekking bij de
+Autoriteit Persoonsgegevens (meldloket datalekken op
+autoriteitpersoonsgegevens.nl). Bij een hoog risico worden ook de
+betrokkenen geïnformeerd. Nog niet alles bekend? Meld binnen de termijn
+en vul later aan.</li>
+<li><strong>Registreren</strong>: elk datalek komt in het
+datalekregister van het bestuur, ook als het niet gemeld is, met de
+reden waarom niet.</li>
+<li><strong>Evalueren</strong> en de oorzaak laten oplossen; noteer de
+maatregel.</li>
+</ol>
+<p>NIS2 (in Nederland de Cyberbeveiligingswet) geldt naar verwachting
+niet voor de brigade als organisatie. Valt ze er toch onder, dan komt
+daar een vroege waarschuwing binnen 24 uur en een melding binnen 72 uur
+bij het CSIRT bij. De maatregelen in dit runbook (toegangsbeheer,
+logging, back-up met hersteltest, incidentprocedure) volgen de
+zorgplicht als goede praktijk.</p>
 <h1 id="beveiligingsmaatregelen-in-het-kort">Beveiligingsmaatregelen in
 het kort</h1>
-<p>Voor de verantwoording (AVG, NIS2-zorgplicht) staat hier wat het
-systeem doet:</p>
+<blockquote>
+<p><strong>In het kort:</strong> Een overzicht van wat het systeem
+technisch doet, voor de verantwoording naar bestuur en toezichthouder
+(AVG, NIS2-zorgplicht).</p>
+</blockquote>
 <ul>
 <li><strong>Toegang:</strong> SSO via Authentik met groepen; rollen en
-rechten per module; sessiecookie alleen via https, HttpOnly, SameSite;
-sessie-id vernieuwt na inloggen en elk half uur.</li>
-<li><strong>Brute force:</strong> 5 mislukte logins per 15 minuten per
-e-mail én per IP-adres; inlogcode voor sollicitanten maximaal 5 pogingen
-per code en 10 aanvragen per uur per IP; verificatiecode bij
-ondertekenen 5 per uur per document; aanmeldformulier 5 per uur per IP
-met honeypot; downloads van loondocumenten 30 per uur per sessie.</li>
-<li><strong>Headers:</strong> Content-Security-Policy (alleen eigen
-scripts en verbindingen), HSTS, X-Frame-Options, nosniff,
-Referrer-Policy, Permissions-Policy. Landingspagina&#39;s hebben een eigen,
-strengere CSP.</li>
+rechten per module; sessiecookie alleen via https, HttpOnly,
+SameSite=Lax, acht uur geldig; sessie-id vernieuwt na inloggen en elk
+half uur. &quot;Blijf ingelogd&quot; op het portaal met selector en gehashte
+verifier die bij elk gebruik wisselt.</li>
+<li><strong>Brute force en misbruik:</strong> beheerderslogin 5 mislukte
+pogingen per 15 minuten per e-mail én per IP-adres; inlogcode voor
+sollicitanten maximaal 5 pogingen per code en 10 aanvragen per uur per
+IP; verificatiecode bij ondertekenen 5 per uur per document;
+aanmeldformulier 5 per uur per IP met honeypot, via de API 10 per uur
+per bezoeker; vragen via het portaal 3 per uur; uploads 20 per uur per
+dossier; downloads van loondocumenten 30 per uur per sessie, met
+watermerk op ID- en bankpasfoto&#39;s.</li>
+<li><strong>Headers:</strong> Content-Security-Policy (scripts en
+verbindingen alleen van de eigen host), HSTS, X-Frame-Options, nosniff,
+Referrer-Policy, Permissions-Policy, gezet in PHP
+(<code>security_headers()</code>), niet in <code>.htaccess</code>.
+Landingspagina&#39;s hebben een eigen, strengere CSP met
+<code>connect-src &#39;none&#39;</code>.</li>
 <li><strong>CSRF:</strong> elk formulier en elke beheer-API met
 token.</li>
+<li><strong>API:</strong> sleutel alleen in de header
+<code>X-Paal13-Key</code>, vergeleken in constante tijd; CORS alleen
+voor paal13.com en de ingestelde websites.</li>
 <li><strong>Uploads:</strong> typecontrole op inhoud, geen
 PHP-uitvoering in <code>uploads/</code>, gevoelige bestanden alleen
-versleuteld in de kluis buiten de webroot.</li>
+versleuteld in de kluis buiten de webroot, foto&#39;s buiten de webroot met
+willekeurige naam en toegangscontrole.</li>
 <li><strong>Versleuteling:</strong> XChaCha20-Poly1305 of AES-256-GCM
 per bestand, sleutel per bestand, hoofdsleutel uit config plus zout uit
-de database, hash-controle bij lezen.</li>
+de database, gebonden aan het dossier (AAD).</li>
 <li><strong>Ondertekenen:</strong> bewijslog (IP, browser, tijd, kanaal
 van de verificatiecode), verzegelde PDF met eigen certificaat, PDF
 eenmalig gemaakt en versleuteld bewaard.</li>
@@ -610,24 +1351,44 @@ eenmalig gemaakt en versleuteld bewaard.</li>
 rechtenwijzigingen; exports worden zelf gelogd; berichtinhoud komt nooit
 in het logboek.</li>
 <li><strong>Bewaartermijnen:</strong> automatische opschoning per
-categorie (instelbaar), verwerkingsregister in
-<code>docs/ai/PROJECT.md</code> §8.</li>
+categorie (instelbaar, moet aan staan), privacyverklaring die dezelfde
+termijnen toont. Het verwerkingsregister houdt de ontwikkelaar bij in
+<code>docs/ai/PROJECT.md</code> §8 (niet in Git); het bestuur hoort een
+actuele kopie te hebben.</li>
 <li><strong>Foutafhandeling:</strong> geen technische details op het
 scherm, wel een referentie; foutmail naar de beheerder.</li>
 </ul>
 <h1 id="bekende-beperkingen">Bekende beperkingen</h1>
+<blockquote>
+<p><strong>In het kort:</strong> Bewuste keuzes en bekende gaten waar je
+als beheerder mee rekening houdt.</p>
+</blockquote>
 <ul>
 <li>Het zegelcertificaat is zelf uitgegeven: Acrobat toont &quot;geldigheid
 onbekend&quot; in plaats van een groen vinkje. Het bewijst wél dat de PDF na
 ondertekening niet is gewijzigd. Een AATL-certificaat kost geld en is
 bewust niet aangeschaft.</li>
+<li>De kluissleutel kan niet worden gewisseld: er is geen functie die
+bestaande documenten opnieuw versleutelt.</li>
+<li>Foto&#39;s van sollicitanten zijn afgeschermd, maar niet versleuteld
+opgeslagen.</li>
+<li>Het cron-token staat in het webadres van de cron en dus in de
+access-log van de server. Houd die logs afgeschermd; vervangen kan
+alleen via de database.</li>
+<li>De AVG-opschoning heeft geen proefdraaistand in het beheer.</li>
 <li>WhatsApp loopt via WhatsReach (geen officiële Meta-koppeling). Het
 bestuur kan het per meldingstype uitzetten; bij storing valt alles terug
 op e-mail.</li>
-<li>Het aanmeldformulier op <code>/aanmelden.php</code> heeft nog de
-oude vormgeving; de landingspagina&#39;s zijn de bedoelde ingang.</li>
+<li>&quot;Halverwege weggegaan&quot; in de trechter bij Landingspagina&#39;s is een
+aanwijzing, geen telling: het signaal komt van een tabblad dat naar de
+achtergrond gaat, en sommigen komen terug.</li>
+<li>Het formulier bewaart tijdens het invullen wat iemand intypt in
+<code>sessionStorage</code> van de eigen browser, zodat de terugknop
+niet alles wist. Dat verdwijnt zodra het tabblad sluit en bij het
+verzenden; toestemmingsvinkjes worden er bewust niet in bewaard.</li>
 <li>Er is geen automatische test-suite op de server; de harnassen in
-<code>docs/ai/harnas/</code> draaien lokaal en staan niet in Git.</li>
+<code>docs/ai/harnas/</code> draaien lokaal bij de ontwikkelaar en staan
+niet in Git.</li>
 </ul>
 </body>
 </html>
