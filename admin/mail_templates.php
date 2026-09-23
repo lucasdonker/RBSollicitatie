@@ -294,7 +294,7 @@ require __DIR__ . '/layout_top.php';
         <div style="grid-column:1/-1">
           <label class="veld-label">Hero-afbeelding (optioneel)</label>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <input type="file" name="hero_image_upload" accept="image/jpeg,image/png,image/webp" style="font-size:12px;flex:1;min-width:200px">
+            <input type="file" name="hero_image_upload" accept="image/jpeg,image/png,image/webp" style="flex:1;min-width:200px">
             <input type="text" name="hero_image_url" value="<?= h($actief['hero_image_url'] ?? '') ?>" placeholder="of URL" style="flex:2;min-width:200px">
           </div>
         </div>
@@ -324,7 +324,7 @@ require __DIR__ . '/layout_top.php';
         <?php foreach ($bijl_huidig as $bh): ?>
         <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin:4px 0"><input type="checkbox" name="bijlage_ids[]" value="<?= (int)$bh['id'] ?>" checked> <?= h($bh['naam']) ?> <span style="color:var(--grijs);font-size:11px">(uitvinken = loskoppelen)</span></label>
         <?php endforeach; ?>
-        <input type="file" name="bijlage_upload" accept=".pdf,.jpg,.jpeg,.png,.webp,.docx,.xlsx" style="font-size:12px">
+        <input type="file" name="bijlage_upload" accept=".pdf,.jpg,.jpeg,.png,.webp,.docx,.xlsx">
         <div style="font-size:11px;color:var(--tekst-zacht);margin-top:3px">pdf, jpg, png, webp, docx, xlsx · max <?= function_exists('bijlagen_max_bytes') ? round(bijlagen_max_bytes() / 1048576) : 25 ?> MB<?= function_exists('bijlagen_max_bytes') && bijlagen_max_bytes() < 25 * 1048576 ? ' (beperkt door de serverinstelling in Plesk)' : '' ?>.</div>
       </div>
 

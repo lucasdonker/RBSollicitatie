@@ -218,7 +218,7 @@ require __DIR__ . '/layout_top.php';
         </div>
         <div class="ds-veld">
           <label>CSV bestand</label>
-          <input type="file" name="csv_bestand" accept=".csv" required style="padding:6px">
+          <input type="file" name="csv_bestand" accept=".csv" required>
           <div class="ds-veld-hint">Exporteer uit Google Sheets als CSV (kommagescheiden, UTF-8)</div>
         </div>
         <button type="submit" class="ds-btn ds-btn-primair">Import starten</button>

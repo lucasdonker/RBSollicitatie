@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.99.3');
+define('APP_VERSIE', '2.99.4');
 
 function app_changelog(): array {
     return [
+        '2.99.4' => [
+            'datum'  => '2026-09-23',
+            'titel'  => 'Donkere modus: ook de knoppen die de browser zelf tekent',
+            'punten' => [
+                'De knop "Bestand kiezen" was wit in donkere modus. Hij volgt nu het thema, net als de uitklaplijsten, datumkiezers en scrollbalken. Het blijft de gewone knop van de browser, dus werken met toetsenbord of schermlezer verandert niet',
+                'Alle bestandsvelden in het beheer zien er nu hetzelfde uit; vijf velden hadden een eigen, kleinere letter',
+                'Wie in het besturingssysteem "minder beweging" heeft aangezet, ziet het beschikbaarheidsformulier niet meer inschuiven',
+            ],
+        ],
         '2.99.3' => [
             'datum'  => '2026-09-23',
             'titel'  => 'Foto\'s afgeschermd, en bewaartermijnen die kloppen met de privacyverklaring',

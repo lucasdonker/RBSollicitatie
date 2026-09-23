@@ -1063,7 +1063,21 @@ html[data-theme="dark"] {
   --shadow-card:  0 1px 2px rgba(0,0,0,.30), 0 2px 8px rgba(0,0,0,.28);
   --shadow-float: 0 4px 16px rgba(0,0,0,.42);
   --shadow-modal: 0 12px 48px rgba(0,0,0,.60);
+
+  /* Native controls (bestandskiezer, datumkiezer, select-lijst, scrollbalk) tekent de
+     browser zelf; zonder dit bleven die wit in donker. */
+  color-scheme: dark;
 }
+
+/* Bestandskiezer: de knop blijft de native knop (focus, toetsenbord, schermlezer
+   ongewijzigd), alleen het uiterlijk volgt de tokens — in licht én donker. */
+input[type="file"] { font: inherit; font-size: 14px; color: var(--ink-soft); max-width: 100%; }
+input[type="file"]::file-selector-button {
+  font: inherit; font-weight: 600; color: var(--ink);
+  background: var(--bg-subtle); border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm); padding: 7px 14px; margin-right: 12px; cursor: pointer;
+}
+input[type="file"]::file-selector-button:hover { border-color: var(--navy); }
 
 /* ═══════════════════════════════════════════════════════════════════
    ONTWERP-COMPONENTEN v2.62 — herbruikbare bouwstenen (ds-* prefix)
@@ -2825,4 +2839,5 @@ form[aria-busy="true"] .p13-bezig { opacity: 1; }
   .p13-bezigbalk { transition: none; }
   .p13-bezig::after { animation-duration: 2s; }
   form[aria-busy="true"] { transition: none; }
+  .wiz-stap { animation: none; }
 }

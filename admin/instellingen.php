@@ -476,13 +476,13 @@ require __DIR__ . '/layout_top.php';
         <div class="bh-veldrij">
           <div class="ds-veld">
             <label>Logo <span class="tip" data-tip="Upload een bestand of vul een URL in. Wordt links bovenin getoond in admin én portaal."></span></label>
-            <input type="file" name="logo_upload" accept="image/png,image/jpeg,image/webp,image/svg+xml" style="font-size:12px">
+            <input type="file" name="logo_upload" accept="image/png,image/jpeg,image/webp,image/svg+xml">
             <div class="ds-veld-hint">Of vul een pad/URL in:</div>
             <input type="text" name="inst[site.logo_url]" value="<?= h(instelling('site.logo_url')) ?>" placeholder="/uploads/branding/logo.png" style="margin-top:4px">
           </div>
           <div class="ds-veld">
             <label>Favicon <span class="tip" data-tip="Pictogram in browsertab. PNG, ICO of SVG."></span></label>
-            <input type="file" name="favicon_upload" accept="image/png,image/x-icon,image/vnd.microsoft.icon,image/svg+xml" style="font-size:12px">
+            <input type="file" name="favicon_upload" accept="image/png,image/x-icon,image/vnd.microsoft.icon,image/svg+xml">
             <div class="ds-veld-hint">Of vul een pad/URL in:</div>
             <input type="text" name="inst[site.favicon_url]" value="<?= h(instelling('site.favicon_url')) ?>" placeholder="/uploads/branding/favicon.svg" style="margin-top:4px">
           </div>
@@ -523,7 +523,7 @@ require __DIR__ . '/layout_top.php';
           <?php else: ?>
             <div class="ds-veld-hint" style="margin-bottom:8px">Nog geen document. De taak "Huisregels lezen" staat bij aangenomen sollicitanten al klaar en krijgt automatisch een link zodra je hier een pdf plaatst.</div>
           <?php endif; ?>
-          <input type="file" name="huisregels_upload" accept="application/pdf" style="font-size:12px">
+          <input type="file" name="huisregels_upload" accept="application/pdf">
           <div class="ds-veld-hint">Een nieuwe pdf vervangt de link in de taak. Het bestand komt in de bijlagenbibliotheek; de sollicitant opent het via een tijdelijke, persoonlijke downloadlink.</div>
         </div>
       </div>
