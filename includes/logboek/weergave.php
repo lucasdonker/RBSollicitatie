@@ -30,6 +30,8 @@ function log_actie_register(): array {
         'ingelogd'        => ['Ingelogd', 'sleutel'],
         'uitgelogd'       => ['Uitgelogd', 'uitloggen'],
         'login_mislukt'   => ['Inloggen mislukt', 'waarschuwing'],
+        'sso_geweigerd'   => ['Inloggen via Authentik geweigerd (geen toegestane groep)', 'slot'],
+        'geweigerd'       => ['Geweigerd', 'waarschuwing'],
         'gewisseld'       => ['Gewisseld van omgeving', 'wissel'],
         'rol_gewijzigd'   => ['Rechten van een rol gewijzigd', 'slot'],
         'rol_aangemaakt'  => ['Rol aangemaakt', 'slot'],
@@ -70,6 +72,9 @@ function log_actie_register(): array {
         'document_verwijderd' => ['Document verwijderd', 'prullenbak'],
         'document_vernietigd' => ['Document vernietigd', 'prullenbak'],
         'loondossier_verwerkt'=> ['Loondossier verwerkt', 'vink'],
+        'gegevens_gecorrigeerd'  => ['Gegevens gecorrigeerd', 'potlood'],
+        'persoon_gewist_avg'     => ['Alle gegevens gewist (AVG-verzoek)', 'prullenbak'],
+        'loondossier_vernietigd' =>['Loondossier vernietigd (na de bewaarplicht)', 'prullenbak'],
         'bijlage_geupload'    => ['Bijlage geüpload', 'document'],
         'bijlage_gedownload'  => ['Bijlage gedownload', 'download'],
 
@@ -79,6 +84,8 @@ function log_actie_register(): array {
         'bericht_verstuurd' => ['Bericht verstuurd', 'mail'],
         'kanaal_voorkeur'   => ['Kanaalvoorkeur gewijzigd', 'telefoon'],
         'afgemeld'          => ['Afgemeld voor berichten', 'kruis-cirkel'],
+        'seintje_gevraagd'    => ['Seintje gevraagd voor de volgende werving', 'bel'],
+        'seintje_ingetrokken' => ['Seintje ingetrokken', 'kruis-cirkel'],
         'herinneringen_gedraaid' => ['Herinneringen gedraaid', 'klok'],
 
         // Landingspagina's
@@ -91,6 +98,9 @@ function log_actie_register(): array {
 
         // AVG-opschoning (categorieën uit opschoon_log)
         'afgewezen_geanonimiseerd'  => ['Afgewezen sollicitaties geanonimiseerd', 'slot'],
+        'aangenomen_geanonimiseerd' => ['Oud-lifeguards geanonimiseerd', 'slot'],
+        'wachtrij_opgeschoond'      => ['Berichtenwachtrij opgeschoond', 'slot'],
+        'foutenlog_verwijderd'      => ['Foutenlog opgeschoond', 'slot'],
         'gezondheid_verwijderd'     => ['Gezondheidsgegevens verwijderd', 'slot'],
         'ai_invoer_verwijderd'      => ['AI-invoer verwijderd', 'slot'],
         'onvoltooid_verwijderd'     => ['Onvoltooide aanmeldingen verwijderd', 'slot'],
@@ -100,7 +110,7 @@ function log_actie_register(): array {
         'auditlog_verwijderd'       => ['Auditlog opgeschoond', 'slot'],
         'pagina_hash_gewist'        => ['Bezoekerspseudoniemen gewist', 'slot'],
         'pagina_events_verwijderd'  => ['Paginastatistiek verwijderd', 'slot'],
-        'loondocumenten_vernietigd' => ['Loondocumenten vernietigd', 'slot'],
+        'loondocumenten_vernietigd' => ['Loondocumenten vernietigd', 'slot'],   // oude regels; sinds 2.100 handmatig
         'bankpas_vernietigd'        => ['Kopie bankpas vernietigd', 'slot'],
     ];
 }

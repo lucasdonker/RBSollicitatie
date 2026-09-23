@@ -38,7 +38,9 @@ function privacy_verklaring_html(): string {
     $seintje  = $int('bewaar.seintje_mnd', 12);
     $onvolt   = $int('bewaar.onvoltooid_mnd', 3);
     $maillog  = $int('bewaar.maillog_mnd', 12);
-    $loonjr   = $int('bewaar.loondocumenten_jaar', 5);
+    $mailbody = $int('bewaar.maillog_body_mnd', 3);
+    $audit    = $int('bewaar.audit_maanden', 12);
+    $fouten   = $int('bewaar.foutenlog_dagen', 90);
     $bankpas  = $int('bewaar.bankpas_na_verwerking_dagen', 30);
     $werkjr   = $int('bewaar.aangenomen_jaar', 2);
     $ai_blk   = $in('ai.api_key') !== '';
@@ -98,17 +100,24 @@ aangenomen.</p>
       selectiecommissie en hun aantekeningen.</li>
   <li>De berichten die we je sturen en de vragen die je ons stelt in het portaal.</li>
 </ul>
+<h3>Als je wordt uitgenodigd voor de selectiedag</h3>
+<ul>
+  <li>Een gezondheidsverklaring en een intakeformulier. Die vragen we vóór de selectiedag, omdat je
+      daar het water in gaat. Daarin staan gezondheidsgegevens: dat zijn bijzondere
+      persoonsgegevens, die extra bescherming krijgen.</li>
+  <li>Of we foto's van je mogen gebruiken (dat vragen we in de intake). Dat bepaal je zelf; je kunt
+      het altijd weer intrekken.</li>
+  <li>Je handtekening onder deze formulieren, met het moment, je IP-adres en je browser als bewijs
+      dat jij (of je ouder of verzorger) het was.</li>
+</ul>
 <h3>Als je wordt aangenomen</h3>
 <ul>
-  <li>Een gezondheidsverklaring en een intakeformulier. Daarin staan gezondheidsgegevens: dat zijn
-      bijzondere persoonsgegevens, die extra bescherming krijgen.</li>
   <li>Voor je loon: je burgerservicenummer (BSN), rekeningnummer (IBAN), een kopie van je
       identiteitsbewijs, een kopie van je bankpas en de opgaaf voor de loonheffing.</li>
   <li>Voor het lidmaatschap van de vereniging: je adres, geboorteplaats, diploma's en
       rekeningnummer voor de contributie.</li>
   <li>Je handtekening onder deze documenten, met het moment, je IP-adres en je browser als bewijs
       dat jij het was.</li>
-  <li>Of we foto's van je mogen gebruiken. Dat bepaal je zelf; je kunt het altijd weer intrekken.</li>
 </ul>
 <h3>Als je het portaal gebruikt</h3>
 <ul>
@@ -228,11 +237,15 @@ dat ze niet meer naar jou te herleiden zijn.</p>
     <tr><td>Gezondheidsverklaring</td>
         <td>Eén seizoen. Voor een nieuw seizoen vragen we een nieuwe verklaring. Word je afgewezen, dan verwijderen we hem direct.</td></tr>
     <tr><td>Opgaaf loonheffing en kopie identiteitsbewijs</td>
-        <td><?= $loonjr ?> jaar na het jaar waarin je voor het laatst bij ons werkte (dat is de wettelijke termijn)</td></tr>
+        <td>5 jaar na het einde van het jaar waarin je voor het laatst bij ons werkte (fiscale bewaarplicht); de penningmeester vernietigt ze daarna</td></tr>
     <tr><td>Kopie van je bankpas</td>
         <td><?= $bankpas ?> dagen nadat de penningmeester je rekeningnummer heeft verwerkt</td></tr>
-    <tr><td>Logboek en overzicht van verstuurde berichten</td>
-        <td><?= $maillog ?> maanden. De tekst van de berichten zelf 3 maanden.</td></tr>
+    <tr><td>Overzicht van verstuurde berichten</td>
+        <td><?= $maillog ?> maanden. De tekst van de berichten zelf <?= $mailbody ?> maanden.</td></tr>
+    <tr><td>Logboek van belangrijke handelingen</td>
+        <td><?= $audit ?> maanden</td></tr>
+    <tr><td>Foutmeldingen van het systeem (met je e-mailadres, als je op dat moment was ingelogd)</td>
+        <td><?= $fouten ?> dagen</td></tr>
     <tr><td>Mislukte inlogpogingen</td><td>24 uur</td></tr>
     <tr><td>"Blijf ingelogd" op een apparaat</td><td>60 dagen, of korter als je uitlogt</td></tr>
   </tbody>

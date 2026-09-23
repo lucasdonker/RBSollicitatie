@@ -8,7 +8,12 @@
  * Veiligheidsprincipes:
  *  - Doet NIETS tenzij 'bewaar.actief' expliciet aan staat.
  *  - Elke categorie heeft een eigen termijn; 0 maanden = die categorie NIET opschonen.
- *  - Aangenomen kandidaten worden nooit automatisch verwijderd/geanonimiseerd.
+ *  - Loondocumenten (loonheffing, kopie ID) worden hier NOOIT vernietigd. De fiscale termijn
+ *    loopt tot 5 jaar na het einde van het jaar waarin het dienstverband eindigde, en dat
+ *    einde kent het systeem niet (een lifeguard kan na een pauze terugkomen). De
+ *    penningmeester vernietigt ze handmatig (admin/documenten.php); besluit Lucas, 23 sep 2026.
+ *  - Oud-lifeguards: het dossier wordt na bewaar.aangenomen_jaar leeggemaakt, de persoon pas
+ *    geanonimiseerd als er geen loondocumenten meer zijn.
  *  - Afgewezen sollicitanten worden geANONIMISEERD (persoonsgegevens weg, geanonimiseerde
  *    statistiek blijft), niet hard verwijderd. Wat er dan precies verdwijnt staat op één
  *    plek, gedeeld met "gegevens laten verwijderen" in het portaal: includes/avg_wissen.php.
@@ -40,6 +45,48 @@ function opschoon_log_schrijf(string $categorie, int $aantal, string $bron = 'cr
         db()->prepare("INSERT INTO opschoon_log (categorie, aantal, bron) VALUES (?,?,?)")
             ->execute([$categorie, $aantal, $bron]);
     } catch (\Exception $e) { error_log('opschoon_log_schrijf: ' . $e->getMessage()); }
+}
+}
+
+if (!function_exists('opschoon_rijen')) {
+/**
+ * Tel (proefdraaien) of verwijder de rijen van één tabel die aan $waar voldoen.
+ * $tabel en $waar komen alleen uit deze code, nooit uit invoer.
+ */
+function opschoon_rijen($db, string $tabel, string $waar, array $params, bool $dry_run): int {
+    if ($dry_run) {
+        $c = $db->prepare("SELECT COUNT(*) FROM `$tabel` WHERE $waar");
+        $c->execute($params);
+        return (int)$c->fetchColumn();
+    }
+    $d = $db->prepare("DELETE FROM `$tabel` WHERE $waar");
+    $d->execute($params);
+    return $d->rowCount();
+}
+
+/** De documentsoorten met een fiscale bewaarplicht (bewaren = 'loon' in document_soorten()). */
+function opschoon_loonsoorten(): array {
+    if (!function_exists('document_soorten')) return ['id_voor', 'id_achter', 'ondertekening_loonheffing'];
+    $uit = [];
+    foreach (document_soorten() as $soort => $def) if (($def['bewaren'] ?? '') === 'loon') $uit[] = $soort;
+    return $uit ?: ['id_voor', 'id_achter', 'ondertekening_loonheffing'];
+}
+
+/**
+ * Vervallen codes en tellingen weggooien: gebruikte of verlopen inlog- en verificatiecodes
+ * (otp_tokens) en oude regels van de snelheidsbegrenzing. Geen dossiers en geen
+ * bewaartermijn, dus los van bewaar.actief; de cron roept dit elke run aan. Er komt geen
+ * regel in opschoon_log: dat zou elke vijf minuten een regel in het logboek geven.
+ * Een uur marge: een code die net verliep, kan nog in een formulier op het scherm staan.
+ */
+function opschoon_vervallen(): array {
+    $uit = ['codes' => 0, 'tellingen' => 0];
+    try {
+        $uit['codes'] = opschoon_rijen(db(), 'otp_tokens',
+            "vervalt_op < DATE_SUB(NOW(), INTERVAL 1 HOUR) OR (gebruikt = 1 AND aangemaakt_op < DATE_SUB(NOW(), INTERVAL 1 HOUR))", [], false);
+    } catch (\Throwable $e) {}
+    if (function_exists('rate_limit_opruimen')) $uit['tellingen'] = rate_limit_opruimen();
+    return $uit;
 }
 }
 
@@ -128,9 +175,11 @@ function opschoon_run(bool $dry_run = false, string $bron = 'cron'): array {
     // Zolang iemand bij ons werkt blijft alles staan; daarna nog bewaar.aangenomen_jaar
     // (standaard 2, de lijn van de AP voor een personeelsdossier), gerekend vanaf het einde
     // van het laatste seizoen. Wie een nieuwe sollicitatie heeft lopen, valt erbuiten.
-    // Loonheffing en kopie ID blijven: die hebben een wettelijke termijn (stap 6). Pas als
-    // die ook weg zijn, wordt de persoon zelf geanonimiseerd — daarvoor staan naam en
-    // geboortedatum er tot die tijd nog bij, anders is het bewaarde stuk niet terug te vinden.
+    // Loonheffing en kopie ID blijven: die hebben een fiscale termijn en de penningmeester
+    // vernietigt ze met de hand. Pas als ze weg zijn, wordt de persoon zelf geanonimiseerd —
+    // tot die tijd staan naam en geboortedatum er nog bij, anders is het bewaarde stuk niet
+    // terug te vinden. Bij het anonimiseren gaat ook de rest van de loonheffing-ondertekening
+    // mee (BSN en handtekening), want het document waarvoor die bewaard werd is dan weg.
     $jaar = instelling_int('bewaar.aangenomen_jaar', 2);
     if ($jaar > 0) {
         try {
@@ -153,8 +202,10 @@ function opschoon_run(bool $dry_run = false, string $bron = 'cron'): array {
             $aantal = 0;
             if ($ids && !$dry_run) {
                 $sols = $db->prepare("SELECT id FROM sollicitaties WHERE persoon_id = ?");
+                $loonsoorten = opschoon_loonsoorten();
                 $loon = $db->prepare("SELECT COUNT(*) FROM sollicitant_documenten d JOIN sollicitaties s ON s.id = d.sollicitatie_id
-                                      WHERE s.persoon_id = ? AND d.status IN ('ingediend','verwerkt')");
+                                      WHERE s.persoon_id = ? AND d.status IN ('ingediend','verwerkt')
+                                        AND d.soort IN (" . implode(',', array_fill(0, count($loonsoorten), '?')) . ")");
                 foreach ($ids as $pid) {
                     $pid = (int)$pid;
                     $email = 'geanonimiseerd+' . $pid . '@paal13.local';
@@ -163,9 +214,10 @@ function opschoon_run(bool $dry_run = false, string $bron = 'cron'): array {
                         $sols->execute([$pid]);
                         $sids = array_map('intval', $sols->fetchAll(PDO::FETCH_COLUMN));
                         foreach ($sids as $sid) avg_sollicitatie_leegmaken($db, $sid, false);
-                        $loon->execute([$pid]);
+                        $loon->execute(array_merge([$pid], $loonsoorten));
                         if ((int)$loon->fetchColumn() === 0) {
-                            foreach ($sids as $sid) avg_maillog_anonimiseren($db, $sid, $email);
+                            // Geen loondocumenten meer: nu mag ook het restant van de loonheffing weg.
+                            foreach ($sids as $sid) { avg_sollicitatie_leegmaken($db, $sid, true); avg_maillog_anonimiseren($db, $sid, $email); }
                             avg_persoon_anonimiseren($db, $pid, 'Geanonimiseerd', '', $email);
                             $aantal++;
                         }
@@ -375,34 +427,26 @@ function opschoon_run(bool $dry_run = false, string $bron = 'cron'): array {
         }
     }
 
-    // ── 6. Loondocumenten (loonheffingsformulier + kopie ID): wettelijke bewaartermijn, jaren na einde dienstjaar ──
-    // Wet LB art. 28: bewaren tot 5 jaar na het einde van het kalenderjaar waarin het dienstverband eindigde.
-    // Het dienstjaar = het jaar van het seizoen (datum_werk_eind, anders het jaar van aanmelding).
-    $jaar_bewaar = instelling_int('bewaar.loondocumenten_jaar', 5);
-    if ($jaar_bewaar > 0 && function_exists('document_vernietigen')) {
+    // ── 6. Loondocumenten: bewust GEEN automatische stap (zie de kop van dit bestand). ──
+
+    // ── 6a. Berichtenwachtrij: verwerkte en mislukte rijen na 30 dagen weg ──
+    // Een rij bevat adres, telefoon en de volledige tekst; na verzending is hij alleen nog
+    // nodig om een storing na te lopen. Het overzicht van verstuurde berichten staat in mail_log.
+    try {
+        $aantal = opschoon_rijen($db, 'mail_queue',
+            "status IN ('klaar','fout') AND aangemaakt_op < DATE_SUB(NOW(), INTERVAL 30 DAY)", [], $dry_run);
+        $uit['categorieen']['wachtrij_opgeschoond'] = $aantal;
+        if (!$dry_run) opschoon_log_schrijf('wachtrij_opgeschoond', $aantal, $bron);
+    } catch (\Exception $e) { $uit['categorieen']['wachtrij_opgeschoond'] = 0; }
+
+    // ── 6b. Foutenlog: bevat e-mailadressen van gebruikers en URL's ──
+    $dagen_fout = instelling_int('bewaar.foutenlog_dagen', 90);
+    if ($dagen_fout > 0) {
         try {
-            $grensjaar = (int)date('Y') - $jaar_bewaar; // dienstjaren t/m dit jaar mogen weg
-            $q = $db->prepare("
-                SELECT d.id FROM sollicitant_documenten d
-                JOIN sollicitaties s ON s.id = d.sollicitatie_id
-                LEFT JOIN seizoenen sz ON sz.id = s.seizoen_id
-                WHERE d.status IN ('ingediend','verwerkt')
-                  AND d.soort IN ('id_voor','id_achter','ondertekening_loonheffing')
-                  AND YEAR(COALESCE(sz.datum_werk_eind, s.aangemeld_op)) <= ?
-            ");
-            $q->execute([$grensjaar]);
-            $ids = $q->fetchAll(PDO::FETCH_COLUMN);
-            $aantal = 0;
-            foreach ($ids as $id) { if ($dry_run) { $aantal++; continue; } if (document_vernietigen((int)$id, 'bewaartermijn loondocumenten verstreken')) $aantal++; }
-            if (!$dry_run && $ids) {
-                // Het ondertekeningsrecord blijft (bewijs dat er getekend is), maar zonder BSN en handtekening
-                $db->prepare("UPDATE ondertekeningen o JOIN sollicitaties s ON s.id=o.sollicitatie_id LEFT JOIN seizoenen sz ON sz.id=s.seizoen_id
-                              SET o.vertrouwelijk=NULL, o.handtekening_beeld=NULL, o.pdf_document_id=NULL
-                              WHERE o.type='loonheffing' AND YEAR(COALESCE(sz.datum_werk_eind, s.aangemeld_op)) <= ?")->execute([$grensjaar]);
-            }
-            $uit['categorieen']['loondocumenten_vernietigd'] = $aantal;
-            if (!$dry_run && $aantal) opschoon_log_schrijf('loondocumenten_vernietigd', $aantal, $bron);
-        } catch (\Exception $e) { $uit['categorieen']['loondocumenten_vernietigd'] = ['fout' => $e->getMessage()]; error_log('opschoon loondocumenten: ' . $e->getMessage()); }
+            $aantal = opschoon_rijen($db, 'error_log', "aangemaakt_op < DATE_SUB(NOW(), INTERVAL ? DAY)", [$dagen_fout], $dry_run);
+            $uit['categorieen']['foutenlog_verwijderd'] = $aantal;
+            if (!$dry_run) opschoon_log_schrijf('foutenlog_verwijderd', $aantal, $bron);
+        } catch (\Exception $e) { $uit['categorieen']['foutenlog_verwijderd'] = 0; }
     }
 
     // ── 7. Kopie bankpas: vernietigen X dagen nadat de penningmeester het dossier heeft verwerkt ──

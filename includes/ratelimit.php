@@ -32,8 +32,10 @@ function rate_limit(string $actie, string $identiteit, int $max, int $venster): 
         $sleutel = substr($actie . ':' . $identiteit, 0, 160);
         $nu = time();
         $grens = $nu - $venster;
-        // Oude regels opruimen (klein)
-        $db->prepare("DELETE FROM api_rate WHERE moment < ?")->execute([$grens]);
+        // Alleen de eigen oude regels opruimen. Een algemene DELETE met het venster van déze
+        // actie wiste de tellingen van acties met een langer venster (zoeken: 60 s tegenover
+        // inlogcodes: 1 uur). De rest ruimt de cron op (rate_limit_opruimen).
+        $db->prepare("DELETE FROM api_rate WHERE sleutel = ? AND moment < ?")->execute([$sleutel, $grens]);
         // Tellen binnen het venster
         $q = $db->prepare("SELECT COUNT(*) FROM api_rate WHERE sleutel=? AND moment >= ?");
         $q->execute([$sleutel, $grens]);
@@ -44,6 +46,18 @@ function rate_limit(string $actie, string $identiteit, int $max, int $venster): 
         error_log('rate_limit: ' . $e->getMessage());
         return true;  // faalt open
     }
+}
+
+/**
+ * Regels ouder dan het grootste venster weggooien (standaard een dag; het langste venster
+ * in de code is nu een uur). Aangeroepen door de cron via opschoon_vervallen().
+ */
+function rate_limit_opruimen(int $ouder_dan = 86400): int {
+    try {
+        $d = db()->prepare("DELETE FROM api_rate WHERE moment < ?");
+        $d->execute([time() - $ouder_dan]);
+        return $d->rowCount();
+    } catch (\Throwable $e) { return 0; }   // tabel bestaat nog niet: niets te doen
 }
 
 }

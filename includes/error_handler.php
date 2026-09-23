@@ -60,6 +60,7 @@ function p13_fout(
     $ref        = substr(bin2hex(random_bytes(4)), 0, 8);
 
     // Log naar database (best-effort)
+    $log_id = 0;
     try {
         if (function_exists('db')) {
             $stmt = db()->prepare("
@@ -67,14 +68,17 @@ function p13_fout(
                 VALUES (?, ?, ?, ?, ?, ?)
             ");
             $stmt->execute([$code, "[ref $ref] $bericht", $bestand, $regel, $gebruiker, $url]);
+            $log_id = (int)db()->lastInsertId();
         }
     } catch (\Exception $dbEx) {
         // DB logging mislukt — schrijf naar PHP error log
         error_log("P13 DB LOG FOUT: $code — $bericht");
     }
 
-    // Stuur mail bij ernstige fouten (max 1x per 5 min per code)
-    p13_stuur_fout_mail($code, $bericht, $bestand, $regel, $url, $gebruiker, $e);
+    // Stuur mail bij ernstige fouten (max 1x per 5 min per code, ook over verzoeken heen)
+    if (p13_fout_mail_mag($code, $log_id)) {
+        p13_stuur_fout_mail($code, $bericht, $bestand, $regel, $url, $gebruiker, $e);
+    }
 
     // PHP error log
     error_log("[$code ref:$ref] $bericht" . ($e ? " ({$e->getMessage()})" : ''));
@@ -92,16 +96,38 @@ function p13_fout(
     }
 }
 
+/**
+ * Mag er voor deze foutcode een mail uit? Eén per code per 5 minuten.
+ *
+ * Een static array hield dat alleen binnen één verzoek bij: bij een storing kwam er per
+ * bezoek een mail. Nu telt de database mee: de logregel krijgt mail_verstuurd = 1, en zolang
+ * er binnen 5 minuten zo'n regel voor dezelfde code is, gaat er geen nieuwe mail uit. Werkt de
+ * database niet (juist bij P13-D001), dan houdt een tijdstempelbestand in de tijdelijke map het bij.
+ */
+function p13_fout_mail_mag(string $code, int $log_id): bool {
+    static $gezien = [];
+    if (isset($gezien[$code])) return false;
+    $gezien[$code] = true;
+    if ($log_id > 0) {
+        try {
+            $q = db()->prepare("SELECT COUNT(*) FROM error_log WHERE code = ? AND mail_verstuurd = 1 AND aangemaakt_op > DATE_SUB(NOW(), INTERVAL 5 MINUTE)");
+            $q->execute([$code]);
+            if ((int)$q->fetchColumn() > 0) return false;
+            db()->prepare("UPDATE error_log SET mail_verstuurd = 1 WHERE id = ?")->execute([$log_id]);
+            return true;
+        } catch (\Throwable $ignored) {}
+    }
+    $pad = rtrim(sys_get_temp_dir(), '/\\') . '/p13_foutmail_' . substr(md5(__DIR__), 0, 8) . '_' . preg_replace('/[^A-Za-z0-9-]/', '', $code);
+    $t = @filemtime($pad);
+    if ($t && time() - $t < 300) return false;
+    @touch($pad);
+    return true;
+}
+
 function p13_stuur_fout_mail(
     string $code, string $bericht, string $bestand,
     int $regel, string $url, string $gebruiker, ?\Throwable $e
 ): void {
-    // Rate limiting: niet spammen
-    static $verstuurd = [];
-    $sleutel = $code . '_' . floor(time() / 300); // 5 min window
-    if (isset($verstuurd[$sleutel])) return;
-    $verstuurd[$sleutel] = true;
-
     // Bepaal email adres
     $naar = P13_FOUT_EMAIL;
     try {
@@ -115,7 +141,7 @@ function p13_stuur_fout_mail(
 
     $onderwerp = "[$code] Fout op $site";
     $body = "
-<h2 style='color:#c53030;font-family:Arial'>⚠️ Foutmelding Paal 13</h2>
+<h2 style='color:#c53030;font-family:Arial'>Foutmelding Paal 13</h2>
 <table style='font-family:Arial;font-size:13px;border-collapse:collapse'>
   <tr><td style='padding:4px 12px 4px 0;color:#666;font-weight:600'>Code</td><td><code style='background:#fee2e2;padding:2px 6px;border-radius:3px'>$code</code></td></tr>
   <tr><td style='padding:4px 12px 4px 0;color:#666;font-weight:600'>Fout</td><td>" . htmlspecialchars($bericht) . "</td></tr>

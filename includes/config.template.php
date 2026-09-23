@@ -56,7 +56,7 @@ define('DOCUMENTEN_MAP', '');
 
 // ── Sessie ──
 define('SESSION_NAME',     'p13sess');
-define('SESSION_LIFETIME', 0);
+// De sessie leeft vast 8 uur (sessie_start() in includes/functions.php); daar is geen constante voor.
 
 date_default_timezone_set('Europe/Amsterdam');
 error_reporting(0);

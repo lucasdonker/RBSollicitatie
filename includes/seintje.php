@@ -50,13 +50,16 @@ function seintje_afwijs_termijn_tekst(): string {
     return $woord[$w] ?? ($w . ' weken');
 }
 
-/** Heeft deze persoon om een seintje gevraagd? */
+/**
+ * Heeft deze persoon om een seintje gevraagd, en geldt dat nog? Na seintje_termijn_mnd()
+ * is de toestemming vervallen, ook als het opschonen de datum nog niet heeft weggehaald.
+ */
 function seintje_heeft(int $persoon_id): bool {
     seintje_auto_setup();
     try {
-        $q = db()->prepare("SELECT seintje_op FROM personen WHERE id=?");
-        $q->execute([$persoon_id]);
-        return (string)$q->fetchColumn() !== '';
+        $q = db()->prepare("SELECT 1 FROM personen WHERE id=? AND seintje_op IS NOT NULL AND seintje_op >= DATE_SUB(NOW(), INTERVAL ? MONTH)");
+        $q->execute([$persoon_id, seintje_termijn_mnd()]);
+        return (bool)$q->fetchColumn();
     } catch (\Throwable $e) { return false; }
 }
 
@@ -90,14 +93,16 @@ function seintje_intrekken(int $persoon_id, string $bron): bool {
     } catch (\Throwable $e) { error_log('seintje_intrekken: ' . $e->getMessage()); return false; }
 }
 
-/** De persoon achter een afmeld-token, of null. */
+/** De persoon achter een afmeld-token, of null. Een vervallen seintje komt terug als seintje_op = null. */
 function seintje_persoon_via_token(string $token): ?array {
     if (!preg_match('/^[a-f0-9]{48}$/', $token)) return null;
     seintje_auto_setup();
     if (function_exists('optout_auto_setup')) optout_auto_setup();
     try {
-        $q = db()->prepare("SELECT id, voornaam, seintje_op FROM personen WHERE afmeld_token=?");
-        $q->execute([$token]);
+        $q = db()->prepare("SELECT id, voornaam,
+                                   CASE WHEN seintje_op >= DATE_SUB(NOW(), INTERVAL ? MONTH) THEN seintje_op END AS seintje_op
+                            FROM personen WHERE afmeld_token=?");
+        $q->execute([seintje_termijn_mnd(), $token]);
         return $q->fetch() ?: null;
     } catch (\Throwable $e) { return null; }
 }

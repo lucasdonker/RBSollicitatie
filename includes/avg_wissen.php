@@ -13,8 +13,8 @@
  * oudere installaties) wordt stil overgeslagen.
  *
  * Wat bewust blijft: de sollicitatie-rij zelf (fase, seizoen, data) voor de statistiek, en
- * het feit dát er ondertekend is. Loondocumenten horen hier niet: die hebben een wettelijke
- * bewaarplicht en een eigen termijn (bewaar.loondocumenten_jaar).
+ * het feit dát er ondertekend is. Loondocumenten horen hier niet: die hebben een fiscale
+ * bewaarplicht en de penningmeester vernietigt ze met de hand (admin/documenten.php).
  */
 
 if (!function_exists('avg_sollicitatie_leegmaken')) {
@@ -79,10 +79,25 @@ function avg_persoon_anonimiseren($db, int $persoon_id, string $voornaam, string
     $db->prepare("UPDATE personen SET " . implode(', ', $set) . " WHERE id=?")->execute($params);
 }
 
-/** Het adres en de inhoud in het berichtenlog van één sollicitatie. */
+/**
+ * Het adres en de inhoud in het berichtenlog van één sollicitatie, en de wachtrij.
+ *
+ * In de wachtrij (mail_queue) staan adres, telefoon en de volledige tekst. Weg gaan: alles wat
+ * al verwerkt is, en wat nog wacht voor de sollicitant of de ouder zelf (die hoeft na het
+ * wissen niets meer te krijgen). Een bericht aan het bestuur dat nog wacht — zoals "sollicitant
+ * heeft zelf verwijderd", dat vlak hiervoor is klaargezet — blijft staan tot het verstuurd is;
+ * de opschoning ruimt het na 30 dagen op.
+ */
 function avg_maillog_anonimiseren($db, int $sol_id, string $email): void {
     try { $db->prepare("UPDATE mail_log SET ontvanger=?, body=NULL, samenvatting=NULL WHERE sollicitatie_id = ?")->execute([$email, $sol_id]); }
     catch (\Exception $e) { try { $db->prepare("UPDATE mail_log SET ontvanger=? WHERE sollicitatie_id = ?")->execute([$email, $sol_id]); } catch (\Exception $e2) {} }
+    try {
+        $db->prepare("DELETE FROM mail_queue WHERE sol_id = ? AND (status IN ('klaar','fout') OR ontvanger_rol IN ('sollicitant','ouder'))")->execute([$sol_id]);
+    } catch (\PDOException $e) {
+        // Oudere wachtrij zonder ontvanger_rol (42S22): dan alleen wat al verwerkt is. Geen tabel (42S02): niets te doen.
+        if ($e->getCode() === '42S22') avg_stap($db, "DELETE FROM mail_queue WHERE sol_id = ? AND status IN ('klaar','fout')", [$sol_id]);
+        elseif ($e->getCode() !== '42S02') throw $e;
+    }
 }
 
 }

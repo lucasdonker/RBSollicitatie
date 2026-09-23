@@ -1,9 +1,11 @@
 <?php
 /**
  * Paal 13 — Cron runner
- * Aangeroepen door de Plesk/cPanel-cron (elke 5 min):
- *   curl -s "https://sollicitatie.paal13.com/cron/run.php?token=..."
- * Token staat in Instellingen → Mail & notificaties → Cronjob.
+ * Aangeroepen door de Plesk-cron (elke 5 min). Bij voorkeur met het token in een header,
+ * zodat het niet in de access-logs van de webserver belandt:
+ *   curl -s -H "X-Cron-Token: ..." "https://sollicitatie.paal13.com/cron/run.php"
+ * De oude vorm met ?token=... werkt nog voor bestaande cronjobs, maar komt wel in de logs.
+ * Token staat in Instellingen → Bewaren & opschonen → Cronjob.
  *
  * Alle taken zitten in includes/cron_taken.php (cron_taken_uitvoeren): berichtenwachtrij,
  * AI-wachtrij, herinneringen, automatisch uitnodigen, Authentik-sync en de AVG-opschoning
@@ -13,9 +15,13 @@ require_once __DIR__ . '/../includes/functions.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
-$token  = $_GET['token'] ?? '';
+// Header gaat voor; de querystring blijft voor bestaande cronjobs. Geen string = geen token
+// (een ?token[]= zou hash_equals anders een TypeError geven).
+$token = (string)($_SERVER['HTTP_X_CRON_TOKEN'] ?? '');
+if ($token === '') $token = $_GET['token'] ?? '';
+if (!is_string($token)) $token = '';
 $geheim = instelling('cron.token', '');
-if ($geheim === '' || !hash_equals($geheim, $token)) {
+if ($geheim === '' || $token === '' || !hash_equals($geheim, $token)) {
     http_response_code(403);
     echo json_encode(['ok' => false, 'fout' => 'Ongeldige token']);
     exit;

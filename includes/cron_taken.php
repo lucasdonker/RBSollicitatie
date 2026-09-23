@@ -50,14 +50,21 @@ function cron_taken_uitvoeren(string $bron, array $limieten = []): array {
             if (function_exists('foto_wezen_opruimen')) {
                 $stap('fotos', fn() => ['verwijderd' => foto_wezen_opruimen()]);
             }
+            // Gebruikte/verlopen inlogcodes en oude tellingen van de snelheidsbegrenzing.
+            // Ook los van bewaar.actief: het zijn geen dossiers maar vervallen codes.
+            if (function_exists('opschoon_vervallen')) $stap('vervallen', fn() => opschoon_vervallen());
             if (function_exists('opschoon_run')) {
                 $laatste = instelling('bewaar.laatste_run', '');
                 if (substr($laatste, 0, 10) !== date('Y-m-d')) $stap('opschonen', fn() => opschoon_run(false, 'cron'));
                 else $uit['taken']['opschonen'] = ['overgeslagen' => 'al gedraaid vandaag'];
             }
         }
-        instelling_opslaan('cron.laatste_run', date('Y-m-d H:i:s'));
+        $nu = date('Y-m-d H:i:s');
+        instelling_opslaan('cron.laatste_run', $nu);
         instelling_opslaan('cron.laatste_bron', $bron);
+        // Apart bijhouden: de lazy-cron houdt cron.laatste_run vers, maar draait de zware taken
+        // (opschonen, opruimen, sync) niet. De health-check kijkt hiernaar.
+        if ($bron === 'cron') instelling_opslaan('cron.laatste_run_cron', $nu);
     } finally {
         instelling_opslaan('cron.lock_tot', '');
     }

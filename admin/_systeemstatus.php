@@ -13,7 +13,10 @@
 $vandaag_systeem = $vandaag_systeem ?? null;
 if (!$vandaag_systeem) return;
 
-$_ok  = !empty($vandaag_systeem['ok']);
+// Opschonen uit is een AVG-probleem, geen storing, maar wel alarm: de privacyverklaring en de
+// afwijzingsmail beloven termijnen die dan niet worden gehaald. Tekst komt uit de health-check.
+$_opschonen_uit = function_exists('instelling_bool') && !instelling_bool('bewaar.actief', false);
+$_ok  = !empty($vandaag_systeem['ok']) && !$_opschonen_uit;
 $_tijd = !empty($vandaag_systeem['ronde']) ? substr((string)$vandaag_systeem['ronde'], 11, 5) : null;
 ?>
 <section class="bh-systeem <?= $_ok ? 'ds-fase-groen' : 'ds-fase-rood' ?><?= $_ok ? '' : ' alarm' ?>">
@@ -38,6 +41,9 @@ $_tijd = !empty($vandaag_systeem['ronde']) ? substr((string)$vandaag_systeem['ro
     <span<?= $vandaag_systeem['open'] > 0 ? ' class="let-op"' : '' ?>>
       <?= (int)$vandaag_systeem['open'] ?> langer dan 3 dagen open
     </span>
+    <?php if ($_opschonen_uit && function_exists('health_opschonen_uit_tekst')): ?>
+      <span class="slecht"><?= h(health_opschonen_uit_tekst()) ?></span>
+    <?php endif; ?>
   </span>
 
   <span class="bh-systeem-ronde">
@@ -50,8 +56,14 @@ $_tijd = !empty($vandaag_systeem['ronde']) ? substr((string)$vandaag_systeem['ro
     <?php endif; ?>
   </span>
 
-  <?php if (!$_ok): ?>
-    <a class="ds-btn ds-btn-sm bh-systeem-knop" href="<?= APP_URL ?>/admin/logboek.php?bron=error">
+  <?php /* Alleen knoppen naar schermen die deze gebruiker ook mag openen. */ ?>
+  <?php if ($_opschonen_uit && mag('instellingen', 'bewerken')): ?>
+    <a class="ds-btn ds-btn-sm bh-systeem-knop" href="<?= APP_URL ?>/admin/instellingen.php?tab=bewaren">
+      Opschonen aanzetten
+    </a>
+  <?php endif; ?>
+  <?php if (empty($vandaag_systeem['ok']) && mag('logboek', 'lezen')): ?>
+    <a class="ds-btn ds-btn-sm bh-systeem-knop" href="<?= APP_URL ?>/admin/logboek.php?bron=fout">
       Bekijk het logboek
     </a>
   <?php endif; ?>

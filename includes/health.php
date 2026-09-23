@@ -68,7 +68,7 @@ function health_check_database(bool $repareer): array {
     $mist = array_merge($mist, $g['ontbrekende_kolommen'] ?? []);
     return [
         'status'   => 'fout',
-        'uitleg'   => 'Ontbrekend: ' . implode(', ', $mist) . '. Klik op "Repareren" of open een pagina zodat het zichzelf herstelt.',
+        'uitleg'   => 'Ontbrekend: ' . implode(', ', $mist) . '. Klik op "Controleren & repareren" of open een pagina zodat het zichzelf herstelt.',
         'hersteld' => $hersteld,
     ];
 }
@@ -88,6 +88,15 @@ function health_check_cron(): array {
     }
     if ($sinds > 1800) {
         return ['status' => 'waarschuwing', 'uitleg' => "De cron draaide voor het laatst op $leesbaar. Dat is langer dan verwacht (>30 min).", 'hersteld' => false];
+    }
+    // De lazy-cron (bij een bezoek aan het beheer) houdt cron.laatste_run vers, maar draait
+    // opschonen, opruimen en de Authentik-sync niet. Kijk dus apart naar de echte cronjob.
+    // Oudere installaties hebben cron.laatste_run_cron nog niet: dan telt een run met bron cron.
+    $echt = instelling('cron.laatste_run_cron', '');
+    if ($echt === '' && $bron === 'cron') $echt = $laatste;
+    if ($echt === '' || time() - strtotime($echt) > 1800) {
+        $wanneer = $echt === '' ? 'nog nooit' : 'voor het laatst op ' . date('d-m-Y H:i', strtotime($echt));
+        return ['status' => 'waarschuwing', 'uitleg' => "Alleen de lazy-cron draait ($leesbaar); de echte cronjob draaide $wanneer. Opschonen en opruimen gebeuren dan niet. Controleer de cronjob in Plesk.", 'hersteld' => false];
     }
     return ['status' => 'ok', 'uitleg' => "Cron draait ($leesbaar, via $bron).", 'hersteld' => false];
 }
@@ -114,6 +123,11 @@ function health_check_mailwachtrij(): array {
 
 /** Opschoning: is die recent gedraaid? */
 function health_check_opschoning(): array {
+    // Uit = rood: dan wordt niets verwijderd, terwijl de privacyverklaring en de afwijzingsmail
+    // termijnen beloven. Dat is geen technisch probleem maar een AVG-probleem.
+    if (function_exists('instelling_bool') && !instelling_bool('bewaar.actief', false)) {
+        return ['status' => 'fout', 'uitleg' => health_opschonen_uit_tekst(), 'hersteld' => false];
+    }
     $laatste = function_exists('instelling') ? instelling('bewaar.laatste_run', '') : '';
     if ($laatste === '') {
         return ['status' => 'waarschuwing', 'uitleg' => 'De AVG-opschoning heeft nog niet gedraaid.', 'hersteld' => false];
@@ -125,6 +139,11 @@ function health_check_opschoning(): array {
         return ['status' => 'waarschuwing', 'uitleg' => "Opschoning draaide voor het laatst op $leesbaar (meer dan 3 dagen geleden).", 'hersteld' => false];
     }
     return ['status' => 'ok', 'uitleg' => "Opschoning recent gedraaid ($leesbaar).", 'hersteld' => false];
+}
+
+/** De waarschuwing als automatisch opschonen uitstaat. Eén tekst voor de systeemcontrole en Vandaag. */
+function health_opschonen_uit_tekst(): string {
+    return 'Automatisch opschonen staat uit — er wordt niets verwijderd; de privacyverklaring belooft wel termijnen. Zet het aan bij Instellingen › Bewaren & opschonen.';
 }
 
 /** Mappen: zijn de upload/output-mappen schrijfbaar? */
@@ -195,7 +214,10 @@ function health_check_configuratie(): array {
         if (instelling('cron.token', '') === '') $ontbreekt[] = 'cron-token';
         // SMTP alleen waarschuwen als er een mailwachtrij is
     }
-    if (!defined('MAIL_BESTUUR') || !MAIL_BESTUUR) $ontbreekt[] = 'bestuur-e-mailadres';
+    // Zelfde volgorde als het verzenden: de instelling mail.bestuur_email, anders MAIL_BESTUUR.
+    $bestuur = function_exists('bestuur_email') ? bestuur_email()
+             : (trim(function_exists('instelling') ? instelling('mail.bestuur_email', '') : '') ?: (defined('MAIL_BESTUUR') ? (string)MAIL_BESTUUR : ''));
+    if ($bestuur === '') $ontbreekt[] = 'bestuur-e-mailadres';
 
     if ($ontbreekt) {
         return ['status' => 'waarschuwing', 'uitleg' => 'Nog niet ingesteld: ' . implode(', ', $ontbreekt) . '.', 'hersteld' => false];
