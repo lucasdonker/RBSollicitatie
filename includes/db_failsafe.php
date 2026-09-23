@@ -178,6 +178,21 @@ function db_failsafe(bool $forceer = false): void {
             } catch (\Exception $e) { error_log('db_failsafe otp_tokens.type: ' . $e->getMessage()); }
         }
 
+        // beheerders.rol was ENUM('begeleider','bestuur','admin'): de rol penningmeester (en elke
+        // rol die je bij Rollen & rechten toevoegt) paste er niet in. MariaDB zette er dan stil ''
+        // van, en zo'n account had geen enkel recht. De rollen staan in de tabel `rollen`; de kolom
+        // hoeft ze niet te kennen.
+        if (db_tabel_bestaat($db, 'beheerders')) {
+            try {
+                $col = $db->query("SHOW COLUMNS FROM beheerders LIKE 'rol'")->fetch();
+                if ($col && stripos((string)($col['Type'] ?? ''), 'enum') !== false) {
+                    $db->exec("ALTER TABLE beheerders MODIFY COLUMN `rol` VARCHAR(40) NOT NULL DEFAULT 'begeleider'");
+                    $db->exec("UPDATE beheerders SET `rol` = 'begeleider' WHERE `rol` = ''");
+                    error_log('db_failsafe: beheerders.rol omgezet van ENUM naar VARCHAR(40)');
+                }
+            } catch (\Exception $e) { error_log('db_failsafe beheerders.rol: ' . $e->getMessage()); }
+        }
+
         // Speciaal: soort-enum van beschikbaarheid_dag moet 'beschikbaar' bevatten
         // (voor bestuurs-overrides die een dag expliciet beschikbaar maken).
         if (db_tabel_bestaat($db, 'beschikbaarheid_dag')) {
@@ -190,6 +205,28 @@ function db_failsafe(bool $forceer = false): void {
                     error_log('db_failsafe: soort-enum uitgebreid met beschikbaar');
                 }
             } catch (\Exception $e) { error_log('db_failsafe soort-enum: ' . $e->getMessage()); }
+        }
+
+        // Speciaal: sollicitaties.fase kende 'verwijderd_door_sollicitant' en 'afgehaakt' niet,
+        // terwijl portaal/gegevens.php de eerste zet en de selecties op beide filteren. In
+        // strict mode gooide die UPDATE een fout, de transactie rolde terug, en kon een
+        // sollicitant zijn eigen account nooit verwijderen (AVG art. 17). Alleen achteraan
+        // toevoegen: bestaande waarden en hun volgorde blijven gelijk.
+        if (db_tabel_bestaat($db, 'sollicitaties')) {
+            try {
+                $col = $db->query("SHOW COLUMNS FROM sollicitaties LIKE 'fase'")->fetch();
+                $type = (string)($col['Type'] ?? '');
+                if ($col && stripos($type, 'enum') !== false && stripos($type, "'verwijderd_door_sollicitant'") === false) {
+                    preg_match_all("/'((?:[^'\\\\]|\\\\.)*)'/", $type, $m);
+                    $waarden = $m[1];
+                    foreach (['afgehaakt', 'verwijderd_door_sollicitant'] as $nieuw) {
+                        if (!in_array($nieuw, $waarden, true)) $waarden[] = $nieuw;
+                    }
+                    $lijst = implode(',', array_map(fn($w) => $db->quote($w), $waarden));
+                    $db->exec("ALTER TABLE sollicitaties MODIFY COLUMN `fase` ENUM($lijst) NOT NULL DEFAULT 'aangemeld'");
+                    error_log('db_failsafe: sollicitaties.fase uitgebreid met afgehaakt en verwijderd_door_sollicitant');
+                }
+            } catch (\Exception $e) { error_log('db_failsafe fase-enum: ' . $e->getMessage()); }
         }
 
         // Speciaal: het oude installatie-account uit schema.sql/migratie 0002 had een wachtwoord dat

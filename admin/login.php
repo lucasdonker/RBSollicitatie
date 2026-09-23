@@ -1,10 +1,12 @@
 <?php
 require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/toegang_terug.php';
 sessie_start();
 if (is_ingelogd()) redirect(APP_URL . '/admin/');
 
 $fout  = '';
-$terug = $_GET['terug'] ?? '';
+// Alleen een pad binnen het beheer (geen open redirect); leeg blijft leeg voor de SSO-link.
+$terug = isset($_GET['terug']) && $_GET['terug'] !== '' ? toegang_veilige_terug((string)$_GET['terug']) : '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
@@ -27,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($b && $b['wachtwoord'] && password_verify($ww, $b['wachtwoord'])) {
                 login_pogingen_wissen($email, $ip);
                 login_beheerder($b, 'wachtwoord');
-                redirect($terug ?: APP_URL . '/admin/');
+                redirect(toegang_veilige_terug($terug));
             } else {
                 login_poging_registreren($email, $ip);
                 sleep(1); // brute force vertraging

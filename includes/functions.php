@@ -505,7 +505,15 @@ function csrf_check(): void {
 // ── Flash ──────────────────────────────────────────────────────
 function flash(string $type, string $msg): void { sessie_start(); $_SESSION['flash'] = ['type' => $type, 'msg' => $msg]; }
 function get_flash(): ?array { sessie_start(); if (isset($_SESSION['flash'])) { $f = $_SESSION['flash']; unset($_SESSION['flash']); return $f; } return null; }
-function toon_flash(): void { $f = get_flash(); if ($f) echo '<div class="flash flash-' . h($f['type']) . '">' . h($f['msg']) . '</div>'; }
+/* Een fout wordt meteen voorgelezen (role=alert), de rest als status. Alleen een
+   succesmelding verdwijnt vanzelf (layout_bottom.php); een fout of waarschuwing blijft
+   staan tot de volgende pagina — wegvagen voordat je hem gelezen hebt helpt niemand (WCAG 2.2.1). */
+function toon_flash(): void {
+    $f = get_flash();
+    if (!$f) return;
+    $rol = in_array($f['type'], ['fout', 'error', 'waarschuwing'], true) ? 'alert' : 'status';
+    echo '<div class="flash flash-' . h($f['type']) . '" role="' . $rol . '">' . h($f['msg']) . '</div>';
+}
 
 // ── Seizoen ───────────────────────────────────────────────────
 function actief_seizoen(): ?array {
@@ -558,7 +566,9 @@ function leeftijd(?string $dob): string {
 function genereer_token(int $bytes = 32): string { return bin2hex(random_bytes($bytes)); }
 
 function fase_label(string $f): string {
-    return ['aangemeld' => 'Aangemeld', 'uitgenodigd_selectie' => 'Uitgenodigd selectiedag', 'aangemeld_selectie' => 'Aangemeld selectiedag', 'selectiedag_geweest' => 'Selectiedag geweest', 'uitgenodigd_tw' => 'Uitgenodigd trainingsweekend', 'tw_geweest' => 'TW geweest', 'aangenomen' => 'Aangenomen', 'afgewezen' => 'Afgewezen'][$f] ?? $f;
+    return ['aangemeld' => 'Aangemeld', 'uitgenodigd_selectie' => 'Uitgenodigd selectiedag', 'aangemeld_selectie' => 'Aangemeld selectiedag', 'selectiedag_geweest' => 'Selectiedag geweest', 'uitgenodigd_tw' => 'Uitgenodigd trainingsweekend', 'tw_geweest' => 'TW geweest', 'aangenomen' => 'Aangenomen', 'afgewezen' => 'Afgewezen',
+            // Eindstanden buiten de procedure: geen knop in fasen(), wel een leesbare naam.
+            'afgehaakt' => 'Afgehaakt', 'verwijderd_door_sollicitant' => 'Zelf verwijderd'][$f] ?? $f;
 }
 
 function fase_kleur(string $f): string {
@@ -608,8 +618,9 @@ function authentik_email_bestaat(string $email): array|false {
 }
 
 /**
- * Map Authentik groups naar app-rol. Bepaalt admin-toegang.
- * Returns: 'admin' | 'bestuur' | 'sol-admin' | 'sol-begeleider' | null (geen admin)
+ * Map Authentik groups naar app-rol (de rolsleutel uit de rollen-tabel). Toegang zelf bepaalt
+ * auth_callback.php met de toegestane groepen; dit kiest alleen de rol.
+ * Returns: rolsleutel (bv. 'admin' | 'bestuur' | 'penningmeester' | 'begeleider') | null (geen match)
  */
 function authentik_groups_naar_rol(array $groups): ?string {
     // Nieuw: gebruik de rollen-tabel (door de gebruiker beheerd via de rechtenmatrix).
@@ -622,14 +633,14 @@ function authentik_groups_naar_rol(array $groups): ?string {
         'admin'           => 'admin',
         'bestuur'         => 'bestuur',
         'sol-admin'       => 'admin',
+        'sol-penningmeester' => 'penningmeester',
         'sol-begeleider'  => 'begeleider',
         'sol_begeleider'  => 'begeleider',
     ];
+    // Alleen exacte groepsnaam (getrimd, hoofdletterongevoelig): "oud-bestuur" is geen "bestuur".
     foreach ($groups as $g) {
-        $g_low = strtolower($g);
-        foreach ($map as $needle => $rol) {
-            if ($g_low === $needle || str_contains($g_low, $needle)) return $rol;
-        }
+        $g_low = strtolower(trim((string)$g));
+        if (isset($map[$g_low])) return $map[$g_low];
     }
     return null;
 }
@@ -681,7 +692,8 @@ function personen_ouder_auto_setup(): void {
  * bij het aanmelden heeft gelezen. Verhoog dit nummer zodra de inhoud wijzigt,
  * zodat vastgelegd blijft welke versie iemand te zien kreeg.
  */
-if (!defined('PRIVACY_VERSIE')) define('PRIVACY_VERSIE', '2026-09');
+// 2026-09b: gezondheid/intake bij de selectiedag, loondocumenten handmatig, termijnen uit de instellingen
+if (!defined('PRIVACY_VERSIE')) define('PRIVACY_VERSIE', '2026-09b');
 
 if (!function_exists('consent_auto_setup')) {
 /**

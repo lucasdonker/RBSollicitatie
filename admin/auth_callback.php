@@ -8,6 +8,7 @@ ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 
 require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/toegang_terug.php';
 sessie_start();
 
 $fout  = '';
@@ -145,8 +146,9 @@ if (!$fout) {
     $sub   = $userinfo['sub'] ?? null;
     $groups = (array)($userinfo['groups'] ?? []);
 
-    // Bepaal rol op basis van Authentik groepen
-    $admin_groepen_str = instelling('authentik.admin_groepen', 'Bestuur,Sol-Admin,Sol-Begeleider');
+    // Toegang: alleen wie in Authentik in een van de toegestane groepen zit (exacte naam).
+    $admin_groepen_str = instelling('authentik.admin_groepen',
+        defined('AUTHENTIK_STANDAARD_GROEPEN') ? AUTHENTIK_STANDAARD_GROEPEN : 'Bestuur,Sol-Admin,Sol-Begeleider,Sol-Penningmeester');
     $admin_groepen    = array_filter(array_map('trim', explode(',', $admin_groepen_str)));
     $matched_group    = null;
     foreach ($admin_groepen as $ag) {
@@ -163,20 +165,33 @@ if (!$fout) {
     $stmt->execute([$sub, $email]);
     $b = $stmt->fetch();
 
-    // Niet in admin-groepen EN nog niet eerder beheerder geweest → weiger admin
-    if (!$matched_group && !$b) {
+    // Niet (meer) in een toegestane groep → geen toegang via SSO, ook niet voor een bestaand account.
+    // Zo trekt "uit de groep halen" in Authentik de toegang echt in (offboarding). Het account zelf
+    // blijft ongemoeid: een ontbrekende groups-claim of hernoemde groep mag niet iedereen buitensluiten,
+    // en een wachtwoord-noodingang die een admin heeft ingericht blijft werken via login.php.
+    if (!$matched_group) {
         $fout = "Je Authentik-account heeft geen admin-toegang. Voor sollicitatieportaal: ga naar " . APP_URL . "/portaal/";
+        if (function_exists('audit_log')) {
+            audit_log('sso_geweigerd', 'beheerder', $b ? (int)$b['id'] : null, [
+                'email'   => $email,
+                'reden'   => $b ? 'niet_meer_in_toegestane_groep' : 'geen_toegestane_groep',
+                'groepen' => array_slice(array_map('strval', $groups), 0, 20),
+            ]);
+        }
     } else {
+        // De rol volgt de gekoppelde Authentik-groep, bij elke login. Zit iemand in een toegestane
+        // groep die aan geen rol gekoppeld is, dan blijft de rol die een admin heeft gekozen: anders
+        // verliest een beheerder in een eigen groep bij de volgende login zijn rechten. (Uit álle
+        // toegestane groepen = hierboven al geweigerd.) Nieuwe accounts krijgen de laagste rol.
         if ($b) {
-            // Bestaande beheerder: rol bijwerken op basis van groepen
-            $nieuwe_rol = $rol_uit_groups ?: $b['rol'];
+            $nieuwe_rol = $rol_uit_groups ?: ($b['rol'] !== '' ? $b['rol'] : 'begeleider');
             $db->prepare("UPDATE beheerders SET authentik_uid = ?, naam = ?, rol = ?, laatste_login = NOW() WHERE id = ?")
                ->execute([$sub, $naam, $nieuwe_rol, $b['id']]);
             $b['naam'] = $naam;
             $b['rol']  = $nieuwe_rol;
         } else {
             // Nieuw account
-            $rol = $rol_uit_groups ?: 'sol-begeleider';
+            $rol = $rol_uit_groups ?: 'begeleider';
             $db->prepare("INSERT INTO beheerders (naam, email, wachtwoord, rol, authentik_uid) VALUES (?, ?, NULL, ?, ?)")
                ->execute([$naam, $email, $rol, $sub]);
             $new_id = (int)$db->lastInsertId();
@@ -190,7 +205,7 @@ if (!$fout) {
         $fout = 'Account is niet actief of kon niet worden aangemaakt. Vraag een admin om toegang.';
     } elseif (!$fout) {
         login_beheerder($b, 'authentik');
-        redirect($terug ?: APP_URL . '/admin/');
+        redirect(toegang_veilige_terug($terug));
     }
 }
 

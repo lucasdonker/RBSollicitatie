@@ -270,9 +270,12 @@ require __DIR__ . '/layout_top.php';
     <section class="ds-kaart ds-kaart-p bh-ssokaart aan">
       <div class="bh-kaartkop"><h2>Authentik is gekoppeld</h2></div>
       <p class="bh-dossier-tekst">
-        Wie via Authentik inlogt krijgt automatisch een account met de rol Bestuur. Zit iemand daar
-        in de groep <code>paal13-admin</code>, dan wordt hij beheerder. Een andere rol geef je
-        hiernaast in de lijst.
+        Inloggen via Authentik kan alleen wie daar in een van de toegestane groepen zit
+        (Instellingen). De rol volgt bij elke login de groep die bij <a href="<?= APP_URL ?>/admin/rollen.php">Rollen</a>
+        aan een rol gekoppeld is; een rol die je hier met de hand kiest, wordt bij de volgende
+        SSO-login weer overschreven. Een toegestane groep zonder gekoppelde rol geeft de rol Begeleider.
+        Haal je iemand in Authentik uit de groep, dan kan die persoon niet meer via SSO inloggen.
+        Heeft het account ook een wachtwoord, zet het account dan hier uit.
       </p>
     </section>
     <?php else: ?>
