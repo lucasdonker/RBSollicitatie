@@ -380,6 +380,24 @@ function portaal_taken_post_afhandelen(int $sol_id): void {
         redirect($terug);
     }
 
+    // "Stuur me een seintje" op de startpagina van een afgewezen sollicitant (includes/seintje.php).
+    if (isset($_POST['seintje_actie']) && function_exists('seintje_geven')) {
+        csrf_check();
+        try {
+            $q = db()->prepare("SELECT persoon_id FROM sollicitaties WHERE id=?");
+            $q->execute([$sol_id]);
+            $pid = (int)$q->fetchColumn();
+            if ($pid > 0 && $_POST['seintje_actie'] === 'aan') {
+                seintje_geven($pid, 'portaal');
+                $_SESSION['flash_portaal'] = 'Genoteerd: je krijgt een seintje als de werving weer opent.';
+            } elseif ($pid > 0) {
+                seintje_intrekken($pid, 'portaal');
+                $_SESSION['flash_portaal'] = 'Genoteerd: je krijgt geen seintje.';
+            }
+        } catch (\Throwable $e) { error_log('seintje portaal: ' . $e->getMessage()); }
+        redirect($terug);
+    }
+
     if (isset($_POST['taak_toggle'])) {
         csrf_check();
         $taak_id = (int)($_POST['taak_id'] ?? 0);

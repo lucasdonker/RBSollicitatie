@@ -62,6 +62,8 @@ function optout_afmelden(string $token): ?string {
         if (!$p) return null;
         $db->prepare("UPDATE personen SET mailing_afgemeld=1, mailing_afgemeld_op=NOW() WHERE id=?")->execute([$p['id']]);
         if (function_exists('audit_log')) audit_log('afgemeld', 'persoon', (int)$p['id'], ['kanaal' => 'mailing']);
+        // Afmelden is ook de toestemming voor een seintje intrekken (AVG art. 7 lid 3).
+        if (function_exists('seintje_intrekken')) seintje_intrekken((int)$p['id'], 'afmelden');
         return $p['voornaam'] ?: 'onbekend';
     } catch (\Exception $e) { return null; }
 }

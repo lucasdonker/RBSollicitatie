@@ -112,7 +112,9 @@ function meldingen_register(): array {
         ]),
         'afgewezen' => array_merge($std, [
             'naam' => 'Niet geselecteerd', 'categorie' => 'fase', 'kanaal_standaard' => 'uit', 'kort_toegestaan' => false,
-            'beschrijving' => 'Als een sollicitant niet verder gaat. Staat standaard uit: het bestuur belt of mailt persoonlijk.',
+            'beschrijving' => 'Als een sollicitant niet verder gaat. Staat standaard uit: het bestuur belt of mailt persoonlijk. Onder de tekst staat altijd de knop "Stuur me een seintje" (toestemming voor de volgende werving).',
+            // Voegt seintje_mailblok() onder de tekst toe, los van het bewerkbare sjabloon.
+            'seintje' => true, 'vars' => ['seintje_url'],
             'seed' => [
                 'onderwerp' => 'Terugkoppeling selectieprocedure {{seizoen_naam}}',
                 'hero_titel' => 'Terugkoppeling', 'hero_subtitel' => '',

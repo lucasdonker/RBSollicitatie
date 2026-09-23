@@ -71,6 +71,26 @@ if (in_array($_fase, ['uitgenodigd_selectie', 'aangemeld_selectie'], true) && !e
     <p>Wil je weten waarop we hebben gelet? Mail <a href="mailto:<?= h(portaal_contact_email()) ?>"><?= h(portaal_contact_email()) ?></a> — we vertellen het graag persoonlijk.</p>
   </div>
   <div class="pt-takenlijst">
+    <?php $_seintje = function_exists('seintje_heeft') && seintje_heeft((int)($sol['persoon_id'] ?? 0)); ?>
+    <div class="pt-taakrij afvink<?= $_seintje ? ' gedaan' : '' ?>">
+      <span class="pt-taakrij-icoon <?= $_seintje ? 'ok' : 'accent' ?>"><?= icoon($_seintje ? 'vink' : 'bel', 20) ?></span>
+      <span class="pt-taakrij-tekst">
+        <span class="pt-taakrij-titel"><?= $_seintje ? 'Je krijgt een seintje' : 'Seintje bij de volgende werving?' ?></span>
+        <span class="pt-taakrij-sub"><?= $_seintje
+          ? 'We bewaren je naam en contactgegevens daarvoor maximaal een jaar.'
+          : 'Dan bewaren we je naam en contactgegevens maximaal een jaar.' ?></span>
+      </span>
+      <form method="POST" class="pt-taakrij-afvink">
+        <?= csrf_input() ?>
+        <input type="hidden" name="seintje_actie" value="<?= $_seintje ? 'uit' : 'aan' ?>">
+        <?php if ($_seintje): ?>
+          <button type="submit" class="pt-taakrij-actie">Toch niet</button>
+        <?php else: ?>
+          <button type="submit" class="pt-taakrij-gedaan"><?= icoon('bel', 16) ?>Ja, graag</button>
+        <?php endif; ?>
+      </form>
+    </div>
+    <div class="pt-taakrij-scheiding"></div>
     <a href="<?= APP_URL ?>/portaal/gegevens.php#download" class="pt-taakrij">
       <span class="pt-taakrij-icoon navy"><?= icoon('download', 20) ?></span>
       <span class="pt-taakrij-tekst"><span class="pt-taakrij-titel">Mijn gegevens downloaden</span><span class="pt-taakrij-sub">Alles wat we bewaren, als bestand</span></span>

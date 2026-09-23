@@ -135,6 +135,7 @@ function db_failsafe(bool $forceer = false): void {
         'audit_dag_auto_setup',
         'pag_auto_setup',
         'optout_auto_setup',
+        'seintje_auto_setup',
         'sjablonen_auto_setup',
         'meldingen_log_auto_setup',
         'personen_kanaal_auto_setup',

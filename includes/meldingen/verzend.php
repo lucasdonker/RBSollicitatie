@@ -152,6 +152,9 @@ function melding_verstuur(string $type, int $sol_id, array $extra = [], array $o
             }
             if ($voet !== '') $override['voetnoot_html'] = $voet;
         }
+        if (!empty($def['seintje']) && function_exists('seintje_mailblok')) {
+            $override['blok_html'] = seintje_mailblok((string)($vars['seintje_url'] ?? ''));
+        }
         // Bijlagen: uit het sjabloon (bijlagen_json) + meegegeven. Te groot voor e-mail → downloadknop in de mail.
         $sj_bijl = [];
         $sj_json = $override['bijlagen_json'] ?? (function_exists('sjabloon_laden') ? (sjabloon_laden($type)['bijlagen_json'] ?? null) : null);

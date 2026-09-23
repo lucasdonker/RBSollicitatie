@@ -189,6 +189,7 @@ function melding_vars(int $sol_id, array $extra = []): array {
     } else {
         $vars['afmeld_url'] = '';
     }
+    $vars['seintje_url'] = (!empty($sol['persoon_id']) && function_exists('seintje_link')) ? seintje_link((int)$sol['persoon_id']) : '';
     foreach ($extra as $k => $v) $vars[$k] = $v;
     // Oude sjablonen gebruiken de lange namen ({{otp.code}}); nieuwe de korte ({{otp_code}}). Beide vullen.
     foreach (['otp_code' => 'otp.code', 'portaal_url' => 'portaal.url', 'bestuur_email' => 'bestuur.email', 'voornaam' => 'sollicitant.voornaam', 'achternaam' => 'sollicitant.achternaam', 'volledige_naam' => 'sollicitant.volledige_naam', 'seizoen_naam' => 'seizoen.naam'] as $kort => $lang) {
@@ -248,6 +249,8 @@ function melding_render(string $type, array $vars, array $override = []): ?array
     $body = function_exists('mail_vervang') ? mail_vervang(mail_vervang($body, $vars), $vars) : tekst_vervang(tekst_vervang($body, $vars), $vars);
     $body = (string)preg_replace('/\{\{[a-z0-9_.]+\}\}/i', '', $body);
     if (!empty($override['bijlagen_blok_html'])) $body .= $override['bijlagen_blok_html'];
+    // Vast blok onder de tekst (bijv. de seintje-vraag); vóór de shortcodes, want het gebruikt [knop].
+    if (!empty($override['blok_html'])) $body .= $override['blok_html'];
     if (function_exists('mail_shortcodes')) $body = mail_shortcodes($body);
     if (!empty($override['voetnoot_html'])) $body .= $override['voetnoot_html'];
 

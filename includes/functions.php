@@ -64,6 +64,7 @@ if (file_exists(__DIR__ . '/aanmeldformulier.php')) require_once __DIR__ . '/aan
 if (file_exists(__DIR__ . '/paginas.php')) require_once __DIR__ . '/paginas.php';
 if (file_exists(__DIR__ . '/kanalen.php')) require_once __DIR__ . '/kanalen.php';
 if (file_exists(__DIR__ . '/optout.php')) require_once __DIR__ . '/optout.php';
+if (file_exists(__DIR__ . '/seintje.php')) require_once __DIR__ . '/seintje.php';
 // Centrale meldingen (register, sjablonen, verzendkern) — ná kanalen/optout/mail_render.
 foreach (['registry', 'sjablonen', 'verzend', 'bijlagen', 'herinneringen', 'gepland'] as $__m) {
     if (file_exists(__DIR__ . '/meldingen/' . $__m . '.php')) require_once __DIR__ . '/meldingen/' . $__m . '.php';
