@@ -2347,3 +2347,60 @@ mark.bh-hb-treffer { background: var(--geel-bg, #fff3b0); color: inherit; border
   .bh-hb-intro, .bh-hb-hoofdstuk { border: none; padding: 0; break-inside: auto; }
   .bh-hb-hoofdstuk[hidden] { display: block !important; }
 }
+
+/* ── DOSSIER — fixes 2.100 ───────────────────────────────────────
+   Gegevens corrigeren (uitklapper), verwijderknoppen, niet-klikbare weektegel, norm,
+   en het smalle formulier van Handmatig toevoegen. */
+.bh-gegevenskaart > summary { cursor: pointer; list-style: none; }
+.bh-gegevenskaart > summary::-webkit-details-marker { display: none; }
+.bh-gegevenskaart > summary::after { content: "+"; margin-left: auto; font-size: 18px; color: var(--ink-muted); }
+.bh-gegevenskaart[open] > summary::after { content: "\2212"; }
+.bh-gegevenskaart > summary:focus-visible { outline: 2px solid var(--navy); outline-offset: 3px; border-radius: var(--radius-sm); }
+.bh-gegevenskaart .bh-veldform { margin-top: 14px; }
+.bh-gegevenskaart .ds-veld + .ds-veld,
+.bh-gegevenskaart .bh-veldrij + .ds-veld,
+.bh-gegevenskaart .ds-veld + .bh-veldrij,
+.bh-gegevenskaart .bh-veldrij + .bh-veldrij { margin-top: 12px; }
+.bh-gegevenskaart .bh-veldrij > .ds-veld { margin-top: 0; }
+.bh-gevaarblok-knoppen { display: flex; gap: 8px; flex-wrap: wrap; }
+.bh-weektegel-vast { cursor: default; }
+.bh-weektegel-vast:hover { border-color: var(--f-rand); }
+.bh-knop-onder { margin-top: 10px; }
+.bh-normform { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; margin-top: 10px; }
+.bh-normform .ds-veld { width: 100%; }
+.bh-smalform { max-width: 600px; }
+.bh-smalform .bh-dialoog-vink { margin-top: 12px; }
+@media (max-width: 520px) {
+  .bh-gevaarblok-knoppen .ds-btn { width: 100%; }
+}
+
+/* ============================================================
+   LOONDOSSIERS — vernietigen
+   ============================================================
+   Kaart "Te beoordelen voor vernietiging" (admin/_loon_vernietigen.php). De rijen
+   hergebruiken .bh-dosstukken; alleen de kop en de uitleg zijn eigen. */
+.bh-loonvernietig { margin-top: 18px; border-left: 3px solid var(--fase-oranje-rand, var(--accent)); scroll-margin-top: calc(var(--topbar-h, 64px) + 12px); }
+.bh-loonvernietig-titel { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; font-size: 16px; color: var(--navy); }
+.bh-loonvernietig-uitleg { margin: 0 0 6px; font-size: 13px; line-height: 1.6; color: var(--ink-soft); max-width: 72ch; }
+
+/* ============================================================
+   SELECTIEDAG — fixes 2.100
+   ============================================================
+   Groepsindeling zonder muis: het kaartje (admin/_kandidaatkaart.php) krijgt een
+   keuzelijst "Naar groep" op een eigen regel, en de naam is een echte knop (voor
+   "wie niet bij elkaar"), zodat alles ook met toetsenbord en touch werkt (WCAG 2.1.1,
+   2.5.7). Verder: de lege staat van Inchecken en de melding op Seizoenen. */
+.bh-kandkaart { flex-wrap: wrap; scroll-margin-top: calc(var(--topbar-h, 64px) + 12px); }
+.bh-kandkaart:focus { outline: 2px solid var(--navy); outline-offset: 2px; }
+.bh-kandkaart-relknop {
+  background: none; border: none; padding: 0; margin: 0; font: inherit; text-align: left;
+  cursor: pointer; min-height: 24px; border-radius: 4px;
+}
+.bh-kandkaart-relknop:hover { text-decoration: underline; }
+.bh-kandkaart-relknop:focus-visible { outline: 2px solid var(--navy); outline-offset: 2px; }
+.bh-kandkaart-naar { flex: 1 1 100%; display: flex; align-items: center; gap: 6px; margin: 0; cursor: default; }
+.bh-kandkaart-naar .ds-input { flex: 1; min-width: 0; min-height: 32px; padding-top: 4px; padding-bottom: 4px; font-size: 13px; }
+.bh-incheck-leeg { padding: 16px; }
+.bh-seizoen-anders { margin-bottom: 16px; }
+/* Invoerveld in bhVraag() (assets/js/beheer.js) — stond als inline style in de JS. */
+.bh-dialoog-veld { margin-top: 12px; }

@@ -3,10 +3,28 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.100.0');
+define('APP_VERSIE', '2.101.0');
 
 function app_changelog(): array {
     return [
+        '2.101.0' => [
+            'datum'  => '2026-09-23',
+            'titel'  => 'De open punten uit de handleidingenronde opgelost: toegang, privacy, selectiedag en dossier',
+            'punten' => [
+                'Een sollicitant kon het eigen account niet verwijderen: de database kende de eindstand "zelf verwijderd" niet en de hele verwijdering rolde terug. Opgelost (AVG art. 17)',
+                'Een penningmeester kreeg via Authentik geen rechten (de rolkolom kende die rol niet) en werd standaard niet toegelaten. Allebei opgelost; Sol-Penningmeester hoort nu bij de standaardgroepen',
+                'Wie uit alle toegestane Authentik-groepen wordt gehaald, komt er via SSO niet meer in. Na het inloggen stuurt het beheer je alleen nog naar een pagina binnen het beheer (geen open redirect)',
+                'Instellingen opslaan vraagt nu bewerkrecht en accepteert alleen de velden van dat tabblad. Wachtwoorden en API-sleutels worden niet meer getoond; een leeg veld laat ze staan. Geen SVG meer als logo. Het cron-token gaat als header mee en is te vernieuwen',
+                'Dossier: verwijderen werkt weer, met een tussenscherm en de keuze tussen alleen deze sollicitatie of alles van de persoon (AVG-verzoek). Nieuw: gegevens corrigeren (naam, e-mail, telefoon, geboortedatum) en de norm per persoon. De volgende stap in de kop vraagt eerst bevestiging, met "zonder bericht"',
+                'Begeleiders (Authentik-rol) kunnen op de selectiedag inchecken en beoordelen. BLK-bijzonderheden zien ze niet, wel dat er iets is om na te vragen. Cijfers en besluiten wis je door nog eens te tikken; groepen indelen kan ook zonder muis',
+                'Loondocumenten worden niet meer automatisch gewist: het systeem weet niet wanneer een dienstverband eindigde. Op Loondossiers staat een lijst met dossiers die in aanmerking komen, en de penningmeester vernietigt ze na controle. De melding "Loondossier compleet" komt nu ook na een upload',
+                'Opschonen: ook de berichtenwachtrij, het foutenlog, verlopen inlogcodes en de tellers van de rate limiter. Staat automatisch opschonen uit, dan staat er een rode waarschuwing op Vandaag, in de systeemcontrole en bij Instellingen',
+                'Privacyverklaring bijgewerkt (gezondheid en intake bij de selectiedag, loondocumenten handmatig, termijnen uit de instellingen); nieuwe versie 2026-09b',
+                'Rate limiter wiste de tellingen van andere acties; foutmails zijn echt beperkt tot één per fout per vijf minuten; de WordPress-plugin vertrouwt geen zelf in te vullen IP-headers meer',
+                'Foutmeldingen en waarschuwingen blijven staan in plaats van na vijf seconden te verdwijnen, en worden voorgelezen. Geen confirm() meer in het portaal',
+                'Trainingsweekend, Vandaag, Seizoen, Loonplanning (alleen-lezen zonder recht), Systeem & Updates (dode knop weg, SQL-migraties bereikbaar) en een reeks teksten gelijkgetrokken',
+            ],
+        ],
         '2.100.0' => [
             'datum'  => '2026-09-23',
             'titel'  => 'Rondleidingen door het beheer, en alle handleidingen bijgewerkt',
