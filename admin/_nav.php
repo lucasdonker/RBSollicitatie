@@ -77,6 +77,8 @@ $_rollen = ['begeleider' => 'Begeleider', 'bestuur' => 'Bestuur',
       </span>
     </a>
     <div class="bh-zijbalk-acties">
+      <?php /* Vast, voor iedere rol: wie nieuw is weet nog niet dat het vraagteken bestaat. */ ?>
+      <a href="<?= APP_URL ?>/admin/handleiding.php"><?= icoon('rondleiding', 14) ?>Hulp en handleidingen</a>
       <?php if ($nav_portaal): ?>
         <a href="<?= APP_URL ?>/wissel.php?naar=portaal"><?= icoon('wissel', 14) ?>Mijn sollicitatie</a>
       <?php endif; ?>

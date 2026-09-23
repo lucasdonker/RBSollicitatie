@@ -89,7 +89,8 @@ function bh_nav_actief(string $nav): string {
     $alias = [
         'mail_templates' => 'instellingen',
         'geplande_berichten' => 'berichten', 'mailing' => 'berichten',
-        'handleiding' => 'instellingen', 'systeem' => 'instellingen', 'update' => 'instellingen',
+        // handleiding: eigen link onderin de zijbalk (_nav.php), niet onder Instellingen
+        'handleiding' => '', 'systeem' => 'instellingen', 'update' => 'instellingen',
         'foutenlog' => 'logboek', 'audit' => 'logboek',
         'rollen' => 'beheerders', 'profiel' => '', 'import' => 'sollicitanten',
         'blk' => 'sollicitanten', 'sollicitant' => 'sollicitanten',

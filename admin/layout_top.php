@@ -30,6 +30,17 @@ try {
 $_nav        = bh_nav_groepen($_tellers);
 $_nav_actief = bh_nav_actief((string)($actieve_nav ?? ''));
 
+// Rondleiding: de stappen van dit scherm, een lopende route (?rondleiding=) en het
+// welkomstblok op Vandaag. Stil falen, net als de tellers.
+$_rl = null;
+try {
+    if (function_exists('rl_pagina_data')) {
+        $_rl = rl_pagina_data(basename((string)($_SERVER['SCRIPT_NAME'] ?? '')),
+                              preg_replace('/[^a-z0-9_-]/', '', (string)($_GET['rondleiding'] ?? '')),
+                              (string)($_bhd['rol'] ?? ''));
+    }
+} catch (\Throwable $e) { $_rl = null; }
+
 $_kan_portaal = false;
 if (function_exists('toegang_bepaal') && !empty($_bhd['email'])) {
     $_t = toegang_bepaal($_bhd['email']);
@@ -75,8 +86,10 @@ if (function_exists('toegang_bepaal') && !empty($_bhd['email'])) {
       $top_titel   = $pagina_titel ?? 'Beheer';
       $top_seizoen = $_seizoen;
       $top_hulp    = function_exists('hulp_tekst') ? hulp_tekst((string)($actieve_nav ?? '')) : null;
+      $top_rondleiding = !empty($_rl['scherm']);
       require __DIR__ . '/_topbar.php';
     ?>
 
     <main class="bh-inhoud<?= !empty($pagina_breed) ? ' breed' : '' ?>" id="inhoud">
       <?php toon_flash(); ?>
+      <?php if (!empty($_rl['welkom'])) { $rlw = $_rl['welkom']; require __DIR__ . '/_rl_welkom.php'; } ?>

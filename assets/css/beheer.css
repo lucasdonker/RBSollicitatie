@@ -196,6 +196,7 @@ html[data-theme="dark"] .bh-nav-link.actief { background: var(--surface); color:
 .bh-hulppaneel-sluit { background: none; border: none; cursor: pointer; color: var(--ink-soft); display: inline-flex; padding: 6px; }
 .bh-hulppaneel p { margin: 0; font-size: 13px; line-height: 1.7; color: var(--ink-soft); }
 .bh-hulppaneel a { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 600; color: var(--accent); }
+.bh-hulppaneel-acties { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; }
 
 .bh-inhoud { flex: 1; padding: 20px 24px 40px; max-width: 1400px; width: 100%; }
 
@@ -1883,6 +1884,7 @@ body.bh-paneel-open .bh-inhoud { transition: padding-right .15s ease; }
 @media print {
   .bh-zijbalk, .bh-topbar, .bh-overlay, .bh-hulppaneel,
   .bh-tabs, .bh-substappen, .bh-filterbalk, .bh-bulkbalk, .bh-paginering,
+  .bh-rl-laag, .bh-rl-spot, .bh-rl-kaart, .bh-rl-welkom, .bh-hb-zij, .bh-hb-toon,
   .ds-btn, button, #bh-toasts, .detail-paneel, .paneel-overlay { display: none !important; }
   .bh-hoofd { margin-left: 0 !important; }
   .bh-inhoud { padding: 0 !important; max-width: none !important; }
@@ -2183,4 +2185,165 @@ body.bh-paneel-open .bh-inhoud { transition: padding-right .15s ease; }
   .bh-verzoek-knoppen .ds-btn { flex: 1; }
   .bh-dekgrafiek-stand { margin-left: 0; }
   .bh-raster-legenda { margin-left: 0; }
+}
+
+/* ============================================================
+   RONDLEIDING — wijst op het echte scherm aan wat waar zit
+   ============================================================
+   assets/js/rondleiding.js bouwt drie lagen: een klikvanger over de pagina, een
+   "spot" die met een grote schaduw alles behalve het element dimt, en de stapkaart.
+   Staat er geen element (lege lijst, menu ingeklapt), dan dimt de laag zelf en staat
+   de kaart in het midden. */
+.bh-rl-laag { position: fixed; inset: 0; z-index: 1200; background: transparent; }
+.bh-rl-laag.dim { background: rgba(9,18,32,.55); }
+.bh-rl-spot {
+  position: fixed; z-index: 1201; pointer-events: none; border-radius: 10px;
+  box-shadow: 0 0 0 3px var(--accent), 0 0 0 9999px rgba(9,18,32,.55);
+  transition: top .2s ease, left .2s ease, width .2s ease, height .2s ease;
+}
+.bh-rl-spot[hidden] { display: none; }
+.bh-rl-kaart {
+  position: fixed; z-index: 1202; width: min(380px, calc(100vw - 32px));
+  background: var(--surface); color: var(--ink); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-modal);
+  padding: 18px 20px 16px; display: flex; flex-direction: column; gap: 8px;
+}
+.bh-rl-kaart.onder {
+  left: 0 !important; right: 0; bottom: 0; top: auto !important; width: auto;
+  border-radius: 16px 16px 0 0; padding-bottom: max(16px, env(safe-area-inset-bottom));
+  max-height: 55vh; overflow-y: auto;
+}
+.bh-rl-label { font: var(--text-meta); font-weight: 600; color: var(--accent); letter-spacing: .02em; }
+.bh-rl-titel { margin: 0; font-size: 17px; line-height: 1.35; color: var(--navy); outline: none; }
+.bh-rl-tekst { margin: 0; font-size: 14px; line-height: 1.65; color: var(--ink-soft); }
+.bh-rl-lees { font-size: 13px; font-weight: 600; color: var(--accent); }
+.bh-rl-stippen { display: flex; align-items: center; gap: 5px; margin-top: 4px; }
+.bh-rl-stippen span:not(.bh-rl-teller) { width: 7px; height: 7px; border-radius: 50%; background: var(--border-strong); }
+.bh-rl-stippen span.gedaan { background: var(--fase-blauw-rand); }
+.bh-rl-stippen span.nu { background: var(--navy); width: 18px; border-radius: 4px; }
+.bh-rl-teller { margin-left: 6px; font: var(--text-meta); color: var(--ink-soft); }
+.bh-rl-voet { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.bh-rl-ruimte { flex: 1; }
+@media (prefers-reduced-motion: reduce) { .bh-rl-spot { transition: none; } }
+
+/* Welkomstblok op Vandaag (admin/_rl_welkom.php) */
+.bh-rl-welkom {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 16px 20px;
+  border-color: var(--fase-blauw-rand); background: var(--fase-blauw-vlak);
+}
+.bh-rl-welkom[hidden] { display: none; }
+.bh-rl-welkom-icoon { color: var(--navy); display: inline-flex; flex: none; }
+.bh-rl-welkom-tekst { flex: 1 1 280px; }
+.bh-rl-welkom-tekst h2 { margin: 0 0 2px; font-size: 15px; color: var(--navy); }
+.bh-rl-welkom-tekst p { margin: 0; font-size: 13px; line-height: 1.6; color: var(--ink-soft); }
+.bh-rl-welkom-knoppen { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.bh-rl-welkom-weg {
+  background: none; border: none; cursor: pointer; color: var(--ink-soft);
+  display: inline-flex; padding: 10px; min-width: 44px; min-height: 44px; align-items: center; justify-content: center;
+}
+
+/* ============================================================
+   HULP — overzicht van rondleidingen en handleidingen
+   ============================================================ */
+.bh-hub { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.bh-hub-routes { grid-column: 1 / -1; }
+.bh-hub .bh-kaartkop h2 { display: inline-flex; align-items: center; gap: 8px; }
+.bh-hub-uitleg { margin: 0 0 12px; font-size: 13px; line-height: 1.7; color: var(--ink-soft); }
+.bh-hub-uitleg:last-child { margin: 12px 0 0; }
+.bh-hub-lijst { list-style: none; margin: 0; padding: 0; }
+.bh-hub-route, .bh-hub-doc {
+  display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--bg-subtle);
+}
+.bh-hub-route:last-child, .bh-hub-doc:last-child { border-bottom: none; }
+.bh-hub-route-tekst { flex: 1; display: flex; flex-direction: column; gap: 2px; font-size: 13px; color: var(--ink-soft); min-width: 0; }
+.bh-hub-route-tekst strong { font-size: 14px; color: var(--navy); }
+.bh-hub-route-tekst a { text-decoration: none; }
+.bh-hub-route-meta { font: var(--text-meta); }
+.bh-hub-doc-icoon { color: var(--navy); display: inline-flex; flex: none; }
+.bh-hub-word { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 600; color: var(--accent); white-space: nowrap; }
+.bh-hub-snellijst { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.bh-hub-snellijst a { display: inline-flex; align-items: center; gap: 7px; padding: 8px 0; font-size: 14px; font-weight: 600; color: var(--navy); }
+kbd {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px;
+  border: 1px solid var(--border-strong); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; background: var(--surface);
+}
+@media (max-width: 900px) { .bh-hub { grid-template-columns: 1fr; } }
+
+/* ============================================================
+   HANDLEIDING LEZEN — de pandoc-HTML in het beheer
+   ============================================================
+   De tekst zelf komt uit Markdown; alles hieronder is dus opmaak voor wat pandoc
+   maakt (p, ul, table, blockquote, code) binnen .bh-hb-tekst. */
+.bh-hb { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 28px; align-items: start; max-width: 1180px; }
+.bh-hb-zij { position: sticky; top: calc(var(--topbar-h, 64px) + 12px); }
+.bh-hb-zij-binnen { display: flex; flex-direction: column; gap: 10px; max-height: calc(100vh - var(--topbar-h, 64px) - 32px); overflow-y: auto; padding-right: 4px; }
+.bh-hb-terug, .bh-hb-word { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--accent); }
+.bh-hb-zoek { display: flex; flex-direction: column; gap: 5px; }
+.bh-hb-zoek-label { font: var(--text-label); color: var(--ink-soft); }
+.bh-hb-zoek-veld {
+  display: flex; align-items: center; gap: 8px; padding: 0 10px; min-height: 40px;
+  border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--ink-soft);
+}
+.bh-hb-zoek-veld:focus-within { border-color: var(--navy); box-shadow: 0 0 0 3px var(--fase-blauw-vlak); }
+.bh-hb-zoek-veld input { flex: 1; border: none; background: none; outline: none; font: inherit; font-size: 14px; color: var(--ink); min-width: 0; }
+.bh-hb-zoek-uitkomst { margin: 0; min-height: 1em; font: var(--text-meta); color: var(--ink-soft); }
+.bh-hb-inhoud summary { cursor: pointer; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); padding: 4px 0; }
+.bh-hb-inhoud ol { list-style: none; margin: 6px 0 0; padding: 0; counter-reset: hb; }
+.bh-hb-inhoud li { counter-increment: hb; }
+.bh-hb-inhoud li[hidden] { display: none; }
+.bh-hb-inhoud a {
+  display: flex; gap: 8px; padding: 6px 10px; border-left: 2px solid var(--border);
+  font-size: 13px; line-height: 1.4; color: var(--ink-soft); text-decoration: none;
+}
+.bh-hb-inhoud a::before { content: counter(hb); min-width: 16px; color: var(--ink-3, var(--ink-soft)); font-variant-numeric: tabular-nums; }
+.bh-hb-inhoud a:hover { color: var(--navy); border-left-color: var(--navy); }
+.bh-hb-inhoud a.actief { color: var(--navy); font-weight: 600; border-left-color: var(--accent); background: var(--bg-subtle); }
+
+.bh-hb-tekst { font-size: 15px; line-height: 1.75; color: var(--ink); max-width: 780px; }
+.bh-hb-intro, .bh-hb-hoofdstuk {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  padding: 22px 28px; margin-bottom: 16px; scroll-margin-top: calc(var(--topbar-h, 64px) + 12px);
+}
+.bh-hb-hoofdstuk[hidden], .bh-hb-intro[hidden] { display: none; }
+.bh-hb-tekst h2 { margin: 0 0 12px; font-size: 22px; line-height: 1.3; color: var(--navy); }
+.bh-hb-tekst h3 { margin: 26px 0 8px; font-size: 17px; color: var(--navy); scroll-margin-top: calc(var(--topbar-h, 64px) + 12px); }
+.bh-hb-tekst h4 { margin: 20px 0 6px; font-size: 15px; color: var(--ink); }
+.bh-hb-tekst p { margin: 0 0 12px; }
+.bh-hb-tekst ul, .bh-hb-tekst ol { margin: 0 0 14px; padding-left: 22px; }
+.bh-hb-tekst li { margin-bottom: 4px; }
+.bh-hb-tekst ul.task-list { list-style: none; padding-left: 4px; }
+.bh-hb-tekst ul.task-list input { width: 17px; height: 17px; margin: 0 8px 0 0; accent-color: var(--navy); vertical-align: -3px; cursor: pointer; }
+.bh-hb-tekst ul.task-list label { cursor: pointer; }
+.bh-hb-tekst a { color: var(--accent); font-weight: 600; }
+.bh-hb-tekst code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px;
+  background: var(--bg-subtle); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px;
+}
+.bh-hb-tekst pre { background: var(--bg-subtle); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; overflow-x: auto; }
+.bh-hb-tekst pre code { border: none; padding: 0; background: none; }
+/* "In het kort" en andere citaten: de snelle referentie bovenaan elk hoofdstuk. */
+.bh-hb-tekst blockquote {
+  margin: 0 0 16px; padding: 12px 16px; border-left: 4px solid var(--accent);
+  background: var(--fase-oranje-vlak); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; color: var(--ink);
+}
+.bh-hb-tekst blockquote p:last-child { margin-bottom: 0; }
+.bh-hb-tekst table { width: 100%; border-collapse: collapse; margin: 0 0 16px; font-size: 14px; display: block; overflow-x: auto; }
+.bh-hb-tekst th, .bh-hb-tekst td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+.bh-hb-tekst th { background: var(--bg-subtle); font-size: 12px; font-weight: 700; letter-spacing: .04em; color: var(--ink-soft); }
+.bh-hb-tekst hr { display: none; }
+.bh-hb-toon { display: flex; flex-wrap: wrap; gap: 8px; margin: -2px 0 14px; }
+mark.bh-hb-treffer { background: var(--geel-bg, #fff3b0); color: inherit; border-radius: 2px; padding: 0 1px; }
+.bh-hb-niets { padding: 24px; text-align: center; color: var(--ink-soft); }
+@media (max-width: 900px) {
+  .bh-hb { grid-template-columns: 1fr; gap: 12px; }
+  .bh-hb-zij { position: static; }
+  .bh-hb-zij-binnen { max-height: none; overflow: visible; }
+  .bh-hb-inhoud:not([open]) + .bh-hb-word { margin-top: 0; }
+  .bh-hb-intro, .bh-hb-hoofdstuk { padding: 16px; }
+  .bh-hb-tekst { font-size: 15px; }
+}
+@media print {
+  .bh-hb { display: block; }
+  .bh-hb-intro, .bh-hb-hoofdstuk { border: none; padding: 0; break-inside: auto; }
+  .bh-hb-hoofdstuk[hidden] { display: block !important; }
 }

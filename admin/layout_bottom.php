@@ -881,5 +881,6 @@ document.addEventListener('DOMContentLoaded', () => {
 <script src="<?= APP_URL ?>/assets/js/app.js?v=<?= @filemtime(__DIR__.'/../assets/js/app.js') ?>"></script>
 <script src="<?= APP_URL ?>/assets/js/editor.js?v=<?= @filemtime(__DIR__.'/../assets/js/editor.js') ?>"></script>
 <script src="<?= APP_URL ?>/assets/js/beheer.js?v=<?= @filemtime(__DIR__.'/../assets/js/beheer.js') ?>"></script>
+<?php require __DIR__ . '/_rondleiding.php'; ?>
 </body>
 </html>

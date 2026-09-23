@@ -6,10 +6,12 @@
  *   $top_titel    string  paginatitel
  *   $top_seizoen  ?array  actief_seizoen()
  *   $top_hulp     ?array  hulp_tekst() → ['titel','tekst','url']
+ *   $top_rondleiding bool  dit scherm heeft een rondleiding (includes/beheer/rondleiding.php)
  */
 $top_titel   = $top_titel ?? 'Beheer';
 $top_seizoen = $top_seizoen ?? null;
 $top_hulp    = $top_hulp ?? null;
+$top_rondleiding = !empty($top_rondleiding);
 ?>
 <header class="bh-topbar">
   <button type="button" class="bh-hamburger" id="hamburger" aria-label="Menu openen"
@@ -43,12 +45,20 @@ $top_hulp    = $top_hulp ?? null;
     <button type="button" class="bh-hulppaneel-sluit" aria-label="Sluiten"><?= icoon('kruis', 16) ?></button>
   </div>
   <p><?= h($top_hulp['tekst']) ?></p>
-  <?php if (!empty($top_hulp['url'])): ?>
-    <a href="<?= h($top_hulp['url']) ?>" target="_blank" rel="noopener">
-      <?= icoon('document', 14) ?> Lees meer in de handleiding
-    </a>
-  <?php endif; ?>
+  <div class="bh-hulppaneel-acties">
+    <?php if ($top_rondleiding): ?>
+      <button type="button" class="ds-btn ds-btn-primair ds-btn-sm" data-rl-start="scherm">
+        <?= icoon('rondleiding', 14) ?> Rondleiding van dit scherm
+      </button>
+    <?php endif; ?>
+    <?php if (!empty($top_hulp['url'])): ?>
+      <a href="<?= h($top_hulp['url']) ?>">
+        <?= icoon('document', 14) ?> Lees meer in de handleiding
+      </a>
+    <?php endif; ?>
+    <a href="<?= APP_URL ?>/admin/handleiding.php"><?= icoon('lijst', 14) ?> Alle rondleidingen</a>
+  </div>
 </div>
 <?php endif; ?>
 <?php
-$top_titel = 'Beheer'; $top_seizoen = null; $top_hulp = null;
+$top_titel = 'Beheer'; $top_seizoen = null; $top_hulp = null; $top_rondleiding = false;

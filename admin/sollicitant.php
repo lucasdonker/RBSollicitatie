@@ -80,7 +80,7 @@ function dossier_url(int $sol_id, string $tab = 'dossier'): string {
 }
 
 $pagina_titel = $naam;
-$actieve_nav  = 'sollicitanten';
+$actieve_nav  = 'sollicitant';   // eigen hulptekst; bh_nav_actief() laat Sollicitanten oplichten
 $pagina_breed = true;
 require __DIR__ . '/layout_top.php';
 ?>
