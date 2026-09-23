@@ -1834,10 +1834,16 @@ body.bh-paneel-open .bh-inhoud { transition: padding-right .15s ease; }
 .bh-blkkop-tekst h2 { margin: 0; font-size: 19px; font-weight: 600; color: var(--navy); word-break: break-word; }
 .bh-blkkop-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
 .bh-blkkop-acties { display: flex; gap: 6px; flex-wrap: wrap; align-items: flex-start; }
-.bh-blkfoto {
-  width: 64px; height: 64px; border-radius: 50%; object-fit: cover; flex: none;
+/* De foto is een knop (toetsenbord + schermlezer), dus de knop-eigen opmaak eruit
+   en de afbeelding vult hem helemaal. */
+.bh-blkfoto, .bh-blkfoto-groot {
+  padding: 0; background: none; overflow: hidden; flex: none;
   cursor: zoom-in; border: 2px solid var(--border);
 }
+.bh-blkfoto { width: 64px; height: 64px; border-radius: 50%; }
+.bh-blkfoto-groot { width: 120px; height: 120px; border-radius: 8px; }
+.bh-blkfoto img, .bh-blkfoto-groot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.bh-blkfoto:focus-visible, .bh-blkfoto-groot:focus-visible { outline: 2px solid var(--navy); outline-offset: 2px; }
 .bh-blkveld { margin-bottom: 14px; }
 .bh-blkveld:last-child { margin-bottom: 0; }
 .bh-blkwaarde {

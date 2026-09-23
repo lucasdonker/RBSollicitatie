@@ -70,6 +70,11 @@ $_p = [
   <?= bh_avatar($_p[1], 38, ['dim' => true]) ?>
   <span class="bh-meta">30 · 38 · 58 px, zonder naam, gedempt</span>
 </div>
+<p class="bh-meta">
+  Met <code>['vergroot' =&gt; true]</code> wordt een échte foto een knop die hem groot opent —
+  gebruik dat waar de avatar niet al in een link staat (in een lijstrij wint de link).
+  Bij initialen doet de optie niets: er valt dan niets te vergroten.
+</p>
 
 <div class="ds-sectie-titel">Chip · meta-regel · voortgang</div>
 <div class="ds-kaart ds-kaart-p" style="display:flex;flex-direction:column;gap:14px">

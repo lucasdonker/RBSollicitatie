@@ -78,9 +78,16 @@ function bh_stoplicht(string $stand, string $tekst): string {
 /**
  * Avatar: foto als die er is, anders de initialen.
  *
+ * Met `vergroot` wordt een échte foto een knop die de gedeelde foto-vergroter opent
+ * (assets/js/app.js, via data-foto). Dat is bewust een <button> en geen klikbare <img>:
+ * een klikbaar plaatje is niet met het toetsenbord te bereiken en heeft geen naam. Zet
+ * de optie alleen waar de avatar niet al in een link staat — een knop in een link is
+ * ongeldige HTML en de link wint toch van de klik. Bij initialen doet de optie niets;
+ * er valt dan niets te vergroten.
+ *
  * @param array $persoon  voornaam/achternaam/foto_url (ontbrekende velden zijn geen fout)
  * @param int   $px       hoogte en breedte
- * @param array $opt      dim:bool (gedempt, bijv. bij afgewezen)
+ * @param array $opt      dim:bool (gedempt, bijv. bij afgewezen), vergroot:bool
  */
 function bh_avatar(array $persoon, int $px = 30, array $opt = []): string {
     $vn = trim((string)($persoon['voornaam'] ?? ''));
@@ -91,11 +98,23 @@ function bh_avatar(array $persoon, int $px = 30, array $opt = []): string {
     $cls   = 'ds-avatar' . (!empty($opt['dim']) ? ' ds-avatar-dim' : '');
     $naam  = trim($vn . ' ' . $an);
     $foto  = (string)($persoon['foto_url'] ?? '');
-    $inhoud = $foto !== ''
-        ? '<img src="' . h(function_exists('foto_url') ? foto_url($foto) : $foto) . '" alt="">'
-        : h($init);
-    return '<span class="' . $cls . '" style="' . $stijl . '" aria-hidden="true" title="' . h($naam) . '">'
-         . $inhoud . '</span>';
+    $bron  = $foto !== '' ? (string)(function_exists('foto_url') ? foto_url($foto) : $foto) : '';
+
+    if ($bron === '') {
+        return '<span class="' . $cls . '" style="' . $stijl . '" aria-hidden="true" title="' . h($naam) . '">'
+             . h($init) . '</span>';
+    }
+
+    $img = '<img src="' . h($bron) . '" alt="">';
+    if (empty($opt['vergroot'])) {
+        return '<span class="' . $cls . '" style="' . $stijl . '" aria-hidden="true" title="' . h($naam) . '">'
+             . $img . '</span>';
+    }
+
+    $label = $naam !== '' ? 'Foto van ' . $naam . ' vergroten' : 'Foto vergroten';
+    return '<button type="button" class="' . $cls . ' ds-avatar-zoom" style="' . $stijl . '"'
+         . ' data-foto="' . h($bron) . '" data-naam="' . h($naam) . '"'
+         . ' aria-label="' . h($label) . '">' . $img . '</button>';
 }
 
 /** Chip voor een los kenmerk: diploma, competentie, "terugkerend". */

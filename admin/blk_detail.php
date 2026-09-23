@@ -78,9 +78,13 @@ require __DIR__ . '/layout_top.php';
       $fotoU = !empty($blk['foto_url']) ? foto_url($blk['foto_url']) : '';
     ?>
     <?php if ($fotoU): ?>
-      <img class="bh-blkfoto" src="<?= h($fotoU) ?>" alt="<?= h($naam) ?>"
-           data-foto="<?= h($fotoU) ?>" data-naam="<?= h($naam) ?>"
-           onclick="fotoVergroten(this.dataset.foto, this.dataset.naam)">
+      <?php /* Knop en geen klikbare <img>: zo is de foto ook met het toetsenbord te
+               openen en heeft hij een naam. De klik wordt opgevangen door de gedeelde
+               vergroter in assets/js/app.js (data-foto). */ ?>
+      <button type="button" class="bh-blkfoto" data-foto="<?= h($fotoU) ?>" data-naam="<?= h($naam) ?>"
+              aria-label="Foto van <?= h($naam) ?> vergroten">
+        <img src="<?= h($fotoU) ?>" alt="">
+      </button>
     <?php else: ?>
       <?= bh_avatar(['voornaam' => $sol['voornaam'], 'achternaam' => $sol['achternaam'] ?? ''], 64) ?>
     <?php endif; ?>
@@ -251,11 +255,13 @@ require __DIR__ . '/layout_top.php';
         </div>
       </div>
       <?php if ($blk['foto_url']): ?>
-      <img src="<?= h(foto_url($blk['foto_url'])) ?>" alt="Foto"
-           data-foto="<?= h(foto_url($blk['foto_url'])) ?>" data-naam="<?= h(volledige_naam($blk)) ?>"
-           onclick="fotoVergroten(this.dataset.foto, this.dataset.naam)"
-           style="width:120px;height:120px;object-fit:cover;border-radius:8px;border:2px solid var(--rand);cursor:zoom-in"
-           title="Klik voor groter">
+      <?php /* $naam en niet volledige_naam($blk): de blk-rij heeft geen naamvelden, dus
+               dat gaf een leeg bijschrift en een aria-label "Foto van  vergroten". */ ?>
+      <button type="button" class="bh-blkfoto-groot" data-foto="<?= h(foto_url($blk['foto_url'])) ?>"
+              data-naam="<?= h($naam) ?>"
+              aria-label="Foto van <?= h($naam) ?> vergroten" title="Klik voor groter">
+        <img src="<?= h(foto_url($blk['foto_url'])) ?>" alt="">
+      </button>
       <?php endif; ?>
       <?php endif; ?>
     </div>

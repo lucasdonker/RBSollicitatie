@@ -17,7 +17,7 @@ $_act  = bh_fase_actie((string)$_s['fase']);
 $_mag  = mag('sollicitanten', 'bewerken');
 ?>
 <header class="bh-dossierkop">
-  <?= bh_avatar($_s, 58) ?>
+  <?= bh_avatar($_s, 58, ['vergroot' => true]) ?>
 
   <div class="bh-dossierkop-wie">
     <div class="bh-dossierkop-naam">

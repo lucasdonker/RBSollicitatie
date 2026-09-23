@@ -6,29 +6,87 @@
 (function () {
   'use strict';
 
-  function initLightbox() {
+  /* ── Foto vergroten ────────────────────────────────────────────
+     Eén vergroter voor het hele systeem. Er stond er ook een tweede in
+     admin/layout_bottom.php (window.fotoVergroten met een eigen #fotoModal);
+     die deed hetzelfde met een ander uiterlijk en een eigen Escape-handler.
+     Die is weg — deze neemt de naam over, zodat bestaande aanroepen blijven werken.
+
+     Twee manieren om hem te openen:
+       1. data-foto="<url>" data-naam="<bijschrift>" op een knop  (de nette weg:
+          bh_avatar(..., ['vergroot' => true]) maakt die)
+       2. automatisch op elke gewone <img> die groot genoeg is
+     De eerste wint: staat er een data-foto op of eromheen, dan slaat de scan
+     de afbeelding erbinnen over. */
+  var lbOpener = null;
+
+  function lbOverlay() {
     var overlay = document.getElementById('p13-lightbox');
-    if (!overlay) {
-      overlay = document.createElement('div');
-      overlay.id = 'p13-lightbox';
-      overlay.setAttribute('role', 'dialog');
-      overlay.setAttribute('aria-label', 'Vergrote afbeelding');
-      overlay.innerHTML =
-        '<button type="button" class="p13-lightbox-sluit" aria-label="Sluiten">&times;</button>' +
-        '<img alt="">';
-      overlay.style.display = 'none';
-      document.body.appendChild(overlay);
+    if (overlay) return overlay;
 
-      var sluit = function () { overlay.style.display = 'none'; document.body.style.overflow = ''; };
-      overlay.addEventListener('click', function (e) {
-        if (e.target === overlay || e.target.classList.contains('p13-lightbox-sluit')) sluit();
-      });
-      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') sluit(); });
-    }
+    overlay = document.createElement('div');
+    overlay.id = 'p13-lightbox';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-label', 'Vergrote afbeelding');
+    overlay.innerHTML =
+      '<button type="button" class="p13-lightbox-sluit" aria-label="Sluiten">&times;</button>' +
+      '<figure class="p13-lightbox-fig"><img alt=""><figcaption></figcaption></figure>';
+    overlay.style.display = 'none';
+    document.body.appendChild(overlay);
 
+    overlay.addEventListener('click', function (e) {
+      if (e.target === overlay || e.target.closest('.p13-lightbox-sluit')) lbSluit();
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && overlay.style.display === 'flex') lbSluit();
+    });
+    return overlay;
+  }
+
+  function lbSluit() {
+    var overlay = document.getElementById('p13-lightbox');
+    if (!overlay) return;
+    overlay.style.display = 'none';
+    document.body.style.overflow = '';
+    /* Terug naar waar je vandaan kwam, anders staat de focus na het sluiten
+       bovenaan de pagina en ben je met het toetsenbord je plek kwijt. */
+    if (lbOpener && document.contains(lbOpener)) lbOpener.focus();
+    lbOpener = null;
+  }
+
+  function lbOpen(url, naam, opener) {
+    if (!url) return;
+    var overlay = lbOverlay();
+    overlay.querySelector('img').src = url;
+    var bij = overlay.querySelector('figcaption');
+    bij.textContent = naam || '';
+    bij.hidden = !naam;
+    lbOpener = opener || null;
+    overlay.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    overlay.querySelector('.p13-lightbox-sluit').focus();
+  }
+
+  /* Publieke ingang; blijft bestaan voor schermen met een onclick erin. */
+  window.fotoVergroten = function (url, naam) { lbOpen(url, naam, null); };
+
+  /* Gedelegeerd: werkt ook voor knoppen die later in de pagina komen. */
+  document.addEventListener('click', function (e) {
+    var knop = e.target.closest ? e.target.closest('[data-foto]') : null;
+    if (!knop) return;
+    e.preventDefault();
+    lbOpen(knop.getAttribute('data-foto'), knop.getAttribute('data-naam'), knop);
+  });
+
+  function initLightbox() {
     document.querySelectorAll('img').forEach(function (img) {
       if (img.dataset.p13Lb) return;
       if (img.closest('#p13-lightbox')) return;
+      /* Zit er al een expliciete vergroot-knop omheen, of is de afbeelding zelf
+         een link, dan niet ook nog eens een eigen klik erop hangen. */
+      if (img.closest('[data-foto]')) return;
+      if (img.closest('a')) return;
       var src = img.getAttribute('src') || '';
       if (!src) return;
       if (/logo|icon|icoon|avatar-default|\.svg($|\?)/i.test(src)) return;
@@ -39,10 +97,7 @@
       img.style.cursor = 'zoom-in';
       img.addEventListener('click', function (e) {
         e.preventDefault();
-        var lb = document.getElementById('p13-lightbox');
-        lb.querySelector('img').src = img.currentSrc || img.src;
-        lb.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
+        lbOpen(img.currentSrc || img.src, img.getAttribute('alt') || '', null);
       });
     });
   }

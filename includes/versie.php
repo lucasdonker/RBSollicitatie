@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.98.0');
+define('APP_VERSIE', '2.98.1');
 
 function app_changelog(): array {
     return [
+        '2.98.1' => [
+            'datum'  => '2026-09-23',
+            'titel'  => 'De foto van een sollicitant, terug waar je hem nodig hebt',
+            'punten' => [
+                'Opgelost: op de pagina van een sollicitant stonden altijd de initialen, ook als er een foto was geüpload. In de lijst zag je die foto wél, wat het extra verwarrend maakte. De foto hoort bij het kennismakingsformulier en werd bij het openen van het dossier niet meegeladen',
+                'Een foto is weer te vergroten door erop te klikken, met de naam eronder zodat je weet wie je ziet. Dat kan nu ook met het toetsenbord, en een schermlezer zegt om wiens foto het gaat',
+                'Er zaten twee foto-vergroters in het systeem, elk met een eigen uiterlijk en een eigen Escape-toets. Er is er nog één',
+            ],
+        ],
         '2.98.0' => [
             'datum'  => '2026-09-21',
             'titel'  => 'Het aanmeldformulier opnieuw, en een echte WordPress-plugin',

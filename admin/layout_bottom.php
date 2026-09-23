@@ -815,32 +815,10 @@ window.sluitSidebar = function() {
   if (b && b.classList.contains('open')) document.getElementById('hamburger')?.click();
 };
 
-/* ── Foto vergroten modaal ─────────────────────────────────── */
-window.fotoVergroten = function(url, naam) {
-  let m = document.getElementById('fotoModal');
-  if (!m) {
-    m = document.createElement('div');
-    m.id = 'fotoModal';
-    m.onclick = () => m.style.display = 'none';
-    m.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;align-items:center;justify-content:center;padding:40px;cursor:zoom-out';
-    m.innerHTML = '<div style="max-width:90vw;max-height:90vh;text-align:center">' +
-      '<img id="fotoModalImg" src="" alt="" style="max-width:100%;max-height:80vh;border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,.5)">' +
-      '<div id="fotoModalCaption" style="color:#fff;margin-top:12px;font-size:14px"></div>' +
-      '<div style="color:rgba(255,255,255,.5);font-size:11px;margin-top:4px">Klik om te sluiten</div></div>';
-    document.body.appendChild(m);
-  }
-  document.getElementById('fotoModalImg').src = url;
-  document.getElementById('fotoModalCaption').textContent = naam || '';
-  m.style.display = 'flex';
-};
-
-/* ESC sluit modaal */
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') {
-    const m = document.getElementById('fotoModal');
-    if (m && m.style.display === 'flex') m.style.display = 'none';
-  }
-});
+/* Foto vergroten zat hier én in assets/js/app.js: twee overlays met twee
+   uiterlijken en twee Escape-handlers op dezelfde afbeeldingen. Er is er nu
+   nog één, in app.js (#p13-lightbox), die ook window.fotoVergroten levert —
+   met bijschrift, een sluitknop en focus die terugkeert naar de knop. */
 
 /* ── Tooltip systeem ──────────────────────────────────────────
    Gebruik: <span class="tip" data-tip="Uitleg hier">ℹ</span> */

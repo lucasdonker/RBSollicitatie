@@ -50,6 +50,13 @@ function bh_dossier(int $sol_id): ?array {
 
         $blk   = $een("SELECT * FROM blk_formulieren WHERE sollicitatie_id=?");
         $besch = $een("SELECT * FROM beschikbaarheid WHERE sollicitatie_id=?");
+
+        // De foto staat bij het kennismakingsformulier, niet bij de persoon. Zonder deze
+        // regel kreeg bh_avatar() een rij zonder `foto_url` en viel het dossier terug op
+        // initialen, terwijl de sollicitantenlijst (die b.foto_url meeselecteert) de foto
+        // wél toonde. Hier neerzetten en niet in elk scherm apart: alles wat met
+        // $dossier['sol'] werkt heeft de foto nu vanzelf.
+        $sol['foto_url'] = $blk['foto_url'] ?? null;
         // De selectiedag-gegevens komen uit includes/selectiedag.php en niet uit de
         // oude tabel `beoordelingen`: scores staan per test/criterium/beoordelaar in
         // selectie_score, met observaties en het besluit ernaast.
