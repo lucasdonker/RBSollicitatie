@@ -107,24 +107,39 @@
 
   /* ── Formulieren ────────────────────────────────────────────────── */
 
-  document.addEventListener('submit', function (e) {
-    var form = e.target;
-    if (!(form instanceof HTMLFormElement)) return;
-    if (form.hasAttribute('data-geen-bezig')) return;
-    if (e.defaultPrevented) return;                 // iemand anders handelt het af
+  /* Twee luisteraars, bewust in twee fasen.
 
+     Vooraan (capture) staat alleen de wacht tegen dubbel verzenden: die moet
+     beslissen vóórdat de handlers van het formulier zelf iets doen.
+
+     Het vergrendelen komt achteraan (bubble), ná de eigen controle van het
+     formulier (aanmeldformulier, ondertekenen, oudergegevens, bevestigen in het
+     beheer). Stond dat vooraan, dan ging het formulier op slot, zei de controle
+     daarna "nog niet goed" — en bleef het slot zitten: een formulier dat eindeloos
+     laadt en waarin je je fout niet meer kunt herstellen. Achteraan zien we aan
+     defaultPrevented of er echt verzonden wordt. */
+
+  function telt(form) {
+    return form instanceof HTMLFormElement && !form.hasAttribute('data-geen-bezig');
+  }
+
+  document.addEventListener('submit', function (e) {
     // Een tweede submit terwijl de eerste loopt: tegenhouden. Dubbel verzenden is
     // op dit systeem niet onschuldig — het kan een tweede mail betekenen.
-    if (form.dataset.p13Loopt === '1') { e.preventDefault(); return; }
+    if (telt(e.target) && e.target.dataset.p13Loopt === '1') e.preventDefault();
+  }, true);
+
+  document.addEventListener('submit', function (e) {
+    var form = e.target;
+    if (!telt(form) || e.defaultPrevented) return;  // tegengehouden: niets vastzetten
 
     // GET-formulieren (filterbalk, zoeken) zijn goedkoop; alleen de balk, geen
     // vergrendeling, anders flikkert het bij elke filterwijziging.
     var post = (form.method || 'get').toLowerCase() === 'post';
-    var knop = e.submitter || form.querySelector('[type=submit]');
     if (!post) { balkStart(); return; }
 
-    bezig(form, knop);
-  }, true);
+    bezig(form, e.submitter || form.querySelector('[type=submit]'));
+  });
 
   /* ── Links ──────────────────────────────────────────────────────
      Een interne link laadt een nieuwe pagina; daar zit dezelfde stilte. */
@@ -138,6 +153,10 @@
     if (!href || href[0] === '#' || /^(mailto:|tel:|javascript:)/i.test(href)) return;
     if (a.origin && a.origin !== window.location.origin) return;    // ander domein
     balkStart();
+    // Een export of document-download laat de pagina staan: er komt nooit een
+    // pagehide. Zonder dit bleef de balk dan eeuwig op 90% hangen. Een formulier
+    // geven we zo niet vrij — daar weegt dubbel verzenden zwaarder.
+    setTimeout(balkKlaar, 8000);
   }, true);
 
   /* Terug-knop: de pagina komt uit de cache en is dan gewoon weer bruikbaar.

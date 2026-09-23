@@ -437,7 +437,7 @@ function beschikbaarheid2_verzoek_melding(int $verzoek_id, string $status): void
             : '<p>We gaan voor die weken uit van je gewone beschikbaarheid. Vragen? Neem gerust contact met ons op.</p>';
         $sol_id = (int)$v['sollicitatie_id'];
         unset($v['sollicitatie_id']);
-        melding_verstuur('verzoek_beslist', $sol_id, $v, ['referentie' => 'verzoek:' . $verzoek_id]);
+        melding_verstuur('verzoek_beslist', $sol_id, $v, ['referentie' => 'verzoek:' . $verzoek_id, 'prioriteit' => 'na_antwoord']);
     } catch (\Throwable $e) { error_log('beschikbaarheid2_verzoek_melding: ' . $e->getMessage()); }
 }
 

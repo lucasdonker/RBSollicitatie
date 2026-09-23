@@ -107,13 +107,11 @@
      én in het beheer. Deze functie blijft bestaan omdat schermen hem aanroepen via
      onsubmit="return portaalSubmit(this)".
 
-     Wat hier stónd zette btn.disabled = true. Dat is stil gevaarlijk: een
-     uitgeschakelde submitknop stuurt zijn name/value niet mee, dus een formulier dat
-     op <button name="actie" value="..."> rekent verliest die waarde. */
-  function portaalSubmit(form) {
-    if (window.P13Actie) {
-      window.P13Actie.bezig(form, form.querySelector('button[type="submit"]'));
-    }
+     Hij doet bewust niets meer. Het vastzetten hoort pas te gebeuren als vaststaat dat
+     er verzonden wordt; dat weet alleen actie.js, achteraan de submit. Zette deze
+     functie het slot zelf, dan bleef een formulier vergrendeld zodra een latere
+     handler het versturen alsnog tegenhield. */
+  function portaalSubmit() {
     return true;
   }
 
@@ -133,7 +131,6 @@
       else { alert(fout); }
       return false;
     }
-    portaalSubmit(form);
     return true;
   }
   window.portaalSubmit = portaalSubmit;

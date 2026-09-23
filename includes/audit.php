@@ -14,6 +14,8 @@
  * Faalt NOOIT hard: een probleem met de logging mag een pagina niet breken.
  */
 
+require_once __DIR__ . '/na_antwoord.php';
+
 if (!function_exists('audit_log')) {
 
 /** In-memory buffer van gebeurtenissen voor deze request. */
@@ -105,10 +107,8 @@ function audit_flush(): void {
     if (!$buffer) return;
     $GLOBALS['_audit_buffer'] = [];  // voorkom dubbel wegschrijven
 
-    // Response afsluiten zodat de gebruiker niet wacht (PHP-FPM).
-    if (function_exists('fastcgi_finish_request')) {
-        @fastcgi_finish_request();
-    }
+    // Response afsluiten (en de sessie vrijgeven) zodat de gebruiker niet wacht.
+    antwoord_afsluiten();
 
     try {
         audit_dag_auto_setup();

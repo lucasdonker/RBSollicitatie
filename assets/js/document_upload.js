@@ -42,8 +42,8 @@
       var sub = e.submitter;
       if (sub && sub.dataset.bevestig) { if (!confirm(sub.dataset.bevestig)) { e.preventDefault(); return; } return; }
       var idtype = form.querySelector('.du-idtype');
-      if (idtype && !idtype.value) { e.preventDefault(); melding(form, 'Kies eerst hierboven of het een paspoort of een identiteitskaart is.'); return; }
-      if (window.portaalSubmit) window.portaalSubmit(form);
+      if (idtype && !idtype.value) { e.preventDefault(); melding(form, 'Kies eerst hierboven of het een paspoort of een identiteitskaart is.'); }
+      // Laadstand en vergrendeling: assets/js/actie.js, zodra vaststaat dat er verzonden wordt.
     });
   });
 

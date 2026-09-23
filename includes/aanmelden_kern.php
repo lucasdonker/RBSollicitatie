@@ -68,7 +68,6 @@ function sollicitatie_aanmaken(array $in, array $context = []): array {
     $ter = $eerder->fetchColumn() > 0 ? 1 : 0;
 
     $token = genereer_token();
-    if (function_exists('consent_auto_setup')) consent_auto_setup();
     $ip = substr($context['ip'] ?? ($_SERVER['REMOTE_ADDR'] ?? ''), 0, 45);
     $ouder_op = ($leeftijd < 16) ? date('Y-m-d H:i:s') : null;
     $ouder_naam_val = ($leeftijd < 16) ? ($ouder_naam ?: null) : null;
@@ -77,12 +76,9 @@ function sollicitatie_aanmaken(array $in, array $context = []): array {
     $bron_code  = isset($in['bron_code'])  ? substr(trim((string)$in['bron_code']), 0, 80)   : null;
     $bron_label = isset($in['bron_label']) ? substr(trim((string)$in['bron_label']), 0, 150) : null;
 
-    // Zorg dat de bron-kolommen bestaan (failsafe-stijl), dan pas invoegen.
-    if (function_exists('db_kolom_verzeker')) {
-        db_kolom_verzeker($db, 'sollicitaties', 'bron_code', 'VARCHAR(80) DEFAULT NULL');
-        db_kolom_verzeker($db, 'sollicitaties', 'bron_label', 'VARCHAR(150) DEFAULT NULL');
-    }
-
+    // De privacy- en bronkolommen legt db_failsafe() aan (consent_auto_setup en
+    // db_verwachte_kolommen). Hier niet nog eens per aanmelding: dat waren drie
+    // INFORMATION_SCHEMA-vragen bij elke verzending.
     $db->prepare("INSERT INTO sollicitaties (persoon_id,seizoen_id,terugkerend,portaal_token,privacy_akkoord_op,privacy_versie,privacy_ip,ouder_toestemming_op,ouder_toestemming_naam,bron_code,bron_label)
                   VALUES(?,?,?,?,?,?,?,?,?,?,?)")
        ->execute([$pid, $seizoen['id'], $ter, $token, date('Y-m-d H:i:s'), PRIVACY_VERSIE, $ip, $ouder_op, $ouder_naam_val, $bron_code, $bron_label]);
@@ -107,9 +103,10 @@ function sollicitatie_aanmaken(array $in, array $context = []): array {
         } catch (\Throwable $e) { error_log('melding bestuur_nieuwe_aanmelding: ' . $e->getMessage()); }
     }
 
-    // Competenties uit Authentik (best-effort)
+    // Competenties uit Authentik (best-effort), ná het antwoord: het is een verzoek naar een
+    // andere server (tot 12 seconden) en niets op het scherm hangt ervan af.
     if (function_exists('competenties_sync') && function_exists('competentie_sync_klaar') && competentie_sync_klaar()) {
-        try { competenties_sync($sid, $email); } catch (\Exception $e) { error_log('sync bij aanmelding: ' . $e->getMessage()); }
+        na_antwoord(fn() => competenties_sync($sid, $email), 'sync bij aanmelding');
     }
 
     // Audit

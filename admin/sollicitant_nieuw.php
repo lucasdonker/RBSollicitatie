@@ -70,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // Bevestiging versturen indien gewenst — via de centrale meldingen-kern (sjabloon 'aanmelding_bevestiging')
                 if ($stuur_mail_optie && function_exists('melding_verstuur')) {
-                    try { melding_verstuur('aanmelding_bevestiging', (int)$sol_id); }
+                    try { melding_verstuur('aanmelding_bevestiging', (int)$sol_id, [], ['prioriteit' => 'na_antwoord']); }
                     catch (\Throwable $e) { error_log('sollicitant_nieuw melding: ' . $e->getMessage()); }
                 }
 

@@ -261,7 +261,7 @@ require __DIR__ . '/_kop.php';
     <?php if (!empty($fout)): ?>
     <div class="ds-melding ds-melding-error pt-login-fout"><?= icoon('let-op', 18) ?> <div><?= h($fout) ?></div></div>
     <?php endif; ?>
-    <form method="POST" class="ds-login-form" onsubmit="var b=this.querySelector('button[type=submit]'); b.disabled=true; b.innerHTML='Versturen…'; this.querySelector('input[name=email]').readOnly=true;">
+    <form method="POST" class="ds-login-form">
       <?= csrf_input() ?>
       <input type="hidden" name="email_submit" value="1">
       <div class="ds-veld">

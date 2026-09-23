@@ -40,8 +40,7 @@ function track_klaar(int $status = 204): void {
     header('Access-Control-Allow-Headers: Content-Type');
     header('Access-Control-Max-Age: 86400');
 
-    if (function_exists('fastcgi_finish_request')) fastcgi_finish_request();
-    elseif (function_exists('litespeed_finish_request')) litespeed_finish_request();
+    antwoord_afsluiten();
 }
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') { track_klaar(204); exit; }

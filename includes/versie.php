@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.99.0');
+define('APP_VERSIE', '2.99.1');
 
 function app_changelog(): array {
     return [
+        '2.99.1' => [
+            'datum'  => '2026-09-23',
+            'titel'  => 'Formulieren controleren eerst en zijn weer snel',
+            'punten' => [
+                'Opgelost: een formulier dat nog niet goed was ingevuld, begon toch te laden en bleef daarna vastzitten, zodat je je fout niet meer kon herstellen. Nu wordt eerst gecontroleerd en gaat het formulier pas in de wachtstand als het echt verstuurd wordt. Dat gold voor het aanmeldformulier, ondertekenen, oudergegevens, uploads en elk beheerformulier met een bevestigingsvraag; die laatste waren zelfs helemaal niet meer te versturen',
+                'Formulieren zijn veel sneller. Mails en WhatsApp gingen al ná het antwoord de deur uit, maar de pagina daarna moest er toch op wachten, omdat de sessie zo lang op slot bleef. Die wordt nu eerst vrijgegeven',
+                'Bij het aanmelden wordt Authentik pas ná het antwoord geraadpleegd, en draaien er geen overbodige databasecontroles meer bij elke aanmelding',
+                'De voortgangsbalk bleef bij een download (export, document) eeuwig staan. Die stopt nu vanzelf',
+            ],
+        ],
         '2.99.0' => [
             'datum'  => '2026-09-23',
             'titel'  => 'Oud-sollicitanten weer bereiken, en netjes opruimen wie dat niet wil',

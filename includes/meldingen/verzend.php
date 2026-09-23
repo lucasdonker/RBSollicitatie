@@ -17,6 +17,8 @@
  * én whatsapp → sms zonder e-mail-terugval, want die mail gaat al).
  */
 
+require_once __DIR__ . '/../na_antwoord.php';
+
 if (!function_exists('melding_verstuur')) {
 
 // ─────────────────────────────────────────────────────────────
@@ -208,7 +210,7 @@ function melding_verstuur(string $type, int $sol_id, array $extra = [], array $o
         if ($bijlagen && $modus === 'kort') $modus = 'beide';
         $plannen = melding_kanaalplan($modus, $ontv, $def, $r['tekst_kort'] !== '');
         $prio = $opties['prioriteit'] ?? 'direct';
-        if ($prio === 'na_antwoord' && (PHP_SAPI === 'cli' || !function_exists('fastcgi_finish_request'))) $prio = 'direct';
+        if ($prio === 'na_antwoord' && !na_antwoord_mogelijk()) $prio = 'direct';
         $ids = [];
         foreach ($plannen as $plan) {
             $item = array_merge($basis, [
@@ -704,7 +706,7 @@ function melding_flush(): void {
     $ids = $GLOBALS['_melding_flush_ids'] ?? [];
     if (!$ids) return;
     $GLOBALS['_melding_flush_ids'] = [];
-    if (function_exists('fastcgi_finish_request')) @fastcgi_finish_request();
+    antwoord_afsluiten();
     try { melding_queue_verwerk(count($ids), $ids); } catch (\Throwable $e) { error_log('melding_flush: ' . $e->getMessage()); }
 }
 
