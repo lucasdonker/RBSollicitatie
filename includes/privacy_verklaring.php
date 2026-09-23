@@ -40,6 +40,7 @@ function privacy_verklaring_html(): string {
     $maillog  = $int('bewaar.maillog_mnd', 12);
     $loonjr   = $int('bewaar.loondocumenten_jaar', 5);
     $bankpas  = $int('bewaar.bankpas_na_verwerking_dagen', 30);
+    $werkjr   = $int('bewaar.aangenomen_jaar', 2);
     $ai_blk   = $in('ai.api_key') !== '';
     $ai_besch = $ai_blk && $in('ai.beschikbaarheid_hulp', '0') === '1';
     $whatsapp = $in('wa.actief', '0') === '1';
@@ -223,7 +224,7 @@ dat ze niet meer naar jou te herleiden zijn.</p>
     <tr><td>Je begint met aanmelden, maar maakt het niet af</td>
         <td><?= $onvolt ?> maanden</td></tr>
     <tr><td>Je wordt aangenomen</td>
-        <td>Zolang je bij ons werkt, en daarna nog maximaal 2 jaar</td></tr>
+        <td>Zolang je bij ons werkt, en daarna nog <?= $werkjr ?> jaar na je laatste seizoen</td></tr>
     <tr><td>Gezondheidsverklaring</td>
         <td>Eén seizoen. Voor een nieuw seizoen vragen we een nieuwe verklaring. Word je afgewezen, dan verwijderen we hem direct.</td></tr>
     <tr><td>Opgaaf loonheffing en kopie identiteitsbewijs</td>

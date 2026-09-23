@@ -142,6 +142,7 @@ function db_failsafe(bool $forceer = false): void {
         'bijlagen_auto_setup',
         'gepland_auto_setup',
         'documenten_auto_setup',
+        'foto_auto_setup',         // na documenten: verhuist foto's naar de afgeschermde map
         'ondertekening_bewijs_auto_setup',
         'portaal_login_setup',
     ];

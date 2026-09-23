@@ -29,6 +29,7 @@ if (file_exists(__DIR__ . '/ratelimit.php'))      require_once __DIR__ . '/ratel
 if (file_exists(__DIR__ . '/kluis.php'))          require_once __DIR__ . '/kluis.php';
 if (file_exists(__DIR__ . '/upload.php'))         require_once __DIR__ . '/upload.php';
 if (file_exists(__DIR__ . '/documenten.php'))     require_once __DIR__ . '/documenten.php';
+if (file_exists(__DIR__ . '/foto.php'))           require_once __DIR__ . '/foto.php';
 if (file_exists(__DIR__ . '/ai_analyse.php'))      require_once __DIR__ . '/ai_analyse.php';
 if (file_exists(__DIR__ . '/kennismakingspakket.php')) require_once __DIR__ . '/kennismakingspakket.php';
 if (file_exists(__DIR__ . '/ondertekening_tekst.php')) require_once __DIR__ . '/ondertekening_tekst.php';
@@ -633,9 +634,11 @@ function authentik_groups_naar_rol(array $groups): ?string {
     return null;
 }
 
-// Foto URL builder — werkt voor zowel oude (volledige URL) als nieuwe (relatief /uploads/...) paden
+// Foto URL builder. Een foto van een sollicitant gaat altijd via foto.php (includes/foto.php);
+// de rest (logo, favicon, afbeeldingen in mails) blijft een gewone URL.
 function foto_url(?string $opgeslagen): ?string {
     if (empty($opgeslagen)) return null;
+    if (function_exists('foto_naam') && ($naam = foto_naam($opgeslagen)) !== null) return foto_beveiligde_url($naam);
     if (preg_match('#^https?://#', $opgeslagen)) return $opgeslagen;
     return rtrim(APP_URL, '/') . '/' . ltrim($opgeslagen, '/');
 }

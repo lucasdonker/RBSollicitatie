@@ -124,40 +124,105 @@ function opschoon_run(bool $dry_run = false, string $bron = 'cron'): array {
         }
     }
 
+    // ── 1b. Oud-lifeguards: dossier leegmaken, persoon anonimiseren ──
+    // Zolang iemand bij ons werkt blijft alles staan; daarna nog bewaar.aangenomen_jaar
+    // (standaard 2, de lijn van de AP voor een personeelsdossier), gerekend vanaf het einde
+    // van het laatste seizoen. Wie een nieuwe sollicitatie heeft lopen, valt erbuiten.
+    // Loonheffing en kopie ID blijven: die hebben een wettelijke termijn (stap 6). Pas als
+    // die ook weg zijn, wordt de persoon zelf geanonimiseerd — daarvoor staan naam en
+    // geboortedatum er tot die tijd nog bij, anders is het bewaarde stuk niet terug te vinden.
+    $jaar = instelling_int('bewaar.aangenomen_jaar', 2);
+    if ($jaar > 0) {
+        try {
+            $q = $db->prepare("
+                SELECT p.id
+                FROM personen p
+                WHERE p.email NOT LIKE 'geanonimiseerd+%' AND p.email NOT LIKE '%@anoniem.local'
+                  AND EXISTS (SELECT 1 FROM sollicitaties s WHERE s.persoon_id = p.id AND s.fase = 'aangenomen')
+                  AND NOT EXISTS (
+                      SELECT 1 FROM sollicitaties s2
+                      LEFT JOIN seizoenen sz ON sz.id = s2.seizoen_id
+                      WHERE s2.persoon_id = p.id
+                        AND (s2.fase NOT IN ('aangenomen','afgewezen','afgehaakt')
+                             OR COALESCE(sz.datum_werk_eind, DATE(s2.gewijzigd_op), DATE(s2.aangemeld_op))
+                                >= DATE_SUB(CURDATE(), INTERVAL ? YEAR))
+                  )
+            ");
+            $q->execute([$jaar]);
+            $ids = $q->fetchAll(PDO::FETCH_COLUMN);
+            $aantal = 0;
+            if ($ids && !$dry_run) {
+                $sols = $db->prepare("SELECT id FROM sollicitaties WHERE persoon_id = ?");
+                $loon = $db->prepare("SELECT COUNT(*) FROM sollicitant_documenten d JOIN sollicitaties s ON s.id = d.sollicitatie_id
+                                      WHERE s.persoon_id = ? AND d.status IN ('ingediend','verwerkt')");
+                foreach ($ids as $pid) {
+                    $pid = (int)$pid;
+                    $email = 'geanonimiseerd+' . $pid . '@paal13.local';
+                    $db->beginTransaction();
+                    try {
+                        $sols->execute([$pid]);
+                        $sids = array_map('intval', $sols->fetchAll(PDO::FETCH_COLUMN));
+                        foreach ($sids as $sid) avg_sollicitatie_leegmaken($db, $sid, false);
+                        $loon->execute([$pid]);
+                        if ((int)$loon->fetchColumn() === 0) {
+                            foreach ($sids as $sid) avg_maillog_anonimiseren($db, $sid, $email);
+                            avg_persoon_anonimiseren($db, $pid, 'Geanonimiseerd', '', $email);
+                            $aantal++;
+                        }
+                        $db->commit();
+                    } catch (\Throwable $e) {
+                        if ($db->inTransaction()) $db->rollBack();
+                        error_log("opschoon aangenomen persoon $pid: " . $e->getMessage());
+                    }
+                }
+            } else {
+                $aantal = count($ids);
+            }
+            $uit['categorieen']['aangenomen_geanonimiseerd'] = $aantal;
+            if (!$dry_run) opschoon_log_schrijf('aangenomen_geanonimiseerd', $aantal, $bron);
+        } catch (\Exception $e) {
+            $uit['categorieen']['aangenomen_geanonimiseerd'] = ['fout' => $e->getMessage()];
+            error_log('opschoon aangenomen: ' . $e->getMessage());
+        }
+    }
+
     // ── 2. Gezondheidsgegevens verwijderen ───────────────────────────
-    // 0 maanden = zodra de sollicitatie is afgehandeld (afgewezen of ouder dan het seizoen).
+    // 0 maanden = na afloop van het seizoen, en meteen bij afwijzen of afhaken.
     // >0 maanden = zoveel maanden na ondertekening.
+    // Het gaat om de gezondheidsverklaring én de gezondheidsvragen in de intake, in de
+    // database en in de verzegelde PDF in de kluis. Het feit dát er ondertekend is blijft,
+    // en bij de intake ook de rest (toestemming voor foto's, verklaringen).
     $mnd = instelling_int('bewaar.gezondheid_mnd', 0);
     try {
-        if ($mnd > 0) {
-            $grensdatum = $grens($mnd);
-            $q = $db->prepare("
-                SELECT id FROM ondertekeningen
-                WHERE type IN ('gezondheid_ouder','gezondheid_18plus')
-                  AND ondertekend_op IS NOT NULL
-                  AND ondertekend_op < ?
-                  AND formulier_data IS NOT NULL
-            ");
-            $q->execute([$grensdatum]);
-        } else {
-            // 0 = zodra de bijbehorende sollicitatie is afgewezen
-            $q = $db->prepare("
-                SELECT o.id FROM ondertekeningen o
-                JOIN sollicitaties s ON s.id = o.sollicitatie_id
-                WHERE o.type IN ('gezondheid_ouder','gezondheid_18plus')
-                  AND o.formulier_data IS NOT NULL
-                  AND s.fase = 'afgewezen'
-            ");
-            $q->execute();
-        }
-        $ids = $q->fetchAll(PDO::FETCH_COLUMN);
+        $klaar = $mnd > 0
+            ? "o.ondertekend_op < ?"
+            : "(s.fase IN ('afgewezen','afgehaakt')
+                OR (sz.datum_werk_eind IS NOT NULL AND sz.datum_werk_eind < CURDATE())
+                OR (sz.datum_werk_eind IS NULL AND o.ondertekend_op < DATE_SUB(NOW(), INTERVAL 12 MONTH)))";
+        $q = $db->prepare("
+            SELECT o.id, o.type, o.formulier_data, o.pdf_document_id FROM ondertekeningen o
+            JOIN sollicitaties s ON s.id = o.sollicitatie_id
+            LEFT JOIN seizoenen sz ON sz.id = s.seizoen_id
+            WHERE o.type IN ('gezondheid_ouder','gezondheid_18plus','intake','intake_ouder')
+              AND o.ondertekend_op IS NOT NULL
+              AND (o.formulier_data IS NOT NULL OR o.pdf_document_id IS NOT NULL)
+              AND $klaar
+        ");
+        $q->execute($mnd > 0 ? [$grens($mnd)] : []);
         $aantal = 0;
-        if ($ids && !$dry_run) {
-            // Verwijder de medische inhoud, behoud het feit dat er ondertekend is
-            $upd = $db->prepare("UPDATE ondertekeningen SET formulier_data = NULL WHERE id = ?");
-            foreach ($ids as $oid) { $upd->execute([$oid]); $aantal++; }
-        } else {
-            $aantal = count($ids);
+        $upd = $db->prepare("UPDATE ondertekeningen SET formulier_data = ?, pdf_document_id = NULL WHERE id = ?");
+        foreach ($q->fetchAll() as $o) {
+            $data = null;
+            if (str_starts_with((string)$o['type'], 'intake')) {
+                $form = json_decode((string)$o['formulier_data'], true);
+                $had  = is_array($form) && (array_key_exists('gezondheid_keuze', $form) || array_key_exists('gezondheid_toelichting', $form));
+                if (!$had && !$o['pdf_document_id']) continue;       // al eerder opgeschoond
+                if (is_array($form)) { unset($form['gezondheid_keuze'], $form['gezondheid_toelichting']); $data = json_encode($form, JSON_UNESCAPED_UNICODE); }
+            }
+            $aantal++;
+            if ($dry_run) continue;
+            if ($o['pdf_document_id'] && function_exists('document_vernietigen')) document_vernietigen((int)$o['pdf_document_id'], 'bewaartermijn gezondheidsgegevens');
+            $upd->execute([$data, $o['id']]);
         }
         $uit['categorieen']['gezondheid_verwijderd'] = $aantal;
         if (!$dry_run) opschoon_log_schrijf('gezondheid_verwijderd', $aantal, $bron);

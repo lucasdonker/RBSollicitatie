@@ -106,27 +106,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['blk_submit'])) {
     } elseif ($is_edit && $blk_changes && !$reden) {
         $fout = 'Je hebt iets aangepast. Vul kort in waarom je het formulier aanpast.'; $fout_stap = 4;
     } else {
-        // Foto: verwijderen, vervangen of behouden — relatief pad opslaan
-        $foto_url = $blk['foto_url'] ?? null;
+        // Foto: verwijderen, vervangen of behouden (includes/foto.php)
+        $foto_oud = $blk['foto_url'] ?? null;
+        $foto_url = $foto_oud;
         if (!empty($_POST['foto_verwijderen']) && $_POST['foto_verwijderen'] === '1') {
             $foto_url = null;
         }
-        if (!empty($_FILES['foto']['tmp_name']) && $_FILES['foto']['error'] === 0) {
-            $ext = strtolower(pathinfo($_FILES['foto']['name'], PATHINFO_EXTENSION));
-            // Controleer dat het bestand ECHT een afbeelding is (niet alleen de extensie vertrouwen)
-            $imginfo    = @getimagesize($_FILES['foto']['tmp_name']);
-            $toegestaan = [IMAGETYPE_JPEG => 'jpg', IMAGETYPE_PNG => 'png', IMAGETYPE_WEBP => 'webp'];
-            $echt_type  = $imginfo['2'] ?? null;
-            if ($imginfo !== false && isset($toegestaan[$echt_type])
-                && in_array($ext, ['jpg', 'jpeg', 'png', 'webp'])
-                && $_FILES['foto']['size'] < 5 * 1024 * 1024) {
-                $dir = __DIR__ . '/../uploads/fotos/';
-                if (!is_dir($dir)) @mkdir($dir, 0755, true);
-                $fn = 'sol_' . $sol_id . '_' . time() . '.' . $toegestaan[$echt_type];
-                if (move_uploaded_file($_FILES['foto']['tmp_name'], $dir . $fn)) {
-                    $foto_url = '/uploads/fotos/' . $fn;
-                }
-            }
+        if (!empty($_FILES['foto']['tmp_name'])) {
+            $foto_url = foto_opslaan((int)$sol_id, $_FILES['foto']) ?? $foto_url;
         }
 
         $nulls = array_map(fn($v) => $v ?: null, $velden);
@@ -145,6 +132,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['blk_submit'])) {
         db()->prepare("INSERT INTO blk_formulieren (sollicitatie_id,$cols,foto_url) VALUES(?,$ph,?)
                        ON DUPLICATE KEY UPDATE $upd, foto_url=VALUES(foto_url), bijgewerkt_op=NOW()")
            ->execute([$sol_id, ...array_values($nulls), $foto_url]);
+        // Pas nu de nieuwe waarde vaststaat: de vervangen of verwijderde foto weg.
+        if ($foto_oud && $foto_oud !== $foto_url) foto_verwijderen($foto_oud);
 
         // Telefoonnummer bij de persoon bijwerken
         if ($tel_in !== '' && $tel_in !== $tel_oud) {

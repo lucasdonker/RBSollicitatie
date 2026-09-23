@@ -1381,9 +1381,14 @@ require __DIR__ . '/layout_top.php';
       </div>
       <div class="bh-veldrij">
         <div class="ds-veld">
-          <label>Gezondheidsgegevens <span class="tip" data-tip="0 = verwijderen zodra de sollicitatie is afgewezen. Anders: zoveel maanden na ondertekening."></span></label>
+          <label>Oud-lifeguards, in jaren <span class="tip" data-tip="Gerekend vanaf het einde van het laatste seizoen waarin iemand werkte. Daarna worden formulier, beschikbaarheid, notities, foto en documenten gewist. Loonheffing en kopie ID blijven tot hun eigen wettelijke termijn; pas daarna wordt ook de naam geanonimiseerd. De AP gaat voor een personeelsdossier uit van 2 jaar."></span></label>
+          <input type="number" name="inst[bewaar.aangenomen_jaar]" value="<?= instelling_int('bewaar.aangenomen_jaar',2) ?>" min="0" max="10">
+          <div class="ds-veld-hint">Na het laatste seizoen. De privacyverklaring noemt dit getal.</div>
+        </div>
+        <div class="ds-veld">
+          <label>Gezondheidsgegevens <span class="tip" data-tip="0 = na afloop van het seizoen, en meteen bij afwijzen of afhaken. Anders: zoveel maanden na ondertekening. Geldt voor de gezondheidsverklaring en de gezondheidsvragen in de intake, ook in de verzegelde PDF."></span></label>
           <input type="number" name="inst[bewaar.gezondheid_mnd]" value="<?= instelling_int('bewaar.gezondheid_mnd',0) ?>" min="0" max="60">
-          <div class="ds-veld-hint">0 = bij afwijzing verwijderen</div>
+          <div class="ds-veld-hint">0 = na het seizoen, of meteen bij afwijzing</div>
         </div>
       </div>
       <div class="bh-veldrij">

@@ -20,6 +20,7 @@ try {
     switch ($actie) {
 
         case 'verwijder_blk':
+            if (function_exists('foto_van_sollicitatie_verwijderen')) foto_van_sollicitatie_verwijderen($sol_id);
             db()->prepare("DELETE FROM blk_formulieren WHERE sollicitatie_id = ?")->execute([$sol_id]);
             echo json_encode(['ok' => true, 'msg' => 'BLK formulier verwijderd.']);
             break;
@@ -51,6 +52,8 @@ try {
             // Onthouden apparaten gaan mee: anders blijft er een token liggen dat naar
             // een dossier verwijst dat niet meer bestaat.
             if (function_exists('portaal_onthoud_intrekken_alle')) portaal_onthoud_intrekken_alle($sol_id);
+            // De BLK-rij gaat via CASCADE mee; het fotobestand niet vanzelf.
+            if (function_exists('foto_van_sollicitatie_verwijderen')) foto_van_sollicitatie_verwijderen($sol_id);
 
             db()->prepare("DELETE FROM sollicitaties WHERE id = ?")->execute([$sol_id]);
             if (function_exists('audit_log')) audit_log('sollicitatie_verwijderd', 'sollicitatie', $sol_id, ['naam' => $naam, 'ook_loondocs' => !empty($_POST['ook_loondocs'])]);

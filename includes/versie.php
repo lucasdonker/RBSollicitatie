@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.99.2');
+define('APP_VERSIE', '2.99.3');
 
 function app_changelog(): array {
     return [
+        '2.99.3' => [
+            'datum'  => '2026-09-23',
+            'titel'  => 'Foto\'s afgeschermd, en bewaartermijnen die kloppen met de privacyverklaring',
+            'punten' => [
+                'Foto\'s van sollicitanten waren voor iedereen op te vragen die het adres kende, en dat adres was te raden. Ze staan nu in de afgeschermde documentenmap en zijn alleen te zien voor de sollicitant zelf en voor beheerders met toegang tot sollicitanten, formulieren of de selectiedag. Bestaande foto\'s worden bij deze update vanzelf verhuisd',
+                'Een foto verdween niet als een dossier werd gewist, en ook niet als iemand een nieuwe foto uploadde. Nu wel. Een nachtelijke opruimronde haalt ook foto\'s weg van dossiers die langs een andere weg zijn verwijderd',
+                'Nieuwe bewaartermijn voor oud-lifeguards: standaard 2 jaar na het laatste seizoen worden formulier, beschikbaarheid, notities, foto en documenten gewist. Loonheffing en kopie ID blijven tot hun eigen wettelijke termijn; daarna wordt ook de naam geanonimiseerd. Instelbaar onder Bewaartermijnen',
+                'Gezondheidsgegevens worden nu ook bij aangenomen lifeguards gewist na afloop van het seizoen. Dat geldt ook voor de gezondheidsvragen in de intake en de verzegelde PDF; eerder bleven die staan. De toestemming voor foto\'s in de intake blijft bewaard',
+            ],
+        ],
         '2.99.2' => [
             'datum'  => '2026-09-23',
             'titel'  => 'Een eigen privacyverklaring voor sollicitanten',

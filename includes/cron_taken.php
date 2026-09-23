@@ -45,6 +45,11 @@ function cron_taken_uitvoeren(string $bron, array $limieten = []): array {
             if (function_exists('portaal_onthoud_opschonen')) {
                 $stap('apparaten', fn() => ['verwijderd' => portaal_onthoud_opschonen()]);
             }
+            // Fotobestanden van dossiers die al weg zijn. Geen bewaartermijn maar opruimen van
+            // wat al verwijderd hoorde te zijn, dus los van bewaar.actief.
+            if (function_exists('foto_wezen_opruimen')) {
+                $stap('fotos', fn() => ['verwijderd' => foto_wezen_opruimen()]);
+            }
             if (function_exists('opschoon_run')) {
                 $laatste = instelling('bewaar.laatste_run', '');
                 if (substr($laatste, 0, 10) !== date('Y-m-d')) $stap('opschonen', fn() => opschoon_run(false, 'cron'));

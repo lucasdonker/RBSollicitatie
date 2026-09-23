@@ -27,14 +27,20 @@ function avg_stap($db, string $sql, array $params): void {
 
 /**
  * Alles wat bij één sollicitatie hoort en persoonlijk is: documenten in de kluis, taken,
- * vertrouwelijke ondertekengegevens, BLK, beschikbaarheid, notities, beoordelingen, en de
- * herleidbare velden op de sollicitatie zelf.
+ * vertrouwelijke ondertekengegevens, BLK met foto, beschikbaarheid, notities, beoordelingen,
+ * en de herleidbare velden op de sollicitatie zelf.
+ *
+ * $ook_loondocs = false laat de loonheffing en de kopie van het identiteitsbewijs staan
+ * (wettelijke bewaarplicht, eigen termijn). Zo gebruikt het opschonen van oud-lifeguards dit.
  */
-function avg_sollicitatie_leegmaken($db, int $sol_id): void {
-    if (function_exists('documenten_bij_dossier_verwijderen')) documenten_bij_dossier_verwijderen($sol_id, true);
+function avg_sollicitatie_leegmaken($db, int $sol_id, bool $ook_loondocs = true): void {
+    if (function_exists('documenten_bij_dossier_verwijderen')) documenten_bij_dossier_verwijderen($sol_id, $ook_loondocs);
+    if (function_exists('foto_van_sollicitatie_verwijderen')) foto_van_sollicitatie_verwijderen($sol_id);
+    $ondertekend = "UPDATE ondertekeningen SET vertrouwelijk=NULL, handtekening_beeld=NULL, pdf_document_id=NULL, formulier_data=NULL WHERE sollicitatie_id = ?"
+                 . ($ook_loondocs ? '' : " AND type <> 'loonheffing'");
     foreach ([
         "DELETE FROM sollicitant_taken WHERE sollicitatie_id = ?",
-        "UPDATE ondertekeningen SET vertrouwelijk=NULL, handtekening_beeld=NULL, pdf_document_id=NULL, formulier_data=NULL WHERE sollicitatie_id = ?",
+        $ondertekend,
         "DELETE FROM blk_formulieren WHERE sollicitatie_id = ?",
         "DELETE FROM beschikbaarheid WHERE sollicitatie_id = ?",
         "DELETE FROM sollicitant_notities WHERE sollicitatie_id = ?",
