@@ -80,6 +80,12 @@ Schrijf een beknopt assessment in dit exacte format (geen inleiding, direct begi
 $pagina_titel = 'Instellingen';
 $actieve_nav  = 'instellingen';
 vereis_recht('instellingen', 'lezen');
+// De beheerlaag (bh_seizoen_fases, bh_badge) is nodig vóór layout_top.php, al bij het opslaan.
+require_once __DIR__ . '/../includes/beheer/laden.php';
+
+// Geheimen die je moet kunnen kopiëren (API-sleutel, cron-token) en de links naar
+// Systeem & updates zijn er alleen voor wie Systeem mag bewerken.
+$mag_systeem = mag('systeem', 'bewerken');
 
 $db = db();
 // Triggers auto-setup van alle tabellen
@@ -93,29 +99,59 @@ $tab = ['sso' => 'authentik'][$tab] ?? $tab;
 // ── Opslaan ───────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
-    vereis_recht('instellingen', 'lezen');
+    // Opslaan is bewerken. Met alleen leesrecht kon eerder alles gewijzigd worden.
+    vereis_recht('instellingen', 'bewerken');
 
     $actie = $_POST['actie'] ?? '';
 
     if ($actie === 'instellingen') {
-        $velden = $_POST['inst'] ?? [];
+        // Alleen sleutels die als veld op dít tabblad staan (whitelist in includes/instellingen.php).
+        // Geheimen volgen daarna apart: leeg = ongewijzigd.
+        $toegestaan_sleutels = instellingen_formulier_sleutels($tab);
+        $geheim_sleutels     = instellingen_geheime_sleutels();
+        $wis_geheim          = array_map('strval', (array)($_POST['geheim_wis'] ?? []));
+        $velden   = [];
+        $geheimen = [];
+        $geweigerd = [];
+        foreach ((array)($_POST['inst'] ?? []) as $sleutel => $waarde) {
+            $sleutel = (string)$sleutel;
+            if (!in_array($sleutel, $toegestaan_sleutels, true) || !is_string($waarde)) { $geweigerd[] = mb_substr($sleutel, 0, 60); continue; }
+            if (in_array($sleutel, $geheim_sleutels, true)) { $geheimen[$sleutel] = $waarde; continue; }
+            $velden[$sleutel] = $waarde;
+        }
+        if ($geweigerd && function_exists('audit_log')) {
+            audit_log('geweigerd', 'instelling', null, ['tab' => $tab, 'reden' => 'sleutel niet op dit tabblad', 'sleutels' => array_slice($geweigerd, 0, 20)]);
+        }
+        // Handmatige seizoensfase: leeg (automatisch) of een van de bekende fases.
+        if (isset($velden['seizoen.fase']) && $velden['seizoen.fase'] !== '' && !isset(bh_seizoen_fases()[$velden['seizoen.fase']])) {
+            $velden['seizoen.fase'] = '';
+        }
 
-        // Logo upload (overschrijft URL als bestand geüpload is)
+        // Logo en favicon uploaden (overschrijft de URL als er een bestand is).
+        // Geen SVG: een SVG kan script bevatten en wordt van dit domein geserveerd (opgeslagen XSS).
+        $upload_types = [
+            'logo'    => ['png' => ['image/png'], 'jpg' => ['image/jpeg'], 'jpeg' => ['image/jpeg'], 'webp' => ['image/webp']],
+            'favicon' => ['png' => ['image/png'], 'ico' => ['image/vnd.microsoft.icon', 'image/x-icon']],
+        ];
         foreach (['logo'=>'site.logo_url', 'favicon'=>'site.favicon_url'] as $veld => $instelling_key) {
-            if (!empty($_FILES[$veld.'_upload']['tmp_name']) && $_FILES[$veld.'_upload']['error'] === 0) {
-                $bron = $_FILES[$veld.'_upload'];
-                if ($bron['size'] < 2*1024*1024) {  // 2MB max
-                    $ext = strtolower(pathinfo($bron['name'], PATHINFO_EXTENSION));
-                    $toegestaan = $veld === 'favicon' ? ['png','ico','svg'] : ['png','jpg','jpeg','webp','svg'];
-                    if (in_array($ext, $toegestaan, true)) {
-                        $dir = __DIR__ . '/../uploads/branding/';
-                        if (!is_dir($dir)) @mkdir($dir, 0755, true);
-                        $fn = $veld . '_' . time() . '.' . $ext;
-                        if (move_uploaded_file($bron['tmp_name'], $dir . $fn)) {
-                            $velden[$instelling_key] = '/uploads/branding/' . $fn;
-                        }
-                    }
-                }
+            $bron = $_FILES[$veld.'_upload'] ?? null;
+            if (!$bron || empty($bron['tmp_name']) || (int)$bron['error'] !== 0) continue;
+            $naam_veld = $veld === 'logo' ? 'Logo' : 'Favicon';
+            $ext = strtolower(pathinfo((string)$bron['name'], PATHINFO_EXTENSION));
+            $mime = function_exists('finfo_open') ? (string)finfo_file(finfo_open(FILEINFO_MIME_TYPE), $bron['tmp_name']) : '';
+            if ($bron['size'] >= 2*1024*1024) {
+                flash('waarschuwing', $naam_veld . ' niet opgeslagen: het bestand is groter dan 2 MB.');
+                continue;
+            }
+            if (!isset($upload_types[$veld][$ext]) || ($mime !== '' && !in_array($mime, $upload_types[$veld][$ext], true))) {
+                flash('waarschuwing', $naam_veld . ' niet opgeslagen: alleen ' . ($veld === 'logo' ? 'PNG, JPG of WebP' : 'PNG of ICO') . ' is toegestaan. SVG kan script bevatten en weigeren we daarom.');
+                continue;
+            }
+            $dir = __DIR__ . '/../uploads/branding/';
+            if (!is_dir($dir)) @mkdir($dir, 0755, true);
+            $fn = $veld . '_' . time() . '.' . $ext;
+            if (move_uploaded_file($bron['tmp_name'], $dir . $fn)) {
+                $velden[$instelling_key] = '/uploads/branding/' . $fn;
             }
         }
 
@@ -129,13 +165,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 flash('waarschuwing', 'Huisregels niet opgeslagen: ' . $hu['fout']);
             }
         }
-        if (!empty($_POST['huisregels_los'])) $velden['taken.huisregels_bijlage_id'] = '0';
+        if ($tab === 'algemeen' && !empty($_POST['huisregels_los'])) $velden['taken.huisregels_bijlage_id'] = '0';
 
+        $gewijzigd = [];
         foreach ($velden as $sleutel => $waarde) {
-            // Saniteer sleutel (alleen letters, punten, underscores)
-            if (!preg_match('/^[a-z0-9._]+$/', $sleutel)) continue;
-            instelling_opslaan($sleutel, trim($waarde));
+            $waarde = trim((string)$waarde);
+            if (instelling($sleutel, "\0") === $waarde) continue;
+            if (instelling_opslaan($sleutel, $waarde)) $gewijzigd[] = $sleutel;
         }
+        foreach ($geheim_sleutels as $sleutel) {
+            if (!in_array($sleutel, $toegestaan_sleutels, true)) continue;
+            if (instelling_geheim_bijwerken($sleutel, (string)($geheimen[$sleutel] ?? ''), in_array($sleutel, $wis_geheim, true))) $gewijzigd[] = $sleutel;
+        }
+        // Alleen wélke sleutels veranderden, nooit de waarden (daar zitten geheimen tussen).
+        if ($gewijzigd && function_exists('audit_log')) audit_log('gewijzigd', 'instelling', null, ['tab' => $tab, 'velden' => $gewijzigd]);
         flash('succes', 'Instellingen opgeslagen.');
         redirect(APP_URL . '/admin/instellingen.php?tab=' . $tab);
     }
@@ -146,7 +189,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect(APP_URL . '/admin/instellingen.php?tab=authentik');
     }
 
+    if ($actie === 'cron_token_vernieuw') {
+        // Alleen voor Systeem-bewerken: wie het token niet mag zien, kan het ook niet vervangen.
+        vereis_recht('systeem', 'bewerken');
+        instelling_opslaan('cron.token', bin2hex(random_bytes(24)));
+        if (function_exists('audit_log')) audit_log('gewijzigd', 'instelling', null, ['veld' => 'cron.token', 'actie' => 'nieuw token gemaakt']);
+        flash('succes', 'Nieuw cron-token gemaakt. Zet de nieuwe regel in de geplande taak in Plesk; de oude werkt niet meer.');
+        redirect(APP_URL . '/admin/instellingen.php?tab=bewaren');
+    }
+
     if ($actie === 'api_sleutel_genereer') {
+        // Alleen voor Systeem-bewerken: een sleutel die je niet kunt kopiëren, kun je ook niet in de plugin zetten.
+        vereis_recht('systeem', 'bewerken');
         // Nieuwe geheime sleutel genereren (32 bytes, hex).
         $nieuw = bin2hex(random_bytes(32));
         instelling_opslaan('api.sleutel', $nieuw);
@@ -167,12 +221,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         instelling_opslaan('sms.afzender', trim($_POST['sms_afzender'] ?? 'Paal13'));
         instelling_opslaan('sms.http_url', trim($_POST['sms_http_url'] ?? ''));
         instelling_opslaan('sms.http_method', $_POST['sms_http_method'] ?? 'POST');
-        instelling_opslaan('sms.http_token', trim($_POST['sms_http_token'] ?? ''));
-        instelling_opslaan('sms.easysendsms_key', trim($_POST['sms_easysendsms_key'] ?? ''));
-        instelling_opslaan('sms.messagebird_key', trim($_POST['sms_messagebird_key'] ?? ''));
+        // Geheimen: leeg = ongewijzigd, "verwijderen" aangevinkt = leegmaken.
+        $wis_geheim = array_map('strval', (array)($_POST['geheim_wis'] ?? []));
+        foreach (['sms_http_token' => 'sms.http_token', 'sms_easysendsms_key' => 'sms.easysendsms_key',
+                  'sms_messagebird_key' => 'sms.messagebird_key', 'wa_api_sleutel' => 'wa.api_sleutel'] as $post_naam => $sleutel) {
+            instelling_geheim_bijwerken($sleutel, (string)($_POST[$post_naam] ?? ''), in_array($sleutel, $wis_geheim, true));
+        }
         // WhatsApp (WhatsReach)
         instelling_opslaan('wa.actief', !empty($_POST['wa_actief']) ? '1' : '0');
-        instelling_opslaan('wa.api_sleutel', trim($_POST['wa_api_sleutel'] ?? ''));
         instelling_opslaan('wa.base_url', trim($_POST['wa_base_url'] ?? '') ?: 'https://api.whatsreach.co/api/v1');
         instelling_opslaan('wa.afzender_nummer', trim($_POST['wa_afzender_nummer'] ?? ''));
         // Per-melding kanaalmodus (email | kort | beide | uit)
@@ -227,10 +283,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         foreach ($velden as $sleutel => $waarde) {
             instelling_opslaan($sleutel, $waarde);
         }
-        // Wachtwoord alleen bijwerken als er een nieuwe is ingevuld (anders behouden)
-        $nieuw_ww = $_POST['smtp_pass'] ?? '';
-        if ($nieuw_ww !== '' && $nieuw_ww !== '••••••••') {
+        // Wachtwoord alleen bijwerken als er een nieuwe is ingevuld (anders behouden).
+        // Niet trimmen: een wachtwoord mag met een spatie beginnen of eindigen.
+        $nieuw_ww = (string)($_POST['smtp_pass'] ?? '');
+        if ($nieuw_ww !== '') {
             instelling_opslaan('smtp.pass', $nieuw_ww);
+        } elseif (in_array('smtp.pass', array_map('strval', (array)($_POST['geheim_wis'] ?? [])), true)) {
+            instelling_geheim_bijwerken('smtp.pass', '', true);
         }
         flash('succes', 'SMTP-instellingen opgeslagen.');
         redirect(APP_URL . '/admin/instellingen.php?tab=smtp');
@@ -366,6 +425,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+
 // Data
 $functies = functies_ophalen();
 $tarieven_jun    = $db->query("SELECT leeftijd, min_uurloon FROM loon_tarieven WHERE periode='jun'    ORDER BY leeftijd")->fetchAll(\PDO::FETCH_KEY_PAIR);
@@ -454,7 +514,7 @@ require __DIR__ . '/layout_top.php';
   <section class="ds-kaart ds-kaart-p bh-instversie">
     <span class="bh-veldlabel">Versie</span>
     <span class="bh-veldwaarde"><?= h(defined('APP_VERSIE') ? APP_VERSIE : instelling('app.versie', '1.0.0')) ?></span>
-    <a href="<?= APP_URL ?>/admin/systeem.php">Systeem &amp; updates</a>
+    <?php if ($mag_systeem): ?><a href="<?= APP_URL ?>/admin/systeem.php">Systeem &amp; updates</a><?php endif; ?>
   </section>
 </div>
 
@@ -475,16 +535,16 @@ require __DIR__ . '/layout_top.php';
         </div>
         <div class="bh-veldrij">
           <div class="ds-veld">
-            <label>Logo <span class="tip" data-tip="Upload een bestand of vul een URL in. Wordt links bovenin getoond in admin én portaal."></span></label>
-            <input type="file" name="logo_upload" accept="image/png,image/jpeg,image/webp,image/svg+xml">
+            <label>Logo <span class="tip" data-tip="Upload een bestand of vul een URL in. Wordt links bovenin getoond in admin én portaal. PNG, JPG of WebP; geen SVG, want daar kan script in zitten."></span></label>
+            <input type="file" name="logo_upload" accept="image/png,image/jpeg,image/webp">
             <div class="ds-veld-hint">Of vul een pad/URL in:</div>
             <input type="text" name="inst[site.logo_url]" value="<?= h(instelling('site.logo_url')) ?>" placeholder="/uploads/branding/logo.png" style="margin-top:4px">
           </div>
           <div class="ds-veld">
-            <label>Favicon <span class="tip" data-tip="Pictogram in browsertab. PNG, ICO of SVG."></span></label>
-            <input type="file" name="favicon_upload" accept="image/png,image/x-icon,image/vnd.microsoft.icon,image/svg+xml">
+            <label>Favicon <span class="tip" data-tip="Pictogram in de browsertab. PNG of ICO."></span></label>
+            <input type="file" name="favicon_upload" accept="image/png,image/x-icon,image/vnd.microsoft.icon">
             <div class="ds-veld-hint">Of vul een pad/URL in:</div>
-            <input type="text" name="inst[site.favicon_url]" value="<?= h(instelling('site.favicon_url')) ?>" placeholder="/uploads/branding/favicon.svg" style="margin-top:4px">
+            <input type="text" name="inst[site.favicon_url]" value="<?= h(instelling('site.favicon_url')) ?>" placeholder="/uploads/branding/favicon.png" style="margin-top:4px">
           </div>
         </div>
         <?php $logo = instelling('site.logo_url'); if ($logo): ?>
@@ -530,16 +590,7 @@ require __DIR__ . '/layout_top.php';
 
       <div class="bh-instsectie">
         <h3>Aanmeldformulier</h3>
-        <div class="bh-veldrij">
-          <div class="ds-veld">
-            <label>Minimumleeftijd sollicitant <span class="tip" data-tip="Wordt gebruikt voor de uitnodiging-suggestie. Sollicitanten jonger dan dit krijgen een waarschuwing."></span></label>
-            <input type="number" name="inst[aanmeld.min_leeftijd]" value="<?= instelling_int('aanmeld.min_leeftijd',15) ?>" min="10" max="30">
-          </div>
-          <div class="ds-veld">
-            <label>Maximumleeftijd sollicitant</label>
-            <input type="number" name="inst[aanmeld.max_leeftijd]" value="<?= instelling_int('aanmeld.max_leeftijd',35) ?>" min="18" max="65">
-          </div>
-        </div>
+        <p class="ds-veld-hint">De minimumleeftijd is 15 jaar (vast: onder de 16 is toestemming van een ouder nodig).</p>
       </div>
 
       <button type="submit" class="ds-btn ds-btn-primair">Opslaan</button>
@@ -711,10 +762,32 @@ require __DIR__ . '/layout_top.php';
 
 <?php elseif ($tab === 'uitnodiging'): ?>
 <div class="ds-kaart">
-  <div class="bh-kaartkop"><h2>Uitnodigingsinstellingen</h2></div>
+  <div class="bh-kaartkop"><h2>Uitnodigen &amp; automatisch</h2></div>
   <div class="bh-kaartbody">
     <form method="POST">
       <?= csrf_input() ?><input type="hidden" name="actie" value="instellingen">
+      <div class="bh-instsectie">
+        <h3>Seizoen en selectie</h3>
+        <div class="bh-veldrij">
+          <div class="ds-veld">
+            <label for="inst-seizoen-fase">Seizoensfase</label>
+            <?php $_sf = instelling('seizoen.fase', ''); ?>
+            <select id="inst-seizoen-fase" name="inst[seizoen.fase]" aria-describedby="inst-seizoen-fase-hint">
+              <option value="" <?= $_sf === '' ? 'selected' : '' ?>>Automatisch (uit de datums van het seizoen)</option>
+              <?php foreach (bh_seizoen_fases() as $_fk => $_fl): ?>
+              <option value="<?= h($_fk) ?>" <?= $_sf === $_fk ? 'selected' : '' ?>><?= h($_fl) ?></option>
+              <?php endforeach; ?>
+            </select>
+            <div class="ds-veld-hint" id="inst-seizoen-fase-hint">Bepaalt de seizoensbalk en de hoofdtaak op Vandaag, en wat de sollicitantenlijst als afwijkend aanmerkt. Kies alleen een vaste fase als de datums niet kloppen, bijvoorbeeld als de selectiedag verschoven is of de belronde uitloopt. Zet hem daarna terug op automatisch.</div>
+          </div>
+          <div class="ds-veld">
+            <label for="inst-selectie-drempel">Advies-drempel selectiedag</label>
+            <input type="number" id="inst-selectie-drempel" name="inst[selectie.drempel]" value="<?= h(instelling('selectie.drempel', '3.5')) ?>" min="1" max="5" step="0.1" aria-describedby="inst-selectie-drempel-hint">
+            <div class="ds-veld-hint" id="inst-selectie-drempel-hint">Gemiddelde score (1 tot 5) vanaf waar het dossier "Door" adviseert. Tot een halve punt eronder is het "Twijfel", daaronder "Niet". Het is een advies; het besluit neem je zelf.</div>
+          </div>
+        </div>
+      </div>
+
       <div class="bh-instsectie">
         <h3>Auto-invite op basis van leeftijd</h3>
         <p class="ds-veld-hint bh-mb">
@@ -774,9 +847,9 @@ require __DIR__ . '/layout_top.php';
         <h3>Herinneringen</h3>
         <p class="ds-veld-hint bh-mb">
           Automatische herinneringen, gecontroleerd op wat er echt verstuurd is (niet dubbel). Inhoud en kanaal per type:
-          <a href="<?= APP_URL ?>/admin/mail_templates.php" class="bh-let-op">Mail templates</a> en
-          <a href="<?= APP_URL ?>/admin/instellingen.php?tab=berichten" class="bh-let-op">Berichten</a>.
-          Proefdraaien zonder te versturen: <a href="<?= APP_URL ?>/admin/systeem.php#herinneringen" class="bh-let-op">Systeem › Herinneringen</a>.
+          <a href="<?= APP_URL ?>/admin/mail_templates.php" class="bh-let-op">Sjablonen</a> en
+          <a href="<?= APP_URL ?>/admin/instellingen.php?tab=berichten" class="bh-let-op">Kanalen &amp; meldingen</a>.
+          <?php if ($mag_systeem): ?>Proefdraaien zonder te versturen: <a href="<?= APP_URL ?>/admin/systeem.php#herinneringen" class="bh-let-op">Systeem › Herinneringen</a>.<?php endif; ?>
         </p>
 
         <?php if (function_exists('herinnering_regels')): foreach (herinnering_regels() as $hslug => $hregel):
@@ -843,7 +916,7 @@ require __DIR__ . '/layout_top.php';
 
 <?php elseif ($tab === 'mail'): ?>
 <div class="ds-kaart">
-  <div class="bh-kaartkop"><h2>Mail & notificaties</h2></div>
+  <div class="bh-kaartkop"><h2>Afzender &amp; adressen</h2></div>
   <div class="bh-kaartbody">
     <form method="POST">
       <?= csrf_input() ?><input type="hidden" name="actie" value="instellingen">
@@ -880,7 +953,7 @@ require __DIR__ . '/layout_top.php';
       </div>
       <button type="submit" class="ds-btn ds-btn-primair">Opslaan</button>
     </form>
-
+  </div>
 </div>
 
 <?php elseif ($tab === 'ai'): ?>
@@ -897,11 +970,8 @@ require __DIR__ . '/layout_top.php';
         <div class="bh-instsectie">
           <h3>API Configuratie</h3>
           <div class="bh-veldrij">
-            <div class="ds-veld">
-              <label>Gemini API Key <span class="tip" data-tip="Verkrijg een gratis key via Google AI Studio"></span></label>
-              <input type="text" name="inst[ai.api_key]" value="<?= h(instelling('ai.api_key', '')) ?>" placeholder="AIza...">
-              <div class="ds-veld-hint"><a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" class="bh-let-op">Gratis key aanvragen →</a></div>
-            </div>
+            <?= bh_geheim_veld('inst[ai.api_key]', 'ai.api_key', 'Gemini API-sleutel', instelling('ai.api_key', '') !== '',
+                  '<a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" class="bh-let-op">Gratis sleutel aanvragen bij Google AI Studio</a>') ?>
             <div class="ds-veld">
               <label>Model</label>
               <select name="inst[ai.model]">
@@ -1027,19 +1097,13 @@ require __DIR__ . '/layout_top.php';
       <?= csrf_input() ?>
       <input type="hidden" name="inst_tab" value="sso">
 
-      <div class="ds-veld">
-        <label>Authentik API token <span class="tip" data-tip="Maak in Authentik → Directory → Tokens een long-lived token aan. Dit gebruiken we om te checken of een sollicitant een Authentik-account heeft."></span></label>
-        <input type="text" name="inst[authentik.api_token]" value="<?= h(instelling('authentik.api_token', '')) ?>"
-               placeholder="ak_xxx..." autocomplete="off">
-        <div class="ds-veld-hint">
-          Vereist scope: <code>core/users</code> view. Laat leeg om SSO voor portaal uit te schakelen (OTP blijft werken).
-        </div>
-      </div>
+      <?= bh_geheim_veld('inst[authentik.api_token]', 'authentik.api_token', 'Authentik API-token', instelling('authentik.api_token', '') !== '',
+            'Maak in Authentik onder Directory › Tokens een long-lived token aan, met scope <code>core/users</code> (view). Verwijder het token om SSO voor het portaal uit te zetten; inloggen met een code blijft werken.') ?>
 
       <div class="ds-veld">
         <label>Toegestane admin-groepen <span class="tip" data-tip="Authentik group namen die admin-toegang krijgen. Andere gebruikers kunnen alleen via portaal inloggen."></span></label>
-        <input type="text" name="inst[authentik.admin_groepen]" value="<?= h(instelling('authentik.admin_groepen', 'Bestuur,Sol-Admin,Sol-Begeleider')) ?>"
-               placeholder="Bestuur,Sol-Admin,Sol-Begeleider">
+        <input type="text" name="inst[authentik.admin_groepen]" value="<?= h(instelling('authentik.admin_groepen', AUTHENTIK_STANDAARD_GROEPEN)) ?>"
+               placeholder="<?= h(AUTHENTIK_STANDAARD_GROEPEN) ?>">
         <div class="ds-veld-hint">
           Comma-separated. Gebruikers met een van deze groepen krijgen toegang tot <code>/admin</code>.
         </div>
@@ -1094,11 +1158,8 @@ require __DIR__ . '/layout_top.php';
           <input type="url" name="inst[authentik.url]" value="<?= h($a_url) ?>" placeholder="<?= $a_url_bestaand ? h($a_url_bestaand) . ' (uit SSO-config)' : 'https://auth.paal13.com' ?>">
           <?php if (!$a_url && $a_url_bestaand): ?><div style="font-size:11px;color:var(--groen)">Gebruikt automatisch de SSO-URL: <?= h($a_url_bestaand) ?></div><?php endif; ?>
         </div>
-        <div class="ds-veld">
-          <label>API-token <span style="color:var(--grijs);font-weight:400">(service-account)</span></label>
-          <input type="password" name="inst[authentik.token]" value="<?= h($a_token) ?>" placeholder="<?= ($a_token || $a_token_bestaand) ? '••••••••••••' : 'Plak hier de token' ?>" autocomplete="off">
-          <?php if (!$a_token && $a_token_bestaand): ?><div style="font-size:11px;color:var(--groen)">Gebruikt automatisch de bestaande API-token</div><?php endif; ?>
-        </div>
+        <?= bh_geheim_veld('inst[authentik.token]', 'authentik.token', 'API-token (service-account)', $a_token !== '',
+              (!$a_token && $a_token_bestaand) ? 'Leeg: het systeem gebruikt het Authentik API-token hierboven.' : '') ?>
       </div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <button type="submit" class="ds-btn ds-btn-primair">Opslaan</button>
@@ -1344,13 +1405,23 @@ require __DIR__ . '/layout_top.php';
   } catch (\Exception $e) {}
   $laatste_opschoon = instelling('bewaar.laatste_run', '');
 ?>
+<?php if (!instelling_bool('bewaar.actief')): ?>
+<div class="ds-melding ds-melding-error bh-mb" role="status">
+  <strong>Automatisch opschonen staat uit: er wordt niets opgeruimd.</strong>
+  Zolang dit uitstaat, kloppen de privacyverklaring en de afwijzingsmail niet: die beloven dat gegevens na de
+  termijnen hieronder verdwijnen. Zet het aan met het vinkje in de kaart hieronder. Let op: aanzetten wist bij
+  de eerstvolgende dagelijkse run alles wat al over de termijn is, en dat is niet terug te draaien.
+</div>
+<?php endif; ?>
 <div class="ds-kaart">
   <div class="bh-kaartkop"><h2>Bewaartermijnen</h2></div>
   <div class="bh-kaartbody">
     <div class="ds-melding ds-melding-info" style="margin-bottom:16px">
       <strong>Automatisch opschonen.</strong> Volgens de AVG mag je persoonsgegevens niet langer bewaren dan nodig.
-      Hieronder stel je in na hoeveel tijd welke gegevens worden opgeschoond. Aangenomen kandidaten worden nooit
-      automatisch verwijderd. Zet een termijn op <code>0</code> om die categorie niet automatisch op te schonen.
+      Hieronder stel je in na hoeveel tijd welke gegevens worden opgeschoond. Dat geldt ook voor wie is aangenomen:
+      het dossier van een oud-lifeguard wordt leeggemaakt na de termijn na het laatste seizoen. Loondocumenten zijn
+      de uitzondering; die vernietigt de penningmeester met de hand. Zet een termijn op <code>0</code> om die
+      categorie niet automatisch op te schonen.
     </div>
 
     <form method="POST">
@@ -1381,7 +1452,7 @@ require __DIR__ . '/layout_top.php';
       </div>
       <div class="bh-veldrij">
         <div class="ds-veld">
-          <label>Oud-lifeguards, in jaren <span class="tip" data-tip="Gerekend vanaf het einde van het laatste seizoen waarin iemand werkte. Daarna worden formulier, beschikbaarheid, notities, foto en documenten gewist. Loonheffing en kopie ID blijven tot hun eigen wettelijke termijn; pas daarna wordt ook de naam geanonimiseerd. De AP gaat voor een personeelsdossier uit van 2 jaar."></span></label>
+          <label>Oud-lifeguards, in jaren <span class="tip" data-tip="Gerekend vanaf het einde van het laatste seizoen waarin iemand werkte. Daarna worden formulier, beschikbaarheid, notities, foto en documenten gewist. Loonheffing en kopie ID blijven staan tot de penningmeester ze op Loondossiers vernietigt; pas daarna wordt ook de naam geanonimiseerd. De AP gaat voor een personeelsdossier uit van 2 jaar."></span></label>
           <input type="number" name="inst[bewaar.aangenomen_jaar]" value="<?= instelling_int('bewaar.aangenomen_jaar',2) ?>" min="0" max="10">
           <div class="ds-veld-hint">Na het laatste seizoen. De privacyverklaring noemt dit getal.</div>
         </div>
@@ -1432,6 +1503,46 @@ require __DIR__ . '/layout_top.php';
           <div class="ds-veld-hint">Dagen, daarna wissen</div>
         </div>
       </div>
+      <div class="bh-veldrij">
+        <div class="ds-veld">
+          <label for="inst-audit-maanden">Auditlog (wie deed wat) <span class="tip" data-tip="Het logboek van handelingen in het beheer, inclusief wie welk dossier inzag. Nodig om een melding of datalek te herleiden."></span></label>
+          <input type="number" id="inst-audit-maanden" name="inst[bewaar.audit_maanden]" value="<?= instelling_int('bewaar.audit_maanden',12) ?>" min="0" max="60">
+          <div class="ds-veld-hint">Maanden, daarna verwijderen</div>
+        </div>
+        <div class="ds-veld">
+          <label for="inst-foutenlog-dagen">Foutenlog <span class="tip" data-tip="Technische foutmeldingen. Kunnen een e-mailadres of een adres van een pagina bevatten."></span></label>
+          <input type="number" id="inst-foutenlog-dagen" name="inst[bewaar.foutenlog_dagen]" value="<?= instelling_int('bewaar.foutenlog_dagen',90) ?>" min="0" max="730">
+          <div class="ds-veld-hint">Dagen, daarna verwijderen</div>
+        </div>
+        <div class="ds-veld">
+          <label for="inst-bankpas-dagen">Kopie bankpas <span class="tip" data-tip="Gerekend vanaf het moment dat de penningmeester het loondossier op Verwerkt zet."></span></label>
+          <input type="number" id="inst-bankpas-dagen" name="inst[bewaar.bankpas_na_verwerking_dagen]" value="<?= instelling_int('bewaar.bankpas_na_verwerking_dagen',30) ?>" min="0" max="365">
+          <div class="ds-veld-hint">Dagen na verwerking, daarna vernietigen</div>
+        </div>
+      </div>
+      <p class="ds-veld-hint bh-mb">
+        <strong>Loondocumenten</strong> (loonheffingsformulier en kopie ID) worden niet automatisch gewist. De fiscale
+        bewaarplicht loopt tot vijf jaar na het laatste jaar waarin iemand bij ons werkte, en welk seizoen dat was weet
+        het systeem niet. De penningmeester vernietigt ze daarom met de hand, op het scherm Loondossiers.
+      </p>
+
+      <h3>Meldingen en statistiek</h3>
+      <div class="ds-veld">
+        <label class="checkbox-label">
+          <input type="hidden" name="inst[documenten.download_melding]" value="0">
+          <input type="checkbox" name="inst[documenten.download_melding]" value="1" <?= instelling('documenten.download_melding', '1') === '1' ? 'checked' : '' ?> aria-describedby="inst-downloadmelding-hint">
+          Mail naar het bestuur bij elke download van een loondocument
+        </label>
+        <div class="ds-veld-hint" id="inst-downloadmelding-hint">Standaard aan. Gaat naar het bestuursadres bij het downloaden van een kopie ID, bankpas of loonheffingsformulier, zodat onverwachte inzage opvalt. De mail bevat geen document.</div>
+      </div>
+      <div class="ds-veld">
+        <label class="checkbox-label">
+          <input type="hidden" name="inst[paginas.tracking]" value="0">
+          <input type="checkbox" name="inst[paginas.tracking]" value="1" <?= instelling_bool('paginas.tracking', true) ? 'checked' : '' ?> aria-describedby="inst-tracking-hint">
+          Bezoekersstatistiek op de wervingspagina's en het aanmeldformulier
+        </label>
+        <div class="ds-veld-hint" id="inst-tracking-hint">Telt bezoeken en bij welke stap mensen afhaken, zonder cookies en zonder persoonsgegevens. Uit = er wordt niets meer geteld; wat al geteld is blijft volgens de termijn hierboven.</div>
+      </div>
 
       <button type="submit" class="ds-btn ds-btn-primair">Opslaan</button>
     </form>
@@ -1474,7 +1585,7 @@ require __DIR__ . '/layout_top.php';
 
 
 <!-- Automatische taken. Stond eerder onderaan het mail-tabblad; de cron doet
-     ook de AVG-opschoning hierboven, dus hij hoort hier. -->
+     ook de AVG-opschoning hierboven, dus die hoort hier. -->
     <!-- ── Cronjob ───────────────────────────────────────────── -->
     <div style="border-top:1px solid var(--rand);padding-top:18px;margin-top:24px">
       <h3 style="font-size:14px;color:var(--navy);margin-bottom:10px">Cronjob (automatische taken)</h3>
@@ -1487,14 +1598,25 @@ require __DIR__ . '/layout_top.php';
       $cron_url = APP_URL . '/cron/run.php?token=' . $cron_token;
       ?>
       <p class="ds-veld-hint bh-mb">
-        Voer de cronjob in cPanel in om de wachtrijen (AI, mail, auto-invite) elke 5 minuten te verwerken.
+        Zet deze regel als geplande taak in Plesk, zodat de wachtrijen (AI, berichten, automatisch uitnodigen) elke
+        5 minuten worden verwerkt en de opschoning één keer per dag draait.
       </p>
+      <?php if ($mag_systeem): ?>
       <div style="background:var(--grijs-bg);border:1px solid var(--rand);border-radius:6px;padding:12px;font-family:monospace;font-size:12px;word-break:break-all;margin-bottom:10px">
-        */5 * * * * curl -s "<?= h($cron_url) ?>" &gt; /dev/null 2&gt;&amp;1
+        */5 * * * * curl -s -H "X-Cron-Token: <?= h($cron_token) ?>" "<?= h(APP_URL . '/cron/run.php') ?>" &gt; /dev/null 2&gt;&amp;1
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
-        <a href="<?= h($cron_url) ?>" target="_blank" class="ds-btn ds-btn-secundair ds-btn-sm">Handmatig uitvoeren</a>
+      <div class="bh-knoprij bh-mb">
+        <a href="<?= h($cron_url) ?>" target="_blank" rel="noopener" class="ds-btn ds-btn-secundair ds-btn-sm">Handmatig uitvoeren</a>
+        <form method="POST" data-bevestig="Een nieuw cron-token maken? De huidige cronjob-regel werkt daarna niet meer: de automatische taken stoppen tot je de nieuwe regel in Plesk zet.">
+          <?= csrf_input() ?>
+          <input type="hidden" name="actie" value="cron_token_vernieuw">
+          <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm"><?= icoon('ververs', 14) ?> Nieuw token maken</button>
+        </form>
       </div>
+      <p class="ds-veld-hint bh-mb">Het token gaat als header mee, zodat het niet in de toegangslogs van de server belandt. Een oude regel met <code>?token=</code> werkt nog, maar vervang hem door deze. Denk je dat het token is uitgelekt, of neemt iemand met toegang tot Plesk afscheid? Maak dan een nieuw token.</p>
+      <?php else: ?>
+      <p class="ds-veld-hint bh-mb"><?= bh_badge('Ingesteld', 'groen') ?> Het cron-token en de regel zelf ziet alleen wie Systeem mag bewerken.</p>
+      <?php endif; ?>
 
       <?php
       // Wachtrij status
@@ -1516,7 +1638,6 @@ require __DIR__ . '/layout_top.php';
       </div>
       <?php endif; endforeach; ?>
     </div>
-  </div>
 
 <?php elseif ($tab === 'smtp'): ?>
   <?php
@@ -1559,9 +1680,9 @@ require __DIR__ . '/layout_top.php';
             <input type="text" name="smtp_user" value="<?= h($s_user) ?>" placeholder="website@paal13.com" class="ds-input">
           </div>
           <div>
-            <label class="ds-label">Wachtwoord</label>
-            <input type="password" name="smtp_pass" value="<?= $s_heeft_ww ? '••••••••' : '' ?>" autocomplete="new-password" class="ds-input">
-            <span style="font-size:11px;color:var(--grijs)"><?= $s_heeft_ww ? 'Laat ongewijzigd om het huidige wachtwoord te behouden.' : 'Nog geen wachtwoord ingesteld.' ?></span>
+            <?php $_ww_db = instelling('smtp.pass', '') !== ''; ?>
+            <?= bh_geheim_veld('smtp_pass', 'smtp.pass', 'Wachtwoord', $s_heeft_ww,
+                  (!$_ww_db && $s_heeft_ww) ? 'Nu uit config.php.' : '', $_ww_db) ?>
           </div>
           <div>
             <label class="ds-label">Afzender-adres</label>
@@ -1612,7 +1733,9 @@ require __DIR__ . '/layout_top.php';
 
     <div class="bh-subkaart">
       <div style="font-weight:600;font-size:14px;margin-bottom:8px">API-sleutel</div>
-      <?php if ($api_sleutel): ?>
+      <?php if ($api_sleutel && !$mag_systeem): ?>
+        <p class="ds-veld-hint bh-mb"><?= bh_badge('Ingesteld', 'groen') ?> De sleutel zelf, en een nieuwe maken, is er alleen voor wie Systeem mag bewerken.</p>
+      <?php elseif ($api_sleutel): ?>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
           <input type="text" readonly value="<?= h($api_sleutel) ?>" id="apiSleutel"
                  style="flex:1;min-width:280px;font-family:monospace;font-size:12px;background:var(--bg)">
@@ -1622,8 +1745,9 @@ require __DIR__ . '/layout_top.php';
           Zet deze sleutel in de WordPress-plugin. Houd 'm geheim — wie de sleutel heeft, kan aanmeldingen versturen.
         </p>
       <?php else: ?>
-        <p style="font-size:13px;color:var(--oranje);margin:0 0 10px">Er is nog geen sleutel. Genereer er een om de koppeling te activeren.</p>
+        <p style="font-size:13px;color:var(--oranje);margin:0 0 10px">Er is nog geen sleutel.<?= $mag_systeem ? ' Genereer er een om de koppeling te activeren.' : ' Vraag een beheerder er een te maken.' ?></p>
       <?php endif; ?>
+      <?php if ($mag_systeem): ?>
       <form method="post" data-bevestig="<?= $api_sleutel
           ? 'Een nieuwe sleutel maakt de oude meteen ongeldig. Tot je de nieuwe in de WordPress-plugin zet, komen er geen aanmeldingen meer binnen.'
           : 'Een sleutel genereren zet de koppeling met de website aan.' ?>">
@@ -1631,6 +1755,7 @@ require __DIR__ . '/layout_top.php';
         <input type="hidden" name="actie" value="api_sleutel_genereer">
         <button type="submit" class="ds-btn ds-btn-primair ds-btn-sm"><?= $api_sleutel ? 'Nieuwe sleutel genereren' : 'Sleutel genereren' ?></button>
       </form>
+      <?php endif; ?>
     </div>
 
     <form method="post">
@@ -1710,22 +1835,19 @@ require __DIR__ . '/layout_top.php';
               </select>
             </div>
             <div style="flex:1;min-width:180px">
-              <label class="ds-label">Token (optioneel)</label>
-              <input type="text" name="sms_http_token" value="<?= h(instelling('sms.http_token','')) ?>" style="width:100%">
+              <?= bh_geheim_veld('sms_http_token', 'sms.http_token', 'Token (optioneel)', instelling('sms.http_token', '') !== '') ?>
             </div>
           </div>
         </div>
 
         <!-- EasySendSMS -->
         <div class="sms-veld" data-voor="easysendsms" style="display:none">
-          <label class="ds-label bh-mt">EasySendSMS API-sleutel</label>
-          <input type="text" name="sms_easysendsms_key" value="<?= h(instelling('sms.easysendsms_key','')) ?>" style="width:100%">
+          <?= bh_geheim_veld('sms_easysendsms_key', 'sms.easysendsms_key', 'EasySendSMS API-sleutel', instelling('sms.easysendsms_key', '') !== '') ?>
         </div>
 
         <!-- MessageBird -->
         <div class="sms-veld" data-voor="messagebird" style="display:none">
-          <label class="ds-label bh-mt">MessageBird API-sleutel</label>
-          <input type="text" name="sms_messagebird_key" value="<?= h(instelling('sms.messagebird_key','')) ?>" style="width:100%">
+          <?= bh_geheim_veld('sms_messagebird_key', 'sms.messagebird_key', 'MessageBird API-sleutel', instelling('sms.messagebird_key', '') !== '') ?>
         </div>
       </div>
 
@@ -1741,8 +1863,7 @@ require __DIR__ . '/layout_top.php';
           voorkeur een apart nummer, en stuur alleen naar mensen die contact via WhatsApp verwachten. Dit kanaal
           staat daarom standaard uit.
         </div>
-        <label class="ds-label">WhatsReach API-sleutel <span style="font-weight:400;color:var(--ink-muted)">(X-API-Key)</span></label>
-        <input type="text" name="wa_api_sleutel" value="<?= h(instelling('wa.api_sleutel','')) ?>" style="width:100%;margin-bottom:8px" placeholder="je API-sleutel">
+        <?= bh_geheim_veld('wa_api_sleutel', 'wa.api_sleutel', 'WhatsReach API-sleutel (X-API-Key)', instelling('wa.api_sleutel', '') !== '') ?>
         <label class="ds-label">Base URL</label>
         <input type="text" name="wa_base_url" value="<?= h(instelling('wa.base_url','https://api.whatsreach.co/api/v1')) ?>" style="width:100%;margin-bottom:8px">
         <label class="ds-label">Afzendernummer <span style="font-weight:400;color:var(--ink-muted)">(optioneel — bij meerdere gekoppelde apparaten)</span></label>

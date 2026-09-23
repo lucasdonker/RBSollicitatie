@@ -221,4 +221,32 @@ function bh_versheid(?string $moment = null, string $wat = 'Gegevens'): string {
          . ' <span class="bh-meta-punt">·</span> ' . h($nu) . '.</p>';
 }
 
+/**
+ * Invoerveld voor een geheim (API-sleutel, wachtwoord, token). Toont nooit de waarde:
+ * alleen of hij is ingesteld, een leeg veld voor een nieuwe waarde (leeg = ongewijzigd)
+ * en, als er iets staat, een vinkje om hem te verwijderen (geheim_wis[]). De opslag-kant
+ * staat in instelling_geheim_bijwerken() (includes/instellingen.php).
+ *
+ * @param string $naam       name van het invoerveld (bv. inst[ai.api_key] of wa_api_sleutel)
+ * @param string $sleutel    de instellingssleutel, voor het verwijder-vinkje
+ * @param bool   $ingesteld  staat er nu een waarde?
+ * @param string $hint       extra uitleg onder het veld (HTML, al veilig)
+ * @param bool   $wisbaar    false = geen verwijder-vinkje (de waarde komt bv. uit config.php)
+ */
+function bh_geheim_veld(string $naam, string $sleutel, string $label, bool $ingesteld, string $hint = '', bool $wisbaar = true): string {
+    $id = 'geheim-' . preg_replace('/[^a-z0-9]+/', '-', $sleutel);
+    $status = $ingesteld ? bh_badge('Ingesteld', 'groen') : bh_badge('Nog niet ingesteld', 'grijs');
+    $uit  = '<div class="ds-veld">';
+    $uit .= '<label for="' . h($id) . '">' . h($label) . ' ' . $status . '</label>';
+    $uit .= '<input type="password" id="' . h($id) . '" name="' . h($naam) . '" value="" autocomplete="new-password" spellcheck="false"'
+          . ' placeholder="' . ($ingesteld ? 'Nieuwe waarde (leeg = ongewijzigd)' : 'Plak hier de waarde') . '" aria-describedby="' . h($id) . '-hint">';
+    $uit .= '<div class="ds-veld-hint" id="' . h($id) . '-hint">'
+          . ($ingesteld ? 'De huidige waarde wordt niet getoond. Laat het veld leeg om die te houden.' : '')
+          . ($hint !== '' ? ' ' . $hint : '') . '</div>';
+    if ($ingesteld && $wisbaar) {
+        $uit .= '<label class="checkbox-label"><input type="checkbox" name="geheim_wis[]" value="' . h($sleutel) . '"> Huidige waarde verwijderen</label>';
+    }
+    return $uit . '</div>';
+}
+
 } // function_exists

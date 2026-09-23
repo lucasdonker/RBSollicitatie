@@ -5,6 +5,70 @@
 
 $_instellingen_cache = null;
 
+/** De Authentik-groepen die standaard het beheer in mogen (zelfde lijst als de terugval in admin/auth_callback.php). */
+if (!defined('AUTHENTIK_STANDAARD_GROEPEN')) define('AUTHENTIK_STANDAARD_GROEPEN', 'Bestuur,Sol-Admin,Sol-Begeleider,Sol-Penningmeester');
+
+/**
+ * Welke sleutels het algemene formulier van Instellingen (actie "instellingen") per
+ * tabblad mag opslaan. Dit is de whitelist: wat hier niet staat — kluis.*, db.*,
+ * cron.token, api.sleutel, rechten.*, app.* — kan via dat formulier nooit worden gezet,
+ * ook niet met een zelfgemaakte POST. Een nieuw veld op een tabblad = de sleutel hier
+ * toevoegen, verder niets.
+ *
+ * @return string[]
+ */
+function instellingen_formulier_sleutels(string $tab): array {
+    $herinneringen = [];
+    if (function_exists('herinnering_regels')) {
+        foreach (array_keys(herinnering_regels()) as $slug) {
+            foreach (['aan', 'na', 'herhaal', 'max'] as $veld) $herinneringen[] = 'herinnering.' . $slug . '.' . $veld;
+        }
+        $herinneringen[] = 'herinnering.selectiedag_morgen.info';
+    }
+    $per_tab = [
+        'algemeen'    => ['site.naam', 'site.logo_url', 'site.favicon_url', 'portaal.welkomst_tekst'],
+        'loon'        => ['loon.budget_seizoen', 'loon.vt_percentage', 'loon.uren_per_dag', 'loon.pc_vast_juni', 'loon.pc_vast_jul_sep'],
+        'uitnodiging' => array_merge([
+            'invite.modus', 'invite.min_leeftijd', 'invite.max_leeftijd', 'invite.delay_uur',
+            'seizoen.fase', 'selectie.drempel',
+            'auto.ondertekening_sd', 'auto.kennismakingspakket',
+            'herinnering.rust_dagen', 'melding.plafond_dag', 'bijlage.mail_max_mb', 'wa.max_per_uur',
+        ], $herinneringen),
+        'mail'        => ['mail.fout_email', 'mail.bestuur_email', 'mail.penningmeester_email', 'mail.ledenservice_email',
+                          'documenten.penningmeester_bijlagen'],
+        'ai'          => ['ai.api_key', 'ai.model', 'ai.beschikbaarheid_hulp', 'ai.prompt_template', 'ai.auto_analyse'],
+        'authentik'   => ['authentik.api_token', 'authentik.admin_groepen', 'authentik.url', 'authentik.token'],
+        'bewaren'     => ['bewaar.actief', 'bewaar.afgewezen_weken', 'bewaar.seintje_mnd', 'bewaar.aangenomen_jaar',
+                          'bewaar.gezondheid_mnd', 'bewaar.ai_invoer_mnd', 'bewaar.onvoltooid_mnd', 'bewaar.maillog_mnd',
+                          'bewaar.maillog_body_mnd', 'bewaar.bijlagen_mnd', 'bewaar.pagina_events_mnd', 'bewaar.pagina_hash_dagen',
+                          'bewaar.audit_maanden', 'bewaar.bankpas_na_verwerking_dagen', 'bewaar.foutenlog_dagen',
+                          'documenten.download_melding', 'paginas.tracking'],
+    ];
+    return $per_tab[$tab] ?? [];
+}
+
+/**
+ * Sleutels waarvan de waarde geheim is. Het scherm toont die nooit terug (alleen
+ * "ingesteld"), en een leeg veld opslaan laat de huidige waarde staan.
+ * api.sleutel en cron.token staan hier niet: die hebben een eigen knop om te vernieuwen.
+ */
+function instellingen_geheime_sleutels(): array {
+    return ['ai.api_key', 'authentik.api_token', 'authentik.token', 'smtp.pass',
+            'sms.http_token', 'sms.easysendsms_key', 'sms.messagebird_key', 'wa.api_sleutel'];
+}
+
+/**
+ * Een geheim bijwerken: een lege nieuwe waarde verandert niets, $wissen maakt hem leeg.
+ * Geeft true terug als er iets veranderde (voor het logboek — de waarde zelf komt daar nooit in).
+ */
+function instelling_geheim_bijwerken(string $sleutel, string $nieuw, bool $wissen = false): bool {
+    if (!in_array($sleutel, instellingen_geheime_sleutels(), true)) return false;
+    $nieuw = trim($nieuw);
+    if ($nieuw !== '') return instelling_opslaan($sleutel, $nieuw);
+    if ($wissen && instelling($sleutel, '') !== '') return instelling_opslaan($sleutel, '');
+    return false;
+}
+
 // Auto-setup: maak alle tabellen aan als ze ontbreken.
 // Draait normaal NIET (alleen als versie wijzigt of $forceer = true).
 function instellingen_auto_setup(bool $forceer = false): void {
@@ -97,8 +161,7 @@ function instellingen_auto_setup(bool $forceer = false): void {
         ['ondertekenen.2fa_typen', 'loonheffing',                'Ondertekentypen met verplichte verificatiecode (wettelijke documenten)', 'tekst'],
         ['bewaar.loondocumenten_jaar', '5',                     'Loonheffingsformulier + kopie ID bewaren (jaren na einde dienstjaar)', 'getal'],
         ['bewaar.bankpas_na_verwerking_dagen', '30',            'Kopie bankpas vernietigen na verwerking (dagen)', 'getal'],
-        ['aanmeld.min_leeftijd',   '15',                        'Minimumleeftijd sollicitant',          'getal'],
-        ['aanmeld.max_leeftijd',   '35',                        'Maximumleeftijd sollicitant',          'getal'],
+        // aanmeld.min_leeftijd/max_leeftijd vervallen (2.100): nergens gebruikt; de minimumleeftijd is vast 15.
         ['invite.modus',           'suggestie',                 'Auto-invite modus',                    'keuze'],
         ['invite.min_leeftijd',    '16',                        'Min leeftijd auto-uitnodiging',        'getal'],
         ['invite.max_leeftijd',    '30',                        'Max leeftijd auto-uitnodiging',        'getal'],
@@ -117,6 +180,12 @@ function instellingen_auto_setup(bool $forceer = false): void {
         ['bewaar.ai_invoer_mnd',   '3',                         'AI-invoertekst verwijderen na (maanden)', 'getal'],
         ['bewaar.onvoltooid_mnd',  '3',                         'Niet-voltooide aanmeldingen verwijderen na (maanden)', 'getal'],
         ['bewaar.maillog_mnd',     '12',                        'Mail-/actielogboek verwijderen na (maanden)', 'getal'],
+        ['bewaar.audit_maanden',   '12',                        'Auditlog (wie deed wat) verwijderen na (maanden)', 'getal'],
+        ['bewaar.foutenlog_dagen', '90',                        'Foutenlog verwijderen na (dagen)',     'getal'],
+        ['paginas.tracking',       '1',                         'Bezoekersstatistiek wervingspagina\'s aan/uit', 'checkbox'],
+        ['authentik.admin_groepen', AUTHENTIK_STANDAARD_GROEPEN, 'Authentik-groepen met toegang tot het beheer', 'tekst'],
+        ['seizoen.fase',           '',                          'Seizoensfase handmatig (leeg = automatisch uit de datums)', 'keuze'],
+        ['selectie.drempel',       '3.5',                       'Advies-drempel selectiedag (gemiddelde score voor "Door")', 'getal'],
     ];
     $stmt = $db->prepare("INSERT IGNORE INTO `instellingen` (sleutel,waarde,beschrijving,type) VALUES (?,?,?,?)");
     foreach ($defaults as $r) $stmt->execute($r);
@@ -127,6 +196,8 @@ function instellingen_auto_setup(bool $forceer = false): void {
     $correcties = [
         // 2.91.0: de inschrijving als lid vraagt geen verificatiecode meer (alleen wettelijke documenten)
         ['ondertekenen.2fa_typen', 'loonheffing,lidmaatschap', 'loonheffing'],
+        // 2.100.0: de penningmeester hoort bij de standaard toegangsgroepen
+        ['authentik.admin_groepen', 'Bestuur,Sol-Admin,Sol-Begeleider', AUTHENTIK_STANDAARD_GROEPEN],
     ];
     $corr = $db->prepare("UPDATE `instellingen` SET waarde=? WHERE sleutel=? AND waarde=?");
     foreach ($correcties as $c) { try { $corr->execute([$c[2], $c[0], $c[1]]); } catch (\Exception $e) {} }

@@ -7,7 +7,14 @@
 includes/config.php
 
 # Door gebruikers geüploade bestanden (BLK-foto's e.d.) — per server, niet in Git.
-uploads/
+# Uitzondering: de .htaccess-bestanden die PHP-uitvoering en script blokkeren. Die moeten
+# op een nieuwe server of na herstel meteen goed staan. (uploads/* i.p.v. uploads/, anders
+# kan Git niets in de map terughalen.)
+uploads/*
+!uploads/.htaccess
+!uploads/branding/
+uploads/branding/*
+!uploads/branding/.htaccess
 
 # Automatische backups van de oude deploy-tool — per server, groot, niet in Git.
 _backups/

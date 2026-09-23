@@ -64,9 +64,13 @@ function bh_zoek_plekken(bool $alles = false): array {
     $basis = APP_URL . '/admin/';
     $uit   = [];
 
+    // $module: null = iedereen die is ingelogd; 'rol:admin' = alleen die rol (schermen met
+    // vereist_rol); anders "module" (lezen) of "module.actie" (bv. systeem.bewerken).
     $mag_zien = function (?string $module) use ($alles): bool {
         if ($alles || $module === null) return true;
-        return !function_exists('mag') || mag($module, 'lezen');
+        if (str_starts_with($module, 'rol:')) return ($_SESSION['bhd_rol'] ?? '') === substr($module, 4);
+        $delen = explode('.', $module);
+        return !function_exists('mag') || mag($delen[0], $delen[1] ?? 'lezen');
     };
 
     // 1. De schermen uit de navigatie — bh_nav_groepen() filtert zelf al op rechten.
@@ -87,9 +91,10 @@ function bh_zoek_plekken(bool $alles = false): array {
         ['Sjablonen voor mails', 'mail_templates.php',     'document', 'mailing', 'sjabloon template mail tekst bericht opmaak'],
         ['Geplande berichten',   'geplande_berichten.php', 'klok',     'mailing', 'gepland wachtrij verzending uitgesteld'],
         ['Nieuwe sollicitant',   'sollicitant_nieuw.php',  'plus',     'sollicitanten', 'toevoegen handmatig aanmelden nieuw'],
-        ['Sollicitanten importeren', 'import.php',         'upload',   'sollicitanten', 'import csv excel bulk inlezen'],
+        // import.php eist vereist_rol('admin'), systeem.php eist systeem-bewerken.
+        ['Sollicitanten importeren', 'import.php',         'upload',   'rol:admin', 'import csv excel bulk inlezen'],
         ['Rollen & rechten',     'rollen.php',             'sleutel',  'beheerders', 'rol recht module machtiging toegang'],
-        ['Systeem & updates',    'systeem.php',            'systeem',  'instellingen', 'update versie server status onderhoud'],
+        ['Systeem & updates',    'systeem.php',            'systeem',  'systeem.bewerken', 'update versie server status onderhoud'],
         ['Handleiding',          'handleiding.php',        'document', null, 'handleiding uitleg help hulp documentatie'],
         ['Mijn profiel',         'profiel.php',            'persoon',  null, 'profiel wachtwoord eigen account thema donker'],
     ];
