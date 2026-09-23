@@ -172,6 +172,7 @@ function melding_vars(int $sol_id, array $extra = []): array {
     $vars = function_exists('mail_variabelen') ? mail_variabelen($sol, $seizoen) : [];
     $app = defined('APP_URL') ? rtrim(APP_URL, '/') : '';
     $vars['portaal_url']          = $app . '/portaal/';
+    $vars['aanmeld_url']          = $app . '/aanmelden.php';
     $vars['beheer_url']           = $app . '/admin/sollicitanten.php' . ($sol_id ? '?panel=' . $sol_id : '');
     $vars['sollicitant_email']    = $sol['email'] ?? '';
     $vars['sollicitant_telefoon'] = $sol['telefoon'] ?? '';

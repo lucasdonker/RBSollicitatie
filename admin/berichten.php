@@ -36,6 +36,11 @@ if ($sid) {
 }
 $per_fase = [];
 foreach ($alle as $s) $per_fase[$s['fase']][] = $s;
+
+// Vorige seizoenen: oud-strandwachten en wie om een seintje vroeg (bh_vorige_seizoenen()).
+$vorige_groepen = ['oud' => 'Oud-strandwachten', 'seintje' => 'Seintje gevraagd'];
+$per_vorig = [];
+foreach (bh_vorige_seizoenen($sid) as $v) $per_vorig[$v['groep']][] = $v;
 $voorsel = array_filter(array_map('intval', explode(',', (string)($_GET['ids'] ?? ''))));
 if (!empty($_GET['fase']) && isset($per_fase[$_GET['fase']])) foreach ($per_fase[$_GET['fase']] as $s) $voorsel[] = (int)$s['id'];
 
@@ -106,9 +111,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tab === 'nieuw') {
             $prio = count($ids) > 10 ? 'queue' : 'direct';
             $resultaat = ['ok' => 0, 'wacht' => 0, 'overgeslagen' => 0, 'mislukt' => 0, 'details' => [], 'via_queue' => $prio === 'queue'];
             $namen = []; foreach ($alle as $s) $namen[(int)$s['id']] = volledige_naam($s);
+            // Iemand uit een vorig seizoen krijgt het bericht op zijn laatste sollicitatie; het
+            // seizoen in de tekst hoort dan wel het huidige te zijn, niet dat van toen.
+            $vorig_ids = [];
+            foreach ($per_vorig as $_rijen) foreach ($_rijen as $v) { $namen[(int)$v['sol_id']] = volledige_naam($v); $vorig_ids[(int)$v['sol_id']] = true; }
+            $nu_seizoen = ['seizoen_naam' => (string)($seizoen['naam'] ?? ''), 'seizoen.naam' => (string)($seizoen['naam'] ?? '')];
             foreach ($ids as $id) {
                 if (!isset($namen[$id])) continue;
-                $r = melding_verstuur('handmatig', $id, $inhoud, ['override' => $override, 'kanaalmodus' => $modus, 'prioriteit' => $prio, 'referentie' => 'handmatig:' . date('YmdHi'), 'bijlagen' => $bijlagen_opties]);
+                $r = melding_verstuur('handmatig', $id, isset($vorig_ids[$id]) ? $inhoud + $nu_seizoen : $inhoud, ['override' => $override, 'kanaalmodus' => $modus, 'prioriteit' => $prio, 'referentie' => 'handmatig:' . date('YmdHi'), 'bijlagen' => $bijlagen_opties]);
                 $st = $r['status'];
                 if ($st === 'verstuurd') $resultaat['ok']++; elseif ($st === 'wacht') $resultaat['wacht']++; elseif ($st === 'overgeslagen') $resultaat['overgeslagen']++; else $resultaat['mislukt']++;
                 $resultaat['details'][] = ['naam' => $namen[$id], 'status' => $st, 'kanaal' => $r['kanaal'] ?? null, 'reden' => $r['reden'] ?? null];
@@ -456,11 +466,16 @@ require __DIR__ . '/layout_top.php';
           </div>
           <ul class="bh-aanveld-lijst" id="aanLijst" role="listbox" aria-label="Gevonden mensen" hidden></ul>
           <p class="bh-aanveld-leeg" id="aanLeeg" hidden>Niemand gevonden met die naam.</p>
-          <?php if ($alle): ?>
+          <?php if ($alle || $per_vorig): ?>
           <div class="bh-aanveld-snel">
             <?php foreach (array_keys($fases) as $f): if (empty($per_fase[$f])) continue; ?>
               <button type="button" class="bh-aanchip-snel" onclick="selGroep('<?= h($f) ?>', true)">
                 + <?= h(fase_label_kort($f)) ?> (<?= count($per_fase[$f]) ?>)
+              </button>
+            <?php endforeach; ?>
+            <?php foreach ($vorige_groepen as $g => $gl): if (empty($per_vorig[$g])) continue; ?>
+              <button type="button" class="bh-aanchip-snel" onclick="selGroep('<?= h($g) ?>', true)">
+                + <?= h($gl) ?> (<?= count($per_vorig[$g]) ?>)
               </button>
             <?php endforeach; ?>
           </div>
@@ -470,41 +485,45 @@ require __DIR__ . '/layout_top.php';
         <details class="bh-ontvlijst" id="aanAlles" open>
           <summary class="bh-ontvlijst-kop">Of kies uit de volledige lijst</summary>
         <div class="bh-ontvangers">
-          <?php if (!$alle): ?>
+          <?php if (!$alle && !$per_vorig): ?>
             <p class="bh-meta">Geen sollicitanten in dit seizoen.</p>
-          <?php else: foreach (array_keys($fases) as $f): if (empty($per_fase[$f])) continue; ?>
+          <?php endif; ?>
+          <?php foreach (array_keys($fases) as $f): if (empty($per_fase[$f])) continue; ?>
           <div class="bh-ontvgroep">
             <label class="bh-ontvgroep-kop">
               <input type="checkbox" class="groep-cb" onclick="selGroep('<?= h($f) ?>',this.checked)">
               <?= bh_fase_badge($f, ['lengte' => 'kort']) ?>
               <span class="bh-ontvgroep-aantal"><?= count($per_fase[$f]) ?></span>
             </label>
-            <?php foreach ($per_fase[$f] as $s): ?>
-            <label class="bh-ontvrij">
-              <input type="checkbox" name="ontvangers[]" value="<?= (int)$s['id'] ?>"
-                     class="ontv-cb fase-<?= h($f) ?>" onchange="updateTeller()"
-                     data-naam="<?= h(volledige_naam($s)) ?>"
-                     data-zoek="<?= h(mb_strtolower(volledige_naam($s) . ' ' . (string)$s['email'])) ?>"
-                     data-fase="<?= h(fase_label_kort($f)) ?>"
-                     <?= in_array((int)$s['id'], $voorsel, true) ? 'checked' : '' ?>>
-              <span class="bh-ontvrij-tekst">
-                <span class="bh-ontvrij-naam">
-                  <?= h(volledige_naam($s)) ?>
-                  <?php if (!empty($s['afgemeld'])): ?><?= bh_chip('afgemeld', 'rood') ?><?php endif; ?>
-                </span>
-                <span class="bh-ontvrij-sub">
-                  <?= h((string)$s['email']) ?>
-                  <?php if (!empty($s['telefoon'])): ?>
-                    · <?= h($s['kanaal_voorkeur'] === 'sms' ? 'sms' : ($s['kanaal_voorkeur'] === 'email' ? 'alleen e-mail' : 'WhatsApp')) ?>
-                  <?php else: ?>
-                    · geen telefoon
-                  <?php endif; ?>
-                </span>
-              </span>
-            </label>
-            <?php endforeach; ?>
+            <?php foreach ($per_fase[$f] as $s) {
+              $ontv = $s; $ontv_id = (int)$s['id']; $ontv_groep = $f; $ontv_label = fase_label_kort($f);
+              $ontv_aan = in_array((int)$s['id'], $voorsel, true);
+              require __DIR__ . '/_ontvrij.php';
+            } ?>
           </div>
-          <?php endforeach; endif; ?>
+          <?php endforeach; ?>
+
+          <?php foreach ($vorige_groepen as $g => $gl): if (empty($per_vorig[$g])) continue; ?>
+          <div class="bh-ontvgroep">
+            <label class="bh-ontvgroep-kop">
+              <input type="checkbox" class="groep-cb" onclick="selGroep('<?= h($g) ?>',this.checked)">
+              <?= bh_badge($gl, $g === 'oud' ? 'blauw' : 'paars') ?>
+              <span class="bh-ontvgroep-aantal"><?= count($per_vorig[$g]) ?></span>
+            </label>
+            <?php foreach ($per_vorig[$g] as $v) {
+              $ontv = $v; $ontv_id = (int)$v['sol_id']; $ontv_groep = $g; $ontv_label = $gl;
+              $ontv_sub = $v['laatste_seizoen'] ? 'laatst ' . $v['laatste_seizoen'] : '';
+              $ontv_aan = in_array((int)$v['sol_id'], $voorsel, true);
+              require __DIR__ . '/_ontvrij.php';
+            } ?>
+          </div>
+          <?php endforeach; ?>
+          <?php if ($per_vorig): ?>
+            <p class="ds-veld-hint">
+              Vorige seizoenen: alleen oud-strandwachten en wie zelf om een seintje vroeg. Afgewezen
+              zonder seintje staan hier bewust niet: daarvoor ontbreekt de toestemming.
+            </p>
+          <?php endif; ?>
         </div>
         </details>
       </section>
@@ -512,7 +531,7 @@ require __DIR__ . '/layout_top.php';
       <section class="ds-kaart ds-kaart-p">
         <div class="bh-kaartkop"><h2>Variabelen</h2></div>
         <div class="bh-varchips">
-          <?php foreach (['voornaam', 'achternaam', 'volledige_naam', 'seizoen_naam', 'selectiedag_datum', 'selectiedag_locatie', 'tw_datum_start', 'tw_locatie', 'portaal_url', 'bestuur_email'] as $v): ?>
+          <?php foreach (['voornaam', 'achternaam', 'volledige_naam', 'seizoen_naam', 'selectiedag_datum', 'selectiedag_locatie', 'tw_datum_start', 'tw_locatie', 'portaal_url', 'aanmeld_url', 'bestuur_email'] as $v): ?>
           <button type="button" class="bh-varchip" onclick="P13Editor.insert('bericht','{{<?= h($v) ?>}}')">{{<?= h($v) ?>}}</button>
           <?php endforeach; ?>
         </div>

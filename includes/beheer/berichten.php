@@ -127,4 +127,53 @@ function bh_verzend_zin(array $r): array {
     return ['goed', $bericht];
 }
 
+/**
+ * Mensen uit vorige seizoenen die we een wervingsbericht mógen sturen.
+ *
+ * Twee groepen, en alleen die twee:
+ *   'oud'     — ooit aangenomen: gerechtvaardigd belang (werk-/lidmaatschapsrelatie).
+ *   'seintje' — afgewezen of afgehaakt, maar zelf om een seintje gevraagd, en die
+ *               toestemming is nog geen seintje_termijn_mnd() oud (includes/seintje.php).
+ * Wie zich heeft afgemeld, is geanonimiseerd, zijn gegevens liet verwijderen of zich dit
+ * seizoen al heeft aangemeld, valt er vanzelf af. Afgewezen zónder seintje komt er nooit
+ * in: daar is geen grondslag voor (AVG art. 6, Telecommunicatiewet art. 11.7).
+ *
+ * Verzonden wordt op de laatste sollicitatie van de persoon (sol_id): die draagt het
+ * afmeld-token en de gegevens. Het seizoen van die sollicitatie is dus een oud seizoen;
+ * berichten.php zet {{seizoen_naam}} daarom zelf op het huidige.
+ *
+ * @return array rijen: sol_id, persoon_id, voornaam, tussenvoegsel, achternaam, email,
+ *               telefoon, kanaal_voorkeur, groep ('oud'|'seintje'), laatste_seizoen
+ */
+function bh_vorige_seizoenen(int $huidig_seizoen_id): array {
+    if (function_exists('seintje_auto_setup')) seintje_auto_setup();
+    if (function_exists('optout_auto_setup')) optout_auto_setup();
+    if (function_exists('personen_kanaal_auto_setup')) personen_kanaal_auto_setup();
+    $mnd = function_exists('seintje_termijn_mnd') ? seintje_termijn_mnd() : 12;
+    try {
+        $q = db()->prepare("
+            SELECT a.sol_id, p.id AS persoon_id, p.voornaam, p.tussenvoegsel, p.achternaam, p.email, p.telefoon,
+                   COALESCE(p.kanaal_voorkeur,'whatsapp') AS kanaal_voorkeur,
+                   IF(a.ooit_aangenomen = 1, 'oud', 'seintje') AS groep,
+                   (SELECT sz.naam FROM sollicitaties s3 JOIN seizoenen sz ON sz.id = s3.seizoen_id
+                     WHERE s3.id = a.sol_id) AS laatste_seizoen
+            FROM personen p
+            JOIN (SELECT persoon_id, MAX(id) AS sol_id, MAX(fase = 'aangenomen') AS ooit_aangenomen
+                    FROM sollicitaties
+                   WHERE seizoen_id <> ? AND fase <> 'verwijderd_door_sollicitant'
+                   GROUP BY persoon_id) a ON a.persoon_id = p.id
+            WHERE COALESCE(p.mailing_afgemeld, 0) = 0
+              AND p.email NOT LIKE 'geanonimiseerd+%' AND p.email NOT LIKE '%@anoniem.local'
+              AND (a.ooit_aangenomen = 1
+                   OR (p.seintje_op IS NOT NULL AND p.seintje_op >= DATE_SUB(NOW(), INTERVAL ? MONTH)))
+              AND NOT EXISTS (SELECT 1 FROM sollicitaties s2 WHERE s2.persoon_id = p.id AND s2.seizoen_id = ?)
+            ORDER BY p.achternaam, p.voornaam");
+        $q->execute([$huidig_seizoen_id, $mnd, $huidig_seizoen_id]);
+        return $q->fetchAll();
+    } catch (\Throwable $e) {
+        error_log('bh_vorige_seizoenen: ' . $e->getMessage());
+        return [];
+    }
+}
+
 } // function_exists

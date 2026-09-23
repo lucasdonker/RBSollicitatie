@@ -34,6 +34,15 @@ function seintje_auto_setup(): void {
     } catch (\Throwable $e) { error_log('seintje_auto_setup: ' . $e->getMessage()); }
 }
 
+/**
+ * Hoe lang een seintje geldt, in maanden. Zolang mogen we de gegevens bewaren en de persoon
+ * benaderen; daarna vervalt de toestemming (en ruimt opschonen de gegevens op).
+ */
+function seintje_termijn_mnd(): int {
+    $m = function_exists('instelling_int') ? instelling_int('bewaar.seintje_mnd', 12) : 12;
+    return $m > 0 ? $m : 12;
+}
+
 /** Heeft deze persoon om een seintje gevraagd? */
 function seintje_heeft(int $persoon_id): bool {
     seintje_auto_setup();
