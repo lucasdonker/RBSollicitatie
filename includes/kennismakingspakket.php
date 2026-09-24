@@ -49,7 +49,7 @@ function kennismakingspakket_activeren(int $sol_id): array {
     try {
         $db = db();
         if (function_exists('extra_tabellen_auto_setup')) extra_tabellen_auto_setup();
-        if (function_exists('db_kolom_verzeker')) {
+        if (function_exists('db_kolom_verzeker') && !schema_actueel()) {
             db_kolom_verzeker($db, 'sollicitant_taken', 'soort', "VARCHAR(20) NOT NULL DEFAULT 'afvinken'");
             db_kolom_verzeker($db, 'sollicitant_taken', 'document_soort', 'VARCHAR(40) DEFAULT NULL');
             db_kolom_verzeker($db, 'sollicitant_taken', 'volgorde', 'INT NOT NULL DEFAULT 50');

@@ -37,7 +37,7 @@ function seizoen_kolom_definities(): array {
 
 /** Zorgt (failsafe) dat alle seizoen-kolommen bestaan. */
 function seizoen_kolommen_verzeker(): void {
-    if (!function_exists('db_kolom_verzeker')) return;
+    if (!function_exists('db_kolom_verzeker') || schema_actueel()) return;
     try {
         $db = db();
         foreach (seizoen_kolom_definities() as $kolom => $def) db_kolom_verzeker($db, 'seizoenen', $kolom, $def);

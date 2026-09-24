@@ -305,7 +305,7 @@ function login_beheerder(array $b, string $via = 'wachtwoord'): void {
 // ── Brute-force bescherming (login) ───────────────────────────
 if (!function_exists('login_pogingen_auto_setup')) {
 function login_pogingen_auto_setup(): void {
-    static $done = false; if ($done) return; $done = true;
+    static $done = false; if ($done || schema_actueel()) return; $done = true;
     try {
         db()->exec("CREATE TABLE IF NOT EXISTS `login_pogingen` (
             `id`         INT AUTO_INCREMENT PRIMARY KEY,
@@ -674,7 +674,7 @@ function stuur_mail(string $naar, string $naam, string $onderwerp, string $body,
 /** Zorgt dat personen de ouder/verzorger-velden hebben (naam, e-mail, telefoon). */
 if (!function_exists('personen_ouder_auto_setup')) {
 function personen_ouder_auto_setup(): void {
-    static $done = false; if ($done) return; $done = true;
+    static $done = false; if ($done || schema_actueel()) return; $done = true;
     try {
         $db = db();
         $dbn = $db->query("SELECT DATABASE()")->fetchColumn();
@@ -704,7 +704,7 @@ if (!function_exists('consent_auto_setup')) {
  * Draait automatisch, voegt alleen toe wat nog ontbreekt (veilig om vaak aan te roepen).
  */
 function consent_auto_setup(): void {
-    static $done = false; if ($done) return; $done = true;
+    static $done = false; if ($done || schema_actueel()) return; $done = true;
     try {
         $db = db();
         $dbn = $db->query("SELECT DATABASE()")->fetchColumn();
@@ -740,7 +740,7 @@ function leeftijd_uit_datum(?string $geboortedatum): ?int {
 }
 
 function mail_queue_auto_setup(): void {
-    static $done = false; if ($done) return; $done = true;
+    static $done = false; if ($done || schema_actueel()) return; $done = true;
     try {
         db()->exec("CREATE TABLE IF NOT EXISTS `mail_queue` (
             `id`             INT AUTO_INCREMENT PRIMARY KEY,
@@ -782,7 +782,7 @@ if (!function_exists('ondertekeningen_auto_setup')) {
  * ontbrak hij daardoor. Nu maakt het systeem hem zelf aan, net als de andere tabellen.
  */
 function ondertekeningen_auto_setup(): void {
-    static $done = false; if ($done) return; $done = true;
+    static $done = false; if ($done || schema_actueel()) return; $done = true;
     try {
         db()->exec("CREATE TABLE IF NOT EXISTS `ondertekeningen` (
             `id` INT AUTO_INCREMENT PRIMARY KEY,
@@ -820,7 +820,7 @@ function ondertekeningen_auto_setup(): void {
 // Op een verse database (bijv. testomgeving) ontbraken deze; nu maken ze zichzelf aan.
 if (!function_exists('extra_tabellen_auto_setup')) {
 function extra_tabellen_auto_setup(): void {
-    static $done = false; if ($done) return; $done = true;
+    static $done = false; if ($done || schema_actueel()) return; $done = true;
     $db = db();
     try {
         $db->exec("CREATE TABLE IF NOT EXISTS `sollicitant_notities` (

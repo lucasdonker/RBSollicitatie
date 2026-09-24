@@ -38,7 +38,7 @@ define('PORTAAL_ONTHOUD_COOKIE', 'p13_apparaat');
 
 function portaal_login_setup(): void {
     static $gedaan = false;
-    if ($gedaan) return;
+    if ($gedaan || schema_actueel()) return;
     $gedaan = true;
     try {
         db()->exec("CREATE TABLE IF NOT EXISTS `portaal_apparaten` (

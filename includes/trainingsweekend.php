@@ -22,7 +22,7 @@ if (!function_exists('tw_auto_setup')) {
 
 function tw_auto_setup(): void {
     static $done = false;
-    if ($done) return;
+    if ($done || schema_actueel()) return;
     $done = true;
     try {
         $db = db();

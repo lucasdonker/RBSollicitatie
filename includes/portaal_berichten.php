@@ -14,7 +14,7 @@ if (!function_exists('portaal_berichten')) {
 /** Zorgt dat de kolom voor de gelezen-status bestaat. */
 function portaal_berichten_kolom_verzeker(): void {
     static $klaar = false;
-    if ($klaar || !function_exists('db_kolom_verzeker')) return;
+    if ($klaar || !function_exists('db_kolom_verzeker') || schema_actueel()) return;
     $klaar = true;
     try { db_kolom_verzeker(db(), 'sollicitaties', 'berichten_gezien_op', 'DATETIME DEFAULT NULL'); }
     catch (\Throwable $e) { error_log('berichten_gezien_op: ' . $e->getMessage()); }

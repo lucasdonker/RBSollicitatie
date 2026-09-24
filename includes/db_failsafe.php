@@ -47,6 +47,21 @@ function db_tabel_bestaat(PDO $db, string $tabel): bool {
     } catch (\Exception $e) { return false; }
 }
 
+/**
+ * Klopt het schema al voor deze versie? Dan hoeft geen enkele *_auto_setup() iets te doen.
+ *
+ * Elke setup-functie begint met `if ($done || schema_actueel()) return;`. Zonder die regel
+ * draaiden ze bij élk verzoek opnieuw (tientallen INFORMATION_SCHEMA-queries en UPDATEs per
+ * aanmelding) — de hoofdoorzaak van trage formulieren. db() start de failsafe bij de eerste
+ * verbinding, dus na de aanroep hieronder is de vlag gezet. Tijdens de volledige run staat
+ * hij uit, zodat de setups dan wél hun werk doen.
+ * Gevolg: een nieuwe tabel of kolom in een setup = APP_VERSIE ophogen, anders draait hij niet.
+ */
+function schema_actueel(): bool {
+    if (function_exists('db')) db();
+    return !empty($GLOBALS['_p13_schema_actueel']);
+}
+
 /** Bestaat deze index (op naam) op de tabel? Breekt nooit af. */
 function db_index_bestaat(PDO $db, string $tabel, string $index): bool {
     try {
@@ -123,11 +138,12 @@ function db_failsafe(bool $forceer = false): void {
     $done = true;
 
     $versie = defined('APP_VERSIE') ? APP_VERSIE : '0';
+    $GLOBALS['_p13_schema_actueel'] = false;
     if (!$forceer) {
         try {
             $q = db()->prepare("SELECT waarde FROM instellingen WHERE sleutel = 'db.failsafe_versie' LIMIT 1");
             $q->execute();
-            if ((string)$q->fetchColumn() === $versie) return;
+            if ((string)$q->fetchColumn() === $versie) { $GLOBALS['_p13_schema_actueel'] = true; return; }
         } catch (\Throwable $e) { /* tabel bestaat nog niet: gewoon de volledige run doen */ }
     }
 
@@ -161,6 +177,12 @@ function db_failsafe(bool $forceer = false): void {
         'foto_auto_setup',         // na documenten: verhuist foto's naar de afgeschermde map
         'ondertekening_bewijs_auto_setup',
         'portaal_login_setup',
+        'beschikbaarheid2_auto_setup',
+        'tw_auto_setup',
+        'ratelimit_auto_setup',
+        'portaal_berichten_kolom_verzeker',
+        'blk_kolommen_verzeker',
+        'seizoen_kolommen_verzeker',
     ];
     foreach ($setups as $fn) {
         if (function_exists($fn)) {
@@ -264,6 +286,7 @@ function db_failsafe(bool $forceer = false): void {
         try {
             $db->prepare("INSERT INTO instellingen (sleutel, waarde) VALUES ('db.failsafe_versie', ?) ON DUPLICATE KEY UPDATE waarde = ?")
                ->execute([$versie, $versie]);
+            $GLOBALS['_p13_schema_actueel'] = true;
         } catch (\Exception $e) { error_log('db_failsafe versievlag: ' . $e->getMessage()); }
     } catch (\Exception $e) {
         error_log('db_failsafe kolom-check: ' . $e->getMessage());

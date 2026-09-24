@@ -104,8 +104,10 @@ function sollicitatie_aanmaken(array $in, array $context = []): array {
     }
 
     // Competenties uit Authentik (best-effort), ná het antwoord: het is een verzoek naar een
-    // andere server (tot 12 seconden) en niets op het scherm hangt ervan af.
-    if (function_exists('competenties_sync') && function_exists('competentie_sync_klaar') && competentie_sync_klaar()) {
+    // andere server (tot 12 seconden) en niets op het scherm hangt ervan af. Kan de server niet
+    // eerst antwoorden (geen FPM), dan niet hier: de bezoeker zou erop wachten. De dagelijkse
+    // cron (competenties_cron_sync) haalt het dan in.
+    if (na_antwoord_mogelijk() && function_exists('competenties_sync') && function_exists('competentie_sync_klaar') && competentie_sync_klaar()) {
         na_antwoord(fn() => competenties_sync($sid, $email), 'sync bij aanmelding');
     }
 

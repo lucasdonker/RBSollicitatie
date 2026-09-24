@@ -75,7 +75,7 @@ function blk_veld_labels(): array {
  * Zonder de adreskolommen werden postcode/huisnummer stil weggefilterd bij het opslaan.
  */
 function blk_kolommen_verzeker(): void {
-    if (!function_exists('db_kolom_verzeker')) return;
+    if (!function_exists('db_kolom_verzeker') || schema_actueel()) return;
     try {
         $db = db();
         db_kolom_verzeker($db, 'blk_formulieren', 'postcode',      'VARCHAR(10) DEFAULT NULL');

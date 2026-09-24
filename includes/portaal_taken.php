@@ -343,7 +343,7 @@ function portaal_taken_post_afhandelen(int $sol_id): void {
                 // Zeker stellen dat de ouder-kolommen bestaan
                 try {
                     $db = db();
-                    if (function_exists('db_kolom_verzeker')) {
+                    if (function_exists('db_kolom_verzeker') && !schema_actueel()) {
                         db_kolom_verzeker($db, 'personen', 'ouder_naam',     'VARCHAR(120) DEFAULT NULL');
                         db_kolom_verzeker($db, 'personen', 'ouder_email',    'VARCHAR(255) DEFAULT NULL');
                         db_kolom_verzeker($db, 'personen', 'ouder_telefoon', 'VARCHAR(30) DEFAULT NULL');

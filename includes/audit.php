@@ -23,7 +23,7 @@ $GLOBALS['_audit_buffer'] = [];
 $GLOBALS['_audit_shutdown_geregistreerd'] = false;
 
 function audit_dag_auto_setup(): void {
-    static $done = false; if ($done) return; $done = true;
+    static $done = false; if ($done || schema_actueel()) return; $done = true;
     try {
         db()->exec("CREATE TABLE IF NOT EXISTS `audit_log` (
             `id` BIGINT AUTO_INCREMENT PRIMARY KEY,

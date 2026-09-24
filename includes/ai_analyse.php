@@ -9,7 +9,7 @@
 // ── Setup ─────────────────────────────────────────────────────
 function ai_queue_auto_setup(): void {
     static $done = false;
-    if ($done) return; $done = true;
+    if ($done || schema_actueel()) return; $done = true;
     try {
         db()->exec("CREATE TABLE IF NOT EXISTS `ai_queue` (
             `id`              INT AUTO_INCREMENT PRIMARY KEY,

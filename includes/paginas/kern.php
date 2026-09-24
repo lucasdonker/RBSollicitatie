@@ -29,7 +29,7 @@ function pag_statussen(): array {
 
 /** Tabellen aanmaken + de rechten eenmalig op bestaande rollen zetten. */
 function pag_auto_setup(): void {
-    static $done = false; if ($done) return; $done = true;
+    static $done = false; if ($done || schema_actueel()) return; $done = true;
     try {
         $db = db();
         $db->exec("CREATE TABLE IF NOT EXISTS `paginas` (

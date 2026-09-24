@@ -17,7 +17,7 @@
 if (!function_exists('documenten_auto_setup')) {
 
 function documenten_auto_setup(): void {
-    static $done = false; if ($done) return; $done = true;
+    static $done = false; if ($done || schema_actueel()) return; $done = true;
     try {
         db()->exec("CREATE TABLE IF NOT EXISTS `sollicitant_documenten` (
             `id`              INT AUTO_INCREMENT PRIMARY KEY,
@@ -364,7 +364,7 @@ function documenten_dossier_compleet_check(int $sol_id, bool $opnieuw = false): 
         'documenten_lijst' => $lijst,
         'beheer_url'       => rtrim(APP_URL, '/') . '/admin/documenten.php?sol=' . $sol_id,
         'bijlagen_tekst'   => $met_bijlagen ? 'De stukken zitten als bijlage bij deze mail.' : 'De stukken staan klaar in het beheer (Loondossiers); download ze daar.',
-    ], ['referentie' => 'loondossier:' . $sol_id, 'prioriteit' => 'direct', 'dedup_min' => 0,
+    ], ['referentie' => 'loondossier:' . $sol_id, 'prioriteit' => 'na_antwoord', 'dedup_min' => 0,
         'bijlagen' => $met_bijlagen ? documenten_penningmeester_bijlagen($d) : []]);
     $ok = in_array($r['status'] ?? '', ['verstuurd', 'wacht'], true);
     if ($ok && $lh_id && function_exists('ondertekening_gebeurtenis')) ondertekening_gebeurtenis($lh_id, 'penningmeester_gemeld', ['bijlagen' => $met_bijlagen ? 'ja' : 'nee', 'opnieuw' => $opnieuw ? 'ja' : 'nee']);

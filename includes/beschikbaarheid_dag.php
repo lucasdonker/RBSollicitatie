@@ -16,7 +16,7 @@
 if (!function_exists('beschikbaarheid_dag_auto_setup')) {
 
 function beschikbaarheid_dag_auto_setup(): void {
-    static $done = false; if ($done) return; $done = true;
+    static $done = false; if ($done || schema_actueel()) return; $done = true;
     try {
         db()->exec("CREATE TABLE IF NOT EXISTS `beschikbaarheid_dag` (
             `id` INT AUTO_INCREMENT PRIMARY KEY,

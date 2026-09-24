@@ -24,7 +24,7 @@
 if (!function_exists('opschoon_auto_setup')) {
 /** Zorgt dat de logtabel bestaat. */
 function opschoon_auto_setup(): void {
-    static $done = false; if ($done) return; $done = true;
+    static $done = false; if ($done || schema_actueel()) return; $done = true;
     try {
         db()->exec("CREATE TABLE IF NOT EXISTS `opschoon_log` (
             `id`          INT AUTO_INCREMENT PRIMARY KEY,

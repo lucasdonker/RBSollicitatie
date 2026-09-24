@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.102.1');
+define('APP_VERSIE', '2.103.0');
 
 function app_changelog(): array {
     return [
+        '2.103.0' => [
+            'datum'  => '2026-09-24',
+            'titel'  => 'Formulieren reageren meteen',
+            'punten' => [
+                'Een aanmelding deed op de server ongeveer honderd databasevragen voordat het antwoord terugging, waarvan het grootste deel controles van de tabelstructuur. Die controles draaien nu één keer per versie in plaats van bij elk verzoek; dat geldt voor alle formulieren in portaal en beheer',
+                'Nog eens op Verstuur drukken terwijl de aanmelding loopt, stuurt geen tweede aanmelding meer',
+                'Het loondossier voor de penningmeester en de inschrijving bij de ledenservice gaan ná het antwoord de deur uit, dus ondertekenen en uploaden wachten niet meer op de mailserver',
+                'Nieuwe controle bij Systeem: waarschuwt als PHP niet als FPM draait (dan wacht elke bezoeker op de verzending van berichten)',
+            ],
+        ],
         '2.102.1' => [
             'datum'  => '2026-09-24',
             'titel'  => 'Drie bugs die gegevens kostten',

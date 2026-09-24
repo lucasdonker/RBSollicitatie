@@ -16,7 +16,7 @@ if (!function_exists('sjablonen_auto_setup')) {
 
 /** Kolommen + slug-migratie + seeds. Draait één keer per request, faalt stil. */
 function sjablonen_auto_setup(): void {
-    static $done = false; if ($done) return; $done = true;
+    static $done = false; if ($done || schema_actueel()) return; $done = true;
     try {
         $db = db();
         if (!function_exists('db_tabel_bestaat') || !db_tabel_bestaat($db, 'mail_templates')) {

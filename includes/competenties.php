@@ -82,7 +82,7 @@ function competentie_group_index(): array {
 
 function competenties_auto_setup(): void {
     static $done = false;
-    if ($done) return;
+    if ($done || schema_actueel()) return;
     $done = true;
     try {
         $db = db();

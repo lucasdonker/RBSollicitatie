@@ -25,7 +25,7 @@
 if (!function_exists('seintje_auto_setup')) {
 
 function seintje_auto_setup(): void {
-    static $done = false; if ($done) return; $done = true;
+    static $done = false; if ($done || schema_actueel()) return; $done = true;
     if (!function_exists('db_kolom_verzeker')) return;
     try {
         $db = db();

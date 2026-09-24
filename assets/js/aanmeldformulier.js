@@ -78,6 +78,7 @@
     var stappen = Array.prototype.slice.call(form.querySelectorAll('[data-af-stap]'));
     var acties = form.querySelector('[data-af-acties]');
     var verzendKnop = form.querySelector('[data-af-verzend]');
+    var verzendTekst = verzendKnop ? verzendKnop.textContent : '';
     var voortgang = kaart.querySelector('[data-af-voortgang]');
     var balkVul = kaart.querySelector('[data-af-balkvul]');
     var teller = kaart.querySelector('[data-af-teller]');
@@ -404,6 +405,8 @@
     // ── Verzenden ──────────────────────────────────────────────────
 
     form.addEventListener('submit', function (e) {
+      // Nog eens drukken terwijl het eerste verzoek loopt = een tweede aanmelding. Tegenhouden.
+      if (verzonden) { e.preventDefault(); return; }
       // Bij de stapsgewijze weergave controleren we alle stappen; anders alleen wat er staat.
       var eersteFout = null;
       var eersteStap = 0;
@@ -425,7 +428,19 @@
         verzendKnop.setAttribute('aria-busy', 'true');
         verzendKnop.textContent = 'Bezig met versturen…';
       }
-      // Niet disablen: een uitgeschakelde knop stuurt zijn name/value niet mee.
+      // Niet disablen: een uitgeschakelde knop stuurt zijn name/value niet mee. inert maakt
+      // het formulier alleen onaanraakbaar; de browser verstuurt gewoon alles.
+      if ('inert' in HTMLElement.prototype) form.inert = true;
+      form.setAttribute('aria-busy', 'true');
+    });
+
+    // Terug-knop: de pagina komt uit de cache en moet dan weer bruikbaar zijn.
+    window.addEventListener('pageshow', function (e) {
+      if (!e.persisted || !verzonden) return;
+      verzonden = false;
+      if ('inert' in HTMLElement.prototype) form.inert = false;
+      form.removeAttribute('aria-busy');
+      if (verzendKnop) { verzendKnop.removeAttribute('aria-busy'); verzendKnop.textContent = verzendTekst; }
     });
 
     // ── Halverwege weg ─────────────────────────────────────────────

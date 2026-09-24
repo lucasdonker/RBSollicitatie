@@ -27,6 +27,7 @@ function health_check(bool $repareer = false): array {
     $checks['configuratie'] = health_check_configuratie();
     $checks['kluis']      = health_check_kluis();
     $checks['zegel']      = health_check_zegel();
+    $checks['snelheid']   = health_check_snelheid();
 
     // Totaaloordeel: fout > waarschuwing > ok
     $heeft_fout = false; $heeft_waarschuwing = false;
@@ -42,6 +43,18 @@ function health_check(bool $repareer = false): array {
         'checks'      => $checks,
         'gecontroleerd_op' => date('c'),
     ];
+}
+
+/**
+ * Kan de server antwoorden vóór het zware werk (mail, WhatsApp) klaar is? Alleen onder PHP-FPM
+ * (of LiteSpeed). Zonder dat wacht elke bezoeker na "verstuur" op de mailserver.
+ */
+function health_check_snelheid(): array {
+    if (PHP_SAPI === 'cli') return ['status' => 'ok', 'uitleg' => 'Niet te controleren vanaf de opdrachtregel.', 'hersteld' => false];
+    if (function_exists('na_antwoord_mogelijk') && na_antwoord_mogelijk()) {
+        return ['status' => 'ok', 'uitleg' => 'Berichten gaan ná het antwoord de deur uit.', 'hersteld' => false];
+    }
+    return ['status' => 'waarschuwing', 'uitleg' => 'PHP draait niet als FPM: na elk formulier wacht de bezoeker tot mails en WhatsApp verstuurd zijn. Zet in Plesk de PHP-handler op "FPM application served by nginx/Apache".', 'hersteld' => false];
 }
 
 /** Database: bestaan alle tabellen en kolommen? Repareert via db_failsafe. */

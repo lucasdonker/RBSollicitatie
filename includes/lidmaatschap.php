@@ -226,11 +226,13 @@ function lidmaatschap_na_ondertekening(array $rec, array $sol, ?string $pdf_byte
         . '</table>';
     try {
         melding_verstuur('ledenservice_inschrijving', (int)$rec['sollicitatie_id'], ['gegevens_html' => $html, 'lid_soort' => ($form['soort'] ?? '') === 'donateur' ? 'donateur' : 'lid'],
-            ['ontvanger' => ['email' => $email, 'naam' => 'Ledenservice', 'telefoon' => '', 'rol' => 'direct'], 'prioriteit' => 'direct', 'dedup_min' => 0,
+            ['ontvanger' => ['email' => $email, 'naam' => 'Ledenservice', 'telefoon' => '', 'rol' => 'direct'], 'prioriteit' => 'na_antwoord', 'dedup_min' => 0,
              'referentie' => 'lidmaatschap:' . (int)$rec['id'], 'bijlagen' => $bijlagen]);
         if (function_exists('ondertekening_gebeurtenis')) ondertekening_gebeurtenis((int)$rec['id'], 'verstuurd_ledenservice', ['naar' => $email]);
     } catch (\Throwable $e) { error_log('lidmaatschap_na_ondertekening: ' . $e->getMessage()); }
-    if ($pad) @unlink($pad);
+    // Verzending gebeurt ná het antwoord (shutdown). Die shutdown-functie is tijdens
+    // melding_verstuur() geregistreerd, deze daarna — dus het bestand gaat pas weg als de mail weg is.
+    if ($pad) register_shutdown_function(function () use ($pad) { @unlink($pad); });
 }
 
 } // function_exists

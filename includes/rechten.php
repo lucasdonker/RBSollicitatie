@@ -129,7 +129,7 @@ function rechten_standaard_rollen(): array {
 
 /** Auto-setup: maak de tabellen en seed de standaardrollen als ze nog niet bestaan. */
 function rechten_auto_setup(): void {
-    static $done = false; if ($done) return; $done = true;
+    static $done = false; if ($done || schema_actueel()) return; $done = true;
     try {
         $db = db();
         $db->exec("CREATE TABLE IF NOT EXISTS `rollen` (

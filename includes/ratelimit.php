@@ -16,6 +16,19 @@ function rate_identiteit(): string {
     return (string)($_SERVER['REMOTE_ADDR'] ?? '');
 }
 
+/** De tabel; via db_failsafe() één keer per versie, niet bij elke poging. */
+function ratelimit_auto_setup(): void {
+    static $done = false; if ($done || schema_actueel()) return; $done = true;
+    try {
+        db()->exec("CREATE TABLE IF NOT EXISTS `api_rate` (
+            `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+            `sleutel` VARCHAR(160) NOT NULL,
+            `moment` INT NOT NULL,
+            KEY `idx_sleutel` (`sleutel`, `moment`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    } catch (\Throwable $e) { error_log('ratelimit_auto_setup: ' . $e->getMessage()); }
+}
+
 /**
  * Registreer een poging en zeg of die nog binnen de limiet valt.
  * Retourneert false zodra $max pogingen binnen $venster seconden zijn gedaan.
@@ -23,12 +36,6 @@ function rate_identiteit(): string {
 function rate_limit(string $actie, string $identiteit, int $max, int $venster): bool {
     try {
         $db = db();
-        $db->exec("CREATE TABLE IF NOT EXISTS `api_rate` (
-            `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
-            `sleutel` VARCHAR(160) NOT NULL,
-            `moment` INT NOT NULL,
-            KEY `idx_sleutel` (`sleutel`, `moment`)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
         $sleutel = substr($actie . ':' . $identiteit, 0, 160);
         $nu = time();
         $grens = $nu - $venster;

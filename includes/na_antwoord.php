@@ -30,7 +30,8 @@ function antwoord_afsluiten(): void {
 
 /** Kan dit verzoek echt antwoorden vóór het werk klaar is? Niet onder CLI (harnas, cron). */
 function na_antwoord_mogelijk(): bool {
-    return PHP_SAPI !== 'cli' && function_exists('fastcgi_finish_request');
+    return PHP_SAPI !== 'cli'
+        && (function_exists('fastcgi_finish_request') || function_exists('litespeed_finish_request'));
 }
 
 /**

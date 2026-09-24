@@ -27,7 +27,7 @@ if (!function_exists('melding_verstuur')) {
 
 /** Kolommen op mail_log en mail_queue voor de centrale meldingen. */
 function meldingen_log_auto_setup(): void {
-    static $done = false; if ($done) return; $done = true;
+    static $done = false; if ($done || schema_actueel()) return; $done = true;
     if (!function_exists('db_kolom_verzeker')) return;
     try {
         $db = db();
@@ -89,7 +89,7 @@ function meldingen_log_auto_setup(): void {
 
 /** Kanaalvoorkeur per persoon. Standaard WhatsApp (auto opt-in); afmelden kan in het portaal of beheer. */
 function personen_kanaal_auto_setup(): void {
-    static $done = false; if ($done) return; $done = true;
+    static $done = false; if ($done || schema_actueel()) return; $done = true;
     if (!function_exists('db_kolom_verzeker')) return;
     try {
         $db = db();
