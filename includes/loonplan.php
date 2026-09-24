@@ -150,6 +150,18 @@ function loonplan_budget(): float {
     return function_exists('instelling_float') ? (float)instelling_float('loon.budget_seizoen', 0) : 0.0;
 }
 
+/**
+ * Dagloon voor één persoon in één week: leeftijd op de maandag van die week, periode (juni of
+ * juli–september) en functie. Eén plek, zodat de planning en de export altijd hetzelfde rekenen.
+ * Retourneert ['dagloon' => float, 'leeftijd' => int].
+ */
+function loonplan_week_dagloon(string $geboortedatum, string $functie, int $week, array $weken_datums, ?array $seizoen, ?float $override = null): array {
+    $maandag = isset($weken_datums[$week]) ? $weken_datums[$week]['start']->format('Y-m-d') : (string)($seizoen['datum_werk_start'] ?? date('Y-m-d'));
+    $lft = $geboortedatum !== '' ? leeftijd_op_datum($geboortedatum, $maandag) : 18;
+    $dagloon = function_exists('bereken_dagloon') ? bereken_dagloon($lft, $functie, loonplan_periode($week, $seizoen), $override) : 0.0;
+    return ['dagloon' => $dagloon, 'leeftijd' => $lft];
+}
+
 /** Seizoensjaar (voor loon_planning.jaar). */
 function loonplan_jaar(?array $seizoen): int {
     return $seizoen && !empty($seizoen['datum_werk_start']) ? (int)date('Y', strtotime($seizoen['datum_werk_start'])) : (int)date('Y');
@@ -240,11 +252,10 @@ function loonplan_analyse(int $seizoen_id, int $scenario_id, ?array $seizoen = n
             $betaald = $pl ? (int)($pl['betaald'] ?? 1) : 1;
             $weekdagen = $pl && !empty($pl['weekdagen']) ? (json_decode($pl['weekdagen'], true) ?: []) : [];
             // Leeftijd op de maandag van die week: wie in juli jarig is, krijgt vanaf dan het hogere tarief.
-            $lft_wk  = $geb !== '' ? leeftijd_op_datum($geb, $wd['start']->format('Y-m-d')) : $lft;
-            $periode = loonplan_periode($wk, $seizoen);
-            $dagloon = function_exists('bereken_dagloon')
-                     ? bereken_dagloon($lft_wk, $fn, $periode, isset($pl['loon_override']) && $pl['loon_override'] !== null ? (float)$pl['loon_override'] : null)
-                     : 0.0;
+            $dl = loonplan_week_dagloon($geb, $fn, $wk, $weken_datums, $seizoen,
+                      isset($pl['loon_override']) && $pl['loon_override'] !== null ? (float)$pl['loon_override'] : null);
+            $lft_wk  = $dl['leeftijd'];
+            $dagloon = $dl['dagloon'];
             $kosten = ($opgen && $betaald) ? round($dagloon * $dagen, 2) : 0.0;
 
             $weken[$wk] = [

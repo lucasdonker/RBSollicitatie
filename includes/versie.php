@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.106.0');
+define('APP_VERSIE', '2.107.0');
 
 function app_changelog(): array {
     return [
+        '2.107.0' => [
+            'datum'  => '2026-09-24',
+            'titel'  => 'Excel-export voor de loonadministratie',
+            'punten' => [
+                'De loonplanning exporteert naar een echt Excel-bestand (in plaats van CSV) met vier tabbladen: Per persoon, Weekmatrix, Opgave vs afspraak en Tarieven en budget. Kopregel blijft staan, filters staan aan, bedragen in euro\'s en datums als datum',
+                'Twee knoppen: "Excel (vastgesteld)" met de definitieve afspraken, en "Excel (dit scenario)" met CONCEPT bovenaan elk tabblad',
+                'BSN, IBAN en adres staan er bewust niet in (die staan in het loondossier). Elke download komt in het logboek',
+            ],
+        ],
         '2.106.0' => [
             'datum'  => '2026-09-24',
             'titel'  => 'Loonplanning: betaald/onbetaald, functie per persoon en de vastgestelde afspraak',

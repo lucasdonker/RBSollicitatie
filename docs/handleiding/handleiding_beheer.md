@@ -1365,32 +1365,50 @@ staat niet tegelijk op een andere post. De postcommandant valt buiten deze berek
 
 ### De loonplanning
 
-In de loonplanning zet je per persoon en per week wie je inplant, en je ziet meteen wat dat kost.
-Elke wijziging wordt direct opgeslagen. Met alleen leesrecht op Loonplanning zie je bovenaan "Je
-bekijkt deze planning alleen" en kun je niets wijzigen.
+In de loonplanning puzzel je per persoon en per week wie je inzet, en zie je meteen wat dat kost.
+Elke wijziging wordt direct opgeslagen. Met alleen leesrecht op Loonplanning kun je niets wijzigen.
 
-- **Scenario's**: bovenaan staan de scenario's. Een ster-icoon met het woord **Actief** wijst de
-  actieve planning aan. **+ Dupliceren** maakt een kopie van het getoonde scenario, zodat je een
-  alternatief kunt doorrekenen. Bij een scenario dat niet actief is staan **Maak actief** en
-  **Verwijderen** (met bevestiging; de beschikbaarheid van de sollicitanten blijft staan). Die
-  knoppen zie je alleen met bewerkrecht. **CSV** downloadt het getoonde scenario.
-- **Signalen (N)**: aandachtspunten boven de tabel, zoals iemand die meer dagen staat
-  ingepland dan die kan. Het zijn geen blokkades; jij beslist.
-- **De tabel**: per persoon de **Functie** (keuzelijst, geldt voor alle weken) en per week een
-  vinkje om iemand op te nemen, met het aantal dagen. Zet je het vinkje aan, dan vult het
-  systeem vijf dagen in. Een "–" betekent niet beschikbaar. Een oranje rand betekent meer dagen
-  dan de persoon beschikbaar is, of meer dan vijf. Rechts staan de kosten en dagen per persoon.
-- **Dekking** (onderste rijen): rekent met wie je werkelijk inplant. Plan je de schipper weg, dan
-  wordt die week meteen **Tekort**. Daaronder staan de kosten per week.
-- **Loontabel (dagloon per leeftijd & functie)**: uitklapbaar, van 15 tot en met 22 jaar, voor juni
-  en voor juli–september.
-- **Onderaan**: de totale loonkosten, de mandagen en, als er een budget is, een balk met
-  "Restant" of "Over budget". Zonder budget staat er een link naar Instellingen › Lonen & budget.
+**Drie lagen, die elkaar niet overschrijven:**
 
-De penningmeester werkt ook in de loonplanning: die heeft standaard lees- en bewerkrecht, houdt de
-kosten tegen het budget en gebruikt de CSV als tussenstand. Het budget zelf en de lonen staan
-onder Instellingen › Lonen & budget, en dat blijft bij het bestuur. Spreek af wie de actieve
-planning wijzigt. De CSV-download vraagt leesrecht op Loonplanning.
+1. **De opgave**: wat de sollicitant zelf invulde (Beschikbaarheid). Die blijft altijd staan.
+2. **Scenario's**: het puzzelen hier. Zoveel varianten als je wilt; één is de actieve planning.
+3. **De afspraak**: wat er echt is afgesproken. Die ontstaat pas als je de loonplanning
+   **definitief maakt** (na het trainingsweekend) en is daarna de bron voor het portaal van de
+   sollicitant, de dekking en de Excel voor de loonadministratie.
+
+- **Scenario's**: bovenaan. **+ Dupliceren** maakt een kopie (met betaald/onbetaald en functies).
+  Bij een scenario dat niet actief is staan **Maak actief** en **Verwijderen**.
+- **Concept / Definitief**: de balk onder de scenario's. **Loonplanning definitief maken** maakt het
+  getoonde scenario de actieve planning én de afspraak van iedereen die is aangenomen. Wie is
+  aangenomen maar nergens staat ingepland, krijgt geen afspraak; die naam staat in de melding.
+- **De tabel**: per persoon de **Functie** en per week een vinkje (inplannen), het aantal dagen en
+  **betaald** (uitzetten voor een onbetaalde week, bijvoorbeeld "8 weken waarvan 5 betaald").
+  Alle weken van het seizoen zijn te plannen, ook weken die iemand niet opgaf (stippelrand; dat
+  komt ook bij de signalen). Een oranje rand betekent meer dagen dan opgegeven, of meer dan vijf.
+- **Functie**: staat per persoon. "voorstel" betekent dat het systeem hem koos: een nieuwe
+  sollicitant is Aspirant, wie in Authentik een Lifeguard-rang heeft krijgt die rang (Junior,
+  Lifeguard, Senior). Kies je zelf, dan verdwijnt "voorstel". Postcommandant kies je altijd zelf.
+- **Afspraak per persoon**: na definitief maken staat bij de naam "Afspraak dd-mm". Wijzig je daarna
+  iets in het scenario, dan staat er **Wijkt af van afspraak** met de knop **Afspraak bijwerken**.
+  Wordt iemand later aangenomen, dan staat er **Afspraak vaststellen**. Elke vaststelling komt in
+  het logboek.
+- **Signalen (N)**: aandachtspunten, geen blokkades: meer dagen dan opgegeven, een week die niet is
+  opgegeven, meer dan vijf dagen, of weinig rust over de weekgrens.
+- **Dekking** (onderste rijen): rekent met wie je werkelijk inplant. Daaronder de kosten per week.
+- **Onderaan**: totale loonkosten (alleen betaalde dagen), mandagen met het aantal onbetaalde
+  dagen, en de budgetbalk.
+
+Het dagloon rekent met de leeftijd op de maandag van elke week: wie halverwege het seizoen jarig
+is, krijgt vanaf die week het hogere tarief.
+
+**Excel voor de loonadministratie**: **Excel (vastgesteld)** (pas na definitief maken) en **Excel
+(dit scenario)** (met CONCEPT bovenaan elk tabblad). Vier tabbladen: Per persoon (geboortedatum,
+functie, dagen betaald en onbetaald, bruto totaal), Weekmatrix, Opgave vs afspraak en Tarieven en
+budget. BSN, IBAN en adres staan er bewust niet in: die heeft de penningmeester in het loondossier.
+Elke download komt in het logboek.
+
+De penningmeester werkt ook in de loonplanning (standaard lees- en bewerkrecht). Het budget en de
+lonen staan onder Instellingen › Lonen & budget; dat blijft bij het bestuur.
 
 ---
 

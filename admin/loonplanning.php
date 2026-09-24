@@ -169,8 +169,12 @@ require __DIR__ . '/layout_top.php';
         </a>
       <?php endforeach; ?>
       <span class="bh-vulling"></span>
-      <a href="<?= APP_URL ?>/admin/export_beschikbaarheid.php?scenario=<?= $scenario_id ?>"
-         class="ds-btn ds-btn-secundair ds-btn-sm" title="Exporteer dit scenario als CSV">CSV</a>
+      <?php if ($definitief_op): ?>
+      <a href="<?= APP_URL ?>/admin/export_loonplanning.php?bron=afspraak" data-geen-bezig
+         class="ds-btn ds-btn-secundair ds-btn-sm"><?= icoon('download', 14) ?> Excel (vastgesteld)</a>
+      <?php endif; ?>
+      <a href="<?= APP_URL ?>/admin/export_loonplanning.php?bron=scenario&amp;scenario=<?= $scenario_id ?>" data-geen-bezig
+         class="ds-btn ds-btn-secundair ds-btn-sm" title="Dit scenario als Excel, met CONCEPT bovenaan"><?= icoon('download', 14) ?> Excel (dit scenario)</a>
       <?php if ($mag_bewerken): ?>
       <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="document.getElementById('dupForm').hidden=false">+ Dupliceren</button>
       <?php $huidig_actief = false; foreach ($scenarios as $sc) if ((int)$sc['id']===$scenario_id && !empty($sc['actief'])) $huidig_actief = true; ?>
