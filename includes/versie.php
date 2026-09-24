@@ -3,10 +3,25 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.101.0');
+define('APP_VERSIE', '2.102.0');
 
 function app_changelog(): array {
     return [
+        '2.102.0' => [
+            'datum'  => '2026-09-24',
+            'titel'  => 'Tweestaps op de noodingang, kluissleutel wisselen, verwerkingsregister, en de AVG-gaten die dat register liet zien',
+            'punten' => [
+                'De penningmeester ziet en bewerkt nu de loonplanning (het werkgereedschap van de penningmeester). Bestaande installaties krijgen dat recht één keer; een admin kan het daarna nog weghalen',
+                'Inloggen met wachtwoord (de noodingang) vraagt nu een tweede stap: een code uit een authenticator-app (instellen in Mijn profiel, met herstelcodes) of anders een code per e-mail. Een admin kan de tweede stap resetten bij Beheerders',
+                'De kluissleutel is te wisselen: nieuw scherm Systeem › Kluissleutel wisselen dat de gegevens batch voor batch opnieuw inpakt; de systeemcontrole waarschuwt zolang er iets op de oude sleutel staat',
+                'Het verwerkingsregister (AVG art. 30) staat nu als handleiding in het beheer, bij Hulp en handleidingen',
+                'AVG: een verwijderverzoek wist nu ook beoordelingen, observaties, beschikbaarheid, apparaten en het IP-adres in het bewijsspoor. De download "je gegevens" is volledig. Zelf verwijderen kan ook als het loondossier al verwerkt is; alleen het loondossier blijft dan tot het einde van de bewaarplicht',
+                'AI-analyse: de bijzonderheden (mogelijk medisch) gaan niet meer mee naar Google; de instellingen voor model en automatisch analyseren worden gevolgd; een sollicitant kan bezwaar maken (het bestuur legt dat vast bij het volledige formulier). De prompt-editor die niets deed is vervangen door een overzicht van wat er meegaat',
+                'Het lettertype staat op de eigen server: er gaat geen IP-adres meer naar Google Fonts. Op het incheckscherm kun je weer inzoomen',
+                'Bezoekers van wervingspagina\'s krijgen een geheim, dagelijks wisselend pseudoniem; in de mail aan de ledenservice staat alleen het einde van het IBAN; inlogcodes blijven na verzending niet in de wachtrij staan. Privacyverklaring versie 2026-09c',
+                'Alle vaste inline opmaak in het beheer is naar de stijlbladen verhuisd (uiterlijk ongewijzigd)',
+            ],
+        ],
         '2.101.0' => [
             'datum'  => '2026-09-23',
             'titel'  => 'De open punten uit de handleidingenronde opgelost: toegang, privacy, selectiedag en dossier',
