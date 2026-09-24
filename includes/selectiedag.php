@@ -355,36 +355,6 @@ function selectie_aanwezig_zetten(int $seizoen_id, int $sol_id, bool $aanwezig, 
     return evenement_inchecken('selectiedag', $seizoen_id, $sol_id, $aanwezig, $bron);
 }
 
-/**
- * Zoek kandidaten op (deel van de) naam — voor de tablet-zelfservice.
- * Alleen mensen die voor de selectiedag zijn uitgenodigd.
- */
-function selectie_zoek_kandidaat(int $seizoen_id, string $term): array {
-    selectiedag_auto_setup();
-    $term = trim($term);
-    if (mb_strlen($term) < 2) return [];
-    try {
-        $q = db()->prepare("
-            SELECT s.id AS sol_id, p.voornaam, p.tussenvoegsel, p.achternaam,
-                   si.aanwezig, g.nummer AS groep_nummer, g.naam AS groep_naam
-            FROM sollicitaties s
-            JOIN personen p ON p.id = s.persoon_id
-            LEFT JOIN selectie_indeling si ON si.sollicitatie_id = s.id AND si.seizoen_id = s.seizoen_id
-            LEFT JOIN selectie_groep g ON g.id = si.groep_id
-            WHERE s.seizoen_id = ?
-              AND s.fase IN ('uitgenodigd_selectie','aangemeld_selectie','selectiedag_geweest')
-              AND CONCAT_WS(' ', p.voornaam, p.tussenvoegsel, p.achternaam) LIKE ?
-            ORDER BY p.voornaam, p.achternaam
-            LIMIT 12
-        ");
-        $q->execute([$seizoen_id, '%' . $term . '%']);
-        return array_map(function($r) {
-            $r['naam'] = trim($r['voornaam'] . ' ' . ($r['tussenvoegsel'] ? $r['tussenvoegsel'] . ' ' : '') . $r['achternaam']);
-            return $r;
-        }, $q->fetchAll());
-    } catch (\Exception $e) { return []; }
-}
-
 // ─────────────────────────────────────────────────────────────
 //  Beoordelen (fase 3): criteria, scores, observaties
 // ─────────────────────────────────────────────────────────────

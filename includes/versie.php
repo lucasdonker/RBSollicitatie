@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.108.0');
+define('APP_VERSIE', '2.109.0');
 
 function app_changelog(): array {
     return [
+        '2.109.0' => [
+            'datum'  => '2026-09-24',
+            'titel'  => 'Inchecken: nieuwe tablet en lijst volgens het ontwerp',
+            'punten' => [
+                'Inchecken in het beheer volgt het ontwerp (3c): tellers aanwezig en verwacht, "Alleen verwacht", een grote knop Aanwezig en een knop Niet, en de foto van iedereen',
+                'Nieuw: "Inchecken afsluiten". Wie dan nog niet is ingecheckt, staat op niet verschenen; een laatkomer check je daarna gewoon nog in. Op de tablet kan de organisatie afsluiten met een pincode (in te stellen bij Inchecken)',
+                'De tablet voor zelf inchecken is opnieuw gebouwd, voor de selectiedag én het trainingsweekend: na drie letters hooguit drie treffers met foto, "Dit ben ik", en een welkom met de groep. Oude tablet-links blijven werken',
+            ],
+        ],
         '2.108.0' => [
             'datum'  => '2026-09-24',
             'titel'  => 'Selectiedag en trainingsweekend: "kom je?", inchecken zet de fase',

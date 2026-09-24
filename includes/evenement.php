@@ -96,6 +96,41 @@ function evenement_inchecken(string $ev, int $seizoen_id, int $sol_id, bool $aan
     return $uit;
 }
 
+/**
+ * De incheck-lijst (beheer): iedereen die voor dit evenement is uitgenodigd, met foto,
+ * leeftijd, groep (selectiedag), aanwezigheid, afmelding en bevestiging. Eén query.
+ */
+function evenement_lijst(string $ev, int $seizoen_id): array {
+    $d = evenement_def($ev);
+    if (!$d || $seizoen_id <= 0) return [];
+    evenement_setup($ev);
+    $groep = $ev === 'selectiedag'
+        ? ", g.nummer AS groep_nummer, g.naam AS groep_naam FROM sollicitaties s JOIN personen p ON p.id = s.persoon_id
+             LEFT JOIN selectie_indeling t ON t.sollicitatie_id = s.id AND t.seizoen_id = s.seizoen_id
+             LEFT JOIN selectie_groep g ON g.id = t.groep_id"
+        : ", NULL AS groep_nummer, NULL AS groep_naam FROM sollicitaties s JOIN personen p ON p.id = s.persoon_id
+             LEFT JOIN tw_deelname t ON t.sollicitatie_id = s.id AND t.seizoen_id = s.seizoen_id";
+    try {
+        $q = db()->prepare("SELECT s.id AS sol_id, s.fase, p.voornaam, p.tussenvoegsel, p.achternaam, p.geboortedatum,
+                                   t.aanwezig, t.ingecheckt_op, t.afgemeld_reden, t.bevestiging, t.bevestiging_reden, blk.foto_url $groep
+                            LEFT JOIN blk_formulieren blk ON blk.sollicitatie_id = s.id
+                            WHERE s.seizoen_id = ? AND s.fase IN (" . implode(',', array_fill(0, count($d['kandidaat_fases']), '?')) . ")
+                            ORDER BY p.voornaam, p.achternaam");
+        $q->execute(array_merge([$seizoen_id], $d['kandidaat_fases']));
+        return array_map(function ($r) {
+            $r += ['aanwezig' => 0, 'ingecheckt_op' => null, 'afgemeld_reden' => null, 'bevestiging' => 'onbekend',
+                   'bevestiging_reden' => null, 'groep_nummer' => null, 'groep_naam' => null, 'foto_url' => null];
+            $r['sol_id']   = (int)$r['sol_id'];
+            $r['naam']     = trim($r['voornaam'] . ' ' . ($r['tussenvoegsel'] ? $r['tussenvoegsel'] . ' ' : '') . $r['achternaam']);
+            $r['leeftijd'] = !empty($r['geboortedatum']) ? leeftijd_uit_datum($r['geboortedatum']) : null;
+            $r['groep']    = ($r['groep_nummer'] ?? null) !== null ? (($r['groep_naam'] ?? '') ?: 'groep ' . $r['groep_nummer']) : null;
+            $r['aanwezig'] = (int)$r['aanwezig'] === 1;
+            $r['stand']    = $r['aanwezig'] ? 'aanwezig' : (($r['afgemeld_reden'] ?? null) !== null ? 'niet' : 'verwacht');
+            return $r;
+        }, $q->fetchAll());
+    } catch (\Exception $e) { return []; }
+}
+
 /** Welke fase had iemand vóór het inchecken? Selectiedag: met ingeleverd BLK "aangemeld", anders "uitgenodigd". */
 function evenement_terugfase(string $ev, int $sol_id): string {
     if ($ev === 'tw') return 'uitgenodigd_tw';
@@ -146,11 +181,14 @@ function evenement_afgesloten_op(string $ev, int $seizoen_id): ?string {
     return $v !== '' ? $v : null;
 }
 
-/** Klopt de pincode om op de tablet af te sluiten? Lege instelling = afsluiten op de tablet kan niet. */
+/**
+ * Klopt de pincode om op de tablet af te sluiten? De instelling bewaart een hash, nooit de pin
+ * zelf. Lege instelling = afsluiten op de tablet kan niet (dan alleen in het beheer).
+ */
 function evenement_pin_ok(string $ev, string $pin): bool {
     $d = evenement_def($ev);
-    $goed = $d && function_exists('instelling') ? (string)instelling($d['pin'], '') : '';
-    return $goed !== '' && $pin !== '' && hash_equals($goed, $pin);
+    $hash = $d && function_exists('instelling') ? (string)instelling($d['pin'], '') : '';
+    return $hash !== '' && $pin !== '' && password_verify($pin, $hash);
 }
 
 /**
@@ -181,8 +219,8 @@ function evenement_zoek(string $ev, int $seizoen_id, string $term): array {
                 'naam' => trim($r['voornaam'] . ' ' . ($r['tussenvoegsel'] ? $r['tussenvoegsel'] . ' ' : '') . $r['achternaam']),
                 'initialen' => mb_strtoupper(mb_substr((string)$r['voornaam'], 0, 1) . mb_substr((string)$r['achternaam'], 0, 1)),
                 'aanwezig' => (int)$r['aanwezig'] === 1,
-                'groep_nummer' => $r['groep_nummer'] !== null ? (int)$r['groep_nummer'] : null,
-                'groep_naam' => $r['groep_naam'],
+                'groep_nummer' => ($r['groep_nummer'] ?? null) !== null ? (int)$r['groep_nummer'] : null,
+                'groep_naam' => $r['groep_naam'] ?? null,
                 'foto' => function_exists('foto_miniatuur_data_url') ? foto_miniatuur_data_url($r['foto_url'] ?? null) : null,
             ];
         }, $q->fetchAll());

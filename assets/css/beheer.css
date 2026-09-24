@@ -625,7 +625,44 @@ span.bh-incheck-code {
 }
 .bh-incheck-voet .ds-btn { margin-left: auto; }
 
+/* ── Inchecken bij de ingang (admin/_incheck_lijst.php, ontwerp 3c) ── */
+.bh-ick { overflow: hidden; background: var(--bg-subtle); }
+.bh-ick-band { background: #043d6e; padding: 16px 20px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.bh-ick-titel { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.bh-ick-titeltekst { font-size: 17px; font-weight: 600; color: #fff; }
+.bh-ick-subtekst { font-size: 13px; color: rgba(255,255,255,.72); }
+.bh-ick-tellers { display: flex; gap: 9px; }
+.bh-ick-teller { background: rgba(255,255,255,.12); border-radius: 10px; padding: 9px 15px; display: flex; flex-direction: column; align-items: center; gap: 1px; font-size: 11px; color: rgba(255,255,255,.72); }
+.bh-ick-getal { font-size: 19px; font-weight: 600; color: #fff; }
+.bh-ick-getal.verwacht { color: #ffc9b0; }
+.bh-ick-zoekrij { padding: 16px 18px 10px; display: flex; align-items: center; gap: 11px; }
+.bh-ick-zoek { flex: 1; height: 50px; }
+.bh-ick-filter { min-height: 50px; padding: 0 16px; border-radius: 11px; border: 1px solid #cfd8e6; background: var(--surface); color: var(--navy); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.bh-ick-filter[aria-pressed="true"] { background: var(--navy); border-color: var(--navy); color: var(--op-vol); }
+.bh-ick-lijst { list-style: none; margin: 0; padding: 6px 18px 18px; display: flex; flex-direction: column; gap: 9px; }
+.bh-ick-rij { background: var(--surface); border: 1px solid var(--border); border-radius: 13px; padding: 14px 16px; display: flex; align-items: center; gap: 14px; }
+.bh-ick-rij[hidden] { display: none; }
+.bh-ick-rij[data-stand="aanwezig"], .bh-ick-rij[data-stand="niet"] { opacity: .6; }
+.bh-ick-avatar { position: relative; flex: none; width: 44px; height: 44px; }
+.bh-ick-avatar .ds-avatar { width: 44px !important; height: 44px !important; border-radius: 12px; }
+.bh-ick-vink { position: absolute; inset: 0; border-radius: 12px; background: var(--ok-soft); color: var(--ok); display: none; align-items: center; justify-content: center; }
+.bh-ick-rij[data-stand="aanwezig"] .bh-ick-vink { display: flex; }
+.bh-ick-naam { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 17px; font-weight: 600; color: var(--ink); }
+.bh-ick-regel { font-size: 13px; font-weight: 400; color: var(--ink-muted); }
+.bh-ick-knoppen { display: flex; gap: 8px; flex: none; }
+.bh-ick-knoppen button { min-height: 50px; border-radius: 11px; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
+.bh-ick-aanwezig { background: #1f7a3d; border: 1px solid #1f7a3d; color: #fff; padding: 0 26px; }
+.bh-ick-niet, .bh-ick-ongedaan { background: var(--surface); border: 1px solid var(--border); color: var(--ink-soft); padding: 0 18px; }
+.bh-ick-rij[data-stand="verwacht"] .bh-ick-ongedaan,
+.bh-ick-rij[data-stand="aanwezig"] .bh-ick-aanwezig, .bh-ick-rij[data-stand="aanwezig"] .bh-ick-niet,
+.bh-ick-rij[data-stand="niet"] .bh-ick-niet, .bh-ick-rij[data-stand="niet"] .bh-ick-ongedaan { display: none; }
+.bh-ick-voet { background: var(--surface); border-top: 1px solid var(--border); padding: 14px 20px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.bh-ick-voet .bh-meta { flex: 1; min-width: 240px; }
+
 @media (max-width: 760px) {
+  .bh-ick-rij { flex-wrap: wrap; }
+  .bh-ick-knoppen { width: 100%; }
+  .bh-ick-knoppen button { flex: 1; }
   .bh-selectiekop { padding: 12px 14px; }
   .bh-substappen { margin-left: 0; gap: 14px; width: 100%; overflow-x: auto; }
   .bh-incheck-rij { padding: 11px 14px; }
