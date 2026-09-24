@@ -194,18 +194,18 @@ bedrijf daarbij is aangesloten, of op standaardcontractbepalingen.
 
 ## Beschikbaarheid en loonplanning
 
-> **In het kort:** wanneer iemand kan werken, verzoeken om minder dagen, correcties van het bestuur
-> en de planning met loonkosten.
+> **In het kort:** wanneer iemand kan werken, verzoeken om minder dagen, correcties van het bestuur,
+> de planning met loonkosten en (na het trainingsweekend) de vastgestelde inzet-afspraak.
 
 | Onderdeel | Inhoud |
 |---|---|
-| Doel | Een bezetting van de posten maken en de loonkosten plannen. |
+| Doel | Een bezetting van de posten maken, de loonkosten plannen en vastleggen wat er per persoon is afgesproken (weken, dagen, betaald of onbetaald, functie) als basis voor contract en loonadministratie. |
 | Grondslag | Art. 6 lid 1 sub b AVG. |
 | Betrokkenen | Sollicitanten en aangenomen strandwachten. |
-| Persoonsgegevens | Weken en dagen, vaste vrije dagen met reden, afwezigheid met omschrijving, verzoeken om minder dagen met toelichting, correcties door het bestuur met reden, losse dagen (tabellen `beschikbaarheid*`). Optioneel de vrije tekst voor de AI-hulp (`ai_beschikbaarheid_log`). Loonplanning: weken, functie, loon, notitie (`loon_planning`, `loon_scenario`). |
-| Ontvangers en verwerkers | Bestuur (modules `beschikbaarheid`, `loonplanning`), penningmeester (`loonplanning`), begeleiders (`dekking`, alleen lezen). Google (Gemini) alleen voor de AI-hulp. |
+| Persoonsgegevens | Weken en dagen, vaste vrije dagen met reden, afwezigheid met omschrijving, verzoeken om minder dagen met toelichting (en welke dagen iemand wél kan), correcties door het bestuur met reden, losse dagen (tabellen `beschikbaarheid*`). Optioneel de vrije tekst voor de AI-hulp (`ai_beschikbaarheid_log`). Loonplanning: weken, dagen, betaald/onbetaald, functie, loon, notitie (`loon_planning`, `loon_scenario`, `loon_scenario_persoon`). Vastgestelde afspraak: functie, weken, dagen, betaald/onbetaald, wie en wanneer vastgesteld (`inzet_afspraak`, `inzet_afspraak_week`). De functie wordt voorgesteld uit de Lifeguard-rang in Authentik (zie Authentik). |
+| Ontvangers en verwerkers | Bestuur (modules `beschikbaarheid`, `loonplanning`), penningmeester (`loonplanning`), begeleiders (`dekking`, alleen lezen). De sollicitant ziet de eigen afspraak in het portaal zodra die is vastgesteld. Google (Gemini) alleen voor de AI-hulp. |
 | Doorgifte buiten de EER | Alleen de vrije tekst van de AI-hulp (zie [AI-analyse](#ai-analyse)). |
-| Bewaartermijn | Volgt het dossier: bij wissen gaan alle tabellen `beschikbaarheid*` en `ai_beschikbaarheid_log` weg. AI-invoertekst: 3 maanden (`bewaar.ai_invoer_mnd`, standaard 3). Loonplanning blijft zonder notitie staan en is na anonimiseren niet meer herleidbaar. |
+| Bewaartermijn | Volgt het dossier: bij wissen gaan alle tabellen `beschikbaarheid*` en `ai_beschikbaarheid_log` weg. AI-invoertekst: 3 maanden (`bewaar.ai_invoer_mnd`, standaard 3). Loonplanning en vastgestelde afspraak blijven zonder notitie staan en zijn na anonimiseren niet meer herleidbaar. |
 | Beveiliging | Rechten per module; correcties alleen met reden en naam van wie corrigeert; de AI-uitvoer wordt op de server gecontroleerd voordat er iets wordt ingevuld. |
 
 ## Loondossier

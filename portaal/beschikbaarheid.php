@@ -45,6 +45,11 @@ $wk_label = function($wn) use ($wkd) {
     return isset($wkd[$wn]) ? 'week ' . $wn . ' (' . datum_kort_nl($wkd[$wn]['start']) . ')' : 'week ' . $wn;
 };
 $heeft_besch = $b2p && $b2['blokken'];
+// De vastgestelde afspraak (loonplanning definitief gemaakt). Vóór dat moment bestaat hij niet
+// en ziet de sollicitant niets van de planning.
+$afspraak = (function_exists('module_aan') && module_aan('loonplanning') && function_exists('inzet_afspraak_van'))
+    ? inzet_afspraak_van($sol_id) : null;
+$functie_namen = function_exists('functies_ophalen') ? array_column(functies_ophalen(), 'naam', 'sleutel') : [];
 $voorlopig = $heeft_besch && !empty($b2p['voorlopig']);
 
 // Deadline
@@ -99,6 +104,24 @@ require __DIR__ . '/_kop.php';
         <p style="font-size:13.5px;margin:10px 0 0;color:var(--tekst-zacht)">Je beschikbaarheid is definitief<?= !empty($b2p['definitief_op']) ? ' sinds ' . h(datum_nl($b2p['definitief_op'])) : '' ?>. Je kunt hem nog steeds aanpassen als er iets wijzigt.</p>
       <?php endif; ?>
     </div>
+
+    <?php if ($afspraak): ?>
+    <!-- Wat er is afgesproken (na het trainingsweekend vastgesteld) -->
+    <div class="bk-card">
+      <h2><?= icoon("vink-cirkel", 18) ?> Wat we hebben afgesproken</h2>
+      <div class="bk-rij">Je werkt als <strong><?= h($functie_namen[$afspraak['functie_sleutel']] ?? $afspraak['functie_sleutel']) ?></strong>.
+        <span style="color:var(--tekst-zacht);font-size:12.5px">Vastgesteld op <?= h(datum_nl(substr((string)$afspraak['vastgesteld_op'], 0, 10))) ?>.</span></div>
+      <?php foreach ($afspraak['weken'] as $wn => $aw): ?>
+        <div class="bk-rij">
+          <strong><?= h($wk_label($wn)) ?></strong>: <?= (int)$aw['dagen'] ?> <?= (int)$aw['dagen'] === 1 ? 'dag' : 'dagen' ?>
+          <?php if ($aw['weekdagen']): ?><span style="color:var(--tekst-zacht)"> (<?= h(implode(', ', array_map(fn($d) => trim($dagnamen[$d]), $aw['weekdagen']))) ?>)</span><?php endif; ?>
+          <?php if (!$aw['betaald']): ?><span style="color:var(--tekst-zacht)"> · onbetaald</span><?php endif; ?>
+        </div>
+      <?php endforeach; ?>
+      <div class="bk-rij" style="color:var(--tekst-zacht);font-size:12.5px">Klopt dit niet met wat je hebt besproken? Stel een vraag via je startpagina.
+        Hieronder staat wat je zelf hebt opgegeven; dat blijft bewaard.</div>
+    </div>
+    <?php endif; ?>
 
     <!-- Samenvatting in mensentaal -->
     <div class="bk-card">

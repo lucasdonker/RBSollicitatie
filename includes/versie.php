@@ -3,10 +3,21 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.105.0');
+define('APP_VERSIE', '2.106.0');
 
 function app_changelog(): array {
     return [
+        '2.106.0' => [
+            'datum'  => '2026-09-24',
+            'titel'  => 'Loonplanning: betaald/onbetaald, functie per persoon en de vastgestelde afspraak',
+            'punten' => [
+                'Per week zet je betaald aan of uit ("8 weken waarvan 5 betaald"); alleen betaalde dagen tellen in de kosten. Elke week van het seizoen is planbaar, ook als iemand die niet opgaf: dat komt dan bij de signalen',
+                'De functie staat per persoon (per scenario). Het systeem stelt hem voor: nieuw = Aspirant, anders de Lifeguard-rang uit Authentik. Het dagloon rekent met de leeftijd op elke week, dus een verjaardag halverwege telt mee',
+                'Nieuw: "Loonplanning definitief maken" (na het trainingsweekend). Het scenario wordt dan de vastgestelde afspraak van iedereen die is aangenomen. Die afspraak overschrijft de eigen opgave niet, is pas daarna zichtbaar voor de sollicitant (Mijn beschikbaarheid) en is de bron voor dekking en de loonadministratie',
+                'Wijzig je daarna het scenario, dan staat bij die persoon "wijkt af van afspraak" met een knop om de afspraak bij te werken (met een regel in het logboek)',
+                'Scenario\'s dupliceren neemt nu ook betaald/onbetaald en de functies mee. De loonberekening doet veel minder databasevragen',
+            ],
+        ],
         '2.105.0' => [
             'datum'  => '2026-09-24',
             'titel'  => 'Modules die aan en uit kunnen',

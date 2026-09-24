@@ -53,6 +53,17 @@ function loonplan_auto_setup(): void {
                 catch (\Exception $e) { error_log("loonplan drop $oud: " . $e->getMessage()); }
             }
         }
+        // 2.106.0: betaald/onbetaald per week ("8 weken waarvan 5 betaald") en optioneel welke
+        // weekdagen. Bestaande regels waren allemaal betaald.
+        db_kolom_verzeker($db, 'loon_planning', 'betaald', 'TINYINT(1) NOT NULL DEFAULT 1');
+        db_kolom_verzeker($db, 'loon_planning', 'weekdagen', 'VARCHAR(30) DEFAULT NULL');
+        // De functie hoort bij de persoon, niet bij een week. Per scenario, want puzzelen mag.
+        $db->exec("CREATE TABLE IF NOT EXISTS `loon_scenario_persoon` (
+            `scenario_id` INT NOT NULL,
+            `sollicitatie_id` INT NOT NULL,
+            `functie_sleutel` VARCHAR(50) NOT NULL,
+            PRIMARY KEY (`scenario_id`, `sollicitatie_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     } catch (\Exception $e) { error_log('loonplan_auto_setup: ' . $e->getMessage()); }
 }
 
@@ -106,10 +117,13 @@ function loonplan_scenario_dupliceer(int $seizoen_id, int $bron_id, string $naam
            ->execute([$seizoen_id, mb_substr(trim($naam), 0, 80) ?: 'Kopie']);
         $nieuw = (int)$db->lastInsertId();
         $db->prepare("
-            INSERT INTO loon_planning (sollicitatie_id, week_nr, jaar, dagen, functie_sleutel, opgenomen, loon_override, notitie, scenario_id)
-            SELECT sollicitatie_id, week_nr, jaar, dagen, functie_sleutel, opgenomen, loon_override, notitie, ?
+            INSERT INTO loon_planning (sollicitatie_id, week_nr, jaar, dagen, functie_sleutel, opgenomen, betaald, weekdagen, loon_override, notitie, scenario_id)
+            SELECT sollicitatie_id, week_nr, jaar, dagen, functie_sleutel, opgenomen, betaald, weekdagen, loon_override, notitie, ?
             FROM loon_planning WHERE scenario_id = ?
         ")->execute([$nieuw, $bron_id]);
+        $db->prepare("INSERT INTO loon_scenario_persoon (scenario_id, sollicitatie_id, functie_sleutel)
+                      SELECT ?, sollicitatie_id, functie_sleutel FROM loon_scenario_persoon WHERE scenario_id = ?")
+           ->execute([$nieuw, $bron_id]);
         return $nieuw;
     } catch (\Exception $e) { error_log('scenario dupliceren: ' . $e->getMessage()); return null; }
 }
@@ -120,6 +134,7 @@ function loonplan_scenario_verwijder(int $seizoen_id, int $scenario_id): bool {
         $s = loonplan_scenarios($seizoen_id);
         if (count($s) <= 1) return false; // laatste scenario niet verwijderen
         db()->prepare("DELETE FROM loon_planning WHERE scenario_id=?")->execute([$scenario_id]);
+        db()->prepare("DELETE FROM loon_scenario_persoon WHERE scenario_id=?")->execute([$scenario_id]);
         db()->prepare("DELETE FROM loon_scenario WHERE id=? AND seizoen_id=?")->execute([$scenario_id, $seizoen_id]);
         // Als het actieve is verwijderd: eerste weer actief maken
         $rest = loonplan_scenarios($seizoen_id);
@@ -135,52 +150,69 @@ function loonplan_budget(): float {
     return function_exists('instelling_float') ? (float)instelling_float('loon.budget_seizoen', 0) : 0.0;
 }
 
+/** Seizoensjaar (voor loon_planning.jaar). */
+function loonplan_jaar(?array $seizoen): int {
+    return $seizoen && !empty($seizoen['datum_werk_start']) ? (int)date('Y', strtotime($seizoen['datum_werk_start'])) : (int)date('Y');
+}
+
 /**
  * Volledige planningsanalyse voor één scenario.
  *
+ * Elke week van het seizoen is planbaar, ook een week die iemand niet opgaf: op het
+ * trainingsweekend wordt soms meer (of minder) afgesproken dan opgegeven. Dat is een
+ * signaal, geen blokkade. Alleen betaalde dagen kosten geld.
+ *
  * Retourneert:
- *  'mensen'  => [sol_id => ['naam','leeftijd','functie','comp','beschikbaar'=>[wk=>max], 'weken'=>[wk=>['dagen','opgenomen','dagloon','kosten']], 'totaal_kosten','totaal_dagen']]
- *  'per_week'=> [wk => ['kosten','dagen','mensen']]
- *  'totaal'  => ['kosten','dagen','budget','over_budget']
+ *  'mensen'  => [sol_id => ['naam','leeftijd','functie','functie_bron' (scenario|voorstel),'comp',
+ *                'beschikbaar'=>[wk=>max], 'weken'=>[wk=>['dagen','opgenomen','betaald','weekdagen',
+ *                'dagloon','kosten','max','leeftijd']], 'totaal_kosten','dagen_betaald','dagen_onbetaald',
+ *                'totaal_dagen','afspraak'=>null|['vastgesteld_op','wijkt_af']]]
+ *  'per_week'=> [wk => ['kosten','dagen','dagen_onbetaald','mensen']]
+ *  'totaal'  => ['kosten','dagen','dagen_onbetaald','budget','over_budget','restant']
  *  'dekking' => [wk => dekkingsresultaat op basis van INGEPLANDE mensen]
  *  'signalen'=> [ ['soort','sol_id','naam','week','tekst'], ... ]
  */
 function loonplan_analyse(int $seizoen_id, int $scenario_id, ?array $seizoen = null): array {
     loonplan_auto_setup();
     if ($seizoen === null && function_exists('actief_seizoen')) $seizoen = actief_seizoen();
-    $jaar = $seizoen && !empty($seizoen['datum_werk_start']) ? (int)date('Y', strtotime($seizoen['datum_werk_start'])) : (int)date('Y');
+    $jaar = loonplan_jaar($seizoen);
+    $weken_datums = function_exists('seizoen_weken_datums') ? seizoen_weken_datums($seizoen) : [];
 
     // Mensen van dit seizoen
     try {
         $q = db()->prepare("
-            SELECT s.id AS sol_id, p.voornaam, p.tussenvoegsel, p.achternaam, p.geboortedatum
+            SELECT s.id AS sol_id, s.fase, s.terugkerend, p.voornaam, p.tussenvoegsel, p.achternaam, p.geboortedatum
             FROM sollicitaties s
             JOIN personen p ON p.id = s.persoon_id
-            WHERE s.seizoen_id = ? AND s.fase NOT IN ('afgewezen','afgehaakt')
+            WHERE s.seizoen_id = ? AND s.fase NOT IN ('afgewezen','afgehaakt','verwijderd_door_sollicitant')
             ORDER BY p.achternaam, p.voornaam
         ");
         $q->execute([$seizoen_id]);
         $rijen = $q->fetchAll();
     } catch (\Exception $e) { $rijen = []; }
 
-    // Bestaande planningsregels
+    // Bestaande planningsregels en functies van dit scenario
     $plan = [];
     try {
         $q = db()->prepare("SELECT * FROM loon_planning WHERE jaar=? AND scenario_id=?");
         $q->execute([$jaar, $scenario_id]);
         foreach ($q->fetchAll() as $r) $plan[(int)$r['sollicitatie_id']][(int)$r['week_nr']] = $r;
     } catch (\Exception $e) {}
+    $functies_sc = loonplan_functies_scenario($scenario_id);
+    $afspraken   = function_exists('inzet_afspraken_seizoen') ? inzet_afspraken_seizoen($seizoen_id) : [];
 
     $mensen   = [];
     $per_week = [];
     $pool     = [];   // voor de dekkingscheck: wie is er INGEPLAND per week
     $signalen = [];
-    $tot_kosten = 0.0; $tot_dagen = 0;
+    $tot_kosten = 0.0; $tot_dagen = 0; $tot_onbetaald = 0;
 
     foreach ($rijen as $r) {
         $sol_id = (int)$r['sol_id'];
         $naam = trim($r['voornaam'] . ' ' . ($r['tussenvoegsel'] ? $r['tussenvoegsel'] . ' ' : '') . $r['achternaam']);
-        $lft  = $r['geboortedatum'] ? (int)(new DateTime($r['geboortedatum']))->diff(new DateTime())->y : 18;
+        $geb  = (string)($r['geboortedatum'] ?? '');
+        $start_seizoen = $seizoen['datum_werk_start'] ?? date('Y-m-d');
+        $lft  = $geb !== '' ? leeftijd_op_datum($geb, $start_seizoen) : 18;
 
         $comp = function_exists('bezetting_comp_van') ? bezetting_comp_van($sol_id) : [];
         $eff  = function_exists('beschikbaarheid2_effectief') ? beschikbaarheid2_effectief($sol_id, $seizoen) : [];
@@ -188,42 +220,63 @@ function loonplan_analyse(int $seizoen_id, int $scenario_id, ?array $seizoen = n
         $beschikbaar = [];
         foreach ($eff as $wk => $w) $beschikbaar[$wk] = (int)$w['dagen_max'];
 
-        $weken = [];
-        $p_kosten = 0.0; $p_dagen = 0;
+        // Wie niets opgaf en nergens is ingepland, hoort niet in het raster (nog geen beschikbaarheid).
+        if (!$beschikbaar && empty($plan[$sol_id]) && !isset($afspraken[$sol_id])) continue;
 
-        foreach ($beschikbaar as $wk => $max) {
+        // Functie: wat in dit scenario is gekozen, anders de oude per-week-waarde, anders het voorstel.
+        $functie_bron = 'scenario';
+        $fn = $functies_sc[$sol_id] ?? null;
+        if ($fn === null) foreach ($plan[$sol_id] ?? [] as $pl) { if (!empty($pl['functie_sleutel'])) { $fn = $pl['functie_sleutel']; break; } }
+        if ($fn === null) { $fn = function_exists('inzet_rol_voorstel') ? inzet_rol_voorstel($sol_id, $comp) : 'aspirant'; $functie_bron = 'voorstel'; }
+
+        $weken = [];
+        $p_kosten = 0.0; $p_dagen = 0; $p_onbetaald = 0;
+
+        foreach ($weken_datums as $wk => $wd) {
+            $max   = $beschikbaar[$wk] ?? 0;
             $pl    = $plan[$sol_id][$wk] ?? null;
             $dagen = $pl ? (int)$pl['dagen'] : 0;
             $opgen = $pl ? (int)$pl['opgenomen'] : 0;
-            $fn    = $pl['functie_sleutel'] ?? 'lifeguard';
+            $betaald = $pl ? (int)($pl['betaald'] ?? 1) : 1;
+            $weekdagen = $pl && !empty($pl['weekdagen']) ? (json_decode($pl['weekdagen'], true) ?: []) : [];
+            // Leeftijd op de maandag van die week: wie in juli jarig is, krijgt vanaf dan het hogere tarief.
+            $lft_wk  = $geb !== '' ? leeftijd_op_datum($geb, $wd['start']->format('Y-m-d')) : $lft;
             $periode = loonplan_periode($wk, $seizoen);
             $dagloon = function_exists('bereken_dagloon')
-                     ? bereken_dagloon($lft, $fn, $periode, isset($pl['loon_override']) && $pl['loon_override'] !== null ? (float)$pl['loon_override'] : null)
+                     ? bereken_dagloon($lft_wk, $fn, $periode, isset($pl['loon_override']) && $pl['loon_override'] !== null ? (float)$pl['loon_override'] : null)
                      : 0.0;
-            $kosten = $opgen ? round($dagloon * $dagen, 2) : 0.0;
+            $kosten = ($opgen && $betaald) ? round($dagloon * $dagen, 2) : 0.0;
 
             $weken[$wk] = [
                 'dagen'     => $dagen,
                 'opgenomen' => $opgen,
+                'betaald'   => $betaald,
+                'weekdagen' => $weekdagen,
                 'functie'   => $fn,
                 'dagloon'   => $dagloon,
                 'kosten'    => $kosten,
                 'max'       => $max,
+                'leeftijd'  => $lft_wk,
             ];
 
             if ($opgen && $dagen > 0) {
-                $p_kosten += $kosten; $p_dagen += $dagen;
+                $p_dagen += $dagen;
+                if ($betaald) $p_kosten += $kosten; else $p_onbetaald += $dagen;
                 $per_week[$wk]['kosten'] = ($per_week[$wk]['kosten'] ?? 0) + $kosten;
                 $per_week[$wk]['dagen']  = ($per_week[$wk]['dagen'] ?? 0) + $dagen;
+                $per_week[$wk]['dagen_onbetaald'] = ($per_week[$wk]['dagen_onbetaald'] ?? 0) + ($betaald ? 0 : $dagen);
                 $per_week[$wk]['mensen'] = ($per_week[$wk]['mensen'] ?? 0) + 1;
 
                 // Deze persoon telt mee voor de dekking van die week
                 $pool[$wk][] = ['sol_id'=>$sol_id, 'naam'=>$naam, 'comp'=>$comp, 'dagen'=>$dagen];
 
                 // ── Signalen ──
-                if ($dagen > $max) {
+                if ($max === 0) {
+                    $signalen[] = ['soort'=>'niet_opgegeven', 'sol_id'=>$sol_id, 'naam'=>$naam, 'week'=>$wk,
+                        'tekst'=>"$naam is week $wk ingepland, maar gaf die week niet op als beschikbaar."];
+                } elseif ($dagen > $max) {
                     $signalen[] = ['soort'=>'boven_beschikbaar', 'sol_id'=>$sol_id, 'naam'=>$naam, 'week'=>$wk,
-                        'tekst'=>"$naam is week $wk voor $dagen dagen ingepland, maar is er maar $max beschikbaar."];
+                        'tekst'=>"$naam is week $wk voor $dagen dagen ingepland, maar gaf er $max op."];
                 }
                 if ($dagen > 5) {
                     $signalen[] = ['soort'=>'veel_dagen', 'sol_id'=>$sol_id, 'naam'=>$naam, 'week'=>$wk,
@@ -234,12 +287,10 @@ function loonplan_analyse(int $seizoen_id, int $scenario_id, ?array $seizoen = n
 
         // Rust over de weekgrens: twee opeenvolgende weken samen > 10 dagen
         // (4+6 = 10 is legitiem; 6+6 = 12 betekent te lang aaneen zonder rust)
-        $wk_lijst = array_keys($weken);
-        sort($wk_lijst);
-        foreach ($wk_lijst as $wk) {
+        foreach ($weken as $wk => $w) {
             $vlg = $wk + 1;
             if (!isset($weken[$vlg])) continue;
-            $a = ($weken[$wk]['opgenomen']  ? $weken[$wk]['dagen']  : 0);
+            $a = ($w['opgenomen']           ? $w['dagen']           : 0);
             $b = ($weken[$vlg]['opgenomen'] ? $weken[$vlg]['dagen'] : 0);
             if ($a + $b > 10) {
                 $signalen[] = ['soort'=>'weinig_rust', 'sol_id'=>$sol_id, 'naam'=>$naam, 'week'=>$wk,
@@ -247,17 +298,31 @@ function loonplan_analyse(int $seizoen_id, int $scenario_id, ?array $seizoen = n
             }
         }
 
+        // Klopt de vastgestelde afspraak nog met dit scenario?
+        $afspraak = null;
+        if (isset($afspraken[$sol_id])) {
+            $afspraak = ['vastgesteld_op' => $afspraken[$sol_id]['vastgesteld_op'],
+                         'wijkt_af' => function_exists('inzet_afspraak_wijkt_af') && inzet_afspraak_wijkt_af($afspraken[$sol_id], $fn, $weken)];
+        }
+
         $mensen[$sol_id] = [
-            'naam'          => $naam,
-            'leeftijd'      => $lft,
-            'comp'          => $comp,
-            'beschikbaar'   => $beschikbaar,
-            'weken'         => $weken,
-            'totaal_kosten' => round($p_kosten, 2),
-            'totaal_dagen'  => $p_dagen,
+            'naam'            => $naam,
+            'fase'            => (string)$r['fase'],
+            'leeftijd'        => $lft,
+            'functie'         => $fn,
+            'functie_bron'    => $functie_bron,
+            'comp'            => $comp,
+            'beschikbaar'     => $beschikbaar,
+            'weken'           => $weken,
+            'totaal_kosten'   => round($p_kosten, 2),
+            'totaal_dagen'    => $p_dagen,
+            'dagen_betaald'   => $p_dagen - $p_onbetaald,
+            'dagen_onbetaald' => $p_onbetaald,
+            'afspraak'        => $afspraak,
         ];
         $tot_kosten += $p_kosten;
         $tot_dagen  += $p_dagen;
+        $tot_onbetaald += $p_onbetaald;
     }
 
     ksort($per_week);
@@ -267,11 +332,12 @@ function loonplan_analyse(int $seizoen_id, int $scenario_id, ?array $seizoen = n
         'mensen'   => $mensen,
         'per_week' => $per_week,
         'totaal'   => [
-            'kosten'      => round($tot_kosten, 2),
-            'dagen'       => $tot_dagen,
-            'budget'      => $budget,
-            'over_budget' => $budget > 0 && $tot_kosten > $budget,
-            'restant'     => $budget > 0 ? round($budget - $tot_kosten, 2) : null,
+            'kosten'          => round($tot_kosten, 2),
+            'dagen'           => $tot_dagen,
+            'dagen_onbetaald' => $tot_onbetaald,
+            'budget'          => $budget,
+            'over_budget'     => $budget > 0 && $tot_kosten > $budget,
+            'restant'         => $budget > 0 ? round($budget - $tot_kosten, 2) : null,
         ],
         'dekking'  => function_exists('bezetting_dekking_van_pool') ? bezetting_dekking_van_pool($pool) : [],
         'signalen' => $signalen,
@@ -288,16 +354,43 @@ function loonplan_periode(int $week, ?array $seizoen = null): string {
     return 'jul_sep';
 }
 
-/** Eén planningscel opslaan. */
-function loonplan_cel_opslaan(int $scenario_id, int $sol_id, int $week, int $jaar, int $dagen, int $opgenomen, ?string $functie): void {
+/**
+ * Eén planningscel opslaan: ingepland (opgenomen), aantal dagen, betaald ja/nee en optioneel
+ * welke weekdagen (1=ma … 7=zo). De functie staat per persoon (loonplan_functie_zetten).
+ */
+function loonplan_cel_opslaan(int $scenario_id, int $sol_id, int $week, int $jaar, int $dagen, int $opgenomen,
+                              int $betaald = 1, ?array $weekdagen = null): void {
     loonplan_auto_setup();
     $dagen = max(0, min(7, $dagen));
+    $wd = $weekdagen ? array_values(array_unique(array_intersect(array_map('intval', $weekdagen), [1,2,3,4,5,6,7]))) : [];
+    sort($wd);
     try {
         db()->prepare("
-            INSERT INTO loon_planning (sollicitatie_id, week_nr, jaar, dagen, functie_sleutel, opgenomen, scenario_id)
-            VALUES (?,?,?,?,?,?,?)
-            ON DUPLICATE KEY UPDATE dagen=VALUES(dagen), functie_sleutel=VALUES(functie_sleutel),
-                                    opgenomen=VALUES(opgenomen), bijgewerkt_op=NOW()
-        ")->execute([$sol_id, $week, $jaar, $dagen, $functie ?: null, $opgenomen ? 1 : 0, $scenario_id]);
+            INSERT INTO loon_planning (sollicitatie_id, week_nr, jaar, dagen, opgenomen, betaald, weekdagen, scenario_id)
+            VALUES (?,?,?,?,?,?,?,?)
+            ON DUPLICATE KEY UPDATE dagen=VALUES(dagen), opgenomen=VALUES(opgenomen), betaald=VALUES(betaald),
+                                    weekdagen=VALUES(weekdagen), bijgewerkt_op=NOW()
+        ")->execute([$sol_id, $week, $jaar, $dagen, $opgenomen ? 1 : 0, $betaald ? 1 : 0, $wd ? json_encode($wd) : null, $scenario_id]);
     } catch (\Exception $e) { error_log('loonplan_cel_opslaan: ' . $e->getMessage()); }
+}
+
+/** De functie van één persoon in één scenario vastleggen. */
+function loonplan_functie_zetten(int $scenario_id, int $sol_id, string $functie): void {
+    loonplan_auto_setup();
+    try {
+        db()->prepare("INSERT INTO loon_scenario_persoon (scenario_id, sollicitatie_id, functie_sleutel) VALUES (?,?,?)
+                       ON DUPLICATE KEY UPDATE functie_sleutel=VALUES(functie_sleutel)")
+           ->execute([$scenario_id, $sol_id, mb_substr($functie, 0, 50)]);
+    } catch (\Exception $e) { error_log('loonplan_functie_zetten: ' . $e->getMessage()); }
+}
+
+/** [sol_id => functie] zoals in dit scenario vastgelegd. */
+function loonplan_functies_scenario(int $scenario_id): array {
+    try {
+        $q = db()->prepare("SELECT sollicitatie_id, functie_sleutel FROM loon_scenario_persoon WHERE scenario_id=?");
+        $q->execute([$scenario_id]);
+        $uit = [];
+        foreach ($q->fetchAll() as $r) $uit[(int)$r['sollicitatie_id']] = (string)$r['functie_sleutel'];
+        return $uit;
+    } catch (\Exception $e) { return []; }
 }

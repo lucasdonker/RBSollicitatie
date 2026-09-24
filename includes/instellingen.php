@@ -294,7 +294,15 @@ function functies_ophalen(): array {
 
 function bereken_dagloon(int $leeftijd, string $functie_sleutel, string $periode = 'jun', ?float $override = null): float {
     if ($override !== null) return $override;
+    // Per verzoek onthouden: de loonplanning vraagt dit per persoon per week (honderden keren),
+    // en elke vraag kostte twee queries. Tarieven wijzigen niet halverwege een verzoek.
+    static $cache = [];
+    $sleutel = $leeftijd . '|' . $functie_sleutel . '|' . $periode;
+    if (isset($cache[$sleutel])) return $cache[$sleutel];
+    return $cache[$sleutel] = bereken_dagloon_uncached($leeftijd, $functie_sleutel, $periode);
+}
 
+function bereken_dagloon_uncached(int $leeftijd, string $functie_sleutel, string $periode): float {
     if ($functie_sleutel === 'postcommandant') {
         $k = $periode === 'jun' ? 'loon.pc_vast_juni' : 'loon.pc_vast_jul_sep';
         return round(instelling_float($k, 850) / 5, 2);

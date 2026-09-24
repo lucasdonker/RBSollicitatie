@@ -684,8 +684,8 @@ de kluis; verificatiecode verplicht voor de typen in
 loonplanning</h1>
 <blockquote>
 <p><strong>In het kort:</strong> wanneer iemand kan werken, verzoeken om
-minder dagen, correcties van het bestuur en de planning met
-loonkosten.</p>
+minder dagen, correcties van het bestuur, de planning met loonkosten en
+(na het trainingsweekend) de vastgestelde inzet-afspraak.</p>
 </blockquote>
 <table>
 <thead>
@@ -697,7 +697,9 @@ loonkosten.</p>
 <tbody>
 <tr>
 <td>Doel</td>
-<td>Een bezetting van de posten maken en de loonkosten plannen.</td>
+<td>Een bezetting van de posten maken, de loonkosten plannen en
+vastleggen wat er per persoon is afgesproken (weken, dagen, betaald of
+onbetaald, functie) als basis voor contract en loonadministratie.</td>
 </tr>
 <tr>
 <td>Grondslag</td>
@@ -710,19 +712,25 @@ loonkosten.</p>
 <tr>
 <td>Persoonsgegevens</td>
 <td>Weken en dagen, vaste vrije dagen met reden, afwezigheid met
-omschrijving, verzoeken om minder dagen met toelichting, correcties door
-het bestuur met reden, losse dagen (tabellen
-<code>beschikbaarheid*</code>). Optioneel de vrije tekst voor de AI-hulp
-(<code>ai_beschikbaarheid_log</code>). Loonplanning: weken, functie,
-loon, notitie (<code>loon_planning</code>,
-<code>loon_scenario</code>).</td>
+omschrijving, verzoeken om minder dagen met toelichting (en welke dagen
+iemand wél kan), correcties door het bestuur met reden, losse dagen
+(tabellen <code>beschikbaarheid*</code>). Optioneel de vrije tekst voor
+de AI-hulp (<code>ai_beschikbaarheid_log</code>). Loonplanning: weken,
+dagen, betaald/onbetaald, functie, loon, notitie
+(<code>loon_planning</code>, <code>loon_scenario</code>,
+<code>loon_scenario_persoon</code>). Vastgestelde afspraak: functie,
+weken, dagen, betaald/onbetaald, wie en wanneer vastgesteld
+(<code>inzet_afspraak</code>, <code>inzet_afspraak_week</code>). De
+functie wordt voorgesteld uit de Lifeguard-rang in Authentik (zie
+Authentik).</td>
 </tr>
 <tr>
 <td>Ontvangers en verwerkers</td>
 <td>Bestuur (modules <code>beschikbaarheid</code>,
 <code>loonplanning</code>), penningmeester (<code>loonplanning</code>),
-begeleiders (<code>dekking</code>, alleen lezen). Google (Gemini) alleen
-voor de AI-hulp.</td>
+begeleiders (<code>dekking</code>, alleen lezen). De sollicitant ziet de
+eigen afspraak in het portaal zodra die is vastgesteld. Google (Gemini)
+alleen voor de AI-hulp.</td>
 </tr>
 <tr>
 <td>Doorgifte buiten de EER</td>
@@ -733,8 +741,8 @@ voor de AI-hulp.</td>
 <td>Volgt het dossier: bij wissen gaan alle tabellen
 <code>beschikbaarheid*</code> en <code>ai_beschikbaarheid_log</code>
 weg. AI-invoertekst: 3 maanden (<code>bewaar.ai_invoer_mnd</code>,
-standaard 3). Loonplanning blijft zonder notitie staan en is na
-anonimiseren niet meer herleidbaar.</td>
+standaard 3). Loonplanning en vastgestelde afspraak blijven zonder
+notitie staan en zijn na anonimiseren niet meer herleidbaar.</td>
 </tr>
 <tr>
 <td>Beveiliging</td>

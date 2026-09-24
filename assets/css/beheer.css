@@ -2620,6 +2620,16 @@ select.bh-testbericht-kanaal { width: 120px; }
 .bh-lp-dupliceer { display: flex; gap: 8px; margin-top: 10px; align-items: center; flex-wrap: wrap; }
 input.bh-lp-dupnaam { flex: 1; min-width: 200px; padding: 7px 10px; border: 1px solid var(--rand); border-radius: 6px; font-size: 13px; }
 .bh-kaartbody.bh-lp-leeg { text-align: center; color: var(--tekst-zacht); padding: 40px; }
+/* Loonplanning: definitief-balk, afspraakstatus per persoon, betaald/onbetaald per cel */
+.bh-lp-definitief { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--rand); }
+.bh-lp-definitief .bh-meta { flex: 1; min-width: 240px; }
+.bh-lp-afspraak { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; margin-top: 4px; white-space: normal; }
+.bh-lp-afspraakform { margin-top: 4px; }
+.bh-lp-betaald { display: flex; align-items: center; justify-content: center; gap: 3px; font-size: 10px; color: var(--tekst-zacht); margin-top: 2px; cursor: pointer; }
+.bh-lp-betaald[hidden] { display: none; }
+.bh-lp-betaald input { margin: 0; }
+.wcel.onb { background: var(--fase-oranje-vlak); }
+.wcel.nb.op, .wcel.nb.onb { outline: 1.5px dashed var(--fase-oranje); outline-offset: -3px; }
 /* Signalen-kaart: ook door de JS van het scherm opnieuw opgebouwd */
 .ds-kaart.bh-signalen { margin-bottom: 12px; border-left: 4px solid var(--oranje); }
 .bh-signalen-kop { font-size: 13.5px; font-weight: 600; margin-bottom: 6px; }

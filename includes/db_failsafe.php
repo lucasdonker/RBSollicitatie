@@ -162,6 +162,7 @@ function db_failsafe(bool $forceer = false): void {
         'consent_auto_setup',
         'opschoon_auto_setup',
         'loonplan_auto_setup',
+        'inzet_afspraak_auto_setup',     // na loonplan: de vastgestelde afspraak
         'rechten_auto_setup',
         'beschikbaarheid_dag_auto_setup',
         'audit_dag_auto_setup',

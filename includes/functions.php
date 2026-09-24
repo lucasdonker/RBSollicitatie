@@ -49,6 +49,7 @@ if (file_exists(__DIR__ . '/beschikbaarheid_dag.php')) require_once __DIR__ . '/
 if (file_exists(__DIR__ . '/competenties.php')) require_once __DIR__ . '/competenties.php';
 if (file_exists(__DIR__ . '/bezetting.php')) require_once __DIR__ . '/bezetting.php';
 if (file_exists(__DIR__ . '/loonplan.php')) require_once __DIR__ . '/loonplan.php';
+if (file_exists(__DIR__ . '/loonplan_afspraak.php')) require_once __DIR__ . '/loonplan_afspraak.php';
 if (file_exists(__DIR__ . '/selectiedag.php')) require_once __DIR__ . '/selectiedag.php';
 if (file_exists(__DIR__ . '/trainingsweekend.php')) require_once __DIR__ . '/trainingsweekend.php';
 if (file_exists(__DIR__ . '/ai_beschikbaarheid.php')) require_once __DIR__ . '/ai_beschikbaarheid.php';
@@ -529,6 +530,17 @@ function actief_seizoen(): ?array {
         } catch (Exception $e) { $s = null; }
     }
     return $s;
+}
+
+/** Eén seizoen op id (null als het niet bestaat). */
+function seizoen_op_id(int $id): ?array {
+    $actief = actief_seizoen();
+    if ($actief && (int)$actief['id'] === $id) return $actief;
+    try {
+        $q = db()->prepare("SELECT * FROM seizoenen WHERE id=?");
+        $q->execute([$id]);
+        return $q->fetch() ?: null;
+    } catch (Exception $e) { return null; }
 }
 
 // ── Helpers ───────────────────────────────────────────────────

@@ -89,6 +89,8 @@ function avg_sollicitatie_leegmaken($db, int $sol_id, bool $ook_loondocs = true)
         "DELETE FROM portaal_apparaten WHERE sollicitatie_id = ?",
         // De planning blijft staan voor het loonoverzicht (na anonimiseren niet meer herleidbaar); alleen de vrije notitie gaat weg.
         "UPDATE loon_planning SET notitie = NULL WHERE sollicitatie_id = ?",
+        // Zelfde voor de vastgestelde afspraak: weken en functie blijven (loonoverzicht), de notitie niet.
+        "UPDATE inzet_afspraak SET notitie = NULL WHERE sollicitatie_id = ?",
     ] as $sql) avg_stap($db, $sql, [$sol_id]);
     // "Houd uit elkaar" werkt in twee richtingen.
     avg_stap($db, "DELETE FROM selectie_relatie WHERE sollicitatie_id = ? OR ander_id = ?", [$sol_id, $sol_id]);
@@ -245,6 +247,11 @@ function avg_inzage($db, int $sol_id): array {
         'trainingsweekend' => [
             'deelname'    => $rij("SELECT aanwezig, ingecheckt_op, afgemeld_reden, besluit, besluit_notitie, besluit_op FROM tw_deelname WHERE sollicitatie_id = ?"),
             'observaties' => $beoordelaar($rijen("SELECT soort, tekst, aangemaakt_op FROM tw_observatie WHERE sollicitatie_id = ? ORDER BY id")),
+        ],
+        'inzet_afspraak' => [
+            'afspraak' => $rij("SELECT functie_sleutel AS functie, notitie, vastgesteld_op FROM inzet_afspraak WHERE sollicitatie_id = ?"),
+            'weken'    => $rijen("SELECT w.jaar, w.week_nr, w.dagen, w.betaald, w.weekdagen FROM inzet_afspraak_week w
+                                  JOIN inzet_afspraak a ON a.id = w.afspraak_id WHERE a.sollicitatie_id = ? ORDER BY w.jaar, w.week_nr"),
         ],
         'notities_bestuur' => $rijen("SELECT tekst, aangemaakt_op FROM sollicitant_notities WHERE sollicitatie_id = ? ORDER BY id"),
         'ondertekeningen' => $rijen("SELECT type, ondertekenaar_rol AS door, ondertekend_op, plaats FROM ondertekeningen WHERE sollicitatie_id = ? ORDER BY aangemaakt_op"),
