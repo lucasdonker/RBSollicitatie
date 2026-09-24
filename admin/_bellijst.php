@@ -54,7 +54,7 @@ foreach ($bel_lijst as $_k) if ((int)$_k['sol_id'] === $_open) $_huidig = $_k;
     <div class="bh-bel-kop">
       <span><strong class="bh-num"><?= $bel_gebeld ?></strong> van <strong class="bh-num"><?= $bel_gebeld + $bel_ongebeld ?></strong> gebeld</span>
       <?php if ($bel_gebeld > 0): ?>
-        <form method="post" id="alleDoorForm" style="margin-left:auto">
+        <form method="post" id="alleDoorForm" class="bh-bel-alledoor">
           <?= csrf_input() ?>
           <input type="hidden" name="actie" value="gebelde_doorvoeren">
           <button type="button" class="bh-doc-actie" onclick="alleGebeldeDoorvoeren(<?= $bel_gebeld ?>)">
@@ -149,7 +149,7 @@ foreach ($bel_lijst as $_k) if ((int)$_k['sol_id'] === $_open) $_huidig = $_k;
       <?php if ($_obs): ?>
         <div>
           <span class="bh-veldlabel">Observaties van die dag</span>
-          <ul class="bh-observaties" style="margin-top:8px">
+          <ul class="bh-observaties bh-bel-observaties">
             <?php foreach (array_slice($_obs, 0, 4) as $_o):
               $_ok = ['positief' => 'groen', 'aandacht' => 'rood'][$_o['soort'] ?? ''] ?? 'grijs'; ?>
               <li class="ds-fase-<?= h($_ok) ?>">
@@ -174,7 +174,7 @@ foreach ($bel_lijst as $_k) if ((int)$_k['sol_id'] === $_open) $_huidig = $_k;
 
     <footer class="bh-bel-acties">
       <?php if ($_gebeld): ?>
-        <div class="ds-melding ds-melding-ok" style="width:100%">
+        <div class="ds-melding ds-melding-ok bh-bel-gebeld">
           <?= icoon('vink-cirkel', 16) ?>
           <span>Gebeld op <?= h(datum_nl(substr((string)$_b['gebeld_op'], 0, 10))) ?>. Nog niet doorgevoerd.</span>
         </div>

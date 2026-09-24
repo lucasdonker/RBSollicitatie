@@ -38,12 +38,12 @@ if (!$_scores && !$_obs) {
           <span class="bh-meta bh-num"><?= h(number_format($_tgem, 1, ',', '')) ?> gemiddeld</span>
         <?php endif; ?>
       </div>
-      <div class="bh-scorebalken" style="margin-top:0">
+      <div class="bh-scorebalken bh-scorebalken-los">
         <?php foreach ($_criteria as $_crit => $_d): ?>
           <div class="bh-scorebalk">
             <span class="bh-scorebalk-naam"><?= h(ucfirst(str_replace('_', ' ', (string)$_crit))) ?></span>
             <span class="bh-scorebalk-spoor">
-              <span class="bh-scorebalk-vul" style="width:<?= (int)round(((float)$_d['gem']) / 5 * 100) ?>%"></span>
+              <span class="bh-scorebalk-vul" style="--w: <?= (int)round(((float)$_d['gem']) / 5 * 100) ?>%"></span>
             </span>
             <span class="bh-scorebalk-getal bh-num"><?= h(number_format((float)$_d['gem'], 1, ',', '')) ?></span>
           </div>
@@ -105,9 +105,9 @@ if (!$_scores && !$_obs) {
         echo bh_badge(ucfirst((string)$_besl['besluit']), $_bk);
       ?>
       <?php if (!empty($_besl['notitie'])): ?>
-        <p class="bh-dossier-tekst" style="margin-top:10px"><?= nl2br(h((string)$_besl['notitie'])) ?></p>
+        <p class="bh-dossier-tekst bh-dossier-besluittekst"><?= nl2br(h((string)$_besl['notitie'])) ?></p>
       <?php endif; ?>
-      <span class="bh-meta" style="display:block;margin-top:8px">
+      <span class="bh-meta bh-dossier-voetregel">
         <?= !empty($_besl['door']) ? 'door ' . h((string)$_besl['door']) : '' ?>
         <?= !empty($_besl['gebeld_op']) ? ' · gebeld ' . h(datum_nl(substr((string)$_besl['gebeld_op'], 0, 10))) : '' ?>
       </span>

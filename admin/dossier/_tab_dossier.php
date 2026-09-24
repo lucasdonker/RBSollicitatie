@@ -99,7 +99,7 @@ $_mag_blk = mag('blk', 'lezen');
             <div class="bh-scorebalk">
               <span class="bh-scorebalk-naam"><?= h(ucfirst((string)$_test)) ?></span>
               <span class="bh-scorebalk-spoor">
-                <span class="bh-scorebalk-vul" style="width:<?= (int)round($_sc / 5 * 100) ?>%"></span>
+                <span class="bh-scorebalk-vul" style="--w: <?= (int)round($_sc / 5 * 100) ?>%"></span>
               </span>
               <span class="bh-scorebalk-getal bh-num"><?= h(number_format($_sc, 1, ',', '')) ?></span>
             </div>
@@ -107,7 +107,7 @@ $_mag_blk = mag('blk', 'lezen');
         </div>
       <?php endif; ?>
       <?php if (!empty($tab_dossier['besluit']['besluit'])): ?>
-        <p class="bh-meta" style="margin-top:10px">
+        <p class="bh-meta bh-dossier-besluitregel">
           Besluit van de nabespreking:
           <strong><?= h(ucfirst((string)$tab_dossier['besluit']['besluit'])) ?></strong>
         </p>
@@ -126,7 +126,7 @@ $_mag_blk = mag('blk', 'lezen');
       <div class="bh-kaartkop">
         <h2>Competenties</h2>
         <?php if ($_mag_bewerken): ?>
-          <button type="button" class="bh-kaartkop-link" style="background:none;border:none;cursor:pointer;font-family:inherit"
+          <button type="button" class="bh-kaartkop-link bh-kaartkop-linkknop"
                   onclick="competentieVerversen(<?= (int)$_s['id'] ?>)">Synchroniseren</button>
         <?php endif; ?>
       </div>
@@ -139,7 +139,7 @@ $_mag_blk = mag('blk', 'lezen');
           <p class="bh-dossier-tekst zacht">Geen competenties gevonden in Authentik.</p>
         <?php endif; ?>
       </div>
-      <span class="bh-meta" style="display:block;margin-top:8px" id="compStatus-<?= (int)$_s['id'] ?>">
+      <span class="bh-meta bh-dossier-voetregel" id="compStatus-<?= (int)$_s['id'] ?>">
         <?php if (!empty($_sync['laatst_gesynct'])): ?>
           Laatst opgehaald <?= h(datum_nl(substr((string)$_sync['laatst_gesynct'], 0, 10))) ?>
           <?php if (($_sync['sync_status'] ?? '') === 'niet_gevonden'): ?> · geen match gevonden<?php endif; ?>
@@ -152,7 +152,7 @@ $_mag_blk = mag('blk', 'lezen');
           <label class="bh-veldlabel" for="compUsername-<?= (int)$_s['id'] ?>">
             Handmatig koppelen op Authentik-gebruikersnaam
           </label>
-          <div class="bh-notitie-nieuw" style="margin-top:6px">
+          <div class="bh-notitie-nieuw bh-comp-koppelrij">
             <input type="text" class="ds-input" id="compUsername-<?= (int)$_s['id'] ?>" placeholder="gebruikersnaam">
             <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm"
                     onclick="competentieKoppelen(<?= (int)$_s['id'] ?>)">Koppelen</button>

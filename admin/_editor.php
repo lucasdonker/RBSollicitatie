@@ -29,8 +29,8 @@ function editor_html(string $id, string $naam, string $html = '', array $opties 
     ' . $sep . $knop('data-actie="knop"', 'Knop', 'Oranje knop (shortcode)') . $knop('data-actie="info"', 'Info-blok', 'Gekleurd info-blok') . $knop('data-actie="letop"', 'Let op', 'Waarschuwingsblok') . $knop('data-actie="afbeelding"', 'Afbeelding', 'Afbeelding via URL') . $knop('data-actie="lijn"', 'Lijn', 'Horizontale lijn') . '
     ' . $sep . $knop('data-cmd="undo"', 'Ongedaan', 'Ongedaan maken') . $knop('data-cmd="redo"', 'Opnieuw', 'Opnieuw') . $knop('data-cmd="removeFormat"', 'Opmaak wissen', 'Opmaak verwijderen') . '
   </div>
-  <div class="p13-evis" id="' . $h($id) . '_vis" contenteditable="true" spellcheck="true" lang="nl" style="min-height:' . $hoogte . 'px"' . (!empty($opties['placeholder']) ? ' data-placeholder="' . $h($opties['placeholder']) . '"' : '') . '></div>
-  <textarea name="' . $h($naam) . '" id="' . $h($id) . '_html" class="p13-ehtml" style="display:none;min-height:' . $hoogte . 'px">' . $h($html) . '</textarea>
+  <div class="p13-evis" id="' . $h($id) . '_vis" contenteditable="true" spellcheck="true" lang="nl" style="--h: ' . $hoogte . 'px"' . (!empty($opties['placeholder']) ? ' data-placeholder="' . $h($opties['placeholder']) . '"' : '') . '></div>
+  <textarea name="' . $h($naam) . '" id="' . $h($id) . '_html" class="p13-ehtml" style="--h: ' . $hoogte . 'px; display: none">' . $h($html) . '</textarea>
 </div>';
 }
 }

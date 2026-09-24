@@ -217,20 +217,20 @@ require __DIR__ . '/layout_top.php';
     <?php endforeach; ?>
   </div>
 
-  <form method="POST" style="margin-top:10px;background:var(--surface);border-radius:var(--radius);border:1px solid var(--rand);padding:12px">
+  <form method="POST" class="bh-mt-zijform">
     <?= csrf_input() ?><input type="hidden" name="actie" value="nieuw">
     <div class="veld-label">Nieuw eigen sjabloon</div>
-    <input type="text" name="naam" placeholder="Naam, bv. Magazine seizoen" required style="width:100%;font-size:12px;padding:6px 8px;margin-bottom:6px">
-    <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm" style="width:100%;justify-content:center">Aanmaken</button>
-    <div style="font-size:10px;color:var(--grijs);margin-top:6px">Voor handmatige en geplande berichten.</div>
+    <input type="text" name="naam" placeholder="Naam, bv. Magazine seizoen" required class="bh-mt-zijveld">
+    <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm bh-mt-zijknop">Aanmaken</button>
+    <div class="bh-mt-zijhint">Voor handmatige en geplande berichten.</div>
   </form>
 
-  <form method="POST" style="margin-top:10px;background:var(--surface);border-radius:var(--radius);border:1px solid var(--rand);padding:12px">
+  <form method="POST" class="bh-mt-zijform">
     <?= csrf_input() ?><input type="hidden" name="actie" value="hero_image">
     <div class="veld-label">Standaard hero-afbeelding (URL)</div>
-    <input type="text" name="hero_url" value="<?= h($hero_row['body_html'] ?? '') ?>" placeholder="https://.../foto.jpg" style="width:100%;font-size:11px;padding:6px 8px;margin-bottom:5px">
-    <div style="font-size:10px;color:var(--grijs);margin-bottom:6px">Leeg = standaard strandfoto</div>
-    <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm" style="width:100%;justify-content:center">Opslaan</button>
+    <input type="text" name="hero_url" value="<?= h($hero_row['body_html'] ?? '') ?>" placeholder="https://.../foto.jpg" class="bh-mt-zijveld bh-mt-zijveld-url">
+    <div class="bh-mt-zijhint bh-mt-zijhint-boven">Leeg = standaard strandfoto</div>
+    <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm bh-mt-zijknop">Opslaan</button>
   </form>
 </div>
 
@@ -238,21 +238,21 @@ require __DIR__ . '/layout_top.php';
 <?php if ($actief): ?>
 <div>
 <div class="ds-kaart">
-  <div class="bh-kaartkop" style="align-items:flex-start">
+  <div class="bh-kaartkop bh-mt-kop">
     <div>
       <h2><?= h($actief['naam'] ?? $actief_slug) ?></h2>
-      <div style="font-size:12px;color:var(--tekst-zacht);margin-top:2px"><?= h($def['beschrijving'] ?? ($actief['beschrijving'] ?? '')) ?></div>
-      <div style="font-size:11px;color:var(--grijs);margin-top:4px">
+      <div class="bh-mt-beschrijving"><?= h($def['beschrijving'] ?? ($actief['beschrijving'] ?? '')) ?></div>
+      <div class="bh-mt-typeregel">
         Type: <code><?= h($actief_slug) ?></code>
         <?php if ($def): ?> · Ontvanger: <?= h($def['ontvanger']) ?><?php endif; ?>
-        <?php if (!$in_db): ?> · <span style="color:var(--oranje)">nog niet in de database (standaardtekst); wordt bij opslaan aangemaakt</span><?php endif; ?>
+        <?php if (!$in_db): ?> · <span class="bh-mt-nietindb">nog niet in de database (standaardtekst); wordt bij opslaan aangemaakt</span><?php endif; ?>
       </div>
     </div>
     <?php if ($def): ?>
-    <form method="POST" style="display:flex;gap:6px;align-items:center;margin:0">
+    <form method="POST" class="bh-mt-kanaal">
       <?= csrf_input() ?><input type="hidden" name="actie" value="kanaal"><input type="hidden" name="slug" value="<?= h($actief_slug) ?>">
-      <label style="font-size:12px;color:var(--tekst-zacht)">Kanaal</label>
-      <select name="kanaalmodus" onchange="this.form.submit()" style="font-size:12px;padding:5px 8px">
+      <label class="bh-mt-kanaal-label">Kanaal</label>
+      <select name="kanaalmodus" onchange="this.form.submit()" class="bh-mt-kanaal-keuze">
         <?php foreach ($modi as $mk => $ml): if ($mk !== 'email' && $mk !== 'uit' && !$def['kort_toegestaan']) continue; ?>
         <option value="<?= $mk ?>" <?= $modus === $mk ? 'selected' : '' ?>><?= h($ml) ?></option>
         <?php endforeach; ?>
@@ -260,7 +260,7 @@ require __DIR__ . '/layout_top.php';
     </form>
     <?php endif; ?>
   </div>
-  <div class="bh-kaartbody" style="padding:0">
+  <div class="bh-kaartbody bh-mt-body">
     <form method="POST" enctype="multipart/form-data" id="tmplForm">
       <?= csrf_input() ?>
       <input type="hidden" name="actie" value="opslaan">
@@ -268,7 +268,7 @@ require __DIR__ . '/layout_top.php';
 
       <div class="tmpl-velden">
         <?php if (!$def): ?>
-        <div style="grid-column:1/-1">
+        <div class="bh-mt-breed">
           <label class="veld-label">Naam</label>
           <input type="text" name="naam" value="<?= h($actief['naam'] ?? '') ?>">
         </div>
@@ -287,58 +287,58 @@ require __DIR__ . '/layout_top.php';
         </div>
         <div>
           <label class="veld-label">Hero-kleur</label>
-          <div style="display:flex;gap:6px;align-items:center">
-            <input type="color" value="<?= h($actief['hero_kleur'] ?: '#054d8a') ?>" oninput="this.nextElementSibling.value=this.value" style="width:42px;height:36px;border:1px solid var(--rand);border-radius:6px;padding:2px">
-            <input type="text" name="hero_kleur" value="<?= h($actief['hero_kleur'] ?? '') ?>" placeholder="leeg = huisstijl-navy" style="flex:1;font-family:monospace">
+          <div class="bh-mt-kleurrij">
+            <input type="color" value="<?= h($actief['hero_kleur'] ?: '#054d8a') ?>" oninput="this.nextElementSibling.value=this.value" class="bh-mt-kleurkiezer">
+            <input type="text" name="hero_kleur" value="<?= h($actief['hero_kleur'] ?? '') ?>" placeholder="leeg = huisstijl-navy" class="bh-mt-kleurcode">
           </div>
         </div>
-        <div style="grid-column:1/-1">
+        <div class="bh-mt-breed">
           <label class="veld-label">Hero-afbeelding (optioneel)</label>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <input type="file" name="hero_image_upload" accept="image/jpeg,image/png,image/webp" style="flex:1;min-width:200px">
-            <input type="text" name="hero_image_url" value="<?= h($actief['hero_image_url'] ?? '') ?>" placeholder="of URL" style="flex:2;min-width:200px">
+          <div class="bh-mt-heroregel">
+            <input type="file" name="hero_image_upload" accept="image/jpeg,image/png,image/webp" class="bh-mt-herobestand">
+            <input type="text" name="hero_image_url" value="<?= h($actief['hero_image_url'] ?? '') ?>" placeholder="of URL" class="bh-mt-herourl">
           </div>
         </div>
       </div>
 
-      <div style="padding:14px 16px 0">
+      <div class="bh-mt-sectie">
         <label class="veld-label">E-mailtekst</label>
         <?= editor_html('tmpl', 'body_html', (string)($actief['body_html'] ?? ''), ['hoogte' => 320]) ?>
       </div>
 
-      <div style="padding:14px 16px 0;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="bh-mt-sectie bh-mt-tweekolom">
         <div>
-          <label class="veld-label">Korte tekst (WhatsApp/SMS) <span id="kortTeller" style="font-weight:400;text-transform:none"></span></label>
-          <textarea name="tekst_kort" id="tekstKort" rows="5" maxlength="400" style="width:100%;font-size:13px;padding:8px 11px" oninput="kortTeller()" <?= ($def && !$def['kort_toegestaan']) ? 'placeholder="Dit type gaat alleen per e-mail."' : '' ?>><?= h($actief['tekst_kort'] ?? '') ?></textarea>
-          <div style="font-size:11px;color:var(--tekst-zacht);margin-top:3px">Platte tekst, max 400 tekens, geen opmaak. Zelfde variabelen als de e-mail.</div>
+          <label class="veld-label">Korte tekst (WhatsApp/SMS) <span id="kortTeller" class="bh-mt-teller"></span></label>
+          <textarea name="tekst_kort" id="tekstKort" rows="5" maxlength="400" class="bh-mt-tekstvak" oninput="kortTeller()" <?= ($def && !$def['kort_toegestaan']) ? 'placeholder="Dit type gaat alleen per e-mail."' : '' ?>><?= h($actief['tekst_kort'] ?? '') ?></textarea>
+          <div class="bh-mt-hulp">Platte tekst, max 400 tekens, geen opmaak. Zelfde variabelen als de e-mail.</div>
         </div>
         <div>
           <label class="veld-label">Samenvatting (portaal)</label>
-          <textarea name="samenvatting" rows="5" maxlength="200" style="width:100%;font-size:13px;padding:8px 11px"><?= h($actief['samenvatting'] ?? '') ?></textarea>
-          <div style="font-size:11px;color:var(--tekst-zacht);margin-top:3px">Eén regel onder de titel in het berichtenoverzicht van de sollicitant.</div>
+          <textarea name="samenvatting" rows="5" maxlength="200" class="bh-mt-tekstvak"><?= h($actief['samenvatting'] ?? '') ?></textarea>
+          <div class="bh-mt-hulp">Eén regel onder de titel in het berichtenoverzicht van de sollicitant.</div>
         </div>
       </div>
 
-      <div style="padding:14px 16px 0">
+      <div class="bh-mt-sectie">
         <label class="veld-label">Bijlagen (mee met elke e-mail, grote bestanden als downloadknop; WhatsApp/SMS krijgt een downloadlink)</label>
         <?php $bijl_huidig = []; if (!empty($actief['bijlagen_json']) && function_exists('bijlagen_van_ids')) { $j = json_decode((string)$actief['bijlagen_json'], true); if (is_array($j)) $bijl_huidig = bijlagen_van_ids($j); } ?>
         <?php foreach ($bijl_huidig as $bh): ?>
-        <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin:4px 0"><input type="checkbox" name="bijlage_ids[]" value="<?= (int)$bh['id'] ?>" checked> <?= h($bh['naam']) ?> <span style="color:var(--grijs);font-size:11px">(uitvinken = loskoppelen)</span></label>
+        <label class="bh-mt-bijlage"><input type="checkbox" name="bijlage_ids[]" value="<?= (int)$bh['id'] ?>" checked> <?= h($bh['naam']) ?> <span class="bh-mt-bijlage-hint">(uitvinken = loskoppelen)</span></label>
         <?php endforeach; ?>
         <input type="file" name="bijlage_upload" accept=".pdf,.jpg,.jpeg,.png,.webp,.docx,.xlsx">
-        <div style="font-size:11px;color:var(--tekst-zacht);margin-top:3px">pdf, jpg, png, webp, docx, xlsx · max <?= function_exists('bijlagen_max_bytes') ? round(bijlagen_max_bytes() / 1048576) : 25 ?> MB<?= function_exists('bijlagen_max_bytes') && bijlagen_max_bytes() < 25 * 1048576 ? ' (beperkt door de serverinstelling in Plesk)' : '' ?>.</div>
+        <div class="bh-mt-hulp">pdf, jpg, png, webp, docx, xlsx · max <?= function_exists('bijlagen_max_bytes') ? round(bijlagen_max_bytes() / 1048576) : 25 ?> MB<?= function_exists('bijlagen_max_bytes') && bijlagen_max_bytes() < 25 * 1048576 ? ' (beperkt door de serverinstelling in Plesk)' : '' ?>.</div>
       </div>
 
-      <div style="padding:12px 16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <div class="bh-mt-voet">
         <button type="submit" class="ds-btn ds-btn-primair">Opslaan</button>
         <a href="?preview=<?= h($actief_slug) ?>" target="_blank" class="ds-btn ds-btn-secundair ds-btn-sm">Voorbeeld e-mail</a>
         <a href="?preview=<?= h($actief_slug) ?>&kanaal=kort" target="_blank" class="ds-btn ds-btn-secundair ds-btn-sm">Voorbeeld kort bericht</a>
-        <div style="flex:1"></div>
-        <?php if (!empty($actief['gewijzigd_op'])): ?><span style="font-size:11px;color:var(--grijs)">Bijgewerkt: <?= datum_nl(substr($actief['gewijzigd_op'], 0, 10)) ?></span><?php endif; ?>
+        <div class="bh-vulling"></div>
+        <?php if (!empty($actief['gewijzigd_op'])): ?><span class="bh-mt-bijgewerkt">Bijgewerkt: <?= datum_nl(substr($actief['gewijzigd_op'], 0, 10)) ?></span><?php endif; ?>
       </div>
     </form>
 
-    <div style="padding:0 16px 14px;display:flex;gap:8px">
+    <div class="bh-mt-gevaarrij">
       <?php if ($def): ?>
       <form method="POST"
             data-bevestig-titel="Terug naar de standaardtekst?"
@@ -363,17 +363,17 @@ require __DIR__ . '/layout_top.php';
 <div>
 <div class="ds-kaart">
   <div class="bh-kaartkop"><h2>Variabelen</h2></div>
-  <div class="bh-kaartbody" style="padding:12px 14px">
-    <p style="font-size:12px;color:var(--tekst-zacht);margin-bottom:8px">Klik om in te voegen in de e-mailtekst (of typ ze in de korte tekst).</p>
+  <div class="bh-kaartbody bh-mt-varbody">
+    <p class="bh-mt-varuitleg">Klik om in te voegen in de e-mailtekst (of typ ze in de korte tekst).</p>
     <?php if ($vars_type): ?>
-    <div style="margin-bottom:10px">
+    <div class="bh-mt-vargroep">
       <div class="veld-label">Voor dit type</div>
       <?php foreach ($vars_type as $v): ?><span class="var-chip" onclick="P13Editor.insert('tmpl','{{<?= h($v) ?>}}')">{{<?= h($v) ?>}}</span><?php endforeach; ?>
     </div>
     <?php endif; ?>
     <div class="veld-label">Altijd beschikbaar</div>
     <?php foreach ($vars_basis as $v): ?><span class="var-chip" onclick="P13Editor.insert('tmpl','{{<?= h($v) ?>}}')">{{<?= h($v) ?>}}</span><?php endforeach; ?>
-    <div style="margin-top:12px;border-top:1px solid var(--rand);padding-top:10px;font-size:11px;color:var(--tekst-zacht)">
+    <div class="bh-mt-opmaak">
       Opmaakblokken via de knoppen in de editor: Knop, Info-blok, Let op. Als tekst: <code>[knop href="URL"]Tekst[/knop]</code>, <code>[info]...[/info]</code>, <code>[let op]...[/let op]</code>, <code>[code]123456[/code]</code>.
     </div>
   </div>

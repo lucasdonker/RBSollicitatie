@@ -176,7 +176,7 @@ require __DIR__ . '/layout_top.php';
       <div class="ds-melding ds-melding-warn">
         <strong>Eenmalige actie.</strong> Het systeem controleert op e-mailadres — dubbelen worden automatisch overgeslagen. Veilig om meerdere keren te draaien.
       </div>
-      <ul style="font-size:13px;color:var(--tekst-zacht);line-height:2;padding-left:18px;margin-bottom:0">
+      <ul class="bh-imp-uitleg">
         <li>Personen worden aangemaakt of bijgewerkt op e-mailadres</li>
         <li>Beschikbaarheid (week 23–35) wordt geïmporteerd</li>
         <li>Motivatie, ervaring en diploma's worden geïmporteerd als BLK-formulier</li>
@@ -222,7 +222,7 @@ require __DIR__ . '/layout_top.php';
           <div class="ds-veld-hint">Exporteer uit Google Sheets als CSV (kommagescheiden, UTF-8)</div>
         </div>
         <button type="submit" class="ds-btn ds-btn-primair">Import starten</button>
-        <a href="<?= APP_URL ?>/admin/" class="ds-btn ds-btn-secundair" style="margin-left:8px">Annuleer</a>
+        <a href="<?= APP_URL ?>/admin/" class="ds-btn ds-btn-secundair bh-imp-annuleer">Annuleer</a>
       </form>
     </div>
   </div>
@@ -239,8 +239,8 @@ require __DIR__ . '/layout_top.php';
       </div>
 
       <?php if (!empty($fouten)): ?>
-      <div style="margin-bottom:14px">
-        <div style="font-size:12px;font-weight:600;color:var(--error);margin-bottom:6px">Fouten (<?= count($fouten) ?>):</div>
+      <div class="bh-imp-fouten">
+        <div class="bh-imp-foutenkop">Fouten (<?= count($fouten) ?>):</div>
         <?php foreach ($fouten as $f): ?>
         <div class="imp-fout-rij">Rij <?= $f['rij'] ?>: <?= h($f['naam']) ?> — <?= h($f['fout']) ?></div>
         <?php endforeach; ?>
@@ -248,17 +248,17 @@ require __DIR__ . '/layout_top.php';
       <?php endif; ?>
 
       <?php if (!empty($resultaten)): ?>
-      <div style="max-height:300px;overflow-y:auto">
+      <div class="bh-imp-resultaten">
         <?php foreach ($resultaten as $r): ?>
         <div class="imp-result-rij">
           <span><?= h($r['naam']) ?></span>
-          <span style="color:var(--tekst-zacht);font-size:12px"><?= $r['weken'] ?> weken | <?= h($r['email']) ?></span>
+          <span class="bh-imp-detail"><?= $r['weken'] ?> weken | <?= h($r['email']) ?></span>
         </div>
         <?php endforeach; ?>
       </div>
       <?php endif; ?>
 
-      <div style="margin-top:16px;display:flex;gap:8px">
+      <div class="bh-imp-voet">
         <a href="<?= APP_URL ?>/admin/sollicitanten.php" class="ds-btn ds-btn-primair">Naar sollicitanten →</a>
         <a href="<?= APP_URL ?>/admin/import.php" class="ds-btn ds-btn-secundair">Nog een import</a>
       </div>

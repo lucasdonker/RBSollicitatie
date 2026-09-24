@@ -22,8 +22,8 @@ $_breedtes   = [['45%', '70%'], ['38%', '60%'], ['52%', '64%'], ['42%', '66%'], 
   <div class="bh-skelet-rij" aria-hidden="true">
     <?php if ($laden_tegel): ?><span class="bh-skelet-tegel"></span><?php endif; ?>
     <span class="bh-skelet-regels">
-      <span class="bh-skelet-regel" style="width:<?= h($_b[0]) ?>"></span>
-      <span class="bh-skelet-regel kort" style="width:<?= h($_b[1]) ?>"></span>
+      <span class="bh-skelet-regel" style="--w: <?= h($_b[0]) ?>"></span>
+      <span class="bh-skelet-regel kort" style="--w: <?= h($_b[1]) ?>"></span>
     </span>
   </div>
   <?php endfor; ?>

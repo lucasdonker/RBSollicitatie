@@ -69,7 +69,7 @@ require __DIR__ . '/layout_top.php';
             <a class="bh-stand-balk ds-fase-<?= h(fase_kleur($_f)) ?>"
                href="<?= APP_URL ?>/admin/sollicitanten.php?fase=<?= h($_f) ?>">
               <span class="bh-stand-getal"><?= $_n ?></span>
-              <span class="bh-stand-staaf" style="height:<?= max(8, (int)round($_n / max(1, $_max) * 56)) ?>px"></span>
+              <span class="bh-stand-staaf" style="--h: <?= max(8, (int)round($_n / max(1, $_max) * 56)) ?>px"></span>
               <span class="bh-stand-label"><?= h(fase_label_kort($_f)) ?></span>
             </a>
           <?php endforeach; ?>

@@ -22,8 +22,8 @@ $_rollen = ['begeleider' => 'begeleider', 'bestuur' => 'bestuur',
             'penningmeester' => 'penningmeester', 'admin' => 'beheerder'];
 $_rol    = $_rollen[$geen_rol] ?? $geen_rol;
 ?>
-<div class="ds-kaart" style="max-width:520px;margin:48px auto;padding:8px">
-  <div class="bh-leeg ds-fase-grijs" style="border:none">
+<div class="ds-kaart bh-losse-kaart">
+  <div class="bh-leeg ds-fase-grijs bh-leeg-kaal">
     <span class="bh-leeg-icoon"><?= icoon('slot', 19) ?></span>
     <span class="bh-leeg-titel">
       <?= $_titel !== '' ? h($_titel) . ' is niet voor jouw rol' : 'Dit onderdeel is niet voor jouw rol' ?>
@@ -36,7 +36,7 @@ $_rol    = $_rollen[$geen_rol] ?? $geen_rol;
                 : 'Je hebt hier geen inzage. Dat is een bewuste keuze, geen storing.') ?>
     </span>
     <a class="ds-btn ds-btn-secundair ds-btn-sm" href="<?= APP_URL ?>/admin/">Terug naar Vandaag</a>
-    <span class="bh-meta" style="margin-top:4px">Denk je dat dit niet klopt? Vraag een beheerder om toegang.</span>
+    <span class="bh-meta bh-leeg-voetnoot">Denk je dat dit niet klopt? Vraag een beheerder om toegang.</span>
   </div>
 </div>
 <?php

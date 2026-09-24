@@ -230,7 +230,7 @@ require __DIR__ . '/layout_top.php';
         <?php if (!$_sc): ?>
           <p class="bh-dossier-tekst zacht">Niet beoordeeld.</p>
         <?php else: ?>
-          <div class="bh-scorebalken" style="margin-top:0">
+          <div class="bh-scorebalken bh-scorebalken-los">
             <?php foreach ($_sc as $_test => $_crits):
               $_w = [];
               foreach ($_crits as $_d) if (!empty($_d['gem'])) $_w[] = (float)$_d['gem'];
@@ -240,7 +240,7 @@ require __DIR__ . '/layout_top.php';
               <div class="bh-scorebalk">
                 <span class="bh-scorebalk-naam"><?= h(ucfirst((string)$_test)) ?></span>
                 <span class="bh-scorebalk-spoor">
-                  <span class="bh-scorebalk-vul" style="width:<?= (int)round($_tg / 5 * 100) ?>%"></span>
+                  <span class="bh-scorebalk-vul" style="--w: <?= (int)round($_tg / 5 * 100) ?>%"></span>
                 </span>
                 <span class="bh-scorebalk-getal bh-num"><?= h(number_format($_tg, 1, ',', '')) ?></span>
               </div>

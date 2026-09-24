@@ -2404,3 +2404,468 @@ mark.bh-hb-treffer { background: var(--geel-bg, #fff3b0); color: inherit; border
 .bh-seizoen-anders { margin-bottom: 16px; }
 /* Invoerveld in bhVraag() (assets/js/beheer.js) — stond als inline style in de JS. */
 .bh-dialoog-veld { margin-top: 12px; }
+
+/* ============================================================
+   INLINE STYLES OPGERUIMD (2.101)
+   ============================================================
+   Wat eerder als style="…" in de beheerschermen stond. Per scherm gegroepeerd; de
+   waarden zijn één-op-één overgenomen, dus het uiterlijk is ongewijzigd. Staat er een
+   element-selector bij (input.bh-…, .ds-veld > label.bh-…), dan is dat omdat de
+   bestaande regel voor dat element anders zou winnen — een inline style won altijd. */
+
+/* ── Instellingen (admin/instellingen.php) ── */
+/* Losse tekstkleuren voor een stand ("aanwezig", "ontbreekt", "nog niet") naast
+   een woord dat de stand zelf al zegt — de kleur is nooit het enige signaal. */
+.bh-tekst-ok    { color: var(--groen); }
+.bh-tekst-fout  { color: var(--rood); }
+.bh-tekst-grijs { color: var(--grijs); }
+.bh-label-optioneel { font-weight: 400; color: var(--ink-muted); }
+/* Lege rekker in een knoppenrij: duwt wat erna komt naar rechts. */
+.bh-vulling { flex: 1; }
+/* Rustige link in lopende tekst of een tabelcel. */
+.bh-link-navy { color: var(--navy); text-decoration: none; }
+/* "Nog niets" in een kaart, als losse regel. */
+.bh-leegregel { font-size: 13px; color: var(--grijs); }
+/* Kaart zonder kop met een smallere binnenrand (filterbalk, scenario's, signalen). */
+.bh-kaartbody.bh-kaartbody-compact { padding: 12px 16px; }
+
+/* Algemeen */
+.bh-inst-intro { font-size: 13px; color: var(--tekst-zacht); margin-bottom: 16px; }
+.bh-inst-intro-vast { margin-top: 0; margin-left: 0; margin-right: 0; }
+.bh-inst-intro.bh-inst-intro-14 { margin-bottom: 14px; }
+.bh-inst-tabkop { font-size: 16px; margin: 0 0 4px; }
+.bh-inst-tabintro { color: var(--tekst-zacht); font-size: 13.5px; margin: 0 0 18px; }
+.bh-inst-blokkop { font-weight: 600; font-size: 14px; margin-bottom: 8px; }
+.bh-inst-uitleg { font-size: 12px; color: var(--tekst-zacht); margin: 0; }
+.bh-inst-uitleg.bh-inst-uitleg-6  { margin-bottom: 6px; }
+.bh-inst-uitleg.bh-inst-uitleg-10 { margin-bottom: 10px; }
+.bh-inst-uitleg.bh-inst-uitleg-12 { margin-bottom: 12px; }
+.bh-inst-subkop { font-size: 14px; font-weight: 600; color: var(--navy); margin-bottom: 10px; }
+.bh-inst-klein { font-size: 11px; }
+.bh-inst-stand { font-size: 12px; }
+.bh-inst-knoppen { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.bh-inst-kaartvoet { padding: 14px 18px; border-top: 1px solid var(--rand); background: var(--grijs-bg); text-align: right; }
+.bh-instsectie.bh-inst-los { margin-bottom: 16px; }
+.bh-inst-regelform { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+.bh-inst-regelform-hint { font-size: 12px; color: var(--tekst-zacht); flex: 1; min-width: 200px; }
+.ds-veld.bh-inst-kaalveld { margin: 0; }
+input.bh-inst-volbreed { width: 100%; }
+.bh-veldrij.bh-inst-loonrij { gap: 20px; }
+.bh-veldrij.bh-inst-testrij { align-items: flex-start; }
+.ds-veld-hint.bh-inst-scorenoot { margin-top: 12px; }
+
+/* Algemeen-tab: logo, huisregels */
+input.bh-inst-urlveld { margin-top: 4px; }
+.bh-inst-logo { margin-top: 8px; display: flex; align-items: center; gap: 10px; }
+.bh-inst-logo-img { max-height: 60px; border: 1px solid var(--rand); border-radius: 6px; padding: 6px; background: var(--bg-card); }
+.bh-inst-huisregels { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.bh-inst-huisregels-link { font-size: 13px; color: var(--navy); }
+.bh-inst-losmaken { font-size: 12px; color: var(--tekst-zacht); display: inline-flex; align-items: center; gap: 5px; }
+.bh-inst-huisregels-stand { margin-bottom: 8px; }
+
+/* Functies & factoren */
+.bh-functie { border: 1px solid var(--rand); border-radius: 8px; padding: 14px; margin-bottom: 10px; }
+.bh-functie-rij { display: grid; grid-template-columns: 1fr 80px 80px 80px 60px auto; gap: 10px; align-items: end; }
+.bh-functie-rij > .ds-veld { margin: 0; }
+.bh-functie-rij > .ds-veld > label { font-size: 11px; }
+.bh-functie-knop { padding-bottom: 1px; }
+.bh-functie-voorbeeld { font-size: 11px; color: var(--grijs); margin-top: 6px; }
+
+/* Loon */
+input.bh-inst-budgetveld { max-width: 200px; }
+.bh-inst-euro { position: relative; }
+.bh-inst-euro > span { position: absolute; left: 10px; top: 9px; color: var(--grijs); }
+.bh-inst-euro > input { padding-left: 24px; }
+.ds-btn.bh-inst-breedknop { margin-top: 10px; width: 100%; justify-content: center; }
+
+/* Uitnodigen: herinneringen */
+.bh-veldrij.bh-inst-herinnering { align-items: flex-start; }
+.bh-veldrij > .ds-veld.bh-inst-herinnering-wat { flex: 2; }
+input.bh-inst-herinnering-info { margin-top: 6px; }
+.ds-veld.bh-inst-getalveld { max-width: 120px; }
+.ds-veld.bh-inst-getalveld-smal { max-width: 100px; }
+
+/* AI */
+.bh-inst-experiment {
+  display: flex; gap: 10px; align-items: flex-start; cursor: pointer; padding: 12px 14px;
+  border: 1px solid var(--rand); border-radius: 8px; background: var(--grijs-bg);
+}
+.bh-inst-experiment input[type=checkbox] { margin-top: 2px; }
+.bh-inst-experiment-label {
+  display: inline-block; font-size: 10px; font-weight: 600; color: var(--oranje);
+  border: 1px solid var(--oranje); border-radius: 4px; padding: 1px 6px; margin-left: 6px; vertical-align: middle;
+}
+.bh-inst-experiment-uitleg { display: block; font-size: 12px; color: var(--tekst-zacht); margin-top: 4px; font-weight: 400; }
+.bh-inst-promptcode { background: var(--grijs-bg); padding: 1px 5px; border-radius: 3px; }
+.bh-inst-variabelen {
+  background: var(--grijs-bg); border: 1px solid var(--rand); border-radius: 6px;
+  padding: 12px 14px; margin-bottom: 12px; font-size: 12px;
+}
+.bh-inst-variabelen-lijst {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 4px 14px; margin-top: 8px;
+  font-family: 'SF Mono', Menlo, Consolas, monospace; font-size: 11.5px;
+}
+.ds-veld > textarea.bh-inst-prompt { font-family: 'SF Mono', Menlo, Consolas, monospace; font-size: 12.5px; line-height: 1.6; white-space: pre-wrap; }
+.bh-inst-vinkregel { display: flex; align-items: center; gap: 8px; }
+
+/* Authentik */
+.bh-inst-status { background: var(--grijs-bg); padding: 12px; border-radius: 6px; margin-bottom: 14px; font-size: 12px; }
+.bh-inst-status-kop { font-weight: 600; color: var(--tekst); margin-bottom: 6px; }
+.bh-inst-werking { border-top: 1px solid var(--rand); padding-top: 14px; margin-top: 18px; }
+.bh-inst-werking-kop { font-weight: 600; font-size: 13px; margin-bottom: 8px; }
+.bh-inst-werking-lijst { font-size: 12px; color: var(--tekst-zacht); line-height: 1.7; padding-left: 18px; }
+.ds-veld-hint.bh-inst-uitlegblok {
+  padding: 12px 16px; background: var(--blauw-bg); border-left: 3px solid var(--blauw);
+  border-radius: 6px; margin-bottom: 14px; font-size: 13px; line-height: 1.7;
+}
+.bh-inst-comptabel { width: 100%; border-collapse: collapse; font-size: 13px; }
+.bh-inst-comptabel thead tr { border-bottom: 2px solid var(--rand); text-align: left; }
+.bh-inst-comptabel tbody tr { border-bottom: 1px solid var(--rand-licht); }
+.bh-inst-compsub { font-size: 11px; color: var(--grijs); font-weight: 400; }
+.bh-inst-groepchip {
+  display: inline-block; background: var(--grijs-bg); border: 1px solid var(--rand);
+  border-radius: 5px; padding: 3px 9px; margin: 2px; font-size: 12px;
+}
+.bh-inst-voetnoot { font-size: 12px; color: var(--grijs); margin-top: 10px; }
+
+/* Posten & bezetting (de kaarten bouwt de JS in instellingen.php) */
+.bh-post { border: 1px solid var(--rand); border-radius: 10px; padding: 14px; margin-bottom: 12px; background: var(--bg); }
+.bh-post-kop { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+.bh-post-rol { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; flex-wrap: wrap; }
+.bh-post input.bh-post-icoon { width: 48px; text-align: center; padding: 6px; border: 1px solid var(--rand); border-radius: 5px; font-size: 15px; }
+.bh-post input.bh-post-naam { flex: 1; min-width: 150px; padding: 7px 10px; border: 1px solid var(--rand); border-radius: 5px; font-weight: 600; font-size: 14px; }
+.bh-post-regel { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--tekst-zacht); }
+.bh-post input.bh-post-rolnaam { flex: 2; min-width: 130px; padding: 6px 8px; border: 1px solid var(--rand); border-radius: 5px; font-size: 13px; }
+.bh-post select.bh-post-categorie { flex: 1; min-width: 110px; padding: 6px; border: 1px solid var(--rand); border-radius: 5px; font-size: 13px; }
+.bh-post select.bh-post-rang { flex: 2; min-width: 150px; padding: 6px; border: 1px solid var(--rand); border-radius: 5px; font-size: 13px; }
+.bh-post input.bh-post-aantal { width: 60px; padding: 6px; border: 1px solid var(--rand); border-radius: 5px; font-size: 13px; }
+.ds-btn.bh-post-weg { min-width: 36px; }
+.bh-post-opslaan { margin-top: 18px; display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* Bewaren */
+.ds-melding.bh-inst-bewaaruitleg { margin-bottom: 16px; }
+.ds-veld.bh-inst-hoofdschakel { margin-bottom: 18px; }
+.ds-veld.bh-inst-hoofdschakel > label { display: flex; align-items: center; gap: 9px; font-weight: 500; cursor: pointer; }
+.bh-inst-hoofdschakel input[type=checkbox] { width: auto; }
+.ds-kaart.bh-inst-logkaart { margin-top: 14px; }
+.bh-opschoontabel { width: 100%; font-size: 13px; border-collapse: collapse; }
+.bh-opschoontabel thead tr { text-align: left; border-bottom: 1px solid var(--rand); }
+.bh-opschoontabel tbody tr { border-bottom: 1px solid var(--rand-licht); }
+.bh-opschoon-datum { padding: 6px 0; }
+.bh-opschoon-aantal { text-align: right; }
+.bh-cron { border-top: 1px solid var(--rand); padding-top: 18px; margin-top: 24px; }
+.bh-cron-kop { font-size: 14px; color: var(--navy); margin-bottom: 10px; }
+.bh-cronregel {
+  background: var(--grijs-bg); border: 1px solid var(--rand); border-radius: 6px; padding: 12px;
+  font-family: monospace; font-size: 12px; word-break: break-all; margin-bottom: 10px;
+}
+.bh-cron-wachtrijblok { margin-bottom: 8px; }
+.bh-cron-wachtrij { font-size: 12px; font-weight: 600; color: var(--tekst-zacht); margin-bottom: 4px; }
+
+/* SMTP — twee kolommen, op een telefoon één (net als de oude div[style*=…]-regel in stijl.css) */
+.bh-smtpraster { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.bh-smtpraster-breed { grid-column: 1 / -1; }
+.bh-smtp-voet { margin-top: 16px; }
+.bh-inst-testnaar { flex: 1; min-width: 220px; }
+@media (max-width: 768px) { .bh-smtpraster { grid-template-columns: 1fr; } }
+
+/* Website & API */
+.bh-inst-sleutelrij { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+input.bh-inst-sleutel { flex: 1; min-width: 280px; font-family: monospace; font-size: 12px; background: var(--bg); }
+.bh-inst-geensleutel { font-size: 13px; color: var(--oranje); margin: 0 0 10px; }
+.bh-inst-veldkop { display: block; font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+textarea.bh-inst-origins { width: 100%; font-family: monospace; font-size: 12px; }
+.bh-api-voet { margin-top: 10px; }
+.bh-inst-pluginblok { margin-top: 20px; padding: 14px; background: var(--bg); border: 1px solid var(--rand); border-radius: 10px; }
+.bh-inst-pluginblok-kop { font-weight: 600; font-size: 13px; margin-bottom: 6px; }
+.bh-inst-plugintabel { font-size: 12.5px; width: 100%; }
+
+/* SMS, WhatsApp & meldingen */
+.bh-inst-kanaalschakel { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 15px; margin-bottom: 12px; }
+.bh-inst-kanaalschakel.bh-inst-kanaalschakel-10 { margin-bottom: 10px; }
+select.bh-sms-gateway { width: 100%; max-width: 360px; margin-bottom: 6px; }
+.bh-sms-afzenderveld { margin-bottom: 10px; }
+input.bh-sms-afzender { width: 100%; max-width: 200px; }
+.bh-sms-plekhouders { font-size: 11px; color: var(--tekst-zacht); margin: 2px 0 8px; }
+.bh-sms-httprij { display: flex; gap: 10px; flex-wrap: wrap; }
+select.bh-sms-methode { width: 100px; }
+.bh-sms-token { flex: 1; min-width: 180px; }
+.bh-wa-risico {
+  padding: 10px 14px; background: var(--oranje-bg); border: 1px solid var(--oranje); border-radius: 8px;
+  font-size: 12.5px; color: var(--oranje); margin-bottom: 12px;
+}
+input.bh-wa-baseurl { margin-bottom: 8px; }
+.bh-wa-nummeruitleg { font-size: 12px; color: var(--ink-muted); margin: 6px 0 0; }
+.bh-meldkanaal-kop { font-weight: 600; font-size: 15px; margin-bottom: 6px; }
+.bh-meldkanaal-groep {
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--grijs); margin: 12px 0 4px;
+}
+.bh-meldkanaaltabel { width: 100%; border-collapse: collapse; font-size: 13px; }
+.bh-meldkanaaltabel tr { border-bottom: 1px solid var(--rand); }
+.bh-meldkanaaltabel td { padding: 7px 8px; }
+.bh-meldkanaal-naam { color: inherit; text-decoration: none; }
+.bh-meldkanaaltabel .bh-meldkanaal-keuze { width: 220px; text-align: right; }
+.bh-meldkanaal-keuze select { font-size: 12px; padding: 5px 8px; width: 200px; }
+.bh-testbericht { background: var(--bg); border: 1px solid var(--rand); border-radius: 10px; padding: 16px; margin-top: 16px; }
+.bh-testbericht-form { display: flex; gap: 8px; flex-wrap: wrap; align-items: end; }
+input.bh-testbericht-nummer { width: 160px; }
+input.bh-testbericht-email { width: 220px; }
+select.bh-testbericht-kanaal { width: 120px; }
+
+/* ── Loonplanning (admin/loonplanning.php; .lt/.totb/.budget-* staan in de <style> van dat scherm) ── */
+.bh-lp-scenariorij { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.bh-lp-scenariolabel { font-size: 12px; font-weight: 600; color: var(--tekst-zacht); }
+.bh-lp-dupliceer { display: flex; gap: 8px; margin-top: 10px; align-items: center; flex-wrap: wrap; }
+input.bh-lp-dupnaam { flex: 1; min-width: 200px; padding: 7px 10px; border: 1px solid var(--rand); border-radius: 6px; font-size: 13px; }
+.bh-kaartbody.bh-lp-leeg { text-align: center; color: var(--tekst-zacht); padding: 40px; }
+/* Signalen-kaart: ook door de JS van het scherm opnieuw opgebouwd */
+.ds-kaart.bh-signalen { margin-bottom: 12px; border-left: 4px solid var(--oranje); }
+.bh-signalen-kop { font-size: 13.5px; font-weight: 600; margin-bottom: 6px; }
+.bh-signalen-uitleg { font-size: 12px; color: var(--tekst-zacht); margin-bottom: 8px; }
+.bh-signalen-lijst { margin: 0; padding-left: 18px; font-size: 12.5px; line-height: 1.7; }
+.bh-lp-uitleg { font-size: 12.5px; color: var(--tekst-zacht); margin-bottom: 10px; }
+.bh-lp-tabelrol {
+  overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%;
+  border-radius: var(--radius-lg); border: 1px solid var(--rand);
+}
+.bh-lp-weekdatum { font-weight: 400; font-size: 10px; opacity: .8; }
+.lt th.bh-lp-totaalkop { min-width: 80px; }
+.bh-lp-opnemen { margin-bottom: 2px; }
+.bh-lp-nb { color: var(--grijs); font-size: 14px; }
+.lt td.bh-lp-persoontotaal { text-align: center; font-weight: 600; }
+.lt td.bh-lp-dekuitleg { font-weight: 400; font-size: 10px; }
+.lt td.bh-lp-weekkosten { font-size: 11px; }
+.bh-lp-loontabel { margin-top: 14px; }
+.bh-lp-loontabel > summary { cursor: pointer; font-size: 13px; color: var(--tekst-zacht); }
+.bh-lp-loontabel > .ds-kaart { margin-top: 8px; overflow-x: auto; }
+.bh-lp-loontabel table { font-size: 11px; border-collapse: collapse; width: 100%; }
+.bh-lp-loontabel thead tr { background: var(--grijs-bg); }
+.bh-lp-loontabel thead tr:first-child th { padding: 6px; }
+.bh-lp-loontabel th.bh-lp-loontabel-leeftijd { text-align: left; }
+.bh-lp-loontabel-periodes { font-size: 10px; }
+.bh-lp-loontabel-periodes th + th { padding: 3px; }
+.bh-lp-loontabel td { padding: 5px 6px; text-align: right; }
+.bh-lp-loontabel td.bh-lp-loontabel-jr { font-weight: 600; text-align: start; }
+.bh-lp-totlabel { font-size: 11px; color: var(--tekst-zacht); }
+.bh-lp-totgetal { font-size: 19px; font-weight: 700; }
+.bh-lp-budget { flex: 1; min-width: 200px; }
+.bh-lp-budgetregel { display: flex; justify-content: space-between; font-size: 11px; color: var(--tekst-zacht); margin-bottom: 3px; }
+.bh-lp-restant { font-weight: 600; }
+/* Breedte komt als --w uit PHP en uit de JS (werkBij); de kleur zegt ok / krap / over. */
+.bh-lp-budget .budget-vul { width: var(--w, 0%); }
+.budget-vul.bh-budget-ok   { background: var(--groen); }
+.budget-vul.bh-budget-krap { background: var(--oranje); }
+.budget-vul.bh-budget-over { background: var(--rood); }
+.bh-lp-geenbudget { font-size: 12px; color: var(--tekst-zacht); }
+
+/* ── Gedeelde bouwstenen met een waarde uit data ──
+   De waarde komt als custom property uit PHP (style="--w: 42%" / "--h: 30px");
+   zonder die property blijft alles zoals het was (auto). */
+.bh-scorebalk-vul { width: var(--w, auto); }
+.bh-skelet-regel  { width: var(--w, auto); }
+.pg-tr-vul        { width: var(--w, auto); }
+.bh-stand-staaf   { height: var(--h, auto); }
+.bh-dekstaaf-vul  { height: var(--h, auto); }
+/* Editor (admin/_editor.php): hoogte per plek. display:none op de textarea blijft inline,
+   want assets/js/editor.js wisselt de weergave met style.display. */
+.p13-evis  { min-height: var(--h, auto); }
+.p13-ehtml { min-height: var(--h, 80px); }
+
+/* ── Losse kaart midden op de pagina (niet gevonden, geen rechten) ── */
+.ds-kaart.bh-losse-kaart { max-width: 520px; margin: 48px auto; padding: 8px; }
+.bh-leeg.bh-leeg-kaal { border: none; }
+.bh-meta.bh-leeg-voetnoot { margin-top: 4px; }
+
+/* ── Selectiedag: bellijst, nabespreking ── */
+.bh-bel-alledoor { margin-left: auto; }
+.bh-observaties.bh-bel-observaties { margin-top: 8px; }
+.ds-melding.bh-bel-gebeld { width: 100%; }
+.bh-scorebalken.bh-scorebalken-los { margin-top: 0; }
+
+/* ── Dossier (admin/dossier/_tab_*.php) ── */
+.bh-meta.bh-dossier-besluitregel { margin-top: 10px; }
+.bh-dossier-tekst.bh-dossier-besluittekst { margin-top: 10px; }
+.bh-meta.bh-dossier-voetregel { display: block; margin-top: 8px; }
+button.bh-kaartkop-linkknop { background: none; border: none; cursor: pointer; font-family: inherit; }
+.bh-notitie-nieuw.bh-comp-koppelrij { margin-top: 6px; }
+.bh-dossier-motivatie.bh-dossier-motivatie-eerst { margin-top: 0; padding-top: 0; border: none; }
+
+/* ── Tijdlijn in het oude zijpaneel (JS in admin/layout_bottom.php) ── */
+.bh-tijdlijn-leeg { font-size: 12px; color: var(--grijs); padding: 6px 0; font-style: italic; }
+.bh-tijdlijn { position: relative; padding-left: 14px; border-left: 2px solid var(--rand); }
+.bh-tijdlijn-item { position: relative; margin-bottom: 12px; padding-left: 10px; }
+.bh-tijdlijn-icoon {
+  position: absolute; left: -22px; top: 0; font-size: 13px;
+  background: var(--bg-card); padding: 0 2px; color: var(--navy);
+}
+.bh-tijdlijn-titel { font-size: 12.5px; font-weight: 500; }
+.bh-tijdlijn-inhoud { font-size: 11.5px; color: var(--tekst-zacht); margin-top: 1px; }
+.bh-tijdlijn-wanneer { font-size: 10.5px; color: var(--grijs); margin-top: 2px; }
+
+/* ── Beschikbaarheid bewerken (admin/beschikbaarheid_bewerken.php) ── */
+.bh-bb { max-width: 820px; margin: 0 auto; }
+.bh-bb-kop { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; flex-wrap: wrap; }
+.bh-bb-naam { margin: 0; font-size: 22px; }
+.bh-bb-sub { font-size: 13px; color: var(--tekst-zacht); }
+.bh-bb-intro { color: var(--tekst-zacht); font-size: 13.5px; margin: 0 0 18px; }
+.bh-bb-uitleg { font-size: 13px; color: var(--tekst-zacht); margin: 0 0 14px; }
+.bh-bb-waarschuwing { padding: 14px 16px; background: var(--oranje-bg); border: 1px solid var(--oranje); border-radius: 10px; font-size: 13.5px; }
+.bh-bb-tabs { display: flex; gap: 4px; border-bottom: 2px solid var(--rand); margin-bottom: 18px; }
+.bh-bb-tab { padding: 10px 18px; border: none; background: none; font-size: 14px; font-weight: 500; cursor: pointer; color: var(--tekst-zacht); }
+.bh-bb-tab.bb-tab-actief { font-weight: 600; border-bottom: 2px solid var(--navy); margin-bottom: -2px; color: var(--navy); }
+.bh-bb-maand { font-weight: 600; font-size: 14px; margin: 16px 0 8px; color: var(--navy); }
+.bh-bb-dagen { display: flex; flex-wrap: wrap; gap: 6px; }
+.bh-bb-dag {
+  width: 64px; padding: 6px 4px; border-radius: 8px; text-align: center; cursor: pointer; user-select: none;
+  border: 2px solid transparent;
+}
+.bh-bb-dag-ja  { background: var(--groen-bg); }
+.bh-bb-dag-nee { background: var(--rood-bg); }
+.bh-bb-dag.bh-bb-dag-bestuur { border-color: var(--navy); }
+.bh-bb-dag-wd { font-size: 10px; color: var(--tekst-zacht); }
+.bh-bb-dag-datum { font-size: 15px; font-weight: 600; }
+.bh-bb-dag-icoon { font-size: 13px; }
+.bh-bb-pop {
+  position: fixed; z-index: 100; background: var(--surface); border: 1px solid var(--rand); border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0,0,0,.15); padding: 16px; width: 260px;
+}
+.bh-bb-pop-datum { font-weight: 600; margin-bottom: 10px; }
+.bh-bb-pop-acties { display: flex; flex-direction: column; gap: 8px; }
+.ds-btn.bh-bb-pop-knop { justify-content: flex-start; }
+input.bh-bb-pop-reden { width: 100%; font-size: 13px; }
+.btn.bh-bb-herstel { background: none; color: var(--tekst-zacht); border: 1px solid var(--rand); }
+.bh-bb-pop-sluit {
+  position: absolute; top: 8px; right: 10px; border: none; background: none;
+  font-size: 16px; cursor: pointer; color: var(--grijs);
+}
+.bh-bb-blokken { background: var(--surface); border: 1px solid var(--rand); border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+.bh-bb-blokkop { font-weight: 600; font-size: 14px; margin-bottom: 10px; }
+.bh-bb-blokrij { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+.bh-bb-wk { font-size: 12px; color: var(--tekst-zacht); }
+input.bh-bb-week { width: 70px; }
+select.bh-bb-regime { min-width: 150px; }
+.bh-bb-export { margin-top: 24px; }
+
+/* ── Sjablonen (admin/mail_templates.php; .tmpl-*, .veld-label staan in de <style> van dat scherm) ── */
+.bh-mt-zijform { margin-top: 10px; background: var(--surface); border-radius: var(--radius); border: 1px solid var(--rand); padding: 12px; }
+input.bh-mt-zijveld { width: 100%; font-size: 12px; padding: 6px 8px; margin-bottom: 6px; }
+input.bh-mt-zijveld.bh-mt-zijveld-url { font-size: 11px; margin-bottom: 5px; }
+.ds-btn.bh-mt-zijknop { width: 100%; justify-content: center; }
+.bh-mt-zijhint { font-size: 10px; color: var(--grijs); margin-top: 6px; }
+.bh-mt-zijhint.bh-mt-zijhint-boven { margin-top: 0; margin-bottom: 6px; }
+.bh-kaartkop.bh-mt-kop { align-items: flex-start; }
+.bh-mt-beschrijving { font-size: 12px; color: var(--tekst-zacht); margin-top: 2px; }
+.bh-mt-typeregel { font-size: 11px; color: var(--grijs); margin-top: 4px; }
+.bh-mt-nietindb { color: var(--oranje); }
+.bh-mt-kanaal { display: flex; gap: 6px; align-items: center; margin: 0; }
+.bh-mt-kanaal-label { font-size: 12px; color: var(--tekst-zacht); }
+select.bh-mt-kanaal-keuze { font-size: 12px; padding: 5px 8px; }
+/* Hoger dan de regel die een body direct onder een kaartkop 14px boven geeft. */
+.ds-kaart:not(.ds-kaart-p) > .bh-kaartbody.bh-mt-body { padding: 0; }
+.ds-kaart:not(.ds-kaart-p) > .bh-kaartbody.bh-mt-varbody { padding: 12px 14px; }
+.bh-mt-breed { grid-column: 1 / -1; }
+.bh-mt-kleurrij { display: flex; gap: 6px; align-items: center; }
+.bh-mt-kleurkiezer { width: 42px; height: 36px; border: 1px solid var(--rand); border-radius: 6px; padding: 2px; }
+.tmpl-velden input.bh-mt-kleurcode { flex: 1; font-family: monospace; }
+.bh-mt-heroregel { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.bh-mt-herobestand { flex: 1; min-width: 200px; }
+.bh-mt-herourl { flex: 2; min-width: 200px; }
+.bh-mt-sectie { padding: 14px 16px 0; }
+.bh-mt-tweekolom { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 768px) { .bh-mt-tweekolom { grid-template-columns: 1fr; } }
+.bh-mt-teller { font-weight: 400; text-transform: none; }
+textarea.bh-mt-tekstvak { width: 100%; font-size: 13px; padding: 8px 11px; }
+.bh-mt-hulp { font-size: 11px; color: var(--tekst-zacht); margin-top: 3px; }
+.bh-mt-bijlage { display: flex; align-items: center; gap: 8px; font-size: 13px; margin: 4px 0; }
+.bh-mt-bijlage-hint { color: var(--grijs); font-size: 11px; }
+.bh-mt-voet { padding: 12px 16px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.bh-mt-bijgewerkt { font-size: 11px; color: var(--grijs); }
+.bh-mt-gevaarrij { padding: 0 16px 14px; display: flex; gap: 8px; }
+.bh-mt-varuitleg { font-size: 12px; color: var(--tekst-zacht); margin-bottom: 8px; }
+.bh-mt-vargroep { margin-bottom: 10px; }
+.bh-mt-opmaak { margin-top: 12px; border-top: 1px solid var(--rand); padding-top: 10px; font-size: 11px; color: var(--tekst-zacht); }
+
+/* ── Logboek (admin/logboek.php) ── */
+.notitie-box.bh-lb-notitie { margin-bottom: 14px; }
+.bh-lb-bronuitleg { font-size: 12.5px; color: var(--tekst-zacht); margin: -6px 0 14px; }
+input.bh-lb-filter, select.bh-lb-filter { font-size: 12px; padding: 5px 9px; border-radius: 6px; }
+input.bh-lb-wie { width: 190px; }
+select.bh-lb-keuze { width: auto; }
+select.bh-lb-actie { max-width: 230px; }
+.bh-lb-periode { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--tekst-zacht); }
+input.bh-lb-datum { font-size: 12px; padding: 4px 7px; border-radius: 6px; }
+.bh-lb-wis { font-size: 12px; color: var(--oranje); }
+.data-tabel td.bh-lb-wanneer { white-space: nowrap; color: var(--tekst-zacht); }
+.bh-lb-klein { font-size: 11px; color: var(--grijs); }
+.bh-lb-ip { font-family: monospace; }
+.bh-lb-actie-regel { display: inline-flex; align-items: center; gap: 6px; }
+.data-tabel td.bh-lb-details { color: var(--tekst-zacht); font-size: 12px; max-width: 340px; }
+.bh-lb-paginering { display: flex; gap: 8px; align-items: center; justify-content: center; margin-top: 16px; font-size: 13px; }
+.bh-lb-paginatekst { color: var(--tekst-zacht); }
+
+/* ── BLK-detail (admin/blk_detail.php) ── */
+.bh-blk-gegevens { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.bh-blk-gegeven { font-size: 13px; }
+.bh-blk-weken { display: flex; flex-wrap: wrap; gap: 4px; }
+.bh-blk-weken.bh-blk-weken-ruim { gap: 5px; }
+.badge.bh-blk-weekbadge { font-size: 12px; }
+hr.bh-blk-scheiding { border: none; border-top: 1px solid var(--rand); margin: 12px 0; }
+.bh-blk-labelnoot { font-weight: 400; color: var(--tekst-zacht); }
+.bh-blk-aiinvoer { background: var(--grijs-bg); border: 1px solid var(--rand); border-radius: 8px; padding: 8px 10px; margin-bottom: 6px; }
+.bh-blk-aiinvoer-meta { font-size: 11px; color: var(--tekst-zacht); margin-bottom: 3px; }
+.bh-blk-aiinvoer-tekst { font-size: 13px; white-space: pre-wrap; }
+.bh-blk-overig { display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: start; }
+.bh-blk-voetnoot { font-size: 11px; color: var(--grijs); margin-top: 8px; }
+.bh-blk-aikop { display: flex; align-items: center; gap: 10px; }
+.bh-blk-aipil { font-size: 11px; color: var(--grijs); background: var(--grijs-bg); padding: 2px 7px; border-radius: 10px; }
+.bh-aikader.bh-blk-aitekst { border-radius: 8px; padding: 16px; line-height: 1.8; font-size: 14px; color: var(--tekst); }
+.bh-blk-oranjelink { color: var(--oranje); }
+.bh-blk-geenanalyse { text-align: center; padding: 20px; }
+.bh-blk-geenanalyse-tekst { margin-bottom: 12px; }
+.bh-blk-bezig { color: var(--grijs); font-size: 13px; margin-top: 8px; }
+.bh-blk-wijziging { padding: 11px 16px; border-bottom: 1px solid var(--rand); }
+.bh-blk-wijziging-kop { display: flex; justify-content: space-between; margin-bottom: 5px; }
+.bh-blk-wijziging-reden { font-size: 13px; }
+.bh-blk-wijziging-wanneer { font-size: 12px; color: var(--grijs); }
+.bh-blk-wijziging-veld { font-size: 12px; background: var(--grijs-bg); border-radius: 5px; padding: 5px 9px; margin-bottom: 3px; }
+.bh-blk-oud { color: var(--rood); text-decoration: line-through; margin: 0 4px; }
+.bh-blk-nieuw { color: var(--groen); margin-left: 4px; }
+
+/* ── Bouwstenen-proefpagina (admin/bouwstenen.php) ── */
+.ds-melding.bh-bs-intro { margin-bottom: 20px; }
+.ds-kaart.bh-bs-rij { display: flex; gap: 8px; flex-wrap: wrap; }
+.ds-kaart.bh-bs-midden { align-items: center; }
+.ds-kaart.bh-bs-stoplichten { gap: 20px; }
+.ds-kaart.bh-bs-avatars { gap: 14px; }
+.ds-kaart.bh-bs-knoppen { gap: 10px; }
+.ds-kaart.bh-bs-stapel { display: flex; flex-direction: column; gap: 10px; }
+.ds-kaart.bh-bs-stapel-ruim { gap: 14px; }
+.bh-bs-lengterij { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.bh-meta.bh-bs-lengtelabel { width: 42px; }
+.bh-bs-voortgang { max-width: 320px; }
+.ds-kaart.bh-bs-leegkaart { padding: 16px; margin-top: 12px; }
+.bh-bs-weekcellen { display: grid; grid-template-columns: var(--bh-tracks); }
+.bh-meta.bh-bs-noot { margin-top: 10px; }
+.bh-bs-knopregel { margin-top: 12px; }
+.ds-kaart.bh-bs-laden { padding: 8px 0; }
+.bh-bs-voetruimte { height: 40px; }
+
+/* ── Import (admin/import.php) ── */
+.bh-imp-uitleg { font-size: 13px; color: var(--tekst-zacht); line-height: 2; padding-left: 18px; margin-bottom: 0; }
+.ds-btn.bh-imp-annuleer { margin-left: 8px; }
+.bh-imp-fouten { margin-bottom: 14px; }
+.bh-imp-foutenkop { font-size: 12px; font-weight: 600; color: var(--error); margin-bottom: 6px; }
+.bh-imp-resultaten { max-height: 300px; overflow-y: auto; }
+.bh-imp-detail { color: var(--tekst-zacht); font-size: 12px; }
+.bh-imp-voet { margin-top: 16px; display: flex; gap: 8px; }
+
+/* ── Database updates (admin/update.php) ── */
+.bh-upd-aantal { font-size: 12px; color: var(--tekst-zacht); }
+.bh-upd-klaar { background: var(--groen-bg); color: var(--ok); }
+.bh-upd-open  { background: var(--oranje-bg); color: var(--fase-oranje); }
+.bh-upd-stand { font-size: 11px; }
+.bh-upd-stand-klaar { color: var(--ok); }
+.bh-upd-stand-open  { color: var(--fase-oranje); }
+.bh-upd-tekst { font-size: 13px; color: var(--tekst-zacht); }
+.bh-upd-voet { margin-top: 14px; }

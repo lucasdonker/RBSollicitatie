@@ -46,7 +46,7 @@ $url = function (array $anders = [], string $naar = 'logboek.php') use ($f, $pag
 require __DIR__ . '/layout_top.php';
 ?>
 
-<div class="notitie-box" style="margin-bottom:14px">
+<div class="notitie-box bh-lb-notitie">
   <?= icoon('slot', 14) ?>
   Dit overzicht laat zien wie wat wanneer deed, inclusief inzage in persoonsgegevens. Gebruik het om
   een melding te herleiden of verantwoording af te leggen — niet om mensen te volgen. Regels worden
@@ -69,12 +69,12 @@ require __DIR__ . '/layout_top.php';
 </div>
 
 <?php if ($f['bron'] !== '' && isset($bronnen[$f['bron']])): ?>
-<p style="font-size:12.5px;color:var(--tekst-zacht);margin:-6px 0 14px"><?= h($bronnen[$f['bron']]['uitleg']) ?></p>
+<p class="bh-lb-bronuitleg"><?= h($bronnen[$f['bron']]['uitleg']) ?></p>
 <?php endif; ?>
 
 <!-- Filters -->
 <div class="ds-kaart">
-  <div class="bh-kaartbody" style="padding:12px 16px">
+  <div class="bh-kaartbody bh-kaartbody-compact">
     <form method="get" class="filter-balk" role="search" aria-label="Logboek doorzoeken">
       <?php if ($f['bron'] !== ''): ?><input type="hidden" name="bron" value="<?= h($f['bron']) ?>"><?php endif; ?>
 
@@ -88,10 +88,10 @@ require __DIR__ . '/layout_top.php';
 
       <label for="lbWie" class="sr-only">Wie</label>
       <input type="text" id="lbWie" name="wie" value="<?= h($f['wie']) ?>" placeholder="Wie (naam, e-mail of id)"
-             style="width:190px;font-size:12px;padding:5px 9px;border-radius:6px">
+             class="bh-lb-filter bh-lb-wie">
 
       <label for="lbActie" class="sr-only">Actie</label>
-      <select id="lbActie" name="actie" style="width:auto;max-width:230px;font-size:12px;padding:5px 9px;border-radius:6px">
+      <select id="lbActie" name="actie" class="bh-lb-filter bh-lb-keuze bh-lb-actie">
         <option value="">Alle acties</option>
         <?php foreach ($acties as $a): ?>
         <option value="<?= h($a) ?>" <?= $f['actie'] === $a ? 'selected' : '' ?>><?= h(log_actie_label($a)) ?></option>
@@ -99,18 +99,18 @@ require __DIR__ . '/layout_top.php';
       </select>
 
       <label for="lbErnst" class="sr-only">Ernst</label>
-      <select id="lbErnst" name="ernst" style="width:auto;font-size:12px;padding:5px 9px;border-radius:6px">
+      <select id="lbErnst" name="ernst" class="bh-lb-filter bh-lb-keuze">
         <option value="">Alles</option>
         <?php foreach (log_ernsten() as $sleutel => $label): ?>
         <option value="<?= h($sleutel) ?>" <?= $f['ernst'] === $sleutel ? 'selected' : '' ?>><?= h($label) ?></option>
         <?php endforeach; ?>
       </select>
 
-      <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--tekst-zacht)">
+      <span class="bh-lb-periode">
         <label for="lbVan">Van</label>
-        <input type="date" id="lbVan" name="van" value="<?= h($f['van']) ?>" style="font-size:12px;padding:4px 7px;border-radius:6px">
+        <input type="date" id="lbVan" name="van" value="<?= h($f['van']) ?>" class="bh-lb-datum">
         <label for="lbTot">tot</label>
-        <input type="date" id="lbTot" name="tot" value="<?= h($f['tot']) ?>" style="font-size:12px;padding:4px 7px;border-radius:6px">
+        <input type="date" id="lbTot" name="tot" value="<?= h($f['tot']) ?>" class="bh-lb-datum">
       </span>
 
       <?php if ($f['objecttype'] !== '' || $f['object_id'] > 0): ?>
@@ -122,10 +122,10 @@ require __DIR__ . '/layout_top.php';
       <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm">Filter</button>
       <?php if ($heeft_filter): ?>
         <a href="<?= h($url(['wie' => '', 'actie' => '', 'object' => '', 'object_id' => '', 'van' => '', 'tot' => '', 'ernst' => '', 'zoek' => '', 'p' => 1])) ?>"
-           style="font-size:12px;color:var(--oranje)">Wis filters</a>
+           class="bh-lb-wis">Wis filters</a>
       <?php endif; ?>
 
-      <span style="flex:1"></span>
+      <span class="bh-vulling"></span>
       <a class="ds-btn ds-btn-secundair ds-btn-sm" href="<?= h($url(['p' => ''], 'logboek_export.php')) ?>">
         <?= icoon('download', 14) ?> Export (CSV)
       </a>
@@ -165,10 +165,10 @@ require __DIR__ . '/layout_top.php';
             $details   = log_details_regels($r['details'] ?? null);
         ?>
           <tr>
-            <td data-label="Wanneer" style="white-space:nowrap;color:var(--tekst-zacht)">
+            <td data-label="Wanneer" class="bh-lb-wanneer">
               <?= h(log_moment_tekst($r['moment'] ?? null)) ?>
               <?php if ($f['bron'] === '' && $bron): ?>
-                <br><span style="font-size:11px;color:var(--grijs)"><?= h($bron['label']) ?></span>
+                <br><span class="bh-lb-klein"><?= h($bron['label']) ?></span>
               <?php endif; ?>
             </td>
 
@@ -181,12 +181,12 @@ require __DIR__ . '/layout_top.php';
                 </span>
               <?php endif; ?>
               <?php if (!empty($r['ip'])): ?>
-                <br><span style="font-size:11px;color:var(--grijs);font-family:monospace"><?= h($r['ip']) ?></span>
+                <br><span class="bh-lb-klein bh-lb-ip"><?= h($r['ip']) ?></span>
               <?php endif; ?>
             </td>
 
             <td data-label="Wat">
-              <span style="display:inline-flex;align-items:center;gap:6px">
+              <span class="bh-lb-actie-regel">
                 <?= icoon(log_actie_icoon($r['actie'] ?? null), 15) ?>
                 <?= h(log_actie_label($r['actie'] ?? null)) ?>
               </span>
@@ -198,15 +198,15 @@ require __DIR__ . '/layout_top.php';
             <td data-label="Waar">
               <?php if ($object !== ''): ?>
                 <a href="<?= h($url(['object' => (string)$r['objecttype'], 'object_id' => (int)($r['object_id'] ?? 0), 'p' => 1])) ?>"
-                   style="color:var(--navy);text-decoration:none" title="Alles van dit object tonen"><?= h($object) ?></a>
+                   class="bh-link-navy" title="Alles van dit object tonen"><?= h($object) ?></a>
               <?php else: ?>
-                <span style="color:var(--grijs)">—</span>
+                <span class="bh-tekst-grijs">—</span>
               <?php endif; ?>
             </td>
 
-            <td data-label="Details" style="color:var(--tekst-zacht);font-size:12px;max-width:340px">
+            <td data-label="Details" class="bh-lb-details">
               <?php if (!$details): ?>
-                <span style="color:var(--grijs)">—</span>
+                <span class="bh-tekst-grijs">—</span>
               <?php else: ?>
                 <?= implode('<br>', array_map('h', $details)) ?>
               <?php endif; ?>
@@ -221,11 +221,11 @@ require __DIR__ . '/layout_top.php';
 
 <!-- Paginering -->
 <?php if ($max_pagina > 1): ?>
-<div style="display:flex;gap:8px;align-items:center;justify-content:center;margin-top:16px;font-size:13px">
+<div class="bh-lb-paginering">
   <?php if ($pagina > 1): ?>
     <a href="<?= h($url(['p' => $pagina - 1])) ?>" class="ds-btn ds-btn-secundair ds-btn-sm">&larr; Vorige</a>
   <?php endif; ?>
-  <span style="color:var(--tekst-zacht)">
+  <span class="bh-lb-paginatekst">
     Pagina <?= (int)$pagina ?> van <?= (int)$max_pagina ?> &middot; <?= number_format($totaal, 0, ',', '.') ?> gebeurtenissen
   </span>
   <?php if ($pagina < $max_pagina): ?>

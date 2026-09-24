@@ -57,7 +57,7 @@ $_zin   = bh_dekking_zin($_knel);
              . ' — ' . $_d['aantal'] . ' beschikbaar, ' . $_d['weekend'] . ' in het weekend'
              . ($_d['telt'] === 'weekend' ? ' · alleen weekend bemand' : '');
       $_cel  = '<span class="bh-dekstaaf-getal">' . (int)$_d['waarde'] . '</span>'
-             . '<span class="bh-dekstaaf-bak"><span class="bh-dekstaaf-vul" style="height:' . $_h . '%"></span></span>'
+             . '<span class="bh-dekstaaf-bak"><span class="bh-dekstaaf-vul" style="--h: ' . $_h . '%"></span></span>'
              . '<span class="bh-dekstaaf-wk">W' . (int)$_wn . '</span>';
       $_cls  = 'bh-dekstaaf bh-dekstaaf-' . $_d['stand'];
     ?>

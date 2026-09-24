@@ -114,35 +114,33 @@ $maanden_nl = [1=>'januari',2=>'februari',3=>'maart',4=>'april',5=>'mei',6=>'jun
 require __DIR__ . '/layout_top.php';
 ?>
 
-<div style="max-width:820px;margin:0 auto">
-  <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px;flex-wrap:wrap">
-    <h2 style="margin:0;font-size:22px"><?= h($naam) ?></h2>
-    <span style="font-size:13px;color:var(--tekst-zacht)">beschikbaarheid<?php
+<div class="bh-bb">
+  <div class="bh-bb-kop">
+    <h2 class="bh-bb-naam"><?= h($naam) ?></h2>
+    <span class="bh-bb-sub">beschikbaarheid<?php
       // Het seizoen staat er alleen bij als de query het meegaf; de naam is een extraatje,
       // geen reden om het scherm te laten struikelen.
       if (!empty($sol['seizoen_naam'])) echo ' · seizoen ' . h((string)$sol['seizoen_naam']);
     ?></span>
   </div>
-  <p style="color:var(--tekst-zacht);font-size:13.5px;margin:0 0 18px">
+  <p class="bh-bb-intro">
     Aanpassingen die je hier maakt worden de nieuwe waarheid — ook in het eigen overzicht van de sollicitant (met melding).
     Elke wijziging wordt vastgelegd (wie en wanneer).
   </p>
 
   <?php if (!$heeft_periode): ?>
-    <div style="padding:14px 16px;background:var(--oranje-bg);border:1px solid var(--oranje);border-radius:10px;font-size:13.5px">
+    <div class="bh-bb-waarschuwing">
       Voor dit seizoen zijn nog geen werk-start/eind-datums ingesteld. Stel die eerst in bij
       <a href="<?= APP_URL ?>/admin/seizoen.php">Seizoen</a>, dan kun je hier per dag werken.
     </div>
   <?php endif; ?>
 
   <!-- Tabs -->
-  <div style="display:flex;gap:4px;border-bottom:2px solid var(--rand);margin-bottom:18px" role="tablist">
-    <button type="button" class="bb-tab bb-tab-actief" data-tab="perdag" onclick="bbTab('perdag')"
-            style="padding:10px 18px;border:none;background:none;font-size:14px;font-weight:600;cursor:pointer;border-bottom:2px solid var(--navy);margin-bottom:-2px;color:var(--navy)">
+  <div class="bh-bb-tabs" role="tablist">
+    <button type="button" class="bb-tab bh-bb-tab bb-tab-actief" data-tab="perdag" onclick="bbTab('perdag')">
       Per dag
     </button>
-    <button type="button" class="bb-tab" data-tab="formulier" onclick="bbTab('formulier')"
-            style="padding:10px 18px;border:none;background:none;font-size:14px;font-weight:500;cursor:pointer;color:var(--tekst-zacht)">
+    <button type="button" class="bb-tab bh-bb-tab" data-tab="formulier" onclick="bbTab('formulier')">
       Formulier (portaal-stijl)
     </button>
   </div>
@@ -150,9 +148,9 @@ require __DIR__ . '/layout_top.php';
   <!-- ══ TAB 1: PER DAG ══ -->
   <div id="bb-perdag" class="bb-paneel">
     <?php if ($heeft_periode): ?>
-    <p style="font-size:13px;color:var(--tekst-zacht);margin:0 0 14px">
-      Klik op een dag om de status om te zetten. <span style="color:var(--groen)">Groen = beschikbaar</span>,
-      <span style="color:var(--rood)">rood = niet</span>. Een <strong>blauw randje</strong> betekent: door het bestuur aangepast.
+    <p class="bh-bb-uitleg">
+      Klik op een dag om de status om te zetten. <span class="bh-tekst-ok">Groen = beschikbaar</span>,
+      <span class="bh-tekst-fout">rood = niet</span>. Een <strong>blauw randje</strong> betekent: door het bestuur aangepast.
     </p>
 
     <?php
@@ -166,53 +164,50 @@ require __DIR__ . '/layout_top.php';
         if ($maand !== $huidige_maand):
             if ($huidige_maand !== null) echo '</div>';
             $huidige_maand = $maand; ?>
-            <div style="font-weight:600;font-size:14px;margin:16px 0 8px;color:var(--navy)"><?= h(ucfirst($maanden_nl[$maand])) ?> <?= h(date('Y', $ts)) ?></div>
-            <div style="display:flex;flex-wrap:wrap;gap:6px">
+            <div class="bh-bb-maand"><?= h(ucfirst($maanden_nl[$maand])) ?> <?= h(date('Y', $ts)) ?></div>
+            <div class="bh-bb-dagen">
         <?php endif; ?>
-        <div class="bb-dag" data-datum="<?= h($datum) ?>" data-beschikbaar="<?= $info['beschikbaar'] ? '1' : '0' ?>"
+        <div class="bb-dag bh-bb-dag <?= $info['beschikbaar'] ? 'bh-bb-dag-ja' : 'bh-bb-dag-nee' ?><?= $is_bestuur ? ' bh-bb-dag-bestuur' : '' ?>" data-datum="<?= h($datum) ?>" data-beschikbaar="<?= $info['beschikbaar'] ? '1' : '0' ?>"
              data-bestuur="<?= $is_bestuur ? '1' : '0' ?>"
-             onclick="bbDagKlik(this)"
-             style="width:64px;padding:6px 4px;border-radius:8px;text-align:center;cursor:pointer;user-select:none;
-                    background:<?= $info['beschikbaar'] ? 'var(--groen-bg)' : 'var(--rood-bg)' ?>;
-                    border:2px solid <?= $is_bestuur ? 'var(--navy)' : 'transparent' ?>">
-          <div style="font-size:10px;color:var(--tekst-zacht)"><?= h($dagen_nl[$weekdag]) ?></div>
-          <div style="font-size:15px;font-weight:600"><?= h(date('d-m', $ts)) ?></div>
-          <div style="font-size:13px"><?= icoon($info['beschikbaar'] ? 'vink' : 'kruis', 14) ?></div>
+             onclick="bbDagKlik(this)">
+          <div class="bh-bb-dag-wd"><?= h($dagen_nl[$weekdag]) ?></div>
+          <div class="bh-bb-dag-datum"><?= h(date('d-m', $ts)) ?></div>
+          <div class="bh-bb-dag-icoon"><?= icoon($info['beschikbaar'] ? 'vink' : 'kruis', 14) ?></div>
         </div>
     <?php endforeach; ?>
     <?php if ($huidige_maand !== null) echo '</div>'; ?>
 
     <!-- Verborgen formulieren voor de per-dag acties -->
-    <form method="post" id="bbDagForm" style="display:none">
+    <form method="post" id="bbDagForm" hidden>
       <?= csrf_input() ?>
       <input type="hidden" name="actie" value="dag_zet">
       <input type="hidden" name="datum" id="bbDagDatum">
       <input type="hidden" name="soort" id="bbDagSoort">
       <input type="hidden" name="reden" id="bbDagReden">
     </form>
-    <form method="post" id="bbHerstelForm" style="display:none">
+    <form method="post" id="bbHerstelForm" hidden>
       <?= csrf_input() ?>
       <input type="hidden" name="actie" value="dag_herstel">
       <input type="hidden" name="datum" id="bbHerstelDatum">
     </form>
 
     <!-- Popover voor een dag (verschijnt bij klik) -->
-    <div id="bbDagPopover" style="display:none;position:fixed;z-index:100;background:var(--surface);border:1px solid var(--rand);border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.15);padding:16px;width:260px">
-      <div id="bbPopDatum" style="font-weight:600;margin-bottom:10px"></div>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="bbZet('beschikbaar')" style="justify-content:flex-start"><?= icoon('vink', 14) ?> Beschikbaar maken</button>
-        <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="bbZet('niet_beschikbaar')" style="justify-content:flex-start"><?= icoon('kruis', 14) ?> Niet beschikbaar maken</button>
-        <input type="text" id="bbPopReden" placeholder="reden (optioneel)" style="width:100%;font-size:13px">
-        <button type="button" class="btn btn-sm" id="bbHerstelKnop" onclick="bbHerstel()" style="display:none;background:none;color:var(--tekst-zacht);border:1px solid var(--rand)">↩ Aanpassing terugdraaien</button>
+    <div id="bbDagPopover" class="bh-bb-pop" hidden>
+      <div id="bbPopDatum" class="bh-bb-pop-datum"></div>
+      <div class="bh-bb-pop-acties">
+        <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm bh-bb-pop-knop" onclick="bbZet('beschikbaar')"><?= icoon('vink', 14) ?> Beschikbaar maken</button>
+        <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm bh-bb-pop-knop" onclick="bbZet('niet_beschikbaar')"><?= icoon('kruis', 14) ?> Niet beschikbaar maken</button>
+        <input type="text" id="bbPopReden" placeholder="reden (optioneel)" class="bh-bb-pop-reden">
+        <button type="button" class="btn btn-sm bh-bb-herstel" id="bbHerstelKnop" onclick="bbHerstel()" hidden>↩ Aanpassing terugdraaien</button>
       </div>
-      <button type="button" onclick="bbSluitPop()" style="position:absolute;top:8px;right:10px;border:none;background:none;font-size:16px;cursor:pointer;color:var(--grijs)"><?= icoon('kruis', 14) ?></button>
+      <button type="button" onclick="bbSluitPop()" class="bh-bb-pop-sluit"><?= icoon('kruis', 14) ?></button>
     </div>
     <?php endif; ?>
   </div>
 
   <!-- ══ TAB 2: FORMULIER (portaal-stijl) ══ -->
-  <div id="bb-formulier" class="bb-paneel" style="display:none">
-    <p style="font-size:13px;color:var(--tekst-zacht);margin:0 0 14px">
+  <div id="bb-formulier" class="bb-paneel" hidden>
+    <p class="bh-bb-uitleg">
       Vul de werkperiodes in namens de sollicitant, in dezelfde vorm als het portaal. Dit overschrijft
       de periode-invoer van de sollicitant. Voor losse dag-correcties gebruik je de tab "Per dag".
     </p>
@@ -230,29 +225,29 @@ require __DIR__ . '/layout_top.php';
     <form method="post" action="<?= APP_URL ?>/admin/beschikbaarheid_bewerken.php?id=<?= $id ?>">
       <?= csrf_input() ?>
       <input type="hidden" name="actie" value="formulier_opslaan">
-      <div style="background:var(--surface);border:1px solid var(--rand);border-radius:12px;padding:16px;margin-bottom:14px">
-        <div style="font-weight:600;font-size:14px;margin-bottom:10px">Werkperiodes</div>
+      <div class="bh-bb-blokken">
+        <div class="bh-bb-blokkop">Werkperiodes</div>
         <div id="bbBlokLijst">
           <?php if ($bb_blokken): foreach ($bb_blokken as $bi => $blok):
             $is_wknd = ($blok['regime'] ?? '') === 'weekend'; ?>
-          <div class="bb-blok-rij" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
-            <span style="font-size:12px;color:var(--tekst-zacht)">week</span>
-            <input type="number" name="bb_van[]" value="<?= (int)$blok['van_week'] ?>" min="1" max="53" style="width:70px" aria-label="Van week">
-            <span style="font-size:12px;color:var(--tekst-zacht)">t/m</span>
-            <input type="number" name="bb_tot[]" value="<?= (int)$blok['tot_week'] ?>" min="1" max="53" style="width:70px" aria-label="Tot week">
-            <select name="bb_regime[]" style="min-width:150px" aria-label="Regime">
+          <div class="bb-blok-rij bh-bb-blokrij">
+            <span class="bh-bb-wk">week</span>
+            <input type="number" name="bb_van[]" value="<?= (int)$blok['van_week'] ?>" min="1" max="53" class="bh-bb-week" aria-label="Van week">
+            <span class="bh-bb-wk">t/m</span>
+            <input type="number" name="bb_tot[]" value="<?= (int)$blok['tot_week'] ?>" min="1" max="53" class="bh-bb-week" aria-label="Tot week">
+            <select name="bb_regime[]" class="bh-bb-regime" aria-label="Regime">
               <option value="vijf" <?= !$is_wknd?'selected':'' ?>>hele weken</option>
               <option value="weekend" <?= $is_wknd?'selected':'' ?>>alleen weekenden</option>
             </select>
             <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="this.parentElement.remove()" aria-label="Verwijderen"><?= icoon('kruis', 14) ?></button>
           </div>
           <?php endforeach; else: ?>
-          <div class="bb-blok-rij" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
-            <span style="font-size:12px;color:var(--tekst-zacht)">week</span>
-            <input type="number" name="bb_van[]" value="<?= $wk_start ?>" min="1" max="53" style="width:70px" aria-label="Van week">
-            <span style="font-size:12px;color:var(--tekst-zacht)">t/m</span>
-            <input type="number" name="bb_tot[]" value="<?= $wk_eind ?>" min="1" max="53" style="width:70px" aria-label="Tot week">
-            <select name="bb_regime[]" style="min-width:150px" aria-label="Regime">
+          <div class="bb-blok-rij bh-bb-blokrij">
+            <span class="bh-bb-wk">week</span>
+            <input type="number" name="bb_van[]" value="<?= $wk_start ?>" min="1" max="53" class="bh-bb-week" aria-label="Van week">
+            <span class="bh-bb-wk">t/m</span>
+            <input type="number" name="bb_tot[]" value="<?= $wk_eind ?>" min="1" max="53" class="bh-bb-week" aria-label="Tot week">
+            <select name="bb_regime[]" class="bh-bb-regime" aria-label="Regime">
               <option value="vijf">hele weken</option>
               <option value="weekend">alleen weekenden</option>
             </select>
@@ -266,7 +261,7 @@ require __DIR__ . '/layout_top.php';
     </form>
   </div>
 
-  <div style="margin-top:24px">
+  <div class="bh-bb-export">
     <a href="<?= APP_URL ?>/admin/export_dagbeschikbaarheid.php?id=<?= $id ?>" target="_blank" class="ds-btn ds-btn-secundair ds-btn-sm">
       Bekijk de dag-export (API-check)
     </a>
@@ -275,13 +270,10 @@ require __DIR__ . '/layout_top.php';
 
 <script>
 function bbTab(naam) {
-  document.querySelectorAll('.bb-paneel').forEach(p => p.style.display = 'none');
-  document.getElementById('bb-' + naam).style.display = '';
+  document.querySelectorAll('.bb-paneel').forEach(p => p.hidden = true);
+  document.getElementById('bb-' + naam).hidden = false;
   document.querySelectorAll('.bb-tab').forEach(t => {
-    const actief = t.dataset.tab === naam;
-    t.style.borderBottom = actief ? '2px solid var(--navy)' : 'none';
-    t.style.color = actief ? 'var(--navy)' : 'var(--tekst-zacht)';
-    t.style.fontWeight = actief ? '600' : '500';
+    t.classList.toggle('bb-tab-actief', t.dataset.tab === naam);
   });
 }
 
@@ -293,17 +285,17 @@ function bbDagKlik(el) {
   document.getElementById('bbPopReden').value = '';
   // Toon herstel-knop alleen als deze dag door bestuur is aangepast (blauw randje)
   const isBestuur = el.style.borderColor && el.style.borderColor !== 'transparent' && getComputedStyle(el).borderColor !== 'rgba(0, 0, 0, 0)';
-  document.getElementById('bbHerstelKnop').style.display = el.getAttribute('data-bestuur') === '1' ? '' : 'none';
+  document.getElementById('bbHerstelKnop').hidden = el.getAttribute('data-bestuur') !== '1';
   // Positioneer de popover bij de dag
   const r = el.getBoundingClientRect();
-  pop.style.display = 'block';
+  pop.hidden = false;
   let top = r.bottom + 8, left = r.left;
   if (left + 260 > window.innerWidth) left = window.innerWidth - 270;
   if (top + 200 > window.innerHeight) top = r.top - 200;
   pop.style.top = top + 'px';
   pop.style.left = left + 'px';
 }
-function bbSluitPop() { document.getElementById('bbDagPopover').style.display = 'none'; }
+function bbSluitPop() { document.getElementById('bbDagPopover').hidden = true; }
 function bbZet(soort) {
   if (!bbHuidigeDatum) return;
   document.getElementById('bbDagDatum').value = bbHuidigeDatum;
@@ -319,7 +311,7 @@ function bbHerstel() {
 // Klik buiten de popover sluit 'm
 document.addEventListener('click', function(e) {
   const pop = document.getElementById('bbDagPopover');
-  if (pop && pop.style.display === 'block' && !pop.contains(e.target) && !e.target.closest('.bb-dag')) {
+  if (pop && !pop.hidden && !pop.contains(e.target) && !e.target.closest('.bb-dag')) {
     bbSluitPop();
   }
 });
@@ -328,13 +320,12 @@ if (location.hash === '#formulier') bbTab('formulier');
 
 function bbBlokToevoegen() {
   const div = document.createElement('div');
-  div.className = 'bb-blok-rij';
-  div.style.cssText = 'display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px';
-  div.innerHTML = '<span style="font-size:12px;color:var(--tekst-zacht)">week</span>' +
-    '<input type="number" name="bb_van[]" min="1" max="53" style="width:70px" aria-label="Van week">' +
-    '<span style="font-size:12px;color:var(--tekst-zacht)">t/m</span>' +
-    '<input type="number" name="bb_tot[]" min="1" max="53" style="width:70px" aria-label="Tot week">' +
-    '<select name="bb_regime[]" style="min-width:150px" aria-label="Regime"><option value="vijf">hele weken</option><option value="weekend">alleen weekenden</option></select>' +
+  div.className = 'bb-blok-rij bh-bb-blokrij';
+  div.innerHTML = '<span class="bh-bb-wk">week</span>' +
+    '<input type="number" name="bb_van[]" min="1" max="53" class="bh-bb-week" aria-label="Van week">' +
+    '<span class="bh-bb-wk">t/m</span>' +
+    '<input type="number" name="bb_tot[]" min="1" max="53" class="bh-bb-week" aria-label="Tot week">' +
+    '<select name="bb_regime[]" class="bh-bb-regime" aria-label="Regime"><option value="vijf">hele weken</option><option value="weekend">alleen weekenden</option></select>' +
     '<button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="this.parentElement.remove()" aria-label="Verwijderen"><?= icoon('kruis', 14) ?></button>';
   document.getElementById('bbBlokLijst').appendChild(div);
 }

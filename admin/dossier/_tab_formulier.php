@@ -81,7 +81,7 @@ $_veld = function (string $label, ?string $waarde, string $toon = '') {
 
   <section class="ds-kaart ds-kaart-p">
     <div class="bh-kaartkop"><h2>Motivatie</h2></div>
-    <div class="bh-dossier-motivatie" style="margin-top:0;padding-top:0;border:none">
+    <div class="bh-dossier-motivatie bh-dossier-motivatie-eerst">
       <span class="bh-veldlabel">Waarom strandwacht?</span>
       <p class="bh-dossier-tekst"><?= nl2br(h(trim((string)($_blk['motivatie_lifeguard'] ?? '')) ?: 'Niet ingevuld')) ?></p>
     </div>

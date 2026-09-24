@@ -102,7 +102,7 @@ $_mag_bewerken = mag('ondertekeningen', 'bewerken');
         automatisch mee met de uitnodiging; lukt dat niet, dan kun je hem hier kopiëren
         en zelf sturen.
       </p>
-      <p class="bh-dossier-tekst" style="margin-top:10px">
+      <p class="bh-dossier-tekst bh-dossier-besluittekst">
         Elk ondertekend document wordt verzegeld opgeslagen en is daarna niet meer te
         wijzigen. Wie wat wanneer opende staat in het logboek.
       </p>

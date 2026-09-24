@@ -655,20 +655,20 @@ function laadTimeline(solId) {
       const box = document.getElementById('timeline-' + solId);
       if (!box) return;
       if (!data.ok || !data.events.length) {
-        box.innerHTML = '<div style="font-size:12px;color:var(--grijs);padding:6px 0;font-style:italic">Nog geen activiteit.</div>';
+        box.innerHTML = '<div class="bh-tijdlijn-leeg">Nog geen activiteit.</div>';
         return;
       }
-      box.innerHTML = '<div class="timeline-lijn" style="position:relative;padding-left:14px;border-left:2px solid var(--rand)">'
+      box.innerHTML = '<div class="timeline-lijn bh-tijdlijn">'
         + data.events.map(e => {
             // Tekst altijd escapen (namen en titels komen uit de database); het icoon
             // is een SVG die de server zelf maakt met icoon().
             const esc = s => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
             return `
-              <div class="timeline-event" style="position:relative;margin-bottom:12px;padding-left:10px">
-                <span style="position:absolute;left:-22px;top:0;font-size:13px;background:var(--bg-card);padding:0 2px;color:var(--navy)">${e.icon || ''}</span>
-                <div style="font-size:12.5px;font-weight:500">${esc(e.titel)}</div>
-                <div style="font-size:11.5px;color:var(--tekst-zacht);margin-top:1px">${esc(e.inhoud)}</div>
-                <div style="font-size:10.5px;color:var(--grijs);margin-top:2px">${formatDatum(e.tijd)} · ${esc(e.door)}</div>
+              <div class="timeline-event bh-tijdlijn-item">
+                <span class="bh-tijdlijn-icoon">${e.icon || ''}</span>
+                <div class="bh-tijdlijn-titel">${esc(e.titel)}</div>
+                <div class="bh-tijdlijn-inhoud">${esc(e.inhoud)}</div>
+                <div class="bh-tijdlijn-wanneer">${formatDatum(e.tijd)} · ${esc(e.door)}</div>
               </div>`;
           }).join('') + '</div>';
     })

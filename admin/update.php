@@ -86,20 +86,20 @@ require __DIR__ . '/layout_top.php';
 </div>
 
 <div class="ds-kaart">
-  <div class="bh-kaartkop"><h2>Database migraties</h2><span style="font-size:12px;color:var(--tekst-zacht)"><?=count($pending)?> pending</span></div>
+  <div class="bh-kaartkop"><h2>Database migraties</h2><span class="bh-upd-aantal"><?=count($pending)?> pending</span></div>
   <div class="bh-kaartbody">
 <?php foreach($bestanden as $bf): preg_match('/migratie_(\d+)_(.+)\.sql$/',basename($bf),$mx); $v=$mx[1]??'?'; $ok=in_array($v,$gedaan)||in_array($v.':', array_map(fn($s)=>explode(':',$s)[0].':',$uitgevoerd)); ?>
     <div class="upd-mig-rij">
-      <span class="upd-nr" style="background:<?=$ok?'var(--groen-bg)':'var(--oranje-bg)'?>;color:<?=$ok?'var(--ok)':'var(--fase-oranje)'?>"><?=$v?></span>
-      <span style="flex:1"><?=htmlspecialchars(str_replace('_',' ',$mx[2]??''))?></span>
-      <span style="font-size:11px;color:<?=$ok?'var(--ok)':'var(--fase-oranje)'?>"><?= $ok ? 'Klaar' : 'Nog uit te voeren' ?></span>
+      <span class="upd-nr <?= $ok ? 'bh-upd-klaar' : 'bh-upd-open' ?>"><?=$v?></span>
+      <span class="bh-vulling"><?=htmlspecialchars(str_replace('_',' ',$mx[2]??''))?></span>
+      <span class="bh-upd-stand <?= $ok ? 'bh-upd-stand-klaar' : 'bh-upd-stand-open' ?>"><?= $ok ? 'Klaar' : 'Nog uit te voeren' ?></span>
     </div>
-<?php endforeach; if(empty($bestanden)): ?><p style="font-size:13px;color:var(--tekst-zacht)">Geen migratiebestanden gevonden in sql/</p><?php endif; ?>
+<?php endforeach; if(empty($bestanden)): ?><p class="bh-upd-tekst">Geen migratiebestanden gevonden in sql/</p><?php endif; ?>
   </div>
 </div>
 
 <?php if(!empty($pending)): ?>
-<form method="POST" style="margin-top:14px"
+<form method="POST" class="bh-upd-voet"
       data-bevestig-titel="<?= count($pending) ?> <?= count($pending) === 1 ? 'migratie' : 'migraties' ?> uitvoeren?"
       data-bevestig="Deze wijzigen de structuur van de database. Maak eerst een back-up als die er nog niet is; terugdraaien kan alleen vanaf een back-up."
       data-bevestig-knop="Ja, uitvoeren">
@@ -109,7 +109,7 @@ require __DIR__ . '/layout_top.php';
   </button>
 </form>
 <?php else: ?>
-<div style="margin-top:14px;color:var(--tekst-zacht);font-size:13px">Alles is bijgewerkt.</div>
+<div class="bh-upd-voet bh-upd-tekst">Alles is bijgewerkt.</div>
 <?php endif; ?>
 
 </div>

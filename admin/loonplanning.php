@@ -129,28 +129,28 @@ require __DIR__ . '/layout_top.php';
 
 <!-- Scenario's -->
 <div class="ds-kaart">
-  <div class="bh-kaartbody" style="padding:12px 16px">
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <span style="font-size:12px;font-weight:600;color:var(--tekst-zacht)">Scenario:</span>
+  <div class="bh-kaartbody bh-kaartbody-compact">
+    <div class="bh-lp-scenariorij">
+      <span class="bh-lp-scenariolabel">Scenario:</span>
       <?php foreach ($scenarios as $sc): ?>
         <a href="?scenario=<?= (int)$sc['id'] ?>" class="sc-tab <?= (int)$sc['id']===$scenario_id?'actief':'' ?>">
           <?= h($sc['naam']) ?><?php if (!empty($sc['actief'])): ?> <?= icoon('ster', 13) ?> <span class="bh-meta">Actief</span><?php endif; ?>
         </a>
       <?php endforeach; ?>
-      <span style="flex:1"></span>
+      <span class="bh-vulling"></span>
       <a href="<?= APP_URL ?>/admin/export_beschikbaarheid.php?scenario=<?= $scenario_id ?>"
          class="ds-btn ds-btn-secundair ds-btn-sm" title="Exporteer dit scenario als CSV">CSV</a>
       <?php if ($mag_bewerken): ?>
-      <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="document.getElementById('dupForm').style.display='flex'">+ Dupliceren</button>
+      <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="document.getElementById('dupForm').hidden=false">+ Dupliceren</button>
       <?php $huidig_actief = false; foreach ($scenarios as $sc) if ((int)$sc['id']===$scenario_id && !empty($sc['actief'])) $huidig_actief = true; ?>
       <?php if (!$huidig_actief && $scenario_id): ?>
-      <form method="POST" style="margin:0">
+      <form method="POST">
         <?= csrf_input() ?>
         <input type="hidden" name="sc_actie" value="activeer">
         <input type="hidden" name="scenario_id" value="<?= $scenario_id ?>">
         <button type="submit" class="ds-btn ds-btn-primair ds-btn-sm"><?= icoon('ster', 14) ?> Maak actief</button>
       </form>
-      <form method="POST" style="margin:0" data-bevestig-titel="Scenario verwijderen?"
+      <form method="POST" data-bevestig-titel="Scenario verwijderen?"
             data-bevestig="Alle ingeplande dagen in dit scenario verdwijnen mee. De beschikbaarheid van de sollicitanten blijft ongemoeid."
             data-bevestig-knop="Ja, verwijderen" data-bevestig-gevaar="1">
         <?= csrf_input() ?>
@@ -162,37 +162,37 @@ require __DIR__ . '/layout_top.php';
       <?php endif; /* $mag_bewerken */ ?>
     </div>
     <?php if ($mag_bewerken): ?>
-    <form method="POST" id="dupForm" style="display:none;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap">
+    <form method="POST" id="dupForm" class="bh-lp-dupliceer" hidden>
       <?= csrf_input() ?>
       <input type="hidden" name="sc_actie" value="dupliceer">
       <input type="hidden" name="bron_id" value="<?= $scenario_id ?>">
       <input type="text" name="naam" placeholder="Naam van het nieuwe scenario" required
-             style="flex:1;min-width:200px;padding:7px 10px;border:1px solid var(--rand);border-radius:6px;font-size:13px">
+             class="bh-lp-dupnaam">
       <button type="submit" class="ds-btn ds-btn-primair ds-btn-sm">Dupliceren</button>
-      <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="this.closest('form').style.display='none'">Annuleren</button>
+      <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="this.closest('form').hidden=true">Annuleren</button>
     </form>
     <?php endif; ?>
   </div>
 </div>
 
 <?php if (empty($analyse['mensen'])): ?>
-  <div class="ds-kaart"><div class="bh-kaartbody" style="text-align:center;color:var(--tekst-zacht);padding:40px">
+  <div class="ds-kaart"><div class="bh-kaartbody bh-lp-leeg">
     Nog niemand met beschikbaarheid dit seizoen — er valt nog niets te plannen.
   </div></div>
 <?php else: ?>
 
 <div id="signaalBox">
 <?php if ($analyse['signalen']): ?>
-  <div class="ds-kaart" style="margin-bottom:12px;border-left:4px solid var(--oranje)">
-    <div class="bh-kaartbody" style="padding:12px 16px">
-      <div style="font-size:13.5px;font-weight:600;margin-bottom:6px">Signalen (<?= count($analyse['signalen']) ?>)</div>
-      <div style="font-size:12px;color:var(--tekst-zacht);margin-bottom:8px">Aandachtspunten, geen blokkades — jij beslist.</div>
-      <ul style="margin:0;padding-left:18px;font-size:12.5px;line-height:1.7">
+  <div class="ds-kaart bh-signalen">
+    <div class="bh-kaartbody bh-kaartbody-compact">
+      <div class="bh-signalen-kop">Signalen (<?= count($analyse['signalen']) ?>)</div>
+      <div class="bh-signalen-uitleg">Aandachtspunten, geen blokkades — jij beslist.</div>
+      <ul class="bh-signalen-lijst">
         <?php foreach (array_slice($analyse['signalen'], 0, 12) as $s): ?>
         <li><?= h($s['tekst']) ?></li>
         <?php endforeach; ?>
         <?php if (count($analyse['signalen']) > 12): ?>
-        <li style="color:var(--grijs)">… en <?= count($analyse['signalen']) - 12 ?> meer</li>
+        <li class="bh-tekst-grijs">… en <?= count($analyse['signalen']) - 12 ?> meer</li>
         <?php endif; ?>
       </ul>
     </div>
@@ -201,7 +201,7 @@ require __DIR__ . '/layout_top.php';
 </div>
 
 <?php $alleen_lezen = $mag_bewerken ? '' : ' disabled'; ?>
-<p style="font-size:12.5px;color:var(--tekst-zacht);margin-bottom:10px">
+<p class="bh-lp-uitleg">
   <?php if (!$mag_bewerken): ?>
   Je bekijkt deze planning alleen. Dagen invullen of scenario's wijzigen vraagt bewerkrecht op Loonplanning.
   <?php else: ?>
@@ -210,7 +210,7 @@ require __DIR__ . '/layout_top.php';
   <?php endif; ?>
 </p>
 
-<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%;border-radius:var(--radius-lg);border:1px solid var(--rand)">
+<div class="bh-lp-tabelrol">
 <table class="lt">
   <thead>
     <tr>
@@ -218,17 +218,17 @@ require __DIR__ . '/layout_top.php';
       <th class="fth">Functie</th>
       <?php foreach ($weken_datums as $wn => $wd): $per = loonplan_periode($wn, $seizoen); ?>
       <th class="<?= $per==='jun'?'jun-brd':'jul-brd' ?>">
-        W<?= $wn ?><br><span style="font-weight:400;font-size:10px;opacity:.8"><?= h(datum_kort_nl($wd['start'])) ?></span>
+        W<?= $wn ?><br><span class="bh-lp-weekdatum"><?= h(datum_kort_nl($wd['start'])) ?></span>
       </th>
       <?php endforeach; ?>
-      <th style="min-width:80px">Totaal</th>
+      <th class="bh-lp-totaalkop">Totaal</th>
     </tr>
   </thead>
   <tbody>
     <?php foreach ($analyse['mensen'] as $sol_id => $m): ?>
     <tr>
       <td class="scol">
-        <a href="<?= APP_URL ?>/admin/sollicitanten.php?panel=<?= $sol_id ?>" style="color:var(--navy);text-decoration:none"><?= h($m['naam']) ?></a>
+        <a href="<?= APP_URL ?>/admin/sollicitanten.php?panel=<?= $sol_id ?>" class="bh-link-navy"><?= h($m['naam']) ?></a>
         <span class="kl"><?= (int)$m['leeftijd'] ?> jr</span>
       </td>
       <td class="fcol">
@@ -251,17 +251,17 @@ require __DIR__ . '/layout_top.php';
           title="<?= $beschikbaar ? 'Max ' . $max . ' dagen beschikbaar · €' . number_format($w['dagloon'],2,',','.') . '/dag' : 'Niet beschikbaar deze week' ?>">
         <?php if ($beschikbaar): ?>
           <input type="checkbox" <?= $opgen ? 'checked' : '' ?> id="c-<?= $sol_id ?>-<?= $wn ?>"
-                 onchange="celWijzig(<?= $sol_id ?>, <?= $wn ?>)" title="Opnemen in de planning" style="margin-bottom:2px"<?= $alleen_lezen ?>>
+                 onchange="celWijzig(<?= $sol_id ?>, <?= $wn ?>)" title="Opnemen in de planning" class="bh-lp-opnemen"<?= $alleen_lezen ?>>
           <br>
           <input type="number" class="di <?= $teveel?'waarschuw':'' ?>" min="0" max="7" value="<?= $dagen ?>"
                  id="d-<?= $sol_id ?>-<?= $wn ?>" onchange="celWijzig(<?= $sol_id ?>, <?= $wn ?>)" <?= ($opgen && $mag_bewerken) ? '' : 'disabled' ?>>
           <span class="kl" id="k-<?= $sol_id ?>-<?= $wn ?>"><?= $opgen && $w['kosten'] > 0 ? '€' . number_format($w['kosten'],0,',','.') : '' ?></span>
         <?php else: ?>
-          <span style="color:var(--grijs);font-size:14px">–</span>
+          <span class="bh-lp-nb">–</span>
         <?php endif; ?>
       </td>
       <?php endforeach; ?>
-      <td style="text-align:center;font-weight:600">
+      <td class="bh-lp-persoontotaal">
         <span id="pk-<?= $sol_id ?>">&euro;<?= number_format($m['totaal_kosten'],0,',','.') ?></span>
         <span class="kl" id="pd-<?= $sol_id ?>"><?= (int)$m['totaal_dagen'] ?> dgn</span>
       </td>
@@ -271,7 +271,7 @@ require __DIR__ . '/layout_top.php';
   <tfoot>
     <tr>
       <td class="scol">Dekking</td>
-      <td class="fcol" style="font-weight:400;font-size:10px">o.b.v. ingeplande mensen</td>
+      <td class="fcol bh-lp-dekuitleg">o.b.v. ingeplande mensen</td>
       <?php foreach ($weken_datums as $wn => $wd): $dk = $analyse['dekking'][$wn] ?? null; ?>
       <td id="dek-<?= $wn ?>" title="<?= $dk ? h(ucfirst($dk['status'])) . ' — ' . (int)$dk['ingezet'] . ' ingezet' : 'Niemand ingepland' ?>">
         <?= $dk
@@ -285,7 +285,7 @@ require __DIR__ . '/layout_top.php';
       <td class="scol">Kosten p/w</td>
       <td class="fcol"></td>
       <?php foreach ($weken_datums as $wn => $wd): $k = $analyse['per_week'][$wn]['kosten'] ?? 0; ?>
-      <td id="wk-<?= $wn ?>" style="font-size:11px"><?= $k > 0 ? '&euro;' . number_format($k,0,',','.') : '–' ?></td>
+      <td id="wk-<?= $wn ?>" class="bh-lp-weekkosten"><?= $k > 0 ? '&euro;' . number_format($k,0,',','.') : '–' ?></td>
       <?php endforeach; ?>
       <td id="totKostenCel">&euro;<?= number_format($analyse['totaal']['kosten'],0,',','.') ?></td>
     </tr>
@@ -293,30 +293,30 @@ require __DIR__ . '/layout_top.php';
 </table>
 </div>
 
-<details style="margin-top:14px">
-  <summary style="cursor:pointer;font-size:13px;color:var(--tekst-zacht)">Loontabel (dagloon per leeftijd &amp; functie)</summary>
-  <div class="ds-kaart" style="margin-top:8px;overflow-x:auto">
-    <table style="font-size:11px;border-collapse:collapse;width:100%">
+<details class="bh-lp-loontabel">
+  <summary>Loontabel (dagloon per leeftijd &amp; functie)</summary>
+  <div class="ds-kaart">
+    <table>
       <thead>
-        <tr style="background:var(--grijs-bg)">
-          <th style="padding:6px;text-align:left">Leeftijd</th>
-          <?php foreach ($functies as $f): ?><th style="padding:6px" colspan="2"><?= h($f['naam']) ?></th><?php endforeach; ?>
+        <tr>
+          <th class="bh-lp-loontabel-leeftijd">Leeftijd</th>
+          <?php foreach ($functies as $f): ?><th colspan="2"><?= h($f['naam']) ?></th><?php endforeach; ?>
         </tr>
-        <tr style="background:var(--grijs-bg);font-size:10px">
+        <tr class="bh-lp-loontabel-periodes">
           <th></th>
-          <?php foreach ($functies as $f): ?><th style="padding:3px">juni</th><th style="padding:3px">jul–sep</th><?php endforeach; ?>
+          <?php foreach ($functies as $f): ?><th>juni</th><th>jul–sep</th><?php endforeach; ?>
         </tr>
       </thead>
       <tbody>
         <?php for ($l = 15; $l <= 22; $l++): ?>
         <tr>
-          <td style="padding:5px 6px;font-weight:600"><?= $l ?> jr</td>
+          <td class="bh-lp-loontabel-jr"><?= $l ?> jr</td>
           <?php foreach ($functies as $f):
             $dj = bereken_dagloon($l, $f['sleutel'], 'jun');
             $dz = bereken_dagloon($l, $f['sleutel'], 'jul_sep');
           ?>
-          <td style="padding:5px 6px;text-align:right">&euro;<?= number_format($dj,2,',','.') ?></td>
-          <td style="padding:5px 6px;text-align:right">&euro;<?= number_format($dz,2,',','.') ?></td>
+          <td>&euro;<?= number_format($dj,2,',','.') ?></td>
+          <td>&euro;<?= number_format($dz,2,',','.') ?></td>
           <?php endforeach; ?>
         </tr>
         <?php endfor; ?>
@@ -329,34 +329,34 @@ require __DIR__ . '/layout_top.php';
 
 <div class="totb">
   <div>
-    <div style="font-size:11px;color:var(--tekst-zacht)">Totale loonkosten</div>
-    <div style="font-size:19px;font-weight:700" id="totKosten">&euro;<?= number_format($analyse['totaal']['kosten'],2,',','.') ?></div>
+    <div class="bh-lp-totlabel">Totale loonkosten</div>
+    <div class="bh-lp-totgetal" id="totKosten">&euro;<?= number_format($analyse['totaal']['kosten'],2,',','.') ?></div>
   </div>
   <div>
-    <div style="font-size:11px;color:var(--tekst-zacht)">Mandagen</div>
-    <div style="font-size:19px;font-weight:700" id="totDagen"><?= (int)$analyse['totaal']['dagen'] ?></div>
+    <div class="bh-lp-totlabel">Mandagen</div>
+    <div class="bh-lp-totgetal" id="totDagen"><?= (int)$analyse['totaal']['dagen'] ?></div>
   </div>
   <?php if ($budget > 0):
     $pct = min(100, ($analyse['totaal']['kosten'] / $budget) * 100);
     $over = !empty($analyse['totaal']['over_budget']);
   ?>
-  <div style="flex:1;min-width:200px">
-    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--tekst-zacht);margin-bottom:3px">
+  <div class="bh-lp-budget">
+    <div class="bh-lp-budgetregel">
       <span>Budget &euro;<?= number_format($budget,0,',','.') ?></span>
-      <span id="restantLabel" style="font-weight:600;color:<?= $over ? 'var(--rood)' : 'var(--groen)' ?>">
+      <span id="restantLabel" class="bh-lp-restant <?= $over ? 'bh-tekst-fout' : 'bh-tekst-ok' ?>">
         <?= $over
             ? 'Over budget: &euro;' . number_format(abs((float)$analyse['totaal']['restant']),0,',','.')
             : 'Restant: &euro;' . number_format((float)$analyse['totaal']['restant'],0,',','.') ?>
       </span>
     </div>
     <div class="budget-balk">
-      <div class="budget-vul" id="budgetVul"
-           style="width:<?= $pct ?>%;background:<?= $over ? 'var(--rood)' : ($pct > 85 ? 'var(--oranje)' : 'var(--groen)') ?>"></div>
+      <div class="budget-vul <?= $over ? 'bh-budget-over' : ($pct > 85 ? 'bh-budget-krap' : 'bh-budget-ok') ?>" id="budgetVul"
+           style="--w: <?= $pct ?>%"></div>
     </div>
   </div>
   <?php else: ?>
-  <div style="font-size:12px;color:var(--tekst-zacht)">
-    Geen budget ingesteld — <a href="<?= APP_URL ?>/admin/instellingen.php?tab=loon" style="color:var(--navy)">stel er een in</a> om de voortgang te volgen.
+  <div class="bh-lp-geenbudget">
+    Geen budget ingesteld — <a href="<?= APP_URL ?>/admin/instellingen.php?tab=loon" class="bh-link-navy">stel er een in</a> om de voortgang te volgen.
   </div>
   <?php endif; ?>
 </div>
@@ -415,15 +415,18 @@ function werkBij(d) {
     const pct = Math.min(100, (d.totaal.kosten / BUDGET) * 100);
     const vul = document.getElementById('budgetVul');
     if (vul) {
-      vul.style.width = pct + '%';
-      vul.style.background = d.totaal.over_budget ? 'var(--rood)' : (pct > 85 ? 'var(--oranje)' : 'var(--groen)');
+      vul.style.setProperty('--w', pct + '%');
+      vul.classList.toggle('bh-budget-over', !!d.totaal.over_budget);
+      vul.classList.toggle('bh-budget-krap', !d.totaal.over_budget && pct > 85);
+      vul.classList.toggle('bh-budget-ok', !d.totaal.over_budget && pct <= 85);
     }
     const lbl = document.getElementById('restantLabel');
     if (lbl) {
       lbl.textContent = d.totaal.over_budget
         ? 'Over budget: \u20ac' + fmt(Math.abs(d.totaal.restant), 0)
         : 'Restant: \u20ac' + fmt(d.totaal.restant, 0);
-      lbl.style.color = d.totaal.over_budget ? 'var(--rood)' : 'var(--groen)';
+      lbl.classList.toggle('bh-tekst-fout', !!d.totaal.over_budget);
+      lbl.classList.toggle('bh-tekst-ok', !d.totaal.over_budget);
     }
   }
 
@@ -456,12 +459,12 @@ function werkBij(d) {
   if (box) {
     if (d.signalen && d.signalen.length) {
       const items = d.signalen.slice(0, 12).map(s => '<li>' + esc(s.tekst) + '</li>').join('');
-      const meer = d.signalen.length > 12 ? '<li style="color:var(--grijs)">\u2026 en ' + (d.signalen.length - 12) + ' meer</li>' : '';
+      const meer = d.signalen.length > 12 ? '<li class="bh-tekst-grijs">\u2026 en ' + (d.signalen.length - 12) + ' meer</li>' : '';
       box.innerHTML =
-        '<div class="ds-kaart" style="margin-bottom:12px;border-left:4px solid var(--oranje)"><div class="bh-kaartbody" style="padding:12px 16px">' +
-        '<div style="font-size:13.5px;font-weight:600;margin-bottom:6px">Signalen (' + d.signalen.length + ')</div>' +
-        '<div style="font-size:12px;color:var(--tekst-zacht);margin-bottom:8px">Aandachtspunten, geen blokkades \u2014 jij beslist.</div>' +
-        '<ul style="margin:0;padding-left:18px;font-size:12.5px;line-height:1.7">' + items + meer + '</ul></div></div>';
+        '<div class="ds-kaart bh-signalen"><div class="bh-kaartbody bh-kaartbody-compact">' +
+        '<div class="bh-signalen-kop">Signalen (' + d.signalen.length + ')</div>' +
+        '<div class="bh-signalen-uitleg">Aandachtspunten, geen blokkades \u2014 jij beslist.</div>' +
+        '<ul class="bh-signalen-lijst">' + items + meer + '</ul></div></div>';
     } else {
       box.innerHTML = '';
     }

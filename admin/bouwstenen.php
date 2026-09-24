@@ -23,31 +23,31 @@ $_p = [
 ];
 ?>
 
-<div class="ds-melding ds-melding-info" style="margin-bottom:20px">
+<div class="ds-melding ds-melding-info bh-bs-intro">
   <?= icoon('info', 16) ?>
   <span>Dit is gereedschap, geen beheerscherm. Wijzig je een bouwsteen, controleer hem hier
         in beide modi en op telefoonbreedte.</span>
 </div>
 
 <div class="ds-sectie-titel">Statusbadge — acht fases</div>
-<div class="ds-kaart ds-kaart-p" style="display:flex;gap:8px;flex-wrap:wrap">
+<div class="ds-kaart ds-kaart-p bh-bs-rij">
   <?php foreach (fasen() as $_f => $_lbl): ?>
     <?= bh_fase_badge($_f) ?>
   <?php endforeach; ?>
 </div>
 
 <div class="ds-sectie-titel">Fasebadge — drie lengtes (vol · kort voor tabel · mini voor de knoppenrij)</div>
-<div class="ds-kaart ds-kaart-p" style="display:flex;flex-direction:column;gap:10px">
+<div class="ds-kaart ds-kaart-p bh-bs-stapel">
   <?php foreach (['vol', 'kort', 'mini'] as $_lg): ?>
-  <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
-    <span class="bh-meta" style="width:42px"><?= h($_lg) ?></span>
+  <div class="bh-bs-lengterij">
+    <span class="bh-meta bh-bs-lengtelabel"><?= h($_lg) ?></span>
     <?php foreach (array_keys(fasen()) as $_f): ?><?= bh_fase_badge($_f, ['lengte' => $_lg]) ?><?php endforeach; ?>
   </div>
   <?php endforeach; ?>
 </div>
 
 <div class="ds-sectie-titel">Statusbadge met stip · losse badge</div>
-<div class="ds-kaart ds-kaart-p" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+<div class="ds-kaart ds-kaart-p bh-bs-rij bh-bs-midden">
   <?= bh_fase_badge('selectiedag_geweest', ['stip' => true]) ?>
   <?= bh_badge('Eerder gesolliciteerd', 'paars') ?>
   <?= bh_badge('mail mislukt', 'rood', ['titel' => 'Adres bestaat niet']) ?>
@@ -55,14 +55,14 @@ $_p = [
 </div>
 
 <div class="ds-sectie-titel">Stoplicht — kleur mét woord</div>
-<div class="ds-kaart ds-kaart-p" style="display:flex;gap:20px;flex-wrap:wrap">
+<div class="ds-kaart ds-kaart-p bh-bs-rij bh-bs-stoplichten">
   <?= bh_stoplicht('goed', 'Gedekt met reserve') ?>
   <?= bh_stoplicht('krap', 'Precies genoeg') ?>
   <?= bh_stoplicht('slecht', 'Rol onvervulbaar') ?>
 </div>
 
 <div class="ds-sectie-titel">Avatar — foto, initialen, terugval</div>
-<div class="ds-kaart ds-kaart-p" style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+<div class="ds-kaart ds-kaart-p bh-bs-rij bh-bs-midden bh-bs-avatars">
   <?= bh_avatar($_p[0], 30) ?>
   <?= bh_avatar($_p[1], 38) ?>
   <?= bh_avatar($_p[0], 58) ?>
@@ -77,20 +77,20 @@ $_p = [
 </p>
 
 <div class="ds-sectie-titel">Chip · meta-regel · voortgang</div>
-<div class="ds-kaart ds-kaart-p" style="display:flex;flex-direction:column;gap:14px">
-  <div style="display:flex;gap:6px;flex-wrap:wrap">
+<div class="ds-kaart ds-kaart-p bh-bs-stapel bh-bs-stapel-ruim">
+  <div class="bh-chiprij">
     <?= bh_chip('Lifesaver 3') ?><?= bh_chip('EHBO') ?><?= bh_chip('Vaarbewijs 1') ?>
     <?= bh_chip('terugkerend', 'paars') ?>
   </div>
   <?= bh_meta(['19 jaar', 'Den Haag', 'sem.bakker@voorbeeld.nl', '06 12 34 56 78']) ?>
   <?= bh_meta(['17 jaar', '', 'Poeldijk', '']) ?>
-  <div style="max-width:320px"><?= bh_voortgang(5, 6) ?></div>
-  <div style="max-width:320px"><?= bh_voortgang(6, 6) ?></div>
-  <div style="max-width:320px"><?= bh_voortgang(0, 6) ?></div>
+  <div class="bh-bs-voortgang"><?= bh_voortgang(5, 6) ?></div>
+  <div class="bh-bs-voortgang"><?= bh_voortgang(6, 6) ?></div>
+  <div class="bh-bs-voortgang"><?= bh_voortgang(0, 6) ?></div>
 </div>
 
 <div class="ds-sectie-titel">Knoppen</div>
-<div class="ds-kaart ds-kaart-p" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+<div class="ds-kaart ds-kaart-p bh-bs-rij bh-bs-midden bh-bs-knoppen">
   <button class="ds-btn ds-btn-primair">Uitnodigen trainingsweekend</button>
   <button class="ds-btn ds-btn-secundair">Bericht</button>
   <button class="ds-btn ds-btn-zacht">Annuleren</button>
@@ -153,7 +153,7 @@ require __DIR__ . '/_tabel.php';
     require __DIR__ . '/_leeg.php';
   ?>
 </div>
-<div class="ds-kaart" style="padding:16px;margin-top:12px">
+<div class="ds-kaart bh-bs-leegkaart">
   <?php
     $leeg_titel = 'Nog geen aanmeldingen';
     $leeg_tekst = 'Zodra iemand zich via een wervingspagina aanmeldt, verschijnt hij hier.';
@@ -164,7 +164,7 @@ require __DIR__ . '/_tabel.php';
 <div class="ds-sectie-titel">Weekcel — vijf standen, klikbaar en niet-klikbaar</div>
 <div class="ds-kaart ds-kaart-p">
   <div class="bh-rastertabel" style="--bh-tracks:repeat(5,minmax(44px,84px))">
-    <div style="display:grid;grid-template-columns:var(--bh-tracks)">
+    <div class="bh-bs-weekcellen">
       <?= bh_weekcel('5',  'vol',       ['titel' => 'hele week']) ?>
       <?= bh_weekcel('wk', 'weekend',   ['titel' => 'alleen het weekend']) ?>
       <?= bh_weekcel('3',  'deels',     ['titel' => '3 van de 5 dagen']) ?>
@@ -172,11 +172,11 @@ require __DIR__ . '/_tabel.php';
       <?= bh_weekcel('—',  'leeg',      ['titel' => 'niet beschikbaar']) ?>
     </div>
   </div>
-  <p class="bh-meta" style="margin-top:10px">
+  <p class="bh-meta bh-bs-noot">
     <?= bh_weekcel('', 'vol') ?>Lege tekst geeft bewust niets: een gekleurd vlak zonder inhoud is
     voor een kleurenblinde gebruiker en voor een schermlezer geen mededeling.
   </p>
-  <p style="margin-top:12px">
+  <p class="bh-bs-knopregel">
     <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm"
             onclick="correctieOpen(1, 28, 'Jacob Donker')">Bewerkpaneel openen</button>
   </p>
@@ -202,18 +202,18 @@ require __DIR__ . '/_dekkinggrafiek.php';
 ?>
 
 <div class="ds-sectie-titel">Laadstaat — de vorm van wat komt</div>
-<div class="ds-kaart" style="padding:8px 0">
+<div class="ds-kaart bh-bs-laden">
   <?php $laden_rijen = 3; require __DIR__ . '/_laden.php'; ?>
 </div>
 
 <div class="ds-sectie-titel">Meldingen</div>
-<div class="ds-kaart ds-kaart-p" style="display:flex;flex-direction:column;gap:10px">
+<div class="ds-kaart ds-kaart-p bh-bs-stapel">
   <div class="ds-melding ds-melding-ok"><?= icoon('vink-cirkel', 16) ?><span>12 uitnodigingen verstuurd.</span></div>
   <div class="ds-melding ds-melding-warn"><?= icoon('waarschuwing', 16) ?><span>Twee berichten konden niet: adres bestaat niet.</span></div>
   <div class="ds-melding ds-melding-error"><?= icoon('kruis-cirkel', 16) ?><span>Beveiligde opslag niet bereikbaar — ref. STG-4471.</span></div>
   <div class="ds-melding ds-melding-info"><?= icoon('info', 16) ?><span>De afwijsmail staat uit; het bestuur belt zelf.</span></div>
 </div>
 
-<div style="height:40px"></div>
+<div class="bh-bs-voetruimte"></div>
 
 <?php require __DIR__ . '/layout_bottom.php'; ?>

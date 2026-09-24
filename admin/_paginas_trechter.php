@@ -48,7 +48,7 @@ $stap_labels = aanmeld_stappen_labels();
         </span>
       </div>
       <div class="pg-tr-balk">
-        <span class="pg-tr-vul<?= $laatste ? ' pg-tr-vul-eind' : '' ?>" style="width:<?= $breedte ?>%"></span>
+        <span class="pg-tr-vul<?= $laatste ? ' pg-tr-vul-eind' : '' ?>" style="--w: <?= $breedte ?>%"></span>
       </div>
       <?php if (!empty($t['verloop'])): ?>
       <p class="pg-tr-verloop"><?= (int)$t['verloop'] ?> gingen hier niet verder</p>

@@ -84,7 +84,7 @@ if (!$d) {
     $pagina_titel = 'Niet gevonden';
     $actieve_nav  = 'sollicitanten';
     require __DIR__ . '/layout_top.php';
-    echo '<div class="ds-kaart" style="max-width:520px;margin:48px auto;padding:8px">';
+    echo '<div class="ds-kaart bh-losse-kaart">';
     $leeg_titel = 'Deze sollicitant bestaat niet';
     $leeg_tekst = 'De link klopt niet meer, of het dossier is verwijderd.';
     $leeg_icoon = 'zoek';
