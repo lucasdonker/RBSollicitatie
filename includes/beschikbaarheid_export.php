@@ -38,7 +38,8 @@ function besch_export_boek(?array $seizoen, array $raster, array $filter, string
                 if ($info['beschikbaar'])                   $rij[] = 'ja';
                 elseif (($info['hardheid'] ?? '') === 'zacht') $rij[] = ['v' => 'liever niet', 's' => 'zacht'];
                 else                                        $rij[] = ['v' => 'nee', 's' => 'let'];
-                if (!$info['beschikbaar'] && ($info['reden'] ?? '') !== '' && ($info['reden'] ?? '') !== 'buiten werkperiode') {
+                // Hele weken die niet zijn opgegeven staan al in het raster; hier alleen de echte redenen.
+                if (!$info['beschikbaar'] && !in_array((string)($info['reden'] ?? ''), ['', 'week niet opgegeven', 'alleen weekend opgegeven'], true)) {
                     $redenen[] = [$p['naam'], ['v' => $dt, 's' => 'datum'], ($info['hardheid'] ?? '') === 'zacht' ? 'liever niet' : 'kan niet',
                                   (string)$info['reden'] . (!empty($info['door_bestuur']) ? ' (bestuur)' : '')];
                 }

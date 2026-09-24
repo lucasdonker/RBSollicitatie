@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.114.0');
+define('APP_VERSIE', '2.115.0');
 
 function app_changelog(): array {
     return [
+        '2.115.0' => [
+            'datum'  => '2026-09-24',
+            'titel'  => 'Rooster: per week de afspraak, per dag of iemand kan',
+            'punten' => [
+                'Nieuwe export voor het rooster (Excel of JSON): per persoon per week de afgesproken dagen, betaald ja/nee en de functie, met per dag of iemand kan, liever niet, of niet (met reden)',
+                'Signalen als het rooster een afspraak niet kan vullen (minder beschikbare dagen dan afgesproken) of als er meer is gepland dan opgegeven',
+                'Per-dag-beschikbaarheid houdt nu ook rekening met de weekcorrecties van het bestuur, en noemt de juiste reden ("alleen weekend opgegeven" in plaats van "buiten werkperiode")',
+            ],
+        ],
         '2.114.0' => [
             'datum'  => '2026-09-24',
             'titel'  => 'Beschikbaarheid: filters en export',
