@@ -121,7 +121,10 @@ contact met je op. Heb je het al aan de telefoon gezegd, dan staat het er vaak a
 
 Op de selectiedag en het trainingsweekend meld je jezelf bij aankomst aan op een tablet: je typt
 de eerste letters van je naam en tikt op jezelf (met je foto). Op de selectiedag zie je daarna in
-welke groep je zit.
+welke groep je zit. Heb je je gezondheidsverklaring of intakeformulier nog niet getekend, dan zegt
+de tablet dat, en krijg je meteen de link per mail en WhatsApp. Vul het dan direct in op je
+telefoon: zonder getekende gezondheidsverklaring ga je het water niet in. Tekent je ouder, dan
+krijgt die de link opnieuw.
 
 Aan het eind van het trainingsweekend heb je een gesprek met het bestuur. Daar hoor je of je bent
 aangenomen, en je krijgt het daarna nog eens per mail, met wat er besproken is. Ben je aangenomen,

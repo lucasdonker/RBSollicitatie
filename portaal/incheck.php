@@ -42,7 +42,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $toegang && $sid) {
     if ($actie === 'inchecken') {
         $sol_id = (int)($_POST['sol_id'] ?? 0);
         if (!evenement_is_kandidaat($ev, $sid, $sol_id)) { echo json_encode(['ok' => false]); exit; }
-        echo json_encode(['ok' => true] + evenement_inchecken($ev, $sid, $sol_id, true, 'tablet'));
+        $r = evenement_inchecken($ev, $sid, $sol_id, true, 'tablet');
+        // Nog iets te tekenen? Dan de link sturen en het op de tablet zeggen (alleen de naam van het formulier).
+        $f = evenement_formulieren_melden($sol_id);
+        echo json_encode(['ok' => true] + $r + ['formulieren' => $f['open'], 'formulieren_tekst' => $f['tekst']]);
         exit;
     }
     if ($actie === 'afsluiten') {
@@ -105,6 +108,13 @@ $logo  = function_exists('site_logo_url') ? (site_logo_url() ?: '') : '';
     <h2 data-klaar-naam></h2>
     <p data-klaar-tekst></p>
     <div class="pt-kiosk-groep" data-klaar-groep hidden></div>
+    <div class="pt-kiosk-letop" data-klaar-letop role="alert" hidden>
+      <?= icoon('waarschuwing', 22) ?>
+      <div>
+        <strong>Let op, nog niet getekend: <span data-letop-wat></span></strong>
+        <p data-letop-tekst></p>
+      </div>
+    </div>
     <button type="button" class="ds-btn ds-btn-primair pt-kiosk-volgende" data-volgende>Volgende persoon</button>
   </section>
 

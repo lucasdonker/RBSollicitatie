@@ -61,9 +61,17 @@
           : 'Je bent ingecheckt. Meld je bij de organisatie voor je groep.';
         groep.hidden = true;
       }
+      // Nog iets te tekenen: groot in beeld, en langer laten staan zodat het gelezen wordt.
+      var letop = root.querySelector('[data-klaar-letop]');
+      var open = d.formulieren || [];
+      letop.hidden = !open.length;
+      if (open.length) {
+        letop.querySelector('[data-letop-wat]').textContent = open.join(' en ');
+        letop.querySelector('[data-letop-tekst]').textContent = d.formulieren_tekst || '';
+      }
       root.querySelector('[data-stap="zoek"]').hidden = true;
       root.querySelector('[data-stap="klaar"]').hidden = false;
-      terug = setTimeout(opnieuw, 10000);
+      terug = setTimeout(opnieuw, open.length ? 25000 : 10000);
     }).catch(function () {
       knop.disabled = false;
       knop.textContent = 'Opnieuw proberen';

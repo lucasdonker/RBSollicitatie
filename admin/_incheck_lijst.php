@@ -21,6 +21,8 @@ $ick_lijst = $ick_lijst ?? [];
 $_afgesloten = evenement_afgesloten_op($ick_ev, (int)(actief_seizoen()['id'] ?? 0));
 $_n_aanw = count(array_filter($ick_lijst, fn($k) => $k['stand'] === 'aanwezig'));
 $_n_verw = count(array_filter($ick_lijst, fn($k) => $k['stand'] === 'verwacht'));
+// Niet getekende gezondheidsverklaring/intake: wie dat heeft, gaat niet het water in.
+$_open_f = function_exists('evenement_open_formulieren_seizoen') ? evenement_open_formulieren_seizoen((int)(actief_seizoen()['id'] ?? 0)) : [];
 ?>
 <section class="ds-kaart bh-ick" data-incheck data-ev="<?= h($ick_ev) ?>" data-endpoint="<?= APP_URL ?>/admin/api_incheck.php" data-csrf="<?= h(csrf_token()) ?>">
   <div class="bh-ick-band">
@@ -69,6 +71,9 @@ $_n_verw = count(array_filter($ick_lijst, fn($k) => $k['stand'] === 'verwacht'))
           else                              echo h($_sub);
           if ($_k['stand'] === 'verwacht' && ($_k['bevestiging'] ?? '') === 'komt_niet') echo ' · gaf door niet te kunnen';
         ?></span>
+        <?php if (!empty($_open_f[(int)$_k['sol_id']])): ?>
+          <span class="bh-ick-letop"><?= bh_badge('Niet getekend: ' . implode(', ', $_open_f[(int)$_k['sol_id']]), 'rood') ?></span>
+        <?php endif; ?>
       </span>
       <?php if ($ick_mag): ?>
         <span class="bh-ick-knoppen">

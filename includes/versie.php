@@ -3,10 +3,18 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.111.0');
+define('APP_VERSIE', '2.112.0');
 
 function app_changelog(): array {
     return [
+        '2.112.0' => [
+            'datum'  => '2026-09-24',
+            'titel'  => 'Inchecken: niet getekende formulieren meteen oppakken',
+            'punten' => [
+                'Checkt iemand in terwijl de gezondheidsverklaring of het intakeformulier nog niet getekend is, dan zegt de tablet dat groot in beeld en gaat de link meteen uit (mail en WhatsApp; bij een minderjarige naar de ouder)',
+                'In de incheck-lijst van het beheer staat bij die persoon "Niet getekend: …", zodat niemand zonder verklaring het water in gaat',
+            ],
+        ],
         '2.111.0' => [
             'datum'  => '2026-09-24',
             'titel'  => 'Trainingsweekend opnieuw: voorbereiden, inchecken, beoordelen, gesprekken',

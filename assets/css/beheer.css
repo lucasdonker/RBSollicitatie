@@ -655,6 +655,7 @@ span.bh-incheck-code {
 .bh-ick-rij[data-stand="aanwezig"] .bh-ick-vink { display: flex; }
 .bh-ick-naam { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 17px; font-weight: 600; color: var(--ink); }
 .bh-ick-regel { font-size: 13px; font-weight: 400; color: var(--ink-muted); }
+.bh-ick-letop { display: block; margin-top: 4px; }
 .bh-ick-knoppen { display: flex; gap: 8px; flex: none; }
 .bh-ick-knoppen button { min-height: 50px; border-radius: 11px; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
 .bh-ick-aanwezig { background: #1f7a3d; border: 1px solid #1f7a3d; color: #fff; padding: 0 26px; }

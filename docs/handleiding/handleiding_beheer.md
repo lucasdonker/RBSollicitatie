@@ -1130,6 +1130,12 @@ er nog geen beschikbaarheid hebben opgegeven. Die heb je nodig voor het gesprek.
 Op de tablet typt de sollicitant minstens drie letters van de naam en tikt op zichzelf (met foto).
 Er staat nooit een volledige lijst op de tablet. Inchecken zet de fase op TW geweest.
 
+Is de gezondheidsverklaring of het intakeformulier nog niet getekend (selectiedag en weekend),
+dan zegt de tablet dat en gaat de link meteen uit: per mail en WhatsApp naar wie 18+ is, per mail
+naar de ouder als die tekent, en zonder bekend ouder-adres een verzoek om dat in te vullen. In de
+incheck-lijst van het beheer staat bij die persoon een rode markering "Niet getekend: …". Laat
+niemand zonder getekende gezondheidsverklaring het water in.
+
 Lukt de tablet niet, dan vink je hier af: **Aanwezig**, **Niet** of **Ongedaan**. Met **Inchecken
 afsluiten** (of de pincode op de tablet) komt iedereen die nog niet is ingecheckt op "niet
 verschenen". Er sluit niets vanzelf af, en een laatkomer check je daarna gewoon nog in.
