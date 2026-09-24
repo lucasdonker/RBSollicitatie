@@ -302,12 +302,28 @@ function kluis_bestand_herwrappen(string $pad): array {
     return ['status' => 'gedaan', 'blob' => null, 'reden' => ''];
 }
 
-/** Waar kluis-blobs staan: bron => omschrijving. Een bron toevoegen = hier + kluis_bron_volgende() + kluis_bron_herwrap(). */
+/**
+ * Waar kluis-blobs staan: bron => omschrijving. Een databasekolom toevoegen = één regel hier én in
+ * kluis_db_bronnen(); een map toevoegen = hier + kluis_bron_map().
+ */
 function kluis_bronnen(): array {
     return [
         'ondertekeningen' => 'BSN en IBAN bij ondertekeningen',
+        'beheerders'      => 'Geheimen van de authenticator-app (tweestaps beheer)',
         'documenten'      => "Documenten (ID, bankpas, verzegelde PDF's)",
         'zegel'           => 'Privésleutel van het documentzegel',
+    ];
+}
+
+/**
+ * De bronnen die een databasekolom zijn: bron => [tabel, kolom]. Vaste namen, dus veilig in SQL.
+ * Het TOTP-geheim (includes/tweestaps.php) stond hier eerst niet in: na het weghalen van de oude
+ * sleutel viel de app-code dan stil terug op een e-mailcode.
+ */
+function kluis_db_bronnen(): array {
+    return [
+        'ondertekeningen' => ['ondertekeningen', 'vertrouwelijk'],
+        'beheerders'      => ['beheerders', 'tweestaps_geheim'],
     ];
 }
 
@@ -325,12 +341,13 @@ function kluis_bron_map(string $bron): ?string {
 function kluis_bron_volgende(string $bron, string $na, int $max): array {
     $uit = [];
     if ($max < 1) return $uit;
-    if ($bron === 'ondertekeningen') {
+    if (isset(kluis_db_bronnen()[$bron])) {
         if (!function_exists('db')) return $uit;
+        $tk = kluis_db_bronnen()[$bron]; $tab = $tk[0]; $kol = $tk[1];
         try {
             // LEFT(…,12): 12 base64-tekens zijn 9 bytes, genoeg voor de kop van 7.
-            $q = db()->prepare("SELECT id, LEFT(vertrouwelijk, 12) AS kop FROM ondertekeningen
-                                WHERE vertrouwelijk IS NOT NULL AND vertrouwelijk <> '' AND id > ? ORDER BY id LIMIT " . (int)$max);
+            $q = db()->prepare("SELECT id, LEFT(`$kol`, 12) AS kop FROM `$tab`
+                                WHERE `$kol` IS NOT NULL AND `$kol` <> '' AND id > ? ORDER BY id LIMIT " . (int)$max);
             $q->execute([(int)$na]);
             foreach ($q->fetchAll() as $r) {
                 $kop = base64_decode((string)$r['kop'], true);
@@ -353,18 +370,20 @@ function kluis_bron_volgende(string $bron, string $na, int $max): array {
 
 /** Herwrap één blob van een bron. Retour ['status', 'reden']. Schrijft alleen weg als de inhoud intussen niet veranderde. */
 function kluis_bron_herwrap(string $bron, string $cursor): array {
-    if ($bron === 'ondertekeningen') {
+    if (isset(kluis_db_bronnen()[$bron])) {
+        $tk = kluis_db_bronnen()[$bron]; $tab = $tk[0]; $kol = $tk[1];
         try {
             $db = db();
-            $q = $db->prepare("SELECT vertrouwelijk FROM ondertekeningen WHERE id=?");
+            $q = $db->prepare("SELECT `$kol` FROM `$tab` WHERE id=?");
             $q->execute([(int)$cursor]);
             $oud = (string)($q->fetchColumn() ?: '');
             if ($oud === '') return ['status' => 'al_goed', 'reden' => ''];   // intussen gewist (bijv. AVG)
             $r = kluis_herwrap($oud);
             if ($r['status'] !== 'gedaan') return $r;
-            $u = $db->prepare("UPDATE ondertekeningen SET vertrouwelijk=? WHERE id=? AND vertrouwelijk=?");
+            $u = $db->prepare("UPDATE `$tab` SET `$kol`=? WHERE id=? AND `$kol`=?");
             $u->execute([$r['blob'], (int)$cursor, $oud]);
             if ($u->rowCount() !== 1) return ['status' => 'mislukt', 'reden' => 'intussen gewijzigd; draai opnieuw'];
+            if ($bron !== 'ondertekeningen') return ['status' => 'gedaan', 'reden' => ''];
             // De bewijs-hash van de ondertekening is over de oude ciphertext berekend. Leg de overgang vast,
             // zodat die hash later nog te herleiden is (alleen hashes van ciphertext, geen inhoud).
             if (function_exists('audit_log')) audit_log('kluis_blob_herwrapt', 'ondertekening', (int)$cursor, [

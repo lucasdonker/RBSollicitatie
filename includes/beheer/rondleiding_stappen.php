@@ -231,7 +231,7 @@ function rl_schermen(): array {
                 ['doel' => null, 'titel' => 'Welkom, penningmeester',
                  'tekst' => 'Dit is jouw werkscherm. Hier staat per aangenomen strandwacht wat de loonadministratie nodig heeft: het loonheffingsformulier, een kopie van het identiteitsbewijs en een kopie van de bankpas. Alleen jij en de admin kunnen dit zien.'],
                 ['doel' => '#zijbalk .bh-nav-link.actief', 'titel' => 'Jouw menu',
-                 'tekst' => 'Je ziet drie onderdelen: Vandaag, Sollicitanten (alleen lezen) en Loondossiers. Loondossiers staat in de groep Inzet & loon.'],
+                 'tekst' => 'Je ziet vier onderdelen: Vandaag, Sollicitanten (alleen lezen), Loonplanning en Loondossiers. Die laatste twee staan in de groep Inzet & loon.'],
                 ['doel' => '.bh-avgkader', 'titel' => 'De vaste regels',
                  'tekst' => 'Dit kader staat er altijd. Elke download wordt vastgelegd, foto\'s van ID en bankpas krijgen een watermerk met jouw naam, en hier staan de bewaartermijnen. Download alleen op een apparaat dat je vertrouwt.'],
                 ['doel' => '.bh-dosstand', 'titel' => 'Hoeveel wacht er op jou',

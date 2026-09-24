@@ -356,7 +356,12 @@ require __DIR__ . '/layout_top.php';
   </div>
   <?php else: ?>
   <div class="bh-lp-geenbudget">
+    <?php // Lonen & budget is een instelling (bestuur); de penningmeester mag daar niet in. ?>
+    <?php if (mag('instellingen', 'bewerken')): ?>
     Geen budget ingesteld — <a href="<?= APP_URL ?>/admin/instellingen.php?tab=loon" class="bh-link-navy">stel er een in</a> om de voortgang te volgen.
+    <?php else: ?>
+    Geen budget ingesteld. Het bestuur stelt het seizoensbudget in bij Instellingen › Lonen &amp; budget; daarna zie je hier de voortgang.
+    <?php endif; ?>
   </div>
   <?php endif; ?>
 </div>
