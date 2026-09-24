@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $sid) {
             echo json_encode(['ok' => false, 'fout' => 'onbekend_criterium']); exit;
         }
         selectie_score_opslaan($sid, (int)$_POST['sol_id'], (string)$_POST['test'],
-                               (string)$_POST['criterium'], (int)$_POST['score'], $ik);
+                               (string)$_POST['criterium'], (int)$_POST['score'], $ik, (int)($_SESSION['bhd_id'] ?? 0) ?: null);
         $sc = selectie_scores_van($sid, (int)$_POST['sol_id'], $ik);
         $d  = $sc[(string)$_POST['test']][(string)$_POST['criterium']] ?? ['gem' => 0, 'allen' => []];
         echo json_encode(['ok' => true, 'gem' => $d['gem'], 'aantal' => count($d['allen'])]);
@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $sid) {
     }
     if ($actie === 'observatie') {
         $id = selectie_observatie_toevoegen($sid, (int)$_POST['sol_id'], (string)($_POST['tekst'] ?? ''),
-                                            (string)($_POST['soort'] ?? 'neutraal'), $ik);
+                                            (string)($_POST['soort'] ?? 'neutraal'), $ik, (int)($_SESSION['bhd_id'] ?? 0) ?: null);
         echo json_encode(['ok' => $id !== null, 'id' => $id, 'door' => $ik]);
         exit;
     }
@@ -84,10 +84,10 @@ $lijst = array_values(array_filter($kandidaten, function ($k) use ($gekozen_groe
 $totaal_criteria = 0;
 foreach ($criteria as $t) $totaal_criteria += count($t['criteria']);
 $voortgang = [];
+$_alle_scores = $sid ? selectie_scores_alle($sid) : [];   // één query in plaats van één per kandidaat
 foreach ($lijst as $k) {
-    $sc = selectie_scores_van($sid, (int)$k['sol_id'], $ik);
     $n = 0;
-    foreach ($sc as $crits) foreach ($crits as $d) if (!empty($d['eigen'])) $n++;
+    foreach ($_alle_scores[(int)$k['sol_id']] ?? [] as $crits) foreach ($crits as $d) if (isset($d['allen'][$ik])) $n++;
     $voortgang[(int)$k['sol_id']] = $n;
 }
 
@@ -172,7 +172,7 @@ require __DIR__ . '/layout_top.php';
         <li>
           <a class="bh-kandidaat<?= $_nu ? ' nu' : '' ?><?= $_af ? ' afwezig' : '' ?>"
              href="<?= h(bd_url($_id)) ?>"<?= $_nu ? ' aria-current="true"' : '' ?>>
-            <?= bh_avatar(['voornaam' => $_k['voornaam'], 'achternaam' => $_k['achternaam']], 38, ['dim' => $_af]) ?>
+            <?= bh_avatar($_k, 38, ['dim' => $_af]) ?>
             <span class="bh-kandidaat-tekst">
               <span class="bh-kandidaat-naam">
                 <?= h((string)$_k['naam']) ?>
@@ -205,7 +205,7 @@ require __DIR__ . '/layout_top.php';
   ?>
   <section class="bh-beoordeel-kaart" id="kandidaat">
     <header class="bh-beoordeel-kop">
-      <?= bh_avatar(['voornaam' => $huidig['voornaam'], 'achternaam' => $huidig['achternaam']], 44) ?>
+      <?= bh_avatar($huidig, 56, ['vergroot' => true]) ?>
       <span class="bh-beoordeel-wie">
         <span class="bh-beoordeel-naam"><?= h((string)$huidig['naam']) ?></span>
         <span class="bh-meta">

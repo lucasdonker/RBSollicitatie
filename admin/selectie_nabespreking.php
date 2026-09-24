@@ -29,9 +29,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $sid) {
     }
     if ($actie === 'gebeld') {
         header('Content-Type: application/json');
-        $res = selectie_gebeld_zetten($sid, (int)$_POST['sol_id'], (string)($_POST['gebeld_notitie'] ?? ''),
-                                      $ik, !empty($_POST['meteen_doorvoeren']));
+        $sol = (int)$_POST['sol_id'];
+        $nieuw = (string)($_POST['nieuw_besluit'] ?? '');
+        // Bij "door" meteen vastleggen of iemand op het trainingsweekend komt; dan krijgt de
+        // sollicitant die vraag niet ook nog in het portaal.
+        $tw = (string)($_POST['tw_bevestiging'] ?? '');
+        if (in_array($tw, ['komt', 'komt_niet'], true)) {
+            if (!evenement_bevestigen('tw', $sid, $sol, $tw, (string)($_POST['tw_reden'] ?? ''), 'bellijst')) {
+                echo json_encode(['ok' => false, 'fout' => 'Vul de reden in als iemand niet op het trainingsweekend kan komen.']);
+                exit;
+            }
+        }
+        $res = selectie_gebeld_zetten($sid, $sol, (string)($_POST['gebeld_notitie'] ?? ''), $ik,
+                                      !empty($_POST['meteen_doorvoeren']), in_array($nieuw, ['door', 'niet'], true) ? $nieuw : null);
         echo json_encode(['ok' => true] + $res);
+        exit;
+    }
+    if ($actie === 'bel_los') {
+        header('Content-Type: application/json');
+        evenement_claim_los('selectie_besluit', 'bel', $sid, (int)$_POST['sol_id'], (int)($_SESSION['bhd_id'] ?? 0));
+        echo json_encode(['ok' => true]);
         exit;
     }
     if ($actie === 'gebeld_wissen') {
@@ -58,6 +75,9 @@ $criteria   = selectie_criteria();
 $kandidaten = $sid ? selectie_kandidaten($sid) : [];
 $groepen    = $sid ? selectie_groepen($sid) : [];
 $besluiten  = $sid ? selectie_besluiten($sid) : [];
+// Eén query voor alle scores en één voor alle observaties (niet per kaart).
+$scores_alle = $sid ? selectie_scores_alle($sid) : [];
+$obs_alle    = $sid ? selectie_observaties_alle($sid) : [];
 
 $groep_naam = [];
 foreach ($groepen as $g) $groep_naam[$g['id']] = $g['naam'] ?: 'Groep ' . $g['nummer'];
@@ -79,21 +99,15 @@ $zichtbaar = array_values(array_filter($kandidaten, function ($k) use ($filter, 
     };
 }));
 
-// Bellijst: wie een definitief besluit heeft maar nog niet is doorgevoerd.
+// Bellijst: wie een besluit heeft maar nog niet is doorgevoerd — ook twijfel: die bel je
+// ook, en na het gesprek wordt het door of niet.
 $bel_kandidaten = array_values(array_filter($kandidaten, function ($k) use ($besluiten) {
     $b = $besluiten[(int)$k['sol_id']] ?? null;
-    return $b && in_array($b['besluit'] ?? '', ['door', 'niet'], true) && empty($b['doorgevoerd_op']);
+    return $b && in_array($b['besluit'] ?? '', ['door', 'twijfel', 'niet'], true) && empty($b['doorgevoerd_op']);
 }));
 $tel_gebeld = $tel_ongebeld = 0;
 foreach ($bel_kandidaten as $k) {
     if (!empty($besluiten[(int)$k['sol_id']]['gebeld_op'])) $tel_gebeld++; else $tel_ongebeld++;
-}
-
-/** Gemiddelde over alle criteria van één kandidaat. */
-function nb_gemiddelde(array $scores): ?float {
-    $w = [];
-    foreach ($scores as $crits) foreach ($crits as $d) if (!empty($d['gem'])) $w[] = (float)$d['gem'];
-    return $w ? round(array_sum($w) / count($w), 1) : null;
 }
 
 $pagina_titel = $tab === 'bellijst' ? 'Bellijst' : 'Nabespreking';
@@ -124,6 +138,8 @@ require __DIR__ . '/layout_top.php';
     $bel_besluiten = $besluiten;
     $bel_gebeld    = $tel_gebeld;
     $bel_ongebeld  = $tel_ongebeld;
+    $bel_scores    = $scores_alle;
+    $bel_obs       = $obs_alle;
     require __DIR__ . '/_bellijst.php';
   ?>
 
@@ -167,16 +183,16 @@ require __DIR__ . '/layout_top.php';
 
   <?php foreach ($zichtbaar as $k):
     $_id  = (int)$k['sol_id'];
-    $_sc  = selectie_scores_van($sid, $_id);
-    $_obs = selectie_observaties_van($sid, $_id);
+    $_sc  = $scores_alle[$_id] ?? [];
+    $_obs = $obs_alle[$_id] ?? [];
     $_b   = $besluiten[$_id]['besluit'] ?? '';
     $_not = $besluiten[$_id]['notitie'] ?? '';
-    $_gem = nb_gemiddelde($_sc);
+    $_gem = selectie_gemiddelde($_sc);
     $_kleur = ['door' => 'groen', 'twijfel' => 'oranje', 'niet' => 'rood'][$_b] ?? 'grijs';
   ?>
   <section class="bh-nb-kaart ds-fase-<?= h($_kleur) ?><?= $_b ? ' besloten' : '' ?>" id="nb-<?= $_id ?>">
     <header class="bh-nb-kop">
-      <?= bh_avatar(['voornaam' => $k['voornaam'], 'achternaam' => $k['achternaam']], 46, ['dim' => empty($k['aanwezig'])]) ?>
+      <?= bh_avatar($k, 46, ['dim' => empty($k['aanwezig']), 'vergroot' => true]) ?>
       <span class="bh-nb-wie">
         <a class="bh-nb-naam" href="<?= APP_URL ?>/admin/sollicitant.php?id=<?= $_id ?>&amp;tab=selectiedag"><?= h((string)$k['naam']) ?></a>
         <?= bh_meta([
@@ -266,13 +282,13 @@ require __DIR__ . '/layout_top.php';
   </section>
   <?php endforeach; ?>
 
-  <?php if ($tel['door'] + $tel['niet'] > 0): ?>
+  <?php if ($tel['door'] + $tel['niet'] + $tel['twijfel'] > 0): ?>
   <div class="bh-nb-afsluiten">
     <div>
-      <strong><?= $tel['door'] + $tel['niet'] ?> kandidaten hebben een definitief besluit.</strong>
+      <strong><?= $tel['door'] + $tel['niet'] + $tel['twijfel'] ?> kandidaten hebben een besluit.</strong>
       <span class="bh-meta">
-        Bellen doe je op de bellijst; daar voer je per persoon door, zodat er pas bericht uitgaat
-        nadat je hebt gebeld.
+        Bellen doe je op de bellijst, ook de twijfelgevallen: daar wordt het na het gesprek door of niet.
+        Je voert per persoon door, zodat er pas bericht uitgaat nadat je hebt gebeld.
       </span>
     </div>
     <a class="ds-btn ds-btn-primair" href="?tab=bellijst">Naar de bellijst</a>

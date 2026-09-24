@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.109.0');
+define('APP_VERSIE', '2.110.0');
 
 function app_changelog(): array {
     return [
+        '2.110.0' => [
+            'datum'  => '2026-09-24',
+            'titel'  => 'Selectiedag: twijfel op de bellijst, "komt op het TW?", niet dubbel bellen',
+            'punten' => [
+                'Twijfelgevallen staan op de bellijst. Na het gesprek kies je "toch door" of "niet door"; daarna voer je door zoals altijd',
+                'Bij een kandidaat die door gaat leg je tijdens het bellen meteen vast of die op het trainingsweekend komt (ja, nee met reden, of weet nog niet). Dan krijgt de sollicitant die vraag niet ook nog in het portaal',
+                'Wie een kandidaat op de bellijst opent, belt hem: een ander bestuurslid ziet "bezig: naam" en kan hem 30 minuten niet bellen. Overslaan geeft hem weer vrij',
+                'Nabespreking, bellijst en beoordelen laden alle scores in één keer (was één verzoek per kandidaat) en tonen de foto van de kandidaat',
+            ],
+        ],
         '2.109.0' => [
             'datum'  => '2026-09-24',
             'titel'  => 'Inchecken: nieuwe tablet en lijst volgens het ontwerp',

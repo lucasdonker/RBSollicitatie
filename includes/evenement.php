@@ -347,7 +347,8 @@ function evenement_claim(string $tabel, string $soort, int $seizoen_id, int $sol
     $q->execute([$seizoen_id, $sol_id]);
     $r = $q->fetch() ?: [];
     $wie = isset($r['door']) ? (int)$r['door'] : null;
-    return ['ok' => $wie === $beheerder_id, 'door' => $wie, 'sinds' => $r['sinds'] ?? null];
+    // Niemand houdt hem vast (bijv. geen rij) = vrij; alleen een ánder die hem heeft blokkeert.
+    return ['ok' => $wie === null || $wie === $beheerder_id, 'door' => $wie, 'sinds' => $r['sinds'] ?? null];
 }
 
 /** Vergrendeling loslaten (klaar, of per ongeluk geclaimd). Alleen je eigen claim. */
@@ -355,6 +356,18 @@ function evenement_claim_los(string $tabel, string $soort, int $seizoen_id, int 
     if (!in_array($tabel, ['selectie_besluit', 'tw_deelname'], true) || !in_array($soort, ['bel', 'gesprek'], true)) return;
     db()->prepare("UPDATE `$tabel` SET `{$soort}_door`=NULL, `{$soort}_sinds`=NULL WHERE seizoen_id=? AND sollicitatie_id=? AND `{$soort}_door`=?")
        ->execute([$seizoen_id, $sol_id, $beheerder_id]);
+}
+
+/** De naam van wie een claim heeft, voor "bezig door X". */
+function evenement_claim_naam(?int $beheerder_id): string {
+    if (!$beheerder_id) return '';
+    static $cache = [];
+    if (isset($cache[$beheerder_id])) return $cache[$beheerder_id];
+    try {
+        $q = db()->prepare("SELECT naam FROM beheerders WHERE id=?");
+        $q->execute([$beheerder_id]);
+        return $cache[$beheerder_id] = (string)($q->fetchColumn() ?: 'een ander bestuurslid');
+    } catch (\Exception $e) { return 'een ander bestuurslid'; }
 }
 
 /** Is de claim nog geldig voor iemand anders? Voor de weergave "bezig door X". */

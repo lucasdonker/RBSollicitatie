@@ -410,7 +410,7 @@ function selectie_criteria_opslaan(array $criteria): void {
 }
 
 /** Eén score opslaan (of wissen bij score 0). Beoordelaar-gebonden, dus geen overschrijven van anderen. */
-function selectie_score_opslaan(int $seizoen_id, int $sol_id, string $test, string $criterium, int $score, string $beoordelaar): void {
+function selectie_score_opslaan(int $seizoen_id, int $sol_id, string $test, string $criterium, int $score, string $beoordelaar, ?int $beoordelaar_id = null): void {
     selectiedag_auto_setup();
     $score = max(0, min(5, $score));
     $db = db();
@@ -420,10 +420,10 @@ function selectie_score_opslaan(int $seizoen_id, int $sol_id, string $test, stri
         return;
     }
     $db->prepare("
-        INSERT INTO selectie_score (seizoen_id, sollicitatie_id, test, criterium, score, beoordelaar)
-        VALUES (?,?,?,?,?,?)
-        ON DUPLICATE KEY UPDATE score=VALUES(score), bijgewerkt_op=NOW()
-    ")->execute([$seizoen_id, $sol_id, $test, $criterium, $score, $beoordelaar]);
+        INSERT INTO selectie_score (seizoen_id, sollicitatie_id, test, criterium, score, beoordelaar, beoordelaar_id)
+        VALUES (?,?,?,?,?,?,?)
+        ON DUPLICATE KEY UPDATE score=VALUES(score), beoordelaar_id=VALUES(beoordelaar_id), bijgewerkt_op=NOW()
+    ")->execute([$seizoen_id, $sol_id, $test, $criterium, $score, $beoordelaar, $beoordelaar_id]);
 }
 
 /**
@@ -450,15 +450,43 @@ function selectie_scores_van(int $seizoen_id, int $sol_id, string $beoordelaar =
     return $uit;
 }
 
+/**
+ * Alle scores van het seizoen in één query, per kandidaat in dezelfde vorm als
+ * selectie_scores_van(): [sol_id][test][criterium] => ['allen' => [..], 'gem' => x].
+ * De nabespreking en bellijst deden eerder één query per kaart.
+ */
+function selectie_scores_alle(int $seizoen_id): array {
+    selectiedag_auto_setup();
+    $uit = [];
+    try {
+        $q = db()->prepare("SELECT sollicitatie_id, test, criterium, score, beoordelaar FROM selectie_score WHERE seizoen_id=?");
+        $q->execute([$seizoen_id]);
+        foreach ($q->fetchAll() as $r) {
+            $uit[(int)$r['sollicitatie_id']][$r['test']][$r['criterium']]['allen'][$r['beoordelaar']] = (int)$r['score'];
+        }
+        foreach ($uit as $sol => $tests) foreach ($tests as $t => $crits) foreach ($crits as $c => $d) {
+            $uit[$sol][$t][$c]['gem'] = round(array_sum($d['allen']) / count($d['allen']), 1);
+        }
+    } catch (\Exception $e) {}
+    return $uit;
+}
+
+/** Gemiddelde over alle criteria van één kandidaat (null zonder scores). */
+function selectie_gemiddelde(array $scores): ?float {
+    $w = [];
+    foreach ($scores as $crits) foreach ($crits as $d) if (!empty($d['gem'])) $w[] = (float)$d['gem'];
+    return $w ? round(array_sum($w) / count($w), 1) : null;
+}
+
 /** Observatie toevoegen. */
-function selectie_observatie_toevoegen(int $seizoen_id, int $sol_id, string $tekst, string $soort, string $beoordelaar): ?int {
+function selectie_observatie_toevoegen(int $seizoen_id, int $sol_id, string $tekst, string $soort, string $beoordelaar, ?int $beoordelaar_id = null): ?int {
     selectiedag_auto_setup();
     $tekst = trim($tekst);
     if ($tekst === '') return null;
     $soort = in_array($soort, ['neutraal','positief','aandacht'], true) ? $soort : 'neutraal';
     try {
-        db()->prepare("INSERT INTO selectie_observatie (seizoen_id, sollicitatie_id, tekst, soort, beoordelaar) VALUES (?,?,?,?,?)")
-           ->execute([$seizoen_id, $sol_id, mb_substr($tekst, 0, 2000), $soort, $beoordelaar]);
+        db()->prepare("INSERT INTO selectie_observatie (seizoen_id, sollicitatie_id, tekst, soort, beoordelaar, beoordelaar_id) VALUES (?,?,?,?,?,?)")
+           ->execute([$seizoen_id, $sol_id, mb_substr($tekst, 0, 2000), $soort, $beoordelaar, $beoordelaar_id]);
         return (int)db()->lastInsertId();
     } catch (\Exception $e) { return null; }
 }
@@ -571,10 +599,13 @@ function selectie_besluit_zetten(int $seizoen_id, int $sol_id, string $besluit, 
  * Markeer één kandidaat als gebeld (met optionele notitie).
  * Als $meteen_doorvoeren true is, wordt de fase meteen doorgezet.
  */
-function selectie_gebeld_zetten(int $seizoen_id, int $sol_id, string $notitie, string $door, bool $meteen_doorvoeren = false): array {
+function selectie_gebeld_zetten(int $seizoen_id, int $sol_id, string $notitie, string $door, bool $meteen_doorvoeren = false, ?string $nieuw_besluit = null): array {
     selectiedag_auto_setup();
     $db = db();
-    $db->prepare("UPDATE selectie_besluit SET gebeld_op=NOW(), gebeld_door=?, gebeld_notitie=? WHERE sollicitatie_id=? AND seizoen_id=?")
+    // Twijfel wordt na het bellen door of niet; dat wordt dan het besluit.
+    $zet_besluit = in_array($nieuw_besluit, ['door', 'niet'], true) ? ", besluit=" . $db->quote($nieuw_besluit) : '';
+    $db->prepare("UPDATE selectie_besluit SET gebeld_op=NOW(), gebeld_door=?, gebeld_notitie=?, bel_door=NULL, bel_sinds=NULL $zet_besluit
+                  WHERE sollicitatie_id=? AND seizoen_id=?")
        ->execute([$door, mb_substr(trim($notitie), 0, 300), $sol_id, $seizoen_id]);
     $doorgevoerd = false;
     if ($meteen_doorvoeren) {

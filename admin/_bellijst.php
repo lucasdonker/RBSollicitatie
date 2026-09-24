@@ -12,18 +12,28 @@
  * direct. Een knop die bundeling belooft terwijl er direct wordt verstuurd, is erger
  * dan geen knop.
  *
+ * Twijfel staat er ook op: na het gesprek wordt het door of niet. Bij "door" leg je meteen
+ * vast of iemand op het trainingsweekend komt. Wie een persoon opent, claimt hem 30 minuten
+ * ("bezig met bellen door X"), zodat niet twee mensen dezelfde kandidaat bellen.
+ *
  * Verwacht:
  *   $bel_sid         int    seizoen-id
- *   $bel_lijst       array  kandidaten met een definitief besluit, nog niet doorgevoerd
+ *   $bel_lijst       array  kandidaten met een besluit (door/twijfel/niet), nog niet doorgevoerd
  *   $bel_besluiten   array  [sol_id => besluit-rij]
+ *   $bel_scores      array  selectie_scores_alle()
+ *   $bel_obs         array  selectie_observaties_alle()
  *   $bel_gebeld      int
  *   $bel_ongebeld    int
  */
 $bel_sid        = (int)($bel_sid ?? 0);
 $bel_lijst      = $bel_lijst ?? [];
 $bel_besluiten  = $bel_besluiten ?? [];
+$bel_scores     = $bel_scores ?? [];
+$bel_obs        = $bel_obs ?? [];
 $bel_gebeld     = (int)($bel_gebeld ?? 0);
 $bel_ongebeld   = (int)($bel_ongebeld ?? 0);
+$_ik            = (int)($_SESSION['bhd_id'] ?? 0);
+$_besluit_kleur = ['door' => 'groen', 'twijfel' => 'oranje', 'niet' => 'rood'];
 
 if (!$bel_lijst) {
     echo '<div class="ds-kaart ds-kaart-p">';
@@ -77,9 +87,10 @@ foreach ($bel_lijst as $_k) if ((int)$_k['sol_id'] === $_open) $_huidig = $_k;
         <?php foreach ($bel_lijst as $_k):
           $_id = (int)$_k['sol_id'];
           $_b   = $bel_besluiten[$_id] ?? [];
-          $_gem = nb_gemiddelde(selectie_scores_van($bel_sid, $_id));
+          $_gem = selectie_gemiddelde($bel_scores[$_id] ?? []);
           $_isnu = $_id === $_open;
           $_gebeld = !empty($_b['gebeld_op']);
+          $_bezig = !$_gebeld && evenement_claim_actief($_b['bel_door'] ?? null, $_b['bel_sinds'] ?? null, $_ik);
         ?>
           <tr class="<?= $_isnu ? 'bh-rij-gemarkeerd' : '' ?><?= $_gebeld ? ' bh-rij-gedempt' : '' ?>">
             <td data-label="Kandidaat">
@@ -94,12 +105,13 @@ foreach ($bel_lijst as $_k) if ((int)$_k['sol_id'] === $_open) $_huidig = $_k;
               <?= $_gem !== null ? h(number_format($_gem, 1, ',', '')) : '—' ?>
             </td>
             <td data-label="Besluit">
-              <?= bh_badge(ucfirst((string)($_b['besluit'] ?? '')),
-                           ($_b['besluit'] ?? '') === 'door' ? 'groen' : 'rood') ?>
+              <?= bh_badge(ucfirst((string)($_b['besluit'] ?? '')), $_besluit_kleur[$_b['besluit'] ?? ''] ?? 'grijs') ?>
             </td>
             <td data-label="Gebeld" class="bh-rechts">
               <?php if ($_gebeld): ?>
                 <span class="bh-meta"><?= h(datum_nl(substr((string)$_b['gebeld_op'], 0, 10))) ?></span>
+              <?php elseif ($_bezig): ?>
+                <span class="bh-meta">bezig: <?= h(evenement_claim_naam((int)$_b['bel_door'])) ?></span>
               <?php elseif ($_isnu): ?>
                 <span class="bh-bel-nu">aan de beurt</span>
               <?php else: ?>
@@ -115,13 +127,17 @@ foreach ($bel_lijst as $_k) if ((int)$_k['sol_id'] === $_open) $_huidig = $_k;
   <?php if ($_huidig):
     $_id = (int)$_huidig['sol_id'];
     $_b  = $bel_besluiten[$_id] ?? [];
-    $_obs = selectie_observaties_van($bel_sid, $_id);
-    $_door = ($_b['besluit'] ?? '') === 'door';
+    $_obs = $bel_obs[$_id] ?? [];
+    $_besl = (string)($_b['besluit'] ?? '');
+    $_door = $_besl === 'door';
     $_gebeld = !empty($_b['gebeld_op']);
+    // Openen = claimen (30 minuten). Heeft een ander hem, dan kijk je mee maar bel je niet.
+    $_claim = $_gebeld ? ['ok' => true] : evenement_claim('selectie_besluit', 'bel', $bel_sid, $_id, $_ik);
+    $_tw = evenement_bevestiging_van('tw', $bel_sid, $_id);
   ?>
   <section class="bh-bel-gesprek ds-kaart">
     <header class="bh-bel-gesprek-kop">
-      <?= bh_avatar(['voornaam' => $_huidig['voornaam'], 'achternaam' => $_huidig['achternaam']], 44) ?>
+      <?= bh_avatar($_huidig, 44, ['vergroot' => true]) ?>
       <span class="bh-beoordeel-wie">
         <span class="bh-beoordeel-naam"><?= h((string)$_huidig['naam']) ?></span>
         <span class="bh-meta">
@@ -170,10 +186,29 @@ foreach ($bel_lijst as $_k) if ((int)$_k['sol_id'] === $_open) $_huidig = $_k;
                   aria-labelledby="lbl-gespreksnotitie"
                   placeholder="Korte aantekening van het gesprek…"><?= h((string)($_b['gebeld_notitie'] ?? '')) ?></textarea>
       </div>
+
+      <?php if (!$_gebeld && $_besl !== 'niet'): ?>
+      <fieldset class="bh-bel-tw" id="tw-<?= $_id ?>">
+        <legend class="bh-veldlabel">Komt op het trainingsweekend?<?= $_besl === 'twijfel' ? ' (alleen als het door wordt)' : '' ?></legend>
+        <div class="bh-knoprij">
+          <?php foreach (['onbekend' => 'Weet nog niet', 'komt' => 'Ja', 'komt_niet' => 'Nee'] as $_tk => $_tl): ?>
+            <label class="bh-bel-twkeuze"><input type="radio" name="tw_<?= $_id ?>" value="<?= $_tk ?>" <?= $_tw['stand'] === $_tk ? 'checked' : '' ?>> <?= h($_tl) ?></label>
+          <?php endforeach; ?>
+        </div>
+        <input type="text" class="ds-input" id="twreden-<?= $_id ?>" maxlength="300" placeholder="Reden als het nee is (verplicht bij nee)"
+               value="<?= h((string)($_tw['reden'] ?? '')) ?>" aria-label="Reden als iemand niet op het trainingsweekend kan">
+      </fieldset>
+      <?php endif; ?>
     </div>
 
     <footer class="bh-bel-acties">
-      <?php if ($_gebeld): ?>
+      <?php if (!$_claim['ok']): ?>
+        <div class="ds-melding ds-melding-warn">
+          <?= icoon('telefoon', 16) ?>
+          <span><?= h(evenement_claim_naam($_claim['door'])) ?> is deze kandidaat aan het bellen (sinds <?= h(date('H:i', strtotime((string)$_claim['sinds']))) ?>).
+            Na 30 minuten komt hij weer vrij.</span>
+        </div>
+      <?php elseif ($_gebeld): ?>
         <div class="ds-melding ds-melding-ok bh-bel-gebeld">
           <?= icoon('vink-cirkel', 16) ?>
           <span>Gebeld op <?= h(datum_nl(substr((string)$_b['gebeld_op'], 0, 10))) ?>. Nog niet doorgevoerd.</span>
@@ -185,6 +220,10 @@ foreach ($bel_lijst as $_k) if ((int)$_k['sol_id'] === $_open) $_huidig = $_k;
         <button type="button" class="ds-btn ds-btn-zacht" onclick="gebeldWissen(<?= $_id ?>)">
           Toch niet gebeld
         </button>
+      <?php elseif ($_besl === 'twijfel'): ?>
+        <button type="button" class="ds-btn ds-btn-primair" onclick="gebeldZet(<?= $_id ?>, false, 'door')">Gebeld — toch door</button>
+        <button type="button" class="ds-btn ds-btn-secundair" onclick="gebeldZet(<?= $_id ?>, false, 'niet')">Gebeld — niet door</button>
+        <button type="button" class="ds-btn ds-btn-zacht" onclick="volgendeBellen(<?= $_id ?>)">Overslaan</button>
       <?php else: ?>
         <button type="button" class="ds-btn <?= $_door ? 'ds-btn-primair' : 'ds-btn-gevaar' ?>"
                 onclick="gebeldZet(<?= $_id ?>, true)">
@@ -193,7 +232,7 @@ foreach ($bel_lijst as $_k) if ((int)$_k['sol_id'] === $_open) $_huidig = $_k;
         <button type="button" class="ds-btn ds-btn-secundair" onclick="gebeldZet(<?= $_id ?>, false)">
           Gebeld, later doorvoeren
         </button>
-        <button type="button" class="ds-btn ds-btn-zacht" onclick="volgendeBellen()">Overslaan</button>
+        <button type="button" class="ds-btn ds-btn-zacht" onclick="volgendeBellen(<?= $_id ?>)">Overslaan</button>
       <?php endif; ?>
     </footer>
   </section>
@@ -213,12 +252,20 @@ function belPost(body) {
   }).then(function (r) { return r.json(); });
 }
 
-function gebeldZet(solId, meteen) {
+function gebeldZet(solId, meteen, nieuwBesluit) {
   const notitie = document.getElementById('gesprek-' + solId).value;
+  const velden = { actie: 'gebeld', sol_id: solId, gebeld_notitie: notitie, meteen_doorvoeren: meteen ? '1' : '', nieuw_besluit: nieuwBesluit || '' };
+  // "Komt op het TW?" alleen meesturen als het door wordt (door, of twijfel die door wordt).
+  const tw = document.querySelector('input[name="tw_' + solId + '"]:checked');
+  const wordtDoor = nieuwBesluit === 'door' || (!nieuwBesluit && document.getElementById('tw-' + solId));
+  if (tw && wordtDoor && tw.value !== 'onbekend') {
+    velden.tw_bevestiging = tw.value;
+    velden.tw_reden = (document.getElementById('twreden-' + solId) || {}).value || '';
+  }
   const doen = function () {
-    belPost({ actie: 'gebeld', sol_id: solId, gebeld_notitie: notitie, meteen_doorvoeren: meteen ? '1' : '' })
+    belPost(velden)
       .then(function (d) {
-        if (!d.ok) { bhToast('Opslaan mislukt.', 'fout'); return; }
+        if (!d.ok) { bhToast(d.fout || 'Opslaan mislukt.', 'fout'); return; }
         location.reload();
       })
       .catch(function () { bhToast('Geen verbinding — probeer opnieuw.', 'fout'); });
@@ -262,7 +309,9 @@ function alleGebeldeDoorvoeren(n) {
   }).then(function (ja) { if (ja) document.getElementById('alleDoorForm').submit(); });
 }
 
-function volgendeBellen() {
+function volgendeBellen(solId) {
+  // Overslaan = de vergrendeling loslaten, zodat een ander hem wél kan bellen.
+  if (solId) belPost({ actie: 'bel_los', sol_id: solId }).catch(function () {});
   const rijen = document.querySelectorAll('.bh-bel-tabel tbody tr');
   let na = false;
   for (const r of rijen) {
