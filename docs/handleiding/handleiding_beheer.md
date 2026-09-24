@@ -1281,6 +1281,11 @@ beneden zie je:
   definitief heeft gemaakt. Er staat de deadline bij, met het aantal dagen dat nog rest of
   "verstreken". Deze mensen krijgen vanaf twee weken vóór de deadline vanzelf herinneringen. Je
   hoeft ze niet zelf na te bellen. Met het envelopje bij een naam mail je iemand direct.
+- **Filters en export**: zoek op naam, kies wie (iedereen, nog in de procedure, aangenomen), nieuw
+  of terugkerend, en toon alleen wie een open verzoek heeft of nog voorlopig is. Grafiek, raster
+  en totalen volgen de filter. **Export per week** geeft een Excel met per persoon per week het
+  aantal dagen; **Export per dag** per persoon per datum ja / nee / liever niet, met een tabblad
+  met de redenen. Beide exports volgen de filter en komen in het logboek.
 - **Dekking per week**: een staafgrafiek met per week het aantal mensen dat telt. In het
   hoofdseizoen is dat het weektotaal. In het voor- en naseizoen zijn de posten alleen in het
   weekend bemand, dus telt dan het aantal dat het weekend dekt. De norm is de optelsom van alle

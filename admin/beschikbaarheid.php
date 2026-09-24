@@ -8,122 +8,18 @@ $actieve_nav  = 'beschikbaarheid';
 $pagina_breed = true;
 vereis_recht('beschikbaarheid', 'lezen');
 
-$db      = db();
 $seizoen = actief_seizoen();
 $sid     = $seizoen ? (int)$seizoen['id'] : 0;
 
-// ── Seizoen-werkperiode -> weken met datums ──────────────────
-$werk_start = $seizoen['datum_werk_start'] ?? null;
-$werk_eind  = $seizoen['datum_werk_eind']  ?? null;
-if (!$werk_start) {
-    $jaar = (int)date('Y');
-    $werk_start = (new DateTime())->setISODate($jaar, 22, 1)->format('Y-m-d');
-    $werk_eind  = (new DateTime())->setISODate($jaar, 35, 7)->format('Y-m-d');
-}
-$weken = [];
-$dag = new DateTime($werk_start);
-$eind_dag = new DateTime($werk_eind);
-while ($dag->format('N') != 1) $dag->modify('-1 day');
-while ($dag <= $eind_dag) {
-    $wn = (int)$dag->format('W');
-    $zo = (clone $dag)->modify('+6 days');
-    $weken[$wn] = [
-        'wn'       => $wn,
-        'kort'     => datum_kort_nl($dag),
-        'eind'     => datum_kort_nl($zo),
-        'weektype' => function_exists('seizoen_weektype') ? seizoen_weektype($seizoen ?? [], $wn) : 'hoofd',
-    ];
-    $dag->modify('+7 days');
-}
-
-// ── Sollicitanten met een formulier of een beschikbaarheid ───
-// Eerder alleen wie een BLK-rij had: wie eerst zijn beschikbaarheid doorgaf, stond
-// hier niet, terwijl het dekkingsscherm (bezetting.php) hem wel meetelde. Zelfde
-// uitsluiting als daar: afgewezen en afgehaakt.
-$lijst = [];
-if ($sid) {
-    if (function_exists('beschikbaarheid2_auto_setup')) beschikbaarheid2_auto_setup(); // beschikbaarheid_blok moet bestaan
-    $q = $db->prepare("
-        SELECT s.id sol_id, s.fase, s.terugkerend,
-               p.voornaam, p.tussenvoegsel, p.achternaam,
-               bsch.weken_json,
-               prof.norm_dagen
-        FROM sollicitaties s
-        JOIN personen p ON p.id = s.persoon_id
-        LEFT JOIN beschikbaarheid bsch ON bsch.sollicitatie_id = s.id
-        LEFT JOIN beschikbaarheid_profiel prof ON prof.sollicitatie_id = s.id
-        WHERE s.seizoen_id = ? AND s.fase NOT IN ('afgewezen','afgehaakt')
-          AND (bsch.sollicitatie_id IS NOT NULL
-               OR EXISTS (SELECT 1 FROM blk_formulieren bl WHERE bl.sollicitatie_id = s.id)
-               OR EXISTS (SELECT 1 FROM beschikbaarheid_blok bb WHERE bb.sollicitatie_id = s.id))
-        ORDER BY p.achternaam, p.voornaam
-    ");
-    $q->execute([$sid]);
-    $lijst = $q->fetchAll();
-}
-
-// ── Per persoon effectieve beschikbaarheid ───────────────────
-$eff = [];
-$weken_count = [];   // sol_id => aantal beschikbare weken
-$vaste_map = [];     // sol_id => [voorkeur vrije dagen]
-$tot_per_week = [];
-foreach ($weken as $wn => $_) { $tot_per_week[$wn] = ['aantal'=>0, 'weekend'=>0]; }
-
-foreach ($lijst as $p) {
-    $sol_id = (int)$p['sol_id'];
-    $b2 = function_exists('beschikbaarheid2_effectief') ? beschikbaarheid2_effectief($sol_id) : [];
-    $heeft_b2 = !empty($b2);
-
-    // Voorkeur-vrije dagen ophalen voor de naam-kolom, en open verzoeken per week: die
-    // waren in het raster onzichtbaar (de week stond gewoon als "vol 5").
-    $open_vz = [];
-    if (function_exists('beschikbaarheid2_van')) {
-        $b2_data = beschikbaarheid2_van($sol_id);
-        $prof = $b2_data['profiel'] ?? null;
-        if ($prof && !empty($prof['vaste_dagen_uit'])) $vaste_map[$sol_id] = $prof['vaste_dagen_uit'];
-        foreach ($b2_data['verzoeken'] ?? [] as $vz) {
-            if (($vz['status'] ?? '') !== 'open') continue;
-            for ($w = (int)$vz['van_week']; $w <= (int)$vz['tot_week']; $w++) $open_vz[$w] = $vz;
-        }
-    }
-
-    $oude_weken = [];
-    if (!$heeft_b2 && !empty($p['weken_json'])) {
-        $d = json_decode($p['weken_json'], true);
-        if (is_array($d)) $oude_weken = array_map('intval', $d);
-    }
-
-    // Soort per week, expliciet. Eerder zat dit verstopt in een tekstveld ('weekend',
-    // '3d', 'correctie'), waardoor "minder dagen" en "hele week" in het raster dezelfde
-    // groene cel kregen: je zag niet dat iemand er maar drie dagen was. Een week die
-    // door een correctie hélemaal vervalt komt niet terug uit beschikbaarheid2_effectief()
-    // (die doet daar `continue`), dus die is hier vanzelf 'leeg'.
-    $telling = 0;
-    foreach ($weken as $wn => $_) {
-        if ($heeft_b2) {
-            if (!isset($b2[$wn])) continue;
-            $w = $b2[$wn];
-            $dagen   = (int)$w['dagen_max'];
-            $weekend = count(array_intersect($w['dagen'], [5, 6, 7])) > 0;
-            $welke   = array_map('intval', $w['dagen']);
-            if (!empty($w['correctie']))                    $soort = 'correctie';
-            elseif (isset($open_vz[$wn]))                   $soort = 'verzoek';
-            elseif (($w['regime'] ?? 'vijf') === 'weekend') $soort = 'weekend';
-            elseif ($dagen < 5)                             $soort = 'deels';
-            else                                            $soort = 'vol';
-        } else {
-            if (!in_array($wn, $oude_weken, true)) continue;
-            $dagen = 5; $weekend = true; $soort = 'vol'; $welke = [];
-        }
-        $eff[$sol_id][$wn] = ['dagen' => $dagen, 'weekend' => $weekend, 'soort' => $soort, 'welke' => $welke,
-                              'verzoek' => $open_vz[$wn] ?? null];
-        $tot_per_week[$wn]['aantal']++;
-        if ($weekend) $tot_per_week[$wn]['weekend']++;
-        $telling++;
-    }
-    $weken_count[$sol_id] = $telling;
-}
-
+// Raster + filters: één bron voor scherm en export (includes/beheer/beschikbaarheid.php).
+$filter  = bh_besch_filter($_GET);
+$raster  = bh_besch_raster($seizoen, $filter);
+$weken        = $raster['weken'];
+$lijst        = $raster['lijst'];
+$eff          = $raster['eff'];
+$weken_count  = $raster['weken_count'];
+$vaste_map    = $raster['vaste'];
+$tot_per_week = $raster['tot_per_week'];
 // ── Wat er nog op een besluit wacht ──────────────────────────
 $voorlopigen    = function_exists('beschikbaarheid2_voorlopigen') && $sid ? beschikbaarheid2_voorlopigen($sid) : [];
 $besch_deadline = function_exists('beschikbaarheid2_deadline') ? beschikbaarheid2_deadline($seizoen) : null;
@@ -225,11 +121,39 @@ require __DIR__ . '/layout_top.php';
 </section>
 <?php endif; ?>
 
+<?php
+  // Filteren en exporteren: de export volgt precies de filters van het scherm.
+  $_exp = http_build_query(array_filter($filter, fn($v) => $v !== ''));
+  $filter_velden = [
+    ['soort' => 'zoek', 'naam' => 'q', 'label' => 'Zoek op naam', 'waarde' => $filter['q'], 'breed' => true],
+    ['soort' => 'keuze', 'naam' => 'groep', 'label' => 'Wie', 'waarde' => $filter['groep'],
+     'opties' => ['' => 'Iedereen', 'proces' => 'Nog in de procedure', 'aangenomen' => 'Aangenomen']],
+    ['soort' => 'keuze', 'naam' => 'type', 'label' => 'Nieuw of terug', 'waarde' => $filter['type'],
+     'opties' => ['' => 'Nieuw en terugkerend', 'nieuw' => 'Alleen nieuw', 'terug' => 'Alleen terugkerend']],
+    ['soort' => 'keuze', 'naam' => 'toon', 'label' => 'Toon', 'waarde' => $filter['toon'],
+     'opties' => ['' => 'Alle opgaven', 'verzoek' => 'Met open verzoek', 'voorlopig' => 'Nog voorlopig']],
+  ];
+  $filter_wissen = bh_besch_gefilterd($filter) ? APP_URL . '/admin/beschikbaarheid.php' : null;
+  $filter_acties = [
+    ['label' => 'Export per week', 'url' => APP_URL . '/admin/export_beschikbaarheid.php?soort=week' . ($_exp ? '&' . $_exp : ''), 'icoon' => 'download',
+     'titel' => 'Excel: per persoon per week het aantal dagen'],
+    ['label' => 'Export per dag', 'url' => APP_URL . '/admin/export_beschikbaarheid.php?soort=dag' . ($_exp ? '&' . $_exp : ''), 'icoon' => 'download',
+     'titel' => 'Excel: per persoon per datum beschikbaar ja/nee'],
+  ];
+  if ($raster['totaal_zonder_filter'] > 0) require __DIR__ . '/_filterbalk.php';
+?>
+
 <?php if (empty($lijst)): ?>
   <?php
-  $leeg_titel = 'Nog niemand met een ingevuld formulier';
-  $leeg_tekst = 'Zodra een sollicitant het "Beter leren kennen"-formulier invult, verschijnt de beschikbaarheid hier.';
-  $leeg_icoon = 'kalender';
+  if (bh_besch_gefilterd($filter) && $raster['totaal_zonder_filter'] > 0) {
+      $leeg_titel = 'Niemand gevonden';
+      $leeg_tekst = 'Met deze filters blijft er niemand over. Pas ze aan of wis ze.';
+      $leeg_icoon = 'zoek';
+  } else {
+      $leeg_titel = 'Nog niemand met een ingevuld formulier';
+      $leeg_tekst = 'Zodra een sollicitant het "Beter leren kennen"-formulier invult, verschijnt de beschikbaarheid hier.';
+      $leeg_icoon = 'kalender';
+  }
   require __DIR__ . '/_leeg.php';
   ?>
 <?php else: ?>
@@ -268,7 +192,7 @@ require __DIR__ . '/_dekkinggrafiek.php';
       <caption class="sr-only">Beschikbaarheid per sollicitant per week</caption>
       <thead>
         <tr>
-          <th scope="col" class="bh-raster-naam">Sollicitant (<?= count($lijst) ?>)</th>
+          <th scope="col" class="bh-raster-naam">Sollicitant (<?= count($lijst) ?><?= bh_besch_gefilterd($filter) ? ' van ' . (int)$raster['totaal_zonder_filter'] : '' ?>)</th>
           <th scope="col" class="bh-raster-wkn" title="Aantal weken beschikbaar">wkn</th>
           <?php foreach ($weken as $wn => $w):
             $_type = (string)$w['weektype'];
@@ -313,25 +237,10 @@ require __DIR__ . '/_dekkinggrafiek.php';
             $c = $eff[$sol_id][$wn] ?? null;
             $klik = $mag_bewerken ? 'correctieOpen(' . $sol_id . ',' . (int)$wn . ',' . $naam_js . ')' : null;
 
-            $soort = is_array($c) ? (string)$c['soort'] : 'leeg';
-            $dagen = is_array($c) ? (int)$c['dagen'] : 0;
-            $vz    = is_array($c) ? $c['verzoek'] : null;
-            $vz_n  = $vz ? (int)$vz['dagen_aantal'] : 0;
-            $vz_op = $vz && !empty($vz['dagen_pool']) ? ' op ' . implode('/', array_map('dag_kort', $vz['dagen_pool'])) : '';
-            $wat   = [
-                'leeg'      => ['—',    'niet beschikbaar'],
-                'weekend'   => ['wk',   'alleen het weekend (' . $dagen . ' dagen)'],
-                'deels'     => [$dagen, $dagen . ' van de 5 dagen'],
-                'correctie' => [$dagen, $dagen . ' dagen — gecorrigeerd door het bestuur'],
-                'verzoek'   => [$vz_n . '?', 'vraagt max. ' . $vz_n . ' dagen' . $vz_op . ' — verzoek nog niet beoordeeld'],
-                'vol'       => [$dagen, 'hele week (' . $dagen . ' dagen)'],
-            ][$soort] ?? ['—', 'niet beschikbaar'];
-            $tekst = (string)$wat[0];
-            $tip   = $naam . ' — week ' . $wn . ': ' . $wat[1];
-            // Welke dagen: alleen als het niet de hele week is (dan zegt het niets extra's).
-            if (is_array($c) && $c['welke'] && count($c['welke']) < 7 && $soort !== 'verzoek') {
-                $tip .= ', kan op ' . implode(' ', array_map('dag_kort', $c['welke']));
-            }
+            $_ct   = bh_besch_cel_tekst($c);
+            $tekst = $_ct[0];
+            $soort = $_ct[2];
+            $tip   = $naam . ' — week ' . $wn . ': ' . $_ct[1];
           ?>
           <td class="bh-raster-cel"><?= bh_weekcel($tekst, $soort, ['titel' => $tip, 'klik' => $klik]) ?></td>
           <?php endforeach; ?>
@@ -354,7 +263,7 @@ require __DIR__ . '/_dekkinggrafiek.php';
   </div>
 
   <p class="bh-raster-voet">
-    Onderaan per week: hoeveel mensen er beschikbaar zijn en hoeveel daarvan het <strong>weekend</strong>
+    Onderaan per week: hoeveel <?= bh_besch_gefilterd($filter) ? 'van de getoonde ' : '' ?>mensen er beschikbaar zijn en hoeveel daarvan het <strong>weekend</strong>
     dekken. Rood betekent onder de norm van <?= $dek_norm > 0 ? $dek_norm . ' mensen' : 'de posten' ?>.
   </p>
 

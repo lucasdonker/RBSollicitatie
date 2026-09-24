@@ -3,10 +3,18 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.113.0');
+define('APP_VERSIE', '2.114.0');
 
 function app_changelog(): array {
     return [
+        '2.114.0' => [
+            'datum'  => '2026-09-24',
+            'titel'  => 'Beschikbaarheid: filters en export',
+            'punten' => [
+                'Filteren op naam, wie (iedereen, in de procedure, aangenomen), nieuw of terugkerend, open verzoek en nog voorlopig. Grafiek en totalen volgen de filter',
+                'Export naar Excel per week of per dag (met de redenen van afwezigheid), volgens dezelfde filter',
+            ],
+        ],
         '2.113.0' => [
             'datum'  => '2026-09-24',
             'titel'  => 'TW-gesprekken: zoeken, de hele selectiedag, en vast na het gesprek',
