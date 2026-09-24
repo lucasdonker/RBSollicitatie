@@ -2245,16 +2245,22 @@ details.b2-uitz > div { padding: 0 16px 16px; }
 .bs-uitz-uitleg { font-size: 13px; line-height: 1.55; color: #8a93a6; }
 .bs-uitz-lijn { height: 1px; background: #e6e9ef; margin: 0 14px; }
 
-/* Vaste-dag-pillen (7 dagen ma-zo) */
+/* Dag-pillen (7 dagen ma-zo): vaste vrije dag én de dagen bij een minder-dagen-verzoek */
 .bs-dagpillen { display: flex; gap: 6px; }
 .bs-dagpil {
+  position: relative;
   flex: 1; height: 44px; border: 1px solid #cdd4e0; border-radius: 8px;
   display: flex; align-items: center; justify-content: center;
   font-size: 13px; font-weight: 600; color: #5a6478; cursor: pointer;
 }
-.bs-dagpil input { display: none; }
+/* Onzichtbaar maar wél bereikbaar met toetsenbord en schermlezer (display:none haalde het
+   vakje uit de tabvolgorde: met alleen een toetsenbord kon je geen dag kiezen). */
+.bs-dagpil input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; }
+.bs-dagpil:focus-within { outline: 2px solid #054d8a; outline-offset: 2px; }
 .bs-dagpil.actief { border-color: #054d8a; background: #054d8a; color: #fff; font-weight: 700; }
 .bs-dagpil.weekend { background: #f4f6f9; border-color: #e6e9ef; color: #8a93a6; cursor: not-allowed; }
+.bs-vz-dagen { border: 0; padding: 0; margin: 0; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.bs-vz-dagen legend { padding: 0; margin-bottom: 6px; }
 
 /* Item-rijen (afwezig/losse/verzoek) — grijze rij met verwijder-knop */
 .bs-item-rij {

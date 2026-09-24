@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.104.0');
+define('APP_VERSIE', '2.104.1');
 
 function app_changelog(): array {
     return [
+        '2.104.1' => [
+            'datum'  => '2026-09-24',
+            'titel'  => 'Minder dagen: welke dagen je wél kunt',
+            'punten' => [
+                'Bij een verzoek om minder dagen kies je nu ook welke dagen je die weken wél kunt (leeg = maakt niet uit). Kies je minder dagen dan je wilt werken, dan zegt het formulier dat meteen',
+                'Een goedgekeurd verzoek met gekozen dagen beperkt de beschikbaarheid tot die dagen; wie de dagen later wijzigt, krijgt het verzoek opnieuw ter beoordeling',
+                'Beschikbaarheid in het beheer: een week met een open verzoek staat nu als "3?" (vraagt 3 dagen) in het raster in plaats van als volle week, en de tooltip noemt welke dagen iemand kan',
+                'De dag-knoppen (ook bij vaste vrije dag) zijn nu met het toetsenbord te bedienen',
+            ],
+        ],
         '2.104.0' => [
             'datum'  => '2026-09-24',
             'titel'  => 'Automatische taken alleen nog via de geplande taak',

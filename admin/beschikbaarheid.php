@@ -74,10 +74,17 @@ foreach ($lijst as $p) {
     $b2 = function_exists('beschikbaarheid2_effectief') ? beschikbaarheid2_effectief($sol_id) : [];
     $heeft_b2 = !empty($b2);
 
-    // Voorkeur-vrije dagen ophalen voor de naam-kolom
+    // Voorkeur-vrije dagen ophalen voor de naam-kolom, en open verzoeken per week: die
+    // waren in het raster onzichtbaar (de week stond gewoon als "vol 5").
+    $open_vz = [];
     if (function_exists('beschikbaarheid2_van')) {
-        $prof = beschikbaarheid2_van($sol_id)['profiel'] ?? null;
+        $b2_data = beschikbaarheid2_van($sol_id);
+        $prof = $b2_data['profiel'] ?? null;
         if ($prof && !empty($prof['vaste_dagen_uit'])) $vaste_map[$sol_id] = $prof['vaste_dagen_uit'];
+        foreach ($b2_data['verzoeken'] ?? [] as $vz) {
+            if (($vz['status'] ?? '') !== 'open') continue;
+            for ($w = (int)$vz['van_week']; $w <= (int)$vz['tot_week']; $w++) $open_vz[$w] = $vz;
+        }
     }
 
     $oude_weken = [];
@@ -98,15 +105,18 @@ foreach ($lijst as $p) {
             $w = $b2[$wn];
             $dagen   = (int)$w['dagen_max'];
             $weekend = count(array_intersect($w['dagen'], [5, 6, 7])) > 0;
+            $welke   = array_map('intval', $w['dagen']);
             if (!empty($w['correctie']))                    $soort = 'correctie';
+            elseif (isset($open_vz[$wn]))                   $soort = 'verzoek';
             elseif (($w['regime'] ?? 'vijf') === 'weekend') $soort = 'weekend';
             elseif ($dagen < 5)                             $soort = 'deels';
             else                                            $soort = 'vol';
         } else {
             if (!in_array($wn, $oude_weken, true)) continue;
-            $dagen = 5; $weekend = true; $soort = 'vol';
+            $dagen = 5; $weekend = true; $soort = 'vol'; $welke = [];
         }
-        $eff[$sol_id][$wn] = ['dagen' => $dagen, 'weekend' => $weekend, 'soort' => $soort];
+        $eff[$sol_id][$wn] = ['dagen' => $dagen, 'weekend' => $weekend, 'soort' => $soort, 'welke' => $welke,
+                              'verzoek' => $open_vz[$wn] ?? null];
         $tot_per_week[$wn]['aantal']++;
         if ($weekend) $tot_per_week[$wn]['weekend']++;
         $telling++;
@@ -249,6 +259,7 @@ require __DIR__ . '/_dekkinggrafiek.php';
       <span><i class="bh-legenda-blok bh-weekcel-weekend"></i>weekend</span>
       <span><i class="bh-legenda-blok bh-weekcel-deels"></i>minder dagen</span>
       <span><i class="bh-legenda-blok bh-weekcel-correctie"></i>correctie bestuur</span>
+      <span><i class="bh-legenda-blok bh-weekcel-verzoek"></i>verzoek open (3? = vraagt 3 dagen)</span>
     </span>
   </header>
 
@@ -304,15 +315,23 @@ require __DIR__ . '/_dekkinggrafiek.php';
 
             $soort = is_array($c) ? (string)$c['soort'] : 'leeg';
             $dagen = is_array($c) ? (int)$c['dagen'] : 0;
+            $vz    = is_array($c) ? $c['verzoek'] : null;
+            $vz_n  = $vz ? (int)$vz['dagen_aantal'] : 0;
+            $vz_op = $vz && !empty($vz['dagen_pool']) ? ' op ' . implode('/', array_map('dag_kort', $vz['dagen_pool'])) : '';
             $wat   = [
                 'leeg'      => ['—',    'niet beschikbaar'],
                 'weekend'   => ['wk',   'alleen het weekend (' . $dagen . ' dagen)'],
                 'deels'     => [$dagen, $dagen . ' van de 5 dagen'],
                 'correctie' => [$dagen, $dagen . ' dagen — gecorrigeerd door het bestuur'],
+                'verzoek'   => [$vz_n . '?', 'vraagt max. ' . $vz_n . ' dagen' . $vz_op . ' — verzoek nog niet beoordeeld'],
                 'vol'       => [$dagen, 'hele week (' . $dagen . ' dagen)'],
             ][$soort] ?? ['—', 'niet beschikbaar'];
             $tekst = (string)$wat[0];
             $tip   = $naam . ' — week ' . $wn . ': ' . $wat[1];
+            // Welke dagen: alleen als het niet de hele week is (dan zegt het niets extra's).
+            if (is_array($c) && $c['welke'] && count($c['welke']) < 7 && $soort !== 'verzoek') {
+                $tip .= ', kan op ' . implode(' ', array_map('dag_kort', $c['welke']));
+            }
           ?>
           <td class="bh-raster-cel"><?= bh_weekcel($tekst, $soort, ['titel' => $tip, 'klik' => $klik]) ?></td>
           <?php endforeach; ?>

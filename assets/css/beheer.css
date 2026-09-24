@@ -1364,6 +1364,7 @@ button.bh-weekcel-klik:hover, button.bh-weekcel-klik:focus-visible { outline: 2p
 .bh-weekcel-deels     { background: var(--fase-teal-vlak);   color: var(--fase-teal); }
 .bh-weekcel-correctie { background: var(--fase-blauw-vlak);  color: var(--fase-blauw); }
 .bh-weekcel-leeg      { background: none; }
+.bh-weekcel-verzoek   { background: var(--fase-oranje-vlak); color: var(--fase-oranje); outline: 1.5px dashed currentColor; outline-offset: -4px; }
 
 /* ── Zijpaneel: één week van één persoon bewerken ──
    Rechts op een groot scherm, onderin op een telefoon — daar is de duim. */

@@ -214,6 +214,7 @@
         '<div class="bs-item-grid">' +
           veld('Max. dagen per week', '<input type="number" name="b2_vz_dagen[]" min="1" max="4" inputmode="numeric" value="' + esc(data.dagen || '') + '" onchange="beschHerbereken()">') +
         '</div>' +
+        verzoekDagen(data.pool || []) +
         '<input type="text" name="b2_vz_toelichting[]" value="' + esc(data.toelichting || '') + '" placeholder="Reden (bijv. tentamenweek)" class="bs-invoer" maxlength="300" onchange="beschHerbereken()">' +
         '<input type="hidden" name="b2_vz_id[]" value="' + esc(data.id || '') + '">' +
         '<input type="hidden" name="b2_vz_status[]" value="' + esc(status) + '">' +
@@ -221,6 +222,39 @@
         (status !== 'open' ? '<span class="bs-item-hint">Wijzig je dit verzoek, dan beoordeelt het bestuur het opnieuw.</span>' : '<span class="bs-item-hint">Het bestuur beoordeelt dit verzoek; je krijgt bericht.</span>') +
       '</div>' + wisBtn();
     return div;
+  }
+  /* Welke dagen kan iemand die weken wél? Leeg = maakt niet uit (het bestuur kiest).
+     De keuze gaat via het verborgen veld b2_vz_pool[] mee, zoals de AI-wizard hem al vulde. */
+  function verzoekDagen(pool) {
+    const aan = (pool || []).map(String);
+    return '<fieldset class="bs-vz-dagen">' +
+      '<legend class="bs-item-lbl">Welke dagen kun je die weken wél? Laat leeg als het niet uitmaakt.</legend>' +
+      '<div class="bs-dagpillen">' +
+      [1, 2, 3, 4, 5, 6, 7].map(function (d) {
+        const is = aan.includes(String(d));
+        return '<label class="bs-dagpil' + (is ? ' actief' : '') + '"><input type="checkbox" class="besch-vzdag" value="' + d + '"' +
+          (is ? ' checked' : '') + ' aria-label="' + DAGEN[d] + '" onchange="beschVzDagToggle(this)">' + DAGEN_KORT[d] + '</label>';
+      }).join('') +
+      '</div>' +
+      '<span class="bs-item-hint besch-vz-poolhint" hidden></span>' +
+    '</fieldset>';
+  }
+  window.beschVzDagToggle = function (cb) {
+    const lbl = cb.closest('.bs-dagpil');
+    if (lbl) lbl.classList.toggle('actief', cb.checked);
+    const rij = cb.closest('.besch-verzoek');
+    const pool = Array.from(rij.querySelectorAll('.besch-vzdag:checked')).map(function (c) { return parseInt(c.value); });
+    rij.querySelector('[name="b2_vz_pool[]"]').value = JSON.stringify(pool);
+    beschHerbereken();
+  };
+  // Minder dagen gekozen dan het aantal dat je wilt werken: dat kan het rooster niet waarmaken.
+  function verzoekPoolHint(rij) {
+    const hint = rij.querySelector('.besch-vz-poolhint'); if (!hint) return;
+    const pool = rij.querySelectorAll('.besch-vzdag:checked').length;
+    const dagen = parseInt(rij.querySelector('[name="b2_vz_dagen[]"]').value) || 0;
+    const fout = pool > 0 && dagen > pool;
+    hint.hidden = !fout;
+    hint.textContent = fout ? 'Je kiest ' + pool + (pool === 1 ? ' dag' : ' dagen') + ', maar wilt er ' + dagen + ' werken. Kies meer dagen of verlaag het aantal.' : '';
   }
   window.beschVerzoekToevoegen = function (data) { sectieOpen('verzoeken', true); el('beschVerzoeken').appendChild(verzoekRij(data)); beschHerbereken(); };
 
@@ -309,6 +343,7 @@
     const d = beschVerzamel();
     const regels = [];
     document.querySelectorAll('#beschPeriodes .besch-periode').forEach(periodeKopBijwerken);
+    document.querySelectorAll('#beschVerzoeken .besch-verzoek').forEach(verzoekPoolHint);
     d.periodes.forEach(function (p) {
       if (!p.van || !p.tot) return;
       if (p.regime === 'weekend') {
@@ -324,7 +359,8 @@
     d.verzoeken.forEach(function (v) {
       if (!v.van || !v.tot || !v.dagen) return;
       const wk = v.van === v.tot ? 'week ' + v.van : 'week ' + v.van + ' t/m ' + v.tot;
-      regels.push('Minder dagen gevraagd in ' + wk + ' (max ' + v.dagen + ')' + (v.status === 'goedgekeurd' ? ' — goedgekeurd' : v.status === 'afgewezen' ? ' — afgewezen' : ''));
+      const op = (v.pool || []).length ? ', op ' + v.pool.map(function (n) { return DAGEN_KORT[n]; }).join('/') : '';
+      regels.push('Minder dagen gevraagd in ' + wk + ' (max ' + v.dagen + op + ')' + (v.status === 'goedgekeurd' ? ' — goedgekeurd' : v.status === 'afgewezen' ? ' — afgewezen' : ''));
     });
     const doel = el('beschPreview');
     if (doel) doel.textContent = regels.length ? regels.join('. ') + '.' : 'Vul hieronder je beschikbaarheid in.';
@@ -458,7 +494,8 @@
     });
     (d.verzoeken || []).forEach(function (v) {
       const wk = v.van_week === v.tot_week ? 'week ' + v.van_week : 'week ' + v.van_week + ' t/m ' + v.tot_week;
-      items.push({ titel: 'Minder dagen: ' + wk + ' — max ' + (v.dagen_aantal || v.dagen) + ' dagen', sub: 'Binnen je werkperiode · het bestuur beoordeelt dit', waarschuwing: true, sectie: 'verzoeken' });
+      const pool = v.dagen_pool || v.pool || [];
+      items.push({ titel: 'Minder dagen: ' + wk + ' — max ' + (v.dagen_aantal || v.dagen) + ' dagen' + (pool.length ? ' (' + pool.map(function (n) { return DAGEN_KORT[n]; }).join('/') + ')' : ''), sub: 'Binnen je werkperiode · het bestuur beoordeelt dit', waarschuwing: true, sectie: 'verzoeken' });
     });
     if (!items.length) { doel.innerHTML = ''; return; }
     let html = '<div class="wiz3-kaart">';

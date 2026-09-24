@@ -146,13 +146,14 @@ function bh_voortgang(int $gedaan, int $totaal, array $opt = []): string {
  * @param string $tekst  wat er in de cel staat: "5", "wk", of "—" voor niets.
  *                       Verplicht: een gekleurd vlakje zonder inhoud zegt niets tegen
  *                       iemand die kleuren niet onderscheidt, en niets tegen een schermlezer.
- * @param string $soort  vol | weekend | deels | correctie | leeg  (onbekend → leeg)
+ * @param string $soort  vol | weekend | deels | correctie | verzoek | leeg  (onbekend → leeg)
+ *                       verzoek = er ligt een minder-dagen-verzoek dat nog beoordeeld moet worden
  * @param array  $opt    titel:?string (tooltip, wordt ook aria-label) ·
  *                       klik:?string (JS-aanroep; maakt er een <button> van)
  */
 function bh_weekcel(string $tekst, string $soort = 'leeg', array $opt = []): string {
     if (trim($tekst) === '') return '';
-    if (!in_array($soort, ['vol', 'weekend', 'deels', 'correctie', 'leeg'], true)) $soort = 'leeg';
+    if (!in_array($soort, ['vol', 'weekend', 'deels', 'correctie', 'verzoek', 'leeg'], true)) $soort = 'leeg';
     $cls   = 'bh-weekcel bh-weekcel-' . $soort;
     $titel = !empty($opt['titel']) ? (string)$opt['titel'] : '';
     $attr  = $titel !== '' ? ' title="' . h($titel) . '" aria-label="' . h($titel) . '"' : '';

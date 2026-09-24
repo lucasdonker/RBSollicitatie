@@ -228,6 +228,11 @@ function beschikbaarheid2_effectief(int $sol_id, ?array $seizoen = null): array 
             if (isset($verzoek_week[$wk])) {
                 $norm = min($norm, $verzoek_week[$wk]['aantal']);
                 $pool = $verzoek_week[$wk]['pool'];
+                // Gekozen dagen bij een goedgekeurd verzoek: alleen die dagen zijn beschikbaar.
+                if ($pool) {
+                    $binnen = array_values(array_intersect($dagen, array_map('intval', $pool)));
+                    if ($binnen) $dagen = $binnen;
+                }
             }
             if ($corr && $corr['soort'] === 'minder') $norm = min($norm, count($dagen));
 
@@ -377,7 +382,7 @@ function beschikbaarheid2_opslaan(int $sol_id, array $input, string $door = 'sol
     // gewijzigd of weggehaald, dan vervalt het besluit (weg, of opnieuw als open verzoek).
     $besliste = [];
     try {
-        $q = $db->prepare("SELECT id, van_week, tot_week, dagen_aantal FROM beschikbaarheid_verzoek WHERE sollicitatie_id=? AND status<>'open'");
+        $q = $db->prepare("SELECT id, van_week, tot_week, dagen_aantal, dagen_pool FROM beschikbaarheid_verzoek WHERE sollicitatie_id=? AND status<>'open'");
         $q->execute([$sol_id]);
         foreach ($q->fetchAll() as $r) $besliste[(int)$r['id']] = $r;
     } catch (\Exception $e) {}
@@ -388,15 +393,20 @@ function beschikbaarheid2_opslaan(int $sol_id, array $input, string $door = 'sol
         $vw=(int)($v['van_week']??0); $tw=(int)($v['tot_week']??0); $da=(int)($v['dagen']??0);
         if ($vw<1||$tw<1||$da<1||$da>6) continue;
         if ($tw<$vw) { $t=$vw; $vw=$tw; $tw=$t; }
+        $pool = null;
+        if (!empty($v['pool'])) {
+            $pool_arr = array_values(array_intersect(array_map('intval', (array)$v['pool']), [1,2,3,4,5,6,7]));
+            sort($pool_arr);
+            if ($pool_arr) $pool = json_encode($pool_arr);
+        }
         $id = (int)($v['id'] ?? 0);
         if ($id && isset($besliste[$id])) {
             $b = $besliste[$id];
-            if ((int)$b['van_week'] === $vw && (int)$b['tot_week'] === $tw && (int)$b['dagen_aantal'] === $da) { $behouden[] = $id; continue; }
-        }
-        $pool = null;
-        if (!empty($v['pool'])) {
-            $pool_arr = array_values(array_intersect(array_map('intval', $v['pool']), [1,2,3,4,5,6,7]));
-            if ($pool_arr) $pool = json_encode($pool_arr);
+            // Ook de gekozen dagen tellen: andere dagen = opnieuw beoordelen.
+            $oude_pool = json_decode((string)($b['dagen_pool'] ?? ''), true) ?: [];
+            sort($oude_pool);
+            if ((int)$b['van_week'] === $vw && (int)$b['tot_week'] === $tw && (int)$b['dagen_aantal'] === $da
+                && json_encode(array_map('intval', $oude_pool)) === ($pool ?? '[]')) { $behouden[] = $id; continue; }
         }
         $insv->execute([$sol_id, $vw, $tw, $da, $pool, mb_substr(trim($v['toelichting']??''),0,300)?:null]);
         $nieuwe_verzoeken[] = (int)$db->lastInsertId();
