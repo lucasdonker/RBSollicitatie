@@ -18,6 +18,28 @@ $actie = (string)($_POST['actie'] ?? '');
 $sz  = actief_seizoen();
 $sid = $sz ? (int)$sz['id'] : 0;
 
+// De tablet instellen (admin/_tablet_code.php): bestuurswerk, terug naar het scherm.
+if ($actie === 'code_genereren' || $actie === 'pin_zetten') {
+    csrf_check();
+    if (!$def) redirect(APP_URL . '/admin/');
+    vereis_recht($def['module'], 'bewerken');
+    if ($actie === 'code_genereren') {
+        // Leesbare code: geen tekens die je kunt verwarren (0/O, 1/I/L).
+        $alfabet = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+        $code = '';
+        for ($i = 0; $i < 6; $i++) $code .= $alfabet[random_int(0, strlen($alfabet) - 1)];
+        instelling_opslaan($def['code'], $code);
+        flash('succes', 'Nieuwe toegangscode aangemaakt. Oude tablet-links werken niet meer.');
+    } else {
+        $pin = preg_replace('/\D/', '', (string)($_POST['pin'] ?? ''));
+        instelling_opslaan($def['pin'], strlen($pin) >= 4 ? password_hash($pin, PASSWORD_DEFAULT) : '');
+        flash('succes', strlen($pin) >= 4 ? 'Pincode voor afsluiten op de tablet opgeslagen.' : 'Pincode gewist: afsluiten kan nu alleen in het beheer.');
+    }
+    if (function_exists('audit_log')) audit_log('tablet_' . $actie, 'seizoen', $sid, ['evenement' => $ev]);
+    $terug = (string)($_SERVER['HTTP_REFERER'] ?? '');
+    redirect(str_starts_with($terug, rtrim(APP_URL, '/') . '/admin/') ? $terug : APP_URL . '/admin/');
+}
+
 if ($actie === 'afsluiten') {
     csrf_check();
     if (!$def) redirect(APP_URL . '/admin/');

@@ -238,14 +238,15 @@ function avg_inzage($db, int $sol_id): array {
             'tekst_voor_ai_hulp'    => $rijen("SELECT aangemaakt_op, invoer, status FROM ai_beschikbaarheid_log WHERE sollicitatie_id = ? AND invoer <> '' ORDER BY id"),
         ],
         'selectiedag' => [
-            'indeling'    => $rij("SELECT g.nummer AS groep, i.aanwezig, i.ingecheckt_op FROM selectie_indeling i LEFT JOIN selectie_groep g ON g.id = i.groep_id WHERE i.sollicitatie_id = ?"),
+            'indeling'    => $rij("SELECT g.nummer AS groep, i.bevestiging, i.bevestiging_reden, i.bevestigd_op, i.aanwezig, i.ingecheckt_op, i.afgemeld_reden FROM selectie_indeling i LEFT JOIN selectie_groep g ON g.id = i.groep_id WHERE i.sollicitatie_id = ?"),
             'cijfers'     => $beoordelaar($rijen("SELECT test, criterium, score, bijgewerkt_op FROM selectie_score WHERE sollicitatie_id = ? ORDER BY test, criterium")),
             'observaties' => $beoordelaar($rijen("SELECT soort, tekst, aangemaakt_op FROM selectie_observatie WHERE sollicitatie_id = ? ORDER BY id")),
             'besluit'     => $rij("SELECT besluit, notitie, gebeld_op, gebeld_notitie, bijgewerkt_op FROM selectie_besluit WHERE sollicitatie_id = ?"),
             'beoordeling_oud' => $zonder($rijen("SELECT * FROM beoordelingen WHERE sollicitatie_id = ?"), ['id', 'sollicitatie_id', 'beoordelaar']),
         ],
         'trainingsweekend' => [
-            'deelname'    => $rij("SELECT aanwezig, ingecheckt_op, afgemeld_reden, besluit, besluit_notitie, besluit_op FROM tw_deelname WHERE sollicitatie_id = ?"),
+            'deelname'    => $rij("SELECT bevestiging, bevestiging_reden, bevestigd_op, aanwezig, ingecheckt_op, afgemeld_reden,
+                                          besluit, besluit_notitie, besluit_op, gesprek_bericht FROM tw_deelname WHERE sollicitatie_id = ?"),
             'observaties' => $beoordelaar($rijen("SELECT soort, tekst, aangemaakt_op FROM tw_observatie WHERE sollicitatie_id = ? ORDER BY id")),
         ],
         'inzet_afspraak' => [

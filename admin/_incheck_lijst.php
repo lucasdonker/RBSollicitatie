@@ -22,7 +22,7 @@ $_afgesloten = evenement_afgesloten_op($ick_ev, (int)(actief_seizoen()['id'] ?? 
 $_n_aanw = count(array_filter($ick_lijst, fn($k) => $k['stand'] === 'aanwezig'));
 $_n_verw = count(array_filter($ick_lijst, fn($k) => $k['stand'] === 'verwacht'));
 ?>
-<section class="ds-kaart bh-ick" data-incheck data-ev="<?= h($ick_ev) ?>" data-endpoint="<?= APP_URL ?>/admin/api_incheck.php">
+<section class="ds-kaart bh-ick" data-incheck data-ev="<?= h($ick_ev) ?>" data-endpoint="<?= APP_URL ?>/admin/api_incheck.php" data-csrf="<?= h(csrf_token()) ?>">
   <div class="bh-ick-band">
     <div class="bh-ick-titel">
       <span class="bh-ick-titeltekst"><?= h($ick_titel) ?></span>

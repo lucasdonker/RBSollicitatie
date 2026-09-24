@@ -568,6 +568,17 @@
     }
   }
 
+  /* <button data-kopieer="#veld"> kopieert de waarde (of tekst) van dat element. Eén haak,
+     één keer aan document: ook voor blokken die later in de DOM komen. */
+  document.addEventListener('click', function (e) {
+    var knop = e.target.closest && e.target.closest('[data-kopieer]');
+    if (!knop) return;
+    var bron = document.querySelector(knop.getAttribute('data-kopieer'));
+    if (!bron || !navigator.clipboard) return;
+    navigator.clipboard.writeText(bron.value !== undefined ? bron.value : bron.textContent)
+      .then(function () { bhToast('Gekopieerd.', 'succes'); });
+  });
+
   function start(wortel) {
     (wortel || document).querySelectorAll('.bh-tabel').forEach(tabelKoppelen);
     (wortel || document).querySelectorAll('[data-kolomkiezer]').forEach(kiezerKoppelen);

@@ -88,6 +88,7 @@ function tw_kandidaten(int $seizoen_id): array {
                    p.geboortedatum, p.geslacht, p.telefoon,
                    d.aanwezig, d.ingecheckt_op, d.afgemeld_reden,
                    d.besluit, d.besluit_notitie, d.besluit_door, d.besluit_op, d.doorgevoerd_op,
+                   d.bevestiging, d.bevestiging_reden, d.gesprek_status, d.gesprek_door, d.gesprek_sinds, d.gesprek_bericht,
                    blk.foto_url, blk.bijzonderheden
             FROM sollicitaties s
             JOIN personen p ON p.id = s.persoon_id
@@ -108,6 +109,16 @@ function tw_kandidaten(int $seizoen_id): array {
     } catch (\Exception $e) {
         return [];
     }
+}
+
+/** De deelnamerij van één sollicitatie (of null), voor het dossier. */
+function tw_deelname_van(int $seizoen_id, int $sol_id): ?array {
+    tw_auto_setup();
+    try {
+        $q = db()->prepare("SELECT * FROM tw_deelname WHERE seizoen_id=? AND sollicitatie_id=?");
+        $q->execute([$seizoen_id, $sol_id]);
+        return $q->fetch() ?: null;
+    } catch (\Exception $e) { return null; }
 }
 
 /** Zorgt dat er een deelnamerij is, en geeft hem terug. */
@@ -151,27 +162,48 @@ function tw_observaties_alle(int $seizoen_id): array {
     return $uit;
 }
 
-function tw_observatie_toevoegen(int $seizoen_id, int $sol_id, string $tekst, string $soort, string $door): bool {
+function tw_observatie_toevoegen(int $seizoen_id, int $sol_id, string $tekst, string $soort, string $door, int $beoordelaar_id = 0): bool {
     $tekst = trim($tekst);
     if ($tekst === '') return false;
     if (!in_array($soort, ['neutraal', 'positief', 'aandacht'], true)) $soort = 'neutraal';
     tw_auto_setup();
     try {
-        db()->prepare("INSERT INTO tw_observatie (seizoen_id, sollicitatie_id, tekst, soort, beoordelaar)
-                       VALUES (?,?,?,?,?)")
-            ->execute([$seizoen_id, $sol_id, mb_substr($tekst, 0, 2000), $soort, mb_substr($door, 0, 100)]);
+        db()->prepare("INSERT INTO tw_observatie (seizoen_id, sollicitatie_id, tekst, soort, beoordelaar, beoordelaar_id)
+                       VALUES (?,?,?,?,?,?)")
+            ->execute([$seizoen_id, $sol_id, mb_substr($tekst, 0, 2000), $soort, mb_substr($door, 0, 100), $beoordelaar_id ?: null]);
         return true;
     } catch (\Exception $e) { return false; }
 }
 
-/** Een observatie wissen. Alleen de eigen observatie; wat een ander zag blijft staan. */
-function tw_observatie_wissen(int $obs_id, string $door): bool {
+/**
+ * Een observatie wissen. Alleen de eigen observatie; wat een ander zag blijft staan.
+ * Eigen = zelfde beoordelaar-id; oude rijen zonder id vallen terug op de naam.
+ */
+function tw_observatie_wissen(int $obs_id, string $door, int $beoordelaar_id = 0): bool {
     tw_auto_setup();
     try {
-        $q = db()->prepare("DELETE FROM tw_observatie WHERE id=? AND beoordelaar=?");
-        $q->execute([$obs_id, $door]);
+        $q = db()->prepare("DELETE FROM tw_observatie WHERE id=?
+                            AND (beoordelaar_id=? OR (beoordelaar_id IS NULL AND beoordelaar=?))");
+        $q->execute([$obs_id, $beoordelaar_id, $door]);
         return $q->rowCount() > 0;
     } catch (\Exception $e) { return false; }
+}
+
+/** Is dit mijn observatie? (Voor de wisknop; de server controleert bij het wissen opnieuw.) */
+function tw_observatie_is_eigen(array $o, string $door, int $beoordelaar_id): bool {
+    return !empty($o['beoordelaar_id']) ? (int)$o['beoordelaar_id'] === $beoordelaar_id : ($o['beoordelaar'] ?? '') === $door;
+}
+
+/** [sol_id => true] voor wie van dit seizoen al beschikbaarheid opgaf. Eén query, voor de stap Voorbereiden. */
+function tw_met_beschikbaarheid(int $seizoen_id): array {
+    try {
+        $q = db()->prepare("SELECT DISTINCT b.sollicitatie_id FROM beschikbaarheid_blok b
+                            JOIN sollicitaties s ON s.id = b.sollicitatie_id WHERE s.seizoen_id=?");
+        $q->execute([$seizoen_id]);
+        $uit = [];
+        foreach ($q->fetchAll() as $r) $uit[(int)$r['sollicitatie_id']] = true;
+        return $uit;
+    } catch (\Exception $e) { return []; }
 }
 
 /** Het besluit vastleggen. Nog niet doorvoeren — dat is een aparte, bewuste stap. */
@@ -241,6 +273,61 @@ function tw_stand(array $kandidaten): array {
 /** Naar welke fase leidt een besluit? Twijfel leidt nergens heen: daar moet iemand over bellen. */
 function tw_besluit_fase(string $besluit): ?string {
     return ['aannemen' => 'aangenomen', 'afwijzen' => 'afgewezen'][$besluit] ?? null;
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Het gesprek met het bestuur (stap Gesprekken)
+// ─────────────────────────────────────────────────────────────
+
+/** De standaardtekst als het bestuur in het gesprek geen eigen bericht invult (Instellingen › Beoordelingscriteria). */
+function tw_standaard_bericht(string $besluit): string {
+    $standaard = [
+        'aannemen' => 'Fijn dat je erbij bent! In je portaal staan een paar formulieren klaar; vul die zo snel mogelijk in.',
+        'afwijzen' => 'We hebben je inzet dit weekend gezien en waarderen die. Dank je wel, en misschien tot een volgend seizoen.',
+    ];
+    $sleutel = $besluit === 'aannemen' ? 'tw.bericht_aangenomen' : 'tw.bericht_afgewezen';
+    $v = function_exists('instelling') ? trim((string)instelling($sleutel, '')) : '';
+    return $v !== '' ? $v : ($standaard[$besluit] ?? '');
+}
+
+/**
+ * Het gesprek afronden: besluit vastleggen en — bij aannemen of afwijzen — meteen doorvoeren.
+ * Aangenomen krijgt daardoor direct het kennismakingspakket (de formuliertaken) in het portaal.
+ * Het bericht aan de sollicitant gaat als {{gesprek_bericht}} mee in de mail; leeg = de
+ * standaardtekst. De interne notitie blijft intern. Twijfel: geen fase, geen mail — die komt
+ * op de bellijst voor na het weekend.
+ *
+ * @return array ['ok' => bool, 'fase' => ?string, 'melding' => string]
+ */
+function tw_gesprek_afronden(int $seizoen_id, int $sol_id, string $besluit, string $notitie, string $bericht, string $door, int $beheerder_id): array {
+    if (!in_array($besluit, ['aannemen', 'twijfel', 'afwijzen'], true)) return ['ok' => false, 'fase' => null, 'melding' => 'Kies een besluit.'];
+    tw_besluit_zetten($seizoen_id, $sol_id, $besluit, $notitie, $door);
+    $bericht = mb_substr(trim($bericht), 0, 2000);
+    db()->prepare("UPDATE tw_deelname SET gesprek_status='gehad', gesprek_bericht=?, gesprek_door=NULL, gesprek_sinds=NULL
+                   WHERE seizoen_id=? AND sollicitatie_id=?")
+       ->execute([$bericht !== '' ? $bericht : null, $seizoen_id, $sol_id]);
+    if (function_exists('audit_log')) audit_log('tw_gesprek', 'sollicitatie', $sol_id, ['besluit' => $besluit, 'door' => $beheerder_id]);
+
+    $naar = tw_besluit_fase($besluit);
+    if ($naar === null) return ['ok' => true, 'fase' => null, 'melding' => 'Vastgelegd als twijfel: bel na het weekend.'];
+    $res = fase_zetten($sol_id, $naar, 'gesprek', [
+        'seizoen_id'    => $seizoen_id,
+        'alleen_van'    => ['uitgenodigd_tw', 'tw_geweest'],
+        'melding_vars'  => ['gesprek_bericht' => $bericht !== '' ? $bericht : tw_standaard_bericht($besluit)],
+        'meldingstypen' => $besluit === 'afwijzen' ? ['tw_afgewezen'] : fase_meldingstypen($naar),
+    ]);
+    if (empty($res['ok'])) return ['ok' => false, 'fase' => null, 'melding' => 'Het besluit staat vast, maar doorvoeren lukte niet: ' . ($res['fout'] ?? 'onbekend')];
+    tw_doorgevoerd_markeren($seizoen_id, $sol_id);
+    $tekst = $besluit === 'aannemen' ? 'Aangenomen. De formulieren staan nu in het portaal klaar.' : 'Afgewezen.';
+    $m = function_exists('fase_melding_tekst') ? fase_melding_tekst($res) : '';
+    return ['ok' => true, 'fase' => $naar, 'melding' => trim($tekst . ' ' . $m)];
+}
+
+/** Stand van de gesprekken voor de lijst: nog / bezig / gehad (twijfel telt als gehad, met twijfel). */
+function tw_gesprek_stand(array $k, int $ik): string {
+    if (!empty($k['doorgevoerd_op']) || ($k['gesprek_status'] ?? '') === 'gehad') return 'gehad';
+    if (function_exists('evenement_claim_actief') && evenement_claim_actief($k['gesprek_door'] ?? null, $k['gesprek_sinds'] ?? null, $ik)) return 'bezig';
+    return 'nog';
 }
 
 } // function_exists

@@ -3,10 +3,21 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.110.0');
+define('APP_VERSIE', '2.111.0');
 
 function app_changelog(): array {
     return [
+        '2.111.0' => [
+            'datum'  => '2026-09-24',
+            'titel'  => 'Trainingsweekend opnieuw: voorbereiden, inchecken, beoordelen, gesprekken',
+            'punten' => [
+                'Vier stappen. Voorbereiden: wie komt er (ook invullen na een telefoontje), wie mist nog beschikbaarheid, en de tablet met code en pincode. Inchecken: dezelfde tablet en lijst als de selectiedag',
+                'Beoordelen op je telefoon, met foto. De selectiedag (advies, besluit en observaties) staat ingeklapt onderaan: te vinden, niet vooraan',
+                'Gesprekken: iedereen spreekt het bestuur, in de volgorde die uitkomt. Eén scherm met gegevens, opgave, de inzet als concept (functie, weken, dagen, betaald) en alles van selectiedag en weekend. "Bezig door ..." voorkomt dat twee bestuursleden hetzelfde gesprek openen',
+                'Aannemen of afwijzen gaat in het gesprek meteen door: de formulieren staan direct in het portaal. Het bericht aan de sollicitant gaat mee in de mail als {{gesprek_bericht}}; leeg = een standaardtekst (Instellingen › Uitnodigen & automatisch). Twijfel blijft staan',
+                'Nieuw dossiertabblad Trainingsweekend: bevestiging, inchecken, observaties, gesprek en besluit, en de afgesproken inzet zodra de loonplanning definitief is',
+            ],
+        ],
         '2.110.0' => [
             'datum'  => '2026-09-24',
             'titel'  => 'Selectiedag: twijfel op de bellijst, "komt op het TW?", niet dubbel bellen',

@@ -112,11 +112,20 @@ privacyverklaring.
 | 1 Aangemeld | We hebben je aanmelding | Wachten op de uitnodiging |
 | 2 Selectiedag | Je bent uitgenodigd en krijgt de datum | Beter Leren Kennen invullen, beschikbaarheid doorgeven, de gezondheidsverklaring en het intakeformulier ondertekenen (of laten ondertekenen door je ouder) |
 | 3 Na de selectie | Het bestuur bespreekt de selectiedag | Wachten; je hoort binnen twee weken of je door mag |
-| 4 Trainingsweekend | Je bent uitgenodigd voor het weekend | Meedoen |
+| 4 Trainingsweekend | Je bent uitgenodigd voor het weekend | Laten weten of je komt, meedoen, en aan het eind een gesprek met het bestuur |
 | 5 Aangenomen | Welkom bij de brigade | Het takenpakket afronden (zie verderop) |
 
-Op de selectiedag kun je jezelf bij aankomst aanmelden op een tablet: je typt je naam en ziet in
+Vóór de selectiedag en het trainingsweekend staat bij je taken "Kom je?". Kies **Ik kom** of **Ik
+kan niet** en klik op **Doorgeven**. Kun je niet, schrijf dan kort waarom; het bestuur neemt
+contact met je op. Heb je het al aan de telefoon gezegd, dan staat het er vaak al ingevuld.
+
+Op de selectiedag en het trainingsweekend meld je jezelf bij aankomst aan op een tablet: je typt
+de eerste letters van je naam en tikt op jezelf (met je foto). Op de selectiedag zie je daarna in
 welke groep je zit.
+
+Aan het eind van het trainingsweekend heb je een gesprek met het bestuur. Daar hoor je of je bent
+aangenomen, en je krijgt het daarna nog eens per mail, met wat er besproken is. Ben je aangenomen,
+dan staan je formulieren meteen in het portaal.
 
 Als je een taak hebt afgerond, zegt het portaal wat er daarna gebeurt. Bijvoorbeeld: "Er staat
 hierna nog één ding open", of "Dat was het voor nu. We zien je op zaterdag 11 april."

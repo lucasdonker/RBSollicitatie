@@ -262,14 +262,16 @@ Hoe Vandaag de seizoensfase bepaalt:
 
 | Wat jij doet | Wat het systeem doet | Scherm |
 |---|---|---|
-| Per kandidaat afvinken wie er is en observaties noteren (bestuur en begeleiders). | Tikken is opslaan; er gaat geen bericht uit. | [Trainingsweekend](#trainingsweekend) |
+| Tablet klaarzetten (toegangscode en pincode) en nalopen wie er komt. | Sollicitanten checken zelf in; dat zet de fase op TW geweest. | [Trainingsweekend](#trainingsweekend) |
+| Observaties noteren op je telefoon (bestuur en begeleiders). | Tikken is opslaan; er gaat geen bericht uit. | [Trainingsweekend](#trainingsweekend) |
 
 ### Moment 7: aannemen
 
 | Wat jij doet | Wat het systeem doet | Scherm |
 |---|---|---|
-| Per kandidaat een besluit vastleggen (Aannemen, Twijfel, Afwijzen) en daarna in één keer doorvoeren. | Aangenomen: het kennismakingspakket gaat klaar in het portaal (upload identiteitsbewijs en bankpas, loonheffingsformulier, inschrijving als lid als er nog geen verenigingsaccount is, huisregels, verenigingsaccount) en de mail "Welkom: aangenomen" gaat uit. Afgewezen: zoals bij moment 5. | [Trainingsweekend](#trainingsweekend) |
-| Twijfelgevallen bellen en daarna het besluit omzetten. | | [Trainingsweekend](#trainingsweekend) |
+| In het gesprek met het bestuur per kandidaat de inzet afspreken en een besluit vastleggen (Aannemen, Twijfel, Afwijzen), met een bericht aan de sollicitant. Het gaat meteen door. | Aangenomen: het kennismakingspakket gaat klaar in het portaal (upload identiteitsbewijs en bankpas, loonheffingsformulier, inschrijving als lid als er nog geen verenigingsaccount is, huisregels, verenigingsaccount) en de mail "Welkom: aangenomen" gaat uit. Afgewezen: zoals bij moment 5. | [Trainingsweekend](#trainingsweekend) |
+| Twijfelgevallen bellen en daarna het gesprek opnieuw openen en het besluit vastleggen. | | [Trainingsweekend](#trainingsweekend) |
+| Na het weekend de loonplanning definitief maken. | Pas dan ziet de sollicitant de afgesproken inzet. | [Beschikbaarheid, dekking en loonplanning](#beschikbaarheid-dekking-en-loonplanning) |
 
 ### Moment 8: loondossiers
 
@@ -1097,70 +1099,84 @@ bellijst is leeg".
 
 ## Trainingsweekend
 
-**Waar:** Kandidaten › Trainingsweekend, met de standen Het weekend en Besluit.  
-**Wie:** Het weekend: bestuur, beheerder en begeleiders. Besluit: alleen bestuur en beheerder.
+**Waar:** Kandidaten › Trainingsweekend, met vier stappen: Voorbereiden, Inchecken, Beoordelen en
+Gesprekken.  
+**Wie:** de eerste drie: bestuur, beheerder en begeleiders. Gesprekken: alleen bestuur en beheerder.
 
-> **In het kort:** tijdens het weekend vink je op je telefoon per kandidaat aan wie er is en
-> schrijf je op wat opvalt; tikken is opslaan en er gaat niets de deur uit. Na afloop leg je aan
-> tafel per kandidaat een besluit vast. Pas als je doorvoert verandert de fase en gaat het bericht
-> uit. Twijfel blijft staan: daar bel je zelf over.
+> **In het kort:** vooraf zie je wie er komt. Op het weekend checken sollicitanten zelf in op een
+> tablet, en schrijven begeleiders op hun telefoon op wat opvalt. Daarna heeft iedereen een gesprek
+> met het bestuur, met alle informatie bij elkaar. Aannemen of afwijzen gaat in dat gesprek meteen
+> door, met jullie eigen bericht in de mail. Twijfel blijft staan.
 
 Op dit scherm staat iedereen in de fases Uitgenodigd trainingsweekend en TW geweest, plus wie hier
-al is doorgevoerd. Naast de titel staat de periode van het weekend. Is er nog niemand, dan staat er
-"Nog niemand uitgenodigd".
+al is doorgevoerd. Naast de titel staat de periode van het weekend. Vóór het weekend opent het
+scherm op Voorbereiden, daarna op Beoordelen.
 
-### Stand 1: het weekend
+### Stap 1: voorbereiden
 
-Links de lijst met "x uitgenodigd", "x aanwezig", een voortgangsbalk en "x nog niet afgevinkt".
-Per kandidaat staat "aanwezig", "niet gekomen" (met reden) of "nog niet afgevinkt", en het aantal
-observaties.
+Bovenaan hoeveel mensen komen, hoeveel niet kunnen en van hoeveel het nog niet bekend is, en hoeveel
+er nog geen beschikbaarheid hebben opgegeven. Die heb je nodig voor het gesprek.
 
-1. Tik een kandidaat aan.
-2. Bij "Is ... er?" tik je **Aanwezig**, of **Niet gekomen**. Bij niet gekomen vraagt het systeem
-   waarom ("Niet gekomen — waarom?"). Die reden is verplicht, bijvoorbeeld "ziek" of "niet komen
-   opdagen", zodat het bestuur dat verschil bij het besluit ziet. Laat je hem leeg, dan vraagt het
-   systeem opnieuw.
-3. Onder "Wat valt op?" kies je **Positief**, **Neutraal** of **Aandacht**, typ je de observatie en
-   tik je op **Observatie opslaan**. De sollicitant ziet observaties niet. Je eigen observaties kun
-   je verwijderen; die van anderen blijven staan.
-4. Ga verder met **Volgende: naam**. Bij de laatste kandidaat brengt **Naar het besluit** het
-   bestuur naar de tweede stand.
+- **Komt?** Dit vult de sollicitant zelf in het portaal in ("Kom je?"). Heb je iemand gebeld (ook
+  na de selectiedag vanuit de bellijst), vul het dan hier in. Bij "Kan niet" is een reden verplicht.
+  Kan iemand niet, dan verandert de fase niet: het bestuur beslist op Vandaag of die persoon afhaakt
+  of een uitzondering krijgt.
+- **Tablet bij de ingang** (bestuur). Maak een toegangscode aan, kopieer de tablet-link en open die
+  op de tablet. Stel ook een pincode in: daarmee kan iemand van de organisatie op de tablet zelf het
+  inchecken afsluiten. Een nieuwe code maakt de oude links ongeldig.
 
-Afvinken zet de fase niet op TW geweest en stuurt geen bericht. Net als op de selectiedag ziet
-wie de kennismakingsformulieren niet mag lezen geen bijzonderheden, alleen dat er iets is om na te
-vragen; de knop **Dossier** en het telefoonnummer ziet alleen wie Sollicitanten mag lezen.
+### Stap 2: inchecken
 
-### Stand 2: het besluit
+Op de tablet typt de sollicitant minstens drie letters van de naam en tikt op zichzelf (met foto).
+Er staat nooit een volledige lijst op de tablet. Inchecken zet de fase op TW geweest.
 
-Bovenaan een regel die zegt hoe het ervoor staat, bijvoorbeeld "3 kandidaten wachten op een
-besluit", "5 besluiten staan klaar om door te voeren", "2 op twijfel — daar moet iemand over
-bellen" of "Alles is besloten en doorgevoerd". Het tabblad Besluit toont tussen haakjes hoeveel
-kandidaten nog een besluit nodig hebben. Dat telt iedereen zonder besluit, ook wie niet is
-afgevinkt of niet kwam.
+Lukt de tablet niet, dan vink je hier af: **Aanwezig**, **Niet** of **Ongedaan**. Met **Inchecken
+afsluiten** (of de pincode op de tablet) komt iedereen die nog niet is ingecheckt op "niet
+verschenen". Er sluit niets vanzelf af, en een laatkomer check je daarna gewoon nog in.
 
-Per kandidaat een kaart met de aanwezigheid ("het hele weekend erbij", "niet gekomen" of
-"aanwezigheid niet afgevinkt"), de observaties van het weekend, en ingeklapt "Op de selectiedag
-gezegd". Heeft niemand iets opgeschreven, dan zegt de kaart dat ook.
+### Stap 3: beoordelen
 
-1. Kies per kandidaat **Aannemen**, **Twijfel** of **Afwijzen**, typ een reden van één regel (die
-   komt in het dossier) en klik op **Besluit vastleggen**. Er verandert nog niets en er gaat geen
-   bericht uit; je kunt het besluit tot het doorvoeren nog wijzigen.
-2. Loop zo de hele groep langs.
-3. Klik op **... besluiten doorvoeren** en bevestig met **Ja, doorvoeren**. Aannemen wordt
-   Aangenomen (met het kennismakingspakket en de welkomstmail), Afwijzen wordt Afgewezen (met de
-   afwijzingsmail als die aan staat). De kaart toont daarna "Doorgevoerd" met de nieuwe fase.
-   Lukt het bij iemand niet, dan zegt de melding hoeveel er niet gelukt zijn; kijk dan in het
-   logboek en voer opnieuw door. Wie intussen via een ander scherm al een andere fase kreeg, krijgt
-   hier geen tweede bericht.
-4. Twijfel gaat nooit vanzelf de deur uit. Bel de kandidaat, zet daarna het besluit om naar
-   Aannemen of Afwijzen en voer opnieuw door.
+Op je telefoon. Tik een naam aan (met foto). Kies onder "Wat valt op?" **Positief**, **Neutraal**
+of **Aandacht**, typ wat je zag en tik op **Observatie opslaan**. De sollicitant ziet observaties
+niet. Je eigen observaties kun je verwijderen; die van anderen blijven staan.
+
+Onderaan staat ingeklapt **Selectiedag**: het advies en gemiddelde, het besluit en de observaties
+van toen. Het is er als je het nodig hebt, maar het staat bewust niet vooraan.
+
+Wie de kennismakingsformulieren niet mag lezen, ziet geen bijzonderheden, alleen dat er iets is om
+na te vragen; de knop **Dossier** en het telefoonnummer ziet alleen wie Sollicitanten mag lezen.
+
+### Stap 4: gesprekken
+
+Iedereen krijgt een gesprek met het bestuur. De lijst heeft drie groepen: Nu bezig, Nog te spreken
+en Gesproken. De volgorde kies je ter plekke.
+
+1. Klik bij wie er aan tafel zit op **Gesprek starten**. Het gesprek staat dan op jouw naam; een
+   ander bestuurslid ziet "bezig door ..." en kan meelezen, maar niet tegelijk een besluit
+   vastleggen. Na 30 minuten vervalt dat vanzelf.
+2. Links staat alles bij elkaar: gegevens, de opgegeven beschikbaarheid, **Inzet afspreken** (de
+   loonplanning als concept: functie, en per week plannen, aantal dagen en betaald ja/nee; elke
+   wijziging wordt meteen opgeslagen), wat er dit weekend en op de selectiedag is opgevallen, en wat
+   er nog openstaat in het portaal.
+3. Rechts kies je **Aannemen**, **Twijfel** of **Afwijzen**. Bij **Bericht aan de sollicitant**
+   schrijf je in je eigen woorden wat jullie besproken hebben. Dat komt in de mail als
+   `{{gesprek_bericht}}`. Laat je het leeg, dan komt de standaardtekst erin (instelbaar bij
+   Instellingen › Uitnodigen & automatisch). De **Interne notitie** is alleen voor het bestuur.
+4. Klik op **Besluit vastleggen** en bevestig. Aannemen en afwijzen gaan **meteen door**: de fase
+   verandert en het bericht gaat uit. Aangenomen heeft direct het kennismakingspakket (de
+   formulieren) in het portaal. Twijfel blijft staan: bel de kandidaat na het weekend, open het
+   gesprek opnieuw en leg dan het besluit vast.
+5. **Terug zonder besluit** geeft het gesprek weer vrij.
+
+De inzet blijft een concept tot je na het weekend bij Loonplanning **Loonplanning definitief maakt**.
+Pas daarna ziet de sollicitant de afspraak.
+
+In het dossier staat alles terug op het tabblad **Trainingsweekend**.
 
 Liever per persoon, of met de keuze zonder bericht? Dat kan ook bij
-[Sollicitanten](#sollicitanten): zet de kandidaat eerst op TW geweest (fasekaart in het dossier)
-en gebruik dan **Aannemen**, of gebruik de bulkbalk.
+[Sollicitanten](#sollicitanten): gebruik de fasekaart in het dossier of de bulkbalk.
 
 ---
-
 ## Ondertekeningen
 
 **Waar:** Kandidaten › Ondertekeningen, en per persoon het tabblad Ondertekeningen in het dossier.  

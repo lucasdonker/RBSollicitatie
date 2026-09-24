@@ -69,6 +69,9 @@ function bh_dossier(int $sol_id): ?array {
         $scores  = function_exists('selectie_scores_van')      ? selectie_scores_van($szid, $sol_id) : [];
         $observ  = function_exists('selectie_observaties_van') ? selectie_observaties_van($szid, $sol_id) : [];
         $besluit = function_exists('selectie_besluit_van')     ? selectie_besluit_van($szid, $sol_id) : null;
+        // Het trainingsweekend: deelname (bevestiging, aanwezig, gesprek, besluit) en observaties.
+        $tw      = function_exists('tw_deelname_van')          ? tw_deelname_van($szid, $sol_id) : null;
+        $tw_obs  = function_exists('tw_observaties_van')       ? tw_observaties_van($szid, $sol_id) : [];
         $ond   = $alle("SELECT id, type, token, ondertekend_op, ondertekenaar_naam, ondertekenaar_rol,
                                aangemaakt_op
                         FROM ondertekeningen WHERE sollicitatie_id=? ORDER BY aangemaakt_op DESC", [$sol_id]);
@@ -94,6 +97,8 @@ function bh_dossier(int $sol_id): ?array {
         'scores'          => $scores,
         'observaties'     => $observ,
         'besluit'         => $besluit,
+        'tw'              => $tw,
+        'tw_observaties'  => $tw_obs,
         'ondertekeningen' => $ond,
         'eerder'          => $eerder,
         'leeftijd'          => $lft,
@@ -346,6 +351,10 @@ function bh_dossier_tabs(array $dossier, string $actief = 'dossier'): array {
     if (($dossier['scores'] || $dossier['observaties']) && (!function_exists('module_aan') || module_aan('selectiedag'))) {
         $tabs[] = ['sleutel' => 'selectiedag', 'label' => 'Selectiedag',
                    'aantal' => $dossier['observaties'] ? count($dossier['observaties']) : null];
+    }
+    if ((!empty($dossier['tw']) || !empty($dossier['tw_observaties'])) && (!function_exists('module_aan') || module_aan('trainingsweekend'))) {
+        $tabs[] = ['sleutel' => 'trainingsweekend', 'label' => 'Trainingsweekend',
+                   'aantal' => $dossier['tw_observaties'] ? count($dossier['tw_observaties']) : null];
     }
     if ($doc['totaal'] > 0) {
         $tabs[] = ['sleutel' => 'ondertekeningen', 'label' => 'Ondertekeningen',

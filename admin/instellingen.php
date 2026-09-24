@@ -774,6 +774,23 @@ require __DIR__ . '/layout_top.php';
         </div>
       </div>
 
+      <?php if (module_aan('trainingsweekend')): ?>
+      <div class="bh-instsectie">
+        <h3>Na het gesprek op het trainingsweekend</h3>
+        <p class="ds-veld-hint bh-mb">
+          In het gesprek schrijft het bestuur op wat er besproken is; dat gaat mee in de mail als <code>{{gesprek_bericht}}</code>.
+          Blijft dat veld leeg, dan komt deze standaardtekst erin. Leeg laten = de ingebouwde tekst.
+        </p>
+        <?php foreach (['aannemen' => ['tw.bericht_aangenomen', 'Standaardtekst bij aangenomen'], 'afwijzen' => ['tw.bericht_afgewezen', 'Standaardtekst bij afgewezen']] as $_b => $_v): ?>
+        <div class="ds-veld">
+          <label for="inst-<?= h(str_replace('.', '-', $_v[0])) ?>"><?= h($_v[1]) ?></label>
+          <textarea id="inst-<?= h(str_replace('.', '-', $_v[0])) ?>" name="inst[<?= h($_v[0]) ?>]" rows="3" maxlength="2000"
+                    placeholder="<?= h(instelling($_v[0], '') === '' ? tw_standaard_bericht($_b) : '') ?>"><?= h((string)instelling($_v[0], '')) ?></textarea>
+        </div>
+        <?php endforeach; ?>
+      </div>
+      <?php endif; ?>
+
       <div class="bh-instsectie">
         <h3>Auto-invite op basis van leeftijd</h3>
         <p class="ds-veld-hint bh-mb">

@@ -188,7 +188,7 @@ function bh_vandaag_hoofdtaak_bepalen(int $sid, string $seizoen_fase): array {
 
         case 'trainingsweekend':
             $n = (int)($t['uitgenodigd_tw'] ?? 0);
-            // Afvinken op het weekend zet geen fase; de voortgang komt dus uit tw_deelname.
+            // Inchecken zet tw_geweest, "niet gekomen" niet; de voortgang komt dus uit tw_deelname.
             $st = ($sid && function_exists('tw_kandidaten') && function_exists('tw_stand')) ? tw_stand(tw_kandidaten($sid)) : null;
             return $taak(['titel' => 'Het trainingsweekend',
                     'tekst'  => $n . ' kandidaten zijn uitgenodigd.'
@@ -200,29 +200,29 @@ function bh_vandaag_hoofdtaak_bepalen(int $sid, string $seizoen_fase): array {
 
         case 'aanname':
         default:
-            // De besluiten staan in tw_deelname, niet in de fase: afvinken op het weekend zet
-            // niemand op tw_geweest. Telden we alleen tw_geweest, dan stond hier "De lichting
-            // is rond" terwijl er nog besluiten openstonden.
+            // De besluiten staan in tw_deelname (het gesprek met het bestuur). Telden we alleen
+            // de fase, dan stond hier "De lichting is rond" terwijl er nog gesprekken openstonden.
             $aan = (int)($t['aangenomen'] ?? 0);
             if ($sid && function_exists('tw_kandidaten') && function_exists('tw_stand')) {
                 $st = tw_stand(tw_kandidaten($sid));
-                $besluit_url = APP_URL . '/admin/trainingsweekend.php?stap=besluit';
+                $besluit_url = APP_URL . '/admin/trainingsweekend.php?stap=gesprekken';
                 $voortgang = ['gedaan' => (int)$st['doorgevoerd'], 'totaal' => (int)$st['totaal'], 'klaar' => false];
                 if ($st['te_beslissen'] > 0) {
-                    return $taak(['titel' => $st['te_beslissen'] . ' wachten op een besluit',
+                    return $taak(['titel' => $st['te_beslissen'] . ' wachten op een gesprek',
                             'tekst' => 'Zij waren uitgenodigd voor het trainingsweekend en moeten nog worden aangenomen of afgewezen.',
-                            'knop' => 'Naar het besluit', 'url' => $besluit_url] + $voortgang, 'trainingsweekend', 'bewerken');
+                            'knop' => 'Naar de gesprekken', 'url' => $besluit_url] + $voortgang, 'trainingsweekend', 'bewerken');
                 }
                 if ($st['klaar_om_door_te_voeren'] > 0) {
+                    // Gebeurt alleen als doorvoeren in het gesprek mislukte (fase_zetten gaf een fout).
                     $k = (int)$st['klaar_om_door_te_voeren'];
-                    return $taak(['titel' => $k . ' ' . ($k === 1 ? 'besluit' : 'besluiten') . ' nog doorvoeren',
-                            'tekst' => 'Het besluit staat vast, maar de fase is nog niet gezet en er is nog geen bericht verstuurd.',
-                            'knop' => 'Naar het besluit', 'url' => $besluit_url] + $voortgang, 'trainingsweekend', 'bewerken');
+                    return $taak(['titel' => $k . ' ' . ($k === 1 ? 'besluit' : 'besluiten') . ' niet doorgevoerd',
+                            'tekst' => 'Het besluit staat vast, maar doorvoeren lukte niet. Open het gesprek en leg het opnieuw vast.',
+                            'knop' => 'Naar de gesprekken', 'url' => $besluit_url] + $voortgang, 'trainingsweekend', 'bewerken');
                 }
                 if ($st['twijfel_open'] > 0) {
                     return $taak(['titel' => $st['twijfel_open'] . ' op twijfel',
-                            'tekst' => 'Daar moet iemand over bellen; twijfel gaat nooit vanzelf de deur uit.',
-                            'knop' => 'Naar het besluit', 'url' => $besluit_url] + $voortgang, 'trainingsweekend', 'bewerken');
+                            'tekst' => 'Bel ze, open daarna het gesprek en leg het besluit vast. Twijfel gaat nooit vanzelf de deur uit.',
+                            'knop' => 'Naar de gesprekken', 'url' => $besluit_url] + $voortgang, 'trainingsweekend', 'bewerken');
                 }
             }
             $n = (int)($t['tw_geweest'] ?? 0);

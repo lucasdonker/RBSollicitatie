@@ -30,7 +30,7 @@ function instellingen_formulier_sleutels(string $tab): array {
         'loon'        => ['loon.budget_seizoen', 'loon.vt_percentage', 'loon.uren_per_dag', 'loon.pc_vast_juni', 'loon.pc_vast_jul_sep'],
         'uitnodiging' => array_merge([
             'invite.modus', 'invite.min_leeftijd', 'invite.max_leeftijd', 'invite.delay_uur',
-            'seizoen.fase', 'selectie.drempel',
+            'seizoen.fase', 'selectie.drempel', 'tw.bericht_aangenomen', 'tw.bericht_afgewezen',
             'auto.ondertekening_sd', 'auto.kennismakingspakket',
             'herinnering.rust_dagen', 'melding.plafond_dag', 'bijlage.mail_max_mb', 'wa.max_per_uur',
         ], $herinneringen),

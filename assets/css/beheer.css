@@ -1667,15 +1667,6 @@ body.bh-paneel-open .bh-inhoud { transition: padding-right .15s ease; }
 /* Losse knop onder een tekstblok in het dossier. */
 .bh-dossier-knop { margin-top: 10px; }
 
-/* Selectiedag-observaties, ingeklapt onder de observaties van het weekend zelf. */
-.bh-twkaart-sd { margin: 0 0 12px; }
-.bh-twkaart-sd > summary {
-  cursor: pointer; font: var(--text-meta); color: var(--ink-muted);
-  min-height: 32px; display: flex; align-items: center;
-}
-.bh-twkaart-sd > summary:hover { color: var(--ink); }
-.bh-twkaart-sd .bh-observaties { margin-top: 6px; opacity: .85; }
-
 /* Weg naar het dossier vanuit een uitklapkaart, waar de naam zelf de knop is. */
 .bh-doskaart-dossier {
   display: inline-flex; align-items: center; gap: 6px; margin-bottom: 12px;
@@ -1980,43 +1971,17 @@ body.bh-paneel-open .bh-inhoud { transition: padding-right .15s ease; }
 }
 
 /* ============================================================
-   TRAININGSWEEKEND — het weekend zelf, en daarna het besluit
+   TRAININGSWEEKEND — voorbereiden, beoordelen, gesprekken (admin/tw/)
    ============================================================ */
 
-/* Aanwezig of niet: twee grote knoppen. Dit gebeurt buiten, met een telefoon in
-   één hand, dus minstens 56px hoog (ontwerpfilosofie §6). */
-.bh-aanwezigkeuze { display: flex; gap: 8px; }
-.bh-aanwezig {
-  flex: 1; min-height: 56px; display: flex; align-items: center; justify-content: center; gap: 8px;
-  border-radius: var(--radius-md); cursor: pointer; font-family: inherit;
-  font-size: 15px; font-weight: 600; color: var(--ink-soft);
-  background: var(--bg-subtle); border: 2px solid var(--border);
-}
-.bh-aanwezig:disabled { cursor: default; opacity: .55; }
-.bh-aanwezig.ja.gekozen { background: var(--fase-groen-vlak); border-color: var(--fase-groen); color: var(--fase-groen); }
-.bh-aanwezig.nee.gekozen { background: var(--fase-rood-vlak); border-color: var(--fase-rood); color: var(--fase-rood); }
-
-/* Het besluit: één kaart per kandidaat, met de observaties erboven. Je leest eerst
-   wat er is gezien en kiest dan — niet andersom. */
-.bh-twbesluiten { display: flex; flex-direction: column; gap: 12px; }
-.bh-twkaart { padding: 14px 18px 16px; border-left: 3px solid var(--f-tekst); }
-.bh-twkaart.doorgevoerd { background: var(--bg-subtle); }
-.bh-twkaart-kop { display: flex; align-items: center; gap: 11px; flex-wrap: wrap; }
-.bh-twkaart-wie { flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 2px; }
-.bh-twkaart-naam { font-size: 15px; font-weight: 600; color: var(--navy); text-decoration: none; }
-.bh-twkaart-naam:hover { text-decoration: underline; }
-.bh-twkaart-obs { margin-top: 12px; }
-.bh-twkaart-geenobs { margin: 12px 0 0; }
-.bh-twkaart-form { margin-top: 13px; padding-top: 13px; border-top: 1px solid var(--bg-subtle); }
-.bh-twkaart-form .ds-veld { margin: 10px 0; }
-
-.bh-twkeuze { display: flex; gap: 6px; flex-wrap: wrap; }
-.bh-twoptie { flex: 1; min-width: 110px; position: relative; }
+/* Het besluit in het gesprek: drie grote keuzes (fieldset zonder rand). */
+.bh-twkeuze { display: flex; gap: 6px; flex-wrap: wrap; border: 0; margin: 0; padding: 0; min-width: 0; }
+.bh-twoptie { flex: 1; min-width: 96px; position: relative; }
 .bh-twoptie input {
   position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;
 }
 .bh-twoptie span {
-  display: flex; align-items: center; justify-content: center; min-height: 44px;
+  display: flex; align-items: center; justify-content: center; min-height: 48px;
   border-radius: var(--radius-md); cursor: pointer;
   font-size: 14px; font-weight: 600; color: var(--ink-soft);
   background: var(--bg); border: 2px solid var(--border);
@@ -2026,6 +1991,77 @@ body.bh-paneel-open .bh-inhoud { transition: padding-right .15s ease; }
 .bh-twoptie.twijfel  input:checked + span { background: var(--fase-oranje-vlak); border-color: var(--fase-oranje); color: var(--fase-oranje); }
 .bh-twoptie.afwijzen input:checked + span { background: var(--fase-rood-vlak); border-color: var(--fase-rood); color: var(--fase-rood); }
 
+/* Voorbereiden: wie komt er. */
+.bh-twvoor { --bh-tracks: minmax(0, 2fr) minmax(0, 1.4fr) 140px minmax(0, 2.2fr); }
+.bh-twvoor td, .bh-twvoor tbody th { white-space: normal; overflow: visible; }
+.bh-twvoor th.bh-twvoor-wie { display: flex; align-items: center; gap: 10px; text-align: left; font-weight: 600; text-transform: none; letter-spacing: 0; font-size: 14px; color: var(--ink); }
+.bh-twvoor-wie > span { display: flex; flex-direction: column; gap: 1px; }
+.bh-twvoor td .bh-meta { display: block; margin-top: 3px; }
+.bh-twvoor-form { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.bh-twvoor-form .ds-select, .bh-twvoor-form .ds-input { height: 38px; font-size: 13px; width: auto; min-width: 130px; }
+
+/* Gesprekken: de lijst, in drie groepen. */
+.bh-twgesprekken { padding: 16px 20px; }
+.bh-twgesprek-lijst { list-style: none; margin: 0; padding: 0; }
+.bh-twgesprek-rij { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 10px 0; border-top: 1px solid var(--bg-subtle); }
+.bh-twgesprek-rij:first-child { border-top: 0; }
+.bh-twgesprek-wie { flex: 1; min-width: 160px; display: flex; flex-direction: column; gap: 1px; }
+.bh-twgesprek-naam { font-size: 15px; font-weight: 600; color: var(--ink); }
+
+/* Het gesprek: links alles over de persoon, rechts het besluit (blijft in beeld). */
+.bh-terug { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; font-size: 13px; font-weight: 600; color: var(--navy); text-decoration: none; }
+.bh-terug:hover { text-decoration: underline; }
+.bh-twgesprek { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; align-items: start; }
+.bh-twgesprek-info { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.bh-twgesprek-info .bh-beoordeel-kop { padding: 0 0 12px; }
+.bh-twgesprek-info .ds-melding { margin-top: 10px; }
+.bh-twgesprek-info h3, .bh-twgesprek-besluit h3 { font: var(--text-subhead); font-size: 15px; color: var(--ink); margin: 0 0 10px; }
+.bh-twgesprek-besluit { position: sticky; top: 16px; }
+.bh-twgesprek-form { display: flex; flex-direction: column; gap: 12px; }
+.bh-twgesprek-form .ds-veld { margin: 0; }
+.bh-twgesprek-form[inert] { opacity: .55; }
+.bh-twgesprek-los { margin-top: 10px; text-align: center; }
+.bh-twopgave { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.bh-twopgave li { padding: 4px 9px; border-radius: var(--radius-sm); background: var(--bg-subtle); font-size: 13px; }
+.bh-twtaken { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+@media (max-width: 900px) {
+  .bh-twgesprek { grid-template-columns: 1fr; }
+  .bh-twgesprek-besluit { position: static; }
+}
+
+/* Selectiedag-samenvatting (admin/_sd_samenvatting.php): ingeklapt, herleidbaar, niet prominent. */
+.bh-sdsamen { margin: 4px 18px 14px; padding-top: 8px; border-top: 1px solid var(--bg-subtle); }
+.bh-twgesprek-info .bh-sdsamen { margin: 14px 0 0; }
+.bh-sdsamen > summary {
+  cursor: pointer; font: var(--text-meta); color: var(--ink-muted);
+  min-height: 32px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.bh-sdsamen > summary:hover { color: var(--ink); }
+.bh-sdsamen-inhoud { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; font-size: 14px; }
+.bh-sdsamen-inhoud p { margin: 0; }
+.bh-sdsamen .bh-observaties { opacity: .85; }
+
+/* De inzet afspreken (admin/_afspraak_editor.php): per week inplannen, dagen, betaald. */
+.bh-afspraak-kop { display: flex; gap: 12px; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; margin-bottom: 10px; }
+.bh-afspraak-kop h3 { margin: 0; }
+.bh-afspraak-functie { display: flex; flex-direction: column; gap: 3px; }
+.bh-afspraak-functie .ds-select { height: 38px; font-size: 13px; width: auto; }
+/* Blijft ook op een telefoon een raster: vijf kaartjes per week lezen niet in een gesprek. */
+.bh-afspraak-tabel { --bh-tracks: minmax(0, 1.2fr) 92px 92px 80px 80px; }
+@media (max-width: 560px) {
+  .bh-afspraak-tabel { --bh-tracks: minmax(0, 1fr) 52px 38px 58px 58px; }
+  .bh-afspraak-tabel thead th { letter-spacing: .02em; }
+  .bh-afspraak-tabel tbody th .bh-meta { display: none; }   /* W26 is genoeg; de datum staat in de title */
+}
+.bh-afspraak-tabel tr { padding: 6px 12px; }
+@media (max-width: 760px) {
+  .bh-afspraak-tabel thead { display: block; }
+  .bh-afspraak-tabel tbody tr { grid-template-columns: var(--bh-tracks); gap: 0 8px; padding: 6px 12px; }
+}
+.bh-afspraak-tabel .ds-input { width: 64px; height: 36px; font-size: 14px; text-align: center; padding: 0 4px; }
+.bh-afspraak-tabel input[type="checkbox"] { width: 20px; height: 20px; }
+.bh-afspraak-tabel tr.ingepland { background: var(--ok-soft); }
+.bh-afspraak [data-af-totaal] { margin: 10px 0 0; }
 /* ============================================================
    INSTELLINGEN — zes groepen links, één onderwerp tegelijk rechts
    ============================================================ */

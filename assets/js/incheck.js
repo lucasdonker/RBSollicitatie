@@ -28,7 +28,7 @@
     var nieuw = wat === 'aanwezig' ? 'aanwezig' : (wat === 'niet' ? 'niet' : 'verwacht');
     zet(rij, nieuw, nieuw === 'aanwezig' ? 'ingecheckt ' + tijd() : (nieuw === 'niet' ? 'Niet gekomen' : rij.dataset.sub));
     tel(blok);
-    var body = new URLSearchParams({ ev: blok.dataset.ev, actie: 'zet', sol_id: rij.dataset.sol, stand: wat, _csrf: window.CSRF || '' });
+    var body = new URLSearchParams({ ev: blok.dataset.ev, actie: 'zet', sol_id: rij.dataset.sol, stand: wat, _csrf: blok.dataset.csrf || window.CSRF || '' });
     fetch(blok.dataset.endpoint, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body })
       .then(function (r) { return r.json(); })
       .then(function (d) {
