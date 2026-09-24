@@ -27,6 +27,7 @@ $_extern = !empty($_t['extern']);
       <a href="<?= h($_t['url']) ?>" class="pt-taakrij-link" target="_blank" rel="noopener"><?= icoon('koppeling', 14) ?>Openen</a>
     <?php endif; ?>
     <?php if ($_inline === 'ouder') require __DIR__ . '/_taak_inline_ouder.php'; ?>
+    <?php if ($_inline === 'deelname') require __DIR__ . '/_taak_inline_deelname.php'; ?>
   </span>
   <?php if ($_afvink): ?>
     <form method="POST" class="pt-taakrij-afvink">

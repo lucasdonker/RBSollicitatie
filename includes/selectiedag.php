@@ -115,6 +115,19 @@ function selectiedag_auto_setup(): void {
                 }
             }
         } catch (\Exception $e) {}
+
+        // 2.108.0 (includes/evenement.php): bevestiging "ik kom / ik kan niet", afmelden bij het
+        // afsluiten van het inchecken, vergrendeling van de bellijst en de beoordelaar als id.
+        // VARCHAR, geen ENUM: een onbekende waarde wordt dan geen stille lege string.
+        foreach (['bevestiging' => "VARCHAR(12) NOT NULL DEFAULT 'onbekend'", 'bevestiging_reden' => 'VARCHAR(300) DEFAULT NULL',
+                  'bevestiging_bron' => 'VARCHAR(12) DEFAULT NULL', 'bevestigd_op' => 'DATETIME DEFAULT NULL',
+                  'afgemeld_reden' => 'VARCHAR(200) DEFAULT NULL'] as $kol => $def) {
+            db_kolom_verzeker($db, 'selectie_indeling', $kol, $def);
+        }
+        db_kolom_verzeker($db, 'selectie_besluit', 'bel_door', 'INT DEFAULT NULL');
+        db_kolom_verzeker($db, 'selectie_besluit', 'bel_sinds', 'DATETIME DEFAULT NULL');
+        db_kolom_verzeker($db, 'selectie_score', 'beoordelaar_id', 'INT DEFAULT NULL');
+        db_kolom_verzeker($db, 'selectie_observatie', 'beoordelaar_id', 'INT DEFAULT NULL');
     } catch (\Exception $e) { error_log('selectiedag_auto_setup: ' . $e->getMessage()); }
 }
 
@@ -336,38 +349,10 @@ function selectie_indeling_opslaan(int $seizoen_id, array $map): void {
  * Zet aanwezigheid van één sollicitant. Retourneert de nieuwe status + groepsinfo,
  * zodat het inchecken meteen kan tonen "je zit in groep 2".
  */
-function selectie_aanwezig_zetten(int $seizoen_id, int $sol_id, bool $aanwezig): array {
-    selectiedag_auto_setup();
-    $db = db();
-    // Regel moet bestaan (indeling kan nog leeg zijn)
-    $db->prepare("
-        INSERT INTO selectie_indeling (seizoen_id, sollicitatie_id, aanwezig, ingecheckt_op)
-        VALUES (?,?,?, " . ($aanwezig ? "NOW()" : "NULL") . ")
-        ON DUPLICATE KEY UPDATE aanwezig=VALUES(aanwezig),
-            ingecheckt_op=" . ($aanwezig ? "IFNULL(ingecheckt_op, NOW())" : "NULL")
-    )->execute([$seizoen_id, $sol_id, $aanwezig ? 1 : 0]);
-
-    // Fase bijwerken bij aanmelden (zoals de oude flow deed)
-    if ($aanwezig) {
-        $db->prepare("UPDATE sollicitaties SET fase='selectiedag_geweest'
-                      WHERE id=? AND fase IN ('uitgenodigd_selectie','aangemeld_selectie')")
-           ->execute([$sol_id]);
-    }
-
-    // Groepsinfo teruggeven
-    $q = $db->prepare("
-        SELECT g.nummer, g.naam
-        FROM selectie_indeling si
-        LEFT JOIN selectie_groep g ON g.id = si.groep_id
-        WHERE si.seizoen_id=? AND si.sollicitatie_id=?
-    ");
-    $q->execute([$seizoen_id, $sol_id]);
-    $r = $q->fetch() ?: [];
-    return [
-        'aanwezig'     => $aanwezig,
-        'groep_nummer' => $r['nummer'] ?? null,
-        'groep_naam'   => $r['naam'] ?? null,
-    ];
+function selectie_aanwezig_zetten(int $seizoen_id, int $sol_id, bool $aanwezig, string $bron = 'beheer'): array {
+    // Eén laag voor selectiedag en trainingsweekend (includes/evenement.php): zet de fase via
+    // fase_zetten() met audit, en ongedaan maken zet hem stil terug.
+    return evenement_inchecken('selectiedag', $seizoen_id, $sol_id, $aanwezig, $bron);
 }
 
 /**

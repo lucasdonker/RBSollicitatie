@@ -44,6 +44,8 @@ require __DIR__ . '/layout_top.php';
 
   <?php $vandaag_taak = $taak; require __DIR__ . '/_hoofdtaak.php'; ?>
 
+  <?php if ($mag_soll && function_exists('evenement_afmeldingen_open')) { $afmeldingen = evenement_afmeldingen_open($sid); require __DIR__ . '/_afmeldingen.php'; } ?>
+
   <div class="bh-vandaag-kolommen">
 
     <?php if ($mag_soll): ?>

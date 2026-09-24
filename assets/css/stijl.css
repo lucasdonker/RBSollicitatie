@@ -1522,6 +1522,15 @@ a.pt-taakrij:hover { background: var(--bg); }
 .pt-inline-grid { display: grid; grid-template-columns: 1fr; gap: 8px; }
 .pt-inline-fout { font: var(--text-meta); color: var(--error); }
 .pt-taakrij-inline .ds-btn { align-self: flex-start; }
+/* "Kom je?" — keuze + reden (portaal/_taak_inline_deelname.php) */
+.pt-taakrij-inline textarea.ds-input { height: auto; min-height: 64px; padding: 10px 12px; font-family: inherit; }
+.pt-inline-legend { font: var(--text-meta); color: var(--ink-soft); padding: 0; }
+.pt-deelname-keuze { border: 0; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.pt-deelname-optie {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px;
+  border: 1px solid var(--border); border-radius: var(--radius-md, 10px); font-size: 15px; cursor: pointer;
+}
+.pt-deelname-optie:has(input:checked) { border-color: var(--navy); background: var(--navy-soft, #eaf1f8); font-weight: 600; }
 
 /* Infokaart (navy): SELECTIEDAG / TRAININGSWEEKEND */
 .pt-infokaart {

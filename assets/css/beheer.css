@@ -311,6 +311,12 @@ html[data-theme="dark"] .bh-nav-link.actief { background: var(--surface); color:
 .bh-loopt-stip { width: 7px; height: 7px; border-radius: 50%; background: var(--f-tekst); flex: none; }
 .bh-looptlijst a { color: var(--ink); }
 .bh-looptlijst a:hover { color: var(--navy); text-decoration: underline; }
+/* Vandaag: kan niet komen — wacht op besluit (admin/_afmeldingen.php) */
+.bh-afmeldingen { margin-bottom: 16px; }
+.bh-afm-lijst { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.bh-afm-rij { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 10px 0; border-top: 1px solid var(--rand); }
+.bh-afm-rij:first-child { border-top: 0; }
+.bh-afm-tekst { display: flex; flex-direction: column; gap: 2px; min-width: 200px; }
 
 /* Systeemstatus */
 .bh-systeem {

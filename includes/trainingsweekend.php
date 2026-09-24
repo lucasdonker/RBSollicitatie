@@ -58,6 +58,17 @@ function tw_auto_setup(): void {
             `aangemaakt_op` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             INDEX (`sollicitatie_id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        // 2.108.0: bevestiging, het gesprek met het bestuur (vergrendeling + bericht aan de
+        // sollicitant, los van de interne besluit_notitie), bellijst-vergrendeling, beoordelaar-id.
+        foreach (['bevestiging' => "VARCHAR(12) NOT NULL DEFAULT 'onbekend'", 'bevestiging_reden' => 'VARCHAR(300) DEFAULT NULL',
+                  'bevestiging_bron' => 'VARCHAR(12) DEFAULT NULL', 'bevestigd_op' => 'DATETIME DEFAULT NULL',
+                  'gesprek_status' => 'VARCHAR(10) DEFAULT NULL', 'gesprek_door' => 'INT DEFAULT NULL',
+                  'gesprek_sinds' => 'DATETIME DEFAULT NULL', 'gesprek_bericht' => 'TEXT DEFAULT NULL',
+                  'bel_door' => 'INT DEFAULT NULL', 'bel_sinds' => 'DATETIME DEFAULT NULL'] as $kol => $def) {
+            db_kolom_verzeker($db, 'tw_deelname', $kol, $def);
+        }
+        db_kolom_verzeker($db, 'tw_observatie', 'beoordelaar_id', 'INT DEFAULT NULL');
     } catch (\Exception $e) {
         error_log('tw_auto_setup: ' . $e->getMessage());
     }
@@ -110,17 +121,11 @@ function tw_rij_verzeker(int $seizoen_id, int $sol_id): void {
  * Aanwezig of niet. Bij afwezig mag een reden mee — dat is precies wat je in de
  * nabespreking wilt weten ("ziek" is iets anders dan "niet komen opdagen").
  */
-function tw_aanwezig_zetten(int $seizoen_id, int $sol_id, bool $aanwezig, ?string $reden = null): void {
-    tw_rij_verzeker($seizoen_id, $sol_id);
-    db()->prepare("UPDATE tw_deelname
-                   SET aanwezig=?, ingecheckt_op=?, afgemeld_reden=?, bijgewerkt_op=NOW()
-                   WHERE seizoen_id=? AND sollicitatie_id=?")
-        ->execute([
-            $aanwezig ? 1 : 0,
-            $aanwezig ? date('Y-m-d H:i:s') : null,
-            $aanwezig ? null : (trim((string)$reden) ?: null),
-            $seizoen_id, $sol_id,
-        ]);
+function tw_aanwezig_zetten(int $seizoen_id, int $sol_id, bool $aanwezig, ?string $reden = null, string $bron = 'beheer'): void {
+    // Inchecken zet nu ook de fase tw_geweest (includes/evenement.php); die werd nergens gezet.
+    if ($aanwezig)                        evenement_inchecken('tw', $seizoen_id, $sol_id, true, $bron);
+    elseif (trim((string)$reden) !== '')  { evenement_inchecken('tw', $seizoen_id, $sol_id, false, $bron); evenement_afmelden('tw', $seizoen_id, $sol_id, (string)$reden); }
+    else                                  evenement_inchecken('tw', $seizoen_id, $sol_id, false, $bron);
 }
 
 /** Observaties van één kandidaat, nieuwste eerst. */

@@ -63,6 +63,26 @@ function foto_beveiligde_url(string $naam): string {
 }
 
 /**
+ * Een kleine, ingesloten versie (data-URL, JPEG) voor de incheck-tablet. Die heeft geen
+ * inlog, dus foto.php laat hem terecht niets zien; de kiosk krijgt na een geldige code
+ * alleen de miniaturen van de hooguit drie treffers mee. Null zonder foto of zonder GD.
+ */
+function foto_miniatuur_data_url(?string $opgeslagen, int $px = 128): ?string {
+    $naam = foto_naam($opgeslagen);
+    $pad  = $naam !== null ? foto_pad($naam) : null;
+    if ($pad === null || !function_exists('imagecreatefromstring')) return null;
+    $bron = @imagecreatefromstring((string)file_get_contents($pad));
+    if (!$bron) return null;
+    $b = imagesx($bron); $h = imagesy($bron); $zijde = min($b, $h);
+    $doel = imagecreatetruecolor($px, $px);
+    // Vierkant uit het midden, zodat een ronde avatar geen vervormd gezicht toont.
+    imagecopyresampled($doel, $bron, 0, 0, (int)(($b - $zijde) / 2), (int)(($h - $zijde) / 2), $px, $px, $zijde, $zijde);
+    ob_start(); imagejpeg($doel, null, 80); $jpg = (string)ob_get_clean();
+    imagedestroy($bron); imagedestroy($doel);
+    return 'data:image/jpeg;base64,' . base64_encode($jpg);
+}
+
+/**
  * Een geüploade foto controleren en opslaan. Geeft de waarde voor blk_formulieren.foto_url
  * terug, of null als het bestand geen bruikbare foto is.
  */

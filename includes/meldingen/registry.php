@@ -101,7 +101,8 @@ function meldingen_register(): array {
         ]),
         'aangenomen' => array_merge($std, [
             'naam' => 'Welkom: aangenomen', 'categorie' => 'fase', 'kanaal_standaard' => 'email',
-            'beschrijving' => 'Als een sollicitant is aangenomen. Het kennismakingspakket (taken) wordt tegelijk klaargezet.',
+            'beschrijving' => 'Als een sollicitant is aangenomen. Het kennismakingspakket (taken) wordt tegelijk klaargezet. {{gesprek_bericht}} is het bericht uit het gesprek op het trainingsweekend (of de standaardtekst uit Instellingen).',
+            'vars' => ['gesprek_bericht'],
             'seed' => [
                 'onderwerp' => 'Welkom bij Paal 13, {{voornaam}}!',
                 'hero_titel' => 'Welkom bij Paal 13!', 'hero_subtitel' => 'Aangenomen voor {{seizoen_naam}}',
@@ -121,6 +122,20 @@ function meldingen_register(): array {
                 'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Na zorgvuldige beoordeling hebben we helaas besloten je niet verder mee te nemen in de selectieprocedure voor {{seizoen_naam}}.</p>\n<p>We hebben dit jaar veel aanmeldingen ontvangen en de keuze was moeilijk. Bedankt voor je enthousiasme en de moeite die je hebt gedaan.</p>\n<p>Vragen over onze beslissing? Neem gerust contact op via <a href=\"mailto:{{bestuur_email}}\">{{bestuur_email}}</a>.</p>\n<p>We hopen je misschien in een volgend seizoen weer te zien.</p>",
                 'tekst_kort' => '',
                 'samenvatting' => 'Terugkoppeling over je sollicitatie.',
+            ],
+        ]),
+        // Na het gesprek op het trainingsweekend: een bevestiging van wat er is besproken. Staat
+        // daarom wél aan (anders dan 'afgewezen' na de selectiedag, waar het bestuur zelf belt).
+        'tw_afgewezen' => array_merge($std, [
+            'naam' => 'Niet aangenomen na het trainingsweekend', 'categorie' => 'fase', 'kanaal_standaard' => 'email', 'kort_toegestaan' => false,
+            'beschrijving' => 'Na het gesprek op het trainingsweekend, als bevestiging van wat er is besproken. {{gesprek_bericht}} is het bericht uit het gesprek (of de standaardtekst uit Instellingen › Beoordelingscriteria). Onder de tekst staat de knop "Stuur me een seintje".',
+            'seintje' => true, 'vars' => ['gesprek_bericht', 'seintje_url'],
+            'seed' => [
+                'onderwerp' => 'Terugkoppeling trainingsweekend {{seizoen_naam}}',
+                'hero_titel' => 'Bedankt voor je inzet', 'hero_subtitel' => 'Trainingsweekend {{seizoen_naam}}',
+                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Bedankt voor het gesprek op het trainingsweekend. Zoals we hebben besproken, gaan we dit seizoen niet met je verder.</p>\n<p>{{gesprek_bericht}}</p>\n<p>Met vriendelijke groet,<br>Het bestuur van Paal 13</p>",
+                'tekst_kort' => '',
+                'samenvatting' => 'Terugkoppeling na het trainingsweekend.',
             ],
         ]),
 
@@ -375,6 +390,18 @@ function meldingen_register(): array {
                 'onderwerp' => 'Formulier ingeleverd: {{volledige_naam}}',
                 'hero_titel' => 'Formulier ingeleverd', 'hero_subtitel' => '{{seizoen_naam}}',
                 'body_html' => "<p><strong>{{volledige_naam}}</strong> heeft het \"Beter leren kennen\"-formulier ingeleverd en is daarmee aangemeld voor de selectiedag.</p>\n[knop href=\"{{beheer_url}}\"]Bekijk in het beheer[/knop]",
+                'tekst_kort' => '', 'samenvatting' => '',
+            ],
+        ]),
+        'bestuur_deelname_afgemeld' => array_merge($std, [
+            'naam' => 'Kan niet komen (selectiedag of trainingsweekend)', 'categorie' => 'bestuur', 'ontvanger' => 'bestuur',
+            'kanaal_standaard' => 'email', 'kort_toegestaan' => false, 'dedup_min' => 0, 'body_loggen' => false,
+            'beschrijving' => 'Naar het bestuur als een sollicitant in het portaal doorgeeft niet te kunnen komen. De fase verandert niet vanzelf: op Vandaag staat de keuze afmelden of uitzondering.',
+            'vars' => ['evenement', 'reden', 'beheer_url'],
+            'seed' => [
+                'onderwerp' => 'Kan niet komen: {{volledige_naam}} ({{evenement}})',
+                'hero_titel' => 'Kan niet komen', 'hero_subtitel' => '{{evenement}}',
+                'body_html' => "<p><strong>{{volledige_naam}}</strong> geeft door niet te kunnen komen op de {{evenement}}.</p>\n<p>Reden: {{reden}}</p>\n<p>Beslis op Vandaag: afmelden, of een uitzondering maken.</p>\n[knop href=\"{{beheer_url}}\"]Naar het dossier[/knop]",
                 'tekst_kort' => '', 'samenvatting' => '',
             ],
         ]),

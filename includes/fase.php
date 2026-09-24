@@ -14,6 +14,11 @@
  *   seizoen_id  => int      extra veiligheid: alleen binnen dit seizoen
  *   stil        => bool     geen meldingen versturen (correcties)
  *   prioriteit  => 'direct' | 'na_antwoord' | 'queue'  (standaard 'direct')
+ *   melding_vars  => array  extra variabelen voor de melding (bijv. gesprek_bericht)
+ *   meldingstypen => array  andere meldingen dan fase_meldingstypen($naar) (bijv. tw_afgewezen)
+ *
+ * Naast fasen() mag ook de eindstand 'afgehaakt' (iemand meldt zich af): geen knop in de
+ * fase-lijsten, wel een geldige overgang.
  */
 
 if (!function_exists('fase_zetten')) {
@@ -84,7 +89,7 @@ function fase_label_kort(string $fase, string $lengte = 'kort'): string {
  */
 function fase_zetten(int $sol_id, string $naar, string $bron, array $opties = []): array {
     $uit = ['ok' => false, 'oud' => null, 'nieuw' => $naar, 'ongewijzigd' => false, 'melding' => null, 'neveneffecten' => [], 'fout' => null];
-    if (!isset(fasen()[$naar])) { $uit['fout'] = 'ongeldige fase'; return $uit; }
+    if (!isset(fasen()[$naar]) && $naar !== 'afgehaakt') { $uit['fout'] = 'ongeldige fase'; return $uit; }
     try {
         $db = db();
         $q = $db->prepare("SELECT fase, seizoen_id FROM sollicitaties WHERE id=?");
@@ -117,7 +122,7 @@ function fase_zetten(int $sol_id, string $naar, string $bron, array $opties = []
         // Zet een mens de fase om (paneel, lijst, bulk, bellijst, trainingsweekend-doorvoeren),
         // dan is dat een bewuste keuze: het anti-loop-dagplafond mag zo'n bericht niet
         // tegenhouden. Automatische bronnen wel.
-        if (in_array($bron, ['paneel', 'lijst', 'bulk', 'bellijst', 'trainingsweekend'], true)) $mopt['negeer_plafond'] = true;
+        if (in_array($bron, ['paneel', 'lijst', 'bulk', 'bellijst', 'trainingsweekend', 'gesprek', 'inchecken'], true)) $mopt['negeer_plafond'] = true;
         $stuur = function (string $type, array $extra = []) use ($sol_id, $stil, $mopt, &$uit) {
             if ($stil || !function_exists('melding_verstuur')) return;
             $r = melding_verstuur($type, $sol_id, $extra, $mopt);
@@ -135,7 +140,8 @@ function fase_zetten(int $sol_id, string $naar, string $bron, array $opties = []
         }
         // De meldingen zelf: uit fase_meldingstypen(), dezelfde bron die de
         // bevestigingsdialoog vooraf raadpleegt.
-        foreach (fase_meldingstypen($naar) as $_type) $stuur($_type);
+        $_typen = isset($opties['meldingstypen']) ? (array)$opties['meldingstypen'] : fase_meldingstypen($naar);
+        foreach ($_typen as $_type) $stuur($_type, (array)($opties['melding_vars'] ?? []));
         return $uit;
     } catch (\Throwable $e) {
         error_log('fase_zetten: ' . $e->getMessage());

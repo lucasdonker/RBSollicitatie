@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.107.0');
+define('APP_VERSIE', '2.108.0');
 
 function app_changelog(): array {
     return [
+        '2.108.0' => [
+            'datum'  => '2026-09-24',
+            'titel'  => 'Selectiedag en trainingsweekend: "kom je?", inchecken zet de fase',
+            'punten' => [
+                'Sollicitanten zien in het portaal de taak "Kom je op de selectiedag / het trainingsweekend?" en kunnen doorgeven dat ze komen of niet kunnen (met reden)',
+                'Wie niet kan, blijft in zijn fase staan. Het bestuur krijgt bericht en ziet op Vandaag "Kan niet komen — wacht op jouw besluit" met Afmelden of Uitzondering',
+                'Inchecken (tablet of beheer) zet de fase via de centrale route, met een regel in het logboek; ongedaan maken zet hem zonder bericht terug. Op het trainingsweekend wordt nu ook "TW geweest" gezet',
+                'Nieuw meldingstype "Niet aangenomen na het trainingsweekend" (standaard aan) en de variabele {{gesprek_bericht}} voor het bericht uit het gesprek',
+            ],
+        ],
         '2.107.0' => [
             'datum'  => '2026-09-24',
             'titel'  => 'Excel-export voor de loonadministratie',

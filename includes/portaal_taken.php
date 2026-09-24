@@ -154,6 +154,36 @@ function portaal_taken(array $sol, ?array $blk = null, bool $vangnet = true): ar
         ]);
     }
 
+    // 4b) "Kom je?" voor de selectiedag en het trainingsweekend (includes/evenement.php).
+    //     Staat de bevestiging al (ook via de bellijst van het bestuur), dan is de taak af.
+    if (function_exists('evenement_bevestiging_van')) {
+        foreach (['selectiedag' => 'datum_selectiedag', 'tw' => 'datum_tw_start'] as $_ev => $_datumkol) {
+            $_d = evenement_def($_ev);
+            if (!in_array($fase, $_d['voor_fases'], true)) continue;
+            if (function_exists('module_aan') && !module_aan($_d['module'])) continue;
+            $_b = evenement_bevestiging_van($_ev, (int)($sol['seizoen_id'] ?? 0), $sol_id);
+            $_datum = !empty($sol[$_datumkol]) ? portaal_datum_kort($sol[$_datumkol]) : '';
+            $_wat = $_ev === 'tw' ? 'het trainingsweekend' : 'de selectiedag';
+            $_klaar = $_b['stand'] !== 'onbekend';
+            $taken[] = array_merge($std, [
+                'id'          => 'deelname_' . $_ev,
+                'titel'       => $_klaar ? ($_b['stand'] === 'komt' ? 'Je komt op ' . $_wat : 'Je kunt niet op ' . $_wat) : 'Kom je op ' . $_wat . '?',
+                'sub'         => $_klaar
+                    ? ($_b['stand'] === 'komt' ? 'Doorgegeven' . ($_datum ? ' · ' . $_datum : '') : 'We nemen contact met je op.')
+                    : 'Laat weten of je erbij bent' . ($_datum ? ' · ' . $_datum : ''),
+                'done'        => $_klaar,
+                'done_op'     => $_b['op'],
+                'icoon'       => 'kalender',
+                'kleur'       => $_klaar ? 'ok' : 'accent',
+                'actie_label' => $_klaar ? 'Wijzigen' : null,
+                'urgent'      => !$_klaar,
+                'volgorde'    => 35,
+                'inline_form' => 'deelname',
+                'inline_data' => ['ev' => $_ev, 'stand' => $_b['stand'], 'reden' => $_b['reden']],
+            ]);
+        }
+    }
+
     // 5) Beschikbaarheid: doorgeven → (voorlopig) definitief maken → bijwerken.
     if (in_array($fase, portaal_taken_fases_beschikbaarheid(), true) && function_exists('beschikbaarheid2_van')) {
         $bv = [];
@@ -378,6 +408,28 @@ function portaal_taken_post_afhandelen(int $sol_id): void {
             }
         } else {
             $_SESSION['flash_portaal_fout'] = 'Vul een geldige naam, e-mailadres én telefoonnummer in.';
+        }
+        redirect($terug);
+    }
+
+    // "Kom je op de selectiedag / het trainingsweekend?" (portaal/_taak_inline_deelname.php)
+    if (isset($_POST['deelname_submit']) && function_exists('evenement_bevestigen')) {
+        csrf_check();
+        $ev    = (string)($_POST['ev'] ?? '');
+        $stand = (string)($_POST['stand'] ?? '');
+        $d     = evenement_def($ev);
+        try {
+            $q = db()->prepare("SELECT seizoen_id, fase FROM sollicitaties WHERE id=?");
+            $q->execute([$sol_id]);
+            $s = $q->fetch() ?: [];
+        } catch (\Throwable $e) { $s = []; }
+        // Alleen zolang je voor dit evenement bent uitgenodigd; daarna valt er niets meer te bevestigen.
+        if (!$d || !in_array($s['fase'] ?? '', $d['voor_fases'], true) || !in_array($stand, ['komt', 'komt_niet'], true)) {
+            $_SESSION['flash_portaal_fout'] = 'Dit kun je nu niet meer doorgeven. Neem contact op als er iets verandert.';
+        } elseif (!evenement_bevestigen($ev, (int)$s['seizoen_id'], $sol_id, $stand, (string)($_POST['reden'] ?? ''), 'portaal')) {
+            $_SESSION['flash_portaal_fout'] = 'Vertel kort waarom je niet kunt; dan kan het bestuur met je meedenken.';
+        } else {
+            $_SESSION['flash_portaal'] = $stand === 'komt' ? 'Genoteerd: je komt. Tot dan!' : 'Genoteerd. Het bestuur neemt contact met je op.';
         }
         redirect($terug);
     }
