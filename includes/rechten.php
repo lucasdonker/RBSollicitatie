@@ -111,8 +111,10 @@ function rechten_standaard_rollen(): array {
             'authentik_groep' => 'Sol-Penningmeester',
             'rang' => 2,
             'rechten' => [
-                // Alleen de loonadministratie: loondossiers inzien, downloaden, verwerkt markeren, bankpas vernietigen.
+                // De loonadministratie: loondossiers inzien, downloaden, verwerkt markeren, bankpas vernietigen,
+                // en de loonplanning (kosten en scenario's) — dat is juist het werkgereedschap van de penningmeester.
                 'documenten'      => 'rwd',
+                'loonplanning'    => 'rw',
                 'sollicitanten'   => 'r',
             ],
         ],
@@ -172,7 +174,49 @@ function rechten_auto_setup(): void {
             }
             error_log("rechten_auto_setup: rol '$sleutel' aangemaakt");
         }
+        rechten_nieuwe_standaarden();
     } catch (\Exception $e) { error_log('rechten_auto_setup: ' . $e->getMessage()); }
+}
+
+/**
+ * Standaardrechten die ná de eerste installatie bij een bestaande rol zijn gekomen.
+ *
+ * Een bestaande rol wordt nooit uit rechten_standaard_rollen() overschreven — een admin kan
+ * de matrix hebben aangepast. Maar dan krijgt een bestaande installatie een nieuw standaardrecht
+ * ook nooit. Deze lijst lost dat op: elk item wordt precies één keer toegepast (vlag in de
+ * instellingen), en alleen als ophoging — een recht wordt hier nooit ingetrokken. Haalt een
+ * admin het daarna weer weg, dan blijft het weg.
+ *
+ * Nieuw item = één regel hieronder: [rol, module, bits, reden].
+ */
+function rechten_nieuwe_standaarden(): void {
+    $db = db();
+    $lijst = [
+        ['penningmeester', 'loonplanning', 'rw', '2.101.1: loonplanning is het werkgereedschap van de penningmeester'],
+    ];
+    if (!function_exists('instelling') || !function_exists('instelling_opslaan')) return;
+    foreach ($lijst as $item) {
+        $vlag = 'rechten.toegevoegd.' . $item[0] . '.' . $item[1];
+        if (instelling($vlag, '') !== '') continue;
+        $rol = $db->prepare("SELECT COUNT(*) FROM rollen WHERE sleutel = ?");
+        $rol->execute([$item[0]]);
+        if ((int)$rol->fetchColumn() === 0) continue;       // rol bestaat (nog) niet: dan seedt de setup hem al goed
+        $l = str_contains($item[2], 'r') ? 1 : 0;
+        $w = str_contains($item[2], 'w') ? 1 : 0;
+        $d = str_contains($item[2], 'd') ? 1 : 0;
+        // Alleen ophogen: GREATEST houdt een recht dat er al was.
+        $db->prepare("INSERT INTO rol_rechten (rol_sleutel, module, lezen, bewerken, verwijderen) VALUES (?,?,?,?,?)
+                      ON DUPLICATE KEY UPDATE lezen = GREATEST(lezen, VALUES(lezen)),
+                                              bewerken = GREATEST(bewerken, VALUES(bewerken)),
+                                              verwijderen = GREATEST(verwijderen, VALUES(verwijderen))")
+           ->execute([$item[0], $item[1], $l, $w, $d]);
+        instelling_opslaan($vlag, date('Y-m-d'));
+        if (function_exists('audit_log')) {
+            audit_log('rol_gewijzigd', 'rol', null, ['rol' => $item[0], 'module' => $item[1], 'rechten' => $item[2],
+                                                    'reden' => $item[3], 'door' => 'systeem']);
+        }
+        error_log("rechten_nieuwe_standaarden: {$item[0]} kreeg {$item[1]} ({$item[2]})");
+    }
 }
 
 /** Alle rollen ophalen (voor de matrix-UI en Authentik-mapping). */

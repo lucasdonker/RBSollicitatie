@@ -430,10 +430,10 @@ function rl_routes(): array {
             'afsluiting' => 'Meer hoef je niet te weten. Staat iets anders dan je verwacht, vraag het dan aan het bestuur.',
         ],
         'penningmeester' => [
-            'titel' => 'Penningmeester: loondossiers',
-            'voor'  => 'Voor de penningmeester: waar de loondossiers staan, hoe je ze downloadt, verwerkt en wat je nooit doet.',
+            'titel' => 'Penningmeester: loondossiers en loonplanning',
+            'voor'  => 'Voor de penningmeester: waar de loondossiers staan, hoe je ze downloadt en verwerkt, en de loonplanning met kosten en budget.',
             'module' => 'documenten',
-            'schermen' => ['algemeen', 'documenten'],
+            'schermen' => ['algemeen', 'documenten', 'loonplanning'],
             'afsluiting' => 'De volledige werkwijze, inclusief bewaartermijnen, staat in de Handleiding penningmeester.',
         ],
         'admin' => [
