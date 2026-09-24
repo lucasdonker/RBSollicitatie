@@ -84,6 +84,12 @@ function db_verwachte_kolommen(): array {
         ],
         'beheerders' => [
             'standaard_ingang' => "VARCHAR(10) DEFAULT NULL",
+            // Tweestaps op de wachtwoord-noodingang (includes/tweestaps.php). TEXT: de kluis-blob
+            // en de lijst met hashes passen niet gegarandeerd in een VARCHAR (stil afkappen).
+            'tweestaps_geheim'  => 'TEXT DEFAULT NULL',
+            'tweestaps_aan_op'  => 'DATETIME DEFAULT NULL',
+            'tweestaps_stap'    => 'BIGINT DEFAULT NULL',
+            'tweestaps_herstel' => 'TEXT DEFAULT NULL',
         ],
         'sollicitaties' => [
             'bron_code'  => 'VARCHAR(80) DEFAULT NULL',

@@ -11,6 +11,7 @@
  */
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/beheer/laden.php';
+require_once __DIR__ . '/../includes/tweestaps.php';
 $pagina_titel = 'Beheerders';
 $actieve_nav  = 'beheerders';
 vereis_recht('beheerders', 'bewerken');
@@ -18,6 +19,10 @@ vereis_recht('beheerders', 'bewerken');
 $db   = db();
 $fout = '';
 $mij  = (int)(huidige_beheerder()['id'] ?? 0);
+// Tweestaps resetten (telefoon kwijt) is voorbehouden aan de rol admin, niet aan elk
+// account met het recht "beheerders": het haalt een beveiliging van iemand anders weg.
+$ben_admin = (huidige_beheerder()['rol'] ?? '') === 'admin';
+tweestaps_setup();
 
 /** Eén beheerder, of null. */
 function beheerder_rij($db, int $id): ?array {
@@ -92,15 +97,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    if ($actie === 'tweestaps_reset') {
+        $doel = beheerder_rij($db, $bid);
+        if (!$ben_admin) {
+            $fout = 'Alleen een beheerder met de rol Beheerder kan tweestaps resetten.';
+        } elseif ($doel && tweestaps_aan($doel)) {
+            tweestaps_uitschakelen($bid);
+            audit_log('tweestaps_gereset', 'beheerder', $bid, ['naam' => (string)$doel['naam']]);
+            flash('succes', 'Tweestaps van ' . $doel['naam'] . ' is gereset. Bij de volgende wachtwoordlogin krijgt '
+                . $doel['naam'] . ' een code per e-mail en kan de app opnieuw worden ingesteld in Mijn profiel.');
+        }
+    }
+
     if (!$fout) redirect(APP_URL . '/admin/beheerders.php');
 }
 
 // ── Bevestiging als tussenscherm ─────────────────────────────
 $bev_actie = (string)($_GET['bevestig'] ?? '');
 $bev_b     = null;
-if (in_array($bev_actie, ['deactiveer', 'activeer'], true)) {
+if (in_array($bev_actie, ['deactiveer', 'activeer', 'tweestaps_reset'], true)) {
     $bev_b = beheerder_rij($db, (int)($_GET['id'] ?? 0));
-    if (!$bev_b) { $bev_actie = ''; }
+    if (!$bev_b || ($bev_actie === 'tweestaps_reset' && (!$ben_admin || !tweestaps_aan($bev_b)))) { $bev_b = null; $bev_actie = ''; }
 }
 
 $beheerders = $db->query("SELECT * FROM beheerders ORDER BY actief DESC, rol DESC, naam")->fetchAll();
@@ -112,6 +129,18 @@ require __DIR__ . '/layout_top.php';
 
 <?php if ($bev_b): $_uit = $bev_actie === 'deactiveer'; ?>
   <?php
+  if ($bev_actie === 'tweestaps_reset') {
+    $bev = [
+      'titel'  => 'Tweestaps van ' . $bev_b['naam'] . ' resetten?',
+      'regels' => ['Doe dit alleen als ' . $bev_b['naam'] . ' de telefoon met de authenticator-app kwijt is én geen herstelcodes meer heeft. Check eerst dat het verzoek echt van deze persoon komt (bel of spreek elkaar).',
+                   'De app-koppeling en alle herstelcodes vervallen. Inloggen met het wachtwoord vraagt daarna een code per e-mail.',
+                   $bev_b['naam'] . ' kan de app daarna zelf opnieuw instellen in Mijn profiel.'],
+      'bericht'      => 'Dit wordt vastgelegd in het logboek.',
+      'onomkeerbaar' => true,
+      'knop'         => 'Ja, tweestaps resetten',
+      'toon'         => 'gevaar',
+    ];
+  } else {
   $bev = [
       'titel'  => ($_uit ? 'Account van ' : 'Account van ') . $bev_b['naam'] . ($_uit ? ' uitzetten?' : ' weer aanzetten?'),
       'regels' => $_uit
@@ -124,6 +153,7 @@ require __DIR__ . '/layout_top.php';
       'knop'         => $_uit ? 'Ja, uitzetten' : 'Ja, aanzetten',
       'toon'         => $_uit ? 'gevaar' : 'primair',
   ];
+  }
   $bev_form  = ['actie' => APP_URL . '/admin/beheerders.php',
                 'velden' => ['actie' => $bev_actie, 'bid' => (int)$bev_b['id']]];
   $bev_terug = APP_URL . '/admin/beheerders.php';
@@ -171,6 +201,10 @@ require __DIR__ . '/layout_top.php';
             <?php endif; ?>
             <?php if (!empty($b['wachtwoord'])): ?>
               <span class="bh-bhrij-via" title="Kan ook inloggen met een wachtwoord in dit systeem"><?= icoon('sleutel', 14) ?> Wachtwoord</span>
+              <?php $_ts = tweestaps_status($b); ?>
+              <?= bh_badge($_ts['tekst'], $_ts['kleur'], ['titel' => tweestaps_aan($b)
+                  ? 'Wachtwoordlogin vraagt een code uit een authenticator-app'
+                  : 'Wachtwoordlogin vraagt een code per e-mail; een app is nog niet ingesteld']) ?>
             <?php endif; ?>
             <?php if (empty($b['authentik_uid']) && empty($b['wachtwoord'])): ?>
               <span class="bh-bhrij-via let-op" title="Dit account kan op geen enkele manier inloggen">
@@ -198,6 +232,9 @@ require __DIR__ . '/layout_top.php';
           <span class="bh-bhrij-acties">
             <a class="ds-btn ds-btn-zacht ds-btn-sm" href="#ww-<?= (int)$b['id'] ?>"
                onclick="bhWachtwoord(<?= (int)$b['id'] ?>); return false;">Wachtwoord</a>
+            <?php if ($ben_admin && tweestaps_aan($b)): ?>
+              <a class="ds-btn ds-btn-zacht ds-btn-sm" href="?bevestig=tweestaps_reset&amp;id=<?= (int)$b['id'] ?>">Tweestaps resetten</a>
+            <?php endif; ?>
             <?php if ($_ik): ?>
               <span class="bh-meta" title="Je kunt je eigen account niet uitzetten">jouw account</span>
             <?php else: ?>

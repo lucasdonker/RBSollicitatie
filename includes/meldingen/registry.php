@@ -472,6 +472,23 @@ function meldingen_register(): array {
             ],
         ]),
 
+        /* Tweede stap van de wachtwoord-noodingang van het beheer (includes/tweestaps.php), voor
+           accounts zonder authenticator-app. Eigen type, zodat het berichtenlog laat zien dat het
+           een beheerinlog was en niet een portaalinlog. Alleen e-mail; de inhoud wordt nooit gelogd. */
+        'beheer_code' => array_merge($std, [
+            'naam' => 'Inlogcode beheer (noodingang)', 'categorie' => 'systeem', 'ontvanger' => 'direct',
+            'kanaal_standaard' => 'email', 'kort_toegestaan' => false, 'dedup_min' => 0, 'body_loggen' => false,
+            'beschrijving' => 'De eenmalige code na een juist wachtwoord bij de noodingang van het beheer, voor wie nog geen authenticator-app heeft ingesteld. De inhoud wordt nooit gelogd.',
+            'vars' => ['otp_code', 'geldig_min'],
+            'seed' => [
+                'onderwerp' => 'Je inlogcode voor het Paal 13 beheer',
+                'hero_titel' => 'Inlogcode beheer', 'hero_subtitel' => 'Geldig {{geldig_min}} minuten',
+                'body_html' => "<p>Hoi {{voornaam}}, je wachtwoord voor het beheer is zojuist goed ingevuld. Vul deze code in om de inlog af te ronden:</p>\n[code]{{otp_code}}[/code]\n<p>De code is <strong>{{geldig_min}} minuten</strong> geldig en werkt één keer.</p>\n[info]Heb jij niet net ingelogd? Dan kent iemand anders je wachtwoord. Wijzig het meteen in Mijn profiel en laat het een beheerder weten.[/info]",
+                'tekst_kort' => '',
+                'samenvatting' => '',
+            ],
+        ]),
+
         // ── Handmatig en gepland ──────────────────────────────────────
         'gepland' => array_merge($std, [
             'naam' => 'Gepland bericht', 'categorie' => 'gepland', 'kanaal_standaard' => 'email', 'dedup_min' => 0,

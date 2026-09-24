@@ -9,12 +9,15 @@
  */
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/beheer/laden.php';
+require_once __DIR__ . '/../includes/tweestaps.php';
 $pagina_titel = 'Mijn profiel';
 $actieve_nav  = 'profiel';
 vereist_login();
 
 $b    = huidige_beheerder();
 $fout = '';
+$ts_fout      = ['bevestig' => '', 'wijzig' => ''];   // foutmelding bij het codeveld
+$herstel_toon = null;                                 // herstelcodes: alleen in dít antwoord, nooit bewaard
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
@@ -60,17 +63,76 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             redirect(APP_URL . '/admin/profiel.php');
         }
     }
+
+    // ── Tweestapsverificatie (includes/tweestaps.php) ─────────
+    if (str_starts_with($actie, 'tweestaps_')) {
+        $bid = (int)$b['id'];
+        $rec = tweestaps_rij($bid) ?? [];
+        $ip  = substr($_SERVER['REMOTE_ADDR'] ?? '', 0, 45);
+        $zelf = APP_URL . '/admin/profiel.php#tweestaps';
+
+        if (!tweestaps_van_toepassing($rec)) {
+            $fout = 'Tweestaps hoort bij inloggen met een wachtwoord. Jij logt in via Authentik, en dat regelt de tweede stap zelf.';
+        } elseif ($actie === 'tweestaps_start') {
+            if (tweestaps_aan($rec)) {
+                $fout = 'Tweestaps staat al aan. Wil je een nieuwe telefoon koppelen, kies dan "Opnieuw instellen".';
+            } elseif (!tweestaps_voorlopig_start($bid)) {
+                $fout = 'Instellen kan nu niet: de kluis voor geheimen werkt niet. Meld dit bij de systeembeheerder.';
+            } else {
+                redirect($zelf);
+            }
+        } elseif ($actie === 'tweestaps_annuleer') {
+            tweestaps_voorlopig_stop();
+            redirect($zelf);
+        } elseif ($actie === 'tweestaps_bevestig') {
+            $b32 = tweestaps_voorlopig($bid);
+            if ($b32 === null) {
+                $fout = 'Het instellen is verlopen (na 15 minuten). Begin opnieuw.';
+            } elseif (!tweestaps_poging_toegestaan($bid, $ip)) {
+                $ts_fout['bevestig'] = 'Te veel pogingen. Wacht een kwartier en probeer het dan opnieuw.';
+            } elseif (($stap = tweestaps_totp_controleer($b32, (string)($_POST['code'] ?? ''))) === null) {
+                audit_log('tweestaps_mislukt', 'beheerder', $bid, ['methode' => 'instellen']);
+                $ts_fout['bevestig'] = 'Deze code klopt niet. Controleer of de tijd op je telefoon automatisch wordt ingesteld en probeer de volgende code.';
+            } elseif (($codes = tweestaps_inschakelen($bid, $b32, $stap)) === null) {
+                $fout = 'Opslaan lukte niet: de kluis voor geheimen werkt niet. Meld dit bij de systeembeheerder.';
+            } else {
+                tweestaps_voorlopig_stop();
+                audit_log('tweestaps_aangezet', 'beheerder', $bid, ['opnieuw' => tweestaps_aan($rec) ? 'ja' : 'nee']);
+                $herstel_toon = $codes;   // geen redirect: de codes bestaan alleen in dit antwoord
+            }
+        } elseif ($actie === 'tweestaps_uit' || $actie === 'tweestaps_opnieuw') {
+            if (!tweestaps_aan($rec)) {
+                $fout = 'Tweestaps staat niet aan.';
+            } elseif (!tweestaps_poging_toegestaan($bid, $ip)) {
+                $ts_fout['wijzig'] = 'Te veel pogingen. Wacht een kwartier en probeer het dan opnieuw.';
+            } elseif (!password_verify((string)($_POST['huidig_wachtwoord'] ?? ''), (string)$rec['wachtwoord'])) {
+                audit_log('tweestaps_mislukt', 'beheerder', $bid, ['methode' => 'wachtwoord bij ' . ($actie === 'tweestaps_uit' ? 'uitzetten' : 'opnieuw instellen')]);
+                $ts_fout['wijzig'] = 'Het wachtwoord klopt niet.';
+            } elseif (!tweestaps_code_of_herstel($rec, (string)($_POST['code'] ?? ''))) {
+                audit_log('tweestaps_mislukt', 'beheerder', $bid, ['methode' => $actie === 'tweestaps_uit' ? 'uitzetten' : 'opnieuw instellen']);
+                $ts_fout['wijzig'] = 'Deze code klopt niet, is al gebruikt of is verlopen.';
+            } elseif ($actie === 'tweestaps_uit') {
+                tweestaps_voorlopig_stop();
+                tweestaps_uitschakelen($bid);
+                audit_log('tweestaps_uitgezet', 'beheerder', $bid, ['door' => 'zelf']);
+                flash('waarschuwing', 'Tweestaps staat uit. Inloggen met je wachtwoord vraagt nu een code per e-mail.');
+                redirect($zelf);
+            } elseif (!tweestaps_voorlopig_start($bid)) {
+                $fout = 'Instellen kan nu niet: de kluis voor geheimen werkt niet. Meld dit bij de systeembeheerder.';
+            } else {
+                redirect($zelf);
+            }
+        }
+    }
 }
 
-$q = db()->prepare("SELECT * FROM beheerders WHERE id=?");
-$q->execute([$b['id']]);
-$rec = $q->fetch() ?: [];
+$rec = tweestaps_rij((int)$b['id']) ?? [];   // SELECT * en zorgt dat de tweestaps-kolommen bestaan
 
 require __DIR__ . '/layout_top.php';
 ?>
 
 <?php if ($fout !== ''): ?>
-  <div class="ds-melding ds-melding-error bh-blokkade"><?= icoon('waarschuwing', 18) ?><span><?= h($fout) ?></span></div>
+  <div class="ds-melding ds-melding-error bh-blokkade" role="alert"><?= icoon('waarschuwing', 18) ?><span><?= h($fout) ?></span></div>
 <?php endif; ?>
 
 <div class="bh-profiel">
@@ -152,6 +214,8 @@ require __DIR__ . '/layout_top.php';
       </form>
     <?php endif; ?>
   </section>
+
+  <?php if (tweestaps_van_toepassing($rec)) require __DIR__ . '/_tweestaps_kaart.php'; ?>
 
   <section class="ds-kaart ds-kaart-p bh-profiel-breed">
     <div class="bh-kaartkop"><h2>Voorkeuren</h2></div>

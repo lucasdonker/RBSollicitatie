@@ -39,6 +39,12 @@ function log_actie_register(): array {
         'beheerder_gewijzigd'   => ['Beheerder gewijzigd', 'persoon'],
         'beheerder_aangemaakt'  => ['Beheerder toegevoegd', 'persoon'],
         'beheerder_verwijderd'  => ['Beheerder verwijderd', 'persoon'],
+        'tweestaps_aangezet'    => ['Tweestapsverificatie aangezet', 'schild'],
+        'tweestaps_uitgezet'    => ['Tweestapsverificatie uitgezet', 'slot'],
+        'tweestaps_gereset'     => ['Tweestapsverificatie gereset door een beheerder', 'slot'],
+        'tweestaps_mislukt'     => ['Tweestapscode fout', 'waarschuwing'],
+        'tweestaps_herstelcode' => ['Herstelcode gebruikt om in te loggen', 'sleutel'],
+        'tweestaps_mailcode'    => ['Inlogcode beheer per e-mail verstuurd', 'mail'],
 
         // Sollicitatie
         'fase_gewijzigd'          => ['Fase gewijzigd', 'pijl-rechts'],
