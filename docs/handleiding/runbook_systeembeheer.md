@@ -56,8 +56,8 @@ je die mee.
   Ontbreekt de kluissleutel van productie daar, meld dat dezelfde dag: zonder die sleutel is een
   back-up van de documenten waardeloos.
 - [ ] Open op beide omgevingen **Beheer › Systeem & Updates**: noteer de versie en controleer of
-  alle acht checks van de [systeemcontrole](#systeemcontrole-health-check) groen zijn. Kijk bij
-  Cron of er "via cron" staat en niet "via lazy".
+  alle checks van de [systeemcontrole](#systeemcontrole-health-check) groen zijn, ook Cron
+  (alle drie de groepen op tijd).
 - [ ] Open **Instellingen › Bewaren & opschonen** op productie en controleer dat
   "Automatisch opschonen" aan staat; staat het uit, dan staat daar een rode waarschuwing (zie
   [Bewaartermijnen en privacy](#bewaartermijnen-en-privacy)).
@@ -91,7 +91,7 @@ Dagelijks, in het seizoen (maart tot en met september):
 
 Wekelijks:
 
-- [ ] Systeemcontrole op productie: alle acht groen, Cron "via cron".
+- [ ] Systeemcontrole op productie: alles groen, Cron met alle drie de groepen op tijd.
 - [ ] Logboek, bron Fouten: nieuwe foutcodes? Zoek de referentie op (zie [Logs lezen](#logs-lezen)).
 - [ ] Logboek, bron Mislukte logins: een piek van mislukte logins op één adres of één e-mailadres
   wijst op raden van wachtwoorden of codes.
@@ -160,7 +160,7 @@ e-mailadres.
 - **PHP 8.3, MariaDB**, Apache met **PHP-FPM** achter de Plesk-proxy (Cloud86). Geen framework,
   geen Composer: alles zit in de repo (`includes/lib/` bevat TCPDF en FPDI voor de PDF's).
   Benodigde PHP-extensies: `pdo_mysql`, `openssl`, `sodium`, `curl`, `mbstring`, `gd`, `fileinfo`.
-- **PHP-FPM is een eis, geen voorkeur.** Mails, WhatsApp, het auditlog en de lazy-cron draaien
+- **PHP-FPM is een eis, geen voorkeur.** Mails, WhatsApp en het auditlog draaien
   ná het antwoord aan de bezoeker (`includes/na_antwoord.php`, via `fastcgi_finish_request`).
   Zet de PHP-handler in Plesk dus op een FPM-variant. Onder een andere handler werkt alles nog,
   maar wacht de bezoeker tot het werk klaar is.
@@ -244,8 +244,8 @@ e-mailadres.
 9. (eenmalig) Ga naar **Beheerders**. Staat er nog een account `admin@paal13.com` op non-actief,
    laat dat zo (of verwijder het). Dat was het installatie-account met een openbaar wachtwoord;
    sinds 2.94.0 zet het systeem het automatisch uit.
-10. Controleer de cron in Plesk (zie [Cron](#cron)) en kijk na tien minuten of de systeemcontrole
-    bij Cron "via cron" meldt.
+10. Controleer de cron in Plesk (zie [Cron](#cron)) en kijk na een kwartier of de systeemcontrole
+    bij Cron alle groepen op tijd meldt.
 11. (eenmalig) Authentik: controleer de redirect-URI's en de groep `Sol-Penningmeester`, en
     controleer dat die groep bij **Instellingen › Authentik** in de lijst met toegestane groepen
     staat (standaard sinds 2.101; een eerder zelf aangepaste lijst blijft ongewijzigd). Kijk bij
@@ -409,40 +409,38 @@ Plesk-taak. Doe dat ook als iemand met toegang tot Plesk vertrekt.
 
 ## Cron
 
-> **In het kort:** Eén geplande taak in Plesk, elke 5 minuten, roept `/cron/run.php` aan met het
-> cron-token. Zonder die taak blijven berichten hangen en draait de AVG-opschoning niet.
+> **In het kort:** Eén geplande taak in Plesk, **elke minuut**: `php cron/run.php`. Er is sinds
+> 2.104.0 geen vangnet meer bij een paginabezoek (lazy cron): staat de taak stil, dan gaan er
+> geen berichten, herinneringen of opschoningen meer uit.
 
-Plesk › Geplande taken, **elke 5 minuten**, type "URL ophalen" of een opdracht als de gebruiker
-van de site:
+Plesk › Geplande taken › **PHP-script uitvoeren**, elke minuut (`* * * * *`), met als script het
+volledige pad naar `cron/run.php` (staat in het beheer bij Instellingen › Bewaren & opschonen ›
+Cronjob). Vanaf de opdrachtregel is geen token nodig.
+
+Kan de server geen PHP-script plannen, gebruik dan een opdracht (ook elke minuut):
 
 ```
 curl -s -H "X-Cron-Token: <cron.token>" "https://sollicitatie.paal13.com/cron/run.php" > /dev/null 2>&1
 ```
 
-Het token gaat als header mee, zodat het niet in de access-log van de server belandt. Een oude
-regel met `?token=` in het adres werkt nog, maar vervang hem door deze. De volledige regel met het
-token staat in het beheer bij Instellingen › Bewaren & opschonen › Cronjob (alleen zichtbaar voor
-wie Systeem mag bewerken), met de knoppen "Handmatig uitvoeren" en "Nieuw token maken". Het
-antwoord is JSON met per taak wat er gebeurde.
+Het token gaat dan als header mee, zodat het niet in de access-log belandt (`?token=` werkt nog
+voor oude regels). "Nieuw token maken" staat bij de cronjob in Instellingen, net als **Nu
+uitvoeren** (draait alle groepen meteen, met bevestiging).
 
-Wat de cron doet (`includes/cron_taken.php`):
+De taken staan in drie groepen (`includes/cron_taken.php`), elk met een eigen interval, lock
+(`cron.lock_<groep>`) en laatste run (`cron.laatste_<groep>`). `run.php` zonder argument draait
+elke groep die aan de beurt is; `php cron/run.php dag` draait één groep, voor wie liever aparte
+taken maakt (een lange dagrun houdt de berichten dan zeker niet op).
 
-- elke run: berichtenwachtrij legen (max 8 per run), AI-wachtrij (max 3), herinneringen en
-  geplande berichten, automatisch uitnodigen;
-- alleen vanuit de echte cron: Authentik-sync, verlopen "blijf ingelogd"-tokens opruimen,
-  fotobestanden zonder dossier opruimen, gebruikte en verlopen inlogcodes (`otp_tokens`) en oude
-  rate-limit-tellers (`api_rate`) opruimen (ook als opschonen uit staat), en één keer per dag de
-  AVG-opschoning.
+| Groep | Interval | Taken |
+|---|---|---|
+| `snel` | elke minuut | berichtenwachtrij (max 20), AI-wachtrij (max 3) |
+| `kwartier` | 15 min | herinneringen en geplande berichten, automatisch uitnodigen, verlopen inlogcodes en rate-limit-tellers, verlopen "blijf ingelogd"-tokens |
+| `dag` | 1× per kalenderdag | Authentik-sync, foto's zonder dossier, AVG-opschoning |
 
-Een lock van vier minuten (`cron.lock_tot`) voorkomt dubbel draaien.
-
-Zonder cron blijft het systeem werken via een vangnet: een bezoek aan het beheer of het portaal
-zet de wachtrij maximaal één keer per uur in gang, ná het antwoord aan de bezoeker. Dat vangnet
-doet **geen** AVG-opschoning, geen Authentik-sync en geen opruiming van tokens en foto's. De
-echte cron houdt daarom een eigen tijdstip bij (`cron.laatste_run_cron`): draait alleen het
-vangnet en ligt de echte cron langer dan 30 minuten stil, dan waarschuwt de systeemcontrole
-"Alleen de lazy-cron draait". Na 30 minuten zonder enige run volgt een waarschuwing, na 2 uur een
-fout.
+De systeemcontrole, Vandaag en het cronblok in Instellingen tonen de stand per groep. Een groep
+die langer dan twee keer zijn interval stilligt (minimaal een kwartier) geeft een waarschuwing;
+langer dan zes keer (minimaal een half uur, dag: zes dagen) een fout.
 
 ## Authentik (SSO)
 
@@ -687,9 +685,9 @@ persoonsgegevens hoort in allebei en in het verwerkingsregister.
 
 ## Systeemcontrole (health check)
 
-> **In het kort:** Beheer › Systeem & Updates › Systeemgezondheid voert acht checks uit en kan
-> een deel zelf herstellen. Draait alleen het vangnet en niet de echte cron, dan waarschuwt de
-> check Cron daarvoor.
+> **In het kort:** Beheer › Systeem & Updates › Systeemgezondheid voert negen checks uit en kan
+> een deel zelf herstellen. Ligt een van de drie cron-groepen stil, dan waarschuwt de check Cron
+> daarvoor.
 
 Knop **Controleren & repareren** draait de checks opnieuw en herstelt waar dat kan (vooral de
 database). Bovenaan het scherm staan daarnaast **Migraties uitvoeren** (de zelfherstelronde) en
@@ -699,7 +697,8 @@ bewerken).
 | Check | Groen | Waarschuwing / fout | Wat te doen |
 |---|---|---|---|
 | Database | Alle tabellen en kolommen aanwezig | Ontbrekend onderdeel | Controleren & repareren; anders Migraties uitvoeren en het serverlog lezen |
-| Cron | Laatste run < 30 min geleden, ook van de echte cron | > 30 min waarschuwing, > 2 uur fout; waarschuwing "Alleen de lazy-cron draait" als de echte cron > 30 min stil ligt | Plesk-taak, header `X-Cron-Token` en token controleren |
+| Cron | Elke groep (snel, kwartier, dag) draaide op tijd | Waarschuwing als een groep langer dan 2× zijn interval stilligt (min. 15 min), fout na 6× (min. 30 min) of als hij nog nooit draaide | Plesk-taak `php cron/run.php` (elke minuut); bij curl de header `X-Cron-Token` en het token |
+| Snel antwoorden | PHP draait als FPM (of LiteSpeed) | Waarschuwing: elke bezoeker wacht op de verzending van berichten | PHP-handler in Plesk op een FPM-variant zetten |
 | Mailwachtrij | Niets ouder dan 1 uur in "wacht" | Berichten blijven hangen | Cron en E-mailserver-instellingen; Logboek › Berichten |
 | Opschoning | AVG-opschoning < 3 dagen geleden | Fout als "Automatisch opschonen" uit staat; waarschuwing als hij nog nooit of langer geleden draaide | Opschonen aanzetten; draait de echte cron? |
 | Mappen | `uploads/` schrijfbaar | Niet schrijfbaar | Maprechten in Plesk |
@@ -749,7 +748,7 @@ bewust: een gelekte back-up zonder sleutel is waardeloos voor een aanvaller.
 2. Koppel die aan een tijdelijk subdomein met een kopie van de productie-`config.php`, met eigen
    `DB_NAME` en `APP_URL`, en een kopie van `DOCUMENTEN_MAP` op een eigen pad.
 3. **Zet vóór je een pagina opent de mail uit:** laat `SMTP_HOST` leeg, en stel géén cron in.
-   Het vangnet verstuurt anders wachtende berichten aan echte sollicitanten.
+   Een cron verstuurt anders wachtende berichten aan echte sollicitanten.
 4. Log in, draai de systeemcontrole (kluis moet groen zijn) en open als admin één document in
    een loondossier. Lukt dat, dan kloppen sleutel, zout en bestanden samen.
 5. Verwijder daarna database, subdomein en kopieën. Noteer datum en uitkomst voor het bestuur.
@@ -790,7 +789,7 @@ mail (SMTP), `P13-M005` WhatsApp tijdelijk gepauzeerd na herhaalde fouten (valt 
 e-mail, gaat vanzelf weer aan), `P13-P004` verwijderverzoek van een sollicitant mislukt en
 teruggedraaid.
 
-Werk dat ná het antwoord draait (mails, audit, lazy-cron) kan de bezoeker niet meer laten zien
+Werk dat ná het antwoord draait (mails, audit) kan de bezoeker niet meer laten zien
 dat het misging; dat vind je alleen in het serverlog, met `(na antwoord)` in de regel.
 
 De foutmail gaat hooguit één keer per foutcode per vijf minuten uit, ook over verzoeken heen (de

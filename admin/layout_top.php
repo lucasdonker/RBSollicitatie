@@ -16,8 +16,6 @@ vereist_login();
 require_once __DIR__ . '/../includes/beheer/laden.php';
 
 $_bhd = huidige_beheerder();
-if (function_exists('sjablonen_auto_setup')) sjablonen_auto_setup();
-if (function_exists('lazy_cron_tick'))       lazy_cron_tick();
 $_seizoen = actief_seizoen();
 
 // Tellers in het menu: wat vraagt om aandacht. Stil falen — een menu hoort nooit een

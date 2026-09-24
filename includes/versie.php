@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.103.0');
+define('APP_VERSIE', '2.104.0');
 
 function app_changelog(): array {
     return [
+        '2.104.0' => [
+            'datum'  => '2026-09-24',
+            'titel'  => 'Automatische taken alleen nog via de geplande taak',
+            'punten' => [
+                'Het vangnet dat bij een bezoek aan beheer of portaal de wachtrij in gang zette is weg: het systeem hangt niet meer af van wie toevallig een pagina opent. Alles loopt via de geplande taak in Plesk',
+                'De taken staan in drie groepen: berichten en AI elke minuut, herinneringen en uitnodigen elk kwartier, Authentik en opschonen dagelijks. Eén geplande taak per minuut (php cron/run.php) volstaat; aparte taken per groep kan ook',
+                'Het script draait nu ook vanaf de opdrachtregel, zonder token. De knop "Nu uitvoeren" in Instellingen is een beveiligde knop geworden (het token staat niet meer in een link)',
+                'Systeemcontrole, Vandaag en Instellingen tonen per groep wanneer die voor het laatst draaide',
+            ],
+        ],
         '2.103.0' => [
             'datum'  => '2026-09-24',
             'titel'  => 'Formulieren reageren meteen',

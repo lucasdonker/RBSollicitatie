@@ -292,7 +292,11 @@ function bh_systeemstatus(): array {
     $sz       = function_exists('actief_seizoen') ? actief_seizoen() : null;
     $open     = bh_ondertekeningen_te_lang_open((int)($sz['id'] ?? 0));
     $ronde    = function_exists('instelling') ? instelling('cron.laatste_run', '') : '';
-    $ronde_ok = $ronde !== '' && strtotime($ronde) > time() - 7200;
+    // Elke groep telt: draaien de berichten wel maar de herinneringen niet, dan klopt het niet.
+    $ronde_ok = $ronde !== '';
+    if (function_exists('cron_stand')) {
+        foreach (cron_stand() as $g) if ($g['status'] !== 'ok') $ronde_ok = false;
+    }
 
     return [
         'ok'       => $fouten === 0 && $ronde_ok && $wachtrij <= 20,

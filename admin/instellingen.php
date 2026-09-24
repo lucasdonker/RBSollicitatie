@@ -125,6 +125,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect(APP_URL . '/admin/instellingen.php?tab=bewaren');
     }
 
+    if ($actie === 'cron_nu') {
+        vereis_recht('systeem', 'bewerken');
+        @set_time_limit(300);
+        $res = cron_taken_uitvoeren('alles');
+        $fouten = [];
+        foreach ($res['groepen'] ?? [] as $g => $taken) {
+            if (isset($taken['overgeslagen'])) { $fouten[] = "$g: " . $taken['overgeslagen']; continue; }
+            foreach ($taken as $naam => $t) if (is_array($t) && isset($t['fout'])) $fouten[] = "$g/$naam: " . $t['fout'];
+        }
+        if (function_exists('audit_log')) audit_log('cron_handmatig', 'systeem', null, ['fouten' => count($fouten)]);
+        flash($fouten ? 'fout' : 'succes', $fouten ? 'Uitgevoerd, met problemen: ' . implode('; ', $fouten) : 'Alle automatische taken zijn uitgevoerd.');
+        redirect(APP_URL . '/admin/instellingen.php?tab=bewaren');
+    }
+
     if ($actie === 'api_sleutel_genereer') {
         // Alleen voor Systeem-bewerken: een sleutel die je niet kunt kopiëren, kun je ook niet in de plugin zetten.
         vereis_recht('systeem', 'bewerken');
@@ -1480,25 +1494,39 @@ require __DIR__ . '/layout_top.php';
           $cron_token = bin2hex(random_bytes(24));
           instelling_opslaan('cron.token', $cron_token);
       }
-      $cron_url = APP_URL . '/cron/run.php?token=' . $cron_token;
+      $cron_pad = realpath(__DIR__ . '/../cron/run.php') ?: 'cron/run.php';
       ?>
       <p class="ds-veld-hint bh-mb">
-        Zet deze regel als geplande taak in Plesk, zodat de wachtrijen (AI, berichten, automatisch uitnodigen) elke
-        5 minuten worden verwerkt en de opschoning één keer per dag draait.
+        Alle automatische taken lopen via deze geplande taak: berichten en AI elke minuut, herinneringen en
+        uitnodigen elk kwartier, Authentik en de AVG-opschoning dagelijks. Er is geen vangnet bij een
+        paginabezoek: staat de taak stil, dan gaat er niets de deur uit.
       </p>
+      <div class="bh-chiprij bh-mb">
+        <?php foreach (cron_stand() as $g): ?>
+          <?= bh_badge($g['label'] . ': ' . ($g['laatste'] ? date('d-m H:i', strtotime($g['laatste'])) : 'nog nooit'),
+                       $g['status'] === 'ok' ? 'groen' : ($g['status'] === 'laat' ? 'oranje' : 'rood')) ?>
+        <?php endforeach; ?>
+      </div>
       <?php if ($mag_systeem): ?>
+      <p class="ds-veld-hint">Plesk › Geplande taken › <strong>PHP-script uitvoeren</strong>, elke minuut (<code>* * * * *</code>):</p>
+      <div class="bh-cronregel"><?= h($cron_pad) ?></div>
+      <p class="ds-veld-hint">Kan de server geen PHP-script plannen, gebruik dan een opdracht (ook elke minuut):</p>
       <div class="bh-cronregel">
-        */5 * * * * curl -s -H "X-Cron-Token: <?= h($cron_token) ?>" "<?= h(APP_URL . '/cron/run.php') ?>" &gt; /dev/null 2&gt;&amp;1
+        curl -s -H "X-Cron-Token: <?= h($cron_token) ?>" "<?= h(APP_URL . '/cron/run.php') ?>" &gt; /dev/null 2&gt;&amp;1
       </div>
       <div class="bh-knoprij bh-mb">
-        <a href="<?= h($cron_url) ?>" target="_blank" rel="noopener" class="ds-btn ds-btn-secundair ds-btn-sm">Handmatig uitvoeren</a>
-        <form method="POST" data-bevestig="Een nieuw cron-token maken? De huidige cronjob-regel werkt daarna niet meer: de automatische taken stoppen tot je de nieuwe regel in Plesk zet.">
+        <form method="POST" data-bevestig="Alle automatische taken nu uitvoeren? Berichten in de wachtrij en herinneringen die klaarstaan gaan dan echt de deur uit.">
+          <?= csrf_input() ?>
+          <input type="hidden" name="actie" value="cron_nu">
+          <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm"><?= icoon('ververs', 14) ?> Nu uitvoeren</button>
+        </form>
+        <form method="POST" data-bevestig="Een nieuw cron-token maken? Een geplande taak met curl werkt daarna niet meer tot je de nieuwe regel in Plesk zet. De PHP-script-variant heeft geen token nodig.">
           <?= csrf_input() ?>
           <input type="hidden" name="actie" value="cron_token_vernieuw">
-          <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm"><?= icoon('ververs', 14) ?> Nieuw token maken</button>
+          <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm"><?= icoon('slot', 14) ?> Nieuw token maken</button>
         </form>
       </div>
-      <p class="ds-veld-hint bh-mb">Het token gaat als header mee, zodat het niet in de toegangslogs van de server belandt. Een oude regel met <code>?token=</code> werkt nog, maar vervang hem door deze. Denk je dat het token is uitgelekt, of neemt iemand met toegang tot Plesk afscheid? Maak dan een nieuw token.</p>
+      <p class="ds-veld-hint bh-mb">Het PHP-script heeft geen token nodig (het draait op de server zelf). Bij curl gaat het token als header mee, zodat het niet in de toegangslogs belandt. Denk je dat het token is uitgelekt, of neemt iemand met toegang tot Plesk afscheid? Maak dan een nieuw token.</p>
       <?php else: ?>
       <p class="ds-veld-hint bh-mb"><?= bh_badge('Ingesteld', 'groen') ?> Het cron-token en de regel zelf ziet alleen wie Systeem mag bewerken.</p>
       <?php endif; ?>

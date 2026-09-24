@@ -137,8 +137,9 @@ require __DIR__ . '/layout_top.php';
   <div class="bh-kaartkop"><h2>Herinneringen</h2></div>
   <div class="bh-kaartbody">
     <p class="bh-sys-intro">
-      Laatste automatische run: <strong><?= h(instelling('cron.laatste_run', '') ?: 'nog niet') ?></strong>
-      (<?= h(instelling('cron.laatste_bron', '') ?: '-') ?>). Proefdraaien toont wie een herinnering zou krijgen zonder iets te versturen.
+      Herinneringen draaien automatisch elk kwartier; laatste keer:
+      <strong><?= h(instelling('cron.laatste_kwartier', '') ?: 'nog niet') ?></strong>.
+      Proefdraaien toont wie een herinnering zou krijgen zonder iets te versturen.
     </p>
     <div class="bh-sys-knoprij">
       <form method="post" class="bh-sys-kaal"><?= csrf_input() ?><input type="hidden" name="actie" value="herinneringen_proef">

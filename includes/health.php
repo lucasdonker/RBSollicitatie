@@ -86,32 +86,22 @@ function health_check_database(bool $repareer): array {
     ];
 }
 
-/** Cron: is de laatste run recent genoeg? */
+/**
+ * Cron: draait elke groep (snel/kwartier/dag) op tijd? Er is geen vangnet meer bij een
+ * paginabezoek, dus een stilgevallen cron betekent: geen berichten, geen herinneringen.
+ */
 function health_check_cron(): array {
-    $laatste = function_exists('instelling') ? instelling('cron.laatste_run', '') : '';
-    $bron    = function_exists('instelling') ? instelling('cron.laatste_bron', '') : '';
-    if ($laatste === '') {
-        return ['status' => 'waarschuwing', 'uitleg' => 'De cron heeft nog nooit gedraaid. Controleer de cronjob-instelling.', 'hersteld' => false];
+    if (!function_exists('cron_stand')) return ['status' => 'waarschuwing', 'uitleg' => 'Cron-module niet geladen.', 'hersteld' => false];
+    $problemen = []; $status = 'ok';
+    foreach (cron_stand() as $g) {
+        if ($g['status'] === 'ok') continue;
+        $wanneer = $g['laatste'] ? 'voor het laatst ' . date('d-m-Y H:i', strtotime($g['laatste'])) : 'nog nooit';
+        $problemen[] = $g['label'] . ': ' . $wanneer . '.';
+        if ($g['status'] === 'stil' || $g['status'] === 'nooit') $status = 'fout';
+        elseif ($status === 'ok') $status = 'waarschuwing';
     }
-    $sinds = time() - strtotime($laatste);
-    $leesbaar = date('d-m-Y H:i', strtotime($laatste));
-    // De cron hoort elke 5 min te draaien; de lazy-cron vangt op tot 1u. Boven 2u = probleem.
-    if ($sinds > 7200) {
-        return ['status' => 'fout', 'uitleg' => "De cron draaide voor het laatst op $leesbaar (meer dan 2 uur geleden). Controleer de cronjob.", 'hersteld' => false];
-    }
-    if ($sinds > 1800) {
-        return ['status' => 'waarschuwing', 'uitleg' => "De cron draaide voor het laatst op $leesbaar. Dat is langer dan verwacht (>30 min).", 'hersteld' => false];
-    }
-    // De lazy-cron (bij een bezoek aan het beheer) houdt cron.laatste_run vers, maar draait
-    // opschonen, opruimen en de Authentik-sync niet. Kijk dus apart naar de echte cronjob.
-    // Oudere installaties hebben cron.laatste_run_cron nog niet: dan telt een run met bron cron.
-    $echt = instelling('cron.laatste_run_cron', '');
-    if ($echt === '' && $bron === 'cron') $echt = $laatste;
-    if ($echt === '' || time() - strtotime($echt) > 1800) {
-        $wanneer = $echt === '' ? 'nog nooit' : 'voor het laatst op ' . date('d-m-Y H:i', strtotime($echt));
-        return ['status' => 'waarschuwing', 'uitleg' => "Alleen de lazy-cron draait ($leesbaar); de echte cronjob draaide $wanneer. Opschonen en opruimen gebeuren dan niet. Controleer de cronjob in Plesk.", 'hersteld' => false];
-    }
-    return ['status' => 'ok', 'uitleg' => "Cron draait ($leesbaar, via $bron).", 'hersteld' => false];
+    if (!$problemen) return ['status' => 'ok', 'uitleg' => 'Alle automatische taken draaien op tijd.', 'hersteld' => false];
+    return ['status' => $status, 'uitleg' => implode(' ', $problemen) . ' Controleer de geplande taak in Plesk (php cron/run.php, elke minuut).', 'hersteld' => false];
 }
 
 /** Mailwachtrij: blijven er berichten hangen? */

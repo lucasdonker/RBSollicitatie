@@ -1633,7 +1633,7 @@ kun je er dus niet per ongeluk uit halen.
 > openstaat of de selectiedag nadert. Het kijkt daarbij naar wat er echt verstuurd is, zodat
 > niemand hetzelfde twee keer krijgt. Daarnaast maak je zelf regels als "tien dagen na het
 > inleveren van het formulier: stuur het magazine". Alles draait mee met de automatische taken,
-> elke vijf minuten.
+> elk kwartier.
 
 ### De ingebouwde herinneringen
 
@@ -1836,8 +1836,8 @@ Een nieuwe installatie werkt pas goed als je deze tabbladen hebt nagelopen:
 5. **Bewaren & opschonen**: zet **Automatisch opschonen inschakelen** aan. Zonder dit vinkje wordt
    er nooit iets opgeruimd; zie [Bewaartermijnen](#bewaartermijnen).
 6. **Posten & bezetting** en **Lonen & budget**: vóór je gaat plannen.
-7. **Bewaren & opschonen**, onderaan (admin): zet de cronjob-regel als geplande taak in Plesk
-   (elke vijf minuten), of laat de technisch beheerder dat doen.
+7. **Bewaren & opschonen**, onderaan (admin): zet de geplande taak in Plesk
+   (PHP-script cron/run.php, elke minuut), of laat de technisch beheerder dat doen.
 
 ---
 
@@ -2284,7 +2284,7 @@ en per onderdeel een vinkje, een waarschuwing of een kruis met uitleg:
 | Controle | Wat er wordt gecontroleerd |
 |---|---|
 | Database | Zijn alle tabellen en kolommen aanwezig? |
-| Cron (automatische taken) | Wanneer draaiden de automatische taken voor het laatst? Hoort elke vijf minuten. Langer dan 30 minuten is een waarschuwing, langer dan 2 uur een fout: controleer dan de cronjob in Plesk (de regel staat onder Instellingen › Bewaren & opschonen). Een waarschuwing volgt ook als alleen het vangnet bij een bezoek aan het beheer draait en de echte cronjob langer dan 30 minuten stil ligt: dan gebeuren opschonen en opruimen niet. |
+| Cron (automatische taken) | Draaien de drie groepen automatische taken op tijd? Berichten elke minuut, herinneringen en uitnodigen elk kwartier, Authentik en opschonen dagelijks. Ligt een groep stil, dan volgt een waarschuwing en daarna een fout: controleer de geplande taak in Plesk (staat onder Instellingen › Bewaren & opschonen). Er is geen vangnet meer bij een paginabezoek. |
 | Mailwachtrij | Wachten er mails langer dan een uur? Dan draait de cron niet of klopt de mailserver niet. |
 | AVG-opschoning | Is de opschoning de laatste drie dagen gedraaid? Staat automatisch opschonen uit, dan is dit een fout. |
 | Mappen & rechten | Kan het systeem uploads wegschrijven? |
@@ -2469,7 +2469,7 @@ Onderin het menu onder **Hulp en handleidingen**. Ook via het vraagteken rechtsb
 
 **Correctie** — een aanpassing van de beschikbaarheid door het bestuur, altijd met reden. Die overschrijft wat de sollicitant opgaf en staat in de tijdlijn.
 
-**Cron** — de automatische taken die elke vijf minuten draaien: de wachtrij, herinneringen, geplande berichten, automatisch uitnodigen en één keer per dag het opschonen. Draait de cron van de hoster niet, dan springt het systeem hooguit één keer per uur bij als een beheerder een scherm opent, maar dan zonder het opschonen en de Authentik-synchronisatie.
+**Cron** — de automatische taken, via één geplande taak in Plesk die elke minuut draait: berichten en AI elke minuut, herinneringen, geplande berichten en automatisch uitnodigen elk kwartier, en één keer per dag de Authentik-synchronisatie en het opschonen. Draait de geplande taak niet, dan gebeurt er niets van dit alles: een bezoek aan het beheer of portaal vangt het niet meer op.
 
 **Dossier** — de pagina van één sollicitant, met de tabbladen Dossier, Kennismakingsformulier, Beschikbaarheid, Selectiedag, Ondertekeningen en Tijdlijn.
 

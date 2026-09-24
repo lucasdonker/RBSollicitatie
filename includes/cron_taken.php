@@ -1,72 +1,127 @@
 <?php
 /**
- * Paal 13 — Eén ingang voor alle periodieke taken.
+ * Paal 13 — Alle periodieke taken, in drie groepen.
  *
- * Aangeroepen door cron/run.php (elke 5 min) én door lazy_cron_tick() (bij admin-bezoek,
- * max 1x per uur). Een lock in de instellingen (cron.lock_tot, 4 minuten) voorkomt dat beide
- * tegelijk draaien en herinneringen dubbel versturen.
+ * Alleen de echte cron draait dit (cron/run.php). Er is bewust géén "lazy cron" meer die op
+ * een paginabezoek meelift: het systeem mag niet afhangen van wie toevallig het beheer opent.
+ *
+ * Elke groep heeft een eigen interval, lock en laatste-run. Zo kan één geplande taak per minuut
+ * volstaan (run.php zonder groep draait wat aan de beurt is), maar je mag ook per groep een
+ * eigen taak maken. Een langzame dagtaak (Authentik, opschonen) houdt dan de berichten niet op.
  */
 
 if (!function_exists('cron_taken_uitvoeren')) {
 
 /**
- * @param string $bron     'cron' | 'lazy'
- * @param array  $limieten ['queue' => 8, 'ai' => 3]
+ * De groepen: interval in seconden (dag = één keer per kalenderdag) en de taken, in volgorde.
+ * Een taak is een naam => callable die een array (resultaat) teruggeeft.
  */
-function cron_taken_uitvoeren(string $bron, array $limieten = []): array {
-    $uit = ['ok' => true, 'bron' => $bron, 'taken' => []];
+function cron_groepen(): array {
+    return [
+        'snel' => [
+            'label'    => 'Berichten en AI (elke minuut)',
+            'interval' => 60,
+            'taken'    => [
+                'berichten' => fn() => function_exists('melding_queue_verwerk') ? melding_queue_verwerk(20) : null,
+                'ai_queue'  => fn() => function_exists('ai_queue_verwerk') ? ai_queue_verwerk(3) : null,
+            ],
+        ],
+        'kwartier' => [
+            'label'    => 'Herinneringen, uitnodigen en opruimen (elk kwartier)',
+            'interval' => 900,
+            'taken'    => [
+                'herinneringen' => fn() => function_exists('herinnering_run')
+                    ? array_map(fn($r) => ['kandidaten' => $r['kandidaten'], 'verstuurd' => $r['verstuurd'], 'overgeslagen' => $r['overgeslagen']], herinnering_run())
+                    : null,
+                'auto_invite'   => fn() => function_exists('auto_invite_run') ? auto_invite_run() : null,
+                // Gebruikte/verlopen inlogcodes en tellers van de snelheidsbegrenzing; los van bewaar.actief.
+                'vervallen'     => fn() => function_exists('opschoon_vervallen') ? opschoon_vervallen() : null,
+                // Verlopen "blijf ingelogd"-tokens: werken toch niet meer, hoeven er niet te staan.
+                'apparaten'     => fn() => function_exists('portaal_onthoud_opschonen') ? ['verwijderd' => portaal_onthoud_opschonen()] : null,
+            ],
+        ],
+        'dag' => [
+            'label'    => 'Authentik en AVG-opschoning (dagelijks)',
+            'interval' => 'dag',
+            'taken'    => [
+                'authentik_sync' => fn() => function_exists('competenties_cron_sync') ? competenties_cron_sync() : null,
+                // Fotobestanden van dossiers die al weg zijn: opruimen, geen bewaartermijn.
+                'fotos'          => fn() => function_exists('foto_wezen_opruimen') ? ['verwijderd' => foto_wezen_opruimen()] : null,
+                'opschonen'      => fn() => function_exists('opschoon_run') ? opschoon_run(false, 'cron') : null,
+            ],
+        ],
+    ];
+}
+
+/** Is deze groep aan de beurt (sinds de laatste geslaagde run)? */
+function cron_groep_aan_de_beurt(string $groep): bool {
+    $def = cron_groepen()[$groep] ?? null;
+    if (!$def) return false;
+    $laatste = instelling('cron.laatste_' . $groep, '');
+    if ($laatste === '') return true;
+    if ($def['interval'] === 'dag') return substr($laatste, 0, 10) !== date('Y-m-d');
+    // 10 seconden speling: een minuutjob die net iets eerder start, slaat anders elke tweede keer over.
+    return strtotime($laatste) <= time() - (int)$def['interval'] + 10;
+}
+
+/**
+ * Voer een groep uit (of 'auto': alle groepen die aan de beurt zijn; 'alles': alle groepen).
+ * Retourneert per groep de uitkomst van elke taak.
+ */
+function cron_taken_uitvoeren(string $groep = 'auto'): array {
+    $uit = ['ok' => true, 'groepen' => []];
     if (!function_exists('instelling') || !function_exists('instelling_opslaan')) { $uit['ok'] = false; return $uit; }
 
-    // Lock
-    $lock = instelling('cron.lock_tot', '');
-    if ($lock !== '' && strtotime($lock) > time()) {
-        $uit['ok'] = false; $uit['overgeslagen'] = 'andere run bezig tot ' . $lock;
-        return $uit;
-    }
-    instelling_opslaan('cron.lock_tot', date('Y-m-d H:i:s', time() + 240));
+    $alle = cron_groepen();
+    if ($groep === 'auto')      $te_doen = array_values(array_filter(array_keys($alle), 'cron_groep_aan_de_beurt'));
+    elseif ($groep === 'alles') $te_doen = array_keys($alle);
+    elseif (isset($alle[$groep])) $te_doen = [$groep];
+    else { $uit['ok'] = false; $uit['fout'] = 'Onbekende groep: ' . $groep; return $uit; }
 
-    $stap = function (string $naam, callable $fn) use (&$uit) {
-        $t0 = microtime(true);
-        try { $uit['taken'][$naam] = $fn(); }
-        catch (\Throwable $e) { $uit['taken'][$naam] = ['fout' => $e->getMessage()]; error_log("cron $naam: " . $e->getMessage()); }
-        if (is_array($uit['taken'][$naam])) $uit['taken'][$naam]['ms'] = (int)round((microtime(true) - $t0) * 1000);
-    };
+    foreach ($te_doen as $g) $uit['groepen'][$g] = cron_groep_draaien($g, $alle[$g]);
+    return $uit;
+}
 
+/** Eén groep: lock, taken, laatste run. Een fout in één taak stopt de andere niet. */
+function cron_groep_draaien(string $groep, array $def): array {
+    // Lock per groep: ruim langer dan een run duurt, zodat een vastgelopen run na een tijd vrijkomt.
+    $lock_sleutel = 'cron.lock_' . $groep;
+    $lock = instelling($lock_sleutel, '');
+    if ($lock !== '' && strtotime($lock) > time()) return ['overgeslagen' => 'andere run bezig tot ' . $lock];
+    instelling_opslaan($lock_sleutel, date('Y-m-d H:i:s', time() + ($groep === 'dag' ? 1800 : 300)));
+
+    $taken = [];
     try {
-        if (function_exists('melding_queue_verwerk')) $stap('berichten', fn() => melding_queue_verwerk((int)($limieten['queue'] ?? 8)));
-        if (function_exists('ai_queue_verwerk'))      $stap('ai_queue', fn() => ai_queue_verwerk((int)($limieten['ai'] ?? 3)));
-        if (function_exists('herinnering_run'))       $stap('herinneringen', fn() => array_map(fn($r) => ['kandidaten' => $r['kandidaten'], 'verstuurd' => $r['verstuurd'], 'overgeslagen' => $r['overgeslagen']], herinnering_run()));
-        if (function_exists('auto_invite_run'))       $stap('auto_invite', fn() => auto_invite_run());
-        // Zwaardere taken alleen vanuit de echte cron
-        if ($bron === 'cron') {
-            if (function_exists('competenties_cron_sync')) $stap('authentik_sync', fn() => competenties_cron_sync());
-            // Verlopen "blijf ingelogd"-tokens weggooien. Ze werken na de vervaldatum
-            // toch niet meer, maar ze hoeven er ook niet te blijven staan.
-            if (function_exists('portaal_onthoud_opschonen')) {
-                $stap('apparaten', fn() => ['verwijderd' => portaal_onthoud_opschonen()]);
-            }
-            // Fotobestanden van dossiers die al weg zijn. Geen bewaartermijn maar opruimen van
-            // wat al verwijderd hoorde te zijn, dus los van bewaar.actief.
-            if (function_exists('foto_wezen_opruimen')) {
-                $stap('fotos', fn() => ['verwijderd' => foto_wezen_opruimen()]);
-            }
-            // Gebruikte/verlopen inlogcodes en oude tellingen van de snelheidsbegrenzing.
-            // Ook los van bewaar.actief: het zijn geen dossiers maar vervallen codes.
-            if (function_exists('opschoon_vervallen')) $stap('vervallen', fn() => opschoon_vervallen());
-            if (function_exists('opschoon_run')) {
-                $laatste = instelling('bewaar.laatste_run', '');
-                if (substr($laatste, 0, 10) !== date('Y-m-d')) $stap('opschonen', fn() => opschoon_run(false, 'cron'));
-                else $uit['taken']['opschonen'] = ['overgeslagen' => 'al gedraaid vandaag'];
-            }
+        foreach ($def['taken'] as $naam => $fn) {
+            $t0 = microtime(true);
+            try { $taken[$naam] = $fn(); }
+            catch (\Throwable $e) { $taken[$naam] = ['fout' => $e->getMessage()]; error_log("cron $groep/$naam: " . $e->getMessage()); }
+            if (is_array($taken[$naam])) $taken[$naam]['ms'] = (int)round((microtime(true) - $t0) * 1000);
         }
         $nu = date('Y-m-d H:i:s');
+        instelling_opslaan('cron.laatste_' . $groep, $nu);
         instelling_opslaan('cron.laatste_run', $nu);
-        instelling_opslaan('cron.laatste_bron', $bron);
-        // Apart bijhouden: de lazy-cron houdt cron.laatste_run vers, maar draait de zware taken
-        // (opschonen, opruimen, sync) niet. De health-check kijkt hiernaar.
-        if ($bron === 'cron') instelling_opslaan('cron.laatste_run_cron', $nu);
     } finally {
-        instelling_opslaan('cron.lock_tot', '');
+        instelling_opslaan($lock_sleutel, '');
+    }
+    return $taken;
+}
+
+/**
+ * Stand per groep voor Systeem, Vandaag en de health-check:
+ * groep => ['label', 'laatste', 'status' (ok|laat|stil|nooit)].
+ * Laat = langer dan 2x het interval geleden; stil = langer dan 6x (dag: 2 dagen).
+ */
+function cron_stand(): array {
+    $uit = [];
+    foreach (cron_groepen() as $g => $def) {
+        $laatste = function_exists('instelling') ? instelling('cron.laatste_' . $g, '') : '';
+        if ($laatste === '') { $uit[$g] = ['label' => $def['label'], 'laatste' => null, 'status' => 'nooit']; continue; }
+        $sec = $def['interval'] === 'dag' ? 86400 : (int)$def['interval'];
+        $leeftijd = time() - strtotime($laatste);
+        // Minimaal een kwartier speling: een minuutgroep die één keer overslaat is geen alarm.
+        $status = $leeftijd > max(6 * $sec, 1800) ? 'stil' : ($leeftijd > max(2 * $sec, 900) ? 'laat' : 'ok');
+        $uit[$g] = ['label' => $def['label'], 'laatste' => $laatste, 'status' => $status];
     }
     return $uit;
 }

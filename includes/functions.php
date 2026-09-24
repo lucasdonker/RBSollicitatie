@@ -877,33 +877,6 @@ function extra_tabellen_auto_setup(): void {
 }
 
 // ── Lazy-cron: draait max 1x per uur bij admin-bezoek ─────────
-/**
- * Vangnet voor als de echte cron een uur niet heeft gedraaid.
- *
- * Dit stond vóór het renderen van de pagina: tien berichten versturen, drie
- * AI-verzoeken, herinneringen en auto-invite — terwijl een sollicitant op zijn portaal
- * stond te wachten. Eén ongelukkig bezoek betaalde zo de rekening van het hele systeem.
- *
- * Nu wordt het werk pas gedaan nadat de pagina bij de bezoeker is (includes/na_antwoord.php).
- * De bezoeker merkt er niets van. Onder CLI (harnas, scripts) draait het gewoon direct.
- */
-function lazy_cron_tick(): void {
-    try {
-        $laatste = instelling('cron.laatste_run', '');
-        if ($laatste && strtotime($laatste) > time() - 3600) return;
-        if (!function_exists('cron_taken_uitvoeren')) return;
-
-        if (!na_antwoord_mogelijk()) {
-            cron_taken_uitvoeren('lazy', ['queue' => 10, 'ai' => 3]);
-            return;
-        }
-        // Eén keer per request registreren, ook als _kop.php en layout_top.php allebei aankloppen.
-        if (!empty($GLOBALS['_lazy_cron_gepland'])) return;
-        $GLOBALS['_lazy_cron_gepland'] = true;
-        na_antwoord(fn() => cron_taken_uitvoeren('lazy', ['queue' => 10, 'ai' => 3]), 'lazy_cron');
-    } catch (\Exception $e) { error_log('lazy_cron: ' . $e->getMessage()); }
-}
-
 // ── Auto-invite: stuur uitnodigingen op basis van criteria ────
 function auto_invite_run(): array {
     $res = ['gecheckt'=>0, 'uitgenodigd'=>0, 'overgeslagen'=>0];
