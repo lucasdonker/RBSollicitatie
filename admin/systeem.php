@@ -116,6 +116,7 @@ require __DIR__ . '/layout_top.php';
         <div style="flex:1">
           <div style="font-size:13px;font-weight:600"><?= h($check_namen[$sleutel] ?? $sleutel) ?></div>
           <div style="font-size:12px;color:var(--tekst-zacht)"><?= h($check['uitleg']) ?><?= !empty($check['hersteld']) ? ' <span style="color:var(--groen)">(automatisch hersteld)</span>' : '' ?></div>
+          <?php if ($sleutel === 'kluis'): ?><a href="<?= APP_URL ?>/admin/kluis.php" class="ds-btn ds-btn-zacht ds-btn-sm"><?= icoon('sleutel', 14) ?> Kluissleutel wisselen</a><?php endif; ?>
         </div>
       </div>
       <?php endforeach; ?>

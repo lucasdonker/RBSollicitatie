@@ -184,10 +184,30 @@ function health_check_kluis(): array {
     if (function_exists('documenten_map')) {
         $map = documenten_map();
         if ($map === null) return ['status' => 'fout', 'uitleg' => $uitleg . ' Maar de documentenmap is niet schrijfbaar (DOCUMENTEN_MAP of uploads/documenten).', 'hersteld' => false];
-        if (function_exists('documenten_map_in_webroot') && documenten_map_in_webroot()) {
-            return ['status' => 'waarschuwing', 'uitleg' => $uitleg . ' De documentenmap staat binnen de webroot (afgeschermd met .htaccess). Beter: DOCUMENTEN_MAP in config.php naar een map buiten httpdocs.', 'hersteld' => false];
+    }
+    // Sleutelrotatie (admin/kluis.php): staat er nog iets op een oude sleutel, of is de oude sleutel overbodig?
+    $punten = [];
+    $status  = 'ok';
+    if (function_exists('kluis_rotatie_status')) {
+        $r = kluis_rotatie_status();
+        if ($r['configfout'] !== '') { $punten[] = $r['configfout']; $status = 'fout'; }
+        if ($r['zonder_sleutel'] > 0) {
+            $punten[] = $r['zonder_sleutel'] . ' versleutelde gegevens staan op een sleutelversie die niet in config.php staat en zijn onleesbaar. Zet die sleutel terug als KLUIS_SLEUTEL_OUD.';
+            $status = 'fout';
+        }
+        if ($r['oud'] > 0) {
+            $punten[] = $r['oud'] . ' versleutelde gegevens staan nog op de oude sleutel (versie ' . (int)$r['oude_versie'] . '). Rond het wisselen af bij Systeem › Kluissleutel wisselen.';
+            if ($status === 'ok') $status = 'waarschuwing';
+        } elseif ($r['oude_versie'] !== null && $r['zonder_sleutel'] === 0) {
+            $punten[] = 'Niets staat meer op de oude sleutel: verwijder KLUIS_SLEUTEL_OUD en KLUIS_SLEUTEL_OUD_VERSIE uit config.php.';
+            if ($status === 'ok') $status = 'waarschuwing';
         }
     }
+    if (function_exists('documenten_map_in_webroot') && function_exists('documenten_map') && documenten_map_in_webroot()) {
+        $punten[] = 'De documentenmap staat binnen de webroot (afgeschermd met .htaccess). Beter: DOCUMENTEN_MAP in config.php naar een map buiten httpdocs.';
+        if ($status === 'ok') $status = 'waarschuwing';
+    }
+    if ($punten) return ['status' => $status, 'uitleg' => $uitleg . ' ' . implode(' ', $punten), 'hersteld' => false];
     return ['status' => 'ok', 'uitleg' => $uitleg . ' Documentenmap buiten de webroot.', 'hersteld' => false];
 }
 

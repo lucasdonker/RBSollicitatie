@@ -320,8 +320,9 @@ Alle andere mappen alleen-lezen is prima.
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_ENCRYPT` | Mailserver | Worden overschreven door Instellingen › E-mailserver als daar een host staat. Allebei leeg = PHP `mail()`, alleen als noodoplossing |
 | `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `OIDC_ISSUER`, `OIDC_SLUG` | Authentik-provider | Leeg = SSO uit; alleen wachtwoordlogin voor beheerders |
 | `OIDC_REDIRECT_URI` | Callback voor het beheer | `<APP_URL>/admin/auth_callback.php`; het portaal gebruikt vast `<APP_URL>/portaal/auth_callback.php` |
-| `KLUIS_SLEUTEL` | Hoofdsleutel van de kluis, base64 van 32 bytes | Uniek per omgeving, kopie in de wachtwoordkluis. Nooit vervangen zolang er documenten zijn |
-| `KLUIS_SLEUTEL_VERSIE` | Nummer van de sleutel | Laat op `1`. Er is geen herversleutel-functie: ophogen maakt alle bestaande documenten onleesbaar |
+| `KLUIS_SLEUTEL` | Hoofdsleutel van de kluis, base64 van 32 bytes | Uniek per omgeving, kopie in de wachtwoordkluis. Alleen vervangen volgens [Kluissleutel wisselen](#kluissleutel-wisselen) |
+| `KLUIS_SLEUTEL_VERSIE` | Nummer van de sleutel | Begint op `1`; gaat alleen omhoog bij het wisselen van de sleutel, samen met `KLUIS_SLEUTEL_OUD` |
+| `KLUIS_SLEUTEL_OUD`, `KLUIS_SLEUTEL_OUD_VERSIE` | Vorige sleutel + versie, alleen tijdens het wisselen | Normaal afwezig. Weghalen zodra Systeem › Kluissleutel wisselen 0 over toont; de systeemcontrole herinnert eraan |
 | `DOCUMENTEN_MAP` | Map voor versleutelde documenten, foto's en het zegel | Buiten de webroot. Leeg = `uploads/documenten` (afgeschermd, maar de systeemcontrole waarschuwt) |
 | `ZEGEL_MAP`, `ZEGEL_NAAM`, `ZEGEL_ORGANISATIE` | Documentzegel (optioneel) | Standaard `<DOCUMENTEN_MAP>/zegel`, automatisch aangemaakt |
 | `ZEGEL_OPENSSL_CNF` | Pad naar `openssl.cnf` (optioneel) | Alleen nodig als openssl zijn configuratie niet zelf vindt; op Cloud86 niet |
@@ -330,6 +331,44 @@ Alle andere mappen alleen-lezen is prima.
 | `error_reporting(0)`, `display_errors=0` | Geen foutmeldingen op het scherm | Verplicht op productie |
 
 Ontbreekt `config.php`, dan toont elke pagina "Systeem is nog niet ingesteld" (HTTP 503).
+
+### Kluissleutel wisselen
+
+**Wanneer:** bij een vermoeden dat de sleutel (of `config.php`) is gelekt, als iemand vertrekt die
+bij `config.php` of de wachtwoordkluis kon, en verder periodiek (eens per jaar).
+
+Wisselen pakt per gegeven alleen de datasleutel opnieuw in met de nieuwe hoofdsleutel; de
+versleutelde inhoud zelf blijft staan. Het gaat in batches van 200 en is hervatbaar: wat al op de
+nieuwe sleutel staat, wordt overgeslagen. Het raakt de BSN/IBAN-velden bij ondertekeningen, alle
+bestanden in `DOCUMENTEN_MAP` en de privésleutel van het documentzegel.
+
+1. **Nieuwe sleutel maken:** `php -r "echo base64_encode(random_bytes(32));"`. Zet hem meteen in
+   de wachtwoordkluis van het bestuur, naast de oude.
+2. **`config.php` aanpassen:** de huidige `KLUIS_SLEUTEL` en `KLUIS_SLEUTEL_VERSIE` gaan naar
+   `KLUIS_SLEUTEL_OUD` en `KLUIS_SLEUTEL_OUD_VERSIE`; de nieuwe sleutel wordt `KLUIS_SLEUTEL` met
+   versie +1. Vanaf nu wordt alles nieuw met de nieuwe sleutel versleuteld; het oude blijft leesbaar.
+3. **Herversleutelen:** Systeem › Kluissleutel wisselen (`/admin/kluis.php`, recht systeem ›
+   bewerken). Klik op Herversleutelen, bevestig, en klik op "Volgende batch" tot er 0 over staat.
+   Mislukte gegevens staan met bron en id op het scherm; de rest gaat door.
+4. **Back-up controleren:** maak een verse back-up van database en documentenmap en open als admin
+   één document in het beheer.
+5. **Oude sleutel weghalen:** haal `KLUIS_SLEUTEL_OUD` en `KLUIS_SLEUTEL_OUD_VERSIE` uit
+   `config.php` en de oude sleutel uit de wachtwoordkluis. De systeemcontrole waarschuwt zolang de
+   oude sleutel nog staat terwijl hij niet meer nodig is.
+
+Let op:
+
+- Haal de oude sleutel nooit weg voordat er 0 over staat: wat dan nog op de oude versie staat, is
+  onleesbaar (de systeemcontrole kleurt dan rood). Zet de sleutel in dat geval terug als
+  `KLUIS_SLEUTEL_OUD` met de juiste versie.
+- Oude back-ups blijven op de oude sleutel. Bewaar die sleutel zo lang als die back-ups bestaan,
+  gescheiden van de nieuwe.
+- De bewijs-hash van een ondertekening is berekend over het versleutelde BSN/IBAN-veld. Na het
+  wisselen staat per ondertekening een logboekregel `kluis_blob_herwrapt` met de sha256 van het
+  oude en het nieuwe veld, zodat die hash herleidbaar blijft.
+- Het logboek bevat per batch `kluis_herversleuteld` met aantallen; nooit een sleutel.
+- Formulieren op wervingspagina's die op het moment van wisselen open staan, kunnen één keer
+  worden geweigerd als hun beveiliging op de sleutel terugvalt; opnieuw versturen werkt.
 
 ## Geheimen die in de database staan
 
@@ -601,7 +640,7 @@ bewerken).
 | Opschoning | AVG-opschoning < 3 dagen geleden | Fout als "Automatisch opschonen" uit staat; waarschuwing als hij nog nooit of langer geleden draaide | Opschonen aanzetten; draait de echte cron? |
 | Mappen | `uploads/` schrijfbaar | Niet schrijfbaar | Maprechten in Plesk |
 | Configuratie | Cron-token en bestuursadres gezet | Iets ontbreekt | Tabblad Bewaren & opschonen openen; bestuursadres in Instellingen › Afzender & adressen (of `MAIL_BESTUUR` in config) |
-| Kluis | Werkt, documentenmap buiten webroot | Sleutel ontbreekt/ongeldig, map niet schrijfbaar of in webroot | `KLUIS_SLEUTEL`, `DOCUMENTEN_MAP` in config; rechten van de map |
+| Kluis | Werkt, documentenmap buiten webroot | Sleutel ontbreekt/ongeldig, map niet schrijfbaar of in webroot; gegevens nog op een oude sleutel, of `KLUIS_SLEUTEL_OUD` staat er nog terwijl niets hem meer nodig heeft | `KLUIS_SLEUTEL`, `DOCUMENTEN_MAP` in config; rechten van de map; [Kluissleutel wisselen](#kluissleutel-wisselen) |
 | Zegel | Certificaat geldig > 60 dagen | Ontbreekt, verloopt of verlopen | Wordt automatisch aangemaakt (10 jaar geldig); bij verlopen: `cert.pem` en `key.enc` in de zegelmap weghalen en een pagina openen |
 
 Let op bij het zegel: een nieuw certificaat heeft een andere vingerafdruk. Eerder verzegelde PDF's
@@ -725,8 +764,10 @@ gelekte back-up, een beheerder die meer zag dan mocht.
    - databasewachtwoord en OIDC client secret vernieuwen in Plesk/Authentik en in `config.php`;
    - bij misbruik van het portaal: tabel `portaal_apparaten` leegmaken;
    - site tijdelijk uit (Plesk: domein uitschakelen) als het lek nog doorloopt.
-   Vervang `KLUIS_SLEUTEL` niet: dat maakt alle documenten onleesbaar en lost niets op. Is de
-   sleutel samen met de database gelekt, overleg dan met de ontwikkelaar.
+   Is `KLUIS_SLEUTEL` (of `config.php`) mogelijk gelekt, wissel hem dan volgens
+   [Kluissleutel wisselen](#kluissleutel-wisselen). Vervang hem nooit zonder die procedure: dan
+   worden alle documenten onleesbaar. Wisselen beschermt niet wat al buitgemaakt is als de
+   database of documenten zelf ook gelekt zijn; overleg dan met de ontwikkelaar.
 3. **Vastleggen**: Logboek-export van de periode, Plesk-logs (access en error) downloaden,
    screenshots, een tijdlijn van wat er gebeurde. Doe dit voor de logs roteren.
 4. **Beoordelen** met het bestuur: welke gegevens, hoeveel mensen, welk risico. BSN, kopie ID,
@@ -794,8 +835,6 @@ back-up met hersteltest, incidentprocedure) volgen de zorgplicht als goede prakt
 - Het zegelcertificaat is zelf uitgegeven: Acrobat toont "geldigheid onbekend" in plaats van een
   groen vinkje. Het bewijst wél dat de PDF na ondertekening niet is gewijzigd. Een AATL-certificaat
   kost geld en is bewust niet aangeschaft.
-- De kluissleutel kan niet worden gewisseld: er is geen functie die bestaande documenten opnieuw
-  versleutelt.
 - Foto's van sollicitanten zijn afgeschermd, maar niet versleuteld opgeslagen.
 - Een oude cronjob-regel met `?token=` in het adres werkt nog, en zet het token dan in de
   access-log van de server. Vervang hem door de regel met de header `X-Cron-Token`, en maak een

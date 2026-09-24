@@ -47,6 +47,10 @@ define('OIDC_REDIRECT_URI',  '{{APP_URL}}/admin/auth_callback.php');
 // onleesbaar, ook voor ons). Verlies = dataverlies; lekken = alleen samen met de database gevaarlijk.
 define('KLUIS_SLEUTEL',        '{{KLUIS_SLEUTEL}}');
 define('KLUIS_SLEUTEL_VERSIE', 1);
+// Sleutel wisselen (Systeem › Kluissleutel wisselen): zet de huidige sleutel + versie hieronder, de nieuwe
+// sleutel hierboven met versie +1, herversleutel in het beheer tot 0 over, en haal deze twee regels dan weer weg.
+// define('KLUIS_SLEUTEL_OUD',        '');   // de vorige KLUIS_SLEUTEL
+// define('KLUIS_SLEUTEL_OUD_VERSIE', 1);    // de vorige KLUIS_SLEUTEL_VERSIE
 // Map voor de versleutelde documenten, bij voorkeur BUITEN de webroot (Plesk: /var/www/vhosts/<domein>/private/documenten).
 // Leeg laten = uploads/documenten binnen de webroot (afgeschermd met .htaccess; de health-check waarschuwt).
 define('DOCUMENTEN_MAP', '');
