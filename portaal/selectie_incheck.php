@@ -14,20 +14,31 @@ $seizoen = actief_seizoen();
 $sid = $seizoen ? (int)$seizoen['id'] : 0;
 
 $verwachte_code = function_exists('instelling') ? instelling('selectie.incheck_code', '') : '';
-$code = $_GET['code'] ?? ($_POST['code'] ?? '');
-$toegang = $verwachte_code !== '' && hash_equals($verwachte_code, (string)$code);
+$code = (string)($_GET['code'] ?? ($_POST['code'] ?? ''));
+// Code raden: na 20 foute pogingen per uur wordt dit IP-adres niet meer vergeleken, ook niet
+// met de goede code. De tablet zelf gebruikt steeds de juiste code en telt dus nooit mee.
+$geblokt = $code !== '' && rate_limit_telling('kiosk_code', rate_identiteit(), 3600) >= 20;
+$toegang = !$geblokt && $verwachte_code !== '' && hash_equals($verwachte_code, $code);
+if ($code !== '' && !$toegang && !$geblokt) rate_limit('kiosk_code', rate_identiteit(), 20, 3600);
 
 // AJAX-endpoints (alleen met geldige code)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $toegang && $sid) {
     header('Content-Type: application/json');
     $actie = $_POST['actie'] ?? '';
+    // Ruim genoeg voor een hele selectiedag vanaf één tablet (elke toetsaanslag zoekt).
+    if (!rate_limit('kiosk_actie', rate_identiteit(), 1500, 3600)) {
+        echo json_encode(['ok' => false]);
+        exit;
+    }
 
     if ($actie === 'zoek') {
         echo json_encode(['ok' => true, 'resultaten' => selectie_zoek_kandidaat($sid, $_POST['term'] ?? '')]);
         exit;
     }
     if ($actie === 'inchecken') {
-        $res = selectie_aanwezig_zetten($sid, (int)$_POST['sol_id'], true);
+        $sol_id = (int)($_POST['sol_id'] ?? 0);
+        if (!selectie_is_kandidaat($sid, $sol_id)) { echo json_encode(['ok' => false]); exit; }
+        $res = selectie_aanwezig_zetten($sid, $sol_id, true);
         echo json_encode(['ok' => true] + $res);
         exit;
     }

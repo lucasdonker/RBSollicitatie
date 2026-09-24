@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.102.0');
+define('APP_VERSIE', '2.102.1');
 
 function app_changelog(): array {
     return [
+        '2.102.1' => [
+            'datum'  => '2026-09-24',
+            'titel'  => 'Drie bugs die gegevens kostten',
+            'punten' => [
+                'Beschikbaarheid aanpassen namens de sollicitant (tab Formulier) wiste de vakanties en verzoeken van de sollicitant en zette gekozen weekenddagen terug op vr/za/zo. Nu blijft alles staan en worden alleen de werkperiodes vervangen',
+                'Loonplanning: scenario\'s deelden dezelfde rij, waardoor een wijziging in het ene scenario het andere overschreef en dupliceren mislukte. De oude databasesleutel wordt nu echt vervangen',
+                'Inchecken op de tablet: alleen kandidaten van de selectiedag kunnen worden ingecheckt, en na 20 foute toegangscodes per uur blokkeert het scherm',
+            ],
+        ],
         '2.102.0' => [
             'datum'  => '2026-09-24',
             'titel'  => 'Tweestaps op de noodingang, kluissleutel wisselen, verwerkingsregister, en de AVG-gaten die dat register liet zien',

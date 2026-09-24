@@ -300,6 +300,40 @@ function beschikbaarheid2_concept_wissen(int $sol_id): void {
     catch (\Exception $e) {}
 }
 
+/**
+ * Zet wat beschikbaarheid2_van() teruggeeft (DB-kolomnamen) om naar de invoer van
+ * beschikbaarheid2_opslaan() (formuliernamen). Wie opslaat met bestaande data moet hierlangs,
+ * anders vallen vakanties en verzoeken stil weg (van_datum ≠ van, dagen_aantal ≠ dagen).
+ */
+function beschikbaarheid2_data_naar_invoer(array $data): array {
+    $p = $data['profiel'] ?: [];
+    $afwezig = [];
+    foreach ($data['afwezig'] ?? [] as $a) {
+        $afwezig[] = ['van' => $a['van_datum'], 'tot' => $a['tot_datum'], 'label' => $a['label'] ?? ''];
+    }
+    $verzoeken = [];
+    foreach ($data['verzoeken'] ?? [] as $v) {
+        $verzoeken[] = [
+            'id' => (int)$v['id'], 'van_week' => (int)$v['van_week'], 'tot_week' => (int)$v['tot_week'],
+            'dagen' => (int)$v['dagen_aantal'], 'pool' => $v['dagen_pool'] ?: [], 'toelichting' => $v['toelichting'] ?? '',
+        ];
+    }
+    $blokken = [];
+    foreach ($data['blokken'] ?? [] as $b) {
+        $blokken[] = ['van_week' => (int)$b['van_week'], 'tot_week' => (int)$b['tot_week'],
+                      'regime' => $b['regime'], 'weekend_dagen' => $b['weekend_dagen'] ?: [5,6,7]];
+    }
+    return [
+        'blokken'           => $blokken,
+        'afwezig'           => $afwezig,
+        'verzoeken'         => $verzoeken,
+        'vaste_dagen_uit'   => $p['vaste_dagen_uit'] ?? [],
+        'vaste_toelichting' => $p['vaste_toelichting'] ?? null,
+        'voorlopig'         => $p['voorlopig'] ?? 0,
+        'opmerking'         => $p['opmerking'] ?? null,
+    ];
+}
+
 function beschikbaarheid2_opslaan(int $sol_id, array $input, string $door = 'sollicitant'): void {
     beschikbaarheid2_auto_setup();
     $db = db();

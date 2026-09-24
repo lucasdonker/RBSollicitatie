@@ -37,12 +37,21 @@ function loonplan_auto_setup(): void {
         $c = $db->prepare("SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=? AND TABLE_NAME='loon_planning' AND COLUMN_NAME='scenario_id'");
         $c->execute([$dbn]);
         if (!$c->fetchColumn()) {
-            try {
-                $db->exec("ALTER TABLE `loon_planning` ADD COLUMN `scenario_id` INT NOT NULL DEFAULT 0");
-                // Unieke sleutel moet scenario meenemen
-                try { $db->exec("ALTER TABLE `loon_planning` DROP INDEX `uniek`"); } catch (\Exception $e) {}
-                try { $db->exec("ALTER TABLE `loon_planning` ADD UNIQUE KEY `uniek_scen` (`sollicitatie_id`,`week_nr`,`jaar`,`scenario_id`)"); } catch (\Exception $e) {}
-            } catch (\Exception $e) {}
+            try { $db->exec("ALTER TABLE `loon_planning` ADD COLUMN `scenario_id` INT NOT NULL DEFAULT 0"); }
+            catch (\Exception $e) {}
+        }
+        // De unieke sleutel moet het scenario meenemen. De oude sleutel heet `sol_week`
+        // (instellingen.php); zolang die bestaat overschrijven scenario's elkaars cellen en
+        // faalt dupliceren. Eerst de nieuwe erbij, dan pas de oude weg: er is altijd één uniek.
+        if (!db_index_bestaat($db, 'loon_planning', 'uniek_scen')) {
+            try { $db->exec("ALTER TABLE `loon_planning` ADD UNIQUE KEY `uniek_scen` (`sollicitatie_id`,`week_nr`,`jaar`,`scenario_id`)"); }
+            catch (\Exception $e) { error_log('loonplan uniek_scen: ' . $e->getMessage()); }
+        }
+        foreach (['sol_week', 'uniek'] as $oud) {
+            if (db_index_bestaat($db, 'loon_planning', $oud)) {
+                try { $db->exec("ALTER TABLE `loon_planning` DROP INDEX `$oud`"); }
+                catch (\Exception $e) { error_log("loonplan drop $oud: " . $e->getMessage()); }
+            }
         }
     } catch (\Exception $e) { error_log('loonplan_auto_setup: ' . $e->getMessage()); }
 }

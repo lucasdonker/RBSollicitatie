@@ -49,6 +49,18 @@ function rate_limit(string $actie, string $identiteit, int $max, int $venster): 
 }
 
 /**
+ * Alleen tellen, niets registreren. Voor een blokkade die pas na mislukte pogingen telt
+ * (foute code raden): eerst kijken of de grens bereikt is, pas bij een fout rate_limit().
+ */
+function rate_limit_telling(string $actie, string $identiteit, int $venster): int {
+    try {
+        $q = db()->prepare("SELECT COUNT(*) FROM api_rate WHERE sleutel=? AND moment >= ?");
+        $q->execute([substr($actie . ':' . $identiteit, 0, 160), time() - $venster]);
+        return (int)$q->fetchColumn();
+    } catch (\Throwable $e) { return 0; }
+}
+
+/**
  * Regels ouder dan het grootste venster weggooien (standaard een dag; het langste venster
  * in de code is nu een uur). Aangeroepen door de cron via opschoon_vervallen().
  */

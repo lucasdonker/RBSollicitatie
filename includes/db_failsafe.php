@@ -47,6 +47,16 @@ function db_tabel_bestaat(PDO $db, string $tabel): bool {
     } catch (\Exception $e) { return false; }
 }
 
+/** Bestaat deze index (op naam) op de tabel? Breekt nooit af. */
+function db_index_bestaat(PDO $db, string $tabel, string $index): bool {
+    try {
+        $q = $db->prepare("SELECT 1 FROM INFORMATION_SCHEMA.STATISTICS
+                           WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND INDEX_NAME = ? LIMIT 1");
+        $q->execute([$tabel, $index]);
+        return (bool)$q->fetchColumn();
+    } catch (\Exception $e) { return false; }
+}
+
 /**
  * Het verwachte kolom-schema per tabel: kolommen die via losse migraties zijn toegevoegd
  * en op een achtergebleven database kunnen ontbreken. Alleen kolommen die stille bugs

@@ -66,28 +66,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Werkperiodes namens de sollicitant opslaan (portaal-stijl tab)
         $blokken = [];
         $vans = $_POST['bb_van'] ?? []; $tots = $_POST['bb_tot'] ?? []; $regs = $_POST['bb_regime'] ?? [];
+        $wds  = $_POST['bb_wd'] ?? [];
         foreach ($vans as $i => $v) {
             $vw = (int)$v; $tw = (int)($tots[$i] ?? 0);
             if ($vw < 1 || $tw < 1) continue;
+            $wd = json_decode((string)($wds[$i] ?? ''), true);
             $blokken[] = [
-                'van_week' => $vw,
-                'tot_week' => $tw,
-                'regime'   => (($regs[$i] ?? 'vijf') === 'weekend') ? 'weekend' : 'vijf',
+                'van_week'      => $vw,
+                'tot_week'      => $tw,
+                'regime'        => (($regs[$i] ?? 'vijf') === 'weekend') ? 'weekend' : 'vijf',
+                'weekend_dagen' => is_array($wd) && $wd ? $wd : [5,6,7],
             ];
         }
-        if (function_exists('beschikbaarheid2_opslaan')) {
-            // Behoud bestaande uitzonderingen; overschrijf alleen de blokken.
-            $bestaand = function_exists('beschikbaarheid2_van') ? beschikbaarheid2_van($id) : [];
-            beschikbaarheid2_opslaan($id, [
-                'blokken'           => $blokken,
-                'afwezig'           => $bestaand['afwezig'] ?? [],
-                'verzoeken'         => $bestaand['verzoeken'] ?? [],
-                'vaste_dagen_uit'   => $bestaand['profiel']['vaste_dagen_uit'] ?? [],
-                'vaste_toelichting' => $bestaand['profiel']['vaste_toelichting'] ?? null,
-                'voorlopig'         => $bestaand['profiel']['voorlopig'] ?? 0,
-                'opmerking'         => $bestaand['profiel']['opmerking'] ?? null,
-            ], 'beheer');
-        }
+        // Behoud alles van de sollicitant (vakanties, verzoeken, vaste dagen); vervang alleen de blokken.
+        $invoer = beschikbaarheid2_data_naar_invoer(beschikbaarheid2_van($id));
+        $invoer['blokken'] = $blokken;
+        beschikbaarheid2_opslaan($id, $invoer, 'beheer');
         flash('succes', 'Werkperiodes opgeslagen namens ' . h($naam) . '.');
         if (function_exists('audit_log')) audit_log('gewijzigd', 'beschikbaarheid', $id, ['via' => 'bestuur_formulier', 'blokken' => count($blokken)]);
         redirect(APP_URL . '/admin/beschikbaarheid_bewerken.php?id=' . $id . '#formulier');
@@ -231,6 +225,7 @@ require __DIR__ . '/layout_top.php';
           <?php if ($bb_blokken): foreach ($bb_blokken as $bi => $blok):
             $is_wknd = ($blok['regime'] ?? '') === 'weekend'; ?>
           <div class="bb-blok-rij bh-bb-blokrij">
+            <input type="hidden" name="bb_wd[]" value="<?= h(json_encode($blok['weekend_dagen'] ?: [5,6,7])) ?>">
             <span class="bh-bb-wk">week</span>
             <input type="number" name="bb_van[]" value="<?= (int)$blok['van_week'] ?>" min="1" max="53" class="bh-bb-week" aria-label="Van week">
             <span class="bh-bb-wk">t/m</span>
@@ -243,6 +238,7 @@ require __DIR__ . '/layout_top.php';
           </div>
           <?php endforeach; else: ?>
           <div class="bb-blok-rij bh-bb-blokrij">
+            <input type="hidden" name="bb_wd[]" value="">
             <span class="bh-bb-wk">week</span>
             <input type="number" name="bb_van[]" value="<?= $wk_start ?>" min="1" max="53" class="bh-bb-week" aria-label="Van week">
             <span class="bh-bb-wk">t/m</span>
@@ -321,7 +317,8 @@ if (location.hash === '#formulier') bbTab('formulier');
 function bbBlokToevoegen() {
   const div = document.createElement('div');
   div.className = 'bb-blok-rij bh-bb-blokrij';
-  div.innerHTML = '<span class="bh-bb-wk">week</span>' +
+  div.innerHTML = '<input type="hidden" name="bb_wd[]" value="">' +
+    '<span class="bh-bb-wk">week</span>' +
     '<input type="number" name="bb_van[]" min="1" max="53" class="bh-bb-week" aria-label="Van week">' +
     '<span class="bh-bb-wk">t/m</span>' +
     '<input type="number" name="bb_tot[]" min="1" max="53" class="bh-bb-week" aria-label="Tot week">' +
