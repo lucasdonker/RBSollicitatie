@@ -9,6 +9,7 @@
  * De sollicitant typt zijn naam, ziet zijn groep, en is aangemeld. Klaar.
  */
 require_once __DIR__ . '/../includes/functions.php';
+module_vereist('selectiedag');
 
 $seizoen = actief_seizoen();
 $sid = $seizoen ? (int)$seizoen['id'] : 0;

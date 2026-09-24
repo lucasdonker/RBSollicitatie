@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.104.1');
+define('APP_VERSIE', '2.105.0');
 
 function app_changelog(): array {
     return [
+        '2.105.0' => [
+            'datum'  => '2026-09-24',
+            'titel'  => 'Modules die aan en uit kunnen',
+            'punten' => [
+                'Het systeem bestaat nu uit een kern plus vijf modules: Selectiedag, Trainingsweekend, Loonplanning, Dekking en Wervingspagina\'s. Bij Instellingen › Modules zet je ze aan of uit (alleen wie Systeem mag bewerken)',
+                'Een module die uitstaat verdwijnt uit het menu en de rechten, ook voor beheerders; de tablet en /p/-pagina\'s geven dan "bestaat niet". Er wordt niets gewist: weer aanzetten en alles staat er nog',
+                'Trainingsweekend heeft een eigen recht (was: dat van de selectiedag). Bestaande begeleiders en bestuursleden houden dezelfde toegang; wie op het weekend beoordeelt ziet ook de foto\'s',
+                'Competenties verversen in het dossier hangt aan het recht op sollicitanten, niet meer aan de selectiedag',
+            ],
+        ],
         '2.104.1' => [
             'datum'  => '2026-09-24',
             'titel'  => 'Minder dagen: welke dagen je wél kunt',

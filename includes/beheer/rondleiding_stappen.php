@@ -140,7 +140,7 @@ function rl_schermen(): array {
         ],
 
         'trainingsweekend' => [
-            'titel' => 'Trainingsweekend', 'bestand' => 'trainingsweekend.php', 'module' => 'selectiedag', 'hulp' => 'trainingsweekend',
+            'titel' => 'Trainingsweekend', 'bestand' => 'trainingsweekend.php', 'module' => 'trainingsweekend', 'hulp' => 'trainingsweekend',
             'stappen' => [
                 ['doel' => null, 'titel' => 'Het trainingsweekend',
                  'tekst' => 'Twee standen: tijdens het weekend afvinken en observeren, daarna het besluit. Er gaat pas iets de deur uit als je doorvoert.'],

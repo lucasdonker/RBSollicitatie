@@ -103,11 +103,11 @@ function foto_van_sollicitatie_verwijderen(int $sol_id): void {
 
 /**
  * Mag de huidige bezoeker deze foto zien? De sollicitant zelf, of een beheerder met een
- * recht waarbij hij de sollicitant in beeld krijgt (lijst, BLK, selectiedag).
+ * recht waarbij hij de sollicitant in beeld krijgt (lijst, BLK, selectiedag, trainingsweekend).
  */
 function foto_mag_zien(string $naam): bool {
     if (!empty($_SESSION['bhd_id']) && function_exists('mag')) {
-        foreach (['sollicitanten', 'blk', 'selectiedag'] as $module) {
+        foreach (['sollicitanten', 'blk', 'selectiedag', 'trainingsweekend'] as $module) {
             if (mag($module, 'lezen')) return true;
         }
     }

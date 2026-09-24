@@ -343,7 +343,7 @@ function bh_dossier_tabs(array $dossier, string $actief = 'dossier'): array {
     if ($_heeft_besch) {
         $tabs[] = ['sleutel' => 'beschikbaarheid', 'label' => 'Beschikbaarheid', 'aantal' => null];
     }
-    if ($dossier['scores'] || $dossier['observaties']) {
+    if (($dossier['scores'] || $dossier['observaties']) && (!function_exists('module_aan') || module_aan('selectiedag'))) {
         $tabs[] = ['sleutel' => 'selectiedag', 'label' => 'Selectiedag',
                    'aantal' => $dossier['observaties'] ? count($dossier['observaties']) : null];
     }

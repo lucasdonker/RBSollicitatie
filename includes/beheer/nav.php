@@ -29,30 +29,27 @@ function bh_nav_groepen(array $tellers = [], bool $alles = false): array {
         ['id' => 'dashboard', 'label' => 'Vandaag', 'url' => $basis, 'icoon' => 'huis', 'module' => null],
     ];
 
-    $groepen = [
-        'Kandidaten' => [
-            ['id' => 'sollicitanten',    'label' => 'Sollicitanten',     'url' => $basis . 'sollicitanten.php',      'icoon' => 'mensen',      'module' => 'sollicitanten'],
-            ['id' => 'selectiedag',      'label' => 'Selectiedag',       'url' => $basis . 'selectie_indeling.php',  'icoon' => 'kalender',    'module' => 'selectiedag'],
-            ['id' => 'trainingsweekend', 'label' => 'Trainingsweekend',  'url' => $basis . 'trainingsweekend.php',   'icoon' => 'reddingsboei', 'module' => 'selectiedag'],
-            ['id' => 'ondertekeningen',  'label' => 'Ondertekeningen',   'url' => $basis . 'ondertekeningen.php',    'icoon' => 'ondertekenen', 'module' => 'ondertekeningen'],
-        ],
-        'Inzet & loon' => [
-            ['id' => 'beschikbaarheid', 'label' => 'Beschikbaarheid', 'url' => $basis . 'beschikbaarheid.php', 'icoon' => 'klok',    'module' => 'beschikbaarheid'],
-            ['id' => 'dekking',         'label' => 'Dekking',         'url' => $basis . 'dekking.php',         'icoon' => 'schild',  'module' => 'dekking'],
-            ['id' => 'loonplanning',    'label' => 'Loonplanning',    'url' => $basis . 'loonplanning.php',    'icoon' => 'grafiek', 'module' => 'loonplanning'],
-            ['id' => 'documenten',      'label' => 'Loondossiers',    'url' => $basis . 'documenten.php',      'icoon' => 'slot',    'module' => 'documenten'],
-        ],
-        'Communicatie' => [
-            ['id' => 'berichten', 'label' => 'Berichten',        'url' => $basis . 'berichten.php', 'icoon' => 'mail',    'module' => 'mailing'],
-            ['id' => 'paginas',   'label' => "Wervingspagina's", 'url' => $basis . 'paginas.php',   'icoon' => 'paginas', 'module' => 'paginas'],
-        ],
-        'Systeem' => [
-            ['id' => 'seizoen',      'label' => 'Seizoen',             'url' => $basis . 'seizoen.php',      'icoon' => 'strand',       'module' => 'seizoen'],
-            ['id' => 'instellingen', 'label' => 'Instellingen',        'url' => $basis . 'instellingen.php', 'icoon' => 'instellingen', 'module' => 'instellingen'],
-            ['id' => 'beheerders',   'label' => 'Beheerders & rechten', 'url' => $basis . 'beheerders.php',  'icoon' => 'sleutel',      'module' => 'beheerders'],
-            ['id' => 'logboek',      'label' => 'Logboek',             'url' => $basis . 'logboek.php',      'icoon' => 'auditlog',     'module' => 'logboek'],
-        ],
+    // De kern. Items van losse modules (selectiedag, loonplanning, …) komen uit het
+    // moduleregister (includes/modules/) en schuiven op 'positie' tussen deze in.
+    $items = [
+        ['groep' => 'Kandidaten',   'positie' => 10, 'id' => 'sollicitanten',   'label' => 'Sollicitanten',   'url' => 'sollicitanten.php',   'icoon' => 'mensen',       'module' => 'sollicitanten'],
+        ['groep' => 'Kandidaten',   'positie' => 40, 'id' => 'ondertekeningen', 'label' => 'Ondertekeningen', 'url' => 'ondertekeningen.php', 'icoon' => 'ondertekenen', 'module' => 'ondertekeningen'],
+        ['groep' => 'Inzet & loon', 'positie' => 10, 'id' => 'beschikbaarheid', 'label' => 'Beschikbaarheid', 'url' => 'beschikbaarheid.php', 'icoon' => 'klok',         'module' => 'beschikbaarheid'],
+        ['groep' => 'Inzet & loon', 'positie' => 40, 'id' => 'documenten',      'label' => 'Loondossiers',    'url' => 'documenten.php',      'icoon' => 'slot',         'module' => 'documenten'],
+        ['groep' => 'Communicatie', 'positie' => 10, 'id' => 'berichten',       'label' => 'Berichten',       'url' => 'berichten.php',       'icoon' => 'mail',         'module' => 'mailing'],
+        ['groep' => 'Systeem',      'positie' => 10, 'id' => 'seizoen',         'label' => 'Seizoen',         'url' => 'seizoen.php',         'icoon' => 'strand',       'module' => 'seizoen'],
+        ['groep' => 'Systeem',      'positie' => 20, 'id' => 'instellingen',    'label' => 'Instellingen',    'url' => 'instellingen.php',    'icoon' => 'instellingen', 'module' => 'instellingen'],
+        ['groep' => 'Systeem',      'positie' => 30, 'id' => 'beheerders',      'label' => 'Beheerders & rechten', 'url' => 'beheerders.php', 'icoon' => 'sleutel',      'module' => 'beheerders'],
+        ['groep' => 'Systeem',      'positie' => 40, 'id' => 'logboek',         'label' => 'Logboek',         'url' => 'logboek.php',         'icoon' => 'auditlog',     'module' => 'logboek'],
     ];
+    if (function_exists('modules_nav')) $items = array_merge($items, modules_nav());
+    usort($items, fn($a, $b) => $a['positie'] <=> $b['positie']);
+
+    $groepen = array_fill_keys(['Kandidaten', 'Inzet & loon', 'Communicatie', 'Systeem'], []);
+    foreach ($items as $i) {
+        $groepen[$i['groep']][] = ['id' => $i['id'], 'label' => $i['label'], 'url' => $basis . $i['url'],
+                                   'icoon' => $i['icoon'], 'module' => $i['module']];
+    }
 
     $zichtbaar = function (array $item) use ($alles): bool {
         if ($alles || $item['module'] === null) return true;
@@ -94,9 +91,7 @@ function bh_nav_actief(string $nav): string {
         'foutenlog' => 'logboek', 'audit' => 'logboek',
         'rollen' => 'beheerders', 'profiel' => '', 'import' => 'sollicitanten',
         'blk' => 'sollicitanten', 'sollicitant' => 'sollicitanten',
-        'selectie_indeling' => 'selectiedag', 'selectie_inchecken' => 'selectiedag',
-        'selectie_nabespreking' => 'selectiedag', 'selectie_bellijst' => 'selectiedag',
-    ];
+    ] + (function_exists('modules_nav_alias') ? modules_nav_alias() : []);
     if (isset($alias[$nav])) return $alias[$nav];
 
     // Alle ids, óók die deze rol niet mag zien: een verborgen item is geen typefout.

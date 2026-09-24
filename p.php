@@ -8,6 +8,7 @@
  * meekomt, kijken we of het een beheerder is (voor de voorbeeldweergave).
  */
 require_once __DIR__ . '/includes/functions.php';
+if (!module_aan('paginas')) pagina_404();   // module uitgezet: de pagina's bestaan niet
 
 $slug = pag_slug_maak((string)($_GET['s'] ?? $_GET['p'] ?? ''));
 if ($slug === '') pagina_404();

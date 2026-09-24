@@ -21,12 +21,20 @@ $_titel  = $_labels[$geen_module]['label'] ?? $geen_module;
 $_rollen = ['begeleider' => 'begeleider', 'bestuur' => 'bestuur',
             'penningmeester' => 'penningmeester', 'admin' => 'beheerder'];
 $_rol    = $_rollen[$geen_rol] ?? $geen_rol;
+// Staat de hele module uit, dan ligt het niet aan de rol: zeg dat, en waar hij aan kan.
+$_module_uit = function_exists('module_recht_actief') && $geen_module !== '' && !module_recht_actief($geen_module);
+if ($_module_uit) {
+    $_def   = modules_alle()[module_van_recht($geen_module)] ?? [];
+    $_titel = (string)($_def['label'] ?? $geen_module);
+    $geen_uitleg = $geen_uitleg ?? 'Deze module staat uit voor dit systeem. Een beheerder kan hem aanzetten bij Instellingen › Modules; de gegevens zijn bewaard gebleven.';
+}
 ?>
 <div class="ds-kaart bh-losse-kaart">
   <div class="bh-leeg ds-fase-grijs bh-leeg-kaal">
     <span class="bh-leeg-icoon"><?= icoon('slot', 19) ?></span>
     <span class="bh-leeg-titel">
-      <?= $_titel !== '' ? h($_titel) . ' is niet voor jouw rol' : 'Dit onderdeel is niet voor jouw rol' ?>
+      <?= $_module_uit ? h($_titel) . ' staat uit'
+            : ($_titel !== '' ? h($_titel) . ' is niet voor jouw rol' : 'Dit onderdeel is niet voor jouw rol') ?>
     </span>
     <span class="bh-leeg-tekst">
       <?= $geen_uitleg

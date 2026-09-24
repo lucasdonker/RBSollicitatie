@@ -18,16 +18,14 @@ if (!function_exists('rechten_modules')) {
  * 'acties' bepaalt welke kolommen in de matrix-UI verschijnen.
  */
 function rechten_modules(): array {
-    return [
+    // De kern. Rechten van losse modules (selectiedag, loonplanning, …) komen uit het
+    // moduleregister (includes/modules/), en alleen als die module aanstaat.
+    $kern = [
         'sollicitanten'   => ['label' => 'Sollicitanten',          'groep' => 'Werving',        'acties' => ['lezen','bewerken','verwijderen']],
-        'paginas'         => ['label' => "Wervingspagina's", 'groep' => 'Werving',        'acties' => ['lezen','bewerken','verwijderen']],
         'blk'             => ['label' => 'BLK-formulieren & details','groep' => 'Werving',       'acties' => ['lezen','bewerken']],
-        'selectiedag'     => ['label' => 'Selectiedag',            'groep' => 'Selectie',       'acties' => ['lezen','bewerken']],
         'ondertekeningen' => ['label' => 'Ondertekeningen',        'groep' => 'Selectie',       'acties' => ['lezen','bewerken']],
         'documenten'      => ['label' => 'Loondossiers (ID, bankpas, loonheffing)', 'groep' => 'Beheer', 'acties' => ['lezen','bewerken','verwijderen']],
         'beschikbaarheid' => ['label' => 'Beschikbaarheid',        'groep' => 'Planning',       'acties' => ['lezen','bewerken']],
-        'dekking'         => ['label' => 'Dekking',                'groep' => 'Planning',       'acties' => ['lezen']],
-        'loonplanning'    => ['label' => 'Loonplanning',           'groep' => 'Planning',       'acties' => ['lezen','bewerken']],
         'mailing'         => ['label' => 'Berichten & sjablonen',  'groep' => 'Communicatie',   'acties' => ['lezen','bewerken']],
         // 'verwijderen' bestaat hier apart omdat een seizoen wissen ook alle sollicitaties
         // van dat jaar wist. Standaard heeft alleen de beheerder het; bestuur krijgt 'rw'.
@@ -40,6 +38,11 @@ function rechten_modules(): array {
         // migraties te draaien of te deployen.
         'logboek'         => ['label' => 'Logboek (alle logs)',    'groep' => 'Beheer',         'acties' => ['lezen']],
     ];
+    $alle = $kern + (function_exists('modules_rechten') ? modules_rechten() : []);
+    // Vaste groepsvolgorde in de matrix; binnen een groep blijft de volgorde staan (stabiele sort).
+    $volgorde = array_flip(['Werving', 'Selectie', 'Planning', 'Communicatie', 'Beheer']);
+    uasort($alle, fn($a, $b) => ($volgorde[$a['groep']] ?? 99) <=> ($volgorde[$b['groep']] ?? 99));
+    return $alle;
 }
 
 /** De drie mogelijke acties, in vaste volgorde. */
@@ -84,6 +87,7 @@ function rechten_standaard_rollen(): array {
                 // (medisch) ziet een begeleider niet, alleen een neutrale "let op"-vlag; het
                 // dossier en telefoonnummers ook niet (daar horen 'blk' en 'sollicitanten' bij).
                 'selectiedag'     => 'r',
+                'trainingsweekend'=> 'r',
                 'dekking'         => 'r',
             ],
         ],
@@ -96,6 +100,7 @@ function rechten_standaard_rollen(): array {
                 'paginas'         => 'rwd',
                 'blk'             => 'rw',
                 'selectiedag'     => 'rw',
+                'trainingsweekend'=> 'rw',
                 'ondertekeningen' => 'rw',
                 'beschikbaarheid' => 'rw',
                 'dekking'         => 'r',
@@ -193,6 +198,9 @@ function rechten_nieuwe_standaarden(): void {
     $db = db();
     $lijst = [
         ['penningmeester', 'loonplanning', 'rw', '2.101.1: loonplanning is het werkgereedschap van de penningmeester'],
+        // Trainingsweekend leende tot 2.105.0 het recht 'selectiedag'; dezelfde rechten als die had.
+        ['begeleider', 'trainingsweekend', 'r', '2.105.0: trainingsweekend heeft een eigen recht'],
+        ['bestuur', 'trainingsweekend', 'rw', '2.105.0: trainingsweekend heeft een eigen recht'],
     ];
     if (!function_exists('instelling') || !function_exists('instelling_opslaan')) return;
     foreach ($lijst as $item) {
@@ -251,6 +259,8 @@ function rol_rechten(string $rol_sleutel): array {
  */
 function mag(string $module, string $actie = 'lezen'): bool {
     rechten_auto_setup();
+    // Een uitgezette module bestaat niet, ook niet voor de admin (zie includes/modules.php).
+    if (function_exists('module_recht_actief') && !module_recht_actief($module)) return false;
     $rol = $_SESSION['bhd_rol'] ?? '';
     if ($rol === '') return false;
     if ($rol === 'admin') return true; // admin: altijd volledige toegang

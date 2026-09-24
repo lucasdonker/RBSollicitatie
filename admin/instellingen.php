@@ -125,6 +125,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect(APP_URL . '/admin/instellingen.php?tab=bewaren');
     }
 
+    if ($actie === 'modules_opslaan') {
+        // Een module uitzetten haalt voor iedereen schermen weg: dat is Systeem, niet alleen Instellingen.
+        vereis_recht('systeem', 'bewerken');
+        $gewijzigd = [];
+        foreach (modules_alle() as $sleutel => $m) {
+            $aan = !empty($_POST['module'][$sleutel]) ? '1' : '0';
+            if (instelling('module.' . $sleutel . '.aan', '1') === $aan) continue;
+            instelling_opslaan('module.' . $sleutel . '.aan', $aan);
+            $gewijzigd[$sleutel] = $aan === '1' ? 'aan' : 'uit';
+        }
+        if ($gewijzigd && function_exists('audit_log')) audit_log('gewijzigd', 'instelling', null, ['modules' => $gewijzigd]);
+        flash('succes', $gewijzigd ? 'Modules bijgewerkt.' : 'Er is niets veranderd.');
+        redirect(APP_URL . '/admin/instellingen.php?tab=modules');
+    }
+
     if ($actie === 'cron_nu') {
         vereis_recht('systeem', 'bewerken');
         @set_time_limit(300);
@@ -535,6 +550,36 @@ require __DIR__ . '/layout_top.php';
       </div>
 
       <button type="submit" class="ds-btn ds-btn-primair">Opslaan</button>
+    </form>
+  </div>
+</div>
+
+<?php elseif ($tab === 'modules'): ?>
+<div class="ds-kaart">
+  <div class="bh-kaartkop"><h2>Modules</h2></div>
+  <div class="bh-kaartbody">
+    <p class="bh-inst-intro">
+      De kern (sollicitanten, portaal, berichten, beschikbaarheid, ondertekenen, loondossiers) staat altijd aan.
+      Een module die uitstaat verdwijnt uit het menu en uit de rechten, ook voor beheerders. Er wordt niets gewist:
+      zet je hem weer aan, dan staat alles er nog.
+    </p>
+    <form method="POST">
+      <?= csrf_input() ?>
+      <input type="hidden" name="actie" value="modules_opslaan">
+      <?php foreach (modules_alle() as $sleutel => $m): ?>
+      <div class="ds-veld">
+        <label>
+          <input type="checkbox" name="module[<?= h($sleutel) ?>]" value="1" <?= module_aan($sleutel) ? 'checked' : '' ?> <?= $mag_systeem ? '' : 'disabled' ?>>
+          <?= h($m['label']) ?>
+        </label>
+        <div class="ds-veld-hint"><?= h($m['omschrijving']) ?></div>
+      </div>
+      <?php endforeach; ?>
+      <?php if ($mag_systeem): ?>
+        <button type="submit" class="ds-btn ds-btn-primair">Opslaan</button>
+      <?php else: ?>
+        <p class="ds-veld-hint">Modules aan- of uitzetten kan alleen wie Systeem mag bewerken.</p>
+      <?php endif; ?>
     </form>
   </div>
 </div>

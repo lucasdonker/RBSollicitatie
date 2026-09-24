@@ -20,7 +20,7 @@ require_once __DIR__ . '/../includes/beheer/laden.php';
 
 $pagina_titel = 'Trainingsweekend';
 $actieve_nav  = 'trainingsweekend';
-vereis_recht('selectiedag', 'lezen');
+vereis_recht('trainingsweekend', 'lezen');
 
 $seizoen = actief_seizoen();
 $sid     = $seizoen ? (int)$seizoen['id'] : 0;
@@ -32,8 +32,8 @@ $ik      = (string)($_SESSION['bhd_naam'] ?? 'onbekend');
 //                Zie rechten.php: "mag inchecken/meedraaien, niet bewerken". Het is hun
 //                werk in het weekend; zonder dit kan een begeleider niets vastleggen.
 //   beslissen  — aannemen of afwijzen: bestuurswerk.
-$mag_meedraaien = mag('selectiedag', 'lezen');
-$mag_beslissen  = mag('selectiedag', 'bewerken');
+$mag_meedraaien = mag('trainingsweekend', 'lezen');
+$mag_beslissen  = mag('trainingsweekend', 'bewerken');
 // Dataminimalisatie, net als op de selectiedag: BLK-bijzonderheden (vaak medisch) alleen
 // met BLK-recht, dossier en telefoonnummer alleen met dossierrecht.
 $mag_blk     = mag('blk', 'lezen');

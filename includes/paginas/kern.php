@@ -1,6 +1,6 @@
 <?php
 /**
- * Pagina's — kern: schema, CRUD en de moduledefinitie.
+ * Pagina's — kern: schema en CRUD. De moduledefinitie (recht, menu) staat in includes/modules/paginas.php.
  *
  * Datamodel (3 tabellen):
  *  - paginas         de pagina zelf (slug, titel, status, actieve versie, CSP-uitzonderingen)
@@ -12,16 +12,6 @@
  */
 
 if (!function_exists('pag_auto_setup')) {
-
-/** Wat deze module bij de kern registreert. Registry-klaar: vier haken, meer niet. */
-function pag_module_definitie(): array {
-    return [
-        'sleutel' => 'paginas',
-        'setup'   => 'pag_auto_setup',
-        'recht'   => ['label' => "Landingspagina's", 'groep' => 'Werving', 'acties' => ['lezen','bewerken','verwijderen']],
-        'nav'     => ['id' => 'paginas', 'label' => "Landingspagina's", 'url' => '/admin/paginas.php'],
-    ];
-}
 
 function pag_statussen(): array {
     return ['concept' => 'Concept', 'alleen_admin' => 'Alleen beheerders', 'gepubliceerd' => 'Gepubliceerd'];

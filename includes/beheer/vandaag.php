@@ -196,7 +196,7 @@ function bh_vandaag_hoofdtaak_bepalen(int $sid, string $seizoen_fase): array {
                     'knop'   => 'Naar het trainingsweekend', 'url' => APP_URL . '/admin/trainingsweekend.php',
                     'gedaan' => $st ? (int)$st['aanwezig'] + (int)$st['afwezig'] : (int)($t['tw_geweest'] ?? 0),
                     'totaal' => $st ? (int)$st['totaal'] : $n + (int)($t['tw_geweest'] ?? 0),
-                    'klaar'  => false], 'selectiedag');
+                    'klaar'  => false], 'trainingsweekend');
 
         case 'aanname':
         default:
@@ -211,18 +211,18 @@ function bh_vandaag_hoofdtaak_bepalen(int $sid, string $seizoen_fase): array {
                 if ($st['te_beslissen'] > 0) {
                     return $taak(['titel' => $st['te_beslissen'] . ' wachten op een besluit',
                             'tekst' => 'Zij waren uitgenodigd voor het trainingsweekend en moeten nog worden aangenomen of afgewezen.',
-                            'knop' => 'Naar het besluit', 'url' => $besluit_url] + $voortgang, 'selectiedag', 'bewerken');
+                            'knop' => 'Naar het besluit', 'url' => $besluit_url] + $voortgang, 'trainingsweekend', 'bewerken');
                 }
                 if ($st['klaar_om_door_te_voeren'] > 0) {
                     $k = (int)$st['klaar_om_door_te_voeren'];
                     return $taak(['titel' => $k . ' ' . ($k === 1 ? 'besluit' : 'besluiten') . ' nog doorvoeren',
                             'tekst' => 'Het besluit staat vast, maar de fase is nog niet gezet en er is nog geen bericht verstuurd.',
-                            'knop' => 'Naar het besluit', 'url' => $besluit_url] + $voortgang, 'selectiedag', 'bewerken');
+                            'knop' => 'Naar het besluit', 'url' => $besluit_url] + $voortgang, 'trainingsweekend', 'bewerken');
                 }
                 if ($st['twijfel_open'] > 0) {
                     return $taak(['titel' => $st['twijfel_open'] . ' op twijfel',
                             'tekst' => 'Daar moet iemand over bellen; twijfel gaat nooit vanzelf de deur uit.',
-                            'knop' => 'Naar het besluit', 'url' => $besluit_url] + $voortgang, 'selectiedag', 'bewerken');
+                            'knop' => 'Naar het besluit', 'url' => $besluit_url] + $voortgang, 'trainingsweekend', 'bewerken');
                 }
             }
             $n = (int)($t['tw_geweest'] ?? 0);

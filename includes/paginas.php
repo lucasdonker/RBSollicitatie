@@ -2,9 +2,9 @@
 /**
  * Paal 13 — Module "Pagina's" (landingspagina's).
  *
- * Zelfstandige module: alles zit in includes/paginas/. De kern raakt hem op maar vier
- * plekken aan (deze require, db_failsafe, het menu en de rechtenmatrix) — zie
- * pag_module_definitie() in kern.php, die precies die vier dingen als array teruggeeft.
+ * Zelfstandige module: alles zit in includes/paginas/. Recht en menu-item staan in het
+ * moduleregister (includes/modules/paginas.php); verder raakt de kern hem via deze require
+ * en pag_auto_setup in db_failsafe. Staat de module uit, dan geeft p.php een 404.
  *
  * Prefix: pag_   (pagina_ is bezet: functions.php heeft al pagina_404)
  * Publieke URL: /p/<slug>     Opslag: uploads/paginas/<slug>/
