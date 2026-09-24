@@ -1,6 +1,6 @@
 # Jouw sollicitatie bij Paal 13 — hoe werkt het portaal?
 
-Versie 2.101 · september 2026
+Versie 2.102 · september 2026
 
 Je wilt strandwacht worden bij Reddingsbrigade Paal 13. Na je aanmelding regel je alles in je
 eigen portaal: `https://sollicitatie.paal13.com/portaal/`. Hier lees je hoe dat werkt. Deze uitleg
@@ -295,8 +295,9 @@ Op deze pagina kun je ook je gegevens downloaden of meteen laten verwijderen.
 ## Je gegevens en privacy
 
 > **In het kort:** bij Gegevens zie je wat we van je weten. Je kunt alles downloaden en je
-> gegevens zelf laten verwijderen. In de privacyverklaring staat wat we bewaren, waarom en hoe
-> lang.
+> gegevens zelf laten verwijderen, ook als je al bent aangenomen. Wil je geen advies van de
+> computer over je formulier, laat het ons weten via Berichten. In de privacyverklaring staat wat
+> we bewaren, waarom en hoe lang.
 
 Op de pagina **Gegevens**:
 
@@ -305,22 +306,41 @@ Op de pagina **Gegevens**:
   Klik op **Stel een vraag via Berichten** en schrijf wat er anders moet. Het bestuur past het dan
   aan. Je telefoonnummer en adres kun je ook zelf aanpassen in Beter Leren Kennen, zolang dat
   formulier open is.
-- **Al mijn gegevens downloaden:** je krijgt een bestand (JSON) met alles wat we van je hebben
-  (recht op inzage).
+- **Al mijn gegevens downloaden:** klik op **Download als JSON**. Je krijgt een bestand met alles
+  wat we over je hebben vastgelegd (recht op inzage). Daarin staan je gegevens, je formulieren, je
+  beschikbaarheid, de cijfers en besluiten van de selectiedag en het trainingsweekend, de
+  aantekeningen van het bestuur, het advies van de computer (zie hieronder), welke documenten je
+  hebt getekend en ingeleverd, en de berichten die we je stuurden. Je BSN, rekeningnummer en
+  handtekening staan er niet in; die vind je in de getekende pdf's. Bij cijfers en aantekeningen
+  staat "beoordelaar" in plaats van de naam van de persoon die ze gaf.
 - **Mijn account verwijderen:** zo gaat het:
   1. Klik op **Definitief verwijderen**. Er klapt een stuk tekst open.
   2. Lees wat er gebeurt: je naam, e-mail, telefoon en adres worden onherkenbaar gemaakt, en je
-     formulieren, beschikbaarheid, foto en documenten worden gewist. Je kunt daarna niet meer
-     inloggen.
+     formulieren, beschikbaarheid, beoordelingen, foto en documenten worden gewist. Je kunt daarna
+     niet meer inloggen.
   3. Typ `VERWIJDER` in het vak.
   4. Klik op **Ja, verwijder mijn account**.
 
-  Het bestuur krijgt daar bericht van. Dit kun je niet terugdraaien. Is je loondossier al verwerkt,
-  dan kan dit niet meer zelf: de wet verplicht ons het loonheffingsformulier en de kopie ID vijf jaar
-  te bewaren. Mail in dat geval het bestuur.
+  Het bestuur krijgt daar bericht van. Dit kun je niet terugdraaien.
+
+  **Al aangenomen en je loongegevens zijn verwerkt?** Dan kun je je account ook verwijderen. Eén
+  ding blijft dan staan, omdat de wet (voor de belasting) dat eist: je naam, je geboortedatum, je
+  getekende opgaaf voor de loonheffing (met je BSN) en de kopie van je identiteitsbewijs. Alleen de
+  penningmeester kan daarbij. We bewaren het tot 5 jaar na het einde van het jaar waarin je voor het
+  laatst bij ons werkte. Daarna vernietigt de penningmeester het. Al het andere verwijderen we
+  meteen. Het portaal laat je vooraf zien wat er blijft.
 - **Ingelogd blijven:** als een of meer apparaten je onthouden, zie je hier hoeveel. Telefoon kwijt
   of ingelogd op een vreemde computer? Klik op **Vergeet alle apparaten** en daarna op **Ja, vergeet
   ze allemaal**. Op elk apparaat moet je dan opnieuw inloggen.
+
+**Advies van de computer (AI).** Als het bestuur dat gebruikt, geeft een computerprogramma van
+Google een advies over je formulier Beter Leren Kennen. Het programma krijgt je leeftijdsgroep en
+je antwoorden over opleiding, diploma's, werkervaring, motivatie en beschikbaarheid. Het krijgt
+niet je naam, adres, e-mailadres, telefoonnummer of foto, en ook niet wat je invult bij
+bijzonderheden. Het advies is een hulpmiddel: een mens beslist altijd. Wil je dit niet? Stel een
+vraag via **Berichten** (het belletje) en schrijf dat je bezwaar maakt tegen de automatische
+beoordeling. Het bestuur verwijdert dan het advies en maakt er geen nieuw. Dat heeft geen gevolgen
+voor je sollicitatie.
 
 **Hoe lang we je gegevens bewaren** (de standaardtermijnen):
 

@@ -1,6 +1,6 @@
 # Verwerkingsregister — Sollicitatiesysteem Paal 13
 
-Versie 2.101 · september 2026
+Versie 2.102 · september 2026
 
 Dit is het register van verwerkingsactiviteiten (AVG artikel 30) voor het sollicitatiesysteem van
 Reddingsbrigade Paal 13: het aanmeldformulier, het sollicitantenportaal en het beheer. Per

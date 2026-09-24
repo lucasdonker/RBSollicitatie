@@ -53,12 +53,14 @@ hr { border: 0; border-top: 1px solid var(--rand); margin: 24px 0; }
 <h1 class="title">Runbook systeembeheer — Sollicitatiesysteem Paal
 13</h1>
 </header>
-<p>Versie 2.101 · september 2026</p>
+<p>Versie 2.102 · september 2026</p>
 <p>Dit document is voor wie de servers beheert: installeren, uitrollen
 naar productie, configuratie, back-ups, herstel, toegangsbeheer,
 incidenten en het lezen van de logs. Het is de enige plek waar de
 technische stappen staan. Wat het bestuur in het beheer doet, staat in
-de <a href="handleiding_beheer.md">handleiding beheer</a>.</p>
+de handleiding beheer
+(<code>docs/handleiding/handleiding_beheer.md</code>, in het beheer
+onder Hulp en handleidingen).</p>
 <p>De handleidingen staan als Markdown in
 <code>docs/handleiding/</code>. De map <code>docs/</code> is op de
 server afgeschermd (<code>docs/.htaccess</code>); in het beheer lees je
@@ -619,14 +621,21 @@ gebruikt vast
 <tr>
 <td><code>KLUIS_SLEUTEL</code></td>
 <td>Hoofdsleutel van de kluis, base64 van 32 bytes</td>
-<td>Uniek per omgeving, kopie in de wachtwoordkluis. Nooit vervangen
-zolang er documenten zijn</td>
+<td>Uniek per omgeving, kopie in de wachtwoordkluis. Alleen vervangen
+volgens <a href="#kluissleutel-wisselen">Kluissleutel wisselen</a></td>
 </tr>
 <tr>
 <td><code>KLUIS_SLEUTEL_VERSIE</code></td>
 <td>Nummer van de sleutel</td>
-<td>Laat op <code>1</code>. Er is geen herversleutel-functie: ophogen
-maakt alle bestaande documenten onleesbaar</td>
+<td>Begint op <code>1</code>; gaat alleen omhoog bij het wisselen van de
+sleutel, samen met <code>KLUIS_SLEUTEL_OUD</code></td>
+</tr>
+<tr>
+<td><code>KLUIS_SLEUTEL_OUD</code>,
+<code>KLUIS_SLEUTEL_OUD_VERSIE</code></td>
+<td>Vorige sleutel + versie, alleen tijdens het wisselen</td>
+<td>Normaal afwezig. Weghalen zodra Systeem › Kluissleutel wisselen 0
+over toont; de systeemcontrole herinnert eraan</td>
 </tr>
 <tr>
 <td><code>DOCUMENTEN_MAP</code></td>
@@ -669,6 +678,72 @@ mag die regel weg</td>
 </table>
 <p>Ontbreekt <code>config.php</code>, dan toont elke pagina &quot;Systeem is
 nog niet ingesteld&quot; (HTTP 503).</p>
+<h2 id="kluissleutel-wisselen">Kluissleutel wisselen</h2>
+<p><strong>Wanneer:</strong> bij een vermoeden dat de sleutel (of
+<code>config.php</code>) is gelekt, als iemand vertrekt die bij
+<code>config.php</code> of de wachtwoordkluis kon, en verder periodiek
+(eens per jaar).</p>
+<p>Wisselen pakt per gegeven alleen de datasleutel opnieuw in met de
+nieuwe hoofdsleutel; de versleutelde inhoud zelf blijft staan. Het gaat
+in batches van 200 en is hervatbaar: wat al op de nieuwe sleutel staat,
+wordt overgeslagen. Het raakt de BSN/IBAN-velden bij ondertekeningen,
+alle bestanden in <code>DOCUMENTEN_MAP</code> en de privésleutel van het
+documentzegel.</p>
+<ol type="1">
+<li><strong>Nieuwe sleutel maken:</strong>
+<code>php -r &quot;echo base64_encode(random_bytes(32));&quot;</code>. Zet hem
+meteen in de wachtwoordkluis van het bestuur, naast de oude.</li>
+<li><strong><code>config.php</code> aanpassen:</strong> de huidige
+<code>KLUIS_SLEUTEL</code> en <code>KLUIS_SLEUTEL_VERSIE</code> gaan
+naar <code>KLUIS_SLEUTEL_OUD</code> en
+<code>KLUIS_SLEUTEL_OUD_VERSIE</code>; de nieuwe sleutel wordt
+<code>KLUIS_SLEUTEL</code> met versie +1. Vanaf nu wordt alles nieuw met
+de nieuwe sleutel versleuteld; het oude blijft leesbaar.</li>
+<li><strong>Herversleutelen:</strong> Systeem › Kluissleutel wisselen
+(<code>/admin/kluis.php</code>, recht systeem › bewerken). Klik op
+Herversleutelen, bevestig, en klik op &quot;Volgende batch&quot; tot er 0 over
+staat. Mislukte gegevens staan met bron en id op het scherm; de rest
+gaat door.</li>
+<li><strong>Back-up controleren:</strong> maak een verse back-up van
+database en documentenmap en open als admin één document in het
+beheer.</li>
+<li><strong>Oude sleutel weghalen:</strong> haal
+<code>KLUIS_SLEUTEL_OUD</code> en <code>KLUIS_SLEUTEL_OUD_VERSIE</code>
+uit <code>config.php</code> en de oude sleutel uit de wachtwoordkluis.
+De systeemcontrole waarschuwt zolang de oude sleutel nog staat terwijl
+hij niet meer nodig is.</li>
+</ol>
+<p>Let op:</p>
+<ul>
+<li>Haal de oude sleutel nooit weg voordat er 0 over staat: wat dan nog
+op de oude versie staat, is onleesbaar (de systeemcontrole kleurt dan
+rood). Zet de sleutel in dat geval terug als
+<code>KLUIS_SLEUTEL_OUD</code> met de juiste versie.</li>
+<li>Oude back-ups blijven op de oude sleutel. Bewaar die sleutel zo lang
+als die back-ups bestaan, gescheiden van de nieuwe.</li>
+<li>De interne bewijs-hash van een ondertekening
+(<code>ondertekeningen.bewijs_hash</code>) is berekend over het
+versleutelde BSN/IBAN-veld. Na een wissel klopt die hash dus niet meer
+met wat in de database staat: het veld is opnieuw ingepakt, de inhoud is
+gelijk. Dat is geen probleem voor het bewijs. Het juridische bewijs is
+de verzegelde PDF; die verandert niet en het zegel blijft geldig. De
+rotatie legt per ondertekening de sha256 van het oude en het nieuwe veld
+vast in het logboek (<code>kluis_blob_herwrapt</code>), zodat je de
+keten van de oude hash naar het huidige veld kunt herleiden. Controleer
+je later een bewijs-hash, neem die logboekregels dan mee.</li>
+<li>Het tweestaps-geheim van beheerders
+(<code>beheerders.tweestaps_geheim</code>) zit <strong>niet</strong> in
+de herversleuteling. Zolang <code>KLUIS_SLEUTEL_OUD</code> staat, blijft
+het leesbaar. Haal je de oude sleutel weg, dan valt de noodingang voor
+die accounts terug op de code per e-mail (zie <a href="#toegangsbeheer">Toegangsbeheer</a>); laat ze de app daarna
+opnieuw instellen in Mijn profiel, of reset hun tweestaps bij
+Beheerders.</li>
+<li>Het logboek bevat per batch <code>kluis_herversleuteld</code> met
+aantallen; nooit een sleutel.</li>
+<li>Formulieren op wervingspagina&#39;s die op het moment van wisselen open
+staan, kunnen één keer worden geweigerd als hun beveiliging op de
+sleutel terugvalt; opnieuw versturen werkt.</li>
+</ul>
 <h1 id="geheimen-die-in-de-database-staan">Geheimen die in de database
 staan</h1>
 <blockquote>
@@ -799,7 +874,7 @@ sollicitanten die via Authentik inloggen &quot;Redirect URI Error&quot;.</li>
 (claim <code>groups</code>).</li>
 <li>Groepen en rollen: <code>Sol-Admin</code> (rol admin, alles),
 <code>Bestuur</code> (rol bestuur), <code>Sol-Penningmeester</code> (rol
-penningmeester: loondossiers en sollicitanten lezen),
+penningmeester: loondossiers, loonplanning en sollicitanten lezen),
 <code>Sol-Begeleider</code> (rol begeleider: selectiedag en dekking
 lezen). Welke groep bij welke rol hoort en wat een rol mag, pas je aan
 in Beheer › Rollen &amp; rechten.</li>
@@ -828,15 +903,17 @@ een Authentik-inlog geen tweede factor.</li>
 <p>Nieuwe beheerders maak je niet in het beheer aan: zet de persoon in
 Authentik in de juiste groep en laat hem één keer inloggen.
 Wachtwoordlogin (<code>/admin/login.php</code>) bestaat nog als
-noodingang voor accounts waarvoor in het beheer een wachtwoord is gezet
-(zie <a href="#toegangsbeheer">Toegangsbeheer</a>).</p>
+noodingang voor accounts waarvoor in het beheer een wachtwoord is gezet.
+Die noodingang heeft een eigen tweede stap (zie <a href="#toegangsbeheer">Toegangsbeheer</a>).</p>
 <h1 id="toegangsbeheer">Toegangsbeheer</h1>
 <blockquote>
 <p><strong>In het kort:</strong> Toegang loopt via Authentik-groepen:
 uit alle toegestane groepen halen trekt de SSO-toegang in. Heeft het
 account ook een wachtwoord, zet het dan daarnaast op non-actief in
 Beheerders. Controleer de toegang elk seizoen en houd de noodingang met
-wachtwoord tot één account.</p>
+wachtwoord tot één account. De noodingang vraagt altijd een tweede stap
+(NIS2): een code uit een authenticator-app of, zonder app, een code per
+e-mail.</p>
 </blockquote>
 <p><strong>Iemand erbij</strong></p>
 <ol type="1">
@@ -865,7 +942,9 @@ Beheer › Rollen &amp; rechten naast elkaar. Iedereen die actief is heeft
 een reden.</label></li>
 <li><label><input type="checkbox"></input>Hoogstens één account met
 wachtwoordlogin (noodingang), met een lang wachtwoord dat in de
-wachtwoordkluis staat. Die inlog heeft geen tweede factor.</label></li>
+wachtwoordkluis staat. In Beheer › Beheerders staat bij dat account
+<strong>Tweestaps aan</strong>; staat er <strong>Tweestaps uit</strong>,
+laat de eigenaar dan een authenticator-app instellen.</label></li>
 <li><label><input type="checkbox"></input>Wie mag Systeem bewerken? Dat recht
 (standaard alleen admin) geeft zicht op de API-sleutel en het
 cron-token, en toegang tot de SQL-migraties. Instellingen bewerken
@@ -876,7 +955,77 @@ IBAN, ID)? Standaard alleen penningmeester en admin.</label></li>
 <li><label><input type="checkbox"></input>Staat de penningmeester (of iemand
 met een eigen rol) in Beheerders als Begeleider? Dat is een restant van
 vóór 2.101; zet de rol goed.</label></li>
+<li><label><input type="checkbox"></input>Sinds 2.102 heeft de penningmeester
+lees- en bewerkrecht op Loonplanning. Een bestaande installatie kreeg
+dat één keer automatisch (vlag
+<code>rechten.toegevoegd.penningmeester.loonplanning</code> in
+<code>instellingen</code>, logboekregel <code>rol_gewijzigd</code> &quot;door
+systeem&quot;). Haalt een admin het weg in Rollen &amp; rechten, dan blijft
+het weg.</label></li>
 </ul>
+<p><strong>Noodingang met tweestaps (NIS2)</strong></p>
+<p>Een Authentik-inlog krijgt zijn tweede factor van Authentik. De
+wachtwoordlogin op <code>/admin/login.php</code> heeft daarom een eigen
+tweede stap (<code>includes/tweestaps.php</code>), zodat ook de
+noodingang MFA heeft, zoals de zorgplicht van NIS2 vraagt.</p>
+<ul>
+<li>Een juist wachtwoord logt nog niet in. Het zet een tussenstand in de
+sessie (sessie-id wordt vernieuwd) die 5 minuten geldig is. Daarbinnen
+moet de tweede stap slagen.</li>
+<li><strong>Met app:</strong> een TOTP-code (RFC 6238, 6 cijfers, 30
+seconden, één stap klokverschil, uitgever &quot;Paal13 Beheer&quot;). Een
+gebruikte code werkt geen tweede keer. Het geheim staat als kluis-blob
+in <code>beheerders.tweestaps_geheim</code>. Instellen, opnieuw
+instellen en uitzetten doet de beheerder zelf in Mijn profiel; uitzetten
+en opnieuw instellen vragen wachtwoord plus code.</li>
+<li><strong>Herstelcodes:</strong> acht per keer, alleen als
+<code>password_hash</code> bewaard
+(<code>beheerders.tweestaps_herstel</code>), elk één keer bruikbaar. De
+beheerder ziet ze alleen direct na het instellen.</li>
+<li><strong>Zonder app (terugval):</strong> een eenmalige code per
+e-mail, 10 minuten geldig, als sha256 in <code>otp_tokens</code> (type
+<code>beheer_2fa</code>), hooguit één per minuut en vijf per uur per
+account. Dit vereist <strong>werkende mail</strong>: ligt de mailserver
+plat (of zit de mailbox achter dezelfde Authentik), dan komt iemand
+zonder app niet binnen. Zorg dus dat minstens de noodingang een app
+heeft.</li>
+<li><strong>Meldingstype:</strong> de mail is het type &quot;Inlogcode beheer
+(noodingang)&quot; (<code>beheer_code</code>), alleen e-mail, wordt altijd
+direct verstuurd en de inhoud wordt nooit gelogd. Het sjabloon is aan te
+passen, maar laat <code>{{otp_code}}</code> erin staan.</li>
+<li><strong>Kapotte of gewisselde <code>KLUIS_SLEUTEL</code>:</strong>
+is het geheim niet te ontsleutelen, dan valt de tweede stap terug op de
+e-mailcode (regel
+<code>tweestaps: geheim van beheerder #… niet te ontsleutelen</code> in
+het serverlog). Een app instellen kan pas weer als de kluis werkt.</li>
+<li><strong>Blokkade:</strong> foute codes tellen mee in
+<code>login_pogingen</code>, net als een fout wachtwoord (5 per 15
+minuten per e-mail en per IP). Daarbovenop een rate limit van 5
+codepogingen per 15 minuten per account en 20 per IP.</li>
+<li><strong>Logboek:</strong> <code>tweestaps_aangezet</code>,
+<code>tweestaps_uitgezet</code>, <code>tweestaps_gereset</code>,
+<code>tweestaps_mislukt</code>, <code>tweestaps_herstelcode</code> en
+<code>tweestaps_mailcode</code>.</li>
+</ul>
+<p><strong>Tweestaps resetten</strong> (telefoon kwijt én geen
+herstelcodes):</p>
+<ol type="1">
+<li>Controleer de identiteit buiten het systeem om: bel de persoon op
+een bekend nummer of spreek elkaar. Een mail- of chatverzoek alleen is
+niet genoeg.</li>
+<li>Beheer › Beheerders › <strong>Tweestaps resetten</strong> bij dat
+account, bevestigen met <strong>Ja, tweestaps resetten</strong>. Alleen
+de rol admin ziet die knop.</li>
+<li>App-koppeling en herstelcodes vervallen; de volgende wachtwoordlogin
+vraagt een e-mailcode.</li>
+<li>Laat de persoon direct daarna een nieuwe app instellen in Mijn
+profiel en controleer bij Beheerders dat er weer <strong>Tweestaps
+aan</strong> staat.</li>
+</ol>
+<p>Komt het resetverzoek onverwacht, of kent iemand anders het
+wachtwoord mogelijk: wijzig dan ook het wachtwoord (Beheerders ›
+<strong>Wachtwoord</strong>) en kijk in het Logboek naar
+<code>tweestaps_mislukt</code> en mislukte logins voor dat account.</p>
 <p><strong>Sollicitanten op het portaal</strong></p>
 <ul>
 <li>Inlogcode en inloglink zijn 15 minuten geldig en eenmalig. De
@@ -1086,7 +1235,13 @@ download van een loondocument, standaard aan) en
 <code>paginas.tracking</code> (bezoekersstatistiek van wervingspagina&#39;s
 en aanmeldformulier, standaard aan). Een AVG-verzoek
 (<code>includes/avg_wissen.php</code>) neemt ook de rijen van die
-persoon in <code>mail_queue</code> mee.</p>
+persoon in <code>mail_queue</code> mee, net als selectiedag,
+trainingsweekend, beschikbaarheid, <code>portaal_apparaten</code> en het
+IP-adres in het bewijsspoor van ondertekeningen. Wat er gewist wordt
+(<code>avg_sollicitatie_leegmaken()</code>) en wat de sollicitant bij
+inzage downloadt (<code>avg_inzage()</code>) staat op één plek; een
+nieuwe tabel met persoonsgegevens hoort in allebei en in het
+verwerkingsregister.</p>
 <p><strong>Privacyverklaring</strong></p>
 <ul>
 <li>De tekst staat in <code>includes/privacy_verklaring.php</code> en is
@@ -1096,7 +1251,7 @@ verschijnen alleen als die dienst aanstaat. Een termijn wijzigen = de
 verklaring verandert mee.</li>
 <li>Verandert de tekst zelf (in code), dan hoort
 <code>PRIVACY_VERSIE</code> in <code>includes/functions.php</code>
-omhoog (nu <code>2026-09b</code>). Bij elke aanmelding wordt vastgelegd
+omhoog (nu <code>2026-09c</code>). Bij elke aanmelding wordt vastgelegd
 welke versie iemand las.</li>
 <li>Schakel je een nieuwe dienst in (bijvoorbeeld sms of een andere
 mailprovider), controleer dan of die als verwerker in de verklaring
@@ -1173,9 +1328,12 @@ config)</td>
 <tr>
 <td>Kluis</td>
 <td>Werkt, documentenmap buiten webroot</td>
-<td>Sleutel ontbreekt/ongeldig, map niet schrijfbaar of in webroot</td>
+<td>Sleutel ontbreekt/ongeldig, map niet schrijfbaar of in webroot;
+gegevens nog op een oude sleutel, of <code>KLUIS_SLEUTEL_OUD</code>
+staat er nog terwijl niets hem meer nodig heeft</td>
 <td><code>KLUIS_SLEUTEL</code>, <code>DOCUMENTEN_MAP</code> in config;
-rechten van de map</td>
+rechten van de map; <a href="#kluissleutel-wisselen">Kluissleutel
+wisselen</a></td>
 </tr>
 <tr>
 <td>Zegel</td>
@@ -1385,16 +1543,23 @@ Plesk/Authentik en in <code>config.php</code>;</li>
 <li>bij misbruik van het portaal: tabel <code>portaal_apparaten</code>
 leegmaken;</li>
 <li>site tijdelijk uit (Plesk: domein uitschakelen) als het lek nog
-doorloopt. Vervang <code>KLUIS_SLEUTEL</code> niet: dat maakt alle
-documenten onleesbaar en lost niets op. Is de sleutel samen met de
-database gelekt, overleg dan met de ontwikkelaar.</li>
+doorloopt. Is <code>KLUIS_SLEUTEL</code> (of <code>config.php</code>)
+mogelijk gelekt, wissel hem dan volgens <a href="#kluissleutel-wisselen">Kluissleutel wisselen</a>. Vervang hem
+nooit zonder die procedure: dan worden alle documenten onleesbaar.
+Wisselen beschermt niet wat al buitgemaakt is als de database of
+documenten zelf ook gelekt zijn; overleg dan met de ontwikkelaar.</li>
 </ul></li>
 <li><strong>Vastleggen</strong>: Logboek-export van de periode,
 Plesk-logs (access en error) downloaden, screenshots, een tijdlijn van
 wat er gebeurde. Doe dit voor de logs roteren.</li>
 <li><strong>Beoordelen</strong> met het bestuur: welke gegevens, hoeveel
 mensen, welk risico. BSN, kopie ID, gezondheidsgegevens en gegevens van
-minderjarigen wegen zwaar.</li>
+minderjarigen wegen zwaar. Het verwerkingsregister
+(<code>docs/handleiding/verwerkingsregister.md</code>, in het beheer
+onder Hulp en handleidingen) is de bron voor &quot;welke gegevens&quot;: zoek het
+getroffen onderdeel (tabel, scherm of verwerker) op en neem de
+categorieën persoonsgegevens, betrokkenen, ontvangers en bewaartermijn
+daaruit over in de beoordeling en de melding.</li>
 <li><strong>Melden</strong>: tenzij het lek waarschijnlijk geen risico
 oplevert, meldt het bestuur binnen 72 uur na ontdekking bij de
 Autoriteit Persoonsgegevens (meldloket datalekken op
@@ -1425,22 +1590,33 @@ technisch doet, voor de verantwoording naar bestuur en toezichthouder
 rechten per module; sessiecookie alleen via https, HttpOnly,
 SameSite=Lax, acht uur geldig; sessie-id vernieuwt na inloggen en elk
 half uur. &quot;Blijf ingelogd&quot; op het portaal met selector en gehashte
-verifier die bij elk gebruik wisselt.</li>
+verifier die bij elk gebruik wisselt. De wachtwoordlogin van het beheer
+(noodingang) vraagt een tweede stap: TOTP uit een authenticator-app, een
+herstelcode of een e-mailcode (zie <a href="#toegangsbeheer">Toegangsbeheer</a>).</li>
 <li><strong>Brute force en misbruik:</strong> beheerderslogin 5 mislukte
-pogingen per 15 minuten per e-mail én per IP-adres; inlogcode voor
-sollicitanten maximaal 5 pogingen per code en 10 aanvragen per uur per
-IP; verificatiecode bij ondertekenen 5 per uur per document;
-aanmeldformulier 5 per uur per IP met honeypot, via de API 10 per uur
-per bezoeker; vragen via het portaal 3 per uur; uploads 20 per uur per
-dossier; downloads van loondocumenten 30 per uur per sessie, met
+pogingen per 15 minuten per e-mail én per IP-adres, foute tweestapscodes
+tellen mee, plus 5 codepogingen per 15 minuten per account en 20 per IP;
+inlogcode voor sollicitanten maximaal 5 pogingen per code en 10
+aanvragen per uur per IP; verificatiecode bij ondertekenen 5 per uur per
+document; aanmeldformulier 5 per uur per IP met honeypot, via de API 10
+per uur per bezoeker; vragen via het portaal 3 per uur; uploads 20 per
+uur per dossier; downloads van loondocumenten 30 per uur per sessie, met
 watermerk op ID- en bankpasfoto&#39;s.</li>
 <li><strong>Headers:</strong> Content-Security-Policy (scripts en
 verbindingen alleen van de eigen host), HSTS, X-Frame-Options, nosniff,
 Referrer-Policy, Permissions-Policy, gezet in PHP
 (<code>security_headers()</code>), niet in <code>.htaccess</code>.
-Wervingspagina&#39;s hebben een eigen, strengere CSP met
-<code>connect-src &#39;none&#39;</code>. Logo en favicon in
-<code>uploads/branding/</code> krijgen via hun eigen
+Stijlen en lettertypen komen alleen van de eigen host:
+<code>style-src &#39;self&#39; &#39;unsafe-inline&#39;</code> en
+<code>font-src &#39;self&#39; data:</code>, zonder externe domeinen.</li>
+<li><strong>Lettertype:</strong> Instrument Sans staat zelf gehost in
+<code>assets/fonts/</code> (woff2, met de licentie <code>OFL.txt</code>,
+SIL Open Font License). Er gaat geen verzoek en dus geen IP-adres meer
+naar Google Fonts. Voeg geen externe lettertypen of stylesheets toe: de
+CSP blokkeert ze, en het zou een nieuwe doorgifte zijn die in het
+verwerkingsregister en de privacyverklaring moet. Wervingspagina&#39;s
+hebben een eigen, strengere CSP met <code>connect-src &#39;none&#39;</code>.
+Logo en favicon in <code>uploads/branding/</code> krijgen via hun eigen
 <code>.htaccess</code> een CSP met <code>sandbox</code>.</li>
 <li><strong>CSRF:</strong> elk formulier en elke beheer-API met
 token.</li>
@@ -1469,9 +1645,12 @@ in het logboek.</li>
 <li><strong>Bewaartermijnen:</strong> automatische opschoning per
 categorie (instelbaar, moet aan staan; rode waarschuwing zolang het uit
 staat), handmatige vernietiging van loondocumenten na de bewaarplicht,
-privacyverklaring die dezelfde termijnen toont. Het verwerkingsregister
-houdt de ontwikkelaar bij in <code>docs/ai/PROJECT.md</code> §8 (niet in
-Git); het bestuur hoort een actuele kopie te hebben.</li>
+privacyverklaring die dezelfde termijnen toont.</li>
+<li><strong>Verwerkingsregister:</strong> het register van
+verwerkingsactiviteiten (AVG art. 30) staat in Git als
+<code>docs/handleiding/verwerkingsregister.md</code> en in het beheer
+onder Hulp en handleidingen. Werk het bij bij elke nieuwe tabel,
+verwerker of termijn.</li>
 <li><strong>Foutafhandeling:</strong> geen technische details op het
 scherm, wel een referentie; foutmail naar de beheerder.</li>
 </ul>
@@ -1485,8 +1664,6 @@ als beheerder mee rekening houdt.</p>
 onbekend&quot; in plaats van een groen vinkje. Het bewijst wél dat de PDF na
 ondertekening niet is gewijzigd. Een AATL-certificaat kost geld en is
 bewust niet aangeschaft.</li>
-<li>De kluissleutel kan niet worden gewisseld: er is geen functie die
-bestaande documenten opnieuw versleutelt.</li>
 <li>Foto&#39;s van sollicitanten zijn afgeschermd, maar niet versleuteld
 opgeslagen.</li>
 <li>Een oude cronjob-regel met <code>?token=</code> in het adres werkt

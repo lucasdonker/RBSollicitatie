@@ -1,6 +1,6 @@
 # Handleiding beheer — Sollicitatiesysteem Paal 13
 
-Versie 2.101 · september 2026
+Versie 2.102 · september 2026
 
 Het sollicitatiesysteem regelt de hele werving van strandwachten voor Reddingsbrigade Paal 13:
 van de aanmelding op de website, via de selectiedag en het trainingsweekend, tot de aangenomen
@@ -89,7 +89,7 @@ beheerder kan ze per rol aanpassen (zie [Beheerders en rechten](#beheerders-en-r
 |---|---|---|---|
 | **Begeleider** | Sol-Begeleider | Op de selectiedag inchecken en beoordelen (cijfers en observaties), in het trainingsweekend aanwezigheid afvinken en observaties noteren. Geen toegang tot persoonsgegevens of dossiers. | Vandaag, Selectiedag, Trainingsweekend, Dekking |
 | **Bestuur** | Bestuur | De hele werving: uitnodigen, selectiedag indelen en beoordelen, nabespreken en bellen, aannemen, berichten, seizoen en instellingen. | Alles behalve Loondossiers, Beheerders & rechten en Logboek |
-| **Penningmeester** | Sol-Penningmeester | Het loondossier: loonheffing, kopie ID en bankpas inzien, downloaden, als verwerkt markeren en na de bewaarplicht vernietigen. Sollicitanten alleen bekijken. | Vandaag, Sollicitanten, Loondossiers |
+| **Penningmeester** | Sol-Penningmeester | Het loondossier: loonheffing, kopie ID en bankpas inzien, downloaden, als verwerkt markeren en na de bewaarplicht vernietigen. De loonplanning bekijken en bewerken (kosten, scenario's, CSV). Sollicitanten alleen bekijken. | Vandaag, Sollicitanten, Loonplanning, Loondossiers |
 | **Beheerder** (technisch: admin) | Sol-Admin | Alles, ook beheerders, rechten, logboek en systeem. Kan zichzelf nooit buitensluiten. | Alles |
 
 Goed om te weten over de begeleider: met de standaardrechten (Selectiedag: alleen lezen) kan een
@@ -135,6 +135,10 @@ groep die toegang geeft. Zie [Inloggen en rollen](#inloggen-en-rollen).
   technisch beheer. Je leest ze daar met een zoekveld; van elke handleiding is er ook een
   Word-versie om af te drukken of uit te delen. Afvinklijsten zoals hieronder kun je in het beheer
   echt aanvinken; dat wordt op je eigen apparaat onthouden.
+- **Het verwerkingsregister** (AVG artikel 30) staat ook onder **Hulp en handleidingen**, als
+  **Verwerkingsregister (AVG)**. Daarin staat per onderdeel welke persoonsgegevens we verwerken,
+  waarom, met wie en hoe lang. Kijk daar als iemand vraagt "wat doen jullie met mijn gegevens?" of
+  als je een datalek moet beoordelen.
 
 ### Checklist: je eerste week als bestuurslid
 
@@ -164,6 +168,10 @@ Alles van het bestuurslid, plus:
 - [ ] Loop bij [Beheerders en rechten](#beheerders-en-rechten) na wie er toegang heeft en welke rol
    bij welke Authentik-groep hoort. Staat de penningmeester (of iemand met een eigen rol) als
    Begeleider in de lijst, zet de rol dan eenmalig goed.
+- [ ] Heb je een wachtwoord als noodingang? Stel dan in **Mijn profiel** › **Tweestapsverificatie**
+   een authenticator-app in en bewaar de herstelcodes offline, bijvoorbeeld op papier in de kluis
+   van het bestuur, niet in je mail of op dezelfde telefoon. Zie
+   [Wachtwoord als noodingang](#wachtwoord-als-noodingang).
 - [ ] Kijk op [Vandaag](#vandaag) of de systeemstatus op "Systeem in orde" staat en de taakronde
    recent heeft gedraaid; zo niet, zie [Systeem en foutenlog](#systeem-en-foutenlog).
 - [ ] Zet bij [Bewaartermijnen](#bewaartermijnen) het automatisch opschonen aan. Het staat
@@ -288,7 +296,8 @@ Hoe Vandaag de seizoensfase bepaalt:
 
 > **In het kort:** je logt in via Authentik; je rol komt uit je Authentik-groep. Linksonder in
 > de zijbalk zie je wie je bent, je rol en hoe je bent ingelogd. Daar vind je ook Mijn profiel
-> (weergavenaam, wachtwoord, donker thema), Mijn sollicitatie en Uitloggen.
+> (weergavenaam, wachtwoord, tweestapsverificatie, donker thema), Mijn sollicitatie en Uitloggen.
+> Inloggen met een wachtwoord vraagt altijd een tweede stap.
 
 ### Inloggen via Authentik
 
@@ -314,9 +323,30 @@ Twee instellingen bepalen of en hoe je binnenkomt:
 
 Onder de SSO-knop staat "of met wachtwoord": **E-mailadres**, **Wachtwoord** en **Inloggen**. Dit
 is voor als Authentik niet bereikbaar is en werkt alleen voor accounts waar een beheerder een
-wachtwoord voor heeft gezet (zie [Beheerders en rechten](#beheerders-en-rechten)). Na te veel
-mislukte pogingen wordt het tijdelijk geblokkeerd; je ziet hoeveel minuten je moet wachten.
-Mislukte pogingen komen in het logboek.
+wachtwoord voor heeft gezet (zie [Beheerders en rechten](#beheerders-en-rechten)).
+
+Een juist wachtwoord is nog niet genoeg. Je komt op het scherm **Tweede stap**:
+
+- **Heb je een authenticator-app ingesteld** (in Mijn profiel, zie hieronder), vul dan bij **Code
+  uit je app** de code van 6 cijfers in die de app bij "Paal13 Beheer" toont, en klik op
+  **Inloggen**. Telefoon kwijt? Klap **Telefoon kwijt? Gebruik een herstelcode** open, vul een van
+  je herstelcodes in en klik op **Inloggen met herstelcode**. Elke herstelcode werkt één keer; na
+  gebruik zie je hoeveel er nog over zijn.
+- **Heb je geen app ingesteld**, dan krijg je een code per e-mail ("Je inlogcode voor het Paal 13
+  beheer"). Vul die in bij **Code uit de e-mail** en klik op **Inloggen**. De code is 10 minuten
+  geldig en werkt één keer. Geen mail gekregen? Klik op **Stuur een nieuwe code** (hooguit één per
+  minuut en vijf per uur).
+- Met **Annuleren** ga je terug naar het gewone inlogscherm.
+
+De tweede stap moet binnen 5 minuten na je wachtwoord. Duurt het langer, dan zie je "Je
+inlogpoging is verlopen" en log je opnieuw in. Na te veel mislukte pogingen, met het wachtwoord of
+met een code, wordt inloggen tijdelijk geblokkeerd; je ziet hoeveel minuten je moet wachten. Bij
+te veel foute codes zie je "Te veel codepogingen. Wacht een kwartier en log dan opnieuw in."
+Mislukte pogingen en foute codes komen in het logboek.
+
+Een code per e-mail is minder veilig dan een app: wie je wachtwoord én je mailbox heeft, komt
+binnen. Stel daarom een app in als je een wachtwoord hebt. Log je alleen via Authentik in, dan
+regelt Authentik de tweede stap en hoef je hier niets te doen.
 
 ### De zijbalk
 
@@ -354,6 +384,26 @@ Klik op je naam voor **Mijn profiel**:
   observaties en besluiten.
 - **Wachtwoord**: alleen als je account een wachtwoord heeft. Minstens 8 tekens; **Wachtwoord
   wijzigen**. Log je alleen via Authentik in, dan wijzig je je wachtwoord in Authentik.
+- **Tweestapsverificatie**: alleen als je account een wachtwoord heeft. Het label **Tweestaps
+  aan** of **Tweestaps uit** zegt hoe het nu staat. Instellen gaat zo:
+  1. Klik op **Instellen**.
+  2. Open een authenticator-app op je telefoon (bijvoorbeeld Microsoft Authenticator, Google
+     Authenticator, 2FAS of je wachtwoordmanager), kies "account toevoegen" en neem de sleutel
+     over die op het scherm staat. Op je telefoon zelf kan het ook met de link **open in je
+     authenticator-app**. Deel die sleutel met niemand.
+  3. Vul bij **Code uit je app** de code in die de app nu toont en klik op **Bevestigen en
+     aanzetten**. Klopt de code niet, controleer dan of de tijd op je telefoon automatisch wordt
+     ingesteld.
+  4. Je ziet nu acht **herstelcodes**. Dit is de enige keer dat je ze ziet. Schrijf ze op of print
+     ze en bewaar ze offline, niet in je mail of op dezelfde telefoon. Klik daarna op **Ik heb ze
+     bewaard**.
+
+  Staat tweestaps aan, dan zie je sinds wanneer en hoeveel herstelcodes je nog hebt; bij twee of
+  minder krijg je een waarschuwing. Nieuwe telefoon of nieuwe herstelcodes nodig? Vul je **Huidig
+  wachtwoord** en een code uit je app (of een herstelcode) in en klik op **Opnieuw instellen**.
+  Met **Uitzetten** zet je de app uit; inloggen met je wachtwoord vraagt dan weer een code per
+  e-mail. Werkt de kluis niet, dan kun je de app niet instellen; meld dat bij de technisch
+  beheerder.
 - **Voorkeuren**: de schakelaar **Donker thema**. Dit wordt per apparaat onthouden, niet op je
   account. Zonder keuze volgt het beheer de instelling van je apparaat.
 
@@ -729,7 +779,7 @@ Een tabblad dat niets te tonen heeft, verschijnt niet.
 - **Uit het kennismakingsformulier**: opleiding, werkervaring, diploma's, bijzonderheden
   (opvallend als er iets staat) en de motivatie, met **Volledig formulier →**. Het label
   **Concept** betekent dat de sollicitant het formulier nog niet heeft ingediend.
-- **AI-analyse**: als er een analyse is gemaakt (geanonimiseerd).
+- **AI-analyse**: als er een analyse is gemaakt (zonder naam, contactgegevens en bijzonderheden).
 - **Sollicitant verwijderen**: zie [Verwijderen](#verwijderen-uit-het-dossier).
 
 ### Tabblad Dossier, rechts: doen
@@ -757,9 +807,13 @@ Persoonsgegevens, Achtergrond (met diploma's als labels), Motivatie ("Waarom str
 "Waarom juist dit strand?") en Bijzonderheden (rood gemarkeerd als er iets staat), plus social
 media. Een leeg veld staat er als "Niet ingevuld". Onderaan opent **Afdrukweergave en
 wijzigingsgeschiedenis** het formulier om te printen, met **Naar het dossier**, **Afdrukken**,
-**PDF**, **Excel** en, als er een AI-sleutel is ingesteld, **Analyseer nu** (of **Opnieuw
-analyseren**). Een AI-analyse komt in de wachtrij en is binnen enkele minuten klaar; er gaan geen
-naam, adres of contactgegevens naar de AI-dienst.
+**PDF**, **Excel** en, als er een AI-sleutel is ingesteld, het blok **AI Geschiktheidsanalyse** met
+**Analyseer nu** (of **Opnieuw analyseren**) en **Bezwaar vastleggen…**; die knoppen vragen
+bewerkrecht op Sollicitanten. Een AI-analyse komt in de wachtrij en is binnen enkele minuten
+klaar. Naar de AI-dienst gaan geen naam, adres, contactgegevens of foto, en ook niet de
+bijzonderheden (die kunnen medisch zijn). Het advies is een hulpmiddel; het bestuur beslist.
+Heeft de sollicitant bezwaar gemaakt, dan staat daar dat er geen analyse is en er ook geen komt;
+zie [Bezwaar tegen de AI-analyse](#bezwaar-tegen-de-ai-analyse).
 
 ### Tabblad Beschikbaarheid
 
@@ -1176,7 +1230,7 @@ Heeft de sollicitant een fout adres van de ouder ingevuld, dan komt de mail niet
 ## Beschikbaarheid, dekking en loonplanning
 
 **Waar:** zijbalk › Inzet & loon › Beschikbaarheid, Dekking en Loonplanning  
-**Wie:** Beschikbaarheid en Loonplanning: bestuur en admin (bekijken met leesrecht, aanpassen met bewerkrecht). Dekking: begeleider, bestuur en admin, alleen bekijken.
+**Wie:** Beschikbaarheid: bestuur en admin. Loonplanning: bestuur, penningmeester en admin (bekijken met leesrecht, aanpassen met bewerkrecht). Dekking: begeleider, bestuur en admin, alleen bekijken.
 
 > **In het kort:** Beschikbaarheid laat per week zien wie er kan werken. Daar beoordeel je ook
 > de verzoeken om minder dagen, en je corrigeert een week als iemand iets anders doorgeeft.
@@ -1333,9 +1387,10 @@ bekijkt deze planning alleen" en kun je niets wijzigen.
 - **Onderaan**: de totale loonkosten, de mandagen en, als er een budget is, een balk met
   "Restant" of "Over budget". Zonder budget staat er een link naar Instellingen › Lonen & budget.
 
-De CSV-download vraagt leesrecht op Loonplanning. De penningmeester heeft dat standaard niet; geef
-het de rol Penningmeester onder [Beheerders en rechten](#beheerders-en-rechten) als die de
-planning moet kunnen downloaden.
+De penningmeester werkt ook in de loonplanning: die heeft standaard lees- en bewerkrecht, houdt de
+kosten tegen het budget en gebruikt de CSV als tussenstand. Het budget zelf en de lonen staan
+onder Instellingen › Lonen & budget, en dat blijft bij het bestuur. Spreek af wie de actieve
+planning wijzigt. De CSV-download vraagt leesrecht op Loonplanning.
 
 ---
 
@@ -1744,7 +1799,7 @@ alleen welk veld is gewijzigd, nooit de waarde.
 | Berichten | **E-mailserver** | Host, poort, beveiliging (STARTTLS, SSL/TLS of Geen), gebruikersnaam, wachtwoord, afzenderadres en afzendernaam. Daaronder **Testmail versturen**: sla eerst op, vul het adres in en klik op **Verstuur testmail**. |
 | Koppelingen | **Authentik** | De status van de SSO-koppeling, het **Authentik API-token** voor het inloggen van terugkerende sollicitanten via Authentik (verwijderd is alleen inloggen per mail), de **Toegestane admin-groepen** (standaard "Bestuur,Sol-Admin,Sol-Begeleider,Sol-Penningmeester"), de koppeling voor competenties (basis-URL en **API-token (service-account)**, **Test verbinding**, **Nu alle sollicitanten verversen**) en de groep-indeling van de competenties (alleen te bekijken). De tokens zijn geheime velden. |
 | Koppelingen | **Website & API** | De geheime sleutel voor de WordPress-plugin (**Kopieer**; **Nieuwe sleutel genereren** maakt de oude meteen ongeldig), de toegestane websites (CORS, één per regel) en de adressen die de plugin nodig heeft. De sleutel zelf zien, kopiëren en vernieuwen kan alleen wie Systeem mag bewerken (standaard admin); anderen zien **Ingesteld**. |
-| Koppelingen | **AI-analyse** | De **Gemini API-sleutel** (geheim veld) en het model; het vinkje **AI-hulp bij beschikbaarheid** (experimenteel); de prompt voor de analyse van het kennismakingsformulier, met de beschikbare variabelen en **Standaardtekst terugzetten**; en **Automatisch analyseren na ontvangst BLK**. |
+| Koppelingen | **AI-analyse** | De **Gemini API-sleutel** (geheim veld) en het **Model**: Gemini 2.5 Flash (standaard), Gemini 2.5 Flash-Lite (sneller, goedkoper) of Gemini 2.5 Pro (grondiger, trager); een oud model dat Google heeft uitgezet valt vanzelf terug op de standaard. Het vinkje **AI-hulp bij beschikbaarheid** (experimenteel). Het blok **Wat er naar Google gaat**: de instructie voor de analyse staat vast in de code en is niet te bewerken; per sollicitant gaan alleen leeftijdscategorie, opleiding, diploma's en certificaten, werkervaring, de twee motivaties en het aantal beschikbare weken mee, niet de naam, contactgegevens, het adres, de foto of de bijzonderheden. **Automatisch analyseren na ontvangst BLK** (standaard aan): uit betekent alleen handmatig, met **Analyseer nu** bij het volledige formulier. |
 | Privacy & onderhoud | **Bewaren & opschonen** | Een rode waarschuwing zolang automatisch opschonen uit staat. **Automatisch opschonen inschakelen**, de termijnen per soort gegeven (ook het logboek, het foutenlog en de kopie bankpas), de schakelaars voor de downloadmail aan het bestuur en de bezoekersstatistiek, en het **Opschoon-logboek**. Daaronder de cronjob-regel voor Plesk met **Handmatig uitvoeren** en **Nieuw token maken** (alleen voor wie Systeem mag bewerken) en de stand van de AI- en mailwachtrij. Zie [Bewaartermijnen](#bewaartermijnen). |
 
 Onder de tabbladen:
@@ -1839,6 +1894,22 @@ inlogmethode**) en "laatst …" of "nog nooit ingelogd". Per account:
   kan niet meer inloggen, ook niet via Authentik. Wat die persoon deed blijft in het logboek.
   Je eigen account kun je niet uitzetten.
 
+Bij een account met een wachtwoord staat ook het label **Tweestaps aan** (groen: inloggen met het
+wachtwoord vraagt een code uit een authenticator-app) of **Tweestaps uit** (oranje: nog geen app,
+dus een code per e-mail). Zie [Wachtwoord als noodingang](#wachtwoord-als-noodingang).
+
+**Tweestaps resetten** staat alleen bij een account met tweestaps aan, en alleen voor wie de rol
+Beheerder (admin) heeft; het recht op Beheerders & rollen is niet genoeg. Gebruik het alleen als
+iemand de telefoon met de app kwijt is én geen herstelcodes meer heeft:
+
+1. Controleer eerst dat het verzoek echt van die persoon komt: bel of spreek elkaar. Een mail of
+   chatbericht is niet genoeg, want juist dat kan een aanvaller sturen.
+2. Klik op **Tweestaps resetten** en bevestig op het tussenscherm met **Ja, tweestaps resetten**.
+3. De app-koppeling en alle herstelcodes vervallen. Inloggen met het wachtwoord vraagt daarna een
+   code per e-mail. Laat de persoon na het inloggen de app opnieuw instellen in Mijn profiel.
+
+De reset komt in het logboek als "Tweestapsverificatie gereset door een beheerder".
+
 Rechts staat **Account aanmaken**: naam, e-mailadres, een tijdelijk wachtwoord (minimaal 8 tekens)
 en de rol, met de knop **Account aanmaken**. Dat heb je alleen nodig voor iemand die niet via
 Authentik binnenkomt, of als noodingang. Alle wijzigingen komen in het logboek; wachtwoorden zelf
@@ -1852,6 +1923,9 @@ Ligt Authentik plat, dan kan alleen iemand met een wachtwoord in dit systeem nog
 2. Vul een sterk wachtwoord in en klik op **Opslaan**.
 3. Bewaar het veilig, bijvoorbeeld in de wachtwoordkluis van het bestuur. Na te veel mislukte
    pogingen wordt het adres tijdelijk geblokkeerd.
+4. Log één keer in met het wachtwoord (met de code per e-mail) en stel in **Mijn profiel** ›
+   **Tweestapsverificatie** een authenticator-app in. Bewaar de herstelcodes offline. Zonder app
+   hangt de noodingang af van werkende mail, en juist die kan tegelijk met Authentik uitvallen.
 
 Je wachtwoord zelf wijzigen doe je onder **Mijn profiel** (klik linksonder op je naam).
 
@@ -1884,13 +1958,18 @@ Zo staat het op een nieuwe installatie (l = lezen, b = bewerken, v = verwijderen
 | Loondossiers (ID, bankpas, loonheffing) | – | – | l b v | alles |
 | Beschikbaarheid | – | l b | – | alles |
 | Dekking | l | l | – | alles |
-| Loonplanning | – | l b | – | alles |
+| Loonplanning | – | l b | l b | alles |
 | Berichten & sjablonen | – | l b | – | alles |
 | Seizoenbeheer | – | l b | – | alles |
 | Instellingen | – | l b | – | alles |
 | Beheerders & rollen | – | – | – | alles |
 | Systeem, updates & logs | – | – | – | alles |
 | Logboek (alle logs) | – | – | – | alles |
+
+Het recht Loonplanning voor de penningmeester is er sinds versie 2.102. Een bestaande installatie
+krijgt het één keer automatisch (in het logboek als rolwijziging "door systeem"); bestaande
+rechten worden daarbij nooit verlaagd. Wil je het niet, haal het dan weg onder Rollen & rechten
+en klik op **Rechten opslaan**: het systeem zet het daarna niet opnieuw aan.
 
 Wat Selectiedag lezen voor de begeleider betekent: groepen bekijken, inchecken, cijfers en
 observaties geven en de eigen observaties verwijderen. Bewerken (bestuur) voegt de tabletcode, de
@@ -1958,8 +2037,15 @@ opschoon-logboek geldt geen automatische termijn. Zie [Bewaartermijnen](#bewaart
 > **In het kort:** Een sollicitant kan veel zelf in het portaal: alle gegevens downloaden, het account
 > verwijderen, het berichtkanaal kiezen, onthouden apparaten vergeten en een seintje geven of
 > intrekken. Komt een verzoek bij het bestuur binnen, antwoord dan binnen een maand en controleer
-> eerst of het echt de betrokkene is. Stuur nooit een BSN, ID-kopie, bankpas of
-> gezondheidsverklaring per mail.
+> eerst of het echt de betrokkene is. Bezwaar tegen de AI-analyse leg je vast bij het volledige
+> formulier. Stuur nooit een BSN, ID-kopie, bankpas of gezondheidsverklaring per mail. Welke
+> gegevens we waarvoor verwerken, staat in het verwerkingsregister.
+
+Het **verwerkingsregister** (AVG artikel 30) staat onder **Hulp en handleidingen** als
+**Verwerkingsregister (AVG)**. Het beschrijft per onderdeel welke persoonsgegevens we verwerken,
+op welke grond, wie ze krijgt en hoe lang we ze bewaren. Gebruik het bij een verzoek om inzage
+("wat hebben jullie van mij?"), bij vragen over de privacyverklaring en bij een datalek. Verandert
+er iets in wat we verwerken, dan hoort het register mee te veranderen.
 
 ### Wat de sollicitant zelf kan
 
@@ -1969,15 +2055,26 @@ Onder **Mijn gegevens** in het portaal:
   iets niet, dan stelt de sollicitant een vraag via Berichten en past het bestuur het aan (zie
   [Een verzoek om correctie](#een-verzoek-om-correctie)).
 - **Hoe wil je berichten ontvangen?**: WhatsApp, Sms of Alleen e-mail, met **Voorkeur opslaan**.
-- **Al mijn gegevens downloaden** met **Download als JSON**: de persoonsgegevens, het
-  kennismakingsformulier (zonder de AI-analyse), de beschikbaarheid, de berichtgeschiedenis (alleen
-  onderwerp, datum, stand en kanaal) en van ondertekeningen en documenten alleen de gegevens erover,
-  geen BSN, IBAN of handtekening.
+- **Al mijn gegevens downloaden** met **Download als JSON**: alles wat over de sollicitatie is
+  vastgelegd. Dat zijn de persoonsgegevens en de stand van de sollicitatie, het
+  kennismakingsformulier met de wijzigingsgeschiedenis, de AI-analyse (als die er is), de hele
+  beschikbaarheid (ook verzoeken, correcties van het bestuur en de tekst voor de AI-hulp), de
+  selectiedag (groep, inchecken, cijfers, observaties en besluit), het trainingsweekend
+  (aanwezigheid, observaties en besluit), de notities van het bestuur, van ondertekeningen en
+  documenten de gegevens erover, de verstuurde berichten (datum, onderwerp, kanaal en stand) en de
+  onthouden apparaten. Er staan geen BSN, IBAN of handtekening in (die staan in de ondertekende
+  PDF's) en geen bestanden. Bij cijfers en observaties staat "beoordelaar" in plaats van de naam van
+  het bestuurslid of de begeleider. Houd daar rekening mee als je een notitie of observatie schrijft:
+  de sollicitant kan die lezen.
 - **Mijn account verwijderen**: de sollicitant klapt **Definitief verwijderen** open, leest wat er
   gebeurt, typt VERWIJDER en klikt op **Ja, verwijder mijn account**. Naam, contactgegevens,
-  formulier, beschikbaarheid, taken en documenten worden meteen gewist of geanonimiseerd. Het bestuur krijgt de melding "Sollicitant heeft zich
-  teruggetrokken". Is het loondossier al verwerkt, dan wordt dit geweigerd vanwege de wettelijke
-  bewaarplicht.
+  formulier, beschikbaarheid, beoordelingen, taken en documenten worden meteen gewist of
+  geanonimiseerd, net als bij [Alles van deze persoon](#een-dossier-verwijderen). Het bestuur krijgt
+  de melding "Sollicitant heeft zich teruggetrokken". Dat kan ook als het loondossier al verwerkt
+  is. Dan blijft alleen wat de wet eist: het ondertekende loonheffingsformulier, de kopie van het
+  identiteitsbewijs, en de naam en geboortedatum om het dossier terug te vinden. Het IP-adres in
+  het bewijsspoor van dat formulier wordt ingekort. De rest gaat meteen weg. Vernietigt de
+  penningmeester het loondossier na de bewaarplicht, dan verdwijnen ook naam en geboortedatum.
 - **Ingelogd blijven**: als er apparaten onthouden worden, staat hier **Vergeet alle apparaten**.
 
 Onder elk bericht staat een afmeldlink. Een afgewezen sollicitant ziet op de startpagina ook de
@@ -1988,7 +2085,7 @@ seintje-vraag (zie [Seintje bij de volgende werving](#seintje-bij-de-volgende-we
 De privacyverklaring staat op `/privacy.php`. Het aanmeldformulier, de wervingspagina's en de
 WordPress-plugin linken ernaar. De bewaartermijnen in de tekst komen uit dezelfde instellingen als
 het opschonen, en een alinea over AI, WhatsApp of SMS verschijnt alleen als die dienst aanstaat.
-Bij elke aanmelding wordt vastgelegd welke versie iemand las (nu 2026-09b). Daarin staan de
+Bij elke aanmelding wordt vastgelegd welke versie iemand las (nu 2026-09c). Daarin staan de
 gezondheidsverklaring en de intake bij de uitnodiging voor de selectiedag, en voor de loondocumenten
 "5 jaar na het einde van het jaar waarin je voor het laatst bij ons werkte; de penningmeester
 vernietigt ze daarna". Het vinkje op het formulier betekent
@@ -1998,7 +2095,9 @@ overeenkomst te kunnen sluiten.
 ### Een verzoek om inzage
 
 1. Controleer of het verzoek van de sollicitant zelf komt, of bij een minderjarige van de ouder.
-2. Wijs eerst op **Mijn gegevens** › **Download als JSON** in het portaal: dat is meteen compleet.
+2. Wijs eerst op **Mijn gegevens** › **Download als JSON** in het portaal: dat is meteen compleet
+   (zie hierboven wat erin zit). Wil de persoon ook weten waarvoor en hoe lang, verwijs dan naar de
+   privacyverklaring; het verwerkingsregister is de bron als je iets moet nazoeken.
 3. Wil de persoon het anders, open dan het dossier, tabblad **Kennismakingsformulier**, en klik op
    **Afdrukweergave en wijzigingsgeschiedenis**. Daar staan **Afdrukken**, **PDF** (een printbare
    pagina; kies "Opslaan als PDF") en **Excel**. Die export bevat de persoonsgegevens, het formulier,
@@ -2034,12 +2133,40 @@ geanonimiseerd. Moet het bestuur het doen:
    gaan ook het loonheffingsformulier en de ID-kopie weg. Zonder vinkje wordt er niets verwijderd,
    want die stukken vallen onder de wettelijke bewaarplicht. Het vinkje zie je alleen met het recht
    Loondossiers verwijderen (standaard alleen de beheerder); zonder dat recht krijg je een melding.
+   Heeft de persoon wel gewerkt en wil die toch weg, wijs dan op de knop in het portaal: die wist
+   alles behalve het loondossier (zie [Wat de sollicitant zelf kan](#wat-de-sollicitant-zelf-kan)).
 
 **Alles van deze persoon** maakt alle sollicitaties leeg en anonimiseert de persoon, precies zoals
 de knop in het portaal; in het logboek staat "Alle gegevens gewist (AVG-verzoek)", zonder naam.
-**Alleen deze sollicitatie** haalt de sollicitatie van dit seizoen weg met het formulier, de
-beschikbaarheid, de taken, de documenten, de foto en de onthouden apparaten; naam en e-mail blijven
+**Alleen deze sollicitatie** haalt de sollicitatie van dit seizoen weg; naam en e-mail blijven
 bestaan voor andere seizoenen. Dat komt in het logboek als "Sollicitatie verwijderd".
+
+In beide gevallen gaat alles van die sollicitatie mee: het kennismakingsformulier met foto en
+wijzigingen, de AI-analyse, de hele beschikbaarheid (ook verzoeken, correcties en de tekst voor
+de AI-hulp), de selectiedag (indeling, cijfers, observaties, besluit), het trainingsweekend
+(aanwezigheid, observaties, besluit), de notities, de taken en documenten, de onthouden apparaten
+("blijf ingelogd") en de berichten in de wachtrij. Van ondertekeningen blijft alleen staan dát er
+getekend is (soort en moment); naam, e-mail, IP-adres en browser in het bewijsspoor gaan weg. In
+de loonplanning blijven alleen de ingeplande dagen staan voor het kostenoverzicht; de notitie
+verdwijnt.
+
+### Bezwaar tegen de AI-analyse
+
+Een sollicitant mag bezwaar maken tegen de automatische beoordeling van het kennismakingsformulier
+door de AI-dienst. De privacyverklaring zegt dat dit kan via een vraag in Berichten of per mail.
+Komt zo'n verzoek binnen:
+
+1. Open het dossier, tabblad **Kennismakingsformulier**, en klik op **Afdrukweergave en
+   wijzigingsgeschiedenis** (de pagina met het volledige formulier).
+2. Klik in het blok **AI Geschiktheidsanalyse** op **Bezwaar vastleggen…** en bevestig met **Ja,
+   vastleggen**. Dit vraagt bewerkrecht op Sollicitanten.
+3. Een bestaande analyse wordt gewist en de sollicitatie gaat uit de wachtrij. Er wordt daarna
+   nooit meer een analyse gemaakt, ook niet automatisch of met een knop. Op de pagina staat dan dat
+   de sollicitant bezwaar heeft gemaakt.
+4. Laat de sollicitant weten dat het is geregeld. Het bezwaar staat in het logboek.
+
+Dit is niet terug te draaien. Het bezwaar heeft geen gevolgen voor de sollicitatie zelf: het
+bestuur beoordeelt het formulier dan gewoon zonder AI-advies.
 
 ### Wat je nooit per mail doorstuurt
 
@@ -2141,7 +2268,7 @@ termijn aan, lees de verklaring dan even na.
 
 > **In het kort:** Systeem & Updates toont de versie, een systeemcontrole met acht onderdelen, de
 > herinneringen (proefdraaien) en de changelog. Wordt iets rood of oranje, dan lees je hier wat er
-> mis is. Een technische fout heeft een referentienummer; dat zoek je op in het Logboek onder Fouten.
+> mis is. Via de controle Kluis wissel je de kluissleutel. Een technische fout heeft een referentienummer; dat zoek je op in het Logboek onder Fouten.
 > Een los foutenlog met een knop om het te legen bestaat niet meer.
 
 ### Systeem & Updates
@@ -2162,7 +2289,7 @@ en per onderdeel een vinkje, een waarschuwing of een kruis met uitleg:
 | AVG-opschoning | Is de opschoning de laatste drie dagen gedraaid? Staat automatisch opschonen uit, dan is dit een fout. |
 | Mappen & rechten | Kan het systeem uploads wegschrijven? |
 | Configuratie | Zijn het cron-token en het bestuursadres (Instellingen › Afzender & adressen, of de terugval in de configuratie) ingesteld? |
-| Kluis (versleutelde documenten) | Kan het systeem gevoelige documenten versleuteld opslaan? Zonder kluis zijn uploads van ID en bankpas en het loonheffingsformulier geblokkeerd. |
+| Kluis (versleutelde documenten) | Kan het systeem gevoelige documenten versleuteld opslaan? Zonder kluis zijn uploads van ID en bankpas en het loonheffingsformulier geblokkeerd, en kan niemand een authenticator-app instellen. Na het wisselen van de kluissleutel komen er twee waarschuwingen bij: "... versleutelde gegevens staan nog op de oude sleutel" (rond het wisselen af) en "Niets staat meer op de oude sleutel: verwijder KLUIS_SLEUTEL_OUD ..." (laat de technisch beheerder de oude sleutel weghalen). Rood wordt het als gegevens op een sleutel staan die niet meer in de configuratie staat: die zijn onleesbaar tot de sleutel terug is. Bij de controle staat de knop **Kluissleutel wisselen**. |
 | Documentzegel (PDF) | Kan het systeem PDF's verzegelen, en hoe lang is het certificaat nog geldig? Onder 60 dagen komt er een waarschuwing. |
 
 **Controleren & repareren** draait de controle opnieuw en herstelt wat automatisch te herstellen is.
@@ -2174,6 +2301,51 @@ Daaronder staan:
 - **Database**: per groep welke tabellen aanwezig zijn;
 - **Logboek**: een knop **Logboek openen**;
 - **Changelog**: per versie wat er veranderde, met de huidige versie open.
+
+### Kluissleutel wisselen
+
+Gevoelige gegevens (BSN en IBAN bij ondertekeningen, kopieën van ID en bankpas, de ondertekende
+PDF's en de privésleutel van het documentzegel) staan versleuteld in de kluis. De hoofdsleutel daarvan staat in de
+configuratie op de server. Die sleutel wissel je bij een vermoeden van een lek, als iemand vertrekt
+die bij de configuratie kon, en verder eens per jaar.
+
+**Waar:** Systeem & Updates › bij de controle Kluis de knop **Kluissleutel wisselen**. Dit vraagt
+bewerkrecht op Systeem, updates & logs (standaard alleen admin).
+
+Het wisselen gaat in twee delen. De technisch beheerder maakt een nieuwe sleutel en zet die in de
+configuratie; die stappen staan in het runbook systeembeheer, hoofdstuk config.php, onder
+"Kluissleutel wisselen". Daarna pak jij op dit scherm alle gegevens opnieuw in met de nieuwe
+sleutel. Het scherm toont nooit een sleutel, en in het logboek komen alleen aantallen.
+
+Wat je op het scherm ziet:
+
+- **Stand van de kluis**: de huidige sleutelversie, en of er nog een oude sleutel in de
+  configuratie staat (**nee**, grijs, of **ja, versie …**, oranje).
+- Een tabel per soort gegeven met **Totaal**, **Huidige versie** (al op de nieuwe sleutel) en
+  **Nog te doen**. Groen **niets** betekent klaar; oranje "… over" betekent dat er nog iets op de
+  oude sleutel staat; rood betekent dat gegevens op een sleutel staan die niet meer in de
+  configuratie staat en dus onleesbaar zijn. Dan moet de technisch beheerder de oude sleutel
+  terugzetten.
+- **Zo wissel je de sleutel**: de vijf stappen, met een vinkje bij wat klaar is en de stap die nu
+  aan de beurt is gemarkeerd.
+
+Opnieuw inpakken:
+
+1. Laat de technisch beheerder eerst een back-up maken en de nieuwe sleutel in de configuratie
+   zetten (stap 1 en 2).
+2. Klik op **Herversleutelen** en bevestig met **Ja, herversleutelen**.
+3. Het gaat in batches van 200. Na elke batch zie je de stand; klik op **Volgende batch** tot er 0
+   over staat. Met **Stoppen, later verder** onderbreek je; wat klaar is wordt de volgende keer
+   overgeslagen. Mislukt er iets, dan staat dat op het scherm en gaat de rest gewoon door.
+4. Staat alles op de nieuwe versie, dan zie je dat in een groene melding. Laat de technisch
+   beheerder daarna de back-up controleren en de oude sleutel uit de configuratie halen. Tot dat
+   gebeurt, geeft de systeemcontrole een waarschuwing.
+
+De koppeling met een authenticator-app (tweestaps) staat niet in deze tabel en wordt niet opnieuw
+ingepakt. Is de oude sleutel weg, dan vraagt inloggen met een wachtwoord een code per e-mail in
+plaats van een code uit de app. Laat wie een wachtwoord heeft de app daarna opnieuw instellen in
+Mijn profiel (**Opnieuw instellen** met een herstelcode, of anders eerst **Tweestaps resetten**
+bij Beheerders).
 
 ### Fouten opzoeken
 

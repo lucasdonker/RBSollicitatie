@@ -1,11 +1,11 @@
 # Runbook systeembeheer — Sollicitatiesysteem Paal 13
 
-Versie 2.101 · september 2026
+Versie 2.102 · september 2026
 
 Dit document is voor wie de servers beheert: installeren, uitrollen naar productie, configuratie,
 back-ups, herstel, toegangsbeheer, incidenten en het lezen van de logs. Het is de enige plek waar
-de technische stappen staan. Wat het bestuur in het beheer doet, staat in de
-[handleiding beheer](handleiding_beheer.md).
+de technische stappen staan. Wat het bestuur in het beheer doet, staat in de handleiding beheer
+(`docs/handleiding/handleiding_beheer.md`, in het beheer onder Hulp en handleidingen).
 
 De handleidingen staan als Markdown in `docs/handleiding/`. De map `docs/` is op de server
 afgeschermd (`docs/.htaccess`); in het beheer lees je ze via het vraagteken rechtsboven of
@@ -363,9 +363,18 @@ Let op:
   `KLUIS_SLEUTEL_OUD` met de juiste versie.
 - Oude back-ups blijven op de oude sleutel. Bewaar die sleutel zo lang als die back-ups bestaan,
   gescheiden van de nieuwe.
-- De bewijs-hash van een ondertekening is berekend over het versleutelde BSN/IBAN-veld. Na het
-  wisselen staat per ondertekening een logboekregel `kluis_blob_herwrapt` met de sha256 van het
-  oude en het nieuwe veld, zodat die hash herleidbaar blijft.
+- De interne bewijs-hash van een ondertekening (`ondertekeningen.bewijs_hash`) is berekend over het
+  versleutelde BSN/IBAN-veld. Na een wissel klopt die hash dus niet meer met wat in de database
+  staat: het veld is opnieuw ingepakt, de inhoud is gelijk. Dat is geen probleem voor het bewijs.
+  Het juridische bewijs is de verzegelde PDF; die verandert niet en het zegel blijft geldig. De
+  rotatie legt per ondertekening de sha256 van het oude en het nieuwe veld vast in het logboek
+  (`kluis_blob_herwrapt`), zodat je de keten van de oude hash naar het huidige veld kunt herleiden.
+  Controleer je later een bewijs-hash, neem die logboekregels dan mee.
+- Het tweestaps-geheim van beheerders (`beheerders.tweestaps_geheim`) zit **niet** in de
+  herversleuteling. Zolang `KLUIS_SLEUTEL_OUD` staat, blijft het leesbaar. Haal je de oude sleutel
+  weg, dan valt de noodingang voor die accounts terug op de code per e-mail (zie
+  [Toegangsbeheer](#toegangsbeheer)); laat ze de app daarna opnieuw instellen in Mijn profiel, of
+  reset hun tweestaps bij Beheerders.
 - Het logboek bevat per batch `kluis_herversleuteld` met aantallen; nooit een sleutel.
 - Formulieren op wervingspagina's die op het moment van wisselen open staan, kunnen één keer
   worden geweigerd als hun beveiliging op de sleutel terugvalt; opnieuw versturen werkt.
@@ -448,7 +457,7 @@ In Authentik hoort per omgeving één OAuth2/OpenID-provider met:
   Ontbreekt de tweede, dan krijgen sollicitanten die via Authentik inloggen "Redirect URI Error".
 - Scopes `openid profile email`, en de groepen in het token (claim `groups`).
 - Groepen en rollen: `Sol-Admin` (rol admin, alles), `Bestuur` (rol bestuur),
-  `Sol-Penningmeester` (rol penningmeester: loondossiers en sollicitanten lezen),
+  `Sol-Penningmeester` (rol penningmeester: loondossiers, loonplanning en sollicitanten lezen),
   `Sol-Begeleider` (rol begeleider: selectiedag en dekking lezen). Welke groep bij welke rol hoort
   en wat een rol mag, pas je aan in Beheer › Rollen & rechten.
 - **Toegestane groepen:** Instellingen › Authentik, veld met groepen die het beheer in mogen
@@ -467,14 +476,16 @@ In Authentik hoort per omgeving één OAuth2/OpenID-provider met:
 
 Nieuwe beheerders maak je niet in het beheer aan: zet de persoon in Authentik in de juiste groep
 en laat hem één keer inloggen. Wachtwoordlogin (`/admin/login.php`) bestaat nog als noodingang
-voor accounts waarvoor in het beheer een wachtwoord is gezet (zie [Toegangsbeheer](#toegangsbeheer)).
+voor accounts waarvoor in het beheer een wachtwoord is gezet. Die noodingang heeft een eigen
+tweede stap (zie [Toegangsbeheer](#toegangsbeheer)).
 
 ## Toegangsbeheer
 
 > **In het kort:** Toegang loopt via Authentik-groepen: uit alle toegestane groepen halen trekt de
 > SSO-toegang in. Heeft het account ook een wachtwoord, zet het dan daarnaast op non-actief in
 > Beheerders. Controleer de toegang elk seizoen en houd de noodingang met wachtwoord tot één
-> account.
+> account. De noodingang vraagt altijd een tweede stap (NIS2): een code uit een authenticator-app
+> of, zonder app, een code per e-mail.
 
 **Iemand erbij**
 
@@ -496,13 +507,62 @@ voor accounts waarvoor in het beheer een wachtwoord is gezet (zie [Toegangsbehee
 - [ ] Leg Authentik-groepen `Sol-*` en `Bestuur`, Beheer › Beheerders en Beheer › Rollen &
   rechten naast elkaar. Iedereen die actief is heeft een reden.
 - [ ] Hoogstens één account met wachtwoordlogin (noodingang), met een lang wachtwoord dat in de
-  wachtwoordkluis staat. Die inlog heeft geen tweede factor.
+  wachtwoordkluis staat. In Beheer › Beheerders staat bij dat account **Tweestaps aan**; staat er
+  **Tweestaps uit**, laat de eigenaar dan een authenticator-app instellen.
 - [ ] Wie mag Systeem bewerken? Dat recht (standaard alleen admin) geeft zicht op de API-sleutel
   en het cron-token, en toegang tot de SQL-migraties. Instellingen bewerken (standaard bestuur en
   admin) toont geen geheimen, maar kan ze wel vervangen of wissen.
 - [ ] Wie heeft de module Documenten (BSN, IBAN, ID)? Standaard alleen penningmeester en admin.
 - [ ] Staat de penningmeester (of iemand met een eigen rol) in Beheerders als Begeleider? Dat is
   een restant van vóór 2.101; zet de rol goed.
+- [ ] Sinds 2.102 heeft de penningmeester lees- en bewerkrecht op Loonplanning. Een bestaande
+  installatie kreeg dat één keer automatisch (vlag `rechten.toegevoegd.penningmeester.loonplanning`
+  in `instellingen`, logboekregel `rol_gewijzigd` "door systeem"). Haalt een admin het weg in
+  Rollen & rechten, dan blijft het weg.
+
+**Noodingang met tweestaps (NIS2)**
+
+Een Authentik-inlog krijgt zijn tweede factor van Authentik. De wachtwoordlogin op
+`/admin/login.php` heeft daarom een eigen tweede stap (`includes/tweestaps.php`), zodat ook de
+noodingang MFA heeft, zoals de zorgplicht van NIS2 vraagt.
+
+- Een juist wachtwoord logt nog niet in. Het zet een tussenstand in de sessie (sessie-id wordt
+  vernieuwd) die 5 minuten geldig is. Daarbinnen moet de tweede stap slagen.
+- **Met app:** een TOTP-code (RFC 6238, 6 cijfers, 30 seconden, één stap klokverschil, uitgever
+  "Paal13 Beheer"). Een gebruikte code werkt geen tweede keer. Het geheim staat als kluis-blob in
+  `beheerders.tweestaps_geheim`. Instellen, opnieuw instellen en uitzetten doet de beheerder zelf
+  in Mijn profiel; uitzetten en opnieuw instellen vragen wachtwoord plus code.
+- **Herstelcodes:** acht per keer, alleen als `password_hash` bewaard (`beheerders.tweestaps_herstel`),
+  elk één keer bruikbaar. De beheerder ziet ze alleen direct na het instellen.
+- **Zonder app (terugval):** een eenmalige code per e-mail, 10 minuten geldig, als sha256 in
+  `otp_tokens` (type `beheer_2fa`), hooguit één per minuut en vijf per uur per account. Dit
+  vereist **werkende mail**: ligt de mailserver plat (of zit de mailbox achter dezelfde Authentik),
+  dan komt iemand zonder app niet binnen. Zorg dus dat minstens de noodingang een app heeft.
+- **Meldingstype:** de mail is het type "Inlogcode beheer (noodingang)" (`beheer_code`), alleen
+  e-mail, wordt altijd direct verstuurd en de inhoud wordt nooit gelogd. Het sjabloon is aan te
+  passen, maar laat `{{otp_code}}` erin staan.
+- **Kapotte of gewisselde `KLUIS_SLEUTEL`:** is het geheim niet te ontsleutelen, dan valt de
+  tweede stap terug op de e-mailcode (regel `tweestaps: geheim van beheerder #… niet te
+  ontsleutelen` in het serverlog). Een app instellen kan pas weer als de kluis werkt.
+- **Blokkade:** foute codes tellen mee in `login_pogingen`, net als een fout wachtwoord (5 per 15
+  minuten per e-mail en per IP). Daarbovenop een rate limit van 5 codepogingen per 15 minuten per
+  account en 20 per IP.
+- **Logboek:** `tweestaps_aangezet`, `tweestaps_uitgezet`, `tweestaps_gereset`,
+  `tweestaps_mislukt`, `tweestaps_herstelcode` en `tweestaps_mailcode`.
+
+**Tweestaps resetten** (telefoon kwijt én geen herstelcodes):
+
+1. Controleer de identiteit buiten het systeem om: bel de persoon op een bekend nummer of spreek
+   elkaar. Een mail- of chatverzoek alleen is niet genoeg.
+2. Beheer › Beheerders › **Tweestaps resetten** bij dat account, bevestigen met **Ja, tweestaps
+   resetten**. Alleen de rol admin ziet die knop.
+3. App-koppeling en herstelcodes vervallen; de volgende wachtwoordlogin vraagt een e-mailcode.
+4. Laat de persoon direct daarna een nieuwe app instellen in Mijn profiel en controleer bij
+   Beheerders dat er weer **Tweestaps aan** staat.
+
+Komt het resetverzoek onverwacht, of kent iemand anders het wachtwoord mogelijk: wijzig dan ook het
+wachtwoord (Beheerders › **Wachtwoord**) en kijk in het Logboek naar `tweestaps_mislukt` en mislukte
+logins voor dat account.
 
 **Sollicitanten op het portaal**
 
@@ -606,7 +666,11 @@ Alles in deze tabel staat nu als veld op het tabblad Bewaren & opschonen, behalv
 `bewaar.loondocumenten_jaar`. Daar staan ook de schakelaars `documenten.download_melding` (mail
 aan het bestuur bij elke download van een loondocument, standaard aan) en `paginas.tracking`
 (bezoekersstatistiek van wervingspagina's en aanmeldformulier, standaard aan). Een AVG-verzoek
-(`includes/avg_wissen.php`) neemt ook de rijen van die persoon in `mail_queue` mee.
+(`includes/avg_wissen.php`) neemt ook de rijen van die persoon in `mail_queue` mee, net als
+selectiedag, trainingsweekend, beschikbaarheid, `portaal_apparaten` en het IP-adres in het
+bewijsspoor van ondertekeningen. Wat er gewist wordt (`avg_sollicitatie_leegmaken()`) en wat de
+sollicitant bij inzage downloadt (`avg_inzage()`) staat op één plek; een nieuwe tabel met
+persoonsgegevens hoort in allebei en in het verwerkingsregister.
 
 **Privacyverklaring**
 
@@ -615,7 +679,7 @@ aan het bestuur bij elke download van een loondocument, standaard aan) en `pagin
   sms verschijnen alleen als die dienst aanstaat. Een termijn wijzigen = de verklaring verandert
   mee.
 - Verandert de tekst zelf (in code), dan hoort `PRIVACY_VERSIE` in `includes/functions.php`
-  omhoog (nu `2026-09b`). Bij elke aanmelding wordt vastgelegd welke versie iemand las.
+  omhoog (nu `2026-09c`). Bij elke aanmelding wordt vastgelegd welke versie iemand las.
 - Schakel je een nieuwe dienst in (bijvoorbeeld sms of een andere mailprovider), controleer dan
   of die als verwerker in de verklaring staat en of er een verwerkersovereenkomst is.
 - De verklaring belooft dat back-ups na verloop van tijd automatisch verdwijnen. Houd de
@@ -771,7 +835,11 @@ gelekte back-up, een beheerder die meer zag dan mocht.
 3. **Vastleggen**: Logboek-export van de periode, Plesk-logs (access en error) downloaden,
    screenshots, een tijdlijn van wat er gebeurde. Doe dit voor de logs roteren.
 4. **Beoordelen** met het bestuur: welke gegevens, hoeveel mensen, welk risico. BSN, kopie ID,
-   gezondheidsgegevens en gegevens van minderjarigen wegen zwaar.
+   gezondheidsgegevens en gegevens van minderjarigen wegen zwaar. Het verwerkingsregister
+   (`docs/handleiding/verwerkingsregister.md`, in het beheer onder Hulp en handleidingen) is de
+   bron voor "welke gegevens": zoek het
+   getroffen onderdeel (tabel, scherm of verwerker) op en neem de categorieën persoonsgegevens,
+   betrokkenen, ontvangers en bewaartermijn daaruit over in de beoordeling en de melding.
 5. **Melden**: tenzij het lek waarschijnlijk geen risico oplevert, meldt het bestuur binnen 72
    uur na ontdekking bij de Autoriteit Persoonsgegevens (meldloket datalekken op
    autoriteitpersoonsgegevens.nl). Bij een hoog risico worden ook de betrokkenen geïnformeerd.
@@ -793,16 +861,23 @@ back-up met hersteltest, incidentprocedure) volgen de zorgplicht als goede prakt
 - **Toegang:** SSO via Authentik met groepen; rollen en rechten per module; sessiecookie alleen
   via https, HttpOnly, SameSite=Lax, acht uur geldig; sessie-id vernieuwt na inloggen en elk half
   uur. "Blijf ingelogd" op het portaal met selector en gehashte verifier die bij elk gebruik
-  wisselt.
+  wisselt. De wachtwoordlogin van het beheer (noodingang) vraagt een tweede stap: TOTP uit een
+  authenticator-app, een herstelcode of een e-mailcode (zie [Toegangsbeheer](#toegangsbeheer)).
 - **Brute force en misbruik:** beheerderslogin 5 mislukte pogingen per 15 minuten per e-mail én
-  per IP-adres; inlogcode voor sollicitanten maximaal 5 pogingen per code en 10 aanvragen per uur
+  per IP-adres, foute tweestapscodes tellen mee, plus 5 codepogingen per 15 minuten per account en
+  20 per IP; inlogcode voor sollicitanten maximaal 5 pogingen per code en 10 aanvragen per uur
   per IP; verificatiecode bij ondertekenen 5 per uur per document; aanmeldformulier 5 per uur per
   IP met honeypot, via de API 10 per uur per bezoeker; vragen via het portaal 3 per uur; uploads
   20 per uur per dossier; downloads van loondocumenten 30 per uur per sessie, met watermerk op
   ID- en bankpasfoto's.
 - **Headers:** Content-Security-Policy (scripts en verbindingen alleen van de eigen host), HSTS,
   X-Frame-Options, nosniff, Referrer-Policy, Permissions-Policy, gezet in PHP
-  (`security_headers()`), niet in `.htaccess`. Wervingspagina's hebben een eigen, strengere CSP met
+  (`security_headers()`), niet in `.htaccess`. Stijlen en lettertypen komen alleen van de eigen
+  host: `style-src 'self' 'unsafe-inline'` en `font-src 'self' data:`, zonder externe domeinen.
+- **Lettertype:** Instrument Sans staat zelf gehost in `assets/fonts/` (woff2, met de licentie
+  `OFL.txt`, SIL Open Font License). Er gaat geen verzoek en dus geen IP-adres meer naar Google
+  Fonts. Voeg geen externe lettertypen of stylesheets toe: de CSP blokkeert ze, en het zou een
+  nieuwe doorgifte zijn die in het verwerkingsregister en de privacyverklaring moet. Wervingspagina's hebben een eigen, strengere CSP met
   `connect-src 'none'`. Logo en favicon in `uploads/branding/` krijgen via hun eigen `.htaccess`
   een CSP met `sandbox`.
 - **CSRF:** elk formulier en elke beheer-API met token.
@@ -823,8 +898,10 @@ back-up met hersteltest, incidentprocedure) volgen de zorgplicht als goede prakt
   gelogd; berichtinhoud komt nooit in het logboek.
 - **Bewaartermijnen:** automatische opschoning per categorie (instelbaar, moet aan staan; rode
   waarschuwing zolang het uit staat), handmatige vernietiging van loondocumenten na de
-  bewaarplicht, privacyverklaring die dezelfde termijnen toont. Het verwerkingsregister houdt de ontwikkelaar
-  bij in `docs/ai/PROJECT.md` §8 (niet in Git); het bestuur hoort een actuele kopie te hebben.
+  bewaarplicht, privacyverklaring die dezelfde termijnen toont.
+- **Verwerkingsregister:** het register van verwerkingsactiviteiten (AVG art. 30) staat in Git als
+  `docs/handleiding/verwerkingsregister.md` en in het beheer onder Hulp en handleidingen.
+  Werk het bij bij elke nieuwe tabel, verwerker of termijn.
 - **Foutafhandeling:** geen technische details op het scherm, wel een referentie; foutmail naar
   de beheerder.
 

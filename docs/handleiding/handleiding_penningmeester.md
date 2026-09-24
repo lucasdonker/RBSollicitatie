@@ -1,11 +1,12 @@
 # Handleiding penningmeester — Loondossiers
 
-Versie 2.101 · september 2026
+Versie 2.102 · september 2026
 
-Deze handleiding is voor de penningmeester. Je werkt vooral op één scherm in het beheer:
-**Loondossiers**. Daar staat per aangenomen strandwacht alles wat de loonadministratie nodig
-heeft. Alleen de penningmeester en de admin kunnen deze stukken inzien; het bestuur ziet dit
-scherm niet.
+Deze handleiding is voor de penningmeester. Je werkt vooral op twee schermen in het beheer:
+**Loondossiers** en **Loonplanning**. In Loondossiers staat per aangenomen strandwacht alles wat
+de loonadministratie nodig heeft. Alleen de penningmeester en de admin kunnen deze stukken
+inzien; het bestuur ziet dit scherm niet. In de Loonplanning zie je wie er wordt ingezet en wat
+dat kost; die deel je met het bestuur.
 
 ## Inhoud
 
@@ -18,8 +19,9 @@ scherm niet.
 7. [Een dossier verwerken](#een-dossier-verwerken)
 8. [Bankpas vernietigen](#bankpas-vernietigen)
 9. [Bewaartermijnen en verwijderen](#bewaartermijnen-en-verwijderen)
-10. [Wat je nooit doet](#wat-je-nooit-doet)
-11. [Veelgestelde vragen](#veelgestelde-vragen)
+10. [Loonplanning](#loonplanning)
+11. [Wat je nooit doet](#wat-je-nooit-doet)
+12. [Veelgestelde vragen](#veelgestelde-vragen)
 
 ---
 
@@ -28,18 +30,24 @@ scherm niet.
 > **In het kort:** jij zet de gegevens van aangenomen strandwachten in de loonadministratie. Je
 > downloadt de stukken uit Loondossiers, verwerkt ze en markeert het dossier als verwerkt. Na de
 > wettelijke bewaarplicht vernietig je de loondocumenten zelf; het systeem zet ze voor je klaar.
+> In de Loonplanning houd je de loonkosten tegen het budget in de gaten.
 
 **Jouw rol.** Na het trainingsweekend neemt het bestuur strandwachten aan. Vanaf dat moment
 leveren zij in het portaal hun loonheffingsformulier, een kopie van hun identiteitsbewijs en een
 kopie van hun bankpas in. Jij haalt die stukken op, zet ze in de loonadministratie en markeert
 het dossier daarna als verwerkt. Je beslist niet over aannemen of afwijzen; dat doet het bestuur.
+Daarnaast kijk je mee in de Loonplanning: wie wordt ingezet, wat kost dat en past het in het
+budget.
 
 **Wat je doet, en wanneer:**
 
 - [ ] **Vóór het seizoen:** log één keer in (zie [Inloggen](#inloggen)) en controleer dat je
-  het menu-item Loondossiers ziet. Vraag het bestuur om jouw e-mailadres in te vullen als
-  penningmeester-adres (Instellingen › Afzender & adressen). Anders gaan de meldingen naar het
-  bestuursadres.
+  de menu-items Loonplanning en Loondossiers ziet. Vraag het bestuur om jouw e-mailadres in te
+  vullen als penningmeester-adres (Instellingen › Afzender & adressen). Anders gaan de meldingen
+  naar het bestuursadres.
+- [ ] **Bij de begroting:** geef het bestuur het seizoensbudget voor loonkosten door. Het bestuur
+  vult dat in bij Instellingen › Lonen & budget, samen met de minimumlonen. Daarna zie je in de
+  Loonplanning of de planning erbinnen past (zie [Loonplanning](#loonplanning)).
 - [ ] **Na het trainingsweekend (de aannames):** open Loondossiers. Elke aangenomen strandwacht
   staat er, ook als er nog niets is ingeleverd.
 - [ ] **Zodra er een mail "Loondossier compleet" komt:** klik op de knop in de mail. Je komt direct
@@ -50,13 +58,16 @@ het dossier daarna als verwerkt. Je beslist niet over aannemen of afwijzen; dat 
 - [ ] **Elke week, tot alles verwerkt is:** kijk in Loondossiers. De balk bovenaan zegt hoeveel
   dossiers nog op verwerking wachten. Staat een dossier lang op oranje, laat het bestuur de
   strandwacht dan herinneren.
+- [ ] **Tijdens het seizoen, bijvoorbeeld elke maand:** open de Loonplanning en kijk onderaan naar
+  de totale loonkosten en het restant van het budget. Download zo nodig een CSV als tussenstand
+  voor het bestuur of de loonadministratie.
 - [ ] **Elk jaar, bijvoorbeeld in januari:** kijk onderaan Loondossiers of de kaart **Te beoordelen
   voor vernietiging** er staat. Controleer die namen in de loonadministratie en vernietig wat over
   de bewaarplicht is (zie
   [Loondossiers vernietigen na de bewaarplicht](#loondossiers-vernietigen-na-de-bewaarplicht)).
 
-**Rondleiding.** In het beheer staat een interactieve rondleiding "Penningmeester: loondossiers".
-Die loopt met je langs de echte schermen en wijst aan wat waar staat en wat jij moet doen. De
+**Rondleiding.** In het beheer staat een interactieve rondleiding "Penningmeester: loondossiers en
+loonplanning". Die loopt met je langs de echte schermen en wijst aan wat waar staat en wat jij moet doen. De
 eerste keer staat hij op Vandaag klaar in het blok **Nieuw in het beheer?**; daarna vind je hem
 onder **Hulp en handleidingen** onderin het menu (of via het vraagteken rechtsboven › **Alle
 rondleidingen**). Op het scherm Loondossiers kun je in het vraagteken ook **Rondleiding van dit
@@ -64,8 +75,8 @@ scherm** kiezen. Stoppen kan altijd met **Stoppen** of Esc.
 
 ## Inloggen
 
-> **In het kort:** log in via Authentik op het beheer. Je ziet drie menu-items: Vandaag,
-> Sollicitanten en Loondossiers.
+> **In het kort:** log in via Authentik op het beheer. Je ziet vier menu-items: Vandaag,
+> Sollicitanten, Loonplanning en Loondossiers.
 
 **Waar:** `https://sollicitatie.paal13.com/admin/`  
 **Wie:** je Authentik-account zit in de groep `Sol-Penningmeester`.  
@@ -74,7 +85,9 @@ Kies "Inloggen via Authentik". In het menu zie je:
 
 - **Vandaag**: het startscherm met de stand van het seizoen;
 - **Sollicitanten**: alleen lezen, zodat je bij een dossier kunt kijken wie iemand is;
-- **Loondossiers**: jouw werkscherm.
+- **Loonplanning** (in de groep Inzet & loon): wie er wordt ingezet en wat dat kost; zie
+  [Loonplanning](#loonplanning);
+- **Loondossiers** (ook in Inzet & loon): jouw werkscherm voor de loonadministratie.
 
 Zie je meer of minder, of krijg je de melding "Je Authentik-account heeft geen admin-toegang", dan
 staat je account in Authentik in de verkeerde groep. Meld dat bij de admin.
@@ -208,8 +221,12 @@ Wat er dan gebeurt:
   Staat opschonen uit, vernietig de bankpasfoto dan zelf (zie [Bankpas vernietigen](#bankpas-vernietigen)).
 - Het loonheffingsformulier en de kopie van het identiteitsbewijs blijven staan tot jij ze na de
   bewaarplicht vernietigt (zie [Bewaartermijnen en verwijderen](#bewaartermijnen-en-verwijderen)).
-- De strandwacht kan het account niet meer zelf verwijderen, omdat de wettelijke bewaarplicht
-  voorgaat. Het portaal legt dat uit.
+- Verwijdert de strandwacht daarna zelf het account, dan blijft het loondossier staan omdat de
+  wettelijke bewaarplicht voorgaat: het loonheffingsformulier, de kopie ID, de naam en de
+  geboortedatum. Al het andere verdwijnt. Het portaal legt dat vooraf uit. In het overzicht van het
+  seizoen staat de persoon dan niet meer, maar na de bewaarplicht verschijnt die gewoon in **Te
+  beoordelen voor vernietiging**. Vernietig je het loondossier, dan verdwijnen ook naam en
+  geboortedatum.
 
 Markeer een dossier pas als verwerkt als het echt verwerkt is. Zelf terugdraaien kan niet; vraag
 dan de admin.
@@ -281,11 +298,60 @@ Doe deze controle één keer per jaar, bijvoorbeeld in januari. Zie de afvinklij
 ### Terugtrekken
 
 Trekt een strandwacht zich terug vóórdat het dossier verwerkt is, dan kan die de gegevens zelf
-verwijderen in het portaal; de stukken worden dan meteen vernietigd. Is het dossier al verwerkt en
-gaat het dienstverband toch niet door, dan kan alleen iemand met zowel het recht om sollicitanten
+verwijderen in het portaal; de stukken worden dan meteen vernietigd. Na het verwerken kan dat ook,
+maar dan blijft het loondossier staan (zie [Een dossier verwerken](#een-dossier-verwerken)). Is
+het dossier al verwerkt en gaat het dienstverband toch niet door, dan kan alleen iemand met zowel het recht om sollicitanten
 te verwijderen als het recht om loondossiers te verwijderen het dossier verwijderen (standaard
 alleen de admin). Het systeem vraagt dan met een apart vinkje om te bevestigen dat het
 dienstverband niet is doorgegaan.
+
+## Loonplanning
+
+**Waar:** Beheer › Loonplanning (in de menugroep Inzet & loon)  
+**Wie:** penningmeester, bestuur en admin. Jij mag de planning bekijken en bewerken.
+
+> **In het kort:** de loonplanning laat per persoon en per week zien wie er wordt ingezet en wat
+> dat kost, in één of meer scenario's. Jij gebruikt hem om de loonkosten tegen het budget te
+> houden en als tussenstand voor de begroting. Het budget en de lonen zelf stelt het bestuur in.
+
+Het bestuur maakt meestal de planning; jij kijkt vooral naar de kosten. Je kunt ook zelf dagen
+aanpassen of een scenario maken. Elke wijziging wordt meteen opgeslagen en het bestuur ziet hem
+ook. Stem dus af voordat je iets in de actieve planning verandert.
+
+**Scenario's.** Bovenaan staan de scenario's. De ster met het woord **Actief** wijst de planning
+aan die geldt. Wil je een alternatief doorrekenen, bijvoorbeeld "wat als we in juni twee mensen
+minder inzetten?", klik dan op **+ Dupliceren**, geef het scenario een naam en klik op
+**Dupliceren**. Je werkt dan in een kopie; de actieve planning blijft zoals hij was. Bij een
+scenario dat niet actief is staan **Maak actief** en **Verwijderen** (met bevestiging). Maak een
+scenario alleen actief als het bestuur dat heeft besloten.
+
+**Kosten per persoon en per week.** In de tabel staat per persoon een rij en per week een kolom:
+
+- met een vinkje neem je iemand die week op; het systeem vult dan vijf dagen in, en dat aantal
+  kun je aanpassen. Een "–" betekent dat de persoon die week niet beschikbaar is;
+- in elke cel staan de kosten van die week, rechts in de rij de totale kosten en dagen van die
+  persoon;
+- de **Functie** per persoon (keuzelijst) bepaalt mee het dagloon;
+- de onderste rijen tonen de dekking per week en de regel **Kosten p/w**: de loonkosten van die
+  week voor iedereen samen.
+
+Het dagloon hangt af van de leeftijd, de functie en de maand (juni heeft andere lonen dan juli
+tot en met september). Klap **Loontabel (dagloon per leeftijd & functie)** open om te zien welk
+dagloon het systeem gebruikt. Boven de tabel staan eventueel **Signalen**, bijvoorbeeld iemand
+die meer dagen staat ingepland dan die kan. Dat zijn aandachtspunten, geen blokkades.
+
+**Budget.** Onderaan staan de **Totale loonkosten** en de mandagen. Is er een budget ingesteld, dan
+zie je een balk met **Restant** of **Over budget**. Staat er "Geen budget ingesteld", dan moet het
+bestuur het budget nog invullen bij Instellingen › Lonen & budget. Daar staan ook de minimumuurlonen
+per leeftijd, het vakantietoeslagpercentage en de werkuren per dag. Die instellingen kun jij niet
+wijzigen; klopt er iets niet, bijvoorbeeld na een nieuwe verhoging van het wettelijk minimumloon,
+geef het dan door aan het bestuur.
+
+**CSV-export.** De knop **CSV** bij de scenario's downloadt het getoonde scenario als bestand voor
+Excel: per persoon de naam, de leeftijd, de functie, de beschikbare en ingeplande weken, de
+ingeplande dagen en de totale kosten. Gebruik het als tussenstand voor de begroting of als
+controle bij de loonadministratie. Er staan geen BSN of rekeningnummers in, maar wel namen:
+bewaar het bestand niet langer dan nodig.
 
 ## Wat je nooit doet
 
@@ -344,6 +410,6 @@ Vernietig dan niets. Het systeem kijkt alleen naar het laatste seizoen waarin ie
 aangenomen voorkwam. Werkte die persoon later nog, bijvoorbeeld zonder nieuwe sollicitatie, dan
 loopt de bewaarplicht langer. De naam blijft in de lijst staan; dat is geen probleem.
 
-**Ik wil de loonplanning als CSV downloaden, maar dat mag niet.**  
-Die download vraagt het recht Loonplanning, en dat heeft de penningmeester standaard niet. Vraag
-de admin om dat recht als je het nodig hebt.
+**Ik zie Loonplanning niet in het menu.**  
+De penningmeester heeft het recht Loonplanning standaard. Een admin kan het bij Rollen & rechten
+hebben weggehaald; vraag de admin om het terug te zetten als je het nodig hebt.
