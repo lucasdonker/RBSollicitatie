@@ -836,6 +836,18 @@ Per test de cijfers per criterium met het gemiddelde; bij meerdere beoordelaars 
 wat gaf. Daaronder de observaties met beoordelaar, datum en soort. Rechts het totaalgemiddelde en
 het besluit van de nabespreking, met wie het nam en wanneer er is gebeld.
 
+### Tabblad Inzet
+
+Alleen met leesrecht op de loonplanning. Per week: wat de sollicitant opgaf, de vastgestelde
+**afspraak** (groen, zodra de loonplanning definitief is) en hoe de persoon in elk scenario staat
+(de ster is het actieve). Bovenaan of de persoon vaststaat na het TW-gesprek. Via **Naar de
+loonplanning** pas je het aan.
+
+### Tabblad Trainingsweekend
+
+Bevestiging en inchecken, de observaties van het weekend, en het gesprek: besluit, interne notitie
+en het bericht aan de sollicitant.
+
 ### Tabblad Ondertekeningen
 
 Bij een minderjarige een melding met de gegevens van de ouder of verzorger, of de waarschuwing dat
@@ -1411,33 +1423,49 @@ Elke wijziging wordt direct opgeslagen. Met alleen leesrecht op Loonplanning kun
    **definitief maakt** (na het trainingsweekend) en is daarna de bron voor het portaal van de
    sollicitant, de dekking en de Excel voor de loonadministratie.
 
-- **Scenario's**: bovenaan. **+ Dupliceren** maakt een kopie (met betaald/onbetaald en functies).
-  Bij een scenario dat niet actief is staan **Maak actief** en **Verwijderen**.
-- **Concept / Definitief**: de balk onder de scenario's. **Loonplanning definitief maken** maakt het
-  getoonde scenario de actieve planning én de afspraak van iedereen die is aangenomen. Wie is
-  aangenomen maar nergens staat ingepland, krijgt geen afspraak; die naam staat in de melding.
-- **De tabel**: per persoon de **Functie** en per week een vinkje (inplannen), het aantal dagen en
-  **betaald** (uitzetten voor een onbetaalde week, bijvoorbeeld "8 weken waarvan 5 betaald").
-  Alle weken van het seizoen zijn te plannen, ook weken die iemand niet opgaf (stippelrand; dat
-  komt ook bij de signalen). Een oranje rand betekent meer dagen dan opgegeven, of meer dan vijf.
-- **Functie**: staat per persoon. "voorstel" betekent dat het systeem hem koos: een nieuwe
-  sollicitant is Aspirant, wie in Authentik een Lifeguard-rang heeft krijgt die rang (Junior,
-  Lifeguard, Senior). Kies je zelf, dan verdwijnt "voorstel". Postcommandant kies je altijd zelf.
-- **Afspraak per persoon**: na definitief maken staat bij de naam "Afspraak dd-mm". Wijzig je daarna
-  iets in het scenario, dan staat er **Wijkt af van afspraak** met de knop **Afspraak bijwerken**.
-  Wordt iemand later aangenomen, dan staat er **Afspraak vaststellen**. Elke vaststelling komt in
-  het logboek.
-- **Signalen (N)**: aandachtspunten, geen blokkades: meer dagen dan opgegeven, een week die niet is
-  opgegeven, meer dan vijf dagen, of weinig rust over de weekgrens.
-- **Dekking** (onderste rijen): rekent met wie je werkelijk inplant. Daaronder de kosten per week.
-- **Onderaan**: totale loonkosten (alleen betaalde dagen), mandagen met het aantal onbetaalde
-  dagen, en de budgetbalk.
+Het scherm heeft dezelfde opbouw als Beschikbaarheid, van boven naar beneden:
 
+- **Scenario**: de knoppen met de scenario's; de ster is de actieve planning (die zie je ook in het
+  TW-gesprek). **Kopie maken** dupliceert het getoonde scenario en opent de kopie. Bij een scenario
+  dat niet actief is staan **Maak actief** en **Verwijderen**.
+- **Loonkosten, werkdagen en budget**: de kosten van betaalde dagen, het aantal werkdagen (en
+  hoeveel daarvan onbetaald) en de budgetbalk met wat er nog over is.
+- **Concept of definitief**: **Definitief maken** maakt het getoonde scenario de actieve planning én
+  de afspraak van iedereen die is aangenomen. Wie is aangenomen maar nergens staat ingepland, krijgt
+  geen afspraak; die naam staat in de melding. Onder **Exporteren**: de Excel voor de
+  loonadministratie (vastgesteld of dit scenario) en de export voor het rooster (Excel of JSON; zie
+  [Rooster-koppeling](rooster_koppeling.md)).
+- **Ingepland per week**: hoeveel mensen je per week hebt ingepland, tegen de norm van de posten.
+- **Filters**: zoek op naam, functie, wie (in de procedure of aangenomen) en toon alleen wie een
+  afwijking heeft, nog niet is ingepland, of wel of niet vaststaat na het gesprek.
+- **De planning**: per persoon per week staat groot wat je plant en klein wat iemand opgaf ("kan 4";
+  "niet opg." als de week niet is opgegeven). Blauw is gepland, oranje met "onb." is onbetaald, rood
+  met een stippelrand is meer dan opgegeven. Een streepje met "kan 4" is opgegeven maar niet
+  gepland. Onderaan per week het aantal ingeplande mensen (en hoeveel in het weekend) en de kosten.
+
+**Een week plannen**: klik op de cel. In het paneel zie je per dag of iemand kan, liever niet of
+niet kan (met de reden: vakantie, bijbaan, en dergelijke). Vink **Deze week inplannen** aan (dat
+zet vijf dagen, of minder als iemand minder opgaf), zet het aantal dagen met **−** en **+**, en zet
+**Betaald** uit voor een onbetaalde week. Elke wijziging slaat meteen op. **Zelfde voor de volgende
+opgegeven weken** plant de weken erna hetzelfde, nooit met meer dagen dan iemand opgaf.
+
+**Onbetaalde weken** zijn echte werkdagen die je met de sollicitant afspreekt; alleen het loon valt
+weg. Ze tellen mee in de dekking, staan in de afspraak en gaan gewoon naar het rooster.
+
+**Minder plannen dan opgegeven** (bijvoorbeeld 3 dagen terwijl iemand er 4 opgaf) is gewoon goed: de
+afspraak zegt 3, en het rooster kiest 3 van de 4 dagen waarop iemand kan. **Meer plannen dan
+opgegeven** kan ook, maar dan is de cel rood: bespreek het met de sollicitant.
+
+**Een persoon**: klik op de naam. Je ziet de **Functie** ("voorstel": nieuw = Aspirant, anders de
+Lifeguard-rang uit Authentik; Postcommandant kies je zelf), de totalen, de **afspraak** (na definitief
+maken: bijwerken naar dit scenario als het afwijkt, of vaststellen voor wie later is aangenomen) en
+of de persoon **vaststaat na het TW-gesprek**. Vaststaan betekent: in alle scenario's gelijk en op
+slot. **Ontgrendelen** vraagt een reden (die komt in het logboek); zet het daarna weer vast met
+**Vastzetten vanuit dit scenario**.
 Het dagloon rekent met de leeftijd op de maandag van elke week: wie halverwege het seizoen jarig
 is, krijgt vanaf die week het hogere tarief.
 
-**Excel voor de loonadministratie**: **Excel (vastgesteld)** (pas na definitief maken) en **Excel
-(dit scenario)** (met CONCEPT bovenaan elk tabblad). Vier tabbladen: Per persoon (geboortedatum,
+**Excel voor de loonadministratie** (onder Exporteren): vastgesteld (pas na definitief maken) of dit scenario (met CONCEPT bovenaan elk tabblad). Vier tabbladen: Per persoon (geboortedatum,
 functie, dagen betaald en onbetaald, bruto totaal), Weekmatrix, Opgave vs afspraak en Tarieven en
 budget. BSN, IBAN en adres staan er bewust niet in: die heeft de penningmeester in het loondossier.
 Elke download komt in het logboek.

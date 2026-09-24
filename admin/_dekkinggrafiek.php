@@ -7,6 +7,7 @@
  *   $_weken    array   wn => ['kort' => '22 jun', …]  (voor de tooltip)
  *   $_titel    ?string kop boven de grafiek       (standaard "Dekking per week")
  *   $_klik     ?string JS-sjabloon met %d voor het weeknummer; maakt de staven klikbaar
+ *   $_woord    ?string wat de getallen zijn: "beschikbaar" (standaard) of "ingepland"
  *
  * De grafiek staat bovenaan het scherm omdat de eerste vraag "is er een probleem?"
  * is en niet "wie is er beschikbaar?" (ontwerpfilosofie §1). De knelpunten staan
@@ -17,6 +18,7 @@ $_dek   = $_dek   ?? [];
 $_weken = $_weken ?? [];
 $_titel = $_titel ?? 'Dekking per week';
 $_klik  = $_klik  ?? null;
+$_woord = $_woord ?? 'beschikbaar';
 if (!$_dek) return;
 
 $_norm  = (int)(reset($_dek)['norm'] ?? 0);
@@ -54,7 +56,7 @@ $_zin   = bh_dekking_zin($_knel);
       $_laag = $_d['stand'] === 'slecht';
       $_tip  = 'Week ' . $_wn
              . (isset($_weken[$_wn]['kort']) ? ' (' . $_weken[$_wn]['kort'] . ')' : '')
-             . ' — ' . $_d['aantal'] . ' beschikbaar, ' . $_d['weekend'] . ' in het weekend'
+             . ' — ' . $_d['aantal'] . ' ' . $_woord . ', ' . $_d['weekend'] . ' in het weekend'
              . ($_d['telt'] === 'weekend' ? ' · alleen weekend bemand' : '');
       $_cel  = '<span class="bh-dekstaaf-getal">' . (int)$_d['waarde'] . '</span>'
              . '<span class="bh-dekstaaf-bak"><span class="bh-dekstaaf-vul" style="--h: ' . $_h . '%"></span></span>'
@@ -77,4 +79,4 @@ $_zin   = bh_dekking_zin($_knel);
   </p>
 </section>
 <?php
-$_klik = null; $_titel = 'Dekking per week';
+$_klik = null; $_titel = 'Dekking per week'; $_woord = 'beschikbaar';

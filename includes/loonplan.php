@@ -267,6 +267,7 @@ function loonplan_analyse(int $seizoen_id, int $scenario_id, ?array $seizoen = n
                 'dagloon'   => $dagloon,
                 'kosten'    => $kosten,
                 'max'       => $max,
+                'opgave_dagen' => array_map('intval', $eff[$wk]['dagen'] ?? []),   // weekdagen 1–7 die iemand opgaf
                 'leeftijd'  => $lft_wk,
             ];
 
@@ -398,6 +399,33 @@ function loonplan_functie_zetten(int $scenario_id, int $sol_id, string $functie)
            ->execute([$scenario_id, $sol_id, mb_substr($functie, 0, 50)]);
         return true;
     } catch (\Exception $e) { error_log('loonplan_functie_zetten: ' . $e->getMessage()); return false; }
+}
+
+/**
+ * Eén persoon in alle scenario's van het seizoen, voor het dossier (tab Inzet).
+ * @return array [ ['id','naam','actief','functie','weken' => [wk => ['dagen','betaald']]] ]  actief scenario eerst
+ */
+function loonplan_persoon_scenarios(int $seizoen_id, int $sol_id): array {
+    loonplan_auto_setup();
+    $uit = [];
+    try {
+        $q = db()->prepare("SELECT id, naam, actief FROM loon_scenario WHERE seizoen_id=? ORDER BY actief DESC, id");
+        $q->execute([$seizoen_id]);
+        foreach ($q->fetchAll() as $s) $uit[(int)$s['id']] = ['id' => (int)$s['id'], 'naam' => (string)$s['naam'], 'actief' => !empty($s['actief']), 'functie' => null, 'weken' => []];
+        if (!$uit) return [];
+        $ph = implode(',', array_fill(0, count($uit), '?'));
+        $q = db()->prepare("SELECT scenario_id, week_nr, dagen, betaald FROM loon_planning
+                            WHERE sollicitatie_id=? AND opgenomen=1 AND dagen>0 AND scenario_id IN ($ph) ORDER BY week_nr");
+        $q->execute(array_merge([$sol_id], array_keys($uit)));
+        foreach ($q->fetchAll() as $r) {
+            $s = (int)($r['scenario_id'] ?? 0);
+            if (isset($uit[$s])) $uit[$s]['weken'][(int)$r['week_nr']] = ['dagen' => (int)$r['dagen'], 'betaald' => (int)$r['betaald']];
+        }
+        $q = db()->prepare("SELECT scenario_id, functie_sleutel FROM loon_scenario_persoon WHERE sollicitatie_id=? AND scenario_id IN ($ph)");
+        $q->execute(array_merge([$sol_id], array_keys($uit)));
+        foreach ($q->fetchAll() as $r) { $s = (int)($r['scenario_id'] ?? 0); if (isset($uit[$s])) $uit[$s]['functie'] = (string)$r['functie_sleutel']; }
+    } catch (\Exception $e) {}
+    return array_values($uit);
 }
 
 /** [sol_id => functie] zoals in dit scenario vastgelegd. */

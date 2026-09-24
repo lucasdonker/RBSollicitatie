@@ -76,18 +76,9 @@ $_functies = array_column(functies_ophalen(), 'naam', 'sleutel');
     <?php if ($_af): ?>
     <section class="ds-kaart ds-kaart-p">
       <div class="bh-kaartkop"><h2>Afgesproken inzet</h2></div>
-      <p class="bh-dossier-tekst">
-        <?= h($_functies[$_af['functie_sleutel']] ?? (string)$_af['functie_sleutel']) ?>
-        · <?= array_sum(array_column($_af['weken'], 'dagen')) ?> dagen
-        <?php $_onb = array_sum(array_map(fn($w) => $w['betaald'] ? 0 : $w['dagen'], $_af['weken'])); ?>
-        <?= $_onb ? '(waarvan ' . $_onb . ' onbetaald)' : '' ?>
-      </p>
-      <ul class="bh-twopgave">
-        <?php foreach ($_af['weken'] as $_wk => $_w): ?>
-          <li><span>W<?= (int)$_wk ?></span> <strong><?= (int)$_w['dagen'] ?> d</strong><?= $_w['betaald'] ? '' : ' onbetaald' ?></li>
-        <?php endforeach; ?>
-      </ul>
-      <span class="bh-meta bh-dossier-voetregel">vastgesteld <?= h(datum_nl(substr((string)$_af['vastgesteld_op'], 0, 10))) ?></span>
+      <p class="bh-dossier-tekst"><?= h($_functies[$_af['functie_sleutel']] ?? (string)$_af['functie_sleutel']) ?>
+        · <?= array_sum(array_column($_af['weken'], 'dagen')) ?> dagen.
+        <a href="<?= APP_URL ?>/admin/sollicitant.php?id=<?= (int)$tab_dossier['sol']['id'] ?>&amp;tab=inzet">Per week bekijken</a></p>
     </section>
     <?php endif; ?>
   </aside>

@@ -3,10 +3,21 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.115.0');
+define('APP_VERSIE', '2.116.0');
 
 function app_changelog(): array {
     return [
+        '2.116.0' => [
+            'datum'  => '2026-09-24',
+            'titel'  => 'Loonplanning opnieuw opgebouwd, en de inzet in het dossier',
+            'punten' => [
+                'Zelfde opbouw als Beschikbaarheid: stand en budget, ingepland per week tegen de norm, filters en het raster',
+                'Per cel groot wat je plant en klein wat iemand opgaf ("kan 4"); rood als het meer is dan opgegeven, oranje als het onbetaald is',
+                'Klik een week: je ziet per dag of iemand kan, liever niet of niet (met de reden), en plant met één vinkje, − en + en betaald. "Zelfde voor de volgende opgegeven weken" scheelt klikken',
+                'Klik een naam: functie, afspraak en vastzetten of ontgrendelen (met reden)',
+                'Dossier: nieuw tabblad Inzet met de opgave, de vastgestelde afspraak en alle scenario\'s van die persoon',
+            ],
+        ],
         '2.115.0' => [
             'datum'  => '2026-09-24',
             'titel'  => 'Rooster: per week de afspraak, per dag of iemand kan',

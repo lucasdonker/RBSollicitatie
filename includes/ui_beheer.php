@@ -146,22 +146,28 @@ function bh_voortgang(int $gedaan, int $totaal, array $opt = []): string {
  * @param string $tekst  wat er in de cel staat: "5", "wk", of "—" voor niets.
  *                       Verplicht: een gekleurd vlakje zonder inhoud zegt niets tegen
  *                       iemand die kleuren niet onderscheidt, en niets tegen een schermlezer.
- * @param string $soort  vol | weekend | deels | correctie | verzoek | leeg  (onbekend → leeg)
- *                       verzoek = er ligt een minder-dagen-verzoek dat nog beoordeeld moet worden
+ * @param string $soort  Beschikbaarheid: vol | weekend | deels | correctie | verzoek | leeg
+ *                       (verzoek = er ligt een minder-dagen-verzoek dat nog beoordeeld moet worden)
+ *                       Loonplanning: gepland | onbetaald | open (opgegeven, niet gepland) | let (afwijking)
+ *                       Onbekend → leeg.
  * @param array  $opt    titel:?string (tooltip, wordt ook aria-label) ·
- *                       klik:?string (JS-aanroep; maakt er een <button> van)
+ *                       klik:?string (JS-aanroep; maakt er een <button> van) ·
+ *                       data:?array (data-attributen, voor een gedeelde klikhaak i.p.v. onclick) ·
+ *                       sub:?string (kleine tweede regel, bijv. wat iemand opgaf: "kan 4")
  */
 function bh_weekcel(string $tekst, string $soort = 'leeg', array $opt = []): string {
     if (trim($tekst) === '') return '';
-    if (!in_array($soort, ['vol', 'weekend', 'deels', 'correctie', 'verzoek', 'leeg'], true)) $soort = 'leeg';
+    if (!in_array($soort, ['vol', 'weekend', 'deels', 'correctie', 'verzoek', 'leeg', 'gepland', 'onbetaald', 'open', 'let'], true)) $soort = 'leeg';
     $cls   = 'bh-weekcel bh-weekcel-' . $soort;
     $titel = !empty($opt['titel']) ? (string)$opt['titel'] : '';
     $attr  = $titel !== '' ? ' title="' . h($titel) . '" aria-label="' . h($titel) . '"' : '';
-    if (empty($opt['klik'])) {
-        return '<span class="' . $cls . '"' . $attr . '>' . h($tekst) . '</span>';
+    foreach (($opt['data'] ?? []) as $k => $v) $attr .= ' data-' . h((string)$k) . '="' . h((string)$v) . '"';
+    $inhoud = h($tekst) . (isset($opt['sub']) && $opt['sub'] !== '' ? '<span class="bh-weekcel-sub">' . h((string)$opt['sub']) . '</span>' : '');
+    if (empty($opt['klik']) && empty($opt['data'])) {
+        return '<span class="' . $cls . '"' . $attr . '>' . $inhoud . '</span>';
     }
     return '<button type="button" class="' . $cls . ' bh-weekcel-klik"' . $attr
-         . ' onclick="' . h((string)$opt['klik']) . '">' . h($tekst) . '</button>';
+         . (!empty($opt['klik']) ? ' onclick="' . h((string)$opt['klik']) . '"' : '') . '>' . $inhoud . '</button>';
 }
 
 /**

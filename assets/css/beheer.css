@@ -1415,6 +1415,13 @@ button.bh-weekcel-klik:hover, button.bh-weekcel-klik:focus-visible { outline: 2p
 .bh-weekcel-correctie { background: var(--fase-blauw-vlak);  color: var(--fase-blauw); }
 .bh-weekcel-leeg      { background: none; }
 .bh-weekcel-verzoek   { background: var(--fase-oranje-vlak); color: var(--fase-oranje); outline: 1.5px dashed currentColor; outline-offset: -4px; }
+/* Loonplanning: het getal is wat je plant, de kleine regel wat iemand opgaf. */
+.bh-weekcel:has(.bh-weekcel-sub) { flex-direction: column; gap: 0; min-height: 44px; line-height: 1.15; }
+.bh-weekcel-sub       { font-size: 10px; font-weight: 500; color: var(--ink-muted); }
+.bh-weekcel-gepland   { background: var(--fase-blauw-vlak);  color: var(--navy); font-size: 15px; }
+.bh-weekcel-onbetaald { background: var(--fase-oranje-vlak); color: var(--fase-oranje); font-size: 13px; }
+.bh-weekcel-open      { background: none; color: var(--ink-muted); font-weight: 400; }
+.bh-weekcel-let       { background: var(--fase-rood-vlak); color: var(--fase-rood); font-size: 15px; outline: 1.5px dashed currentColor; outline-offset: -4px; }
 
 /* ── Zijpaneel: één week van één persoon bewerken ──
    Rechts op een groot scherm, onderin op een telefoon — daar is de duim. */
@@ -2710,62 +2717,89 @@ input.bh-testbericht-nummer { width: 160px; }
 input.bh-testbericht-email { width: 220px; }
 select.bh-testbericht-kanaal { width: 120px; }
 
-/* ── Loonplanning (admin/loonplanning.php; .lt/.totb/.budget-* staan in de <style> van dat scherm) ── */
-.bh-lp-scenariorij { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.bh-lp-scenariolabel { font-size: 12px; font-weight: 600; color: var(--tekst-zacht); }
-.bh-lp-dupliceer { display: flex; gap: 8px; margin-top: 10px; align-items: center; flex-wrap: wrap; }
-input.bh-lp-dupnaam { flex: 1; min-width: 200px; padding: 7px 10px; border: 1px solid var(--rand); border-radius: 6px; font-size: 13px; }
-.bh-kaartbody.bh-lp-leeg { text-align: center; color: var(--tekst-zacht); padding: 40px; }
-/* Loonplanning: definitief-balk, afspraakstatus per persoon, betaald/onbetaald per cel */
-.bh-lp-definitief { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--rand); }
-.bh-lp-definitief .bh-meta { flex: 1; min-width: 240px; }
-.bh-lp-afspraak { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; margin-top: 4px; white-space: normal; }
-.bh-lp-afspraakform { margin-top: 4px; }
-.bh-lp-betaald { display: flex; align-items: center; justify-content: center; gap: 3px; font-size: 10px; color: var(--tekst-zacht); margin-top: 2px; cursor: pointer; }
-.bh-lp-betaald[hidden] { display: none; }
-.bh-lp-betaald input { margin: 0; }
-.wcel.onb { background: var(--fase-oranje-vlak); }
-.wcel.nb.op, .wcel.nb.onb { outline: 1.5px dashed var(--fase-oranje); outline-offset: -3px; }
-/* Signalen-kaart: ook door de JS van het scherm opnieuw opgebouwd */
-.ds-kaart.bh-signalen { margin-bottom: 12px; border-left: 4px solid var(--oranje); }
-.bh-signalen-kop { font-size: 13.5px; font-weight: 600; margin-bottom: 6px; }
-.bh-signalen-uitleg { font-size: 12px; color: var(--tekst-zacht); margin-bottom: 8px; }
-.bh-signalen-lijst { margin: 0; padding-left: 18px; font-size: 12.5px; line-height: 1.7; }
-.bh-lp-uitleg { font-size: 12.5px; color: var(--tekst-zacht); margin-bottom: 10px; }
-.bh-lp-tabelrol {
-  overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%;
-  border-radius: var(--radius-lg); border: 1px solid var(--rand);
+/* ── Loonplanning (admin/loonplanning.php + admin/lp/) ──
+   Zelfde taal als Beschikbaarheid: kop met de stand, dekking per week, filters, raster, zijpaneel. */
+.bh-lp-kop { display: flex; flex-direction: column; gap: 14px; }
+.bh-lp-scenarios { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.bh-lp-sclijst { display: flex; gap: 6px; flex-wrap: wrap; }
+.bh-lp-sc {
+  display: inline-flex; align-items: center; gap: 5px; min-height: 34px; padding: 0 13px;
+  border: 1px solid var(--border); border-radius: 999px; font-size: 13px; font-weight: 600;
+  color: var(--ink-soft); text-decoration: none; background: var(--surface);
 }
-.bh-lp-weekdatum { font-weight: 400; font-size: 10px; opacity: .8; }
-.lt th.bh-lp-totaalkop { min-width: 80px; }
-.bh-lp-opnemen { margin-bottom: 2px; }
-.bh-lp-nb { color: var(--grijs); font-size: 14px; }
-.lt td.bh-lp-persoontotaal { text-align: center; font-weight: 600; }
-.lt td.bh-lp-dekuitleg { font-weight: 400; font-size: 10px; }
-.lt td.bh-lp-weekkosten { font-size: 11px; }
-.bh-lp-loontabel { margin-top: 14px; }
-.bh-lp-loontabel > summary { cursor: pointer; font-size: 13px; color: var(--tekst-zacht); }
-.bh-lp-loontabel > .ds-kaart { margin-top: 8px; overflow-x: auto; }
-.bh-lp-loontabel table { font-size: 11px; border-collapse: collapse; width: 100%; }
-.bh-lp-loontabel thead tr { background: var(--grijs-bg); }
-.bh-lp-loontabel thead tr:first-child th { padding: 6px; }
-.bh-lp-loontabel th.bh-lp-loontabel-leeftijd { text-align: left; }
-.bh-lp-loontabel-periodes { font-size: 10px; }
-.bh-lp-loontabel-periodes th + th { padding: 3px; }
-.bh-lp-loontabel td { padding: 5px 6px; text-align: right; }
-.bh-lp-loontabel td.bh-lp-loontabel-jr { font-weight: 600; text-align: start; }
-.bh-lp-totlabel { font-size: 11px; color: var(--tekst-zacht); }
-.bh-lp-totgetal { font-size: 19px; font-weight: 700; }
-.bh-lp-budget { flex: 1; min-width: 200px; }
-.bh-lp-budgetregel { display: flex; justify-content: space-between; font-size: 11px; color: var(--tekst-zacht); margin-bottom: 3px; }
-.bh-lp-restant { font-weight: 600; }
-/* Breedte komt als --w uit PHP en uit de JS (werkBij); de kleur zegt ok / krap / over. */
-.bh-lp-budget .budget-vul { width: var(--w, 0%); }
-.budget-vul.bh-budget-ok   { background: var(--groen); }
-.budget-vul.bh-budget-krap { background: var(--oranje); }
-.budget-vul.bh-budget-over { background: var(--rood); }
-.bh-lp-geenbudget { font-size: 12px; color: var(--tekst-zacht); }
+.bh-lp-sc:hover { border-color: var(--navy); color: var(--navy); }
+.bh-lp-sc.nu { background: var(--navy); border-color: var(--navy); color: var(--op-vol); }
+.bh-lp-nieuw > summary { list-style: none; cursor: pointer; }
+.bh-lp-nieuw > summary::-webkit-details-marker { display: none; }
+.bh-lp-nieuwform { display: flex; gap: 6px; align-items: center; margin-top: 6px; }
+.bh-lp-nieuwform .ds-input { height: 36px; font-size: 13px; width: 200px; }
+.bh-lp-stand { display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid var(--bg-subtle); }
+.bh-lp-getal { display: flex; flex-direction: column; gap: 2px; }
+.bh-lp-getal strong { font-size: 22px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+.bh-lp-budget { flex: 1; min-width: 240px; display: flex; flex-direction: column; gap: 5px; }
+.bh-lp-budgetbalk { display: block; height: 10px; border-radius: 5px; background: var(--bg-subtle); overflow: hidden; }
+.bh-lp-budgetvul { display: block; height: 100%; width: var(--w, 0%); background: var(--f-tekst); transition: width .3s; }
+.bh-lp-status { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid var(--bg-subtle); }
+.bh-lp-status > .bh-meta { flex: 1; min-width: 260px; }
+.bh-lp-knoppen { display: flex; gap: 6px; flex-wrap: wrap; align-items: flex-start; }
+.bh-lp-export { position: relative; }
+.bh-lp-export > summary { list-style: none; }
+.bh-lp-export > summary::-webkit-details-marker { display: none; }
+.bh-lp-exportlijst {
+  position: absolute; right: 0; top: calc(100% + 4px); z-index: 20; min-width: 260px; margin: 0; padding: 6px;
+  list-style: none; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-float);
+}
+.bh-lp-exportlijst a { display: block; padding: 8px 10px; border-radius: var(--radius-sm); font-size: 13px; color: var(--ink); text-decoration: none; }
+.bh-lp-exportlijst a:hover, .bh-lp-exportlijst a:focus-visible { background: var(--bg-subtle); }
 
+.bh-lp-smal { display: none; margin: 0; padding: 12px 20px; font: var(--text-meta); color: var(--ink-soft); }
+.bh-lp-naam { gap: 6px; }
+.bh-lp-persoonknop {
+  flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 1px;
+  background: none; border: none; padding: 4px 0; cursor: pointer; font-family: inherit; text-align: left;
+}
+.bh-lp-naamtekst { font-size: 13px; font-weight: 600; color: var(--navy); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bh-lp-persoonknop:hover .bh-lp-naamtekst { text-decoration: underline; }
+.bh-lp-persoonknop:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.bh-lp-naamsub { font-size: 11px; color: var(--ink-muted); font-weight: 400; }
+.bh-lp-slot { display: inline-flex; color: var(--fase-groen); }
+.bh-lp-tot { flex-direction: column; gap: 0; line-height: 1.2; }
+.bh-lp-tot strong { font-size: 13px; color: var(--ink); }
+.bh-lp-tot span { font-size: 11px; font-weight: 400; }
+.bh-lp-weekkosten { font-size: 11px; font-weight: 500; color: var(--ink-soft); }
+
+/* Het zijpaneel */
+.bh-lp-paneel[hidden] { display: none; }
+.bh-lp-vastmelding { display: flex; gap: 8px; align-items: flex-start; margin: 0; padding: 10px 12px; border-radius: var(--radius-sm);
+  background: var(--fase-groen-vlak); color: var(--fase-groen); font-size: 13px; }
+.bh-lp-vastmelding[hidden] { display: none; }
+.bh-lp-dagen { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.bh-lp-dag { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 2px; border-radius: var(--radius-sm); font-size: 12px; }
+.bh-lp-dag strong { font-size: 12px; }
+.bh-lp-dag em { font-style: normal; font-size: 10px; }
+.bh-lp-dag.ja     { background: var(--fase-groen-vlak); color: var(--fase-groen); }
+.bh-lp-dag.liever { background: var(--fase-oranje-vlak); color: var(--fase-oranje); }
+.bh-lp-dag.nee    { background: var(--bg-subtle); color: var(--ink-muted); text-decoration: line-through; }
+.bh-lp-dag.nee em { text-decoration: none; }
+.bh-lp-redenen { margin: 0; padding-left: 18px; font-size: 12px; color: var(--ink-soft); }
+.bh-lp-stepper { display: flex; align-items: center; gap: 8px; }
+.bh-lp-stepper output { min-width: 32px; text-align: center; font-size: 20px; font-weight: 700; color: var(--navy); font-variant-numeric: tabular-nums; }
+.bh-lp-stepper .ds-btn { min-width: 44px; min-height: 44px; font-size: 18px; }
+.bh-lp-signalen { margin: 0; font-size: 13px; font-weight: 600; color: var(--fase-rood); }
+.bh-lp-signalen:empty { display: none; }
+
+.bh-inzet-afspraak { background: var(--fase-groen-vlak) !important; }
+.bh-lp-loontabel { margin-top: 14px; }
+.bh-lp-loontabel > summary { cursor: pointer; padding: 14px 20px; font-size: 13px; color: var(--ink-soft); }
+.bh-lp-loontab { width: 100%; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; }
+.bh-lp-loontab th, .bh-lp-loontab td { padding: 6px 8px; border-top: 1px solid var(--bg-subtle); text-align: right; white-space: nowrap; }
+.bh-lp-loontab th:first-child { text-align: left; }
+.bh-lp-loontab thead th { background: var(--bg-subtle); color: var(--ink-soft); font-size: 11px; }
+
+@media (max-width: 760px) {
+  .bh-lp-smal { display: block; }
+  .bh-lp-stand { gap: 16px; }
+}
 /* ── Gedeelde bouwstenen met een waarde uit data ──
    De waarde komt als custom property uit PHP (style="--w: 42%" / "--h: 30px");
    zonder die property blijft alles zoals het was (auto). */

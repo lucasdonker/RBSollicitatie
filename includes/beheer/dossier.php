@@ -352,6 +352,12 @@ function bh_dossier_tabs(array $dossier, string $actief = 'dossier'): array {
         $tabs[] = ['sleutel' => 'selectiedag', 'label' => 'Selectiedag',
                    'aantal' => $dossier['observaties'] ? count($dossier['observaties']) : null];
     }
+    // Inzet: opgave, afspraak en de loonplanning-scenario's. Alleen met leesrecht op de loonplanning
+    // (daar staan loonkosten achter) en als er iets te zien is.
+    if ($_heeft_besch && function_exists('loonplan_persoon_scenarios') && (!function_exists('module_aan') || module_aan('loonplanning'))
+        && (!function_exists('mag') || mag('loonplanning', 'lezen'))) {
+        $tabs[] = ['sleutel' => 'inzet', 'label' => 'Inzet', 'aantal' => null];
+    }
     if ((!empty($dossier['tw']) || !empty($dossier['tw_observaties'])) && (!function_exists('module_aan') || module_aan('trainingsweekend'))) {
         $tabs[] = ['sleutel' => 'trainingsweekend', 'label' => 'Trainingsweekend',
                    'aantal' => $dossier['tw_observaties'] ? count($dossier['tw_observaties']) : null];

@@ -47,7 +47,10 @@ function evenement_open_formulieren_seizoen(int $seizoen_id): array {
                             WHERE s.seizoen_id=? AND o.ondertekend_op IS NULL
                               AND o.type IN (" . implode(',', array_fill(0, count($types), '?')) . ")");
         $q->execute(array_merge([$seizoen_id], $types));
-        foreach ($q->fetchAll() as $r) $uit[(int)$r['sollicitatie_id']][] = ondertekening_titel_kort((string)$r['type']);
+        foreach ($q->fetchAll() as $r) {
+            if (empty($r['sollicitatie_id']) || empty($r['type'])) continue;
+            $uit[(int)$r['sollicitatie_id']][] = ondertekening_titel_kort((string)$r['type']);
+        }
     } catch (\Throwable $e) {}
     return array_map(fn($t) => array_values(array_unique($t)), $uit);
 }
