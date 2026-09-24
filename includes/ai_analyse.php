@@ -24,17 +24,67 @@ function ai_queue_auto_setup(): void {
             UNIQUE KEY `sol_type` (`sollicitatie_id`,`type`),
             INDEX `idx_wacht` (`status`,`volgende_poging`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        // Bezwaar tegen de AI-analyse (AVG art. 21): moment van het bezwaar, NULL = geen.
+        if (function_exists('db_kolom_verzeker')) db_kolom_verzeker(db(), 'sollicitaties', 'ai_bezwaar', 'DATETIME DEFAULT NULL');
     } catch (\Exception $e) {}
+}
+
+/** Heeft deze sollicitant bezwaar gemaakt tegen de AI-analyse? Bij twijfel (kolom ontbreekt): nee. */
+function ai_bezwaar(int $sol_id): bool {
+    ai_queue_auto_setup();
+    try {
+        $q = db()->prepare("SELECT ai_bezwaar FROM sollicitaties WHERE id=?");
+        $q->execute([$sol_id]);
+        return (bool)$q->fetchColumn();
+    } catch (\Exception $e) { return false; }
+}
+
+/**
+ * Bezwaar tegen de AI-analyse vastleggen (AVG art. 21), op verzoek van de sollicitant.
+ * Zet de vlag, wist een bestaande analyse en haalt de sollicitatie uit de wachtrij; daarna
+ * analyseert niets hem meer (ai_queue_toevoegen en ai_queue_verwerk kijken naar de vlag).
+ * $door: wie het vastlegt (naam van de beheerder), voor het logboek.
+ */
+function ai_bezwaar_zetten(int $sol_id, string $door): bool {
+    if ($sol_id <= 0) return false;
+    ai_queue_auto_setup();
+    try {
+        $db = db();
+        $db->beginTransaction();
+        $db->prepare("UPDATE sollicitaties SET ai_bezwaar = COALESCE(ai_bezwaar, NOW()) WHERE id=?")->execute([$sol_id]);
+        try { $db->prepare("UPDATE blk_formulieren SET ai_analyse=NULL, ai_analyse_op=NULL WHERE sollicitatie_id=?")->execute([$sol_id]); }
+        catch (\PDOException $e) { if (!in_array($e->getCode(), ['42S02', '42S22'], true)) throw $e; }
+        $db->prepare("DELETE FROM ai_queue WHERE sollicitatie_id=?")->execute([$sol_id]);
+        $db->commit();
+    } catch (\Exception $e) {
+        if (isset($db) && $db->inTransaction()) $db->rollBack();
+        error_log('ai_bezwaar_zetten: ' . $e->getMessage());
+        return false;
+    }
+    if (function_exists('audit_log')) audit_log('ai_bezwaar', 'sollicitatie', $sol_id, ['door' => mb_substr($door, 0, 100)]);
+    return true;
+}
+
+/**
+ * Het Gemini-model uit de instelling ai.model. Modellen die Google heeft uitgezet (1.x en de
+ * experimentele 2.0) of een waarde die geen modelnaam is, vallen terug op de standaard.
+ */
+function ai_model(): string {
+    $standaard = 'gemini-2.5-flash';
+    $m = trim(instelling('ai.model', $standaard));
+    if (!preg_match('/^gemini-[a-z0-9.\-]{1,40}$/', $m) || preg_match('/^gemini-1\.|^gemini-2\.0-flash-exp$/', $m)) return $standaard;
+    return $m;
 }
 
 // ── Wachtrij ─────────────────────────────────────────────────
 /**
  * Voegt toe aan wachtrij.
- * Doet GEEN API call. Skipt als analyse al klaar is of al in wachtrij.
- * Returns: 'al_klaar' | 'al_in_wachtrij' | 'toegevoegd' | 'fout'
+ * Doet GEEN API call. Skipt als analyse al klaar is, al in wachtrij, of als de sollicitant bezwaar maakte.
+ * Returns: 'bezwaar' | 'al_klaar' | 'al_in_wachtrij' | 'toegevoegd' | 'fout'
  */
 function ai_queue_toevoegen(int $sol_id, string $type = 'blk_analyse'): string {
     ai_queue_auto_setup();
+    if (ai_bezwaar($sol_id)) return 'bezwaar';
     try {
         // Al geanalyseerd?
         $check_analyse = db()->prepare("SELECT ai_analyse FROM blk_formulieren WHERE sollicitatie_id=? AND ai_analyse IS NOT NULL AND ai_analyse != ''");
@@ -100,6 +150,12 @@ function ai_queue_verwerk(int $max = 5): array {
         // Markeer als bezig
         db()->prepare("UPDATE ai_queue SET status='bezig', pogingen=pogingen+1 WHERE id=?")
            ->execute([$item['id']]);
+
+        // Bezwaar gemaakt nadat hij in de wachtrij kwam: niet versturen.
+        if (ai_bezwaar($sol_id)) {
+            db()->prepare("DELETE FROM ai_queue WHERE id=?")->execute([$item['id']]);
+            $res['overgeslagen']++; continue;
+        }
 
         // Haal data op
         try {
@@ -181,7 +237,6 @@ ANONIEME SOLLICITANTGEGEVENS:
 - Motivatie (lifeguard): " . ($blk['motivatie_lifeguard'] ?: 'Niet ingevuld') . "
 - Motivatie (strand): " . ($blk['motivatie_strand'] ?: 'Niet ingevuld') . "
 - Beschikbaarheid: $besch
-- Bijzonderheden: " . ($blk['bijzonderheden'] ?: 'Geen') . "
 
 Schrijf een beknopt assessment in dit exacte format (geen inleiding, direct beginnen):
 
@@ -200,7 +255,7 @@ Schrijf een beknopt assessment in dit exacte format (geen inleiding, direct begi
         'generationConfig' => ['temperature' => 0.2]
     ]);
 
-    $ch = curl_init("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$api_key");
+    $ch = curl_init('https://generativelanguage.googleapis.com/v1beta/models/' . rawurlencode(ai_model()) . ':generateContent?key=' . rawurlencode($api_key));
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_POST           => true,

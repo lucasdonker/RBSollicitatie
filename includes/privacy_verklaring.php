@@ -47,6 +47,8 @@ function privacy_verklaring_html(): string {
     $ai_besch = $ai_blk && $in('ai.beschikbaarheid_hulp', '0') === '1';
     $whatsapp = $in('wa.actief', '0') === '1';
     $sms      = $in('sms.actief', '0') === '1';
+    // EasySendSMS verwerkt buiten de EER; de andere gateways (Bird, eigen telefoon) niet of vastgelegd per gateway.
+    $sms_buiten = $sms && $in('sms.gateway', '') === 'easysendsms';
     $versie   = defined('PRIVACY_VERSIE') ? PRIVACY_VERSIE : '';
 
     $h = fn($s) => htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
@@ -148,8 +150,10 @@ aangenomen.</p>
         <td>Je toestemming. Die geef je met een aparte knop; je kunt hem altijd intrekken.</td></tr>
     <tr><td>Bewijs van je handtekening, het logboek en de beveiliging van het portaal</td>
         <td>Ons gerechtvaardigd belang, en onze plicht om je gegevens te beveiligen (art. 6 lid 1 sub f en art. 32).</td></tr>
-    <tr><td>Anoniem tellen hoeveel mensen het formulier starten en afmaken</td>
-        <td>Ons gerechtvaardigd belang: het formulier verbeteren. We gebruiken hier geen cookies en slaan niets op waarmee we jou herkennen.</td></tr>
+    <tr><td>Oud-strandwachten een bericht sturen als we weer mensen zoeken</td>
+        <td>Ons gerechtvaardigd belang: je hebt al bij ons gewerkt, en we willen je graag terug. Wil je dat niet? Meld je af met de link onder het bericht, dan sturen we je geen wervingsberichten meer (bezwaar, art. 21).</td></tr>
+    <tr><td>Tellen hoeveel mensen het formulier starten en afmaken</td>
+        <td>Ons gerechtvaardigd belang: het formulier verbeteren. We gebruiken hier geen cookies en bewaren geen IP-adres. Om dubbele tellingen te voorkomen maken we van je IP-adres en browser een dagelijks wisselende, niet terug te rekenen code. Die wissen we na <?= (int)$int('bewaar.pagina_hash_dagen', 30) ?> dagen.</td></tr>
   </tbody>
 </table>
 </div>
@@ -174,11 +178,12 @@ is nooit een afwijzing: wie niet automatisch wordt uitgenodigd, wordt door een m
 <?php if ($ai_blk): ?>
 <p>Als je het kennismakingsformulier indient, laten we het lezen door een AI-dienst (Gemini, van
 Google). Die schrijft voor het bestuur een korte beoordeling met een advies. Wat de AI krijgt:
-je leeftijdsgroep en je antwoorden over opleiding, diploma's, werkervaring, motivatie,
-beschikbaarheid en bijzonderheden. Je naam, adres, e-mailadres, telefoonnummer en foto krijgt de AI niet. Het advies is
-een hulpmiddel. Een mens beslist altijd, en kan het advies negeren. Wil je niet dat een AI je
-antwoorden leest? Mail dan <?= $mail ?> voordat je het formulier indient. Dan zetten we het
-voor jou uit.</p>
+je leeftijdsgroep en je antwoorden over opleiding, diploma's, werkervaring, motivatie en
+beschikbaarheid. Je naam, adres, e-mailadres, telefoonnummer en foto krijgt de AI niet, en ook niet
+wat je invult bij bijzonderheden, medicatie of allergieën. Het advies is een hulpmiddel. Een mens
+beslist altijd, en kan het advies negeren. Wil je niet dat je formulier (zonder naam en
+contactgegevens) automatisch wordt beoordeeld? Laat het ons weten via een vraag in Berichten in
+het portaal, of mail <?= $mail ?>. Dan verwijderen we de analyse en doen we dat niet opnieuw.</p>
 <?php endif; ?>
 <?php if ($ai_besch): ?>
 <p>Bij je beschikbaarheid kun je in gewone woorden typen wanneer je kunt. Wil je dat, dan maakt
@@ -203,20 +208,20 @@ gegevens alleen voor ons gebruiken:</p>
   <li><strong>WhatsReach</strong> en <strong>WhatsApp</strong> (Meta): als je berichten via WhatsApp wilt krijgen. Wil je dat niet, kies dan in het portaal voor e-mail.</li>
 <?php endif; ?>
 <?php if ($sms): ?>
-  <li><strong>Een sms-dienst</strong>: voor berichten en inlogcodes per sms.</li>
+  <li><strong>Een sms-dienst</strong><?= $sms_buiten ? ' (EasySendSMS, buiten de Europese Unie)' : '' ?>: voor berichten en inlogcodes per sms.</li>
 <?php endif; ?>
 <?php if ($ai_blk): ?>
   <li><strong>Google</strong> (Gemini, zie hierboven).</li>
 <?php endif; ?>
   <li><strong>Het Kadaster</strong> (PDOK): als je je postcode en huisnummer invult, vullen we je straat en woonplaats aan. Alleen je postcode en huisnummer gaan daarheen.</li>
-  <li><strong>Google Fonts</strong>: het lettertype van het portaal komt van Google. Je browser maakt daarvoor contact met Google en geeft daarbij je IP-adres door.</li>
   <li><strong>De Belastingdienst</strong>: de loonheffing geven we door, omdat de wet dat verplicht.</li>
 </ul>
-<?php if ($ai_blk || $whatsapp): ?>
-<p>Sommige van deze diensten gebruiken servers buiten de Europese Unie, vooral in de Verenigde
-Staten. Dat mag alleen als je gegevens daar even goed beschermd zijn, bijvoorbeeld omdat het bedrijf
+<?php if ($ai_blk || $whatsapp || $sms_buiten):
+    $buiten = array_filter([$ai_blk ? 'Google (de AI-dienst)' : '', $whatsapp ? 'WhatsApp (Meta)' : '', $sms_buiten ? 'EasySendSMS (de sms-dienst)' : '']); ?>
+<p>Sommige van deze diensten gebruiken servers buiten de Europese Unie: <?= $h(implode(', ', $buiten)) ?>.
+Dat mag alleen als je gegevens daar even goed beschermd zijn, bijvoorbeeld omdat het bedrijf
 is aangesloten bij het EU-VS Data Privacy Framework, of met afspraken die de Europese Commissie
-heeft goedgekeurd.</p>
+heeft goedgekeurd (standaardcontractbepalingen).</p>
 <?php endif; ?>
 
 <h2 id="bewaren">7. Hoe lang we ze bewaren</h2>
@@ -280,8 +285,8 @@ advertenties.</p>
 <ul>
   <li><strong>ze te bekijken</strong>: in het portaal kun je onder "Mijn gegevens" alles downloaden wat we van je hebben;</li>
   <li><strong>ze te laten verbeteren</strong> als er iets niet klopt;</li>
-  <li><strong>ze te laten verwijderen</strong>: dat kan met een knop in het portaal. Gegevens die we van de wet moeten bewaren (zoals voor de loonheffing) blijven staan tot de wettelijke termijn voorbij is;</li>
-  <li><strong>bezwaar te maken</strong> als we je gegevens gebruiken vanwege ons gerechtvaardigd belang, bijvoorbeeld tegen de AI-beoordeling;</li>
+  <li><strong>ze te laten verwijderen</strong>: dat kan met een knop in het portaal. Gegevens die we van de wet moeten bewaren (je opgaaf voor de loonheffing en de kopie van je identiteitsbewijs, met je naam en geboortedatum) blijven staan tot de wettelijke termijn voorbij is. Al het andere verdwijnt meteen;</li>
+  <li><strong>bezwaar te maken</strong> als we je gegevens gebruiken vanwege ons gerechtvaardigd belang, bijvoorbeeld tegen de AI-beoordeling (stel een vraag in Berichten) of tegen wervingsberichten als oud-strandwacht (de afmeldlink);</li>
   <li><strong>je toestemming in te trekken</strong>, bijvoorbeeld voor foto's of het seintje. Wat we al deden voordat je de toestemming introk, blijft geldig;</li>
   <li><strong>te vragen dat we het gebruik tijdelijk stoppen</strong>, of <strong>je gegevens mee te nemen</strong> in een bestand dat je elders kunt gebruiken.</li>
 </ul>

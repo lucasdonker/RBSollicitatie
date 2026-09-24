@@ -123,7 +123,7 @@ require __DIR__ . '/layout_top.php';
 <div class="ds-kaart">
   <div class="bh-kaartkop"><h2>Persoonsgegevens</h2></div>
   <div class="bh-kaartbody">
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">
+    <div class="bh-blk-gegevens">
       <?php
       // AVG: alleen wie de BLK-module mag lezen ziet het volledige adres; anders alleen woonplaats
       $mag_adres = function_exists('mag') ? mag('blk', 'lezen') : true;
@@ -140,7 +140,7 @@ require __DIR__ . '/layout_top.php';
         $adres_label    => h($adres_toon ?: '—'),
         'Social media'  => h($blk['social_media'] ?: '—'),
       ] as $l => $v): ?>
-      <div><div class="bh-veldlabel"><?= $l ?></div><div style="font-size:13px"><?= $v ?></div></div>
+      <div><div class="bh-veldlabel"><?= $l ?></div><div class="bh-blk-gegeven"><?= $v ?></div></div>
       <?php endforeach; ?>
     </div>
   </div>
@@ -181,8 +181,8 @@ require __DIR__ . '/layout_top.php';
     <?php if (!empty($blk_weken)): ?>
     <div class="bh-blkveld">
       <div class="bh-veldlabel">Voorkeur weken (uit BLK — <?= count($blk_weken) ?> weken)</div>
-      <div style="display:flex;flex-wrap:wrap;gap:5px">
-        <?php foreach ($blk_weken as $w): ?><span class="badge badge-blauw" style="font-size:12px">Week <?= (int)$w ?></span><?php endforeach; ?>
+      <div class="bh-blk-weken bh-blk-weken-ruim">
+        <?php foreach ($blk_weken as $w): ?><span class="badge badge-blauw bh-blk-weekbadge">Week <?= (int)$w ?></span><?php endforeach; ?>
       </div>
     </div>
     <?php elseif ($blk['beschikbaarheid_intentie']): ?>
@@ -198,11 +198,11 @@ require __DIR__ . '/layout_top.php';
     </div>
     <?php endif; ?>
     <?php if (!empty($weken_sol) || !empty($weken_def)): ?>
-    <hr style="border:none;border-top:1px solid var(--rand);margin:12px 0">
+    <hr class="bh-blk-scheiding">
     <?php if (!empty($weken_sol)): ?>
     <div class="bh-blkveld">
       <div class="bh-veldlabel">Definitief opgegeven door sollicitant (<?= count($weken_sol) ?> weken)</div>
-      <div style="display:flex;flex-wrap:wrap;gap:4px">
+      <div class="bh-blk-weken">
         <?php foreach ($weken_sol as $w): ?><span class="badge badge-blauw">W<?= $w ?></span><?php endforeach; ?>
       </div>
     </div>
@@ -210,7 +210,7 @@ require __DIR__ . '/layout_top.php';
     <?php if (!empty($weken_def)): ?>
     <div class="bh-blkveld">
       <div class="bh-veldlabel">Definitief ingepland door beheerder (<?= count($weken_def) ?> weken · <?= count($weken_def)*5 ?> werkdagen)</div>
-      <div style="display:flex;flex-wrap:wrap;gap:4px">
+      <div class="bh-blk-weken">
         <?php foreach ($weken_def as $w): ?><span class="badge badge-oranje">W<?= $w ?></span><?php endforeach; ?>
       </div>
     </div>
@@ -218,16 +218,16 @@ require __DIR__ . '/layout_top.php';
     <?php endif; ?>
 
     <?php if (!empty($ai_besch_logs)): ?>
-    <hr style="border:none;border-top:1px solid var(--rand);margin:12px 0">
+    <hr class="bh-blk-scheiding">
     <div class="bh-blkveld">
-      <div class="bh-veldlabel">AI-invoer beschikbaarheid <span style="font-weight:400;color:var(--tekst-zacht)">(wat de sollicitant zelf typte)</span></div>
+      <div class="bh-veldlabel">AI-invoer beschikbaarheid <span class="bh-blk-labelnoot">(wat de sollicitant zelf typte)</span></div>
       <?php foreach ($ai_besch_logs as $log): ?>
-      <div style="background:var(--grijs-bg);border:1px solid var(--rand);border-radius:8px;padding:8px 10px;margin-bottom:6px">
-        <div style="font-size:11px;color:var(--tekst-zacht);margin-bottom:3px">
+      <div class="bh-blk-aiinvoer">
+        <div class="bh-blk-aiinvoer-meta">
           <?= h(date('j-n-Y H:i', strtotime($log['aangemaakt_op']))) ?>
           · <?= $log['status']==='ok' ? 'verwerkt' : h($log['status']) ?>
         </div>
-        <div style="font-size:13px;white-space:pre-wrap"><?= h($log['invoer']) ?></div>
+        <div class="bh-blk-aiinvoer-tekst"><?= h($log['invoer']) ?></div>
       </div>
       <?php endforeach; ?>
     </div>
@@ -239,7 +239,7 @@ require __DIR__ . '/layout_top.php';
 <div class="ds-kaart">
   <div class="bh-kaartkop"><h2>Overig</h2></div>
   <div class="bh-kaartbody">
-    <div style="display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start">
+    <div class="bh-blk-overig">
       <div>
         <?php if ($blk['bijzonderheden']): ?>
         <div class="bh-blkveld">
@@ -247,7 +247,7 @@ require __DIR__ . '/layout_top.php';
           <div class="bh-blkwaarde ds-fase-rood bh-blk-let-op"><?= h($blk['bijzonderheden']) ?></div>
         </div>
         <?php endif; ?>
-        <div style="font-size:11px;color:var(--grijs);margin-top:8px">
+        <div class="bh-blk-voetnoot">
           <?php $_blk_op = blk_ingediend_op($sol, $blk); ?>
           <?= $_blk_op ? 'Ingediend: ' . h(datum_nl(substr($_blk_op, 0, 10))) : 'Concept, nog niet ingediend' ?>
           <?php if ($blk['bijgewerkt_op'] && substr($blk['bijgewerkt_op'],0,10) !== substr((string)$_blk_op,0,10)): ?>
@@ -271,41 +271,56 @@ require __DIR__ . '/layout_top.php';
 
 <!-- Wijzigingslog -->
 <!-- AI Analyse sectie -->
-<?php if ($ai_tekst || instelling('ai.api_key')): ?>
+<?php
+// Bezwaar (AVG art. 21): de sollicitant wil geen automatische beoordeling. Dan geen knop meer
+// om te analyseren, alleen de vaststelling. Vastleggen doet het bestuur op verzoek (vraag in Berichten).
+$ai_bezwaar  = function_exists('ai_bezwaar') && ai_bezwaar($sol_id);
+$ai_mag      = !function_exists('mag') || mag('sollicitanten', 'bewerken');
+?>
+<?php if ($ai_tekst || $ai_bezwaar || instelling('ai.api_key')): ?>
 <div class="ds-kaart">
   <div class="bh-kaartkop">
-    <div style="display:flex;align-items:center;gap:10px">
+    <div class="bh-blk-aikop">
       <h2>AI Geschiktheidsanalyse</h2>
-      <span style="font-size:11px;color:var(--grijs);background:var(--grijs-bg);padding:2px 7px;border-radius:10px">Geanonimiseerd · AVG-conform</span>
+      <span class="bh-blk-aipil">Zonder naam en contactgegevens, zonder bijzonderheden</span>
     </div>
-    <?php if ($blk): ?>
-    <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm"
-            onclick="genereerAnalyse(<?= $sol_id ?>)">
-      <?= $ai_tekst ? 'Opnieuw analyseren' : 'Analyseer nu' ?>
-    </button>
+    <?php if ($blk && !$ai_bezwaar && $ai_mag): ?>
+    <span class="bh-knoprij">
+      <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm"
+              onclick="genereerAnalyse(<?= $sol_id ?>)">
+        <?= $ai_tekst ? 'Opnieuw analyseren' : 'Analyseer nu' ?>
+      </button>
+      <button type="button" class="ds-btn ds-btn-zacht ds-btn-sm" onclick="aiBezwaar(<?= $sol_id ?>)">
+        Bezwaar vastleggen…
+      </button>
+    </span>
     <?php endif; ?>
   </div>
   <div class="bh-kaartbody">
-    <?php if ($ai_tekst): ?>
-    <div class="bh-aikader" style=";border-radius:8px;padding:16px;line-height:1.8;font-size:14px;color:var(--tekst)">
+    <?php if ($ai_bezwaar): ?>
+    <div class="ds-melding ds-melding-info">
+      De sollicitant heeft bezwaar gemaakt tegen de AI-analyse. Er is geen analyse (meer) en er wordt er ook geen gemaakt.
+    </div>
+    <?php elseif ($ai_tekst): ?>
+    <div class="bh-aikader bh-blk-aitekst">
       <?= function_exists('ai_render') ? ai_render($ai_tekst) : nl2br(h($ai_tekst)) ?>
     </div>
     <?php if ($ai_datum): ?>
-    <div style="font-size:11px;color:var(--grijs);margin-top:8px">
+    <div class="bh-blk-voetnoot">
       Analyse gegenereerd op <?= datum_nl(substr($ai_datum,0,10)) ?> <?= substr($ai_datum,11,5) ?>
       · Gebaseerd op BLK-formulier, geen persoonsgegevens verstuurd
     </div>
     <?php endif; ?>
     <?php elseif (!instelling('ai.api_key')): ?>
     <div class="ds-melding ds-melding-info">
-      Stel een Gemini API key in via <a href="<?= APP_URL ?>/admin/instellingen.php?tab=mail" style="color:var(--oranje)">Instellingen → Mail & notificaties</a> om AI analyse te activeren.
+      Stel een Gemini API-sleutel in bij <a href="<?= APP_URL ?>/admin/instellingen.php?tab=ai" class="bh-blk-oranjelink">Instellingen › AI-analyse</a> om de analyse te gebruiken.
     </div>
     <?php elseif (!$blk): ?>
-    <p style="color:var(--grijs);font-size:13px">Analyse beschikbaar zodra het BLK-formulier is ingevuld.</p>
+    <p class="bh-leegregel">Analyse beschikbaar zodra het BLK-formulier is ingevuld.</p>
     <?php else: ?>
-    <div style="text-align:center;padding:20px">
-      <p style="color:var(--grijs);font-size:13px;margin-bottom:12px">Nog geen analyse gegenereerd.</p>
-      <div id="ai-loading-<?= $sol_id ?>" style="display:none;color:var(--grijs);font-size:13px;margin-top:8px">
+    <div class="bh-blk-geenanalyse">
+      <p class="bh-leegregel bh-blk-geenanalyse-tekst">Nog geen analyse gegenereerd.</p>
+      <div id="ai-loading-<?= $sol_id ?>" class="bh-blk-bezig" hidden>
         Analyse wordt gemaakt via Gemini AI...
       </div>
     </div>
@@ -317,19 +332,19 @@ require __DIR__ . '/layout_top.php';
 <?php if (!empty($wijzigingen)): ?>
 <div class="ds-kaart">
   <div class="bh-kaartkop"><h2>Wijzigingsgeschiedenis</h2></div>
-  <div style="padding:0">
+  <div>
     <?php foreach ($wijzigingen as $wij):
       $ch = json_decode($wij['wijzigingen_json'] ?? '[]', true) ?: []; ?>
-    <div style="padding:11px 16px;border-bottom:1px solid var(--rand)">
-      <div style="display:flex;justify-content:space-between;margin-bottom:5px">
-        <strong style="font-size:13px">Reden: <?= h($wij['reden']) ?></strong>
-        <span style="font-size:12px;color:var(--grijs)"><?= datum_nl(substr($wij['gewijzigd_op'],0,10)) ?> <?= substr($wij['gewijzigd_op'],11,5) ?></span>
+    <div class="bh-blk-wijziging">
+      <div class="bh-blk-wijziging-kop">
+        <strong class="bh-blk-wijziging-reden">Reden: <?= h($wij['reden']) ?></strong>
+        <span class="bh-blk-wijziging-wanneer"><?= datum_nl(substr($wij['gewijzigd_op'],0,10)) ?> <?= substr($wij['gewijzigd_op'],11,5) ?></span>
       </div>
       <?php foreach ($ch as $c): ?>
-      <div style="font-size:12px;background:var(--grijs-bg);border-radius:5px;padding:5px 9px;margin-bottom:3px">
+      <div class="bh-blk-wijziging-veld">
         <strong><?= h($c['label'] ?? $c['veld'] ?? '') ?>:</strong>
-        <span style="color:var(--rood);text-decoration:line-through;margin:0 4px"><?= h(mb_substr($c['oud'] ?? '—', 0, 60)) ?></span>
-        → <span style="color:var(--groen);margin-left:4px"><?= h(mb_substr($c['nieuw'] ?? '—', 0, 60)) ?></span>
+        <span class="bh-blk-oud"><?= h(mb_substr($c['oud'] ?? '—', 0, 60)) ?></span>
+        → <span class="bh-blk-nieuw"><?= h(mb_substr($c['nieuw'] ?? '—', 0, 60)) ?></span>
       </div>
       <?php endforeach; ?>
     </div>
@@ -345,7 +360,7 @@ function genereerAnalyse(solId) {
   const btn = event?.target;
   const loadEl = document.getElementById('ai-loading-' + solId);
   if (btn) { btn.disabled = true; btn.textContent = 'Bezig…'; }
-  if (loadEl) loadEl.style.display = '';
+  if (loadEl) loadEl.hidden = false;
 
   fetch('<?= APP_URL ?>/admin/api_ai_analyse.php', {
     method: 'POST',
@@ -358,14 +373,38 @@ function genereerAnalyse(solId) {
       window.location.reload();
     } else {
       if (btn) { btn.disabled = false; btn.textContent = 'Analyseer nu'; }
-      if (loadEl) loadEl.style.display = 'none';
+      if (loadEl) loadEl.hidden = true;
       bhToast(data.fout || 'De analyse lukte niet. Controleer de API-sleutel bij Instellingen › AI-analyse.', 'fout');
     }
   })
   .catch(() => {
     if (btn) { btn.disabled = false; }
-    if (loadEl) loadEl.style.display = 'none';
+    if (loadEl) loadEl.hidden = true;
     bhToast('Verbindingsfout — probeer het opnieuw.', 'fout');
+  });
+}
+
+/* Bezwaar tegen de AI-analyse (AVG art. 21), op verzoek van de sollicitant. Wist de analyse
+   en zorgt dat er geen nieuwe komt (includes/ai_analyse.php, ai_bezwaar_zetten()). */
+function aiBezwaar(solId) {
+  bhBevestig({
+    titel: 'Bezwaar tegen de AI-analyse vastleggen?',
+    tekst: 'Doe dit als de sollicitant erom vraagt. De bestaande analyse wordt gewist en er wordt geen nieuwe gemaakt. Dit kun je niet terugdraaien.',
+    knop: 'Ja, vastleggen'
+  }).then(function (ja) {
+    if (!ja) return;
+    var klaar = window.P13Actie ? window.P13Actie.bezig(null, null) : function () {};
+    fetch('<?= APP_URL ?>/admin/api_ai_analyse.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ sol_id: solId, actie: 'bezwaar', _csrf: '<?= csrf_token() ?>' })
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (data.ok) { location.reload(); return; }
+      klaar(); bhToast(data.fout || 'Vastleggen mislukt.', 'fout');
+    })
+    .catch(function () { klaar(); bhToast('Verbindingsfout — probeer het opnieuw.', 'fout'); });
   });
 }
 </script>

@@ -167,7 +167,8 @@ function security_headers(?array $frame_ancestors = null): void {
     // dus 'unsafe-inline' blijft; het echte slot is dat scripts en verbindingen alleen van de eigen
     // host mogen komen. Camera-upload (blob:) en het handtekening-canvas (data:) hebben img-src nodig.
     header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; "
-         . "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; "
+         // Lettertypen komen van de eigen host (assets/fonts): geen Google Fonts, dus geen IP naar Google.
+         . "style-src 'self' 'unsafe-inline'; font-src 'self' data:; "
          . "img-src 'self' data: blob: https:; connect-src 'self'; frame-ancestors $ancestors; "
          . "form-action 'self' https:; base-uri 'self'; object-src 'none'");
 }
@@ -693,7 +694,9 @@ function personen_ouder_auto_setup(): void {
  * zodat vastgelegd blijft welke versie iemand te zien kreeg.
  */
 // 2026-09b: gezondheid/intake bij de selectiedag, loondocumenten handmatig, termijnen uit de instellingen
-if (!defined('PRIVACY_VERSIE')) define('PRIVACY_VERSIE', '2026-09b');
+// 2026-09c: AI-bezwaar, dagpseudoniem, oud-strandwachten, verwijderen met bewaard loondossier,
+//           doorgifte (sms), lettertype zelf gehost
+if (!defined('PRIVACY_VERSIE')) define('PRIVACY_VERSIE', '2026-09c');
 
 if (!function_exists('consent_auto_setup')) {
 /**

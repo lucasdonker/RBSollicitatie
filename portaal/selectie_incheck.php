@@ -41,11 +41,11 @@ $logo = function_exists('site_logo_url') ? (site_logo_url() ?: '') : '';
 <html lang="nl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1"><?php /* inzoomen mag altijd (WCAG 1.4.4), ook op de tablet bij de ingang */ ?>
 <title>Aanmelden — Selectiedag Paal 13</title>
 <link rel="stylesheet" href="<?= APP_URL ?>/assets/css/stijl.css">
 <style>
-  body { background:linear-gradient(160deg,#054d8a,#032e52); min-height:100vh; margin:0; display:flex; align-items:center; justify-content:center; padding:20px; font-family:Inter,system-ui,sans-serif; }
+  body { background:linear-gradient(160deg,#054d8a,#032e52); min-height:100vh; margin:0; display:flex; align-items:center; justify-content:center; padding:20px; font-family:'Instrument Sans',system-ui,sans-serif; }
   .kiosk { background:#fff; border-radius:20px; box-shadow:0 20px 60px rgba(0,0,0,.3); width:100%; max-width:520px; padding:32px; }
   .kiosk img { height:48px; display:block; margin:0 auto 20px; }
   .kiosk h1 { text-align:center; font-size:26px; color:#054d8a; margin:0 0 6px; }

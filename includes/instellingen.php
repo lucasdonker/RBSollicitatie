@@ -36,7 +36,7 @@ function instellingen_formulier_sleutels(string $tab): array {
         ], $herinneringen),
         'mail'        => ['mail.fout_email', 'mail.bestuur_email', 'mail.penningmeester_email', 'mail.ledenservice_email',
                           'documenten.penningmeester_bijlagen'],
-        'ai'          => ['ai.api_key', 'ai.model', 'ai.beschikbaarheid_hulp', 'ai.prompt_template', 'ai.auto_analyse'],
+        'ai'          => ['ai.api_key', 'ai.model', 'ai.beschikbaarheid_hulp', 'ai.auto_analyse'],
         'authentik'   => ['authentik.api_token', 'authentik.admin_groepen', 'authentik.url', 'authentik.token'],
         'bewaren'     => ['bewaar.actief', 'bewaar.afgewezen_weken', 'bewaar.seintje_mnd', 'bewaar.aangenomen_jaar',
                           'bewaar.gezondheid_mnd', 'bewaar.ai_invoer_mnd', 'bewaar.onvoltooid_mnd', 'bewaar.maillog_mnd',

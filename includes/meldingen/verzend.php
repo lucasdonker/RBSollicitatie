@@ -520,6 +520,12 @@ function melding_verzend_item(array $m): array {
         $db = db();
         if ($gelukt) {
             $db->prepare("UPDATE mail_queue SET status='klaar', verwerkt_op=NOW(), fout=? WHERE id=?")->execute([$fouttekst, $m['id']]);
+            // Types waarvan de inhoud nooit gelogd wordt (inlogcodes, IBAN, bestuursmeldingen): ook de
+            // kopie in de wachtrij leeg zodra hij verstuurd is. Anders stond die 30 dagen tot de opschoning.
+            $mdef = function_exists('melding_definitie') ? melding_definitie((string)($m['meldingstype'] ?? '')) : null;
+            if ($mdef && empty($mdef['body_loggen'])) {
+                $db->prepare("UPDATE mail_queue SET body = '', tekst_kort = '' WHERE id = ?")->execute([$m['id']]);
+            }
             if ($log_id) $db->prepare("UPDATE mail_log SET status='verstuurd', kanaal=?, type=?, ontvanger=?, fallback_van=?, foutmelding=?, pogingen=?, verstuurd_op=NOW(), bijgewerkt_op=NOW() WHERE id=?")
                 ->execute([$gelukt, $gelukt === 'email' ? 'mail' : $gelukt, $gelukt === 'email' ? $m['naar_email'] : ($m['telefoon'] ?: $m['naar_email']), $gelukt !== $plan[0] ? $fallback_van : null, $fouttekst, $poging, $log_id]);
             melding_audit((string)($m['meldingstype'] ?? ''), (int)($m['sol_id'] ?? 0), $log_id, 'verstuurd', null, $gelukt);

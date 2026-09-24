@@ -284,7 +284,7 @@ function opschoon_run(bool $dry_run = false, string $bron = 'cron'): array {
     }
 
     // ── 3. AI-invoertekst verwijderen ────────────────────────────────
-    $mnd = instelling_int('bewaar.ai_invoer_mnd', 0);
+    $mnd = instelling_int('bewaar.ai_invoer_mnd', 3);
     if ($grensdatum = $grens($mnd)) {
         try {
             if ($dry_run) {
@@ -308,7 +308,7 @@ function opschoon_run(bool $dry_run = false, string $bron = 'cron'): array {
     // ── 4. Niet-voltooide aanmeldingen verwijderen ───────────────────
     // Sollicitaties die in 'aangemeld' bleven staan, nooit een BLK/beschikbaarheid kregen,
     // en ouder zijn dan de termijn.
-    $mnd = instelling_int('bewaar.onvoltooid_mnd', 0);
+    $mnd = instelling_int('bewaar.onvoltooid_mnd', 3);
     if ($grensdatum = $grens($mnd)) {
         try {
             $q = $db->prepare("
@@ -370,7 +370,7 @@ function opschoon_run(bool $dry_run = false, string $bron = 'cron'): array {
     }
 
     // ── 5. Mail-/actielogboek verwijderen ────────────────────────────
-    $mnd = instelling_int('bewaar.maillog_mnd', 0);
+    $mnd = instelling_int('bewaar.maillog_mnd', 12);
     if ($grensdatum = $grens($mnd)) {
         try {
             if ($dry_run) {

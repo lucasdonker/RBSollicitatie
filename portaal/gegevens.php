@@ -52,43 +52,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['apparaten_vergeten'])
 $apparaten_aantal = function_exists('portaal_onthoud_aantal') ? portaal_onthoud_aantal($sol_id) : 0;
 
 // ── Download data (JSON) ────────────────────────────────────
+// Alles wat over deze sollicitatie is vastgelegd (AVG art. 15); de lijst staat in avg_inzage().
 if (isset($_GET['download'])) {
-    $data = ['persoon' => array_diff_key($mij, ['persoon_id' => 1])];
-    try {
-        // BLK zonder AI analyse (intern bestuurs-oordeel, geen persoonsdata van sollicitant)
-        $b = $db->prepare("SELECT * FROM blk_formulieren WHERE sollicitatie_id = ?");
-        $b->execute([$sol_id]);
-        $blk = $b->fetch();
-        if ($blk) {
-            unset($blk['ai_analyse'], $blk['ai_analyse_op']);
-            $data['blk_formulier'] = $blk;
-        } else $data['blk_formulier'] = null;
-    } catch (Exception $e) { $data['blk_formulier'] = null; }
-    try {
-        $b = $db->prepare("SELECT * FROM beschikbaarheid WHERE sollicitatie_id = ?");
-        $b->execute([$sol_id]);
-        $data['beschikbaarheid'] = $b->fetch() ?: null;
-    } catch (Exception $e) { $data['beschikbaarheid'] = null; }
-    try {
-        $b = $db->prepare("SELECT onderwerp, verstuurd_op, status, kanaal FROM mail_log WHERE sollicitatie_id = ? AND COALESCE(ontvanger_rol,'sollicitant')='sollicitant' ORDER BY verstuurd_op DESC");
-        $b->execute([$sol_id]);
-        $data['mail_geschiedenis'] = $b->fetchAll();
-    } catch (Exception $e) { $data['mail_geschiedenis'] = []; }
-
-    // Ondertekeningen en documenten: alleen metadata (geen BSN/IBAN/handtekening); de PDF's zelf staan onder je taken
-    try {
-        $b = $db->prepare("SELECT type, ondertekenaar_rol, ondertekend_op, plaats, zekerheid, zekerheid_naar, pdf_sha256 FROM ondertekeningen WHERE sollicitatie_id = ? ORDER BY aangemaakt_op");
-        $b->execute([$sol_id]);
-        $data['ondertekeningen'] = $b->fetchAll();
-    } catch (Exception $e) { $data['ondertekeningen'] = []; }
-    try {
-        $b = $db->prepare("SELECT soort, bestandsnaam, mime, grootte, status, geupload_op, verwerkt_op, vernietigd_op FROM sollicitant_documenten WHERE sollicitatie_id = ? ORDER BY id");
-        $b->execute([$sol_id]);
-        $data['documenten'] = $b->fetchAll();
-    } catch (Exception $e) { $data['documenten'] = []; }
-
-    $data['gegenereerd_op'] = date('c');
-    $data['toelichting'] = 'Dit is een export van al jouw persoonlijke gegevens bij Reddingsbrigade Paal 13, conform artikel 15 AVG (recht op inzage). Interne beoordelingen van het bestuur zijn niet opgenomen — die vallen onder gerechtvaardigd belang van de organisatie.';
+    $data = ['toelichting' => 'Dit zijn alle gegevens die Reddingsbrigade Paal 13 over jou heeft vastgelegd voor je sollicitatie (AVG artikel 15, recht op inzage). '
+                            . 'Je BSN, IBAN en handtekening staan hier niet in; die staan in de ondertekende documenten onder je taken. '
+                            . 'Waar "beoordelaar" staat, laten we de naam van die persoon weg.',
+             'gegenereerd_op' => date('c'),
+             'persoon' => array_diff_key($mij, ['persoon_id' => 1])]
+          + avg_inzage($db, $sol_id);
 
     header('Content-Type: application/json; charset=utf-8');
     header('Content-Disposition: attachment; filename="paal13-mijn-gegevens-' . date('Y-m-d') . '.json"');
@@ -99,21 +70,20 @@ if (isset($_GET['download'])) {
 // ── Verwijder account ───────────────────────────────────────
 $verwijderd = false;
 $fout = '';
+/* AVG art. 17 lid 3 sub b: is het loondossier al verwerkt, dan bewaren we alleen wat de wet
+   eist (loonheffing met BSN, kopie ID, naam en geboortedatum). De rest gaat gewoon weg. */
+$loon_bewaard = function_exists('documenten_loondossier') && !empty(documenten_loondossier($sol_id)['verwerkt']);
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verwijder'])) {
     csrf_check();
-    $loondossier = function_exists('documenten_loondossier') ? documenten_loondossier($sol_id) : ['verwerkt' => false];
     if (($_POST['bevestig'] ?? '') !== 'VERWIJDER') {
         $fout = 'Typ "VERWIJDER" (hoofdletters) om te bevestigen.';
-    } elseif (!empty($loondossier['verwerkt'])) {
-        // AVG art. 17 lid 3 sub b: wettelijke bewaarplicht (loonadministratie) gaat vóór het recht op wissen
-        $fout = 'Je loongegevens (loonheffingsformulier en kopie identiteitsbewijs) zijn al verwerkt in de loonadministratie. De wet verplicht Paal 13 die 5 jaar te bewaren; daarom kun je je account nu niet zelf verwijderen. Mail ' . portaal_contact_email() . ' als je hierover vragen hebt.';
     } else {
         try {
             $db->beginTransaction();
-            // Kluis, taken, ondertekengegevens, BLK, beschikbaarheid, notities, beoordelingen
-            // (includes/avg_wissen.php). Een echte fout rolt alles terug; de sollicitant krijgt
-            // dan een eerlijke melding.
-            avg_sollicitatie_leegmaken($db, $sol_id);
+            // Kluis, taken, ondertekengegevens, BLK, beschikbaarheid, beoordelingen, selectiedag,
+            // trainingsweekend, apparaten (includes/avg_wissen.php). Een echte fout rolt alles
+            // terug; de sollicitant krijgt dan een eerlijke melding.
+            avg_sollicitatie_leegmaken($db, $sol_id, !$loon_bewaard);
 
             // Bestuur informeren vóór de anonimisering (de naam is daarna weg); verzending ná het antwoord.
             if (function_exists('melding_verstuur')) {
@@ -126,10 +96,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verwijder'])) {
             $anon_email = 'verwijderd_' . $sol_id . '@anoniem.local';
             $pq = $db->prepare("SELECT persoon_id FROM sollicitaties WHERE id=?");
             $pq->execute([$sol_id]);
-            avg_persoon_anonimiseren($db, (int)$pq->fetchColumn(), 'Verwijderd', '(verzoek AVG)', $anon_email);
+            avg_persoon_anonimiseren($db, (int)$pq->fetchColumn(), 'Verwijderd', '(verzoek AVG)', $anon_email,
+                                     $loon_bewaard ? avg_behoud_loondossier() : []);
             avg_maillog_anonimiseren($db, $sol_id, $anon_email);
 
             $db->commit();
+            if (function_exists('portaal_onthoud_cookie')) portaal_onthoud_cookie('');
             session_destroy();
             $verwijderd = true;
         } catch (Exception $e) {
@@ -167,6 +139,9 @@ require __DIR__ . '/_kop.php';
   <div class="flash flash-succes" style="text-align:center;padding:24px">
     <h2 style="margin-top:0"><?= icoon("vink-cirkel", 20) ?> Account verwijderd</h2>
     <p style="margin-bottom:0">Je persoonlijke gegevens zijn geanonimiseerd. Bedankt voor je interesse in Paal 13.</p>
+    <?php if ($loon_bewaard): ?>
+      <p style="margin-bottom:0">Alleen je loondossier bewaren we nog, omdat de wet dat eist. Daarna vernietigt de penningmeester het.</p>
+    <?php endif; ?>
     <p style="font-size:12px;color:var(--tekst-zacht);margin-top:14px">
       <a href="https://paal13.com">Terug naar paal13.com</a>
     </p>
@@ -239,7 +214,9 @@ require __DIR__ . '/_kop.php';
   <div class="avg-card" id="download">
     <h2><?= icoon("download", 18) ?> Al mijn gegevens downloaden</h2>
     <p style="font-size:13px;color:var(--tekst-zacht)">
-      Volgens de AVG (artikel 15) heb je recht op inzage. Je krijgt hieronder een JSON-bestand met alles wat we van je hebben: persoon, BLK-formulier, beschikbaarheid en mail-geschiedenis.
+      Volgens de AVG (artikel 15) heb je recht op inzage. Je krijgt hieronder een JSON-bestand met alles wat we over je hebben vastgelegd:
+      je gegevens, je formulieren, je beschikbaarheid, de beoordelingen en besluiten van de selectiedag en het trainingsweekend,
+      de AI-analyse, de notities van het bestuur, je documenten en ondertekeningen (zonder de bestanden zelf) en de berichten die we je stuurden.
     </p>
     <a href="?download=1" class="ds-btn ds-btn-primair"><?= icoon("download", 18) ?> Download als JSON</a>
   </div>
@@ -251,17 +228,28 @@ require __DIR__ . '/_kop.php';
       Volgens de AVG (artikel 17) heb je recht op vergetelheid. Bij verwijdering:
     </p>
     <ul style="font-size:13px;line-height:1.7;color:var(--tekst-zacht);margin:8px 0 12px 22px">
-      <li>Je naam, e-mail, telefoon en adres worden geanonimiseerd.</li>
-      <li>Je BLK-formulier en beschikbaarheid worden verwijderd.</li>
+      <li>Je <?= $loon_bewaard ? 'e-mail, telefoon' : 'naam, e-mail, telefoon' ?> en adres worden geanonimiseerd.</li>
+      <li>Je formulieren, foto, beschikbaarheid en beoordelingen worden verwijderd.</li>
       <li>Je sollicitatie-record blijft anoniem bestaan voor onze statistieken.</li>
       <li>Deze actie is <strong>onomkeerbaar</strong>.</li>
     </ul>
+    <?php if ($loon_bewaard): ?>
+      <?php /* AVG art. 17 lid 3 sub b: alleen wat de wet eist blijft; B1-taal. */ ?>
+      <div class="ds-melding" style="margin-bottom:12px"><?= icoon('info', 18) ?> <div>
+        <strong>Wat blijft er bewaard?</strong>
+        <p style="margin:6px 0 0">Je loongegevens zijn al verwerkt. De wet (voor de belasting) verplicht ons die te bewaren.
+          Daarom blijft dit staan: je naam, je geboortedatum, je ondertekende opgaaf voor de loonheffing (met je BSN) en de kopie van je identiteitsbewijs.
+          Alleen de penningmeester kan daarbij.</p>
+        <p style="margin:6px 0 0">We bewaren het tot 5 jaar na het einde van het jaar waarin je voor het laatst bij ons werkte.
+          Daarna vernietigt de penningmeester het. Al het andere verwijderen we meteen.</p>
+      </div></div>
+    <?php endif; ?>
 
     <?php /* Zelfde patroon als "Vergeet alle apparaten": eerst uitklappen, dan pas de knop.
              Werkt zonder JavaScript; na een fout staat hij meteen open. */ ?>
     <details class="pt-bevestig gevaar"<?= ($fout && isset($_POST['verwijder'])) ? ' open' : '' ?>>
       <summary><?= icoon('waarschuwing', 16) ?> Definitief verwijderen</summary>
-      <p>Je naam, e-mail, telefoon en adres worden onherkenbaar gemaakt. Je formulieren en beschikbaarheid verdwijnen.
+      <p><?= $loon_bewaard ? 'Je e-mail, telefoon en adres worden onherkenbaar gemaakt; alleen je loondossier blijft.' : 'Je naam, e-mail, telefoon en adres worden onherkenbaar gemaakt.' ?> Je formulieren en beschikbaarheid verdwijnen.
         Je kunt daarna niet meer inloggen. Dit kun je niet terugdraaien.</p>
       <p>Weet je het zeker? Typ <strong>VERWIJDER</strong> in het veld en klik op de knop.</p>
       <form method="POST">

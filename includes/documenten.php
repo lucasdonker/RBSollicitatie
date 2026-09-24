@@ -507,6 +507,10 @@ function documenten_loondossier_vernietigen(int $persoon_id, string $door): arra
                            WHERE s.persoon_id = ? AND o.type = 'loonheffing'");
         $u->execute([$persoon_id]);
         $aantal += $u->rowCount();
+        // Had de persoon zich zelf laten verwijderen en stond alleen het loondossier nog (naam en
+        // geboortedatum bleven daarvoor bewaard)? Dan gaat nu ook de rest. De opschoning slaat zo'n
+        // geanonimiseerd adres over, dus anders bleven die gegevens voor altijd staan.
+        if (function_exists('avg_na_loondossier_vernietigd')) avg_na_loondossier_vernietigd($db, $persoon_id);
     } catch (\Throwable $e) {
         error_log('documenten_loondossier_vernietigen: ' . $e->getMessage());
         return ['ok' => false, 'aantal' => $aantal, 'fout' => 'vernietigen is halverwege mislukt; probeer het opnieuw'];

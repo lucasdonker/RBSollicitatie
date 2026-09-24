@@ -55,12 +55,36 @@ function pag_events_enum_bij(\PDO $db): void {
 }
 
 /**
- * Dag-gebonden pseudoniem van de bezoeker: IP + user-agent + dag + geheim. Niet herleidbaar
- * naar een persoon en na één dag vervallen (andere dag = andere hash).
+ * Het geheime zout voor het bezoekerspseudoniem: 32 willekeurige bytes (hex) in de instelling
+ * paginas.pseudoniem_zout, eenmalig aangemaakt. INSERT IGNORE + opnieuw lezen: twee verzoeken
+ * tegelijk krijgen zo toch hetzelfde zout. Lukt opslaan niet, dan geldt een zout voor dit
+ * verzoek alleen (hooguit een dubbele telling, nooit een herleidbare hash).
+ */
+function pag_pseudoniem_zout(): string {
+    static $zout = null;
+    if ($zout !== null) return $zout;
+    $geldig = fn($z) => is_string($z) && preg_match('/^[0-9a-f]{64}$/', $z);
+    $z = function_exists('instelling') ? instelling('paginas.pseudoniem_zout', '') : '';
+    if ($geldig($z)) return $zout = $z;
+    $nieuw = bin2hex(random_bytes(32));
+    try {
+        db()->prepare("INSERT IGNORE INTO instellingen (sleutel, waarde) VALUES ('paginas.pseudoniem_zout', ?)")->execute([$nieuw]);
+        $q = db()->prepare("SELECT waarde FROM instellingen WHERE sleutel = 'paginas.pseudoniem_zout'");
+        $q->execute();
+        $z = $q->fetchColumn();
+        if ($geldig($z)) return $zout = $z;
+    } catch (\Throwable $e) { error_log('pag_pseudoniem_zout: ' . $e->getMessage()); }
+    return $zout = $nieuw;
+}
+
+/**
+ * Dag-gebonden pseudoniem van de bezoeker. De dagsleutel is afgeleid van het geheime zout en
+ * de datum (HMAC), de hash van IP + user-agent met die dagsleutel. Zonder het zout niet terug
+ * te rekenen, en morgen is het een andere code: een bezoeker is niet over dagen te volgen.
  */
 function pag_bezoeker_hash(): string {
-    $geheim = defined('APP_URL') ? APP_URL : 'paal13';
-    return hash('sha256', ($_SERVER['REMOTE_ADDR'] ?? '') . '|' . ($_SERVER['HTTP_USER_AGENT'] ?? '') . '|' . date('Y-m-d') . '|' . $geheim);
+    $dagsleutel = hash_hmac('sha256', date('Y-m-d'), pag_pseudoniem_zout());
+    return hash_hmac('sha256', ($_SERVER['REMOTE_ADDR'] ?? '') . '|' . ($_SERVER['HTTP_USER_AGENT'] ?? ''), $dagsleutel);
 }
 
 /** Grove bot-herkenning, zodat crawlers de statistiek niet opblazen. */

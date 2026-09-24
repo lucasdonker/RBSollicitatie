@@ -201,6 +201,17 @@ function lidmaatschap_na_ondertekening(array $rec, array $sol, ?string $pdf_byte
     foreach ((array)($form['diplomas'] ?? []) as $k) if (isset($sleutels[$k])) $dip[] = $sleutels[$k];
     $rij = fn(string $l, string $w): string => '<tr><td style="padding:4px 10px 4px 0;color:#5a6478;white-space:nowrap">' . h($l) . '</td><td style="padding:4px 0">' . h($w !== '' ? $w : '-') . '</td></tr>';
     $o = $form['ouder'] ?? [];
+    $pad = null; $bijlagen = [];
+    if ($pdf_bytes !== null) {
+        $pad = sys_get_temp_dir() . '/lid_' . (int)$rec['id'] . '_' . bin2hex(random_bytes(4)) . '.pdf';
+        if (@file_put_contents($pad, $pdf_bytes) !== false) $bijlagen = [['pad' => $pad, 'naam' => 'Inschrijving_' . preg_replace('/[^A-Za-z0-9]+/', '_', ($form['voornaam'] ?? '') . '_' . ($form['achternaam'] ?? '')) . '_Paal13.pdf', 'mime' => 'application/pdf']];
+        else $pad = null;
+    }
+    /* Het volledige IBAN staat in de verzegelde PDF (bijlage). In de mailtekst, die ook in de
+       wachtrij en mailboxen blijft staan, alleen de laatste vier tekens. Zonder bijlage (PDF
+       mislukt) blijft het volledig staan, anders kan de ledenservice niet incasseren. */
+    $iban = !empty($geheim['iban']) ? iban_opmaak((string)$geheim['iban']) : '';
+    $iban_mail = $iban === '' ? '-' : ($bijlagen ? 'eindigt op ' . substr(preg_replace('/\s+/', '', $iban), -4) . ' (volledig in de bijlage)' : $iban);
     $html = '<table cellpadding="0" cellspacing="0" style="font-size:14px">'
         . $rij('Naam', trim(($form['voornaam'] ?? '') . ' ' . trim(($form['tussenvoegsel'] ?? '') . ' ' . ($form['achternaam'] ?? ''))))
         . $rij('Geslacht', match ($form['geslacht'] ?? '') { 'man' => 'Man', 'vrouw' => 'Vrouw', 'geen' => 'Wil ik niet specificeren', default => '' })
@@ -211,14 +222,8 @@ function lidmaatschap_na_ondertekening(array $rec, array $sol, ?string $pdf_byte
         . $rij('Wil worden', ($form['soort'] ?? '') === 'donateur' ? 'Donateur' : 'Lid')
         . $rij('Diploma\'s', $dip ? implode(', ', $dip) : 'Geen')
         . $rij('Betaling', ($form['betaling'] ?? '') === 'incasso' ? 'Automatische incasso (machtiging ondertekend)' : 'Overschrijving')
-        . (($form['betaling'] ?? '') === 'incasso' ? $rij('IBAN', !empty($geheim['iban']) ? iban_opmaak((string)$geheim['iban']) : '-') . $rij('Ten name van', (string)($geheim['tenaamstelling'] ?? '')) : '')
+        . (($form['betaling'] ?? '') === 'incasso' ? $rij('IBAN', $iban_mail) . $rij('Ten name van', (string)($geheim['tenaamstelling'] ?? '')) : '')
         . '</table>';
-    $pad = null; $bijlagen = [];
-    if ($pdf_bytes !== null) {
-        $pad = sys_get_temp_dir() . '/lid_' . (int)$rec['id'] . '_' . bin2hex(random_bytes(4)) . '.pdf';
-        if (@file_put_contents($pad, $pdf_bytes) !== false) $bijlagen = [['pad' => $pad, 'naam' => 'Inschrijving_' . preg_replace('/[^A-Za-z0-9]+/', '_', ($form['voornaam'] ?? '') . '_' . ($form['achternaam'] ?? '')) . '_Paal13.pdf', 'mime' => 'application/pdf']];
-        else $pad = null;
-    }
     try {
         melding_verstuur('ledenservice_inschrijving', (int)$rec['sollicitatie_id'], ['gegevens_html' => $html, 'lid_soort' => ($form['soort'] ?? '') === 'donateur' ? 'donateur' : 'lid'],
             ['ontvanger' => ['email' => $email, 'naam' => 'Ledenservice', 'telefoon' => '', 'rol' => 'direct'], 'prioriteit' => 'direct', 'dedup_min' => 0,

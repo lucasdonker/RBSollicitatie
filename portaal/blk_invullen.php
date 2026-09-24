@@ -159,8 +159,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['blk_submit'])) {
         if (function_exists('audit_log')) {
             try { audit_log($is_edit ? 'blk_gewijzigd' : 'blk_ingediend', 'sollicitatie', $sol_id, ['via' => 'losse pagina']); } catch (\Exception $e) {}
         }
-        // AI-analyse: toevoegen aan wachtrij (cron verwerkt dit)
-        if (function_exists('ai_queue_toevoegen') && instelling('ai.api_key')) {
+        // AI-analyse: toevoegen aan wachtrij (cron verwerkt dit), alleen als automatisch analyseren aan staat
+        if (function_exists('ai_queue_toevoegen') && instelling('ai.api_key') && instelling('ai.auto_analyse', '1') === '1') {
             try { ai_queue_toevoegen($sol_id, 'blk_analyse'); } catch (\Exception $e) {}
         }
 
