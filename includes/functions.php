@@ -50,6 +50,7 @@ if (file_exists(__DIR__ . '/competenties.php')) require_once __DIR__ . '/compete
 if (file_exists(__DIR__ . '/bezetting.php')) require_once __DIR__ . '/bezetting.php';
 if (file_exists(__DIR__ . '/loonplan.php')) require_once __DIR__ . '/loonplan.php';
 if (file_exists(__DIR__ . '/loonplan_afspraak.php')) require_once __DIR__ . '/loonplan_afspraak.php';
+if (file_exists(__DIR__ . '/loonplan_slot.php')) require_once __DIR__ . '/loonplan_slot.php';
 if (file_exists(__DIR__ . '/loonplan_export.php')) require_once __DIR__ . '/loonplan_export.php';
 if (file_exists(__DIR__ . '/xlsx.php')) require_once __DIR__ . '/xlsx.php';
 if (file_exists(__DIR__ . '/selectiedag.php')) require_once __DIR__ . '/selectiedag.php';

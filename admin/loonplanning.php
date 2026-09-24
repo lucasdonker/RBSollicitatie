@@ -77,13 +77,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_loon'])) {
             exit;
         }
         if (($_POST['wat'] ?? '') === 'functie') {
-            loonplan_functie_zetten($sc_post, (int)$_POST['sol_id'], trim((string)($_POST['functie'] ?? '')) ?: 'aspirant');
+            $gelukt = loonplan_functie_zetten($sc_post, (int)$_POST['sol_id'], trim((string)($_POST['functie'] ?? '')) ?: 'aspirant');
         } else {
-            loonplan_cel_opslaan(
+            $gelukt = loonplan_cel_opslaan(
                 $sc_post, (int)$_POST['sol_id'], (int)$_POST['week_nr'], $jaar,
                 (int)$_POST['dagen'], ($_POST['opgenomen'] ?? '0') === '1' ? 1 : 0,
                 ($_POST['betaald'] ?? '1') === '1' ? 1 : 0
             );
+        }
+        if (!$gelukt) {
+            echo json_encode(['ok' => false, 'fout' => loonplan_slot_in_scenario($sc_post, (int)$_POST['sol_id'])
+                ? 'Deze persoon staat vast na het gesprek. Ontgrendel eerst (met een reden).' : 'Opslaan lukte niet.']);
+            exit;
         }
         $an = loonplan_analyse($sid, $sc_post, $seizoen);
         $pers = $an['mensen'][(int)$_POST['sol_id']] ?? null;

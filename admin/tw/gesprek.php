@@ -11,9 +11,9 @@
 $_id = (int)($_GET['k'] ?? 0);
 $_k  = null;
 foreach ($kandidaten as $_r) if ((int)$_r['sol_id'] === $_id) { $_k = $_r; break; }
-$_d  = $_k ? bh_dossier($_id) : null;
+$gd_dossier  = $_k ? bh_dossier($_id) : null;
 
-if (!$_k || !$_d): ?>
+if (!$_k || !$gd_dossier): ?>
   <div class="ds-kaart ds-kaart-p">
     <?php $leeg_titel = 'Niet gevonden'; $leeg_tekst = 'Deze persoon staat niet (meer) op de lijst van het trainingsweekend.'; $leeg_icoon = 'mensen'; require __DIR__ . '/../_leeg.php'; ?>
     <a class="ds-btn ds-btn-secundair" href="<?= h(tw_url('gesprekken')) ?>">Terug naar de gesprekken</a>
@@ -27,9 +27,9 @@ if (!$_klaar) {
     $_claim = evenement_claim('tw_deelname', 'gesprek', $sid, $_id, $ik_id);
 }
 $_mag_form = !$_klaar && $_claim['ok'];
-$_taken    = bh_dossier_taken($_d);
+$_taken    = bh_dossier_taken($gd_dossier);
 $_open     = array_filter($_taken['rijen'], fn($t) => !$t['done']);
-$_sol      = $_d['sol'];
+$_sol      = $gd_dossier['sol'];
 $_b        = (string)($_k['besluit'] ?? '');
 ?>
 <p><a class="bh-terug" href="<?= h(tw_url('gesprekken')) ?>"><?= icoon('terug', 16) ?> Alle gesprekken</a></p>
@@ -49,19 +49,19 @@ $_b        = (string)($_k['besluit'] ?? '');
         <?= bh_avatar($_k, 72, ['vergroot' => true]) ?>
         <span class="bh-beoordeel-wie">
           <span class="bh-beoordeel-naam"><?= h((string)$_k['naam']) ?></span>
-          <?= bh_meta([$_d['leeftijd'] !== null ? $_d['leeftijd'] . ' jaar' : '',
-                       $_d['leeftijd_seizoen'] !== null && $_d['leeftijd_seizoen'] !== $_d['leeftijd'] ? $_d['leeftijd_seizoen'] . ' bij de start' : '',
+          <?= bh_meta([$gd_dossier['leeftijd'] !== null ? $gd_dossier['leeftijd'] . ' jaar' : '',
+                       $gd_dossier['leeftijd_seizoen'] !== null && $gd_dossier['leeftijd_seizoen'] !== $gd_dossier['leeftijd'] ? $gd_dossier['leeftijd_seizoen'] . ' bij de start' : '',
                        fase_label((string)$_k['fase']),
                        !empty($_sol['terugkerend']) ? 'terugkerend' : 'nieuw']) ?>
           <?php if ($mag_dossier): ?><?= bh_meta([(string)($_sol['email'] ?? ''), (string)($_sol['telefoon'] ?? '')]) ?><?php endif; ?>
         </span>
         <?php if ($mag_dossier): ?><a class="ds-btn ds-btn-secundair ds-btn-sm" href="<?= APP_URL ?>/admin/sollicitant.php?id=<?= $_id ?>" target="_blank" rel="noopener">Dossier</a><?php endif; ?>
       </header>
-      <?php if ($_d['minderjarig']): ?>
+      <?php if ($gd_dossier['minderjarig']): ?>
         <p class="bh-meta">Minderjarig: een ouder of verzorger tekent de documenten mee.</p>
       <?php endif; ?>
-      <?php if (!empty($_d['leeftijd_melding'])): ?>
-        <div class="ds-melding ds-melding-warn"><?= icoon('waarschuwing', 16) ?><span><?= h((string)$_d['leeftijd_melding']) ?></span></div>
+      <?php if (!empty($gd_dossier['leeftijd_melding'])): ?>
+        <div class="ds-melding ds-melding-warn"><?= icoon('waarschuwing', 16) ?><span><?= h((string)$gd_dossier['leeftijd_melding']) ?></span></div>
       <?php endif; ?>
       <?php if ($mag_blk && !empty($_k['bijzonderheden'])): ?>
         <div class="ds-melding ds-melding-warn"><?= icoon('waarschuwing', 16) ?><span><strong>Bijzonderheid:</strong> <?= nl2br(h((string)$_k['bijzonderheden'])) ?></span></div>
@@ -93,10 +93,18 @@ $_b        = (string)($_k['besluit'] ?? '');
         $obs_lijst = tw_observaties_van($sid, $_id);
         if ($obs_lijst) { $obs_eigen = null; require __DIR__ . '/../_observaties.php'; }
         else echo '<p class="bh-meta">Niemand heeft iets opgeschreven.</p>';
-        $sds_dossier = $_d; $sds_open = true;
-        require __DIR__ . '/../_sd_samenvatting.php';
       ?>
     </section>
+
+    <?php if (module_aan('selectiedag') && ($gd_dossier['scores'] || $gd_dossier['observaties'] || $gd_dossier['besluit'])): ?>
+    <section class="ds-kaart ds-kaart-p bh-twgesprek-sd">
+      <h3>Op de selectiedag</h3>
+      <?php
+        $scs_dossier = $gd_dossier; require __DIR__ . '/../_sd_scores.php';
+        $sds_dossier = $gd_dossier; $sds_open = true; require __DIR__ . '/../_sd_samenvatting.php';
+      ?>
+    </section>
+    <?php endif; ?>
 
     <?php if ($_open): ?>
     <section class="ds-kaart ds-kaart-p">

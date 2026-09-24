@@ -370,8 +370,10 @@ function loonplan_periode(int $week, ?array $seizoen = null): string {
  * welke weekdagen (1=ma … 7=zo). De functie staat per persoon (loonplan_functie_zetten).
  */
 function loonplan_cel_opslaan(int $scenario_id, int $sol_id, int $week, int $jaar, int $dagen, int $opgenomen,
-                              int $betaald = 1, ?array $weekdagen = null): void {
+                              int $betaald = 1, ?array $weekdagen = null): bool {
     loonplan_auto_setup();
+    // Na het TW-gesprek staat iemand op slot in alle scenario's (includes/loonplan_slot.php).
+    if (function_exists('loonplan_slot_in_scenario') && loonplan_slot_in_scenario($scenario_id, $sol_id)) return false;
     $dagen = max(0, min(7, $dagen));
     $wd = $weekdagen ? array_values(array_unique(array_intersect(array_map('intval', $weekdagen), [1,2,3,4,5,6,7]))) : [];
     sort($wd);
@@ -382,17 +384,20 @@ function loonplan_cel_opslaan(int $scenario_id, int $sol_id, int $week, int $jaa
             ON DUPLICATE KEY UPDATE dagen=VALUES(dagen), opgenomen=VALUES(opgenomen), betaald=VALUES(betaald),
                                     weekdagen=VALUES(weekdagen), bijgewerkt_op=NOW()
         ")->execute([$sol_id, $week, $jaar, $dagen, $opgenomen ? 1 : 0, $betaald ? 1 : 0, $wd ? json_encode($wd) : null, $scenario_id]);
-    } catch (\Exception $e) { error_log('loonplan_cel_opslaan: ' . $e->getMessage()); }
+        return true;
+    } catch (\Exception $e) { error_log('loonplan_cel_opslaan: ' . $e->getMessage()); return false; }
 }
 
-/** De functie van één persoon in één scenario vastleggen. */
-function loonplan_functie_zetten(int $scenario_id, int $sol_id, string $functie): void {
+/** De functie van één persoon in één scenario vastleggen (niet als die persoon op slot staat). */
+function loonplan_functie_zetten(int $scenario_id, int $sol_id, string $functie): bool {
     loonplan_auto_setup();
+    if (function_exists('loonplan_slot_in_scenario') && loonplan_slot_in_scenario($scenario_id, $sol_id)) return false;
     try {
         db()->prepare("INSERT INTO loon_scenario_persoon (scenario_id, sollicitatie_id, functie_sleutel) VALUES (?,?,?)
                        ON DUPLICATE KEY UPDATE functie_sleutel=VALUES(functie_sleutel)")
            ->execute([$scenario_id, $sol_id, mb_substr($functie, 0, 50)]);
-    } catch (\Exception $e) { error_log('loonplan_functie_zetten: ' . $e->getMessage()); }
+        return true;
+    } catch (\Exception $e) { error_log('loonplan_functie_zetten: ' . $e->getMessage()); return false; }
 }
 
 /** [sol_id => functie] zoals in dit scenario vastgelegd. */

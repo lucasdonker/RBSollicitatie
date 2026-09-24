@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.112.0');
+define('APP_VERSIE', '2.113.0');
 
 function app_changelog(): array {
     return [
+        '2.113.0' => [
+            'datum'  => '2026-09-24',
+            'titel'  => 'TW-gesprekken: zoeken, de hele selectiedag, en vast na het gesprek',
+            'punten' => [
+                'Gesprekken: zoeken op naam, filteren op gesprek en besluit, sorteren op selectiedag-cijfer',
+                'In het gesprek staat de selectiedag nu volledig: cijfers per onderdeel (ook per beoordelaar), advies, besluit en opmerkingen. Die ontbraken door een fout',
+                'De inzet in het gesprek ververst zich elke 15 seconden: wat iemand in de loonplanning verandert, zie je meteen',
+                'Na aannemen of twijfel staat de inzet van die persoon vast in álle scenario\'s. Toch aanpassen kan, met een reden die in het logboek komt',
+            ],
+        ],
         '2.112.0' => [
             'datum'  => '2026-09-24',
             'titel'  => 'Inchecken: niet getekende formulieren meteen oppakken',

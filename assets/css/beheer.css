@@ -2024,6 +2024,9 @@ body.bh-paneel-open .bh-inhoud { transition: padding-right .15s ease; }
 .bh-twgesprek-los { margin-top: 10px; text-align: center; }
 .bh-twopgave { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
 .bh-twopgave li { padding: 4px 9px; border-radius: var(--radius-sm); background: var(--bg-subtle); font-size: 13px; }
+.bh-sdscores-test { margin-bottom: 14px; }
+.bh-sdscores-test .bh-kaartkop { margin-bottom: 8px; }
+.bh-twgesprek-sd .bh-sdsamen { margin: 6px 0 0; }
 .bh-twtaken { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
 @media (max-width: 900px) {
   .bh-twgesprek { grid-template-columns: 1fr; }
@@ -2063,6 +2066,13 @@ body.bh-paneel-open .bh-inhoud { transition: padding-right .15s ease; }
 .bh-afspraak-tabel input[type="checkbox"] { width: 20px; height: 20px; }
 .bh-afspraak-tabel tr.ingepland { background: var(--ok-soft); }
 .bh-afspraak [data-af-totaal] { margin: 10px 0 0; }
+.bh-afspraak-slot {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 10px;
+  padding: 8px 12px; border-radius: var(--radius-sm); background: var(--bg-subtle);
+  font-size: 13px; color: var(--ink-soft);
+}
+.bh-afspraak-slot > span { flex: 1; min-width: 200px; display: inline-flex; align-items: center; gap: 6px; }
+.bh-afspraak.vast .bh-afspraak-slot { background: var(--fase-groen-vlak); color: var(--fase-groen); font-weight: 600; }
 /* ============================================================
    INSTELLINGEN — zes groepen links, één onderwerp tegelijk rechts
    ============================================================ */

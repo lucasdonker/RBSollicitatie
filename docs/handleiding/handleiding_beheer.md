@@ -1155,15 +1155,17 @@ na te vragen; de knop **Dossier** en het telefoonnummer ziet alleen wie Sollicit
 ### Stap 4: gesprekken
 
 Iedereen krijgt een gesprek met het bestuur. De lijst heeft drie groepen: Nu bezig, Nog te spreken
-en Gesproken. De volgorde kies je ter plekke.
+en Gesproken. De volgorde kies je ter plekke. Zoek op naam, filter op gesprek of besluit, of sorteer
+op het selectiedag-cijfer.
 
 1. Klik bij wie er aan tafel zit op **Gesprek starten**. Het gesprek staat dan op jouw naam; een
    ander bestuurslid ziet "bezig door ..." en kan meelezen, maar niet tegelijk een besluit
    vastleggen. Na 30 minuten vervalt dat vanzelf.
 2. Links staat alles bij elkaar: gegevens, de opgegeven beschikbaarheid, **Inzet afspreken** (de
    loonplanning als concept: functie, en per week plannen, aantal dagen en betaald ja/nee; elke
-   wijziging wordt meteen opgeslagen), wat er dit weekend en op de selectiedag is opgevallen, en wat
-   er nog openstaat in het portaal.
+   wijziging wordt meteen opgeslagen, en wat iemand in de loonplanning verandert zie je hier binnen
+   15 seconden), wat er dit weekend is opgevallen, de selectiedag (cijfers per onderdeel, advies,
+   besluit en opmerkingen), en wat er nog openstaat in het portaal.
 3. Rechts kies je **Aannemen**, **Twijfel** of **Afwijzen**. Bij **Bericht aan de sollicitant**
    schrijf je in je eigen woorden wat jullie besproken hebben. Dat komt in de mail als
    `{{gesprek_bericht}}`. Laat je het leeg, dan komt de standaardtekst erin (instelbaar bij
@@ -1173,6 +1175,12 @@ en Gesproken. De volgorde kies je ter plekke.
    formulieren) in het portaal. Twijfel blijft staan: bel de kandidaat na het weekend, open het
    gesprek opnieuw en leg dan het besluit vast.
 5. **Terug zonder besluit** geeft het gesprek weer vrij.
+
+Bij aannemen of twijfel wordt de inzet van die persoon uit het actieve scenario naar **alle**
+scenario's gekopieerd en daar vastgezet: wat met de sollicitant besproken is, verandert niet meer
+doordat iemand met een ander scenario speelt. Met de anderen kun je gewoon verder puzzelen. Moet
+het toch anders (bijzondere situatie), klik dan op **Toch aanpassen**, geef een reden (die komt in
+het logboek), pas het aan en klik op **Nu vastzetten**.
 
 De inzet blijft een concept tot je na het weekend bij Loonplanning **Loonplanning definitief maakt**.
 Pas daarna ziet de sollicitant de afspraak.

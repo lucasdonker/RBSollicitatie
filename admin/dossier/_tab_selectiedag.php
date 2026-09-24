@@ -29,35 +29,7 @@ if (!$_scores && !$_obs) {
 <div class="bh-dossier-kolommen">
   <div class="bh-dossier-hoofd">
 
-    <?php foreach ($_scores as $_test => $_criteria): ?>
-    <section class="ds-kaart ds-kaart-p">
-      <div class="bh-kaartkop">
-        <h2><?= h(ucfirst((string)$_test)) ?></h2>
-        <?php $_tgem = bh_dossier_score_per_test($tab_dossier)[$_test] ?? null; ?>
-        <?php if ($_tgem !== null): ?>
-          <span class="bh-meta bh-num"><?= h(number_format($_tgem, 1, ',', '')) ?> gemiddeld</span>
-        <?php endif; ?>
-      </div>
-      <div class="bh-scorebalken bh-scorebalken-los">
-        <?php foreach ($_criteria as $_crit => $_d): ?>
-          <div class="bh-scorebalk">
-            <span class="bh-scorebalk-naam"><?= h(ucfirst(str_replace('_', ' ', (string)$_crit))) ?></span>
-            <span class="bh-scorebalk-spoor">
-              <span class="bh-scorebalk-vul" style="--w: <?= (int)round(((float)$_d['gem']) / 5 * 100) ?>%"></span>
-            </span>
-            <span class="bh-scorebalk-getal bh-num"><?= h(number_format((float)$_d['gem'], 1, ',', '')) ?></span>
-          </div>
-          <?php if (count($_d['allen']) > 1): ?>
-            <div class="bh-scorebalk-wie">
-              <?php foreach ($_d['allen'] as $_door => $_sc): ?>
-                <span><?= h($_door) ?> <strong class="bh-num"><?= (int)$_sc ?></strong></span>
-              <?php endforeach; ?>
-            </div>
-          <?php endif; ?>
-        <?php endforeach; ?>
-      </div>
-    </section>
-    <?php endforeach; ?>
+    <?php $scs_dossier = $tab_dossier; $scs_kaarten = true; require __DIR__ . '/../_sd_scores.php'; ?>
 
     <?php if ($_obs): ?>
     <section class="ds-kaart ds-kaart-p">

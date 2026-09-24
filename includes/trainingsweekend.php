@@ -308,6 +308,13 @@ function tw_gesprek_afronden(int $seizoen_id, int $sol_id, string $besluit, stri
        ->execute([$bericht !== '' ? $bericht : null, $seizoen_id, $sol_id]);
     if (function_exists('audit_log')) audit_log('tw_gesprek', 'sollicitatie', $sol_id, ['besluit' => $besluit, 'door' => $beheerder_id]);
 
+    // Wat in het gesprek over de inzet is besproken, staat daarna vast in alle scenario's
+    // (includes/loonplan_slot.php). Bij afwijzen valt de persoon uit de planning; niets vast te zetten.
+    if ($besluit !== 'afwijzen' && function_exists('loonplan_vastzetten') && (!function_exists('module_aan') || module_aan('loonplanning'))) {
+        $sc = loonplan_actief_scenario($seizoen_id);
+        if ($sc) loonplan_vastzetten($seizoen_id, $sol_id, (int)$sc['id'], $beheerder_id);
+    }
+
     $naar = tw_besluit_fase($besluit);
     if ($naar === null) return ['ok' => true, 'fase' => null, 'melding' => 'Vastgelegd als twijfel: bel na het weekend.'];
     $res = fase_zetten($sol_id, $naar, 'gesprek', [
@@ -321,6 +328,31 @@ function tw_gesprek_afronden(int $seizoen_id, int $sol_id, string $besluit, stri
     $tekst = $besluit === 'aannemen' ? 'Aangenomen. De formulieren staan nu in het portaal klaar.' : 'Afgewezen.';
     $m = function_exists('fase_melding_tekst') ? fase_melding_tekst($res) : '';
     return ['ok' => true, 'fase' => $naar, 'melding' => trim($tekst . ' ' . $m)];
+}
+
+/**
+ * De gesprekkenlijst gefilterd en gesorteerd (30 gesprekken op een tablet: je moet snel vinden).
+ * Voegt aan elke kandidaat '_stand' (nog|bezig|gehad) en '_sd' (selectiedag-gemiddelde of null) toe.
+ *
+ * @param array $f  q (naam), stand (''|nog|bezig|gehad), besluit (''|aannemen|twijfel|afwijzen|geen),
+ *                  sort ('naam'|'sd')
+ */
+function tw_gesprekken_filter(array $kandidaten, array $f, int $ik, array $sd_scores): array {
+    $q = mb_strtolower(trim((string)($f['q'] ?? '')));
+    $uit = [];
+    foreach ($kandidaten as $k) {
+        $k['_stand'] = tw_gesprek_stand($k, $ik);
+        $k['_sd'] = function_exists('selectie_gemiddelde') ? selectie_gemiddelde($sd_scores[(int)$k['sol_id']] ?? []) : null;
+        if ($q !== '' && !str_contains(mb_strtolower((string)$k['naam']), $q)) continue;
+        if (!empty($f['stand']) && $k['_stand'] !== $f['stand']) continue;
+        $b = (string)($k['besluit'] ?? '');
+        if (!empty($f['besluit']) && ($f['besluit'] === 'geen' ? $b !== '' : $b !== $f['besluit'])) continue;
+        $uit[] = $k;
+    }
+    if (($f['sort'] ?? '') === 'sd') {
+        usort($uit, fn($a, $b) => ($b['_sd'] ?? -1) <=> ($a['_sd'] ?? -1) ?: strcmp((string)$a['naam'], (string)$b['naam']));
+    }
+    return $uit;
 }
 
 /** Stand van de gesprekken voor de lijst: nog / bezig / gehad (twijfel telt als gehad, met twijfel). */
