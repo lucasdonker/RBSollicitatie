@@ -47,8 +47,8 @@ $_aanw  = fn($k) => !empty($k['aanwezig']) ? 'aanwezig' : (($k['afgemeld_reden']
       <?= bh_avatar($huidig, 56, ['vergroot' => true]) ?>
       <span class="bh-beoordeel-wie">
         <span class="bh-beoordeel-naam"><?= h((string)$huidig['naam']) ?></span>
-        <?= bh_meta([$huidig['leeftijd'] ? $huidig['leeftijd'] . ' jaar' : '', $_aanw($huidig),
-                     $mag_dossier ? (string)($huidig['telefoon'] ?? '') : '']) ?>
+        <?php /* Geen telefoonnummer: een beoordelaar belt niet (dataminimalisatie). */ ?>
+        <?= bh_meta([$huidig['leeftijd'] ? $huidig['leeftijd'] . ' jaar' : '', $_aanw($huidig)]) ?>
       </span>
       <?php if ($mag_dossier): ?>
         <a class="ds-btn ds-btn-secundair ds-btn-sm" href="<?= APP_URL ?>/admin/sollicitant.php?id=<?= $hid ?>">Dossier</a>

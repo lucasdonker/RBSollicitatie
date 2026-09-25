@@ -195,8 +195,8 @@ foreach ($bel_lijst as $_k) if ((int)$_k['sol_id'] === $_open) $_huidig = $_k;
             <label class="bh-bel-twkeuze"><input type="radio" name="tw_<?= $_id ?>" value="<?= $_tk ?>" <?= $_tw['stand'] === $_tk ? 'checked' : '' ?>> <?= h($_tl) ?></label>
           <?php endforeach; ?>
         </div>
-        <input type="text" class="ds-input" id="twreden-<?= $_id ?>" maxlength="300" placeholder="Reden als het nee is (verplicht bij nee)"
-               value="<?= h((string)($_tw['reden'] ?? '')) ?>" aria-label="Reden als iemand niet op het trainingsweekend kan">
+        <input type="text" class="ds-input" id="twreden-<?= $_id ?>" maxlength="300" placeholder="Opmerking (verplicht bij nee)"
+               value="<?= h((string)($_tw['reden'] ?? '')) ?>" aria-label="Opmerking over het trainingsweekend, verplicht als iemand niet kan">
       </fieldset>
       <?php endif; ?>
     </div>

@@ -63,6 +63,9 @@ $_b        = (string)($_k['besluit'] ?? '');
       <?php if (!empty($gd_dossier['leeftijd_melding'])): ?>
         <div class="ds-melding ds-melding-warn"><?= icoon('waarschuwing', 16) ?><span><?= h((string)$gd_dossier['leeftijd_melding']) ?></span></div>
       <?php endif; ?>
+      <?php if (!empty($_k['bevestiging_reden'])): ?>
+        <p class="bh-dossier-tekst"><strong>Opmerking bij het aanmelden:</strong> <?= h((string)$_k['bevestiging_reden']) ?></p>
+      <?php endif; ?>
       <?php if ($mag_blk && !empty($_k['bijzonderheden'])): ?>
         <div class="ds-melding ds-melding-warn"><?= icoon('waarschuwing', 16) ?><span><strong>Bijzonderheid:</strong> <?= nl2br(h((string)$_k['bijzonderheden'])) ?></span></div>
       <?php endif; ?>

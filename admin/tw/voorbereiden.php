@@ -69,8 +69,8 @@ $_bron     = ['portaal' => 'zelf doorgegeven', 'bellijst' => 'via de bellijst', 
               <select name="stand" id="bev-<?= $_id ?>" class="ds-select">
                 <?php foreach ($_standen as $_w => $_l): ?><option value="<?= h($_w) ?>"<?= $_w === $_st ? ' selected' : '' ?>><?= h($_l) ?></option><?php endforeach; ?>
               </select>
-              <label class="bh-vw" for="red-<?= $_id ?>">Reden (verplicht bij kan niet)</label>
-              <input type="text" name="reden" id="red-<?= $_id ?>" class="ds-input" maxlength="300" placeholder="Reden bij kan niet" value="<?= h((string)($_k['bevestiging_reden'] ?? '')) ?>">
+              <label class="bh-vw" for="red-<?= $_id ?>">Opmerking (verplicht bij kan niet)</label>
+              <input type="text" name="reden" id="red-<?= $_id ?>" class="ds-input" maxlength="300" placeholder="Opmerking (verplicht bij kan niet)" value="<?= h((string)($_k['bevestiging_reden'] ?? '')) ?>">
               <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm">Opslaan</button>
             </form>
           </td>

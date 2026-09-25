@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.116.0');
+define('APP_VERSIE', '2.116.1');
 
 function app_changelog(): array {
     return [
+        '2.116.1' => [
+            'datum'  => '2026-09-25',
+            'titel'  => 'Opmerking bij "ik kom" blijft bewaard; geen telefoonnummer bij beoordelen',
+            'punten' => [
+                'Een opmerking bij "ik kom" (portaal, bellijst of beheer) ging verloren: alleen bij "kan niet" werd hij bewaard. Nu altijd; verplicht blijft hij alleen bij "kan niet"',
+                'De opmerking staat nu ook in de incheck-lijst en bij het TW-gesprek',
+                'Trainingsweekend › Beoordelen toont geen telefoonnummer meer: een beoordelaar belt niet',
+            ],
+        ],
         '2.116.0' => [
             'datum'  => '2026-09-24',
             'titel'  => 'Loonplanning opnieuw opgebouwd, en de inzet in het dossier',

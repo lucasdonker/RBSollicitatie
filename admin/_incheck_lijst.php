@@ -71,6 +71,9 @@ $_open_f = function_exists('evenement_open_formulieren_seizoen') ? evenement_ope
           else                              echo h($_sub);
           if ($_k['stand'] === 'verwacht' && ($_k['bevestiging'] ?? '') === 'komt_niet') echo ' · gaf door niet te kunnen';
         ?></span>
+        <?php if (!empty($_k['bevestiging_reden'])): ?>
+          <span class="bh-ick-regel">Opmerking: <?= h((string)$_k['bevestiging_reden']) ?></span>
+        <?php endif; ?>
         <?php if (!empty($_open_f[(int)$_k['sol_id']])): ?>
           <span class="bh-ick-letop"><?= bh_badge('Niet getekend: ' . implode(', ', $_open_f[(int)$_k['sol_id']]), 'rood') ?></span>
         <?php endif; ?>

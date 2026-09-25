@@ -85,7 +85,7 @@ function tw_kandidaten(int $seizoen_id): array {
     try {
         $q = db()->prepare("
             SELECT s.id AS sol_id, s.fase, p.voornaam, p.tussenvoegsel, p.achternaam,
-                   p.geboortedatum, p.geslacht, p.telefoon,
+                   p.geboortedatum, p.geslacht,
                    d.aanwezig, d.ingecheckt_op, d.afgemeld_reden,
                    d.besluit, d.besluit_notitie, d.besluit_door, d.besluit_op, d.doorgevoerd_op,
                    d.bevestiging, d.bevestiging_reden, d.gesprek_status, d.gesprek_door, d.gesprek_sinds, d.gesprek_bericht,

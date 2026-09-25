@@ -236,9 +236,10 @@ function evenement_bevestig_standen(): array {
 }
 
 /**
- * Bevestiging vastleggen. Bij "kan niet" is een reden verplicht. De fase verandert niet: het
- * bestuur beslist op Vandaag (afmelden of uitzondering). Komt de afmelding uit het portaal,
- * dan krijgt het bestuur bericht.
+ * Bevestiging vastleggen, met een opmerking (kolom bevestiging_reden). Bij "kan niet" is die
+ * verplicht; bij "ik kom" mag hij er ook staan ("ik ben er pas om 14 uur") en wordt hij bewaard —
+ * tot 2.117.0 viel hij dan stil weg. De fase verandert niet: het bestuur beslist op Vandaag
+ * (afmelden of uitzondering). Komt de afmelding uit het portaal, dan krijgt het bestuur bericht.
  *
  * @param string $bron  portaal | bellijst | beheer
  * @return bool  false bij een ongeldige stand of een ontbrekende reden
@@ -251,7 +252,7 @@ function evenement_bevestigen(string $ev, int $seizoen_id, int $sol_id, string $
     evenement_rij_verzeker($ev, $seizoen_id, $sol_id);
     db()->prepare("UPDATE `{$d['tabel']}` SET bevestiging=?, bevestiging_reden=?, bevestiging_bron=?, bevestigd_op=NOW()
                    WHERE seizoen_id=? AND sollicitatie_id=?")
-       ->execute([$stand, $stand === 'komt_niet' ? $reden : null, $bron, $seizoen_id, $sol_id]);
+       ->execute([$stand, $reden !== '' ? $reden : null, $bron, $seizoen_id, $sol_id]);
     if (function_exists('audit_log')) audit_log('deelname_bevestigd', 'sollicitatie', $sol_id, ['evenement' => $ev, 'stand' => $stand, 'bron' => $bron]);
     if ($stand === 'komt_niet' && $bron === 'portaal' && function_exists('melding_verstuur')) {
         melding_verstuur('bestuur_deelname_afgemeld', $sol_id, [
