@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.123.2');
+define('APP_VERSIE', '2.123.3');
 
 function app_changelog(): array {
     return [
+        '2.123.3' => [
+            'datum'  => '2026-09-25',
+            'titel'  => 'Loonplanning: duidelijker en sneller',
+            'punten' => [
+                '"Naar de loonplanning" in het dossier opent meteen het paneel van die persoon',
+                'In het paneel: "Afspraak" (wat de sollicitant ziet) en "Vast in alle scenario\'s" (op slot na het gesprek) staan duidelijker uit elkaar',
+                'Bij de dekking heet het "minimaal N per dienst"; "norm" betekent nu alleen nog dagen per week per persoon',
+                'De afspraak-editor en het weekpaneel rekenen alleen die ene persoon door in plaats van het hele seizoen',
+            ],
+        ],
         '2.123.2' => [
             'datum'  => '2026-09-25',
             'titel'  => 'Minder klikken bij het weekend en de bellijst',

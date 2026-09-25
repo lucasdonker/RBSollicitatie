@@ -30,7 +30,7 @@ if (!$q->fetchColumn()) { echo json_encode(['ok' => false, 'fout' => 'Onbekende 
 
 /** De stand van één persoon in het actieve scenario, zoals de editor hem toont. */
 function afspraak_stand(int $sid, array $sc, int $sol, array $seizoen): array {
-    $m = loonplan_analyse($sid, (int)$sc['id'], $seizoen)['mensen'][$sol] ?? null;
+    $m = loonplan_analyse($sid, (int)$sc['id'], $seizoen, $sol)['mensen'][$sol] ?? null;   // alleen deze persoon (elke 15 s)
     $slot = loonplan_sloten($sid)[$sol] ?? null;
     $weken = [];
     foreach (($m['weken'] ?? []) as $wk => $w) $weken[$wk] = ['opgenomen' => (int)$w['opgenomen'], 'dagen' => (int)$w['dagen'], 'betaald' => (int)$w['betaald']];

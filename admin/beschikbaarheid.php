@@ -253,7 +253,7 @@ require __DIR__ . '/_dekkinggrafiek.php';
           <td class="bh-raster-wkn"></td>
           <?php foreach ($weken as $wn => $w): $d = $dekking[$wn]; ?>
           <td class="bh-raster-tot bh-num<?= $d['stand'] === 'slecht' ? ' bh-raster-tot-laag' : '' ?>"
-              title="Week <?= (int)$wn ?>: <?= $d['aantal'] ?> beschikbaar, <?= $d['weekend'] ?> dekken het weekend<?= $dek_norm > 0 ? ' (norm ' . $dek_norm . ')' : '' ?>">
+              title="Week <?= (int)$wn ?>: <?= $d['aantal'] ?> beschikbaar, <?= $d['weekend'] ?> dekken het weekend<?= $dek_norm > 0 ? ' (minimaal ' . $dek_norm . ' nodig)' : '' ?>">
             <?= $d['aantal'] ?><span class="bh-raster-totwk"> / <?= $d['weekend'] ?></span>
           </td>
           <?php endforeach; ?>

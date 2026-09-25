@@ -77,17 +77,20 @@ $_functies_opt = array_column($functies, 'naam', 'sleutel');
           <p class="bh-zijpaneel-hint">Plant elke week zoveel dagen als de sollicitant opgaf. Daarna kun je per week bijsturen.</p>
         </section>
 
+        <?php /* Twee verschillende dingen, bewust apart:
+                 afspraak = wat de sollicitant ziet en naar de loonadministratie gaat (na "definitief maken");
+                 vastzetten = de planning op slot in álle scenario's, zodat puzzelen hem niet verschuift. */ ?>
         <section class="bh-zijpaneel-blok" data-lp-afspraakblok>
-          <h3>Afspraak</h3>
+          <h3>Afspraak <span class="bh-meta">wat de sollicitant ziet</span></h3>
           <p class="bh-zijpaneel-status" data-lp-afspraaktekst></p>
-          <form method="post" data-lp-afspraakform data-bevestig="De afspraak van deze persoon vervangen door wat nu in dit scenario staat?">
+          <form method="post" data-lp-afspraakform data-bevestig="De afspraak van deze persoon vervangen door wat nu in dit scenario staat? De sollicitant ziet de nieuwe afspraak in het portaal.">
             <?= csrf_input() ?><input type="hidden" name="sc_actie" value="afspraak"><input type="hidden" name="sol_id" value="">
-            <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm" data-lp-afspraakknop>Afspraak vaststellen</button>
+            <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm" data-lp-afspraakknop>Afspraak bijwerken uit dit scenario</button>
           </form>
         </section>
 
         <section class="bh-zijpaneel-blok">
-          <h3>Vast na het gesprek</h3>
+          <h3>Vast in alle scenario's <span class="bh-meta">na het gesprek</span></h3>
           <p class="bh-zijpaneel-status" data-lp-slottekst></p>
           <form method="post" data-lp-vastzetform>
             <?= csrf_input() ?><input type="hidden" name="sc_actie" value="vastzetten"><input type="hidden" name="sol_id" value="">

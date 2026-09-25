@@ -18,7 +18,7 @@ if ((function_exists('module_aan') && !module_aan('loonplanning')) || !mag('loon
 $_sid = (int)($af_seizoen['id'] ?? 0);
 $_sc  = $_sid ? loonplan_actief_scenario($_sid) : null;
 if (!$_sc) return;
-$_m    = loonplan_analyse($_sid, (int)$_sc['id'], $af_seizoen)['mensen'][(int)$af_sol_id] ?? null;
+$_m    = loonplan_analyse($_sid, (int)$_sc['id'], $af_seizoen, (int)$af_sol_id)['mensen'][(int)$af_sol_id] ?? null;
 $_slot = loonplan_sloten($_sid)[(int)$af_sol_id] ?? null;
 $_mag  = mag('loonplanning', 'bewerken');
 $_kan  = $_mag && !$_slot;

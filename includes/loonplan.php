@@ -184,11 +184,14 @@ function loonplan_jaar(?array $seizoen): int {
  *  'dekking' => [wk => dekkingsresultaat op basis van INGEPLANDE mensen]
  *  'signalen'=> [ ['soort','sol_id','naam','week','tekst'], ... ]
  */
-function loonplan_analyse(int $seizoen_id, int $scenario_id, ?array $seizoen = null): array {
+function loonplan_analyse(int $seizoen_id, int $scenario_id, ?array $seizoen = null, ?int $alleen_sol = null): array {
     loonplan_auto_setup();
     if ($seizoen === null && function_exists('actief_seizoen')) $seizoen = actief_seizoen();
     $jaar = loonplan_jaar($seizoen);
     $weken_datums = function_exists('seizoen_weken_datums') ? seizoen_weken_datums($seizoen) : [];
+    // $alleen_sol: alleen deze persoon doorrekenen (afspraak-editor, weekpaneel). Totalen en dekking
+    // gaan dan alleen over die persoon — gebruik alleen ['mensen'][$alleen_sol].
+    $een = $alleen_sol !== null && $alleen_sol > 0;
 
     // Mensen van dit seizoen
     try {
@@ -196,18 +199,18 @@ function loonplan_analyse(int $seizoen_id, int $scenario_id, ?array $seizoen = n
             SELECT s.id AS sol_id, s.fase, s.terugkerend, p.voornaam, p.tussenvoegsel, p.achternaam, p.geboortedatum
             FROM sollicitaties s
             JOIN personen p ON p.id = s.persoon_id
-            WHERE s.seizoen_id = ? AND s.fase NOT IN ('afgewezen','afgehaakt','verwijderd_door_sollicitant')
+            WHERE s.seizoen_id = ? AND s.fase NOT IN ('afgewezen','afgehaakt','verwijderd_door_sollicitant')" . ($een ? " AND s.id = ?" : "") . "
             ORDER BY p.achternaam, p.voornaam
         ");
-        $q->execute([$seizoen_id]);
+        $q->execute($een ? [$seizoen_id, $alleen_sol] : [$seizoen_id]);
         $rijen = $q->fetchAll();
     } catch (\Exception $e) { $rijen = []; }
 
     // Bestaande planningsregels en functies van dit scenario
     $plan = [];
     try {
-        $q = db()->prepare("SELECT * FROM loon_planning WHERE jaar=? AND scenario_id=?");
-        $q->execute([$jaar, $scenario_id]);
+        $q = db()->prepare("SELECT * FROM loon_planning WHERE jaar=? AND scenario_id=?" . ($een ? " AND sollicitatie_id=?" : ""));
+        $q->execute($een ? [$jaar, $scenario_id, $alleen_sol] : [$jaar, $scenario_id]);
         foreach ($q->fetchAll() as $r) $plan[(int)$r['sollicitatie_id']][(int)$r['week_nr']] = $r;
     } catch (\Exception $e) {}
     $functies_sc = loonplan_functies_scenario($scenario_id);
@@ -351,7 +354,7 @@ function loonplan_analyse(int $seizoen_id, int $scenario_id, ?array $seizoen = n
             'over_budget'     => $budget > 0 && $tot_kosten > $budget,
             'restant'         => $budget > 0 ? round($budget - $tot_kosten, 2) : null,
         ],
-        'dekking'  => function_exists('bezetting_dekking_van_pool') ? bezetting_dekking_van_pool($pool) : [],
+        'dekking'  => (!$een && function_exists('bezetting_dekking_van_pool')) ? bezetting_dekking_van_pool($pool) : [],
         'signalen' => $signalen,
     ];
 }

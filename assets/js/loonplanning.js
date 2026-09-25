@@ -150,7 +150,7 @@
       ab.hidden = !defi;
       $('[data-lp-afspraaktekst]').textContent = af === 'ja' ? 'Vastgesteld; komt overeen met dit scenario.'
         : (af === 'wijkt_af' ? 'Vastgesteld, maar dit scenario wijkt ervan af.' : 'Nog geen afspraak vastgesteld.');
-      $('[data-lp-afspraakknop]').textContent = af ? 'Afspraak bijwerken naar dit scenario' : 'Afspraak vaststellen';
+      $('[data-lp-afspraakknop]').textContent = af ? 'Afspraak bijwerken uit dit scenario' : 'Afspraak vastleggen uit dit scenario';
       $('[data-lp-afspraakform]').hidden = af === 'ja';
     }
     var vast = knop.dataset.vast;
@@ -225,4 +225,8 @@
     var p = e.target.closest('[data-lp-persoon]');
     if (p) persoonOpen(p);
   });
+
+  // Vanuit het dossier (?persoon=<sol_id>): meteen het paneel van die persoon open.
+  var vanuit = new URLSearchParams(location.search).get('persoon');
+  if (vanuit && /^\d+$/.test(vanuit) && persoonKnop(vanuit)) persoonOpen(persoonKnop(vanuit));
 })();

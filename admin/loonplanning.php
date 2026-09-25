@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['sc_actie'])) {
     } elseif ($a === 'opgave_alle') {
         // Iedereen die in dit scenario nog niets gepland heeft; wie al gepland is of vaststaat blijft zoals het is.
         $mensen = 0;
-        foreach (array_keys(loonplan_analyse($sid, $scenario_id, $seizoen)['mensen'] ?? []) as $_p) {
+        foreach (array_keys(loonplan_analyse($sid, $scenario_id, $seizoen)['mensen'] ?? []) as $_p) {   // hele seizoen: iedereen in het raster
             if (loonplan_opgave_overnemen($scenario_id, (int)$_p, $seizoen, true) !== null) $mensen++;
         }
         flash('succes', $mensen ? 'Opgave overgenomen voor ' . $mensen . ' ' . ($mensen === 1 ? 'persoon' : 'personen') . ' zonder planning.' : 'Iedereen had al een planning; niets veranderd.');
@@ -103,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['dagen'])) {
     header('Content-Type: application/json; charset=utf-8');
     $sol = (int)($_GET['sol_id'] ?? 0); $wk = (int)($_GET['week'] ?? 0);
     $wd = seizoen_weken_datums($seizoen);
-    $m = $sid ? (loonplan_analyse($sid, $scenario_id, $seizoen)['mensen'][$sol] ?? null) : null;
+    $m = $sid ? (loonplan_analyse($sid, $scenario_id, $seizoen, $sol)['mensen'][$sol] ?? null) : null;
     if (!$m || !isset($wd[$wk])) { echo json_encode(['ok' => false]); exit; }
     $ma = $wd[$wk]['start']->format('Y-m-d');
     $w  = $m['weken'][$wk];
@@ -132,7 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_loon'])) {
     } elseif ($wat === 'kopieer') {
         // Zelfde plan voor de volgende weken die iemand opgaf, hooguit het opgegeven aantal dagen.
         $van = (int)($_POST['week_nr'] ?? 0); $dagen = (int)($_POST['dagen'] ?? 0); $betaald = ($_POST['betaald'] ?? '1') === '1' ? 1 : 0;
-        $m = loonplan_analyse($sid, $scenario_id, $seizoen)['mensen'][$sol] ?? null;
+        $m = loonplan_analyse($sid, $scenario_id, $seizoen, $sol)['mensen'][$sol] ?? null;
         foreach (($m['weken'] ?? []) as $wk => $w) {
             if ($wk <= $van || (int)$w['max'] <= 0) continue;
             $gelukt = loonplan_cel_opslaan($scenario_id, $sol, (int)$wk, $jaar, min($dagen, (int)$w['max']), $dagen > 0 ? 1 : 0, $betaald) && $gelukt;

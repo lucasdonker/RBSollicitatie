@@ -30,7 +30,7 @@ $_zin   = bh_dekking_zin($_knel);
   <header class="bh-dekgrafiek-kop">
     <h2><?= h($_titel) ?></h2>
     <?php if ($_norm > 0): ?>
-      <span class="bh-dekgrafiek-norm">norm <?= $_norm ?> <?= $_norm === 1 ? 'persoon' : 'mensen' ?> per dienst</span>
+      <span class="bh-dekgrafiek-norm">minimaal <?= $_norm ?> <?= $_norm === 1 ? 'persoon' : 'mensen' ?> per dienst</span>
       <span class="bh-dekgrafiek-stand">
         <?= $_zin !== null ? bh_stoplicht('slecht', $_zin) : bh_stoplicht('goed', 'Alle weken gedekt') ?>
       </span>

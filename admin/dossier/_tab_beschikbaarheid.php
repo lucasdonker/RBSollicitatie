@@ -80,7 +80,7 @@ $_kop = function () use ($_wkn): string {
       ]))) ?>
     </span>
     <?php if ($_lp): ?>
-      <a class="bh-kaartkop-link" href="<?= APP_URL ?>/admin/loonplanning.php?q=<?= urlencode(volledige_naam($_s)) ?>">Naar de loonplanning</a>
+      <a class="bh-kaartkop-link" href="<?= APP_URL ?>/admin/loonplanning.php?<?= h(http_build_query(['q' => volledige_naam($_s), 'persoon' => $_sol])) ?>">Naar de loonplanning</a>
     <?php endif; ?>
   </header>
   <div class="bh-rasterrol">
