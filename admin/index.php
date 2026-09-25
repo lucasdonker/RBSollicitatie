@@ -18,7 +18,10 @@ $sid = $sz ? (int)$sz['id'] : 0;
 
 $fase     = bh_seizoen_fase($sz);
 $taak     = bh_vandaag_hoofdtaak($sz, $fase);
-$loopt    = bh_vandaag_loopt($sz);
+$werkbak  = bh_vandaag_werkbak($sz, $taak);
+$sinds_op = beheerder_vandaag_sinds((int)($_SESSION['bhd_id'] ?? 0));
+$sinds    = bh_vandaag_sinds($sz, $sinds_op);
+$agenda   = bh_vandaag_agenda($sz);
 $systeem  = (mag('systeem', 'lezen') || mag('logboek', 'lezen') || mag('instellingen', 'bewerken')) ? bh_systeemstatus() : null;
 $tellingen = $sid ? bh_fase_tellingen($sid) : [];
 $mag_soll = mag('sollicitanten', 'lezen');
@@ -42,13 +45,16 @@ require __DIR__ . '/layout_top.php';
 
   <?php $vandaag_fase = $fase; require __DIR__ . '/_seizoenbalk.php'; ?>
 
-  <?php $vandaag_taak = $taak; require __DIR__ . '/_hoofdtaak.php'; ?>
-
-  <?php if ($mag_soll && function_exists('evenement_afmeldingen_open')) { $afmeldingen = evenement_afmeldingen_open($sid); require __DIR__ . '/_afmeldingen.php'; } ?>
-
-  <?php if ($mag_soll && function_exists('intrek_open_lijst')) { $intrekverzoeken = intrek_open_lijst($sid); require __DIR__ . '/_intrekverzoeken.php'; } ?>
-
   <div class="bh-vandaag-kolommen">
+    <?php // Links: wat je moet doen. Rechts: wat je moet weten. ?>
+    <div class="bh-vandaag-hoofd">
+      <?php $vandaag_taak = $taak; require __DIR__ . '/_hoofdtaak.php'; ?>
+
+      <?php require __DIR__ . '/_werkbak.php'; ?>
+
+      <?php if ($mag_soll && function_exists('evenement_afmeldingen_open')) { $afmeldingen = evenement_afmeldingen_open($sid); require __DIR__ . '/_afmeldingen.php'; } ?>
+
+      <?php if ($mag_soll && function_exists('intrek_open_lijst')) { $intrekverzoeken = intrek_open_lijst($sid); require __DIR__ . '/_intrekverzoeken.php'; } ?>
 
     <?php if ($mag_soll): ?>
     <section class="ds-kaart ds-kaart-p bh-stand">
@@ -81,25 +87,11 @@ require __DIR__ . '/layout_top.php';
       <?php endif; ?>
     </section>
     <?php endif; ?>
+    </div>
 
     <div class="bh-vandaag-zij">
-      <?php if ($loopt): ?>
-      <section class="ds-kaart ds-kaart-p">
-        <div class="bh-kaartkop"><h2>Loopt ondertussen</h2></div>
-        <ul class="bh-looptlijst">
-          <?php foreach ($loopt as $_l): ?>
-            <li class="ds-fase-<?= h($_l['toon']) ?>">
-              <span class="bh-loopt-stip"></span>
-              <?php if (!empty($_l['url'])): ?>
-                <a href="<?= h($_l['url']) ?>"><?= h($_l['tekst']) ?></a>
-              <?php else: ?>
-                <span><?= h($_l['tekst']) ?></span>
-              <?php endif; ?>
-            </li>
-          <?php endforeach; ?>
-        </ul>
-      </section>
-      <?php endif; ?>
+      <?php $sinds_regels = $sinds; require __DIR__ . '/_sinds.php'; ?>
+      <?php require __DIR__ . '/_agenda.php'; ?>
 
       <?php // Techniek (wachtrij, mailfouten, taakronde) is voor wie er iets aan kan doen; voor een begeleider is het ruis.
         if (mag('systeem', 'lezen') || mag('logboek', 'lezen') || mag('instellingen', 'bewerken')) {

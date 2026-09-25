@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.124.0');
+define('APP_VERSIE', '2.125.0');
 
 function app_changelog(): array {
     return [
+        '2.125.0' => [
+            'datum'  => '2026-09-25',
+            'titel'  => 'Vandaag: werkbak, sinds je vorige bezoek en agenda',
+            'punten' => [
+                'Wacht ook op jou: alles wat op een handeling wacht, per stuk met een knop ernaartoe (alleen wat je rechten toelaten)',
+                'Sinds je vorige bezoek: nieuwe aanmeldingen, ingeleverde formulieren, ondertekeningen, vragen, afmeldingen en intrekverzoeken',
+                'Agenda: selectiedag, trainingsweekend, werkperiode en geplande berichten van de komende 60 dagen',
+                'Systeemstatus alleen nog voor wie het systeem beheert',
+            ],
+        ],
         '2.124.0' => [
             'datum'  => '2026-09-25',
             'titel'  => 'Beheer opgeruimd',

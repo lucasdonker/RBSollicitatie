@@ -266,41 +266,6 @@ function bh_vandaag_hoofdtaak_bepalen(int $sid, string $seizoen_fase): array {
 }
 
 /**
- * De dingen die ondertussen lopen: wel weten, niet nu handelen.
- * @return array<int,array{tekst:string,toon:string,extra:?string,url:?string}>
- */
-function bh_vandaag_loopt(?array $seizoen): array {
-    $uit = [];
-    $sid = $seizoen ? (int)$seizoen['id'] : 0;
-    if (!$sid) return $uit;
-
-    $n = bh_ondertekeningen_te_lang_open($sid);
-    if ($n > 0) {
-        $uit[] = ['tekst' => $n === 1 ? 'Eén ondertekening staat langer dan 3 dagen open'
-                                      : $n . ' ondertekeningen staan langer dan 3 dagen open',
-                  'toon' => 'oranje', 'extra' => null,
-                  'url' => APP_URL . '/admin/ondertekeningen.php'];
-    }
-
-    // Zelfde selectie als de lijst "nog voorlopig" (beschikbaarheid2_voorlopigen) en de
-    // herinneringen: dit seizoen, en alleen wie echt weken heeft ingevuld.
-    try {
-        $q = db()->prepare("SELECT COUNT(*) FROM beschikbaarheid_profiel bp
-                            JOIN sollicitaties s ON s.id = bp.sollicitatie_id
-                            WHERE bp.voorlopig = 1 AND s.seizoen_id = ? AND s.fase NOT IN ('afgewezen','afgehaakt')
-                              AND EXISTS (SELECT 1 FROM beschikbaarheid_blok bb WHERE bb.sollicitatie_id = bp.sollicitatie_id)");
-        $q->execute([$sid]);
-        $n = (int)$q->fetchColumn();
-        if ($n > 0) {
-            $uit[] = ['tekst' => $n . ' beschikbaarheden zijn nog voorlopig', 'toon' => 'grijs',
-                      'extra' => null, 'url' => APP_URL . '/admin/beschikbaarheid.php'];
-        }
-    } catch (\Throwable $e) {}
-
-    return $uit;
-}
-
-/**
  * De systeemstatusbalk — twee standen.
  *
  * Automatisering die je niet ziet wordt eng zodra ze hapert (§3), dus de taakronde
@@ -330,6 +295,148 @@ function bh_systeemstatus(): array {
         'wachtrij' => $wachtrij, 'fouten' => $fouten, 'open' => $open,
         'ronde'    => $ronde !== '' ? $ronde : null, 'ronde_ok' => $ronde_ok,
     ];
+}
+
+/**
+ * De werkbak: alles wat op een mens wacht, uit alle modules, gefilterd op wat jouw rol mag.
+ * Elke regel is een aantal + een zin + een knop naar de plek waar je het afhandelt. Wat al de
+ * hoofdtaak is (zelfde url) staat er niet nog eens. Afmeldingen en intrekverzoeken hebben een
+ * eigen blok met knoppen (admin/_afmeldingen.php, admin/_intrekverzoeken.php) en staan hier niet.
+ *
+ * @return array<int,array{aantal:int,tekst:string,url:string,knop:string,toon:string,icoon:string}>
+ */
+function bh_vandaag_werkbak(?array $seizoen, array $hoofdtaak): array {
+    $sid = $seizoen ? (int)$seizoen['id'] : 0;
+    if (!$sid) return [];
+    $mag = fn(string $m, string $a = 'lezen') => !function_exists('mag') || mag($m, $a);
+    $tel = function (string $sql, array $p = []) {
+        try { $q = db()->prepare($sql); $q->execute($p); return (int)$q->fetchColumn(); } catch (\Throwable $e) { return 0; }
+    };
+    $a = APP_URL . '/admin/';
+    $uit = [];
+    $zet = function (int $n, string $een, string $meer, string $url, string $knop, string $toon, string $icoon) use (&$uit, $hoofdtaak) {
+        if ($n <= 0 || ($hoofdtaak['url'] ?? null) === $url) return;
+        $uit[] = ['aantal' => $n, 'tekst' => $n === 1 ? $een : $meer, 'url' => $url, 'knop' => $knop, 'toon' => $toon, 'icoon' => $icoon];
+    };
+    $vandaag = date('Y-m-d');
+
+    if ($mag('sollicitanten', 'bewerken')) {
+        $n = $tel("SELECT COUNT(*) FROM sollicitaties WHERE seizoen_id=? AND fase='aangemeld'", [$sid]);
+        $zet($n, 'aanmelding wacht op een uitnodiging', 'aanmeldingen wachten op een uitnodiging', $a . 'sollicitanten.php?fase=aangemeld', 'Uitnodigen', 'oranje', 'mensen');
+    }
+    if ($mag('beschikbaarheid', 'bewerken')) {
+        $n = $tel("SELECT COUNT(*) FROM beschikbaarheid_verzoek v JOIN sollicitaties s ON s.id=v.sollicitatie_id WHERE s.seizoen_id=? AND v.status='open'", [$sid]);
+        $zet($n, 'verzoek om minder dagen te beoordelen', 'verzoeken om minder dagen te beoordelen', $a . 'beschikbaarheid.php?toon=verzoek', 'Beoordelen', 'oranje', 'klok');
+    }
+    if ($mag('selectiedag', 'bewerken') && (!function_exists('module_aan') || module_aan('selectiedag'))) {
+        $n = $tel("SELECT COUNT(*) FROM selectie_besluit b JOIN sollicitaties s ON s.id=b.sollicitatie_id
+                   WHERE b.seizoen_id=? AND b.gebeld_op IS NOT NULL AND b.doorgevoerd_op IS NULL AND s.fase IN ('uitgenodigd_selectie','aangemeld_selectie','selectiedag_geweest')", [$sid]);
+        $zet($n, 'gebeld, maar nog niet doorgevoerd', 'gebeld, maar nog niet doorgevoerd', $a . 'selectie_nabespreking.php?tab=bellijst', 'Doorvoeren', 'oranje', 'telefoon');
+        if (!empty($seizoen['datum_selectiedag']) && $vandaag > $seizoen['datum_selectiedag']) {
+            $n = $tel("SELECT COUNT(*) FROM sollicitaties s LEFT JOIN selectie_besluit b ON b.sollicitatie_id=s.id
+                       WHERE s.seizoen_id=? AND s.fase='selectiedag_geweest' AND (b.besluit IS NULL OR b.besluit='')", [$sid]);
+            $zet($n, 'kandidaat van de selectiedag zonder besluit', 'kandidaten van de selectiedag zonder besluit', $a . 'selectie_nabespreking.php?filter=open', 'Nabespreken', 'oranje', 'vink');
+        }
+    }
+    if ($mag('trainingsweekend', 'bewerken') && (!function_exists('module_aan') || module_aan('trainingsweekend'))) {
+        $n = $tel("SELECT COUNT(*) FROM tw_deelname d JOIN sollicitaties s ON s.id=d.sollicitatie_id
+                   WHERE d.seizoen_id=? AND d.besluit='twijfel' AND d.doorgevoerd_op IS NULL AND s.fase IN ('uitgenodigd_tw','tw_geweest')", [$sid]);
+        $zet($n, 'twijfelgeval na het trainingsweekend: bellen en beslissen', 'twijfelgevallen na het trainingsweekend: bellen en beslissen', $a . 'trainingsweekend.php?stap=gesprekken&besluit=twijfel', 'Naar de gesprekken', 'oranje', 'telefoon');
+    }
+    if ($mag('ondertekeningen')) {
+        $n = bh_ondertekeningen_te_lang_open($sid);
+        $zet($n, 'ondertekening staat langer dan 3 dagen open', 'ondertekeningen staan langer dan 3 dagen open', $a . 'ondertekeningen.php', 'Bekijken', 'grijs', 'potlood');
+    }
+    if ($mag('beschikbaarheid')) {
+        $n = $tel("SELECT COUNT(*) FROM beschikbaarheid_profiel bp JOIN sollicitaties s ON s.id = bp.sollicitatie_id
+                   WHERE bp.voorlopig = 1 AND s.seizoen_id = ? AND s.fase NOT IN ('afgewezen','afgehaakt')
+                     AND EXISTS (SELECT 1 FROM beschikbaarheid_blok bb WHERE bb.sollicitatie_id = bp.sollicitatie_id)", [$sid]);
+        $zet($n, 'beschikbaarheid is nog voorlopig', 'beschikbaarheden zijn nog voorlopig', $a . 'beschikbaarheid.php?toon=voorlopig', 'Bekijken', 'grijs', 'kalender');
+    }
+    if ($mag('documenten', 'bewerken') && function_exists('documenten_overzicht') && ($hoofdtaak['url'] ?? '') !== $a . 'documenten.php') {
+        $n = count(array_filter(documenten_overzicht($sid), fn($r) => $r['dossier']['compleet'] && !$r['dossier']['verwerkt']));
+        $zet($n, 'loondossier te verwerken', 'loondossiers te verwerken', $a . 'documenten.php', 'Verwerken', 'oranje', 'slot');
+    }
+    if ($mag('mailing')) {
+        $n = $tel("SELECT COUNT(*) FROM mail_log WHERE status='mislukt' AND verstuurd_op > DATE_SUB(NOW(), INTERVAL 7 DAY)");
+        $zet($n, 'bericht kwam deze week niet aan', 'berichten kwamen deze week niet aan', $a . 'berichten.php?tab=log', 'Bekijken', 'rood', 'mail');
+    }
+    return $uit;
+}
+
+/**
+ * Wat er nieuw is sinds je vorige bezoek (beheerder_vandaag_sinds()). Alleen wat je mag zien;
+ * rijen met 0 vallen weg.
+ *
+ * @return array<int,array{aantal:int,tekst:string,url:?string}>
+ */
+function bh_vandaag_sinds(?array $seizoen, string $sinds): array {
+    $sid = $seizoen ? (int)$seizoen['id'] : 0;
+    if (!$sid) return [];
+    $mag = fn(string $m) => !function_exists('mag') || mag($m, 'lezen');
+    $tel = function (string $sql) use ($sid, $sinds) {
+        try { $q = db()->prepare($sql); $q->execute([$sid, $sinds]); return (int)$q->fetchColumn(); } catch (\Throwable $e) { return 0; }
+    };
+    $a = APP_URL . '/admin/';
+    $regels = [];
+    $zet = function (bool $mag_zien, int $n, string $een, string $meer, ?string $url) use (&$regels) {
+        if ($mag_zien && $n > 0) $regels[] = ['aantal' => $n, 'tekst' => $n === 1 ? $een : $meer, 'url' => $url];
+    };
+    $s = "JOIN sollicitaties s ON s.id = x.sollicitatie_id WHERE s.seizoen_id = ? AND";
+    $zet($mag('sollicitanten'), $tel("SELECT COUNT(*) FROM sollicitaties s WHERE s.seizoen_id = ? AND s.aangemeld_op > ?"),
+         'nieuwe aanmelding', 'nieuwe aanmeldingen', $a . 'sollicitanten.php?sort=s.aangemeld_op');
+    $zet($mag('blk'), $tel("SELECT COUNT(*) FROM blk_formulieren x $s x.definitief_op > ?"),
+         'kennismakingsformulier ingeleverd', 'kennismakingsformulieren ingeleverd', $a . 'sollicitanten.php?blk=ja');
+    $zet($mag('beschikbaarheid'), $tel("SELECT COUNT(*) FROM beschikbaarheid_profiel x $s x.definitief_op > ?"),
+         'beschikbaarheid definitief gemaakt', 'beschikbaarheden definitief gemaakt', $a . 'beschikbaarheid.php');
+    $zet($mag('beschikbaarheid'), $tel("SELECT COUNT(*) FROM beschikbaarheid_verzoek x $s x.aangemaakt_op > ?"),
+         'verzoek om minder dagen', 'verzoeken om minder dagen', $a . 'beschikbaarheid.php?toon=verzoek');
+    $zet($mag('ondertekeningen'), $tel("SELECT COUNT(*) FROM ondertekeningen x $s x.ondertekend_op > ?"),
+         'ondertekening binnen', 'ondertekeningen binnen', $a . 'ondertekeningen.php');
+    $zet($mag('sollicitanten'), $tel("SELECT COUNT(*) FROM mail_log x $s x.meldingstype = 'sollicitant_vraag' AND x.verstuurd_op > ?"),
+         'vraag uit het portaal (staat in de mailbox)', 'vragen uit het portaal (staan in de mailbox)', null);
+    $zet($mag('sollicitanten'), $tel("SELECT COUNT(*) FROM selectie_indeling x $s x.bevestiging = 'komt_niet' AND x.bevestigd_op > ?")
+                             + $tel("SELECT COUNT(*) FROM tw_deelname x $s x.bevestiging = 'komt_niet' AND x.bevestigd_op > ?"),
+         'afmelding: kan niet komen', 'afmeldingen: kunnen niet komen', null);
+    $zet($mag('sollicitanten'), $tel("SELECT COUNT(*) FROM intrek_verzoek x $s x.aangevraagd_op > ?"),
+         'verzoek om in te trekken', 'verzoeken om in te trekken', $a . 'sollicitanten.php?intrek=ja');
+    return $regels;
+}
+
+/**
+ * De agenda: datums van het seizoen en geplande berichten die aan een datum hangen, vanaf
+ * vandaag tot $dagen dagen vooruit, oplopend.
+ *
+ * @return array<int,array{datum:string,tot:?string,tekst:string,soort:string,over:int}>
+ */
+function bh_vandaag_agenda(?array $seizoen, int $dagen = 60): array {
+    if (!$seizoen) return [];
+    $van = date('Y-m-d'); $tot = date('Y-m-d', strtotime('+' . $dagen . ' days'));
+    $uit = [];
+    $zet = function (?string $datum, string $tekst, string $soort, ?string $eind = null) use (&$uit, $van, $tot) {
+        if (!$datum) return;
+        $d = substr($datum, 0, 10);
+        $e = $eind ? substr($eind, 0, 10) : null;
+        if (($e ?? $d) < $van || $d > $tot) return;   // lopend (bijv. het weekend) telt mee
+        $uit[] = ['datum' => $d, 'tot' => ($e && $e !== $d) ? $e : null, 'tekst' => $tekst, 'soort' => $soort,
+                  'over' => (int)round((strtotime($d) - strtotime($van)) / 86400)];
+    };
+    $mod = fn(string $m) => !function_exists('module_aan') || module_aan($m);
+    if ($mod('selectiedag'))      $zet($seizoen['datum_selectiedag'] ?? null, 'Selectiedag', 'evenement');
+    if ($mod('trainingsweekend')) $zet($seizoen['datum_tw_start'] ?? null, 'Trainingsweekend', 'evenement', $seizoen['datum_tw_eind'] ?? null);
+    $zet($seizoen['datum_werk_start'] ?? null, 'Start werkperiode', 'seizoen');
+    $zet($seizoen['datum_werk_eind'] ?? null, 'Einde werkperiode', 'seizoen');
+    // Geplande berichten die aan de selectiedag of het weekend hangen (vaste datum + offset).
+    if (function_exists('gepland_regels') && (!function_exists('mag') || mag('mailing', 'lezen'))) {
+        foreach (gepland_regels(true) as $r) {
+            $basis = ['selectiedag' => $seizoen['datum_selectiedag'] ?? null, 'trainingsweekend' => $seizoen['datum_tw_start'] ?? null][$r['gebeurtenis']] ?? null;
+            if (!$basis) continue;
+            $zet(date('Y-m-d', strtotime(substr($basis, 0, 10) . ' ' . sprintf('%+d', (int)$r['offset_dagen']) . ' days')),
+                 'Bericht: ' . $r['naam'], 'bericht');
+        }
+    }
+    usort($uit, fn($x, $y) => strcmp($x['datum'], $y['datum']) ?: strcmp($x['soort'], $y['soort']));
+    return $uit;
 }
 
 /** Badges in het menu: alleen wat om aandacht vraagt. */

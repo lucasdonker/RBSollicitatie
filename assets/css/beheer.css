@@ -288,6 +288,34 @@ html[data-theme="dark"] .bh-nav-link.actief { background: var(--surface); color:
 .bh-vandaag-kolommen { display: flex; gap: 14px; align-items: flex-start; flex-wrap: wrap; }
 .bh-stand { flex: 2; min-width: 380px; }
 .bh-vandaag-zij { flex: 1; min-width: 270px; display: flex; flex-direction: column; gap: 14px; }
+/* Links wat je moet doen (hoofdtaak, werkbak, afmeldingen, intrekken, stand), rechts wat je moet weten. */
+.bh-vandaag-hoofd { flex: 2; min-width: 380px; display: flex; flex-direction: column; gap: 14px; }
+.bh-vandaag-hoofd > * { margin: 0; }
+.bh-vandaag-hoofd .bh-stand { min-width: 0; }
+/* Werkbak (admin/_werkbak.php) */
+.bh-werkbak-lijst { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.bh-werkbak-rij { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--bg-subtle); }
+.bh-werkbak-rij:first-child { border-top: 0; }
+.bh-werkbak-icoon { flex: none; width: 34px; height: 34px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+  background: var(--f-vlak, var(--bg-subtle)); color: var(--f-tekst, var(--ink-soft)); }
+.bh-werkbak-tekst { flex: 1; font-size: 14px; color: var(--ink); }
+.bh-werkbak-tekst strong { font-size: 16px; margin-right: 2px; }
+.bh-werkbak-leeg { display: flex; align-items: center; gap: 8px; margin: 0; }
+/* Sinds je vorige bezoek (admin/_sinds.php) */
+.bh-sinds-lijst { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+.bh-sinds-lijst li { display: flex; align-items: baseline; gap: 10px; font-size: 14px; }
+.bh-sinds-getal { min-width: 26px; text-align: right; font-weight: 700; color: var(--navy); }
+.bh-sinds-lijst a { color: var(--ink); }
+.bh-sinds-lijst a:hover { color: var(--navy); text-decoration: underline; }
+/* Agenda (admin/_agenda.php) */
+.bh-agenda-lijst { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.bh-agenda-rij { display: flex; gap: 12px; align-items: center; }
+.bh-agenda-datum { flex: none; width: 44px; border-radius: var(--radius-sm); border: 1px solid var(--border); text-align: center; padding: 3px 0; line-height: 1.1; }
+.bh-agenda-rij.evenement .bh-agenda-datum { border-color: var(--navy); }
+.bh-agenda-dag { display: block; font-size: 17px; font-weight: 700; color: var(--ink); }
+.bh-agenda-maand { display: block; font-size: 11px; text-transform: uppercase; color: var(--ink-muted); }
+.bh-agenda-tekst { display: flex; flex-direction: column; gap: 1px; font-size: 14px; color: var(--ink); }
+.bh-agenda-rij.evenement .bh-agenda-tekst { font-weight: 600; }
 .bh-stand-balken { display: flex; gap: 6px; align-items: flex-end; }
 .bh-stand-balk {
   flex: 1; display: flex; flex-direction: column; gap: 6px; align-items: center;
@@ -306,11 +334,6 @@ html[data-theme="dark"] .bh-nav-link.actief { background: var(--surface); color:
 }
 
 /* Loopt ondertussen */
-.bh-looptlijst { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 11px; }
-.bh-looptlijst li { display: flex; align-items: center; gap: 10px; font-size: 14px; }
-.bh-loopt-stip { width: 7px; height: 7px; border-radius: 50%; background: var(--f-tekst); flex: none; }
-.bh-looptlijst a { color: var(--ink); }
-.bh-looptlijst a:hover { color: var(--navy); text-decoration: underline; }
 /* Vandaag: kan niet komen — wacht op besluit (admin/_afmeldingen.php) */
 .bh-afmeldingen { margin-bottom: 16px; }
 .bh-afm-lijst { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
@@ -342,7 +365,7 @@ html[data-theme="dark"] .bh-nav-link.actief { background: var(--surface); color:
 @media (max-width: 760px) {
   .bh-seizoenbalk { flex-wrap: wrap; gap: 10px 14px; }
   .bh-sb-stap, .bh-sb-stap.nu { flex: 1 1 30%; }
-  .bh-stand, .bh-vandaag-zij { min-width: 100%; }
+  .bh-stand, .bh-vandaag-zij, .bh-vandaag-hoofd { min-width: 100%; }
   .bh-hoofdtaak h2 { font-size: 19px; }
   .bh-systeem-ronde { margin-left: 0; }
 }

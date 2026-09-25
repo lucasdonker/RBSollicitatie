@@ -183,6 +183,7 @@ function db_failsafe(bool $forceer = false): void {
         'tw_auto_setup',
         'lg_feedback_auto_setup',
         'intrek_auto_setup',
+        'beheerder_bezoek_auto_setup',
         'ratelimit_auto_setup',
         'portaal_berichten_kolom_verzeker',
         'blk_kolommen_verzeker',
