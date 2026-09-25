@@ -389,6 +389,40 @@ function loonplan_cel_opslaan(int $scenario_id, int $sol_id, int $week, int $jaa
     } catch (\Exception $e) { error_log('loonplan_cel_opslaan: ' . $e->getMessage()); return false; }
 }
 
+/**
+ * De opgave van de sollicitant overnemen in een scenario: per week zoveel dagen als hij of zij
+ * opgaf (beschikbaarheid2_effectief, dagen_max); weken zonder opgave gaan eruit. Betaald blijft
+ * zoals het per week stond (standaard betaald). Wie op slot staat (na het TW-gesprek) wordt niet
+ * aangeraakt.
+ *
+ * @param bool $alleen_leeg  true = alleen als deze persoon in dit scenario nog niets gepland heeft
+ * @return ?int  aantal ingeplande weken; null = niet gedaan (slot, of al gepland bij $alleen_leeg)
+ */
+function loonplan_opgave_overnemen(int $scenario_id, int $sol_id, ?array $seizoen, bool $alleen_leeg = false): ?int {
+    loonplan_auto_setup();
+    if (function_exists('loonplan_slot_in_scenario') && loonplan_slot_in_scenario($scenario_id, $sol_id)) return null;
+    $jaar = loonplan_jaar($seizoen);
+    $betaald = [];
+    try {
+        $q = db()->prepare("SELECT week_nr, betaald, opgenomen, dagen FROM loon_planning WHERE scenario_id=? AND sollicitatie_id=?");
+        $q->execute([$scenario_id, $sol_id]);
+        foreach ($q->fetchAll() as $r) {
+            if ($alleen_leeg && !empty($r['opgenomen']) && (int)$r['dagen'] > 0) return null;
+            $betaald[(int)$r['week_nr']] = (int)$r['betaald'];
+        }
+    } catch (\Exception $e) { return null; }
+    $opgave = function_exists('beschikbaarheid2_effectief') ? beschikbaarheid2_effectief($sol_id, $seizoen) : [];
+    $n = 0;
+    foreach (seizoen_weken_datums($seizoen) as $wk => $_) {
+        $dagen = (int)($opgave[$wk]['dagen_max'] ?? 0);
+        if ($dagen <= 0 && !isset($betaald[$wk])) continue;   // niets opgegeven en niets gepland: niets te doen
+        loonplan_cel_opslaan($scenario_id, $sol_id, (int)$wk, $jaar, $dagen, $dagen > 0 ? 1 : 0, $betaald[$wk] ?? 1);
+        if ($dagen > 0) $n++;
+    }
+    if (function_exists('audit_log')) audit_log('loonplan_opgave_overgenomen', 'sollicitatie', $sol_id, ['scenario' => $scenario_id, 'weken' => $n]);
+    return $n;
+}
+
 /** De functie van één persoon in één scenario vastleggen (niet als die persoon op slot staat). */
 function loonplan_functie_zetten(int $scenario_id, int $sol_id, string $functie): bool {
     loonplan_auto_setup();

@@ -44,6 +44,7 @@ $_functies = functies_ophalen();
     <span data-af-slottekst><?php if ($_slot): ?><?= icoon('slot', 15) ?> Vastgezet na het gesprek (<?= h(date('d-m H:i', strtotime((string)$_slot['vergrendeld_op']))) ?>), in alle scenario's.<?php else: ?>Wijzigingen gaan meteen in het actieve scenario. Na het besluit staat dit vast in alle scenario's.<?php endif; ?></span>
     <?php if ($_mag): ?>
       <button type="button" class="bh-doc-actie" data-af-ontgrendel<?= $_slot ? '' : ' hidden' ?>>Toch aanpassen</button>
+      <button type="button" class="bh-doc-actie" data-af-opgave<?= $_slot ? ' hidden' : '' ?>>Opgave overnemen</button>
       <button type="button" class="bh-doc-actie" data-af-vastzetten<?= $_slot ? ' hidden' : '' ?>>Nu vastzetten</button>
     <?php endif; ?>
   </div>

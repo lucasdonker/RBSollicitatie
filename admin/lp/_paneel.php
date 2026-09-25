@@ -68,6 +68,15 @@ $_functies_opt = array_column($functies, 'naam', 'sleutel');
         </section>
 
         <?php if ($mag_bewerken): ?>
+        <section class="bh-zijpaneel-blok">
+          <h3>Opgave overnemen</h3>
+          <form method="post" data-bevestig="De planning van deze persoon in dit scenario vervangen door wat hij of zij zelf opgaf?">
+            <?= csrf_input() ?><input type="hidden" name="sc_actie" value="opgave"><input type="hidden" name="sol_id" value="">
+            <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm">Neem de opgave over</button>
+          </form>
+          <p class="bh-zijpaneel-hint">Plant elke week zoveel dagen als de sollicitant opgaf. Daarna kun je per week bijsturen.</p>
+        </section>
+
         <section class="bh-zijpaneel-blok" data-lp-afspraakblok>
           <h3>Afspraak</h3>
           <p class="bh-zijpaneel-status" data-lp-afspraaktekst></p>

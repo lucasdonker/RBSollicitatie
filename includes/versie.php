@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.122.0');
+define('APP_VERSIE', '2.122.1');
 
 function app_changelog(): array {
     return [
+        '2.122.1' => [
+            'datum'  => '2026-09-25',
+            'titel'  => 'Loonplanning: opgave overnemen',
+            'punten' => [
+                'Knop "Neem de opgave over" bij een persoon in de loonplanning en "Opgave overnemen" in de afspraak-editor (TW-gesprek en dossier): elke week zoveel dagen als de sollicitant opgaf',
+                'In de kop: "Opgave overnemen (wie nog leeg is)" voor iedereen die in het scenario nog niets gepland heeft',
+                'Wie vaststaat na het TW-gesprek wordt niet aangeraakt; betaald/onbetaald per week blijft zoals je het had',
+            ],
+        ],
         '2.122.0' => [
             'datum'  => '2026-09-25',
             'titel'  => 'Dossier: beschikbaarheid en inzet op één tab',

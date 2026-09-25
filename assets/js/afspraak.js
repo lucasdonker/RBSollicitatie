@@ -25,6 +25,8 @@
       var o = blok.querySelector('[data-af-ontgrendel]'), v = blok.querySelector('[data-af-vastzetten]');
       if (o) o.hidden = !slot;
       if (v) v.hidden = slot;
+      var og = blok.querySelector('[data-af-opgave]');
+      if (og) og.hidden = slot;
       var fn = blok.querySelector('[data-af-functie]');
       if (d.functie && document.activeElement !== fn) fn.value = d.functie;
       fn.disabled = !kan;
@@ -73,6 +75,15 @@
 
     blok.addEventListener('click', function (e) {
       if (e.target.closest('[data-af-vastzetten]')) { post({ wat: 'vastzetten' }); return; }
+      if (e.target.closest('[data-af-opgave]') && !slot) {
+        var doe = function () { post({ wat: 'opgave' }); };
+        if (window.bhBevestig) {
+          bhBevestig({ titel: 'Opgave overnemen?', knop: 'Ja, overnemen',
+                       tekst: 'Elke week wordt ingepland met zoveel dagen als de sollicitant opgaf. Wat hier nu staat, wordt vervangen.' })
+            .then(function (ja) { if (ja) doe(); });
+        } else doe();
+        return;
+      }
       if (e.target.closest('[data-af-ontgrendel]') && window.bhVraag) {
         bhVraag({ titel: 'Toch aanpassen?', knop: 'Ontgrendelen',
                   tekst: 'Dit is met de sollicitant besproken. Waarom pas je het aan? De reden komt in het logboek. Zet het daarna opnieuw vast.' })

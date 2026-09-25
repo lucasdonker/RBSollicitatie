@@ -57,6 +57,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['sc_actie'])) {
         $tekst = 'Loonplanning definitief: ' . $res['aantal'] . ' ' . ($res['aantal'] === 1 ? 'afspraak' : 'afspraken') . ' vastgesteld.';
         if ($res['zonder_planning']) $tekst .= ' Aangenomen maar nergens ingepland (geen afspraak gemaakt): ' . implode(', ', $res['zonder_planning']) . '.';
         flash($res['zonder_planning'] ? 'fout' : 'succes', $tekst);
+    } elseif ($a === 'opgave' && $sol) {
+        // Eén persoon: planning = wat hij of zij opgaf (overschrijft dit scenario voor die persoon).
+        $n = loonplan_opgave_overnemen($scenario_id, $sol, $seizoen);
+        flash($n === null ? 'fout' : 'succes', $n === null ? 'Niet gedaan: deze persoon staat vast na het TW-gesprek.' : 'Opgave overgenomen: ' . $n . ' weken ingepland.');
+    } elseif ($a === 'opgave_alle') {
+        // Iedereen die in dit scenario nog niets gepland heeft; wie al gepland is of vaststaat blijft zoals het is.
+        $mensen = 0;
+        foreach (array_keys(loonplan_analyse($sid, $scenario_id, $seizoen)['mensen'] ?? []) as $_p) {
+            if (loonplan_opgave_overnemen($scenario_id, (int)$_p, $seizoen, true) !== null) $mensen++;
+        }
+        flash('succes', $mensen ? 'Opgave overgenomen voor ' . $mensen . ' ' . ($mensen === 1 ? 'persoon' : 'personen') . ' zonder planning.' : 'Iedereen had al een planning; niets veranderd.');
     } elseif ($a === 'afspraak' && $sol) {
         // Eén persoon opnieuw vaststellen vanuit dit scenario (na een wijziging, of later aangenomen).
         $n = inzet_vaststellen($sid, $scenario_id, [$sol], $ik);

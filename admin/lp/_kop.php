@@ -78,6 +78,9 @@ $_n_vast = count($sloten);
           <button type="submit" class="ds-btn ds-btn-zacht ds-btn-sm">Verwijderen</button></form>
       <?php endif; ?>
       <?php if ($mag_bewerken): ?>
+        <form method="post" data-bevestig="Voor iedereen die in dit scenario nog niets gepland heeft de eigen opgave overnemen? Wie al gepland is of vaststaat, blijft zoals het is.">
+          <?= csrf_input() ?><input type="hidden" name="sc_actie" value="opgave_alle">
+          <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm">Opgave overnemen (wie nog leeg is)</button></form>
         <form method="post" data-bevestig="Loonplanning definitief maken? Dit scenario wordt de actieve planning en de afspraak van iedereen die is aangenomen. Die afspraak zien de sollicitant, het dossier en de loonadministratie. Een eerdere afspraak van dezelfde persoon wordt vervangen.">
           <?= csrf_input() ?><input type="hidden" name="sc_actie" value="definitief">
           <button type="submit" class="ds-btn ds-btn-primair ds-btn-sm"><?= icoon('vink', 14) ?> <?= $definitief_op ? 'Opnieuw definitief maken' : 'Definitief maken' ?></button></form>

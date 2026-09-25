@@ -6,6 +6,7 @@
  * GET  sol_id                          → de stand van die persoon (live bijwerken; lezen)
  * POST wat=cel     sol_id, week_nr, dagen, opgenomen (0/1), betaald (0/1)   (bewerken)
  * POST wat=functie sol_id, functie                                            (bewerken)
+ * POST wat=opgave  sol_id              → planning = eigen opgave (bewerken)
  * POST wat=vastzetten sol_id           → naar alle scenario's kopiëren + op slot (bewerken)
  * POST wat=ontgrendelen sol_id, reden  → slot eraf, reden verplicht (bewerken)
  * Staat iemand op slot, dan weigeren cel en functie (includes/loonplan_slot.php).
@@ -56,6 +57,12 @@ if ($wat === 'ontgrendelen') {
     exit;
 }
 
+if ($wat === 'opgave') {
+    // Planning van deze persoon = wat hij of zij zelf opgaf (includes/loonplan.php).
+    $n = loonplan_opgave_overnemen((int)$sc['id'], $sol, $seizoen);
+    echo json_encode($n !== null ? afspraak_stand($sid, $sc, $sol, $seizoen) : ['ok' => false, 'fout' => 'Staat vast na het gesprek. Klik op "Toch aanpassen" om te ontgrendelen.']);
+    exit;
+}
 if ($wat === 'functie') {
     $fn = (string)($_POST['functie'] ?? '');
     if (!in_array($fn, array_column(functies_ophalen(), 'sleutel'), true)) { echo json_encode(['ok' => false, 'fout' => 'Onbekende functie.']); exit; }
