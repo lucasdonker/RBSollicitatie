@@ -939,6 +939,13 @@ require __DIR__ . '/layout_top.php';
         </div>
         <div class="bh-veldrij">
           <div class="ds-veld">
+            <label>Contact voor sollicitanten</label>
+            <input type="email" name="inst[mail.contact_email]" value="<?= h(instelling('mail.contact_email','sollicitatie@paal13.com')) ?>">
+            <div class="ds-veld-hint">Staat in het portaal onder Contact en onderaan elke pagina; vragen uit het portaal komen hier binnen. Leeg = bestuursadres</div>
+          </div>
+        </div>
+        <div class="bh-veldrij">
+          <div class="ds-veld">
             <label>Penningmeester e-mail</label>
             <input type="email" name="inst[mail.penningmeester_email]" value="<?= h(instelling('mail.penningmeester_email','')) ?>">
             <div class="ds-veld-hint">Ontvangt de melding "loondossier compleet" (loonheffing, kopie ID, bankpas). Leeg = bestuursadres</div>

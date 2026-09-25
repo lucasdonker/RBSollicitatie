@@ -123,7 +123,9 @@ function portaal_vraag_verwerk(array $sol): array {
         $res = melding_verstuur('sollicitant_vraag', $sol_id, [
             'vraag'      => $vraag,
             'fase_label' => function_exists('fase_label') ? fase_label((string)($sol['fase'] ?? '')) : (string)($sol['fase'] ?? ''),
-        ], ['prioriteit' => 'na_antwoord', 'dedup_min' => 0]);
+        ], ['prioriteit' => 'na_antwoord', 'dedup_min' => 0,
+            // Naar het contactadres voor sollicitanten (Instellingen › Mail), niet het algemene bestuursadres.
+            'ontvanger' => ['email' => portaal_contact_email(), 'naam' => 'Paal 13', 'rol' => 'bestuur']]);
         if (($res['status'] ?? '') === 'mislukt') {
             $uit['fout'] = 'Versturen lukte niet. Probeer het later opnieuw, of mail ons rechtstreeks.';
             return $uit;

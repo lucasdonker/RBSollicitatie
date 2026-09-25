@@ -193,7 +193,7 @@ require __DIR__ . '/_kop.php';
     <?php /* AVG art. 16 (rectificatie): zelf wijzigen kan niet, het bestuur past het aan. */ ?>
     <p style="font-size:13px;color:var(--tekst-zacht);margin:12px 0 0">
       Klopt je naam, e-mailadres of telefoonnummer niet?
-      <a href="<?= APP_URL ?>/portaal/berichten.php#vraagTekst">Stel een vraag via Berichten</a>, dan past het bestuur het aan.
+      <a href="<?= APP_URL ?>/portaal/contact.php#vraagTekst">Laat het ons weten via Contact</a>, dan past het bestuur het aan.
     </p>
   </div>
 

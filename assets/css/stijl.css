@@ -1287,11 +1287,22 @@ button.ds-avatar { padding: 0; border: 0; font-family: inherit; }
 }
 .pt-hulpvoet a { color: var(--accent); font-weight: 600; }
 
+/* Portaal-kaart (vraagblok, contact, ingelogd blijven). Werd gebruikt maar was nergens
+   gedefinieerd, waardoor die blokken zonder kaart op de achtergrond stonden. */
+.pt-kaart {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-card); padding: var(--space-5);
+}
+.pt-kaart-titel { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; font: var(--text-subhead); color: var(--ink); }
+.pt-kaart-tekst { margin: 0; font-size: 14px; line-height: 1.55; color: var(--ink-soft); }
 /* "Stel een vraag": de uitweg uit het portaal. */
 .pt-vraag-form { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
 .pt-vraag-form .ds-textarea { width: 100%; }
 .pt-vraag-voet { margin: 12px 0 0; font: var(--text-meta); color: var(--ink-soft); }
 .pt-vraag-voet a { color: var(--accent); }
+/* Contactpagina (portaal/contact.php). */
+.pt-contact-knoppen { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+.pt-contact-knoppen .ds-btn { gap: 8px; max-width: 100%; overflow-wrap: anywhere; }
 
 /* Uitklappen vóór een knop die iets terugdraait: twee bewuste handelingen, zonder JS. */
 .pt-bevestig > summary {

@@ -9,9 +9,7 @@ $sol_id = portaal_vereis_login();
 $sol = portaal_sollicitant_laden($sol_id);
 if (!$sol) { unset($_SESSION['portaal_sol_id']); redirect(APP_URL . '/portaal/'); }
 
-// "Stel een vraag" staat onder de berichtenlijst: dit is de plek waar iemand zit die
-// net iets heeft gelezen en wil reageren.
-$vr = portaal_vraag_verwerk($sol);
+// "Stel een vraag" staat op portaal/contact.php (eigen tab); hier alleen een verwijzing.
 
 $gezien_op = portaal_berichten_gezien_op($sol_id);
 $berichten = portaal_berichten($sol_id, $gezien_op);
@@ -54,12 +52,13 @@ require __DIR__ . '/_kop.php';
     <span class="pt-hulp">Berichten zie je hier <?= $_bewaar_mnd === 1 ? '1 maand' : (int)$_bewaar_mnd . ' maanden' ?> terug.</span>
   <?php endif; ?>
 
-  <?php
-    $vraag_sol   = $sol;
-    $vraag_flash = $vr['flash'];
-    $vraag_fout  = $vr['fout'];
-    require __DIR__ . '/_vraag.php';
-  ?>
+  <a class="pt-bericht" href="<?= APP_URL ?>/portaal/contact.php">
+    <span class="pt-bericht-icoon"><?= icoon('chat', 20) ?></span>
+    <div class="pt-bericht-tekst">
+      <span class="pt-bericht-titel">Reageren of een vraag stellen?</span>
+      <span class="pt-bericht-sam">Via Contact komt je vraag met je naam erbij bij ons binnen.</span>
+    </div>
+  </a>
 </div>
 
 <?php require __DIR__ . '/_voet.php'; ?>

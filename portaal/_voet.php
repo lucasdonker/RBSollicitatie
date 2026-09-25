@@ -17,8 +17,7 @@ $_open = isset($portaal_open_taken) ? (int)$portaal_open_taken
 
 /* Eén adres voor als iets niet lukt, op élke pagina. Dat ontbrak: wie vastliep op het
    ondertekenen of het formulier had nergens iets om naartoe te gaan, behalve terug.
-   portaal_contact_email() is de bestaande bron (mail.bestuur_email); geen tweede
-   instelling erbij verzinnen. */
+   portaal_contact_email() is de enige bron (mail.contact_email, leeg = mail.bestuur_email). */
 $_contact_mail = function_exists('portaal_contact_email') ? portaal_contact_email() : '';
 $_contact_tel  = function_exists('instelling') ? trim((string)instelling('org.telefoon', '')) : '';
 ?>
@@ -58,6 +57,10 @@ $_contact_tel  = function_exists('instelling') ? trim((string)instelling('org.te
       </a>
       <a href="<?= APP_URL ?>/portaal/gegevens.php" class="pt-nav-item <?= $_nav==='gegevens'?'actief':'' ?>">
         <?= icoon('persoon', 22) ?><span>Gegevens</span>
+      </a>
+      <?php /* Contact als eigen tab: vragen stellen stond onderaan Berichten en werd niet gevonden. */ ?>
+      <a href="<?= APP_URL ?>/portaal/contact.php" class="pt-nav-item <?= $_nav==='contact'?'actief':'' ?>">
+        <?= icoon('chat', 22) ?><span>Contact</span>
       </a>
     </div>
     <?php // Gebruikersblok onderin de desktop-zijbalk (ontwerp): initialen, naam, stap, uitloggen

@@ -233,8 +233,10 @@ function portaal_url_met_terug(string $url, string $terug): string {
 
 /** E-mailadres voor "Vragen? Mail ..." (instelling, met fallback). */
 function portaal_contact_email(): string {
-    $e = function_exists('instelling') ? instelling('mail.bestuur_email', '') : '';
-    return $e ?: 'bestuur@paal13.com';
+    // Eén adres voor sollicitanten (Instellingen › Mail › Contact voor sollicitanten); leeg = het bestuursadres.
+    $e = function_exists('instelling') ? trim((string)instelling('mail.contact_email', '')) : '';
+    if ($e === '' && function_exists('instelling')) $e = trim((string)instelling('mail.bestuur_email', ''));
+    return $e !== '' ? $e : 'sollicitatie@paal13.com';
 }
 
 /** "2026-04-11" → "Zaterdag 11 april" (zonder jaar; ontwerp-notatie). */

@@ -263,7 +263,7 @@ require __DIR__ . '/_kop.php';
             <input class="blk-input" value="<?= h(volledige_naam($sol)) ?>" disabled></label>
           <label class="blk-veld"><span class="blk-lbl">E-mailadres</span>
             <input class="blk-input" value="<?= h($sol['email']) ?>" disabled>
-            <span class="blk-hint">Klopt je e-mailadres niet? Stel een vraag via <a href="<?= APP_URL ?>/portaal/berichten.php#vraagTekst">Berichten</a>, dan past het bestuur het aan.</span></label>
+            <span class="blk-hint">Klopt je e-mailadres niet? Laat het ons weten via <a href="<?= APP_URL ?>/portaal/contact.php#vraagTekst">Contact</a>, dan past het bestuur het aan.</span></label>
           <label class="blk-veld"><span class="blk-lbl">Telefoonnummer <span class="ster">*</span></span>
             <input class="blk-input" type="tel" name="telefoon" value="<?= h($tel_w) ?>" autocomplete="tel" data-verplicht="1"></label>
         </div>

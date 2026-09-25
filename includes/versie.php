@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.120.0');
+define('APP_VERSIE', '2.121.0');
 
 function app_changelog(): array {
     return [
+        '2.121.0' => [
+            'datum'  => '2026-09-25',
+            'titel'  => 'Contact als eigen tab in het portaal',
+            'punten' => [
+                'Nieuwe tab Contact in het portaal: mailknop, telefoon (als ingesteld) en "Een vraag?" op één plek. Onder Berichten staat alleen nog een verwijzing',
+                'Nieuwe instelling Instellingen › Mail › Contact voor sollicitanten (standaard sollicitatie@paal13.com). Dat adres staat overal in het portaal en vragen komen daar binnen',
+                'Kaarten in het portaal (vraag, contact, ingelogd blijven) hadden geen opmaak; nu wel',
+            ],
+        ],
         '2.120.0' => [
             'datum'  => '2026-09-25',
             'titel'  => 'Verzoek om de sollicitatie in te trekken',
