@@ -222,13 +222,13 @@ foreach ($bel_lijst as $_k) if ((int)$_k['sol_id'] === $_open) $_huidig = $_k;
         <button type="button" class="ds-btn ds-btn-secundair" onclick="gebeldZet(<?= $_id ?>, false, 'niet')">Gebeld — niet door</button>
         <button type="button" class="ds-btn ds-btn-zacht" onclick="volgendeBellen(<?= $_id ?>)">Overslaan</button>
       <?php else: ?>
+        <?php // Eén knop; het vinkje bepaalt of het meteen doorgaat (standaard wel, met bevestiging). ?>
+        <label class="bh-zijpaneel-vink bh-bel-meteen">
+          <input type="checkbox" id="meteen-<?= $_id ?>" checked>
+          <span>Meteen doorvoeren: fase <?= $_door ? 'naar het trainingsweekend' : 'afgewezen' ?> en het bericht gaat uit</span>
+        </label>
         <button type="button" class="ds-btn <?= $_door ? 'ds-btn-primair' : 'ds-btn-gevaar' ?>"
-                onclick="gebeldZet(<?= $_id ?>, true)">
-          Gebeld — <?= $_door ? 'doorzetten' : 'afwijzen' ?>
-        </button>
-        <button type="button" class="ds-btn ds-btn-secundair" onclick="gebeldZet(<?= $_id ?>, false)">
-          Gebeld, later doorvoeren
-        </button>
+                onclick="gebeldZet(<?= $_id ?>, document.getElementById('meteen-<?= $_id ?>').checked)">Gebeld</button>
         <button type="button" class="ds-btn ds-btn-zacht" onclick="volgendeBellen(<?= $_id ?>)">Overslaan</button>
       <?php endif; ?>
     </footer>

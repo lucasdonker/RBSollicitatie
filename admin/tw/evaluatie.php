@@ -76,7 +76,7 @@ $_kleur = ['aannemen' => 'groen', 'twijfel' => 'oranje', 'afwijzen' => 'rood'];
     <?php if (!empty($_k['doorgevoerd_op'])): ?>
       <p class="bh-meta">Het gesprek is al geweest; het besluit staat bij Gesprekken.</p>
     <?php else: ?>
-    <form method="post" class="bh-twevaluatie-form">
+    <form method="post" class="bh-twevaluatie-form" data-direct-opslaan>
       <?= csrf_input() ?>
       <input type="hidden" name="actie" value="evaluatie">
       <input type="hidden" name="sol_id" value="<?= $_id ?>">
@@ -91,11 +91,22 @@ $_kleur = ['aannemen' => 'groen', 'twijfel' => 'oranje', 'afwijzen' => 'rood'];
       <label class="bh-vw" for="evb-<?= $_id ?>">Vraag aan de beoordelaars, alleen bij twijfel</label>
       <input type="text" class="ds-input" id="evb-<?= $_id ?>" name="evaluatie_bericht" maxlength="500"
              placeholder="Bij twijfel: waar moeten de beoordelaars op letten?" value="<?= h((string)($_k['evaluatie_bericht'] ?? '')) ?>">
-      <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm">Opslaan</button>
+      <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm" data-direct-knop>Opslaan</button>
+      <span class="bh-meta bh-direct-status" data-direct-status aria-live="polite"></span>
     </form>
+    <?php endif; ?>
+
+    <?php // De observaties waarop je evalueert, hier uitklapbaar: niet heen en weer naar Beoordelen. ?>
+    <?php if (!empty($_obs[$_id])): ?>
+    <details class="bh-twevaluatie-obs">
+      <summary>Observaties (<?= count($_obs[$_id]) ?>)</summary>
+      <?php $obs_lijst = $_obs[$_id]; $obs_eigen = null; require __DIR__ . '/../_observaties.php'; ?>
+    </details>
     <?php endif; ?>
   </li>
   <?php endforeach; ?>
 </ul>
-<p class="bh-meta">De vraag bij twijfel zien de beoordelaars bij die persoon. Bij sowieso aannemen of afwijzen wordt hij niet bewaard.</p>
+<p class="bh-meta">Een keuze wordt meteen opgeslagen, de vraag zodra je het veld verlaat. De vraag bij twijfel zien de beoordelaars
+  bij die persoon; bij sowieso aannemen of afwijzen wordt hij niet bewaard.</p>
 <?php endif; ?>
+<script src="<?= APP_URL ?>/assets/js/direct_opslaan.js?v=<?= @filemtime(__DIR__ . '/../../assets/js/direct_opslaan.js') ?>" defer></script>

@@ -61,7 +61,7 @@ $_bron     = ['portaal' => 'zelf doorgegeven', 'bellijst' => 'via de bellijst', 
           <td data-label="Beschikbaarheid"><?= !empty($_met_b[$_id]) ? bh_badge('Opgegeven', 'groen') : bh_badge('Ontbreekt', 'oranje') ?></td>
           <?php if ($mag_beslissen): ?>
           <td>
-            <form method="post" class="bh-twvoor-form">
+            <form method="post" class="bh-twvoor-form" data-direct-opslaan>
               <?= csrf_input() ?>
               <input type="hidden" name="actie" value="bevestiging">
               <input type="hidden" name="sol_id" value="<?= $_id ?>">
@@ -71,7 +71,8 @@ $_bron     = ['portaal' => 'zelf doorgegeven', 'bellijst' => 'via de bellijst', 
               </select>
               <label class="bh-vw" for="red-<?= $_id ?>">Opmerking (verplicht bij kan niet)</label>
               <input type="text" name="reden" id="red-<?= $_id ?>" class="ds-input" maxlength="300" placeholder="Opmerking (verplicht bij kan niet)" value="<?= h((string)($_k['bevestiging_reden'] ?? '')) ?>">
-              <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm">Opslaan</button>
+              <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm" data-direct-knop>Opslaan</button>
+              <span class="bh-meta bh-direct-status" data-direct-status aria-live="polite"></span>
             </form>
           </td>
           <?php endif; ?>
@@ -80,5 +81,7 @@ $_bron     = ['portaal' => 'zelf doorgegeven', 'bellijst' => 'via de bellijst', 
       </tbody>
     </table>
   </section>
+  <p class="bh-meta">Wijzigingen worden meteen opgeslagen; een opmerking zodra je het veld verlaat.</p>
   <?php endif; ?>
 </div>
+<script src="<?= APP_URL ?>/assets/js/direct_opslaan.js?v=<?= @filemtime(__DIR__ . '/../../assets/js/direct_opslaan.js') ?>" defer></script>

@@ -67,17 +67,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $sid) {
     // Groepsindeling (admin/tw/groepen.php): zelfde handelingen als op de selectiedag.
     bh_groepsindeling_post('tw', $sid, tw_kandidaten($sid), tw_url('groepen'));
 
+    // Direct opslaan (assets/js/direct_opslaan.js stuurt ajax=1): JSON terug, geen herlaadactie.
+    // Zonder JavaScript: gewoon formulier met Opslaan-knop, flash + redirect.
+    $_ajax = !empty($_POST['ajax']);
+    $_klaar = function (bool $ok, string $goed, string $fout, string $terug) use ($_ajax) {
+        if ($_ajax) { header('Content-Type: application/json; charset=utf-8'); echo json_encode(['ok' => $ok, 'melding' => $ok ? $goed : $fout]); exit; }
+        flash($ok ? 'succes' : 'fout', $ok ? $goed : $fout);
+        redirect($terug);
+    };
     if ($actie === 'bevestiging') {
         $ok = evenement_is_kandidaat('tw', $sid, $sol)
            && evenement_bevestigen('tw', $sid, $sol, (string)($_POST['stand'] ?? ''), (string)($_POST['reden'] ?? ''), 'beheer');
-        flash($ok ? 'succes' : 'fout', $ok ? 'Opgeslagen.' : 'Niet opgeslagen: bij "kan niet" hoort een reden.');
-        redirect(tw_url('voorbereiden'));
+        $_klaar($ok, 'Opgeslagen.', 'Niet opgeslagen: bij "kan niet" hoort een opmerking.', tw_url('voorbereiden'));
     }
     if ($actie === 'evaluatie') {
         $ok = evenement_is_kandidaat('tw', $sid, $sol)
            && tw_evaluatie_zetten($sid, $sol, (string)($_POST['evaluatie'] ?? ''), (string)($_POST['evaluatie_bericht'] ?? ''), $ik);
-        flash($ok ? 'succes' : 'fout', $ok ? 'Evaluatie opgeslagen.' : 'Niet opgeslagen: deze persoon staat niet (meer) op de lijst.');
-        redirect(tw_url('evaluatie', null, ['toon' => (string)($_POST['toon'] ?? '')]) . '#ev-' . $sol);
+        $_klaar($ok, 'Opgeslagen.', 'Niet opgeslagen: deze persoon staat niet (meer) op de lijst.',
+                tw_url('evaluatie', null, ['toon' => (string)($_POST['toon'] ?? '')]) . '#ev-' . $sol);
     }
     if ($actie === 'gesprek_los') {
         evenement_claim_los('tw_deelname', 'gesprek', $sid, $sol, $ik_id);

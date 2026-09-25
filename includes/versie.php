@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.123.1');
+define('APP_VERSIE', '2.123.2');
 
 function app_changelog(): array {
     return [
+        '2.123.2' => [
+            'datum'  => '2026-09-25',
+            'titel'  => 'Minder klikken bij het weekend en de bellijst',
+            'punten' => [
+                'Trainingsweekend › Voorbereiden en › Evaluatie slaan meteen op: een keuze direct, een opmerking zodra je het veld verlaat. Geen Opslaan-knop per rij meer',
+                'Evaluatie: per persoon de observaties uitklapbaar, zodat je niet naar Beoordelen hoeft',
+                'Bellijst: één knop "Gebeld" met een vinkje "meteen doorvoeren" (staat aan) in plaats van twee knoppen',
+            ],
+        ],
         '2.123.1' => [
             'datum'  => '2026-09-25',
             'titel'  => 'Selectiedag en trainingsweekend lopen gelijk',

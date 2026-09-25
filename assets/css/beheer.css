@@ -888,6 +888,7 @@ span.bh-incheck-code {
   padding: 14px 18px; border-top: 1px solid var(--border); background: var(--bg-subtle);
 }
 .bh-bel-acties .ds-btn { flex: 1; min-width: 140px; }
+.bh-bel-meteen { flex: 1 1 100%; font-size: 13px; }
 
 @media (max-width: 860px) {
   .bh-nb-kolommen { grid-template-columns: 1fr; }
@@ -2051,6 +2052,12 @@ body.bh-paneel-open .bh-inhoud { transition: padding-right .15s ease; }
 .bh-twevaluatie-form .bh-twoptie { min-width: 0; }
 .bh-twevaluatie-form .ds-input { flex: 1 1 220px; height: 38px; font-size: 13px; }
 @media (max-width: 860px) { .bh-twevaluatie-rij { grid-template-columns: 1fr; } }
+.bh-twevaluatie-obs { grid-column: 1 / -1; border-top: 1px solid var(--bg-subtle); padding-top: 4px; }
+.bh-twevaluatie-obs > summary { cursor: pointer; min-height: 36px; display: flex; align-items: center; font-size: 13px; color: var(--ink-soft); }
+.bh-twevaluatie-obs[open] > summary { margin-bottom: 8px; }
+/* Direct opslaan (assets/js/direct_opslaan.js): status naast het veld. */
+.bh-direct-status { min-width: 70px; }
+.bh-direct-status.fout { color: var(--error); }
 /* Dossier › Beschikbaarheid & inzet (admin/dossier/_tab_beschikbaarheid.php). */
 .bh-inzet-rest { border-top: 1px solid var(--bg-subtle); }
 .bh-inzet-rest > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; padding: 0 20px; font-size: 13px; color: var(--ink-soft); }
