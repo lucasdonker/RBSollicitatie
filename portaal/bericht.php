@@ -33,6 +33,10 @@ require __DIR__ . '/_kop.php';
     <?php else: ?>
       <div class="pt-bericht-inhoud pt-korttekst"><?= nl2br(h($b['body'])) ?></div>
     <?php endif; ?>
+    <?php // Zelfde bericht via een ander kanaal (portaal_berichten_bundel): één keer tonen, met een voetnoot. ?>
+    <?php $_ook = portaal_bericht_ook($sol_id, $b); if ($_ook): ?>
+      <p class="pt-bericht-ook">Ook verstuurd <?= h(implode(' en ', array_map(fn($o) => portaal_bericht_kanaal($o['kanaal'])['label'], $_ook))) ?>.</p>
+    <?php endif; ?>
   </div>
   <a class="pt-hulp" href="<?= APP_URL ?>/portaal/berichten.php"><?= icoon('terug', 14) ?> Alle berichten</a>
 </div>

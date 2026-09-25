@@ -2785,6 +2785,7 @@ a.pt-bericht { text-decoration: none; color: inherit; }
 .pt-bericht-detail .pt-bericht-titel { color: var(--ink); }
 .pt-bericht-inhoud { border-top: 1px solid #e6e9ef; padding-top: 14px; font-size: 15px; line-height: 1.65; color: var(--ink); word-break: break-word; }
 .pt-bericht-inhoud-leeg { border-top: 1px solid #e6e9ef; padding-top: 14px; font-size: 14px; line-height: 1.55; color: var(--ink-muted); }
+.pt-bericht-ook { margin: 12px 0 0; font-size: 13px; color: var(--ink-muted); }
 .pt-korttekst { white-space: pre-wrap; }
 .pt-mailtekst p { margin: 0 0 12px; }
 .pt-mailtekst a { color: var(--navy); font-weight: 600; }

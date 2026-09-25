@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.122.2');
+define('APP_VERSIE', '2.122.3');
 
 function app_changelog(): array {
     return [
+        '2.122.3' => [
+            'datum'  => '2026-09-25',
+            'titel'  => 'Portaal: één regel per bericht',
+            'punten' => [
+                'Ging een bericht per e-mail én WhatsApp (of sms), dan staat het nu één keer in Berichten: "per e-mail en WhatsApp"',
+                'Openen toont de e-mail (de volledigste versie), met onderaan "Ook verstuurd per WhatsApp"',
+                'Losse berichten van dezelfde soort, of met een ander onderwerp, blijven gewoon apart',
+            ],
+        ],
         '2.122.2' => [
             'datum'  => '2026-09-25',
             'titel'  => 'Intrekverzoeken terugvinden',

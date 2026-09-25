@@ -55,24 +55,95 @@ function portaal_berichten(int $sol_id, ?string $gezien_op = null): array {
     try {
         $q = db()->prepare("SELECT id, onderwerp, verstuurd_op, kanaal, samenvatting, meldingstype, (body IS NOT NULL AND body<>'') AS heeft_inhoud
                             FROM mail_log WHERE " . portaal_berichten_waar() . "
-                            ORDER BY verstuurd_op DESC, id DESC LIMIT 50");
+                            ORDER BY verstuurd_op DESC, id DESC LIMIT 80");
         $q->execute([$sol_id]);
-        foreach ($q->fetchAll() as $m) {
-            $k = portaal_bericht_kanaal((string)($m['kanaal'] ?? 'email'));
+        // Eén bericht dat per e-mail én WhatsApp ging, staat als één regel (portaal_berichten_bundel).
+        foreach (portaal_berichten_bundel($q->fetchAll()) as $groep) {
+            $m = $groep['hoofd'];
+            $kanalen = array_values(array_intersect(['email', 'whatsapp', 'sms'], array_map(fn($r) => (string)($r['kanaal'] ?? 'email'), $groep['rijen'])));
+            $samen = '';
+            foreach ($groep['rijen'] as $r) if (trim((string)($r['samenvatting'] ?? '')) !== '') { $samen = (string)$r['samenvatting']; break; }
+            $ongelezen = false;
+            foreach ($groep['rijen'] as $r) $ongelezen = $ongelezen || $gezien_op === null || strcmp((string)$r['verstuurd_op'], $gezien_op) > 0;
             $uit[] = [
                 'id'           => (int)$m['id'],
                 'titel'        => $m['onderwerp'] ?: 'Bericht van Paal 13',
-                'samenvatting' => (string)($m['samenvatting'] ?? ''),
+                'samenvatting' => $samen,
                 'kanaal'       => (string)($m['kanaal'] ?? 'email'),
-                'icoon'        => $k['icoon'],
+                'kanalen'      => $kanalen,
+                'icoon'        => portaal_bericht_kanaal((string)($m['kanaal'] ?? 'email'))['icoon'],
                 'verstuurd_op' => $m['verstuurd_op'],
-                'meta'         => portaal_bericht_tijd($m['verstuurd_op']) . ' · ' . $k['label'],
-                'ongelezen'    => $gezien_op === null || strcmp((string)$m['verstuurd_op'], $gezien_op) > 0,
+                'meta'         => portaal_bericht_tijd($m['verstuurd_op']) . ' · ' . portaal_bericht_kanalen_tekst($kanalen),
+                'ongelezen'    => $ongelezen,
                 'heeft_inhoud' => !empty($m['heeft_inhoud']),
             ];
+            if (count($uit) >= 50) break;
         }
     } catch (\Throwable $e) {}
     return $uit;
+}
+
+/**
+ * Rijen uit mail_log (nieuwste eerst) samenvoegen tot berichten: dezelfde melding die binnen
+ * 15 minuten via meer kanalen ging (e-mail + WhatsApp/sms) is voor de sollicitant één bericht.
+ * Hoofdversie = de e-mail (volledigste inhoud), anders de eerste. Handmatige berichten met een
+ * verschillend onderwerp blijven los.
+ *
+ * @return array [ ['hoofd' => rij, 'rijen' => [rij, …]] ]  in dezelfde volgorde
+ */
+function portaal_berichten_bundel(array $rijen): array {
+    $groepen = [];
+    foreach ($rijen as $r) {
+        $type = (string)($r['meldingstype'] ?? '');
+        $t    = strtotime((string)$r['verstuurd_op']) ?: 0;
+        $bij  = null;
+        foreach ($groepen as $i => $g) {
+            $g0 = $g['rijen'][0];
+            if ($type === '' || (string)($g0['meldingstype'] ?? '') !== $type) continue;
+            if (abs((strtotime((string)$g0['verstuurd_op']) ?: 0) - $t) > 900) continue;
+            if (in_array((string)($r['kanaal'] ?? 'email'), array_map(fn($x) => (string)($x['kanaal'] ?? 'email'), $g['rijen']), true)) continue;
+            $o1 = trim((string)($g0['onderwerp'] ?? '')); $o2 = trim((string)($r['onderwerp'] ?? ''));
+            if ($o1 !== '' && $o2 !== '' && $o1 !== $o2) continue;
+            $bij = $i; break;
+        }
+        if ($bij === null) $groepen[] = ['rijen' => [$r]];
+        else $groepen[$bij]['rijen'][] = $r;
+    }
+    foreach ($groepen as &$g) {
+        $g['hoofd'] = $g['rijen'][0];
+        foreach ($g['rijen'] as $r) if (($r['kanaal'] ?? 'email') === 'email') { $g['hoofd'] = $r; break; }
+        // Onderwerp van de e-mail als titel, ook als de WhatsApp-versie er geen had.
+        if (trim((string)($g['hoofd']['onderwerp'] ?? '')) === '') {
+            foreach ($g['rijen'] as $r) if (trim((string)($r['onderwerp'] ?? '')) !== '') { $g['hoofd']['onderwerp'] = $r['onderwerp']; break; }
+        }
+    }
+    unset($g);
+    return $groepen;
+}
+
+/** ['email','whatsapp'] → "per e-mail en WhatsApp". */
+function portaal_bericht_kanalen_tekst(array $kanalen): string {
+    $naam = ['email' => 'e-mail', 'whatsapp' => 'WhatsApp', 'sms' => 'sms'];
+    $l = array_map(fn($k) => $naam[$k] ?? $k, $kanalen);
+    if (count($l) <= 1) return 'per ' . ($l[0] ?? 'e-mail');
+    $laatste = array_pop($l);
+    return 'per ' . implode(', ', $l) . ' en ' . $laatste;
+}
+
+/** De andere kanalen van hetzelfde bericht, voor de detailpagina: [['kanaal','verstuurd_op'], …]. */
+function portaal_bericht_ook(int $sol_id, array $b): array {
+    if (empty($b['meldingstype'])) return [];
+    try {
+        $q = db()->prepare("SELECT id, onderwerp, verstuurd_op, kanaal, meldingstype FROM mail_log WHERE " . portaal_berichten_waar() . "
+                            AND meldingstype=? ORDER BY verstuurd_op DESC, id DESC LIMIT 30");
+        $q->execute([$sol_id, $b['meldingstype']]);
+        foreach (portaal_berichten_bundel($q->fetchAll()) as $g) {
+            if (!in_array((int)$b['id'], array_map(fn($r) => (int)$r['id'], $g['rijen']), true)) continue;
+            return array_values(array_map(fn($r) => ['kanaal' => (string)$r['kanaal'], 'verstuurd_op' => $r['verstuurd_op']],
+                                array_filter($g['rijen'], fn($r) => (int)$r['id'] !== (int)$b['id'])));
+        }
+    } catch (\Throwable $e) {}
+    return [];
 }
 
 /** Eén bericht met inhoud, alleen als het van deze sollicitant is. Null als niet gevonden. */
@@ -87,6 +158,7 @@ function portaal_bericht_laden(int $sol_id, int $id): ?array {
             'id' => (int)$m['id'], 'titel' => $m['onderwerp'] ?: 'Bericht van Paal 13', 'kanaal' => (string)($m['kanaal'] ?? 'email'),
             'icoon' => $k['icoon'], 'meta' => portaal_bericht_tijd($m['verstuurd_op']) . ' · ' . $k['label'],
             'samenvatting' => (string)($m['samenvatting'] ?? ''), 'body' => $m['body'] !== null ? (string)$m['body'] : null,
+            'meldingstype' => (string)($m['meldingstype'] ?? ''),
         ];
     } catch (\Throwable $e) { return null; }
 }
