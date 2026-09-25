@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.116.2');
+define('APP_VERSIE', '2.116.3');
 
 function app_changelog(): array {
     return [
+        '2.116.3' => [
+            'datum'  => '2026-09-25',
+            'titel'  => 'Terugkerende lifeguards apart bij beoordelen, verspreid over de groepen',
+            'punten' => [
+                'Wie al een Authentik-account heeft, is een terugkerende lifeguard',
+                'Bij beoordelen (selectiedag en trainingsweekend) staan zij onderaan onder een eigen kop; beoordelen kan gewoon',
+                'Het voorstel voor de groepsindeling verdeelt de lifeguards zo gelijk mogelijk over de groepen; hun kaartje heeft het label Lifeguard',
+            ],
+        ],
         '2.116.2' => [
             'datum'  => '2026-09-25',
             'titel'  => 'Observaties van het weekend per dag',

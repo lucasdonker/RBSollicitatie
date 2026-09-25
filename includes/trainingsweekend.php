@@ -82,10 +82,11 @@ function tw_auto_setup(): void {
  */
 function tw_kandidaten(int $seizoen_id): array {
     tw_auto_setup();
+    $lg = function_exists('authentik_lifeguard_sql') ? authentik_lifeguard_sql('s.id') : '0';
     try {
         $q = db()->prepare("
             SELECT s.id AS sol_id, s.fase, p.voornaam, p.tussenvoegsel, p.achternaam,
-                   p.geboortedatum, p.geslacht,
+                   p.geboortedatum, p.geslacht, $lg AS is_lifeguard,
                    d.aanwezig, d.ingecheckt_op, d.afgemeld_reden,
                    d.besluit, d.besluit_notitie, d.besluit_door, d.besluit_op, d.doorgevoerd_op,
                    d.bevestiging, d.bevestiging_reden, d.gesprek_status, d.gesprek_door, d.gesprek_sinds, d.gesprek_bericht,

@@ -302,6 +302,18 @@ function competenties_van(int $sol_id): array {
     return $uit;
 }
 
+/**
+ * SQL-expressie (0/1): heeft deze sollicitatie een Authentik-account, dus een terugkerende
+ * lifeguard? Een nieuwe sollicitant heeft er geen; wie al bij de brigade zit wel. De sync
+ * zet sync_status 'ok' alleen als de gebruiker in Authentik gevonden is.
+ * Gebruik: "SELECT …, " . authentik_lifeguard_sql('s.id') . " AS is_lifeguard FROM sollicitaties s …"
+ */
+function authentik_lifeguard_sql(string $sol_kolom): string {
+    if (!preg_match('/^[a-z_]+\.[a-z_]+$/', $sol_kolom)) $sol_kolom = 's.id';
+    return "(CASE WHEN EXISTS (SELECT 1 FROM authentik_koppeling ak WHERE ak.sollicitatie_id = $sol_kolom
+                 AND ak.sync_status = 'ok' AND ak.authentik_pk IS NOT NULL AND ak.authentik_pk <> '') THEN 1 ELSE 0 END)";
+}
+
 /** Sync-status van een sollicitatie voor weergave. */
 function competentie_sync_info(int $sol_id): array {
     competenties_auto_setup();

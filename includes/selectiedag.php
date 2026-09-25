@@ -131,13 +131,14 @@ function selectiedag_auto_setup(): void {
     } catch (\Exception $e) { error_log('selectiedag_auto_setup: ' . $e->getMessage()); }
 }
 
-/** De sollicitanten die voor de selectiedag in aanmerking komen. */
+/** De sollicitanten die voor de selectiedag in aanmerking komen (is_lifeguard: zie authentik_lifeguard_sql()). */
 function selectie_kandidaten(int $seizoen_id): array {
     selectiedag_auto_setup();
+    $lg = function_exists('authentik_lifeguard_sql') ? authentik_lifeguard_sql('s.id') : '0';
     try {
         $q = db()->prepare("
             SELECT s.id AS sol_id, p.voornaam, p.tussenvoegsel, p.achternaam, p.geboortedatum, p.geslacht, p.telefoon,
-                   si.groep_id, si.aanwezig,
+                   si.groep_id, si.aanwezig, $lg AS is_lifeguard,
                    blk.foto_url, blk.bijzonderheden
             FROM sollicitaties s
             JOIN personen p ON p.id = s.persoon_id
@@ -256,7 +257,8 @@ function selectie_relatie_zet(int $seizoen_id, int $a, int $b, bool $toevoegen):
  * Doelen, in volgorde van belangrijkheid:
  *  1. "Houd uit elkaar"-paren niet in dezelfde groep (hard geprobeerd, zacht gegarandeerd)
  *  2. Groepen even groot
- *  3. Gemengd op geslacht en leeftijd (groepen onderling vergelijkbaar)
+ *  3. Terugkerende lifeguards (is_lifeguard) zo gelijk mogelijk verspreid
+ *  4. Gemengd op geslacht en leeftijd (groepen onderling vergelijkbaar)
  *
  * Retourneert [sol_id => groep_index (0-based)]. Schrijft NIET naar de database —
  * de UI toont het voorstel en de gebruiker bevestigt.
@@ -265,8 +267,11 @@ function selectie_verdeel_voorstel(array $kandidaten, int $aantal_groepen, array
     $aantal_groepen = max(1, $aantal_groepen);
     if (!$kandidaten) return [];
 
-    // Sorteer op geslacht dan leeftijd, zodat "slangsgewijs" verdelen automatisch mengt
+    // Sorteer op lifeguard, dan geslacht, dan leeftijd, zodat "slangsgewijs" verdelen
+    // automatisch spreidt: de lifeguards komen als eerste rond, dus elke groep krijgt er evenveel (±1).
     usort($kandidaten, function($a, $b) {
+        $la = (int)!empty($a['is_lifeguard']); $lb = (int)!empty($b['is_lifeguard']);
+        if ($la !== $lb) return $lb <=> $la;
         $ga = $a['geslacht'] ?? ''; $gb = $b['geslacht'] ?? '';
         if ($ga !== $gb) return strcmp($ga, $gb);
         return ($a['leeftijd'] ?? 99) <=> ($b['leeftijd'] ?? 99);

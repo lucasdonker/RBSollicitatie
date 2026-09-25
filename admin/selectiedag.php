@@ -79,6 +79,9 @@ $lijst = array_values(array_filter($kandidaten, function ($k) use ($gekozen_groe
     if ($gekozen_groep === 'geen') return !$k['groep_id'];
     return (string)$k['groep_id'] === $gekozen_groep;
 }));
+// Terugkerende lifeguards onderaan in een eigen blok; vorige/volgende volgt dezelfde volgorde.
+$secties = evenement_beoordeel_secties($lijst);
+$lijst   = evenement_secties_plat($secties);
 
 /** Hoeveel criteria heeft déze beoordelaar al ingevuld? */
 $totaal_criteria = 0;
@@ -162,8 +165,13 @@ require __DIR__ . '/layout_top.php';
     </div>
     <?= bh_voortgang($_klaar, max(1, count($lijst)), ['label' => '']) ?>
 
+    <?php foreach ($secties as $_sec): ?>
+    <?php if ($_sec['titel']): ?>
+      <h3 class="bh-kandidaatlijst-kop"><?= h($_sec['titel']) ?> <span class="bh-num"><?= count($_sec['rijen']) ?></span></h3>
+      <?php if ($_sec['uitleg'] !== ''): ?><p class="bh-meta bh-kandidaatlijst-uitleg"><?= h($_sec['uitleg']) ?></p><?php endif; ?>
+    <?php endif; ?>
     <ul class="bh-kandidaatlijst">
-      <?php foreach ($lijst as $_k):
+      <?php foreach ($_sec['rijen'] as $_k):
         $_id = (int)$_k['sol_id'];
         $_v  = $voortgang[$_id] ?? 0;
         $_af = empty($_k['aanwezig']);
@@ -197,6 +205,7 @@ require __DIR__ . '/layout_top.php';
         </li>
       <?php endforeach; ?>
     </ul>
+    <?php endforeach; ?>
   </aside>
 
   <?php if ($huidig): $hid = (int)$huidig['sol_id'];
@@ -210,6 +219,7 @@ require __DIR__ . '/layout_top.php';
         <span class="bh-beoordeel-naam"><?= h((string)$huidig['naam']) ?></span>
         <span class="bh-meta">
           <?= $huidig['groep_id'] ? h($groep_naam[$huidig['groep_id']] ?? '') . ' · ' : '' ?>
+          <?= !empty($huidig['is_lifeguard']) ? 'terugkerende lifeguard · ' : '' ?>
           <?= (int)($voortgang[$hid] ?? 0) ?> van <?= (int)$totaal_criteria ?> criteria
         </span>
       </span>

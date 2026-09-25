@@ -6,17 +6,25 @@
  * Gedrag: assets/js/tw_beoordelen.js (tikken is opslaan).
  */
 $obs_alle  = tw_observaties_alle($sid);
-$ids       = array_map(fn($k) => (int)$k['sol_id'], $kandidaten);
+// Terugkerende lifeguards onderaan in een eigen blok; vorige/volgende volgt dezelfde volgorde.
+$bo_secties = evenement_beoordeel_secties($kandidaten);
+$bo_lijst   = evenement_secties_plat($bo_secties);
+$ids       = array_map(fn($k) => (int)$k['sol_id'], $bo_lijst);
 $huidig_id = (int)($_GET['k'] ?? 0);
 if (!in_array($huidig_id, $ids, true)) $huidig_id = $ids[0] ?? 0;
 $pos    = array_search($huidig_id, $ids, true);
-$huidig = $pos !== false ? $kandidaten[$pos] : null;
+$huidig = $pos !== false ? $bo_lijst[$pos] : null;
 $_aanw  = fn($k) => !empty($k['aanwezig']) ? 'aanwezig' : (($k['afgemeld_reden'] ?? null) !== null ? 'niet gekomen' : 'nog niet ingecheckt');
 ?>
 <div class="bh-beoordeel" data-twbeoordeel data-endpoint="<?= APP_URL ?>/admin/trainingsweekend.php" data-csrf="<?= h(csrf_token()) ?>">
   <aside class="bh-beoordeel-lijst">
+    <?php foreach ($bo_secties as $_sec): ?>
+    <?php if ($_sec['titel']): ?>
+      <h3 class="bh-kandidaatlijst-kop"><?= h($_sec['titel']) ?> <span class="bh-num"><?= count($_sec['rijen']) ?></span></h3>
+      <?php if ($_sec['uitleg'] !== ''): ?><p class="bh-meta bh-kandidaatlijst-uitleg"><?= h($_sec['uitleg']) ?></p><?php endif; ?>
+    <?php endif; ?>
     <ul class="bh-kandidaatlijst">
-      <?php foreach ($kandidaten as $_k):
+      <?php foreach ($_sec['rijen'] as $_k):
         $_id  = (int)$_k['sol_id'];
         $_nu  = $_id === $huidig_id;
         $_af  = empty($_k['aanwezig']) && ($_k['afgemeld_reden'] ?? null) !== null;
@@ -39,6 +47,7 @@ $_aanw  = fn($k) => !empty($k['aanwezig']) ? 'aanwezig' : (($k['afgemeld_reden']
       </li>
       <?php endforeach; ?>
     </ul>
+    <?php endforeach; ?>
   </aside>
 
   <?php if ($huidig): $hid = (int)$huidig['sol_id']; ?>
@@ -48,7 +57,8 @@ $_aanw  = fn($k) => !empty($k['aanwezig']) ? 'aanwezig' : (($k['afgemeld_reden']
       <span class="bh-beoordeel-wie">
         <span class="bh-beoordeel-naam"><?= h((string)$huidig['naam']) ?></span>
         <?php /* Geen telefoonnummer: een beoordelaar belt niet (dataminimalisatie). */ ?>
-        <?= bh_meta([$huidig['leeftijd'] ? $huidig['leeftijd'] . ' jaar' : '', $_aanw($huidig)]) ?>
+        <?= bh_meta([$huidig['leeftijd'] ? $huidig['leeftijd'] . ' jaar' : '', $_aanw($huidig),
+                     !empty($huidig['is_lifeguard']) ? 'terugkerende lifeguard' : '']) ?>
       </span>
       <?php if ($mag_dossier): ?>
         <a class="ds-btn ds-btn-secundair ds-btn-sm" href="<?= APP_URL ?>/admin/sollicitant.php?id=<?= $hid ?>">Dossier</a>
@@ -94,7 +104,7 @@ $_aanw  = fn($k) => !empty($k['aanwezig']) ? 'aanwezig' : (($k['afgemeld_reden']
     <?php $d = bh_dossier($hid); if ($d) { $sds_dossier = $d; require __DIR__ . '/../_sd_samenvatting.php'; } ?>
 
     <footer class="bh-beoordeel-voet">
-      <?php $_v = $pos > 0 ? $kandidaten[$pos - 1] : null; $_n = $kandidaten[$pos + 1] ?? null; ?>
+      <?php $_v = $pos > 0 ? $bo_lijst[$pos - 1] : null; $_n = $bo_lijst[$pos + 1] ?? null; ?>
       <?php if ($_v): ?>
         <a class="ds-btn ds-btn-secundair" href="<?= h(tw_url('beoordelen', (int)$_v['sol_id'])) ?>#kandidaat" rel="prev">Vorige</a>
       <?php else: ?>

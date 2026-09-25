@@ -131,6 +131,36 @@ function evenement_lijst(string $ev, int $seizoen_id): array {
     } catch (\Exception $e) { return []; }
 }
 
+/**
+ * De beoordeellijst in secties: eerst de nieuwe sollicitanten, onderaan de terugkerende
+ * lifeguards (Authentik-account, is_lifeguard). Die worden wel ingedeeld en kunnen beoordeeld
+ * worden, maar zijn daarvoor minder interessant. De volgorde binnen een sectie blijft staan.
+ *
+ * @param array $voorop  optioneel: sol_ids die in een eigen sectie bovenaan komen (TW: twijfel
+ *                       van het bestuur), met $voorop_titel en $voorop_uitleg
+ * @return array [ ['sleutel','titel','uitleg','rijen'] ] — lege secties vallen weg; titel null = geen kop
+ */
+function evenement_beoordeel_secties(array $lijst, array $voorop = [], string $voorop_titel = '', string $voorop_uitleg = ''): array {
+    $s = ['voorop' => [], 'nieuw' => [], 'lifeguard' => []];
+    $voor = array_flip(array_map('intval', $voorop));
+    foreach ($lijst as $k) {
+        $sleutel = isset($voor[(int)$k['sol_id']]) ? 'voorop' : (!empty($k['is_lifeguard']) ? 'lifeguard' : 'nieuw');
+        $s[$sleutel][] = $k;
+    }
+    $uit = [];
+    if ($s['voorop'])    $uit[] = ['sleutel' => 'voorop', 'titel' => $voorop_titel, 'uitleg' => $voorop_uitleg, 'rijen' => $s['voorop']];
+    if ($s['nieuw'])     $uit[] = ['sleutel' => 'nieuw', 'titel' => $s['voorop'] ? 'Overige sollicitanten' : null, 'uitleg' => '', 'rijen' => $s['nieuw']];
+    if ($s['lifeguard']) $uit[] = ['sleutel' => 'lifeguard', 'titel' => 'Terugkerende lifeguards', 'uitleg' => 'Al lifeguard bij de brigade; ze doen mee voor de groepen.', 'rijen' => $s['lifeguard']];
+    return $uit;
+}
+
+/** De secties weer als één lijst, in dezelfde volgorde (voor vorige/volgende). */
+function evenement_secties_plat(array $secties): array {
+    $uit = [];
+    foreach ($secties as $sec) foreach ($sec['rijen'] as $r) $uit[] = $r;
+    return $uit;
+}
+
 /** Welke fase had iemand vóór het inchecken? Selectiedag: met ingeleverd BLK "aangemeld", anders "uitgenodigd". */
 function evenement_terugfase(string $ev, int $sol_id): string {
     if ($ev === 'tw') return 'uitgenodigd_tw';
