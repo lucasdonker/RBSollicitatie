@@ -97,55 +97,73 @@ function bh_besch_raster(?array $seizoen, array $f): array {
         if ($f['type'] === 'nieuw' && !empty($p['terugkerend'])) continue;
         if ($f['toon'] === 'voorlopig' && empty($voorlopig[$sol_id])) continue;
 
-        $b2 = function_exists('beschikbaarheid2_effectief') ? beschikbaarheid2_effectief($sol_id) : [];
-        $heeft_b2 = !empty($b2);
-        // Voorkeur-vrije dagen voor de naamkolom, en open verzoeken per week (anders stond de week als "vol 5").
-        $open_vz = [];
-        if (function_exists('beschikbaarheid2_van')) {
-            $b2_data = beschikbaarheid2_van($sol_id);
-            $prof = $b2_data['profiel'] ?? null;
-            if ($prof && !empty($prof['vaste_dagen_uit'])) $uit['vaste'][$sol_id] = $prof['vaste_dagen_uit'];
-            foreach ($b2_data['verzoeken'] ?? [] as $vz) {
-                if (($vz['status'] ?? '') !== 'open') continue;
-                for ($w = (int)$vz['van_week']; $w <= (int)$vz['tot_week']; $w++) $open_vz[$w] = $vz;
-            }
-        }
-        if ($f['toon'] === 'verzoek' && !$open_vz) continue;
-
-        $oude_weken = [];
-        if (!$heeft_b2 && !empty($p['weken_json'])) {
-            $d = json_decode($p['weken_json'], true);
-            if (is_array($d)) $oude_weken = array_map('intval', $d);
-        }
-
-        // Soort per week, expliciet: "minder dagen" en "hele week" horen niet dezelfde cel te krijgen.
-        // Een week die door een correctie helemaal vervalt komt niet uit beschikbaarheid2_effectief().
-        $telling = 0;
-        foreach ($weken as $wn => $_) {
-            if ($heeft_b2) {
-                if (!isset($b2[$wn])) continue;
-                $w = $b2[$wn];
-                $dagen   = (int)$w['dagen_max'];
-                $weekend = count(array_intersect($w['dagen'], [5, 6, 7])) > 0;
-                $welke   = array_map('intval', $w['dagen']);
-                if (!empty($w['correctie']))                    $soort = 'correctie';
-                elseif (isset($open_vz[$wn]))                   $soort = 'verzoek';
-                elseif (($w['regime'] ?? 'vijf') === 'weekend') $soort = 'weekend';
-                elseif ($dagen < 5)                             $soort = 'deels';
-                else                                            $soort = 'vol';
-            } else {
-                if (!in_array($wn, $oude_weken, true)) continue;
-                $dagen = 5; $weekend = true; $soort = 'vol'; $welke = [];
-            }
-            $uit['eff'][$sol_id][$wn] = ['dagen' => $dagen, 'weekend' => $weekend, 'soort' => $soort, 'welke' => $welke,
-                                         'verzoek' => $open_vz[$wn] ?? null];
+        $pw = bh_besch_persoon_weken($sol_id, $weken, $seizoen, $p['weken_json'] ?? null);
+        if ($pw['vaste']) $uit['vaste'][$sol_id] = $pw['vaste'];
+        if ($f['toon'] === 'verzoek' && !$pw['open_verzoek']) continue;
+        foreach ($pw['weken'] as $wn => $c) {
+            $uit['eff'][$sol_id][$wn] = $c;
             $uit['tot_per_week'][$wn]['aantal']++;
-            if ($weekend) $uit['tot_per_week'][$wn]['weekend']++;
-            $telling++;
+            if ($c['weekend']) $uit['tot_per_week'][$wn]['weekend']++;
         }
-        $uit['weken_count'][$sol_id] = $telling;
+        $uit['weken_count'][$sol_id] = count($pw['weken']);
         $p['naam'] = $naam;
         $uit['lijst'][] = $p;
+    }
+    return $uit;
+}
+
+/**
+ * De opgave van één persoon per week, als rastercellen. Eén bron voor het raster
+ * (bh_besch_raster) en het dossier (tab Beschikbaarheid & inzet), zodat beide hetzelfde tonen.
+ *
+ * @param array   $weken       bh_besch_weken()
+ * @param ?array  $seizoen     het seizoen van déze sollicitatie (niet per se het actieve)
+ * @param ?string $weken_json  de oude beschikbaarheid (van vóór beschikbaarheid2), als terugval
+ * @return array ['weken' => [wn => [dagen,weekend,soort,welke,verzoek]], 'vaste' => ?json, 'open_verzoek' => bool]
+ */
+function bh_besch_persoon_weken(int $sol_id, array $weken, ?array $seizoen, ?string $weken_json = null): array {
+    $b2 = function_exists('beschikbaarheid2_effectief') ? beschikbaarheid2_effectief($sol_id, $seizoen) : [];
+    $heeft_b2 = !empty($b2);
+    $uit = ['weken' => [], 'vaste' => null, 'open_verzoek' => false];
+    // Voorkeur-vrije dagen voor de naamkolom, en open verzoeken per week (anders stond de week als "vol 5").
+    $open_vz = [];
+    if (function_exists('beschikbaarheid2_van')) {
+        $b2_data = beschikbaarheid2_van($sol_id);
+        $prof = $b2_data['profiel'] ?? null;
+        if ($prof && !empty($prof['vaste_dagen_uit'])) $uit['vaste'] = $prof['vaste_dagen_uit'];
+        foreach ($b2_data['verzoeken'] ?? [] as $vz) {
+            if (($vz['status'] ?? '') !== 'open') continue;
+            for ($w = (int)$vz['van_week']; $w <= (int)$vz['tot_week']; $w++) $open_vz[$w] = $vz;
+        }
+    }
+    $uit['open_verzoek'] = (bool)$open_vz;
+
+    $oude_weken = [];
+    if (!$heeft_b2 && $weken_json) {
+        $d = json_decode($weken_json, true);
+        if (is_array($d)) $oude_weken = array_map('intval', $d);
+    }
+
+    // Soort per week, expliciet: "minder dagen" en "hele week" horen niet dezelfde cel te krijgen.
+    // Een week die door een correctie helemaal vervalt komt niet uit beschikbaarheid2_effectief().
+    foreach ($weken as $wn => $_) {
+        if ($heeft_b2) {
+            if (!isset($b2[$wn])) continue;
+            $w = $b2[$wn];
+            $dagen   = (int)$w['dagen_max'];
+            $weekend = count(array_intersect($w['dagen'], [5, 6, 7])) > 0;
+            $welke   = array_map('intval', $w['dagen']);
+            if (!empty($w['correctie']))                    $soort = 'correctie';
+            elseif (isset($open_vz[$wn]))                   $soort = 'verzoek';
+            elseif (($w['regime'] ?? 'vijf') === 'weekend') $soort = 'weekend';
+            elseif ($dagen < 5)                             $soort = 'deels';
+            else                                            $soort = 'vol';
+        } else {
+            if (!in_array($wn, $oude_weken, true)) continue;
+            $dagen = 5; $weekend = true; $soort = 'vol'; $welke = [];
+        }
+        $uit['weken'][$wn] = ['dagen' => $dagen, 'weekend' => $weekend, 'soort' => $soort, 'welke' => $welke,
+                              'verzoek' => $open_vz[$wn] ?? null];
     }
     return $uit;
 }

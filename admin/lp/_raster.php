@@ -19,7 +19,7 @@ require __DIR__ . '/../_filterbalk.php';
 ?>
 <section class="ds-kaart bh-raster bh-lp-raster" data-lp-raster data-mag="<?= $mag_bewerken ? '1' : '0' ?>" data-csrf="<?= h(csrf_token()) ?>"
          data-scenario="<?= (int)$scenario_id ?>" data-endpoint="<?= APP_URL ?>/admin/loonplanning.php"
-         data-definitief="<?= $definitief_op ? '1' : '0' ?>" data-dossier="<?= APP_URL ?>/admin/sollicitant.php?tab=inzet&amp;id=">
+         data-definitief="<?= $definitief_op ? '1' : '0' ?>" data-dossier="<?= APP_URL ?>/admin/sollicitant.php?tab=beschikbaarheid&amp;id=">
   <header class="bh-raster-kop">
     <h2>Planning</h2>
     <span class="bh-raster-uitleg"><?= $mag_bewerken ? 'klik een week om te plannen, een naam voor de persoon' : 'alleen lezen' ?></span>

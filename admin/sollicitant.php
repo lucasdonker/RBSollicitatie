@@ -101,6 +101,7 @@ $sid     = (int)($sol['seizoen_id'] ?? 0);
 $naam    = volledige_naam($sol);
 
 $tab    = (string)($_GET['tab'] ?? 'dossier');
+$tab    = ['inzet' => 'beschikbaarheid'][$tab] ?? $tab;   // 2.122.0: Inzet zit in Beschikbaarheid & inzet
 $tabs   = bh_dossier_tabs($d, $tab);
 if (!in_array($tab, array_column($tabs, 'sleutel'), true)) $tab = 'dossier';
 

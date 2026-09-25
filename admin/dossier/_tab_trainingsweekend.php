@@ -2,10 +2,9 @@
 /**
  * Tabblad: het trainingsweekend — wat er is gezien, en het gesprek met het bestuur.
  *
- * Links de observaties van het weekend. Rechts: kwam hij/zij (bevestiging en inchecken), het
- * besluit met de interne notitie en het bericht dat naar de sollicitant ging, en de
- * vastgestelde inzet zodra de loonplanning definitief is (daarvóór is het concept, en dat
- * hoort in de loonplanning, niet in het dossier).
+ * Links de observaties van het weekend en de feedback van lifeguards. Rechts: kwam hij/zij
+ * (bevestiging en inchecken), en het besluit met de interne notitie en het bericht dat naar de
+ * sollicitant ging. De afgesproken inzet staat op de tab Beschikbaarheid & inzet.
  *
  * Verwacht: $tab_dossier  array  uitkomst van bh_dossier()
  */
@@ -14,10 +13,7 @@ if (!$tab_dossier) return;
 
 $_tw  = $tab_dossier['tw'] ?? null;
 $_obs = $tab_dossier['tw_observaties'] ?? [];
-$_af  = (module_aan('loonplanning') && mag('loonplanning', 'lezen') && function_exists('inzet_afspraak_van'))
-      ? inzet_afspraak_van((int)$tab_dossier['sol']['id']) : null;
 $_bev = evenement_bevestig_standen();
-$_functies = array_column(functies_ophalen(), 'naam', 'sleutel');
 ?>
 <div class="bh-dossier-kolommen">
   <div class="bh-dossier-hoofd">
@@ -81,14 +77,7 @@ $_functies = array_column(functies_ophalen(), 'naam', 'sleutel');
     <?php endif; ?>
     <?php endif; ?>
 
-    <?php if ($_af): ?>
-    <section class="ds-kaart ds-kaart-p">
-      <div class="bh-kaartkop"><h2>Afgesproken inzet</h2></div>
-      <p class="bh-dossier-tekst"><?= h($_functies[$_af['functie_sleutel']] ?? (string)$_af['functie_sleutel']) ?>
-        · <?= array_sum(array_column($_af['weken'], 'dagen')) ?> dagen.
-        <a href="<?= APP_URL ?>/admin/sollicitant.php?id=<?= (int)$tab_dossier['sol']['id'] ?>&amp;tab=inzet">Per week bekijken</a></p>
-    </section>
-    <?php endif; ?>
+    <?php // De afgesproken inzet staat op de tab Beschikbaarheid & inzet, naast de opgave. ?>
   </aside>
 </div>
 <?php

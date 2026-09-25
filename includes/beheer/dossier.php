@@ -339,24 +339,21 @@ function bh_dossier_tabs(array $dossier, string $actief = 'dossier'): array {
     if ($dossier['blk'] && $mag_blk) {
         $tabs[] = ['sleutel' => 'formulier', 'label' => 'Kennismakingsformulier', 'aantal' => null];
     }
-    // Ook tonen als de oude beschikbaarheid-rij ontbreekt maar er wél effectieve weken
-    // zijn: die komen uit de nieuwe beschikbaarheid2-opzet. Anders is het tabblad
-    // bereikbaar via de URL maar staat het niet in de rij.
+    // Beschikbaarheid & inzet (2.122.0: één tab, opgave en afspraak per week onder elkaar).
+    // Ook tonen als de oude beschikbaarheid-rij ontbreekt maar er wél effectieve weken zijn
+    // (beschikbaarheid2), of als er alleen een afspraak is. Altijd met het seizoen van déze sollicitatie.
+    $_sz_sol = function_exists('seizoen_op_id') ? seizoen_op_id((int)$dossier['sol']['seizoen_id']) : null;
     $_heeft_besch = $dossier['beschikbaarheid']
         || (function_exists('beschikbaarheid2_effectief')
-            && beschikbaarheid2_effectief((int)$dossier['sol']['id']));
+            && beschikbaarheid2_effectief((int)$dossier['sol']['id'], $_sz_sol))
+        || (function_exists('inzet_afspraak_van') && (!function_exists('mag') || mag('loonplanning', 'lezen'))
+            && inzet_afspraak_van((int)$dossier['sol']['id']));
     if ($_heeft_besch) {
-        $tabs[] = ['sleutel' => 'beschikbaarheid', 'label' => 'Beschikbaarheid', 'aantal' => null];
+        $tabs[] = ['sleutel' => 'beschikbaarheid', 'label' => 'Beschikbaarheid & inzet', 'aantal' => null];
     }
     if (($dossier['scores'] || $dossier['observaties']) && (!function_exists('module_aan') || module_aan('selectiedag'))) {
         $tabs[] = ['sleutel' => 'selectiedag', 'label' => 'Selectiedag',
                    'aantal' => $dossier['observaties'] ? count($dossier['observaties']) : null];
-    }
-    // Inzet: opgave, afspraak en de loonplanning-scenario's. Alleen met leesrecht op de loonplanning
-    // (daar staan loonkosten achter) en als er iets te zien is.
-    if ($_heeft_besch && function_exists('loonplan_persoon_scenarios') && (!function_exists('module_aan') || module_aan('loonplanning'))
-        && (!function_exists('mag') || mag('loonplanning', 'lezen'))) {
-        $tabs[] = ['sleutel' => 'inzet', 'label' => 'Inzet', 'aantal' => null];
     }
     if ((!empty($dossier['tw']) || !empty($dossier['tw_observaties'])) && (!function_exists('module_aan') || module_aan('trainingsweekend'))) {
         $tabs[] = ['sleutel' => 'trainingsweekend', 'label' => 'Trainingsweekend',

@@ -2051,6 +2051,14 @@ body.bh-paneel-open .bh-inhoud { transition: padding-right .15s ease; }
 .bh-twevaluatie-form .bh-twoptie { min-width: 0; }
 .bh-twevaluatie-form .ds-input { flex: 1 1 220px; height: 38px; font-size: 13px; }
 @media (max-width: 860px) { .bh-twevaluatie-rij { grid-template-columns: 1fr; } }
+/* Dossier › Beschikbaarheid & inzet (admin/dossier/_tab_beschikbaarheid.php). */
+.bh-inzet-rest { border-top: 1px solid var(--bg-subtle); }
+.bh-inzet-rest > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; padding: 0 20px; font-size: 13px; color: var(--ink-soft); }
+.bh-inzet-editor { margin-top: 16px; }
+.bh-inzet-editor > summary { cursor: pointer; min-height: 32px; display: flex; align-items: center; font-size: 14px; font-weight: 600; color: var(--navy); }
+.bh-inzet-editor[open] > summary { margin-bottom: 12px; }
+.bh-raster-voet.bh-weeklegenda { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+.bh-raster-voet.bh-weeklegenda > span { display: inline-flex; gap: 6px; align-items: center; }
 /* Feedback van lifeguards (admin/_lg_feedback.php). In de nabespreking over de volle breedte van de kaart. */
 .bh-nb-kolommen > .bh-lgf-blok { grid-column: 1 / -1; border-top: 1px solid var(--bg-subtle); padding-top: 10px; }
 .bh-lgf-blok > .bh-kaartkop { margin-bottom: 6px; }

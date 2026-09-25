@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.121.1');
+define('APP_VERSIE', '2.122.0');
 
 function app_changelog(): array {
     return [
+        '2.122.0' => [
+            'datum'  => '2026-09-25',
+            'titel'  => 'Dossier: beschikbaarheid en inzet op één tab',
+            'punten' => [
+                'Nieuwe tab Beschikbaarheid & inzet: per week de opgave, de afspraak en de planning recht onder elkaar. Meer gepland dan opgegeven kleurt rood',
+                'Opgave in dezelfde cellen als het raster op Beschikbaarheid; klik een week om te corrigeren',
+                'Inzet afspreken of aanpassen kan nu ook vanuit het dossier (uitklapper), andere scenario\'s staan ingeklapt',
+                'Altijd de weken van het seizoen van die sollicitatie; de losse tab Inzet en het blok "Afgesproken inzet" bij het weekend zijn weg',
+            ],
+        ],
         '2.121.1' => [
             'datum'  => '2026-09-25',
             'titel'  => 'Feedback van lifeguards bij de selectiedag en het weekend',
