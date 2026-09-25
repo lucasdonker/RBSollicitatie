@@ -83,6 +83,7 @@ $fase_filter  = (string)($_GET['fase']  ?? 'alle');
 $filter_terug = (string)($_GET['terug'] ?? '');
 $filter_blk   = (string)($_GET['blk']   ?? '');
 $filter_comp  = (string)($_GET['comp']  ?? '');
+$filter_intrek = (string)($_GET['intrek'] ?? '');
 $zoek         = trim((string)($_GET['q'] ?? ''));
 
 /** Bouwt een URL met de huidige filters, met één ding vervangen. */
@@ -92,7 +93,7 @@ function soll_url(array $vervang = []): string {
         'terug' => $_GET['terug'] ?? null, 'blk'  => $_GET['blk']  ?? null,
         'comp'  => $_GET['comp']  ?? null, 'sort' => $_GET['sort'] ?? null,
         'richting' => $_GET['richting'] ?? null, 'per' => $_GET['per'] ?? null,
-        'pagina'   => $_GET['pagina']   ?? null,
+        'pagina'   => $_GET['pagina']   ?? null, 'intrek' => $_GET['intrek'] ?? null,
     ], $vervang), fn($v) => $v !== null && $v !== '');
     return '?' . http_build_query($p);
 }
@@ -179,7 +180,8 @@ foreach ($tabel['kolommen'] as $_sleutel => $_k) {
 $stmt = $db->prepare("
     SELECT s.id, s.fase, s.terugkerend, s.aangemeld_op, s.persoon_id,
            p.voornaam, p.tussenvoegsel, p.achternaam, p.email, p.telefoon, p.geboortedatum,
-           b.foto_url, b.woonplaats, b.adres, (b.id IS NOT NULL) AS heeft_blk
+           b.foto_url, b.woonplaats, b.adres, (b.id IS NOT NULL) AS heeft_blk,
+           (SELECT iv.status FROM intrek_verzoek iv WHERE iv.sollicitatie_id=s.id ORDER BY iv.id DESC LIMIT 1) AS intrek_status
            $extra_sql
     FROM sollicitaties s
     JOIN personen p ON p.id=s.persoon_id
@@ -242,6 +244,9 @@ endif; ?>
        'opties' => ['' => 'Alle kandidaten', '1' => 'Alleen terugkerend']],
       ['soort' => 'keuze', 'naam' => 'blk', 'label' => 'Kennismakingsformulier', 'waarde' => $filter_blk,
        'opties' => ['' => 'Formulier: alle', 'ja' => 'Formulier ingediend', 'nee' => 'Formulier open']],
+      // Intrekverzoeken (ook afgehandelde): wie is doorgevoerd staat op Afgehaakt en valt buiten de fasetabs.
+      ['soort' => 'keuze', 'naam' => 'intrek', 'label' => 'Intrekverzoek', 'waarde' => $filter_intrek,
+       'opties' => ['' => 'Intrekverzoek: alle', 'open' => 'Wil intrekken (open)', 'afgehandeld' => 'Intrekverzoek afgehandeld', 'ja' => 'Met intrekverzoek']],
   ];
   if (function_exists('competentie_sync_klaar') && competentie_sync_klaar()) {
       $_opties = ['' => 'Competentie: alle'];

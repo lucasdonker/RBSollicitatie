@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.122.1');
+define('APP_VERSIE', '2.122.2');
 
 function app_changelog(): array {
     return [
+        '2.122.2' => [
+            'datum'  => '2026-09-25',
+            'titel'  => 'Intrekverzoeken terugvinden',
+            'punten' => [
+                'Sollicitanten: nieuwe filter Intrekverzoek (open, afgehandeld of allemaal). Ook wie al is afgehaakt komt zo terug',
+                'In de lijst een label "wil intrekken" of "ingetrokken" bij de status',
+                'Logboek en tijdlijn tonen intrekken, lifeguard-feedback, de evaluatie en "opgave overgenomen" in gewone taal',
+            ],
+        ],
         '2.122.1' => [
             'datum'  => '2026-09-25',
             'titel'  => 'Loonplanning: opgave overnemen',

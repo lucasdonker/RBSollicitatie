@@ -67,6 +67,9 @@ foreach ($tabel_kolommen as $_kol):
         <span class="bh-statuscel">
           <?= bh_fase_badge((string)($rij['fase'] ?? ''), ['lengte' => 'kort']) ?>
           <?php if (!empty($rij['terugkerend'])): ?><?= bh_chip('terug', 'paars') ?><?php endif; ?>
+          <?php // Verzoek om in te trekken (includes/intrekken.php): open = actie nodig, anders ter info. ?>
+          <?php if (($rij['intrek_status'] ?? '') === 'open'): ?><?= bh_chip('wil intrekken', 'rood') ?>
+          <?php elseif (($rij['intrek_status'] ?? '') === 'doorgevoerd'): ?><?= bh_chip('ingetrokken', 'grijs') ?><?php endif; ?>
           <?php // Uitnodig-modus "Suggestie": een voorstel, de knop blijft een mensenklik. ?>
           <?php if (bh_uitnodig_suggestie($rij)): ?>
             <?= bh_badge('Uitnodigen?', 'groen', ['titel' => 'Valt binnen de leeftijdsgrenzen voor uitnodigen (Instellingen › Uitnodigen & automatisch)']) ?>

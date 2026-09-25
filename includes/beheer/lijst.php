@@ -47,6 +47,17 @@ function bh_soll_filter(array $q, int $sid): array {
         $params[] = $comp;
         $delen[] = 'competentie';
     }
+    // Verzoek om in te trekken (includes/intrekken.php). Ook wie al is afgehaakt komt zo terug.
+    $intrek = (string)($q['intrek'] ?? '');
+    $_iv_sql = [
+        'open'        => ["iv.status = 'open'", 'wil intrekken'],
+        'afgehandeld' => ["iv.status IN ('doorgevoerd','afgewezen','geannuleerd')", 'intrekverzoek afgehandeld'],
+        'ja'          => ["1=1", 'met intrekverzoek'],
+    ][$intrek] ?? null;
+    if ($_iv_sql) {
+        $where .= " AND EXISTS (SELECT 1 FROM intrek_verzoek iv WHERE iv.sollicitatie_id=s.id AND {$_iv_sql[0]})";
+        $delen[] = $_iv_sql[1];
+    }
     $zoek = trim((string)($q['q'] ?? ''));
     if ($zoek !== '') {
         $where .= " AND (p.voornaam LIKE ? OR p.achternaam LIKE ? OR p.email LIKE ?)";
@@ -131,7 +142,7 @@ function bh_soll_filter_params(array $q): array {
         'fase'  => $q['fase']  ?? null, 'q'    => $q['q']    ?? null,
         'terug' => $q['terug'] ?? null, 'blk'  => $q['blk']  ?? null,
         'comp'  => $q['comp']  ?? null, 'sort' => $q['sort'] ?? null,
-        'richting' => $q['richting'] ?? null,
+        'richting' => $q['richting'] ?? null, 'intrek' => $q['intrek'] ?? null,
     ], fn($v) => $v !== null && $v !== '');
 }
 

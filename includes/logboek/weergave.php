@@ -92,6 +92,18 @@ function log_actie_register(): array {
         'afgemeld'          => ['Afgemeld voor berichten', 'kruis-cirkel'],
         'seintje_gevraagd'    => ['Seintje gevraagd voor de volgende werving', 'bel'],
         'seintje_ingetrokken' => ['Seintje ingetrokken', 'kruis-cirkel'],
+
+        // Sollicitatie intrekken (includes/intrekken.php)
+        'intrekverzoek'              => ['Vroeg de sollicitatie in te trekken', 'waarschuwing'],
+        'intrekverzoek_geannuleerd'  => ['Verzoek om in te trekken geannuleerd', 'kruis-cirkel'],
+        'intrekverzoek_doorgevoerd'  => ['Intrekken doorgevoerd (afgehaakt)', 'vink'],
+        'intrekverzoek_afgewezen'    => ['Intrekken niet doorgevoerd, loopt door', 'info'],
+
+        // Selectiedag en trainingsweekend (2.117 e.v.)
+        'tw_evaluatie'               => ['Eerste indruk trainingsweekend vastgelegd', 'vink'],
+        'lg_feedback_vastgelegd'     => ['Feedback van een lifeguard vastgelegd', 'chat'],
+        'lg_feedback_gewist'         => ['Feedback van een lifeguard verwijderd', 'prullenbak'],
+        'loonplan_opgave_overgenomen'=> ['Opgave overgenomen in de loonplanning', 'kalender'],
         'herinneringen_gedraaid' => ['Herinneringen gedraaid', 'klok'],
 
         // Landingspagina's
