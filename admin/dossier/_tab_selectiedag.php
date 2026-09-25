@@ -15,8 +15,10 @@ $_scores = $tab_dossier['scores'] ?? [];
 $_obs    = $tab_dossier['observaties'] ?? [];
 $_besl   = $tab_dossier['besluit'] ?? null;
 $_gem    = bh_dossier_score($tab_dossier);
+// Feedback van lifeguards over de selectiedag: vastgelegd in de nabespreking, hier alleen lezen.
+$_lgf    = lg_feedback_van((int)$tab_dossier['sol']['id'], ['selectiedag']);
 
-if (!$_scores && !$_obs) {
+if (!$_scores && !$_obs && !$_lgf) {
     echo '<div class="ds-kaart ds-kaart-p">';
     $leeg_titel = 'Nog niet beoordeeld';
     $leeg_tekst = 'Zodra er op de selectiedag scores of observaties zijn vastgelegd, staan ze hier.';
@@ -58,6 +60,12 @@ if (!$_scores && !$_obs) {
       </ul>
     </section>
     <?php endif; ?>
+
+    <?php if ($_lgf) {
+        $lgf_sol_id = (int)$tab_dossier['sol']['id']; $lgf_seizoen_id = 0; $lgf_moment = 'selectiedag';
+        $lgf_mag_bewerken = false; $lgf_terug = ''; $lgf_rijen = $_lgf;
+        require __DIR__ . '/../_lg_feedback.php';
+    } ?>
   </div>
 
   <aside class="bh-dossier-zij">

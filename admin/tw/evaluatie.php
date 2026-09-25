@@ -9,6 +9,7 @@
  */
 $_st   = tw_evaluatie_standen();
 $_obs  = tw_observaties_alle($sid);
+$_lgf  = lg_feedback_alle($sid);
 $_sd   = (module_aan('selectiedag') && function_exists('selectie_scores_alle')) ? selectie_scores_alle($sid) : [];
 $_toon = (string)($_GET['toon'] ?? '');
 $_tel  = ['aannemen' => 0, 'twijfel' => 0, 'afwijzen' => 0, 'geen' => 0];
@@ -64,6 +65,7 @@ $_kleur = ['aannemen' => 'groen', 'twijfel' => 'oranje', 'afwijzen' => 'rood'];
         <?= bh_meta([!empty($_k['aanwezig']) ? 'aanwezig' : (($_k['afgemeld_reden'] ?? null) !== null ? 'niet gekomen' : 'niet ingecheckt'),
                      count($_obs[$_id] ?? []) ? $_pos . ' positief · ' . $_aan . ' aandacht' : 'nog geen observaties',
                      $_gem !== null ? 'selectiedag ' . number_format($_gem, 1, ',', '') : '',
+                     !empty($_lgf[$_id]) ? count($_lgf[$_id]) . ' van lifeguards' : '',
                      !empty($_k['is_lifeguard']) ? 'terugkerende lifeguard' : '']) ?>
         <?php if ($_e !== '' && !empty($_k['evaluatie_door'])): ?>
           <span class="bh-meta"><?= h((string)$_k['evaluatie_door']) ?>, <?= h(datum_dag_nl((string)$_k['evaluatie_op'])) ?> <?= h(date('H:i', strtotime((string)$_k['evaluatie_op']))) ?></span>

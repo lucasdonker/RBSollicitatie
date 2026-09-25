@@ -78,6 +78,7 @@ $besluiten  = $sid ? selectie_besluiten($sid) : [];
 // Eén query voor alle scores en één voor alle observaties (niet per kaart).
 $scores_alle = $sid ? selectie_scores_alle($sid) : [];
 $obs_alle    = $sid ? selectie_observaties_alle($sid) : [];
+$lgf_alle    = $sid ? lg_feedback_alle($sid) : [];   // feedback van lifeguards, ook één query
 
 $groep_naam = [];
 foreach ($groepen as $g) $groep_naam[$g['id']] = $g['naam'] ?: 'Groep ' . $g['nummer'];
@@ -140,6 +141,7 @@ require __DIR__ . '/layout_top.php';
     $bel_ongebeld  = $tel_ongebeld;
     $bel_scores    = $scores_alle;
     $bel_obs       = $obs_alle;
+    $bel_lgf       = $lgf_alle;
     require __DIR__ . '/_bellijst.php';
   ?>
 
@@ -264,6 +266,14 @@ require __DIR__ . '/layout_top.php';
           </div>
         <?php endif; ?>
       </div>
+
+      <?php
+        // Wat lifeguards het bestuur over deze kandidaat vertelden; hier vastleggen.
+        $lgf_sol_id = $_id; $lgf_seizoen_id = $sid; $lgf_moment = 'selectiedag'; $lgf_mag_bewerken = true;
+        $lgf_terug = APP_URL . '/admin/selectie_nabespreking.php?filter=' . rawurlencode($filter);
+        $lgf_rijen = $lgf_alle[$_id] ?? []; $lgf_kaart = false; $lgf_kop = 'h3';
+        require __DIR__ . '/_lg_feedback.php';
+      ?>
     </div>
 
     <footer class="bh-nb-besluit">

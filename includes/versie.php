@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.121.0');
+define('APP_VERSIE', '2.121.1');
 
 function app_changelog(): array {
     return [
+        '2.121.1' => [
+            'datum'  => '2026-09-25',
+            'titel'  => 'Feedback van lifeguards bij de selectiedag en het weekend',
+            'punten' => [
+                'Vastleggen gebeurt nu in de module: per kandidaat in de nabespreking van de selectiedag, en in het gesprek van het trainingsweekend',
+                'Te lezen in de bellijst, als teller bij de evaluatie, en in het dossier op de tabs Selectiedag en Trainingsweekend (niet meer op het tabblad Dossier)',
+                'Recht: bewerken op de selectiedag of het trainingsweekend',
+            ],
+        ],
         '2.121.0' => [
             'datum'  => '2026-09-25',
             'titel'  => 'Contact als eigen tab in het portaal',

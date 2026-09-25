@@ -22,6 +22,7 @@
  *   $bel_besluiten   array  [sol_id => besluit-rij]
  *   $bel_scores      array  selectie_scores_alle()
  *   $bel_obs         array  selectie_observaties_alle()
+ *   $bel_lgf         array  lg_feedback_alle() — feedback van lifeguards, alleen lezen
  *   $bel_gebeld      int
  *   $bel_ongebeld    int
  */
@@ -177,6 +178,13 @@ foreach ($bel_lijst as $_k) if ((int)$_k['sol_id'] === $_open) $_huidig = $_k;
               </li>
             <?php endforeach; ?>
           </ul>
+        </div>
+      <?php endif; ?>
+
+      <?php if (!empty($bel_lgf[$_id])): ?>
+        <div>
+          <span class="bh-veldlabel">Feedback van lifeguards</span>
+          <?php $obs_lijst = lg_feedback_als_observaties($bel_lgf[$_id]); $obs_plat = true; $obs_eigen = null; require __DIR__ . '/_observaties.php'; ?>
         </div>
       <?php endif; ?>
 

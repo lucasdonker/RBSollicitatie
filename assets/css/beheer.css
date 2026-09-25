@@ -2051,7 +2051,13 @@ body.bh-paneel-open .bh-inhoud { transition: padding-right .15s ease; }
 .bh-twevaluatie-form .bh-twoptie { min-width: 0; }
 .bh-twevaluatie-form .ds-input { flex: 1 1 220px; height: 38px; font-size: 13px; }
 @media (max-width: 860px) { .bh-twevaluatie-rij { grid-template-columns: 1fr; } }
-/* Feedback van lifeguards (admin/_lg_feedback.php). */
+/* Feedback van lifeguards (admin/_lg_feedback.php). In de nabespreking over de volle breedte van de kaart. */
+.bh-nb-kolommen > .bh-lgf-blok { grid-column: 1 / -1; border-top: 1px solid var(--bg-subtle); padding-top: 10px; }
+.bh-lgf-blok > .bh-kaartkop { margin-bottom: 6px; }
+.bh-lgf-blok > .bh-kaartkop h3 { margin: 0; }
+.bh-lgf-blok.klein { padding-top: 0; border-top: 0; }
+.bh-lgf-blok.klein > .bh-lgf { margin-top: 0; border-top: 0; padding-top: 0; }
+.bh-lgf-blok.klein > .bh-lgf > summary { min-height: 36px; font-size: 13px; font-weight: 500; }
 .bh-lgf { margin-top: 12px; border-top: 1px solid var(--bg-subtle); padding-top: 4px; }
 .bh-lgf > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-size: 14px; font-weight: 600; color: var(--navy); }
 .bh-lgf > summary:focus-visible { outline: 2px solid var(--navy); outline-offset: 3px; border-radius: var(--radius-sm); }

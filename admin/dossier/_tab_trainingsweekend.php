@@ -29,6 +29,14 @@ $_functies = array_column(functies_ophalen(), 'naam', 'sleutel');
       <?php if ($_obs) { $obs_lijst = $_obs; $obs_eigen = null; require __DIR__ . '/../_observaties.php'; }
             else echo '<p class="bh-meta">Niemand heeft iets opgeschreven.</p>'; ?>
     </section>
+
+    <?php // Feedback van lifeguards over het weekend: vastgelegd in het TW-gesprek, hier alleen lezen.
+      $_lgf = lg_feedback_van((int)$tab_dossier['sol']['id'], ['tw', 'anders']);
+      if ($_lgf) {
+          $lgf_sol_id = (int)$tab_dossier['sol']['id']; $lgf_seizoen_id = 0; $lgf_moment = 'tw';
+          $lgf_mag_bewerken = false; $lgf_terug = ''; $lgf_rijen = $_lgf;
+          require __DIR__ . '/../_lg_feedback.php';
+      } ?>
   </div>
 
   <aside class="bh-dossier-zij">

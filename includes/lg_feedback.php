@@ -7,8 +7,9 @@
  * wat ze zeggen zelf vast in het dossier (besluit Lucas, 25 sep 2026), met wie het zei, op
  * welk moment en of het positief, neutraal of een aandachtspunt is.
  *
- * Zichtbaar voor wie het dossier mag zien (sollicitanten › lezen); vastleggen en wissen met
- * bewerkrecht. Beoordelaars op de dag zien het niet.
+ * Vastleggen gebeurt in de module waar het bij hoort (SD-nabespreking, TW-gesprek) met bewerkrecht
+ * op die module (lg_feedback_module()); in het dossier staat het alleen te lezen, per moment op
+ * de tabs Selectiedag en Trainingsweekend. Beoordelaars op de dag zien het niet.
  *
  * AVG: de tekst gaat over de sollicitant en staat dus in de inzage (art. 15), zonder de naam
  * van de lifeguard (art. 15 lid 4). Hij verdwijnt met avg_sollicitatie_leegmaken().
@@ -42,14 +43,47 @@ function lg_feedback_momenten(): array {
     return ['selectiedag' => 'Selectiedag', 'tw' => 'Trainingsweekend', 'anders' => 'Anders'];
 }
 
-/** Feedback over één sollicitatie, nieuwste eerst. */
-function lg_feedback_van(int $sol_id): array {
+/**
+ * Welk recht hoort bij feedback van dit moment? Vastleggen en wissen gebeurt in de module zelf
+ * (SD-nabespreking, TW-gesprek), dus met bewerkrecht op die module. 'anders' (oude rijen): dossierrecht.
+ */
+function lg_feedback_module(string $moment): string {
+    return ['selectiedag' => 'selectiedag', 'tw' => 'trainingsweekend'][$moment] ?? 'sollicitanten';
+}
+
+/** Feedback over één sollicitatie, nieuwste eerst. $momenten leeg = alles. */
+function lg_feedback_van(int $sol_id, array $momenten = []): array {
     lg_feedback_auto_setup();
     try {
-        $q = db()->prepare("SELECT * FROM lifeguard_feedback WHERE sollicitatie_id=? ORDER BY aangemaakt_op DESC, id DESC");
-        $q->execute([$sol_id]);
+        $sql = "SELECT * FROM lifeguard_feedback WHERE sollicitatie_id=?";
+        $p = [$sol_id];
+        if ($momenten) { $sql .= " AND moment IN (" . implode(',', array_fill(0, count($momenten), '?')) . ")"; $p = array_merge($p, array_values($momenten)); }
+        $q = db()->prepare($sql . " ORDER BY aangemaakt_op DESC, id DESC");
+        $q->execute($p);
         return $q->fetchAll();
     } catch (\Exception $e) { return []; }
+}
+
+/** Alle feedback van een seizoen in één query, per sollicitatie: [sol_id => [rij, …]]. Voor lijsten met veel kaarten. */
+function lg_feedback_alle(int $seizoen_id): array {
+    lg_feedback_auto_setup();
+    $uit = [];
+    try {
+        $q = db()->prepare("SELECT * FROM lifeguard_feedback WHERE seizoen_id=? ORDER BY aangemaakt_op DESC, id DESC");
+        $q->execute([$seizoen_id]);
+        foreach ($q->fetchAll() as $r) $uit[(int)$r['sollicitatie_id']][] = $r;
+    } catch (\Exception $e) {}
+    return $uit;
+}
+
+/** Eén rij (voor de rechtencheck bij wissen), of null. */
+function lg_feedback_rij(int $id): ?array {
+    lg_feedback_auto_setup();
+    try {
+        $q = db()->prepare("SELECT * FROM lifeguard_feedback WHERE id=?");
+        $q->execute([$id]);
+        return $q->fetch() ?: null;
+    } catch (\Exception $e) { return null; }
 }
 
 /** Vastleggen. false bij een lege naam of tekst. */
@@ -89,7 +123,13 @@ function lg_feedback_wissen(int $id, int $door_id, bool $is_admin): int {
  * Alleen voor het bestuur (dossierrecht); vrij typen blijft mogelijk.
  */
 function lg_feedback_namen(int $seizoen_id): array {
+    static $cache = [];
+    if (isset($cache[$seizoen_id])) return $cache[$seizoen_id];
     if ($seizoen_id <= 0 || !function_exists('authentik_lifeguard_sql')) return [];
+    return $cache[$seizoen_id] = lg_feedback_namen_laden($seizoen_id);
+}
+
+function lg_feedback_namen_laden(int $seizoen_id): array {
     try {
         $q = db()->prepare("SELECT p.voornaam, p.tussenvoegsel, p.achternaam FROM sollicitaties s JOIN personen p ON p.id = s.persoon_id
                             WHERE s.seizoen_id=? AND " . authentik_lifeguard_sql('s.id') . " = 1 ORDER BY p.voornaam, p.achternaam");

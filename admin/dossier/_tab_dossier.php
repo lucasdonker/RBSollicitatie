@@ -312,11 +312,6 @@ if ($_iv) {
     </section>
     <?php endif; ?>
 
-    <?php
-      $lgf_sol_id = (int)$_s['id']; $lgf_seizoen_id = (int)($_s['seizoen_id'] ?? 0); $lgf_mag_bewerken = $_mag_bewerken;
-      require __DIR__ . '/../_lg_feedback.php';
-    ?>
-
     <section class="ds-kaart ds-kaart-p">
       <div class="bh-kaartkop">
         <h2>Notities</h2>
