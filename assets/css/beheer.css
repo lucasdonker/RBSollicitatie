@@ -2041,6 +2041,18 @@ body.bh-paneel-open .bh-inhoud { transition: padding-right .15s ease; }
 .bh-twgesprek-info .ds-melding { margin-top: 10px; }
 .bh-twgesprek-info h3, .bh-twgesprek-besluit h3 { font: var(--text-subhead); font-size: 15px; color: var(--ink); margin: 0 0 10px; }
 .bh-twgesprek-besluit { position: sticky; top: 16px; }
+/* TW-stap Evaluatie (admin/tw/evaluatie.php): per persoon een eerste indruk van het bestuur. */
+.bh-twevaluatie { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.bh-twevaluatie-rij { padding: 14px 18px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); gap: 12px 20px; align-items: center; }
+.bh-twevaluatie-wie { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.bh-twevaluatie-wie > span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.bh-twevaluatie-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.bh-twevaluatie-form .bh-twkeuze { flex: 1 1 100%; }
+.bh-twevaluatie-form .bh-twoptie { min-width: 0; }
+.bh-twevaluatie-form .ds-input { flex: 1 1 220px; height: 38px; font-size: 13px; }
+@media (max-width: 860px) { .bh-twevaluatie-rij { grid-template-columns: 1fr; } }
+/* Beoordelen: de vraag van het bestuur bij iemand op twijfel. */
+.bh-beoordeel-vraag { margin: 14px 18px 0; }
 .bh-twgesprek-form { display: flex; flex-direction: column; gap: 12px; }
 .bh-twgesprek-form .ds-veld { margin: 0; }
 .bh-twgesprek-form[inert] { opacity: .55; }

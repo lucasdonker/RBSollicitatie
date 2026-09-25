@@ -14,8 +14,11 @@ $bo_groep   = (string)($_GET['groep'] ?? '');
 if ($bo_groep !== '' && !isset($bo_gnaam[(int)$bo_groep])) $bo_groep = '';
 $bo_url     = fn(?int $k = null, ?string $g = null) => tw_url('beoordelen', $k, ['groep' => $g ?? $bo_groep]);
 $bo_kand    = $bo_groep === '' ? $kandidaten : array_values(array_filter($kandidaten, fn($k) => (string)($k['groep_id'] ?? '') === $bo_groep));
-// Terugkerende lifeguards onderaan in een eigen blok; vorige/volgende volgt dezelfde volgorde.
-$bo_secties = evenement_beoordeel_secties($bo_kand);
+// Twijfel van het bestuur (stap Evaluatie) bovenaan, terugkerende lifeguards onderaan;
+// vorige/volgende volgt dezelfde volgorde. Aannemen/afwijzen blijft onzichtbaar voor beoordelaars.
+$bo_twijfel = tw_twijfel_ids($bo_kand);
+$bo_secties = evenement_beoordeel_secties($bo_kand, $bo_twijfel, 'Extra aandacht gevraagd',
+                                          'Het bestuur hoort over hen graag extra wat je ziet.');
 $bo_lijst   = evenement_secties_plat($bo_secties);
 $ids       = array_map(fn($k) => (int)$k['sol_id'], $bo_lijst);
 $huidig_id = (int)($_GET['k'] ?? 0);
@@ -77,6 +80,14 @@ $_aanw  = fn($k) => !empty($k['aanwezig']) ? 'aanwezig' : (($k['afgemeld_reden']
         <a class="ds-btn ds-btn-secundair ds-btn-sm" href="<?= APP_URL ?>/admin/sollicitant.php?id=<?= $hid ?>">Dossier</a>
       <?php endif; ?>
     </header>
+
+    <?php if (in_array($hid, $bo_twijfel, true)): ?>
+      <div class="ds-melding ds-melding-info bh-beoordeel-vraag">
+        <?= icoon('info', 16) ?>
+        <span><strong>Extra aandacht gevraagd door het bestuur.</strong>
+          <?= !empty($huidig['evaluatie_bericht']) ? h((string)$huidig['evaluatie_bericht']) : 'Schrijf op wat je ziet, ook als het klein is.' ?></span>
+      </div>
+    <?php endif; ?>
 
     <?php if (!empty($huidig['bijzonderheden'])): ?>
       <div class="ds-melding ds-melding-warn bh-beoordeel-bijz">

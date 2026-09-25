@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.117.0');
+define('APP_VERSIE', '2.118.0');
 
 function app_changelog(): array {
     return [
+        '2.118.0' => [
+            'datum'  => '2026-09-25',
+            'titel'  => 'Evaluatie tijdens het trainingsweekend',
+            'punten' => [
+                'Nieuwe stap Evaluatie (bestuur): per persoon alvast sowieso aannemen, twijfel of sowieso afwijzen, met bij twijfel een vraag aan de beoordelaars',
+                'Bij Beoordelen staat wie op twijfel staat bovenaan onder "Extra aandacht gevraagd", met die vraag. Aannemen of afwijzen zien beoordelaars nooit',
+                'In het gesprek en in de gesprekkenlijst ziet het bestuur de eerste indruk terug; niets wordt vooraf aangevinkt',
+            ],
+        ],
         '2.117.0' => [
             'datum'  => '2026-09-25',
             'titel'  => 'Groepen bij het trainingsweekend',

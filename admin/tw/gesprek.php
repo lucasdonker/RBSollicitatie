@@ -128,6 +128,12 @@ $_b        = (string)($_k['besluit'] ?? '');
         <?php if (!empty($_k['besluit_notitie'])): ?><p><strong>Intern:</strong> <?= h((string)$_k['besluit_notitie']) ?></p><?php endif; ?>
         <p><strong>Aan de sollicitant:</strong> <?= nl2br(h((string)($_k['gesprek_bericht'] ?: tw_standaard_bericht($_b)))) ?></p>
       <?php else: ?>
+      <?php if (!empty($_k['evaluatie'])): ?>
+        <p class="bh-dossier-tekst">
+          Eerste indruk: <?= bh_badge(tw_evaluatie_standen()[$_k['evaluatie']] ?? (string)$_k['evaluatie'], ['aannemen' => 'groen', 'twijfel' => 'oranje', 'afwijzen' => 'rood'][$_k['evaluatie']] ?? 'grijs') ?>
+          <?php if (!empty($_k['evaluatie_bericht'])): ?><span class="bh-meta"><?= h((string)$_k['evaluatie_bericht']) ?></span><?php endif; ?>
+        </p>
+      <?php endif; ?>
       <form method="post" class="bh-twgesprek-form"<?= $_mag_form ? '' : ' inert' ?>
             data-bevestig="Besluit vastleggen? Bij aannemen of afwijzen gaat het meteen door: de fase verandert en de sollicitant krijgt bericht, met jullie tekst. Twijfel blijft staan.">
         <?= csrf_input() ?>

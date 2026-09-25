@@ -5,7 +5,9 @@
  *   voorbereiden — wie komt er (bevestiging), wie mist nog beschikbaarheid, de tablet     (lezen; wijzigen = bestuur)
  *   groepen      — groepsindeling, gedeeld met de selectiedag (admin/_groepsindeling.php) (lezen; wijzigen = bestuur)
  *   inchecken    — gedeelde incheck-lijst; de tablet doet hetzelfde                       (lezen)
- *   beoordelen   — vrijwilligers op hun telefoon: observaties per persoon, met foto        (lezen)
+ *   beoordelen   — vrijwilligers op hun telefoon: observaties per persoon, met foto;
+ *                  twijfelgevallen van het bestuur bovenaan ("extra aandacht")             (lezen)
+ *   evaluatie    — het bestuur zegt alvast sowieso aannemen / twijfel / sowieso afwijzen   (bewerken)
  *   gesprekken   — het bestuur spreekt iedereen, in vrije volgorde, en beslist ter plekke (bewerken)
  *
  * Dit bestand is alleen de router: rechten, POST-acties en welke stap. De stappen staan in
@@ -71,6 +73,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $sid) {
         flash($ok ? 'succes' : 'fout', $ok ? 'Opgeslagen.' : 'Niet opgeslagen: bij "kan niet" hoort een reden.');
         redirect(tw_url('voorbereiden'));
     }
+    if ($actie === 'evaluatie') {
+        $ok = evenement_is_kandidaat('tw', $sid, $sol)
+           && tw_evaluatie_zetten($sid, $sol, (string)($_POST['evaluatie'] ?? ''), (string)($_POST['evaluatie_bericht'] ?? ''), $ik);
+        flash($ok ? 'succes' : 'fout', $ok ? 'Evaluatie opgeslagen.' : 'Niet opgeslagen: deze persoon staat niet (meer) op de lijst.');
+        redirect(tw_url('evaluatie', null, ['toon' => (string)($_POST['toon'] ?? '')]) . '#ev-' . $sol);
+    }
     if ($actie === 'gesprek_los') {
         evenement_claim_los('tw_deelname', 'gesprek', $sid, $sol, $ik_id);
         redirect(tw_url('gesprekken'));
@@ -96,7 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $sid) {
 
 // ── Welke stap ──
 $stappen = ['voorbereiden' => 'Voorbereiden', 'groepen' => 'Groepen', 'inchecken' => 'Inchecken', 'beoordelen' => 'Beoordelen'];
-if ($mag_beslissen) $stappen['gesprekken'] = 'Gesprekken';
+if ($mag_beslissen) $stappen += ['evaluatie' => 'Evaluatie', 'gesprekken' => 'Gesprekken'];
 $stap = (string)($_GET['stap'] ?? '');
 $stap = ['weekend' => 'beoordelen', 'besluit' => 'gesprekken'][$stap] ?? $stap;   // oude links
 if (!isset($stappen[$stap])) {

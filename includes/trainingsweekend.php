@@ -81,6 +81,13 @@ function tw_auto_setup(): void {
             INDEX (`seizoen_id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
         db_kolom_verzeker($db, 'tw_deelname', 'groep_id', 'INT DEFAULT NULL');
+
+        // 2.118.0: de evaluatie van het bestuur tijdens het weekend (tw_evaluatie_zetten()).
+        // VARCHAR, geen ENUM: een onbekende waarde wordt dan geen stille lege string.
+        foreach (['evaluatie' => 'VARCHAR(10) DEFAULT NULL', 'evaluatie_bericht' => 'TEXT DEFAULT NULL',
+                  'evaluatie_door' => 'VARCHAR(100) DEFAULT NULL', 'evaluatie_op' => 'DATETIME DEFAULT NULL'] as $kol => $def) {
+            db_kolom_verzeker($db, 'tw_deelname', $kol, $def);
+        }
     } catch (\Exception $e) {
         error_log('tw_auto_setup: ' . $e->getMessage());
     }
@@ -102,6 +109,7 @@ function tw_kandidaten(int $seizoen_id): array {
                    d.aanwezig, d.ingecheckt_op, d.afgemeld_reden, d.groep_id,
                    d.besluit, d.besluit_notitie, d.besluit_door, d.besluit_op, d.doorgevoerd_op,
                    d.bevestiging, d.bevestiging_reden, d.gesprek_status, d.gesprek_door, d.gesprek_sinds, d.gesprek_bericht,
+                   d.evaluatie, d.evaluatie_bericht, d.evaluatie_door, d.evaluatie_op,
                    blk.foto_url, blk.bijzonderheden
             FROM sollicitaties s
             JOIN personen p ON p.id = s.persoon_id
@@ -286,6 +294,45 @@ function tw_stand(array $kandidaten): array {
 /** Naar welke fase leidt een besluit? Twijfel leidt nergens heen: daar moet iemand over bellen. */
 function tw_besluit_fase(string $besluit): ?string {
     return ['aannemen' => 'aangenomen', 'afwijzen' => 'afgewezen'][$besluit] ?? null;
+}
+
+// ─────────────────────────────────────────────────────────────
+//  De evaluatie van het bestuur (stap Evaluatie), tijdens het weekend
+// ─────────────────────────────────────────────────────────────
+//
+// Na een dag beoordelen zegt het bestuur alvast wat het vindt: sowieso aannemen, sowieso
+// afwijzen, of twijfel. Dat is geen besluit (dat valt in het gesprek) en gaat nergens heen.
+// Het doel: de beoordelaars kijken de rest van het weekend vooral naar de twijfelgevallen.
+// Beoordelaars zien daarom ALLEEN wie op twijfel staat ("extra aandacht gevraagd", met de
+// vraag van het bestuur); aannemen of afwijzen zien ze nooit — dat zou hun blik kleuren.
+
+/** De keuzes, in de volgorde van het scherm. */
+function tw_evaluatie_standen(): array {
+    return ['aannemen' => 'Sowieso aannemen', 'twijfel' => 'Twijfel', 'afwijzen' => 'Sowieso afwijzen'];
+}
+
+/**
+ * De evaluatie van één persoon vastleggen of wissen ($stand leeg).
+ * Het bericht is een vraag aan de beoordelaars en telt alleen bij twijfel; bij de andere
+ * keuzes wordt het niet bewaard (anders zou het bij een beoordelaar kunnen opduiken).
+ */
+function tw_evaluatie_zetten(int $seizoen_id, int $sol_id, string $stand, string $bericht, string $door): bool {
+    if ($stand !== '' && !isset(tw_evaluatie_standen()[$stand])) return false;
+    tw_rij_verzeker($seizoen_id, $sol_id);
+    $bericht = $stand === 'twijfel' ? mb_substr(trim($bericht), 0, 500) : '';
+    db()->prepare("UPDATE tw_deelname SET evaluatie=?, evaluatie_bericht=?, evaluatie_door=?, evaluatie_op=?
+                   WHERE seizoen_id=? AND sollicitatie_id=?")
+       ->execute([$stand !== '' ? $stand : null, $bericht !== '' ? $bericht : null,
+                  $stand !== '' ? mb_substr($door, 0, 100) : null, $stand !== '' ? date('Y-m-d H:i:s') : null,
+                  $seizoen_id, $sol_id]);
+    if (function_exists('audit_log')) audit_log('tw_evaluatie', 'sollicitatie', $sol_id, ['stand' => $stand !== '' ? $stand : 'gewist']);
+    return true;
+}
+
+/** Wie staat op twijfel en is nog niet doorgevoerd? [sol_id, …] — voor de beoordeellijst. */
+function tw_twijfel_ids(array $kandidaten): array {
+    return array_values(array_map(fn($k) => (int)$k['sol_id'],
+        array_filter($kandidaten, fn($k) => ($k['evaluatie'] ?? '') === 'twijfel' && empty($k['doorgevoerd_op']))));
 }
 
 // ─────────────────────────────────────────────────────────────

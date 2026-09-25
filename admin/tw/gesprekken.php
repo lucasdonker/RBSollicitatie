@@ -67,6 +67,7 @@ $_gefilterd = $_f['q'] !== '' || $_f['stand'] !== '' || $_f['besluit'] !== '';
         <?= bh_meta([$_k['leeftijd'] !== null ? $_k['leeftijd'] . ' jaar' : '',
                      $_k['_sd'] !== null ? 'selectiedag ' . number_format($_k['_sd'], 1, ',', '') : '',
                      !empty($_k['aanwezig']) ? 'aanwezig' : (($_k['afgemeld_reden'] ?? null) !== null ? 'niet gekomen' : ''),
+                     $_groep !== 'gehad' && !empty($_k['evaluatie']) ? 'indruk: ' . mb_strtolower(tw_evaluatie_standen()[$_k['evaluatie']] ?? '') : '',
                      $_groep === 'bezig' ? 'bezig door ' . evenement_claim_naam((int)$_k['gesprek_door']) : '']) ?>
       </span>
       <?php if ($_groep === 'gehad' && $_b): ?><?= bh_badge($_b[0] . (!empty($_k['doorgevoerd_op']) ? ' · doorgevoerd' : ''), $_b[1]) ?><?php endif; ?>
