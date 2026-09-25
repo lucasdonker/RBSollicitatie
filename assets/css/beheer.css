@@ -780,10 +780,19 @@ span.bh-incheck-code {
 .bh-beoordeel-bijz { margin: 14px 18px 0; }
 .bh-beoordeel-kaart > .ds-melding { margin: 14px 18px 0; }
 
-.bh-testblok { padding: 16px 18px 4px; }
+.bh-testblok { padding: 6px 18px 4px; border-bottom: 1px solid var(--bg-subtle); }
+.bh-testblok > summary {
+  cursor: pointer; min-height: 44px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; list-style: none;
+}
+.bh-testblok > summary::-webkit-details-marker { display: none; }
+.bh-testblok > summary::after { content: "+"; margin-left: auto; font-size: 18px; color: var(--ink-muted); }
+.bh-testblok[open] > summary::after { content: "\2212"; }
+.bh-testblok[open] > summary { margin-bottom: 4px; }
+.bh-testblok:not([open]) [data-test-stand].nog { color: var(--oranje); font-weight: 600; }  /* dicht, maar nog niet af */
+.bh-testblok > summary:focus-visible { outline: 2px solid var(--navy); outline-offset: 3px; border-radius: var(--radius-sm); }
 .bh-testblok h3 {
   font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
-  color: var(--ink-muted); margin: 0 0 10px;
+  color: var(--ink-muted); margin: 0;
 }
 .bh-criterium {
   border: 1.5px solid var(--fase-oranje-rand); border-radius: 13px;

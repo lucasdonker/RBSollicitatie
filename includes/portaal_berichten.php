@@ -121,6 +121,18 @@ function portaal_berichten_bundel(array $rijen): array {
     return $groepen;
 }
 
+/**
+ * Het icoonvlak van een bericht: één icoon per kanaal waarlangs het ging, zodat je ziet dat
+ * een gebundeld bericht naar e-mail én WhatsApp ging. Decoratief; de meta-tekst zegt het ook.
+ */
+function portaal_kanaal_iconen(array $kanalen): string {
+    $kanalen = array_values(array_intersect(['email', 'whatsapp', 'sms'], $kanalen)) ?: ['email'];
+    $maat = count($kanalen) > 1 ? 16 : 20;
+    $uit = '';
+    foreach ($kanalen as $k) $uit .= icoon(portaal_bericht_kanaal($k)['icoon'], $maat);
+    return '<span class="pt-bericht-icoon' . (count($kanalen) > 1 ? ' meer' : '') . '" aria-hidden="true">' . $uit . '</span>';
+}
+
 /** ['email','whatsapp'] → "per e-mail en WhatsApp". */
 function portaal_bericht_kanalen_tekst(array $kanalen): string {
     $naam = ['email' => 'e-mail', 'whatsapp' => 'WhatsApp', 'sms' => 'sms'];

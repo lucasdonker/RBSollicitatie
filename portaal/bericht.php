@@ -15,12 +15,14 @@ if (!$b) redirect(APP_URL . '/portaal/berichten.php');
 $portaal_titel = $b['titel'];
 $portaal_nav   = 'start';
 $portaal_terug = APP_URL . '/portaal/berichten.php';
+// Zelfde bericht via een ander kanaal (portaal_berichten_bundel): één keer tonen, met beide iconen en een voetnoot.
+$_ook = portaal_bericht_ook($sol_id, $b);
 require __DIR__ . '/_kop.php';
 ?>
 <div class="pt-stapel pt-berichten">
   <div class="pt-bericht-detail">
     <div class="pt-bericht-detail-kop">
-      <span class="pt-bericht-icoon"><?= icoon($b['icoon'], 20) ?></span>
+      <?= portaal_kanaal_iconen(array_merge([(string)$b['kanaal']], array_column($_ook, 'kanaal'))) ?>
       <div class="pt-bericht-tekst">
         <span class="pt-bericht-titel"><?= h($b['titel']) ?></span>
         <span class="pt-bericht-meta"><?= h($b['meta']) ?></span>
@@ -33,8 +35,7 @@ require __DIR__ . '/_kop.php';
     <?php else: ?>
       <div class="pt-bericht-inhoud pt-korttekst"><?= nl2br(h($b['body'])) ?></div>
     <?php endif; ?>
-    <?php // Zelfde bericht via een ander kanaal (portaal_berichten_bundel): één keer tonen, met een voetnoot. ?>
-    <?php $_ook = portaal_bericht_ook($sol_id, $b); if ($_ook): ?>
+    <?php if ($_ook): ?>
       <p class="pt-bericht-ook">Ook verstuurd <?= h(implode(' en ', array_map(fn($o) => portaal_bericht_kanaal($o['kanaal'])['label'], $_ook))) ?>.</p>
     <?php endif; ?>
   </div>

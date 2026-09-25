@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.125.0');
+define('APP_VERSIE', '2.125.1');
 
 function app_changelog(): array {
     return [
+        '2.125.1' => [
+            'datum'  => '2026-09-25',
+            'titel'  => 'Beoordelen overzichtelijker, berichten met beide kanalen',
+            'punten' => [
+                'Selectiedag › Beoordelen: elke test is in te klappen; een test die je helemaal hebt gescoord begint dicht en je keuze blijft bewaard',
+                'Observaties staan overal per dag, inklapbaar (ook bij één dag)',
+                'Portaal: een bericht dat per e-mail én WhatsApp ging, toont beide iconen',
+            ],
+        ],
         '2.125.0' => [
             'datum'  => '2026-09-25',
             'titel'  => 'Vandaag: werkbak, sinds je vorige bezoek en agenda',

@@ -37,7 +37,7 @@ require __DIR__ . '/_kop.php';
   <?php else: ?>
     <?php foreach ($berichten as $b): ?>
     <a class="pt-bericht<?= $b['ongelezen'] ? ' ongelezen' : '' ?>" href="<?= APP_URL ?>/portaal/bericht.php?id=<?= (int)$b['id'] ?>">
-      <span class="pt-bericht-icoon"><?= icoon($b['icoon'], 20) ?></span>
+      <?= portaal_kanaal_iconen($b['kanalen']) ?>
       <div class="pt-bericht-tekst">
         <div class="pt-bericht-kop">
           <span class="pt-bericht-titel"><?= h($b['titel']) ?></span>

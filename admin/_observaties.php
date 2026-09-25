@@ -3,9 +3,8 @@
  * Partial: een lijst observaties (selectiedag of trainingsweekend), gekleurd per soort — met
  * de soort ook als tekst, want kleur alleen zegt niets voor wie hem niet ziet.
  *
- * Beslaan de observaties meer dan één dag (het trainingsweekend), dan komen ze per dag onder
- * een inklapbare kop, nieuwste dag bovenaan en open; de eerdere dagen ingeklapt. Eén dag
- * (de selectiedag) blijft een platte lijst.
+ * Observaties staan overal per dag onder een inklapbare kop (ook als het er maar één is, zodat
+ * het er op elk scherm hetzelfde uitziet): nieuwste dag bovenaan en open, eerdere dagen ingeklapt.
  *
  * Verwacht:
  *   $obs_lijst  array   rijen met tekst, soort, beoordelaar, id, aangemaakt_op — nieuwste eerst
@@ -47,7 +46,7 @@ $_obs_rij = function (array $_o) use ($_soortlabel, $obs_eigen, $obs_wis_form): 
     <?php
 };
 ?>
-<?php if ($obs_plat || count($_obs_dagen) <= 1): ?>
+<?php if ($obs_plat): ?>
 <ul class="bh-observaties">
   <?php foreach ($obs_lijst as $_o) $_obs_rij($_o); ?>
 </ul>

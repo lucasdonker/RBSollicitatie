@@ -243,9 +243,14 @@ require __DIR__ . '/layout_top.php';
       <p class="bh-zijpaneel-hint">Tikken is opslaan. Tik nog een keer op hetzelfde cijfer om het te wissen.</p>
     <?php endif; ?>
 
-    <?php foreach ($criteria as $_ts => $_test): ?>
-      <div class="bh-testblok">
-        <h3><?= h($_test['naam']) ?></h3>
+    <?php foreach ($criteria as $_ts => $_test):
+      // Inklapbaar, zodat je snel bij de observaties bent; een test die je helemaal hebt gescoord begint dicht.
+      $_tot = count($_test['criteria']);
+      $_klaar = count(array_filter($_test['criteria'], fn($c) => (int)($scores[$_ts][$c['sleutel']]['eigen'] ?? 0) > 0));
+    ?>
+      <details class="bh-testblok" data-test="<?= h($_ts) ?>"<?= $_klaar < $_tot ? ' open' : '' ?>>
+        <summary><h3><?= h($_test['naam']) ?></h3>
+          <span class="bh-meta<?= $_klaar < $_tot ? ' nog' : '' ?>" data-test-stand><?= $_klaar ?> van <?= $_tot ?> gescoord</span></summary>
         <?php foreach ($_test['criteria'] as $_crit):
           $_sc = $scores[$_ts][$_crit['sleutel']] ?? ['eigen' => 0, 'allen' => [], 'gem' => 0];
           $_eigen = (int)$_sc['eigen'];
@@ -273,10 +278,10 @@ require __DIR__ . '/layout_top.php';
             </span>
           </div>
         <?php endforeach; ?>
-      </div>
+      </details>
     <?php endforeach; ?>
 
-    <div class="bh-observatieblok">
+    <div class="bh-observatieblok" id="observaties">
       <h3>Observatie plaatsen</h3>
       <?php if ($mag_beoordelen): ?>
         <div class="bh-soortkeuze" id="soort-<?= $hid ?>" role="group" aria-label="Soort observatie">
@@ -346,6 +351,13 @@ function zetScore(knop, solId, test, crit, score) {
       b.setAttribute('aria-pressed', b === actief ? 'true' : 'false');
     });
     if (kaart) kaart.classList.toggle('gedaan', !!actief);
+    const blok = rij.closest('.bh-testblok');
+    const tel = blok && blok.querySelector('[data-test-stand]');
+    if (tel) {
+      const klaar = blok.querySelectorAll('.bh-criterium.gedaan').length, tot = blok.querySelectorAll('.bh-criterium').length;
+      tel.textContent = klaar + ' van ' + tot + ' gescoord';
+      tel.classList.toggle('nog', klaar < tot);
+    }
   }
 
   toon(wissen ? null : knop);
@@ -397,10 +409,23 @@ function obsToevoegen(solId) {
     if (!d.ok) { bhToast('Opslaan mislukt.', 'fout'); return; }
     veld.value = '';
     bhToast('Observatie opgeslagen.', 'succes');
-    setTimeout(function () { location.reload(); }, 600);
+    setTimeout(function () { location.hash = 'observaties'; location.reload(); }, 600);
   })
   .catch(() => bhToast('Geen verbinding — probeer opnieuw.', 'fout'));
 }
+
+// Wat je in- of uitklapt blijft zo, ook bij de volgende kandidaat (alleen in deze browser).
+(function () {
+  let stand = {};
+  try { stand = JSON.parse(sessionStorage.getItem('p13-sd-testen') || '{}'); } catch (e) {}
+  document.querySelectorAll('.bh-testblok[data-test]').forEach(function (d) {
+    if (d.dataset.test in stand) d.open = stand[d.dataset.test];
+    d.addEventListener('toggle', function () {
+      stand[d.dataset.test] = d.open;
+      try { sessionStorage.setItem('p13-sd-testen', JSON.stringify(stand)); } catch (e) {}
+    });
+  });
+})();
 
 // De wisknop komt uit de gedeelde partial (data-obs-wis); één haak op de pagina.
 document.addEventListener('click', function (e) {

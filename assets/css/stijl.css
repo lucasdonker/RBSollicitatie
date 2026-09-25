@@ -1679,6 +1679,7 @@ a.pt-taakrij:hover { background: var(--bg); }
   width: 40px; height: 40px; border-radius: 10px; flex: none; background: var(--bg); color: var(--ink-muted);
   display: flex; align-items: center; justify-content: center;
 }
+.pt-bericht-icoon.meer { width: auto; min-width: 40px; padding: 0 8px; gap: 5px; }   /* gebundeld: e-mail + WhatsApp */
 .pt-bericht.ongelezen .pt-bericht-icoon { background: #eef2f8; color: var(--navy); }
 .pt-bericht-tekst { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
 .pt-bericht-kop { display: flex; align-items: baseline; gap: 8px; }
