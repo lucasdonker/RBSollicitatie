@@ -181,6 +181,7 @@ function db_failsafe(bool $forceer = false): void {
         'portaal_login_setup',
         'beschikbaarheid2_auto_setup',
         'tw_auto_setup',
+        'lg_feedback_auto_setup',
         'ratelimit_auto_setup',
         'portaal_berichten_kolom_verzeker',
         'blk_kolommen_verzeker',

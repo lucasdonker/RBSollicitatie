@@ -2051,6 +2051,14 @@ body.bh-paneel-open .bh-inhoud { transition: padding-right .15s ease; }
 .bh-twevaluatie-form .bh-twoptie { min-width: 0; }
 .bh-twevaluatie-form .ds-input { flex: 1 1 220px; height: 38px; font-size: 13px; }
 @media (max-width: 860px) { .bh-twevaluatie-rij { grid-template-columns: 1fr; } }
+/* Feedback van lifeguards (admin/_lg_feedback.php). */
+.bh-lgf { margin-top: 12px; border-top: 1px solid var(--bg-subtle); padding-top: 4px; }
+.bh-lgf > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-size: 14px; font-weight: 600; color: var(--navy); }
+.bh-lgf > summary:focus-visible { outline: 2px solid var(--navy); outline-offset: 3px; border-radius: var(--radius-sm); }
+.bh-lgf-form { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.bh-lgf-form .ds-veld { margin: 0; width: 100%; }
+/* Staat in de smalle zijkolom van het dossier: velden vallen onder elkaar zodra het krap wordt. */
+.bh-lgf-rij { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; width: 100%; }
 /* Beoordelen: de vraag van het bestuur bij iemand op twijfel. */
 .bh-beoordeel-vraag { margin: 14px 18px 0; }
 .bh-twgesprek-form { display: flex; flex-direction: column; gap: 12px; }

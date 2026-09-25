@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.118.0');
+define('APP_VERSIE', '2.119.0');
 
 function app_changelog(): array {
     return [
+        '2.119.0' => [
+            'datum'  => '2026-09-25',
+            'titel'  => 'Feedback van lifeguards in het dossier',
+            'punten' => [
+                'Nieuw blok op het tabblad Dossier: wat een lifeguard over een sollicitant zei, vastgelegd door het bestuur (van wie, wanneer gezien, positief/neutraal/aandachtspunt)',
+                'Lifeguards krijgen zelf geen toegang en geven geen cijfers; bij "Van wie" staan de terugkerende lifeguards als suggestie',
+                'Ook zichtbaar in het TW-gesprek. Beoordelaars zien het niet. Verwijderen kan wie het vastlegde, of een admin',
+            ],
+        ],
         '2.118.0' => [
             'datum'  => '2026-09-25',
             'titel'  => 'Evaluatie tijdens het trainingsweekend',

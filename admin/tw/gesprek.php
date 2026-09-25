@@ -99,6 +99,8 @@ $_b        = (string)($_k['besluit'] ?? '');
       ?>
     </section>
 
+    <?php if (lg_feedback_van($_id)) { $lgf_sol_id = $_id; $lgf_seizoen_id = $sid; $lgf_mag_bewerken = false; $lgf_kop = 'h3'; require __DIR__ . '/../_lg_feedback.php'; } ?>
+
     <?php if (module_aan('selectiedag') && ($gd_dossier['scores'] || $gd_dossier['observaties'] || $gd_dossier['besluit'])): ?>
     <section class="ds-kaart ds-kaart-p bh-twgesprek-sd">
       <h3>Op de selectiedag</h3>
