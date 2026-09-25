@@ -576,6 +576,15 @@ function datum_kort_nl($d): string {
     return $dt->format('j') . ' ' . maanden_kort_nl()[(int)$dt->format('n')];
 }
 
+/** "zaterdag 3 mei" — weekdag, dag en maand, voor koppen per dag (observaties van het weekend). */
+function datum_dag_nl($d): string {
+    if (!$d) return '';
+    try { $dt = $d instanceof DateTimeInterface ? $d : new DateTime((string)$d); }
+    catch (Exception $e) { return (string)$d; }
+    $dagen = ['', 'maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag', 'zondag'];
+    return $dagen[(int)$dt->format('N')] . ' ' . datum_kort_nl($dt);
+}
+
 function volledige_naam(array $p): string {
     return implode(' ', array_filter([$p['voornaam'] ?? '', $p['tussenvoegsel'] ?? '', $p['achternaam'] ?? '']));
 }

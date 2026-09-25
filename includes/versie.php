@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.116.1');
+define('APP_VERSIE', '2.116.2');
 
 function app_changelog(): array {
     return [
+        '2.116.2' => [
+            'datum'  => '2026-09-25',
+            'titel'  => 'Observaties van het weekend per dag',
+            'punten' => [
+                'Observaties die over meer dagen gaan staan per dag onder een kop die je inklapt: nieuwste dag bovenaan en open',
+                'Bij elke observatie staat nu ook het tijdstip',
+                'Geldt overal waar observaties staan: beoordelen, het gesprek en het dossier',
+            ],
+        ],
         '2.116.1' => [
             'datum'  => '2026-09-25',
             'titel'  => 'Opmerking bij "ik kom" blijft bewaard; geen telefoonnummer bij beoordelen',
