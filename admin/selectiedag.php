@@ -141,20 +141,11 @@ require __DIR__ . '/layout_top.php';
 <div class="bh-beoordeel">
 
   <aside class="bh-beoordeel-lijst">
-    <div class="bh-groepkeuze">
-      <a class="bh-groepchip<?= $gekozen_groep === '' ? ' actief' : '' ?>" href="<?= h(bd_url(null, '')) ?>">
-        Alle <span><?= count($kandidaten) ?></span>
-      </a>
-      <?php foreach ($groepen as $_g):
-        $_n = count(array_filter($kandidaten, fn($k) => (string)$k['groep_id'] === (string)$_g['id']));
-        if (!$_n) continue;
-      ?>
-        <a class="bh-groepchip<?= $gekozen_groep === (string)$_g['id'] ? ' actief' : '' ?>"
-           href="<?= h(bd_url(null, (string)$_g['id'])) ?>">
-          <?= h($groep_naam[$_g['id']]) ?> <span><?= $_n ?></span>
-        </a>
-      <?php endforeach; ?>
-    </div>
+    <?php
+      $gk_groepen = $groepen; $gk_kandidaten = $kandidaten; $gk_gekozen = $gekozen_groep;
+      $gk_url = fn(string $g) => bd_url(null, $g);
+      require __DIR__ . '/_groepkeuze.php';
+    ?>
 
     <?php
       $_klaar = count(array_filter($lijst, fn($k) => ($voortgang[(int)$k['sol_id']] ?? 0) >= $totaal_criteria && $totaal_criteria > 0));

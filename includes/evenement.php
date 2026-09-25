@@ -19,13 +19,13 @@ if (!function_exists('evenement_def')) {
 function evenement_def(string $ev): ?array {
     return [
         'selectiedag' => [
-            'label' => 'selectiedag', 'module' => 'selectiedag', 'tabel' => 'selectie_indeling',
+            'label' => 'selectiedag', 'module' => 'selectiedag', 'tabel' => 'selectie_indeling', 'groep_tabel' => 'selectie_groep',
             'kandidaat_fases' => ['uitgenodigd_selectie', 'aangemeld_selectie', 'selectiedag_geweest'],
             'voor_fases' => ['uitgenodigd_selectie', 'aangemeld_selectie'], 'na_fase' => 'selectiedag_geweest',
             'code' => 'selectie.incheck_code', 'pin' => 'selectie.afsluit_pin',
         ],
         'tw' => [
-            'label' => 'trainingsweekend', 'module' => 'trainingsweekend', 'tabel' => 'tw_deelname',
+            'label' => 'trainingsweekend', 'module' => 'trainingsweekend', 'tabel' => 'tw_deelname', 'groep_tabel' => 'tw_groep',
             'kandidaat_fases' => ['uitgenodigd_tw', 'tw_geweest'],
             'voor_fases' => ['uitgenodigd_tw'], 'na_fase' => 'tw_geweest',
             'code' => 'tw.incheck_code', 'pin' => 'tw.afsluit_pin',
@@ -83,17 +83,23 @@ function evenement_inchecken(string $ev, int $seizoen_id, int $sol_id, bool $aan
     }
     if (function_exists('audit_log')) audit_log($aanwezig ? 'ingecheckt' : 'inchecken_ongedaan', 'sollicitatie', $sol_id, ['evenement' => $ev, 'via' => $bron]);
 
-    if ($ev === 'selectiedag') {
-        try {
-            $q = $db->prepare("SELECT g.nummer, g.naam FROM selectie_indeling si LEFT JOIN selectie_groep g ON g.id = si.groep_id
-                               WHERE si.seizoen_id=? AND si.sollicitatie_id=?");
-            $q->execute([$seizoen_id, $sol_id]);
-            $r = $q->fetch() ?: [];
-            $uit['groep_nummer'] = isset($r['nummer']) ? (int)$r['nummer'] : null;
-            $uit['groep_naam']   = $r['naam'] ?? null;
-        } catch (\Exception $e) {}
-    }
+    // "Je zit in groep 2" — beide evenementen hebben groepen (includes/evenement_groepen.php).
+    try {
+        $q = $db->prepare("SELECT g.nummer, g.naam FROM `{$d['tabel']}` t LEFT JOIN `{$d['groep_tabel']}` g ON g.id = t.groep_id
+                           WHERE t.seizoen_id=? AND t.sollicitatie_id=?");
+        $q->execute([$seizoen_id, $sol_id]);
+        $r = $q->fetch() ?: [];
+        $uit['groep_nummer'] = isset($r['nummer']) ? (int)$r['nummer'] : null;
+        $uit['groep_naam']   = $r['naam'] ?? null;
+    } catch (\Exception $e) {}
     return $uit;
+}
+
+/** FROM + joins voor een lijst van een evenement, met de groep erbij (alias t = deelname, g = groep). */
+function evenement_from_met_groep(array $d): string {
+    return ", g.nummer AS groep_nummer, g.naam AS groep_naam FROM sollicitaties s JOIN personen p ON p.id = s.persoon_id
+             LEFT JOIN `{$d['tabel']}` t ON t.sollicitatie_id = s.id AND t.seizoen_id = s.seizoen_id
+             LEFT JOIN `{$d['groep_tabel']}` g ON g.id = t.groep_id";
 }
 
 /**
@@ -104,12 +110,7 @@ function evenement_lijst(string $ev, int $seizoen_id): array {
     $d = evenement_def($ev);
     if (!$d || $seizoen_id <= 0) return [];
     evenement_setup($ev);
-    $groep = $ev === 'selectiedag'
-        ? ", g.nummer AS groep_nummer, g.naam AS groep_naam FROM sollicitaties s JOIN personen p ON p.id = s.persoon_id
-             LEFT JOIN selectie_indeling t ON t.sollicitatie_id = s.id AND t.seizoen_id = s.seizoen_id
-             LEFT JOIN selectie_groep g ON g.id = t.groep_id"
-        : ", NULL AS groep_nummer, NULL AS groep_naam FROM sollicitaties s JOIN personen p ON p.id = s.persoon_id
-             LEFT JOIN tw_deelname t ON t.sollicitatie_id = s.id AND t.seizoen_id = s.seizoen_id";
+    $groep = evenement_from_met_groep($d);
     try {
         $q = db()->prepare("SELECT s.id AS sol_id, s.fase, p.voornaam, p.tussenvoegsel, p.achternaam, p.geboortedatum,
                                    t.aanwezig, t.ingecheckt_op, t.afgemeld_reden, t.bevestiging, t.bevestiging_reden, blk.foto_url $groep
@@ -230,12 +231,7 @@ function evenement_zoek(string $ev, int $seizoen_id, string $term): array {
     $term = trim($term);
     if (!$d || mb_strlen($term) < 3) return [];
     evenement_setup($ev);
-    $groep = $ev === 'selectiedag'
-        ? ", g.nummer AS groep_nummer, g.naam AS groep_naam FROM sollicitaties s JOIN personen p ON p.id = s.persoon_id
-             LEFT JOIN selectie_indeling t ON t.sollicitatie_id = s.id AND t.seizoen_id = s.seizoen_id
-             LEFT JOIN selectie_groep g ON g.id = t.groep_id"
-        : ", NULL AS groep_nummer, NULL AS groep_naam FROM sollicitaties s JOIN personen p ON p.id = s.persoon_id
-             LEFT JOIN tw_deelname t ON t.sollicitatie_id = s.id AND t.seizoen_id = s.seizoen_id";
+    $groep = evenement_from_met_groep($d);
     try {
         $q = db()->prepare("SELECT s.id AS sol_id, p.voornaam, p.tussenvoegsel, p.achternaam, t.aanwezig, blk.foto_url $groep
                             LEFT JOIN blk_formulieren blk ON blk.sollicitatie_id = s.id

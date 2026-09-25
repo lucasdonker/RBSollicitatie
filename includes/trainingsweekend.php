@@ -69,6 +69,18 @@ function tw_auto_setup(): void {
             db_kolom_verzeker($db, 'tw_deelname', $kol, $def);
         }
         db_kolom_verzeker($db, 'tw_observatie', 'beoordelaar_id', 'INT DEFAULT NULL');
+
+        // 2.117.0: groepen, net als op de selectiedag (includes/evenement_groepen.php).
+        $db->exec("CREATE TABLE IF NOT EXISTS `tw_groep` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `seizoen_id` INT NOT NULL,
+            `nummer` SMALLINT NOT NULL,
+            `naam` VARCHAR(60) DEFAULT NULL,
+            `aangemaakt_op` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY `uniek_nr` (`seizoen_id`,`nummer`),
+            INDEX (`seizoen_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        db_kolom_verzeker($db, 'tw_deelname', 'groep_id', 'INT DEFAULT NULL');
     } catch (\Exception $e) {
         error_log('tw_auto_setup: ' . $e->getMessage());
     }
@@ -87,7 +99,7 @@ function tw_kandidaten(int $seizoen_id): array {
         $q = db()->prepare("
             SELECT s.id AS sol_id, s.fase, p.voornaam, p.tussenvoegsel, p.achternaam,
                    p.geboortedatum, p.geslacht, $lg AS is_lifeguard,
-                   d.aanwezig, d.ingecheckt_op, d.afgemeld_reden,
+                   d.aanwezig, d.ingecheckt_op, d.afgemeld_reden, d.groep_id,
                    d.besluit, d.besluit_notitie, d.besluit_door, d.besluit_op, d.doorgevoerd_op,
                    d.bevestiging, d.bevestiging_reden, d.gesprek_status, d.gesprek_door, d.gesprek_sinds, d.gesprek_bericht,
                    blk.foto_url, blk.bijzonderheden

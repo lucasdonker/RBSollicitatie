@@ -6,8 +6,16 @@
  * Gedrag: assets/js/tw_beoordelen.js (tikken is opslaan).
  */
 $obs_alle  = tw_observaties_alle($sid);
+// Groep kiezen (zoals op de selectiedag); de keuze reist mee in elke link.
+$bo_groepen = evenement_groepen('tw', $sid);
+$bo_gnaam   = [];
+foreach ($bo_groepen as $_g) $bo_gnaam[(int)$_g['id']] = evenement_groep_label($_g);
+$bo_groep   = (string)($_GET['groep'] ?? '');
+if ($bo_groep !== '' && !isset($bo_gnaam[(int)$bo_groep])) $bo_groep = '';
+$bo_url     = fn(?int $k = null, ?string $g = null) => tw_url('beoordelen', $k, ['groep' => $g ?? $bo_groep]);
+$bo_kand    = $bo_groep === '' ? $kandidaten : array_values(array_filter($kandidaten, fn($k) => (string)($k['groep_id'] ?? '') === $bo_groep));
 // Terugkerende lifeguards onderaan in een eigen blok; vorige/volgende volgt dezelfde volgorde.
-$bo_secties = evenement_beoordeel_secties($kandidaten);
+$bo_secties = evenement_beoordeel_secties($bo_kand);
 $bo_lijst   = evenement_secties_plat($bo_secties);
 $ids       = array_map(fn($k) => (int)$k['sol_id'], $bo_lijst);
 $huidig_id = (int)($_GET['k'] ?? 0);
@@ -18,6 +26,11 @@ $_aanw  = fn($k) => !empty($k['aanwezig']) ? 'aanwezig' : (($k['afgemeld_reden']
 ?>
 <div class="bh-beoordeel" data-twbeoordeel data-endpoint="<?= APP_URL ?>/admin/trainingsweekend.php" data-csrf="<?= h(csrf_token()) ?>">
   <aside class="bh-beoordeel-lijst">
+    <?php
+      $gk_groepen = $bo_groepen; $gk_kandidaten = $kandidaten; $gk_gekozen = $bo_groep;
+      $gk_url = fn(string $g) => $bo_url(null, $g);
+      require __DIR__ . '/../_groepkeuze.php';
+    ?>
     <?php foreach ($bo_secties as $_sec): ?>
     <?php if ($_sec['titel']): ?>
       <h3 class="bh-kandidaatlijst-kop"><?= h($_sec['titel']) ?> <span class="bh-num"><?= count($_sec['rijen']) ?></span></h3>
@@ -31,7 +44,7 @@ $_aanw  = fn($k) => !empty($k['aanwezig']) ? 'aanwezig' : (($k['afgemeld_reden']
         $_nob = count($obs_alle[$_id] ?? []);
       ?>
       <li>
-        <a class="bh-kandidaat<?= $_nu ? ' nu' : '' ?><?= $_af ? ' afwezig' : '' ?>" href="<?= h(tw_url('beoordelen', $_id)) ?>#kandidaat"<?= $_nu ? ' aria-current="true"' : '' ?>>
+        <a class="bh-kandidaat<?= $_nu ? ' nu' : '' ?><?= $_af ? ' afwezig' : '' ?>" href="<?= h($bo_url($_id)) ?>#kandidaat"<?= $_nu ? ' aria-current="true"' : '' ?>>
           <?= bh_avatar($_k, 38, ['dim' => $_af]) ?>
           <span class="bh-kandidaat-tekst">
             <span class="bh-kandidaat-naam">
@@ -57,8 +70,8 @@ $_aanw  = fn($k) => !empty($k['aanwezig']) ? 'aanwezig' : (($k['afgemeld_reden']
       <span class="bh-beoordeel-wie">
         <span class="bh-beoordeel-naam"><?= h((string)$huidig['naam']) ?></span>
         <?php /* Geen telefoonnummer: een beoordelaar belt niet (dataminimalisatie). */ ?>
-        <?= bh_meta([$huidig['leeftijd'] ? $huidig['leeftijd'] . ' jaar' : '', $_aanw($huidig),
-                     !empty($huidig['is_lifeguard']) ? 'terugkerende lifeguard' : '']) ?>
+        <?= bh_meta([$huidig['leeftijd'] ? $huidig['leeftijd'] . ' jaar' : '', $bo_gnaam[(int)($huidig['groep_id'] ?? 0)] ?? '',
+                     $_aanw($huidig), !empty($huidig['is_lifeguard']) ? 'terugkerende lifeguard' : '']) ?>
       </span>
       <?php if ($mag_dossier): ?>
         <a class="ds-btn ds-btn-secundair ds-btn-sm" href="<?= APP_URL ?>/admin/sollicitant.php?id=<?= $hid ?>">Dossier</a>
@@ -106,12 +119,12 @@ $_aanw  = fn($k) => !empty($k['aanwezig']) ? 'aanwezig' : (($k['afgemeld_reden']
     <footer class="bh-beoordeel-voet">
       <?php $_v = $pos > 0 ? $bo_lijst[$pos - 1] : null; $_n = $bo_lijst[$pos + 1] ?? null; ?>
       <?php if ($_v): ?>
-        <a class="ds-btn ds-btn-secundair" href="<?= h(tw_url('beoordelen', (int)$_v['sol_id'])) ?>#kandidaat" rel="prev">Vorige</a>
+        <a class="ds-btn ds-btn-secundair" href="<?= h($bo_url((int)$_v['sol_id'])) ?>#kandidaat" rel="prev">Vorige</a>
       <?php else: ?>
         <span class="ds-btn ds-btn-zacht" aria-disabled="true">Vorige</span>
       <?php endif; ?>
       <?php if ($_n): ?>
-        <a class="ds-btn ds-btn-primair bh-beoordeel-volgende" href="<?= h(tw_url('beoordelen', (int)$_n['sol_id'])) ?>#kandidaat" rel="next">Volgende: <?= h((string)$_n['voornaam']) ?></a>
+        <a class="ds-btn ds-btn-primair bh-beoordeel-volgende" href="<?= h($bo_url((int)$_n['sol_id'])) ?>#kandidaat" rel="next">Volgende: <?= h((string)$_n['voornaam']) ?></a>
       <?php endif; ?>
     </footer>
   </section>

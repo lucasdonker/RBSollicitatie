@@ -58,6 +58,7 @@ if (file_exists(__DIR__ . '/selectiedag.php')) require_once __DIR__ . '/selectie
 if (file_exists(__DIR__ . '/trainingsweekend.php')) require_once __DIR__ . '/trainingsweekend.php';
 // Wat selectiedag en trainingsweekend delen: inchecken, afsluiten, ik kom/kan niet, vergrendeling.
 if (file_exists(__DIR__ . '/evenement.php')) require_once __DIR__ . '/evenement.php';
+if (file_exists(__DIR__ . '/evenement_groepen.php')) require_once __DIR__ . '/evenement_groepen.php';
 if (file_exists(__DIR__ . '/evenement_formulieren.php')) require_once __DIR__ . '/evenement_formulieren.php';
 if (file_exists(__DIR__ . '/ai_beschikbaarheid.php')) require_once __DIR__ . '/ai_beschikbaarheid.php';
 if (file_exists(__DIR__ . '/opschonen.php')) require_once __DIR__ . '/opschonen.php';

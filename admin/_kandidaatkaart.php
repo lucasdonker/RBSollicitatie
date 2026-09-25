@@ -1,12 +1,13 @@
 <?php
 /**
- * Partial: één kaartje in de groepsindeling.
+ * Partial: één kaartje in de groepsindeling (admin/_groepsindeling.php).
  *
  * Verwacht:
- *   $_kand        array  kandidaat uit selectie_kandidaten()
+ *   $_kand        array  kandidaat uit selectie_kandidaten() / tw_kandidaten()
  *   $_conflict    bool   zit er iemand in dezelfde groep die uit elkaar moet?
  *   $mag_bewerken bool   (van het scherm)
- *   $groepen      array  selectie_groepen() (van het scherm) — voor de keuzelijst "Naar groep"
+ *   $groepen      array  evenement_groepen() (van het scherm) — voor de keuzelijst "Naar groep"
+ * De naamknop (data-rel-kies) opent "niet samen met"; gedrag in assets/js/groepsindeling.js.
  *
  * De conflictmelding staat in tekst en niet alleen in kleur: wie kleurenblind is moet
  * hem ook zien (ontwerpfilosofie, toegankelijkheid).
@@ -30,7 +31,7 @@ $_groep = (int)($_kand['groep_id'] ?? 0);
   <?php if (!empty($mag_bewerken)): ?>
     <button type="button" class="bh-kandkaart-naam bh-kandkaart-relknop"
             title="Aangeven wie niet bij <?= h($_naam) ?> in de groep mag"
-            onclick="relKies(<?= $_sol ?>, <?= htmlspecialchars(json_encode($_naam), ENT_QUOTES) ?>)"><?= h($_naam) ?></button>
+            data-rel-kies="<?= $_sol ?>" data-naam="<?= h($_naam) ?>"><?= h($_naam) ?></button>
   <?php else: ?>
     <span class="bh-kandkaart-naam"><?= h($_naam) ?></span>
   <?php endif; ?>
@@ -57,7 +58,7 @@ $_groep = (int)($_kand['groep_id'] ?? 0);
         <option value=""<?= $_groep === 0 ? ' selected' : '' ?>>Nog niet ingedeeld</option>
         <?php foreach ($groepen as $_ng): ?>
           <option value="<?= (int)$_ng['id'] ?>"<?= $_groep === (int)$_ng['id'] ? ' selected' : '' ?>>
-            <?= h((string)($_ng['naam'] ?: 'Groep ' . $_ng['nummer'])) ?>
+            <?= h(evenement_groep_label($_ng)) ?>
           </option>
         <?php endforeach; ?>
       </select>

@@ -3,6 +3,7 @@
  * Beheer — Trainingsweekend. Vier stappen, zelfde opbouw als de selectiedag:
  *
  *   voorbereiden — wie komt er (bevestiging), wie mist nog beschikbaarheid, de tablet     (lezen; wijzigen = bestuur)
+ *   groepen      — groepsindeling, gedeeld met de selectiedag (admin/_groepsindeling.php) (lezen; wijzigen = bestuur)
  *   inchecken    — gedeelde incheck-lijst; de tablet doet hetzelfde                       (lezen)
  *   beoordelen   — vrijwilligers op hun telefoon: observaties per persoon, met foto        (lezen)
  *   gesprekken   — het bestuur spreekt iedereen, in vrije volgorde, en beslist ter plekke (bewerken)
@@ -33,9 +34,9 @@ $mag_beslissen  = mag('trainingsweekend', 'bewerken');
 $mag_blk     = mag('blk', 'lezen');
 $mag_dossier = mag('sollicitanten', 'lezen');
 
-/** URL naar dit scherm, met een stap en eventueel een persoon. */
-function tw_url(string $stap, ?int $k = null): string {
-    $p = ['stap' => $stap];
+/** URL naar dit scherm, met een stap, eventueel een persoon en extra parameters (bijv. groep). */
+function tw_url(string $stap, ?int $k = null, array $extra = []): string {
+    $p = ['stap' => $stap] + array_filter($extra, fn($v) => $v !== '' && $v !== null);
     if ($k) $p['k'] = $k;
     return APP_URL . '/admin/trainingsweekend.php?' . http_build_query($p);
 }
@@ -60,6 +61,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $sid) {
     }
 
     if (!$mag_beslissen) { http_response_code(403); exit('Dit is bestuurswerk.'); }
+
+    // Groepsindeling (admin/tw/groepen.php): zelfde handelingen als op de selectiedag.
+    bh_groepsindeling_post('tw', $sid, tw_kandidaten($sid), tw_url('groepen'));
 
     if ($actie === 'bevestiging') {
         $ok = evenement_is_kandidaat('tw', $sid, $sol)
@@ -91,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $sid) {
 }
 
 // ── Welke stap ──
-$stappen = ['voorbereiden' => 'Voorbereiden', 'inchecken' => 'Inchecken', 'beoordelen' => 'Beoordelen'];
+$stappen = ['voorbereiden' => 'Voorbereiden', 'groepen' => 'Groepen', 'inchecken' => 'Inchecken', 'beoordelen' => 'Beoordelen'];
 if ($mag_beslissen) $stappen['gesprekken'] = 'Gesprekken';
 $stap = (string)($_GET['stap'] ?? '');
 $stap = ['weekend' => 'beoordelen', 'besluit' => 'gesprekken'][$stap] ?? $stap;   // oude links

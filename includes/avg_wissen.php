@@ -245,8 +245,9 @@ function avg_inzage($db, int $sol_id): array {
             'beoordeling_oud' => $zonder($rijen("SELECT * FROM beoordelingen WHERE sollicitatie_id = ?"), ['id', 'sollicitatie_id', 'beoordelaar']),
         ],
         'trainingsweekend' => [
-            'deelname'    => $rij("SELECT bevestiging, bevestiging_reden, bevestigd_op, aanwezig, ingecheckt_op, afgemeld_reden,
-                                          besluit, besluit_notitie, besluit_op, gesprek_bericht FROM tw_deelname WHERE sollicitatie_id = ?"),
+            'deelname'    => $rij("SELECT g.nummer AS groep, d.bevestiging, d.bevestiging_reden, d.bevestigd_op, d.aanwezig, d.ingecheckt_op, d.afgemeld_reden,
+                                          d.besluit, d.besluit_notitie, d.besluit_op, d.gesprek_bericht
+                                   FROM tw_deelname d LEFT JOIN tw_groep g ON g.id = d.groep_id WHERE d.sollicitatie_id = ?"),
             'observaties' => $beoordelaar($rijen("SELECT soort, tekst, aangemaakt_op FROM tw_observatie WHERE sollicitatie_id = ? ORDER BY id")),
         ],
         'inzet_afspraak' => [

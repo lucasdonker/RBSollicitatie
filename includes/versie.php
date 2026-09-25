@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.116.3');
+define('APP_VERSIE', '2.117.0');
 
 function app_changelog(): array {
     return [
+        '2.117.0' => [
+            'datum'  => '2026-09-25',
+            'titel'  => 'Groepen bij het trainingsweekend',
+            'punten' => [
+                'Nieuwe stap Groepen bij het trainingsweekend: aantal groepen, voorstel maken, slepen of "Naar groep", precies als op de selectiedag',
+                '"Niet samen met" is één lijst per seizoen: wat je op de selectiedag aangaf, geldt op het weekend ook (en andersom)',
+                'De groep staat bij het inchecken, op de tablet ("je zit in groep 2") en bij beoordelen, waar je ook per groep kunt kiezen',
+                'Groepsindeling is nu één gedeeld scherm voor beide evenementen; het script staat in een eigen bestand',
+            ],
+        ],
         '2.116.3' => [
             'datum'  => '2026-09-25',
             'titel'  => 'Terugkerende lifeguards apart bij beoordelen, verspreid over de groepen',

@@ -181,46 +181,17 @@ function selectie_criterium_bestaat(string $test, string $criterium): bool {
     return false;
 }
 
-/** Groepen van een seizoen. */
-function selectie_groepen(int $seizoen_id): array {
-    selectiedag_auto_setup();
-    try {
-        $q = db()->prepare("SELECT * FROM selectie_groep WHERE seizoen_id=? ORDER BY nummer");
-        $q->execute([$seizoen_id]);
-        return $q->fetchAll();
-    } catch (\Exception $e) { return []; }
-}
+// Groepen: de logica staat in includes/evenement_groepen.php (selectiedag én trainingsweekend).
+// Deze namen blijven bestaan omdat andere schermen ze gebruiken.
 
-/** Zet het aantal groepen (maakt bij / verwijdert overtollige lege groepen). */
-function selectie_groepen_zetten(int $seizoen_id, int $aantal): void {
-    selectiedag_auto_setup();
-    $aantal = max(1, min(20, $aantal));
-    $db = db();
-    $bestaand = selectie_groepen($seizoen_id);
-    $huidige = count($bestaand);
+/** Groepen van de selectiedag van een seizoen. */
+function selectie_groepen(int $seizoen_id): array { return evenement_groepen('selectiedag', $seizoen_id); }
 
-    if ($aantal > $huidige) {
-        $ins = $db->prepare("INSERT IGNORE INTO selectie_groep (seizoen_id, nummer) VALUES (?,?)");
-        for ($n = $huidige + 1; $n <= $aantal; $n++) $ins->execute([$seizoen_id, $n]);
-    } elseif ($aantal < $huidige) {
-        // Verwijder de hoogste groepen; koppel hun sollicitanten los
-        for ($n = $huidige; $n > $aantal; $n--) {
-            $g = $bestaand[$n - 1];
-            $db->prepare("UPDATE selectie_indeling SET groep_id=NULL WHERE groep_id=?")->execute([$g['id']]);
-            $db->prepare("DELETE FROM selectie_groep WHERE id=?")->execute([$g['id']]);
-        }
-    }
-}
+/** Zet het aantal groepen (maakt bij / verwijdert de hoogste; hun leden worden "nog niet ingedeeld"). */
+function selectie_groepen_zetten(int $seizoen_id, int $aantal): void { evenement_groepen_zetten('selectiedag', $seizoen_id, $aantal); }
 
 /** Eén sollicitant in een groep zetten (of eruit met groep_id=null). */
-function selectie_indeel(int $seizoen_id, int $sol_id, ?int $groep_id): void {
-    selectiedag_auto_setup();
-    db()->prepare("
-        INSERT INTO selectie_indeling (seizoen_id, sollicitatie_id, groep_id)
-        VALUES (?,?,?)
-        ON DUPLICATE KEY UPDATE groep_id=VALUES(groep_id)
-    ")->execute([$seizoen_id, $sol_id, $groep_id]);
-}
+function selectie_indeel(int $seizoen_id, int $sol_id, ?int $groep_id): void { evenement_indeel('selectiedag', $seizoen_id, $sol_id, $groep_id); }
 
 /** "Houd uit elkaar"-relaties van een seizoen als [sol_id => [ander_id, ...]]. */
 function selectie_relaties(int $seizoen_id): array {
@@ -337,18 +308,7 @@ function selectie_los_conflicten(array $indeling, array $relaties, int $aantal_g
 }
 
 /** Sla een voorgestelde/aangepaste indeling op. $map = [sol_id => groep_id|null]. */
-function selectie_indeling_opslaan(int $seizoen_id, array $map): void {
-    selectiedag_auto_setup();
-    $db = db();
-    $ins = $db->prepare("
-        INSERT INTO selectie_indeling (seizoen_id, sollicitatie_id, groep_id)
-        VALUES (?,?,?)
-        ON DUPLICATE KEY UPDATE groep_id=VALUES(groep_id)
-    ");
-    foreach ($map as $sol_id => $groep_id) {
-        $ins->execute([$seizoen_id, (int)$sol_id, $groep_id !== null ? (int)$groep_id : null]);
-    }
-}
+function selectie_indeling_opslaan(int $seizoen_id, array $map): void { evenement_indeling_opslaan('selectiedag', $seizoen_id, $map); }
 
 /**
  * Zet aanwezigheid van één sollicitant. Retourneert de nieuwe status + groepsinfo,
