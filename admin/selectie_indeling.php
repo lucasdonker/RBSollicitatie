@@ -13,6 +13,16 @@ vereis_recht('selectiedag', 'lezen');
 $seizoen = actief_seizoen();
 $sid = $seizoen ? (int)$seizoen['id'] : 0;
 $mag_bewerken = mag('selectiedag', 'bewerken');
+
+// Vanuit het menu (?start=1) beginnen waar je op dat moment bent, net als het trainingsweekend:
+// vóór de dag de groepen, op de dag beoordelen, daarna (bestuur) de nabespreking.
+$_sd_datum = (string)($seizoen['datum_selectiedag'] ?? '');
+if (!empty($_GET['start']) && $_sd_datum !== '' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+    $_vandaag = date('Y-m-d');
+    if ($_vandaag > $_sd_datum && $mag_bewerken) redirect(APP_URL . '/admin/selectie_nabespreking.php');
+    if ($_vandaag >= $_sd_datum)                 redirect(APP_URL . '/admin/selectiedag.php');
+}
+
 $kandidaten = $sid ? selectie_kandidaten($sid) : [];
 $_url = APP_URL . '/admin/selectie_indeling.php';
 

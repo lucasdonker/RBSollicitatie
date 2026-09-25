@@ -23,22 +23,10 @@ $_stappen = [
     'nabespreking' => ['Nabespreking', 'selectie_nabespreking.php',  'selectiedag', 'bewerken'],
     'bellijst'     => ['Bellijst',     'selectie_nabespreking.php?tab=bellijst', 'selectiedag', 'bewerken'],
 ];
-?>
-<div class="bh-selectiekop">
-  <div class="bh-selectiekop-titel">
-    <h2>Selectiedag</h2>
-    <?php if ($subnav_datum): ?>
-      <span class="bh-meta"><?= h($subnav_datum) ?></span>
-    <?php endif; ?>
-  </div>
-  <nav class="bh-substappen" aria-label="Stappen van de selectiedag">
-    <?php foreach ($_stappen as $_k => $_s): ?>
-      <?php if (!mag($_s[2], $_s[3])) continue; ?>
-      <a class="bh-substap<?= $subnav_actief === $_k ? ' actief' : '' ?>"
-         href="<?= APP_URL ?>/admin/<?= $_s[1] ?>"
-         <?= $subnav_actief === $_k ? 'aria-current="page"' : '' ?>><?= h($_s[0]) ?></a>
-    <?php endforeach; ?>
-  </nav>
-</div>
-<?php
+$sb_stappen = [];
+foreach ($_stappen as $_k => $_s) {
+    if (mag($_s[2], $_s[3])) $sb_stappen[$_k] = ['label' => $_s[0], 'url' => APP_URL . '/admin/' . $_s[1]];
+}
+$sb_titel = 'Selectiedag'; $sb_datum = $subnav_datum; $sb_actief = $subnav_actief;
+require __DIR__ . '/_stappenbalk.php';   // zelfde kop als het trainingsweekend
 $subnav_actief = ''; $subnav_datum = null;

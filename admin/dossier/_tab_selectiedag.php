@@ -39,25 +39,7 @@ if (!$_scores && !$_obs && !$_lgf) {
         <h2>Observaties van die dag</h2>
         <span class="bh-meta"><?= count($_obs) ?></span>
       </div>
-      <ul class="bh-observaties">
-        <?php foreach ($_obs as $_o):
-          $_kleur = ['positief' => 'groen', 'aandacht' => 'rood'][$_o['soort'] ?? ''] ?? 'grijs';
-        ?>
-          <li class="ds-fase-<?= h($_kleur) ?>">
-            <span class="bh-obs-stip" title="<?= h(ucfirst((string)($_o['soort'] ?? 'neutraal'))) ?>"></span>
-            <span class="bh-obs-tekst">
-              <?= nl2br(h((string)$_o['tekst'])) ?>
-              <span class="bh-obs-wie">
-                <?= h((string)($_o['beoordelaar'] ?? '')) ?>
-                <?php if (!empty($_o['aangemaakt_op'])): ?>
-                  · <?= h(datum_nl(substr((string)$_o['aangemaakt_op'], 0, 10))) ?>
-                <?php endif; ?>
-                · <?= h(ucfirst((string)($_o['soort'] ?? 'neutraal'))) ?>
-              </span>
-            </span>
-          </li>
-        <?php endforeach; ?>
-      </ul>
+      <?php $obs_lijst = $_obs; $obs_eigen = null; require __DIR__ . '/../_observaties.php'; ?>
     </section>
     <?php endif; ?>
 

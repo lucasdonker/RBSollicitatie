@@ -294,24 +294,14 @@ require __DIR__ . '/layout_top.php';
         </button>
       <?php endif; ?>
 
-      <ul class="bh-observaties" id="obslijst-<?= $hid ?>">
-        <?php foreach ($observaties as $_o):
-          $_kleur = ['positief' => 'groen', 'aandacht' => 'rood'][$_o['soort'] ?? ''] ?? 'grijs';
-          $_eigen_obs = ($_o['beoordelaar'] ?? '') === $ik;
-        ?>
-          <li class="ds-fase-<?= h($_kleur) ?>" id="obs-<?= (int)$_o['id'] ?>">
-            <span class="bh-obs-stip"></span>
-            <span class="bh-obs-tekst">
-              <?= nl2br(h((string)$_o['tekst'])) ?>
-              <span class="bh-obs-wie"><?= h((string)($_o['beoordelaar'] ?? '')) ?></span>
-            </span>
-            <?php if ($_eigen_obs || $mag_alles): ?>
-              <button type="button" class="bh-obs-wis" aria-label="Observatie verwijderen"
-                      onclick="obsWis(<?= (int)$_o['id'] ?>)"><?= icoon('kruis', 14) ?></button>
-            <?php endif; ?>
-          </li>
-        <?php endforeach; ?>
-      </ul>
+      <?php
+        // Gedeelde weergave (admin/_observaties.php); wissen via data-obs-wis, zie obsWis() hieronder.
+        if ($observaties) {
+            $obs_lijst = $observaties;
+            $obs_eigen = fn($o) => $mag_alles || ($o['beoordelaar'] ?? '') === $ik;
+            require __DIR__ . '/_observaties.php';
+        }
+      ?>
     </div>
 
     <footer class="bh-beoordeel-voet">
@@ -412,6 +402,12 @@ function obsToevoegen(solId) {
   .catch(() => bhToast('Geen verbinding — probeer opnieuw.', 'fout'));
 }
 
+// De wisknop komt uit de gedeelde partial (data-obs-wis); één haak op de pagina.
+document.addEventListener('click', function (e) {
+  const k = e.target.closest('[data-obs-wis]');
+  if (k) obsWis(parseInt(k.dataset.obsWis, 10));
+});
+
 function obsWis(id) {
   bhBevestig({ titel: 'Observatie verwijderen?', knop: 'Ja, verwijderen', gevaar: true })
     .then(function (ja) {
@@ -424,7 +420,7 @@ function obsWis(id) {
       .then(r => r.json())
       .then(d => {
         if (!d.ok) { bhToast('Verwijderen mislukt.', 'fout'); return; }
-        const el = document.getElementById('obs-' + id);
+        const el = document.querySelector('[data-obs="' + id + '"]');
         if (el) el.remove();
       })
       .catch(() => bhToast('Geen verbinding — probeer opnieuw.', 'fout'));

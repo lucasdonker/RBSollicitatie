@@ -29,7 +29,7 @@ $_bron     = ['portaal' => 'zelf doorgegeven', 'bellijst' => 'via de bellijst', 
     </p>
   </section>
 
-  <?php if ($mag_beslissen) { $tc_ev = 'tw'; $tc_mag_bewerken = true; require __DIR__ . '/../_tablet_code.php'; } ?>
+  <?php // De tablet-code staat bij Inchecken, net als bij de selectiedag. ?>
 
   <?php if (!$kandidaten): ?>
     <div class="ds-kaart ds-kaart-p">

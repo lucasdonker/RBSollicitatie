@@ -166,18 +166,7 @@ foreach ($bel_lijst as $_k) if ((int)$_k['sol_id'] === $_open) $_huidig = $_k;
       <?php if ($_obs): ?>
         <div>
           <span class="bh-veldlabel">Observaties van die dag</span>
-          <ul class="bh-observaties bh-bel-observaties">
-            <?php foreach (array_slice($_obs, 0, 4) as $_o):
-              $_ok = ['positief' => 'groen', 'aandacht' => 'rood'][$_o['soort'] ?? ''] ?? 'grijs'; ?>
-              <li class="ds-fase-<?= h($_ok) ?>">
-                <span class="bh-obs-stip"></span>
-                <span class="bh-obs-tekst">
-                  <?= nl2br(h((string)$_o['tekst'])) ?>
-                  <span class="bh-obs-wie"><?= h((string)($_o['beoordelaar'] ?? '')) ?></span>
-                </span>
-              </li>
-            <?php endforeach; ?>
-          </ul>
+          <?php $obs_lijst = array_slice($_obs, 0, 4); $obs_eigen = null; require __DIR__ . '/_observaties.php'; ?>
         </div>
       <?php endif; ?>
 

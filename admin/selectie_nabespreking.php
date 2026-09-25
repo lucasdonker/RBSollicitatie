@@ -227,20 +227,7 @@ require __DIR__ . '/layout_top.php';
         <h3>Observaties</h3>
         <?php if (!$_obs): ?>
           <p class="bh-dossier-tekst zacht">Niemand heeft iets genoteerd.</p>
-        <?php else: ?>
-          <ul class="bh-observaties">
-            <?php foreach ($_obs as $_o):
-              $_ok = ['positief' => 'groen', 'aandacht' => 'rood'][$_o['soort'] ?? ''] ?? 'grijs'; ?>
-              <li class="ds-fase-<?= h($_ok) ?>">
-                <span class="bh-obs-stip"></span>
-                <span class="bh-obs-tekst">
-                  <?= nl2br(h((string)$_o['tekst'])) ?>
-                  <span class="bh-obs-wie"><?= h((string)($_o['beoordelaar'] ?? '')) ?></span>
-                </span>
-              </li>
-            <?php endforeach; ?>
-          </ul>
-        <?php endif; ?>
+        <?php else: $obs_lijst = $_obs; $obs_eigen = null; require __DIR__ . '/_observaties.php'; endif; ?>
       </div>
 
       <div>

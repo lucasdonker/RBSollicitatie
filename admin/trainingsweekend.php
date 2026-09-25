@@ -127,17 +127,12 @@ if ($seizoen && !empty($seizoen['datum_tw_start'])) {
 require __DIR__ . '/layout_top.php';
 ?>
 
-<div class="bh-selectiekop">
-  <div class="bh-selectiekop-titel">
-    <h2>Trainingsweekend</h2>
-    <?php if ($tw_periode !== ''): ?><span class="bh-meta"><?= h($tw_periode) ?></span><?php endif; ?>
-  </div>
-  <nav class="bh-substappen" aria-label="Stappen van het trainingsweekend">
-    <?php foreach ($stappen as $_s => $_l): ?>
-      <a class="bh-substap<?= $stap === $_s ? ' actief' : '' ?>" href="<?= h(tw_url($_s)) ?>"<?= $stap === $_s ? ' aria-current="page"' : '' ?>><?= h($_l) ?></a>
-    <?php endforeach; ?>
-  </nav>
-</div>
+<?php
+  // Zelfde kop als de selectiedag (admin/_stappenbalk.php).
+  $sb_titel = 'Trainingsweekend'; $sb_datum = $tw_periode; $sb_actief = $stap; $sb_stappen = [];
+  foreach ($stappen as $_s => $_l) $sb_stappen[$_s] = ['label' => $_l, 'url' => tw_url($_s)];
+  require __DIR__ . '/_stappenbalk.php';
+?>
 
 <?php if (!$sid || (!$kandidaten && $stap !== 'voorbereiden')): ?>
   <div class="ds-kaart ds-kaart-p">
