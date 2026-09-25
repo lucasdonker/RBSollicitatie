@@ -22,6 +22,11 @@ $tab = (string)($_GET['tab'] ?? 'algemeen');
 // Oude tabbladnamen blijven werken: er liggen links naar in mails, in de handleiding
 // en in bladwijzers. 'sso' is opgegaan in 'authentik'.
 $tab = ['sso' => 'authentik'][$tab] ?? $tab;
+// Technische tabbladen (bh_inst_tab_technisch) alleen met Systeem › bewerken: tonen én opslaan.
+if (bh_inst_tab_technisch($tab) && !$mag_systeem) {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') { http_response_code(403); exit('Dit is een technische instelling: alleen voor wie het systeem beheert.'); }
+    $tab = 'algemeen';
+}
 
 // ── Opslaan ───────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

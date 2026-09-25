@@ -550,6 +550,12 @@ html[data-theme="dark"] .bh-fasechip.nu { color: var(--bg); }
 }
 .bh-gevaarblok h2 { font: var(--text-subhead); font-size: 15px; color: var(--error); margin: 0; }
 .bh-gevaarblok p { margin: 0; font-size: 13px; line-height: 1.6; color: var(--ink-soft); }
+/* Ingeklapt in het dossier: dicht een rustige regel, open het rode blok. */
+.bh-gevaarblok-uitklap:not([open]) { background: transparent; border-style: dashed; padding: 10px 20px; }
+.bh-gevaarblok-uitklap > summary { cursor: pointer; list-style: none; min-height: 32px; display: flex; align-items: center; }
+.bh-gevaarblok-uitklap > summary::-webkit-details-marker { display: none; }
+.bh-gevaarblok-uitklap > summary h2 { font-size: 14px; }
+.bh-gevaarblok-uitklap[open] > summary { margin-bottom: 4px; }
 
 @media (max-width: 900px) {
   .bh-dossier-hoofd, .bh-dossier-zij { min-width: 100%; }

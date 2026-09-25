@@ -78,13 +78,13 @@ function bh_nav_groepen(array $tellers = [], bool $alles = false): array {
  * Welk nav-item hoort bij deze $actieve_nav?
  *
  * Schermen zetten een vrije string en die is niet altijd een nav-id: mail_templates.php
- * hoort onder Instellingen, foutenlog onder Logboek. Onbekende
+ * hoort onder Berichten, foutenlog onder Logboek. Onbekende
  * sleutels worden gelogd — anders is een typefout onzichtbaar en licht er gewoon geen
  * enkel item op.
  */
 function bh_nav_actief(string $nav): string {
     $alias = [
-        'mail_templates' => 'instellingen',
+        'mail_templates' => 'berichten',   // Sjablonen is een tab van Berichten (2.123)
         'geplande_berichten' => 'berichten', 'mailing' => 'berichten',
         // handleiding: eigen link onderin de zijbalk (_nav.php), niet onder Instellingen
         'handleiding' => '', 'systeem' => 'instellingen', 'update' => 'instellingen',

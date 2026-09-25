@@ -225,8 +225,9 @@ if ($_iv) {
     <?php if (mag('sollicitanten', 'verwijderen')): ?>
     <?php // Onomkeerbaar én persoonsgegevens: een gewone POST naar het tussenscherm in
           // admin/sollicitant.php (werkt zonder JavaScript), niet een dialoog. ?>
-    <section class="bh-gevaarblok">
-      <h2>Sollicitant verwijderen</h2>
+    <?php // Ingeklapt: je hebt het zelden nodig en het hoort niet tussen wat je leest om te beslissen. ?>
+    <details class="bh-gevaarblok bh-gevaarblok-uitklap">
+      <summary><h2>Sollicitant verwijderen</h2></summary>
       <p>
         Hiermee verdwijnen het kennismakingsformulier, de beschikbaarheid, alle notities en
         observaties, de ondertekende documenten en het loondossier. Berichten blijven in het
@@ -243,7 +244,7 @@ if ($_iv) {
         <button type="submit" name="verwijder" value="sollicitatie" class="ds-btn ds-btn-gevaar">Alleen deze sollicitatie…</button>
         <button type="submit" name="verwijder" value="persoon" class="ds-btn ds-btn-secundair">Alles van deze persoon…</button>
       </form>
-    </section>
+    </details>
     <?php endif; ?>
   </div>
 
@@ -332,19 +333,14 @@ if ($_iv) {
       <?php endif; ?>
     </section>
 
-    <section class="ds-kaart ds-kaart-p">
-      <div class="bh-kaartkop"><h2>Tijdlijn</h2></div>
-      <div id="timeline-<?= (int)$_s['id'] ?>">
-        <?php $laden_rijen = 3; $laden_tegel = false; require __DIR__ . '/../_laden.php'; ?>
-      </div>
-    </section>
+    <?php // De tijdlijn staat op zijn eigen tabblad (Tijdlijn); hier stond hij dubbel. ?>
+    <a class="bh-kaartkop-link" href="<?= h(dossier_url((int)$_s['id'], 'tijdlijn')) ?>">Tijdlijn bekijken →</a>
 
     <script>
-      // Deze twee halen hun inhoud op na het laden; ze stonden eerder alleen in het
-      // paneel, dat ze zelf aanriep nadat innerHTML de scripts had ingeslikt.
+      // Haalt de inhoud op na het laden; stond eerder alleen in het paneel, dat hem zelf
+      // aanriep nadat innerHTML de scripts had ingeslikt.
       document.addEventListener('DOMContentLoaded', function () {
         if (window.laadNotities) laadNotities(<?= (int)$_s['id'] ?>);
-        if (window.laadTimeline) laadTimeline(<?= (int)$_s['id'] ?>);
       });
     </script>
 

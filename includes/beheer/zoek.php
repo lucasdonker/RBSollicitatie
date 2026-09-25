@@ -24,7 +24,26 @@ if (!function_exists('bh_inst_tabs')) {
  * staan — "vakantietoeslag" hoort bij "Lonen & budget", "sso" bij "Authentik". Dat is
  * de hele reden dat dit een lijst is en geen tekstvergelijking op het label.
  */
+/**
+ * Technische tabbladen (servers, sleutels, koppelingen, modules): alleen voor wie Systeem mag
+ * bewerken. Een bestuurslid hoeft SMTP-poorten en API-sleutels niet te zien.
+ */
+function bh_inst_tab_technisch(string $tab): bool {
+    return in_array($tab, ['modules', 'smtp', 'authentik', 'api', 'ai'], true);
+}
+
 function bh_inst_tabs(): array {
+    $alle = bh_inst_tabs_alle();
+    if (!function_exists('mag') || mag('systeem', 'bewerken')) return $alle;
+    foreach ($alle as $groep => $items) {
+        $alle[$groep] = array_values(array_filter($items, fn($t) => !bh_inst_tab_technisch($t[0])));
+        if (!$alle[$groep]) unset($alle[$groep]);
+    }
+    return $alle;
+}
+
+/** Alle tabbladen, ongeacht rechten (bh_inst_tabs() filtert). */
+function bh_inst_tabs_alle(): array {
     return [
       'Organisatie' => [
         ['algemeen',    'Algemeen',                  'instellingen', 'brigade naam logo contact adres portaal url tijdzone leeftijd minimumleeftijd'],

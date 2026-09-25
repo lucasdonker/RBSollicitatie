@@ -202,6 +202,8 @@ require __DIR__ . '/layout_top.php';
 .tmpl-velden input[type=text]{width:100%;font-size:13px;padding:8px 11px}
 </style>
 
+<?php $bt_actief = 'sjablonen'; require __DIR__ . '/_berichten_tabs.php'; ?>
+
 <div class="tmpl-grid">
 
 <!-- 1: Lijst -->

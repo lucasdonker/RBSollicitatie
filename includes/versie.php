@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.123.4');
+define('APP_VERSIE', '2.124.0');
 
 function app_changelog(): array {
     return [
+        '2.124.0' => [
+            'datum'  => '2026-09-25',
+            'titel'  => 'Beheer opgeruimd',
+            'punten' => [
+                'Dossier: de tijdlijn staat alleen nog op het eigen tabblad; "Sollicitant verwijderen" is ingeklapt',
+                'Sjablonen is een tabblad van Berichten (naast Nieuw, Verzonden en Gepland)',
+                'Instellingen: E-mailserver, Authentik, Website & API, AI-analyse en Modules zijn alleen nog zichtbaar voor wie het systeem beheert',
+                'Sollicitanten: knop Importeren voor de admin',
+            ],
+        ],
         '2.123.4' => [
             'datum'  => '2026-09-25',
             'titel'  => 'Vandaag past bij je rol',

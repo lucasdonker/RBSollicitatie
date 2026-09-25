@@ -261,6 +261,11 @@ endif; ?>
       $filter_acties[] = ['label' => 'Toevoegen', 'icoon' => 'plus', 'toon' => 'primair',
                           'url' => APP_URL . '/admin/sollicitant_nieuw.php'];
   }
+  // Importeren (CSV) is admin-werk (import.php: vereist_rol('admin')); was alleen via de zoeker te vinden.
+  if ((huidige_beheerder()['rol'] ?? '') === 'admin') {
+      $filter_acties[] = ['label' => 'Importeren', 'icoon' => 'download', 'toon' => 'secundair',
+                          'url' => APP_URL . '/admin/import.php'];
+  }
   if ($sid) {
       // Zonder recht op het kennismakingsformulier bevat de export alleen de basisgegevens
       // (export_dossier_van); de knop zegt dat, zodat niemand een half bestand verwacht.
