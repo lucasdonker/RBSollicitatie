@@ -39,7 +39,7 @@ $_zin   = bh_dekking_zin($_knel);
                "Alle weken gedekt" zou hier een bewering zijn die nergens op rust. */ ?>
       <span class="bh-dekgrafiek-norm">
         Er is nog geen norm ingesteld, dus de staven tonen alleen de onderlinge verhouding.
-        Stel de posten in bij <a href="<?= APP_URL ?>/admin/instellingen.php#bezetting">Posten &amp; bezetting</a>.
+        Stel de posten in bij <a href="<?= APP_URL ?>/admin/instellingen.php?tab=bezetting">Posten &amp; bezetting</a>.
       </span>
     <?php endif; ?>
   </header>

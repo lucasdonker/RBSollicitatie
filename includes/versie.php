@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.122.3');
+define('APP_VERSIE', '2.123.0');
 
 function app_changelog(): array {
     return [
+        '2.123.0' => [
+            'datum'  => '2026-09-25',
+            'titel'  => 'Eén getal voor beschikbaarheid, en een paar dingen rechtgezet',
+            'punten' => [
+                'Een losse dag "kan ik niet" (of een dag die het bestuur op beschikbaar zet) telt nu ook mee in het weektotaal. Raster, dossier en loonplanning tonen daardoor hetzelfde als het rooster. "Liever vrij" blijft een voorkeur',
+                'Groepsindeling: het aantal groepen en "Voorstel maken" zitten in één formulier; het voorstel gebruikt het aantal dat er staat',
+                'Bevestigen met meerdere knoppen in één formulier: de gekozen knop gaat nu mee',
+                'Links naar Instellingen › Posten & bezetting en › Authentik kwamen op de verkeerde plek uit',
+            ],
+        ],
         '2.122.3' => [
             'datum'  => '2026-09-25',
             'titel'  => 'Portaal: één regel per bericht',

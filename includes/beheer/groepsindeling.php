@@ -35,6 +35,8 @@ function bh_groepsindeling_post(string $ev, int $seizoen_id, array $kandidaten, 
         redirect($terug);
     }
     if ($actie === 'voorstel') {
+        // Het aantal uit het formulier geldt: eerst de groepen daarop zetten, dan verdelen.
+        evenement_groepen_zetten($ev, $seizoen_id, (int)($_POST['aantal'] ?? 3));
         evenement_voorstel_maken($ev, $seizoen_id, $kandidaten, (int)($_POST['aantal'] ?? 3));
         flash('succes', 'Voorstel gemaakt. Je kunt het hieronder nog aanpassen.');
         redirect($terug);

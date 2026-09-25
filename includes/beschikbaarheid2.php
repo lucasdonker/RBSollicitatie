@@ -189,6 +189,23 @@ function beschikbaarheid2_effectief(int $sol_id, ?array $seizoen = null): array 
     $correctie_week = [];
     foreach ($data['correcties'] as $c) $correctie_week[(int)$c['week']] = $c;
 
+    // Losse dagen (includes/beschikbaarheid_dag.php): "die dag kan ik niet" (hard) en een
+    // bestuurs-override "wél beschikbaar". Telden tot 2.123.0 alleen in beschikbaarheid_per_dag()
+    // (rooster) mee en niet hier, waardoor raster/dossier/loonplanning een ander getal toonden.
+    // "Liever vrij" blijft een voorkeur (zoals de vaste vrije dagen) en telt dus niet af.
+    $dag_los = [];   // 'Y-m-d' => 'niet' | 'wel'
+    if (function_exists('beschikbaarheid_dagen') && $weken_datums) {
+        $eerste = reset($weken_datums); $laatste = end($weken_datums);
+        $losse = beschikbaarheid_dagen($sol_id, $eerste['start']->format('Y-m-d'), $laatste['eind']->format('Y-m-d'));
+        usort($losse, fn($a, $b) => (($a['bron'] ?? '') === 'bestuur') <=> (($b['bron'] ?? '') === 'bestuur'));   // bestuur wint
+        foreach ($losse as $l) {
+            if (($l['status'] ?? 'goedgekeurd') !== 'goedgekeurd') continue;
+            if (($l['soort'] ?? '') === 'niet_beschikbaar') $dag_los[$l['datum']] = 'niet';
+            elseif (($l['soort'] ?? '') === 'beschikbaar' && ($l['bron'] ?? '') === 'bestuur') $dag_los[$l['datum']] = 'wel';
+            elseif (($l['bron'] ?? '') === 'bestuur') unset($dag_los[$l['datum']]);   // bestuur zegt "liever vrij": geen harde blokkade meer
+        }
+    }
+
     $uit = [];
     foreach ($data['blokken'] as $blok) {
         $regime = $blok['regime'] === 'weekend' ? 'weekend' : 'vijf';
@@ -215,7 +232,9 @@ function beschikbaarheid2_effectief(int $sol_id, ?array $seizoen = null): array 
                 foreach ($data['afwezig'] as $a) {
                     if ($datum >= new DateTime($a['van_datum']) && $datum <= new DateTime($a['tot_datum'])) { $afw=true; break; }
                 }
-                if ($afw) continue;
+                if ($afw && ($dag_los[$datum->format('Y-m-d')] ?? '') !== 'wel') continue;
+                // Losse dag "kan ik niet" (sollicitant of bestuur)
+                if (($dag_los[$datum->format('Y-m-d')] ?? '') === 'niet') continue;
                 // Bestuurs-correctie soort=minder: alleen deze dagen resteren
                 if ($corr && $corr['soort'] === 'minder' && $corr['dagen'] && !in_array($d, $corr['dagen'], true)) continue;
                 $dagen[] = $d;

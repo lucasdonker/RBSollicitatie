@@ -32,22 +32,17 @@ $_gi_lg    = count(array_filter($gi_kandidaten, fn($k) => !empty($k['is_lifeguar
 ?>
 <section class="ds-kaart ds-kaart-p bh-indeel-balk">
   <?php if ($gi_mag_bewerken): ?>
-    <form method="post" action="<?= h($gi_endpoint) ?>" class="bh-indeel-aantal">
+    <?php /* Eén formulier: het aantal hierboven geldt ook voor het voorstel (vroeger nam het voorstel
+             het oude aantal uit een verborgen veld). Alleen "Voorstel maken" vraagt bevestiging. */ ?>
+    <form method="post" action="<?= h($gi_endpoint) ?>" class="bh-indeel-aantal"
+          data-bevestig="Een nieuw voorstel maken? Dit overschrijft de indeling die er nu staat, ook de kaartjes die je zelf hebt versleept.">
       <?= csrf_input() ?>
-      <input type="hidden" name="actie" value="aantal_groepen">
       <label class="bh-veldlabel" for="gi-aantal">Aantal groepen</label>
       <div class="bh-indeel-aantalrij">
         <input type="number" class="ds-input" id="gi-aantal" name="aantal" min="1" max="20" value="<?= count($gi_groepen) ?: 3 ?>">
-        <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm">Instellen</button>
+        <button type="submit" name="actie" value="aantal_groepen" class="ds-btn ds-btn-secundair ds-btn-sm" data-zonder-bevestig>Alleen aantal aanpassen</button>
+        <button type="submit" name="actie" value="voorstel" class="ds-btn ds-btn-primair">Voorstel maken</button>
       </div>
-    </form>
-
-    <form method="post" action="<?= h($gi_endpoint) ?>"
-          data-bevestig="Een nieuw voorstel maken? Dit overschrijft de indeling die er nu staat, ook de kaartjes die je zelf hebt versleept.">
-      <?= csrf_input() ?>
-      <input type="hidden" name="actie" value="voorstel">
-      <input type="hidden" name="aantal" value="<?= count($gi_groepen) ?: 3 ?>">
-      <button type="submit" class="ds-btn ds-btn-primair">Voorstel maken</button>
     </form>
   <?php endif; ?>
 

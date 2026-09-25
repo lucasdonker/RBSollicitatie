@@ -416,6 +416,10 @@
     form.dataset.bhBevestigGekoppeld = '1';
     form.addEventListener('submit', function (e) {
       if (form.dataset.bhAkkoord === '1') { form.dataset.bhAkkoord = ''; return; }
+      // Een knop met data-zonder-bevestig in hetzelfde formulier hoeft niet te vragen
+      // (bijv. "Alleen aantal aanpassen" naast "Voorstel maken").
+      var knop = e.submitter || null;
+      if (knop && knop.hasAttribute('data-zonder-bevestig')) return;
       e.preventDefault();
       bhBevestig({
         titel: form.dataset.bevestigTitel || 'Weet je het zeker?',
@@ -425,7 +429,9 @@
       }).then(function (ja) {
         if (!ja) return;
         form.dataset.bhAkkoord = '1';
-        if (typeof form.requestSubmit === 'function') form.requestSubmit(); else form.submit();
+        // De aangeklikte knop meegeven: anders gaan zijn name/value verloren.
+        if (typeof form.requestSubmit === 'function') form.requestSubmit(knop && knop.form === form ? knop : undefined);
+        else form.submit();
       });
     });
   }

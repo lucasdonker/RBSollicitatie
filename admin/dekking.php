@@ -46,7 +46,7 @@ require __DIR__ . '/layout_top.php';
     <strong>Authentik is nog niet gekoppeld.</strong>
     Zonder competenties weet het systeem niet wie mag varen of rijden, en kan het de dekking
     niet berekenen. Koppel het bij
-    <a href="<?= APP_URL ?>/admin/instellingen.php?tab=authentik">Instellingen › Authentik &amp; competenties</a>.
+    <a href="<?= APP_URL ?>/admin/instellingen.php?tab=authentik">Instellingen › Authentik</a>.
   </span>
 </div>
 <?php endif; ?>
