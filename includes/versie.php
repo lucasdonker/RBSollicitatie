@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.123.3');
+define('APP_VERSIE', '2.123.4');
 
 function app_changelog(): array {
     return [
+        '2.123.4' => [
+            'datum'  => '2026-09-25',
+            'titel'  => 'Vandaag past bij je rol',
+            'punten' => [
+                'Kan je rol de taak van het seizoen niet doen, dan zie je wat wél voor jou is: de penningmeester ziet de loondossiers die te verwerken zijn, anders "Er ligt nu niets voor jou"',
+                'De systeemstatus (wachtrij, mailfouten, taakronde) zie je alleen met recht op systeem, logboek of instellingen',
+                '"Langer dan 3 dagen open" staat niet meer dubbel',
+                'Een uitzondering maken of een intrekverzoek niet doorvoeren vraagt nu ook eerst bevestiging',
+            ],
+        ],
         '2.123.3' => [
             'datum'  => '2026-09-25',
             'titel'  => 'Loonplanning: duidelijker en sneller',

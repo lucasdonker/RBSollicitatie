@@ -62,7 +62,34 @@ function bh_vandaag_hoofdtaak(?array $seizoen, string $seizoen_fase): array {
     $sid = $seizoen ? (int)$seizoen['id'] : 0;
     $sleutel = $sid . '|' . $seizoen_fase;
     if (isset($cache[$sleutel])) return $cache[$sleutel];
-    return $cache[$sleutel] = bh_vandaag_hoofdtaak_bepalen($sid, $seizoen_fase);
+    $tk = bh_vandaag_hoofdtaak_bepalen($sid, $seizoen_fase);
+    // Is de taak van het seizoen niet voor jouw rol (de knop viel weg op rechten), dan een taak
+    // die wél bij je past — de penningmeester had hier "12 aanmeldingen uitnodigen" staan.
+    if (!$tk['klaar'] && $tk['url'] === null) $tk = bh_vandaag_roltaak($sid, $tk);
+    return $cache[$sleutel] = $tk;
+}
+
+/**
+ * De hoofdtaak voor wie de taak van het seizoen niet kan doen.
+ * Penningmeester: loondossiers die compleet zijn maar nog niet verwerkt. Anders: niets voor jou.
+ */
+function bh_vandaag_roltaak(int $sid, array $algemeen): array {
+    $niets = ['titel' => 'Er ligt nu niets voor jou', 'knop' => null, 'url' => null, 'gedaan' => 0, 'totaal' => 0, 'klaar' => true,
+              'tekst' => 'Het bestuur is bezig met: ' . mb_strtolower($algemeen['titel']) . '.'];
+    if ($sid && function_exists('mag') && mag('documenten', 'bewerken') && function_exists('documenten_overzicht')) {
+        $rijen = documenten_overzicht($sid);
+        $te_doen = count(array_filter($rijen, fn($r) => $r['dossier']['compleet'] && !$r['dossier']['verwerkt']));
+        $klaar   = count(array_filter($rijen, fn($r) => $r['dossier']['verwerkt']));
+        if ($te_doen > 0) {
+            return ['titel' => $te_doen === 1 ? 'Eén loondossier te verwerken' : $te_doen . ' loondossiers te verwerken',
+                    'tekst' => 'Compleet aangeleverd, nog niet in de loonadministratie. Markeer ze als verwerkt zodra dat klaar is.',
+                    'knop'  => 'Naar de loondossiers', 'url' => APP_URL . '/admin/documenten.php',
+                    'gedaan' => $klaar, 'totaal' => $klaar + $te_doen, 'klaar' => false];
+        }
+        return ['titel' => 'Geen loondossiers te verwerken', 'knop' => null, 'url' => null, 'gedaan' => $klaar, 'totaal' => count($rijen), 'klaar' => true,
+                'tekst' => count($rijen) ? $klaar . ' van ' . count($rijen) . ' verwerkt; de rest is nog niet compleet.' : 'Er is nog niemand aangenomen.'];
+    }
+    return $niets;
 }
 
 /**

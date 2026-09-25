@@ -19,7 +19,7 @@ $sid = $sz ? (int)$sz['id'] : 0;
 $fase     = bh_seizoen_fase($sz);
 $taak     = bh_vandaag_hoofdtaak($sz, $fase);
 $loopt    = bh_vandaag_loopt($sz);
-$systeem  = bh_systeemstatus();
+$systeem  = (mag('systeem', 'lezen') || mag('logboek', 'lezen') || mag('instellingen', 'bewerken')) ? bh_systeemstatus() : null;
 $tellingen = $sid ? bh_fase_tellingen($sid) : [];
 $mag_soll = mag('sollicitanten', 'lezen');
 
@@ -101,7 +101,10 @@ require __DIR__ . '/layout_top.php';
       </section>
       <?php endif; ?>
 
-      <?php $vandaag_systeem = $systeem; require __DIR__ . '/_systeemstatus.php'; ?>
+      <?php // Techniek (wachtrij, mailfouten, taakronde) is voor wie er iets aan kan doen; voor een begeleider is het ruis.
+        if (mag('systeem', 'lezen') || mag('logboek', 'lezen') || mag('instellingen', 'bewerken')) {
+            $vandaag_systeem = $systeem; require __DIR__ . '/_systeemstatus.php';
+        } ?>
     </div>
   </div>
 

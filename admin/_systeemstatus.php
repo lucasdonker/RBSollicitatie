@@ -38,9 +38,7 @@ $_tijd = !empty($vandaag_systeem['ronde']) ? substr((string)$vandaag_systeem['ro
     <span<?= $vandaag_systeem['fouten'] > 0 ? ' class="slecht"' : '' ?>>
       <?= (int)$vandaag_systeem['fouten'] ?> mailfouten in 24 uur
     </span>
-    <span<?= $vandaag_systeem['open'] > 0 ? ' class="let-op"' : '' ?>>
-      <?= (int)$vandaag_systeem['open'] ?> langer dan 3 dagen open
-    </span>
+    <?php // Open ondertekeningen staan al onder "Loopt ondertussen"; hier alleen techniek. ?>
     <?php if ($_opschonen_uit && function_exists('health_opschonen_uit_tekst')): ?>
       <span class="slecht"><?= h(health_opschonen_uit_tekst()) ?></span>
     <?php endif; ?>

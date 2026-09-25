@@ -34,7 +34,8 @@ $_iv_mag = mag('sollicitanten', 'bewerken');
             <input type="hidden" name="keuze" value="doorvoeren">
             <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm">Doorvoeren</button>
           </form>
-          <form method="POST" action="<?= APP_URL ?>/admin/intrekken.php">
+          <form method="POST" action="<?= APP_URL ?>/admin/intrekken.php"
+                data-bevestig="Niet doorvoeren? De sollicitatie van <?= h($_iv['naam']) ?> loopt gewoon door. Doe dit pas als je het met de sollicitant hebt besproken.">
             <?= csrf_input() ?>
             <input type="hidden" name="id" value="<?= (int)$_iv['id'] ?>">
             <input type="hidden" name="keuze" value="afwijzen">

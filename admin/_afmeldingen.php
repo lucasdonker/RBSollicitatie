@@ -32,7 +32,8 @@ if (!$afmeldingen) return;
             <input type="hidden" name="keuze" value="afmelden">
             <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm">Afmelden</button>
           </form>
-          <form method="POST" action="<?= APP_URL ?>/admin/afmelding.php">
+          <form method="POST" action="<?= APP_URL ?>/admin/afmelding.php"
+                data-bevestig="<?= h($_a['naam']) ?> blijft in het proces, ook al gaf die door niet te kunnen. Uitzondering maken?">
             <?= csrf_input() ?>
             <input type="hidden" name="sol_id" value="<?= (int)$_a['sol_id'] ?>">
             <input type="hidden" name="ev" value="<?= h($_a['evenement']) ?>">
