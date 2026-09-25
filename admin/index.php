@@ -46,6 +46,8 @@ require __DIR__ . '/layout_top.php';
 
   <?php if ($mag_soll && function_exists('evenement_afmeldingen_open')) { $afmeldingen = evenement_afmeldingen_open($sid); require __DIR__ . '/_afmeldingen.php'; } ?>
 
+  <?php if ($mag_soll && function_exists('intrek_open_lijst')) { $intrekverzoeken = intrek_open_lijst($sid); require __DIR__ . '/_intrekverzoeken.php'; } ?>
+
   <div class="bh-vandaag-kolommen">
 
     <?php if ($mag_soll): ?>

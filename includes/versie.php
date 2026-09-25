@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.119.0');
+define('APP_VERSIE', '2.120.0');
 
 function app_changelog(): array {
     return [
+        '2.120.0' => [
+            'datum'  => '2026-09-25',
+            'titel'  => 'Verzoek om de sollicitatie in te trekken',
+            'punten' => [
+                'In Mijn gegevens (boven het downloaden) kan een sollicitant vragen de sollicitatie in te trekken, met een reden als hij wil. Er verandert niets vanzelf',
+                'Het bestuur krijgt een mail en ziet het verzoek op Vandaag en bovenaan het dossier: na het gesprek doorvoeren (fase Afgehaakt, zonder bericht) of niet',
+                'De sollicitant kan het verzoek annuleren zolang het openstaat',
+                'Op de hoogte blijven voor een volgend seizoen is een los vinkje dat niet vooraf aan staat: dat is toestemming (AVG, Telecommunicatiewet), en loopt via het bestaande seintje',
+            ],
+        ],
         '2.119.0' => [
             'datum'  => '2026-09-25',
             'titel'  => 'Feedback van lifeguards in het dossier',

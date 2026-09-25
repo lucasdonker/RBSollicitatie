@@ -405,6 +405,18 @@ function meldingen_register(): array {
                 'tekst_kort' => '', 'samenvatting' => '',
             ],
         ]),
+        'bestuur_intrekverzoek' => array_merge($std, [
+            'naam' => 'Verzoek sollicitatie intrekken', 'categorie' => 'bestuur', 'ontvanger' => 'bestuur',
+            'kanaal_standaard' => 'email', 'kort_toegestaan' => false, 'dedup_min' => 0, 'body_loggen' => false,
+            'beschrijving' => 'Naar het bestuur als een sollicitant in het portaal vraagt de sollicitatie in te trekken. Er verandert niets vanzelf: op Vandaag kies je na het gesprek doorvoeren of niet.',
+            'vars' => ['reden', 'beheer_url'],
+            'seed' => [
+                'onderwerp' => 'Wil intrekken: {{volledige_naam}}',
+                'hero_titel' => 'Verzoek om in te trekken', 'hero_subtitel' => '{{seizoen_naam}}',
+                'body_html' => "<p><strong>{{volledige_naam}}</strong> vraagt de sollicitatie in te trekken.</p>\n<p>Reden: {{reden}}</p>\n<p>Neem contact op en beslis daarna op Vandaag: doorvoeren of niet.</p>\n[knop href=\"{{beheer_url}}\"]Naar het dossier[/knop]",
+                'tekst_kort' => '', 'samenvatting' => '',
+            ],
+        ]),
         'bestuur_beschikbaarheid_definitief' => array_merge($std, [
             'naam' => 'Beschikbaarheid definitief gemaakt', 'categorie' => 'bestuur', 'ontvanger' => 'bestuur',
             'kanaal_standaard' => 'uit', 'kort_toegestaan' => false, 'dedup_min' => 0, 'body_loggen' => false,

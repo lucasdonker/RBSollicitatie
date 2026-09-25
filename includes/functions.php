@@ -60,6 +60,7 @@ if (file_exists(__DIR__ . '/trainingsweekend.php')) require_once __DIR__ . '/tra
 if (file_exists(__DIR__ . '/evenement.php')) require_once __DIR__ . '/evenement.php';
 if (file_exists(__DIR__ . '/evenement_groepen.php')) require_once __DIR__ . '/evenement_groepen.php';
 if (file_exists(__DIR__ . '/lg_feedback.php')) require_once __DIR__ . '/lg_feedback.php';
+if (file_exists(__DIR__ . '/intrekken.php')) require_once __DIR__ . '/intrekken.php';
 if (file_exists(__DIR__ . '/evenement_formulieren.php')) require_once __DIR__ . '/evenement_formulieren.php';
 if (file_exists(__DIR__ . '/ai_beschikbaarheid.php')) require_once __DIR__ . '/ai_beschikbaarheid.php';
 if (file_exists(__DIR__ . '/opschonen.php')) require_once __DIR__ . '/opschonen.php';

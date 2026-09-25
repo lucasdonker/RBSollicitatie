@@ -51,6 +51,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['apparaten_vergeten'])
 }
 $apparaten_aantal = function_exists('portaal_onthoud_aantal') ? portaal_onthoud_aantal($sol_id) : 0;
 
+// ── Verzoek om in te trekken (portaal/_intrekken.php, includes/intrekken.php) ──
+$intrek_flash = null; $intrek_fout = null;
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['intrek_actie']) && function_exists('intrek_aanvragen')) {
+    csrf_check();
+    if ($_POST['intrek_actie'] === 'annuleren') {
+        $intrek_flash = intrek_annuleren($sol_id) ? 'Je verzoek is geannuleerd. Je sollicitatie loopt gewoon door.' : null;
+    } else {
+        $intrek_fout = intrek_aanvragen($sol_id, (string)($_POST['reden'] ?? ''), !empty($_POST['seintje'])) ?: null;
+        if (!$intrek_fout) $intrek_flash = 'Je verzoek is verstuurd. We nemen contact met je op.';
+    }
+}
+
 // ── Download data (JSON) ────────────────────────────────────
 // Alles wat over deze sollicitatie is vastgelegd (AVG art. 15); de lijst staat in avg_inzage().
 if (isset($_GET['download'])) {
@@ -121,6 +133,7 @@ require __DIR__ . '/_kop.php';
 <style>
 .avg-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:16px;box-shadow:var(--shadow-card)}
 .avg-card h2{margin-top:0;font:var(--text-subhead)}
+.avg-card .pt-kaart-tekst{font-size:13px;color:var(--tekst-zacht)}
 .avg-rij{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--rand-2);font-size:14px;gap:12px;flex-wrap:wrap}
 .avg-rij:last-child{border-bottom:none}
 .avg-label{color:var(--ink-soft);flex-shrink:0}
@@ -209,6 +222,12 @@ require __DIR__ . '/_kop.php';
       <button type="submit" class="ds-btn ds-btn-primair">Voorkeur opslaan</button>
     </form>
   </div>
+
+  <?php
+    $ik_sol_id = $sol_id; $ik_persoon = (int)$mij['persoon_id']; $ik_fase = (string)$mij['fase'];
+    $ik_flash = $intrek_flash; $ik_fout = $intrek_fout;
+    require __DIR__ . '/_intrekken.php';
+  ?>
 
   <!-- Downloaden -->
   <div class="avg-card" id="download">

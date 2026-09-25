@@ -1299,6 +1299,11 @@ button.ds-avatar { padding: 0; border: 0; font-family: inherit; }
   min-height: 44px; display: flex; align-items: center;
 }
 .pt-bevestig > p { margin: 4px 0 12px; font-size: 13px; color: var(--ink-soft); line-height: 1.5; }
+/* Verzoek om in te trekken (portaal/_intrekken.php). */
+.pt-intrek-form { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.pt-intrek-form .ds-veld { width: 100%; margin: 0; }
+.pt-intrek-form .ds-textarea { width: 100%; }
+.pt-intrek-form .ds-veld-hint { margin-top: -4px; }
 
 /* 6-cijfer code-invoer */
 .ds-code-inputs {

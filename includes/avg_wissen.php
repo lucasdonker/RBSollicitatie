@@ -87,6 +87,7 @@ function avg_sollicitatie_leegmaken($db, int $sol_id, bool $ook_loondocs = true)
         "DELETE FROM tw_deelname WHERE sollicitatie_id = ?",
         "DELETE FROM tw_observatie WHERE sollicitatie_id = ?",
         "DELETE FROM lifeguard_feedback WHERE sollicitatie_id = ?",
+        "DELETE FROM intrek_verzoek WHERE sollicitatie_id = ?",
         "DELETE FROM portaal_apparaten WHERE sollicitatie_id = ?",
         // De planning blijft staan voor het loonoverzicht (na anonimiseren niet meer herleidbaar); alleen de vrije notitie gaat weg.
         "UPDATE loon_planning SET notitie = NULL WHERE sollicitatie_id = ?",
@@ -253,6 +254,7 @@ function avg_inzage($db, int $sol_id): array {
             'observaties' => $beoordelaar($rijen("SELECT soort, tekst, aangemaakt_op FROM tw_observatie WHERE sollicitatie_id = ? ORDER BY id")),
         ],
         // Wat lifeguards het bestuur over je vertelden (includes/lg_feedback.php); zonder hun naam.
+        'verzoek_intrekken' => $rijen("SELECT reden, seintje AS op_de_hoogte_blijven, status, aangevraagd_op, besloten_op FROM intrek_verzoek WHERE sollicitatie_id = ? ORDER BY id"),
         'feedback_van_lifeguards' => $rijen("SELECT moment, soort, tekst, aangemaakt_op FROM lifeguard_feedback WHERE sollicitatie_id = ? ORDER BY id"),
         'inzet_afspraak' => [
             'afspraak' => $rij("SELECT functie_sleutel AS functie, notitie, vastgesteld_op FROM inzet_afspraak WHERE sollicitatie_id = ?"),

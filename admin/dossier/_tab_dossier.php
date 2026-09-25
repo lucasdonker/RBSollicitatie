@@ -18,6 +18,12 @@ $_doc = bh_dossier_documenten($tab_dossier);
 $_taken = bh_dossier_taken($tab_dossier);
 $_mag_bewerken = mag('sollicitanten', 'bewerken');
 $_mag_blk = mag('blk', 'lezen');
+// Openstaand verzoek om in te trekken: bovenaan, met dezelfde knoppen als op Vandaag.
+$_iv = function_exists('intrek_open_van') ? intrek_open_van((int)$_s['id']) : null;
+if ($_iv) {
+    $intrekverzoeken = [$_iv + ['sol_id' => (int)$_s['id'], 'fase' => (string)$_s['fase'], 'naam' => volledige_naam($_s)]];
+    require __DIR__ . '/../_intrekverzoeken.php';
+}
 ?>
 <div class="bh-dossier-kolommen">
 
