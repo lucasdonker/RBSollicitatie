@@ -144,6 +144,14 @@ gebeurde.</label></li>
 <li><label><input type="checkbox"></input>Zorg dat je de foutmails ontvangt:
 het adres staat bij <strong>Instellingen › Afzender &amp;
 adressen</strong> (<code>mail.fout_email</code>, standaard <a href="mailto:website@paal13.com">website@paal13.com</a>).</label></li>
+<li><label><input type="checkbox"></input>Controleer dat er een
+<strong>uptime-monitor</strong> op <code>api/status.php</code> van
+productie staat en dat jij de alarmen krijgt (zie <a href="#uptime-monitor">Uptime-monitor</a>).</label></li>
+<li><label><input type="checkbox"></input>Controleer op de
+<strong>testomgeving</strong> dat bovenaan elk beheerscherm de balk
+&quot;Testmodus&quot; staat (<code>MAIL_OMLEIDEN</code> in
+<code>config.php</code>), en op <strong>productie</strong> dat die balk
+er níét staat.</label></li>
 </ul>
 <p><strong>Waar staat wat</strong></p>
 <table>
@@ -454,9 +462,14 @@ kijk of er losse SQL-migraties uit <code>sql/</code> op &quot;pending&quot; staa
 Normaal is dat nul; de laatste is
 <code>migratie_0022_blk_uitbreiding</code> (vroeger dubbel genummerd als
 <code>0002</code>; die naam bestaat niet meer).</li>
-<li>Kijk bij <strong>Systeemgezondheid</strong> of alle acht checks
-groen zijn. Kluis en zegel horen groen te zijn; het zegelcertificaat
-wordt bij de eerste keer automatisch aangemaakt.</li>
+<li>Kijk bij <strong>Systeemgezondheid</strong> of alle elf checks groen
+zijn. Kluis en zegel horen groen te zijn; het zegelcertificaat wordt bij
+de eerste keer automatisch aangemaakt. Staat er bij een check een
+lijstje met knoppen (SMTP, Authentik, adressen, huisregels), werk dat
+dan af; op Vandaag staat hetzelfde als <strong>Nog in te
+stellen</strong>. Op productie hoort &quot;E-mail en testmodus&quot; groen te
+zijn: oranje met &quot;Testmodus&quot; betekent dat <code>MAIL_OMLEIDEN</code> nog
+gevuld is.</li>
 <li>(eenmalig) Zoek in het serverlog (Plesk › Logs) of Logboek › Fouten
 de regel <code>otp_tokens.type omgezet van ENUM naar VARCHAR(30)</code>.
 Die hoort er <strong>één keer</strong> te staan. Zonder die omzetting
@@ -554,6 +567,10 @@ tabellen aan.</p></li>
 admin. Er is geen standaardaccount met wachtwoord meer.</p></li>
 <li><p>Stel de cron in en doorloop de rest van de checklist vanaf stap
 8.</p></li>
+<li><p>Werk op Vandaag de lijst <strong>Nog in te stellen</strong> af
+(SMTP, adressen, huisregels, opschonen) en zet een <a href="#uptime-monitor">uptime-monitor</a> op
+<code>api/status.php</code>. Een testomgeving krijgt
+<code>MAIL_OMLEIDEN</code> in <code>config.php</code>.</p></li>
 </ol>
 <p>Maprechten: <code>uploads/</code> schrijfbaar voor PHP;
 <code>DOCUMENTEN_MAP</code> schrijfbaar en buiten de webroot. Alle
@@ -598,19 +615,33 @@ DMARC</td>
 systeemcontrole kijkt in dezelfde volgorde</td>
 </tr>
 <tr>
+<td><code>MAIL_OMLEIDEN</code></td>
+<td><strong>Testmodus</strong>: één e-mailadres waar álle e-mail naartoe
+gaat</td>
+<td>Alleen op test en bij een hersteltest; op productie altijd leeg.
+Onderwerp krijgt <code>[TEST, voor &lt;echte ontvanger&gt;]</code>;
+WhatsApp en sms gaan niet de deur uit (de tekst komt als mail op dit
+adres, het logboek zegt &quot;testmodus&quot;). Bewust een constante en geen
+instelling: een teruggezette productiedatabase zet hem niet uit. Het
+beheer toont dan bovenaan een balk</td>
+</tr>
+<tr>
 <td><code>SMTP_HOST</code>, <code>SMTP_PORT</code>,
 <code>SMTP_USER</code>, <code>SMTP_PASS</code>,
 <code>SMTP_ENCRYPT</code></td>
 <td>Mailserver</td>
 <td>Worden overschreven door Instellingen › E-mailserver als daar een
-host staat. Allebei leeg = PHP <code>mail()</code>, alleen als
-noodoplossing</td>
+host staat. Allebei leeg (of nog <code>{{SMTP_HOST}}</code>) = PHP
+<code>mail()</code>, alleen als noodoplossing. Let op: ook dan gaat er
+gewoon mail de deur uit; tegenhouden doe je met
+<code>MAIL_OMLEIDEN</code></td>
 </tr>
 <tr>
 <td><code>OIDC_CLIENT_ID</code>, <code>OIDC_CLIENT_SECRET</code>,
 <code>OIDC_ISSUER</code>, <code>OIDC_SLUG</code></td>
 <td>Authentik-provider</td>
-<td>Leeg = SSO uit; alleen wachtwoordlogin voor beheerders</td>
+<td>Leeg (of nog een <code>{{…}}</code>-plaatshouder) = SSO uit; alleen
+wachtwoordlogin voor beheerders. De systeemcontrole waarschuwt</td>
 </tr>
 <tr>
 <td><code>OIDC_REDIRECT_URI</code></td>
@@ -880,6 +911,58 @@ ingelogd&quot;-tokens</td>
 stand per groep. Een groep die langer dan twee keer zijn interval
 stilligt (minimaal een kwartier) geeft een waarschuwing; langer dan zes
 keer (minimaal een half uur, dag: zes dagen) een fout.</p>
+<h2 id="uptime-monitor">Uptime-monitor</h2>
+<p>Die meldingen zie je alleen als iemand het beheer opent. Zet daarom
+een externe uptime-monitor (UptimeRobot, Uptime Kuma, Better Stack of
+vergelijkbaar) op productie, elke 5 minuten:</p>
+<pre><code>GET https://sollicitatie.paal13.com/api/status.php
+Header: X-Cron-Token: &lt;cron.token&gt;</code></pre>
+<p>Kan de monitor geen header meesturen, gebruik dan
+<code>?token=&lt;cron.token&gt;</code> in het adres (dat komt wel in de
+access-log). Het is hetzelfde token als voor de cron; vernieuw je het,
+pas dan ook de monitor aan.</p>
+<table>
+<thead>
+<tr>
+<th>Antwoord</th>
+<th>Betekenis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>200</code> + <code>&quot;ok&quot;: true</code></td>
+<td>Taakronde liep de laatste 10 minuten en er hangt niets in de
+berichtenwachtrij</td>
+</tr>
+<tr>
+<td><code>503</code> + <code>&quot;ok&quot;: false</code></td>
+<td>Taakronde langer dan 10 minuten stil of nog nooit gedraaid, of
+berichten wachten langer dan een uur. <code>problemen</code> zegt
+welke</td>
+</tr>
+<tr>
+<td><code>403</code></td>
+<td>Token ontbreekt of klopt niet</td>
+</tr>
+<tr>
+<td><code>429</code></td>
+<td>Meer dan 30 verzoeken per minuut vanaf hetzelfde adres</td>
+</tr>
+<tr>
+<td><code>503</code> + &quot;niet ingesteld&quot;</td>
+<td>Er is nog geen cron-token (open Instellingen › Bewaren &amp;
+opschonen)</td>
+</tr>
+</tbody>
+</table>
+<p>Het antwoord bevat alleen tijden en tellingen
+(<code>cron_laatst</code>, <code>cron_groepen</code>,
+<code>wachtrij_wacht</code>, <code>wachtrij_vast</code>,
+<code>wachtrij_fout</code>, <code>testmodus</code>,
+<code>versie</code>), nooit persoonsgegevens. Mislukte berichten
+(<code>wachtrij_fout</code>, afgelopen 24 uur) geven bewust geen 503:
+één verkeerd adres is geen storing. Laat de monitor alarmeren naar ten
+minste twee mensen.</p>
 <h1 id="authentik-sso">Authentik (SSO)</h1>
 <blockquote>
 <p><strong>In het kort:</strong> Eén OAuth2/OpenID-provider in
@@ -1287,9 +1370,11 @@ verdwijnen. Houd de back-uptermijn daarom kort (zie <a href="#back-up-en-herstel
 check)</h1>
 <blockquote>
 <p><strong>In het kort:</strong> Beheer › Systeem &amp; Updates ›
-Systeemgezondheid voert negen checks uit en kan een deel zelf
-herstellen. Ligt een van de drie cron-groepen stil, dan waarschuwt de
-check Cron daarvoor.</p>
+Systeemgezondheid voert elf checks uit en kan een deel zelf herstellen.
+Ligt een van de drie cron-groepen stil, dan waarschuwt de check Cron
+daarvoor. Wat bij de eerste keer instellen nog openstaat, staat op
+Vandaag als <strong>Nog in te stellen</strong>, elk punt met een knop
+naar het juiste tabblad.</p>
 </blockquote>
 <p>Knop <strong>Controleren &amp; repareren</strong> draait de checks
 opnieuw en herstelt waar dat kan (vooral de database). Bovenaan het
@@ -1332,9 +1417,12 @@ berichten</td>
 </tr>
 <tr>
 <td>Mailwachtrij</td>
-<td>Niets ouder dan 1 uur in &quot;wacht&quot;</td>
-<td>Berichten blijven hangen</td>
-<td>Cron en E-mailserver-instellingen; Logboek › Berichten</td>
+<td>Niets ouder dan 1 uur in &quot;wacht&quot;, niets definitief mislukt in 24
+uur</td>
+<td>Berichten blijven hangen, of berichten staan na drie pogingen op
+&quot;fout&quot; (de ontvanger heeft ze nooit gehad)</td>
+<td>Cron en E-mailserver-instellingen; Logboek › Berichten voor de
+reden</td>
 </tr>
 <tr>
 <td>Opschoning</td>
@@ -1350,12 +1438,31 @@ nooit of langer geleden draaide</td>
 <td>Maprechten in Plesk</td>
 </tr>
 <tr>
+<td>E-mail en testmodus</td>
+<td>SMTP ingesteld, testmodus uit</td>
+<td>Geen SMTP (mail gaat via PHP <code>mail()</code>, komt vaak niet
+aan); of <code>MAIL_OMLEIDEN</code> staat aan</td>
+<td>Instellingen › E-mailserver; op productie <code>MAIL_OMLEIDEN</code>
+leegmaken</td>
+</tr>
+<tr>
+<td>Inloggen (Authentik)</td>
+<td><code>OIDC_CLIENT_ID</code> en <code>OIDC_ISSUER</code>
+ingevuld</td>
+<td>Leeg of nog een <code>{{…}}</code>-plaatshouder: alleen de
+wachtwoord-noodingang werkt</td>
+<td><code>config.php</code>, zie <a href="#authentik-sso">Authentik
+(SSO)</a></td>
+</tr>
+<tr>
 <td>Configuratie</td>
-<td>Cron-token en bestuursadres gezet</td>
-<td>Iets ontbreekt</td>
-<td>Tabblad Bewaren &amp; opschonen openen; bestuursadres in
-Instellingen › Afzender &amp; adressen (of <code>MAIL_BESTUUR</code> in
-config)</td>
+<td>Cron-token, bestuursadres, adres penningmeester en ledenservice,
+huisregels-PDF</td>
+<td>Iets ontbreekt. Zonder adres voor penningmeester of ledenservice
+gaan loondocumenten en lidmaatschapsinschrijvingen (met IBAN) naar het
+bestuursadres. Geen open seizoen staat er alleen ter informatie bij</td>
+<td>Knop bij het punt; adressen in Instellingen › Afzender &amp;
+adressen, huisregels in Instellingen › Algemeen</td>
 </tr>
 <tr>
 <td>Kluis</td>
@@ -1377,6 +1484,17 @@ een pagina openen</td>
 </tr>
 </tbody>
 </table>
+<p>Het bestuursadres telt als ingesteld zodra het niet leeg en geen
+plaatshouder is; de standaard <code>bestuur@paal13.com</code> geeft
+bewust geen waarschuwing, want dat is het echte adres van de
+brigade.</p>
+<p><strong>Nog in te stellen</strong> (Vandaag, alleen voor wie Systeem
+mag bewerken) verzamelt de punten uit Configuratie, E-mail, Inloggen en
+Opschoning: rood eerst, dan oranje, dan informatief. Een nieuwe
+installatie werk je van boven naar beneden af tot de lijst leeg is. De
+punten komen uit <code>health_nog_in_te_stellen()</code> in
+<code>includes/health.php</code>; een nieuw punt is één
+<code>health_punt()</code> in de check waar het bij hoort.</p>
 <p>Let op bij het zegel: een nieuw certificaat heeft een andere
 vingerafdruk. Eerder verzegelde PDF&#39;s blijven geldig; noteer de nieuwe
 vingerafdruk (staat in het Logboek bij
@@ -1428,9 +1546,15 @@ daarin terug.</li>
 productie-<code>config.php</code>, met eigen <code>DB_NAME</code> en
 <code>APP_URL</code>, en een kopie van <code>DOCUMENTEN_MAP</code> op
 een eigen pad.</li>
-<li><strong>Zet vóór je een pagina opent de mail uit:</strong> laat
-<code>SMTP_HOST</code> leeg, en stel géén cron in. Een cron verstuurt
-anders wachtende berichten aan echte sollicitanten.</li>
+<li><strong>Zet vóór je een pagina opent de testmodus aan:</strong> vul
+in de gekopieerde <code>config.php</code> <code>MAIL_OMLEIDEN</code> met
+je eigen adres, en stel géén cron in. <code>SMTP_HOST</code> leeglaten
+helpt níét: de SMTP-instelling uit de teruggezette database gaat voor,
+en zonder SMTP valt het systeem terug op PHP <code>mail()</code> — dan
+gaan wachtende berichten gewoon naar echte sollicitanten. Met
+<code>MAIL_OMLEIDEN</code> gaat alle e-mail naar jou en worden WhatsApp
+en sms niet verstuurd. Controleer bij het openen dat bovenaan het beheer
+de balk &quot;Testmodus&quot; staat voordat je iets anders doet.</li>
 <li>Log in, draai de systeemcontrole (kluis moet groen zijn) en open als
 admin één document in een loondossier. Lukt dat, dan kloppen sleutel,
 zout en bestanden samen.</li>

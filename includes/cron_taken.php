@@ -126,4 +126,16 @@ function cron_stand(): array {
     return $uit;
 }
 
+/**
+ * Hartslag voor een externe uptime-monitor (api/status.php): liep de taakronde de laatste
+ * $max_sec seconden? De minuutgroep zet cron.laatste_run elke minuut, dus 10 minuten is ruim.
+ * @return array{laatst:?string, seconden:?int, ok:bool}
+ */
+function cron_hartslag(int $max_sec = 600): array {
+    $laatst = function_exists('instelling') ? instelling('cron.laatste_run', '') : '';
+    if ($laatst === '' || strtotime($laatst) === false) return ['laatst' => null, 'seconden' => null, 'ok' => false];
+    $sec = max(0, time() - strtotime($laatst));
+    return ['laatst' => date('c', strtotime($laatst)), 'seconden' => $sec, 'ok' => $sec <= $max_sec];
+}
+
 }

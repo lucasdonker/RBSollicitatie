@@ -7,11 +7,15 @@
  *   $top_seizoen  ?array  actief_seizoen()
  *   $top_hulp     ?array  hulp_tekst() → ['titel','tekst','url']
  *   $top_rondleiding bool  dit scherm heeft een rondleiding (includes/beheer/rondleiding.php)
+ *
+ * Staat de testmodus aan (MAIL_OMLEIDEN in config.php), dan komt er op elk beheerscherm een
+ * balk onder, zodat niemand denkt dat berichten echt naar sollicitanten gaan.
  */
 $top_titel   = $top_titel ?? 'Beheer';
 $top_seizoen = $top_seizoen ?? null;
 $top_hulp    = $top_hulp ?? null;
 $top_rondleiding = !empty($top_rondleiding);
+$_top_test   = function_exists('mail_omleiden') ? mail_omleiden() : '';
 ?>
 <header class="bh-topbar">
   <button type="button" class="bh-hamburger" id="hamburger" aria-label="Menu openen"
@@ -38,6 +42,13 @@ $top_rondleiding = !empty($top_rondleiding);
   <?php endif; ?>
 </header>
 
+<?php if ($_top_test !== '' && function_exists('health_testmodus_tekst')): ?>
+<div class="ds-melding ds-melding-warn bh-testmodus" role="status">
+  <?= icoon('waarschuwing', 16) ?>
+  <span><?= h(health_testmodus_tekst($_top_test)) ?></span>
+</div>
+<?php endif; ?>
+
 <?php if ($top_hulp): ?>
 <div id="hulppaneel" class="bh-hulppaneel" role="region" aria-label="Uitleg over dit scherm" hidden>
   <div class="bh-hulppaneel-kop">
@@ -61,4 +72,4 @@ $top_rondleiding = !empty($top_rondleiding);
 </div>
 <?php endif; ?>
 <?php
-$top_titel = 'Beheer'; $top_seizoen = null; $top_hulp = null; $top_rondleiding = false;
+$top_titel = 'Beheer'; $top_seizoen = null; $top_hulp = null; $top_rondleiding = false; $_top_test = '';

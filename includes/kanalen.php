@@ -50,12 +50,27 @@ function telefoon_normaliseer(string $tel): ?string {
  * Verstuur een SMS. Retourneert true bij (ogenschijnlijk) succes.
  * $tekst wordt kort gehouden; de aanroeper zorgt voor een zinnige, korte boodschap.
  */
+/**
+ * Testmodus (config MAIL_OMLEIDEN): SMS/WhatsApp gaan nooit echt de deur uit, ook niet buiten de
+ * meldingen-kern om (bijv. de verificatiecode bij ondertekenen). De tekst gaat als mail naar het
+ * testadres, zodat een tester een code toch kan lezen. Buiten testmodus: null.
+ */
+function kanaal_testmodus(string $kanaal, string $telefoon, string $tekst): ?array {
+    $naar = function_exists('mail_omleiden') ? mail_omleiden() : '';
+    if ($naar === '') return null;
+    try {
+        Mailer::verzend($naar, '', $kanaal . ' naar ' . $telefoon, '<p>' . nl2br(h($tekst)) . '</p>');
+    } catch (\Throwable $e) { error_log('kanaal_testmodus: ' . $e->getMessage()); }
+    return ['ok' => true, 'fout' => null];
+}
+
 function sms_verstuur(string $telefoon, string $tekst): bool {
     return sms_verstuur_res($telefoon, $tekst)['ok'];
 }
 
 /** Zelfde als sms_verstuur(), maar met de reden bij falen: ['ok'=>bool, 'fout'=>?string]. */
 function sms_verstuur_res(string $telefoon, string $tekst): array {
+    if ($t = kanaal_testmodus('SMS', $telefoon, $tekst)) return $t;
     if (!sms_actief()) return ['ok' => false, 'fout' => 'sms niet actief'];
     $nummer = telefoon_normaliseer($telefoon);
     if (!$nummer) return ['ok' => false, 'fout' => 'onherkenbaar nummer'];
@@ -169,6 +184,7 @@ function wa_verstuur(string $telefoon, string $tekst): bool {
 
 /** Zelfde als wa_verstuur(), maar met de reden bij falen: ['ok'=>bool, 'fout'=>?string]. */
 function wa_verstuur_res(string $telefoon, string $tekst): array {
+    if ($t = kanaal_testmodus('WhatsApp', $telefoon, $tekst)) return $t;
     if (!wa_actief()) return ['ok' => false, 'fout' => 'whatsapp niet actief'];
     $nummer = telefoon_normaliseer($telefoon); // E.164 met '+', precies wat WhatsReach wil
     if (!$nummer) return ['ok' => false, 'fout' => 'onherkenbaar nummer'];

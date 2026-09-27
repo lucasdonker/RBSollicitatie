@@ -105,17 +105,33 @@ require __DIR__ . '/layout_top.php';
         $check_namen = [
           'database' => 'Database', 'cron' => 'Cron (automatische taken)', 'mailwachtrij' => 'Mailwachtrij',
           'opschoning' => 'AVG-opschoning', 'mappen' => 'Mappen & rechten', 'configuratie' => 'Configuratie',
+          'berichten' => 'E-mail en testmodus', 'inloggen' => 'Inloggen (Authentik)',
           'kluis' => 'Kluis (versleutelde documenten)', 'zegel' => 'Documentzegel (PDF)',
           'snelheid' => 'Snel antwoorden (PHP-FPM)',
         ];
         foreach ($health['checks'] as $sleutel => $check):
           $ck = $check['status'];
+          $punten = $check['punten'] ?? [];
       ?>
       <div class="bh-sys-check">
         <span class="bh-healthicoon bh-sys-kleur <?= h($ck) ?>"><?= icoon($health_icoon[$ck], 15) ?></span>
         <div class="bh-vulling">
           <div class="bh-sys-checknaam"><?= h($check_namen[$sleutel] ?? $sleutel) ?></div>
+          <?php if ($punten): /* Per punt de tekst + een knop naar het juiste tabblad (health_punt()). */ ?>
+            <ul class="bh-instellen-lijst">
+              <?php foreach ($punten as $p): ?>
+                <li class="bh-instellen-punt <?= h($p['soort']) ?>">
+                  <span class="bh-instellen-tekst bh-sys-klein"><?= h($p['tekst']) ?></span>
+                  <a class="ds-btn ds-btn-zacht ds-btn-sm" href="<?= h($p['url']) ?>"><?= h($p['knop']) ?></a>
+                </li>
+              <?php endforeach; ?>
+            </ul>
+            <?php if ($sleutel === 'berichten' && function_exists('mail_omleiden') && mail_omleiden() !== ''): ?>
+              <div class="bh-sys-klein"><?= h(health_testmodus_tekst(mail_omleiden())) ?></div>
+            <?php endif; ?>
+          <?php else: ?>
           <div class="bh-sys-klein"><?= h($check['uitleg']) ?><?= !empty($check['hersteld']) ? ' <span class="bh-tekst-ok">(automatisch hersteld)</span>' : '' ?></div>
+          <?php endif; ?>
           <?php if ($sleutel === 'kluis'): ?><a href="<?= APP_URL ?>/admin/kluis.php" class="ds-btn ds-btn-zacht ds-btn-sm"><?= icoon('sleutel', 14) ?> Kluissleutel wisselen</a><?php endif; ?>
         </div>
       </div>

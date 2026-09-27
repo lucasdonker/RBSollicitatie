@@ -3,31 +3,87 @@
  * Paal 13 SMTP Mailer
  * Puur PHP SMTP implementatie — geen composer, geen dependencies
  * Ondersteunt: plain, STARTTLS, SSL/TLS, AUTH LOGIN, AUTH PLAIN
+ *
+ * Twee algemene hulpjes staan hier omdat dit bestand als eerste na config.php laadt:
+ *   config_ingevuld() / config_const()  — een {{PLAATSHOUDER}} uit config.template.php telt als leeg
+ *   mail_omleiden()                     — testmodus (MAIL_OMLEIDEN in config.php)
  */
+
+if (!function_exists('config_ingevuld')) {
+    /** Is dit een echt ingevulde waarde? Leeg of een {{PLAATSHOUDER}} uit het sjabloon telt niet. */
+    function config_ingevuld(string $waarde): bool {
+        $waarde = trim($waarde);
+        return $waarde !== '' && !str_contains($waarde, '{{');
+    }
+
+    /** Een constante uit config.php, of '' als hij ontbreekt of nog een plaatshouder is. */
+    function config_const(string $naam): string {
+        if (!defined($naam)) return '';
+        $v = (string)constant($naam);   // niet trimmen: een wachtwoord mag met een spatie eindigen
+        return config_ingevuld($v) ? $v : '';
+    }
+
+    /**
+     * Testmodus: het adres waar álle e-mail naartoe gaat, of '' als de modus uit staat.
+     * Bewust een constante in config.php en geen instelling: een teruggezette productiedatabase
+     * op de testomgeving mag hem nooit uitzetten. Een ongeldig adres telt als uit.
+     */
+    function mail_omleiden(): string {
+        $v = config_const('MAIL_OMLEIDEN');
+        return ($v !== '' && filter_var($v, FILTER_VALIDATE_EMAIL)) ? $v : '';
+    }
+}
 
 class Mailer
 {
     // ── Hoofd verzendmethode ──────────────────────────────────
-    /** True als SMTP is ingesteld (via beheer óf config.php). */
+    /** True als SMTP is ingesteld (via beheer óf config.php). Een plaatshouder telt niet. */
     public static function smtpActief(): bool {
-        if (function_exists('instelling') && instelling('smtp.host', '') !== '') return true;
-        return defined('SMTP_HOST') && SMTP_HOST !== '';
+        if (function_exists('instelling') && config_ingevuld(instelling('smtp.host', ''))) return true;
+        return config_const('SMTP_HOST') !== '';
+    }
+
+    /**
+     * Instelling uit de database (beheer), anders de constante uit config.php, anders $default.
+     * Plaatshouders ({{...}}) tellen als niet ingesteld.
+     */
+    private static function inst(string $sleutel, string $const, string $default = ''): string {
+        if (function_exists('instelling')) {
+            $v = instelling($sleutel, '');
+            if (config_ingevuld($v)) return $v;
+        }
+        $c = config_const($const);
+        return $c !== '' ? $c : $default;
     }
 
     /**
      * Puur verzenden (SMTP of mail()), ZONDER logregel. Dit is wat de centrale meldingen-kern
      * (includes/meldingen/verzend.php) gebruikt; die logt zelf in mail_log.
-     * @return array{ok:bool, fout:?string}
+     *
+     * Testmodus (MAIL_OMLEIDEN): het bericht gaat naar dat adres, met de echte ontvanger vooraan
+     * in het onderwerp. 'omgeleid' in het resultaat is dan het adres waar het heen ging.
+     * @return array{ok:bool, fout:?string, omgeleid:?string}
      */
     public static function verzend(string $naar, string $naam, string $onderwerp, string $html_body, array $bijlagen = []): array {
+        // Geen regeleinde in het adres: dat zou extra headers of SMTP-commando's kunnen injecteren.
+        // (Naam en onderwerp gaan base64-gecodeerd de header in.)
+        if (preg_match('/[\r\n]/', $naar)) {
+            return ['ok' => false, 'fout' => 'ongeldig e-mailadres', 'omgeleid' => null];
+        }
+        $test = mail_omleiden();
+        $omgeleid = $test !== '' ? $test : null;
+        if ($omgeleid !== null && strcasecmp($test, trim($naar)) !== 0) {
+            $onderwerp = '[TEST, voor ' . $naar . '] ' . $onderwerp;
+            $naar = $test;
+        }
         try {
             $ok = self::smtpActief()
                 ? self::viaSMTP($naar, $naam, $onderwerp, $html_body, $bijlagen)
-                : self::viaPhpMail($naar, $naam, $onderwerp, $html_body);
-            return ['ok' => (bool)$ok, 'fout' => $ok ? null : 'verzenden gaf false'];
+                : self::viaPhpMail($naar, $naam, $onderwerp, $html_body, $bijlagen);
+            return ['ok' => (bool)$ok, 'fout' => $ok ? null : 'verzenden gaf false', 'omgeleid' => $omgeleid];
         } catch (\Throwable $e) {
             error_log('[Mailer] Fout: ' . $e->getMessage());
-            return ['ok' => false, 'fout' => $e->getMessage()];
+            return ['ok' => false, 'fout' => $e->getMessage(), 'omgeleid' => $omgeleid];
         }
     }
 
@@ -53,6 +109,8 @@ class Mailer
             $code  = self::smtpActief() ? 'P13-M001' : 'P13-M002';
             p13_fout($code, "Mail ('{$onderwerp}') mislukt: {$reden}");
         }
+        // Testmodus: de omleiding staat bij een geslaagde verzending in foutmelding (vrij tekstveld).
+        if ($ok && !empty($r['omgeleid'])) $fout = 'testmodus: omgeleid naar ' . $r['omgeleid'];
 
         // Log in database
         try {
@@ -81,24 +139,89 @@ class Mailer
         return $bericht;
     }
 
+    /** Geldige bijlagen (bestaande, leesbare bestanden) als ['pad','naam','mime']. */
+    private static function bijlagenGeldig(array $bijlagen): array {
+        $uit = [];
+        foreach ($bijlagen as $b) {
+            $pad = is_array($b) ? ($b['pad'] ?? '') : $b;
+            if ($pad && is_file($pad) && is_readable($pad)) {
+                $uit[] = [
+                    'pad'  => $pad,
+                    'naam' => is_array($b) ? ($b['naam'] ?? basename($pad)) : basename($pad),
+                    'mime' => is_array($b) ? ($b['mime'] ?? 'application/octet-stream') : 'application/octet-stream',
+                ];
+            }
+        }
+        return $uit;
+    }
+
+    /**
+     * De MIME-inhoud, gedeeld door SMTP en mail(): tekst + HTML (multipart/alternative), met
+     * bijlagen eromheen als multipart/mixed. Zonder de adresheaders (From/To/Subject), want die
+     * geeft mail() apart mee.
+     * @return array{content_type:string, body:string}
+     */
+    public static function mimeInhoud(string $naam, string $onderwerp, string $body, array $bijlagen = []): array {
+        $boundary = md5(uniqid((string)mt_rand(), true));
+
+        // Plain text versie (strip HTML tags)
+        $plain = strip_tags(preg_replace('/<br\s*\/?>/i', "\n", $body));
+        $plain = html_entity_decode($plain, ENT_QUOTES, 'UTF-8');
+        $plain = preg_replace('/\n{3,}/', "\n\n", trim($plain));
+
+        // Het inhoudsdeel (tekst + HTML) — altijd multipart/alternative
+        $altBody =
+            "--{$boundary}\r\n" .
+            "Content-Type: text/plain; charset=UTF-8\r\n" .
+            "Content-Transfer-Encoding: quoted-printable\r\n" .
+            "\r\n" .
+            quoted_printable_encode($plain) . "\r\n" .
+            "--{$boundary}\r\n" .
+            "Content-Type: text/html; charset=UTF-8\r\n" .
+            "Content-Transfer-Encoding: quoted-printable\r\n" .
+            "\r\n" .
+            quoted_printable_encode(self::bereideHtmlVoor($naam, $onderwerp, $body)) . "\r\n" .
+            "--{$boundary}--\r\n";
+
+        $geldige_bijlagen = self::bijlagenGeldig($bijlagen);
+        if (!$geldige_bijlagen) {
+            return ['content_type' => "multipart/alternative; boundary=\"{$boundary}\"", 'body' => $altBody];
+        }
+
+        // multipart/mixed: eerst het alternative-deel, dan de bijlagen
+        $mixed = md5(uniqid((string)mt_rand(), true)) . 'mix';
+        $inhoud =
+            "--{$mixed}\r\n" .
+            "Content-Type: multipart/alternative; boundary=\"{$boundary}\"\r\n" .
+            "\r\n" .
+            $altBody;
+        foreach ($geldige_bijlagen as $bij) {
+            $data = base64_encode((string)file_get_contents($bij['pad']));
+            $data = chunk_split($data, 76, "\r\n");
+            $bnaam = '=?UTF-8?B?' . base64_encode($bij['naam']) . '?=';
+            $inhoud .=
+                "--{$mixed}\r\n" .
+                "Content-Type: {$bij['mime']}; name=\"{$bnaam}\"\r\n" .
+                "Content-Transfer-Encoding: base64\r\n" .
+                "Content-Disposition: attachment; filename=\"{$bnaam}\"\r\n" .
+                "\r\n" .
+                $data . "\r\n";
+        }
+        $inhoud .= "--{$mixed}--\r\n";
+        return ['content_type' => "multipart/mixed; boundary=\"{$mixed}\"", 'body' => $inhoud];
+    }
+
     // ── SMTP verzending ───────────────────────────────────────
     private static function viaSMTP(string $naar, string $naam, string $onderwerp, string $body, array $bijlagen = []): bool
     {
         // Instellingen: eerst uit de database (beheer), anders uit config.php als terugval.
-        $ci = function(string $sleutel, string $const, string $default = ''): string {
-            if (function_exists('instelling')) {
-                $v = instelling($sleutel, '');
-                if ($v !== '') return $v;
-            }
-            return defined($const) ? (string)constant($const) : $default;
-        };
-        $host     = $ci('smtp.host', 'SMTP_HOST');
-        $port     = (int)$ci('smtp.port', 'SMTP_PORT', '587');
-        $user     = $ci('smtp.user', 'SMTP_USER');
-        $pass     = $ci('smtp.pass', 'SMTP_PASS');
-        $encrypt  = strtolower($ci('smtp.encrypt', 'SMTP_ENCRYPT', 'tls'));
-        $from     = $ci('smtp.from', 'MAIL_FROM', $user);
-        $fromName = $ci('smtp.from_naam', 'MAIL_FROM_NAME', 'Paal 13');
+        $host     = self::inst('smtp.host', 'SMTP_HOST');
+        $port     = (int)self::inst('smtp.port', 'SMTP_PORT', '587');
+        $user     = self::inst('smtp.user', 'SMTP_USER');
+        $pass     = self::inst('smtp.pass', 'SMTP_PASS');
+        $encrypt  = strtolower(self::inst('smtp.encrypt', 'SMTP_ENCRYPT', 'tls'));
+        $from     = self::inst('smtp.from', 'MAIL_FROM', $user);
+        $fromName = self::inst('smtp.from_naam', 'MAIL_FROM_NAME', 'Paal 13');
         $timeout  = 15;
 
         // Verbinding openen
@@ -198,82 +321,20 @@ class Mailer
         $stuur("DATA");
 
         // Bouw MIME bericht
-        $boundary = md5(uniqid((string)mt_rand(), true));
-        $datum    = date('r');
-        $msgid    = '<' . md5(uniqid()) . '@paal13.com>';
-        $naamEnc  = '=?UTF-8?B?' . base64_encode($naam) . '?=';
-        $ondEnc   = '=?UTF-8?B?' . base64_encode($onderwerp) . '?=';
-        $vanEnc   = '=?UTF-8?B?' . base64_encode($fromName) . '?=';
-
-        // Plain text versie (strip HTML tags)
-        $plain = strip_tags(preg_replace('/<br\s*\/?>/i', "\n", $body));
-        $plain = html_entity_decode($plain, ENT_QUOTES, 'UTF-8');
-        $plain = preg_replace('/\n{3,}/', "\n\n", trim($plain));
-
-        // Het inhoudsdeel (tekst + HTML) — altijd multipart/alternative
-        $altBody =
-            "--{$boundary}\r\n" .
-            "Content-Type: text/plain; charset=UTF-8\r\n" .
-            "Content-Transfer-Encoding: quoted-printable\r\n" .
-            "\r\n" .
-            quoted_printable_encode($plain) . "\r\n" .
-            "--{$boundary}\r\n" .
-            "Content-Type: text/html; charset=UTF-8\r\n" .
-            "Content-Transfer-Encoding: quoted-printable\r\n" .
-            "\r\n" .
-            quoted_printable_encode(self::bereideHtmlVoor($naam, $onderwerp, $body)) . "\r\n" .
-            "--{$boundary}--\r\n";
-
-        // Geldige bijlagen verzamelen (bestaande, leesbare bestanden)
-        $geldige_bijlagen = [];
-        foreach ($bijlagen as $b) {
-            $pad = is_array($b) ? ($b['pad'] ?? '') : $b;
-            if ($pad && is_file($pad) && is_readable($pad)) {
-                $geldige_bijlagen[] = [
-                    'pad'  => $pad,
-                    'naam' => is_array($b) ? ($b['naam'] ?? basename($pad)) : basename($pad),
-                    'mime' => is_array($b) ? ($b['mime'] ?? 'application/octet-stream') : 'application/octet-stream',
-                ];
-            }
-        }
-
-        $headers =
-            "Date: {$datum}\r\n" .
-            "Message-ID: {$msgid}\r\n" .
+        $mime    = self::mimeInhoud($naam, $onderwerp, $body, $bijlagen);
+        $naamEnc = '=?UTF-8?B?' . base64_encode($naam) . '?=';
+        $ondEnc  = '=?UTF-8?B?' . base64_encode($onderwerp) . '?=';
+        $vanEnc  = '=?UTF-8?B?' . base64_encode($fromName) . '?=';
+        $bericht =
+            "Date: " . date('r') . "\r\n" .
+            "Message-ID: <" . md5(uniqid()) . "@paal13.com>\r\n" .
             "From: {$vanEnc} <{$from}>\r\n" .
             "To: {$naamEnc} <{$naar}>\r\n" .
             "Subject: {$ondEnc}\r\n" .
-            "MIME-Version: 1.0\r\n";
-
-        if ($geldige_bijlagen) {
-            // multipart/mixed: eerst het alternative-deel, dan de bijlagen
-            $mixed = md5(uniqid((string)mt_rand(), true)) . 'mix';
-            $bericht = $headers .
-                "Content-Type: multipart/mixed; boundary=\"{$mixed}\"\r\n" .
-                "\r\n" .
-                "--{$mixed}\r\n" .
-                "Content-Type: multipart/alternative; boundary=\"{$boundary}\"\r\n" .
-                "\r\n" .
-                $altBody;
-            foreach ($geldige_bijlagen as $bij) {
-                $data = base64_encode((string)file_get_contents($bij['pad']));
-                $data = chunk_split($data, 76, "\r\n");
-                $bnaam = '=?UTF-8?B?' . base64_encode($bij['naam']) . '?=';
-                $bericht .=
-                    "--{$mixed}\r\n" .
-                    "Content-Type: {$bij['mime']}; name=\"{$bnaam}\"\r\n" .
-                    "Content-Transfer-Encoding: base64\r\n" .
-                    "Content-Disposition: attachment; filename=\"{$bnaam}\"\r\n" .
-                    "\r\n" .
-                    $data . "\r\n";
-            }
-            $bericht .= "--{$mixed}--\r\n";
-        } else {
-            $bericht = $headers .
-                "Content-Type: multipart/alternative; boundary=\"{$boundary}\"\r\n" .
-                "\r\n" .
-                $altBody;
-        }
+            "MIME-Version: 1.0\r\n" .
+            "Content-Type: {$mime['content_type']}\r\n" .
+            "\r\n" .
+            $mime['body'];
 
         // RFC 5321 §4.5.2: regels die met een punt beginnen verdubbelen, anders eet de
         // mailserver die punt op. (quoted-printable breekt lange URL's af op 75 tekens;
@@ -290,17 +351,24 @@ class Mailer
     }
 
     // ── Fallback: PHP mail() ──────────────────────────────────
-    private static function viaPhpMail(string $naar, string $naam, string $onderwerp, string $body): bool
+    /**
+     * Zelfde MIME-bericht als via SMTP (tekst + HTML + bijlagen). Vroeger gingen bijlagen hier
+     * stil verloren terwijl de mail als verstuurd werd gelogd (getekende PDF's, ledenservice).
+     */
+    private static function viaPhpMail(string $naar, string $naam, string $onderwerp, string $body, array $bijlagen = []): bool
     {
-        $from     = defined('MAIL_FROM') ? MAIL_FROM : 'noreply@paal13.com';
-        $fromName = defined('MAIL_FROM_NAME') ? MAIL_FROM_NAME : 'Paal 13';
+        $from     = self::inst('smtp.from', 'MAIL_FROM', 'noreply@paal13.com');
+        $fromName = self::inst('smtp.from_naam', 'MAIL_FROM_NAME', 'Paal 13');
+        $reply    = function_exists('bestuur_email') && bestuur_email() !== '' ? bestuur_email() : $from;
+        $mime     = self::mimeInhoud($naam, $onderwerp, $body, $bijlagen);
         $headers  = implode("\r\n", [
             "MIME-Version: 1.0",
-            "Content-Type: text/html; charset=UTF-8",
-            "From: {$fromName} <{$from}>",
-            "Reply-To: " . (function_exists('bestuur_email') && bestuur_email() !== '' ? bestuur_email() : (defined('MAIL_BESTUUR') ? MAIL_BESTUUR : $from)),
+            "Content-Type: {$mime['content_type']}",
+            "From: =?UTF-8?B?" . base64_encode($fromName) . "?= <{$from}>",
+            "Reply-To: {$reply}",
         ]);
-        return @mail($naar, $onderwerp, self::htmlTemplate($naam, $onderwerp, $body), $headers);
+        $ondEnc = '=?UTF-8?B?' . base64_encode($onderwerp) . '?=';
+        return @mail($naar, $ondEnc, $mime['body'], $headers);
     }
 
     // ── Bereid HTML voor: wrap alleen als nog geen volledige HTML ──
@@ -331,18 +399,22 @@ class Mailer
 
     /**
      * Probeert een testmail te versturen en geeft het resultaat terug met foutmelding.
+     * In testmodus gaat ook de testmail naar het omleidadres.
      * @return array{ok:bool, melding:string}
      */
     public static function test(string $naar): array {
         if (!self::smtpActief()) {
             return ['ok' => false, 'melding' => 'Geen SMTP ingesteld. Vul eerst de servergegevens in (of het systeem gebruikt PHP mail(), wat op shared hosting vaak niet werkt).'];
         }
+        $onderwerp = 'SMTP-test Paal 13';
+        $test = mail_omleiden();
+        if ($test !== '' && strcasecmp($test, $naar) !== 0) { $onderwerp = '[TEST, voor ' . $naar . '] ' . $onderwerp; $naar = $test; }
         try {
             $body = '<p>Dit is een testmail van het Paal 13 sollicitatiesysteem.</p><p>Als je deze ontvangt, werken je SMTP-instellingen correct.</p>';
             $html = function_exists('mail_thema_wrapper')
                 ? mail_thema_wrapper($body, 'SMTP-test', 'Testmail', 'Je instellingen werken!')
                 : $body;
-            $ok = self::viaSMTP($naar, 'Test', 'SMTP-test Paal 13', $html);
+            $ok = self::viaSMTP($naar, 'Test', $onderwerp, $html);
             return $ok
                 ? ['ok' => true, 'melding' => "Testmail verstuurd naar {$naar}. Controleer je inbox (en spam)."]
                 : ['ok' => false, 'melding' => 'De testmail kon niet worden verstuurd (onbekende reden).'];

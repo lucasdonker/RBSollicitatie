@@ -27,7 +27,18 @@ define('MAIL_FROM',      'no-reply@paal13.com');
 define('MAIL_FROM_NAME', 'Reddingsbrigade Paal 13');
 define('MAIL_BESTUUR',   '{{MAIL_BESTUUR}}');
 
-// ── SMTP (leeg laten = PHP mail() als terugval) ──
+// ── Testmodus: alle berichten omleiden ──
+// Vul op de TESTOMGEVING een eigen e-mailadres in. Dan gaat ALLE e-mail naar dat adres (het onderwerp
+// begint met "[TEST, voor <echte ontvanger>]") en worden WhatsApp en sms NIET verstuurd: de tekst komt
+// als e-mail op dit adres binnen en het logboek zegt "testmodus". In het beheer staat dan bovenaan een balk.
+// Bewust hier en niet in de database: een teruggezette productiedatabase zet hem zo nooit uit.
+// Op PRODUCTIE altijd leeg laten.
+define('MAIL_OMLEIDEN', '');
+
+// ── SMTP ──
+// Leeg of {{...}} = niet ingesteld. Let op: smtp.host uit Instellingen › SMTP gaat vóór deze waarden,
+// en zonder SMTP valt het systeem terug op PHP mail() — ook dan gaat er dus gewoon mail de deur uit.
+// Wil je dat niet (testomgeving), gebruik dan MAIL_OMLEIDEN hierboven.
 define('SMTP_HOST',    '{{SMTP_HOST}}');
 define('SMTP_PORT',    587);
 define('SMTP_USER',    '{{SMTP_USER}}');

@@ -64,6 +64,10 @@ je die mee.
 - [ ] Open **Logboek**, filter op bron Fouten, en kijk wat er de afgelopen week gebeurde.
 - [ ] Zorg dat je de foutmails ontvangt: het adres staat bij **Instellingen › Afzender &
   adressen** (`mail.fout_email`, standaard website@paal13.com).
+- [ ] Controleer dat er een **uptime-monitor** op `api/status.php` van productie staat en dat
+  jij de alarmen krijgt (zie [Uptime-monitor](#uptime-monitor)).
+- [ ] Controleer op de **testomgeving** dat bovenaan elk beheerscherm de balk "Testmodus" staat
+  (`MAIL_OMLEIDEN` in `config.php`), en op **productie** dat die balk er níét staat.
 
 **Waar staat wat**
 
@@ -232,8 +236,11 @@ e-mailadres.
      kijk of er losse SQL-migraties uit `sql/` op "pending" staan. Normaal is dat nul; de laatste
      is `migratie_0022_blk_uitbreiding` (vroeger dubbel genummerd als `0002`; die naam bestaat
      niet meer).
-   - Kijk bij **Systeemgezondheid** of alle acht checks groen zijn. Kluis en zegel horen groen te
-     zijn; het zegelcertificaat wordt bij de eerste keer automatisch aangemaakt.
+   - Kijk bij **Systeemgezondheid** of alle elf checks groen zijn. Kluis en zegel horen groen te
+     zijn; het zegelcertificaat wordt bij de eerste keer automatisch aangemaakt. Staat er bij een
+     check een lijstje met knoppen (SMTP, Authentik, adressen, huisregels), werk dat dan af; op
+     Vandaag staat hetzelfde als **Nog in te stellen**. Op productie hoort "E-mail en testmodus"
+     groen te zijn: oranje met "Testmodus" betekent dat `MAIL_OMLEIDEN` nog gevuld is.
    - (eenmalig) Zoek in het serverlog (Plesk › Logs) of Logboek › Fouten de regel
      `otp_tokens.type omgezet van ENUM naar VARCHAR(30)`. Die hoort er **één keer** te staan.
      Zonder die omzetting wordt elke verificatiecode bij het ondertekenen afgekeurd.
@@ -302,6 +309,9 @@ e-mailadres.
 8. Log in via Authentik met een account in de groep `Sol-Admin`; dat account wordt automatisch
    beheerder met rol admin. Er is geen standaardaccount met wachtwoord meer.
 9. Stel de cron in en doorloop de rest van de checklist vanaf stap 8.
+10. Werk op Vandaag de lijst **Nog in te stellen** af (SMTP, adressen, huisregels, opschonen)
+    en zet een [uptime-monitor](#uptime-monitor) op `api/status.php`. Een testomgeving krijgt
+    `MAIL_OMLEIDEN` in `config.php`.
 
 Maprechten: `uploads/` schrijfbaar voor PHP; `DOCUMENTEN_MAP` schrijfbaar en buiten de webroot.
 Alle andere mappen alleen-lezen is prima.
@@ -317,8 +327,9 @@ Alle andere mappen alleen-lezen is prima.
 | `APP_URL` | Volledig webadres van deze omgeving, zonder slash aan het eind | Bepaalt test/productie, https-detectie en alle links in mails |
 | `MAIL_FROM`, `MAIL_FROM_NAME` | Afzender van alle e-mail | Moet een adres zijn op een domein met geldige SPF, DKIM en DMARC |
 | `MAIL_BESTUUR` | Terugval voor het bestuursadres | Het adres in Instellingen › Afzender & adressen gaat voor; de systeemcontrole kijkt in dezelfde volgorde |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_ENCRYPT` | Mailserver | Worden overschreven door Instellingen › E-mailserver als daar een host staat. Allebei leeg = PHP `mail()`, alleen als noodoplossing |
-| `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `OIDC_ISSUER`, `OIDC_SLUG` | Authentik-provider | Leeg = SSO uit; alleen wachtwoordlogin voor beheerders |
+| `MAIL_OMLEIDEN` | **Testmodus**: één e-mailadres waar álle e-mail naartoe gaat | Alleen op test en bij een hersteltest; op productie altijd leeg. Onderwerp krijgt `[TEST, voor <echte ontvanger>]`; WhatsApp en sms gaan niet de deur uit (de tekst komt als mail op dit adres, het logboek zegt "testmodus"). Bewust een constante en geen instelling: een teruggezette productiedatabase zet hem niet uit. Het beheer toont dan bovenaan een balk |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_ENCRYPT` | Mailserver | Worden overschreven door Instellingen › E-mailserver als daar een host staat. Allebei leeg (of nog `{{SMTP_HOST}}`) = PHP `mail()`, alleen als noodoplossing. Let op: ook dan gaat er gewoon mail de deur uit; tegenhouden doe je met `MAIL_OMLEIDEN` |
+| `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `OIDC_ISSUER`, `OIDC_SLUG` | Authentik-provider | Leeg (of nog een `{{…}}`-plaatshouder) = SSO uit; alleen wachtwoordlogin voor beheerders. De systeemcontrole waarschuwt |
 | `OIDC_REDIRECT_URI` | Callback voor het beheer | `<APP_URL>/admin/auth_callback.php`; het portaal gebruikt vast `<APP_URL>/portaal/auth_callback.php` |
 | `KLUIS_SLEUTEL` | Hoofdsleutel van de kluis, base64 van 32 bytes | Uniek per omgeving, kopie in de wachtwoordkluis. Alleen vervangen volgens [Kluissleutel wisselen](#kluissleutel-wisselen) |
 | `KLUIS_SLEUTEL_VERSIE` | Nummer van de sleutel | Begint op `1`; gaat alleen omhoog bij het wisselen van de sleutel, samen met `KLUIS_SLEUTEL_OUD` |
@@ -441,6 +452,33 @@ taken maakt (een lange dagrun houdt de berichten dan zeker niet op).
 De systeemcontrole, Vandaag en het cronblok in Instellingen tonen de stand per groep. Een groep
 die langer dan twee keer zijn interval stilligt (minimaal een kwartier) geeft een waarschuwing;
 langer dan zes keer (minimaal een half uur, dag: zes dagen) een fout.
+
+### Uptime-monitor
+
+Die meldingen zie je alleen als iemand het beheer opent. Zet daarom een externe uptime-monitor
+(UptimeRobot, Uptime Kuma, Better Stack of vergelijkbaar) op productie, elke 5 minuten:
+
+```
+GET https://sollicitatie.paal13.com/api/status.php
+Header: X-Cron-Token: <cron.token>
+```
+
+Kan de monitor geen header meesturen, gebruik dan `?token=<cron.token>` in het adres (dat komt
+wel in de access-log). Het is hetzelfde token als voor de cron; vernieuw je het, pas dan ook de
+monitor aan.
+
+| Antwoord | Betekenis |
+|---|---|
+| `200` + `"ok": true` | Taakronde liep de laatste 10 minuten en er hangt niets in de berichtenwachtrij |
+| `503` + `"ok": false` | Taakronde langer dan 10 minuten stil of nog nooit gedraaid, of berichten wachten langer dan een uur. `problemen` zegt welke |
+| `403` | Token ontbreekt of klopt niet |
+| `429` | Meer dan 30 verzoeken per minuut vanaf hetzelfde adres |
+| `503` + "niet ingesteld" | Er is nog geen cron-token (open Instellingen › Bewaren & opschonen) |
+
+Het antwoord bevat alleen tijden en tellingen (`cron_laatst`, `cron_groepen`, `wachtrij_wacht`,
+`wachtrij_vast`, `wachtrij_fout`, `testmodus`, `versie`), nooit persoonsgegevens. Mislukte
+berichten (`wachtrij_fout`, afgelopen 24 uur) geven bewust geen 503: één verkeerd adres is geen
+storing. Laat de monitor alarmeren naar ten minste twee mensen.
 
 ## Authentik (SSO)
 
@@ -685,9 +723,10 @@ persoonsgegevens hoort in allebei en in het verwerkingsregister.
 
 ## Systeemcontrole (health check)
 
-> **In het kort:** Beheer › Systeem & Updates › Systeemgezondheid voert negen checks uit en kan
+> **In het kort:** Beheer › Systeem & Updates › Systeemgezondheid voert elf checks uit en kan
 > een deel zelf herstellen. Ligt een van de drie cron-groepen stil, dan waarschuwt de check Cron
-> daarvoor.
+> daarvoor. Wat bij de eerste keer instellen nog openstaat, staat op Vandaag als **Nog in te
+> stellen**, elk punt met een knop naar het juiste tabblad.
 
 Knop **Controleren & repareren** draait de checks opnieuw en herstelt waar dat kan (vooral de
 database). Bovenaan het scherm staan daarnaast **Migraties uitvoeren** (de zelfherstelronde) en
@@ -699,12 +738,23 @@ bewerken).
 | Database | Alle tabellen en kolommen aanwezig | Ontbrekend onderdeel | Controleren & repareren; anders Migraties uitvoeren en het serverlog lezen |
 | Cron | Elke groep (snel, kwartier, dag) draaide op tijd | Waarschuwing als een groep langer dan 2× zijn interval stilligt (min. 15 min), fout na 6× (min. 30 min) of als hij nog nooit draaide | Plesk-taak `php cron/run.php` (elke minuut); bij curl de header `X-Cron-Token` en het token |
 | Snel antwoorden | PHP draait als FPM (of LiteSpeed) | Waarschuwing: elke bezoeker wacht op de verzending van berichten | PHP-handler in Plesk op een FPM-variant zetten |
-| Mailwachtrij | Niets ouder dan 1 uur in "wacht" | Berichten blijven hangen | Cron en E-mailserver-instellingen; Logboek › Berichten |
+| Mailwachtrij | Niets ouder dan 1 uur in "wacht", niets definitief mislukt in 24 uur | Berichten blijven hangen, of berichten staan na drie pogingen op "fout" (de ontvanger heeft ze nooit gehad) | Cron en E-mailserver-instellingen; Logboek › Berichten voor de reden |
 | Opschoning | AVG-opschoning < 3 dagen geleden | Fout als "Automatisch opschonen" uit staat; waarschuwing als hij nog nooit of langer geleden draaide | Opschonen aanzetten; draait de echte cron? |
 | Mappen | `uploads/` schrijfbaar | Niet schrijfbaar | Maprechten in Plesk |
-| Configuratie | Cron-token en bestuursadres gezet | Iets ontbreekt | Tabblad Bewaren & opschonen openen; bestuursadres in Instellingen › Afzender & adressen (of `MAIL_BESTUUR` in config) |
+| E-mail en testmodus | SMTP ingesteld, testmodus uit | Geen SMTP (mail gaat via PHP `mail()`, komt vaak niet aan); of `MAIL_OMLEIDEN` staat aan | Instellingen › E-mailserver; op productie `MAIL_OMLEIDEN` leegmaken |
+| Inloggen (Authentik) | `OIDC_CLIENT_ID` en `OIDC_ISSUER` ingevuld | Leeg of nog een `{{…}}`-plaatshouder: alleen de wachtwoord-noodingang werkt | `config.php`, zie [Authentik (SSO)](#authentik-sso) |
+| Configuratie | Cron-token, bestuursadres, adres penningmeester en ledenservice, huisregels-PDF | Iets ontbreekt. Zonder adres voor penningmeester of ledenservice gaan loondocumenten en lidmaatschapsinschrijvingen (met IBAN) naar het bestuursadres. Geen open seizoen staat er alleen ter informatie bij | Knop bij het punt; adressen in Instellingen › Afzender & adressen, huisregels in Instellingen › Algemeen |
 | Kluis | Werkt, documentenmap buiten webroot | Sleutel ontbreekt/ongeldig, map niet schrijfbaar of in webroot; gegevens nog op een oude sleutel, of `KLUIS_SLEUTEL_OUD` staat er nog terwijl niets hem meer nodig heeft | `KLUIS_SLEUTEL`, `DOCUMENTEN_MAP` in config; rechten van de map; [Kluissleutel wisselen](#kluissleutel-wisselen) |
 | Zegel | Certificaat geldig > 60 dagen | Ontbreekt, verloopt of verlopen | Wordt automatisch aangemaakt (10 jaar geldig); bij verlopen: `cert.pem` en `key.enc` in de zegelmap weghalen en een pagina openen |
+
+Het bestuursadres telt als ingesteld zodra het niet leeg en geen plaatshouder is; de standaard
+`bestuur@paal13.com` geeft bewust geen waarschuwing, want dat is het echte adres van de brigade.
+
+**Nog in te stellen** (Vandaag, alleen voor wie Systeem mag bewerken) verzamelt de punten uit
+Configuratie, E-mail, Inloggen en Opschoning: rood eerst, dan oranje, dan informatief. Een
+nieuwe installatie werk je van boven naar beneden af tot de lijst leeg is. De punten komen uit
+`health_nog_in_te_stellen()` in `includes/health.php`; een nieuw punt is één `health_punt()` in
+de check waar het bij hoort.
 
 Let op bij het zegel: een nieuw certificaat heeft een andere vingerafdruk. Eerder verzegelde PDF's
 blijven geldig; noteer de nieuwe vingerafdruk (staat in het Logboek bij
@@ -747,8 +797,12 @@ bewust: een gelekte back-up zonder sleutel is waardeloos voor een aanvaller.
 1. Maak in Plesk een tijdelijke database en zet de productie-back-up daarin terug.
 2. Koppel die aan een tijdelijk subdomein met een kopie van de productie-`config.php`, met eigen
    `DB_NAME` en `APP_URL`, en een kopie van `DOCUMENTEN_MAP` op een eigen pad.
-3. **Zet vóór je een pagina opent de mail uit:** laat `SMTP_HOST` leeg, en stel géén cron in.
-   Een cron verstuurt anders wachtende berichten aan echte sollicitanten.
+3. **Zet vóór je een pagina opent de testmodus aan:** vul in de gekopieerde `config.php`
+   `MAIL_OMLEIDEN` met je eigen adres, en stel géén cron in. `SMTP_HOST` leeglaten helpt níét:
+   de SMTP-instelling uit de teruggezette database gaat voor, en zonder SMTP valt het systeem
+   terug op PHP `mail()` — dan gaan wachtende berichten gewoon naar echte sollicitanten. Met
+   `MAIL_OMLEIDEN` gaat alle e-mail naar jou en worden WhatsApp en sms niet verstuurd. Controleer
+   bij het openen dat bovenaan het beheer de balk "Testmodus" staat voordat je iets anders doet.
 4. Log in, draai de systeemcontrole (kluis moet groen zijn) en open als admin één document in
    een loondossier. Lukt dat, dan kloppen sleutel, zout en bestanden samen.
 5. Verwijder daarna database, subdomein en kopieën. Noteer datum en uitkomst voor het bestuur.

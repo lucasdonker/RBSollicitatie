@@ -99,14 +99,20 @@ function personen_kanaal_auto_setup(): void {
     } catch (\Throwable $e) { error_log('personen_kanaal_auto_setup: ' . $e->getMessage()); }
 }
 
-/** Het bestuursadres: instelling, anders de constante uit config.php. */
+/** Het bestuursadres: instelling, anders de constante uit config.php (een {{PLAATSHOUDER}} telt als leeg). */
 function bestuur_email(): string {
     $v = function_exists('instelling') ? trim(instelling('mail.bestuur_email', '')) : '';
     if ($v !== '') return $v;
-    return defined('MAIL_BESTUUR') ? (string)MAIL_BESTUUR : '';
+    if (function_exists('config_const')) return trim(config_const('MAIL_BESTUUR'));
+    $c = defined('MAIL_BESTUUR') ? trim((string)MAIL_BESTUUR) : '';
+    return str_contains($c, '{{') ? '' : $c;
 }
 
-/** Het adres van de penningmeester (loonadministratie): instelling, anders het bestuursadres. */
+/**
+ * Het adres van de penningmeester (loonadministratie): instelling, anders het bestuursadres.
+ * Die terugval stuurt loondocumenten (IBAN, BSN) naar de bestuursmailbox; de systeemcontrole
+ * waarschuwt daarom zolang dit adres leeg is (health_check_configuratie).
+ */
 function penningmeester_email(): string {
     $v = function_exists('instelling') ? trim(instelling('mail.penningmeester_email', '')) : '';
     return $v !== '' ? $v : bestuur_email();
@@ -486,7 +492,9 @@ function melding_verzend_item(array $m): array {
         if ($kanaal !== 'email' && $poging > 1) { $fouten[] = "$kanaal: overgeslagen bij herhaling"; continue; }
         $r = ['ok' => false, 'fout' => 'onbekend kanaal'];
         try {
-            if ($kanaal === 'whatsapp') {
+            if (($kanaal === 'whatsapp' || $kanaal === 'sms') && function_exists('mail_omleiden') && mail_omleiden() !== '') {
+                $r = melding_testmodus_kort($kanaal, (string)$m['telefoon'], (string)$m['onderwerp'], $tekst_kort);
+            } elseif ($kanaal === 'whatsapp') {
                 $r = melding_kanaal_whatsapp((string)$m['telefoon'], $tekst_kort);
             } elseif ($kanaal === 'sms') {
                 $r = (function_exists('sms_actief') && sms_actief() && $m['telefoon'])
@@ -504,11 +512,13 @@ function melding_verzend_item(array $m): array {
                         $r2 = Mailer::verzend((string)$m['naar_email'], (string)($m['naar_naam'] ?? ''), (string)$m['onderwerp'], $body2, []);
                         if (!empty($r2['ok'])) { $fouten[] = 'email: bijlage geweigerd door mailserver, verstuurd met downloadlink'; $r = $r2; }
                     }
+                    // Testmodus: de omleiding komt in foutmelding (vrij tekstveld; status blijft 'verstuurd').
+                    if (!empty($r['ok']) && !empty($r['omgeleid'])) $r['notitie'] = 'email: testmodus, omgeleid naar ' . $r['omgeleid'];
                 }
                 else $r = ['ok' => false, 'fout' => 'mailer ontbreekt'];
             }
         } catch (\Throwable $e) { $r = ['ok' => false, 'fout' => $e->getMessage()]; }
-        if (!empty($r['ok'])) { $gelukt = $kanaal; break; }
+        if (!empty($r['ok'])) { if (!empty($r['notitie'])) $fouten[] = $r['notitie']; $gelukt = $kanaal; break; }
         $fouten[] = $kanaal . ': ' . substr((string)($r['fout'] ?? 'mislukt'), 0, 160);
         if ($fallback_van === null) $fallback_van = $kanaal;
         if ($kanaal === 'whatsapp') melding_wa_fout_registreer();
@@ -636,6 +646,21 @@ function melding_bijlagen_kort_tekst(array $kort): string {
 function melding_resultaat($r): array {
     if (is_array($r)) return ['ok' => !empty($r['ok']), 'fout' => $r['fout'] ?? null];
     return ['ok' => (bool)$r, 'fout' => $r ? null : 'mislukt'];
+}
+
+/**
+ * Testmodus (MAIL_OMLEIDEN): een WhatsApp- of sms-bericht gaat niet echt de deur uit. Het telt als
+ * afgehandeld (anders volgt een e-mailterugval of een foutmelding per bericht) en de tekst gaat als
+ * e-mail naar het omleidadres, zodat je de inhoud toch ziet. De 'notitie' komt in mail_log.foutmelding.
+ */
+function melding_testmodus_kort(string $kanaal, string $telefoon, string $onderwerp, string $tekst): array {
+    $test  = mail_omleiden();
+    $label = $kanaal === 'sms' ? 'SMS' : 'WhatsApp';
+    $html  = '<p><strong>' . $label . '-bericht, niet verstuurd (testmodus)</strong></p><p>'
+           . nl2br(htmlspecialchars($tekst, ENT_QUOTES, 'UTF-8')) . '</p>';
+    $r = class_exists('Mailer') ? Mailer::verzend($test, '', '[TEST, ' . $label . ' voor ' . $telefoon . '] ' . $onderwerp, $html) : ['ok' => false];
+    return ['ok' => true, 'fout' => null,
+            'notitie' => $kanaal . ': testmodus, niet verstuurd' . (!empty($r['ok']) ? ' (tekst gemaild naar ' . $test . ')' : '')];
 }
 
 /** WhatsApp met uurlimiet en pauze na herhaalde fouten (WhatsReach-blokkeringsrisico). */

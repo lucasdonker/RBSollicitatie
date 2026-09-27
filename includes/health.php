@@ -8,6 +8,10 @@
  *
  * Elke check geeft terug: status ('ok' | 'waarschuwing' | 'fout'), een leesbare uitleg, en
  * of er automatisch iets hersteld is. Niets hierin mag ooit een pagina breken.
+ *
+ * Een check kan ook 'punten' hebben: losse dingen die nog ingesteld moeten worden, elk als
+ * ['sleutel','tekst','url','knop','soort' => fout|waarschuwing|info]. Samen vormen die de lijst
+ * "Nog in te stellen" (health_nog_in_te_stellen()) op Vandaag en bij Systeem. Geen HTML hier.
  */
 
 if (!function_exists('health_check')) {
@@ -24,6 +28,8 @@ function health_check(bool $repareer = false): array {
     $checks['mailwachtrij'] = health_check_mailwachtrij();
     $checks['opschoning'] = health_check_opschoning();
     $checks['mappen']     = health_check_mappen();
+    $checks['berichten']  = health_check_berichten();
+    $checks['inloggen']   = health_check_inloggen();
     $checks['configuratie'] = health_check_configuratie();
     $checks['kluis']      = health_check_kluis();
     $checks['zegel']      = health_check_zegel();
@@ -104,24 +110,36 @@ function health_check_cron(): array {
     return ['status' => $status, 'uitleg' => implode(' ', $problemen) . ' Controleer de geplande taak in Plesk (php cron/run.php, elke minuut).', 'hersteld' => false];
 }
 
-/** Mailwachtrij: blijven er berichten hangen? */
-function health_check_mailwachtrij(): array {
+/**
+ * Stand van de mailwachtrij, ook voor api/status.php: wachtend, vast (wacht/bezig langer dan een
+ * uur) en definitief mislukt in de afgelopen 24 uur. null als de wachtrij niet te lezen is.
+ * @return ?array{wacht:int, vast:int, fout_24u:int}
+ */
+function health_wachtrij_stand(): ?array {
     try {
         $db = db();
-        // Tabel bestaat mogelijk niet
-        if (function_exists('db_tabel_bestaat') && !db_tabel_bestaat($db, 'mail_queue')) {
-            return ['status' => 'ok', 'uitleg' => 'Geen mailwachtrij in gebruik.', 'hersteld' => false];
-        }
-        // Berichten die al lang wachten (meer dan 1 uur, nog niet verzonden)
-        $q = $db->query("SELECT COUNT(*) FROM mail_queue WHERE status IN ('wacht','bezig') AND aangemaakt_op < DATE_SUB(NOW(), INTERVAL 1 HOUR)");
-        $vast = (int)$q->fetchColumn();
-        if ($vast > 0) {
-            return ['status' => 'waarschuwing', 'uitleg' => "$vast e-mail(s) wachten al meer dan een uur. Draait de cron en klopt de SMTP-instelling?", 'hersteld' => false];
-        }
-        return ['status' => 'ok', 'uitleg' => 'Mailwachtrij loopt door.', 'hersteld' => false];
-    } catch (\Exception $e) {
-        return ['status' => 'ok', 'uitleg' => 'Mailwachtrij niet te controleren (mogelijk niet in gebruik).', 'hersteld' => false];
+        if (function_exists('db_tabel_bestaat') && !db_tabel_bestaat($db, 'mail_queue')) return null;
+        $r = $db->query("SELECT
+                SUM(status = 'wacht') AS wacht,
+                SUM(status IN ('wacht','bezig') AND aangemaakt_op < DATE_SUB(NOW(), INTERVAL 1 HOUR)) AS vast,
+                SUM(status = 'fout' AND aangemaakt_op > DATE_SUB(NOW(), INTERVAL 24 HOUR)) AS fout_24u
+            FROM mail_queue")->fetch();
+        return ['wacht' => (int)($r['wacht'] ?? 0), 'vast' => (int)($r['vast'] ?? 0), 'fout_24u' => (int)($r['fout_24u'] ?? 0)];
+    } catch (\Throwable $e) {
+        return null;
     }
+}
+
+/** Mailwachtrij: blijven er berichten hangen, of zijn er definitief mislukt? */
+function health_check_mailwachtrij(): array {
+    $s = health_wachtrij_stand();
+    if ($s === null) return ['status' => 'ok', 'uitleg' => 'Mailwachtrij niet te controleren (mogelijk niet in gebruik).', 'hersteld' => false];
+    $punten = [];
+    if ($s['vast'] > 0) $punten[] = "{$s['vast']} bericht(en) wachten al meer dan een uur. Draait de cron en klopt de SMTP-instelling?";
+    // Na drie pogingen staat een bericht op 'fout' en wordt het niet meer geprobeerd: de ontvanger heeft het nooit gehad.
+    if ($s['fout_24u'] > 0) $punten[] = "{$s['fout_24u']} bericht(en) definitief mislukt in de afgelopen 24 uur. De reden staat in het logboek (bron Berichten).";
+    if ($punten) return ['status' => 'waarschuwing', 'uitleg' => implode(' ', $punten), 'hersteld' => false];
+    return ['status' => 'ok', 'uitleg' => 'Mailwachtrij loopt door.', 'hersteld' => false];
 }
 
 /** Opschoning: is die recent gedraaid? */
@@ -129,7 +147,8 @@ function health_check_opschoning(): array {
     // Uit = rood: dan wordt niets verwijderd, terwijl de privacyverklaring en de afwijzingsmail
     // termijnen beloven. Dat is geen technisch probleem maar een AVG-probleem.
     if (function_exists('instelling_bool') && !instelling_bool('bewaar.actief', false)) {
-        return ['status' => 'fout', 'uitleg' => health_opschonen_uit_tekst(), 'hersteld' => false];
+        return ['status' => 'fout', 'uitleg' => health_opschonen_uit_tekst(), 'hersteld' => false,
+                'punten' => [health_punt('opschonen', 'fout', 'Automatisch opschonen staat uit: er wordt niets verwijderd, terwijl de privacyverklaring termijnen belooft.', 'bewaren', 'Opschonen aanzetten')]];
     }
     $laatste = function_exists('instelling') ? instelling('bewaar.laatste_run', '') : '';
     if ($laatste === '') {
@@ -230,22 +249,109 @@ function health_check_zegel(): array {
     return ['status' => 'ok', 'uitleg' => $uitleg, 'hersteld' => false];
 }
 
-/** Configuratie: zijn de basiszaken ingesteld? */
+/**
+ * Eén punt voor de lijst "Nog in te stellen". $waar is een instellingentabblad ('mail') of een
+ * pad vanaf de app-root ('/admin/seizoen.php').
+ */
+function health_punt(string $sleutel, string $soort, string $tekst, string $waar, string $knop): array {
+    $basis = defined('APP_URL') ? APP_URL : '';
+    $url = str_starts_with($waar, '/') ? $basis . $waar : $basis . '/admin/instellingen.php?tab=' . rawurlencode($waar);
+    return ['sleutel' => $sleutel, 'soort' => $soort, 'tekst' => $tekst, 'url' => $url, 'knop' => $knop];
+}
+
+/** Check-uitkomst uit een lijst punten: de zwaarste soort telt; 'info' maakt de check niet oranje. */
+function health_uit_punten(array $punten, string $ok_tekst): array {
+    $status = 'ok';
+    foreach ($punten as $p) {
+        if ($p['soort'] === 'fout') $status = 'fout';
+        elseif ($p['soort'] === 'waarschuwing' && $status === 'ok') $status = 'waarschuwing';
+    }
+    $uitleg = $punten ? implode(' ', array_column($punten, 'tekst')) : $ok_tekst;
+    return ['status' => $status, 'uitleg' => $uitleg, 'hersteld' => false, 'punten' => $punten];
+}
+
+/**
+ * Berichten: gaat e-mail via SMTP, en staat de testmodus (MAIL_OMLEIDEN) aan?
+ * De testmodus is geen instelpunt maar een stand; hij staat daarom niet in "Nog in te stellen".
+ */
+function health_check_berichten(): array {
+    $punten = [];
+    if (class_exists('Mailer') && !Mailer::smtpActief()) {
+        $punten[] = health_punt('smtp', 'waarschuwing', 'Er is geen SMTP-server ingesteld: e-mail gaat via PHP mail() en komt op gedeelde hosting vaak niet aan of in de spam.', 'smtp', 'SMTP instellen');
+    }
+    $uit = health_uit_punten($punten, 'E-mail gaat via de ingestelde SMTP-server.');
+    $test = function_exists('mail_omleiden') ? mail_omleiden() : '';
+    if ($test !== '') {
+        $uit['uitleg'] = health_testmodus_tekst($test) . ($punten ? ' ' . $uit['uitleg'] : '');
+        if ($uit['status'] === 'ok') $uit['status'] = 'waarschuwing';
+    }
+    return $uit;
+}
+
+/** De zin over de testmodus. Eén tekst voor de topbalk, de systeemcontrole en Vandaag. */
+function health_testmodus_tekst(string $adres): string {
+    return 'Testmodus: alle e-mail gaat naar ' . $adres . '; WhatsApp en sms worden niet verstuurd (MAIL_OMLEIDEN in config.php).';
+}
+
+/** Inloggen in het beheer: is Authentik (OIDC) ingesteld? Zonder werkt alleen de wachtwoord-noodingang. */
+function health_check_inloggen(): array {
+    $punten = [];
+    if (function_exists('authentik_actief') && !authentik_actief()) {
+        $punten[] = health_punt('oidc', 'waarschuwing', 'Inloggen via Authentik is niet ingesteld (OIDC_CLIENT_ID en OIDC_ISSUER in config.php): het beheer werkt dan alleen met de wachtwoord-noodingang.', 'authentik', 'Authentik bekijken');
+    }
+    return health_uit_punten($punten, 'Inloggen via Authentik is ingesteld.');
+}
+
+/**
+ * Configuratie: de basiszaken die bij de eerste keer instellen horen.
+ *
+ * Het bestuursadres telt als ingesteld zodra het niet leeg en geen {{PLAATSHOUDER}} is. De standaard
+ * bestuur@paal13.com is bewust géén waarschuwing: dat is het echte adres van de brigade.
+ */
 function health_check_configuratie(): array {
-    $ontbreekt = [];
-    if (function_exists('instelling')) {
-        if (instelling('cron.token', '') === '') $ontbreekt[] = 'cron-token';
-        // SMTP alleen waarschuwen als er een mailwachtrij is
+    $punten = [];
+    $inst = fn(string $k, string $d = '') => function_exists('instelling') ? trim(instelling($k, $d)) : $d;
+
+    if ($inst('cron.token') === '') {
+        // Het tabblad maakt het token vanzelf aan zodra je het opent.
+        $punten[] = health_punt('cron_token', 'waarschuwing', 'Er is geen cron-token: de taakronde via HTTP en de uptime-monitor (api/status.php) werken dan niet.', 'bewaren', 'Token aanmaken');
     }
     // Zelfde volgorde als het verzenden: de instelling mail.bestuur_email, anders MAIL_BESTUUR.
-    $bestuur = function_exists('bestuur_email') ? bestuur_email()
-             : (trim(function_exists('instelling') ? instelling('mail.bestuur_email', '') : '') ?: (defined('MAIL_BESTUUR') ? (string)MAIL_BESTUUR : ''));
-    if ($bestuur === '') $ontbreekt[] = 'bestuur-e-mailadres';
-
-    if ($ontbreekt) {
-        return ['status' => 'waarschuwing', 'uitleg' => 'Nog niet ingesteld: ' . implode(', ', $ontbreekt) . '.', 'hersteld' => false];
+    $bestuur = function_exists('bestuur_email') ? bestuur_email() : $inst('mail.bestuur_email');
+    if (!config_ingevuld($bestuur)) {
+        $punten[] = health_punt('bestuur', 'waarschuwing', 'Er is geen bestuursadres: meldingen voor het bestuur worden niet verstuurd.', 'mail', 'Adres invullen');
     }
-    return ['status' => 'ok', 'uitleg' => 'Basisconfiguratie compleet.', 'hersteld' => false];
+    if ($inst('mail.penningmeester_email') === '') {
+        $punten[] = health_punt('penningmeester', 'waarschuwing', 'Er is geen adres voor de penningmeester: loondocumenten (IBAN, BSN) gaan nu naar het bestuursadres.', 'mail', 'Adres invullen');
+    }
+    if ($inst('mail.ledenservice_email') === '') {
+        $punten[] = health_punt('ledenservice', 'waarschuwing', 'Er is geen adres voor de ledenservice: inschrijvingen voor het lidmaatschap (met IBAN) gaan nu naar het bestuursadres.', 'mail', 'Adres invullen');
+    }
+    // Huisregels horen bij het takenpakket voor aangenomen lifeguards; staat dat uit, dan maakt het niet uit.
+    if ($inst('auto.kennismakingspakket', '1') === '1' && (function_exists('instelling_int') ? instelling_int('taken.huisregels_bijlage_id', 0) : 0) <= 0) {
+        $punten[] = health_punt('huisregels', 'waarschuwing', 'Er is geen huisregels-PDF gekozen: aangenomen lifeguards zien bij die taak "volgt binnenkort".', 'algemeen', 'Huisregels kiezen');
+    }
+    // Informatief: geen fout, wel handig om te weten bij de eerste keer instellen.
+    $sz = function_exists('actief_seizoen') ? actief_seizoen() : null;
+    if (!$sz || ($sz['status'] ?? '') !== 'open') {
+        $punten[] = health_punt('seizoen', 'info', 'Er is geen open seizoen: aanmelden staat dicht.', '/admin/seizoen.php', 'Seizoen');
+    }
+    return health_uit_punten($punten, 'Basisconfiguratie compleet.');
+}
+
+/**
+ * De lijst "Nog in te stellen": alle punten uit de lichte checks (geen database-schema, geen kluis
+ * of zegel), zwaarste eerst. Goedkoop genoeg voor Vandaag.
+ * @return array<int,array{sleutel:string,soort:string,tekst:string,url:string,knop:string}>
+ */
+function health_nog_in_te_stellen(): array {
+    $punten = [];
+    foreach (['health_check_opschoning', 'health_check_berichten', 'health_check_inloggen', 'health_check_configuratie'] as $fn) {
+        try { foreach ($fn()['punten'] ?? [] as $p) $punten[] = $p; } catch (\Throwable $e) {}
+    }
+    $gewicht = ['fout' => 0, 'waarschuwing' => 1, 'info' => 2];
+    usort($punten, fn($a, $b) => ($gewicht[$a['soort']] ?? 3) <=> ($gewicht[$b['soort']] ?? 3));
+    return $punten;
 }
 
 }
