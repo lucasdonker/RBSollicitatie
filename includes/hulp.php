@@ -56,7 +56,7 @@ function hulp_handleidingen(): array {
     return [
         'beheer'         => ['titel' => 'Handleiding beheer',            'voor' => 'Bestuur: van seizoen opzetten tot aangenomen, scherm voor scherm', 'bestand' => 'handleiding_beheer',         'module' => null],
         'landingspaginas'=> ['titel' => "Handleiding wervingspagina's",  'voor' => 'Bestuur: eigen wervingspagina\'s maken en publiceren',             'bestand' => 'landingspaginas',             'module' => null],
-        'penningmeester' => ['titel' => 'Handleiding penningmeester',    'voor' => 'Penningmeester: loondossiers inzien, verwerken en bewaren',       'bestand' => 'handleiding_penningmeester',  'module' => null],
+        'penningmeester' => ['titel' => 'Handleiding penningmeester',    'voor' => 'Penningmeester: van beschikbaarheid en loonplanning tot het gesprek en het loondossier',       'bestand' => 'handleiding_penningmeester',  'module' => null],
         'sollicitant'    => ['titel' => 'Jouw sollicitatie bij Paal 13', 'voor' => 'Sollicitanten en ouders: uitleg over het portaal',                'bestand' => 'handleiding_sollicitant',     'module' => null],
         'verwerkingsregister' => ['titel' => 'Verwerkingsregister (AVG)', 'voor' => 'Bestuur en admin: welke persoonsgegevens we verwerken, waarom, hoe lang en met wie', 'bestand' => 'verwerkingsregister', 'module' => 'instellingen'],
         'systeembeheer'  => ['titel' => 'Runbook systeembeheer',         'voor' => 'Technisch beheer: installeren, uitrollen, back-up en herstel',    'bestand' => 'runbook_systeembeheer',       'module' => 'systeem'],

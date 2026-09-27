@@ -89,7 +89,7 @@ beheerder kan ze per rol aanpassen (zie [Beheerders en rechten](#beheerders-en-r
 |---|---|---|---|
 | **Begeleider** | Sol-Begeleider | Op de selectiedag inchecken en beoordelen (cijfers en observaties), in het trainingsweekend aanwezigheid afvinken en observaties noteren. Geen toegang tot persoonsgegevens of dossiers. | Vandaag, Selectiedag, Trainingsweekend, Dekking |
 | **Bestuur** | Bestuur | De hele werving: uitnodigen, selectiedag indelen en beoordelen, nabespreken en bellen, aannemen, berichten, seizoen en instellingen. | Alles behalve Loondossiers, Beheerders & rechten en Logboek |
-| **Penningmeester** | Sol-Penningmeester | Het loondossier: loonheffing, kopie ID en bankpas inzien, downloaden, als verwerkt markeren en na de bewaarplicht vernietigen. De loonplanning bekijken en bewerken (kosten, scenario's, CSV). Sollicitanten alleen bekijken. | Vandaag, Sollicitanten, Loonplanning, Loondossiers |
+| **Penningmeester** | Sol-Penningmeester | Het loondossier: loonheffing, kopie ID en bankpas inzien, downloaden, als verwerkt markeren en na de bewaarplicht vernietigen. De loonplanning bekijken en bewerken (kosten, scenario's, Excel-export). Sollicitanten alleen bekijken. | Vandaag, Sollicitanten, Loonplanning, Loondossiers |
 | **Beheerder** (technisch: admin) | Sol-Admin | Alles, ook beheerders, rechten, logboek en systeem. Kan zichzelf nooit buitensluiten. | Alles |
 
 Goed om te weten over de begeleider: met de standaardrechten (Selectiedag: alleen lezen) kan een
@@ -1114,9 +1114,9 @@ bellijst is leeg".
 
 ## Trainingsweekend
 
-**Waar:** Kandidaten › Trainingsweekend, met vier stappen: Voorbereiden, Inchecken, Beoordelen en
-Gesprekken.  
-**Wie:** de eerste drie: bestuur, beheerder en begeleiders. Gesprekken: alleen bestuur en beheerder.
+**Waar:** Kandidaten › Trainingsweekend, met zes stappen: Voorbereiden, Groepen, Inchecken,
+Beoordelen, Evaluatie en Gesprekken.  
+**Wie:** de eerste vier: bestuur, beheerder en begeleiders. Evaluatie en Gesprekken: alleen bestuur en beheerder.
 
 > **In het kort:** vooraf zie je wie er komt. Op het weekend checken sollicitanten zelf in op een
 > tablet, en schrijven begeleiders op hun telefoon op wat opvalt. Daarna heeft iedereen een gesprek
@@ -1225,7 +1225,7 @@ penningmeester en beheerder.
 | Gezondheidsverklaring (ouder tekent) | Ouder of verzorger, via een link per mail | Zodra de minderjarige de oudergegevens heeft ingevuld |
 | Intake ouder | Ouder of verzorger | Zodra de oudergegevens bekend zijn |
 | Loonheffingsformulier | Sollicitant zelf, ook onder de 18 | Bij aannemen (kennismakingspakket) |
-| Inschrijving als lid | Sollicitant zelf, ook onder de 18 | Bij aannemen, als er nog geen verenigingsaccount is |
+| Inschrijving als lid | Vanaf 18 de sollicitant zelf; onder de 18 de ouder of verzorger via een link per mail (ook de SEPA-machtiging, als rekeninghouder) | Bij aannemen, als er nog geen verenigingsaccount is |
 
 De grens van 18 jaar geldt voor het tekenen; dat is een andere grens dan de minimumleeftijd van 16
 voor de aanmelding. De gezondheidsverklaring is één jaar geldig vanaf ondertekening. Elk getekend

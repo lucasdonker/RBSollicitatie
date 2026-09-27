@@ -237,8 +237,10 @@ kwartier. Heb je een verkeerd e-mailadres ingevuld? Klik bij de taak "Gegevens o
 **Wijzigen** en pas het aan. De mail gaat dan naar het nieuwe adres.
 
 Het loonheffingsformulier (na het aannemen) onderteken je wél zelf, ook als je 15, 16 of 17 bent.
-Dat schrijft de Belastingdienst zo voor. De inschrijving als lid onderteken je ook zelf; ben je
-jonger dan 18, dan vul je daarin ook de gegevens van je ouder in.
+Dat schrijft de Belastingdienst zo voor. De inschrijving als lid van de vereniging tekent je ouder
+of verzorger als je jonger bent dan 18 (net als de gezondheidsverklaring): die krijgt een mail met
+een eigen link, controleert je gegevens en geeft zo nodig ook de machtiging voor de contributie. In
+je portaal zie je die taak onder "Wacht op ouder". Ben je 18 of ouder, dan teken je zelf.
 
 ## Aangenomen: het takenpakket
 
