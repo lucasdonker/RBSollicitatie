@@ -260,8 +260,13 @@ function aanmeld_stappen_labels(int $aantal = 3): array {
 }
 
 /**
- * Wervingsoverzicht: per bron hoeveel aanmeldingen en hoeveel daarvan aangenomen.
+ * Wervingsoverzicht: per bron hoeveel aanmeldingen en hoeveel daarvan aangenomen, en per bron de
+ * campagnes (bron_code "<bron>/<campagne>", zie werving.php).
  * Leest de sollicitaties zelf, niet de events — een aanmelding telt pas als hij er echt is.
+ *
+ * Retour, gesorteerd op aanmeldingen: [['bron' => label, 'bron_code', 'aanmeldingen', 'aangenomen',
+ *   'campagnes' => [['campagne', 'aanmeldingen', 'aangenomen'], …],
+ *   'zonder'    => ['aanmeldingen', 'aangenomen']], …]   ('zonder' = zonder campagne binnen die bron)
  */
 function pag_werving_overzicht(?int $seizoen_id = null): array {
     try {
@@ -270,18 +275,53 @@ function pag_werving_overzicht(?int $seizoen_id = null): array {
         $args = [];
         if ($seizoen_id) { $where .= " AND s.seizoen_id = ?"; $args[] = $seizoen_id; }
         $q = db()->prepare("
-            SELECT COALESCE(s.bron_label, s.bron_code) AS bron,
-                   s.bron_code,
+            SELECT s.bron_code,
+                   MIN(s.bron_label) AS bron_label,
                    COUNT(*) AS aanmeldingen,
                    SUM(CASE WHEN s.fase = 'aangenomen' THEN 1 ELSE 0 END) AS aangenomen
             FROM sollicitaties s
             $where
-            GROUP BY s.bron_code, bron
-            ORDER BY aanmeldingen DESC
+            GROUP BY s.bron_code
         ");
         $q->execute($args);
-        return $q->fetchAll();
+        $rijen = $q->fetchAll();
     } catch (\Throwable $e) { return []; }
+
+    $per = [];
+    foreach ($rijen as $r) {
+        $delen = explode('/', (string)$r['bron_code'], 2);
+        $basis = $delen[0];
+        $camp  = $delen[1] ?? '';
+        $n = (int)$r['aanmeldingen'];
+        $a = (int)$r['aangenomen'];
+        if (!isset($per[$basis])) {
+            $per[$basis] = ['bron' => '', 'bron_code' => $basis, 'aanmeldingen' => 0, 'aangenomen' => 0,
+                            'campagnes' => [], 'zonder' => ['aanmeldingen' => 0, 'aangenomen' => 0]];
+        }
+        $per[$basis]['aanmeldingen'] += $n;
+        $per[$basis]['aangenomen']   += $a;
+
+        // Label van de bron: bij voorkeur van een aanmelding zonder campagne; anders dat van een
+        // campagne zonder het achtervoegsel " · <campagne>".
+        $label = (string)($r['bron_label'] ?? '');
+        if ($camp !== '' && str_ends_with($label, ' · ' . $camp)) $label = substr($label, 0, -strlen(' · ' . $camp));
+        if ($label !== '' && ($per[$basis]['bron'] === '' || $camp === '')) $per[$basis]['bron'] = $label;
+
+        if ($camp === '') {
+            $per[$basis]['zonder'] = ['aanmeldingen' => $n, 'aangenomen' => $a];
+        } else {
+            $per[$basis]['campagnes'][] = ['campagne' => $camp, 'aanmeldingen' => $n, 'aangenomen' => $a];
+        }
+    }
+
+    $op_aantal = fn($x, $y) => $y['aanmeldingen'] <=> $x['aanmeldingen'];
+    foreach ($per as $k => $b) {
+        if ($b['bron'] === '') $per[$k]['bron'] = $b['bron_code'];
+        usort($per[$k]['campagnes'], $op_aantal);
+    }
+    $uit = array_values($per);
+    usort($uit, $op_aantal);
+    return $uit;
 }
 
 /**

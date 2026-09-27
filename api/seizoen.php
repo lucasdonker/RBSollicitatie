@@ -12,14 +12,8 @@ require_once __DIR__ . '/_basis.php';
 api_preflight();
 api_vereis_sleutel();
 
-// De website kijkt vooruit: het seizoen met de aanmelding open, anders het nieuwste (dat is het
-// komende seizoen zodra het is aangemaakt). actief_seizoen() is voor het beheer en blijft bij het
-// lopende seizoen zolang daar nog sollicitaties in zitten — voor de website zijn dat oude datums.
-$seizoen = actief_seizoen();
-if (!$seizoen || ($seizoen['status'] ?? '') !== 'open') {
-    try { $seizoen = db()->query("SELECT * FROM seizoenen ORDER BY id DESC LIMIT 1")->fetch() ?: $seizoen; }
-    catch (\Throwable $e) { /* terugval: actief_seizoen() */ }
-}
+// De website kijkt vooruit (zie seizoen_voor_werving() in includes/functions.php).
+$seizoen = seizoen_voor_werving();
 
 if (!$seizoen) {
     api_json([
@@ -44,6 +38,7 @@ $open = ($seizoen['status'] ?? '') === 'open';
 $publiek = [
     'naam'                     => $seizoen['naam'] ?? null,
     'status'                   => $seizoen['status'] ?? null,
+    'aanmelden_tot'            => $seizoen['aanmelden_tot'] ?? null,
 
     'datum_selectiedag'        => $seizoen['datum_selectiedag'] ?? null,
     'locatie_selectiedag'      => $seizoen['locatie_selectiedag'] ?? null,

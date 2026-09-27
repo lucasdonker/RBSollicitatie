@@ -32,6 +32,7 @@ function seizoen_kolom_definities(): array {
         'datum_werk_eind'          => 'DATE DEFAULT NULL',
         'hoofdseizoen_start_week'  => 'INT DEFAULT NULL',
         'hoofdseizoen_eind_week'   => 'INT DEFAULT NULL',
+        'aanmelden_tot'            => 'DATE DEFAULT NULL',   // sollicitatiedeadline (wervingspagina's, vacature voor Google)
     ];
 }
 

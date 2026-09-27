@@ -30,6 +30,7 @@ Wervingspagina's (`paginas`) nodig; dat hebben standaard het bestuur en de admin
 
 > **In het kort:** pagina aanmaken, ontwerp met `[[formulier]]` uploaden, rapport bevestigen,
 > status op Gepubliceerd. Dan staat de pagina op `https://sollicitatie.paal13.com/p/<adres>`.
+> Datums en loon komen via markeringen uit het seizoen, dus de pagina veroudert niet.
 
 **Je eerste wervingspagina in 6 stappen:**
 
@@ -70,13 +71,37 @@ Andere markeringen die je kunt gebruiken:
 | Markering | Wordt |
 |---|---|
 | `[[formulier]]` | Het aanmeldformulier |
-| `[[seizoen]]` | De naam van het huidige seizoen, bijvoorbeeld "zomer 2027" |
+| `[[seizoen]]` | De naam van het seizoen, bijvoorbeeld "zomer 2027" |
+| `[[selectiedag_datum]]` | De selectiedag, bijvoorbeeld "zaterdag 10 april 2027" |
+| `[[trainingsweekend_datum]]` | Het trainingsweekend, bijvoorbeeld "vrijdag 30 april t/m zondag 2 mei 2027" (of één dag) |
+| `[[werkperiode]]` | De werkperiode, bijvoorbeeld "1 juni t/m 31 augustus 2027" |
+| `[[aanmelden_tot]]` | De sollicitatiedeadline, bijvoorbeeld "15 maart 2027" |
+| `[[uurloon_vanaf]]` | Het laagste uurloon vanaf 16 jaar, bijvoorbeeld "€ 4,97" (zonder vakantietoeslag) |
+| `[[salaristabel]]` | Een tabel met het uurloon per leeftijd (juni en juli–september), met een regel over de vakantietoeslag eronder |
+| `[[vacature_schema]]` | Onzichtbaar: de vacature voor Google (zie [De vacature in Google](#de-vacature-in-google)). Zet hem in de `<head>` |
 | `[[aanmeld_url]]` | Het adres van het formulier op deze pagina, handig voor een eigen knop ("Meld je aan") |
 | `[[bron]]` | De bron-code van deze pagina |
 | `[[pagina_url]]` | Het volledige adres van deze pagina, bijvoorbeeld `https://sollicitatie.paal13.com/p/zomer-2027`. Nodig voor `og:url`, `og:image` (`[[pagina_url]]/deel-foto.jpg`) en structured data: daar werkt een los bestandsnaam niet |
 
 Een markering die je verkeerd typt, blijft gewoon zichtbaar op de pagina staan. Zie je
 `[[formulir]]` staan, dan weet je meteen wat eraan scheelt.
+
+### Datums en loon uit het seizoen
+
+Zet datums en bedragen **nooit letterlijk** in het ontwerp, maar gebruik de markeringen hierboven.
+Dan veroudert de pagina niet: volgend jaar staan er vanzelf de nieuwe datums en de nieuwe lonen.
+
+- De datums komen uit **Seizoen** in het beheer: het seizoen waarvan de aanmelding open staat, of
+  anders het nieuwste (het komende seizoen, zodra je dat hebt aangemaakt). De deadline vul je daar in
+  bij **Aanmelden kan tot**. Dat veld sluit het formulier niet: dat blijft "Aanmelding sluiten".
+- Het loon komt uit **Instellingen › Lonen & budget**, van het kalenderjaar van het seizoen. Het is
+  het wettelijke minimum(jeugd)loon per uur, zonder vakantietoeslag.
+- Is iets nog niet ingevuld, dan staat er "wordt nog bekendgemaakt".
+
+De salaristabel begint bij 16 jaar. De hoogste leeftijden met hetzelfde loon worden één regel,
+bijvoorbeeld "21 jaar en ouder". Voor de opmaak in het ontwerp (bijvoorbeeld in Claude Design):
+de tabel heeft de klasse `p13-salaris`, met een `<caption>`, kolomkoppen en per rij de leeftijd
+als rijkop; de regel eronder heeft de klasse `p13-salaris-noot`.
 
 ### Afbeeldingen
 
@@ -254,6 +279,23 @@ inloggen.
 Op de testomgeving is een pagina nooit vindbaar, ook niet met het vinkje aan: anders concurreert
 test met de echte site in de zoekresultaten.
 
+### De vacature in Google
+
+Zet `[[vacature_schema]]` in de `<head>` van het ontwerp. Daar komt dan een vacature voor Google
+Jobs ("Lifeguard (strandwacht)" in Callantsoog), met de werkperiode, de selectiedag, het
+trainingsweekend en het loon per leeftijd uit het seizoen. Je ziet er op de pagina zelf niets van.
+
+De vacature staat er alleen als:
+
+- de pagina **Gepubliceerd** is en **Mag gevonden worden via Google** aan staat (dus nooit op de
+  testomgeving);
+- de aanmelding van het seizoen **open** staat;
+- de deadline (**Aanmelden kan tot**) nog niet voorbij is. Zonder deadline geldt de selectiedag.
+
+Daarna is de markering leeg en **verloopt de vacature vanzelf** in Google; je hoeft niets weg te
+halen. Opent de aanmelding volgend jaar weer, dan staat hij er vanzelf opnieuw, met de nieuwe
+gegevens. Controleer een gepubliceerde pagina één keer met de test voor rich results van Google.
+
 In het overzicht staat **Geen ontwerp** bij een pagina waarop nog geen versie live staat.
 
 ---
@@ -303,10 +345,34 @@ dus je ziet later precies welke pagina welke aanmeldingen heeft opgeleverd, en h
 uiteindelijk zijn aangenomen.
 
 Dat overzicht staat onderaan het overzicht van wervingspagina's, onder **Waar komen aanmeldingen
-vandaan?**: per bron het aantal aanmeldingen, het aantal aangenomen en het aandeel.
+vandaan?**: per bron het aantal aanmeldingen, het aantal aangenomen en het aandeel. Kwamen er
+aanmeldingen binnen via een campagnelink, dan staan de campagnes eronder, elk met hun eigen
+aantallen, plus een regel "zonder campagne" voor de rest.
 
-Gebruik je het gewone aanmeldformulier voor meerdere advertenties, dan kun je de bron ook in het
-adres meegeven: `https://sollicitatie.paal13.com/aanmelden.php?bron=instagram-mei`.
+### Campagnes en QR-codes
+
+Wil je weten welke poster, flyer of advertentie iets oplevert, gebruik dan **dezelfde pagina** met
+een campagne erachter: `https://sollicitatie.paal13.com/p/zomer-2027?bron=poster-csg-2027`.
+Een aanmelding via die link telt gewoon mee voor de pagina (de cijfers en de trechter van de
+pagina blijven kloppen), en in het overzicht zie je hem terug onder die campagne. Werkt een
+advertentieplatform met `utm_campaign` of `utm_source`, dan wordt die gebruikt als er geen
+`?bron=` is.
+
+Een campagnenaam bestaat uit kleine letters, cijfers en koppeltekens, maximaal 40 tekens. Andere
+tekens worden vanzelf een koppelteken ("Poster CSG 2027" wordt `poster-csg-2027`).
+
+Je hoeft de link niet zelf te maken. Op het scherm van een pagina staat het blok **Delen en
+meten**: vul een campagne in en klik op **Link maken**. Je krijgt de volledige link (met
+**Kopiëren**) en een QR-code om te downloaden: **SVG** voor drukwerk (blijft scherp op elk formaat)
+en, als de server het kan, een **PNG**. De QR-code wordt op onze eigen server gemaakt; er gaat niets
+naar een andere dienst. Scan hem altijd even met je telefoon voordat je iets laat drukken, en wijzig
+daarna het adres van de pagina niet meer.
+
+Het canonical-adres voor Google blijft altijd zonder `?bron=`, dus campagnelinks leveren geen
+dubbele pagina's op in de zoekresultaten.
+
+Gebruik je het gewone aanmeldformulier voor meerdere advertenties, dan kun je de bron ook daar in
+het adres meegeven: `https://sollicitatie.paal13.com/aanmelden.php?bron=instagram-mei`.
 
 Het veld **Doelgroep** bij "Gegevens" is alleen voor jezelf; het staat in het overzicht achter het
 adres.

@@ -16,8 +16,9 @@ if (!function_exists('pag_formulier_html')) {
 /**
  * De verwerking van een ingestuurd formulier.
  * Retour: ['ok'=>bool, 'fout'=>string, 'code'=>string] — bij ok volgt een redirect (PRG).
+ * $campagne: al geschoond (pag_campagne_uit); leeg = geen campagne. Zie werving.php.
  */
-function pag_formulier_verwerk(array $pagina, array $post): array {
+function pag_formulier_verwerk(array $pagina, array $post, string $campagne = ''): array {
     $bron = (string)($pagina['bron_code'] ?: $pagina['slug']);
     $pid  = (int)$pagina['id'];
 
@@ -68,9 +69,12 @@ function pag_formulier_verwerk(array $pagina, array $post): array {
                 'fout' => 'Aanmelden lukt op dit moment niet. Probeer het later opnieuw of mail ons.'];
     }
 
+    // De paginabron blijft voorop staan (per-pagina-cijfers kloppen); de campagne komt erachter.
+    $campagne = pag_campagne_schoon($campagne);
     $invoer = $post;
-    $invoer['bron_code']  = $bron;
-    $invoer['bron_label'] = (string)$pagina['titel'];
+    unset($invoer['p13_campagne']);
+    $invoer['bron_code']  = pag_bron_met_campagne($bron, $campagne);
+    $invoer['bron_label'] = (string)$pagina['titel'] . ($campagne !== '' ? ' · ' . $campagne : '');
     $res = sollicitatie_aanmaken($invoer, ['ip' => $_SERVER['REMOTE_ADDR'] ?? '', 'via' => 'landingspagina']);
     if (!empty($res['ok'])) return ['ok' => true, 'fout' => '', 'code' => ''];
 
@@ -100,9 +104,11 @@ function pag_succes_html(): string {
  * Het formulier als HTML.
  * $staat: ['fout'=>string, 'code'=>string, 'waarden'=>array] — bij een fout blijven de
  * ingevulde gegevens staan en krijgt de bezoeker een melding bovenaan.
+ * $campagne: uit het adres van dít verzoek (pag_campagne_uit), nooit uit een cache. Gaat mee
+ * als verborgen veld p13_campagne, zodat hij de POST overleeft.
  */
-function pag_formulier_html(array $pagina, array $staat = []): string {
-    return aanmeld_formulier_html([
+function pag_formulier_html(array $pagina, array $staat = [], string $campagne = ''): string {
+    $html = aanmeld_formulier_html([
         'bron_code' => (string)($pagina['bron_code'] ?: $pagina['slug']),
         'waarden'   => (array)($staat['waarden'] ?? []),
         'fout'      => (string)($staat['fout'] ?? ''),
@@ -112,6 +118,16 @@ function pag_formulier_html(array $pagina, array $staat = []): string {
         'markeer'   => true,   // hidden p13_form=1, waar p.php op let
         'prefix'    => 'pf',
     ]);
+
+    // Het gedeelde formulier (includes/aanmeldformulier.php) kent geen campagne; het veld komt
+    // direct na de p13_form-markering. Geen markering (formulier dicht) = geen veld.
+    $campagne = pag_campagne_schoon($campagne);
+    $haak = '<input type="hidden" name="p13_form" value="1">';
+    $pos = strpos($html, $haak);
+    if ($campagne !== '' && $pos !== false) {
+        $html = substr_replace($html, $haak . "\n        " . '<input type="hidden" name="p13_campagne" value="' . h($campagne) . '">', $pos, strlen($haak));
+    }
+    return $html;
 }
 
 }

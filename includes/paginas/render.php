@@ -13,6 +13,10 @@
  *    beheerders bij een pagina die nog niet gepubliceerd is
  */
 
+// Wervingsmarkeringen, vacature en campagnes (werving.php) horen bij de weergave; hier geladen
+// zodat de moduleloader (includes/paginas.php) niet hoeft te veranderen.
+require_once __DIR__ . '/werving.php';
+
 if (!function_exists('pag_render')) {
 
 function pag_publieke_url(array $pagina): string {
@@ -99,12 +103,16 @@ function pag_asset_versie(string $relatief): string {
  * Markeringen in het ontwerp vervangen.
  * Onbekende markeringen laten we staan: dan ziet de beheerder zijn typefout op de pagina,
  * in plaats van dat er stilletjes niets gebeurt.
+ *
+ * Seizoensgegevens komen uit seizoen_voor_werving() (niet actief_seizoen(), zie werving.php);
+ * de datum-, loon- en vacaturemarkeringen staan in pag_werving_markeringen().
+ * $versie: de getoonde versie (voor datePosted in de vacature).
  */
-function pag_placeholders(string $html, array $pagina, string $formulier_html): string {
-    $seizoen = function_exists('actief_seizoen') ? actief_seizoen() : null;
+function pag_placeholders(string $html, array $pagina, string $formulier_html, ?array $versie = null): string {
+    $seizoen = function_exists('seizoen_voor_werving') ? seizoen_voor_werving() : null;
     $bron = (string)($pagina['bron_code'] ?: $pagina['slug']);
 
-    return strtr($html, [
+    return strtr($html, pag_werving_markeringen($html, $pagina, $versie) + [
         '[[formulier]]'   => $formulier_html,
         '[[seizoen]]'     => h((string)($seizoen['naam'] ?? '')),
         '[[aanmeld_url]]' => h(pag_publieke_url($pagina) . '#aanmelden'),
@@ -167,7 +175,7 @@ function pag_render(array $pagina, string $ontwerp, array $opties = []): string 
     $formulier = (string)($opties['formulier'] ?? '');
     $met_formulier = $formulier !== '' && str_contains($ontwerp, '[[formulier]]');
 
-    $html = pag_placeholders($ontwerp, $pagina, $formulier);
+    $html = pag_placeholders($ontwerp, $pagina, $formulier, $opties['versie'] ?? null);
 
     // Een fragment zonder eigen documentstructuur krijgt een minimale, geldige wrapper.
     if (!preg_match('/<html\b/i', $html)) {

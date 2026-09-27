@@ -133,8 +133,11 @@ function pag_via_slug(string $slug): ?array {
  * Pagina bij een bron-code, voor herkomst-attributie bij een aanmelding.
  * Eerst op bron_code (de expliciete koppeling), pas daarna op slug — de oude module deed
  * "bron_code = ? OR slug = ?" in één query en gaf bij een botsing een willekeurige rij.
+ * Een campagne erachter ("<bron>/<campagne>", zie werving.php) telt niet mee voor de pagina.
  */
 function pag_via_bron(string $bron_code): ?array {
+    $delen = explode('/', $bron_code, 2);
+    $bron_code = $delen[0];
     if ($bron_code === '') return null;
     try {
         pag_auto_setup();

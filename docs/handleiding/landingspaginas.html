@@ -150,7 +150,9 @@ laadt</a></li>
 <p><strong>In het kort:</strong> pagina aanmaken, ontwerp met
 <code>[[formulier]]</code> uploaden, rapport bevestigen, status op
 Gepubliceerd. Dan staat de pagina op
-<code>https://sollicitatie.paal13.com/p/&lt;adres&gt;</code>.</p>
+<code>https://sollicitatie.paal13.com/p/&lt;adres&gt;</code>. Datums en
+loon komen via markeringen uit het seizoen, dus de pagina veroudert
+niet.</p>
 </blockquote>
 <p><strong>Je eerste wervingspagina in 6 stappen:</strong></p>
 <ol type="1">
@@ -211,7 +213,39 @@ geplakt, want dat zou het ontwerp verpesten.</p>
 </tr>
 <tr>
 <td><code>[[seizoen]]</code></td>
-<td>De naam van het huidige seizoen, bijvoorbeeld &quot;zomer 2027&quot;</td>
+<td>De naam van het seizoen, bijvoorbeeld &quot;zomer 2027&quot;</td>
+</tr>
+<tr>
+<td><code>[[selectiedag_datum]]</code></td>
+<td>De selectiedag, bijvoorbeeld &quot;zaterdag 10 april 2027&quot;</td>
+</tr>
+<tr>
+<td><code>[[trainingsweekend_datum]]</code></td>
+<td>Het trainingsweekend, bijvoorbeeld &quot;vrijdag 30 april t/m zondag 2
+mei 2027&quot; (of één dag)</td>
+</tr>
+<tr>
+<td><code>[[werkperiode]]</code></td>
+<td>De werkperiode, bijvoorbeeld &quot;1 juni t/m 31 augustus 2027&quot;</td>
+</tr>
+<tr>
+<td><code>[[aanmelden_tot]]</code></td>
+<td>De sollicitatiedeadline, bijvoorbeeld &quot;15 maart 2027&quot;</td>
+</tr>
+<tr>
+<td><code>[[uurloon_vanaf]]</code></td>
+<td>Het laagste uurloon vanaf 16 jaar, bijvoorbeeld &quot;€ 4,97&quot; (zonder
+vakantietoeslag)</td>
+</tr>
+<tr>
+<td><code>[[salaristabel]]</code></td>
+<td>Een tabel met het uurloon per leeftijd (juni en juli–september), met
+een regel over de vakantietoeslag eronder</td>
+</tr>
+<tr>
+<td><code>[[vacature_schema]]</code></td>
+<td>Onzichtbaar: de vacature voor Google (zie <a href="#de-vacature-in-google">De vacature in Google</a>). Zet hem in de
+<code>&lt;head&gt;</code></td>
 </tr>
 <tr>
 <td><code>[[aanmeld_url]]</code></td>
@@ -235,6 +269,31 @@ werkt een los bestandsnaam niet</td>
 <p>Een markering die je verkeerd typt, blijft gewoon zichtbaar op de
 pagina staan. Zie je <code>[[formulir]]</code> staan, dan weet je meteen
 wat eraan scheelt.</p>
+<h2 id="datums-en-loon-uit-het-seizoen">Datums en loon uit het
+seizoen</h2>
+<p>Zet datums en bedragen <strong>nooit letterlijk</strong> in het
+ontwerp, maar gebruik de markeringen hierboven. Dan veroudert de pagina
+niet: volgend jaar staan er vanzelf de nieuwe datums en de nieuwe
+lonen.</p>
+<ul>
+<li>De datums komen uit <strong>Seizoen</strong> in het beheer: het
+seizoen waarvan de aanmelding open staat, of anders het nieuwste (het
+komende seizoen, zodra je dat hebt aangemaakt). De deadline vul je daar
+in bij <strong>Aanmelden kan tot</strong>. Dat veld sluit het formulier
+niet: dat blijft &quot;Aanmelding sluiten&quot;.</li>
+<li>Het loon komt uit <strong>Instellingen › Lonen &amp;
+budget</strong>, van het kalenderjaar van het seizoen. Het is het
+wettelijke minimum(jeugd)loon per uur, zonder vakantietoeslag.</li>
+<li>Is iets nog niet ingevuld, dan staat er &quot;wordt nog
+bekendgemaakt&quot;.</li>
+</ul>
+<p>De salaristabel begint bij 16 jaar. De hoogste leeftijden met
+hetzelfde loon worden één regel, bijvoorbeeld &quot;21 jaar en ouder&quot;. Voor
+de opmaak in het ontwerp (bijvoorbeeld in Claude Design): de tabel heeft
+de klasse <code>p13-salaris</code>, met een
+<code>&lt;caption&gt;</code>, kolomkoppen en per rij de leeftijd als
+rijkop; de regel eronder heeft de klasse
+<code>p13-salaris-noot</code>.</p>
 <h2 id="afbeeldingen">Afbeeldingen</h2>
 <p>Upload afbeeldingen los bij de pagina (JPG, PNG, GIF of WebP,
 standaard maximaal 5 MB per stuk) en verwijs ernaar met alleen de
@@ -439,6 +498,26 @@ op Gepubliceerd, dan gaat de voorpagina gewoon naar het inloggen.</p>
 <p>Op de testomgeving is een pagina nooit vindbaar, ook niet met het
 vinkje aan: anders concurreert test met de echte site in de
 zoekresultaten.</p>
+<h2 id="de-vacature-in-google">De vacature in Google</h2>
+<p>Zet <code>[[vacature_schema]]</code> in de <code>&lt;head&gt;</code>
+van het ontwerp. Daar komt dan een vacature voor Google Jobs (&quot;Lifeguard
+(strandwacht)&quot; in Callantsoog), met de werkperiode, de selectiedag, het
+trainingsweekend en het loon per leeftijd uit het seizoen. Je ziet er op
+de pagina zelf niets van.</p>
+<p>De vacature staat er alleen als:</p>
+<ul>
+<li>de pagina <strong>Gepubliceerd</strong> is en <strong>Mag gevonden
+worden via Google</strong> aan staat (dus nooit op de
+testomgeving);</li>
+<li>de aanmelding van het seizoen <strong>open</strong> staat;</li>
+<li>de deadline (<strong>Aanmelden kan tot</strong>) nog niet voorbij
+is. Zonder deadline geldt de selectiedag.</li>
+</ul>
+<p>Daarna is de markering leeg en <strong>verloopt de vacature
+vanzelf</strong> in Google; je hoeft niets weg te halen. Opent de
+aanmelding volgend jaar weer, dan staat hij er vanzelf opnieuw, met de
+nieuwe gegevens. Controleer een gepubliceerde pagina één keer met de
+test voor rich results van Google.</p>
 <p>In het overzicht staat <strong>Geen ontwerp</strong> bij een pagina
 waarop nog geen versie live staat.</p>
 <hr />
@@ -492,9 +571,36 @@ je ziet later precies welke pagina welke aanmeldingen heeft opgeleverd,
 en hoeveel daarvan uiteindelijk zijn aangenomen.</p>
 <p>Dat overzicht staat onderaan het overzicht van wervingspagina&#39;s,
 onder <strong>Waar komen aanmeldingen vandaan?</strong>: per bron het
-aantal aanmeldingen, het aantal aangenomen en het aandeel.</p>
+aantal aanmeldingen, het aantal aangenomen en het aandeel. Kwamen er
+aanmeldingen binnen via een campagnelink, dan staan de campagnes
+eronder, elk met hun eigen aantallen, plus een regel &quot;zonder campagne&quot;
+voor de rest.</p>
+<h2 id="campagnes-en-qr-codes">Campagnes en QR-codes</h2>
+<p>Wil je weten welke poster, flyer of advertentie iets oplevert,
+gebruik dan <strong>dezelfde pagina</strong> met een campagne erachter:
+<code>https://sollicitatie.paal13.com/p/zomer-2027?bron=poster-csg-2027</code>.
+Een aanmelding via die link telt gewoon mee voor de pagina (de cijfers
+en de trechter van de pagina blijven kloppen), en in het overzicht zie
+je hem terug onder die campagne. Werkt een advertentieplatform met
+<code>utm_campaign</code> of <code>utm_source</code>, dan wordt die
+gebruikt als er geen <code>?bron=</code> is.</p>
+<p>Een campagnenaam bestaat uit kleine letters, cijfers en koppeltekens,
+maximaal 40 tekens. Andere tekens worden vanzelf een koppelteken
+(&quot;Poster CSG 2027&quot; wordt <code>poster-csg-2027</code>).</p>
+<p>Je hoeft de link niet zelf te maken. Op het scherm van een pagina
+staat het blok <strong>Delen en meten</strong>: vul een campagne in en
+klik op <strong>Link maken</strong>. Je krijgt de volledige link (met
+<strong>Kopiëren</strong>) en een QR-code om te downloaden:
+<strong>SVG</strong> voor drukwerk (blijft scherp op elk formaat) en,
+als de server het kan, een <strong>PNG</strong>. De QR-code wordt op
+onze eigen server gemaakt; er gaat niets naar een andere dienst. Scan
+hem altijd even met je telefoon voordat je iets laat drukken, en wijzig
+daarna het adres van de pagina niet meer.</p>
+<p>Het canonical-adres voor Google blijft altijd zonder
+<code>?bron=</code>, dus campagnelinks leveren geen dubbele pagina&#39;s op
+in de zoekresultaten.</p>
 <p>Gebruik je het gewone aanmeldformulier voor meerdere advertenties,
-dan kun je de bron ook in het adres meegeven:
+dan kun je de bron ook daar in het adres meegeven:
 <code>https://sollicitatie.paal13.com/aanmelden.php?bron=instagram-mei</code>.</p>
 <p>Het veld <strong>Doelgroep</strong> bij &quot;Gegevens&quot; is alleen voor
 jezelf; het staat in het overzicht achter het adres.</p>

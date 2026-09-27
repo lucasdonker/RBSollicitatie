@@ -79,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     datum_tw_start=?, datum_tw_eind=?, locatie_tw=?, tw_verzameltijd=?, tw_begintijd=?, tw_eindtijd=?,
                     adres_tw=?, tw_meenemen=?,
                     datum_werk_start=?, datum_werk_eind=?,
-                    hoofdseizoen_start_week=?, hoofdseizoen_eind_week=?
+                    hoofdseizoen_start_week=?, hoofdseizoen_eind_week=?, aanmelden_tot=?
                     WHERE id=?")
                    ->execute([
                        $_POST['naam'],
@@ -102,6 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                        $_POST['datum_werk_eind'] ?: null,
                        (int)($_POST['hoofdseizoen_start_week'] ?? 0) ?: null,
                        (int)($_POST['hoofdseizoen_eind_week'] ?? 0) ?: null,
+                       preg_match('/^\d{4}-\d{2}-\d{2}$/', (string)($_POST['aanmelden_tot'] ?? '')) ? $_POST['aanmelden_tot'] : null,
                        $sid,
                    ]);
                 flash('succes', 'Seizoen bijgewerkt.');
@@ -279,6 +280,19 @@ require __DIR__ . '/layout_top.php';
         <label class="ds-label" for="sz_naam">Naam van het seizoen</label>
         <input class="ds-input" type="text" id="sz_naam" name="naam" value="<?= h((string)$huidig['naam']) ?>" required>
       </div>
+
+      <fieldset class="bh-veldgroep">
+        <legend>Aanmelding</legend>
+        <div class="ds-veld">
+          <label class="ds-label" for="sz_aanmelden_tot">Aanmelden kan tot</label>
+          <input class="ds-input" type="date" id="sz_aanmelden_tot" name="aanmelden_tot" value="<?= h((string)($huidig['aanmelden_tot'] ?? '')) ?>" aria-describedby="sz_aanmelden_tot_hint">
+          <p class="ds-veld-hint" id="sz_aanmelden_tot_hint">
+            De sollicitatiedeadline, tot en met deze dag. Staat op de wervingspagina's
+            (<code>[[aanmelden_tot]]</code>) en in de vacature voor Google, die daarna vanzelf verloopt.
+            Het formulier sluit hier niet vanzelf door: dat doe je met "Aanmelding sluiten".
+          </p>
+        </div>
+      </fieldset>
 
       <fieldset class="bh-veldgroep">
         <legend>Werkperiode</legend>

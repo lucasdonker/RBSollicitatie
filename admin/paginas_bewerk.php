@@ -90,6 +90,13 @@ $actief  = (int)($pagina['actieve_versie_id'] ?? 0);
 $assets  = pag_asset_lijst((string)$pagina['slug']);
 $stat    = pag_stats($id);
 
+// Delen en meten: deellink met ?bron=<campagne> en de QR-code ervan (includes/paginas/qr.php).
+require_once __DIR__ . '/../includes/paginas/qr.php';
+$campagne  = pag_campagne_schoon((string)($_GET['campagne'] ?? ''));
+$deel_url  = pag_deel_url($pagina, $campagne);
+$qr_svg    = pag_qr_svg($deel_url, 'QR-code naar ' . $deel_url);
+$qr_basis  = APP_URL . '/admin/paginas_qr.php?id=' . $id . ($campagne !== '' ? '&campagne=' . rawurlencode($campagne) : '');
+
 // Welk scanrapport tonen we? Dat van de net geüploade versie, of van de nieuwste onbevestigde.
 $rapport_versie = null;
 if ($toon_versie > 0) {
@@ -297,6 +304,45 @@ require __DIR__ . '/layout_top.php';
           <button type="submit" class="ds-btn ds-btn-primair">Opslaan</button>
           <?php endif; ?>
         </form>
+      </section>
+
+      <!-- Delen en meten -->
+      <section class="ds-kaart ds-kaart-p" id="delen">
+        <h2 class="pg-h2">Delen en meten</h2>
+        <p class="pg-sub">Maak per poster, flyer of advertentie een eigen link. Aanmeldingen via die link tellen gewoon mee voor deze pagina, en onder "Waar komen aanmeldingen vandaan?" zie je ze per campagne terug.</p>
+
+        <form method="get" action="#delen" class="pg-deelform">
+          <input type="hidden" name="id" value="<?= $id ?>">
+          <div class="ds-veld">
+            <label class="ds-label" for="pg-campagne">Campagne</label>
+            <input class="ds-input" type="text" id="pg-campagne" name="campagne" value="<?= h($campagne) ?>" maxlength="60" placeholder="poster-csg-2027" aria-describedby="pg-campagne-hint">
+            <p class="ds-veld-hint" id="pg-campagne-hint">Kleine letters, cijfers en koppeltekens, maximaal 40 tekens; andere tekens worden een koppelteken. Leeg = de gewone link.</p>
+          </div>
+          <button type="submit" class="ds-btn ds-btn-secundair">Link maken</button>
+        </form>
+
+        <div class="pg-deellink">
+          <label class="ds-label" for="pg-deel-url">Link<?= $campagne !== '' ? ' voor ' . h($campagne) : '' ?></label>
+          <div class="pg-deellink-rij">
+            <input class="ds-input" type="text" id="pg-deel-url" value="<?= h($deel_url) ?>" readonly>
+            <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" data-kopieer="#pg-deel-url">Kopiëren</button>
+          </div>
+        </div>
+
+        <?php if ($qr_svg !== ''): ?>
+        <div class="pg-qr">
+          <div class="pg-qr-beeld"><?= $qr_svg ?></div>
+          <div class="pg-knoprij">
+            <a class="ds-btn ds-btn-secundair ds-btn-sm" href="<?= h($qr_basis . '&formaat=svg') ?>" download><?= icoon('download', 16) ?> QR-code (SVG, voor drukwerk)</a>
+            <?php if (function_exists('imagepng')): ?>
+            <a class="ds-btn ds-btn-zacht ds-btn-sm" href="<?= h($qr_basis . '&formaat=png') ?>" download>PNG</a>
+            <?php endif; ?>
+          </div>
+          <p class="ds-veld-hint">Test de code altijd even met je telefoon voordat je iets laat drukken. Wijzig daarna het adres van de pagina niet meer: dan werkt de gedrukte code niet meer.</p>
+        </div>
+        <?php else: ?>
+        <p class="pg-rij-meta">Deze link is te lang voor een QR-code. Kies een kortere campagnenaam.</p>
+        <?php endif; ?>
       </section>
 
       <!-- Voorbeeld -->

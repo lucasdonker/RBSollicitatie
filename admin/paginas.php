@@ -151,21 +151,33 @@ RewriteRule ^p/([a-z0-9\-]{1,80})/([A-Za-z0-9._\-]+)$ uploads/paginas/$1/assets/
   <?php if ($werving): ?>
   <section class="ds-kaart ds-kaart-p pg-werving">
     <h2 class="pg-h2">Waar komen aanmeldingen vandaan?</h2>
-    <p class="pg-sub">Per bron het aantal aanmeldingen en hoeveel daarvan uiteindelijk zijn aangenomen.</p>
+    <p class="pg-sub">Per bron het aantal aanmeldingen en hoeveel daarvan uiteindelijk zijn aangenomen. Kwamen ze binnen via een campagnelink (<code>?bron=…</code>), dan staat de campagne eronder.</p>
+    <?php $aandeel = fn(int $n, int $a): string => $n > 0 ? round($a / $n * 100) . '%' : '—'; ?>
     <div class="tabel-scroll">
       <table class="pg-tabel">
-        <caption class="pg-verborgen">Aanmeldingen en aangenomen sollicitanten per bron</caption>
+        <caption class="pg-verborgen">Aanmeldingen en aangenomen sollicitanten per bron en campagne</caption>
         <thead>
           <tr><th scope="col">Bron</th><th scope="col" class="pg-rechts">Aanmeldingen</th><th scope="col" class="pg-rechts">Aangenomen</th><th scope="col" class="pg-rechts">Aandeel</th></tr>
         </thead>
         <tbody>
           <?php foreach ($werving as $w): ?>
           <tr>
-            <td><?= h((string)$w['bron']) ?></td>
+            <th scope="row" class="pg-bronrij"><?= h((string)$w['bron']) ?></th>
             <td class="pg-rechts"><?= (int)$w['aanmeldingen'] ?></td>
             <td class="pg-rechts"><?= (int)$w['aangenomen'] ?></td>
-            <td class="pg-rechts"><?= $w['aanmeldingen'] > 0 ? round($w['aangenomen'] / $w['aanmeldingen'] * 100) . '%' : '—' ?></td>
+            <td class="pg-rechts"><?= $aandeel((int)$w['aanmeldingen'], (int)$w['aangenomen']) ?></td>
           </tr>
+          <?php if ($w['campagnes']):
+                $_sub = $w['campagnes'];
+                if ($w['zonder']['aanmeldingen'] > 0) $_sub[] = ['campagne' => '', 'aanmeldingen' => $w['zonder']['aanmeldingen'], 'aangenomen' => $w['zonder']['aangenomen']];
+                foreach ($_sub as $c): ?>
+          <tr class="pg-campagnerij">
+            <td><span class="pg-verborgen"><?= h((string)$w['bron']) ?>, </span><?= $c['campagne'] !== '' ? '<span class="pg-verborgen">campagne </span>' . h($c['campagne']) : 'zonder campagne' ?></td>
+            <td class="pg-rechts"><?= (int)$c['aanmeldingen'] ?></td>
+            <td class="pg-rechts"><?= (int)$c['aangenomen'] ?></td>
+            <td class="pg-rechts"><?= $aandeel((int)$c['aanmeldingen'], (int)$c['aangenomen']) ?></td>
+          </tr>
+          <?php endforeach; endif; ?>
           <?php endforeach; ?>
         </tbody>
       </table>
