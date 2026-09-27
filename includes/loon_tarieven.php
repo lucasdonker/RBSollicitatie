@@ -270,6 +270,16 @@ function loon_seizoenen_per_jaar(): array {
     return $uit;
 }
 
+/** Is de tabel per jaar uniek (oude sleutel zonder jaar weg)? Eén keer per verzoek gevraagd. */
+function loon_tarieven_schema_ok(): bool {
+    static $ok = null;
+    if ($ok === null) {
+        try { $ok = !db_index_bestaat(db(), 'loon_tarieven', 'leeftijd_periode'); }
+        catch (\Throwable $e) { $ok = true; }
+    }
+    return $ok;
+}
+
 /**
  * Minimumuurlonen van één jaar en periode opslaan. Lege of ongeldige waarden worden overgeslagen.
  * @return int aantal opgeslagen leeftijden
@@ -277,6 +287,9 @@ function loon_seizoenen_per_jaar(): array {
 function loon_tarieven_opslaan(int $jaar, string $periode, array $lonen): int {
     loon_tarieven_auto_setup();
     if ($jaar < 2000 || $jaar > 2100 || !isset(loon_periodes()[$periode])) return 0;
+    // Staat de oude unieke sleutel (zonder jaar) er nog, dan zou ON DUPLICATE KEY stil het tarief van
+    // een ánder jaar bijwerken. Dan liever niets opslaan (zie loon_tarieven_auto_setup).
+    if (!loon_tarieven_schema_ok()) { error_log('loon_tarieven_opslaan: oude sleutel leeftijd_periode bestaat nog'); return 0; }
     $n = 0;
     try {
         $st = db()->prepare("INSERT INTO `loon_tarieven` (jaar, leeftijd, periode, min_uurloon) VALUES (?,?,?,?)
@@ -325,6 +338,7 @@ function loon_jaar_opslaan(int $jaar, array $waarden): array {
  */
 function loon_jaar_kopieer(int $van, int $naar): bool {
     loon_tarieven_auto_setup();
+    if (!loon_tarieven_schema_ok()) return false;
     if ($naar < 2000 || $naar > 2100 || $van === $naar || !in_array($van, loon_tarief_jaren(), true) || in_array($naar, loon_tarief_jaren(), true)) return false;
     try {
         $db = db();

@@ -113,6 +113,7 @@ function portaal_taken(array $sol, ?array $blk = null, bool $vangnet = true): ar
                 'actie_label' => $klaar ? 'Bekijken' : null,
                 'urgent'      => !$klaar,
                 'volgorde'    => 20,
+                'loon'        => (string)$o['type'] === 'loonheffing',
             ]);
         }
     } catch (\Throwable $e) {}
@@ -262,6 +263,7 @@ function portaal_taken(array $sol, ?array $blk = null, bool $vangnet = true): ar
                 $rij['sub']         = $klaar ? 'Geüpload' . (!empty($t['voltooid_op']) ? ' ' . datum_nl(substr($t['voltooid_op'], 0, 10)) : '') : $rij['sub'];
                 $rij['actie_label'] = $klaar ? 'Bekijken' : null;
                 $rij['knop_label']  = 'Uploaden';
+                $rij['loon']        = function_exists('documenten_loonsoorten') && in_array($slug, documenten_loonsoorten(), true);
             } elseif ($t['taak_slug'] === 'huisregels') {
                 // Huisregels: de link komt live uit de instelling, niet uit de rij. Zo krijgt de taak
                 // ook een link als het bestuur de pdf pas ná de aanname plaatst. Zonder document is het
@@ -295,7 +297,12 @@ function portaal_taken(array $sol, ?array $blk = null, bool $vangnet = true): ar
     } catch (\Throwable $e) {}
 
     // Afgelopen sollicitatie: er valt niets meer te doen, dus ook geen open taken tonen of tellen.
-    if ($eindfase) $taken = array_values(array_filter($taken, fn($t) => !empty($t['done'])));
+    // Behalve het loondossier als er al inzet was afgesproken: dan kan er gewerkt zijn en moet er
+    // uitbetaald worden (portaal_loondossier_nog_nodig).
+    if ($eindfase) {
+        $loon_nodig = function_exists('portaal_loondossier_nog_nodig') && portaal_loondossier_nog_nodig(['id' => $sol_id, 'fase' => $fase]);
+        $taken = array_values(array_filter($taken, fn($t) => !empty($t['done']) || ($loon_nodig && !empty($t['loon']))));
+    }
 
     usort($taken, function ($a, $b) {
         if ($a['done'] !== $b['done']) return $a['done'] ? 1 : -1;
@@ -444,6 +451,10 @@ function portaal_taken_post_afhandelen(int $sol_id): void {
             // Elke keer opslaan stuurt de ouder een mail (naar een mogelijk nieuw adres): begrensd,
             // zodat het formulier geen manier wordt om willekeurige adressen te bestoken.
             $_SESSION['flash_portaal_fout'] = 'Je hebt dit het afgelopen uur al een paar keer verstuurd. Probeer het over een uur opnieuw, of neem contact op.';
+        } elseif ($o_email !== '' && strcasecmp($o_email, trim((string)($sol_nu['email'] ?? ''))) === 0) {
+            // De ouder tekent als wettelijk vertegenwoordiger (ook een SEPA-machtiging): de link mag niet
+            // naar het eigen adres van de sollicitant gaan.
+            $_SESSION['flash_portaal_fout'] = 'Vul het e-mailadres van je ouder of verzorger in, niet je eigen adres.';
         } elseif ($o_naam && filter_var($o_email, FILTER_VALIDATE_EMAIL) && $tel_ok) {
             $opgeslagen = false;
             // Stap 1: gegevens opslaan (dit is de kern — moet lukken)
@@ -481,7 +492,7 @@ function portaal_taken_post_afhandelen(int $sol_id): void {
                 // Selectiedag-documenten alleen in de selectiedag-fases aanmaken; daarna alleen de al bestaande
                 // (anders krijgt een aangenomen minderjarige die alleen het lidmaatschap mist alsnog SD-formulieren).
                 $sd_docs = in_array((string)($sol_nu['fase'] ?? ''), portaal_taken_fases_ouder(), true)
-                    || array_filter(portaal_ouder_docs($sol_id), fn($d) => $d['type'] !== 'lidmaatschap');
+                    || array_filter(portaal_ouder_docs($sol_id), fn($d) => $d['type'] !== 'lidmaatschap' && empty($d['klaar']));
                 $res = null;
                 try { if ($sd_docs && function_exists('ondertekeningen_klaarzetten_sd')) $res = ondertekeningen_klaarzetten_sd($sol_id, true); }
                 catch (\Throwable $e) { error_log('ondertekeningen_klaarzetten_sd: ' . $e->getMessage()); }

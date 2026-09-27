@@ -1,6 +1,6 @@
 <?php
 /**
- * Beheer — Trainingsweekend. Vier stappen, zelfde opbouw als de selectiedag:
+ * Beheer — Trainingsweekend. Zes stappen (de laatste twee alleen met bewerkrecht), zelfde opbouw als de selectiedag:
  *
  *   voorbereiden — wie komt er (bevestiging), wie mist nog beschikbaarheid, de tablet     (lezen; wijzigen = bestuur)
  *   groepen      — groepsindeling, gedeeld met de selectiedag (admin/_groepsindeling.php) (lezen; wijzigen = bestuur)

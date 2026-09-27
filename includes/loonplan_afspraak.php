@@ -63,12 +63,19 @@ function inzet_rol_voorstel(int $sol_id, ?array $comp = null): string {
     return $sleutel;
 }
 
-/** Alle afspraken van een seizoen: [sol_id => afspraak + 'weken' => [wk => ['dagen','betaald','weekdagen']]]. */
-function inzet_afspraken_seizoen(int $seizoen_id): array {
+/**
+ * Alle afspraken van een seizoen: [sol_id => afspraak + 'weken' => [wk => ['dagen','betaald','weekdagen']]].
+ * Standaard zonder wie inmiddels gestopt is (afgewezen, afgehaakt, zelf verwijderd), net als de
+ * scenario's (loonplan.php): anders blijft zo iemand in de loonexport, het rooster en de dekking staan.
+ * $ook_gestopt = true voor de historie in het dossier.
+ */
+function inzet_afspraken_seizoen(int $seizoen_id, bool $ook_gestopt = false): array {
     inzet_afspraak_auto_setup();
     $uit = [];
     try {
-        $q = db()->prepare("SELECT * FROM inzet_afspraak WHERE seizoen_id=?");
+        $q = db()->prepare("SELECT a.* FROM inzet_afspraak a JOIN sollicitaties s ON s.id = a.sollicitatie_id
+                            WHERE a.seizoen_id=?"
+                           . ($ook_gestopt ? '' : " AND s.fase NOT IN ('afgewezen','afgehaakt','verwijderd_door_sollicitant')"));
         $q->execute([$seizoen_id]);
         foreach ($q->fetchAll() as $a) { $a['weken'] = []; $uit[(int)$a['sollicitatie_id']] = $a; }
         if (!$uit) return [];
@@ -95,7 +102,7 @@ function inzet_afspraak_van(int $sol_id): ?array {
         $q->execute([$sol_id]);
         $sid = (int)$q->fetchColumn();
     } catch (\Exception $e) { return null; }
-    return $sid ? (inzet_afspraken_seizoen($sid)[$sol_id] ?? null) : null;
+    return $sid ? (inzet_afspraken_seizoen($sid, true)[$sol_id] ?? null) : null;
 }
 
 /**

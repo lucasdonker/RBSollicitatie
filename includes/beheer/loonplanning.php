@@ -49,16 +49,17 @@ function bh_lp_cel(array $w, string $naam, int $wk): array {
 
 /**
  * De rijen van het raster, gefilterd. Voegt per persoon 'let' (bool: een week of signaal met
- * een afwijking) en 'vast' (op slot na het TW-gesprek) toe.
+ * een afwijking), 'signalen' (de teksten daarvan) en 'vast' (op slot na het TW-gesprek) toe.
  */
 function bh_lp_rijen(array $analyse, array $f, array $sloten): array {
     $signaal_sol = [];
-    foreach ($analyse['signalen'] as $s) $signaal_sol[(int)$s['sol_id']] = true;
+    foreach ($analyse['signalen'] as $s) $signaal_sol[(int)$s['sol_id']][] = (string)$s['tekst'];
     $uit = [];
     foreach ($analyse['mensen'] as $sol => $m) {
         $m['sol_id'] = (int)$sol;
         $m['vast'] = isset($sloten[$sol]) ? $sloten[$sol] : null;
-        $m['let'] = !empty($signaal_sol[$sol]);
+        $m['signalen'] = $signaal_sol[$sol] ?? [];   // de redenen, voor de chip "let op" in het raster
+        $m['let'] = (bool)$m['signalen'];
         if ($f['q'] !== '' && !str_contains(mb_strtolower($m['naam']), mb_strtolower($f['q']))) continue;
         if ($f['functie'] !== '' && $m['functie'] !== $f['functie']) continue;
         if ($f['groep'] === 'aangenomen' && $m['fase'] !== 'aangenomen') continue;

@@ -64,6 +64,9 @@ require __DIR__ . '/../_filterbalk.php';
                   $_m['leeftijd'] ? $_m['leeftijd'] . ' jr' : '', $_m['fase'] === 'aangenomen' ? 'aangenomen' : '']))) ?></span>
             </button>
             <?php if ($_m['vast']): ?><span class="bh-lp-slot" title="Vast na het TW-gesprek"><?= icoon('slot', 14) ?><span class="bh-vw">vast na het gesprek</span></span><?php endif; ?>
+            <?php if (!empty($_m['signalen'])): ?>
+              <span title="<?= h(implode("\n", $_m['signalen'])) ?>"><?= bh_chip('let op', 'oranje') ?><span class="bh-vw">: <?= h(implode(' ', $_m['signalen'])) ?></span></span>
+            <?php endif; ?>
             <?php if ($_m['afspraak']): ?>
               <?= $_m['afspraak']['wijkt_af'] ? bh_chip('wijkt af', 'oranje') : bh_chip('afspraak', 'groen') ?>
             <?php endif; ?>

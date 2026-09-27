@@ -191,6 +191,15 @@ function portaal_is_eindfase(string $fase): bool {
 }
 
 /**
+ * Gestopt na de aanname, maar er was al een inzet vastgesteld: dan kan er gewerkt zijn en is het
+ * loondossier (loonheffing, ID, bankpas) nog nodig om uit te betalen. Die taken blijven dan staan.
+ */
+function portaal_loondossier_nog_nodig(array $sol): bool {
+    if (($sol['fase'] ?? '') !== 'afgehaakt' || !function_exists('inzet_afspraak_van')) return false;
+    return inzet_afspraak_van((int)($sol['id'] ?? 0)) !== null;
+}
+
+/**
  * De status zoals de sollicitant hem ziet: zonder jargon ("TW geweest") en zonder
  * beheertaal ("Afgehaakt"). fase_label() blijft voor het beheer.
  */
@@ -259,7 +268,10 @@ function portaal_eindstand(array $sol): ?array {
             return ['titel' => 'Dit seizoen niet verder', 'tekst' => $tekst . ' ' . $volgend, 'icoon' => 'kruis-cirkel', 'kleur' => 'error', 'avg' => true];
         case 'afgehaakt':
             return ['titel' => 'Je sollicitatie is gestopt',
-                    'tekst' => 'Je sollicitatie voor ' . ($sol['sz_naam'] ?? 'dit seizoen') . ' loopt niet meer door. Je hoeft niets meer te doen. '
+                    'tekst' => 'Je sollicitatie voor ' . ($sol['sz_naam'] ?? 'dit seizoen') . ' loopt niet meer door. '
+                             . (portaal_loondossier_nog_nodig($sol)
+                                 ? 'Heb je al gewerkt? Rond dan de taken voor je loondossier hieronder af, zodat we je kunnen uitbetalen. '
+                                 : 'Je hoeft niets meer te doen. ')
                              . 'Volgend seizoen kun je je gewoon opnieuw aanmelden.',
                     'icoon' => 'info', 'kleur' => 'navy', 'avg' => true];
         case 'verwijderd_door_sollicitant':

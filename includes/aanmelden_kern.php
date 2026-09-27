@@ -62,6 +62,9 @@ function sollicitatie_aanmaken(array $in, array $context = []): array {
         foreach ($nieuw as $k => $v) {
             $oud = trim((string)($p[$k] ?? ''));
             if ($v === '' || ($k === 'geslacht' && $v === 'onbekend')) continue;
+            // Telefoon nooit vanuit dit formulier invullen, ook niet als hij leeg is: daar gaat de
+            // inlogcode heen. Het bestuur ziet het nummer als afwijking en zet het zelf in het dossier.
+            if ($k === 'telefoon' && $oud === '') { $afwijkend[] = $k; continue; }
             if ($oud === '' || ($k === 'geslacht' && $oud === 'onbekend')) $aanvullen[$k] = $v;
             elseif (mb_strtolower($oud) !== mb_strtolower($v)) $afwijkend[] = $k;
         }
@@ -111,8 +114,9 @@ function sollicitatie_aanmaken(array $in, array $context = []): array {
     $afwijk_labels = ['voornaam' => 'voornaam', 'tussenvoegsel' => 'tussenvoegsel', 'achternaam' => 'achternaam',
                       'telefoon' => 'telefoonnummer', 'geboortedatum' => 'geboortedatum', 'geslacht' => 'geslacht'];
     $afwijk_html = $afwijkend
-        ? '<p><em>Let op: bij deze aanmelding is een andere ' . h(implode(', ', array_map(fn($k) => $afwijk_labels[$k], $afwijkend)))
-          . ' opgegeven dan in het bestaande dossier. We hebben het dossier niet aangepast; controleer het en corrigeer het zo nodig in het dossier.</em></p>'
+        ? '<p><em>Let op: bij deze aanmelding wijkt dit af van het bestaande dossier: ' . h(implode(', ', array_map(fn($k) => $afwijk_labels[$k], $afwijkend)))
+          . (in_array('telefoon', $afwijkend, true) ? ' (opgegeven telefoonnummer: ' . h($tel) . ')' : '')
+          . '. We hebben het dossier niet aangepast; controleer het, bijvoorbeeld door te bellen, en corrigeer het zo nodig in het dossier.</em></p>'
         : '';
     if (function_exists('melding_verstuur')) {
         try { melding_verstuur('aanmelding_bevestiging', $sid, ['portaal_url' => $purl], ['prioriteit' => 'na_antwoord']); }

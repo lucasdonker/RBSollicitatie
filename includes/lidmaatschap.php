@@ -344,7 +344,13 @@ function lidmaatschap_route_persoon(int $sol_id): ?array {
     if (function_exists('personen_ouder_auto_setup')) personen_ouder_auto_setup();
     $q = db()->prepare("SELECT p.geboortedatum, p.email, p.ouder_naam, p.ouder_email FROM sollicitaties s JOIN personen p ON p.id=s.persoon_id WHERE s.id=?");
     $q->execute([$sol_id]);
-    return $q->fetch() ?: null;
+    $p = $q->fetch() ?: null;
+    // Het eigen adres van de sollicitant telt niet als ouderadres: dan zou de minderjarige zelf "als
+    // wettelijk vertegenwoordiger" tekenen, inclusief de SEPA-machtiging. Behandel het als onbekend.
+    if ($p && trim((string)$p['ouder_email']) !== '' && strcasecmp(trim((string)$p['ouder_email']), trim((string)$p['email'])) === 0) {
+        $p['ouder_email'] = '';
+    }
+    return $p;
 }
 
 /** Moet de ouder/verzorger de inschrijving tekenen? (geboortedatum → leeftijd; grens 18) */

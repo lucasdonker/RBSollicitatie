@@ -113,11 +113,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verwijder'])) {
             avg_maillog_anonimiseren($db, $sol_id, $anon_email);
 
             $db->commit();
+            if (function_exists('avg_na_commit')) avg_na_commit();
             if (function_exists('portaal_onthoud_cookie')) portaal_onthoud_cookie('');
             session_destroy();
             $verwijderd = true;
         } catch (Exception $e) {
             if ($db->inTransaction()) $db->rollBack();
+            if (function_exists('avg_na_rollback')) avg_na_rollback();
             p13_fout('P13-P004', 'AVG-verwijdering sollicitatie ' . $sol_id . ' mislukt', $e);
             $fout = 'Het verwijderen is niet gelukt; er is niets gewist. Het beheer is automatisch op de hoogte gebracht. '
                   . 'Probeer het later opnieuw of mail ' . portaal_contact_email() . '.';

@@ -65,7 +65,7 @@ $_bev = evenement_bevestig_standen();
       <?php endif; ?>
       <?php if (!empty($_tw['doorgevoerd_op']) && $_tw['besluit'] !== 'twijfel'): ?>
         <p class="bh-dossier-tekst"><strong>Aan de sollicitant:</strong>
-          <?= nl2br(h((string)($_tw['gesprek_bericht'] ?: tw_standaard_bericht((string)$_tw['besluit'])))) ?>
+          <?= nl2br(h((string)($_tw['gesprek_bericht'] ?: tw_standaard_bericht((string)$_tw['besluit'], function_exists('tw_niet_gekomen') && tw_niet_gekomen($_tw))))) ?>
           <?php if (empty($_tw['gesprek_bericht'])): ?><span class="bh-meta">(standaardtekst)</span><?php endif; ?>
         </p>
       <?php endif; ?>

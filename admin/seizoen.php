@@ -26,9 +26,13 @@ $bhd = huidige_beheerder();
 // Auto-migratie: alle seizoen-kolommen (één lijst, gedeeld met het portaal: includes/portaal_dossier.php)
 seizoen_kolommen_verzeker();
 
-// Verwijderen en heropenen blijven bij de beheerder; bestuur mag instellen en openen.
+// Verwijderen en heropenen blijven bij de beheerder; bestuur mag instellen, het nieuwste seizoen openen en sluiten.
 $mag_verwijderen = function_exists('mag') ? mag('seizoen', 'verwijderen') : ($bhd['rol'] ?? '') === 'admin';
 if (!$mag_verwijderen && ($bhd['rol'] ?? '') === 'admin') $mag_verwijderen = true;
+// Heropenen = de aanmelding openen van een seizoen dat niet het nieuwste is. Dat sluit het lopende
+// seizoen en zet het hele beheer terug; daarom alleen de beheerder (server-side, niet alleen in de UI).
+$nieuwste_id = (int)$db->query("SELECT MAX(id) FROM seizoenen")->fetchColumn();
+$mag_openen  = fn(int $id): bool => $mag_verwijderen || $id === $nieuwste_id;
 
 /** Eén seizoensrij mét het aantal sollicitaties, of null. ($db bewust zonder type: het
     renderharnas geeft hier een FakePDO door, en dat is precies de bedoeling.) */
@@ -116,6 +120,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // actief_seizoen() stil het nieuwste kiezen; nu sluit openen de andere.
             $sz = seizoen_rij($db, $sid);
             if (!$sz) break;
+            if (!$mag_openen($sid)) {
+                flash('fout', 'De aanmelding van een eerder seizoen heropenen kan alleen een beheerder.');
+                redirect(APP_URL . '/admin/seizoen.php?id=' . $sid);
+            }
             $q = $db->prepare("SELECT naam FROM seizoenen WHERE status='open' AND id<>?");
             $q->execute([$sid]);
             $gesloten = array_column($q->fetchAll(), 'naam');
@@ -159,7 +167,8 @@ $bevestig_actie = (string)($_GET['bevestig'] ?? '');
 $bevestig_sz    = null;
 if (in_array($bevestig_actie, ['open', 'sluit', 'verwijder'], true)) {
     $bevestig_sz = seizoen_rij($db, (int)($_GET['id'] ?? 0));
-    if (!$bevestig_sz || ($bevestig_actie === 'verwijder' && !$mag_verwijderen)) {
+    if (!$bevestig_sz || ($bevestig_actie === 'verwijder' && !$mag_verwijderen)
+        || ($bevestig_actie === 'open' && !$mag_openen((int)$bevestig_sz['id']))) {
         $bevestig_actie = ''; $bevestig_sz = null;
     }
     // Verwerkte loondossiers (bewaarplicht): dan geen knop die toch zou weigeren, maar meteen de reden.
@@ -240,10 +249,14 @@ require __DIR__ . '/layout_top.php';
                  : 'Aanmelding gesloten — het aanmeldformulier staat uit') ?>
   </div>
   <div class="bh-seizoenkaart-acties">
+    <?php if ($_open || $mag_openen((int)$huidig['id'])): ?>
     <a class="ds-btn <?= $_open ? 'ds-btn-secundair' : 'ds-btn-primair' ?>"
        href="<?= h($bev_url($_open ? 'sluit' : 'open', (int)$huidig['id'])) ?>">
       <?= $_open ? 'Aanmelding sluiten' : 'Aanmelding openen' ?>
     </a>
+    <?php else: ?>
+    <span class="ds-veld-hint">Dit is een eerder seizoen; de aanmelding heropenen kan alleen een beheerder.</span>
+    <?php endif; ?>
     <a class="ds-btn ds-btn-zacht ds-btn-sm" href="<?= APP_URL ?>/aanmelden.php" target="_blank" rel="noopener">
       Aanmeldformulier bekijken
     </a>
@@ -491,7 +504,7 @@ require __DIR__ . '/layout_top.php';
       </ul>
       <?php endif; ?>
       <?php if (!$mag_verwijderen): ?>
-        <p class="ds-veld-hint">Een seizoen verwijderen, of de aanmelding van een ander seizoen openen of sluiten, kan alleen een beheerder.</p>
+        <p class="ds-veld-hint">Een seizoen verwijderen, of de aanmelding van een eerder seizoen heropenen, kan alleen een beheerder.</p>
       <?php endif; ?>
     </section>
   </aside>

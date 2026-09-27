@@ -351,11 +351,15 @@ function bh_dossier_tabs(array $dossier, string $actief = 'dossier'): array {
     if ($_heeft_besch) {
         $tabs[] = ['sleutel' => 'beschikbaarheid', 'label' => 'Beschikbaarheid & inzet', 'aantal' => null];
     }
-    if (($dossier['scores'] || $dossier['observaties']) && (!function_exists('module_aan') || module_aan('selectiedag'))) {
+    // Observaties en scores alleen voor wie de module mag lezen (dataminimalisatie: de penningmeester
+    // leest dossiers, maar heeft niets te maken met hoe iemand op de selectiedag of het weekend deed).
+    // mag() geeft ook false als de module uit staat. De tabbladenlijst is ook het slot op ?tab=.
+    $_mag_mod = fn(string $m) => function_exists('mag') ? mag($m, 'lezen') : (!function_exists('module_aan') || module_aan($m));
+    if (($dossier['scores'] || $dossier['observaties']) && $_mag_mod('selectiedag')) {
         $tabs[] = ['sleutel' => 'selectiedag', 'label' => 'Selectiedag',
                    'aantal' => $dossier['observaties'] ? count($dossier['observaties']) : null];
     }
-    if ((!empty($dossier['tw']) || !empty($dossier['tw_observaties'])) && (!function_exists('module_aan') || module_aan('trainingsweekend'))) {
+    if ((!empty($dossier['tw']) || !empty($dossier['tw_observaties'])) && $_mag_mod('trainingsweekend')) {
         $tabs[] = ['sleutel' => 'trainingsweekend', 'label' => 'Trainingsweekend',
                    'aantal' => $dossier['tw_observaties'] ? count($dossier['tw_observaties']) : null];
     }
@@ -454,8 +458,10 @@ function bh_dossier_verwijderen(int $sol_id, string $omvang, bool $ook_loondocs)
             $db->prepare("DELETE FROM sollicitaties WHERE id = ?")->execute([$sol_id]);
         }
         $db->commit();
+        if (function_exists('avg_na_commit')) avg_na_commit();
     } catch (\Throwable $e) {
         if ($db->inTransaction()) $db->rollBack();
+        if (function_exists('avg_na_rollback')) avg_na_rollback();
         error_log('bh_dossier_verwijderen ' . $sol_id . ': ' . $e->getMessage());
         $uit['fout'] = 'Verwijderen is niet gelukt; er is niets gewist. De fout staat in het logboek.';
         return $uit;

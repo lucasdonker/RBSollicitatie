@@ -165,8 +165,12 @@ function loonplan_export_boek(int $seizoen_id, string $bron, int $scenario_id): 
     $rijen[] = [];
     $rijen[] = [['v' => 'Budget', 's' => 'vet']];
     $rijen[] = ['Bruto loonkosten (betaalde dagen)', ['v' => round($tot['kosten'], 2), 's' => 'geld']];
-    $rijen[] = ['Budget ' . $t['jaar'], ['v' => $budget, 's' => 'geld']];
-    $rijen[] = ['Restant', ['v' => round($budget - $tot['kosten'], 2), 's' => $budget - $tot['kosten'] < 0 ? 'let' : 'geld']];
+    if ($budget > 0) {
+        $rijen[] = ['Budget ' . $t['jaar'], ['v' => $budget, 's' => 'geld']];
+        $rijen[] = ['Restant', ['v' => round($budget - $tot['kosten'], 2), 's' => $budget - $tot['kosten'] < 0 ? 'let' : 'geld']];
+    } else {
+        $rijen[] = ['Budget ' . $t['jaar'], 'Niet ingesteld (Instellingen › Lonen & budget)'];
+    }
     $rijen[] = [];
     $rijen[] = [['v' => 'Dagloon = minimumuurloon (leeftijd op de maandag van de week, periode juni of juli–september) × uren per dag × factor × (1 + vakantietoeslag). Onbetaalde dagen kosten niets.', 's' => 'zacht']];
     $blad4 = ['naam' => 'Tarieven en budget', 'boven' => $boven, 'kop' => ['Onderdeel', 'Waarde', ''], 'breedte' => [38, 16, 16], 'rijen' => $rijen];

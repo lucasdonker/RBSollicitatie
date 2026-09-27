@@ -27,6 +27,27 @@
 
 if (!function_exists('avg_sollicitatie_leegmaken')) {
 
+/** De bestanden van één sollicitatie van schijf (kluisdocumenten en foto). */
+function avg_bestanden_wissen(int $sol_id, bool $ook_loondocs = true): void {
+    if (function_exists('documenten_bij_dossier_verwijderen')) documenten_bij_dossier_verwijderen($sol_id, $ook_loondocs);
+    if (function_exists('foto_van_sollicitatie_verwijderen')) foto_van_sollicitatie_verwijderen($sol_id);
+}
+
+/** Na een geslaagde commit: de uitgestelde bestanden echt wissen. */
+function avg_na_commit(): void {
+    $lijst = $GLOBALS['_avg_na_commit'] ?? [];
+    $GLOBALS['_avg_na_commit'] = [];
+    foreach ($lijst as $l) {
+        try { avg_bestanden_wissen((int)$l[0], (bool)$l[1]); }
+        catch (\Throwable $e) { error_log('avg_na_commit ' . $l[0] . ': ' . $e->getMessage()); }
+    }
+}
+
+/** Na een rollback: niets wissen, de database is teruggezet. */
+function avg_na_rollback(): void {
+    $GLOBALS['_avg_na_commit'] = [];
+}
+
 /** Voer één stap uit; alleen "tabel bestaat niet" (en desgewenst "kolom bestaat niet") mag stil voorbij. */
 function avg_stap($db, string $sql, array $params, bool $kolom_mag_ontbreken = false): void {
     try { $db->prepare($sql)->execute($params); }
@@ -62,8 +83,18 @@ function avg_ip_masker_sql(string $kol): string {
  * loondossier dit.
  */
 function avg_sollicitatie_leegmaken($db, int $sol_id, bool $ook_loondocs = true): void {
-    if (function_exists('documenten_bij_dossier_verwijderen')) documenten_bij_dossier_verwijderen($sol_id, $ook_loondocs);
-    if (function_exists('foto_van_sollicitatie_verwijderen')) foto_van_sollicitatie_verwijderen($sol_id);
+    // Bestanden op schijf (kluis, foto) zijn niet terug te rollen. Binnen een transactie wachten ze
+    // daarom tot de aanroeper avg_na_commit() doet; bij een rollback gooit avg_na_rollback() de lijst weg.
+    if (is_object($db) && method_exists($db, 'inTransaction') && $db->inTransaction()) {
+        if (empty($GLOBALS['_avg_na_commit'])) {
+            register_shutdown_function(function () {
+                if (!empty($GLOBALS['_avg_na_commit'])) error_log('avg_wissen: bestanden niet opgeruimd — avg_na_commit() ontbreekt bij de aanroeper');
+            });
+        }
+        $GLOBALS['_avg_na_commit'][] = [$sol_id, $ook_loondocs];
+    } else {
+        avg_bestanden_wissen($sol_id, $ook_loondocs);
+    }
     $niet_loon = $ook_loondocs ? '' : " AND type <> 'loonheffing'";
     foreach ([
         "DELETE FROM sollicitant_taken WHERE sollicitatie_id = ?",

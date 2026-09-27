@@ -237,14 +237,23 @@ function bh_seizoen_verwijderen(int $sid): array {
             avg_sollicitatie_leegmaken($db, $id, true);   // niet verwerkt: geen bewaarplicht (zie hierboven)
             avg_maillog_anonimiseren($db, $id, 'verwijderd_' . $id . '@anoniem.local');
         }
-        // De afspraak hangt aan het seizoen; de weken gaan mee (FK). Tabel kan ontbreken.
-        avg_stap($db, "DELETE FROM inzet_afspraak WHERE seizoen_id = ?", [$sid]);
+        // Alles wat aan het seizoen hangt, zonder FK naar seizoenen (anders blijven er wezen staan).
+        // Een tabel die (nog) niet bestaat, slaat avg_stap stil over. De afspraakweken gaan mee (FK).
+        // Volgorde: eerst wat naar een ander verwijst (planning → scenario, indeling → groep).
+        if ($ids) avg_stap($db, "DELETE FROM loon_planning WHERE sollicitatie_id IN (" . implode(',', array_fill(0, count($ids), '?')) . ")", $ids);
+        foreach (['inzet_afspraak', 'loon_vergrendeling', 'loon_scenario', 'lifeguard_feedback',
+                  'selectie_besluit', 'selectie_score', 'selectie_observatie', 'selectie_indeling', 'selectie_relatie', 'selectie_groep',
+                  'tw_observatie', 'tw_deelname', 'tw_groep'] as $_t) {
+            avg_stap($db, "DELETE FROM `$_t` WHERE seizoen_id = ?", [$sid]);
+        }
         $db->prepare("DELETE FROM sollicitaties WHERE seizoen_id = ?")->execute([$sid]);
         $db->prepare("DELETE FROM seizoenen WHERE id = ?")->execute([$sid]);
         $geanonimiseerd = function_exists('avg_personen_zonder_sollicitatie') ? avg_personen_zonder_sollicitatie($db, $personen) : 0;
         $db->commit();
+        if (function_exists('avg_na_commit')) avg_na_commit();
     } catch (\Throwable $e) {
         if ($db->inTransaction()) $db->rollBack();
+        if (function_exists('avg_na_rollback')) avg_na_rollback();
         error_log('bh_seizoen_verwijderen ' . $sid . ': ' . $e->getMessage());
         $uit['fout'] = 'Verwijderen is niet gelukt; er is niets uit de database gewist. De fout staat in het logboek.';
         return $uit;

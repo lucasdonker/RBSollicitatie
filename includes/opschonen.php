@@ -154,9 +154,11 @@ function opschoon_run(bool $dry_run = false, string $bron = 'cron'): array {
                         }
                         avg_persoon_anonimiseren($db, $pid, 'Geanonimiseerd', '', $email);
                         $db->commit();
+                        if (function_exists('avg_na_commit')) avg_na_commit();
                         $aantal++;
                     } catch (\Throwable $e) {
                         if ($db->inTransaction()) $db->rollBack();
+                        if (function_exists('avg_na_rollback')) avg_na_rollback();
                         error_log("opschoon afgewezen persoon $pid: " . $e->getMessage());
                     }
                 }
@@ -222,8 +224,10 @@ function opschoon_run(bool $dry_run = false, string $bron = 'cron'): array {
                             $aantal++;
                         }
                         $db->commit();
+                        if (function_exists('avg_na_commit')) avg_na_commit();
                     } catch (\Throwable $e) {
                         if ($db->inTransaction()) $db->rollBack();
+                        if (function_exists('avg_na_rollback')) avg_na_rollback();
                         error_log("opschoon aangenomen persoon $pid: " . $e->getMessage());
                     }
                 }

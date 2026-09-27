@@ -3,10 +3,26 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.126.0');
+define('APP_VERSIE', '2.126.1');
 
 function app_changelog(): array {
     return [
+        '2.126.1' => [
+            'datum'  => '2026-09-27',
+            'titel'  => 'Review 2.126: gaten dicht, handleiding penningmeester',
+            'punten' => [
+                'Dossier: tabbladen Selectiedag en Trainingsweekend (observaties) alleen voor wie die module mag lezen; de penningmeester ziet ze niet meer',
+                'Loonexport, rooster en dekking tellen wie na de afspraak is gestopt niet meer mee; Excel zonder budget toont geen negatief restant',
+                'Loonplanning: chip "let op" met de reden bij een persoon met een signaal',
+                'Seizoen: heropenen van een eerder seizoen alleen voor de beheerder (ook server-side); verwijderen ruimt ook groepen, scenario\'s en planning op',
+                'AVG-wissen: bestanden pas na de commit weg (bij een mislukte transactie blijft alles staan)',
+                'Ouderadres mag niet het eigen adres zijn (lidmaatschap en SEPA-machtiging door de ouder)',
+                'Aanmelden vult nooit een telefoonnummer aan; website-API toont het komende seizoen als de aanmelding dicht is',
+                'Gestopt na aanname met een vastgestelde inzet: de loondossiertaken blijven staan voor de uitbetaling',
+                'Portaal: geen automatisch doorsturen naar het Paal 13-account; foto-upload werkt zonder JavaScript',
+                'Handleiding penningmeester herschreven: van beschikbaarheid en loonplanning tot het gesprek en het loondossier',
+            ],
+        ],
         '2.126.0' => [
             'datum'  => '2026-09-27',
             'titel'  => 'Klaar voor gebruik: gaten in de flow dicht, testmodus, loontarieven per jaar',

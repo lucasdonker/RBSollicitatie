@@ -33,7 +33,7 @@ $q->execute([$token]);
 $rec = $q->fetch();
 $sol = null;
 if ($rec) {
-    $s_q = $db->prepare("SELECT s.id, s.fase, p.voornaam, p.tussenvoegsel, p.achternaam, p.geboortedatum, p.email, p.telefoon, sz.naam AS seizoen_naam
+    $s_q = $db->prepare("SELECT s.id, s.fase, p.voornaam, p.tussenvoegsel, p.achternaam, p.geboortedatum, p.email, p.telefoon, p.ouder_telefoon, sz.naam AS seizoen_naam
                          FROM sollicitaties s JOIN personen p ON p.id = s.persoon_id JOIN seizoenen sz ON sz.id = s.seizoen_id WHERE s.id = ?");
     $s_q->execute([$rec['sollicitatie_id']]);
     $sol = $s_q->fetch() ?: null;
@@ -485,7 +485,7 @@ require __DIR__ . '/_kop.php';
           </div>
           <?= ondertekening_veldfout_html('handtekening', $fout_veld, $fout) ?>
           <input type="hidden" name="handtekening_beeld" id="hdtData" value="<?= $v('handtekening_beeld') ?>">
-          <?php if ($twee_fa): $tel_masker = ondertekening_tel_masker($is_ouder ? ($rec['ouder_telefoon'] ?? '') : ($sol['telefoon'] ?? '')); require __DIR__ . '/_ondertekenen_2fa.php'; endif; ?>
+          <?php if ($twee_fa): $tel_masker = ondertekening_tel_masker($is_ouder ? ($sol['ouder_telefoon'] ?? '') : ($sol['telefoon'] ?? '')); require __DIR__ . '/_ondertekenen_2fa.php'; endif; ?>
           <label class="ond-check<?= $fout_veld === 'akkoord' ? ' fout' : '' ?>">
             <input type="checkbox" name="akkoord" value="1"<?= $aan('akkoord') ?> required<?= ondertekening_veldfout_attr('akkoord', $fout_veld) ?>>
             <span class="ond-check-box"><?= icoon('vink', 14) ?></span>
