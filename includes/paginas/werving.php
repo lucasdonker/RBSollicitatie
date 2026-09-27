@@ -53,36 +53,63 @@ function pag_periode_tekst(?string $van, ?string $tot, bool $met_dag = true): st
 }
 
 /**
- * De rijen van de salaristabel uit een tariefpakket (loon_tarieven_voor_seizoen()).
- * Retour: [['label' => '16 jaar', 'jun' => ?float, 'jul_sep' => ?float], …]
+ * De kolommen van de salaristabel: de diploma's/functies met een factor op het uurloon
+ * (Instellingen › Functies & factoren), in hun volgorde. Functies met een vast weekbedrag
+ * (postcommandant) horen er niet in: dat is geen uurloon en geen diploma waarmee je instroomt.
+ * Retour: [sleutel => ['naam', 'factor', 'min', 'max']].
+ */
+function pag_salaris_kolommen(): array {
+    $uit = [];
+    foreach (function_exists('functies_ophalen') ? functies_ophalen() : [] as $f) {
+        if ((float)($f['factor'] ?? 0) <= 0 || !empty($f['vast_loon'])) continue;
+        $uit[(string)$f['sleutel']] = ['naam' => (string)$f['naam'], 'factor' => (float)$f['factor'],
+                                       'min' => (int)($f['min_leeftijd'] ?? 0), 'max' => (int)($f['max_leeftijd'] ?? 99)];
+    }
+    return $uit;
+}
+
+/** Het tarief waarmee de tabel rekent: juli t/m september, het grootste deel van de werkperiode. */
+function pag_salaris_periode(): string {
+    return 'jul_sep';
+}
+
+/**
+ * De rijen van de salaristabel: per leeftijd het uurloon per diploma, zoals de loonplanning het
+ * rekent (minimum(jeugd)uurloon van die leeftijd × factor van de functie; loon_dagloon() zonder
+ * uren en vakantietoeslag). Buiten de leeftijdsgrenzen van een functie: null ("—").
+ * Retour: [['label' => '16 jaar', 'bedragen' => [sleutel => ?float]], …]
  *
  * De hoogste leeftijden met dezelfde bedragen worden één rij "N jaar en ouder" — boven de
  * hoogste ingevulde leeftijd geldt toch al dat tarief. Bedragen vergelijken we zoals ze op de
  * pagina staan (twee decimalen), anders splitst een verschil in de vierde decimaal een rij.
  */
-function pag_salaris_rijen(array $t): array {
-    $jun = (array)($t['tarieven']['jun'] ?? []);
-    $jul = (array)($t['tarieven']['jul_sep'] ?? []);
-    $leeftijden = array_values(array_filter(array_unique(array_merge(array_keys($jun), array_keys($jul))),
-        fn($l) => (int)$l >= pag_salaris_vanaf()));
+function pag_salaris_rijen(array $t, ?array $kolommen = null): array {
+    $kolommen ??= pag_salaris_kolommen();
+    $tarief = (array)($t['tarieven'][pag_salaris_periode()] ?? []);
+    $leeftijden = array_values(array_filter(array_keys($tarief), fn($l) => (int)$l >= pag_salaris_vanaf()));
     sort($leeftijden);
-    if (!$leeftijden) return [];
+    if (!$leeftijden || !$kolommen) return [];
 
-    $bedrag = fn(array $rij, int $l): ?float => isset($rij[$l]) && (float)$rij[$l] > 0 ? round((float)$rij[$l], 2) : null;
     $rijen = [];
     foreach ($leeftijden as $l) {
-        $rijen[] = ['leeftijd' => (int)$l, 'jun' => $bedrag($jun, (int)$l), 'jul_sep' => $bedrag($jul, (int)$l)];
+        $l = (int)$l;
+        $bedragen = [];
+        foreach ($kolommen as $k => $f) {
+            $bedragen[$k] = ((float)$tarief[$l] > 0 && $l >= $f['min'] && $l <= $f['max'])
+                ? round((float)$tarief[$l] * $f['factor'], 2) : null;
+        }
+        $rijen[] = ['leeftijd' => $l, 'bedragen' => $bedragen];
     }
 
     // Van boven af samenvoegen zolang de bedragen gelijk zijn aan die van de hoogste leeftijd.
     $laatste = count($rijen) - 1;
     $van = $laatste;
-    while ($van > 0 && $rijen[$van - 1]['jun'] === $rijen[$laatste]['jun'] && $rijen[$van - 1]['jul_sep'] === $rijen[$laatste]['jul_sep']) $van--;
+    while ($van > 0 && $rijen[$van - 1]['bedragen'] === $rijen[$laatste]['bedragen']) $van--;
 
     $uit = [];
     foreach ($rijen as $i => $r) {
         if ($i > $van) break;
-        $uit[] = ['label' => $r['leeftijd'] . ($i === $van ? ' jaar en ouder' : ' jaar'), 'jun' => $r['jun'], 'jul_sep' => $r['jul_sep']];
+        $uit[] = ['label' => $r['leeftijd'] . ($i === $van ? ' jaar en ouder' : ' jaar'), 'bedragen' => $r['bedragen']];
     }
     return $uit;
 }
@@ -90,8 +117,15 @@ function pag_salaris_rijen(array $t): array {
 /** Laagste en hoogste bedrag uit de rijen: ['min' => ?float, 'max' => ?float]. */
 function pag_salaris_bereik(array $rijen): array {
     $alle = [];
-    foreach ($rijen as $r) foreach (['jun', 'jul_sep'] as $p) if ($r[$p] !== null) $alle[] = $r[$p];
+    foreach ($rijen as $r) foreach ($r['bedragen'] as $v) if ($v !== null) $alle[] = $v;
     return ['min' => $alle ? min($alle) : null, 'max' => $alle ? max($alle) : null];
+}
+
+/** De vaste disclaimer onder elke loonweergave: indicatief, geen rechten aan te ontlenen. */
+function pag_salaris_disclaimer(): string {
+    return 'Deze bedragen zijn indicatief en kunnen veranderen. Wat je precies verdient, hangt af van '
+         . 'je situatie en gegevens, zoals je leeftijd, je diploma\'s en je functie, en van wijzigingen '
+         . 'in het wettelijk minimumloon. Aan deze tabel kun je geen rechten ontlenen.';
 }
 
 /**
@@ -116,29 +150,42 @@ function pag_werving_loon(?array $seizoen): array {
         error_log('pag_werving_loon: ' . $e->getMessage());
         return $cache[$sleutel] = $leeg;
     }
-    $rijen = pag_salaris_rijen($t);
+    $kolommen = pag_salaris_kolommen();
+    $rijen = pag_salaris_rijen($t, $kolommen);
     $bereik = pag_salaris_bereik($rijen);
-    return $cache[$sleutel] = ['rijen' => $rijen, 'min' => $bereik['min'], 'max' => $bereik['max'],
+    return $cache[$sleutel] = ['rijen' => $rijen, 'kolommen' => $kolommen, 'min' => $bereik['min'], 'max' => $bereik['max'],
                                'vt' => (float)($t['vt_percentage'] ?? 0), 'jaar' => (int)($t['jaar'] ?? 0)];
 }
 
-/** De salaristabel als toegankelijke HTML (caption, th met scope), met de noot eronder. */
+/**
+ * De salaristabel als toegankelijke HTML: een rij per leeftijd, een kolom per diploma/functie
+ * (caption, th met scope), met eronder altijd de noot en de disclaimer (indicatief).
+ */
 function pag_salaris_html(array $loon): string {
+    $disclaimer = '<p class="p13-salaris-noot p13-salaris-disclaimer">' . h(pag_salaris_disclaimer()) . '</p>';
     if (!$loon['rijen']) {
-        return '<p class="p13-salaris-noot">Het uurloon per leeftijd ' . h(pag_nog_onbekend()) . '.</p>';
+        return '<p class="p13-salaris-noot">Het uurloon per leeftijd ' . h(pag_nog_onbekend()) . '.</p>' . $disclaimer;
     }
-    $cel = fn(?float $v): string => $v === null ? '—' : h(pag_euro($v));
+    $cel = fn(?float $v): string => $v === null
+        // Verborgen tekst voor schermlezers met een eigen inline stijl: het ontwerp (Claude Design)
+        // kent onze klassen niet. Op publieke pagina's staat de CSP inline stijl toe.
+        ? '<span aria-hidden="true">—</span><span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">niet van toepassing</span>'
+        : h(pag_euro($v));
     $html = '<table class="p13-salaris">'
-          . '<caption>Uurloon per leeftijd' . ($loon['jaar'] ? ' in ' . (int)$loon['jaar'] : '') . '</caption>'
-          . '<thead><tr><th scope="col">Leeftijd</th><th scope="col">Juni</th><th scope="col">Juli–september</th></tr></thead>'
-          . '<tbody>';
+          . '<caption>Indicatief uurloon per leeftijd en diploma' . ($loon['jaar'] ? ' (' . (int)$loon['jaar'] . ')' : '') . '</caption>'
+          . '<thead><tr><th scope="col">Leeftijd</th>';
+    foreach ($loon['kolommen'] as $f) $html .= '<th scope="col">' . h($f['naam']) . '</th>';
+    $html .= '</tr></thead><tbody>';
     foreach ($loon['rijen'] as $r) {
-        $html .= '<tr><th scope="row">' . h($r['label']) . '</th><td>' . $cel($r['jun']) . '</td><td>' . $cel($r['jul_sep']) . '</td></tr>';
+        $html .= '<tr><th scope="row">' . h($r['label']) . '</th>';
+        foreach (array_keys($loon['kolommen']) as $k) $html .= '<td>' . $cel($r['bedragen'][$k] ?? null) . '</td>';
+        $html .= '</tr>';
     }
     $html .= '</tbody></table>';
     $vt = function_exists('loon_getal') ? loon_getal($loon['vt'], 2) : rtrim(rtrim(number_format($loon['vt'], 2, ',', ''), '0'), ',');
-    $html .= '<p class="p13-salaris-noot">Per uur, exclusief ' . h($vt) . '% vakantietoeslag.'
-           . ($loon['jaar'] ? ' Minimum(jeugd)loon voor ' . (int)$loon['jaar'] . '.' : '') . '</p>';
+    $html .= '<p class="p13-salaris-noot">Bruto per uur, exclusief ' . h($vt) . '% vakantietoeslag, voor juli en augustus. '
+           . 'In juni geldt een iets ander wettelijk tarief. Een "—" betekent dat die functie bij die leeftijd niet voorkomt.</p>'
+           . $disclaimer;
     return $html;
 }
 
@@ -175,7 +222,8 @@ function pag_werving_markeringen(string $html, array $pagina, ?array $versie = n
             $uit['[[salaristabel]]'] = pag_salaris_html(pag_werving_loon($seizoen));
         } elseif ($n === 'uurloon_vanaf') {
             $min = pag_werving_loon($seizoen)['min'];
-            $uit['[[uurloon_vanaf]]'] = h($min === null ? pag_nog_onbekend() : pag_euro($min));
+            // Altijd met "indicatief": een los bedrag in een hero leest anders als een belofte.
+            $uit['[[uurloon_vanaf]]'] = h($min === null ? pag_nog_onbekend() : pag_euro($min) . ' (indicatief)');
         } elseif ($n === 'vacature_schema') {
             $uit['[[vacature_schema]]'] = pag_vacature_schema($pagina, $seizoen, $versie);
         } else {
@@ -228,14 +276,11 @@ function pag_vacature_schema(array $pagina, ?array $seizoen, ?array $versie = nu
     $beschrijving = '<p>Word lifeguard bij Reddingsbrigade Paal 13 op het strand van Callantsoog.</p><ul>';
     foreach ($punten as $p) $beschrijving .= '<li>' . h($p) . '</li>';
     $beschrijving .= '</ul>';
-    if ($loon['rijen']) {
-        $beschrijving .= '<p>Uurloon per leeftijd (juni / juli–september), plus '
-                       . h(function_exists('loon_getal') ? loon_getal($loon['vt'], 2) : (string)$loon['vt']) . '% vakantietoeslag:</p><ul>';
-        foreach ($loon['rijen'] as $r) {
-            $beschrijving .= '<li>' . h($r['label'] . ': ' . ($r['jun'] !== null ? pag_euro($r['jun']) : '—')
-                           . ' / ' . ($r['jul_sep'] !== null ? pag_euro($r['jul_sep']) : '—')) . '</li>';
-        }
-        $beschrijving .= '</ul>';
+    if ($loon['rijen'] && $loon['min'] !== null) {
+        $beschrijving .= '<p>Indicatief uurloon ' . h(pag_euro($loon['min'])) . ' tot ' . h(pag_euro($loon['max']))
+                       . ' bruto, afhankelijk van leeftijd en diploma, plus '
+                       . h(function_exists('loon_getal') ? loon_getal($loon['vt'], 2) : (string)$loon['vt']) . '% vakantietoeslag. '
+                       . h(pag_salaris_disclaimer()) . '</p>';
     }
 
     // Geplaatst: toen de huidige versie live ging, anders toen de pagina werd aangemaakt.

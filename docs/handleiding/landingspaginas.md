@@ -76,8 +76,8 @@ Andere markeringen die je kunt gebruiken:
 | `[[trainingsweekend_datum]]` | Het trainingsweekend, bijvoorbeeld "vrijdag 30 april t/m zondag 2 mei 2027" (of één dag) |
 | `[[werkperiode]]` | De werkperiode, bijvoorbeeld "1 juni t/m 31 augustus 2027" |
 | `[[aanmelden_tot]]` | De sollicitatiedeadline, bijvoorbeeld "15 maart 2027" |
-| `[[uurloon_vanaf]]` | Het laagste uurloon vanaf 16 jaar, bijvoorbeeld "€ 4,97" (zonder vakantietoeslag) |
-| `[[salaristabel]]` | Een tabel met het uurloon per leeftijd (juni en juli–september), met een regel over de vakantietoeslag eronder |
+| `[[uurloon_vanaf]]` | Het laagste uurloon vanaf 16 jaar, bijvoorbeeld "€ 4,97 (indicatief)" (zonder vakantietoeslag) |
+| `[[salaristabel]]` | Een tabel met een rij per leeftijd en een kolom per diploma, met de vakantietoeslag en de vermelding "indicatief" eronder |
 | `[[vacature_schema]]` | Onzichtbaar: de vacature voor Google (zie [De vacature in Google](#de-vacature-in-google)). Zet hem in de `<head>` |
 | `[[aanmeld_url]]` | Het adres van het formulier op deze pagina, handig voor een eigen knop ("Meld je aan") |
 | `[[bron]]` | De bron-code van deze pagina |
@@ -94,14 +94,22 @@ Dan veroudert de pagina niet: volgend jaar staan er vanzelf de nieuwe datums en 
 - De datums komen uit **Seizoen** in het beheer: het seizoen waarvan de aanmelding open staat, of
   anders het nieuwste (het komende seizoen, zodra je dat hebt aangemaakt). De deadline vul je daar in
   bij **Aanmelden kan tot**. Dat veld sluit het formulier niet: dat blijft "Aanmelding sluiten".
-- Het loon komt uit **Instellingen › Lonen & budget**, van het kalenderjaar van het seizoen. Het is
-  het wettelijke minimum(jeugd)loon per uur, zonder vakantietoeslag.
+- Het loon rekent zoals de loonplanning: het minimum(jeugd)uurloon van de leeftijd (Instellingen ›
+  Lonen & budget, kalenderjaar van het seizoen, tarief juli–september) × de factor van het diploma
+  (Instellingen › Functies & factoren). Bruto per uur, zonder vakantietoeslag.
 - Is iets nog niet ingevuld, dan staat er "wordt nog bekendgemaakt".
 
-De salaristabel begint bij 16 jaar. De hoogste leeftijden met hetzelfde loon worden één regel,
-bijvoorbeeld "21 jaar en ouder". Voor de opmaak in het ontwerp (bijvoorbeeld in Claude Design):
-de tabel heeft de klasse `p13-salaris`, met een `<caption>`, kolomkoppen en per rij de leeftijd
-als rijkop; de regel eronder heeft de klasse `p13-salaris-noot`.
+De salaristabel heeft een **rij per leeftijd** (vanaf 16 jaar) en een **kolom per diploma**: alle
+functies met een factor, in hun volgorde (de postcommandant met een vast weekbedrag niet). Valt een
+leeftijd buiten de grenzen van een functie (bijvoorbeeld Senior pas vanaf 18), dan staat er "—". De
+hoogste leeftijden met overal hetzelfde loon worden één regel, bijvoorbeeld "21 jaar en ouder".
+Onder de tabel staat **altijd** dat de bedragen indicatief zijn en kunnen veranderen, afhankelijk
+van je situatie en gegevens; ook `[[uurloon_vanaf]]` krijgt "(indicatief)" mee. Een functie
+hernoemen of een factor wijzigen bij Functies & factoren past de tabel op alle pagina's meteen aan.
+
+Voor de opmaak in het ontwerp (bijvoorbeeld in Claude Design): de tabel heeft de klasse
+`p13-salaris`, met een `<caption>`, kolomkoppen en per rij de leeftijd als rijkop; de regels eronder
+hebben de klasse `p13-salaris-noot`, de disclaimer daarnaast `p13-salaris-disclaimer`.
 
 ### Afbeeldingen
 

@@ -3,10 +3,18 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.127.0');
+define('APP_VERSIE', '2.127.1');
 
 function app_changelog(): array {
     return [
+        '2.127.1' => [
+            'datum'  => '2026-09-27',
+            'titel'  => 'Salaristabel per leeftijd en diploma',
+            'punten' => [
+                '[[salaristabel]]: een rij per leeftijd en een kolom per diploma (Aspirant, Junior, Lifeguard, Senior), bedragen zoals de loonplanning rekent (minimumuurloon × factor)',
+                'Onder de tabel altijd: indicatief, kan veranderen afhankelijk van je situatie en gegevens; [[uurloon_vanaf]] krijgt "(indicatief)" mee',
+            ],
+        ],
         '2.127.0' => [
             'datum'  => '2026-09-27',
             'titel'  => 'Wervingspagina\'s klaar voor werving',
