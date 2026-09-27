@@ -234,6 +234,9 @@
     const inp = el('fotoInput'), avatar = el('fotoAvatar'), rij = el('fotoRij');
     const naam = el('fotoNaam'), status = el('fotoStatus'), thumb = el('fotoThumb'), verwijderVlag = el('fotoVerwijderen');
     if (!inp || !avatar || !rij) return;
+    // Pas nu de knoppen tonen en het bestandsveld verbergen; zonder JS blijft het gewone veld staan.
+    inp.closest('.blk-foto-zone')?.classList.add('blk-foto-js');
+    inp.closest('.blk-veld-foto')?.classList.add('blk-foto-js');
     const avatarLeeg = avatar.innerHTML, thumbLeeg = thumb ? thumb.innerHTML : '';
 
     function kies(capture) {

@@ -387,12 +387,9 @@ require __DIR__ . '/_kop.php';
     <div class="ds-login-kop">
       <div class="ds-login-logo"><?= icoon('slot', 26) ?></div>
       <h1>Je hebt al een account</h1>
-      <p>We sturen je door naar het Paal 13-account van <strong><?= h($dse) ?></strong>. Daar log je in zoals je gewend bent.</p>
+      <p>Je logt in met het Paal 13-account van <strong><?= h($dse) ?></strong>, zoals je gewend bent.</p>
     </div>
-    <div class="ds-melding ds-melding-info pt-login-fout" role="status">
-      <?= icoon('klok', 18) ?> <div>Even geduld — je wordt doorgestuurd…</div>
-    </div>
-    <a href="<?= APP_URL ?>/portaal/auth_sso.php" class="ds-btn ds-btn-primair ds-btn-vol" id="dsNu">Nu doorgaan</a>
+    <a href="<?= APP_URL ?>/portaal/auth_sso.php" class="ds-btn ds-btn-primair ds-btn-vol" id="dsNu">Inloggen met je Paal 13-account</a>
     <form method="POST" class="pt-login-los">
       <?= csrf_input() ?>
       <input type="hidden" name="toch_code" value="1">
@@ -401,9 +398,6 @@ require __DIR__ . '/_kop.php';
       </div>
     </form>
   </div>
-  <script>
-    setTimeout(function(){ window.location.href = document.getElementById('dsNu').href; }, 2500);
-  </script>
 
 <?php endif; ?>
 
