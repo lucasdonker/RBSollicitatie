@@ -5,7 +5,8 @@
  * Gebruikt door portaal/ondertekenen.php (het scherm), de meldingen (documentnaam in mails en
  * herinneringen), de takenlijst en de PDF-bestandsnaam. Geen HTML hier; alleen data en teksten.
  *
- * Typen: gezondheid_18plus, gezondheid_ouder (ouder tekent), intake, intake_ouder (ouder tekent).
+ * Typen: gezondheid_18plus, gezondheid_ouder (ouder tekent), intake, intake_ouder (ouder tekent),
+ * loonheffing (altijd zelf), lidmaatschap (18+ zelf; onder 18 hetzelfde type met ondertekenaar_rol 'ouder').
  */
 
 if (!function_exists('ondertekening_label')) {
@@ -23,9 +24,55 @@ function ondertekening_label(string $type): string {
     };
 }
 
-/** Typen waarbij de sollicitant altijd zelf tekent (ook onder 18): geen ouderflow. */
+/**
+ * Typen van het aangenomen-pakket met vertrouwelijke gegevens (BSN, IBAN → kluis verplicht).
+ * Loonheffing tekent de werknemer altijd zelf, ook onder 18. Lidmaatschap onder 18 tekent de
+ * ouder/verzorger (zie ondertekening_ouder_tekent()).
+ */
 function ondertekening_is_werknemer_type(string $type): bool {
     return in_array($type, ['loonheffing', 'lidmaatschap'], true);
+}
+
+/**
+ * Tekent de ouder/verzorger dit document, gegeven de leeftijd van de sollicitant?
+ * Oudertypen altijd; lidmaatschap onder 18 (wettelijk vertegenwoordiger: lidmaatschap met contributieplicht
+ * en SEPA-machtiging gaat een minderjarige niet zelf aan, art. 1:234 BW). Grens 18 = de ondertekeningsgrens,
+ * bewust los van de aanmeld-/AVG-grens van 16.
+ */
+function ondertekening_ouder_tekent(string $type, ?int $leeftijd): bool {
+    if (ondertekening_is_ouder_type($type)) return true;
+    return $type === 'lidmaatschap' && $leeftijd !== null && $leeftijd < 18;
+}
+
+/** Introtekst bovenaan het ondertekenscherm van de ouder/verzorger. */
+function ondertekening_ouder_intro(string $type, string $voornaam, ?int $leeftijd): string {
+    $kind = $voornaam . ($leeftijd !== null ? ' (' . $leeftijd . ')' : '');
+    if ($type === 'lidmaatschap') {
+        return 'Uw kind ' . $kind . ' is aangenomen als strandwacht bij Reddingsbrigade Paal 13 en wordt lid van de vereniging. '
+             . 'Omdat ' . $voornaam . ' jonger is dan 18, schrijft u als ouder/verzorger ' . $voornaam . ' in en tekent u namens ' . $voornaam . '. '
+             . 'Kiest u voor automatische incasso, dan geeft u ook de machtiging als rekeninghouder.';
+    }
+    return 'Uw kind ' . $kind . ' meldt zich aan als strandwacht bij Reddingsbrigade Paal 13. Voor deelname is uw handtekening nodig.';
+}
+
+/** Tekst bij het verplichte akkoordvinkje naast de handtekening. */
+function ondertekening_akkoord_tekst(string $type, bool $ouder, string $voornaam = ''): string {
+    if ($ouder && $type === 'lidmaatschap') {
+        return 'Ik heb het document gelezen en geef als ouder/verzorger (wettelijk vertegenwoordiger) toestemming voor het lidmaatschap van '
+             . ($voornaam !== '' ? $voornaam : 'mijn kind') . '.';
+    }
+    return $ouder
+        ? 'Ik heb het document gelezen en geef toestemming voor deelname.'
+        : 'Ik heb het document gelezen en verklaar naar waarheid te hebben ondertekend.';
+}
+
+/** Uitleg onder "Ondertekenaar" (desktop) als de sollicitant zelf tekent. */
+function ondertekening_zelf_uitleg(string $type): string {
+    return match ($type) {
+        'loonheffing'  => 'Dit formulier teken je altijd zelf, ook als je jonger bent dan 18: het is een verklaring van jou als werknemer.',
+        'lidmaatschap' => 'Je bent 18 of ouder, dus je schrijft je zelf in. Onder 18 tekent je ouder of verzorger via een eigen link.',
+        default        => '18 of ouder, dus je tekent zelf. Onder 18 vervalt dit scherm en tekent alleen de ouder via een eigen link.',
+    };
 }
 
 /** Korte titel voor in de kop van het ondertekenscherm en de bestandsnaam ("Gezondheidsverklaring"). */
@@ -75,8 +122,8 @@ function ondertekening_pdf_bestandsnaam(string $type): string {
  * Dit is de tekst waar de handtekening onder komt; de vragen (aandoeningen, verklaringen) staan
  * apart in het formulier en worden mee opgeslagen in formulier_data.
  */
-function ondertekening_document(string $type, string $voornaam = ''): array {
-    $ouder = ondertekening_is_ouder_type($type);
+function ondertekening_document(string $type, string $voornaam = '', ?bool $ouder = null): array {
+    $ouder = $ouder ?? ondertekening_is_ouder_type($type);
     $kind  = $voornaam !== '' ? $voornaam : 'uw kind';
     if ($type === 'loonheffing') {
         return [
@@ -89,12 +136,22 @@ function ondertekening_document(string $type, string $voornaam = ''): array {
             ],
         ];
     }
+    if ($type === 'lidmaatschap' && $ouder) {
+        return [
+            'titel'   => 'Inschrijving als lid van Reddingsbrigade Paal 13',
+            'alineas' => [
+                'Als strandwacht wordt ' . $kind . ' lid van de vereniging Reddingsbrigade Paal 13. Omdat ' . $kind . ' jonger is dan 18, kan ' . $kind . ' dat niet zelf aangaan: als ouder/verzorger (wettelijk vertegenwoordiger) geeft u toestemming voor het lidmaatschap en tekent u namens ' . $kind . '. Daarmee gaat u ook de verplichtingen van het lidmaatschap aan, zoals de contributie.',
+                'De gegevens van ' . $kind . ' zijn grotendeels al ingevuld vanuit de sollicitatie; controleer ze en vul aan wat ontbreekt. De ledenservice verwerkt de inschrijving.',
+                'De contributie, zwemgelden en eventuele opleidingskosten worden betaald per overschrijving of via automatische incasso. Kiest u voor incasso, dan machtigt u als rekeninghouder de vereniging om die bedragen jaarlijks van de rekening af te schrijven; u ontvangt minimaal 14 dagen van tevoren een factuur en kunt een afschrijving binnen 56 dagen laten terugboeken.',
+            ],
+        ];
+    }
     if ($type === 'lidmaatschap') {
         return [
             'titel'   => 'Inschrijving als lid van Reddingsbrigade Paal 13',
             'alineas' => [
                 'Als strandwacht word je lid van de vereniging Reddingsbrigade Paal 13. Met dit formulier schrijf je je in; de ledenservice verwerkt je inschrijving en je krijgt daarvan bericht.',
-                'Je gegevens zijn grotendeels al ingevuld vanuit je sollicitatie; controleer ze en vul aan wat ontbreekt. Ben je jonger dan 18, dan vragen we ook de gegevens van je ouder of verzorger.',
+                'Je gegevens zijn grotendeels al ingevuld vanuit je sollicitatie; controleer ze en vul aan wat ontbreekt. (Ben je jonger dan 18, dan schrijft je ouder of verzorger je in via een eigen link.)',
                 'De contributie, zwemgelden en eventuele opleidingskosten betaal je per overschrijving of via automatische incasso. Kies je voor incasso, dan machtig je de vereniging om die bedragen jaarlijks van je rekening af te schrijven; je ontvangt minimaal 14 dagen van tevoren een factuur en kunt een afschrijving binnen 56 dagen laten terugboeken.',
             ],
         ];

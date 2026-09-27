@@ -6,7 +6,9 @@
  * Toegang via de unieke token in de URL. Twee routes, nooit beide:
  *   1) Sollicitant zelf (ondertekenaar_rol = sollicitant): opent vanuit zijn taken; ingelogd → met
  *      portaal-navigatie, anders (link uit de mail) alleen het document.
- *   2) Ouder/verzorger (ondertekenaar_rol = ouder): alleen de token uit de mail is nodig.
+ *   2) Ouder/verzorger (ondertekenaar_rol = ouder): alleen de token uit de mail is nodig. Ook de inschrijving
+ *      als lid (type lidmaatschap) van een sollicitant onder 18: de ouder vult in, machtigt als rekeninghouder
+ *      en tekent als wettelijk vertegenwoordiger (includes/lidmaatschap.php).
  * Na ondertekenen: bevestiging + PDF-kopie (?pdf=1, alleen voor een ondertekend document).
  *
  * Veldnamen en opslag zijn ongewijzigd (formulier_data-JSON per type); alleen de presentatie is nieuw.
@@ -66,7 +68,39 @@ $voornaam       = (string)$sol['voornaam'];
 $naam_sol       = trim($voornaam . ' ' . trim(($sol['tussenvoegsel'] ?? '') . ' ' . $sol['achternaam']));
 $leeftijd       = function_exists('leeftijd_uit_datum') ? leeftijd_uit_datum($sol['geboortedatum'] ?? null) : null;
 $titel_kort     = ondertekening_titel_kort($type);
-$doc            = ondertekening_document($type, $voornaam);
+
+// ── Lidmaatschap: tekent de juiste persoon? Onder 18 de ouder/verzorger, vanaf 18 de sollicitant zelf.
+//    Klopt de rol van deze (nog niet getekende) inschrijving niet (klaargezet vóór deze regel, of het lid is
+//    intussen 18), dan zet het vangnet hem om — met een nieuwe link voor de juiste ondertekenaar — en legt
+//    dit scherm uit wat er gebeurt. Deze link is daarna niet meer geldig.
+if ($type === 'lidmaatschap' && !$is_ondertekend && $leeftijd !== null
+    && function_exists('lidmaatschap_ondertekenaar_verzekeren') && ondertekening_ouder_tekent($type, $leeftijd) !== $is_ouder) {
+    $_stand = lidmaatschap_ondertekenaar_verzekeren((int)$rec['sollicitatie_id']);
+    $_naar_ouder = !$is_ouder;
+    $portaal_titel     = $titel_kort;
+    $portaal_geen_nav  = true;
+    $portaal_merk_naam = 'Reddingsbrigade Paal 13';
+    require __DIR__ . '/_kop.php';
+    ?>
+  <div class="pt-leeg groot ond-ongeldig">
+    <span class="pt-leeg-icoon"><?= icoon($_naar_ouder ? 'ouders' : 'vink', 26) ?></span>
+    <?php if ($_naar_ouder): ?>
+      <span class="pt-leeg-titel">Dit formulier tekent je ouder of verzorger</span>
+      <span class="pt-leeg-tekst">Omdat je jonger bent dan 18, schrijft je ouder of verzorger je in als lid van de vereniging en tekent namens jou. <?= $_stand === 'wacht_op_ouder'
+        ? 'Vul in je portaal de gegevens van je ouder of verzorger in; daarna krijgt die een mail met een eigen link.'
+        : 'Je ouder of verzorger krijgt daarvoor een mail met een eigen link. In je portaal zie je wanneer het rond is.' ?></span>
+      <a href="<?= h(APP_URL . '/portaal/taken.php') ?>" class="ds-btn ds-btn-primair">Naar mijn taken</a>
+    <?php else: ?>
+      <span class="pt-leeg-titel">U hoeft hier niets meer te doen</span>
+      <span class="pt-leeg-tekst"><?= h($voornaam) ?> is inmiddels 18 en schrijft zich daarom zelf in als lid, via het eigen portaal. Deze link is niet meer geldig.</span>
+    <?php endif; ?>
+    <span class="pt-hulp">Vragen? Mail <a href="mailto:<?= h($contact) ?>"><?= h($contact) ?></a></span>
+  </div>
+    <?php
+    require __DIR__ . '/_voet.php';
+    exit;
+}
+$doc            = ondertekening_document($type, $voornaam, $is_ouder);
 $eigen_ingelogd = !$is_ouder && portaal_ingelogd() && (int)($_SESSION['portaal_sol_id'] ?? 0) === (int)$rec['sollicitatie_id'];
 $basis_url      = APP_URL . '/portaal/ondertekenen.php?token=' . urlencode($token);
 $twee_fa        = !$is_ondertekend && function_exists('ondertekening_2fa_nodig') && ondertekening_2fa_nodig($type);
@@ -84,7 +118,7 @@ if (!$is_ondertekend && function_exists('ondertekening_geopend_loggen') && $_SER
 }
 
 // ── POST: verwerken ondertekening (logica ongewijzigd) ───────
-$fout = '';
+$fout = ''; $fout_veld = ''; // $fout_veld: naam van het veld waar de fout bij hoort (melding + aria-invalid daar)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_ondertekend) {
     csrf_check();
     $naam_getypt  = trim($_POST['naam_getypt'] ?? '');
@@ -129,23 +163,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_ondertekend) {
         }
     }
     if ($fout === '' && $type === 'lidmaatschap' && function_exists('lidmaatschap_post_valideren')) {
-        $lid = lidmaatschap_post_valideren($_POST, $kluis_ok, $fout, $leeftijd);
+        $lid = lidmaatschap_post_valideren($_POST, $kluis_ok, $fout, $leeftijd, $is_ouder);
+        $fout_veld = (string)($lid['veld'] ?? '');
     }
 
     if ($fout !== '') { /* type- of code-fout gaat voor */ }
-    elseif (!$akkoord)                   $fout = 'Vink het akkoord aan.';
-    elseif (strlen($naam_getypt) < 3)    $fout = ($is_ouder ? 'Vul uw' : 'Vul je') . ' volledige naam in ter ondertekening.';
-    elseif (!$plaats)                    $fout = ($is_ouder ? 'Vul uw' : 'Vul je') . ' woonplaats in.';
-    elseif ($handtekening === '')        $fout = ($is_ouder ? 'Zet uw' : 'Zet je') . ' handtekening in het vak.';
+    elseif (!$akkoord)                   { $fout = 'Vink het akkoord aan.'; $fout_veld = 'akkoord'; }
+    elseif (strlen($naam_getypt) < 3)    { $fout = ($is_ouder ? 'Vul uw' : 'Vul je') . ' volledige naam in ter ondertekening.'; $fout_veld = 'naam_getypt'; }
+    elseif (!$plaats)                    { $fout = 'Vul de plaats van ondertekening in.'; $fout_veld = 'plaats'; }
+    elseif ($handtekening === '')        { $fout = ($is_ouder ? 'Zet uw' : 'Zet je') . ' handtekening in het vak.'; $fout_veld = 'handtekening'; }
     else {
         // Verzamel form-data (verschilt per type). Vertrouwelijke waarden (BSN, IBAN) gaan apart de kluis in.
         $form = []; $vertrouwelijk = null;
+        $ond_geboortedatum = false; $ond_geboorteplaats = false; // false = uit $form halen (hieronder)
         if ($type === 'loonheffing') {
             $form = $lh + ['geslacht' => '', 'aow' => '', 'sjabloon_versie' => loonheffing_sjabloon_versie(), 'sjabloon_sha256' => loonheffing_sjabloon_sha256()];
             $vertrouwelijk = kluis_versleutel(json_encode(['bsn' => $bsn]), 'ondertekening|' . (int)$rec['id'] . '|vertrouwelijk');
             if ($vertrouwelijk === null) { $fout = 'Versleutelen mislukt; probeer het later opnieuw.'; }
         } elseif ($type === 'lidmaatschap') {
             $form = $lid['form'] ?? [];
+            // Tekent de ouder, dan zijn geboortedatum/-plaats die van het lid, niet van de ondertekenaar
+            // (die kolommen blijven dan leeg); de relatie gaat wél mee als ondertekenaar_relatie.
+            if ($is_ouder) { $ond_geboortedatum = null; $ond_geboorteplaats = null; }
             if (!empty($lid['vertrouwelijk'])) {
                 $vertrouwelijk = kluis_versleutel(json_encode($lid['vertrouwelijk']), 'ondertekening|' . (int)$rec['id'] . '|vertrouwelijk');
                 if ($vertrouwelijk === null) { $fout = 'Versleutelen mislukt; probeer het later opnieuw.'; }
@@ -193,8 +232,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_ondertekend) {
                      WHERE token=?")
            ->execute([
                 $naam_getypt,
-                ($form['geboortedatum'] ?? '') !== '' ? $form['geboortedatum'] : null,
-                $form['geboorteplaats'] ?? null,
+                $ond_geboortedatum !== false ? $ond_geboortedatum : (($form['geboortedatum'] ?? '') !== '' ? $form['geboortedatum'] : null),
+                $ond_geboorteplaats !== false ? $ond_geboorteplaats : ($form['geboorteplaats'] ?? null),
                 $form['relatie'] ?? null,
                 json_encode($form, JSON_UNESCAPED_UNICODE),
                 $vertrouwelijk,
@@ -394,12 +433,13 @@ require __DIR__ . '/_kop.php';
         <?php if ($is_ouder): ?>
           <div class="ond-intro">
             <span class="ond-intro-titel"><?= h($titel_kort) ?></span>
-            <span class="ond-intro-tekst">Uw kind <?= h($voornaam) ?><?= $leeftijd !== null ? ' (' . (int)$leeftijd . ')' : '' ?> meldt zich aan als strandwacht bij Reddingsbrigade Paal 13. Voor deelname is uw handtekening nodig.</span>
+            <span class="ond-intro-tekst"><?= h(ondertekening_ouder_intro($type, $voornaam, $leeftijd)) ?></span>
           </div>
         <?php endif; ?>
 
         <?php if ($na_fout): ?>
-          <div class="ds-melding ds-melding-error" id="ondFoutmelding" role="alert"><?= icoon('let-op', 18) ?> <div><?= h($fout) ?></div></div>
+          <?php /* Staat de fout ook bij het veld (dat heeft role=alert), dan is dit de samenvatting zonder tweede aankondiging. */ ?>
+          <div class="ds-melding ds-melding-error" id="ondFoutmelding"<?= $fout_veld === '' ? ' role="alert"' : '' ?>><?= icoon('let-op', 18) ?> <div><?= h($fout) ?></div></div>
         <?php elseif (!$kluis_ok): ?>
           <div class="ds-melding ds-melding-warn" role="alert"><?= icoon('let-op', 18) ?> <div>De beveiligde opslag is tijdelijk niet beschikbaar. Dit formulier kan nu niet ondertekend worden; probeer het later opnieuw.</div></div>
         <?php endif; ?>
@@ -420,14 +460,16 @@ require __DIR__ . '/_kop.php';
       <div class="ond-rechts">
         <!-- Handtekening -->
         <div class="ond-kaart ond-teken">
-          <label class="ds-veld ond-veld">
+          <label class="ds-veld ond-veld<?= $fout_veld === 'naam_getypt' ? ' fout' : '' ?>">
             <span class="ond-lbl"><?= $u ? 'Uw naam' : 'Je naam' ?> <span class="ster">*</span></span>
-            <input type="text" name="naam_getypt" class="ds-input" value="<?= $v('naam_getypt') ?>" autocomplete="name" required>
+            <input type="text" name="naam_getypt" class="ds-input" value="<?= $v('naam_getypt') ?>" autocomplete="name" required<?= ondertekening_veldfout_attr('naam_getypt', $fout_veld) ?>>
             <span class="ds-veld-hint"><?= $u ? 'Uw volledige naam, zoals op uw identiteitsbewijs.' : 'Je volledige naam, zoals op je identiteitsbewijs.' ?></span>
+            <?= ondertekening_veldfout_html('naam_getypt', $fout_veld, $fout) ?>
           </label>
-          <label class="ds-veld ond-veld">
+          <label class="ds-veld ond-veld<?= $fout_veld === 'plaats' ? ' fout' : '' ?>">
             <span class="ond-lbl">Plaats van ondertekening <span class="ster">*</span></span>
-            <input type="text" name="plaats" class="ds-input" value="<?= $v('plaats') ?>" placeholder="Bijv. Callantsoog" autocomplete="address-level2" required>
+            <input type="text" name="plaats" class="ds-input" value="<?= $v('plaats') ?>" placeholder="Bijv. Callantsoog" autocomplete="address-level2" required<?= ondertekening_veldfout_attr('plaats', $fout_veld) ?>>
+            <?= ondertekening_veldfout_html('plaats', $fout_veld, $fout) ?>
           </label>
           <div class="ond-teken-kop">
             <span class="ond-teken-titel"><?= $u ? 'Uw handtekening' : 'Jouw handtekening' ?>
@@ -437,19 +479,19 @@ require __DIR__ . '/_kop.php';
             </span>
             <button type="button" class="ond-teken-wis" id="hdtWis">Wissen</button>
           </div>
-          <div class="ond-vak" id="hdtWrap">
-            <canvas id="hdtCanvas" class="ond-canvas" aria-label="Handtekeningvak"></canvas>
+          <div class="ond-vak<?= $fout_veld === 'handtekening' ? ' fout' : '' ?>" id="hdtWrap">
+            <canvas id="hdtCanvas" class="ond-canvas" aria-label="Handtekeningvak"<?= ondertekening_veldfout_attr('handtekening', $fout_veld) ?>></canvas>
             <span class="ond-vak-hint" id="hdtHint">Teken met <?= $u ? 'uw' : 'je' ?> vinger</span>
           </div>
+          <?= ondertekening_veldfout_html('handtekening', $fout_veld, $fout) ?>
           <input type="hidden" name="handtekening_beeld" id="hdtData" value="<?= $v('handtekening_beeld') ?>">
           <?php if ($twee_fa): $tel_masker = ondertekening_tel_masker($is_ouder ? ($rec['ouder_telefoon'] ?? '') : ($sol['telefoon'] ?? '')); require __DIR__ . '/_ondertekenen_2fa.php'; endif; ?>
-          <label class="ond-check">
-            <input type="checkbox" name="akkoord" value="1"<?= $aan('akkoord') ?> required>
+          <label class="ond-check<?= $fout_veld === 'akkoord' ? ' fout' : '' ?>">
+            <input type="checkbox" name="akkoord" value="1"<?= $aan('akkoord') ?> required<?= ondertekening_veldfout_attr('akkoord', $fout_veld) ?>>
             <span class="ond-check-box"><?= icoon('vink', 14) ?></span>
-            <span class="ond-check-tekst"><?= $u
-              ? 'Ik heb het document gelezen en geef toestemming voor deelname.'
-              : 'Ik heb het document gelezen en verklaar naar waarheid te hebben ondertekend.' ?></span>
+            <span class="ond-check-tekst"><?= h(ondertekening_akkoord_tekst($type, $u, $voornaam)) ?></span>
           </label>
+          <?= ondertekening_veldfout_html('akkoord', $fout_veld, $fout) ?>
         </div>
 
         <?php if (!$is_ouder): ?>
@@ -457,9 +499,7 @@ require __DIR__ . '/_kop.php';
           <div class="ond-ondertekenaar">
             <span class="ond-ondertekenaar-lbl">Ondertekenaar</span>
             <span class="ond-ondertekenaar-naam"><?= h($naam_sol) ?><?= $leeftijd !== null ? ' · ' . (int)$leeftijd . ' jaar' : '' ?></span>
-            <span class="ond-ondertekenaar-sub"><?= $werknemer_type
-              ? 'Dit formulier teken je altijd zelf, ook als je jonger bent dan 18: het is een verklaring van jou als werknemer/lid.'
-              : '18 of ouder, dus je tekent zelf. Onder 18 vervalt dit scherm en tekent alleen de ouder via een eigen link.' ?></span>
+            <span class="ond-ondertekenaar-sub"><?= h(ondertekening_zelf_uitleg($type)) ?></span>
           </div>
         <?php endif; ?>
 

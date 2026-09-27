@@ -46,7 +46,9 @@ function ondertekening_pdf_bytes(array $rec, array $sol, array $opties = []): ?s
 
         if (($opties['zegel'] ?? true) && function_exists('zegel_status') && zegel_status()['ok']) {
             zegel_toepassen($pdf, [
-                'Reason' => 'Digitaal ondertekend door ' . ondertekening_pdf_tekst($rec['ondertekenaar_naam'] ?? '') . ' via het sollicitatiesysteem van Reddingsbrigade Paal 13',
+                'Reason' => 'Digitaal ondertekend door ' . ondertekening_pdf_tekst($rec['ondertekenaar_naam'] ?? '')
+                    . (($rec['ondertekenaar_rol'] ?? '') === 'ouder' ? ' (ouder/verzorger, wettelijk vertegenwoordiger)' : '')
+                    . ' via het sollicitatiesysteem van Reddingsbrigade Paal 13',
             ], $veld);
         }
         return zegel_bytes($pdf, 'document.pdf');
@@ -238,7 +240,9 @@ function ondertekening_pdf_certificaatpagina($pdf, array $rec, array $sol): arra
 
     $kop('Ondertekenaar');
     $veld('Naam', (string)($rec['ondertekenaar_naam'] ?? ''));
-    $veld('Rol', ($rec['ondertekenaar_rol'] ?? '') === 'ouder' ? 'Ouder / verzorger' : 'Sollicitant (werknemer) zelf');
+    $veld('Rol', ($rec['ondertekenaar_rol'] ?? '') === 'ouder'
+        ? 'Ouder / verzorger, als wettelijk vertegenwoordiger van ' . ondertekening_pdf_naam($sol) . ' (minderjarig)'
+        : 'Sollicitant (werknemer) zelf');
     $veld('E-mailadres', (string)($rec['ondertekenaar_email'] ?: ($sol['email'] ?? '')));
     $veld('Ondertekend op', !empty($rec['ondertekend_op']) ? date('d-m-Y H:i:s', strtotime($rec['ondertekend_op'])) . ' (Europe/Amsterdam)' : '-');
     $veld('Plaats (opgegeven)', (string)($rec['plaats'] ?? ''));
