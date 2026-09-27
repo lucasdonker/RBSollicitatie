@@ -52,7 +52,7 @@ hr { border: 0; border-top: 1px solid var(--rand); margin: 24px 0; }
 <header id="title-block-header">
 <h1 class="title">Verwerkingsregister — Sollicitatiesysteem Paal 13</h1>
 </header>
-<p>Versie 2.102 · september 2026</p>
+<p>Versie 2.125 · september 2026</p>
 <p>Dit is het register van verwerkingsactiviteiten (AVG artikel 30) voor
 het sollicitatiesysteem van Reddingsbrigade Paal 13: het
 aanmeldformulier, het sollicitantenportaal en het beheer. Per verwerking
@@ -363,6 +363,14 @@ Portaalgebruik: inlogmomenten, &quot;blijf ingelogd&quot; met browser en IP per
 apparaat (<code>portaal_apparaten</code>).</td>
 </tr>
 <tr>
+<td>Verzoek om in te trekken (2.120)</td>
+<td>Vanuit Mijn gegevens: reden (optioneel), of iemand een seintje wil,
+status en wie besliste (<code>intrek_verzoek</code>). Er verandert niets
+vanzelf; het bestuur belt en beslist. Het seintje-vinkje staat niet
+vooraf aan (toestemming, zie <a href="#seintje-bij-de-volgende-werving">Seintje</a>, bron
+<code>intrekken</code>). Gaat mee in inzage en wissen.</td>
+</tr>
+<tr>
 <td>Ontvangers en verwerkers</td>
 <td>Bestuur (module <code>sollicitanten</code>), penningmeester (alleen
 lezen). Cloud86, e-mailprovider, eventueel WhatsReach of sms-dienst,
@@ -499,7 +507,9 @@ van het strand). Een mens beslist altijd.</td>
 <tr>
 <td>Betrokkenen</td>
 <td>Sollicitanten die zijn uitgenodigd; beoordelaars (hun naam staat bij
-hun cijfers en observaties).</td>
+hun cijfers en observaties); lifeguards van wie het bestuur feedback
+vastlegt (hun naam staat bij die feedback, niet in de inzage voor de
+sollicitant).</td>
 </tr>
 <tr>
 <td>Persoonsgegevens</td>
@@ -515,16 +525,30 @@ evenement de bevestiging &quot;ik kom / ik kan niet&quot; met reden en bron
 het besluit, een interne notitie en het bericht aan de sollicitant
 (<code>tw_deelname.gesprek_bericht</code>, gaat mee in de mail). Wie een
 bellijst-regel of gesprek open heeft staat maximaal 30 minuten bij de
-rij (<code>bel_door</code>, <code>gesprek_door</code>).</td>
+rij (<code>bel_door</code>, <code>gesprek_door</code>). Sinds 2.117:
+groepsindeling van het weekend (<code>tw_groep</code>,
+<code>tw_deelname.groep_id</code>); &quot;houd uit elkaar&quot; geldt voor beide
+evenementen. Of iemand een terugkerende lifeguard is, wordt afgeleid uit
+de bestaande Authentik-koppeling (niets nieuws opgeslagen). Sinds 2.118:
+de eerste indruk van het bestuur tijdens het weekend (sowieso aannemen /
+twijfel / sowieso afwijzen) met bij twijfel een vraag aan de
+beoordelaars (<code>tw_deelname.evaluatie*</code>). Sinds 2.119:
+feedback die een lifeguard het bestuur gaf, door het bestuur vastgelegd:
+van wie, wanneer gezien, soort en tekst
+(<code>lifeguard_feedback</code>).</td>
 </tr>
 <tr>
 <td>Ontvangers en verwerkers</td>
 <td>Bestuur (modules <code>selectiedag</code> en
 <code>trainingsweekend</code>, bewerken). Begeleiders (rol
 <code>begeleider</code>): alleen lezen, inchecken, eigen cijfers en
-observaties geven, geen dossier en geen telefoonnummers. Op de
-incheck-tablet ziet iemand na minstens 3 getypte letters hooguit 3 namen
-met foto — nooit een volledige lijst. Cloud86.</td>
+observaties geven, geen dossier en geen telefoonnummers. Van de
+evaluatie zien begeleiders alleen wie op twijfel staat (&quot;extra aandacht
+gevraagd&quot;) met de vraag van het bestuur; sowieso aannemen of afwijzen
+zien ze niet. Lifeguard-feedback is alleen zichtbaar met dossierrecht
+(bestuur, penningmeester). Op de incheck-tablet ziet iemand na minstens
+3 getypte letters hooguit 3 namen met foto — nooit een volledige lijst.
+Cloud86.</td>
 </tr>
 <tr>
 <td>Doorgifte buiten de EER</td>
@@ -534,7 +558,8 @@ met foto — nooit een volledige lijst. Cloud86.</td>
 <td>Bewaartermijn</td>
 <td>Volgt het dossier: bij afwijzen 4 weken, bij aannemen 2 jaar na het
 laatste seizoen. Bij wissen gaan indeling, relaties (in beide
-richtingen), cijfers, observaties, besluiten en deelname weg.</td>
+richtingen), cijfers, observaties, besluiten, deelname (met evaluatie)
+en lifeguard-feedback weg.</td>
 </tr>
 <tr>
 <td>Beveiliging</td>
@@ -848,12 +873,18 @@ loonheffing-ondertekening (met BSN), de kopie van het identiteitsbewijs,
 naam en geboortedatum (<code>avg_behoud_loondossier()</code>). Het
 portaal legt in eenvoudige taal uit wat blijft, waarom en tot wanneer.
 Het dossier blijft op de lijst &quot;Te beoordelen voor vernietiging&quot; komen
-(de naam staat er nog, de loonheffing-ondertekening bestaat nog).</p>
+(de naam staat er nog, de loonheffing-ondertekening bestaat nog).
+Vernietigt de penningmeester dat loondossier, dan gaan meteen ook naam
+en geboortedatum weg: <code>documenten_loondossier_vernietigen()</code>
+roept daarvoor <code>avg_na_loondossier_vernietigd()</code> aan
+(<code>includes/documenten.php</code>,
+<code>includes/avg_wissen.php</code>).</p>
 <h1 id="lidmaatschap">Lidmaatschap</h1>
 <blockquote>
 <p><strong>In het kort:</strong> aangenomen strandwachten worden lid van
 de vereniging. De inschrijving wordt in het portaal getekend en gaat per
-e-mail naar de ledenservice.</p>
+e-mail naar de ledenservice. Bij een minderjarige tekent de ouder of
+verzorger, en de SEPA-machtiging tekent de rekeninghouder.</p>
 </blockquote>
 <table>
 <thead>
@@ -871,19 +902,37 @@ contributie innen.</td>
 <tr>
 <td>Grondslag</td>
 <td>Art. 6 lid 1 sub b AVG (lidmaatschapsovereenkomst); bij incasso de
-SEPA-machtiging.</td>
+SEPA-machtiging. Een minderjarige is handelingsonbekwaam (grens 18, zie
+<a href="#bijzonderheden">Bijzonderheden</a>), dus de
+lidmaatschapsovereenkomst van iemand onder de 18 wordt aangegaan en
+getekend door de ouder of verzorger. Een SEPA-machtiging kan alleen de
+rekeninghouder geven; die tekent de machtiging.</td>
 </tr>
 <tr>
 <td>Betrokkenen</td>
-<td>Aangenomen strandwachten; bij een minderjarige de ouder of
-verzorger.</td>
+<td>Aangenomen strandwachten; bij een minderjarige de ouder of verzorger
+die tekent; bij incasso de rekeninghouder (dat kan een ander zijn dan
+het lid, bijvoorbeeld de ouder).</td>
 </tr>
 <tr>
 <td>Persoonsgegevens</td>
 <td>Naam, geslacht, geboortedatum en -plaats, adres, telefoon, e-mail,
 gegevens van de ouder, lid of donateur, diploma&#39;s, betaalwijze, bij
 incasso IBAN en tenaamstelling, SEPA-machtiging, handtekening,
-verzegelde PDF.</td>
+verzegelde PDF. Bij een minderjarige: naam, e-mailadres en
+telefoonnummer van de ouder of verzorger die tekent, diens handtekening
+en het bewijsspoor van die ondertekening (tijdstip, IP-adres, browser;
+zie <a href="#ondertekening-en-bewijslog">Ondertekening en
+bewijslog</a>); bij incasso naam en IBAN van de rekeninghouder en diens
+handtekening onder de machtiging.</td>
+</tr>
+<tr>
+<td>Status (september 2026)</td>
+<td>Het tekenen door de ouder of verzorger en de machtiging door de
+rekeninghouder worden op dit moment gebouwd. Tot dat in gebruik is,
+tekent de sollicitant zelf in het portaal en staan de oudergegevens
+alleen als invulvelden op het formulier. Na oplevering dit hoofdstuk en
+de privacyverklaring nalopen tegen de code (zie <a href="#nog-vast-te-leggen">Nog vast te leggen</a>).</td>
 </tr>
 <tr>
 <td>Ontvangers en verwerkers</td>
@@ -974,8 +1023,12 @@ vastleggen.</td>
 <td>Overzicht van berichten: 12 maanden
 (<code>bewaar.maillog_mnd</code>, standaard 12). Inhoud van berichten: 3
 maanden (<code>bewaar.maillog_body_mnd</code>, standaard 3). Wachtrij:
-30 dagen na verzending of fout (vast). Losse bijlagen die aan geen
-sjabloon meer hangen: 12 maanden (<code>bewaar.bijlagen_mnd</code>,
+30 dagen na verzending of fout (vast); bij berichten waarvan de inhoud
+nooit gelogd wordt (inlogcodes, bestuursmeldingen, ledenservice,
+penningmeester) worden de tekst en de korte tekst in de wachtrij direct
+na een geslaagde verzending leeggemaakt
+(<code>includes/meldingen/verzend.php</code>). Losse bijlagen die aan
+geen sjabloon meer hangen: 12 maanden (<code>bewaar.bijlagen_mnd</code>,
 standaard 12).</td>
 </tr>
 <tr>
@@ -1014,14 +1067,18 @@ te vullen.</td>
 <td>Grondslag</td>
 <td>BLK-analyse: art. 6 lid 1 sub f AVG (gerechtvaardigd belang:
 zorgvuldig en efficiënt selecteren); de sollicitant kan bezwaar maken
-via een vraag in Berichten of per mail. Het bestuur legt dat vast met
-<code>ai_bezwaar_zetten()</code>: de vlag
-<code>sollicitaties.ai_bezwaar</code> wordt gezet, de analyse gewist, en
-de wachtrij slaat de sollicitant daarna over. Beschikbaarheidshulp: art.
-6 lid 1 sub b; het gebruik is vrijwillig, handmatig invullen kan altijd.
-Geen geautomatiseerd besluit in de zin van art. 22. Geen bijzondere
-persoonsgegevens: het veld bijzonderheden (medicatie, allergieën) gaat
-niet naar de AI, want daarvoor is geen grondslag onder art. 9.</td>
+via een vraag in Berichten of per mail. Het bestuur legt dat vast met de
+knop &quot;Bezwaar vastleggen&quot; bij de AI-analyse op het
+kennismakingsformulier in het beheer (<code>admin/blk_detail.php</code>,
+via <code>admin/api_ai_analyse.php</code> naar
+<code>ai_bezwaar_zetten()</code>; recht <code>sollicitanten</code>
+bewerken): de vlag <code>sollicitaties.ai_bezwaar</code> wordt gezet, de
+analyse gewist, en de wachtrij slaat de sollicitant daarna over.
+Beschikbaarheidshulp: art. 6 lid 1 sub b; het gebruik is vrijwillig,
+handmatig invullen kan altijd. Geen geautomatiseerd besluit in de zin
+van art. 22. Geen bijzondere persoonsgegevens: het veld bijzonderheden
+(medicatie, allergieën) gaat niet naar de AI, want daarvoor is geen
+grondslag onder art. 9.</td>
 </tr>
 <tr>
 <td>Betrokkenen</td>
@@ -1305,7 +1362,9 @@ toestemming; naam en moment worden vastgelegd.</td>
 <td>Ondertekeningsgrens: minderjarigen zijn handelingsonbekwaam</td>
 <td>Onder de 18 vragen we naam, e-mail en telefoon van de ouder; de
 ouder tekent de gezondheidsverklaring en de intake via een link in de
-mail. De opgaaf loonheffing tekent de minderjarige zelf.</td>
+mail, en (in aanbouw, zie <a href="#lidmaatschap">Lidmaatschap</a>) ook
+het lidmaatschap; een SEPA-machtiging tekent altijd de rekeninghouder.
+De opgaaf loonheffing tekent de minderjarige zelf.</td>
 </tr>
 </tbody>
 </table>
@@ -1380,9 +1439,10 @@ dienstverband niet is doorgegaan.</td>
 <tr>
 <td>Bezwaar (art. 21)</td>
 <td>Tegen verwerking op grond van gerechtvaardigd belang. AI-analyse:
-via een vraag in Berichten of per mail; het bestuur zet het bezwaar in
-het dossier (<code>ai_bezwaar_zetten()</code>), de analyse wordt gewist
-en niet opnieuw gemaakt. Wervingsberichten aan oud-strandwachten: de
+via een vraag in Berichten of per mail; het bestuur zet het bezwaar met
+de knop &quot;Bezwaar vastleggen&quot; op het kennismakingsformulier
+(<code>ai_bezwaar_zetten()</code>), de analyse wordt gewist en niet
+opnieuw gemaakt. Wervingsberichten aan oud-strandwachten: de
 afmeldlink.</td>
 </tr>
 <tr>
@@ -1437,19 +1497,12 @@ welke sms-gateway op productie in gebruik zijn, en waar ze de gegevens
 verwerken.</label></li>
 <li><label><input type="checkbox"></input>De bewaartermijn van de
 ledenadministratie bij de ledenservice vastleggen.</label></li>
-<li><label><input type="checkbox"></input>AI-analyse: de knop in het dossier
-waarmee het bestuur een bezwaar vastlegt
-(<code>ai_bezwaar_zetten()</code> bestaat, de knop nog niet); en de
-AI-verordening toetsen (zie <a href="#ai-analyse">AI-analyse</a>).</label></li>
-<li><label><input type="checkbox"></input>Na het vernietigen van het
-loondossier van iemand die zichzelf verwijderde, moeten naam en
-geboortedatum ook weg: <code>documenten_loondossier_vernietigen()</code>
-moet daarvoor <code>avg_na_loondossier_vernietigd()</code>
-aanroepen.</label></li>
-<li><label><input type="checkbox"></input>De wachtrij
-(<code>mail_queue</code>) bewaart de volledige tekst tot 30 dagen, ook
-van berichten waarvan de inhoud niet gelogd wordt (ledenservice,
-penningmeester): na verzending leegmaken.</label></li>
+<li><label><input type="checkbox"></input>AI-analyse: de AI-verordening
+toetsen (zie <a href="#ai-analyse">AI-analyse</a>).</label></li>
+<li><label><input type="checkbox"></input>Lidmaatschap van minderjarigen
+(ouder of verzorger tekent, SEPA-machtiging door de rekeninghouder): na
+de bouw controleren of dit register en de privacyverklaring kloppen met
+de code (zie <a href="#lidmaatschap">Lidmaatschap</a>).</label></li>
 <li><label><input type="checkbox"></input>Het bewijs van ondertekening met
 gemaskeerd IP-adres laten toetsen: is een IP-adres met het laatste blok
 op 0 nog nodig als bewijs, of kan het helemaal weg?</label></li>
@@ -1517,6 +1570,18 @@ met reden, het gesprek met het bestuur (besluit, interne notitie,
 bericht aan de sollicitant), vergrendeling &quot;bezig door&quot; en de
 incheck-tablet met foto. Alles zit in de inzage en gaat mee bij
 wissen.</td>
+</tr>
+<tr>
+<td>27 september 2026</td>
+<td>Drie punten uit &quot;Nog vast te leggen&quot; zijn gebouwd en naar hun
+hoofdstuk verplaatst: de knop &quot;Bezwaar vastleggen&quot; voor de AI-analyse,
+naam en geboortedatum weg na het vernietigen van een bewaard
+loondossier, en de wachtrijtekst van niet-gelogde berichten leeg na
+verzending. Lidmaatschap van minderjarigen: de ouder of verzorger
+tekent, de SEPA-machtiging tekent de rekeninghouder (in aanbouw).
+Privacyverklaring: de termijn van de gezondheidsgegevens volgt nu
+<code>bewaar.gezondheid_mnd</code>, en het tekenen van het lidmaatschap
+door de ouder staat erin.</td>
 </tr>
 </tbody>
 </table>

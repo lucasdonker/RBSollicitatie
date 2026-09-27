@@ -535,10 +535,18 @@ function actief_seizoen(): ?array {
     static $s = null;
     if ($s === null) {
         try {
-            // Kies het GEOPENDE seizoen (het meest recente als er meerdere open zijn).
-            // Pas als er geen enkel seizoen open is, terugvallen op het nieuwste seizoen.
-            $s = db()->query("SELECT * FROM seizoenen ORDER BY (status='open') DESC, id DESC LIMIT 1")->fetch() ?: null;
-        } catch (Exception $e) { $s = null; }
+            // Kies het seizoen waarvan de AANMELDING open staat (het meest recente als er ooit
+            // meerdere open zijn; openen sluit de andere). Staat er geen open, dan het nieuwste
+            // seizoen met sollicitaties — de aanmelding sluiten betekent niet dat de procedure
+            // klaar is, en een net aangemaakt, leeg seizoen mag die niet wegdrukken. Pas als geen
+            // enkel seizoen sollicitaties heeft: het nieuwste.
+            $s = db()->query("SELECT * FROM seizoenen ORDER BY (status='open') DESC,
+                                  (EXISTS (SELECT 1 FROM sollicitaties so WHERE so.seizoen_id = seizoenen.id)) DESC, id DESC
+                              LIMIT 1")->fetch() ?: null;
+        } catch (Exception $e) {
+            try { $s = db()->query("SELECT * FROM seizoenen ORDER BY (status='open') DESC, id DESC LIMIT 1")->fetch() ?: null; }
+            catch (Exception $e2) { $s = null; }
+        }
     }
     return $s;
 }
@@ -610,8 +618,9 @@ function fase_kleur(string $f): string {
     return ['aangemeld' => 'grijs', 'uitgenodigd_selectie' => 'blauw', 'aangemeld_selectie' => 'oranje', 'selectiedag_geweest' => 'teal', 'uitgenodigd_tw' => 'paars', 'tw_geweest' => 'paars', 'aangenomen' => 'groen', 'afgewezen' => 'rood'][$f] ?? 'grijs';
 }
 
+/** Is Authentik (OIDC) ingesteld? Een {{PLAATSHOUDER}} uit config.template.php telt als leeg (config_const, smtp.php). */
 function authentik_actief(): bool {
-    return defined('OIDC_CLIENT_ID') && OIDC_CLIENT_ID !== '' && defined('OIDC_ISSUER') && OIDC_ISSUER !== '';
+    return config_const('OIDC_CLIENT_ID') !== '' && config_const('OIDC_ISSUER') !== '';
 }
 
 // Alias voor backwards compat
@@ -730,7 +739,9 @@ function personen_ouder_auto_setup(): void {
 // 2026-09b: gezondheid/intake bij de selectiedag, loondocumenten handmatig, termijnen uit de instellingen
 // 2026-09c: AI-bezwaar, dagpseudoniem, oud-strandwachten, verwijderen met bewaard loondossier,
 //           doorgifte (sms), lettertype zelf gehost
-if (!defined('PRIVACY_VERSIE')) define('PRIVACY_VERSIE', '2026-09c');
+// 2026-09d: lidmaatschap onder 18 getekend door ouder/verzorger (SEPA door de rekeninghouder),
+//           termijn gezondheidsverklaring volgt de instelling
+if (!defined('PRIVACY_VERSIE')) define('PRIVACY_VERSIE', '2026-09d');
 
 if (!function_exists('consent_auto_setup')) {
 /**

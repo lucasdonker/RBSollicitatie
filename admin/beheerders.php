@@ -12,7 +12,7 @@
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/beheer/laden.php';
 require_once __DIR__ . '/../includes/tweestaps.php';
-$pagina_titel = 'Beheerders';
+$pagina_titel = 'Beheerders & rechten';
 $actieve_nav  = 'beheerders';
 vereis_recht('beheerders', 'bewerken');
 

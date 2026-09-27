@@ -2004,7 +2004,7 @@ body.bh-paneel-open .bh-inhoud { transition: padding-right .15s ease; }
   .bh-zijbalk, .bh-topbar, .bh-overlay, .bh-hulppaneel,
   .bh-tabs, .bh-substappen, .bh-filterbalk, .bh-bulkbalk, .bh-paginering,
   .bh-rl-laag, .bh-rl-spot, .bh-rl-kaart, .bh-rl-welkom, .bh-hb-zij, .bh-hb-toon,
-  .ds-btn, button, #bh-toasts, .detail-paneel, .paneel-overlay { display: none !important; }
+  .ds-btn, button, #bh-toasts { display: none !important; }
   .bh-hoofd { margin-left: 0 !important; }
   .bh-inhoud { padding: 0 !important; max-width: none !important; }
   .ds-kaart { box-shadow: none !important; border-color: #ccc !important; break-inside: avoid; }
@@ -3188,3 +3188,54 @@ hr.bh-blk-scheiding { border: none; border-top: 1px solid var(--rand); margin: 1
 .bh-sys-versietitel { font-size: 13px; color: var(--tekst); }
 .bh-sys-datum { font-size: 11px; color: var(--grijs); }
 .bh-sys-punten { margin: 8px 0 0; padding-left: 20px; font-size: 12.5px; line-height: 1.8; color: var(--tekst-zacht); }
+
+/* === trainingsweekend (agent E) === */
+/* Knop "Overnemen" bij een bezet gesprek: in de lijstrij en in de melding boven het gesprek. */
+.bh-twovernemen { margin: 0; }
+.bh-twbezet { flex-wrap: wrap; align-items: center; }
+.bh-twbezet > span { flex: 1; min-width: 200px; }
+
+/* === klein beheer (agent J) === */
+/* SSO-foutpagina (admin/auth_callback.php): staat buiten het beheerkader, op de login-kaart. */
+.login-kaart.bh-ssofout { max-width: 500px; }
+.bh-ssofout-details { margin-bottom: 14px; }
+.bh-ssofout-details summary { cursor: pointer; font-size: 12px; color: var(--grijs); padding: 8px 0; }
+.bh-ssofout-details summary svg { vertical-align: -2px; }
+.bh-ssofout-code {
+  background: var(--grijs-bg); border: 1px solid var(--rand); border-radius: 6px; padding: 10px; margin: 6px 0 0;
+  font-size: 11px; font-family: monospace; white-space: pre-wrap; word-break: break-all;
+}
+.bh-ssofout-knoppen { display: flex; flex-direction: column; gap: 8px; }
+.bh-ssofout-knoppen .ds-btn { justify-content: center; }
+/* Tooltip ([data-tip]) uit admin/layout_bottom.php: alleen positie en zichtbaarheid zet het script. */
+.bh-tooltip {
+  position: absolute; background: var(--navy); color: var(--op-vol); padding: 8px 12px; border-radius: 6px;
+  font-size: 12px; line-height: 1.5; max-width: 260px; z-index: 10000; pointer-events: none;
+  opacity: 0; transition: opacity .15s; box-shadow: 0 4px 12px rgba(0,0,0,.3);
+}
+
+/* === systeemstatus/testmodus (agent B) === */
+/* Testmodus-balk onder de topbalk (admin/_topbar.php, MAIL_OMLEIDEN): over de volle breedte, geen ronde hoeken. */
+.bh-testmodus { border-radius: 0; padding: 10px 24px; align-items: center; font-weight: 600; border-bottom: 1px solid var(--border); }
+/* "Nog in te stellen" op Vandaag (admin/_systeemstatus.php) en per check bij Systeem (admin/systeem.php). */
+.bh-instellen {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md);
+  padding: 13px 16px; margin-top: 12px;
+}
+.bh-instellen-kop { font-size: 14px; font-weight: 700; color: var(--ink); margin: 0 0 8px; }
+.bh-instellen-lijst { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.bh-instellen-punt { display: flex; align-items: flex-start; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--ink-soft); }
+.bh-instellen-punt > .ic { flex-shrink: 0; margin-top: 2px; color: var(--warn); }
+.bh-instellen-punt.fout > .ic { color: var(--error); }
+.bh-instellen-punt.info > .ic { color: var(--navy); }
+.bh-instellen-tekst { flex: 1 1 200px; min-width: 0; }
+@media (max-width: 760px) { .bh-testmodus { padding: 10px 16px; } }
+
+/* === seizoen/vandaag (agent CD) === */
+/* Afronden op Vandaag (admin/_hoofdtaak.php): de stappen met een vinkje of een punt. */
+.bh-hoofdtaak-taken { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.bh-hoofdtaak-taak { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; }
+.bh-hoofdtaak-taakicoon { color: var(--accent); display: flex; padding-top: 2px; }
+.bh-hoofdtaak-taak.af .bh-hoofdtaak-taakicoon { color: var(--ok); }
+.bh-hoofdtaak-taak.af .bh-hoofdtaak-taaktekst { color: var(--ink-soft); }
+.bh-hoofdtaak-taaktekst { display: flex; flex-direction: column; gap: 2px; min-width: 0; }

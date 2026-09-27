@@ -3,10 +3,28 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.125.2');
+define('APP_VERSIE', '2.126.0');
 
 function app_changelog(): array {
     return [
+        '2.126.0' => [
+            'datum'  => '2026-09-27',
+            'titel'  => 'Klaar voor gebruik: gaten in de flow dicht, testmodus, loontarieven per jaar',
+            'punten' => [
+                'Aanmelden overschrijft geen bestaand persoon meer (afwijkingen ziet het bestuur); een sollicitant kan geen documenten meer starten via de URL',
+                'Testmodus: config MAIL_OMLEIDEN stuurt alle mail naar één adres en verstuurt geen WhatsApp/SMS (ook de verificatiecode niet); balk in het beheer',
+                'Zonder SMTP gaan bijlagen voortaan mee via mail(); plaatshouders {{...}} tellen niet meer als ingesteld',
+                'Systeemcontrole: 11 checks en een lijst "Nog in te stellen" (SMTP, SSO, penningmeester-/ledenservice-adres, huisregels, opschonen); api/status.php voor een externe uptime-monitor',
+                'Seizoen: open/dicht betreft alleen de aanmelding; openen sluit andere seizoenen; verwijderen via de AVG-wislaag en geweigerd bij bewaarplichtige loondossiers',
+                'Vandaag loopt het hele seizoen mee: groepsindeling, TW voorbereiden, loonplanning, niet-gekomenen en een nieuwe fase Afronden; per rol alleen wat je kunt doen',
+                'Trainingsweekend: wie niet kwam is een eigen groep met eigen bericht; een bezet gesprek kan worden overgenomen',
+                'Loontarieven, vakantietoeslag, werkuren en budget per kalenderjaar; oude seizoenen rekenen niet meer met nieuwe lonen',
+                'Loondossiers per seizoen te kiezen; nieuwe velden voor bewaartermijn loondocumenten, privacy-URL en verificatiecode per type',
+                'Lidmaatschap onder 18 wordt getekend door de ouder/verzorger, de SEPA-machtiging door de rekeninghouder',
+                'Portaal: eigen staat na stoppen, labels zonder jargon, afwijstekst naar hoe ver iemand kwam, huisregels live, ouderadres altijd te wijzigen, bericht bij elk besluit',
+                'Portaal toegankelijker: gekoppelde labels en veldfouten, geen alert/confirm meer, uploaden zonder JavaScript, Mijn gegevens volgens ontwerp met adres en ouder',
+            ],
+        ],
         '2.125.2' => [
             'datum'  => '2026-09-27',
             'titel'  => 'Vandaag: kengetallen',

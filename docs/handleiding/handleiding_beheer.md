@@ -222,7 +222,7 @@ Hoe Vandaag de seizoensfase bepaalt:
 
 | Wat jij doet | Wat het systeem doet | Scherm |
 |---|---|---|
-| Op **Seizoen openen** klikken en bevestigen met **Ja, openen**. | Het aanmeldformulier (website, wervingspagina's, WordPress-plugin) gaat aan. Het formulier heeft drie korte stappen: naam, een paar gegevens, contact. | [Seizoen](#seizoen-opzetten) |
+| Op **Aanmelding openen** klikken en bevestigen met **Ja, aanmelding openen**. | Het aanmeldformulier (website, wervingspagina's, WordPress-plugin) gaat aan. Het formulier heeft drie korte stappen: naam, een paar gegevens, contact. | [Seizoen](#seizoen-opzetten) |
 | Aanmeldingen bekijken en uitnodigen (zie moment 3). | Elke aanmelder krijgt de mail "Bevestiging van aanmelding"; het bestuur krijgt "Nieuwe aanmelding". Vandaag toont "... aanmeldingen uitnodigen". | [Vandaag](#vandaag), [Sollicitanten](#sollicitanten) |
 | | Staat de uitnodig-modus op Automatisch, dan nodigt het systeem zelf uit wie binnen de leeftijdsgrenzen valt (standaard 16 tot en met 30), na de ingestelde vertraging (standaard 24 uur). | [Instellingen](#instellingen) |
 | | Staan er in het portaal taken open, dan gaat 5 dagen na de laatste fasewijziging de herinnering "Openstaande taken", daarna elke 7 dagen, maximaal 3 keer. | |
@@ -232,7 +232,7 @@ Hoe Vandaag de seizoensfase bepaalt:
 | Wat jij doet | Wat het systeem doet | Scherm |
 |---|---|---|
 | Kandidaten uitnodigen: per rij **Uitnodigen SD**, in het dossier **Uitnodigen selectiedag**, of meerdere tegelijk via de bulkbalk. | Zet de ondertekeningen klaar (18+: gezondheidsverklaring en intake als taak; jonger dan 18: wacht op de oudergegevens en mailt dan de ouder). Stuurt "Uitnodiging selectiedag" per e-mail en WhatsApp/sms. | [Sollicitanten](#sollicitanten) |
-| De aanmelding sluiten zodra je genoeg kandidaten hebt: **Seizoen sluiten**. | Vandaag springt naar "Formulieren" en telt wie het kennismakingsformulier nog niet inleverde. | [Seizoen](#seizoen-opzetten) |
+| De aanmelding sluiten zodra je genoeg kandidaten hebt: **Aanmelding sluiten**. | Het aanmeldformulier gaat uit. Zodra niemand meer op een uitnodiging wacht, springt Vandaag naar "Formulieren" en telt wie het kennismakingsformulier nog niet inleverde; daarna wijst het naar de groepsindeling. | [Seizoen](#seizoen-opzetten) |
 | | Wie het formulier "Beter leren kennen" inlevert, gaat vanzelf naar Aangemeld selectiedag en krijgt een bevestiging. | |
 | | Herinnering "Nog niet aangemeld voor de selectiedag": alleen als de selectiedag binnen 14 dagen is, 3 dagen na de uitnodiging, daarna elke 4 dagen, maximaal 3 keer. | |
 | | Herinnering aan minderjarigen die de oudergegevens nog niet invulden: na 2 dagen, elke 4 dagen, maximaal 3 keer. | |
@@ -519,14 +519,17 @@ seizoen gaat werken.
      **Adres** en **Wat neem je mee**.
    - **Trainingsweekend**: **Start**, **Eind**, **Locatie**, **Verzameltijd**, **Start programma**,
      **Eindtijd (ongeveer)**, **Adres** en **Wat neem je mee**.
-3. **Openen.** Klik in de kaart bovenaan op **Seizoen openen**. Het tussenscherm zegt dat het
-   aanmeldformulier meteen actief wordt en vraagt je de datums te controleren (die staan in de
-   bevestigingsmail van elke aanmelder). Klik op **Ja, openen**. Met **Aanmeldformulier bekijken**
-   open je het formulier in een nieuw tabblad.
-4. **Procedure doorlopen** bij [Sollicitanten](#sollicitanten), [Selectiedag](#selectiedag) en
-   [Trainingsweekend](#trainingsweekend).
-5. **Sluiten.** Klik op **Seizoen sluiten** en bevestig met **Ja, sluiten**. Het aanmeldformulier
-   gaat uit; alle gegevens blijven bewaard en je kunt later weer openen.
+3. **Aanmelding openen.** Klik in de kaart bovenaan op **Aanmelding openen**. Het tussenscherm zegt
+   dat het aanmeldformulier meteen actief wordt en vraagt je de datums te controleren (die staan in de
+   bevestigingsmail van elke aanmelder). Staat de aanmelding van een ander seizoen nog open, dan gaat
+   die vanzelf dicht en stapt het beheer over naar dit seizoen. Klik op **Ja, aanmelding openen**. Met
+   **Aanmeldformulier bekijken** open je het formulier in een nieuw tabblad.
+4. **Aanmelding sluiten** zodra je genoeg kandidaten hebt: **Aanmelding sluiten**, bevestigen met
+   **Ja, aanmelding sluiten**. Alleen het aanmeldformulier gaat uit; het seizoen zelf loopt door en
+   alle gegevens blijven bewaard. Je kunt later weer openen.
+5. **Procedure doorlopen** bij [Selectiedag](#selectiedag) en [Trainingsweekend](#trainingsweekend).
+   Vandaag wijst per fase de volgende stap aan, tot en met de fase **Afronden** (loonplanning
+   definitief, opschonen aan, volgend seizoen klaarzetten).
 
 ### Waar sta je?
 
@@ -1874,7 +1877,7 @@ alleen welk veld is gewijzigd, nooit de waarde.
 | Selectie & seizoen | **Beoordelingscriteria** | Per test (Sporttest en Zwemtest) het icoon, de naam en de criteria, één per regel. Beoordelaars scoren elk criterium van 1 tot 5. **Standaard uit het draaiboek herstellen** zet de ingebouwde lijst terug. |
 | Selectie & seizoen | **Posten & bezetting** | De posten en per post de rollen: naam, competentie, minimale rang uit Authentik en aantal personen. Per post het vinkje "nooit 2 aspiranten samen". **+ Post toevoegen**, **+ Rol**, **Opslaan**, **Standaard herstellen**. Dekking en de norm in het beschikbaarheidsraster rekenen hiermee. De postcommandant valt erbuiten. |
 | Inzet & loon | **Functies** | Per functie de naam, de factor voor het dagloon, de minimum- en maximumleeftijd en de volgorde, met **Sla op** en een voorbeeldberekening. |
-| Inzet & loon | **Lonen & budget** | Het seizoensbudget voor loonkosten (voor de balk in de loonplanning; leeg is zonder budget); het vakantietoeslagpercentage (standaard 8), de werkuren per dag (standaard 8) en de vaste weekbedragen van de postcommandant voor juni en juli–september; de minimumuurlonen per leeftijd (15 tot en met 32) voor juni en voor juli/augustus/september, elk met een eigen **Opslaan**. |
+| Inzet & loon | **Lonen & budget** | Alles per kalenderjaar (kies het jaar bovenaan; een seizoen rekent met het jaar van de eerste werkdag): het budget voor loonkosten (voor de balk in de loonplanning; leeg is zonder budget), het vakantietoeslagpercentage (standaard 8), de werkuren per dag (standaard 8), de vaste weekbedragen van de postcommandant voor juni en juli–september, en de minimumuurlonen per leeftijd (15 tot en met 32) voor juni en voor juli/augustus/september, elk met een eigen **Opslaan**. Met **Nieuw jaar op basis van …** kopieer je de tarieven naar het volgende jaar (het budget niet). Zijn de tarieven van een jaar nog niet ingevuld, dan rekent de loonplanning met het vorige jaar en zegt dat erbij. Oude seizoenen veranderen dus niet meer als je nieuwe minimumlonen invoert. |
 | Berichten | **Kanalen & meldingen** | SMS inschakelen met de gateway en de gegevens daarvan; WhatsApp inschakelen via WhatsReach (staat standaard uit; lees de waarschuwing over blokkering van het nummer); per meldingstype het kanaal (E-mail, WhatsApp/SMS, E-mail + WhatsApp/SMS of Uit). Ouders en het bestuur krijgen altijd e-mail. Onderaan **Testbericht sturen** met een telefoonnummer, een e-mailadres als terugval en het kanaal, en **Test versturen**. |
 | Berichten | **Afzender & adressen** | De adressen voor foutmeldingen, het bestuur (ontvangt de bestuursmeldingen), de penningmeester ("loondossier compleet"; leeg is het bestuursadres) en de ledenservice (de ondertekende inschrijving als lid; leeg is het bestuursadres). Het vinkje voor loondossier-stukken als bijlage: laat dat uit. |
 | Berichten | **E-mailserver** | Host, poort, beveiliging (STARTTLS, SSL/TLS of Geen), gebruikersnaam, wachtwoord, afzenderadres en afzendernaam. Daaronder **Testmail versturen**: sla eerst op, vul het adres in en klik op **Verstuur testmail**. |
@@ -2033,7 +2036,7 @@ Zo staat het op een nieuwe installatie (l = lezen, b = bewerken, v = verwijderen
 |---|---|---|---|---|
 | Sollicitanten | – | l b v | l | alles |
 | Wervingspagina's | – | l b v | – | alles |
-| BLK-formulieren & details | – | l b | – | alles |
+| Kennismakingsformulier | – | l b | – | alles |
 | Selectiedag | l | l b | – | alles |
 | Ondertekeningen | – | l b | – | alles |
 | Loondossiers (ID, bankpas, loonheffing) | – | – | l b v | alles |
@@ -2041,7 +2044,7 @@ Zo staat het op een nieuwe installatie (l = lezen, b = bewerken, v = verwijderen
 | Dekking | l | l | – | alles |
 | Loonplanning | – | l b | l b | alles |
 | Berichten & sjablonen | – | l b | – | alles |
-| Seizoenbeheer | – | l b | – | alles |
+| Seizoen | – | l b | – | alles |
 | Instellingen | – | l b | – | alles |
 | Beheerders & rollen | – | – | – | alles |
 | Systeem, updates & logs | – | – | – | alles |

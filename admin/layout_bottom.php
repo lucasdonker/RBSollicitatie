@@ -2,10 +2,6 @@
   </div><!-- /bh-hoofd -->
 </div><!-- /bh-kader -->
 
-<!-- Detail paneel (globaal) -->
-<div class="paneel-overlay" id="paneelOverlay" onclick="sluitPaneel()"></div>
-<div class="detail-paneel" id="detailPaneel"><div id="paneelInhoud"></div></div>
-
 <script>
 const APP_URL = '<?= APP_URL ?>';
 const CSRF    = '<?= csrf_token() ?>';
@@ -215,7 +211,7 @@ function verzoekBeslis(verzoekId, besluit, solId) {
   if (besluit !== 'afwijzen') { doen(); return; }
   bhBevestig({
     titel: 'Dit verzoek afwijzen?',
-    tekst: 'De sollicitant houdt dan de beschikbaarheid die er nu staat. Hij krijgt hierover bericht.',
+    tekst: 'De sollicitant houdt dan de beschikbaarheid die er nu staat en krijgt hierover bericht.',
     knop: 'Ja, afwijzen', gevaar: true
   }).then(function (ja) { if (ja) doen(); });
 }
@@ -393,8 +389,8 @@ function corrVullen(d) {
      week — het model kent geen status per week. Dat staat er daarom bij, anders lijkt
      "voorlopig" over week 28 te gaan. */
   zet('corrStatus', d.voorlopig
-    ? 'Voorlopig — deze sollicitant heeft zijn beschikbaarheid nog niet definitief gemaakt.'
-    : 'Definitief — de sollicitant heeft zijn beschikbaarheid vastgezet.');
+    ? 'Voorlopig — deze sollicitant heeft de beschikbaarheid nog niet definitief gemaakt.'
+    : 'Definitief — de sollicitant heeft de beschikbaarheid vastgezet.');
 
   // Redenen
   var sel = document.getElementById('corrRedenKeuze');
@@ -750,7 +746,7 @@ window.sluitSidebar = function() {
 document.addEventListener('DOMContentLoaded', () => {
   const tooltipEl = document.createElement('div');
   tooltipEl.id = 'p13-tooltip';
-  tooltipEl.style.cssText = 'position:absolute;background:var(--navy);color:var(--op-vol);padding:8px 12px;border-radius:6px;font-size:12px;line-height:1.5;max-width:260px;z-index:10000;pointer-events:none;opacity:0;transition:opacity .15s;box-shadow:0 4px 12px rgba(0,0,0,.3)';
+  tooltipEl.className = 'bh-tooltip';   // uiterlijk in beheer.css; alleen positie en zichtbaarheid hier
   document.body.appendChild(tooltipEl);
   let huidige = null;
 

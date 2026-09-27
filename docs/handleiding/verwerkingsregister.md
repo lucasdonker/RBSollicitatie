@@ -1,6 +1,6 @@
 # Verwerkingsregister — Sollicitatiesysteem Paal 13
 
-Versie 2.102 · september 2026
+Versie 2.125 · september 2026
 
 Dit is het register van verwerkingsactiviteiten (AVG artikel 30) voor het sollicitatiesysteem van
 Reddingsbrigade Paal 13: het aanmeldformulier, het sollicitantenportaal en het beheer. Per
@@ -232,19 +232,23 @@ een sollicitant met een verwerkt loondossier zichzelf, dan gaat al het andere we
 de loonheffing-ondertekening (met BSN), de kopie van het identiteitsbewijs, naam en geboortedatum
 (`avg_behoud_loondossier()`). Het portaal legt in eenvoudige taal uit wat blijft, waarom en tot
 wanneer. Het dossier blijft op de lijst "Te beoordelen voor vernietiging" komen (de naam staat er
-nog, de loonheffing-ondertekening bestaat nog).
+nog, de loonheffing-ondertekening bestaat nog). Vernietigt de penningmeester dat loondossier, dan
+gaan meteen ook naam en geboortedatum weg: `documenten_loondossier_vernietigen()` roept daarvoor
+`avg_na_loondossier_vernietigd()` aan (`includes/documenten.php`, `includes/avg_wissen.php`).
 
 ## Lidmaatschap
 
 > **In het kort:** aangenomen strandwachten worden lid van de vereniging. De inschrijving wordt in
-> het portaal getekend en gaat per e-mail naar de ledenservice.
+> het portaal getekend en gaat per e-mail naar de ledenservice. Bij een minderjarige tekent de
+> ouder of verzorger, en de SEPA-machtiging tekent de rekeninghouder.
 
 | Onderdeel | Inhoud |
 |---|---|
 | Doel | Inschrijving als lid of donateur van de vereniging, en de contributie innen. |
-| Grondslag | Art. 6 lid 1 sub b AVG (lidmaatschapsovereenkomst); bij incasso de SEPA-machtiging. |
-| Betrokkenen | Aangenomen strandwachten; bij een minderjarige de ouder of verzorger. |
-| Persoonsgegevens | Naam, geslacht, geboortedatum en -plaats, adres, telefoon, e-mail, gegevens van de ouder, lid of donateur, diploma's, betaalwijze, bij incasso IBAN en tenaamstelling, SEPA-machtiging, handtekening, verzegelde PDF. |
+| Grondslag | Art. 6 lid 1 sub b AVG (lidmaatschapsovereenkomst); bij incasso de SEPA-machtiging. Een minderjarige is handelingsonbekwaam (grens 18, zie [Bijzonderheden](#bijzonderheden)), dus de lidmaatschapsovereenkomst van iemand onder de 18 wordt aangegaan en getekend door de ouder of verzorger. Een SEPA-machtiging kan alleen de rekeninghouder geven; die tekent de machtiging. |
+| Betrokkenen | Aangenomen strandwachten; bij een minderjarige de ouder of verzorger die tekent; bij incasso de rekeninghouder (dat kan een ander zijn dan het lid, bijvoorbeeld de ouder). |
+| Persoonsgegevens | Naam, geslacht, geboortedatum en -plaats, adres, telefoon, e-mail, gegevens van de ouder, lid of donateur, diploma's, betaalwijze, bij incasso IBAN en tenaamstelling, SEPA-machtiging, handtekening, verzegelde PDF. Bij een minderjarige: naam, e-mailadres en telefoonnummer van de ouder of verzorger die tekent, diens handtekening en het bewijsspoor van die ondertekening (tijdstip, IP-adres, browser; zie [Ondertekening en bewijslog](#ondertekening-en-bewijslog)); bij incasso naam en IBAN van de rekeninghouder en diens handtekening onder de machtiging. |
+| Status (september 2026) | Het tekenen door de ouder of verzorger en de machtiging door de rekeninghouder worden op dit moment gebouwd. Tot dat in gebruik is, tekent de sollicitant zelf in het portaal en staan de oudergegevens alleen als invulvelden op het formulier. Na oplevering dit hoofdstuk en de privacyverklaring nalopen tegen de code (zie [Nog vast te leggen](#nog-vast-te-leggen)). |
 | Ontvangers en verwerkers | Ledenservice: e-mail met de gegevens en de verzegelde PDF naar `mail.ledenservice_email` (leeg = bestuursadres). Penningmeester en admin voor de PDF en het IBAN (module `documenten`). E-mailprovider. |
 | Doorgifte buiten de EER | Nee. |
 | Bewaartermijn | In dit systeem: volgt het dossier. De ledenadministratie bij de ledenservice valt buiten dit systeem en heeft een eigen termijn (vastleggen bij de ledenadministratie). |
@@ -263,7 +267,7 @@ nog, de loonheffing-ondertekening bestaat nog).
 | Persoonsgegevens | Ontvanger (e-mailadres of telefoonnummer), onderwerp, samenvatting, inhoud, kanaal, status, tijdstip (`mail_log`); wachtrij met adres, telefoon en volledige tekst (`mail_queue`); vragen via het portaal; wanneer de sollicitant de berichten voor het laatst bekeek. Bij inlogcodes, bestuursmeldingen, de ledenservice en de penningmeester wordt de inhoud nooit gelogd. |
 | Ontvangers en verwerkers | Bestuur (module `mailing`). E-mailprovider (`smtp.host`); WhatsReach en Meta als `wa.actief` aan staat; de sms-dienst uit `sms.gateway` als `sms.actief` aan staat (Bird/MessageBird, EasySendSMS, een eigen telefoon of een HTTP-gateway). |
 | Doorgifte buiten de EER | WhatsApp: ja (Meta, VS). Sms: bij `easysendsms` ja (EasySendSMS, buiten de EER; de privacyverklaring noemt het dan); andere gateways vastleggen. E-mail: afhankelijk van de provider; vastleggen. |
-| Bewaartermijn | Overzicht van berichten: 12 maanden (`bewaar.maillog_mnd`, standaard 12). Inhoud van berichten: 3 maanden (`bewaar.maillog_body_mnd`, standaard 3). Wachtrij: 30 dagen na verzending of fout (vast). Losse bijlagen die aan geen sjabloon meer hangen: 12 maanden (`bewaar.bijlagen_mnd`, standaard 12). |
+| Bewaartermijn | Overzicht van berichten: 12 maanden (`bewaar.maillog_mnd`, standaard 12). Inhoud van berichten: 3 maanden (`bewaar.maillog_body_mnd`, standaard 3). Wachtrij: 30 dagen na verzending of fout (vast); bij berichten waarvan de inhoud nooit gelogd wordt (inlogcodes, bestuursmeldingen, ledenservice, penningmeester) worden de tekst en de korte tekst in de wachtrij direct na een geslaagde verzending leeggemaakt (`includes/meldingen/verzend.php`). Losse bijlagen die aan geen sjabloon meer hangen: 12 maanden (`bewaar.bijlagen_mnd`, standaard 12). |
 | Beveiliging | Dagplafond en uurlimiet (WhatsApp), pauze na herhaalde fouten, afmeldlink, kanaalkeuze in het portaal; geheimen (API-sleutels, SMTP-wachtwoord) worden in het beheer nooit teruggetoond. |
 
 ## AI-analyse
@@ -276,7 +280,7 @@ nog, de loonheffing-ondertekening bestaat nog).
 | Onderdeel | Inhoud |
 |---|---|
 | Doel | BLK-analyse: het bestuur een korte beoordeling met advies geven als hulpmiddel. Beschikbaarheidshulp: de sollicitant helpen het rooster in te vullen. |
-| Grondslag | BLK-analyse: art. 6 lid 1 sub f AVG (gerechtvaardigd belang: zorgvuldig en efficiënt selecteren); de sollicitant kan bezwaar maken via een vraag in Berichten of per mail. Het bestuur legt dat vast met `ai_bezwaar_zetten()`: de vlag `sollicitaties.ai_bezwaar` wordt gezet, de analyse gewist, en de wachtrij slaat de sollicitant daarna over. Beschikbaarheidshulp: art. 6 lid 1 sub b; het gebruik is vrijwillig, handmatig invullen kan altijd. Geen geautomatiseerd besluit in de zin van art. 22. Geen bijzondere persoonsgegevens: het veld bijzonderheden (medicatie, allergieën) gaat niet naar de AI, want daarvoor is geen grondslag onder art. 9. |
+| Grondslag | BLK-analyse: art. 6 lid 1 sub f AVG (gerechtvaardigd belang: zorgvuldig en efficiënt selecteren); de sollicitant kan bezwaar maken via een vraag in Berichten of per mail. Het bestuur legt dat vast met de knop "Bezwaar vastleggen" bij de AI-analyse op het kennismakingsformulier in het beheer (`admin/blk_detail.php`, via `admin/api_ai_analyse.php` naar `ai_bezwaar_zetten()`; recht `sollicitanten` bewerken): de vlag `sollicitaties.ai_bezwaar` wordt gezet, de analyse gewist, en de wachtrij slaat de sollicitant daarna over. Beschikbaarheidshulp: art. 6 lid 1 sub b; het gebruik is vrijwillig, handmatig invullen kan altijd. Geen geautomatiseerd besluit in de zin van art. 22. Geen bijzondere persoonsgegevens: het veld bijzonderheden (medicatie, allergieën) gaat niet naar de AI, want daarvoor is geen grondslag onder art. 9. |
 | Betrokkenen | Sollicitanten die het kennismakingsformulier indienen of de beschikbaarheidshulp gebruiken. |
 | Persoonsgegevens | BLK-analyse, wat naar Google gaat: leeftijdscategorie (geen geboortedatum), opleiding, diploma's, werkervaring, motivatie, aantal weken beschikbaar. Niet: naam, adres, e-mail, telefoon, foto, bijzonderheden. De uitkomst staat in `blk_formulieren.ai_analyse`. Beschikbaarheidshulp: de vrije tekst (maximaal 1500 tekens) en de weken van het seizoen; de tekst wordt bewaard in `ai_beschikbaarheid_log`. Let op: dit is pseudonimisering, geen anonimisering. Vrije tekst kan zelf herleidbare of gezondheidsinformatie bevatten. |
 | Ontvangers en verwerkers | Google (Gemini API), alleen als `ai.api_key` gevuld is. De analyse is zichtbaar voor het bestuur (module `blk`) en voor de sollicitant in de download (inzage). Automatisch starten na indienen alleen als `ai.auto_analyse` aan staat (standaard aan); anders alleen met de knop in het beheer. Beschikbaarheidshulp alleen als `ai.beschikbaarheid_hulp` aan staat (standaard uit). |
@@ -349,7 +353,7 @@ BLK-analyse op productie aan gaat.
 | Grens | Waarvoor | Hoe in het systeem |
 |---|---|---|
 | 15/16 | Minimumleeftijd voor aanmelden, en de AVG-grens voor toestemming (art. 8 AVG, art. 5 UAVG: onder de 16 geeft de ouder of verzorger toestemming) | Aanmelden kan vanaf 15 (vast; een geboortedatum onder de 15 wordt geweigerd). Bij een 15-jarige geeft de ouder bij het aanmelden toestemming; naam en moment worden vastgelegd. |
-| 18 | Ondertekeningsgrens: minderjarigen zijn handelingsonbekwaam | Onder de 18 vragen we naam, e-mail en telefoon van de ouder; de ouder tekent de gezondheidsverklaring en de intake via een link in de mail. De opgaaf loonheffing tekent de minderjarige zelf. |
+| 18 | Ondertekeningsgrens: minderjarigen zijn handelingsonbekwaam | Onder de 18 vragen we naam, e-mail en telefoon van de ouder; de ouder tekent de gezondheidsverklaring en de intake via een link in de mail, en (in aanbouw, zie [Lidmaatschap](#lidmaatschap)) ook het lidmaatschap; een SEPA-machtiging tekent altijd de rekeninghouder. De opgaaf loonheffing tekent de minderjarige zelf. |
 
 Dit zijn twee juridisch verschillende grenzen. Voeg ze nooit samen tot één grens, ook niet bij het
 opschonen van code. De instelling `invite.min_leeftijd` (standaard 16) is iets anders: die bepaalt
@@ -379,7 +383,7 @@ begeleiders zien dat veld daarom niet, en het gaat niet naar de AI-dienst.
 | Inzage (art. 15) | Portaal › Mijn gegevens › Al mijn gegevens downloaden: een JSON-bestand (`avg_inzage()`) met persoon, sollicitatie, kennismakingsformulier met wijzigingen, AI-analyse, beschikbaarheid (alle huidige tabellen en de AI-invoertekst), selectiedag en trainingsweekend (indeling, cijfers, observaties, besluiten), notities van het bestuur, ondertekeningen (type, datum), documenten (soort, datum, status), berichten (datum, onderwerp, kanaal) en ingelogde apparaten. Niet: BSN, IBAN en handtekening (die staan in de verzegelde PDF's onder de taken), de bestanden zelf, en namen van beoordelaars en bestuursleden (rechten van anderen, art. 15 lid 4; daar staat "beoordelaar"). |
 | Verbeteren (art. 16) | De sollicitant stelt een vraag via het blok "Een vraag?" in het portaal (komt bij het bestuur binnen met naam en fase). Het bestuur corrigeert in het dossier; een wijziging aan het kennismakingsformulier wordt met reden vastgelegd. |
 | Verwijderen (art. 17) | Portaal › Mijn gegevens › Mijn account verwijderen (bevestigen met VERWIJDER): het dossier wordt leeggemaakt en de persoon geanonimiseerd; het bestuur krijgt bericht. Is het loondossier verwerkt, dan blijven alleen het loondossier, naam en geboortedatum (art. 17 lid 3 sub b, zie [Loondossier](#loondossier)); het scherm legt uit wat blijft en tot wanneer. Een verzoek per mail handelt het bestuur af in het dossier: Verwijderen, voor één sollicitatie of de hele persoon. Een verwerkt loondossier gaat daar alleen mee met de verklaring dat het dienstverband niet is doorgegaan. |
-| Bezwaar (art. 21) | Tegen verwerking op grond van gerechtvaardigd belang. AI-analyse: via een vraag in Berichten of per mail; het bestuur zet het bezwaar in het dossier (`ai_bezwaar_zetten()`), de analyse wordt gewist en niet opnieuw gemaakt. Wervingsberichten aan oud-strandwachten: de afmeldlink. |
+| Bezwaar (art. 21) | Tegen verwerking op grond van gerechtvaardigd belang. AI-analyse: via een vraag in Berichten of per mail; het bestuur zet het bezwaar met de knop "Bezwaar vastleggen" op het kennismakingsformulier (`ai_bezwaar_zetten()`), de analyse wordt gewist en niet opnieuw gemaakt. Wervingsberichten aan oud-strandwachten: de afmeldlink. |
 | Toestemming intrekken (art. 7 lid 3) | Seintje: afmeldlink of de knop in het portaal. Foto's: per mail. Wat al gebeurde blijft rechtmatig. |
 | Beperking en overdraagbaarheid (art. 18, 20) | Per mail aan het bestuur; de JSON-download dient als overdraagbaar bestand. |
 | Apparaten | Mijn gegevens › "vergeet alle apparaten" trekt alle "blijf ingelogd"-tokens in. |
@@ -410,14 +414,10 @@ gebruiken. Het datalekregister zelf houdt het bestuur buiten dit systeem bij.
 - [ ] Vastleggen welke e-mailprovider en welke sms-gateway op productie in gebruik zijn, en waar ze
   de gegevens verwerken.
 - [ ] De bewaartermijn van de ledenadministratie bij de ledenservice vastleggen.
-- [ ] AI-analyse: de knop in het dossier waarmee het bestuur een bezwaar vastlegt
-  (`ai_bezwaar_zetten()` bestaat, de knop nog niet); en de AI-verordening toetsen (zie
-  [AI-analyse](#ai-analyse)).
-- [ ] Na het vernietigen van het loondossier van iemand die zichzelf verwijderde, moeten naam en
-  geboortedatum ook weg: `documenten_loondossier_vernietigen()` moet daarvoor
-  `avg_na_loondossier_vernietigd()` aanroepen.
-- [ ] De wachtrij (`mail_queue`) bewaart de volledige tekst tot 30 dagen, ook van berichten
-  waarvan de inhoud niet gelogd wordt (ledenservice, penningmeester): na verzending leegmaken.
+- [ ] AI-analyse: de AI-verordening toetsen (zie [AI-analyse](#ai-analyse)).
+- [ ] Lidmaatschap van minderjarigen (ouder of verzorger tekent, SEPA-machtiging door de
+  rekeninghouder): na de bouw controleren of dit register en de privacyverklaring kloppen met de
+  code (zie [Lidmaatschap](#lidmaatschap)).
 - [ ] Het bewijs van ondertekening met gemaskeerd IP-adres laten toetsen: is een IP-adres met het
   laatste blok op 0 nog nodig als bewijs, of kan het helemaal weg?
 - [ ] Gezondheidsverklaring vóór de selectiedag: laten toetsen aan de Wet op de medische keuringen
@@ -436,3 +436,4 @@ gebruiken. Het datalekregister zelf houdt het bestuur buiten dit systeem bij.
 | 24 september 2026 | Het lettertype (Instrument Sans) staat nu op de eigen server; er gaat geen IP-adres meer naar Google Fonts. Google Fonts uit de lijst met verwerkers gehaald. |
 | 24 september 2026 | Beschikbaarheid exporteren naar Excel (per week of per dag, met redenen van afwezigheid): alleen naam, fase en opgave, geen contactgegevens of geboortedatum; elke export in het logboek. Loonplanning: vastzetten na het TW-gesprek (`loon_vergrendeling`: wie en wanneer; ontgrendelen met reden in het logboek). |
 | 24 september 2026 | Selectiedag en trainingsweekend: bevestiging "ik kom / ik kan niet" met reden, het gesprek met het bestuur (besluit, interne notitie, bericht aan de sollicitant), vergrendeling "bezig door" en de incheck-tablet met foto. Alles zit in de inzage en gaat mee bij wissen. |
+| 27 september 2026 | Drie punten uit "Nog vast te leggen" zijn gebouwd en naar hun hoofdstuk verplaatst: de knop "Bezwaar vastleggen" voor de AI-analyse, naam en geboortedatum weg na het vernietigen van een bewaard loondossier, en de wachtrijtekst van niet-gelogde berichten leeg na verzending. Lidmaatschap van minderjarigen: de ouder of verzorger tekent, de SEPA-machtiging tekent de rekeninghouder (in aanbouw). Privacyverklaring: de termijn van de gezondheidsgegevens volgt nu `bewaar.gezondheid_mnd`, en het tekenen van het lidmaatschap door de ouder staat erin. |

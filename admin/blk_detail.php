@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/functions.php';
-$pagina_titel = 'BLK Formulier';
+$pagina_titel = 'Kennismakingsformulier';
 $actieve_nav  = 'sollicitanten';
 vereis_recht('blk', 'lezen');
 
@@ -68,7 +68,7 @@ try {
 } catch (Exception $e) { /* tabel bestaat nog niet */ }
 
 $naam = volledige_naam($sol);
-$pagina_titel = 'BLK: ' . $naam;
+$pagina_titel = 'Kennismakingsformulier: ' . $naam;
 require __DIR__ . '/layout_top.php';
 ?>
 <div class="bh-blk">
@@ -180,7 +180,7 @@ require __DIR__ . '/layout_top.php';
   <div class="bh-kaartbody">
     <?php if (!empty($blk_weken)): ?>
     <div class="bh-blkveld">
-      <div class="bh-veldlabel">Voorkeur weken (uit BLK — <?= count($blk_weken) ?> weken)</div>
+      <div class="bh-veldlabel">Voorkeur weken (uit het kennismakingsformulier, <?= count($blk_weken) ?> weken)</div>
       <div class="bh-blk-weken bh-blk-weken-ruim">
         <?php foreach ($blk_weken as $w): ?><span class="badge badge-blauw bh-blk-weekbadge">Week <?= (int)$w ?></span><?php endforeach; ?>
       </div>
@@ -194,7 +194,7 @@ require __DIR__ . '/layout_top.php';
     <?php if ($blk['beschikbaarheid_uitzonderingen']): ?>
     <div class="bh-blkveld">
       <div class="bh-veldlabel">Kan niet op</div>
-      <div class="bh-blkwaarde" class="bh-blkwaarde ds-fase-oranje bh-blk-let-op"><?= h($blk['beschikbaarheid_uitzonderingen']) ?></div>
+      <div class="bh-blkwaarde ds-fase-oranje bh-blk-let-op"><?= h($blk['beschikbaarheid_uitzonderingen']) ?></div>
     </div>
     <?php endif; ?>
     <?php if (!empty($weken_sol) || !empty($weken_def)): ?>
@@ -308,7 +308,7 @@ $ai_mag      = !function_exists('mag') || mag('sollicitanten', 'bewerken');
     <?php if ($ai_datum): ?>
     <div class="bh-blk-voetnoot">
       Analyse gegenereerd op <?= datum_nl(substr($ai_datum,0,10)) ?> <?= substr($ai_datum,11,5) ?>
-      · Gebaseerd op BLK-formulier, geen persoonsgegevens verstuurd
+      · Gebaseerd op het kennismakingsformulier, zonder naam en contactgegevens verstuurd
     </div>
     <?php endif; ?>
     <?php elseif (!instelling('ai.api_key')): ?>
@@ -316,7 +316,7 @@ $ai_mag      = !function_exists('mag') || mag('sollicitanten', 'bewerken');
       Stel een Gemini API-sleutel in bij <a href="<?= APP_URL ?>/admin/instellingen.php?tab=ai" class="bh-blk-oranjelink">Instellingen › AI-analyse</a> om de analyse te gebruiken.
     </div>
     <?php elseif (!$blk): ?>
-    <p class="bh-leegregel">Analyse beschikbaar zodra het BLK-formulier is ingevuld.</p>
+    <p class="bh-leegregel">Analyse beschikbaar zodra het kennismakingsformulier is ingevuld.</p>
     <?php else: ?>
     <div class="bh-blk-geenanalyse">
       <p class="bh-leegregel bh-blk-geenanalyse-tekst">Nog geen analyse gegenereerd.</p>

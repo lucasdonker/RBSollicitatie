@@ -224,27 +224,29 @@ if ($fout && !$debug_tonen) {
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SSO Fout — Paal 13</title>
 <link rel="stylesheet" href="<?= APP_URL ?>/assets/css/stijl.css">
+<link rel="stylesheet" href="<?= APP_URL ?>/assets/css/beheer.css">
+<meta name="robots" content="noindex">
 </head>
 <body>
 <div class="login-wrapper">
-  <div class="login-kaart" style="max-width:500px">
+  <div class="login-kaart bh-ssofout">
     <div class="login-logo">
       <img src="<?= APP_URL ?>/assets/img/logo.png" alt="Paal 13"
            onerror="this.onerror=null;this.src='<?= APP_URL ?>/assets/img/logo.svg'">
-      <h1>SSO Login mislukt</h1>
+      <h1>Inloggen via SSO mislukt</h1>
     </div>
-    <div class="ds-melding ds-melding-error"><?= h($fout) ?></div>
+    <div class="ds-melding ds-melding-error" role="alert"><?= h($fout) ?></div>
 
     <?php if (!empty($debug)): ?>
-    <details style="margin-bottom:14px">
-      <summary style="cursor:pointer;font-size:12px;color:var(--grijs);padding:8px 0">🔍 Technische details (voor diagnose)</summary>
-      <div style="background:#f7f8fa;border-radius:6px;padding:10px;margin-top:6px;font-size:11px;font-family:monospace;white-space:pre-wrap;word-break:break-all;border:1px solid var(--rand)"><?= h(implode("\n\n", $debug)) ?></div>
+    <details class="bh-ssofout-details">
+      <summary><?= icoon('zoek', 14) ?> Technische details (voor diagnose)</summary>
+      <pre class="bh-ssofout-code"><?= h(implode("\n\n", $debug)) ?></pre>
     </details>
     <?php endif; ?>
 
-    <div style="display:flex;flex-direction:column;gap:8px">
-      <a href="<?= APP_URL ?>/admin/auth_sso.php" class="ds-btn ds-btn-primair" style="justify-content:center">↺ Opnieuw proberen via SSO</a>
-      <a href="<?= APP_URL ?>/admin/login.php" class="ds-btn ds-btn-secundair" style="justify-content:center">🔑 Inloggen met wachtwoord</a>
+    <div class="bh-ssofout-knoppen">
+      <a href="<?= APP_URL ?>/admin/auth_sso.php" class="ds-btn ds-btn-primair"><?= icoon('ververs', 16) ?> Opnieuw proberen via SSO</a>
+      <a href="<?= APP_URL ?>/admin/login.php" class="ds-btn ds-btn-secundair"><?= icoon('sleutel', 16) ?> Inloggen met wachtwoord</a>
     </div>
   </div>
 </div>

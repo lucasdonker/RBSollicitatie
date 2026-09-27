@@ -165,7 +165,7 @@ function export_loondossier_tekst(int $sol_id): string {
     if (!function_exists('documenten_loondossier')) return '';
     $d = documenten_loondossier($sol_id);
     $delen = [];
-    foreach (['id_voor' => 'ID voor', 'id_achter' => 'ID achter', 'bankpas' => 'bankpas', 'pasfoto' => 'pasfoto'] as $s => $l) {
+    foreach (['id_voor' => 'ID voor', 'id_achter' => 'ID achter', 'bankpas' => 'bankpas'] as $s => $l) {
         if (!empty($d['docs'][$s])) $delen[] = $l . ' ' . date('d-m-Y', strtotime($d['docs'][$s]['geupload_op'])) . ($d['docs'][$s]['status'] === 'verwerkt' ? ' (verwerkt)' : '');
     }
     if (!$delen && !$d['loonheffing']) return '';

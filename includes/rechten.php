@@ -22,14 +22,14 @@ function rechten_modules(): array {
     // moduleregister (includes/modules/), en alleen als die module aanstaat.
     $kern = [
         'sollicitanten'   => ['label' => 'Sollicitanten',          'groep' => 'Werving',        'acties' => ['lezen','bewerken','verwijderen']],
-        'blk'             => ['label' => 'BLK-formulieren & details','groep' => 'Werving',       'acties' => ['lezen','bewerken']],
+        'blk'             => ['label' => 'Kennismakingsformulier',   'groep' => 'Werving',       'acties' => ['lezen','bewerken']],
         'ondertekeningen' => ['label' => 'Ondertekeningen',        'groep' => 'Selectie',       'acties' => ['lezen','bewerken']],
         'documenten'      => ['label' => 'Loondossiers (ID, bankpas, loonheffing)', 'groep' => 'Beheer', 'acties' => ['lezen','bewerken','verwijderen']],
         'beschikbaarheid' => ['label' => 'Beschikbaarheid',        'groep' => 'Planning',       'acties' => ['lezen','bewerken']],
         'mailing'         => ['label' => 'Berichten & sjablonen',  'groep' => 'Communicatie',   'acties' => ['lezen','bewerken']],
         // 'verwijderen' bestaat hier apart omdat een seizoen wissen ook alle sollicitaties
         // van dat jaar wist. Standaard heeft alleen de beheerder het; bestuur krijgt 'rw'.
-        'seizoen'         => ['label' => 'Seizoenbeheer',          'groep' => 'Beheer',         'acties' => ['lezen','bewerken','verwijderen']],
+        'seizoen'         => ['label' => 'Seizoen',                'groep' => 'Beheer',         'acties' => ['lezen','bewerken','verwijderen']],
         'instellingen'    => ['label' => 'Instellingen',           'groep' => 'Beheer',         'acties' => ['lezen','bewerken']],
         'beheerders'      => ['label' => 'Beheerders & rollen',    'groep' => 'Beheer',         'acties' => ['lezen','bewerken']],
         'systeem'         => ['label' => 'Systeem, updates & logs','groep' => 'Beheer',         'acties' => ['lezen','bewerken']],

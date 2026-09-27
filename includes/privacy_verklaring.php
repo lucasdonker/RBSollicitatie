@@ -43,6 +43,9 @@ function privacy_verklaring_html(): string {
     $fouten   = $int('bewaar.foutenlog_dagen', 90);
     $bankpas  = $int('bewaar.bankpas_na_verwerking_dagen', 30);
     $werkjr   = $int('bewaar.aangenomen_jaar', 2);
+    // 0 = tot het einde van het seizoen (en direct bij afwijzen of afhaken); >0 = zoveel
+    // maanden na ondertekening. Zelfde instelling en betekenis als in includes/opschonen.php.
+    $gezond   = $int('bewaar.gezondheid_mnd', 0);
     $ai_blk   = $in('ai.api_key') !== '';
     $ai_besch = $ai_blk && $in('ai.beschikbaarheid_hulp', '0') === '1';
     $whatsapp = $in('wa.actief', '0') === '1';
@@ -119,7 +122,9 @@ aangenomen.</p>
   <li>Voor het lidmaatschap van de vereniging: je adres, geboorteplaats, diploma's en
       rekeningnummer voor de contributie.</li>
   <li>Je handtekening onder deze documenten, met het moment, je IP-adres en je browser als bewijs
-      dat jij het was.</li>
+      dat jij het was. Ben je jonger dan 18, dan tekent je ouder of verzorger het lidmaatschap; dan
+      leggen we diens naam, e-mailadres, telefoonnummer en handtekening vast, en bij automatische
+      incasso de naam en het rekeningnummer van wie de machtiging tekent.</li>
 </ul>
 <h3>Als je het portaal gebruikt</h3>
 <ul>
@@ -165,8 +170,10 @@ voor alles wat hier staat: waar we je toestemming nodig hebben, vragen we die ap
   <li>Je kunt je aanmelden vanaf 15 jaar.</li>
   <li>Ben je 15, dan moet je ouder of verzorger bij het aanmelden toestemming geven.</li>
   <li>Ben je jonger dan 18, dan vragen we de naam, het e-mailadres en het telefoonnummer van je
-      ouder of verzorger. Je ouder of verzorger ondertekent dan de gezondheidsverklaring en de
-      intake. De opgaaf voor de loonheffing onderteken je zelf.</li>
+      ouder of verzorger. Je ouder of verzorger ondertekent dan de gezondheidsverklaring, de
+      intake en, als je wordt aangenomen, je inschrijving als lid van de vereniging. Betaal je de
+      contributie met automatische incasso, dan tekent degene van wie de bankrekening is de
+      machtiging. De opgaaf voor de loonheffing onderteken je zelf.</li>
 </ul>
 
 <h2 id="beslissen">5. Wie beslist over je sollicitatie</h2>
@@ -193,7 +200,7 @@ zonder AI invullen.</p>
 <?php endif; ?>
 
 <h2 id="delen">6. Wie je gegevens ziet</h2>
-<p>Binnen de vereniging ziet iedereen alleen wat nodig is voor zijn taak:</p>
+<p>Binnen de vereniging ziet iedereen alleen wat nodig is voor de eigen taak:</p>
 <ul>
   <li><strong>Het bestuur en de selectiecommissie</strong> zien je sollicitatie, je beschikbaarheid en de beoordelingen.</li>
   <li><strong>De penningmeester</strong> ziet je loongegevens (BSN, IBAN, identiteitsbewijs, loonheffing). Alleen de penningmeester en de beheerder van het systeem kunnen die openen.</li>
@@ -239,8 +246,12 @@ dat ze niet meer naar jou te herleiden zijn.</p>
         <td><?= $onvolt ?> maanden</td></tr>
     <tr><td>Je wordt aangenomen</td>
         <td>Zolang je bij ons werkt, en daarna nog <?= $werkjr ?> jaar na je laatste seizoen</td></tr>
-    <tr><td>Gezondheidsverklaring</td>
-        <td>Eén seizoen. Voor een nieuw seizoen vragen we een nieuwe verklaring. Word je afgewezen, dan verwijderen we hem direct.</td></tr>
+    <tr><td>Gezondheidsverklaring en de gezondheidsvragen in de intake</td>
+<?php if ($gezond > 0): ?>
+        <td><?= $gezond ?> maanden nadat je ze hebt ondertekend. Voor een nieuw seizoen vragen we een nieuwe verklaring.</td></tr>
+<?php else: ?>
+        <td>Tot het einde van het seizoen. Voor een nieuw seizoen vragen we een nieuwe verklaring. Word je afgewezen of stop je zelf, dan verwijderen we ze direct.</td></tr>
+<?php endif; ?>
     <tr><td>Opgaaf loonheffing en kopie identiteitsbewijs</td>
         <td>5 jaar na het einde van het jaar waarin je voor het laatst bij ons werkte (fiscale bewaarplicht); de penningmeester vernietigt ze daarna</td></tr>
     <tr><td>Kopie van je bankpas</td>
@@ -264,7 +275,7 @@ daaruit verdwijnen je gegevens ook, alleen iets later.</p>
   <li>Alle verbindingen zijn versleuteld (https).</li>
   <li>Je BSN, IBAN, identiteitsbewijs en bankpas bewaren we versleuteld, in een apart deel van het systeem.</li>
   <li>Voor documenten zoals de opgaaf voor de loonheffing moet je een code invullen die we naar je telefoon of e-mailadres sturen.</li>
-  <li>Iedere beheerder heeft een eigen account en ziet alleen wat bij zijn taak hoort. Wie gevoelige gegevens bekijkt, wordt vastgelegd.</li>
+  <li>Iedere beheerder heeft een eigen account en ziet alleen wat bij de eigen taak hoort. Wie gevoelige gegevens bekijkt, wordt vastgelegd.</li>
   <li>Gaat er toch iets mis met je gegevens (een datalek)? Dan melden we dat binnen 72 uur bij de
       Autoriteit Persoonsgegevens. Is er een groot risico voor jou, dan laten we het jou ook weten.</li>
 </ul>

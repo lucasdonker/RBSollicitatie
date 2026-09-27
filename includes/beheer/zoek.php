@@ -50,7 +50,7 @@ function bh_inst_tabs_alle(): array {
         ['modules',     'Modules',                   'systeem',      'module aan uit selectiedag trainingsweekend loonplanning dekking wervingspagina onderdeel'],
       ],
       'Selectie & seizoen' => [
-        ['uitnodiging', 'Uitnodigen & automatisch',  'bliksem',      'automatisch uitnodigen herinnering deadline aanmeldstop drempel'],
+        ['uitnodiging', 'Uitnodigen & automatisch',  'bliksem',      'automatisch uitnodigen herinnering deadline drempel'],
         ['selectie',    'Beoordelingscriteria',      'vink',         'criteria competenties beoordelen cijfer weging selectiedag'],
         ['bezetting',   'Posten & bezetting',        'schild',       'post strandpost bezetting diensten minimale dekking'],
       ],
@@ -115,6 +115,8 @@ function bh_zoek_plekken(bool $alles = false): array {
         ['Sollicitanten importeren', 'import.php',         'upload',   'rol:admin', 'import csv excel bulk inlezen'],
         ['Rollen & rechten',     'rollen.php',             'sleutel',  'beheerders', 'rol recht module machtiging toegang'],
         ['Systeem & updates',    'systeem.php',            'systeem',  'systeem.bewerken', 'update versie server status onderhoud'],
+        // Er is geen aparte "aanmeldstop": de aanmelding gaat open of dicht met het seizoen.
+        ['Aanmelding openen of sluiten', 'seizoen.php',    'strand',   'seizoen.bewerken', 'aanmelding aanmelden openen sluiten dicht aanmeldstop aanmeldformulier stoppen'],
         ['Handleiding',          'handleiding.php',        'document', null, 'handleiding uitleg help hulp documentatie'],
         ['Mijn profiel',         'profiel.php',            'persoon',  null, 'profiel wachtwoord eigen account thema donker'],
     ];
