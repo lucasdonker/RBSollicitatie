@@ -188,6 +188,7 @@ function db_failsafe(bool $forceer = false): void {
         'portaal_berichten_kolom_verzeker',
         'blk_kolommen_verzeker',
         'seizoen_kolommen_verzeker',
+        'loon_tarieven_auto_setup',      // na de seizoenkolommen: het jaar komt uit datum_werk_start
     ];
     foreach ($setups as $fn) {
         if (function_exists($fn)) {

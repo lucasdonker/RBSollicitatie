@@ -39,6 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($actie === 'instellingen') {
         // Alleen sleutels die als veld op dít tabblad staan (whitelist in includes/instellingen.php).
         // Geheimen volgen daarna apart: leeg = ongewijzigd.
+        $inst_waarschuwing   = '';
         $toegestaan_sleutels = instellingen_formulier_sleutels($tab);
         $geheim_sleutels     = instellingen_geheime_sleutels();
         $wis_geheim          = array_map('strval', (array)($_POST['geheim_wis'] ?? []));
@@ -57,6 +58,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Handmatige seizoensfase: leeg (automatisch) of een van de bekende fases.
         if (isset($velden['seizoen.fase']) && $velden['seizoen.fase'] !== '' && !isset(bh_seizoen_fases()[$velden['seizoen.fase']])) {
             $velden['seizoen.fase'] = '';
+        }
+        // Verificatiecode bij ondertekenen: vinkjes → komma-lijst. Het loonheffingsformulier houdt hem altijd
+        // (wettelijk document met BSN; besluit 2.91.0) — ook als iemand het vinkje uit de POST haalt.
+        if ($tab === 'modules' && isset($_POST['tfa_formulier'])) {
+            $tfa = array_values(array_intersect(array_keys(instellingen_2fa_keuzes()), array_map('strval', (array)($_POST['tfa_typen'] ?? []))));
+            $velden['ondertekenen.2fa_typen'] = implode(',', array_unique(array_merge(['loonheffing'], $tfa)));
+        }
+        // Privacyverklaring: leeg, een pad op dit domein ("/…") of een https-adres. Niets anders
+        // (geen javascript:, geen "//ander-domein"): de link staat op het aanmeldformulier.
+        if (isset($velden['privacy.url'])) {
+            $pu = trim((string)$velden['privacy.url']);
+            $pu_ok = $pu === '' || (str_starts_with($pu, '/') && !str_starts_with($pu, '//'))
+                  || (str_starts_with(strtolower($pu), 'https://') && filter_var($pu, FILTER_VALIDATE_URL));
+            if (!$pu_ok) { unset($velden['privacy.url']); $inst_waarschuwing = 'De rest is opgeslagen, maar het adres van de privacyverklaring niet: gebruik een https-adres of een pad dat met / begint.'; }
+        }
+        // Loondocumenten: nooit korter dan de wettelijke vijf jaar (documenten_loon_bewaarjaren doet hetzelfde).
+        if (isset($velden['bewaar.loondocumenten_jaar'])) {
+            $velden['bewaar.loondocumenten_jaar'] = (string)max(5, min(10, (int)$velden['bewaar.loondocumenten_jaar']));
         }
 
         // Logo en favicon uploaden (overschrijft de URL als er een bestand is).
@@ -111,7 +130,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         // Alleen wélke sleutels veranderden, nooit de waarden (daar zitten geheimen tussen).
         if ($gewijzigd && function_exists('audit_log')) audit_log('gewijzigd', 'instelling', null, ['tab' => $tab, 'velden' => $gewijzigd]);
-        flash('succes', 'Instellingen opgeslagen.');
+        if (!empty($inst_waarschuwing)) flash('waarschuwing', $inst_waarschuwing);
+        else flash('succes', 'Instellingen opgeslagen.');
         redirect(APP_URL . '/admin/instellingen.php?tab=' . $tab);
     }
 
@@ -289,16 +309,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect(APP_URL . '/admin/instellingen.php?tab=functies');
     }
 
-    if ($actie === 'loon_tarief') {
-        $periode    = $_POST['periode'] === 'jun' ? 'jun' : 'jul_sep';
-        $leeftijden = $_POST['loon'] ?? [];
-        $stmt = $db->prepare("INSERT INTO loon_tarieven (leeftijd,periode,min_uurloon) VALUES (?,?,?) ON DUPLICATE KEY UPDATE min_uurloon=VALUES(min_uurloon)");
-        foreach ($leeftijden as $lft => $loon) {
-            $loon_val = (float)str_replace(',', '.', $loon);
-            if ($loon_val > 0) $stmt->execute([(int)$lft, $periode, $loon_val]);
+    // ── Lonen & budget: alles per kalenderjaar (includes/loon_tarieven.php) ──
+    if (in_array($actie, ['loon_tarief', 'loon_jaar', 'loon_budget', 'loon_jaar_nieuw'], true)) {
+        $lj = (int)($_POST['jaar'] ?? 0);
+        if ($lj < 2000 || $lj > 2100) { flash('fout', 'Onbekend jaar.'); redirect(APP_URL . '/admin/instellingen.php?tab=loon'); }
+        $terug_loon = APP_URL . '/admin/instellingen.php?tab=loon&jaar=' . $lj;
+        if ($actie === 'loon_tarief') {
+            $periode = (string)($_POST['periode'] ?? '') === 'jun' ? 'jun' : 'jul_sep';
+            $n = loon_tarieven_opslaan($lj, $periode, (array)($_POST['loon'] ?? []));
+            if (function_exists('audit_log')) audit_log('gewijzigd', 'instelling', null, ['loon_tarieven' => $lj, 'periode' => $periode, 'leeftijden' => $n]);
+            flash($n ? 'succes' : 'fout', $n ? 'Minimumlonen ' . $lj . ' (' . loon_periodes()[$periode] . ') opgeslagen.' : 'Niets opgeslagen: vul bedragen tussen 0 en 100 in.');
+        } elseif ($actie === 'loon_jaar' || $actie === 'loon_budget') {
+            $velden = $actie === 'loon_budget' ? ['budget'] : ['vt_percentage', 'uren_per_dag', 'pc_vast_juni', 'pc_vast_jul_sep'];
+            $post   = (array)($_POST['lj'] ?? []);
+            $in     = [];
+            foreach ($velden as $v) if (isset($post[$v]) && is_string($post[$v])) $in[$v] = $post[$v];
+            $opgeslagen = loon_jaar_opslaan($lj, $in);
+            if ($opgeslagen && function_exists('audit_log')) audit_log('gewijzigd', 'instelling', null, ['loon_jaar' => $lj, 'velden' => $opgeslagen]);
+            $overgeslagen = array_diff(array_keys($in), $opgeslagen);
+            flash($overgeslagen ? 'waarschuwing' : 'succes', $overgeslagen
+                ? 'Niet alles opgeslagen: een waarde viel buiten de grenzen (' . implode(', ', $overgeslagen) . ').'
+                : ($actie === 'loon_budget' ? 'Budget ' . $lj . ' opgeslagen.' : 'Vakantietoeslag, werkuren en postcommandant ' . $lj . ' opgeslagen.'));
+        } else {
+            $van = (int)($_POST['van'] ?? 0);
+            $ok  = loon_jaar_kopieer($van, $lj);
+            if ($ok && function_exists('audit_log')) audit_log('gewijzigd', 'instelling', null, ['loon_jaar_nieuw' => $lj, 'van' => $van]);
+            flash($ok ? 'succes' : 'fout', $ok
+                ? 'Tarieven ' . $lj . ' gemaakt op basis van ' . $van . '. Pas ze aan naar de nieuwe minimumlonen.'
+                : 'Niet gelukt: ' . $lj . ' heeft al tarieven, of ' . $van . ' heeft er geen.');
         }
-        flash('succes', 'Loonuurtarieven opgeslagen.');
-        redirect(APP_URL . '/admin/instellingen.php?tab=loon');
+        redirect($terug_loon);
     }
 
     if ($actie === 'bezetting_opslaan') {
@@ -389,8 +429,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Data
 $functies = functies_ophalen();
-$tarieven_jun    = $db->query("SELECT leeftijd, min_uurloon FROM loon_tarieven WHERE periode='jun'    ORDER BY leeftijd")->fetchAll(\PDO::FETCH_KEY_PAIR);
-$tarieven_jul    = $db->query("SELECT leeftijd, min_uurloon FROM loon_tarieven WHERE periode='jul_sep' ORDER BY leeftijd")->fetchAll(\PDO::FETCH_KEY_PAIR);
+// Lonen per kalenderjaar: standaard het jaar van het actieve seizoen (includes/loon_tarieven.php).
+$loon_jaar_nu = loon_seizoen_jaar(actief_seizoen());
+$loon_nu      = loon_tarieven_voor_jaar($loon_jaar_nu);   // Functies-tab: voorbeeldberekening
+if ($tab === 'loon') {
+    $loon_keuzes = loon_jaar_keuzes();
+    $loon_jaar   = (int)($_GET['jaar'] ?? $loon_jaar_nu);
+    if ($loon_jaar < 2000 || $loon_jaar > 2100) $loon_jaar = $loon_jaar_nu;
+    if (!in_array($loon_jaar, $loon_keuzes, true)) { $loon_keuzes[] = $loon_jaar; rsort($loon_keuzes); }
+    $loon_t       = loon_tarieven_voor_jaar($loon_jaar);
+    $loon_eigen   = $loon_t['bron_jaar'] === $loon_jaar;
+    $loon_jaren   = loon_tarief_jaren();
+    $loon_nieuwst = $loon_jaren ? max($loon_jaren) : null;
+    $loon_sz      = loon_seizoenen_per_jaar()[$loon_jaar] ?? [];
+}
 
 require __DIR__ . '/layout_top.php';
 ?>
@@ -589,12 +641,44 @@ require __DIR__ . '/layout_top.php';
   </div>
 </div>
 
+<?php /* Technisch (dit tabblad is alleen voor Systeem › bewerken): welke ondertekeningen een
+         verificatiecode per sms/WhatsApp/e-mail vragen. Gelezen door ondertekening_2fa_typen(). */
+      $_tfa_aan = function_exists('ondertekening_2fa_typen') ? ondertekening_2fa_typen() : ['loonheffing']; ?>
+<div class="ds-kaart">
+  <div class="bh-kaartkop"><h2>Ondertekenen: verificatiecode</h2></div>
+  <div class="bh-kaartbody">
+    <p class="bh-inst-intro">
+      Bij de aangevinkte documenten krijgt wie tekent eerst een code (sms, dan WhatsApp, dan e-mail) en moet die
+      invullen. De code en het kanaal komen in het bewijs bij de verzegelde PDF. Dat maakt de handtekening sterker,
+      maar is ook een extra drempel: gebruik het voor documenten die wettelijk vastgelegd moeten worden. Het
+      loonheffingsformulier (met BSN) houdt de code altijd.
+    </p>
+    <form method="POST">
+      <?= csrf_input() ?>
+      <input type="hidden" name="actie" value="instellingen">
+      <input type="hidden" name="tfa_formulier" value="1">
+      <fieldset class="ds-veld">
+        <legend>Verificatiecode verplicht bij</legend>
+        <?php foreach (instellingen_2fa_keuzes() as $_t => $_l): $_vast = $_t === 'loonheffing'; ?>
+          <label class="checkbox-label">
+            <input type="checkbox" name="tfa_typen[]" value="<?= h($_t) ?>" <?= $_vast || in_array($_t, $_tfa_aan, true) ? 'checked' : '' ?> <?= $_vast ? 'disabled' : '' ?>>
+            <?= h($_l) ?><?= $_vast ? ' (altijd, wettelijk document)' : '' ?>
+          </label>
+        <?php endforeach; ?>
+        <div class="ds-veld-hint">Besluit 2.91.0: de inschrijving als lid vraagt geen code — een verenigingsformulier, geen wettelijk document.</div>
+      </fieldset>
+      <button type="submit" class="ds-btn ds-btn-primair">Opslaan</button>
+    </form>
+  </div>
+</div>
+
 <?php elseif ($tab === 'functies'): ?>
 <div class="ds-kaart">
   <div class="bh-kaartkop"><h2>Functies & factoren</h2></div>
   <div class="bh-kaartbody">
     <p class="bh-inst-intro">
-      Het dagloon per persoon = minimumloon/uur × <?= instelling_int('loon.uren_per_dag',8) ?> uur × factor × <?= 1 + instelling_float('loon.vt_percentage',8)/100 ?> (VT).
+      Het dagloon per persoon = minimumloon/uur × <?= h(loon_getal($loon_nu['uren_per_dag'])) ?> uur × factor × <?= h(loon_getal(1 + $loon_nu['vt_percentage'] / 100)) ?> (VT),
+      met de tarieven van <?= (int)($loon_nu['bron_jaar'] ?? $loon_jaar_nu) ?> (<a href="?tab=loon">Lonen &amp; budget</a>). De factor geldt voor elk jaar.
     </p>
     <?php foreach ($functies as $f): ?>
     <form method="POST" class="bh-functie">
@@ -626,14 +710,11 @@ require __DIR__ . '/layout_top.php';
           <button type="submit" class="ds-btn ds-btn-primair ds-btn-sm">Sla op</button>
         </div>
       </div>
-      <?php
-      $dl_jun = $f['sleutel'] !== 'postcommandant'
-        ? '€'.number_format(bereken_dagloon(20, $f['sleutel'], 'jun'), 2, ',', '.')
-        : '€'.number_format(instelling_float('loon.pc_vast_juni',850)/5, 2, ',', '.');
-      ?>
       <div class="bh-functie-voorbeeld">
-        Voorbeeldberekening 20jr, juni: <strong><?= $dl_jun ?>/dag</strong>
-        <?= $f['factor'] > 0 ? "(uurloon × 8 × {$f['factor']} × 1.08)" : "(vast weekbedrag ÷ 5)" ?>
+        Voorbeeldberekening 20 jaar, juni <?= $loon_jaar_nu ?>:
+        <strong>€<?= number_format(bereken_dagloon(20, (string)$f['sleutel'], 'jun', null, $loon_jaar_nu), 2, ',', '.') ?>/dag</strong>
+        <?= $f['sleutel'] === 'postcommandant' ? '(vast weekbedrag ÷ 5)'
+            : h('(uurloon × ' . loon_getal($loon_nu['uren_per_dag']) . ' × ' . loon_getal((float)$f['factor']) . ' × ' . loon_getal(1 + $loon_nu['vt_percentage'] / 100) . ')') ?>
       </div>
     </form>
     <?php endforeach; ?>
@@ -642,56 +723,110 @@ require __DIR__ . '/layout_top.php';
 </div>
 
 <?php elseif ($tab === 'loon'): ?>
+<?php /* Alles op dit tabblad geldt per kalenderjaar (includes/loon_tarieven.php). Een seizoen rekent met
+         het jaar van de start van de werkperiode; ontbreken die tarieven, dan met het jaar ervoor. */ ?>
 <div class="ds-kaart">
   <div class="bh-kaartkop">
-    <h2>Seizoensbudget</h2>
+    <h2>Lonen &amp; budget <?= $loon_jaar ?></h2>
+    <div class="ds-veld-hint">Per kalenderjaar. Een seizoen rekent met het jaar waarin de werkperiode begint.</div>
+  </div>
+  <div class="bh-kaartbody">
+    <?php
+      $_opties = [];
+      foreach ($loon_keuzes as $_j) $_opties[$_j] = $_j . (in_array($_j, $loon_jaren, true) ? '' : ' (nog geen tarieven)');
+      $filter_velden    = [['soort' => 'keuze', 'naam' => 'jaar', 'label' => 'Jaar', 'waarde' => $loon_jaar, 'opties' => $_opties]];
+      $filter_verborgen = ['tab' => 'loon'];
+      require __DIR__ . '/_filterbalk.php';
+    ?>
+    <p class="ds-veld-hint bh-mb">
+      <?= $loon_sz ? 'Geldt voor seizoen ' . h(implode(', ', $loon_sz)) . '.' : 'Er is nog geen seizoen in ' . $loon_jaar . '.' ?>
+      Een wijziging hier geldt voor alle loonberekeningen van dit jaar (ook vastgestelde afspraken en de export) en verandert andere jaren niet.
+    </p>
+    <?php if (!$loon_eigen): ?>
+      <div class="ds-melding ds-melding-warn bh-mb" role="status">
+        <?= icoon('waarschuwing', 16) ?> <?= h(loon_tarieven_melding($loon_t)) ?>
+        <?php if ($loon_t['bron_jaar'] !== null): ?>
+          Maak de tarieven voor <?= $loon_jaar ?> aan: dat kopieert <?= (int)$loon_t['bron_jaar'] ?> (zonder het budget), daarna vul je de nieuwe minimumlonen in.
+        <?php endif; ?>
+      </div>
+      <?php if ($loon_t['bron_jaar'] !== null): ?>
+        <form method="POST">
+          <?= csrf_input() ?>
+          <input type="hidden" name="actie" value="loon_jaar_nieuw">
+          <input type="hidden" name="jaar" value="<?= $loon_jaar ?>">
+          <input type="hidden" name="van" value="<?= (int)$loon_t['bron_jaar'] ?>">
+          <button type="submit" class="ds-btn ds-btn-primair"><?= icoon('plus', 15) ?> Tarieven <?= $loon_jaar ?> maken op basis van <?= (int)$loon_t['bron_jaar'] ?></button>
+        </form>
+      <?php endif; ?>
+    <?php elseif ($loon_nieuwst !== null && !in_array($loon_nieuwst + 1, $loon_jaren, true)): ?>
+      <form method="POST" data-bevestig="Nieuw jaar <?= $loon_nieuwst + 1 ?> maken? De tarieven, vakantietoeslag, werkuren en postcommandant van <?= $loon_nieuwst ?> worden gekopieerd; het budget niet. Daarna pas je de bedragen aan.">
+        <?= csrf_input() ?>
+        <input type="hidden" name="actie" value="loon_jaar_nieuw">
+        <input type="hidden" name="jaar" value="<?= $loon_nieuwst + 1 ?>">
+        <input type="hidden" name="van" value="<?= $loon_nieuwst ?>">
+        <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm"><?= icoon('plus', 14) ?> Nieuw jaar <?= $loon_nieuwst + 1 ?> op basis van <?= $loon_nieuwst ?></button>
+      </form>
+    <?php endif; ?>
+  </div>
+</div>
+
+<div class="ds-kaart">
+  <div class="bh-kaartkop">
+    <h2>Budget <?= $loon_jaar ?></h2>
     <div class="ds-veld-hint">Voor de voortgangsbalk op de loonplanning</div>
   </div>
   <div class="bh-kaartbody">
     <form method="POST" class="bh-inst-regelform">
       <?= csrf_input() ?>
-      <input type="hidden" name="actie" value="instellingen">
+      <input type="hidden" name="actie" value="loon_budget">
+      <input type="hidden" name="jaar" value="<?= $loon_jaar ?>">
       <div class="ds-veld bh-inst-kaalveld">
-        <label for="budget_seizoen">Totaalbudget loonkosten dit seizoen (€)</label>
-        <input type="number" step="100" min="0" id="budget_seizoen" name="inst[loon.budget_seizoen]"
-               value="<?= h(instelling('loon.budget_seizoen', '')) ?>" placeholder="bijv. 25000" class="bh-inst-budgetveld">
+        <label for="lj-budget">Totaalbudget loonkosten <?= $loon_jaar ?> (€)</label>
+        <input type="number" step="1" min="0" max="99999999" id="lj-budget" name="lj[budget]"
+               value="<?= $loon_t['budget'] > 0 ? h((string)$loon_t['budget']) : '' ?>" placeholder="bijv. 25000" class="bh-inst-budgetveld"
+               aria-describedby="lj-budget-hint">
       </div>
       <button type="submit" class="ds-btn ds-btn-primair">Opslaan</button>
-      <div class="bh-inst-regelform-hint">
-        Laat leeg om zonder budget te werken — de loonplanning toont dan alleen de kosten.
+      <div class="bh-inst-regelform-hint" id="lj-budget-hint">
+        Laat leeg om zonder budget te werken — de loonplanning toont dan alleen de kosten. Het budget hoort bij dit
+        jaar alleen: een volgend jaar begint zonder budget.
       </div>
     </form>
   </div>
 </div>
 
-<!-- Vakantietoeslag stond bij Functies; alles over geld hoort bij elkaar. -->
+<?php if ($loon_eigen): ?>
+
+<!-- Vakantietoeslag stond bij Functies; alles over geld hoort bij elkaar. Per jaar, want ook dit kan wijzigen. -->
 <div class="ds-kaart">
-  <div class="bh-kaartkop"><h2>Vakantietoeslag &amp; werkuren</h2></div>
+  <div class="bh-kaartkop"><h2>Vakantietoeslag &amp; werkuren <?= $loon_jaar ?></h2></div>
   <div class="bh-kaartbody">
       <form method="POST">
-        <?= csrf_input() ?><input type="hidden" name="actie" value="instellingen">
+        <?= csrf_input() ?>
+        <input type="hidden" name="actie" value="loon_jaar">
+        <input type="hidden" name="jaar" value="<?= $loon_jaar ?>">
         <div class="bh-veldrij">
           <div class="ds-veld">
-            <label>Vakantietoeslag % <span class="tip" data-tip="Wordt automatisch opgeteld bij de uurlonen in de loonplanning. Standaard 8%."></span></label>
-            <input type="number" name="inst[loon.vt_percentage]" value="<?= instelling_int('loon.vt_percentage',8) ?>" min="0" max="20">
+            <label for="lj-vt">Vakantietoeslag % <span class="tip" data-tip="Wordt automatisch opgeteld bij de uurlonen in de loonplanning. Standaard 8%."></span></label>
+            <input type="number" id="lj-vt" name="lj[vt_percentage]" value="<?= h((string)$loon_t['vt_percentage']) ?>" min="0" max="50" step="0.01">
             <div class="ds-veld-hint">Standaard 8% (wettelijk minimum)</div>
           </div>
           <div class="ds-veld">
-            <label>Werkuren per dag <span class="tip" data-tip="Gebruikt voor dagloon-berekening: uurloon × dit getal × functie-factor × VT."></span></label>
-            <input type="number" name="inst[loon.uren_per_dag]" value="<?= instelling_int('loon.uren_per_dag',8) ?>" min="1" max="12">
+            <label for="lj-uren">Werkuren per dag <span class="tip" data-tip="Gebruikt voor dagloon-berekening: uurloon × dit getal × functie-factor × VT."></span></label>
+            <input type="number" id="lj-uren" name="lj[uren_per_dag]" value="<?= h((string)$loon_t['uren_per_dag']) ?>" min="1" max="12" step="0.25">
             <div class="ds-veld-hint">Standaard 8 uur (40u/week ÷ 5)</div>
           </div>
         </div>
         <div class="bh-veldrij">
           <div class="ds-veld">
-            <label>Vast weekbedrag postcommandant (juni) <span class="tip" data-tip="Postcommandant heeft vast bedrag per week, niet gerelateerd aan leeftijd."></span></label>
-            <div class="bh-inst-euro"><span>€</span>
-            <input type="number" name="inst[loon.pc_vast_juni]" value="<?= instelling_float('loon.pc_vast_juni',850) ?>" step="0.01"></div>
+            <label for="lj-pc-jun">Vast weekbedrag postcommandant (juni) <span class="tip" data-tip="Postcommandant heeft vast bedrag per week, niet gerelateerd aan leeftijd."></span></label>
+            <div class="bh-inst-euro"><span aria-hidden="true">€</span>
+            <input type="number" id="lj-pc-jun" name="lj[pc_vast_juni]" value="<?= h((string)$loon_t['pc_vast_juni']) ?>" min="0" max="99999" step="0.01"></div>
           </div>
           <div class="ds-veld">
-            <label>Vast weekbedrag postcommandant (jul-sep)</label>
-            <div class="bh-inst-euro"><span>€</span>
-            <input type="number" name="inst[loon.pc_vast_jul_sep]" value="<?= instelling_float('loon.pc_vast_jul_sep',750) ?>" step="0.01"></div>
+            <label for="lj-pc-jul">Vast weekbedrag postcommandant (jul-sep)</label>
+            <div class="bh-inst-euro"><span aria-hidden="true">€</span>
+            <input type="number" id="lj-pc-jul" name="lj[pc_vast_jul_sep]" value="<?= h((string)$loon_t['pc_vast_jul_sep']) ?>" min="0" max="99999" step="0.01"></div>
           </div>
         </div>
         <button type="submit" class="ds-btn ds-btn-primair">Opslaan</button>
@@ -699,9 +834,14 @@ require __DIR__ . '/layout_top.php';
   </div>
 </div>
 
+<?php
+  // Factor van een lifeguard voor de voorbeeldkolom "Dag (LG)"; de JS rekent live met dezelfde getallen.
+  $_lg_factor = 1.20;
+  foreach ($functies as $_f) if ($_f['sleutel'] === 'lifeguard') $_lg_factor = (float)$_f['factor'];
+?>
 <div class="ds-kaart">
   <div class="bh-kaartkop">
-    <h2>Minimumlonen per leeftijd</h2>
+    <h2>Minimumlonen per leeftijd <?= $loon_jaar ?></h2>
     <div class="ds-veld-hint">Bedragen per uur, excl. vakantietoeslag</div>
   </div>
   <div class="bh-kaartbody">
@@ -710,9 +850,11 @@ require __DIR__ . '/layout_top.php';
       <form method="POST">
         <?= csrf_input() ?>
         <input type="hidden" name="actie" value="loon_tarief">
+        <input type="hidden" name="jaar" value="<?= $loon_jaar ?>">
         <input type="hidden" name="periode" value="<?= $periode ?>">
         <h3 class="bh-inst-subkop"><?= $label ?></h3>
-        <table class="bh-loontabel">
+        <table class="bh-loontabel" data-loonvoorbeeld data-uren="<?= h((string)$loon_t['uren_per_dag']) ?>"
+               data-factor="<?= h((string)$_lg_factor) ?>" data-vt="<?= h((string)$loon_t['vt_percentage']) ?>">
           <thead>
             <tr>
               <th>Leeftijd</th>
@@ -721,35 +863,35 @@ require __DIR__ . '/layout_top.php';
             </tr>
           </thead>
           <tbody>
-            <?php $tarieven = $periode === 'jun' ? $tarieven_jun : $tarieven_jul;
-            for ($l = 15; $l <= 32; $l++):
-              $loon = $tarieven[$l] ?? '';
-              $dagl = $loon ? bereken_dagloon($l, 'lifeguard', $periode) : null;
+            <?php foreach (loon_leeftijden() as $l):
+              $loon = $loon_t['tarieven'][$periode][$l] ?? '';
+              $dagl = $loon !== '' ? bereken_dagloon($l, 'lifeguard', $periode, null, $loon_jaar) : null;
             ?>
             <tr>
               <th scope="row"><?= $l ?> jr</th>
               <td>
                 <span class="bh-euroveld">
                   <span aria-hidden="true">€</span>
-                  <label class="sr-only" for="loon-<?= h($periode) ?>-<?= $l ?>">Uurloon <?= $l ?> jaar, <?= h($label) ?></label>
+                  <label class="sr-only" for="loon-<?= h($periode) ?>-<?= $l ?>">Uurloon <?= $l ?> jaar, <?= h($label) ?> <?= $loon_jaar ?></label>
                   <input type="number" id="loon-<?= h($periode) ?>-<?= $l ?>" name="loon[<?= $l ?>]"
-                         value="<?= $loon ?>" step="0.01" min="0" max="99"
-                         oninput="updatePreview(this, <?= $l ?>, '<?= $periode ?>')">
+                         value="<?= $loon === '' ? '' : h((string)$loon) ?>" step="0.01" min="0" max="99"
+                         data-voorbeeld="prev-<?= h($periode) ?>-<?= $l ?>">
                 </span>
               </td>
               <td class="bh-meta" id="prev-<?= $periode ?>-<?= $l ?>">
                 <?= $dagl ? '€'.number_format($dagl,2,',','.') : '—' ?>
               </td>
             </tr>
-            <?php endfor; ?>
+            <?php endforeach; ?>
           </tbody>
         </table>
-        <button type="submit" class="ds-btn ds-btn-primair bh-inst-breedknop">Opslaan <?= $label ?></button>
+        <button type="submit" class="ds-btn ds-btn-primair bh-inst-breedknop">Opslaan <?= $label ?> <?= $loon_jaar ?></button>
       </form>
       <?php endforeach; ?>
     </div>
   </div>
 </div>
+<?php endif; ?>
 
 <?php elseif ($tab === 'uitnodiging'): ?>
 <div class="ds-kaart">
@@ -786,11 +928,13 @@ require __DIR__ . '/layout_top.php';
           In het gesprek schrijft het bestuur op wat er besproken is; dat gaat mee in de mail als <code>{{gesprek_bericht}}</code>.
           Blijft dat veld leeg, dan komt deze standaardtekst erin. Leeg laten = de ingebouwde tekst.
         </p>
-        <?php foreach (['aannemen' => ['tw.bericht_aangenomen', 'Standaardtekst bij aangenomen'], 'afwijzen' => ['tw.bericht_afgewezen', 'Standaardtekst bij afgewezen']] as $_b => $_v): ?>
+        <?php foreach ([['tw.bericht_aangenomen', 'Standaardtekst bij aangenomen', 'aannemen', false],
+                        ['tw.bericht_afgewezen', 'Standaardtekst bij afgewezen', 'afwijzen', false],
+                        ['tw.bericht_afgewezen_niet_gekomen', 'Standaardbericht bij afwijzen: niet op het trainingsweekend geweest', 'afwijzen', true]] as $_v): ?>
         <div class="ds-veld">
           <label for="inst-<?= h(str_replace('.', '-', $_v[0])) ?>"><?= h($_v[1]) ?></label>
           <textarea id="inst-<?= h(str_replace('.', '-', $_v[0])) ?>" name="inst[<?= h($_v[0]) ?>]" rows="3" maxlength="2000"
-                    placeholder="<?= h(instelling($_v[0], '') === '' ? tw_standaard_bericht($_b) : '') ?>"><?= h((string)instelling($_v[0], '')) ?></textarea>
+                    placeholder="<?= h(instelling($_v[0], '') === '' ? tw_standaard_bericht($_v[2], $_v[3]) : '') ?>"><?= h((string)instelling($_v[0], '')) ?></textarea>
         </div>
         <?php endforeach; ?>
       </div>
@@ -1493,11 +1637,26 @@ require __DIR__ . '/layout_top.php';
           <div class="ds-veld-hint">Dagen na verwerking, daarna vernietigen</div>
         </div>
       </div>
+      <div class="bh-veldrij">
+        <div class="ds-veld">
+          <label for="inst-loondoc-jaar">Loondocumenten, in jaren <span class="tip" data-tip="Loonheffingsformulier en kopie identiteitsbewijs. De fiscale bewaarplicht loopt tot vijf jaar na het einde van het kalenderjaar waarin het dienstverband eindigde. Minder dan 5 kan niet."></span></label>
+          <input type="number" id="inst-loondoc-jaar" name="inst[bewaar.loondocumenten_jaar]" value="<?= max(5, instelling_int('bewaar.loondocumenten_jaar', 5)) ?>" min="5" max="10" aria-describedby="inst-loondoc-jaar-hint">
+          <div class="ds-veld-hint" id="inst-loondoc-jaar-hint">Na het laatste seizoen. Daarna komt het dossier op de lijst "Te beoordelen voor vernietiging" op Loondossiers; het wordt nooit automatisch gewist.</div>
+        </div>
+      </div>
       <p class="ds-veld-hint bh-mb">
-        <strong>Loondocumenten</strong> (loonheffingsformulier en kopie ID) worden niet automatisch gewist. De fiscale
-        bewaarplicht loopt tot vijf jaar na het laatste jaar waarin iemand bij ons werkte, en welk seizoen dat was weet
-        het systeem niet. De penningmeester vernietigt ze daarom met de hand, op het scherm Loondossiers.
+        <strong>Loondocumenten</strong> worden niet automatisch gewist: het systeem weet wel tot welk seizoen iemand
+        hier werkte, maar niet wanneer het dienstverband eindigde. De penningmeester controleert dat in de
+        loonadministratie en vernietigt ze met de hand, op het scherm Loondossiers.
       </p>
+
+      <h3>Privacyverklaring</h3>
+      <div class="ds-veld">
+        <label for="inst-privacy-url">Adres van de privacyverklaring</label>
+        <input type="text" id="inst-privacy-url" name="inst[privacy.url]" value="<?= h(instelling('privacy.url', '')) ?>"
+               placeholder="<?= h(APP_URL . '/privacy.php') ?>" class="bh-inst-urlveld" inputmode="url" aria-describedby="inst-privacy-url-hint">
+        <div class="ds-veld-hint" id="inst-privacy-url-hint">Leeg = de verklaring in dit systeem, die de termijnen hierboven automatisch noemt. Vul alleen een ander adres in (https, of een pad dat met / begint) als de verklaring op de website staat; die moet je dan zelf bijhouden. Het aanmeldformulier, de wervingspagina's en de WordPress-plugin linken hiernaar.</div>
+      </div>
 
       <h3>Meldingen en statistiek</h3>
       <div class="ds-veld">
@@ -1932,16 +2091,19 @@ require __DIR__ . '/layout_top.php';
 </div>
 
 <script>
-// Loon preview live bijwerken
-function updatePreview(input, leeftijd, periode) {
-  const v = parseFloat(input.value);
-  const el = document.getElementById('prev-' + periode + '-' + leeftijd);
-  if (!el) return;
+// Loon-voorbeeld live bijwerken: uurloon × uren × factor lifeguard × (1 + VT), met de getallen van
+// het gekozen jaar (data-* op de tabel), dus hetzelfde als loon_dagloon() op de server.
+document.addEventListener('input', function (e) {
+  const input = e.target.closest ? e.target.closest('input[data-voorbeeld]') : null;
+  if (!input) return;
+  const tab = input.closest('[data-loonvoorbeeld]');
+  const el  = document.getElementById(input.dataset.voorbeeld);
+  if (!tab || !el) return;
+  const v = parseFloat(String(input.value).replace(',', '.'));
   if (!v || isNaN(v)) { el.textContent = '—'; return; }
-  // Factor lifeguard 1.2, VT 1.08, 8 uur
-  const dl = Math.round(v * 8 * 1.2 * 1.08 * 100) / 100;
+  const dl = Math.round(v * parseFloat(tab.dataset.uren) * parseFloat(tab.dataset.factor) * (1 + parseFloat(tab.dataset.vt) / 100) * 100) / 100;
   el.textContent = '€' + dl.toFixed(2).replace('.', ',');
-}
+});
 
 // Delay veld tonen/verbergen
 document.querySelector('select[name="inst[invite.modus]"]')?.addEventListener('change', function() {

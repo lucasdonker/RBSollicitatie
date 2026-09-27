@@ -12,6 +12,8 @@ $_dit_actief = false;
 foreach ($scenarios as $_s) if ((int)$_s['id'] === $scenario_id && !empty($_s['actief'])) $_dit_actief = true;
 $_n_aangenomen = count(array_filter($analyse['mensen'], fn($m) => $m['fase'] === 'aangenomen'));
 $_n_vast = count($sloten);
+// Welk tariefjaar er gerekend wordt; een zin als dat een eerder jaar is (includes/loon_tarieven.php).
+$_tarief = $analyse['tarieven'] ?? loonplan_tarief_info($seizoen);
 ?>
 <section class="ds-kaart ds-kaart-p bh-lp-kop" data-lp-kop data-budget="<?= $_budget ?>">
   <div class="bh-lp-scenarios">
@@ -55,7 +57,10 @@ $_n_vast = count($sloten);
             ? 'Over budget: € ' . number_format(abs((float)$_tot['restant']), 0, ',', '.')
             : 'Nog € ' . number_format((float)$_tot['restant'], 0, ',', '.') . ' over') ?></span>
       <?php else: ?>
-        <span class="bh-meta">Geen budget ingesteld<?= mag('instellingen', 'bewerken') ? ' — <a href="' . APP_URL . '/admin/instellingen.php?tab=loon">instellen</a>' : '' ?>.</span>
+        <span class="bh-meta">Geen budget ingesteld voor <?= $_tarief['jaar'] ?><?= mag('instellingen', 'bewerken') ? ' — <a href="' . APP_URL . '/admin/instellingen.php?tab=loon&amp;jaar=' . $_tarief['jaar'] . '">instellen</a>' : '' ?>.</span>
+      <?php endif; ?>
+      <?php if ($_tarief['melding'] !== ''): ?>
+        <span class="bh-meta"><?= icoon('waarschuwing', 13) ?> <?= h($_tarief['melding']) ?></span>
       <?php endif; ?>
     </div>
   </div>

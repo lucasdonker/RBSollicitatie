@@ -45,8 +45,8 @@ budget.
   de menu-items Loonplanning en Loondossiers ziet. Vraag het bestuur om jouw e-mailadres in te
   vullen als penningmeester-adres (Instellingen › Afzender & adressen). Anders gaan de meldingen
   naar het bestuursadres.
-- [ ] **Bij de begroting:** geef het bestuur het seizoensbudget voor loonkosten door. Het bestuur
-  vult dat in bij Instellingen › Lonen & budget, samen met de minimumlonen. Daarna zie je in de
+- [ ] **Bij de begroting:** geef het bestuur het budget voor loonkosten van dat jaar door. Het bestuur
+  vult dat in bij Instellingen › Lonen & budget (per jaar), samen met de minimumlonen van dat jaar. Daarna zie je in de
   Loonplanning of de planning erbinnen past (zie [Loonplanning](#loonplanning)).
 - [ ] **Na het trainingsweekend (de aannames):** open Loondossiers. Elke aangenomen strandwacht
   staat er, ook als er nog niets is ingeleverd.

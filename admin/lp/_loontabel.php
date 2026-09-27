@@ -1,11 +1,17 @@
 <?php
 /**
- * Loonplanning — ingeklapt onderaan: het dagloon per leeftijd en functie (juni en juli–september).
- * Onderdeel van admin/loonplanning.php.
+ * Loonplanning — ingeklapt onderaan: het dagloon per leeftijd en functie (juni en juli–september),
+ * met de tarieven van het jaar van het seizoen (includes/loon_tarieven.php).
+ * Onderdeel van admin/loonplanning.php (zet $seizoen, $functies, $analyse).
  */
+$_lt_info = $analyse['tarieven'] ?? loonplan_tarief_info($seizoen);
+$_lt_jaar = (int)$_lt_info['jaar'];
 ?>
 <details class="ds-kaart bh-lp-loontabel">
-  <summary>Loontabel: dagloon per leeftijd en functie</summary>
+  <summary>Loontabel <?= $_lt_info['bron_jaar'] ? (int)$_lt_info['bron_jaar'] : $_lt_jaar ?>: dagloon per leeftijd en functie</summary>
+  <?php if ($_lt_info['melding'] !== ''): ?>
+    <p class="bh-meta"><?= h($_lt_info['melding']) ?></p>
+  <?php endif; ?>
   <div class="bh-rasterrol">
     <table class="bh-lp-loontab">
       <thead>
@@ -17,8 +23,8 @@
         <tr>
           <th scope="row"><?= $_l ?> jr</th>
           <?php foreach ($functies as $_f): ?>
-            <td>€ <?= number_format(bereken_dagloon($_l, $_f['sleutel'], 'jun'), 2, ',', '.') ?></td>
-            <td>€ <?= number_format(bereken_dagloon($_l, $_f['sleutel'], 'jul_sep'), 2, ',', '.') ?></td>
+            <td>€ <?= number_format(bereken_dagloon($_l, $_f['sleutel'], 'jun', null, $_lt_jaar), 2, ',', '.') ?></td>
+            <td>€ <?= number_format(bereken_dagloon($_l, $_f['sleutel'], 'jul_sep', null, $_lt_jaar), 2, ',', '.') ?></td>
           <?php endforeach; ?>
         </tr>
         <?php endfor; ?>

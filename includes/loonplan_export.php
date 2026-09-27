@@ -142,30 +142,30 @@ function loonplan_export_boek(int $seizoen_id, string $bron, int $scenario_id): 
               'kop' => ['Naam', 'Week', 'Maandag', 'Opgegeven (max dagen)', ($bron === 'scenario' ? 'Ingepland' : 'Afgesproken'), 'Betaald', 'Verschil', 'Opmerking'],
               'breedte' => [28, 7, 12, 20, 13, 9, 9, 22], 'rijen' => $rijen];
 
-    // 4. Tarieven en budget
-    $rijen = [[['v' => 'Instellingen', 's' => 'vet']],
-              ['Uren per dag', instelling_float('loon.uren_per_dag', 8)],
-              ['Vakantietoeslag (%)', instelling_float('loon.vt_percentage', 8)],
-              ['Postcommandant vast per week, juni', ['v' => instelling_float('loon.pc_vast_juni', 850), 's' => 'geld']],
-              ['Postcommandant vast per week, jul–sep', ['v' => instelling_float('loon.pc_vast_jul_sep', 850), 's' => 'geld']],
-              [], [['v' => 'Functies', 's' => 'vet'], ['v' => 'Factor', 's' => 'vet']]];
+    // 4. Tarieven en budget: van het jaar van dit seizoen (includes/loon_tarieven.php), dezelfde bron als de berekening.
+    $t = loon_tarieven_voor_seizoen($seizoen);
+    $melding = loon_tarieven_melding($t);
+    $rijen = [[['v' => 'Tarieven ' . ($t['bron_jaar'] ?? $t['jaar']), 's' => 'vet']]];
+    if ($melding !== '') $rijen[] = [['v' => $melding, 's' => 'let']];
+    array_push($rijen,
+              ['Uren per dag', $t['uren_per_dag']],
+              ['Vakantietoeslag (%)', $t['vt_percentage']],
+              ['Postcommandant vast per week, juni', ['v' => $t['pc_vast_juni'], 's' => 'geld']],
+              ['Postcommandant vast per week, jul–sep', ['v' => $t['pc_vast_jul_sep'], 's' => 'geld']],
+              [], [['v' => 'Functies', 's' => 'vet'], ['v' => 'Factor', 's' => 'vet']]);
     foreach ($functies as $f) $rijen[] = [$f['naam'], (float)$f['factor']];
     $rijen[] = [];
     $rijen[] = [['v' => 'Minimumuurloon', 's' => 'vet'], ['v' => 'Juni', 's' => 'vet'], ['v' => 'Juli–september', 's' => 'vet']];
-    $tarief = [];
-    try {
-        foreach (db()->query("SELECT leeftijd, periode, min_uurloon FROM loon_tarieven ORDER BY leeftijd")->fetchAll() as $t) {
-            $tarief[(int)$t['leeftijd']][$t['periode']] = (float)$t['min_uurloon'];
-        }
-    } catch (\Exception $e) {}
-    foreach ($tarief as $lft => $per) {
-        $rijen[] = [$lft . ' jaar', ['v' => $per['jun'] ?? null, 's' => 'geld'], ['v' => $per['jul_sep'] ?? null, 's' => 'geld']];
+    $leeftijden = array_unique(array_merge(array_keys($t['tarieven']['jun']), array_keys($t['tarieven']['jul_sep'])));
+    sort($leeftijden);
+    foreach ($leeftijden as $lft) {
+        $rijen[] = [$lft . ' jaar', ['v' => $t['tarieven']['jun'][$lft] ?? null, 's' => 'geld'], ['v' => $t['tarieven']['jul_sep'][$lft] ?? null, 's' => 'geld']];
     }
-    $budget = loonplan_budget();
+    $budget = (float)$t['budget'];
     $rijen[] = [];
     $rijen[] = [['v' => 'Budget', 's' => 'vet']];
     $rijen[] = ['Bruto loonkosten (betaalde dagen)', ['v' => round($tot['kosten'], 2), 's' => 'geld']];
-    $rijen[] = ['Budget seizoen', ['v' => $budget, 's' => 'geld']];
+    $rijen[] = ['Budget ' . $t['jaar'], ['v' => $budget, 's' => 'geld']];
     $rijen[] = ['Restant', ['v' => round($budget - $tot['kosten'], 2), 's' => $budget - $tot['kosten'] < 0 ? 'let' : 'geld']];
     $rijen[] = [];
     $rijen[] = [['v' => 'Dagloon = minimumuurloon (leeftijd op de maandag van de week, periode juni of juli–september) × uren per dag × factor × (1 + vakantietoeslag). Onbetaalde dagen kosten niets.', 's' => 'zacht']];

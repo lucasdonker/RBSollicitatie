@@ -3,6 +3,9 @@
  * Paal 13 — Instellingen helper + auto-setup
  */
 
+// Loontarieven per kalenderjaar (tarieven, VT, werkuren, postcommandant, budget) en het dagloon.
+require_once __DIR__ . '/loon_tarieven.php';
+
 $_instellingen_cache = null;
 
 /** De Authentik-groepen die standaard het beheer in mogen (zelfde lijst als de terugval in admin/auth_callback.php). */
@@ -27,10 +30,14 @@ function instellingen_formulier_sleutels(string $tab): array {
     }
     $per_tab = [
         'algemeen'    => ['site.naam', 'site.logo_url', 'site.favicon_url', 'portaal.welkomst_tekst'],
-        'loon'        => ['loon.budget_seizoen', 'loon.vt_percentage', 'loon.uren_per_dag', 'loon.pc_vast_juni', 'loon.pc_vast_jul_sep'],
+        // Lonen & budget slaat op per kalenderjaar (includes/loon_tarieven.php) via eigen acties, niet via
+        // dit formulier. De oude loon.*-sleutels zijn alleen nog de terugval voor een jaar zonder eigen waarden.
+        'loon'        => [],
+        // Technisch tabblad (alleen Systeem › bewerken): welke ondertekeningen een verificatiecode vragen.
+        'modules'     => ['ondertekenen.2fa_typen'],
         'uitnodiging' => array_merge([
             'invite.modus', 'invite.min_leeftijd', 'invite.max_leeftijd', 'invite.delay_uur',
-            'seizoen.fase', 'selectie.drempel', 'tw.bericht_aangenomen', 'tw.bericht_afgewezen',
+            'seizoen.fase', 'selectie.drempel', 'tw.bericht_aangenomen', 'tw.bericht_afgewezen', 'tw.bericht_afgewezen_niet_gekomen',
             'auto.ondertekening_sd', 'auto.kennismakingspakket',
             'herinnering.rust_dagen', 'melding.plafond_dag', 'bijlage.mail_max_mb', 'wa.max_per_uur',
         ], $herinneringen),
@@ -42,9 +49,22 @@ function instellingen_formulier_sleutels(string $tab): array {
                           'bewaar.gezondheid_mnd', 'bewaar.ai_invoer_mnd', 'bewaar.onvoltooid_mnd', 'bewaar.maillog_mnd',
                           'bewaar.maillog_body_mnd', 'bewaar.bijlagen_mnd', 'bewaar.pagina_events_mnd', 'bewaar.pagina_hash_dagen',
                           'bewaar.audit_maanden', 'bewaar.bankpas_na_verwerking_dagen', 'bewaar.foutenlog_dagen',
+                          'bewaar.loondocumenten_jaar', 'privacy.url',
                           'documenten.download_melding', 'paginas.tracking'],
     ];
     return $per_tab[$tab] ?? [];
+}
+
+/**
+ * Ondertekentypen waarvoor je in Instellingen › Modules een verificatiecode kunt verplichten
+ * (instelling ondertekenen.2fa_typen, gelezen door ondertekening_2fa_typen()). [type => label]
+ */
+function instellingen_2fa_keuzes(): array {
+    $uit = [];
+    foreach (['loonheffing', 'lidmaatschap', 'gezondheid_18plus', 'gezondheid_ouder', 'intake', 'intake_ouder'] as $t) {
+        $uit[$t] = function_exists('ondertekening_label') ? ondertekening_label($t) : $t;
+    }
+    return $uit;
 }
 
 /**
@@ -108,13 +128,14 @@ function instellingen_auto_setup(bool $forceer = false): void {
         `volgorde`     INT          DEFAULT 0
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
-    // loon_tarieven tabel
+    // loon_tarieven tabel: per kalenderjaar. Vullen, migreren en de jaartabel: loon_tarieven_auto_setup().
     $db->exec("CREATE TABLE IF NOT EXISTS `loon_tarieven` (
         `id`          INT          AUTO_INCREMENT PRIMARY KEY,
+        `jaar`        SMALLINT     NOT NULL DEFAULT 0,
         `leeftijd`    INT          NOT NULL,
         `periode`     VARCHAR(10)  NOT NULL,
         `min_uurloon` DECIMAL(6,4) NOT NULL,
-        UNIQUE KEY `leeftijd_periode` (`leeftijd`,`periode`)
+        UNIQUE KEY `jaar_leeftijd_periode` (`jaar`,`leeftijd`,`periode`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
     // loon_planning tabel
@@ -162,6 +183,7 @@ function instellingen_auto_setup(bool $forceer = false): void {
         ['ondertekenen.2fa_typen', 'loonheffing',                'Ondertekentypen met verplichte verificatiecode (wettelijke documenten)', 'tekst'],
         ['bewaar.loondocumenten_jaar', '5',                     'Loonheffingsformulier + kopie ID bewaren (jaren na einde dienstjaar)', 'getal'],
         ['bewaar.bankpas_na_verwerking_dagen', '30',            'Kopie bankpas vernietigen na verwerking (dagen)', 'getal'],
+        ['privacy.url',            '',                          'Adres van de privacyverklaring (leeg = de pagina in dit systeem)', 'url'],
         // aanmeld.min_leeftijd/max_leeftijd vervallen (2.100): nergens gebruikt; de minimumleeftijd is vast 15.
         ['invite.modus',           'suggestie',                 'Auto-invite modus',                    'keuze'],
         ['invite.min_leeftijd',    '16',                        'Min leeftijd auto-uitnodiging',        'getal'],
@@ -213,17 +235,8 @@ function instellingen_auto_setup(bool $forceer = false): void {
         ['postcommandant','Postcommandant',      0.00, 18, 99, 5],
     ] as $f) $fstmt->execute($f);
 
-    // Minimumlonen (per uur, excl VT)
-    $lstmt = $db->prepare("INSERT IGNORE INTO `loon_tarieven` (leeftijd,periode,min_uurloon) VALUES (?,?,?)");
-    $lonen = [
-        'jun'    => [15=>4.41,16=>5.07,17=>5.81,18=>7.36,19=>8.83,20=>11.77,21=>14.71,22=>14.71,23=>14.71,24=>11.16,25=>11.16,26=>11.16,27=>11.16,28=>11.16,29=>11.16,30=>11.16,31=>11.16,32=>11.16],
-        'jul_sep'=> [15=>4.32,16=>4.97,17=>5.69,18=>7.20,19=>8.64,20=>11.52,21=>14.40,22=>14.40,23=>14.40,24=>11.16,25=>11.16,26=>11.16,27=>11.16,28=>11.16,29=>11.16,30=>11.16,31=>11.16,32=>11.16],
-    ];
-    foreach ($lonen as $periode => $leeftijden) {
-        foreach ($leeftijden as $lft => $loon) {
-            $lstmt->execute([$lft, $periode, $loon]);
-        }
-    }
+    // Minimumlonen: per jaar, gevuld door loon_tarieven_auto_setup() (includes/loon_tarieven.php).
+    // Hier niet meer: zonder jaar zou elke versie-ophoging rijen met jaar 0 toevoegen.
 
     // Markeer DB als bijgewerkt naar huidige versie
     if (defined('APP_VERSIE')) {
@@ -293,47 +306,7 @@ function functies_ophalen(): array {
     }
 }
 
-function bereken_dagloon(int $leeftijd, string $functie_sleutel, string $periode = 'jun', ?float $override = null): float {
-    if ($override !== null) return $override;
-    // Per verzoek onthouden: de loonplanning vraagt dit per persoon per week (honderden keren),
-    // en elke vraag kostte twee queries. Tarieven wijzigen niet halverwege een verzoek.
-    static $cache = [];
-    $sleutel = $leeftijd . '|' . $functie_sleutel . '|' . $periode;
-    if (isset($cache[$sleutel])) return $cache[$sleutel];
-    return $cache[$sleutel] = bereken_dagloon_uncached($leeftijd, $functie_sleutel, $periode);
-}
-
-function bereken_dagloon_uncached(int $leeftijd, string $functie_sleutel, string $periode): float {
-    if ($functie_sleutel === 'postcommandant') {
-        $k = $periode === 'jun' ? 'loon.pc_vast_juni' : 'loon.pc_vast_jul_sep';
-        return round(instelling_float($k, 850) / 5, 2);
-    }
-
-    $functies = functies_ophalen();
-    $factor   = 1.20; // standaard lifeguard
-    foreach ($functies as $f) {
-        if ($f['sleutel'] === $functie_sleutel) { $factor = (float)$f['factor']; break; }
-    }
-
-    try {
-        instellingen_auto_setup();
-        $stmt = db()->prepare("SELECT min_uurloon FROM loon_tarieven WHERE leeftijd=? AND periode=? LIMIT 1");
-        $stmt->execute([$leeftijd, $periode]);
-        $row = $stmt->fetch();
-        if (!$row) {
-            // Dichtstbijzijnde leeftijd
-            $stmt2 = db()->prepare("SELECT min_uurloon FROM loon_tarieven WHERE periode=? ORDER BY ABS(leeftijd-?) LIMIT 1");
-            $stmt2->execute([$periode, $leeftijd]);
-            $row = $stmt2->fetch();
-        }
-    } catch (\Exception $e) { $row = false; }
-
-    $uurloon  = $row ? (float)$row['min_uurloon'] : 11.16;
-    $uren_dag = instelling_float('loon.uren_per_dag', 8);
-    $vt       = 1 + (instelling_float('loon.vt_percentage', 8) / 100);
-
-    return round($uurloon * $uren_dag * $factor * $vt, 2);
-}
+// bereken_dagloon() staat in includes/loon_tarieven.php: het tarief hangt af van het kalenderjaar.
 
 function week_naar_periode(int $week_nr): string {
     return ($week_nr <= 26) ? 'jun' : 'jul_sep';

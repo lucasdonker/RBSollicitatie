@@ -28,6 +28,17 @@ $bp_zin   = $bp_auto
     ? 'De bankpasfoto wordt ' . $bp_dagen . ' dagen na "verwerkt" automatisch vernietigd.'
     : 'Automatisch opschonen staat uit: vernietig de bankpasfoto na het verwerken zelf (knop Vernietigen bij de bankpas).';
 
+// ── Seizoenkeuze ──────────────────────────────────────────────
+// Standaard het actieve seizoen. Oudere seizoenen blijven kiesbaar: zodra een nieuw seizoen opengaat
+// moeten de loondossiers van vorig jaar er nog zijn (fiscale bewaarplicht). De lijst "Te beoordelen
+// voor vernietiging" onderaan kijkt altijd over alle seizoenen.
+$seizoenen = documenten_seizoenen();
+$actief_id = (int)(actief_seizoen()['id'] ?? 0);
+$sz_id     = (int)($_POST['seizoen'] ?? $_GET['seizoen'] ?? $actief_id);
+if (!isset($seizoenen[$sz_id])) $sz_id = $actief_id;
+$sz_q      = $sz_id !== $actief_id ? 'seizoen=' . $sz_id : '';   // alleen in de URL als het niet het actieve is
+$terug     = APP_URL . '/admin/documenten.php' . ($sz_q !== '' ? '?' . $sz_q : '');
+
 // ── Acties ────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
@@ -38,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $res = documenten_loondossier_vernietigen((int)($_POST['persoon_id'] ?? 0), (string)($bhd['naam'] ?: 'beheerder #' . $bhd['id']));
         if ($res['ok']) flash('succes', 'Het loondossier is vernietigd. De rest van het dossier staat er nog.');
         else flash('fout', 'Vernietigen lukte niet: ' . $res['fout'] . '.');
-        redirect(APP_URL . '/admin/documenten.php');
+        redirect($terug);
     }
 
     if ($actie === 'verwerkt' && $sol_id > 0 && $mag_bewerken) {
@@ -61,14 +72,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         flash('fout', 'Je rol mag deze actie niet uitvoeren.');
     }
-    redirect(APP_URL . '/admin/documenten.php');
+    redirect($terug);
 }
 
 $pagina_titel = 'Loondossiers';
 $actieve_nav  = 'documenten';
 
-$seizoen = actief_seizoen();
-$rijen   = documenten_overzicht((int)($seizoen['id'] ?? 0));
+$seizoen = $seizoenen[$sz_id] ?? null;
+$rijen   = documenten_overzicht($sz_id);
 $focus   = (int)($_GET['sol'] ?? 0);
 $tok     = csrf_token();
 $dl      = fn(int $doc_id): string => APP_URL . '/admin/document_download.php?id=' . $doc_id . '&t=' . urlencode($tok);
@@ -132,8 +143,8 @@ require __DIR__ . '/layout_top.php';
       'toon'         => 'gevaar',
   ];
   $bev_form  = ['actie' => APP_URL . '/admin/documenten.php',
-                'velden' => ['actie' => 'vernietig', 'document_id' => (int)$bev_doc['id']]];
-  $bev_terug = APP_URL . '/admin/documenten.php';
+                'velden' => ['actie' => 'vernietig', 'document_id' => (int)$bev_doc['id'], 'seizoen' => $sz_id]];
+  $bev_terug = $terug;
   require __DIR__ . '/_bevestig.php';
   ?>
   <?php require __DIR__ . '/layout_bottom.php'; ?>
@@ -155,8 +166,8 @@ require __DIR__ . '/layout_top.php';
       'toon'         => 'primair',
   ];
   $bev_form  = ['actie' => APP_URL . '/admin/documenten.php',
-                'velden' => ['actie' => 'verwerkt', 'sol_id' => (int)$bev_sol['sol']['id']]];
-  $bev_terug = APP_URL . '/admin/documenten.php';
+                'velden' => ['actie' => 'verwerkt', 'sol_id' => (int)$bev_sol['sol']['id'], 'seizoen' => $sz_id]];
+  $bev_terug = $terug;
   require __DIR__ . '/_bevestig.php';
   ?>
   <?php require __DIR__ . '/layout_bottom.php'; ?>
@@ -225,10 +236,23 @@ require __DIR__ . '/layout_top.php';
   </div>
 </section>
 
+<?php if (count($seizoenen) > 1): ?>
+  <?php
+  $_opties = [];
+  foreach ($seizoenen as $_s) {
+      $_opties[$_s['id']] = $_s['naam'] . ($_s['id'] === $actief_id ? ' (actief)' : '') . ' — ' . $_s['aangenomen'] . ' aangenomen';
+  }
+  $filter_velden = [['soort' => 'keuze', 'naam' => 'seizoen', 'label' => 'Seizoen', 'waarde' => $sz_id, 'opties' => $_opties]];
+  require __DIR__ . '/_filterbalk.php';
+  ?>
+<?php endif; ?>
+
 <?php if (!$rijen): ?>
   <?php
-  $leeg_titel = 'Nog geen loondossiers';
-  $leeg_tekst = 'Zodra iemand op "Aangenomen" staat, zet het systeem een loondossier klaar en verschijnt het hier.';
+  $leeg_titel = $sz_id === $actief_id ? 'Nog geen loondossiers' : 'Geen loondossiers in ' . ($seizoen['naam'] ?? 'dit seizoen');
+  $leeg_tekst = $sz_id === $actief_id
+      ? 'Zodra iemand op "Aangenomen" staat, zet het systeem een loondossier klaar en verschijnt het hier.'
+      : 'In dit seizoen is niemand (meer) aangenomen. Loonstukken die nog bewaard worden, staan onderaan bij "Te beoordelen voor vernietiging" zodra de termijn voorbij is.';
   $leeg_icoon = 'slot';
   require __DIR__ . '/_leeg.php';
   ?>
@@ -240,7 +264,7 @@ require __DIR__ . '/layout_top.php';
           ? ($n_compleet - $n_verwerkt) . ' ' . ($n_compleet - $n_verwerkt === 1 ? 'dossier wacht' : 'dossiers wachten') . ' op verwerking'
           : ($n_verwerkt === count($rijen) ? 'Alles verwerkt' : 'Geen dossier compleet')) ?>
   <span class="bh-meta">
-    <?= count($rijen) ?> aangenomen · <?= $n_compleet ?> compleet · <?= $n_verwerkt ?> verwerkt
+    <?= h((string)($seizoen['naam'] ?? '')) ?> · <?= count($rijen) ?> aangenomen · <?= $n_compleet ?> compleet · <?= $n_verwerkt ?> verwerkt
   </span>
 </div>
 
@@ -342,7 +366,7 @@ require __DIR__ . '/layout_top.php';
               </a>
             <?php endif; ?>
             <?php if ($doc && $soort === 'bankpas' && $mag_verwijderen): ?>
-              <a class="ds-btn ds-btn-gevaar ds-btn-sm" href="?bevestig=vernietig&amp;doc=<?= (int)$doc['id'] ?>">
+              <a class="ds-btn ds-btn-gevaar ds-btn-sm" href="?bevestig=vernietig&amp;doc=<?= (int)$doc['id'] ?><?= $sz_q !== '' ? '&amp;' . $sz_q : '' ?>">
                 <?= icoon('prullenbak', 14) ?> Vernietigen
               </a>
             <?php endif; ?>
@@ -376,7 +400,7 @@ require __DIR__ . '/layout_top.php';
       <?php if ($mag_bewerken): ?>
       <div class="bh-doskaart-voet">
         <?php if ($d['compleet'] && !$d['verwerkt']): ?>
-          <a class="ds-btn ds-btn-primair ds-btn-sm" href="?bevestig=verwerkt&amp;sol=<?= $sol_id ?>">
+          <a class="ds-btn ds-btn-primair ds-btn-sm" href="?bevestig=verwerkt&amp;sol=<?= $sol_id ?><?= $sz_q !== '' ? '&amp;' . $sz_q : '' ?>">
             <?= icoon('vink', 14) ?> Verwerkt in de loonadministratie
           </a>
         <?php endif; ?>
@@ -384,6 +408,7 @@ require __DIR__ . '/layout_top.php';
           <form method="POST">
             <?= csrf_input() ?>
             <input type="hidden" name="actie" value="melding_opnieuw">
+            <input type="hidden" name="seizoen" value="<?= $sz_id ?>">
             <input type="hidden" name="sol_id" value="<?= $sol_id ?>">
             <button type="submit" class="ds-btn ds-btn-zacht ds-btn-sm">
               <?= icoon('mail', 14) ?> Melding opnieuw naar de penningmeester

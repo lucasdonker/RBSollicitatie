@@ -395,6 +395,25 @@ function documenten_overzicht(int $seizoen_id): array {
     return $uit;
 }
 
+/**
+ * Seizoenen om uit te kiezen op Loondossiers, nieuwste eerst, met het aantal aangenomen per seizoen.
+ * Oude seizoenen blijven kiesbaar: de loonstukken vallen onder de fiscale bewaarplicht, ook als er al
+ * een nieuw seizoen open staat.
+ * @return array<int, array{id:int, naam:string, status:string, aangenomen:int}>  [seizoen_id => …]
+ */
+function documenten_seizoenen(): array {
+    $uit = [];
+    try {
+        $q = db()->query("SELECT sz.id, sz.naam, sz.status, COUNT(s.id) AS aangenomen
+                          FROM seizoenen sz LEFT JOIN sollicitaties s ON s.seizoen_id = sz.id AND s.fase = 'aangenomen'
+                          GROUP BY sz.id, sz.naam, sz.status ORDER BY sz.id DESC");
+        foreach ($q->fetchAll() as $r) {
+            $uit[(int)$r['id']] = ['id' => (int)$r['id'], 'naam' => (string)$r['naam'], 'status' => (string)$r['status'], 'aangenomen' => (int)$r['aangenomen']];
+        }
+    } catch (\Throwable $e) {}
+    return $uit;
+}
+
 // ── Loondossier vernietigen (handmatig, penningmeester) ───────
 //
 // Fiscale bewaarplicht: vijf jaar na het einde van het kalenderjaar waarin het dienstverband

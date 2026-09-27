@@ -145,25 +145,37 @@ function loonplan_scenario_verwijder(int $seizoen_id, int $scenario_id): bool {
     } catch (\Exception $e) { return false; }
 }
 
-/** Budget van het seizoen (instelling). */
-function loonplan_budget(): float {
-    return function_exists('instelling_float') ? (float)instelling_float('loon.budget_seizoen', 0) : 0.0;
+/** Budget van het jaar van dit seizoen (includes/loon_tarieven.php; 0 = geen budget). */
+function loonplan_budget(?array $seizoen = null): float {
+    return function_exists('loon_tarieven_voor_seizoen') ? (float)loon_tarieven_voor_seizoen($seizoen)['budget'] : 0.0;
+}
+
+/**
+ * Welk tariefjaar de planning van dit seizoen gebruikt, en de zin als dat een ander jaar is.
+ * @return array{jaar:int, bron_jaar:?int, melding:string}
+ */
+function loonplan_tarief_info(?array $seizoen): array {
+    if (!function_exists('loon_tarieven_voor_seizoen')) return ['jaar' => loonplan_jaar($seizoen), 'bron_jaar' => null, 'melding' => ''];
+    $t = loon_tarieven_voor_seizoen($seizoen);
+    return ['jaar' => $t['jaar'], 'bron_jaar' => $t['bron_jaar'], 'melding' => loon_tarieven_melding($t)];
 }
 
 /**
  * Dagloon voor één persoon in één week: leeftijd op de maandag van die week, periode (juni of
- * juli–september) en functie. Eén plek, zodat de planning en de export altijd hetzelfde rekenen.
+ * juli–september), functie en de tarieven van het jaar van het seizoen. Eén plek, zodat de planning
+ * en de export altijd hetzelfde rekenen.
  * Retourneert ['dagloon' => float, 'leeftijd' => int].
  */
 function loonplan_week_dagloon(string $geboortedatum, string $functie, int $week, array $weken_datums, ?array $seizoen, ?float $override = null): array {
     $maandag = isset($weken_datums[$week]) ? $weken_datums[$week]['start']->format('Y-m-d') : (string)($seizoen['datum_werk_start'] ?? date('Y-m-d'));
     $lft = $geboortedatum !== '' ? leeftijd_op_datum($geboortedatum, $maandag) : 18;
-    $dagloon = function_exists('bereken_dagloon') ? bereken_dagloon($lft, $functie, loonplan_periode($week, $seizoen), $override) : 0.0;
+    $dagloon = function_exists('bereken_dagloon') ? bereken_dagloon($lft, $functie, loonplan_periode($week, $seizoen), $override, loonplan_jaar($seizoen)) : 0.0;
     return ['dagloon' => $dagloon, 'leeftijd' => $lft];
 }
 
-/** Seizoensjaar (voor loon_planning.jaar). */
+/** Seizoensjaar (voor loon_planning.jaar en de tarieven): zie loon_seizoen_jaar(). */
 function loonplan_jaar(?array $seizoen): int {
+    if (function_exists('loon_seizoen_jaar')) return loon_seizoen_jaar($seizoen);
     return $seizoen && !empty($seizoen['datum_werk_start']) ? (int)date('Y', strtotime($seizoen['datum_werk_start'])) : (int)date('Y');
 }
 
@@ -341,7 +353,7 @@ function loonplan_analyse(int $seizoen_id, int $scenario_id, ?array $seizoen = n
     }
 
     ksort($per_week);
-    $budget = loonplan_budget();
+    $budget = loonplan_budget($seizoen);
 
     return [
         'mensen'   => $mensen,
@@ -356,6 +368,7 @@ function loonplan_analyse(int $seizoen_id, int $scenario_id, ?array $seizoen = n
         ],
         'dekking'  => (!$een && function_exists('bezetting_dekking_van_pool')) ? bezetting_dekking_van_pool($pool) : [],
         'signalen' => $signalen,
+        'tarieven' => loonplan_tarief_info($seizoen),
     ];
 }
 
