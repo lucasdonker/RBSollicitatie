@@ -115,20 +115,61 @@
     return true;
   }
 
+  /* ── Foutmelding in de pagina (vervangt alert()) ──
+     Eén manier voor het hele portaal om "dit kan zo niet" te zeggen: een melding op de plek
+     waar het speelt, die voorgelezen wordt (role=alert) en die blijft staan. alert() blokkeert
+     de pagina, is niet te stylen en verdwijnt zodra je hem wegklikt — dan weet je niet meer
+     wat er fout was.
+
+       P13Melding.fout(plek, tekst[, veld])  plek = element waarin de melding komt (wordt
+                                            gevuld, niet vervangen); veld = optioneel invoerveld
+                                            dat aria-invalid krijgt, aan de melding wordt
+                                            gekoppeld (aria-describedby) en de focus krijgt.
+       P13Melding.wis(plek[, veld])          melding weg, veld weer geldig. */
+  var meldingTeller = 0;
+  var P13Melding = {
+    fout: function (plek, tekst, veld) {
+      if (!plek) return null;
+      if (!plek.id) plek.id = 'p13-melding-' + (++meldingTeller);
+      // Een plek met een eigen, kleine foutstijl (pt-inline-fout in een taakrij) houdt die.
+      if (!plek.classList.contains('pt-inline-fout')) plek.classList.add('ds-melding', 'ds-melding-error');
+      plek.setAttribute('role', 'alert');
+      plek.textContent = tekst;
+      plek.hidden = false;
+      if (veld) {
+        veld.setAttribute('aria-invalid', 'true');
+        var d = (veld.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean);
+        if (d.indexOf(plek.id) < 0) { d.push(plek.id); veld.setAttribute('aria-describedby', d.join(' ')); }
+        veld.focus();
+      } else if (plek.scrollIntoView) {
+        plek.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return plek;
+    },
+    wis: function (plek, veld) {
+      if (plek) { plek.textContent = ''; plek.hidden = true; }
+      if (veld) veld.removeAttribute('aria-invalid');
+    }
+  };
+  window.P13Melding = P13Melding;
+
   /* ── Portaal: oudergegevens-formulier in een taakrij (velden zonder 'required' zodat een
         verborgen formulier de submit niet blokkeert; validatie hier) ── */
   function ouderValideer(form) {
-    var v = function (n) { var el = form.querySelector('[name="' + n + '"]'); return el ? el.value.trim() : ''; };
+    var veld = function (n) { return form.querySelector('[name="' + n + '"]'); };
+    var v = function (n) { var el = veld(n); return el ? el.value.trim() : ''; };
     var naam = v('ouder_naam'), email = v('ouder_email'), tel = v('ouder_telefoon');
-    var foutBox = form.querySelector('.ouder-fout');
     var cijfers = (tel.match(/\d/g) || []).length;
-    var fout = '';
-    if (!naam) fout = 'Vul de naam van je ouder/verzorger in.';
-    else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) fout = 'Vul een geldig e-mailadres in.';
-    else if (cijfers < 8) fout = 'Vul een geldig telefoonnummer in (minstens 8 cijfers).';
+    var fout = '', foutVeld = null;
+    if (!naam) { fout = 'Vul de naam van je ouder/verzorger in.'; foutVeld = veld('ouder_naam'); }
+    else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { fout = 'Vul een geldig e-mailadres in.'; foutVeld = veld('ouder_email'); }
+    else if (cijfers < 8) { fout = 'Vul een geldig telefoonnummer in (minstens 8 cijfers).'; foutVeld = veld('ouder_telefoon'); }
+    ['ouder_naam', 'ouder_email', 'ouder_telefoon'].forEach(function (n) { var el = veld(n); if (el) el.removeAttribute('aria-invalid'); });
     if (fout) {
-      if (foutBox) { foutBox.textContent = fout; foutBox.hidden = false; foutBox.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-      else { alert(fout); }
+      // Geen .ouder-fout in de markup? Dan maken we hem bovenaan het formulier — nooit alert().
+      var foutBox = form.querySelector('.ouder-fout');
+      if (!foutBox) { foutBox = document.createElement('div'); foutBox.className = 'ouder-fout pt-inline-fout'; form.insertBefore(foutBox, form.firstChild); }
+      P13Melding.fout(foutBox, fout, foutVeld);
       return false;
     }
     return true;

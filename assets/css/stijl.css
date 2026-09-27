@@ -343,10 +343,6 @@ textarea { resize: vertical; min-height: 80px; }
 .bulk-balk .info strong { color: var(--oranje); }
 
 /* ── Detail paneel ──────────────────────────────────────────── */
-.paneel-overlay { display: none; position: fixed; inset: 0; background: rgba(0,21,48,.45); z-index: 200; }
-.paneel-overlay.open { display: block; }
-.detail-paneel { position: fixed; top: 0; right: 0; bottom: 0; width: 400px; background: var(--bg-card); box-shadow: -4px 0 24px rgba(0,33,71,.2); z-index: 201; overflow-y: auto; transform: translateX(100%); transition: transform .25s ease; }
-.detail-paneel.open { transform: translateX(0); }
 .paneel-header { background: var(--navy); padding: 18px 20px; color: #fff; }
 .paneel-sluiten { float: right; background: rgba(255,255,255,.15); border: none; color: #fff; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center; }
 .paneel-sluiten:hover { background: rgba(255,255,255,.25); }
@@ -439,9 +435,6 @@ html[data-theme="dark"] .notitie-box { background: rgba(245,158,11,.08); border-
 
   /* Page body */
   .page-body { padding: 14px; }
-
-  /* Paneel fullscreen op mobiel */
-  .detail-paneel { width: 100%; }
 
   /* Seizoen badge verbergen op kleine schermen */
   .seizoen-badge { display: none; }
@@ -551,7 +544,6 @@ html[data-theme="dark"] .notitie-box { background: rgba(245,158,11,.08); border-
 
 /* ── Paneel detail op mobiel ─────────────────────────────────── */
 @media (max-width: 768px) {
-  .detail-paneel { width: 100%; left: 0; }
   .paneel-body { padding: 14px; }
   .info-grid { grid-template-columns: 1fr 1fr; }
   .paneel-sectie h3 { font-size: 10px; }
@@ -2951,3 +2943,138 @@ form[aria-busy="true"] .p13-bezig { opacity: 1; }
    binnen het rode gevaar-vlak; de kop krijgt daar de foutkleur en ruimte voor het icoon. */
 .pt-bevestig.gevaar > summary { color: var(--error); gap: 6px; }
 .pt-bevestig.gevaar > p { color: var(--ink); }
+
+/* === portaal UI (agent H2) === */
+
+/* Bevestigen in het portaal (portaal/_bevestig.php): uitklappen, dan pas de knop.
+   Vervangt confirm(); werkt zonder JavaScript. */
+.pt-bevestig > summary { gap: 6px; }
+.pt-bevestig > summary:focus-visible { outline: 2px solid var(--navy); outline-offset: 2px; border-radius: 6px; }
+.pt-bevestig-vlak { display: flex; flex-direction: column; gap: 10px; padding: 4px 0 2px; }
+.pt-bevestig-vlak > p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--ink-soft); }
+.pt-bevestig-vlak > .pt-bevestig-titel { font-size: 15px; font-weight: 600; color: var(--ink); }
+.pt-bevestig-form { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.pt-bevestig-typ { width: 100%; font-family: ui-monospace, monospace; letter-spacing: .08em; }
+.pt-bevestig.gevaar .pt-bevestig-typ { border-color: var(--error); }
+.pt-bevestig.gevaar .pt-bevestig-vlak > p { color: var(--ink); }
+
+/* Inloggen: hint bij "niets ontvangen", losse formulieren, uitgestelde link-knop, codefout */
+.ds-login-kop .pt-code-hint { margin-top: 10px; font: var(--text-meta); color: var(--ink-soft); }
+.pt-code-hint a { color: var(--accent); font-weight: 600; }
+.ds-login-kop .pt-code-uitleg { margin-top: 14px; }
+.pt-login-los { margin-top: 14px; }
+.pt-login-los .ds-login-voet { margin-top: 0; }
+.ds-link-knop[aria-disabled="true"] { color: var(--ink-muted); cursor: default; font-weight: 500; text-decoration: none; }
+.ds-code-cijfer[aria-invalid="true"] { border-color: var(--error); }
+.ds-input[aria-invalid="true"] { border-color: var(--error); }
+
+/* Beter Leren Kennen: foutmelding bij het veld */
+.blk-ingeleverd-boven { margin-top: 0; }
+.blk-veld-foto { gap: 9px; }
+.blk-veldfout { display: block; margin-top: -2px; font-weight: 600; }
+.blk-veldfout[hidden] { display: none; }
+.blk-input[aria-invalid="true"], .blk-textarea[aria-invalid="true"] { border-color: #b3261e; }
+
+/* Documenten uploaden: zichtbare focus op het (onzichtbare) bestandsveld */
+.du-kies:focus-within { border-color: var(--navy); box-shadow: 0 0 0 3px rgba(5,77,138,.15); }
+
+/* Mijn beschikbaarheid (portaal/beschikbaarheid.php) — was een los <style>-blok */
+.bk-rij { padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 14px; line-height: 1.6; color: var(--ink); }
+.bk-rij:last-child { border-bottom: none; }
+.bk-rij a { color: var(--navy); font-weight: 600; }
+.bk-zacht { color: var(--ink-soft); }
+.bk-klein { color: var(--ink-soft); font-size: 13px; }
+.bk-dringend { color: var(--error); }
+.bk-status-tekst { margin: 10px 0 0; font-size: 14px; line-height: 1.6; }
+.bk-status { font-weight: 600; color: var(--accent); }
+.bk-status.ok { color: var(--ok); }
+.bk-status.error { color: var(--error); }
+.bk-acties { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+.bk-acties > .ds-btn, .bk-acties > form { flex: 1; min-width: 140px; margin: 0; }
+
+/* Mijn gegevens (ontwerp Portaal.dc sectie 06) */
+.pt-gegevens .pt-paginatitel { flex-wrap: wrap; }
+.pt-profiel {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  padding: 18px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+}
+.pt-profiel-initialen {
+  width: 52px; height: 52px; border-radius: 26px; flex: none; background: #eef2f8; color: var(--navy);
+  font-size: 17px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+}
+.pt-profiel-tekst { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1 1 180px; }
+.pt-profiel-naam { font-size: 17px; font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
+.pt-profiel-sub { font-size: 13px; color: var(--ink-muted); }
+.pt-profiel-chip {
+  display: inline-flex; align-items: center; gap: 7px; min-height: 28px; padding: 0 12px; border-radius: 8px;
+  font-size: 13px; font-weight: 600; background: var(--accent-soft); color: #a83100;
+}
+.pt-profiel-stip { width: 6px; height: 6px; border-radius: 3px; background: var(--accent); flex: none; }
+.pt-profiel-chip.ok { background: var(--ok-soft); color: #1a6b36; }
+.pt-profiel-chip.ok .pt-profiel-stip { background: var(--ok); }
+.pt-profiel-chip.error { background: var(--error-soft); color: var(--error); }
+.pt-profiel-chip.error .pt-profiel-stip { background: var(--error); }
+.pt-profiel-chip.navy { background: #e8f0f8; color: var(--navy); }
+.pt-profiel-chip.navy .pt-profiel-stip { background: var(--navy); }
+
+.pt-gegevens-grid { display: flex; flex-direction: column; gap: 14px; }
+.pt-gegevens-lijst { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+/* Mobiel toont het ontwerp geen kop boven de lijst; voor een schermlezer blijft hij er. */
+.pt-gegevens-kop { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
+.pt-gegevens-rijen { margin: 0; }
+.pt-gegevens-rij { padding: 14px 18px; display: flex; flex-direction: column; gap: 2px; }
+.pt-gegevens-rij + .pt-gegevens-rij { box-shadow: inset 0 1px 0 var(--border); }
+.pt-gegevens-rij dt { font-size: 12px; color: var(--ink-muted); }
+.pt-gegevens-rij dd { margin: 0; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.pt-gegevens-waarde { font-size: 15px; line-height: 1.5; color: var(--ink); min-width: 0; overflow-wrap: break-word; }
+.pt-gegevens-wijzig { flex: none; font-size: 13px; font-weight: 600; color: var(--navy); text-decoration: none; padding: 4px 0; }
+.pt-gegevens-wijzig:hover { text-decoration: underline; }
+.pt-gegevens-voet { margin: 0; padding: 12px 18px 16px; font: var(--text-meta); color: var(--ink-soft); border-top: 1px solid var(--border); }
+.pt-gegevens .pt-taakrij-sub { overflow-wrap: anywhere; }
+.pt-gegevens .pt-kaart { display: flex; flex-direction: column; gap: 10px; }
+.pt-gegevens .pt-kaart > .pt-kaart-titel { margin: 0; }
+.pt-gegevens-form { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
+.pt-kanaal-keuze { flex-direction: column; align-items: stretch; width: 100%; }
+.pt-kanaal-keuze .pt-inline-legend { margin-bottom: 8px; }
+.pt-kanaal-uitleg { color: var(--ink-muted); font-size: 12px; font-weight: 400; }
+.pt-gegevens-gevaar { border-color: #f2ccc8; }
+.pt-gegevens-gevolgen { margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.7; color: var(--ink-soft); }
+.pt-gegevens-gevaar .ds-melding p { margin: 6px 0 0; }
+.pt-leeg h1.pt-leeg-titel { margin: 0; }
+
+@media (min-width: 860px) {
+  .pt-profiel { padding: 20px 28px; gap: 16px; }
+  .pt-profiel-initialen { width: 44px; height: 44px; border-radius: 22px; font-size: 15px; }
+  .pt-profiel-naam { font-size: 19px; letter-spacing: -.01em; }
+  /* De content is hier smaller dan in het ontwerp (zijbalk + max 820px): de lijst krijgt de
+     bredere kolom, anders breken e-mailadressen midden in het woord. */
+  .pt-gegevens-grid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 24px; align-items: start; }
+  .pt-gegevens-grid > * { min-width: 0; }
+  .pt-gegevens-kop {
+    position: static; width: auto; height: auto; margin: 0; overflow: visible; clip: auto; white-space: normal;
+    padding: 14px 20px; background: var(--bg-subtle); border-bottom: 1px solid var(--border);
+    font-size: 15px; font-weight: 600; color: var(--ink);
+  }
+  .pt-gegevens-rijen { padding: 6px 20px 0; }
+  .pt-gegevens-rij { padding: 14px 0; flex-direction: row; align-items: center; gap: 16px; }
+  .pt-gegevens-rij dt { width: 120px; flex: none; font-size: 13px; }
+  .pt-gegevens-rij dd { flex: 1; min-width: 0; align-items: center; }
+  .pt-gegevens-voet { padding: 12px 20px 16px; }
+}
+
+/* === portaal flow (agent H1) === */
+/* Tweede en volgende sectiekop op de Taken-tab (Wacht op …, Afgerond): wat lucht na de lijst erboven. */
+.pt-sectiekop.na-lijst { padding-top: 8px; }
+
+/* === lidmaatschap ouder (agent I) === */
+/* Foutmelding bij het veld (ondertekening_veldfout_html): rood, met icoon, onder het invoerveld. */
+.ond-veldfout { display: flex; align-items: flex-start; gap: 6px; font-size: 13px; line-height: 1.45; color: var(--error); font-weight: 600; }
+.ond-veldfout .ic { flex: none; margin-top: 2px; stroke: var(--error); }
+.ond-lijst[aria-invalid="true"] .ond-radio-box { border-color: var(--error); }
+/* Kolombreedtes in de lidmaatschapsvelden (vervangen de vroegere inline flex-waarden). */
+.ond-rij > .lid-w-08 { flex: .8; }
+.ond-rij > .lid-w-13 { flex: 1.3; }
+.ond-rij > .lid-w-14 { flex: 1.4; }
+.ond-rij > .lid-w-16 { flex: 1.6; }
+.ond-rij > .lid-w-2  { flex: 2; }
+.lid-dip-groep { font-weight: 600; color: var(--ink); }

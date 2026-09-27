@@ -125,103 +125,148 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verwijder'])) {
     }
 }
 
+// ── Weergave: wat we bewaren (AVG art. 15) ──────────────────
+// Adres staat in het Beter Leren Kennen-formulier, de ouder/verzorger op de persoon.
+$adres = '';
+if (!$verwijderd) {
+    require_once __DIR__ . '/../includes/blk.php';
+    $_blk = function_exists('blk_van') ? blk_van($sol_id) : null;
+    if ($_blk) {
+        $_a = (!empty($_blk['straat']) || !empty($_blk['postcode'])) ? $_blk : array_merge($_blk, array_filter(blk_adres_splitsen($_blk['adres'] ?? '')));
+        $_regel1 = trim(($_a['straat'] ?? '') . ' ' . ($_a['huisnummer'] ?? ''));
+        $_regel2 = trim(($_a['postcode'] ?? '') . ' ' . ($_a['woonplaats'] ?? ''));
+        $adres = trim($_regel1 . ($_regel1 !== '' && $_regel2 !== '' ? ', ' : '') . $_regel2);
+    }
+}
+$ouder = (!$verwijderd && function_exists('portaal_ouder_gegevens')) ? portaal_ouder_gegevens($sol_id) : [];
+$ouder_tekst = implode(' · ', array_filter([$ouder['ouder_naam'] ?? '', $ouder['ouder_email'] ?? '', $ouder['ouder_telefoon'] ?? '']));
+
+$naam = trim($mij['voornaam'] . ' ' . ($mij['tussenvoegsel'] ? $mij['tussenvoegsel'] . ' ' : '') . $mij['achternaam']);
+$jaar = '';
+if (!empty($mij['geboortedatum'])) {
+    try { $jaar = (new DateTime($mij['geboortedatum']))->diff(new DateTime())->y . ' jaar'; } catch (\Exception $e) { $jaar = ''; }
+}
+$profiel_sub = implode(' · ', array_filter([$jaar, 'aangemeld ' . datum_nl(substr((string)$mij['aangemeld_op'], 0, 10))]));
+// Statuschip: de status zoals de sollicitant hem ziet (includes/portaal_dossier.php), niet de beheernaam.
+$fase_tekst = portaal_fase_label((string)$mij['fase']);
+$fase_kleur = match ((string)$mij['fase']) { 'aangenomen' => 'ok', 'afgewezen' => 'error', 'aangemeld', 'afgehaakt' => 'navy', default => 'accent' };
+$wijzig_url = APP_URL . '/portaal/contact.php#vraagTekst';
+
 $portaal_titel = 'Mijn gegevens';
 $portaal_nav = 'gegevens';
-$logo  = function_exists('site_logo_url') ? site_logo_url() : '';
 require __DIR__ . '/_kop.php';
 ?>
-<style>
-.avg-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:16px;box-shadow:var(--shadow-card)}
-.avg-card h2{margin-top:0;font:var(--text-subhead)}
-.avg-card .pt-kaart-tekst{font-size:13px;color:var(--tekst-zacht)}
-.avg-rij{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--rand-2);font-size:14px;gap:12px;flex-wrap:wrap}
-.avg-rij:last-child{border-bottom:none}
-.avg-label{color:var(--ink-soft);flex-shrink:0}
-.avg-waarde{color:var(--ink);font-weight:500;text-align:right;word-break:break-word}
-.gevaar{border:1px solid var(--fase-rood-rand);background:var(--error-soft);padding:18px;border-radius:var(--radius-md);margin-top:14px}
-.gevaar h3{color:var(--error);margin-top:0;font-size:15px}
-.gevaar-input{width:100%;margin-top:8px;padding:10px;border:1px solid var(--error);border-radius:var(--radius-sm);font-family:monospace;background:var(--surface);color:var(--ink)}
-</style>
-
-<h1 style="font-size:22px;margin-bottom:6px">Mijn gegevens</h1>
-<p style="color:var(--tekst-zacht);font-size:13px;margin-bottom:24px">
-  Hier zie je welke gegevens Paal 13 over je bewaart, en heb je controle over inzage en verwijdering conform de AVG.
-</p>
 
 <?php if ($verwijderd): ?>
-  <div class="flash flash-succes" style="text-align:center;padding:24px">
-    <h2 style="margin-top:0"><?= icoon("vink-cirkel", 20) ?> Account verwijderd</h2>
-    <p style="margin-bottom:0">Je persoonlijke gegevens zijn geanonimiseerd. Bedankt voor je interesse in Paal 13.</p>
+  <div class="pt-leeg groot" role="status">
+    <span class="pt-leeg-icoon"><?= icoon('vink-cirkel', 26) ?></span>
+    <h1 class="pt-leeg-titel">Account verwijderd</h1>
+    <p class="pt-leeg-tekst">Je persoonlijke gegevens zijn geanonimiseerd. Bedankt voor je interesse in Paal 13.</p>
     <?php if ($loon_bewaard): ?>
-      <p style="margin-bottom:0">Alleen je loondossier bewaren we nog, omdat de wet dat eist. Daarna vernietigt de penningmeester het.</p>
+      <p class="pt-leeg-tekst">Alleen je loondossier bewaren we nog, omdat de wet dat eist. Daarna vernietigt de penningmeester het.</p>
     <?php endif; ?>
-    <p style="font-size:12px;color:var(--tekst-zacht);margin-top:14px">
-      <a href="https://paal13.com">Terug naar paal13.com</a>
-    </p>
+    <a href="https://paal13.com" class="ds-btn ds-btn-secundair">Terug naar paal13.com</a>
   </div>
 <?php else: ?>
+<div class="pt-stapel pt-gegevens">
 
-  <?php if ($fout): ?>
-    <div class="flash flash-fout"><?= h($fout) ?></div>
-  <?php endif; ?>
+  <div class="pt-paginatitel"><h1>Mijn gegevens</h1><span>Inzien, downloaden en laten verwijderen</span></div>
 
-  <!-- Wat is er van jou bekend -->
-  <div class="avg-card">
-    <h2><?= icoon("persoon", 18) ?> Wat we van je weten</h2>
-    <div class="avg-rij">
-      <span class="avg-label">Naam</span>
-      <span class="avg-waarde"><?= h(trim($mij['voornaam'] . ' ' . ($mij['tussenvoegsel'] ? $mij['tussenvoegsel'] . ' ' : '') . $mij['achternaam'])) ?></span>
+  <!-- Wie je bent (ontwerp 06: initialen, naam, leeftijd · aangemeld) -->
+  <section class="pt-profiel" aria-label="Jouw sollicitatie">
+    <span class="pt-profiel-initialen" aria-hidden="true"><?= h(portaal_initialen($mij)) ?></span>
+    <div class="pt-profiel-tekst">
+      <span class="pt-profiel-naam"><?= h($naam) ?></span>
+      <span class="pt-profiel-sub"><?= h($profiel_sub) ?> · seizoen <?= h($mij['seizoen_naam']) ?></span>
     </div>
-    <div class="avg-rij">
-      <span class="avg-label">E-mail</span>
-      <span class="avg-waarde"><?= h($mij['email']) ?></span>
-    </div>
-    <?php if ($mij['telefoon']): ?>
-      <div class="avg-rij"><span class="avg-label">Telefoon</span><span class="avg-waarde"><?= h($mij['telefoon']) ?></span></div>
-    <?php endif; ?>
-    <?php if ($mij['geboortedatum']): ?>
-      <div class="avg-rij"><span class="avg-label">Geboortedatum</span><span class="avg-waarde"><?= h(datum_nl($mij['geboortedatum'])) ?></span></div>
-    <?php endif; ?>
-    <div class="avg-rij">
-      <span class="avg-label">Aangemeld</span>
-      <span class="avg-waarde"><?= h(datum_nl(substr($mij['aangemeld_op'],0,10))) ?> — seizoen <?= h($mij['seizoen_naam']) ?></span>
-    </div>
-    <div class="avg-rij">
-      <span class="avg-label">Huidige status</span>
-      <span class="avg-waarde"><?= h(fase_label($mij['fase'])) ?></span>
-    </div>
-    <?php /* AVG art. 16 (rectificatie): zelf wijzigen kan niet, het bestuur past het aan. */ ?>
-    <p style="font-size:13px;color:var(--tekst-zacht);margin:12px 0 0">
-      Klopt je naam, e-mailadres of telefoonnummer niet?
-      <a href="<?= APP_URL ?>/portaal/contact.php#vraagTekst">Laat het ons weten via Contact</a>, dan past het bestuur het aan.
-    </p>
+    <span class="pt-profiel-chip <?= $fase_kleur ?>"><span class="pt-profiel-stip" aria-hidden="true"></span><span class="sr-only">Status: </span><?= h($fase_tekst) ?></span>
+  </section>
+
+  <div class="pt-gegevens-grid">
+    <!-- Persoonsgegevens (AVG art. 15: alles wat we van je weten, ook adres en ouder/verzorger) -->
+    <section class="pt-gegevens-lijst" aria-labelledby="ggPersoon">
+      <h2 class="pt-gegevens-kop" id="ggPersoon">Persoonsgegevens</h2>
+      <?php
+        /* Eén rij = label, waarde en (bij wat je kunt laten aanpassen) "Wijzig". De link staat
+           in de <dd>, want een <dl> mag alleen dt/dd bevatten. */
+        $rijen = [
+            ['Naam', $naam, 'je naam'],
+            ['E-mailadres', (string)$mij['email'], 'je e-mailadres'],
+            ['Telefoonnummer', (string)($mij['telefoon'] ?: 'Nog niet bekend'), 'je telefoonnummer'],
+            ['Geboortedatum', $mij['geboortedatum'] ? datum_nl($mij['geboortedatum']) : '', ''],
+            ['Adres', $adres, 'je adres'],
+            ['Ouder / verzorger', $ouder_tekst, ''],
+            ['Status', $fase_tekst, ''],
+        ];
+      ?>
+      <dl class="pt-gegevens-rijen">
+        <?php foreach ($rijen as $r): if ($r[1] === '') continue; ?>
+        <div class="pt-gegevens-rij">
+          <dt><?= h($r[0]) ?></dt>
+          <dd><span class="pt-gegevens-waarde"><?= h($r[1]) ?></span><?php if ($r[2] !== ''): ?>
+            <a href="<?= h($wijzig_url) ?>" class="pt-gegevens-wijzig">Wijzig<span class="sr-only"> <?= h($r[2]) ?></span></a><?php endif; ?></dd>
+        </div>
+        <?php endforeach; ?>
+      </dl>
+      <?php /* AVG art. 16 (rectificatie): zelf wijzigen kan niet, het bestuur past het aan. */ ?>
+      <p class="pt-gegevens-voet">Klopt er iets niet? Via "Wijzig" laat je het ons weten op Contact; het bestuur past het dan aan.</p>
+    </section>
+
+    <!-- Jouw gegevens (AVG): downloaden (art. 15) en verwijderen (art. 17) -->
+    <section class="pt-stapel" id="download" aria-labelledby="ggAvg">
+      <div class="pt-kaart">
+        <h2 class="pt-kaart-titel" id="ggAvg">Jouw gegevens (AVG)</h2>
+        <p class="pt-kaart-tekst">Download alles wat we over je hebben vastgelegd (AVG artikel 15), of laat je account verwijderen.
+          In het bestand staan je gegevens, formulieren, beschikbaarheid, beoordelingen en besluiten, notities, documenten en
+          ondertekeningen (zonder de bestanden zelf) en de berichten die we je stuurden.</p>
+      </div>
+      <div class="pt-takenlijst">
+        <a href="?download=1" class="pt-taakrij" download>
+          <span class="pt-taakrij-icoon navy"><?= icoon('download', 20) ?></span>
+          <span class="pt-taakrij-tekst">
+            <span class="pt-taakrij-titel">Mijn gegevens downloaden</span>
+            <span class="pt-taakrij-sub">Alles wat we van je bewaren, als bestand (JSON)</span>
+          </span>
+          <span class="pt-taakrij-chevron"><?= icoon('chevron', 18) ?></span>
+        </a>
+        <div class="pt-taakrij-scheiding"></div>
+        <a href="#verwijderen" class="pt-taakrij">
+          <span class="pt-taakrij-icoon error"><?= icoon('prullenbak', 20) ?></span>
+          <span class="pt-taakrij-tekst">
+            <span class="pt-taakrij-titel">Mijn account verwijderen</span>
+            <span class="pt-taakrij-sub">Je sollicitatie stopt dan en je portaal wordt gesloten</span>
+          </span>
+          <span class="pt-taakrij-chevron"><?= icoon('chevron', 18) ?></span>
+        </a>
+      </div>
+    </section>
   </div>
 
   <!-- Berichten: kanaalvoorkeur -->
-  <div class="avg-card">
-    <h2><?= icoon("bel", 18) ?> Hoe wil je berichten ontvangen?</h2>
-    <p style="font-size:13px;color:var(--tekst-zacht)">
+  <section class="pt-kaart" aria-labelledby="ggKanaal">
+    <h2 class="pt-kaart-titel" id="ggKanaal"><?= icoon('bel', 18) ?> Hoe wil je berichten ontvangen?</h2>
+    <p class="pt-kaart-tekst">
       Belangrijke berichten (uitnodiging, herinnering, bevestiging) sturen we per e-mail. Korte berichten sturen we
       <?php $kort_kanalen = array_values(array_diff_key($kanaal_opties, ['email' => 1])); ?>
       daarnaast via <?= h($kort_kanalen ? implode(' of ', $kort_kanalen) : 'WhatsApp of sms') ?>
       naar <?= $mij['telefoon'] ? h($mij['telefoon']) : 'je telefoonnummer (nog niet bekend)' ?>. Lukt dat niet, dan krijg je het bericht per e-mail.
-      Kies hier wat jij wilt; je kunt dit altijd aanpassen.
     </p>
-    <?php if ($kanaal_flash): ?><div class="flash flash-succes" style="margin-bottom:10px"><?= h($kanaal_flash) ?></div><?php endif; ?>
-    <form method="POST">
+    <?php if ($kanaal_flash): ?><div class="ds-melding ds-melding-ok" role="status"><?= icoon('vink-cirkel', 18) ?> <div><?= h($kanaal_flash) ?></div></div><?php endif; ?>
+    <form method="POST" class="pt-gegevens-form">
       <?= csrf_input() ?>
       <input type="hidden" name="kanaal_opslaan" value="1">
-      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
+      <fieldset class="pt-deelname-keuze pt-kanaal-keuze">
+        <legend class="pt-inline-legend">Kies wat jij wilt; je kunt dit altijd aanpassen.</legend>
         <?php $huidig = isset($kanaal_opties[$mij['kanaal_voorkeur'] ?? '']) ? $mij['kanaal_voorkeur'] : 'email'; foreach ($kanaal_opties as $kk => $kl): ?>
-        <label style="display:flex;align-items:center;gap:10px;font-size:14px;padding:10px 12px;border:1px solid var(--rand-2);border-radius:var(--radius-md);cursor:pointer">
-          <input type="radio" name="kanaal_voorkeur" value="<?= $kk ?>" <?= $huidig === $kk ? 'checked' : '' ?>>
-          <?= h($kl) ?><?= $kk === 'email' ? ' <span style="color:var(--tekst-zacht);font-size:12px">(geen WhatsApp/sms)</span>' : '' ?>
+        <label class="pt-deelname-optie">
+          <input type="radio" name="kanaal_voorkeur" value="<?= h($kk) ?>" <?= $huidig === $kk ? 'checked' : '' ?>>
+          <span><?= h($kl) ?><?= $kk === 'email' ? ' <span class="pt-kanaal-uitleg">(geen WhatsApp of sms)</span>' : '' ?></span>
         </label>
         <?php endforeach; ?>
-      </div>
+      </fieldset>
       <button type="submit" class="ds-btn ds-btn-primair">Voorkeur opslaan</button>
     </form>
-  </div>
+  </section>
 
   <?php
     $ik_sol_id = $sol_id; $ik_persoon = (int)$mij['persoon_id']; $ik_fase = (string)$mij['fase'];
@@ -229,63 +274,11 @@ require __DIR__ . '/_kop.php';
     require __DIR__ . '/_intrekken.php';
   ?>
 
-  <!-- Downloaden -->
-  <div class="avg-card" id="download">
-    <h2><?= icoon("download", 18) ?> Al mijn gegevens downloaden</h2>
-    <p style="font-size:13px;color:var(--tekst-zacht)">
-      Volgens de AVG (artikel 15) heb je recht op inzage. Je krijgt hieronder een JSON-bestand met alles wat we over je hebben vastgelegd:
-      je gegevens, je formulieren, je beschikbaarheid, de beoordelingen en besluiten van de selectiedag en het trainingsweekend,
-      de AI-analyse, de notities van het bestuur, je documenten en ondertekeningen (zonder de bestanden zelf) en de berichten die we je stuurden.
-    </p>
-    <a href="?download=1" class="ds-btn ds-btn-primair"><?= icoon("download", 18) ?> Download als JSON</a>
-  </div>
-
-  <!-- Verwijderen -->
-  <div class="avg-card" id="verwijderen">
-    <h2><?= icoon("prullenbak", 18) ?> Mijn account verwijderen</h2>
-    <p style="font-size:13px;color:var(--tekst-zacht)">
-      Volgens de AVG (artikel 17) heb je recht op vergetelheid. Bij verwijdering:
-    </p>
-    <ul style="font-size:13px;line-height:1.7;color:var(--tekst-zacht);margin:8px 0 12px 22px">
-      <li>Je <?= $loon_bewaard ? 'e-mail, telefoon' : 'naam, e-mail, telefoon' ?> en adres worden geanonimiseerd.</li>
-      <li>Je formulieren, foto, beschikbaarheid en beoordelingen worden verwijderd.</li>
-      <li>Je sollicitatie-record blijft anoniem bestaan voor onze statistieken.</li>
-      <li>Deze actie is <strong>onomkeerbaar</strong>.</li>
-    </ul>
-    <?php if ($loon_bewaard): ?>
-      <?php /* AVG art. 17 lid 3 sub b: alleen wat de wet eist blijft; B1-taal. */ ?>
-      <div class="ds-melding" style="margin-bottom:12px"><?= icoon('info', 18) ?> <div>
-        <strong>Wat blijft er bewaard?</strong>
-        <p style="margin:6px 0 0">Je loongegevens zijn al verwerkt. De wet (voor de belasting) verplicht ons die te bewaren.
-          Daarom blijft dit staan: je naam, je geboortedatum, je ondertekende opgaaf voor de loonheffing (met je BSN) en de kopie van je identiteitsbewijs.
-          Alleen de penningmeester kan daarbij.</p>
-        <p style="margin:6px 0 0">We bewaren het tot 5 jaar na het einde van het jaar waarin je voor het laatst bij ons werkte.
-          Daarna vernietigt de penningmeester het. Al het andere verwijderen we meteen.</p>
-      </div></div>
-    <?php endif; ?>
-
-    <?php /* Zelfde patroon als "Vergeet alle apparaten": eerst uitklappen, dan pas de knop.
-             Werkt zonder JavaScript; na een fout staat hij meteen open. */ ?>
-    <details class="pt-bevestig gevaar"<?= ($fout && isset($_POST['verwijder'])) ? ' open' : '' ?>>
-      <summary><?= icoon('waarschuwing', 16) ?> Definitief verwijderen</summary>
-      <p><?= $loon_bewaard ? 'Je e-mail, telefoon en adres worden onherkenbaar gemaakt; alleen je loondossier blijft.' : 'Je naam, e-mail, telefoon en adres worden onherkenbaar gemaakt.' ?> Je formulieren en beschikbaarheid verdwijnen.
-        Je kunt daarna niet meer inloggen. Dit kun je niet terugdraaien.</p>
-      <p>Weet je het zeker? Typ <strong>VERWIJDER</strong> in het veld en klik op de knop.</p>
-      <form method="POST">
-        <?= csrf_input() ?>
-        <input type="hidden" name="verwijder" value="1">
-        <label for="bevestigVerwijder" class="sr-only">Typ VERWIJDER om te bevestigen</label>
-        <input type="text" id="bevestigVerwijder" name="bevestig" placeholder="VERWIJDER" autocomplete="off" class="gevaar-input" required>
-        <button type="submit" class="ds-btn ds-btn-gevaar ds-btn-vol" style="margin-top:10px">Ja, verwijder mijn account</button>
-      </form>
-    </details>
-  </div>
-
   <?php if ($apparaten_aantal > 0 || $apparaten_flash): ?>
-  <div class="pt-kaart">
-    <h2 class="pt-kaart-titel"><?= icoon('slot', 18) ?> Ingelogd blijven</h2>
+  <section class="pt-kaart" aria-labelledby="ggApparaten">
+    <h2 class="pt-kaart-titel" id="ggApparaten"><?= icoon('slot', 18) ?> Ingelogd blijven</h2>
     <?php if ($apparaten_flash): ?>
-      <div class="ds-melding ds-melding-ok"><?= icoon('vink-cirkel', 18) ?> <div><?= h($apparaten_flash) ?></div></div>
+      <div class="ds-melding ds-melding-ok" role="status"><?= icoon('vink-cirkel', 18) ?> <div><?= h($apparaten_flash) ?></div></div>
     <?php else: ?>
       <p class="pt-kaart-tekst">
         <?= $apparaten_aantal === 1
@@ -293,19 +286,53 @@ require __DIR__ . '/_kop.php';
             : h((string)$apparaten_aantal) . ' apparaten onthouden je, zodat je daar niet steeds opnieuw hoeft in te loggen.' ?>
         Telefoon kwijt of op een vreemde computer ingelogd? Vergeet ze dan allemaal.
       </p>
-      <?php /* Uitklappen en dan pas de knop: twee bewuste handelingen, en het werkt
-               zonder JavaScript. De data-bevestig-haak uit het beheer draait hier niet. */ ?>
-      <details class="pt-bevestig">
-        <summary>Vergeet alle apparaten</summary>
-        <p>Op elk apparaat — ook dit — moet daarna opnieuw worden ingelogd met een link uit je mail.</p>
-        <form method="POST">
-          <?= csrf_input() ?>
-          <input type="hidden" name="apparaten_vergeten" value="1">
-          <button type="submit" class="ds-btn ds-btn-secundair">Ja, vergeet ze allemaal</button>
-        </form>
-      </details>
+      <?php $bev = [
+          'knop_open' => 'Vergeet alle apparaten',
+          'tekst'     => ['Op elk apparaat — ook dit — moet daarna opnieuw worden ingelogd met een link uit je mail.'],
+          'knop'      => 'Ja, vergeet ze allemaal',
+          'velden'    => ['apparaten_vergeten' => '1'],
+      ]; require __DIR__ . '/_bevestig.php'; ?>
     <?php endif; ?>
-  </div>
+  </section>
+  <?php endif; ?>
+
+  <!-- Verwijderen (AVG art. 17) -->
+  <section class="pt-kaart pt-gegevens-gevaar" id="verwijderen" aria-labelledby="ggVerwijder">
+    <h2 class="pt-kaart-titel" id="ggVerwijder"><?= icoon('prullenbak', 18) ?> Mijn account verwijderen</h2>
+    <p class="pt-kaart-tekst">Volgens de AVG (artikel 17) mag je ons vragen je gegevens te wissen. Bij verwijderen:</p>
+    <ul class="pt-gegevens-gevolgen">
+      <li>Je <?= $loon_bewaard ? 'e-mail, telefoon' : 'naam, e-mail, telefoon' ?> en adres worden geanonimiseerd.</li>
+      <li>Je formulieren, foto, beschikbaarheid en beoordelingen worden verwijderd.</li>
+      <li>Je sollicitatie blijft anoniem bestaan voor onze statistieken.</li>
+      <li>Je sollicitatie stopt en je kunt niet meer inloggen. Dit is <strong>onomkeerbaar</strong>.</li>
+    </ul>
+    <?php if ($loon_bewaard): ?>
+      <?php /* AVG art. 17 lid 3 sub b: alleen wat de wet eist blijft; B1-taal. */ ?>
+      <div class="ds-melding"><?= icoon('info', 18) ?> <div>
+        <strong>Wat blijft er bewaard?</strong>
+        <p>Je loongegevens zijn al verwerkt. De wet (voor de belasting) verplicht ons die te bewaren.
+          Daarom blijft dit staan: je naam, je geboortedatum, je ondertekende opgaaf voor de loonheffing (met je BSN) en de kopie van je identiteitsbewijs.
+          Alleen de penningmeester kan daarbij.</p>
+        <p>We bewaren het tot 5 jaar na het einde van het jaar waarin je voor het laatst bij ons werkte.
+          Daarna vernietigt de penningmeester het. Al het andere verwijderen we meteen.</p>
+      </div></div>
+    <?php endif; ?>
+    <?php $bev = [
+        'knop_open' => 'Definitief verwijderen',
+        'icoon'     => 'waarschuwing',
+        'gevaar'    => true,
+        'titel'     => 'Gegevens laten verwijderen?',
+        'tekst'     => [($loon_bewaard ? 'Je e-mail, telefoon en adres worden onherkenbaar gemaakt; alleen je loondossier blijft.' : 'Je naam, e-mail, telefoon en adres worden onherkenbaar gemaakt.')
+                        . ' Je formulieren en beschikbaarheid verdwijnen. Je kunt daarna niet meer inloggen. Dit kun je niet terugdraaien.'],
+        'typ'       => 'VERWIJDER',
+        'knop'      => 'Ja, verwijder mijn account',
+        'velden'    => ['verwijder' => '1'],
+        'fout'      => isset($_POST['verwijder']) ? $fout : '',
+    ]; require __DIR__ . '/_bevestig.php'; ?>
+  </section>
+
+  <?php if (function_exists('privacy_url')): ?>
+    <p class="pt-hulp">Hoe lang we je gegevens bewaren, lees je in de <a href="<?= h(privacy_url()) ?>">privacyverklaring</a>.</p>
   <?php endif; ?>
 
   <?php
@@ -325,6 +352,7 @@ require __DIR__ . '/_kop.php';
     <a href="https://paal13.com">paal13.com</a>
   </div>
 
+</div>
 <?php endif; ?>
 
 <?php require __DIR__ . '/_voet.php'; ?>

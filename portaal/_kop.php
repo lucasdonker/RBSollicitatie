@@ -31,7 +31,7 @@ if ($_heeft_nav && empty($portaal_status_fase) && function_exists('portaal_solli
     $portaal_status_fase = $_ps['fase'] ?? '';
 }
 $portaal_status_fase = $portaal_status_fase ?? '';
-$_chip_kleur = match ($portaal_status_fase) { 'aangenomen' => 'ok', 'afgewezen' => 'error', 'aangemeld' => 'navy', default => 'accent' };
+$_chip_kleur = match ($portaal_status_fase) { 'aangenomen' => 'ok', 'afgewezen' => 'error', 'aangemeld', 'afgehaakt', 'verwijderd_door_sollicitant' => 'navy', default => 'accent' };
 // Belletje: ongelezen berichten (pagina mag het aantal zelf zetten, bijv. berichten.php → 0)
 $_ongelezen = 0;
 if ($_heeft_nav) {
@@ -78,7 +78,7 @@ $_bel = '<a href="' . APP_URL . '/portaal/berichten.php" class="pt-topbar-actie"
     <span class="pt-paginakop-titel"><?= h($portaal_titel) ?></span>
     <div class="pt-paginakop-acties">
       <?php if ($portaal_status_fase !== ''): ?>
-        <span class="pt-paginakop-chip <?= $_chip_kleur ?>"><span class="pt-paginakop-stip"></span><?= h(fase_label($portaal_status_fase)) ?></span>
+        <span class="pt-paginakop-chip <?= $_chip_kleur ?>"><span class="pt-paginakop-stip"></span><?= h(portaal_fase_label($portaal_status_fase)) ?></span>
       <?php endif; ?>
       <a href="<?= APP_URL ?>/portaal/berichten.php" class="pt-paginakop-knop" aria-label="Berichten<?= $_ongelezen ? ' (' . $_ongelezen . ' ongelezen)' : '' ?>"><?= icoon('bel', 18) ?><?php if ($_ongelezen): ?><span class="pt-topbar-stip"></span><?php endif; ?></a>
     </div>

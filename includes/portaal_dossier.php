@@ -103,7 +103,7 @@ function portaal_initialen(array $sol): string {
 
 /**
  * Voortgang in vijf stappen (ontwerp: "Stap N van 5 — Naam", percentage, bolletjes).
- * Null bij afgewezen (geen reis meer te tonen).
+ * Null in de eindfases (portaal_eindfases(): geen reis meer te tonen).
  */
 function portaal_voortgang(string $fase): ?array {
     $stappen = ['Aangemeld', 'Selectiedag', 'Na de selectie', 'Trainingsweekend', 'Aangenomen'];
@@ -168,9 +168,115 @@ function portaal_begroeting(array $sol, int $open): array {
         case 'aangenomen':
             return ['titel' => 'Welkom bij Paal 13', 'tekst' => 'Je bent aangenomen als strandwacht voor ' . ($sol['sz_naam'] ?? 'dit seizoen') . '.'];
         case 'afgewezen':
-            return ['titel' => 'Hoi ' . $naam, 'tekst' => 'Bedankt voor je inzet tijdens de selectie.'];
+            return ['titel' => 'Hoi ' . $naam, 'tekst' => match (portaal_afwijs_stadium((int)($sol['id'] ?? 0))) {
+                'tw'          => 'Bedankt voor je inzet tijdens het trainingsweekend.',
+                'selectiedag' => 'Bedankt voor je inzet op de selectiedag.',
+                default       => 'Bedankt voor je aanmelding en je interesse in Paal 13.',
+            }];
+        case 'afgehaakt':
+            return ['titel' => 'Hoi ' . $naam, 'tekst' => 'Bedankt voor je interesse in Paal 13.'];
+        case 'verwijderd_door_sollicitant':
+            return ['titel' => 'Tot ziens', 'tekst' => 'Je gegevens zijn verwijderd.'];
     }
     return ['titel' => 'Hoi ' . $naam, 'tekst' => ''];
+}
+
+/** Fases waarin de sollicitatie is afgelopen zonder aanname: geen taken, geen voortgang meer. */
+function portaal_eindfases(): array {
+    return ['afgewezen', 'afgehaakt', 'verwijderd_door_sollicitant'];
+}
+
+function portaal_is_eindfase(string $fase): bool {
+    return in_array($fase, portaal_eindfases(), true);
+}
+
+/**
+ * De status zoals de sollicitant hem ziet: zonder jargon ("TW geweest") en zonder
+ * beheertaal ("Afgehaakt"). fase_label() blijft voor het beheer.
+ */
+function portaal_fase_label(string $fase): string {
+    return [
+        'aangemeld'                   => 'Aanmelding ontvangen',
+        'uitgenodigd_selectie'        => 'Uitgenodigd voor de selectiedag',
+        'aangemeld_selectie'          => 'Aangemeld voor de selectiedag',
+        'selectiedag_geweest'         => 'Selectiedag gedaan',
+        'uitgenodigd_tw'              => 'Uitgenodigd voor het trainingsweekend',
+        'tw_geweest'                  => 'Trainingsweekend gedaan',
+        'aangenomen'                  => 'Aangenomen',
+        'afgewezen'                   => 'Dit seizoen niet verder',
+        'afgehaakt'                   => 'Sollicitatie gestopt',
+        'verwijderd_door_sollicitant' => 'Gegevens verwijderd',
+    ][$fase] ?? 'In behandeling';
+}
+
+/**
+ * Hoe ver kwam een afgewezen sollicitant? 'tw' | 'selectiedag' | 'aanmelding'.
+ *
+ * De afwijstekst mag geen selectie noemen die er niet was. Bronnen, van hard naar zacht:
+ *  1. aanwezigheid bij het evenement (tw_deelname / selectie_indeling, aanwezig = 1): ingecheckt is een feit;
+ *  2. de fase van vóór de afwijzing uit het audit-log (fase_zetten schrijft oud → nieuw);
+ *  3. niets gevonden = afgewezen op de aanmelding.
+ */
+function portaal_afwijs_stadium(int $sol_id): string {
+    static $cache = [];
+    if (isset($cache[$sol_id])) return $cache[$sol_id];
+    if ($sol_id <= 0) return 'aanmelding';
+    foreach (['tw' => 'tw_deelname', 'selectiedag' => 'selectie_indeling'] as $stadium => $tabel) {
+        try {
+            $q = db()->prepare("SELECT 1 FROM `$tabel` WHERE sollicitatie_id=? AND aanwezig=1 LIMIT 1");
+            $q->execute([$sol_id]);
+            if ($q->fetchColumn()) return $cache[$sol_id] = $stadium;
+        } catch (\Throwable $e) {}
+    }
+    try {
+        $q = db()->prepare("SELECT details FROM audit_log WHERE objecttype='sollicitatie' AND object_id=? AND actie='fase_gewijzigd'
+                              AND details LIKE ? ORDER BY id DESC LIMIT 1");
+        $q->execute([$sol_id, '%"nieuw":"afgewezen"%']);
+        $d = json_decode((string)$q->fetchColumn(), true);
+        $oud = is_array($d) ? (string)($d['oud'] ?? '') : '';
+        if (in_array($oud, ['tw_geweest', 'aangenomen'], true))           return $cache[$sol_id] = 'tw';
+        if (in_array($oud, ['selectiedag_geweest', 'uitgenodigd_tw'], true)) return $cache[$sol_id] = 'selectiedag';
+    } catch (\Throwable $e) {}
+    return $cache[$sol_id] = 'aanmelding';
+}
+
+/**
+ * De eindstand op de startpagina (afgewezen, gestopt, zelf verwijderd): titel, tekst en of de
+ * AVG-acties (seintje, downloaden, verwijderen) erbij horen. Null buiten de eindfases.
+ * Geen HTML; portaal/_start_info.php rendert.
+ *
+ * @return ?array ['titel','tekst','icoon','kleur','avg' => bool]
+ */
+function portaal_eindstand(array $sol): ?array {
+    $volgend = 'Dat zegt niets over volgend jaar — je bent dan opnieuw welkom.';
+    switch ($sol['fase'] ?? '') {
+        case 'afgewezen':
+            $tekst = match (portaal_afwijs_stadium((int)($sol['id'] ?? 0))) {
+                'tw'          => 'Na het trainingsweekend hebben we besloten je dit seizoen niet aan te nemen.',
+                'selectiedag' => 'Na de selectiedag hebben we besloten je dit seizoen niet aan te nemen.',
+                default       => 'We hebben besloten je dit seizoen niet verder mee te nemen in de sollicitatie.',
+            };
+            return ['titel' => 'Dit seizoen niet verder', 'tekst' => $tekst . ' ' . $volgend, 'icoon' => 'kruis-cirkel', 'kleur' => 'error', 'avg' => true];
+        case 'afgehaakt':
+            return ['titel' => 'Je sollicitatie is gestopt',
+                    'tekst' => 'Je sollicitatie voor ' . ($sol['sz_naam'] ?? 'dit seizoen') . ' loopt niet meer door. Je hoeft niets meer te doen. '
+                             . 'Volgend seizoen kun je je gewoon opnieuw aanmelden.',
+                    'icoon' => 'info', 'kleur' => 'navy', 'avg' => true];
+        case 'verwijderd_door_sollicitant':
+            return ['titel' => 'Je gegevens zijn verwijderd',
+                    'tekst' => 'Je hebt gevraagd je gegevens te verwijderen. Je sollicitatie is daarmee gestopt. '
+                             . 'Volgend seizoen kun je je gewoon opnieuw aanmelden.',
+                    'icoon' => 'info', 'kleur' => 'navy', 'avg' => false];
+    }
+    return null;
+}
+
+/** Lege staat van de takenlijst: in een eindfase komt er niets meer bij, dus ook niets beloven. */
+function portaal_leeg_tekst(array $sol): array {
+    if (portaal_is_eindfase((string)($sol['fase'] ?? ''))) {
+        return ['titel' => 'Geen taken meer', 'tekst' => 'Je sollicitatie loopt niet meer, dus hier komt niets meer bij.'];
+    }
+    return ['titel' => 'Je bent helemaal bij', 'tekst' => 'Er staat niets open. Zodra er iets van je nodig is, verschijnt het hier en krijg je een bericht.'];
 }
 
 /**

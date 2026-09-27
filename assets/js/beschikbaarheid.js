@@ -390,10 +390,21 @@
 
   /* ── Validatie bij opslaan ───────────────────────────────────── */
   window.beschValideer = function () {
+    const periodes = el('beschPeriodes');
+    let foutPlek = el('beschPeriodesFout');
     if (!document.querySelectorAll('#beschPeriodes .besch-periode').length) {
-      alert('Geef minstens één werkperiode op (wanneer je kunt werken).');
+      // Melding bij de werkperiodes zelf (P13Melding uit app.js), nooit alert().
+      if (!foutPlek && periodes) {
+        foutPlek = document.createElement('div');
+        foutPlek.id = 'beschPeriodesFout';
+        periodes.parentNode.insertBefore(foutPlek, periodes);
+      }
+      const tekst = 'Geef minstens één werkperiode op (wanneer je kunt werken).';
+      if (window.P13Melding && foutPlek) P13Melding.fout(foutPlek, tekst);
+      else if (foutPlek) { foutPlek.setAttribute('role', 'alert'); foutPlek.textContent = tekst; }
       return false;
     }
+    if (foutPlek && window.P13Melding) P13Melding.wis(foutPlek);
     // Vaste vrije dagen: verborgen b2_vaste_uit[]-velden opnieuw opbouwen uit de checkboxes
     const form = el('beschForm') || document.querySelector('form');
     document.querySelectorAll('.besch-vaste-hidden').forEach(function (h) { h.remove(); });

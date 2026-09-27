@@ -112,7 +112,8 @@ function intrek_open_lijst(int $seizoen_id): array {
 /**
  * Het bestuur beslist na het gesprek.
  *   'doorvoeren' — fase Afgehaakt (stil: jullie hebben al gebeld), verzoek 'doorgevoerd'
- *   'afwijzen'   — de sollicitatie loopt door, verzoek 'afgewezen'
+ *   'afwijzen'   — de sollicitatie loopt door, verzoek 'afgewezen'; de sollicitant krijgt
+ *                  bericht (meldingstype intrekverzoek_niet_doorgevoerd)
  */
 function intrek_besluiten(int $verzoek_id, string $keuze, string $notitie, string $door): bool {
     if (!in_array($keuze, ['doorvoeren', 'afwijzen'], true)) return false;
@@ -130,6 +131,11 @@ function intrek_besluiten(int $verzoek_id, string $keuze, string $notitie, strin
            ->execute([$keuze === 'doorvoeren' ? 'doorgevoerd' : 'afgewezen', mb_substr($door, 0, 100),
                       mb_substr(trim($notitie), 0, 500) ?: null, $verzoek_id]);
         if (function_exists('audit_log')) audit_log('intrekverzoek_' . ($keuze === 'doorvoeren' ? 'doorgevoerd' : 'afgewezen'), 'sollicitatie', $sol, []);
+        // Niet doorvoeren: de sollicitant vroeg iets en hoort wat het besluit is (anders verdwijnt
+        // het verzoek stil uit Mijn gegevens). Doorvoeren blijft stil; het portaal toont dan de eindstand.
+        if ($keuze === 'afwijzen' && function_exists('melding_verstuur')) {
+            melding_verstuur('intrekverzoek_niet_doorgevoerd', $sol, [], ['prioriteit' => 'na_antwoord']);
+        }
         return true;
     } catch (\Exception $e) { error_log('intrek_besluiten: ' . $e->getMessage()); return false; }
 }

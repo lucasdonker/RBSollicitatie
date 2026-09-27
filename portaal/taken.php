@@ -49,19 +49,20 @@ require __DIR__ . '/_kop.php';
   <?php else: ?>
     <?php
       $leeg_groot = true;
-      $leeg_titel = 'Je bent helemaal bij';
-      $leeg_tekst = 'Er staat niets open. Zodra er iets van je nodig is, verschijnt het hier en krijg je een bericht.';
+      $_lt        = portaal_leeg_tekst($sol);
+      $leeg_titel = $_lt['titel'];
+      $leeg_tekst = $_lt['tekst'];
       require __DIR__ . '/_leeg.php';
     ?>
   <?php endif; ?>
 
   <?php if ($wacht): ?>
-    <div class="pt-sectiekop" style="padding-top:8px"><span>Wacht op je ouder/verzorger</span></div>
+    <div class="pt-sectiekop na-lijst"><span><?= h(portaal_taken_wacht_titel($wacht)) ?></span></div>
     <?php $lijst = $wacht; require __DIR__ . '/_takenlijst.php'; ?>
   <?php endif; ?>
 
   <?php if ($afgerond): ?>
-    <div class="pt-sectiekop" style="padding-top:8px"><span>Afgerond</span></div>
+    <div class="pt-sectiekop na-lijst"><span>Afgerond</span></div>
     <?php $lijst = $afgerond; require __DIR__ . '/_takenlijst.php'; ?>
   <?php endif; ?>
 </div>

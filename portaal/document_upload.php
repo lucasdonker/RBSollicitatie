@@ -107,11 +107,13 @@ require __DIR__ . '/_kop.php';
       <?php endif; ?>
 
       <?php if ($taak_slug === 'id_kopie'): ?>
+        <?php /* De keuze hoort bij het voorkant-formulier (form="du-form-id_voor"), ook al staat hij
+                 erboven: zo gaat hij zonder JavaScript gewoon mee met het uploaden. */ ?>
         <div class="ond-kaart" id="idType">
-          <span class="ond-kaart-lbl"><?= icoon('id-kaart', 18) ?>Welk document?</span>
-          <div class="ond-lijst">
-            <label class="ond-radio"><input type="radio" name="id_type_keuze" value="paspoort"<?= $id_type === 'paspoort' ? ' checked' : '' ?>><span class="ond-radio-box"></span><span class="ond-radio-tekst">Paspoort — alleen de pagina met je foto</span></label>
-            <label class="ond-radio"><input type="radio" name="id_type_keuze" value="id_kaart"<?= $id_type === 'id_kaart' ? ' checked' : '' ?>><span class="ond-radio-box"></span><span class="ond-radio-tekst">Identiteitskaart — voorkant én achterkant</span></label>
+          <span class="ond-kaart-lbl" id="idTypeLbl"><?= icoon('id-kaart', 18) ?>Welk document?</span>
+          <div class="ond-lijst" role="radiogroup" aria-labelledby="idTypeLbl">
+            <label class="ond-radio"><input type="radio" name="id_type" value="paspoort" form="du-form-id_voor"<?= $id_type === 'paspoort' ? ' checked' : '' ?>><span class="ond-radio-box"></span><span class="ond-radio-tekst">Paspoort — alleen de pagina met je foto</span></label>
+            <label class="ond-radio"><input type="radio" name="id_type" value="id_kaart" form="du-form-id_voor"<?= $id_type === 'id_kaart' ? ' checked' : '' ?>><span class="ond-radio-box"></span><span class="ond-radio-tekst">Identiteitskaart — voorkant én achterkant</span></label>
           </div>
           <span class="ond-kaart-tekst">Een rijbewijs is geen geldig identiteitsbewijs voor de loonadministratie.</span>
         </div>
@@ -120,9 +122,12 @@ require __DIR__ . '/_kop.php';
       <?php foreach ($taak['soorten'] as $soort => $label):
         $doc = $docs[$soort] ?? null;
         $verwerkt = $doc && ($doc['status'] ?? '') === 'verwerkt';
-        $verborgen = ($soort === 'id_achter' && $id_type !== 'id_kaart' && !$doc); ?>
-        <div class="ond-kaart du-vak<?= $verborgen ? ' du-alleen-idkaart' : '' ?>" data-soort="<?= h($soort) ?>"<?= $verborgen ? ' hidden' : '' ?>>
+        /* Het achterkant-vak verbergt pas JavaScript (bij "paspoort"); zonder JS blijft het staan
+           met de hint dat het alleen bij een identiteitskaart hoeft. */
+        $alleen_idkaart = ($soort === 'id_achter' && !$doc); ?>
+        <div class="ond-kaart du-vak<?= $alleen_idkaart ? ' du-alleen-idkaart' : '' ?>" data-soort="<?= h($soort) ?>">
           <span class="ond-kaart-lbl"><?= icoon($doc ? 'vink-cirkel' : 'camera', 18) ?><?= h($label) ?></span>
+          <?php if ($alleen_idkaart): ?><span class="ond-kaart-tekst">Alleen nodig bij een identiteitskaart.</span><?php endif; ?>
           <?php if ($doc): ?>
             <div class="du-status">
               <span class="du-status-icoon"><?= icoon($doc['mime'] === 'application/pdf' ? 'document' : 'camera', 20) ?></span>
@@ -137,13 +142,14 @@ require __DIR__ . '/_kop.php';
           <?php endif; ?>
 
           <?php if (!$verwerkt && $kluis_ok): ?>
-            <form method="POST" enctype="multipart/form-data" class="du-form" data-soort="<?= h($soort) ?>">
+            <?php /* Werkt zonder JavaScript: het bestandsveld is verplicht en de knop staat altijd aan.
+                     document_upload.js voegt alleen het voorbeeld en de vooraf-controle toe. */ ?>
+            <form method="POST" enctype="multipart/form-data" class="du-form" id="du-form-<?= h($soort) ?>" data-soort="<?= h($soort) ?>">
               <?= csrf_input() ?>
               <input type="hidden" name="soort" value="<?= h($soort) ?>">
               <input type="hidden" name="terug" value="<?= h(portaal_terug_param()) ?>">
-              <?php if ($soort === 'id_voor'): ?><input type="hidden" name="id_type" value="<?= h($id_type) ?>" class="du-idtype"><?php endif; ?>
               <label class="du-kies<?= $doc ? ' klein' : '' ?>">
-                <input type="file" name="bestand" accept="image/jpeg,image/png,application/pdf" capture="environment" class="du-input">
+                <input type="file" name="bestand" accept="image/jpeg,image/png,application/pdf" capture="environment" class="du-input" required>
                 <span class="du-kies-icoon"><?= icoon('camera', 22) ?></span>
                 <span class="du-kies-tekst"><?= $doc ? 'Andere foto kiezen (vervangt de huidige)' : 'Foto maken of bestand kiezen' ?></span>
               </label>
@@ -152,13 +158,19 @@ require __DIR__ . '/_kop.php';
                 <span class="du-preview-naam"></span>
               </div>
               <div class="du-acties">
-                <button type="submit" class="ds-btn ds-btn-primair du-upload" disabled><span class="btn-tekst"><?= $doc ? 'Vervangen' : 'Uploaden' ?></span><span class="btn-spinner" hidden>Bezig met versleutelen…</span></button>
-                <?php if ($doc): ?>
-                  <button type="submit" class="ds-btn ds-btn-zacht" name="verwijder" value="1" formnovalidate data-bevestig="Weet je zeker dat je dit document wilt verwijderen?"><?= icoon('prullenbak', 16) ?>Verwijderen</button>
-                  <input type="hidden" name="document_id" value="<?= (int)$doc['id'] ?>">
-                <?php endif; ?>
+                <button type="submit" class="ds-btn ds-btn-primair du-upload"><span class="btn-tekst"><?= $doc ? 'Vervangen' : 'Uploaden' ?></span><span class="btn-spinner" hidden>Bezig met versleutelen…</span></button>
               </div>
             </form>
+            <?php if ($doc):
+              $bev = [
+                  'knop_open' => 'Verwijderen',
+                  'icoon'     => 'prullenbak',
+                  'tekst'     => [$label . ' wordt meteen uit de beveiligde opslag gewist. Daarna kun je een nieuw bestand uploaden.'],
+                  'knop'      => 'Ja, verwijder dit bestand',
+                  'velden'    => ['soort' => $soort, 'verwijder' => '1', 'document_id' => (int)$doc['id'], 'terug' => portaal_terug_param()],
+              ];
+              require __DIR__ . '/_bevestig.php';
+            endif; ?>
           <?php endif; ?>
         </div>
       <?php endforeach; ?>

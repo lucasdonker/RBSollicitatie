@@ -5,6 +5,7 @@ sessie_start();
 
 $stap = $_GET['stap'] ?? 'login';
 $fout = '';
+$fout_kop = '';   // korte kop boven een codefout ("Code onjuist." / "Code niet compleet.")
 
 /* "Blijf ingelogd": is er een geldig apparaat-token, dan hoeft er niets gevraagd te
    worden. Moet vóór de ingelogd-check, anders staat de sollicitant alsnog op het
@@ -128,10 +129,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toch_code'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['code_submit'])) {
     csrf_check();
     $email = $_SESSION['otp_email'] ?? '';
-    $code  = preg_replace('/\D/', '', $_POST['code'] ?? '');
+    // 'code' vult JS in; zonder JavaScript komen de zes losse vakjes als code_cijfer[] binnen.
+    $code_ruw = (string)($_POST['code'] ?? '');
+    if ($code_ruw === '') $code_ruw = implode('', array_map('strval', (array)($_POST['code_cijfer'] ?? [])));
+    $code  = preg_replace('/\D/', '', $code_ruw);
     if (!$email) redirect(APP_URL . '/portaal/');
-    if (strlen($code) !== 6) { $fout = 'Voer een 6-cijferige code in.'; $stap = 'code'; }
-    elseif (!otp_verifieer($email, $code, 'portaal')) { $fout = 'Onjuiste of verlopen code.'; $stap = 'code'; }
+    if (strlen($code) !== 6) { $fout_kop = 'Code niet compleet.'; $fout = 'Vul alle zes cijfers van de code in.'; $stap = 'code'; }
+    elseif (!otp_verifieer($email, $code, 'portaal')) { $fout_kop = 'Code onjuist.'; $fout = 'Deze code klopt niet of is verlopen. Controleer de cijfers, of laat hieronder een nieuwe sturen.'; $stap = 'code'; }
     else {
         $st = db()->prepare("SELECT s.id FROM sollicitaties s JOIN personen p ON p.id=s.persoon_id WHERE p.email=? ORDER BY s.aangemeld_op DESC LIMIT 1");
         $st->execute([$email]); $sol = $st->fetch();
@@ -204,7 +208,7 @@ require __DIR__ . '/_kop.php';
 ?>
 
   <?php toon_flash(); ?>
-  <?php if ($fout && $stap !== 'code'): // op het code-scherm toont dat scherm de fout zelf ?>
+  <?php if ($fout && !in_array($stap, ['code', 'login'], true)): // inlog- en codescherm tonen de fout zelf, bij het veld ?>
   <div class="flash flash-fout" style="margin-bottom:12px"><?= h($fout) ?></div><?php endif; ?>
   <?php if (!empty($_SESSION['portaal_flash'])): ?>
     <div class="flash flash-info" style="margin-bottom:12px"><?= h($_SESSION['portaal_flash']) ?></div>
@@ -258,17 +262,24 @@ require __DIR__ . '/_kop.php';
         ? 'Heb je al een Paal 13-account, dan sturen we je automatisch door. Anders krijg je een inloglink.'
         : 'Je krijgt een inloglink — één tik en je bent binnen.' ?></p>
     </div>
+    <?php
+      // Fout over het ingevulde adres → bij het veld (aria-invalid); andere fouten (verlopen link) alleen als melding.
+      $email_fout = !empty($fout) && isset($_POST['email_submit']);
+      // Terug via "adres opnieuw invoeren": het vorige adres staat er al, zodat je alleen een typfout hoeft te verbeteren.
+      $email_waarde = (string)($_POST['email'] ?? ($_SESSION['otp_email'] ?? ''));
+    ?>
     <?php if (!empty($fout)): ?>
-    <div class="ds-melding ds-melding-error pt-login-fout"><?= icoon('let-op', 18) ?> <div><?= h($fout) ?></div></div>
+    <div class="ds-melding ds-melding-error pt-login-fout" id="loginFout" role="alert"><?= icoon('let-op', 18) ?> <div><?= h($fout) ?></div></div>
     <?php endif; ?>
     <form method="POST" class="ds-login-form">
       <?= csrf_input() ?>
       <input type="hidden" name="email_submit" value="1">
       <div class="ds-veld">
-        <label class="ds-label">E-mailadres</label>
-        <input type="email" name="email" required autofocus autocomplete="email" class="ds-input"
-               value="<?= h($_POST['email'] ?? '') ?>" placeholder="jou@voorbeeld.nl">
-        <div class="ds-veld-hint">Waarmee je je hebt aangemeld bij Paal 13</div>
+        <label class="ds-label" for="loginEmail">E-mailadres</label>
+        <input type="email" id="loginEmail" name="email" required autofocus autocomplete="email" class="ds-input"
+               value="<?= h($email_waarde) ?>" placeholder="jou@voorbeeld.nl"
+               aria-describedby="loginEmailHint<?= $email_fout ? ' loginFout' : '' ?>"<?= $email_fout ? ' aria-invalid="true"' : '' ?>>
+        <div class="ds-veld-hint" id="loginEmailHint">Waarmee je je hebt aangemeld bij Paal 13</div>
       </div>
       <button type="submit" class="ds-btn ds-btn-primair ds-btn-vol">Doorgaan</button>
     </form>
@@ -283,19 +294,25 @@ require __DIR__ . '/_kop.php';
       <div class="ds-login-logo"><?= icoon('mail', 26) ?></div>
       <h1>Kijk in je berichten</h1>
       <p>We stuurden een <strong>inloglink</strong> naar <?= h($_SESSION['otp_email'] ?? '') ?>.
-         Eén tik en je bent binnen. Check ook je spam-map.</p>
-      <p class="pt-code-uitleg">Liever typen? De code uit datzelfde bericht kan hieronder.</p>
+         Eén tik en je bent binnen.</p>
+      <?php /* Niets verklappen: deze tekst staat er altijd, of het adres nu bekend is of niet. */ ?>
+      <p class="pt-code-hint">Niets ontvangen? Controleer of je het adres goed hebt getypt en kijk in je spam.
+         <a href="<?= APP_URL ?>/portaal/">Adres opnieuw invoeren</a></p>
+      <p class="pt-code-uitleg" id="codeLbl">Liever typen? De code uit datzelfde bericht kan hieronder.</p>
     </div>
-    <?php if (!empty($fout)): ?>
-    <div class="ds-melding ds-melding-error" style="margin-bottom:14px"><?= icoon('let-op', 18) ?> <div><strong>Code onjuist.</strong> <?= h($fout) ?></div></div>
-    <?php endif; ?>
+    <?php /* De foutplek staat er altijd (leeg en verborgen), zodat de groep er met aria-describedby
+             naar kan wijzen en JS er dezelfde plek voor gebruikt. */ ?>
+    <div class="ds-melding ds-melding-error pt-login-fout" id="codeFout" role="alert"<?= empty($fout) ? ' hidden' : '' ?>><?php if (!empty($fout)): ?><?= icoon('let-op', 18) ?> <div><?php if ($fout_kop !== ''): ?><strong><?= h($fout_kop) ?></strong> <?php endif; ?><?= h($fout) ?></div><?php endif; ?></div>
     <form method="POST" id="codeForm" class="ds-login-form">
       <?= csrf_input() ?>
       <input type="hidden" name="code_submit" value="1">
       <input type="hidden" name="code" id="codeHidden">
-      <div class="ds-code-inputs">
+      <?php /* Zes vakjes = één veld: één groep met een naam, elk vakje zegt welk cijfer het is.
+               Zonder JavaScript gaan de vakjes als code_cijfer[] mee; de server plakt ze aan elkaar. */ ?>
+      <div class="ds-code-inputs" role="group" aria-labelledby="codeLbl" aria-describedby="codeFout">
         <?php for ($i = 0; $i < 6; $i++): ?>
         <input type="text" inputmode="numeric" pattern="[0-9]" maxlength="1" class="code-cijfer ds-code-cijfer"
+               name="code_cijfer[]" aria-label="Cijfer <?= $i + 1 ?> van 6"<?= !empty($fout) ? ' aria-invalid="true"' : '' ?>
                autocomplete="<?= $i === 0 ? 'one-time-code' : 'off' ?>">
         <?php endfor; ?>
       </div>
@@ -307,40 +324,59 @@ require __DIR__ . '/_kop.php';
           Doe dit niet op een gedeelde of geleende telefoon.</span>
         </span>
       </label>
-      <button type="submit" class="ds-btn ds-btn-primair ds-btn-vol" id="submitBtn" disabled>Inloggen</button>
+      <?php /* Nooit disabled (CLAUDE.md, actie.js): de knop werkt altijd; een onvolledige code
+               meldt de controle hieronder in de foutplek. */ ?>
+      <button type="submit" class="ds-btn ds-btn-primair ds-btn-vol" id="submitBtn">Inloggen</button>
     </form>
-    <div class="ds-login-voet">
-      Geen mail ontvangen? <button type="button" class="ds-link-knop" id="opnieuwBtn" disabled>Opnieuw sturen (<span id="teller">0:60</span>)</button>
+    <?php /* Opnieuw sturen: een gewoon formulier, dus ook zonder JavaScript bruikbaar. De server
+             stuurt binnen 60 seconden geen tweede code; de teller maakt dat alleen zichtbaar. */ ?>
+    <form method="POST" class="ds-login-voet" id="opnieuwForm">
+      <?= csrf_input() ?>
+      <input type="hidden" name="email_submit" value="1">
+      <input type="hidden" name="email" value="<?= h($_SESSION['otp_email'] ?? '') ?>">
+      Geen mail ontvangen? <button type="submit" class="ds-link-knop" id="opnieuwBtn">Opnieuw sturen<span id="teller"></span></button>
       <br><a href="<?= APP_URL ?>/portaal/">← Ander e-mailadres</a>
-    </div>
+    </form>
   </div>
-  <form method="POST" id="opnieuwForm" style="display:none">
-    <?= csrf_input() ?>
-    <input type="hidden" name="email_submit" value="1">
-    <input type="hidden" name="email" value="<?= h($_SESSION['otp_email'] ?? '') ?>">
-  </form>
   <script>
-  const inp = document.querySelectorAll('.code-cijfer'), h = document.getElementById('codeHidden'), b = document.getElementById('submitBtn');
-  inp.forEach((el,i) => {
-    el.addEventListener('input', () => { el.value=el.value.replace(/\D/g,'').slice(-1); if(el.value&&i<5) inp[i+1].focus(); upd(); });
-    el.addEventListener('keydown', e => { if(e.key==='Backspace'&&!el.value&&i>0) inp[i-1].focus(); });
-    el.addEventListener('paste', e => { e.preventDefault(); const v=(e.clipboardData||window.clipboardData).getData('text').replace(/\D/g,'').slice(0,6); v.split('').forEach((c,j)=>{if(inp[j])inp[j].value=c;}); inp[Math.min(v.length,5)].focus(); upd(); });
-  });
-  function upd() { const c=Array.from(inp).map(i=>i.value).join(''); h.value=c; b.disabled=c.length!==6; if(c.length===6)b.focus(); }
-  inp[0].focus();
-  // Opnieuw-sturen teller: 60s aftellen, daarna knop actief
-  (function(){
-    var t = 60, el = document.getElementById('teller'), knop = document.getElementById('opnieuwBtn');
-    var iv = setInterval(function(){
+  (function () {
+    var inp = document.querySelectorAll('.code-cijfer'), verborgen = document.getElementById('codeHidden');
+    var form = document.getElementById('codeForm'), knop = document.getElementById('submitBtn'), foutPlek = document.getElementById('codeFout');
+    function code() { return Array.prototype.map.call(inp, function (i) { return i.value; }).join(''); }
+    function upd() { var c = code(); verborgen.value = c; if (c.length === 6) knop.focus(); }
+    inp.forEach(function (el, i) {
+      el.addEventListener('input', function () { el.value = el.value.replace(/\D/g, '').slice(-1); if (el.value && i < 5) inp[i + 1].focus(); upd(); });
+      el.addEventListener('keydown', function (e) { if (e.key === 'Backspace' && !el.value && i > 0) inp[i - 1].focus(); });
+      el.addEventListener('paste', function (e) {
+        e.preventDefault();
+        var v = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
+        v.split('').forEach(function (c, j) { if (inp[j]) inp[j].value = c; });
+        inp[Math.min(v.length, 5)].focus(); upd();
+      });
+    });
+    form.addEventListener('submit', function (e) {
+      upd();
+      if (code().length === 6) return;
+      e.preventDefault();
+      var leeg = Array.prototype.filter.call(inp, function (i) { return !i.value; })[0] || inp[0];
+      var tekst = 'Code niet compleet. Vul alle zes cijfers van de code in.';
+      if (window.P13Melding) P13Melding.fout(foutPlek, tekst, leeg);
+      else { foutPlek.textContent = tekst; foutPlek.hidden = false; leeg.focus(); }
+    });
+    inp[0].focus();
+
+    // Opnieuw sturen: 60 seconden aftellen. aria-disabled i.p.v. disabled, zodat de knop
+    // vindbaar blijft voor een schermlezer en het formulier niet stil vastzit.
+    var t = 60, teller = document.getElementById('teller'), opnieuw = document.getElementById('opnieuwBtn');
+    opnieuw.setAttribute('aria-disabled', 'true');
+    teller.textContent = ' (0:60)';
+    document.getElementById('opnieuwForm').addEventListener('submit', function (e) {
+      if (opnieuw.getAttribute('aria-disabled') === 'true') e.preventDefault();
+    });
+    var iv = setInterval(function () {
       t--;
-      if (t <= 0) {
-        clearInterval(iv);
-        knop.disabled = false;
-        knop.innerHTML = 'Opnieuw sturen';
-        knop.addEventListener('click', function(){ document.getElementById('opnieuwForm').submit(); });
-      } else {
-        el.textContent = '0:' + (t < 10 ? '0' : '') + t;
-      }
+      if (t <= 0) { clearInterval(iv); opnieuw.removeAttribute('aria-disabled'); teller.textContent = ''; }
+      else teller.textContent = ' (0:' + (t < 10 ? '0' : '') + t + ')';
     }, 1000);
   })();
   </script>
@@ -353,14 +389,14 @@ require __DIR__ . '/_kop.php';
       <h1>Je hebt al een account</h1>
       <p>We sturen je door naar het Paal 13-account van <strong><?= h($dse) ?></strong>. Daar log je in zoals je gewend bent.</p>
     </div>
-    <div class="ds-melding ds-melding-info" style="margin-bottom:16px">
+    <div class="ds-melding ds-melding-info pt-login-fout" role="status">
       <?= icoon('klok', 18) ?> <div>Even geduld — je wordt doorgestuurd…</div>
     </div>
     <a href="<?= APP_URL ?>/portaal/auth_sso.php" class="ds-btn ds-btn-primair ds-btn-vol" id="dsNu">Nu doorgaan</a>
-    <form method="POST" style="margin-top:14px">
+    <form method="POST" class="pt-login-los">
       <?= csrf_input() ?>
       <input type="hidden" name="toch_code" value="1">
-      <div class="ds-login-voet" style="margin-top:0">
+      <div class="ds-login-voet">
         Geen account meer? <button type="submit" class="ds-link-knop">Stuur mij toch een code</button>
       </div>
     </form>
@@ -380,7 +416,7 @@ require __DIR__ . '/_kop.php';
   $n_open     = count($open_taken);
   $vg         = portaal_voortgang($fase);
   $begroet    = portaal_begroeting($sol, $n_open);
-  $afgewezen  = ($fase === 'afgewezen');
+  $eindfase   = portaal_is_eindfase($fase);   // afgewezen, gestopt, zelf verwijderd: _start_info toont de eindstand
   $aangenomen = ($fase === 'aangenomen');
   $wachtend   = in_array($fase, ['selectiedag_geweest', 'tw_geweest'], true);
   $start_max  = 3;   // meer open taken → "Alle (N) taken tonen" naar het Taken-tabblad
@@ -415,7 +451,7 @@ require __DIR__ . '/_kop.php';
   <div class="pt-start-grid">
     <?php require __DIR__ . '/_start_info.php'; ?>
 
-    <?php if (!$afgewezen): ?>
+    <?php if (!$eindfase): ?>
     <div class="pt-stapel pt-start-taken">
       <?php if ($aangenomen && $taken): $n_klaar = count($taken) - $n_open; ?>
         <div class="pt-sectiekop"><span>Takenpakket</span><span class="pt-sectiekop-teller"><?= $n_klaar ?> van <?= count($taken) ?> gedaan</span></div>
@@ -437,10 +473,9 @@ require __DIR__ . '/_kop.php';
       <?php else: ?>
         <?php
           $leeg_groot = $wachtend;
-          $leeg_titel = 'Je bent helemaal bij';
-          $leeg_tekst = $wachtend
-            ? 'Niets te doen. Zodra er iets van je nodig is, verschijnt het hier en krijg je een bericht.'
-            : 'Er staat niets open. Zodra er iets van je nodig is, verschijnt het hier.';
+          $_lt        = portaal_leeg_tekst($sol);
+          $leeg_titel = $_lt['titel'];
+          $leeg_tekst = $_lt['tekst'];
           $leeg_knop  = null;
           foreach ($taken as $t) { if ($t['id'] === 'besch' && $t['done']) { $leeg_knop = ['url' => APP_URL . '/portaal/beschikbaarheid.php', 'label' => 'Mijn beschikbaarheid bekijken']; } }
           require __DIR__ . '/_leeg.php';
@@ -451,7 +486,7 @@ require __DIR__ . '/_kop.php';
       <?php endif; ?>
 
       <?php if ($wacht_taken && !$aangenomen): ?>
-        <div class="pt-sectiekop"><span>Wacht op je ouder/verzorger</span></div>
+        <div class="pt-sectiekop"><span><?= h(portaal_taken_wacht_titel($wacht_taken)) ?></span></div>
         <?php $lijst = $wacht_taken; require __DIR__ . '/_takenlijst.php'; ?>
       <?php endif; ?>
     </div>

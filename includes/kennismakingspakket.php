@@ -25,18 +25,27 @@ function kennismakingspakket_taken_definities(): array {
                              'soort' => 'upload', 'document_soort' => $slug, 'volgorde' => $d['volgorde']];
         }
     }
-    // Huisregels: de PDF komt uit de bijlagenbibliotheek (Instellingen › Algemeen › Huisregels). Zolang er geen
-    // document is gekozen, staat de taak er wel maar zonder link ("volgt binnenkort") — zodat de sollicitant weet
-    // dat dit er nog aankomt en wij niet vergeten het te plaatsen.
-    $huisregels = function_exists('instelling_int') ? instelling_int('taken.huisregels_bijlage_id', 0) : 0;
-    $taken['huisregels'] = $huisregels > 0
-        ? ['titel' => 'Huisregels lezen', 'omschrijving' => 'Open het document en vink daarna af', 'link_url' => null, 'verplicht' => 1,
-           'soort' => 'link', 'document_soort' => 'bijlage:' . $huisregels, 'volgorde' => 30]
-        : ['titel' => 'Huisregels lezen', 'omschrijving' => 'Het document volgt binnenkort van het bestuur', 'link_url' => null, 'verplicht' => 1,
-           'soort' => 'afvinken', 'document_soort' => null, 'volgorde' => 30];
+    // Huisregels: de PDF komt uit de bijlagenbibliotheek (Instellingen › Algemeen › Huisregels). De link wordt
+    // NIET in de rij vastgelegd: portaal_taken() haalt hem live op via kennismakingspakket_huisregels_bijlage().
+    // Zo krijgt de taak ook een link als het bestuur de pdf pas ná de aanname plaatst. Zonder document staat de
+    // taak er als "volgt binnenkort" en is hij niet af te vinken.
+    $taken['huisregels'] = ['titel' => 'Huisregels lezen', 'omschrijving' => 'Open het document en vink daarna af', 'link_url' => null, 'verplicht' => 1,
+                            'soort' => 'link', 'document_soort' => null, 'volgorde' => 30];
     $taken['authentik_activeren'] = ['titel' => 'Paal 13-account activeren', 'omschrijving' => 'Je krijgt later per mail een uitnodiging voor je verenigingsaccount', 'link_url' => null, 'verplicht' => 0,
                                      'soort' => 'afvinken', 'document_soort' => null, 'volgorde' => 90];
     return $taken;
+}
+
+/**
+ * Het huisregeldocument dat nu in gebruik is (bijlage-id), of 0 als er geen is of het gekoppelde
+ * document niet meer bestaat. Live gelezen, per request onthouden.
+ */
+function kennismakingspakket_huisregels_bijlage(): int {
+    static $id = null;
+    if ($id !== null) return $id;
+    $id = function_exists('instelling_int') ? instelling_int('taken.huisregels_bijlage_id', 0) : 0;
+    if ($id > 0 && function_exists('bijlage_rij') && !bijlage_rij($id)) $id = 0;
+    return $id;
 }
 
 /**

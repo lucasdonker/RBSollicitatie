@@ -101,7 +101,8 @@ $v = static fn(string $p): string => APP_URL . $p . '?v=' . (@filemtime(__DIR__ 
 </main>
 
 <?php if (!$ingebed): ?>
-<?php $contact = instelling('mail.bestuur_email', 'bestuur@paal13.com'); ?>
+<?php // Eén adres voor sollicitanten (mail.contact_email, leeg = bestuursadres): portaal_contact_email(). ?>
+<?php $contact = portaal_contact_email(); ?>
 <footer class="af-voet">
   Vragen over je aanmelding? Mail <a href="mailto:<?= h($contact) ?>"><?= h($contact) ?></a>.
 </footer>

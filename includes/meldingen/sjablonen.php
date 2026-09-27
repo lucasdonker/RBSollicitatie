@@ -83,6 +83,11 @@ function sjablonen_migreer_slugs($db): void {
         $db->exec("UPDATE mail_templates SET body_html=REPLACE(body_html,'{{otp.code}}','{{otp_code}}') WHERE body_html LIKE '%{{otp.code}}%'");
         // De vaste afmeldzin stond t/m 2.87.7 in elke korte tekst; nu alleen bij het eerste korte bericht (code).
         $db->exec("UPDATE mail_templates SET tekst_kort=TRIM(REPLACE(tekst_kort,'Afmelden voor WhatsApp/SMS kan onder Mijn gegevens in het portaal.','')) WHERE tekst_kort LIKE '%Afmelden voor WhatsApp/SMS kan onder Mijn gegevens%'");
+        // De ondertekenherinnering noemde t/m 2.125 altijd de selectiedag, ook bij loonheffing of lidmaatschap.
+        $oud_zin = 'Zonder deze handtekening kan {{voornaam}} helaas niet deelnemen aan de selectiedag van Reddingsbrigade Paal 13.';
+        $nw_zin  = 'We hebben deze handtekening nodig om met de sollicitatie van {{voornaam}} bij Reddingsbrigade Paal 13 verder te kunnen.';
+        $db->prepare("UPDATE mail_templates SET body_html=REPLACE(body_html,?,?) WHERE slug='ondertekening_herinnering' AND body_html LIKE ?")
+           ->execute([$oud_zin, $nw_zin, '%' . $oud_zin . '%']);
         if (function_exists('meldingen_register') && isset(meldingen_register()['portaal_code'])) {
             $s = meldingen_register()['portaal_code']['seed'];
             $db->prepare("UPDATE mail_templates SET hero_titel=?, hero_subtitel=? WHERE slug='portaal_code' AND (hero_titel IS NULL OR hero_titel='' OR hero_titel LIKE '%inlogcode voor%')")

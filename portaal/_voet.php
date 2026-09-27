@@ -48,18 +48,21 @@ $_contact_tel  = function_exists('instelling') ? trim((string)instelling('org.te
       </div>
     </div>
     <div class="pt-nav-items">
-      <a href="<?= APP_URL ?>/portaal/" class="pt-nav-item <?= $_nav==='start'?'actief':'' ?>">
+      <?php /* aria-current="page": de actieve tab alleen aan kleur herkennen gaat niet voor een
+               schermlezer (WCAG 1.3.1/4.1.2). $_akt() geeft klasse + attribuut in één keer. */
+        $_akt = fn(string $n): string => $_nav === $n ? 'class="pt-nav-item actief" aria-current="page"' : 'class="pt-nav-item"'; ?>
+      <a href="<?= APP_URL ?>/portaal/" <?= $_akt('start') ?>>
         <?= icoon('huis', 22) ?><span>Start</span>
       </a>
-      <a href="<?= APP_URL ?>/portaal/taken.php" class="pt-nav-item <?= $_nav==='taken'?'actief':'' ?>">
-        <span class="pt-nav-icoon-wrap"><?= icoon('lijst', 22) ?><?php if ($_open > 0): ?><span class="pt-nav-badge"><?= $_open ?></span><?php endif; ?></span>
+      <a href="<?= APP_URL ?>/portaal/taken.php" <?= $_akt('taken') ?>>
+        <span class="pt-nav-icoon-wrap"><?= icoon('lijst', 22) ?><?php if ($_open > 0): ?><span class="pt-nav-badge"><?= $_open ?><span class="sr-only"> open</span></span><?php endif; ?></span>
         <span>Taken</span>
       </a>
-      <a href="<?= APP_URL ?>/portaal/gegevens.php" class="pt-nav-item <?= $_nav==='gegevens'?'actief':'' ?>">
+      <a href="<?= APP_URL ?>/portaal/gegevens.php" <?= $_akt('gegevens') ?>>
         <?= icoon('persoon', 22) ?><span>Gegevens</span>
       </a>
       <?php /* Contact als eigen tab: vragen stellen stond onderaan Berichten en werd niet gevonden. */ ?>
-      <a href="<?= APP_URL ?>/portaal/contact.php" class="pt-nav-item <?= $_nav==='contact'?'actief':'' ?>">
+      <a href="<?= APP_URL ?>/portaal/contact.php" <?= $_akt('contact') ?>>
         <?= icoon('chat', 22) ?><span>Contact</span>
       </a>
     </div>
@@ -70,7 +73,7 @@ $_contact_tel  = function_exists('instelling') ? trim((string)instelling('org.te
       <span class="pt-nav-initialen"><?= h(portaal_initialen($_gs)) ?></span>
       <div class="pt-nav-gebruiker-tekst">
         <span class="pt-nav-gebruiker-naam"><?= h(portaal_naam($_gs)) ?></span>
-        <span class="pt-nav-gebruiker-sub"><?= $_gv ? 'Stap ' . (int)$_gv['stap'] . ' van ' . (int)$_gv['totaal'] : h(fase_label($_gs['fase'] ?? '')) ?></span>
+        <span class="pt-nav-gebruiker-sub"><?= $_gv ? 'Stap ' . (int)$_gv['stap'] . ' van ' . (int)$_gv['totaal'] : h(portaal_fase_label((string)($_gs['fase'] ?? ''))) ?></span>
       </div>
       <a href="<?= APP_URL ?>/portaal/?uitloggen=1" class="pt-nav-uitloggen" aria-label="Uitloggen"><?= icoon('uitloggen', 17) ?></a>
     </div>

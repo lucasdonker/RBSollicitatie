@@ -65,11 +65,11 @@
     e.tabHtml.classList.toggle('actief', modus === 'html');
   }
 
-  /* Vragen via bhVraag() als dat er is (beheerkant), anders via prompt(). Het portaal
-     laadt beheer.js niet, dus de terugval blijft staan; hij is geen dode code. */
+  /* Vragen via bhVraag() uit beheer.js. De editor draait alleen in het beheer (layout_bottom.php);
+     zonder bhVraag doet de knop niets, in plaats van terug te vallen op een browservenster. */
   function vraag(opt) {
     if (typeof bhVraag === 'function') return bhVraag(opt);
-    return Promise.resolve(window.prompt(opt.titel, opt.waarde || ''));
+    return Promise.resolve(null);
   }
 
   function actie(e, naam) {

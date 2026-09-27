@@ -5,7 +5,7 @@
  * beslist (includes/intrekken.php). Het vakje "op de hoogte blijven" staat NIET vooraf aan:
  * dat is toestemming, en die moet iemand zelf geven.
  * POST-afhandeling: portaal/gegevens.php (intrek_actie). Werkt zonder JavaScript.
- * Kaartopmaak (.avg-card) komt van gegevens.php, zodat het blok gelijk is aan de andere kaarten daar.
+ * Kaartopmaak: .pt-kaart, net als de andere kaarten op Mijn gegevens.
  *
  * Verwacht:
  *   $ik_sol_id    int
@@ -20,8 +20,8 @@ if (!function_exists('intrek_open_van') || !in_array($ik_fase, intrek_fases(), t
 $_iv      = intrek_open_van($ik_sol_id);
 $_seintje = function_exists('seintje_heeft') && seintje_heeft($ik_persoon);
 ?>
-<div class="avg-card" id="intrekken">
-  <h2><?= icoon('info', 18) ?> Toch niet meer?</h2>
+<section class="pt-kaart" id="intrekken" aria-labelledby="ggIntrekken">
+  <h2 class="pt-kaart-titel" id="ggIntrekken"><?= icoon('info', 18) ?> Toch niet meer?</h2>
   <?php if ($ik_flash): ?>
     <div class="ds-melding ds-melding-ok"><?= icoon('vink-cirkel', 18) ?> <div><?= h($ik_flash) ?></div></div>
   <?php endif; ?>
@@ -67,4 +67,4 @@ $_seintje = function_exists('seintje_heeft') && seintje_heeft($ik_persoon);
       </form>
     </details>
   <?php endif; ?>
-</div>
+</section>
