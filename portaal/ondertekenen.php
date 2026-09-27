@@ -21,18 +21,9 @@ $db = db();
 if (function_exists('ondertekeningen_auto_setup')) ondertekeningen_auto_setup();
 $token = trim($_GET['token'] ?? '');
 
-if ($token === '') {
-    // Zonder token: alleen een ingelogde sollicitant kan zelf een nieuw document starten
-    $sol_id = portaal_vereis_login();
-    $type = $_GET['nieuw'] ?? '';
-    if (in_array($type, ['intake', 'gezondheid_18plus'], true)) {
-        $nieuw_token = bin2hex(random_bytes(24));
-        $db->prepare("INSERT INTO ondertekeningen (sollicitatie_id, type, token, ondertekenaar_rol) VALUES (?,?,?,'sollicitant')")
-           ->execute([$sol_id, $type, $nieuw_token]);
-        redirect(APP_URL . '/portaal/ondertekenen.php?token=' . $nieuw_token);
-    }
-    pagina_404();
-}
+// Zonder token bestaat deze pagina niet. Documenten zet het systeem zelf klaar
+// (ondertekeningen_auto.php); een sollicitant kan er geen starten via de URL.
+if ($token === '') pagina_404();
 
 // ── Record + sollicitant ophalen ─────────────────────────────
 $q = $db->prepare("SELECT * FROM ondertekeningen WHERE token = ?");

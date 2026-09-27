@@ -43,24 +43,37 @@ function sollicitatie_aanmaken(array $in, array $context = []): array {
         return ['ok'=>false,'fout'=>'Omdat je nog geen 16 bent, hebben we de toestemming en naam van je ouder/verzorger nodig.','code'=>'ouder_nodig'];
     }
 
-    // Persoon opzoeken of aanmaken
-    $bestaand = $db->prepare("SELECT id FROM personen WHERE email=?");
+    // Persoon opzoeken of aanmaken. Een bestaand persoon wordt NIET overschreven: dit formulier is
+    // anoniem, dus wie andermans e-mailadres intypt zou anders naam en telefoon (het kanaal van de
+    // inlogcode!) kunnen vervangen. Lege velden vullen we aan; een afwijking ziet het bestuur.
+    $bestaand = $db->prepare("SELECT id, voornaam, tussenvoegsel, achternaam, telefoon, geboortedatum, geslacht FROM personen WHERE email=?");
     $bestaand->execute([$email]);
     $p = $bestaand->fetch();
+    $afwijkend = [];
     if ($p) {
         $pid = $p['id'];
-        $db->prepare("UPDATE personen SET voornaam=?,tussenvoegsel=?,achternaam=?,telefoon=?,geboortedatum=?,geslacht=? WHERE id=?")
-           ->execute([$voornaam, $tv ?: null, $achternaam, $tel, $dob, $geslacht, $pid]);
+        $al = $db->prepare("SELECT id FROM sollicitaties WHERE persoon_id=? AND seizoen_id=?");
+        $al->execute([$pid, $seizoen['id']]);
+        if ($al->fetch()) return ['ok'=>false,'fout'=>'Je hebt je al aangemeld voor dit seizoen. Check je e-mail.','code'=>'al_aangemeld'];
+
+        $nieuw = ['voornaam' => $voornaam, 'tussenvoegsel' => $tv, 'achternaam' => $achternaam,
+                  'telefoon' => $tel, 'geboortedatum' => $dob, 'geslacht' => $geslacht];
+        $aanvullen = [];
+        foreach ($nieuw as $k => $v) {
+            $oud = trim((string)($p[$k] ?? ''));
+            if ($v === '' || ($k === 'geslacht' && $v === 'onbekend')) continue;
+            if ($oud === '' || ($k === 'geslacht' && $oud === 'onbekend')) $aanvullen[$k] = $v;
+            elseif (mb_strtolower($oud) !== mb_strtolower($v)) $afwijkend[] = $k;
+        }
+        if ($aanvullen) {
+            $sets = implode(',', array_map(fn($k) => "$k=?", array_keys($aanvullen)));
+            $db->prepare("UPDATE personen SET $sets WHERE id=?")->execute([...array_values($aanvullen), $pid]);
+        }
     } else {
         $db->prepare("INSERT INTO personen (voornaam,tussenvoegsel,achternaam,email,telefoon,geboortedatum,geslacht) VALUES(?,?,?,?,?,?,?)")
            ->execute([$voornaam, $tv ?: null, $achternaam, $email, $tel, $dob, $geslacht]);
         $pid = $db->lastInsertId();
     }
-
-    // Al aangemeld voor dit seizoen?
-    $al = $db->prepare("SELECT id FROM sollicitaties WHERE persoon_id=? AND seizoen_id=?");
-    $al->execute([$pid, $seizoen['id']]);
-    if ($al->fetch()) return ['ok'=>false,'fout'=>'Je hebt je al aangemeld voor dit seizoen. Check je e-mail.','code'=>'al_aangemeld'];
 
     // Terugkerend?
     $eerder = $db->prepare("SELECT COUNT(*) FROM sollicitaties WHERE persoon_id=?");
@@ -92,13 +105,21 @@ function sollicitatie_aanmaken(array $in, array $context = []): array {
 
     // Bevestiging aan de sollicitant + melding aan het bestuur, via de centrale meldingen-kern
     // (kanaalkeuze, terugval en logboek zitten daar). Verzending ná het antwoord: snel formulier.
-    $purl = APP_URL . '/portaal/?token=' . $token;
+    // Het portaal logt in met een inloglink of code (portaal_login.php); een token in deze URL
+    // deed niets en is daarom weg.
+    $purl = APP_URL . '/portaal/';
+    $afwijk_labels = ['voornaam' => 'voornaam', 'tussenvoegsel' => 'tussenvoegsel', 'achternaam' => 'achternaam',
+                      'telefoon' => 'telefoonnummer', 'geboortedatum' => 'geboortedatum', 'geslacht' => 'geslacht'];
+    $afwijk_html = $afwijkend
+        ? '<p><em>Let op: bij deze aanmelding is een andere ' . h(implode(', ', array_map(fn($k) => $afwijk_labels[$k], $afwijkend)))
+          . ' opgegeven dan in het bestaande dossier. We hebben het dossier niet aangepast; controleer het en corrigeer het zo nodig in het dossier.</em></p>'
+        : '';
     if (function_exists('melding_verstuur')) {
         try { melding_verstuur('aanmelding_bevestiging', $sid, ['portaal_url' => $purl], ['prioriteit' => 'na_antwoord']); }
         catch (\Throwable $e) { error_log('melding aanmelding_bevestiging: ' . $e->getMessage()); }
         try {
             melding_verstuur('bestuur_nieuwe_aanmelding', $sid,
-                ['terugkerend_html' => $ter ? '<p><em>Terugkerende sollicitant: heeft eerder gesolliciteerd.</em></p>' : ''],
+                ['terugkerend_html' => ($ter ? '<p><em>Terugkerende sollicitant: heeft eerder gesolliciteerd.</em></p>' : '') . $afwijk_html],
                 ['prioriteit' => 'na_antwoord']);
         } catch (\Throwable $e) { error_log('melding bestuur_nieuwe_aanmelding: ' . $e->getMessage()); }
     }
@@ -113,7 +134,8 @@ function sollicitatie_aanmaken(array $in, array $context = []): array {
 
     // Audit
     if (function_exists('audit_log')) {
-        audit_log('aangemaakt', 'sollicitatie', $sid, ['via' => $context['via'] ?? 'formulier', 'terugkerend' => (bool)$ter]);
+        audit_log('aangemaakt', 'sollicitatie', $sid, ['via' => $context['via'] ?? 'formulier', 'terugkerend' => (bool)$ter]
+                  + ($afwijkend ? ['afwijkend' => $afwijkend] : []));
     }
 
     return ['ok'=>true, 'sollicitatie_id'=>$sid, 'portaal_token'=>$token, 'terugkerend'=>(bool)$ter, 'portaal_url'=>$purl];

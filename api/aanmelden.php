@@ -58,11 +58,11 @@ if (!$resultaat['ok']) {
     ], $status);
 }
 
-// Succes — geef het portaal-token terug zodat de plugin desgewenst kan doorverwijzen.
+// Succes — geef de portaal-URL terug zodat de plugin desgewenst kan doorverwijzen. Het oude
+// portaal_token gaat niet meer mee: het logde nergens in en is een onnodig geheim in een antwoord.
 api_json([
     'ok'              => true,
     'sollicitatie_id' => $resultaat['sollicitatie_id'],
-    'portaal_token'   => $resultaat['portaal_token'],
     'portaal_url'     => $resultaat['portaal_url'],
     'terugkerend'     => $resultaat['terugkerend'],
     'bericht'         => 'Aanmelding ontvangen.',
