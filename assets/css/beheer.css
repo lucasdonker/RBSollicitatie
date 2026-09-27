@@ -292,6 +292,21 @@ html[data-theme="dark"] .bh-nav-link.actief { background: var(--surface); color:
 .bh-vandaag-hoofd { flex: 2; min-width: 380px; display: flex; flex-direction: column; gap: 14px; }
 .bh-vandaag-hoofd > * { margin: 0; }
 .bh-vandaag-hoofd .bh-stand { min-width: 0; }
+/* Kengetallen (admin/_kengetallen.php): zes tegels; op een telefoon drie per rij en zonder
+   subregel, zodat de taak van vandaag in beeld blijft */
+.bh-kengetallen { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.bh-kengetal { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; margin: 0; text-decoration: none; color: var(--ink); }
+a.bh-kengetal:hover { border-color: var(--navy); }
+a.bh-kengetal:focus-visible { outline: 2px solid var(--navy); outline-offset: 2px; }
+.bh-kengetal-waarde { font-size: 26px; font-weight: 700; line-height: 1.1; color: var(--navy); }
+.bh-kengetal-label { font-size: 14px; font-weight: 600; }
+@media (max-width: 520px) {
+  .bh-kengetallen { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .bh-kengetal { padding: 9px 10px; }
+  .bh-kengetal-waarde { font-size: 20px; }
+  .bh-kengetal-label { font-size: 12px; line-height: 1.25; hyphens: auto; }
+  .bh-kengetal .bh-meta { display: none; }
+}
 /* Werkbak (admin/_werkbak.php) */
 .bh-werkbak-lijst { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 .bh-werkbak-rij { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--bg-subtle); }

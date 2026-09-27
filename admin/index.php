@@ -45,6 +45,8 @@ require __DIR__ . '/layout_top.php';
 
   <?php $vandaag_fase = $fase; require __DIR__ . '/_seizoenbalk.php'; ?>
 
+  <?php $kengetallen = bh_vandaag_kengetallen($sz); require __DIR__ . '/_kengetallen.php'; ?>
+
   <div class="bh-vandaag-kolommen">
     <?php // Links: wat je moet doen. Rechts: wat je moet weten. ?>
     <div class="bh-vandaag-hoofd">

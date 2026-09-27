@@ -28,9 +28,28 @@ function bh_soll_filter(array $q, int $sid): array {
         $params[] = $fase;
         $delen[] = fase_label($fase);
     }
-    if ((string)($q['terug'] ?? '') === '1') {
+    // Terugkerend: 1 = eerder gesolliciteerd; lg = terugkerende lifeguard (Authentik-account);
+    // sol = eerder gesolliciteerd maar geen lifeguard. Dezelfde indeling als de kengetallen op Vandaag.
+    $terug = (string)($q['terug'] ?? '');
+    $_lg   = function_exists('authentik_lifeguard_sql') ? authentik_lifeguard_sql('s.id') : '0';
+    if ($terug === '1') {
         $where .= " AND s.terugkerend = 1";
         $delen[] = 'terugkerend';
+    } elseif ($terug === 'lg') {
+        $where .= " AND $_lg = 1";
+        $delen[] = 'terugkerende lifeguard';
+    } elseif ($terug === 'sol') {
+        $where .= " AND s.terugkerend = 1 AND $_lg = 0";
+        $delen[] = 'eerder gesolliciteerd';
+    }
+    $toon = (string)($q['toon'] ?? '');
+    if ($toon === 'lopend') {
+        $where .= " AND s.fase NOT IN ('aangenomen','afgewezen','afgehaakt')";
+        $delen[] = 'in de procedure';
+    } elseif ($toon === '30d') {
+        $where .= " AND s.aangemeld_op >= ?";
+        $params[] = date('Y-m-d H:i:s', strtotime('-30 days'));
+        $delen[] = 'aangemeld in de laatste 30 dagen';
     }
     // Ingediend telt, niet het bestaan van een rij: de autosave maakt al een conceptrij.
     $_blk_in = "EXISTS (SELECT 1 FROM blk_formulieren bf WHERE bf.sollicitatie_id=s.id AND " . blk_ingediend_sql('bf', 's') . ")";
@@ -143,6 +162,7 @@ function bh_soll_filter_params(array $q): array {
         'terug' => $q['terug'] ?? null, 'blk'  => $q['blk']  ?? null,
         'comp'  => $q['comp']  ?? null, 'sort' => $q['sort'] ?? null,
         'richting' => $q['richting'] ?? null, 'intrek' => $q['intrek'] ?? null,
+        'toon'     => $q['toon']     ?? null,
     ], fn($v) => $v !== null && $v !== '');
 }
 

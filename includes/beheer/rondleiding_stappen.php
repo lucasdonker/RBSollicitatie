@@ -49,6 +49,8 @@ function rl_schermen(): array {
                  'tekst' => 'Het startscherm opent op de vraag wat er nu moet gebeuren. Kom hier elke keer eerst.'],
                 ['doel' => '.bh-seizoenbalk', 'titel' => 'Waar staat het seizoen',
                  'tekst' => 'Zes fases van werving tot aanname. Groen is geweest, oranje is nu, grijs komt nog. Het systeem rekent de fase uit met de datums van het seizoen.'],
+                ['doel' => '.bh-kengetallen', 'titel' => 'Kengetallen',
+                 'tekst' => 'Hoeveel aanmeldingen er zijn (en hoeveel vorig seizoen), hoeveel in de laatste 30 dagen, wie nog in de procedure zit, en hoeveel er terugkomen: lifeguards met een Authentik-account en mensen die eerder solliciteerden. Klik op een tegel voor de lijst.'],
                 ['doel' => '.bh-hoofdtaak', 'titel' => 'De taak van nu',
                  'tekst' => 'De ene taak die in deze fase telt, met hoeveel er al gedaan is en een knop ernaartoe. Staat er Niets te doen, dan is dat goed nieuws.'],
                 ['doel' => '.bh-werkbak', 'titel' => 'Wacht ook op jou',

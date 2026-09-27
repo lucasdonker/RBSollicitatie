@@ -439,6 +439,53 @@ function bh_vandaag_agenda(?array $seizoen, int $dagen = 60): array {
     return $uit;
 }
 
+/**
+ * Kengetallen van het seizoen, altijd zichtbaar bovenaan Vandaag. Alleen tellingen, geen
+ * persoonsgegevens, dus voor iedereen; de link naar de gefilterde lijst alleen met leesrecht op
+ * sollicitanten (de filters staan in bh_soll_filter()). Lifeguard = Authentik-account
+ * (authentik_lifeguard_sql); terugkerend = eerder gesolliciteerd, zonder die lifeguards.
+ *
+ * @return array<int,array{waarde:int,label:string,sub:string,url:?string}>
+ */
+function bh_vandaag_kengetallen(?array $seizoen): array {
+    $sid = $seizoen ? (int)$seizoen['id'] : 0;
+    if (!$sid) return [];
+    $d30 = date('Y-m-d H:i:s', strtotime('-30 days'));
+    $d60 = date('Y-m-d H:i:s', strtotime('-60 days'));
+    $lg  = function_exists('authentik_lifeguard_sql') ? authentik_lifeguard_sql('s.id') : '0';
+    $sql = fn(string $lg) => "SELECT COUNT(*) totaal,
+                SUM(CASE WHEN s.aangemeld_op >= ? THEN 1 ELSE 0 END) r30,
+                SUM(CASE WHEN s.aangemeld_op >= ? AND s.aangemeld_op < ? THEN 1 ELSE 0 END) r30v,
+                SUM($lg) lifeguards,
+                SUM(CASE WHEN s.terugkerend = 1 AND $lg = 0 THEN 1 ELSE 0 END) terug,
+                SUM(CASE WHEN s.fase NOT IN ('aangenomen','afgewezen','afgehaakt') THEN 1 ELSE 0 END) lopend,
+                SUM(CASE WHEN s.fase = 'aangenomen' THEN 1 ELSE 0 END) aangenomen
+              FROM sollicitaties s WHERE s.seizoen_id = ?";
+    $t = [];
+    // Zonder koppeltabel (Authentik nooit ingesteld) tellen we zonder lifeguards in plaats van niets te tonen.
+    foreach ([$lg, '0'] as $_lg) {
+        try { $q = db()->prepare($sql($_lg)); $q->execute([$d30, $d60, $d30, $sid]); $t = $q->fetch() ?: []; break; } catch (\Throwable $e) {}
+    }
+    $vorig = null;
+    try {
+        $q = db()->prepare("SELECT COUNT(*) FROM sollicitaties WHERE seizoen_id = (SELECT MAX(id) FROM seizoenen WHERE id < ?)");
+        $q->execute([$sid]);
+        $vorig = (int)$q->fetchColumn();
+    } catch (\Throwable $e) {}
+
+    $n = fn(string $k) => (int)($t[$k] ?? 0);
+    $url = (!function_exists('mag') || mag('sollicitanten', 'lezen'))
+         ? fn(string $q) => APP_URL . '/admin/sollicitanten.php' . ($q !== '' ? '?' . $q : '') : fn(string $q) => null;
+    return [
+        ['waarde' => $n('totaal'), 'label' => 'Aanmeldingen', 'sub' => $vorig ? 'vorig seizoen ' . $vorig : 'dit seizoen', 'url' => $url('')],
+        ['waarde' => $n('r30'), 'label' => 'Laatste 30 dagen', 'sub' => '30 dagen daarvoor ' . $n('r30v'), 'url' => $url('toon=30d')],
+        ['waarde' => $n('lopend'), 'label' => 'In de procedure', 'sub' => 'nog niet besloten', 'url' => $url('toon=lopend')],
+        ['waarde' => $n('aangenomen'), 'label' => 'Aangenomen', 'sub' => 'dit seizoen', 'url' => $url('fase=aangenomen')],
+        ['waarde' => $n('lifeguards'), 'label' => 'Terugkerende lifeguards', 'sub' => 'met een Authentik-account', 'url' => $url('terug=lg')],
+        ['waarde' => $n('terug'), 'label' => 'Terugkerende sollicitanten', 'sub' => 'eerder gesolliciteerd', 'url' => $url('terug=sol')],
+    ];
+}
+
 /** Badges in het menu: alleen wat om aandacht vraagt. */
 function bh_nav_tellers(?array $seizoen): array {
     $uit = [];

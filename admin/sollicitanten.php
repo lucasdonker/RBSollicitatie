@@ -84,6 +84,7 @@ $filter_terug = (string)($_GET['terug'] ?? '');
 $filter_blk   = (string)($_GET['blk']   ?? '');
 $filter_comp  = (string)($_GET['comp']  ?? '');
 $filter_intrek = (string)($_GET['intrek'] ?? '');
+$filter_toon  = (string)($_GET['toon']  ?? '');
 $zoek         = trim((string)($_GET['q'] ?? ''));
 
 /** Bouwt een URL met de huidige filters, met één ding vervangen. */
@@ -94,6 +95,7 @@ function soll_url(array $vervang = []): string {
         'comp'  => $_GET['comp']  ?? null, 'sort' => $_GET['sort'] ?? null,
         'richting' => $_GET['richting'] ?? null, 'per' => $_GET['per'] ?? null,
         'pagina'   => $_GET['pagina']   ?? null, 'intrek' => $_GET['intrek'] ?? null,
+        'toon'     => $_GET['toon']     ?? null,
     ], $vervang), fn($v) => $v !== null && $v !== '');
     return '?' . http_build_query($p);
 }
@@ -241,7 +243,10 @@ endif; ?>
   $filter_velden = [
       ['soort' => 'zoek', 'naam' => 'q', 'label' => 'Zoek naam of e-mail', 'waarde' => $zoek, 'breed' => true],
       ['soort' => 'keuze', 'naam' => 'terug', 'label' => 'Terugkerend', 'waarde' => $filter_terug,
-       'opties' => ['' => 'Alle kandidaten', '1' => 'Alleen terugkerend']],
+       'opties' => ['' => 'Alle kandidaten', '1' => 'Alle terugkerenden', 'lg' => 'Terugkerende lifeguards',
+                    'sol' => 'Eerder gesolliciteerd (geen lifeguard)']],
+      ['soort' => 'keuze', 'naam' => 'toon', 'label' => 'Toon', 'waarde' => $filter_toon,
+       'opties' => ['' => 'Iedereen', 'lopend' => 'In de procedure', '30d' => 'Aangemeld in de laatste 30 dagen']],
       ['soort' => 'keuze', 'naam' => 'blk', 'label' => 'Kennismakingsformulier', 'waarde' => $filter_blk,
        'opties' => ['' => 'Formulier: alle', 'ja' => 'Formulier ingediend', 'nee' => 'Formulier open']],
       // Intrekverzoeken (ook afgehandelde): wie is doorgevoerd staat op Afgehaakt en valt buiten de fasetabs.

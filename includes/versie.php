@@ -3,10 +3,18 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.125.1');
+define('APP_VERSIE', '2.125.2');
 
 function app_changelog(): array {
     return [
+        '2.125.2' => [
+            'datum'  => '2026-09-27',
+            'titel'  => 'Vandaag: kengetallen',
+            'punten' => [
+                'Bovenaan Vandaag altijd zes kengetallen: aanmeldingen (met vorig seizoen), laatste 30 dagen (met de 30 dagen daarvoor), in de procedure, aangenomen, terugkerende lifeguards (Authentik-account) en terugkerende sollicitanten',
+                'Klik op een tegel voor de gefilterde lijst; Sollicitanten heeft daarvoor de keuzes Terugkerende lifeguards, Eerder gesolliciteerd en Toon (in de procedure / laatste 30 dagen)',
+            ],
+        ],
         '2.125.1' => [
             'datum'  => '2026-09-25',
             'titel'  => 'Beoordelen overzichtelijker, berichten met beide kanalen',
