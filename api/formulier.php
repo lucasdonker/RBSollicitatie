@@ -14,6 +14,13 @@
  *    WordPress zelf. Zou dit adres een meegegeven URL in de HTML zetten, dan had je een
  *    open doorstuurgat
  *
+ * Staat de aanmelding dicht, dan is 'html' het seintje-formulier (aanmeld_gesloten_html). Dat
+ * is de uitzondering op beide punten hierboven, met opzet: het post rechtstreeks vanuit de
+ * browser naar APP_URL/seintje.php (een vast adres, geen meegegeven URL) en draagt het
+ * anti-bot-token. Zo heeft de plugin er niets voor nodig: geen API-sleutel in de browser,
+ * geen nieuwe route via WordPress. Is het token verlopen (plugincache, noodvoorraad), dan
+ * toont /seintje.php het formulier opnieuw met de invoer erin; dat kost één extra klik.
+ *
  * Vereist de API-sleutel in de header X-Paal13-Key.
  */
 require_once __DIR__ . '/_basis.php';

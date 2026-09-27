@@ -508,6 +508,13 @@ function bh_vandaag_werkbak(?array $seizoen, array $hoofdtaak): array {
         $n = count(array_filter(documenten_overzicht($sid), fn($r) => $r['dossier']['compleet'] && !$r['dossier']['verwerkt']));
         $zet($n, 'loondossier te verwerken', 'loondossiers te verwerken', $a . 'documenten.php', 'Verwerken', 'oranje', 'slot');
     }
+    // Seintjes van de website (aanmelding was dicht): zodra de aanmelding open staat, wachten zij op
+    // precies dat bericht. Versturen gaat via Berichten, groep "Seintje gevraagd".
+    if ($mag('mailing', 'bewerken') && function_exists('seintje_wachtend_aantal') && function_exists('seizoen_voor_werving')
+        && (seizoen_voor_werving()['status'] ?? '') === 'open') {
+        $zet(seintje_wachtend_aantal(), 'persoon wacht op een seintje dat de aanmelding open is', 'mensen wachten op een seintje dat de aanmelding open is',
+             $a . 'berichten.php', 'Seintje sturen', 'oranje', 'bel');
+    }
     if ($mag('mailing')) {
         $n = $tel("SELECT COUNT(*) FROM mail_log WHERE status='mislukt' AND verstuurd_op > DATE_SUB(NOW(), INTERVAL 7 DAY)");
         $zet($n, 'bericht kwam deze week niet aan', 'berichten kwamen deze week niet aan', $a . 'berichten.php?tab=log', 'Bekijken', 'rood', 'mail');

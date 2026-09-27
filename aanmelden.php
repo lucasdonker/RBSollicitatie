@@ -6,6 +6,9 @@
  * zelf komt uit includes/aanmeldformulier.php — hier staat alleen wat op deze pagina anders
  * is: een echte sessie (dus csrf_check) en onze eigen omlijsting eromheen.
  *
+ * Staat de aanmelding dicht, dan staat hier het seintje-formulier (aanmeld_gesloten_html);
+ * dat post naar deze pagina, met csrf, en wordt verwerkt in includes/seintje_werving.php.
+ *
  * Met ?ingebed=1 vallen de kop en de voettekst weg, zodat de pagina in een iframe op
  * paal13.com niet twee keer een logo laat zien.
  */
@@ -59,55 +62,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $open) {
     }
 }
 
+// ── Aanmelding dicht: het seintje ────────────────────────────────────────
+$seintje = ['seintje_zelf' => true];
+$seintje_ok = isset($_GET['seintje']);
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$open && isset($_POST['p13_seintje']) && function_exists('seintje_werving_aanvragen')) {
+    // csrf zoals overal op deze pagina. Een verlopen sessie geeft hier geen kale 403 (zoals
+    // csrf_check), maar het formulier opnieuw met een melding: de invoer blijft staan.
+    csrf_token();
+    $csrf_ok = hash_equals((string)($_SESSION['csrf'] ?? ''), (string)($_POST['_csrf'] ?? ''));
+    $res = $csrf_ok
+        ? seintje_werving_aanvragen($_POST, ['vertrouwd' => true])
+        : ['ok' => false, 'code' => 'token', 'fout' => 'Controleer je gegevens en verstuur het formulier nog een keer.'];
+    if ($res['ok']) {
+        $q = ['seintje' => 1];
+        if ($ingebed) $q['ingebed'] = 1;
+        header('Location: ' . APP_URL . '/aanmelden.php?' . http_build_query($q) . '#aanmelden', true, 303);
+        exit;
+    }
+    http_response_code(422);
+    $seintje += ['seintje_waarden' => $_POST, 'seintje_fout' => $res['fout'], 'seintje_code' => $res['code']];
+}
+
 // Op onze eigen pagina schuift de kaart over de kopbalk heen; in een iframe niet.
-$opmaak = ['extra_class' => $ingebed ? '' : 'af-zelfstandig'];
+$opmaak = ['extra_class' => $ingebed ? '' : 'af-zelfstandig', 'bron_code' => $bron_code];
 
-$formulier = !$open
-    ? aanmeld_gesloten_html($opmaak)
-    : ($succes
-        ? aanmeld_succes_html($opmaak)
-        : aanmeld_formulier_html($opmaak + [
-            'bron_code' => $bron_code,
-            'waarden'   => $_SERVER['REQUEST_METHOD'] === 'POST' ? $_POST : [],
-            'fout'      => $fout,
-            'code'      => $code,
-            'csrf'      => true,
-            'prefix'    => 'af',
-          ]));
+if (!$open) {
+    $formulier = $seintje_ok ? aanmeld_seintje_succes_html($opmaak) : aanmeld_gesloten_html($opmaak + $seintje);
+} elseif ($succes) {
+    $formulier = aanmeld_succes_html($opmaak);
+} else {
+    $formulier = aanmeld_formulier_html($opmaak + [
+        'waarden'   => $_SERVER['REQUEST_METHOD'] === 'POST' ? $_POST : [],
+        'fout'      => $fout,
+        'code'      => $code,
+        'csrf'      => true,
+        'prefix'    => 'af',
+    ]);
+}
 
-$v = static fn(string $p): string => APP_URL . $p . '?v=' . (@filemtime(__DIR__ . $p) ?: '1');
-?>
-<!DOCTYPE html>
-<html lang="nl">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex,follow">
-<title>Aanmelden als lifeguard — Reddingsbrigade Paal 13</title>
-<meta name="description" content="Meld je aan voor de selectieprocedure van Reddingsbrigade Paal 13 in Callantsoog en Groote Keeten.">
-<link rel="stylesheet" href="<?= h($v('/assets/css/aanmeldformulier.css')) ?>">
-</head>
-<body class="af-pagina">
-<?php if (!$ingebed): ?>
-<header class="af-hero">
-  <img src="<?=APP_URL?>/assets/img/logo.png" alt="Reddingsbrigade Paal 13" width="120" height="46">
-  <h1>Word lifeguard op het strand</h1>
-  <p>Reddingsbrigade Callantsoog &amp; Groote Keeten</p>
-</header>
-<?php endif; ?>
-
-<main>
-  <?= $formulier ?>
-</main>
-
-<?php if (!$ingebed): ?>
-<?php // Eén adres voor sollicitanten (mail.contact_email, leeg = bestuursadres): portaal_contact_email(). ?>
-<?php $contact = portaal_contact_email(); ?>
-<footer class="af-voet">
-  Vragen over je aanmelding? Mail <a href="mailto:<?= h($contact) ?>"><?= h($contact) ?></a>.
-</footer>
-<?php endif; ?>
-
-<script src="<?= h($v('/assets/js/aanmeldformulier.js')) ?>" defer></script>
-</body>
-</html>
+echo aanmeld_pagina_html($formulier, [
+    'titel'        => 'Aanmelden als lifeguard — Reddingsbrigade Paal 13',
+    'beschrijving' => 'Meld je aan voor de selectieprocedure van Reddingsbrigade Paal 13 in Callantsoog en Groote Keeten.',
+    'ingebed'      => $ingebed,
+]);

@@ -134,6 +134,9 @@ function bh_verzend_zin(array $r): array {
  *   'oud'     — ooit aangenomen: gerechtvaardigd belang (werk-/lidmaatschapsrelatie).
  *   'seintje' — afgewezen of afgehaakt, maar zelf om een seintje gevraagd, en die
  *               toestemming is nog geen seintje_termijn_mnd() oud (includes/seintje.php).
+ *               Plus wie buiten het seizoen via de website om een seintje vroeg en dat
+ *               bevestigde (includes/seintje_werving.php): die rijen hebben sol_id = -id,
+ *               persoon_id 0 en 'werving_seintje_id'; verzenden via seintje_werving_verstuur().
  * Wie zich heeft afgemeld, is geanonimiseerd, zijn gegevens liet verwijderen of zich dit
  * seizoen al heeft aangemeld, valt er vanzelf af. Afgewezen zónder seintje komt er nooit
  * in: daar is geen grondslag voor (AVG art. 6, Telecommunicatiewet art. 11.7).
@@ -150,6 +153,7 @@ function bh_vorige_seizoenen(int $huidig_seizoen_id): array {
     if (function_exists('optout_auto_setup')) optout_auto_setup();
     if (function_exists('personen_kanaal_auto_setup')) personen_kanaal_auto_setup();
     $mnd = function_exists('seintje_termijn_mnd') ? seintje_termijn_mnd() : 12;
+    $rijen = [];
     try {
         $q = db()->prepare("
             SELECT a.sol_id, p.id AS persoon_id, p.voornaam, p.tussenvoegsel, p.achternaam, p.email, p.telefoon,
@@ -169,11 +173,17 @@ function bh_vorige_seizoenen(int $huidig_seizoen_id): array {
               AND NOT EXISTS (SELECT 1 FROM sollicitaties s2 WHERE s2.persoon_id = p.id AND s2.seizoen_id = ?)
             ORDER BY p.achternaam, p.voornaam");
         $q->execute([$huidig_seizoen_id, $mnd, $huidig_seizoen_id]);
-        return $q->fetchAll();
+        $rijen = $q->fetchAll();
     } catch (\Throwable $e) {
         error_log('bh_vorige_seizoenen: ' . $e->getMessage());
-        return [];
     }
+    // Plus wie buiten het seizoen via de website om een seintje vroeg en dat bevestigde
+    // (includes/seintje_werving.php). Ontdubbeld op e-mailadres: wie hierboven al staat,
+    // krijgt het bericht via die rij. Die rijen hebben een negatief sol_id.
+    if (function_exists('seintje_werving_doelgroep')) {
+        $rijen = array_merge($rijen, seintje_werving_doelgroep($huidig_seizoen_id, array_column($rijen, 'email')));
+    }
+    return $rijen;
 }
 
 } // function_exists

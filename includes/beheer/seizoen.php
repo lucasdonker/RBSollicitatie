@@ -107,6 +107,11 @@ function bh_seizoen_gevolgen(string $actie, array $sz, ?array $ander_open = null
             $regels[] = 'Het beheer (Vandaag, Sollicitanten, Selectiedag, Trainingsweekend) werkt daarna met ' . $naam
                       . ' in plaats van ' . ($actief['naam'] ?? 'het huidige seizoen') . '.';
         }
+        $wacht = function_exists('seintje_wachtend_aantal') ? seintje_wachtend_aantal() : 0;
+        if ($wacht > 0) {
+            $regels[] = ($wacht === 1 ? 'Eén persoon liet' : $wacht . ' mensen lieten') . ' via de website een e-mailadres achter voor een seintje. '
+                      . 'Stuur ze na het openen een bericht via Berichten › Seintje gevraagd; Vandaag herinnert je eraan.';
+        }
         return [
             'titel'  => 'Aanmelding voor ' . $naam . ' openen?',
             'regels' => $regels,

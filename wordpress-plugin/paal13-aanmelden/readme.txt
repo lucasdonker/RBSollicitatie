@@ -56,8 +56,10 @@ aan dat dat niet mag (DONOTCACHEPAGE); sluit de pagina anders met de hand uit va
 
 = De aanmelding is gesloten, maar ik wil de pagina alvast klaarzetten =
 
-Dat kan. Zolang het seizoen in het beheer op "gesloten" staat, laat het formulier een nette
-melding zien in plaats van invulvelden.
+Dat kan. Zolang het seizoen in het beheer op "gesloten" staat, laat het formulier een klein
+seintje-formulier zien: bezoekers laten voornaam en e-mailadres achter en krijgen één bericht
+als de aanmelding opengaat. Dat formulier post rechtstreeks naar het sollicitatiesysteem
+(/seintje.php), niet via WordPress; de plugin hoeft er niets voor te doen.
 
 = Kan ik het formulier zelf opmaken? =
 

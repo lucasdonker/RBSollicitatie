@@ -20,6 +20,9 @@
  *
  * Opslag: personen.seintje_op (moment van toestemming, NULL = geen) en seintje_bron (waar).
  * Het token is het bestaande afmeld-token (optout_token) — één geheim per persoon.
+ *
+ * Iemand zonder sollicitatie (de aanmelding is dicht) vraagt het seintje via het formulier in
+ * aanmeld_gesloten_html(); dat staat in een eigen tabel, zie includes/seintje_werving.php.
  */
 
 if (!function_exists('seintje_auto_setup')) {
@@ -127,3 +130,6 @@ function seintje_mailblok(string $url): string {
 }
 
 }
+
+// Het seintje voor mensen zonder sollicitatie (aanmelding dicht): eigen tabel, zelfde termijn.
+if (file_exists(__DIR__ . '/seintje_werving.php')) require_once __DIR__ . '/seintje_werving.php';

@@ -89,6 +89,7 @@ verklaring leest dezelfde instellingen voor de termijnen.
 | Wervingspagina's en statistiek | art. 6 lid 1 sub f | pseudoniem 30 dagen, telling 13 maanden |
 | Beheerders en logboek | art. 6 lid 1 sub f en art. 32 | logboek 12 maanden, fouten 90 dagen |
 | Seintje bij de volgende werving | art. 6 lid 1 sub a; oud-strandwachten sub f | maximaal 12 maanden |
+| Seintje buiten het seizoen (nog niet gesolliciteerd) | art. 6 lid 1 sub a, met dubbele bevestiging | onbevestigd 7 dagen; na het bericht weg; maximaal 12 maanden |
 
 ## Hosting en vaste verwerkers
 
@@ -343,6 +344,22 @@ BLK-analyse op productie aan gaat.
 | Bewaartermijn | Maximaal 12 maanden na de toestemming (`bewaar.seintje_mnd`, standaard 12). Na intrekken: anonimiseren volgens `bewaar.afgewezen_weken`. |
 | Beveiliging | Toestemming geven nooit op een GET (mailscanners), alleen na een klik op een knop; intrekken via de afmeldlink of in het portaal. |
 
+**Seintje buiten het seizoen.** Staat de aanmelding dicht, dan tonen het aanmeldformulier, de
+wervingspagina's en het formulier op paal13.com een klein formulier: "laat je e-mailadres achter,
+dan sturen we je één bericht zodra je je kunt aanmelden" (`includes/seintje_werving.php`).
+
+| Onderdeel | Inhoud |
+|---|---|
+| Doel | Mensen die nog niet solliciteerden één bericht sturen als de aanmelding opengaat. |
+| Grondslag | Art. 6 lid 1 sub a AVG, toestemming: een apart, niet vooraf aangevinkt vakje "Ja, stuur me één bericht als de werving opent", met de privacyverklaring erbij. Dubbele bevestiging (double opt-in): pas na de klik in de bevestigingsmail staat het seintje aan, want iedereen kan elk adres invullen (AVG art. 7 lid 1 aantoonbaarheid, Telecommunicatiewet art. 11.7). |
+| Betrokkenen | Bezoekers van het aanmeldformulier, een wervingspagina of paal13.com buiten de aanmeldperiode. |
+| Persoonsgegevens | Voornaam, e-mailadres, bron (pagina of campagne, voor de statistiek), moment van aanvragen, bevestigen en versturen, en een token (alleen als sha256-hash). Tabel `werving_seintje`. Het IP-adres komt alleen in het logboek (bevestigen, intrekken) en in de snelheidsbegrenzing, niet in de tabel. |
+| Ontvangers en verwerkers | Bestuur (module `mailing`, Berichten › groep Seintje gevraagd). E-mailprovider. Alleen e-mail; geen WhatsApp of sms (geen telefoonnummer). |
+| Doorgifte buiten de EER | Nee. |
+| Bewaartermijn | Onbevestigd: 7 dagen, daarna weg (altijd, ook met `bewaar.actief` uit: zonder bevestiging is er geen toestemming). Bevestigd: tot het openingsbericht is verstuurd (een dag later weg), en uiterlijk `bewaar.seintje_mnd` maanden (standaard en maximaal 12) na de bevestiging. Intrekken: meteen weg. |
+| Intrekken | De link in de bevestigingsmail en de afmeldlink onder het openingsbericht leiden naar `/seintje.php` met de knop "Toch geen seintje"; die verwijdert de rij direct (art. 7 lid 3). |
+| Beveiliging | Anti-bot-token (wervingspagina, paal13.com) of csrf (`/aanmelden.php`), honeypot, maximaal 10 aanvragen per uur per IP-adres en maximaal 3 bevestigingsmails per adres per dag. Bevestigen en intrekken alleen met een knop die post, niet op een GET (mailscanners). Het scherm verklapt nooit of een adres al bekend is. De bevestigingsmail wordt niet gelogd (`body_loggen` uit). |
+
 ## Bijzonderheden
 
 > **In het kort:** twee leeftijdsgrenzen die juridisch los van elkaar staan: 15/16 voor aanmelden
@@ -384,7 +401,7 @@ begeleiders zien dat veld daarom niet, en het gaat niet naar de AI-dienst.
 | Verbeteren (art. 16) | De sollicitant stelt een vraag via het blok "Een vraag?" in het portaal (komt bij het bestuur binnen met naam en fase). Het bestuur corrigeert in het dossier; een wijziging aan het kennismakingsformulier wordt met reden vastgelegd. |
 | Verwijderen (art. 17) | Portaal › Mijn gegevens › Mijn account verwijderen (bevestigen met VERWIJDER): het dossier wordt leeggemaakt en de persoon geanonimiseerd; het bestuur krijgt bericht. Is het loondossier verwerkt, dan blijven alleen het loondossier, naam en geboortedatum (art. 17 lid 3 sub b, zie [Loondossier](#loondossier)); het scherm legt uit wat blijft en tot wanneer. Een verzoek per mail handelt het bestuur af in het dossier: Verwijderen, voor één sollicitatie of de hele persoon. Een verwerkt loondossier gaat daar alleen mee met de verklaring dat het dienstverband niet is doorgegaan. |
 | Bezwaar (art. 21) | Tegen verwerking op grond van gerechtvaardigd belang. AI-analyse: via een vraag in Berichten of per mail; het bestuur zet het bezwaar met de knop "Bezwaar vastleggen" op het kennismakingsformulier (`ai_bezwaar_zetten()`), de analyse wordt gewist en niet opnieuw gemaakt. Wervingsberichten aan oud-strandwachten: de afmeldlink. |
-| Toestemming intrekken (art. 7 lid 3) | Seintje: afmeldlink of de knop in het portaal. Foto's: per mail. Wat al gebeurde blijft rechtmatig. |
+| Toestemming intrekken (art. 7 lid 3) | Seintje: afmeldlink of de knop in het portaal. Seintje buiten het seizoen: de knop "Toch geen seintje" achter de link in de mail (gegevens meteen weg). Foto's: per mail. Wat al gebeurde blijft rechtmatig. |
 | Beperking en overdraagbaarheid (art. 18, 20) | Per mail aan het bestuur; de JSON-download dient als overdraagbaar bestand. |
 | Apparaten | Mijn gegevens › "vergeet alle apparaten" trekt alle "blijf ingelogd"-tokens in. |
 
@@ -436,4 +453,5 @@ gebruiken. Het datalekregister zelf houdt het bestuur buiten dit systeem bij.
 | 24 september 2026 | Het lettertype (Instrument Sans) staat nu op de eigen server; er gaat geen IP-adres meer naar Google Fonts. Google Fonts uit de lijst met verwerkers gehaald. |
 | 24 september 2026 | Beschikbaarheid exporteren naar Excel (per week of per dag, met redenen van afwezigheid): alleen naam, fase en opgave, geen contactgegevens of geboortedatum; elke export in het logboek. Loonplanning: vastzetten na het TW-gesprek (`loon_vergrendeling`: wie en wanneer; ontgrendelen met reden in het logboek). |
 | 24 september 2026 | Selectiedag en trainingsweekend: bevestiging "ik kom / ik kan niet" met reden, het gesprek met het bestuur (besluit, interne notitie, bericht aan de sollicitant), vergrendeling "bezig door" en de incheck-tablet met foto. Alles zit in de inzage en gaat mee bij wissen. |
+| 27 september 2026 | Seintje buiten het seizoen: wie nog niet solliciteerde kan bij een gesloten aanmelding om één bericht vragen (voornaam, e-mail, bron; dubbele bevestiging; onbevestigd 7 dagen, daarna tot het bericht en maximaal 12 maanden). Tabel `werving_seintje`; privacyverklaring bijgewerkt. |
 | 27 september 2026 | Drie punten uit "Nog vast te leggen" zijn gebouwd en naar hun hoofdstuk verplaatst: de knop "Bezwaar vastleggen" voor de AI-analyse, naam en geboortedatum weg na het vernietigen van een bewaard loondossier, en de wachtrijtekst van niet-gelogde berichten leeg na verzending. Lidmaatschap van minderjarigen: de ouder of verzorger tekent, de SEPA-machtiging tekent de rekeninghouder (in aanbouw). Privacyverklaring: de termijn van de gezondheidsgegevens volgt nu `bewaar.gezondheid_mnd`, en het tekenen van het lidmaatschap door de ouder staat erin. |

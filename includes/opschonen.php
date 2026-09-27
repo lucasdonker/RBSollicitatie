@@ -18,6 +18,8 @@
  *    statistiek blijft), niet hard verwijderd. Wat er dan precies verdwijnt staat op één
  *    plek, gedeeld met "gegevens laten verwijderen" in het portaal: includes/avg_wissen.php.
  *    Een seintje (includes/seintje.php) stelt dat uit tot de toestemming verloopt.
+ *  - Een seintje buiten het seizoen (includes/seintje_werving.php, eigen tabel) verdwijnt na
+ *    het openingsbericht of na seintje_termijn_mnd(); onbevestigd na zeven dagen (altijd).
  *  - Alles wordt gelogd in de tabel `opschoon_log`.
  */
 
@@ -80,12 +82,15 @@ function opschoon_loonsoorten(): array {
  * Een uur marge: een code die net verliep, kan nog in een formulier op het scherm staan.
  */
 function opschoon_vervallen(): array {
-    $uit = ['codes' => 0, 'tellingen' => 0];
+    $uit = ['codes' => 0, 'tellingen' => 0, 'seintje_onbevestigd' => 0];
     try {
         $uit['codes'] = opschoon_rijen(db(), 'otp_tokens',
             "vervalt_op < DATE_SUB(NOW(), INTERVAL 1 HOUR) OR (gebruikt = 1 AND aangemaakt_op < DATE_SUB(NOW(), INTERVAL 1 HOUR))", [], false);
     } catch (\Throwable $e) {}
     if (function_exists('rate_limit_opruimen')) $uit['tellingen'] = rate_limit_opruimen();
+    // Een seintje-aanvraag die na zeven dagen niet is bevestigd: een verlopen link, geen
+    // bewaartermijn. Zonder bevestiging hebben we geen toestemming, dus ook los van bewaar.actief.
+    if (function_exists('seintje_werving_opschonen')) $uit['seintje_onbevestigd'] = seintje_werving_opschonen(true)['onbevestigd'];
     return $uit;
 }
 }
@@ -170,6 +175,20 @@ function opschoon_run(bool $dry_run = false, string $bron = 'cron'): array {
         } catch (\Exception $e) {
             $uit['categorieen']['afgewezen_geanonimiseerd'] = ['fout' => $e->getMessage()];
             error_log('opschoon afgewezen: ' . $e->getMessage());
+        }
+    }
+
+    // ── 1a. Seintje buiten het seizoen (includes/seintje_werving.php) ──
+    // Weg na het openingsbericht (een dag marge voor de afmeldlink), of als de toestemming
+    // ouder is dan seintje_termijn_mnd(). Onbevestigde aanvragen gaan al eerder, in
+    // opschoon_vervallen(); die telt hier voor de volledigheid mee.
+    if (function_exists('seintje_werving_opschonen')) {
+        try {
+            $r = seintje_werving_opschonen(false, $dry_run);
+            $uit['categorieen']['seintje_werving_verwijderd'] = $r['onbevestigd'] + $r['afgerond'];
+            if (!$dry_run) opschoon_log_schrijf('seintje_werving_verwijderd', $r['onbevestigd'] + $r['afgerond'], $bron);
+        } catch (\Throwable $e) {
+            $uit['categorieen']['seintje_werving_verwijderd'] = ['fout' => $e->getMessage()];
         }
     }
 

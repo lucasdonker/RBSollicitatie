@@ -118,7 +118,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tab === 'nieuw') {
             $nu_seizoen = ['seizoen_naam' => (string)($seizoen['naam'] ?? ''), 'seizoen.naam' => (string)($seizoen['naam'] ?? '')];
             foreach ($ids as $id) {
                 if (!isset($namen[$id])) continue;
-                $r = melding_verstuur('handmatig', $id, isset($vorig_ids[$id]) ? $inhoud + $nu_seizoen : $inhoud, ['override' => $override, 'kanaalmodus' => $modus, 'prioriteit' => $prio, 'referentie' => 'handmatig:' . date('YmdHi'), 'bijlagen' => $bijlagen_opties]);
+                $opt = ['override' => $override, 'kanaalmodus' => $modus, 'prioriteit' => $prio, 'referentie' => 'handmatig:' . date('YmdHi'), 'bijlagen' => $bijlagen_opties];
+                // Negatief id = seintje via de website, zonder sollicitatie (includes/seintje_werving.php):
+                // altijd e-mail, eigen afmeldlink, en daarna gemarkeerd als verstuurd.
+                $r = $id < 0
+                    ? seintje_werving_verstuur(-$id, $inhoud + $nu_seizoen, $opt)
+                    : melding_verstuur('handmatig', $id, isset($vorig_ids[$id]) ? $inhoud + $nu_seizoen : $inhoud, $opt);
                 $st = $r['status'];
                 if ($st === 'verstuurd') $resultaat['ok']++; elseif ($st === 'wacht') $resultaat['wacht']++; elseif ($st === 'overgeslagen') $resultaat['overgeslagen']++; else $resultaat['mislukt']++;
                 $resultaat['details'][] = ['naam' => $namen[$id], 'status' => $st, 'kanaal' => $r['kanaal'] ?? null, 'reden' => $r['reden'] ?? null];
@@ -512,7 +517,8 @@ require __DIR__ . '/layout_top.php';
             </label>
             <?php foreach ($per_vorig[$g] as $v) {
               $ontv = $v; $ontv_id = (int)$v['sol_id']; $ontv_groep = $g; $ontv_label = $gl;
-              $ontv_sub = $v['laatste_seizoen'] ? 'laatst ' . $v['laatste_seizoen'] : '';
+              $ontv_sub = $v['laatste_seizoen'] ? 'laatst ' . $v['laatste_seizoen']
+                        : (!empty($v['werving_seintje_id']) ? 'via de website, nog niet gesolliciteerd' : '');
               $ontv_aan = in_array((int)$v['sol_id'], $voorsel, true);
               require __DIR__ . '/_ontvrij.php';
             } ?>
@@ -520,8 +526,9 @@ require __DIR__ . '/layout_top.php';
           <?php endforeach; ?>
           <?php if ($per_vorig): ?>
             <p class="ds-veld-hint">
-              Vorige seizoenen: alleen oud-strandwachten en wie zelf om een seintje vroeg. Afgewezen
-              zonder seintje staan hier bewust niet: daarvoor ontbreekt de toestemming.
+              Vorige seizoenen: alleen oud-strandwachten en wie zelf om een seintje vroeg (ook via
+              de website toen de aanmelding dicht was; die krijgen het bericht één keer, per e-mail).
+              Afgewezen zonder seintje staan hier bewust niet: daarvoor ontbreekt de toestemming.
             </p>
           <?php endif; ?>
         </div>

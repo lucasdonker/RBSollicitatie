@@ -572,3 +572,24 @@
   .af-pv-inhoud ol { columns: 1; }
   .af-pv td:first-child { width: auto; }
 }
+
+/* === seintje buiten seizoen (agent S) === */
+/* Aanmelding dicht: geen dood einde maar een klein formulier (aanmeld_gesloten_html). De
+   amberkleurige rand zegt "nog niet open"; de kaart zelf blijft de gewone formulierkaart,
+   zodat velden en tekst in licht én donker hun contrast houden. */
+.af-kaart.af-seintje { background: var(--af-vlak); }
+.af-seintje .af-titel { color: var(--af-navy); }
+.af-seintje-velden { margin-top: 4px; }
+.af-seintje .af-akkoord { margin-top: 4px; }
+
+/* De knop op /seintje.php (bevestigen, intrekken) staat in een gecentreerde meldingskaart. */
+.af-seintje-knop .af-acties { justify-content: center; margin-top: 18px; }
+.af-seintje-knop .af-knop { flex: 0 1 320px; }
+
+@media (prefers-color-scheme: dark) {
+  /* .af-gesloten heeft een lichte achtergrond; op onze eigen donkere pagina zou lichte tekst
+     daarop onleesbaar zijn. */
+  .af-zelfstandig.af-gesloten { background: var(--af-vlak); }
+  .af-zelfstandig.af-gesloten .af-titel { color: #f0c96a; }
+  .af-zelfstandig.af-seintje .af-titel { color: var(--af-navy); }
+}

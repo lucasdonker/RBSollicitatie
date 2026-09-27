@@ -1616,8 +1616,10 @@ Onder de fases van het huidige seizoen staan twee groepen uit vorige seizoenen:
 - **Oud-strandwachten**: iedereen die ooit is aangenomen. Die mag je als vereniging benaderen,
   met de afmeldlink eronder.
 - **Seintje gevraagd**: afgewezen sollicitanten die zelf om een bericht bij de volgende werving
-  vroegen, minder dan twaalf maanden geleden (zie
-  [Seintje bij de volgende werving](#seintje-bij-de-volgende-werving)).
+  vroegen, minder dan twaalf maanden geleden, en mensen die dat via de website deden toen de
+  aanmelding dicht was ("via de website, nog niet gesolliciteerd"; die krijgen het bericht één
+  keer, per e-mail). Zie
+  [Seintje bij de volgende werving](#seintje-bij-de-volgende-werving).
 
 Bij elke naam staat "laatst (seizoen)". Wie zich heeft afgemeld, is geanonimiseerd of zich dit
 seizoen al heeft aangemeld, staat er niet in. Afgewezen mensen zonder seintje staan er bewust niet
@@ -1846,6 +1848,39 @@ het terugdraaien met **Toch geen seintje**.
 
 Oud-strandwachten hebben geen seintje nodig. Die mag je als vereniging benaderen, met de afmeldlink
 eronder, en die zet het systeem er zelf onder.
+
+### Seintje buiten het seizoen (nog niet gesolliciteerd)
+
+Staat de aanmelding dicht, dan zie je op het aanmeldformulier, op elke wervingspagina en in het
+formulier op paal13.com niet meer "De aanmelding is gesloten", maar: **De aanmelding voor het
+volgende seizoen is nog niet open. Laat je e-mailadres achter, dan sturen we je één bericht zodra je
+je kunt aanmelden.** De bezoeker vult voornaam en e-mailadres in en zet een vinkje.
+
+- Daarna krijgt die een mail **Bevestig je seintje**. Pas na de klik op de knop in die mail (en
+  daarna nog een knop op de pagina, want mailscanners openen links vooraf) staat het seintje aan.
+  Iedereen kan immers elk adres invullen. Wie niet binnen zeven dagen bevestigt, verdwijnt vanzelf.
+- Het scherm zegt altijd hetzelfde, ook als het adres al bekend is. Zo kan niemand uitproberen wie
+  er op de lijst staat.
+- Je doet er niets voor: de bevestigde seintjes staan bij Berichten in de groep **Seintje
+  gevraagd**, met onder de naam "via de website, nog niet gesolliciteerd".
+
+**Als de werving opent, iedereen in één keer mailen:**
+
+1. Zet het seizoen op open (daarmee verdwijnt het seintje-formulier en staat het aanmeldformulier er weer).
+2. Ga naar Berichten › Nieuw bericht en klik bij **Aan** op **+ Seintje gevraagd (n)**. Daarin
+   zitten afgewezen sollicitanten met een seintje én de seintjes van de website. Staat iemand er
+   twee keer in met hetzelfde e-mailadres, of heeft die zich dit seizoen al aangemeld, dan krijgt
+   die het bericht maar één keer (of niet).
+3. Schrijf het bericht met {{aanmeld_url}} en verstuur. De seintjes van de website gaan altijd per
+   e-mail (er is geen telefoonnummer), met een eigen afmeldregel eronder.
+4. Wie het bericht heeft gekregen, staat daarna niet meer in de groep: je kunt ze niet per ongeluk
+   twee keer mailen. Een dag later verwijdert het opschonen hun gegevens (als automatisch opschonen
+   aan staat). Een seintje dat nooit wordt gebruikt, vervalt na de termijn **Seintje bij de volgende
+   werving** (standaard 12 maanden).
+
+Intrekken kan de bezoeker zelf met de link in de bevestigingsmail of onder het bericht (knop **Toch
+geen seintje**); de gegevens zijn dan meteen weg. In het [Logboek](#logboek) zie je bevestigen en
+intrekken terug, zonder naam of adres.
 
 ---
 

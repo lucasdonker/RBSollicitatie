@@ -598,6 +598,23 @@ function meldingen_register(): array {
             ],
         ]),
 
+        /* Seintje buiten het seizoen (includes/seintje_werving.php): de dubbele bevestiging.
+           Iedereen kan elk adres invullen, dus pas na deze klik staat het seintje aan. De knop
+           opent een pagina met nóg een knop die post: mailscanners bezoeken links vooraf.
+           De inhoud wordt niet gelogd, want de link is het geheim. Alleen e-mail. */
+        'werving_seintje_bevestigen' => array_merge($std, [
+            'naam' => 'Seintje bij de werving: bevestig je e-mailadres', 'categorie' => 'systeem', 'ontvanger' => 'direct',
+            'kanaal_standaard' => 'email', 'kort_toegestaan' => false, 'dedup_min' => 0, 'body_loggen' => false,
+            'beschrijving' => 'Als iemand bij een gesloten aanmelding om een seintje vraagt. Pas na de klik op de knop staat het seintje aan; zonder bevestiging verdwijnt de aanvraag na zeven dagen. De inhoud wordt niet gelogd.',
+            'vars' => ['bevestig_url', 'bevestig_dagen'],
+            'seed' => [
+                'onderwerp' => 'Bevestig je seintje — Paal 13',
+                'hero_titel' => 'Bevestig je seintje', 'hero_subtitel' => 'Dan hoor je het als de aanmelding opengaat',
+                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Je vroeg om een seintje als de aanmelding voor het volgende seizoen bij Reddingsbrigade Paal 13 opengaat. Bevestig met de knop hieronder dat dit jouw e-mailadres is.</p>\n[knop href=\"{{bevestig_url}}\"]Bevestig mijn seintje[/knop]\n<p>Daarna sturen we je één bericht zodra je je kunt aanmelden. Na dat bericht verwijderen we je gegevens.</p>\n[info]Heb jij dit niet aangevraagd? Dan hoef je niets te doen. Zonder bevestiging verwijderen we je gegevens binnen {{bevestig_dagen}} dagen.[/info]",
+                'tekst_kort' => '', 'samenvatting' => '',
+            ],
+        ]),
+
         // ── Handmatig en gepland ──────────────────────────────────────
         'gepland' => array_merge($std, [
             'naam' => 'Gepland bericht', 'categorie' => 'gepland', 'kanaal_standaard' => 'email', 'dedup_min' => 0,

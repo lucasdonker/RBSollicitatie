@@ -98,8 +98,11 @@ function aanmeld_track_url(): string {
     return (defined('APP_URL') ? APP_URL : '') . '/track.php';
 }
 
-/** Eén invoerveld met label, hulptekst en foutplek. */
-function aanmeld_veld_html(array $veld, array $waarden, string $foutveld, string $p): string {
+/**
+ * Eén invoerveld met label, hulptekst en foutplek.
+ * $fouttekst: melding van de server voor dít veld (alleen als $foutveld dit veld is).
+ */
+function aanmeld_veld_html(array $veld, array $waarden, string $foutveld, string $p, string $fouttekst = ''): string {
     $naam  = $veld['naam'];
     $id    = $p . '-' . $naam;
     $fout  = $foutveld === $naam;
@@ -141,7 +144,7 @@ function aanmeld_veld_html(array $veld, array $waarden, string $foutveld, string
     }
 
     if ($hulp !== '') $uit .= '<p class="af-hulp" id="' . h($hulp_id) . '">' . h($hulp) . '</p>';
-    $uit .= '<p class="af-veldfout" id="' . h($fout_id) . '" data-af-veldfout></p>';
+    $uit .= '<p class="af-veldfout" id="' . h($fout_id) . '" data-af-veldfout>' . ($fout ? h($fouttekst) : '') . '</p>';
     $uit .= '</div>';
     return $uit;
 }
@@ -183,13 +186,144 @@ function aanmeld_extra_class(array $opties): string {
     return ' ' . $extra;
 }
 
-/** Bericht als er geen open seizoen is. */
+/** De velden van het seintje-formulier; zelfde opbouw als aanmeld_velden(). */
+function aanmeld_seintje_velden(): array {
+    return [
+        ['naam' => 'voornaam', 'type' => 'text',  'label' => 'Voornaam',    'verplicht' => true,
+         'autocomplete' => 'given-name', 'breedte' => 'vol'],
+        ['naam' => 'email',    'type' => 'email', 'label' => 'E-mailadres', 'verplicht' => true,
+         'autocomplete' => 'email', 'breedte' => 'vol',
+         'hulp' => 'Je krijgt eerst een mail om te bevestigen dat dit jouw adres is.'],
+    ];
+}
+
+/**
+ * Staat de aanmelding dicht, dan geen dood einde maar een seintje: voornaam, e-mailadres en
+ * een vinkje. De verwerking staat in includes/seintje_werving.php.
+ *
+ * Waar het formulier heen post:
+ *   - op /aanmelden.php naar zichzelf, met csrf (seintje_zelf)
+ *   - overal anders (wervingspagina, WordPress, /seintje.php) naar /seintje.php, met het
+ *     anti-bot-token. Een wervingspagina en paal13.com hebben geen sessie, en p.php en de
+ *     plugin verwerken alleen het aanmeldformulier; daarom één eigen adres.
+ *
+ * $opties (naast die van aanmeld_formulier_html: prefix, bron_code, extra_class):
+ *   seintje_zelf     bool    naar dezelfde pagina posten, met csrf
+ *   seintje_waarden  array   eerder ingevulde waarden
+ *   seintje_fout     string  melding van de server
+ *   seintje_code     string  foutcode uit seintje_werving_aanvragen()
+ */
 function aanmeld_gesloten_html(array $opties = []): string {
-    return '<div class="af-kaart af-melding af-gesloten' . aanmeld_extra_class($opties) . '" id="aanmelden" role="status">'
-         . '<h2 class="af-titel">De aanmelding is gesloten</h2>'
-         . '<p>Op dit moment kun je je niet aanmelden. Zodra de inschrijving voor het volgende seizoen '
-         . 'opengaat, staat dat op onze website en op social media.</p>'
+    $p       = (string)($opties['prefix'] ?? 'af') . '-seintje';
+    $bron    = (string)($opties['bron_code'] ?? '');
+    $zelf    = !empty($opties['seintje_zelf']);
+    $waarden = (array)($opties['seintje_waarden'] ?? []);
+    $fout    = (string)($opties['seintje_fout'] ?? '');
+    $code    = (string)($opties['seintje_code'] ?? '');
+    $foutveld = function_exists('seintje_werving_fout_veld') ? seintje_werving_fout_veld($code) : '';
+    $actie   = $zelf ? '' : (defined('APP_URL') ? APP_URL : '') . '/seintje.php';
+    $privacy = aanmeld_privacy_url();
+    $mnd     = function_exists('seintje_termijn_mnd') ? seintje_termijn_mnd() : 12;
+    $akk_inv = $foutveld === 'seintje_akkoord';
+
+    $uit  = '<div class="af-kaart af-gesloten af-seintje' . aanmeld_extra_class($opties) . '" id="aanmelden" data-af-kaart data-af-bron="' . h($bron) . '">';
+    $uit .= '<div class="af-top">'
+          . '<h2 class="af-titel">De aanmelding voor het volgende seizoen is nog niet open</h2>'
+          . '<p class="af-sub">Laat je e-mailadres achter, dan sturen we je één bericht zodra je je kunt aanmelden.</p>'
+          . '</div>';
+
+    if ($fout !== '') {
+        $uit .= '<div class="af-fout" id="' . h($p) . '-fout" role="alert" tabindex="-1" data-formulier-fout>'
+              . '<strong>Je aanvraag is nog niet verstuurd.</strong><p>' . h($fout) . '</p></div>';
+    }
+
+    $uit .= '<form method="post"' . ($actie !== '' ? ' action="' . h($actie) . '"' : '') . ' class="af-form" novalidate data-af-form>';
+    if ($zelf && function_exists('csrf_input')) {
+        $uit .= csrf_input();
+    } elseif (function_exists('pag_token_maak') && function_exists('seintje_werving_token_bron')) {
+        $uit .= '<input type="hidden" name="p13_t" value="' . h(pag_token_maak(seintje_werving_token_bron())) . '">';
+    }
+    $uit .= '<input type="hidden" name="p13_seintje" value="1">';
+    if ($bron !== '') $uit .= '<input type="hidden" name="bron_code" value="' . h($bron) . '">';
+    // Vangnet: uit beeld, uit de tab-volgorde en verborgen voor voorleessoftware.
+    $uit .= '<div class="af-vangnet" aria-hidden="true">'
+          . '<label for="' . h($p) . '-website">Website (niet invullen)</label>'
+          . '<input type="text" id="' . h($p) . '-website" name="p13_w" tabindex="-1" autocomplete="off">'
+          . '</div>';
+
+    // data-af-stap: het script controleert de velden hierin vóór het verzenden (één stap,
+    // dus geen stappenbalk).
+    $uit .= '<div class="af-seintje-velden" data-af-stap="1">';
+    foreach (aanmeld_seintje_velden() as $veld) {
+        $uit .= aanmeld_veld_html($veld, $waarden, $foutveld, $p, $fout);
+    }
+    $uit .= '<div class="af-vink af-akkoord" data-af-veld="seintje_akkoord">'
+          . '<input type="checkbox" id="' . h($p) . '-akkoord" name="seintje_akkoord" value="1" required aria-required="true"'
+          . ' aria-describedby="' . h($p) . '-akkoord-fout"' . ($akk_inv ? ' aria-invalid="true"' : '') . '>'
+          . '<label for="' . h($p) . '-akkoord">Ja, stuur me één bericht als de werving opent. Ik heb de '
+          . '<a href="' . h($privacy) . '" target="_blank" rel="noopener">privacyverklaring</a> gelezen.</label>'
+          . '<p class="af-veldfout" id="' . h($p) . '-akkoord-fout" data-af-veldfout>' . ($akk_inv ? h($fout) : '') . '</p>'
+          . '</div>';
+    $uit .= '</div>';
+
+    $uit .= '<div class="af-acties" data-af-acties><button type="submit" class="af-knop" data-af-verzend>Stuur me een seintje</button></div>'
+          . '<p class="af-gerust">We bewaren alleen je voornaam en e-mailadres. Na dat ene bericht verwijderen we ze, '
+          . 'en anders uiterlijk na ' . (int)$mnd . ' maanden.</p>';
+    $uit .= '</form></div>';
+    return $uit;
+}
+
+/** Na een seintje-aanvraag. Zegt bewust niet of het adres al bekend was. */
+function aanmeld_seintje_succes_html(array $opties = []): string {
+    $dagen = function_exists('seintje_werving_bevestig_dagen') ? seintje_werving_bevestig_dagen() : 7;
+    return '<div class="af-kaart af-melding af-succes' . aanmeld_extra_class($opties) . '" id="aanmelden" role="status" tabindex="-1" data-formulier-succes>'
+         . '<div class="af-succes-vink" aria-hidden="true">'
+         . '<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.4" '
+         . 'stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+         . '</div>'
+         . '<h2 class="af-titel">Nog één stap: check je mail</h2>'
+         . '<p>Als je e-mailadres klopt, krijg je zo een mail van ons. Klik op de knop in die mail om je '
+         . 'seintje te bevestigen. Pas daarna zetten we je op de lijst.</p>'
+         . '<p class="af-klein">Geen mail gekregen? Kijk ook even bij je ongewenste post. De knop in de mail '
+         . 'werkt ' . (int)$dagen . ' dagen.</p>'
          . '</div>';
+}
+
+/**
+ * De omlijsting van onze eigen publieke pagina's rond het formulier (/aanmelden.php,
+ * /seintje.php): kop, inhoud, voet. Met 'ingebed' vallen kop en voet weg (iframe op paal13.com).
+ *
+ * $o: titel (<title>), beschrijving, h1, sub, ingebed (bool)
+ */
+function aanmeld_pagina_html(string $inhoud, array $o = []): string {
+    $root = dirname(__DIR__);
+    $v = static fn(string $pad): string => APP_URL . $pad . '?v=' . (@filemtime($root . $pad) ?: '1');
+    $ingebed = !empty($o['ingebed']);
+    $titel = (string)($o['titel'] ?? 'Aanmelden als lifeguard — Reddingsbrigade Paal 13');
+
+    $uit  = "<!DOCTYPE html>\n<html lang=\"nl\">\n<head>\n<meta charset=\"UTF-8\">\n"
+          . "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n"
+          . "<meta name=\"robots\" content=\"noindex,follow\">\n"
+          . '<title>' . h($titel) . "</title>\n";
+    if (!empty($o['beschrijving'])) $uit .= '<meta name="description" content="' . h((string)$o['beschrijving']) . "\">\n";
+    $uit .= '<link rel="stylesheet" href="' . h($v('/assets/css/aanmeldformulier.css')) . "\">\n</head>\n<body class=\"af-pagina\">\n";
+    if (!$ingebed) {
+        $uit .= "<header class=\"af-hero\">\n"
+              . '  <img src="' . APP_URL . '/assets/img/logo.png" alt="Reddingsbrigade Paal 13" width="120" height="46">' . "\n"
+              . '  <h1>' . h((string)($o['h1'] ?? 'Word lifeguard op het strand')) . "</h1>\n"
+              . '  <p>' . h((string)($o['sub'] ?? 'Reddingsbrigade Callantsoog & Groote Keeten')) . "</p>\n"
+              . "</header>\n";
+    }
+    $uit .= "\n<main>\n  " . $inhoud . "\n</main>\n";
+    if (!$ingebed) {
+        // Eén adres voor sollicitanten (mail.contact_email, leeg = bestuursadres).
+        $contact = function_exists('portaal_contact_email') ? portaal_contact_email() : '';
+        if ($contact !== '') {
+            $uit .= "\n<footer class=\"af-voet\">\n  Vragen over je aanmelding? Mail <a href=\"mailto:" . h($contact) . '">' . h($contact) . "</a>.\n</footer>\n";
+        }
+    }
+    $uit .= "\n<script src=\"" . h($v('/assets/js/aanmeldformulier.js')) . "\" defer></script>\n</body>\n</html>\n";
+    return $uit;
 }
 
 /** Bevestiging na een geslaagde aanmelding. */

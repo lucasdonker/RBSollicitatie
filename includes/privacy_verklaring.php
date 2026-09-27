@@ -82,7 +82,7 @@ doen: je gegevens bekijken, laten verbeteren of laten verwijderen.</p>
 <h2 id="wie">1. Wie wij zijn</h2>
 <p><?= $h($org) ?> (Callantsoog en Groote Keeten) is verantwoordelijk voor je gegevens.
 Vragen over privacy? Mail het bestuur: <?= $mail ?>.</p>
-<p>Deze verklaring gaat alleen over solliciteren: het aanmeldformulier (hier of op paal13.com),
+<p>Deze verklaring gaat alleen over solliciteren: het aanmeldformulier (hier of op paal13.com), het seintje als de aanmelding nog dicht is,
 het sollicitantenportaal, de selectiedag, het trainingsweekend en wat je regelt als je wordt
 aangenomen.</p>
 
@@ -126,6 +126,11 @@ aangenomen.</p>
       leggen we diens naam, e-mailadres, telefoonnummer en handtekening vast, en bij automatische
       incasso de naam en het rekeningnummer van wie de machtiging tekent.</li>
 </ul>
+<h3>Als je om een seintje vraagt terwijl de aanmelding dicht is</h3>
+<ul>
+  <li>Je voornaam en e-mailadres, via welke pagina je kwam, en wanneer je het seintje aanvroeg en bevestigde.
+      Meer niet: je hebt dan nog niet gesolliciteerd.</li>
+</ul>
 <h3>Als je het portaal gebruikt</h3>
 <ul>
   <li>Wanneer je inlogt, en als je "blijf ingelogd" aanzet: je browser en IP-adres bij dat apparaat.</li>
@@ -153,6 +158,8 @@ aangenomen.</p>
         <td>Je toestemming (art. 6 lid 1 sub a). Die kun je altijd intrekken.</td></tr>
     <tr><td>Een seintje sturen als we weer mensen zoeken, nadat je bent afgewezen</td>
         <td>Je toestemming. Die geef je met een aparte knop; je kunt hem altijd intrekken.</td></tr>
+    <tr><td>Eén bericht sturen als de aanmelding opengaat, omdat je daarom vroeg toen die nog dicht was</td>
+        <td>Je toestemming (art. 6 lid 1 sub a). Je bevestigt die met de knop in de mail die je daarna van ons krijgt; zonder die bevestiging sturen we niets. Intrekken kan altijd, met de link in die mail of onder het bericht.</td></tr>
     <tr><td>Bewijs van je handtekening, het logboek en de beveiliging van het portaal</td>
         <td>Ons gerechtvaardigd belang, en onze plicht om je gegevens te beveiligen (art. 6 lid 1 sub f en art. 32).</td></tr>
     <tr><td>Oud-strandwachten een bericht sturen als we weer mensen zoeken</td>
@@ -242,6 +249,8 @@ dat ze niet meer naar jou te herleiden zijn.</p>
         <td><?= $weken ?> weken na het besluit</td></tr>
     <tr><td>Je wordt afgewezen, maar vraagt om een seintje als we weer mensen zoeken</td>
         <td>Maximaal <?= $seintje ?> maanden. Je kunt het seintje eerder intrekken; dan verwijderen we je gegevens binnen <?= $weken ?> weken.</td></tr>
+    <tr><td>Je vraagt om een seintje terwijl de aanmelding dicht is</td>
+        <td>Tot we je dat ene bericht hebben gestuurd, en uiterlijk <?= $seintje ?> maanden. Bevestig je het seintje niet binnen 7 dagen, dan verwijderen we je aanvraag. Trek je het in, dan verwijderen we je gegevens meteen.</td></tr>
     <tr><td>Je begint met aanmelden, maar maakt het niet af</td>
         <td><?= $onvolt ?> maanden</td></tr>
     <tr><td>Je wordt aangenomen</td>

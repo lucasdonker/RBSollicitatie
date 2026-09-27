@@ -170,6 +170,7 @@ function db_failsafe(bool $forceer = false): void {
         'pag_auto_setup',
         'optout_auto_setup',
         'seintje_auto_setup',
+        'werving_seintje_auto_setup',    // seintje buiten het seizoen (includes/seintje_werving.php)
         'sjablonen_auto_setup',
         'meldingen_log_auto_setup',
         'personen_kanaal_auto_setup',

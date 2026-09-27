@@ -3239,3 +3239,18 @@ hr.bh-blk-scheiding { border: none; border-top: 1px solid var(--rand); margin: 1
 .bh-hoofdtaak-taak.af .bh-hoofdtaak-taakicoon { color: var(--ok); }
 .bh-hoofdtaak-taak.af .bh-hoofdtaak-taaktekst { color: var(--ink-soft); }
 .bh-hoofdtaak-taaktekst { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+/* === wervingspagina's (agent W) === */
+/* Delen en meten (admin/paginas_bewerk.php): campagnelink + QR-code. */
+.pg-deelform { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 12px; margin-top: 10px; }
+.pg-deelform .ds-veld { flex: 1 1 220px; margin: 0; }
+.pg-deellink { margin-top: 14px; }
+.pg-deellink-rij { display: flex; gap: 8px; align-items: center; }
+.pg-deellink-rij .ds-input { flex: 1 1 auto; min-width: 0; font-size: 13px; }
+.pg-qr { margin-top: 14px; }
+.pg-qr-beeld { width: 180px; max-width: 100%; padding: 8px; background: #fff; border: 1px solid var(--border); border-radius: 8px; }
+.pg-qr-beeld svg { display: block; width: 100%; height: auto; }
+/* Waar komen aanmeldingen vandaan? (admin/paginas.php): bron als rijkop, campagnes eronder. */
+.pg-tabel th.pg-bronrij { font: inherit; font-size: 14px; font-weight: 600; color: var(--ink); }
+.pg-tabel .pg-campagnerij td { font-size: 13px; color: var(--ink-soft); }
+.pg-tabel .pg-campagnerij td:first-child { padding-left: 28px; }

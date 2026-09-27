@@ -3,10 +3,22 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.126.2');
+define('APP_VERSIE', '2.127.0');
 
 function app_changelog(): array {
     return [
+        '2.127.0' => [
+            'datum'  => '2026-09-27',
+            'titel'  => 'Wervingspagina\'s klaar voor werving',
+            'punten' => [
+                'Markeringen die het systeem zelf invult uit het seizoen en de loontarieven: [[selectiedag_datum]], [[trainingsweekend_datum]], [[werkperiode]], [[aanmelden_tot]], [[uurloon_vanaf]] en [[salaristabel]] — een pagina veroudert niet meer',
+                'Seizoen: nieuw veld "Aanmelden kan tot" (de sollicitatiedeadline)',
+                '[[vacature_schema]]: vacature voor Google (JobPosting) uit de seizoensgegevens; verdwijnt vanzelf als de aanmelding dicht is of de deadline voorbij',
+                'Campagnes: /p/<adres>?bron=… (of utm_campaign) op wervingspagina\'s; per campagne aanmeldingen en aangenomen in het overzicht',
+                'Delen en meten: link per campagne en een QR-code (SVG/PNG) om te downloaden',
+                'Aanmelding dicht? Dan een seintje-formulier in plaats van een dood einde: voornaam + e-mail, bevestigen per mail; bij het openen iedereen mailen via Berichten › Seintje gevraagd (Vandaag herinnert eraan)',
+            ],
+        ],
         '2.126.2' => [
             'datum'  => '2026-09-27',
             'titel'  => 'Wervingspagina\'s vindbaar in Google',

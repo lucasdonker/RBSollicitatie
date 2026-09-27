@@ -551,6 +551,23 @@ function actief_seizoen(): ?array {
     return $s;
 }
 
+/**
+ * Het seizoen voor de buitenwereld (website-API, wervingspagina's): dat met de aanmelding open,
+ * anders het nieuwste (het komende seizoen zodra het is aangemaakt). actief_seizoen() is voor het
+ * beheer en blijft bij het lopende seizoen zolang daar nog sollicitaties in zitten — voor een
+ * wervingstekst zijn dat oude datums.
+ */
+function seizoen_voor_werving(): ?array {
+    static $s = false;
+    if ($s !== false) return $s;
+    $s = actief_seizoen();
+    if (!$s || ($s['status'] ?? '') !== 'open') {
+        try { $s = db()->query("SELECT * FROM seizoenen ORDER BY id DESC LIMIT 1")->fetch() ?: $s; }
+        catch (\Throwable $e) { /* terugval: actief_seizoen() */ }
+    }
+    return $s;
+}
+
 /** Eén seizoen op id (null als het niet bestaat). */
 function seizoen_op_id(int $id): ?array {
     $actief = actief_seizoen();
@@ -741,7 +758,8 @@ function personen_ouder_auto_setup(): void {
 //           doorgifte (sms), lettertype zelf gehost
 // 2026-09d: lidmaatschap onder 18 getekend door ouder/verzorger (SEPA door de rekeninghouder),
 //           termijn gezondheidsverklaring volgt de instelling
-if (!defined('PRIVACY_VERSIE')) define('PRIVACY_VERSIE', '2026-09d');
+// 2026-09e: seintje via de website buiten het seizoen (voornaam + e-mail, dubbele bevestiging)
+if (!defined('PRIVACY_VERSIE')) define('PRIVACY_VERSIE', '2026-09e');
 
 if (!function_exists('consent_auto_setup')) {
 /**
