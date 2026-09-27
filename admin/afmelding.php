@@ -19,7 +19,9 @@ vereis_recht($def['module'], 'bewerken');
 $sz = actief_seizoen();
 $ok = $sz && evenement_afmelding_besluiten($ev, (int)$sz['id'], $sol, $keuze);
 flash($ok ? 'succes' : 'fout', $ok
-    ? ($keuze === 'afmelden' ? 'Afgemeld (fase Afgehaakt).' : 'Uitzondering vastgelegd: blijft in het proces.')
+    ? ($keuze === 'afmelden'
+        ? 'Afgemeld (fase Afgehaakt). De sollicitant krijgt hier een bericht over.'
+        : 'Uitzondering vastgelegd: blijft in het proces. De sollicitant krijgt hier een bericht over.')
     : 'Dat lukte niet. Staat deze persoon nog uitgenodigd?');
 
 $terug = (string)($_SERVER['HTTP_REFERER'] ?? '');

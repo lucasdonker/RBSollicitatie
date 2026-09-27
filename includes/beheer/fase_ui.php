@@ -130,7 +130,7 @@ function bh_uitnodig_suggestie(array $rij): bool {
  * 'vreemd' en krijgt onder de tabs één regel met een link.
  *
  * @param array<string,int> $aantallen  fase => aantal (uit één GROUP BY)
- * @param string $seizoen_fase          werving|formulieren|selectiedag|bellijst|trainingsweekend|aanname
+ * @param string $seizoen_fase          werving|formulieren|selectiedag|bellijst|trainingsweekend|aanname|afronden
  * @return array{tabs:array,vreemd:array,vreemd_aantal:int}
  */
 function bh_fase_tabs(array $aantallen, string $seizoen_fase = ''): array {
@@ -160,12 +160,15 @@ function bh_fase_tabs(array $aantallen, string $seizoen_fase = ''): array {
 }
 
 /**
- * In welke fase zit het seizoen? Afgeleid uit de datums die al in het seizoen staan,
- * met een handmatige uitweg: de instelling seizoen.fase overrulet de afleiding. Die
- * uitweg is er omdat een selectiedag verschoven kan worden of een belronde uitloopt —
- * en dan klopt elk fase-gestuurd scherm niet meer (ontwerpfilosofie §3).
+ * In welke fase zit het seizoen? Afgeleid uit de datums en uit wie waar staat, met een
+ * handmatige uitweg: de instelling seizoen.fase overrulet de afleiding. Die uitweg is er
+ * omdat een selectiedag verschoven kan worden of een belronde uitloopt — en dan klopt elk
+ * fase-gestuurd scherm niet meer (ontwerpfilosofie §3).
  *
- * @return string werving|formulieren|selectiedag|bellijst|trainingsweekend|aanname
+ * De status van het seizoen (open/gesloten) telt hier NIET: die gaat alleen over het
+ * aanmeldformulier. Wie de aanmelding vroeg sluit, zit nog middenin de procedure.
+ *
+ * @return string werving|formulieren|selectiedag|bellijst|trainingsweekend|aanname|afronden
  */
 function bh_seizoen_fase(?array $seizoen = null): string {
     $handmatig = function_exists('instelling') ? trim(instelling('seizoen.fase', '')) : '';
@@ -173,26 +176,77 @@ function bh_seizoen_fase(?array $seizoen = null): string {
 
     $s = $seizoen ?? (function_exists('actief_seizoen') ? actief_seizoen() : null);
     if (!$s) return 'werving';
+    // Het menubolletje vraagt dit op elke pagina; na het weekend kost het een telling van tw_stand().
+    static $cache = [];
+    $sleutel = (int)($s['id'] ?? 0) . '|' . ($s['datum_selectiedag'] ?? '') . '|' . ($s['datum_tw_start'] ?? '') . '|' . ($s['datum_tw_eind'] ?? '');
+    return $cache[$sleutel] ??= bh_seizoen_fase_bepalen($s);
+}
+
+/**
+ * @see bh_seizoen_fase() — zonder handmatige uitweg en zonder cache. Het stappenplan van
+ * Seizoen gebruikt dit direct: de handmatige fase geldt voor het actieve seizoen, niet voor
+ * een ander seizoen dat je bewerkt.
+ *
+ * Een module die uit staat (selectiedag, trainingsweekend) slaat zijn fases over: zijn datums
+ * tellen niet, en de volgende fase begint zodra de data dat zeggen.
+ */
+function bh_seizoen_fase_bepalen(array $s): string {
+    $sd_aan = bh_seizoen_module_aan('selectiedag');
+    $tw_aan = bh_seizoen_module_aan('trainingsweekend');
+    $t = (!empty($s['id']) && function_exists('bh_fase_tellingen')) ? bh_fase_tellingen((int)$s['id']) : [];
+    $n = function (string ...$fases) use ($t): int {
+        $som = 0;
+        foreach ($fases as $f) $som += (int)($t[$f] ?? 0);
+        return $som;
+    };
 
     $vandaag = new DateTimeImmutable('today');
     $datum = function (?string $d): ?DateTimeImmutable {
         if (!$d) return null;
         try { return new DateTimeImmutable($d); } catch (\Exception $e) { return null; }
     };
-    $sd = $datum($s['datum_selectiedag'] ?? null);
-    $tw = $datum($s['datum_tw_start'] ?? null);
-    $we = $datum($s['datum_tw_eind'] ?? null) ?? $tw;
+    $sd = $sd_aan ? $datum($s['datum_selectiedag'] ?? null) : null;
+    $tw = $tw_aan ? $datum($s['datum_tw_start'] ?? null) : null;
+    $we = $tw_aan ? ($datum($s['datum_tw_eind'] ?? null) ?? $tw) : null;
 
-    if ($we && $vandaag > $we)                          return 'aanname';
+    // Na het weekend. Zonder weekend-module: zodra er mensen voorbij de selectiedag zijn.
+    $na_weekend = ($we && $vandaag > $we)
+        || (!$tw_aan && (!$sd || $vandaag > $sd) && $n('uitgenodigd_tw', 'tw_geweest', 'aangenomen') > 0);
+    if ($na_weekend) return bh_seizoen_besluiten_open($s, $t, $tw_aan) ? 'aanname' : 'afronden';
     if ($tw && $vandaag >= $tw)                         return 'trainingsweekend';
     // Tussen de selectiedag en het trainingsweekend wordt gebeld en besloten.
     if ($sd && $vandaag > $sd)                          return 'bellijst';
     if ($sd && $vandaag->format('Y-m-d') === $sd->format('Y-m-d')) return 'selectiedag';
-    if (($s['status'] ?? '') === 'open')                return 'werving';
-    return 'formulieren';
+    // Vóór de selectiedag: wie waar staat. Wacht er niemand meer op een uitnodiging en is er
+    // wél iemand uitgenodigd, dan wachten we op de formulieren; anders is het werving.
+    if ($sd_aan && $n('aangemeld') === 0 && $n('uitgenodigd_selectie', 'aangemeld_selectie') > 0) return 'formulieren';
+    return 'werving';
 }
 
-/** De zes seizoensfases met hun label, voor de keuzelijst in Instellingen. */
+/** Staat deze module aan? Zonder moduleregister (oude installatie, harnas): ja. */
+function bh_seizoen_module_aan(string $module): bool {
+    return !function_exists('module_aan') || module_aan($module);
+}
+
+/**
+ * Wacht er na het weekend nog iemand op een besluit? De besluiten staan in tw_deelname (het
+ * gesprek). Wie niet kwam en nog geen besluit heeft (tw_stand() 'niet_gekomen') telt ook: dat
+ * is geen gesprek, maar wel een besluit dat nog genomen moet worden. Zonder weekend-module:
+ * wie nog op TW geweest of uitgenodigd TW staat.
+ */
+function bh_seizoen_besluiten_open(array $s, array $tellingen, bool $tw_aan): bool {
+    $sid = (int)($s['id'] ?? 0);
+    if ($tw_aan && $sid && function_exists('tw_stand_seizoen')) {
+        $st = tw_stand_seizoen($sid);
+        return ((int)$st['te_beslissen'] + (int)$st['klaar_om_door_te_voeren'] + (int)$st['twijfel_open']
+                + (int)($st['niet_gekomen'] ?? 0)) > 0;
+    }
+    $open = (int)($tellingen['tw_geweest'] ?? 0);
+    if (!$tw_aan) $open += (int)($tellingen['uitgenodigd_tw'] ?? 0);
+    return $open > 0;
+}
+
+/** De zeven seizoensfases met hun label, voor de keuzelijst in Instellingen. */
 function bh_seizoen_fases(): array {
     return [
         'werving'          => 'Werving — aanmeldingen komen binnen',
@@ -200,8 +254,21 @@ function bh_seizoen_fases(): array {
         'selectiedag'      => 'Selectiedag',
         'bellijst'         => 'Bellijst — besluiten en bellen',
         'trainingsweekend' => 'Trainingsweekend',
-        'aanname'          => 'Aanname — contracten en loondossiers',
+        'aanname'          => 'Aanname — gesprekken en besluiten',
+        'afronden'         => 'Afronden — afspraken, aanmelding dicht, volgend seizoen',
     ];
+}
+
+/**
+ * De seizoensfases zonder die van modules die uit staan — voor de seizoensbalk. Staat de
+ * selectiedag uit, dan vallen formulieren, selectiedag en bellijst weg; staat het weekend uit,
+ * dan het weekend.
+ */
+function bh_seizoen_fases_actief(): array {
+    $uit = bh_seizoen_fases();
+    if (!bh_seizoen_module_aan('selectiedag')) unset($uit['formulieren'], $uit['selectiedag'], $uit['bellijst']);
+    if (!bh_seizoen_module_aan('trainingsweekend')) unset($uit['trainingsweekend']);
+    return $uit;
 }
 
 /**
@@ -222,6 +289,7 @@ function bh_fases_in_seizoensfase(string $seizoen_fase): ?array {
         'bellijst'         => 'uitgenodigd_tw',
         'trainingsweekend' => 'tw_geweest',
         'aanname'          => 'aangenomen',
+        'afronden'         => 'aangenomen',
     ];
     if (!isset($tot[$seizoen_fase])) return null;
 

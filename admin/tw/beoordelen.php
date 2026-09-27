@@ -25,7 +25,7 @@ $huidig_id = (int)($_GET['k'] ?? 0);
 if (!in_array($huidig_id, $ids, true)) $huidig_id = $ids[0] ?? 0;
 $pos    = array_search($huidig_id, $ids, true);
 $huidig = $pos !== false ? $bo_lijst[$pos] : null;
-$_aanw  = fn($k) => !empty($k['aanwezig']) ? 'aanwezig' : (($k['afgemeld_reden'] ?? null) !== null ? 'niet gekomen' : 'nog niet ingecheckt');
+$_aanw  = 'tw_aanwezigheid_tekst';
 ?>
 <div class="bh-beoordeel" data-twbeoordeel data-endpoint="<?= APP_URL ?>/admin/trainingsweekend.php" data-csrf="<?= h(csrf_token()) ?>">
   <aside class="bh-beoordeel-lijst">
@@ -43,7 +43,7 @@ $_aanw  = fn($k) => !empty($k['aanwezig']) ? 'aanwezig' : (($k['afgemeld_reden']
       <?php foreach ($_sec['rijen'] as $_k):
         $_id  = (int)$_k['sol_id'];
         $_nu  = $_id === $huidig_id;
-        $_af  = empty($_k['aanwezig']) && ($_k['afgemeld_reden'] ?? null) !== null;
+        $_af  = tw_niet_gekomen($_k);
         $_nob = count($obs_alle[$_id] ?? []);
       ?>
       <li>
@@ -106,6 +106,9 @@ $_aanw  = fn($k) => !empty($k['aanwezig']) ? 'aanwezig' : (($k['afgemeld_reden']
       <?php if ($mag_meedraaien && !empty($huidig['doorgevoerd_op'])): ?>
         <p class="bh-meta">Over <?= h((string)$huidig['voornaam']) ?> is al besloten; nieuwe observaties horen nu in het dossier.</p>
       <?php elseif ($mag_meedraaien): ?>
+        <?php if (tw_niet_gekomen($huidig)): ?>
+          <p class="bh-meta"><?= h((string)$huidig['voornaam']) ?> staat op niet gekomen. Toch gezien? Check dan eerst alsnog in bij <a href="<?= h(tw_url('inchecken')) ?>">Inchecken</a>.</p>
+        <?php endif; ?>
         <div class="bh-soortkeuze" role="group" aria-label="Soort observatie">
           <button type="button" class="bh-soort positief" data-soort="positief" aria-pressed="false">Positief</button>
           <button type="button" class="bh-soort neutraal gekozen" data-soort="neutraal" aria-pressed="true">Neutraal</button>

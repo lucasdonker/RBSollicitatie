@@ -332,19 +332,26 @@ function evenement_afmeldingen_open(int $seizoen_id): array {
 /**
  * Het bestuur beslist over een afmelding: 'afmelden' (fase afgehaakt, via fase_zetten) of
  * 'uitzondering' (blijft in het proces; de bevestiging gaat op "komt" met bron uitzondering).
+ * In beide gevallen krijgt de sollicitant bericht (deelname_afgemeld / deelname_uitzondering):
+ * het portaal belooft na "ik kan niet" dat het bestuur laat weten wat het besluit is.
  */
 function evenement_afmelding_besluiten(string $ev, int $seizoen_id, int $sol_id, string $keuze): bool {
     if (!evenement_is_kandidaat($ev, $seizoen_id, $sol_id)) return false;
+    $d = evenement_def($ev);
+    $meld = function (string $type) use ($d, $sol_id) {
+        if (function_exists('melding_verstuur')) melding_verstuur($type, $sol_id, ['evenement' => $d['label']], ['prioriteit' => 'na_antwoord']);
+    };
     if ($keuze === 'afmelden') {
-        $d = evenement_def($ev);
+        // De fase-overgang zelf blijft stil (afgehaakt heeft geen fase-melding); het besluit gaat apart.
         $r = function_exists('fase_zetten') ? fase_zetten($sol_id, 'afgehaakt', 'paneel', ['seizoen_id' => $seizoen_id, 'alleen_van' => $d['voor_fases'], 'stil' => true]) : ['ok' => false];
+        if (!empty($r['ok']) && empty($r['ongewijzigd'])) $meld('deelname_afgemeld');
         return !empty($r['ok']);
     }
     if ($keuze === 'uitzondering') {
-        $d = evenement_def($ev);
         db()->prepare("UPDATE `{$d['tabel']}` SET bevestiging='komt', bevestiging_bron='uitzondering', bevestigd_op=NOW() WHERE seizoen_id=? AND sollicitatie_id=?")
            ->execute([$seizoen_id, $sol_id]);
         if (function_exists('audit_log')) audit_log('afmelding_uitzondering', 'sollicitatie', $sol_id, ['evenement' => $ev]);
+        $meld('deelname_uitzondering');
         return true;
     }
     return false;
@@ -383,6 +390,32 @@ function evenement_claim_los(string $tabel, string $soort, int $seizoen_id, int 
     if (!in_array($tabel, ['selectie_besluit', 'tw_deelname'], true) || !in_array($soort, ['bel', 'gesprek'], true)) return;
     db()->prepare("UPDATE `$tabel` SET `{$soort}_door`=NULL, `{$soort}_sinds`=NULL WHERE seizoen_id=? AND sollicitatie_id=? AND `{$soort}_door`=?")
        ->execute([$seizoen_id, $sol_id, $beheerder_id]);
+}
+
+/**
+ * Een claim van een ander bewust overnemen (bijv. iemand liep weg met het gesprek open).
+ * Alleen als de claim nog bij $van ligt — de persoon die in de bevestiging werd genoemd. Heeft
+ * intussen een derde hem, dan gebeurt er niets (je bevestigde iets anders). Geaudit.
+ *
+ * @return array ['ok' => bool, 'door' => ?int (wie hem nu heeft), 'sinds' => ?string]
+ */
+function evenement_claim_overnemen(string $tabel, string $soort, int $seizoen_id, int $sol_id, int $beheerder_id, int $van): array {
+    if (!in_array($tabel, ['selectie_besluit', 'tw_deelname'], true) || !in_array($soort, ['bel', 'gesprek'], true) || $van <= 0) {
+        return ['ok' => false, 'door' => null, 'sinds' => null];
+    }
+    $door = $soort . '_door'; $sinds = $soort . '_sinds';
+    $db = db();
+    $u = $db->prepare("UPDATE `$tabel` SET `$door`=?, `$sinds`=NOW() WHERE seizoen_id=? AND sollicitatie_id=? AND `$door`=?");
+    $u->execute([$beheerder_id, $seizoen_id, $sol_id, $van]);
+    $gelukt = $u->rowCount() > 0;
+    $q = $db->prepare("SELECT `$door` AS door, `$sinds` AS sinds FROM `$tabel` WHERE seizoen_id=? AND sollicitatie_id=?");
+    $q->execute([$seizoen_id, $sol_id]);
+    $r = $q->fetch() ?: [];
+    $wie = isset($r['door']) ? (int)$r['door'] : null;
+    if ($gelukt && function_exists('audit_log')) {
+        audit_log('claim_overgenomen', 'sollicitatie', $sol_id, ['tabel' => $tabel, 'soort' => $soort, 'van' => $van, 'door' => $beheerder_id]);
+    }
+    return ['ok' => $wie === $beheerder_id, 'door' => $wie, 'sinds' => $r['sinds'] ?? null];
 }
 
 /** De naam van wie een claim heeft, voor "bezig door X". */

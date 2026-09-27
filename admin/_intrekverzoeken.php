@@ -9,14 +9,15 @@
  *
  * Verwacht:
  *   $intrekverzoeken  array  uit intrek_open_lijst() (of één rij daarvan)
- * Knoppen alleen met sollicitanten › bewerken.
+ * Knoppen alleen met sollicitanten › bewerken; zonder dat recht is het blok informatie
+ * ("het bestuur neemt contact op") en geen opdracht.
  */
 $intrekverzoeken = $intrekverzoeken ?? [];
 if (!$intrekverzoeken) return;
 $_iv_mag = mag('sollicitanten', 'bewerken');
 ?>
 <section class="ds-kaart ds-kaart-p bh-afmeldingen" aria-labelledby="bh-iv-kop">
-  <div class="bh-kaartkop"><h2 id="bh-iv-kop">Wil intrekken — neem eerst contact op</h2></div>
+  <div class="bh-kaartkop"><h2 id="bh-iv-kop"><?= $_iv_mag ? 'Wil intrekken — neem eerst contact op' : 'Wil intrekken — het bestuur neemt contact op' ?></h2></div>
   <ul class="bh-afm-lijst">
     <?php foreach ($intrekverzoeken as $_iv): ?>
       <li class="bh-afm-rij">

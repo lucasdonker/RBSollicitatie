@@ -12,18 +12,18 @@ $_obs  = tw_observaties_alle($sid);
 $_lgf  = lg_feedback_alle($sid);
 $_sd   = (module_aan('selectiedag') && function_exists('selectie_scores_alle')) ? selectie_scores_alle($sid) : [];
 $_toon = (string)($_GET['toon'] ?? '');
-$_tel  = ['aannemen' => 0, 'twijfel' => 0, 'afwijzen' => 0, 'geen' => 0];
-foreach ($kandidaten as $_k) $_tel[isset($_st[$_k['evaluatie'] ?? '']) ? $_k['evaluatie'] : 'geen']++;
-$_lijst = array_values(array_filter($kandidaten, function ($k) use ($_toon, $_st) {
-    $e = isset($_st[$k['evaluatie'] ?? '']) ? $k['evaluatie'] : 'geen';
-    return $_toon === '' || $_toon === $e;
-}));
+// Wie niet kwam, is niet te evalueren: eigen groep, telt niet mee in "nog niet" (anders blijft het stoplicht oranje).
+$_groep_van = fn($k) => isset($_st[$k['evaluatie'] ?? '']) ? $k['evaluatie'] : (tw_niet_gekomen($k) ? 'niet_gekomen' : 'geen');
+$_tel  = ['aannemen' => 0, 'twijfel' => 0, 'afwijzen' => 0, 'geen' => 0, 'niet_gekomen' => 0];
+foreach ($kandidaten as $_k) $_tel[$_groep_van($_k)]++;
+$_lijst = array_values(array_filter($kandidaten, fn($k) => $_toon === '' || $_toon === $_groep_van($k)));
 $_kleur = ['aannemen' => 'groen', 'twijfel' => 'oranje', 'afwijzen' => 'rood'];
 ?>
 <section class="ds-kaart bh-dekkop">
   <div class="bh-dekkop-zin">
     <?= bh_stoplicht($_tel['geen'] > 0 ? 'krap' : 'goed',
-                     $_tel['aannemen'] . ' sowieso aannemen · ' . $_tel['twijfel'] . ' twijfel · ' . $_tel['afwijzen'] . ' sowieso afwijzen · ' . $_tel['geen'] . ' nog niet') ?>
+                     $_tel['aannemen'] . ' sowieso aannemen · ' . $_tel['twijfel'] . ' twijfel · ' . $_tel['afwijzen'] . ' sowieso afwijzen · ' . $_tel['geen'] . ' nog niet'
+                     . ($_tel['niet_gekomen'] > 0 ? ' · ' . $_tel['niet_gekomen'] . ' niet gekomen' : '')) ?>
   </div>
   <p class="bh-dekkop-uitleg">
     Nog geen besluit, alleen jullie eerste indruk. Wie op <strong>twijfel</strong> staat, komt bij Beoordelen bovenaan
@@ -38,7 +38,7 @@ $_kleur = ['aannemen' => 'groen', 'twijfel' => 'oranje', 'afwijzen' => 'rood'];
     ['soort' => 'keuze', 'naam' => 'toon', 'label' => 'Toon', 'waarde' => $_toon,
      'opties' => ['' => 'Iedereen (' . count($kandidaten) . ')', 'geen' => 'Nog niet geëvalueerd (' . $_tel['geen'] . ')',
                   'twijfel' => 'Twijfel (' . $_tel['twijfel'] . ')', 'aannemen' => 'Sowieso aannemen (' . $_tel['aannemen'] . ')',
-                  'afwijzen' => 'Sowieso afwijzen (' . $_tel['afwijzen'] . ')']],
+                  'afwijzen' => 'Sowieso afwijzen (' . $_tel['afwijzen'] . ')', 'niet_gekomen' => 'Niet gekomen (' . $_tel['niet_gekomen'] . ')']],
   ];
   $filter_wissen = $_toon !== '' ? tw_url('evaluatie') : null;
   require __DIR__ . '/../_filterbalk.php';
@@ -62,7 +62,7 @@ $_kleur = ['aannemen' => 'groen', 'twijfel' => 'oranje', 'afwijzen' => 'rood'];
       <?= bh_avatar($_k, 44) ?>
       <span>
         <span class="bh-twgesprek-naam"><?= h((string)$_k['naam']) ?></span>
-        <?= bh_meta([!empty($_k['aanwezig']) ? 'aanwezig' : (($_k['afgemeld_reden'] ?? null) !== null ? 'niet gekomen' : 'niet ingecheckt'),
+        <?= bh_meta([tw_aanwezigheid_tekst($_k),
                      count($_obs[$_id] ?? []) ? $_pos . ' positief · ' . $_aan . ' aandacht' : 'nog geen observaties',
                      $_gem !== null ? 'selectiedag ' . number_format($_gem, 1, ',', '') : '',
                      !empty($_lgf[$_id]) ? count($_lgf[$_id]) . ' van lifeguards' : '',
@@ -74,7 +74,9 @@ $_kleur = ['aannemen' => 'groen', 'twijfel' => 'oranje', 'afwijzen' => 'rood'];
     </div>
 
     <?php if (!empty($_k['doorgevoerd_op'])): ?>
-      <p class="bh-meta">Het gesprek is al geweest; het besluit staat bij Gesprekken.</p>
+      <p class="bh-meta"><?= tw_niet_gekomen($_k) ? 'Er is al besloten' : 'Het gesprek is al geweest' ?>; het besluit staat bij Gesprekken.</p>
+    <?php elseif ($_e === '' && tw_niet_gekomen($_k)): ?>
+      <p class="bh-meta">Niet gekomen, dus niets te evalueren. Het besluit leg je vast bij Gesprekken, onder "Niet gekomen".</p>
     <?php else: ?>
     <form method="post" class="bh-twevaluatie-form" data-direct-opslaan>
       <?= csrf_input() ?>

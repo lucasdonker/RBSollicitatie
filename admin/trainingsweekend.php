@@ -90,6 +90,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $sid) {
         evenement_claim_los('tw_deelname', 'gesprek', $sid, $sol, $ik_id);
         redirect(tw_url('gesprekken'));
     }
+    if ($actie === 'gesprek_overnemen') {
+        // Bewust overnemen van wie het gesprek open heeft (bevestigd met naam en tijd); geaudit.
+        $van = (int)($_POST['van'] ?? 0);
+        if (!evenement_is_kandidaat('tw', $sid, $sol)) {
+            flash('fout', 'Deze persoon staat niet (meer) op de lijst van het trainingsweekend.');
+            redirect(tw_url('gesprekken'));
+        }
+        $r = evenement_claim_overnemen('tw_deelname', 'gesprek', $sid, $sol, $ik_id, $van);
+        if ($r['ok']) {
+            flash('succes', 'Je hebt het gesprek overgenomen van ' . evenement_claim_naam($van) . '.');
+            redirect(tw_url('gesprekken', $sol));
+        }
+        flash('fout', $r['door'] ? 'Niet overgenomen: het gesprek is intussen van ' . evenement_claim_naam((int)$r['door']) . '.'
+                                 : 'Niet overgenomen: het gesprek is niet meer bezet. Open het gewoon.');
+        redirect(tw_url('gesprekken'));
+    }
     if ($actie === 'gesprek') {
         // Alleen wie nog in het weekend zit (uitgenodigd_tw / tw_geweest); na doorvoeren is het klaar.
         if (!evenement_is_kandidaat('tw', $sid, $sol)) {
@@ -146,7 +162,7 @@ require __DIR__ . '/layout_top.php';
     <?php
     $leeg_titel = !$sid ? 'Geen actief seizoen' : 'Nog niemand uitgenodigd';
     $leeg_tekst = !$sid
-        ? 'Maak eerst een seizoen aan bij Seizoenen.'
+        ? 'Maak eerst een seizoen aan bij Seizoen.'
         : 'Zodra je na de selectiedag mensen uitnodigt voor het trainingsweekend, staan ze hier.';
     $leeg_icoon = 'reddingsboei';
     require __DIR__ . '/_leeg.php';

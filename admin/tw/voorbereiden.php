@@ -21,7 +21,8 @@ $_bron     = ['portaal' => 'zelf doorgegeven', 'bellijst' => 'via de bellijst', 
                        $_tel['komt'] . ' komen · ' . $_tel['komt_niet'] . ' kunnen niet · ' . $_tel['onbekend'] . ' nog niet bekend') ?>
     </div>
     <p class="bh-dekkop-uitleg">
-      Wie nog niets liet weten, ziet in het portaal de vraag "Kom je?". Bel je iemand, vul het dan hier in.
+      Wie nog niets liet weten, ziet in het portaal de vraag "Kom je?".
+      <?= $mag_beslissen ? 'Bel je iemand, vul het dan hier in.' : 'Het bestuur werkt deze lijst bij.' ?>
       <?php if ($_zonder_b > 0): ?>
         <strong><?= $_zonder_b ?> <?= $_zonder_b === 1 ? 'persoon heeft' : 'personen hebben' ?> nog geen beschikbaarheid opgegeven</strong>
         — die heb je nodig voor het gesprek en de loonplanning.
@@ -81,7 +82,11 @@ $_bron     = ['portaal' => 'zelf doorgegeven', 'bellijst' => 'via de bellijst', 
       </tbody>
     </table>
   </section>
+  <?php if ($mag_beslissen): // alleen wie een formulier heeft, heeft iets om op te slaan ?>
   <p class="bh-meta">Wijzigingen worden meteen opgeslagen; een opmerking zodra je het veld verlaat.</p>
   <?php endif; ?>
+  <?php endif; ?>
 </div>
+<?php if ($mag_beslissen): ?>
 <script src="<?= APP_URL ?>/assets/js/direct_opslaan.js?v=<?= @filemtime(__DIR__ . '/../../assets/js/direct_opslaan.js') ?>" defer></script>
+<?php endif; ?>

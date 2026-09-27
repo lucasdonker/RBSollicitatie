@@ -6,6 +6,9 @@
  *
  * Openen = claimen ("bezig door jou", 30 min). Aannemen/afwijzen gaat direct door via
  * tw_gesprek_afronden(); het bericht aan de sollicitant gaat als {{gesprek_bericht}} mee.
+ * Heeft een ander het open, dan kan wie mag beslissen het overnemen (admin/tw/_overnemen.php).
+ * Wie niet kwam (tw_niet_gekomen()) krijgt hier ook een besluit, zonder gesprek en met een
+ * eigen standaardtekst bij afwijzen.
  * Onderdeel van admin/trainingsweekend.php.
  */
 $_id = (int)($_GET['k'] ?? 0);
@@ -31,14 +34,26 @@ $_taken    = bh_dossier_taken($gd_dossier);
 $_open     = array_filter($_taken['rijen'], fn($t) => !$t['done']);
 $_sol      = $gd_dossier['sol'];
 $_b        = (string)($_k['besluit'] ?? '');
+$_niet     = tw_niet_gekomen($_k);   // was er niet: geen gesprek, wel een besluit
 ?>
 <p><a class="bh-terug" href="<?= h(tw_url('gesprekken')) ?>"><?= icoon('terug', 16) ?> Alle gesprekken</a></p>
 
 <?php if (!$_claim['ok']): ?>
-  <div class="ds-melding ds-melding-warn" role="status">
+  <div class="ds-melding ds-melding-warn bh-twbezet" role="status">
     <?= icoon('waarschuwing', 16) ?>
-    <span><?= h(evenement_claim_naam($_claim['door'])) ?> voert dit gesprek nu. Je kunt meelezen; het besluit
-      vastleggen kan pas als dat gesprek klaar is (of na 30 minuten).</span>
+    <span><?= h(evenement_claim_naam($_claim['door'])) ?> heeft dit gesprek open<?= !empty($_claim['sinds']) ? ' sinds ' . h(date('H:i', strtotime((string)$_claim['sinds']))) : '' ?>.
+      Je kunt meelezen; het besluit vastleggen kan pas als dat gesprek klaar is, na 30 minuten, of als je het overneemt.</span>
+    <?php if ($mag_beslissen) { $ov_sol_id = $_id; $ov_naam = (string)$_k['naam']; $ov_door = (int)$_claim['door'];
+                               $ov_sinds = $_claim['sinds'] ?? null; require __DIR__ . '/_overnemen.php'; } ?>
+  </div>
+<?php endif; ?>
+
+<?php if ($_niet): ?>
+  <div class="ds-melding ds-melding-info" role="note">
+    <?= icoon('info', 16) ?>
+    <span><strong>Niet gekomen</strong><?= ($_k['afgemeld_reden'] ?? '') !== '' ? ': ' . h((string)$_k['afgemeld_reden']) : '' ?>.
+      Er is dit weekend geen gesprek geweest. Leg hier toch het besluit vast; bij afwijzen gaat er een tekst mee
+      die past bij iemand die er niet was.</span>
   </div>
 <?php endif; ?>
 
@@ -95,7 +110,7 @@ $_b        = (string)($_k['besluit'] ?? '');
       <?php
         $obs_lijst = tw_observaties_van($sid, $_id);
         if ($obs_lijst) { $obs_eigen = null; require __DIR__ . '/../_observaties.php'; }
-        else echo '<p class="bh-meta">Niemand heeft iets opgeschreven.</p>';
+        else echo '<p class="bh-meta">' . ($_niet ? 'Niet op het weekend geweest, dus niets gezien.' : 'Niemand heeft iets opgeschreven.') . '</p>';
       ?>
     </section>
 
@@ -131,7 +146,7 @@ $_b        = (string)($_k['besluit'] ?? '');
         <p><?= bh_badge(['aannemen' => 'Aangenomen', 'afwijzen' => 'Afgewezen', 'twijfel' => 'Twijfel'][$_b] ?? 'Doorgevoerd', ['aannemen' => 'groen', 'afwijzen' => 'rood'][$_b] ?? 'oranje') ?>
           <span class="bh-meta">doorgevoerd op <?= h(datum_nl(substr((string)$_k['doorgevoerd_op'], 0, 10))) ?><?= !empty($_k['besluit_door']) ? ' door ' . h((string)$_k['besluit_door']) : '' ?></span></p>
         <?php if (!empty($_k['besluit_notitie'])): ?><p><strong>Intern:</strong> <?= h((string)$_k['besluit_notitie']) ?></p><?php endif; ?>
-        <p><strong>Aan de sollicitant:</strong> <?= nl2br(h((string)($_k['gesprek_bericht'] ?: tw_standaard_bericht($_b)))) ?></p>
+        <p><strong>Aan de sollicitant:</strong> <?= nl2br(h((string)($_k['gesprek_bericht'] ?: tw_standaard_bericht($_b, $_niet)))) ?></p>
       <?php else: ?>
       <?php if (!empty($_k['evaluatie'])): ?>
         <p class="bh-dossier-tekst">
@@ -159,9 +174,9 @@ $_b        = (string)($_k['besluit'] ?? '');
           <textarea class="ds-textarea" id="gb-<?= $_id ?>" name="bericht" rows="5" maxlength="2000"
                     aria-describedby="gbh-<?= $_id ?>"><?= h((string)($_k['gesprek_bericht'] ?? '')) ?></textarea>
           <p class="ds-veld-hint" id="gbh-<?= $_id ?>">
-            Wat jullie besproken hebben, in je eigen woorden — dit komt in de mail. Leeg laten = de standaardtekst:
+            <?= $_niet ? 'Wat je de sollicitant wilt laten weten' : 'Wat jullie besproken hebben' ?>, in je eigen woorden — dit komt in de mail. Leeg laten = de standaardtekst:
             <br><em>Aangenomen:</em> <?= h(tw_standaard_bericht('aannemen')) ?>
-            <br><em>Afgewezen:</em> <?= h(tw_standaard_bericht('afwijzen')) ?>
+            <br><em>Afgewezen:</em> <?= h(tw_standaard_bericht('afwijzen', $_niet)) ?>
           </p>
         </div>
 

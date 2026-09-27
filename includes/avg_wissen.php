@@ -5,7 +5,8 @@
  * Eén plek voor "wat verdwijnt er als iemand weg moet". Drie routes gebruiken dit:
  *   - de sollicitant zelf, via Mijn gegevens → Gegevens laten verwijderen (portaal/gegevens.php);
  *   - het bestuur, via Verwijderen in het dossier (includes/beheer/dossier.php);
- *   - het automatisch opschonen na de bewaartermijn (includes/opschonen.php).
+ *   - het automatisch opschonen na de bewaartermijn (includes/opschonen.php);
+ *   - een heel seizoen verwijderen (bh_seizoen_verwijderen() in includes/beheer/seizoen.php).
  * Voorheen had het opschonen zijn eigen, kortere lijst: dan bleef bij een afgewezen
  * sollicitant na "anonimiseren" het BLK-formulier met adres en motivatie gewoon staan.
  *
@@ -174,6 +175,29 @@ function avg_na_loondossier_vernietigd($db, int $persoon_id): bool {
     $eerste = (int)$sols[0]['id'];
     avg_persoon_anonimiseren($db, $persoon_id, 'Verwijderd', '(verzoek AVG)', 'verwijderd_' . $eerste . '@anoniem.local');
     return true;
+}
+
+/**
+ * Personen die na het verwijderen van sollicitaties (een heel seizoen, bh_seizoen_verwijderen())
+ * nergens meer voorkomen: anonimiseren. Zonder sollicitatie is er geen doel meer om naam en
+ * contactgegevens te bewaren (AVG art. 5 lid 1 sub c en e), en het automatisch opschonen kijkt
+ * alleen naar personen mét een sollicitatie — zonder dit bleven ze voor altijd staan. Ook een
+ * seintje vervalt: dat hing aan een sollicitatie die er niet meer is. Hoort in een transactie.
+ *
+ * @param int[] $persoon_ids  de personen van de verwijderde sollicitaties
+ * @return int  aantal geanonimiseerd
+ */
+function avg_personen_zonder_sollicitatie($db, array $persoon_ids): int {
+    $n = 0;
+    $nog = $db->prepare("SELECT COUNT(*) FROM sollicitaties WHERE persoon_id = ?");
+    foreach (array_unique(array_map('intval', $persoon_ids)) as $pid) {
+        if ($pid <= 0) continue;
+        $nog->execute([$pid]);
+        if ((int)$nog->fetchColumn() > 0) continue;
+        avg_persoon_anonimiseren($db, $pid, 'Verwijderd', '(seizoen verwijderd)', 'verwijderd_p' . $pid . '@anoniem.local');
+        $n++;
+    }
+    return $n;
 }
 
 /**

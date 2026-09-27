@@ -1,17 +1,22 @@
 <?php
 /**
- * Beheer — Seizoenen: één seizoen per jaar opzetten, openen en aan het eind sluiten.
+ * Beheer — Seizoen: één seizoen per jaar opzetten, de aanmelding openen en sluiten.
  *
  * Dit is een jaarlijkse taak, dus het scherm gaat ervan uit dat je de volgorde niet
  * meer weet: het stappenplan rechts laat zien wat al af is en wat nu aan de beurt is.
  *
+ * Open/gesloten gaat alleen over de AANMELDING (het aanmeldformulier). Waar het seizoen
+ * staat, volgt uit de data (bh_seizoen_fase_bepalen). Er staat maar één aanmelding
+ * tegelijk open: openen sluit de andere.
+ *
  * Alle drie de acties (openen, sluiten, verwijderen) gaan via een tussenscherm dat
  * zegt wat er gebeurt. Verwijderen raakt persoonsgegevens van sollicitanten en kan
- * niet ongedaan worden gemaakt — daar hoort geen confirm() bij die je wegklikt.
+ * niet ongedaan worden gemaakt — daar hoort geen confirm() bij die je wegklikt. Het
+ * loopt via de AVG-wislaag (bh_seizoen_verwijderen) en weigert bij verwerkte loondossiers.
  */
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/beheer/laden.php';
-$pagina_titel = 'Seizoenen';
+$pagina_titel = 'Seizoen';
 $actieve_nav  = 'seizoen';
 vereis_recht('seizoen', 'bewerken');
 
@@ -44,12 +49,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         case 'nieuw':
             $naam = trim((string)($_POST['naam'] ?? ''));
             if ($naam !== '') {
+                // Vóór het invoegen: het seizoen waar het beheer mee werkt. Dat blijft zo als de
+                // aanmelding ervan open staat of het sollicitaties heeft (actief_seizoen()).
+                $nu_actief = actief_seizoen();
+                if ($nu_actief && ($nu_actief['status'] ?? '') !== 'open'
+                    && (int)(seizoen_rij($db, (int)$nu_actief['id'])['n'] ?? 0) === 0) $nu_actief = null;
                 $db->prepare("INSERT INTO seizoenen (naam, status) VALUES (?, 'gesloten')")->execute([$naam]);
                 $nieuw_id = (int)$db->lastInsertId();
-                $open_nu  = actief_seizoen();
-                flash('succes', 'Seizoen "' . $naam . '" aangemaakt. Vul nu de datums in.'
-                    . ($open_nu && ($open_nu['status'] ?? '') === 'open'
-                        ? ' Het beheer blijft werken met "' . $open_nu['naam'] . '" tot je dat sluit en dit seizoen opent.'
+                flash('succes', 'Seizoen "' . $naam . '" aangemaakt, met de aanmelding dicht. Vul nu de datums in.'
+                    . ($nu_actief
+                        ? ' Het beheer blijft werken met "' . $nu_actief['naam'] . '" tot je de aanmelding van dit seizoen opent.'
                         : ''));
                 // Meteen het nieuwe seizoen bewerken: daar ga je de datums invullen.
                 if ($nieuw_id > 0) redirect(APP_URL . '/admin/seizoen.php?id=' . $nieuw_id);
@@ -103,28 +112,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             redirect(APP_URL . '/admin/seizoen.php?id=' . $sid);
 
         case 'open':
+            // Er staat maar één aanmelding tegelijk open. Twee open seizoenen lieten
+            // actief_seizoen() stil het nieuwste kiezen; nu sluit openen de andere.
+            $sz = seizoen_rij($db, $sid);
+            if (!$sz) break;
+            $q = $db->prepare("SELECT naam FROM seizoenen WHERE status='open' AND id<>?");
+            $q->execute([$sid]);
+            $gesloten = array_column($q->fetchAll(), 'naam');
+            $db->beginTransaction();
+            try {
+                $db->prepare("UPDATE seizoenen SET status='gesloten' WHERE status='open' AND id<>?")->execute([$sid]);
+                $db->prepare("UPDATE seizoenen SET status='open' WHERE id=?")->execute([$sid]);
+                $db->commit();
+            } catch (\Throwable $e) {
+                if ($db->inTransaction()) $db->rollBack();
+                error_log('seizoen openen ' . $sid . ': ' . $e->getMessage());
+                flash('fout', 'Openen is niet gelukt; er is niets veranderd.');
+                redirect(APP_URL . '/admin/seizoen.php?id=' . $sid);
+            }
+            flash('succes', 'De aanmelding voor ' . $sz['naam'] . ' staat open — het aanmeldformulier is nu actief.'
+                . ($gesloten ? ' De aanmelding van ' . implode(', ', $gesloten) . ' is daarmee gesloten.' : ''));
+            redirect(APP_URL . '/admin/seizoen.php?id=' . $sid);
+
         case 'sluit':
-            $db->prepare("UPDATE seizoenen SET status=? WHERE id=?")
-               ->execute([$actie === 'open' ? 'open' : 'gesloten', $sid]);
-            flash('succes', $actie === 'open'
-                ? 'Seizoen geopend — het aanmeldformulier is nu actief.'
-                : 'Seizoen gesloten — er kan niet meer worden aangemeld.');
+            $db->prepare("UPDATE seizoenen SET status='gesloten' WHERE id=?")->execute([$sid]);
+            flash('succes', 'De aanmelding is gesloten — er kan niet meer worden aangemeld. Wie al in de procedure zit, loopt gewoon door.');
             redirect(APP_URL . '/admin/seizoen.php?id=' . $sid);
 
         case 'verwijder':
             if (!$mag_verwijderen) { http_response_code(403); exit('Alleen een beheerder kan een seizoen verwijderen.'); }
-            $sz = seizoen_rij($db, $sid);
-            if ($sz) {
-                // FK CASCADE ruimt de rest op; de sollicitaties expliciet, zodat het ook
-                // werkt op een database waar die cascade ooit is weggevallen.
-                $db->prepare("DELETE FROM sollicitaties WHERE seizoen_id=?")->execute([$sid]);
-                $db->prepare("DELETE FROM seizoenen WHERE id=?")->execute([$sid]);
-                if (function_exists('audit_log')) {
-                    audit_log('seizoen_verwijderd', 'seizoen', $sid,
-                              ['naam' => $sz['naam'], 'sollicitaties' => (int)$sz['n']]);
-                }
-                flash('succes', 'Seizoen "' . $sz['naam'] . '" en alle bijbehorende gegevens zijn verwijderd.');
+            // Via de AVG-wislaag; weigert bij verwerkte loondossiers (bewaarplicht).
+            $r = bh_seizoen_verwijderen($sid);
+            if (!$r['ok']) {
+                flash('fout', (string)$r['fout']);
+                redirect(APP_URL . '/admin/seizoen.php?id=' . $sid);
             }
+            flash('succes', $r['tekst']);
             break;
     }
 
@@ -139,6 +162,12 @@ if (in_array($bevestig_actie, ['open', 'sluit', 'verwijder'], true)) {
     if (!$bevestig_sz || ($bevestig_actie === 'verwijder' && !$mag_verwijderen)) {
         $bevestig_actie = ''; $bevestig_sz = null;
     }
+    // Verwerkte loondossiers (bewaarplicht): dan geen knop die toch zou weigeren, maar meteen de reden.
+    if ($bevestig_sz && $bevestig_actie === 'verwijder' && ($_bewaard = bh_seizoen_loon_bewaard((int)$bevestig_sz['id'])) > 0) {
+        flash('fout', $bevestig_sz['naam'] . ' kan niet worden verwijderd: er ' . ($_bewaard === 1 ? 'is één verwerkt loondossier' : 'zijn ' . $_bewaard . ' verwerkte loondossiers')
+            . ' met een wettelijke bewaarplicht. Vernietig die eerst bij Loondossiers als de bewaartermijn voorbij is.');
+        redirect(APP_URL . '/admin/seizoen.php?id=' . (int)$bevestig_sz['id']);
+    }
 }
 
 $seizoenen = $db->query("
@@ -147,9 +176,9 @@ $seizoenen = $db->query("
 ")->fetchAll();
 
 // "Huidig" betekent hier hetzelfde als in de rest van het beheer: actief_seizoen() (het
-// open seizoen, anders het nieuwste). Eerder was dat hier altijd het nieuwste, zodat een
-// net aangemaakt, nog gesloten seizoen "huidig" heette terwijl Vandaag, Sollicitanten en
-// de selectiedag nog met het open seizoen werkten.
+// seizoen met de aanmelding open, anders het nieuwste met sollicitaties). Eerder was dat
+// hier altijd het nieuwste, zodat een net aangemaakt, leeg seizoen "huidig" heette terwijl
+// Vandaag, Sollicitanten en de selectiedag nog met het lopende seizoen werkten.
 $actief    = actief_seizoen();
 $actief_id = $actief ? (int)$actief['id'] : 0;
 
@@ -180,7 +209,7 @@ require __DIR__ . '/layout_top.php';
 
 <?php if ($bevestig_sz): ?>
   <?php
-  $bev = bh_seizoen_gevolgen($bevestig_actie, $bevestig_sz, $ander_open((int)$bevestig_sz['id']));
+  $bev = bh_seizoen_gevolgen($bevestig_actie, $bevestig_sz, $ander_open((int)$bevestig_sz['id']), $actief);
   $bev_form = ['actie' => APP_URL . '/admin/seizoen.php',
                'velden' => ['actie' => $bevestig_actie, 'seizoen_id' => (int)$bevestig_sz['id']]];
   $bev_terug = APP_URL . '/admin/seizoen.php?id=' . (int)$bevestig_sz['id'];
@@ -196,7 +225,7 @@ require __DIR__ . '/layout_top.php';
     <span>
       Je bewerkt <strong><?= h((string)$huidig['naam']) ?></strong>. De rest van het beheer
       (Vandaag, Sollicitanten, de selectiedag) werkt met <strong><?= h((string)$actief['naam']) ?></strong>:
-      dat is het seizoen dat <?= ($actief['status'] ?? '') === 'open' ? 'open staat' : 'het nieuwst is, omdat er geen seizoen open staat' ?>.
+      dat is het seizoen <?= ($actief['status'] ?? '') === 'open' ? 'waarvan de aanmelding open staat' : 'dat nu loopt, omdat er geen aanmelding open staat' ?>.
       <a href="<?= APP_URL ?>/admin/seizoen.php">Naar <?= h((string)$actief['naam']) ?></a>
     </span>
   </div>
@@ -207,13 +236,13 @@ require __DIR__ . '/layout_top.php';
   <div class="bh-seizoenkaart-wie">
     <h2><?= h((string)$huidig['naam']) ?> <?php if ($bewerkt_actief): ?><?= bh_chip('huidig', 'blauw') ?><?php endif; ?></h2>
     <?= bh_stoplicht($_open ? 'goed' : 'krap',
-          $_open ? 'Open — sollicitanten kunnen zich aanmelden'
-                 : 'Gesloten — het aanmeldformulier staat uit') ?>
+          $_open ? 'Aanmelding open — sollicitanten kunnen zich aanmelden'
+                 : 'Aanmelding gesloten — het aanmeldformulier staat uit') ?>
   </div>
   <div class="bh-seizoenkaart-acties">
     <a class="ds-btn <?= $_open ? 'ds-btn-secundair' : 'ds-btn-primair' ?>"
        href="<?= h($bev_url($_open ? 'sluit' : 'open', (int)$huidig['id'])) ?>">
-      <?= $_open ? 'Seizoen sluiten' : 'Seizoen openen' ?>
+      <?= $_open ? 'Aanmelding sluiten' : 'Aanmelding openen' ?>
     </a>
     <a class="ds-btn ds-btn-zacht ds-btn-sm" href="<?= APP_URL ?>/aanmelden.php" target="_blank" rel="noopener">
       Aanmeldformulier bekijken
@@ -373,16 +402,17 @@ require __DIR__ . '/layout_top.php';
       <input type="hidden" name="actie" value="nieuw">
       <div class="bh-kaartkop"><h2>Nieuw seizoen aanmaken</h2></div>
       <p class="ds-veld-hint">
-        Het nieuwe seizoen begint gesloten. Bestaande gegevens blijven staan, en wie eerder
-        heeft gesolliciteerd wordt vanzelf herkend als terugkerend.
+        Het nieuwe seizoen begint met de aanmelding dicht. Bestaande gegevens blijven staan, en
+        wie eerder heeft gesolliciteerd wordt vanzelf herkend als terugkerend.
       </p>
       <?php $_nu_open = $ander_open(0); if ($_nu_open): ?>
         <div class="ds-melding ds-melding-warn">
           <?= icoon('waarschuwing', 16) ?>
           <span>
-            <strong><?= h((string)$_nu_open['naam']) ?></strong> staat nog open. Het nieuwe seizoen
-            maak je wel alvast aan, maar het beheer en het aanmeldformulier blijven met
-            <?= h((string)$_nu_open['naam']) ?> werken tot je dat sluit en het nieuwe opent.
+            De aanmelding van <strong><?= h((string)$_nu_open['naam']) ?></strong> staat nog open. Het nieuwe
+            seizoen maak je wel alvast aan, maar het beheer en het aanmeldformulier blijven met
+            <?= h((string)$_nu_open['naam']) ?> werken tot je de aanmelding van het nieuwe seizoen opent;
+            die van <?= h((string)$_nu_open['naam']) ?> gaat dan vanzelf dicht.
           </span>
         </div>
       <?php endif; ?>
@@ -428,7 +458,7 @@ require __DIR__ . '/layout_top.php';
           <span class="bh-seizoenrij-naam">
             <?= h((string)$sz['naam']) ?>
             <?php if ($_actief): ?><?= bh_chip('huidig', 'blauw') ?><?php endif; ?>
-            <?= bh_badge($_is_open ? 'Open' : 'Gesloten', $_is_open ? 'groen' : 'grijs') ?>
+            <?= bh_badge($_is_open ? 'Aanmelding open' : 'Aanmelding dicht', $_is_open ? 'groen' : 'grijs') ?>
           </span>
           <span class="bh-seizoenrij-sub">
             <?= (int)$sz['n'] ?> <?= (int)$sz['n'] === 1 ? 'sollicitatie' : 'sollicitaties' ?>
@@ -450,7 +480,7 @@ require __DIR__ . '/layout_top.php';
             <?php if ($mag_verwijderen): ?>
               <?php if (!$_huidig): ?>
                 <a class="ds-btn ds-btn-zacht ds-btn-sm" href="<?= h($bev_url($_is_open ? 'sluit' : 'open', (int)$sz['id'])) ?>">
-                  <?= $_is_open ? 'Sluiten' : 'Heropenen' ?>
+                  <?= $_is_open ? 'Aanmelding sluiten' : 'Aanmelding openen' ?><span class="bh-vw"> — <?= h((string)$sz['naam']) ?></span>
                 </a>
               <?php endif; ?>
               <a class="ds-btn ds-btn-gevaar ds-btn-sm" href="<?= h($bev_url('verwijder', (int)$sz['id'])) ?>">Verwijderen</a>
@@ -461,7 +491,7 @@ require __DIR__ . '/layout_top.php';
       </ul>
       <?php endif; ?>
       <?php if (!$mag_verwijderen): ?>
-        <p class="ds-veld-hint">Een seizoen verwijderen of heropenen kan alleen een beheerder.</p>
+        <p class="ds-veld-hint">Een seizoen verwijderen, of de aanmelding van een ander seizoen openen of sluiten, kan alleen een beheerder.</p>
       <?php endif; ?>
     </section>
   </aside>

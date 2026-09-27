@@ -34,10 +34,14 @@ require __DIR__ . '/layout_top.php';
 <?php if (!$sz): ?>
   <div class="ds-kaart ds-kaart-p">
     <?php
+      // De knop alleen voor wie een seizoen mag aanmaken; anders eindigt hij op "Geen toegang".
+      $_sz_mag    = mag('seizoen', 'bewerken');
       $leeg_titel = 'Er is nog geen seizoen';
-      $leeg_tekst = 'Maak een seizoen aan en zet de datums; daarna komt hier te staan wat er te doen is.';
+      $leeg_tekst = $_sz_mag
+          ? 'Maak een seizoen aan en zet de datums; daarna komt hier te staan wat er te doen is.'
+          : 'Zodra het bestuur een seizoen heeft aangemaakt, komt hier te staan wat er te doen is.';
       $leeg_icoon = 'kalender';
-      $leeg_knop  = ['tekst' => 'Seizoen aanmaken', 'url' => APP_URL . '/admin/seizoen.php'];
+      $leeg_knop  = $_sz_mag ? ['tekst' => 'Seizoen aanmaken', 'url' => APP_URL . '/admin/seizoen.php'] : null;
       require __DIR__ . '/_leeg.php';
     ?>
   </div>

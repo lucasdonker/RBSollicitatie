@@ -8,13 +8,19 @@
  *
  * Verwacht:
  *   $afmeldingen  array  uit evenement_afmeldingen_open(): [['sol_id','naam','evenement','label','reden'], …]
- * Knoppen alleen met bewerkrecht op de module van dat evenement.
+ * Knoppen alleen met bewerkrecht op de module van dat evenement. Wie bij geen enkele rij
+ * een knop heeft, krijgt het blok als informatie: dan wacht er niets op jóúw besluit.
  */
 $afmeldingen = $afmeldingen ?? [];
 if (!$afmeldingen) return;
+$_afm_mag = false;
+foreach ($afmeldingen as $_a) {
+    $_def = evenement_def($_a['evenement']);
+    if ($_def && mag($_def['module'], 'bewerken')) { $_afm_mag = true; break; }
+}
 ?>
 <section class="ds-kaart ds-kaart-p bh-afmeldingen" aria-labelledby="bh-afm-kop">
-  <div class="bh-kaartkop"><h2 id="bh-afm-kop">Kan niet komen — wacht op jouw besluit</h2></div>
+  <div class="bh-kaartkop"><h2 id="bh-afm-kop"><?= $_afm_mag ? 'Kan niet komen — wacht op jouw besluit' : 'Kan niet komen — het bestuur beslist' ?></h2></div>
   <ul class="bh-afm-lijst">
     <?php foreach ($afmeldingen as $_a): $_def = evenement_def($_a['evenement']); ?>
       <li class="bh-afm-rij">

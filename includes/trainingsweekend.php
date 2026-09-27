@@ -251,12 +251,31 @@ function tw_doorgevoerd_markeren(int $seizoen_id, int $sol_id): void {
 }
 
 /**
+ * Was deze persoon er niet? Staat op "niet gekomen" (met reden, of "Niet verschenen" na het
+ * afsluiten van het inchecken) en is niet alsnog ingecheckt. Eén definitie voor alle schermen.
+ */
+function tw_niet_gekomen(array $k): bool {
+    return empty($k['aanwezig']) && ($k['afgemeld_reden'] ?? null) !== null;
+}
+
+/** Aanwezigheid als tekst, voor de meta-regels op de TW-schermen. */
+function tw_aanwezigheid_tekst(array $k): string {
+    if (!empty($k['aanwezig'])) return 'aanwezig';
+    return tw_niet_gekomen($k) ? 'niet gekomen' : 'nog niet ingecheckt';
+}
+
+/**
  * De stand van het weekend in getallen.
  *
- * 'te_beslissen'            — nog geen besluit, ongeacht de aanwezigheid. Ook wie niet is
- *                             afgevinkt of niet kwam heeft een besluit nodig; telden alleen
- *                             aanwezigen, dan zei het stoplicht "alles besloten" terwijl er
- *                             nog kandidaten zonder besluit in uitgenodigd_tw stonden.
+ * 'te_beslissen'            — nog geen besluit en wél een gesprek nodig: aanwezig of nog niet
+ *                             afgevinkt. Telden alleen aanwezigen, dan zei het stoplicht "alles
+ *                             besloten" terwijl er nog kandidaten zonder besluit in uitgenodigd_tw
+ *                             stonden. Wie niet kwam telt hier níét (meer): die wacht niet op een
+ *                             gesprek, zie 'niet_gekomen'.
+ * 'niet_gekomen'            — (2.125.3) niet gekomen en nog geen besluit. Eigen besluitroute: het
+ *                             bestuur beslist zonder gesprek (meestal afwijzen, met een eigen
+ *                             standaardbericht — tw_standaard_bericht(..., true)).
+ * 'niet_gekomen_totaal'     — (2.125.3) iedereen die niet kwam, besloten of niet.
  * 'klaar_om_door_te_voeren' — besluiten die ergens toe leiden en nog niet zijn uitgevoerd.
  * 'twijfel_open'            — vastgelegd als twijfel, dus wachtend op een telefoontje.
  *
@@ -268,12 +287,15 @@ function tw_doorgevoerd_markeren(int $seizoen_id, int $sol_id): void {
 function tw_stand(array $kandidaten): array {
     $s = ['totaal' => count($kandidaten), 'aanwezig' => 0, 'afwezig' => 0, 'onbekend' => 0,
           'besloten' => 0, 'te_beslissen' => 0, 'klaar_om_door_te_voeren' => 0, 'twijfel_open' => 0,
-          'aannemen' => 0, 'twijfel' => 0, 'afwijzen' => 0, 'doorgevoerd' => 0];
+          'aannemen' => 0, 'twijfel' => 0, 'afwijzen' => 0, 'doorgevoerd' => 0,
+          'niet_gekomen' => 0, 'niet_gekomen_totaal' => 0];
     foreach ($kandidaten as $k) {
-        $ingecheckt = $k['ingecheckt_op'] !== null || $k['afgemeld_reden'] !== null;
+        $ingecheckt = ($k['ingecheckt_op'] ?? null) !== null || ($k['afgemeld_reden'] ?? null) !== null;
         if (!empty($k['aanwezig']))      $s['aanwezig']++;
         elseif ($ingecheckt)             $s['afwezig']++;
         else                             $s['onbekend']++;
+        $niet_gekomen = tw_niet_gekomen($k);
+        if ($niet_gekomen) $s['niet_gekomen_totaal']++;
 
         $besluit = (string)($k['besluit'] ?? '');
         if ($besluit !== '') {
@@ -283,12 +305,25 @@ function tw_stand(array $kandidaten): array {
                 if (tw_besluit_fase($besluit) !== null) $s['klaar_om_door_te_voeren']++;
                 else                                    $s['twijfel_open']++;
             }
+        } elseif ($niet_gekomen) {
+            $s['niet_gekomen']++;
         } else {
             $s['te_beslissen']++;
         }
         if (!empty($k['doorgevoerd_op'])) $s['doorgevoerd']++;
     }
     return $s;
+}
+
+/**
+ * tw_stand() van een seizoen, één keer per request berekend. Alleen voor tellingen op schermen die
+ * niets wijzigen (Vandaag, het menubolletje): die vroegen hem tot vier keer per pagina op.
+ * Na een wijziging in hetzelfde request: $vers = true (of tw_stand(tw_kandidaten($sid)) zelf).
+ */
+function tw_stand_seizoen(int $seizoen_id, bool $vers = false): array {
+    static $cache = [];
+    if ($vers) unset($cache[$seizoen_id]);
+    return $cache[$seizoen_id] ??= tw_stand(tw_kandidaten($seizoen_id));
 }
 
 /** Naar welke fase leidt een besluit? Twijfel leidt nergens heen: daar moet iemand over bellen. */
@@ -339,15 +374,26 @@ function tw_twijfel_ids(array $kandidaten): array {
 //  Het gesprek met het bestuur (stap Gesprekken)
 // ─────────────────────────────────────────────────────────────
 
-/** De standaardtekst als het bestuur in het gesprek geen eigen bericht invult (Instellingen › Beoordelingscriteria). */
-function tw_standaard_bericht(string $besluit): string {
+/**
+ * De standaardtekst als het bestuur in het gesprek geen eigen bericht invult. Aanpasbaar in
+ * Instellingen › Uitnodigen & automatisch (tw.bericht_aangenomen / tw.bericht_afgewezen).
+ *
+ * Wie niet op het weekend kwam, krijgt bij afwijzen een eigen tekst: "we hebben je inzet
+ * gezien" klopt dan niet. Die tekst heeft (nog) geen veld in Instellingen; de sleutel
+ * tw.bericht_afgewezen_niet_gekomen wordt al wel gelezen, zodat hij er later zo bij kan.
+ */
+function tw_standaard_bericht(string $besluit, bool $niet_gekomen = false): string {
     $standaard = [
         'aannemen' => 'Fijn dat je erbij bent! In je portaal staan een paar formulieren klaar; vul die zo snel mogelijk in.',
         'afwijzen' => 'We hebben je inzet dit weekend gezien en waarderen die. Dank je wel, en misschien tot een volgend seizoen.',
+        'afwijzen_niet_gekomen' => 'Je was er niet bij op het trainingsweekend. Dat weekend is de laatste stap voordat we iemand aannemen, dus we gaan dit seizoen niet met je verder. Dank je wel voor je interesse, en misschien tot een volgend seizoen.',
     ];
-    $sleutel = $besluit === 'aannemen' ? 'tw.bericht_aangenomen' : 'tw.bericht_afgewezen';
-    $v = function_exists('instelling') ? trim((string)instelling($sleutel, '')) : '';
-    return $v !== '' ? $v : ($standaard[$besluit] ?? '');
+    $sleutels = ['aannemen' => 'tw.bericht_aangenomen', 'afwijzen' => 'tw.bericht_afgewezen',
+                 'afwijzen_niet_gekomen' => 'tw.bericht_afgewezen_niet_gekomen'];
+    $soort = ($besluit === 'afwijzen' && $niet_gekomen) ? 'afwijzen_niet_gekomen' : $besluit;
+    if (!isset($standaard[$soort])) return '';
+    $v = function_exists('instelling') ? trim((string)instelling($sleutels[$soort], '')) : '';
+    return $v !== '' ? $v : $standaard[$soort];
 }
 
 /**
@@ -377,11 +423,17 @@ function tw_gesprek_afronden(int $seizoen_id, int $sol_id, string $besluit, stri
 
     $naar = tw_besluit_fase($besluit);
     if ($naar === null) return ['ok' => true, 'fase' => null, 'melding' => 'Vastgelegd als twijfel: bel na het weekend.'];
+    // Wie er niet was, krijgt bij afwijzen de tekst voor "niet gekomen" (niet "we zagen je inzet").
+    $niet_gekomen = tw_niet_gekomen(tw_deelname_van($seizoen_id, $sol_id) ?? []);
+    // Het sjabloon tw_afgewezen bedankt voor "het gesprek op het trainingsweekend". Voor wie niet
+    // kwam hoort daar een eigen sjabloon bij (tw_niet_gekomen); zolang dat niet in het
+    // meldingenregister staat, valt het terug op tw_afgewezen.
+    $afwijs_type = ($niet_gekomen && function_exists('melding_definitie') && melding_definitie('tw_niet_gekomen')) ? 'tw_niet_gekomen' : 'tw_afgewezen';
     $res = fase_zetten($sol_id, $naar, 'gesprek', [
         'seizoen_id'    => $seizoen_id,
         'alleen_van'    => ['uitgenodigd_tw', 'tw_geweest'],
-        'melding_vars'  => ['gesprek_bericht' => $bericht !== '' ? $bericht : tw_standaard_bericht($besluit)],
-        'meldingstypen' => $besluit === 'afwijzen' ? ['tw_afgewezen'] : fase_meldingstypen($naar),
+        'melding_vars'  => ['gesprek_bericht' => $bericht !== '' ? $bericht : tw_standaard_bericht($besluit, $niet_gekomen)],
+        'meldingstypen' => $besluit === 'afwijzen' ? [$afwijs_type] : fase_meldingstypen($naar),
     ]);
     if (empty($res['ok'])) return ['ok' => false, 'fase' => null, 'melding' => 'Het besluit staat vast, maar doorvoeren lukte niet: ' . ($res['fout'] ?? 'onbekend')];
     tw_doorgevoerd_markeren($seizoen_id, $sol_id);
@@ -392,9 +444,9 @@ function tw_gesprek_afronden(int $seizoen_id, int $sol_id, string $besluit, stri
 
 /**
  * De gesprekkenlijst gefilterd en gesorteerd (30 gesprekken op een tablet: je moet snel vinden).
- * Voegt aan elke kandidaat '_stand' (nog|bezig|gehad) en '_sd' (selectiedag-gemiddelde of null) toe.
+ * Voegt aan elke kandidaat '_stand' (nog|bezig|gehad|niet_gekomen) en '_sd' (selectiedag-gemiddelde of null) toe.
  *
- * @param array $f  q (naam), stand (''|nog|bezig|gehad), besluit (''|aannemen|twijfel|afwijzen|geen),
+ * @param array $f  q (naam), stand (''|nog|bezig|gehad|niet_gekomen), besluit (''|aannemen|twijfel|afwijzen|geen),
  *                  sort ('naam'|'sd')
  */
 function tw_gesprekken_filter(array $kandidaten, array $f, int $ik, array $sd_scores): array {
@@ -415,10 +467,15 @@ function tw_gesprekken_filter(array $kandidaten, array $f, int $ik, array $sd_sc
     return $uit;
 }
 
-/** Stand van de gesprekken voor de lijst: nog / bezig / gehad (twijfel telt als gehad, met twijfel). */
+/**
+ * Stand van de gesprekken voor de lijst: nog / bezig / gehad / niet_gekomen.
+ * Twijfel telt als gehad (met twijfel). 'niet_gekomen' = was er niet en heeft nog geen besluit:
+ * geen gesprek, wel een besluit (eigen groep op het scherm, telt niet als "nog te spreken").
+ */
 function tw_gesprek_stand(array $k, int $ik): string {
     if (!empty($k['doorgevoerd_op']) || ($k['gesprek_status'] ?? '') === 'gehad') return 'gehad';
     if (function_exists('evenement_claim_actief') && evenement_claim_actief($k['gesprek_door'] ?? null, $k['gesprek_sinds'] ?? null, $ik)) return 'bezig';
+    if (tw_niet_gekomen($k)) return 'niet_gekomen';
     return 'nog';
 }
 

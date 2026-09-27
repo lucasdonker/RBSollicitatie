@@ -91,6 +91,7 @@ function log_actie_register(): array {
         'kanaal_voorkeur'   => ['Kanaalvoorkeur gewijzigd', 'telefoon'],
         'afgemeld'          => ['Afgemeld voor berichten', 'kruis-cirkel'],
         'seintje_gevraagd'    => ['Seintje gevraagd voor de volgende werving', 'bel'],
+        'claim_overgenomen'   => ['Gesprek overgenomen van een andere beheerder', 'wissel'],
         'seintje_ingetrokken' => ['Seintje ingetrokken', 'kruis-cirkel'],
 
         // Sollicitatie intrekken (includes/intrekken.php)
