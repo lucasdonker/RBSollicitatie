@@ -153,6 +153,14 @@ function pag_alle(): array {
 }
 
 /**
+ * De wervingspagina die bezoekers zien op de voorpagina van het domein (index.php), of ''.
+ * Voor zoekmachines is de voorpagina het sterkste adres; zonder startpagina gaat die naar de login.
+ */
+function pag_startpagina_slug(): string {
+    return function_exists('instelling') ? trim((string)instelling('paginas.startpagina', '')) : '';
+}
+
+/**
  * Pagina aanmaken of bijwerken. Bij een gewijzigde slug verhuist ook de opslagmap mee,
  * zodat relatieve verwijzingen naar afbeeldingen blijven werken.
  * Retour: ['ok'=>bool, 'id'=>int, 'fout'=>string]
@@ -197,6 +205,18 @@ function pag_opslaan(array $in, int $id = 0): array {
                ->execute([$slug, $titel, $doelgroep, $bron, $status, $csp, $index, $bhd ?: null]);
             $id = (int)$db->lastInsertId();
             if (function_exists('audit_log')) audit_log('aangemaakt', 'pagina', $id, ['slug' => $slug]);
+        }
+        // Startpagina van het domein: één instelling (slug). Hernoemd → meeverhuizen; alleen als het
+        // formulier het veld meestuurt (startpagina_veld) mag het vinkje hem aan- of uitzetten.
+        $start = pag_startpagina_slug();
+        if (isset($oud) && $start === $oud['slug'] && $oud['slug'] !== $slug) $start = $slug;
+        if (isset($in['startpagina_veld'])) {
+            if (!empty($in['startpagina'])) $start = $slug;
+            elseif ($start === $slug)       $start = '';
+        }
+        if ($start !== pag_startpagina_slug() && function_exists('instelling_opslaan')) {
+            instelling_opslaan('paginas.startpagina', $start);
+            if (function_exists('audit_log')) audit_log('pagina_startpagina', 'pagina', $id, ['slug' => $start]);
         }
         return ['ok' => true, 'id' => $id, 'fout' => ''];
     } catch (\Throwable $e) {

@@ -15,6 +15,7 @@ function app_changelog(): array {
                 'Nieuw: /sitemap.xml met de vindbare wervingspagina\'s en een /robots.txt die ernaar verwijst; beheer, portaal en API staan erin als niet-indexeren',
                 'Op de testomgeving is niets vindbaar, ook niet met het vinkje aan',
                 'Nieuwe markering [[pagina_url]] voor og:url, og:image en structured data',
+                'Startpagina van het domein: een wervingspagina kan de voorpagina worden voor wie niet is ingelogd (vinkje bij Gegevens); de voorpagina zet geen cookie meer voor nieuwe bezoekers',
             ],
         ],
         '2.126.1' => [

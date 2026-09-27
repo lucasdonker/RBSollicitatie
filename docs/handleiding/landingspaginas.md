@@ -243,6 +243,14 @@ Standaard staat een pagina op "niet vindbaar via Google". Wil je dat wel, vink d
 - de pagina komt in **`/sitemap.xml`**, waar Google hem vindt, en `/robots.txt` verwijst daarnaar.
   Meld de sitemap één keer aan in Google Search Console.
 
+**Startpagina van het domein.** Vink bij "Gegevens" **Startpagina van sollicitatie.paal13.com** aan
+bij de belangrijkste wervingspagina. Wie dan naar `https://sollicitatie.paal13.com/` gaat en niet is
+ingelogd, komt op die pagina uit; ingelogde sollicitanten en beheerders gaan naar hun eigen
+omgeving. Dat is goed voor Google (de voorpagina is het sterkste adres) en voor bezoekers die het
+adres intypen. Zet op die pagina wel een link "Al gesolliciteerd? Log in" naar `/portaal/`. Er is
+maar één startpagina; staat de pagina niet op Gepubliceerd, dan gaat de voorpagina gewoon naar het
+inloggen.
+
 Op de testomgeving is een pagina nooit vindbaar, ook niet met het vinkje aan: anders concurreert
 test met de echte site in de zoekresultaten.
 

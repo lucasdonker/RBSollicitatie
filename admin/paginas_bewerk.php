@@ -280,6 +280,13 @@ require __DIR__ . '/layout_top.php';
             <label for="f-index">Mag gevonden worden via Google</label>
           </div>
 
+          <div class="pg-vink">
+            <input type="hidden" name="startpagina_veld" value="1">
+            <input type="checkbox" id="f-start" name="startpagina" value="1" aria-describedby="f-start-hint"<?= pag_startpagina_slug() === $pagina['slug'] ? ' checked' : '' ?> <?= $mag_bewerken ? '' : 'disabled' ?>>
+            <label for="f-start">Startpagina van <?= h((string)parse_url(APP_URL, PHP_URL_HOST)) ?></label>
+          </div>
+          <p class="ds-veld-hint" id="f-start-hint">Bezoekers die niet zijn ingelogd en naar het domein zelf gaan, komen op deze pagina uit (alleen als hij gepubliceerd is). Ingelogde sollicitanten en beheerders gaan gewoon naar hun eigen omgeving. Zet op de pagina een duidelijke link "Al gesolliciteerd? Log in" naar <code>/portaal/</code>. Er kan maar één startpagina zijn.</p>
+
           <div class="ds-veld">
             <label class="ds-label" for="f-csp">Toegestane externe bronnen</label>
             <textarea class="ds-textarea" id="f-csp" name="csp_extra" rows="3" aria-describedby="f-csp-hint" <?= $mag_bewerken ? '' : 'disabled' ?>><?= h((string)($pagina['csp_extra'] ?? '')) ?></textarea>

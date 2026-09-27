@@ -114,6 +114,7 @@ function log_actie_register(): array {
         'asset_verwijderd'    => ['Bestand verwijderd', 'prullenbak'],
         'scan_bevestigd'      => ['Scanrapport bevestigd', 'schild'],
         'csp_host_toegestaan' => ['Externe host toegestaan', 'schild'],
+        'pagina_startpagina'  => ['Startpagina van het domein gewijzigd', 'koppeling'],
 
         // AVG-opschoning (categorieën uit opschoon_log)
         'afgewezen_geanonimiseerd'  => ['Afgewezen sollicitaties geanonimiseerd', 'slot'],
