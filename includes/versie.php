@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.126.1');
+define('APP_VERSIE', '2.126.2');
 
 function app_changelog(): array {
     return [
+        '2.126.2' => [
+            'datum'  => '2026-09-27',
+            'titel'  => 'Wervingspagina\'s vindbaar in Google',
+            'punten' => [
+                'Vindbare pagina\'s krijgen automatisch een canonical-adres (zonder ?bron= en dergelijke)',
+                'Nieuw: /sitemap.xml met de vindbare wervingspagina\'s en een /robots.txt die ernaar verwijst; beheer, portaal en API staan erin als niet-indexeren',
+                'Op de testomgeving is niets vindbaar, ook niet met het vinkje aan',
+                'Nieuwe markering [[pagina_url]] voor og:url, og:image en structured data',
+            ],
+        ],
         '2.126.1' => [
             'datum'  => '2026-09-27',
             'titel'  => 'Review 2.126: gaten dicht, handleiding penningmeester',

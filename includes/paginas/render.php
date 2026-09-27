@@ -20,6 +20,15 @@ function pag_publieke_url(array $pagina): string {
 }
 
 /**
+ * Mag Google deze pagina indexeren? Alleen gepubliceerd, met het vinkje "Mag gevonden worden via
+ * Google", en nooit op de testomgeving (anders concurreert test met productie in de zoekresultaten).
+ */
+function pag_indexeerbaar(array $pagina): bool {
+    return ($pagina['status'] ?? '') === 'gepubliceerd' && !empty($pagina['indexeerbaar'])
+        && !(function_exists('is_test_omgeving') && is_test_omgeving());
+}
+
+/**
  * De Content-Security-Policy voor één pagina.
  *
  * 'unsafe-inline' is onvermijdelijk: een geüpload ontwerp heeft zijn opmaak en scripts in
@@ -73,7 +82,7 @@ function pag_headers_zet(array $pagina, array $opties = []): void {
     header('Referrer-Policy: strict-origin-when-cross-origin');
     header('Permissions-Policy: geolocation=(), camera=(), microphone=(), payment=(), interest-cohort=()');
 
-    if (!$gepubliceerd || empty($pagina['indexeerbaar'])) {
+    if (!pag_indexeerbaar($pagina)) {
         header('X-Robots-Tag: noindex, nofollow');
     }
     header($vers ? 'Cache-Control: no-store, must-revalidate' : 'Cache-Control: public, max-age=300');
@@ -100,6 +109,9 @@ function pag_placeholders(string $html, array $pagina, string $formulier_html): 
         '[[seizoen]]'     => h((string)($seizoen['naam'] ?? '')),
         '[[aanmeld_url]]' => h(pag_publieke_url($pagina) . '#aanmelden'),
         '[[bron]]'        => h($bron),
+        // Het volledige adres van de pagina, voor og:url, og:image en structured data. Relatieve
+        // adressen werken daar niet (en <base> geldt niet voor crawlers van sociale media).
+        '[[pagina_url]]'  => h(pag_publieke_url($pagina)),
     ]);
 }
 
@@ -108,8 +120,11 @@ function pag_injecteer_head(string $html, array $pagina, bool $met_formulier): s
     $basis = (defined('APP_URL') ? APP_URL : '') . '/p/' . $pagina['slug'] . '/';
     $blok  = "\n<base href=\"" . h($basis) . "\">\n";
 
-    if (($pagina['status'] ?? '') !== 'gepubliceerd' || empty($pagina['indexeerbaar'])) {
+    if (!pag_indexeerbaar($pagina)) {
         $blok .= "<meta name=\"robots\" content=\"noindex,nofollow\">\n";
+    } elseif (!preg_match('/<link\b[^>]*rel=["\']?canonical/i', $html)) {
+        // Eén adres per pagina, ook als er ?bron=… of ?ok=1 achter staat (anders dubbele inhoud).
+        $blok .= '<link rel="canonical" href="' . h(pag_publieke_url($pagina)) . "\">\n";
     }
     if ($met_formulier) {
         $css = (defined('APP_URL') ? APP_URL : '') . '/assets/css/aanmeldformulier.css?v=' . pag_asset_versie('assets/css/aanmeldformulier.css');

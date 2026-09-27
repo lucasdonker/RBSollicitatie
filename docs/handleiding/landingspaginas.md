@@ -73,6 +73,7 @@ Andere markeringen die je kunt gebruiken:
 | `[[seizoen]]` | De naam van het huidige seizoen, bijvoorbeeld "zomer 2027" |
 | `[[aanmeld_url]]` | Het adres van het formulier op deze pagina, handig voor een eigen knop ("Meld je aan") |
 | `[[bron]]` | De bron-code van deze pagina |
+| `[[pagina_url]]` | Het volledige adres van deze pagina, bijvoorbeeld `https://sollicitatie.paal13.com/p/zomer-2027`. Nodig voor `og:url`, `og:image` (`[[pagina_url]]/deel-foto.jpg`) en structured data: daar werkt een los bestandsnaam niet |
 
 Een markering die je verkeerd typt, blijft gewoon zichtbaar op de pagina staan. Zie je
 `[[formulir]]` staan, dan weet je meteen wat eraan scheelt.
@@ -235,7 +236,15 @@ pagina die nog niet openbaar is, of naar een versie die nog niet is bevestigd, d
 een balk en telt je bezoek niet mee.
 
 Standaard staat een pagina op "niet vindbaar via Google". Wil je dat wel, vink dan bij "Gegevens"
-**Mag gevonden worden via Google** aan.
+**Mag gevonden worden via Google** aan. Dan gebeurt er automatisch nog meer:
+
+- de pagina krijgt een **canonical**-adres (`/p/<adres>`, zonder `?bron=` of andere toevoegingen),
+  tenzij het ontwerp er zelf een heeft;
+- de pagina komt in **`/sitemap.xml`**, waar Google hem vindt, en `/robots.txt` verwijst daarnaar.
+  Meld de sitemap één keer aan in Google Search Console.
+
+Op de testomgeving is een pagina nooit vindbaar, ook niet met het vinkje aan: anders concurreert
+test met de echte site in de zoekresultaten.
 
 In het overzicht staat **Geen ontwerp** bij een pagina waarop nog geen versie live staat.
 

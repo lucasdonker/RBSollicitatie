@@ -222,6 +222,14 @@ knop (&quot;Meld je aan&quot;)</td>
 <td><code>[[bron]]</code></td>
 <td>De bron-code van deze pagina</td>
 </tr>
+<tr>
+<td><code>[[pagina_url]]</code></td>
+<td>Het volledige adres van deze pagina, bijvoorbeeld
+<code>https://sollicitatie.paal13.com/p/zomer-2027</code>. Nodig voor
+<code>og:url</code>, <code>og:image</code>
+(<code>[[pagina_url]]/deel-foto.jpg</code>) en structured data: daar
+werkt een los bestandsnaam niet</td>
+</tr>
 </tbody>
 </table>
 <p>Een markering die je verkeerd typt, blijft gewoon zichtbaar op de
@@ -409,7 +417,18 @@ openbaar is, of naar een versie die nog niet is bevestigd, dan zie je
 bovenaan een balk en telt je bezoek niet mee.</p>
 <p>Standaard staat een pagina op &quot;niet vindbaar via Google&quot;. Wil je dat
 wel, vink dan bij &quot;Gegevens&quot; <strong>Mag gevonden worden via
-Google</strong> aan.</p>
+Google</strong> aan. Dan gebeurt er automatisch nog meer:</p>
+<ul>
+<li>de pagina krijgt een <strong>canonical</strong>-adres
+(<code>/p/&lt;adres&gt;</code>, zonder <code>?bron=</code> of andere
+toevoegingen), tenzij het ontwerp er zelf een heeft;</li>
+<li>de pagina komt in <strong><code>/sitemap.xml</code></strong>, waar
+Google hem vindt, en <code>/robots.txt</code> verwijst daarnaar. Meld de
+sitemap één keer aan in Google Search Console.</li>
+</ul>
+<p>Op de testomgeving is een pagina nooit vindbaar, ook niet met het
+vinkje aan: anders concurreert test met de echte site in de
+zoekresultaten.</p>
 <p>In het overzicht staat <strong>Geen ontwerp</strong> bij een pagina
 waarop nog geen versie live staat.</p>
 <hr />
