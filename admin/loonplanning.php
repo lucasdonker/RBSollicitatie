@@ -56,7 +56,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['sc_actie'])) {
         $res = loonplan_definitief_maken($sid, $scenario_id, $ik);
         $tekst = 'Loonplanning definitief: ' . $res['aantal'] . ' ' . ($res['aantal'] === 1 ? 'afspraak' : 'afspraken') . ' vastgesteld.';
         if ($res['zonder_planning']) $tekst .= ' Aangenomen maar nergens ingepland (geen afspraak gemaakt): ' . implode(', ', $res['zonder_planning']) . '.';
-        flash($res['zonder_planning'] ? 'fout' : 'succes', $tekst);
+        // Definitief maken is gelukt; wie niet ingepland is, is een aandachtspunt, geen fout.
+        flash($res['zonder_planning'] ? 'waarschuwing' : 'succes', $tekst);
     } elseif ($a === 'opgave' && $sol) {
         // Eén persoon: planning = wat hij of zij opgaf (overschrijft dit scenario voor die persoon).
         $n = loonplan_opgave_overnemen($scenario_id, $sol, $seizoen);

@@ -32,10 +32,12 @@ try {
 // Migraties forceren / schema repareren (handig na een upload)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['actie'] ?? '') === 'migreer') {
     csrf_check();
+    $_fout = null;
     if (function_exists('db_failsafe')) {
-        try { db_failsafe(true); } catch (\Throwable $e) {}
+        try { db_failsafe(true); } catch (\Throwable $e) { $_fout = $e->getMessage(); }
     }
-    flash('succes', 'Databasecontrole uitgevoerd: ontbrekende tabellen en kolommen zijn aangemaakt waar nodig.');
+    if ($_fout !== null) flash('fout', 'De databasecontrole liep vast: ' . $_fout . ' Zie ook het logboek.');
+    else flash('succes', 'Databasecontrole uitgevoerd: ontbrekende tabellen en kolommen zijn aangemaakt waar nodig.');
     redirect(APP_URL . '/admin/systeem.php');
 }
 
@@ -45,8 +47,12 @@ $gezondheid = function_exists('db_gezondheid') ? db_gezondheid() : null;
 // Health check: volledige systeemcontrole (met optionele reparatie)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['actie'] ?? '') === 'health_repareer') {
     csrf_check();
-    if (function_exists('health_check')) health_check(true);
-    flash('succes', 'Systeemcontrole uitgevoerd en waar mogelijk hersteld.');
+    $_fout = null;
+    if (function_exists('health_check')) {
+        try { health_check(true); } catch (\Throwable $e) { $_fout = $e->getMessage(); }
+    }
+    if ($_fout !== null) flash('fout', 'De systeemcontrole liep vast: ' . $_fout);
+    else flash('succes', 'Systeemcontrole uitgevoerd en waar mogelijk hersteld. Wat nog rood of oranje is, staat hieronder.');
     redirect(APP_URL . '/admin/systeem.php');
 }
 $health = function_exists('health_check') ? health_check(false) : null;

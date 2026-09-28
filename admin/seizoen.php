@@ -112,7 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     datum_tw_start=?, datum_tw_eind=?, locatie_tw=? WHERE id=?")
                    ->execute([$_POST['naam'], $_POST['datum_selectiedag'] ?: null, $_POST['locatie_selectiedag'] ?: null,
                               $_POST['datum_tw_start'] ?: null, $_POST['datum_tw_eind'] ?: null, $_POST['locatie_tw'] ?: null, $sid]);
-                flash('succes', 'Seizoen bijgewerkt — niet alle velden konden worden opgeslagen.');
+                flash('waarschuwing', 'Seizoen deels bijgewerkt: naam, selectiedag en trainingsweekend zijn opgeslagen, de andere velden niet. Draai de databasecontrole bij Systeem & updates en sla daarna opnieuw op.');
             }
             redirect(APP_URL . '/admin/seizoen.php?id=' . $sid);
 

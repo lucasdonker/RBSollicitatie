@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (function_exists('beschikbaarheid_dag_bestuur_zet')) {
             beschikbaarheid_dag_bestuur_zet($id, $datum, $soort, $reden, $beheerder_id);
         }
-        flash('succes', 'Dag bijgewerkt: ' . h($datum) . '.');
+        flash('succes', 'Dag bijgewerkt: ' . $datum . '.');
         redirect(APP_URL . '/admin/beschikbaarheid_bewerken.php?id=' . $id . '#perdag');
     }
 
@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (function_exists('beschikbaarheid_dag_bestuur_verwijder')) {
             beschikbaarheid_dag_bestuur_verwijder($id, $datum);
         }
-        flash('succes', 'Aanpassing teruggedraaid voor ' . h($datum) . '. De eigen invoer van de sollicitant geldt weer.');
+        flash('succes', 'Aanpassing teruggedraaid voor ' . $datum . '. De eigen invoer van de sollicitant geldt weer.');
         redirect(APP_URL . '/admin/beschikbaarheid_bewerken.php?id=' . $id . '#perdag');
     }
 
@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $invoer = beschikbaarheid2_data_naar_invoer(beschikbaarheid2_van($id));
         $invoer['blokken'] = $blokken;
         beschikbaarheid2_opslaan($id, $invoer, 'beheer');
-        flash('succes', 'Werkperiodes opgeslagen namens ' . h($naam) . '.');
+        flash('succes', 'Werkperiodes opgeslagen namens ' . $naam . '.');
         if (function_exists('audit_log')) audit_log('gewijzigd', 'beschikbaarheid', $id, ['via' => 'bestuur_formulier', 'blokken' => count($blokken)]);
         redirect(APP_URL . '/admin/beschikbaarheid_bewerken.php?id=' . $id . '#formulier');
     }
