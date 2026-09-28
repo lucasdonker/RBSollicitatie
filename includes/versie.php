@@ -3,10 +3,27 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.128.3');
+define('APP_VERSIE', '2.129.0');
 
 function app_changelog(): array {
     return [
+        '2.129.0' => [
+            'datum'  => '2026-09-28',
+            'titel'  => 'Overal dezelfde woorden, knoppen en kleuren',
+            'punten' => [
+                'Eén soort melding na een actie, in portaal en beheer, en voorgelezen door een schermlezer',
+                'Datums, bedragen en cijfers overal op dezelfde manier ("€ 1.250", "3,4", "28 sep 2026")',
+                'Vaste woorden: sollicitant (niet kandidaat), strandwacht, kennismakingsformulier, landingspagina. Fasenamen zonder afkortingen ("Uitgenodigd weekend" in plaats van "Uitg. TW"). Menugroep heet Selectie',
+                'Sollicitanten en ouders krijgen één contactadres in alle mails, de privacyverklaring en het portaal (instelbaar; nieuwe variabele {{contact_email}}). Bestaande, ongewijzigde sjablonen worden bijgewerkt',
+                'Portaal: dezelfde termijn voor dezelfde fase; Beschikbaarheid gebruikt dezelfde koppen als het formulier en toont ook losse vrije dagen',
+                'Selectiedag en trainingsweekend gelijk: besluit "Niet door" overal, "Niet gekomen" met een echte reden, observaties wissen volgt dezelfde regel (eigen, of alles met bewerkrecht)',
+                'Knoppen volgen de rechten: wie alleen mag lezen ziet geen Bericht-, Versturen- of Sjablonen-knop meer die op een weigering uitkomt; Seizoen en Beheerders staan alleen in het menu met bewerkrecht. Een voorbeeld bekijken mag met leesrecht',
+                'Logboek, inlogscherm beheer en de SSO-foutpagina gebruiken de nieuwe opmaak; oude knoppen, badges en tabellen zijn weg',
+                'Instellingen zonder vaktaal (geen Cronjob, Anti-loop, Auto-invite, OTP of OIDC in de tekst)',
+                'Loonplanning: uitklapbare uitleg van opgave, scenario, actief, concept, vast na het gesprek, definitief en afspraak',
+                'Pijlen en iconen overal uit dezelfde set, geen emoji meer; kleuren komen uit één set tokens, zodat de donkere modus overal klopt',
+            ],
+        ],
         '2.128.3' => [
             'datum'  => '2026-09-28',
             'titel'  => 'Grote beslissingen zeggen vooraf wat er gebeurt',
