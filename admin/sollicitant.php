@@ -161,15 +161,15 @@ endif;
     <span class="bh-kruimel-pijlen">
       <?php if ($buren['vorige']): ?>
         <a class="ds-btn ds-btn-secundair ds-btn-sm" href="<?= h(dossier_url((int)$buren['vorige'], $tab)) ?>"
-           rel="prev" aria-label="Vorige sollicitant">← Vorige</a>
+           rel="prev" aria-label="Vorige sollicitant"><?= icoon('terug', 14) ?> Vorige</a>
       <?php else: ?>
-        <span class="ds-btn ds-btn-zacht ds-btn-sm" aria-disabled="true">← Vorige</span>
+        <span class="ds-btn ds-btn-zacht ds-btn-sm" aria-disabled="true"><?= icoon('terug', 14) ?> Vorige</span>
       <?php endif; ?>
       <?php if ($buren['volgende']): ?>
         <a class="ds-btn ds-btn-secundair ds-btn-sm" href="<?= h(dossier_url((int)$buren['volgende'], $tab)) ?>"
-           rel="next" aria-label="Volgende sollicitant">Volgende →</a>
+           rel="next" aria-label="Volgende sollicitant">Volgende <?= icoon('pijl-rechts', 14) ?></a>
       <?php else: ?>
-        <span class="ds-btn ds-btn-zacht ds-btn-sm" aria-disabled="true">Volgende →</span>
+        <span class="ds-btn ds-btn-zacht ds-btn-sm" aria-disabled="true">Volgende <?= icoon('pijl-rechts', 14) ?></span>
       <?php endif; ?>
     </span>
   <?php endif; ?>

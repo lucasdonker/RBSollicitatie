@@ -312,13 +312,13 @@ require __DIR__ . '/layout_top.php';
     <footer class="bh-beoordeel-voet">
       <?php $_vorige = $pos > 0 ? $lijst[$pos - 1] : null; $_volgende = isset($lijst[$pos + 1]) ? $lijst[$pos + 1] : null; ?>
       <?php if ($_vorige): ?>
-        <a class="ds-btn ds-btn-secundair" href="<?= h(bd_url((int)$_vorige['sol_id'])) ?>" rel="prev">‹ Vorige</a>
+        <a class="ds-btn ds-btn-secundair" href="<?= h(bd_url((int)$_vorige['sol_id'])) ?>" rel="prev"><?= icoon('terug', 14) ?> Vorige</a>
       <?php else: ?>
-        <span class="ds-btn ds-btn-zacht" aria-disabled="true">‹ Vorige</span>
+        <span class="ds-btn ds-btn-zacht" aria-disabled="true"><?= icoon('terug', 14) ?> Vorige</span>
       <?php endif; ?>
       <?php if ($_volgende): ?>
         <a class="ds-btn ds-btn-primair bh-beoordeel-volgende" href="<?= h(bd_url((int)$_volgende['sol_id'])) ?>" rel="next">
-          Volgende: <?= h((string)$_volgende['voornaam']) ?> ›
+          Volgende: <?= h((string)$_volgende['voornaam']) ?> <?= icoon('chevron', 14) ?>
         </a>
       <?php else: ?>
         <span class="bh-meta bh-beoordeel-volgende">Dit was de laatste van deze groep.</span>

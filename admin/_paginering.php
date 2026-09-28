@@ -50,16 +50,16 @@ $_tot = min($pag_pagina * $pag_per, $pag_totaal);
     <span class="bh-pag-knoppen">
       <?php if ($pag_pagina > 1): ?>
         <a class="ds-btn ds-btn-secundair ds-btn-sm" href="<?= h($pag_url($pag_pagina - 1)) ?>"
-           rel="prev" aria-label="Vorige pagina">‹ Vorige</a>
+           rel="prev" aria-label="Vorige pagina"><?= icoon('terug', 14) ?> Vorige</a>
       <?php else: ?>
-        <span class="ds-btn ds-btn-zacht ds-btn-sm" aria-disabled="true">‹ Vorige</span>
+        <span class="ds-btn ds-btn-zacht ds-btn-sm" aria-disabled="true"><?= icoon('terug', 14) ?> Vorige</span>
       <?php endif; ?>
       <span class="bh-pag-van">pagina <span class="bh-num"><?= $pag_pagina ?></span> van <span class="bh-num"><?= $_paginas ?></span></span>
       <?php if ($pag_pagina < $_paginas): ?>
         <a class="ds-btn ds-btn-secundair ds-btn-sm" href="<?= h($pag_url($pag_pagina + 1)) ?>"
-           rel="next" aria-label="Volgende pagina">Volgende ›</a>
+           rel="next" aria-label="Volgende pagina">Volgende <?= icoon('pijl-rechts', 14) ?></a>
       <?php else: ?>
-        <span class="ds-btn ds-btn-zacht ds-btn-sm" aria-disabled="true">Volgende ›</span>
+        <span class="ds-btn ds-btn-zacht ds-btn-sm" aria-disabled="true">Volgende <?= icoon('pijl-rechts', 14) ?></span>
       <?php endif; ?>
     </span>
   <?php endif; ?>

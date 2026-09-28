@@ -259,7 +259,7 @@ require __DIR__ . '/layout_top.php';
       <?php endif; ?>
 
       <div class="bh-imp-voet">
-        <a href="<?= APP_URL ?>/admin/sollicitanten.php" class="ds-btn ds-btn-primair">Naar sollicitanten →</a>
+        <a href="<?= APP_URL ?>/admin/sollicitanten.php" class="ds-btn ds-btn-primair">Naar sollicitanten <?= icoon('chevron', 14) ?></a>
         <a href="<?= APP_URL ?>/admin/import.php" class="ds-btn ds-btn-secundair">Nog een import</a>
       </div>
     </div>

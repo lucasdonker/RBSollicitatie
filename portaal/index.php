@@ -324,7 +324,7 @@ require __DIR__ . '/_kop.php';
       <input type="hidden" name="email_submit" value="1">
       <input type="hidden" name="email" value="<?= h($_SESSION['otp_email'] ?? '') ?>">
       Geen mail ontvangen? <button type="submit" class="ds-link-knop" id="opnieuwBtn">Opnieuw sturen<span id="teller"></span></button>
-      <br><a href="<?= APP_URL ?>/portaal/">← Ander e-mailadres</a>
+      <br><a href="<?= APP_URL ?>/portaal/"><?= icoon('terug', 14) ?> Ander e-mailadres</a>
     </form>
   </div>
   <script>

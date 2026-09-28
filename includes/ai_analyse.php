@@ -303,5 +303,5 @@ function invite_aanbeveling(int $leeftijd): array {
     $modus = instelling('invite.modus', 'suggestie');
     $ok = ($leeftijd >= $min && $leeftijd <= $max);
     return ['voldoet'=>$ok,'min'=>$min,'max'=>$max,'modus'=>$modus,
-            'label'=>$ok ? "✓ Leeftijd {$leeftijd}jr voldoet ({$min}–{$max}jr)" : "✗ Leeftijd {$leeftijd}jr buiten criteria"];
+            'label'=>$ok ? "Leeftijd {$leeftijd} jaar voldoet ({$min}–{$max}jr)" : "Leeftijd {$leeftijd} jaar valt buiten de criteria"];
 }

@@ -223,13 +223,13 @@ require __DIR__ . '/layout_top.php';
 <?php if ($max_pagina > 1): ?>
 <div class="bh-lb-paginering">
   <?php if ($pagina > 1): ?>
-    <a href="<?= h($url(['p' => $pagina - 1])) ?>" class="ds-btn ds-btn-secundair ds-btn-sm">&larr; Vorige</a>
+    <a href="<?= h($url(['p' => $pagina - 1])) ?>" class="ds-btn ds-btn-secundair ds-btn-sm"><?= icoon('terug', 14) ?> Vorige</a>
   <?php endif; ?>
   <span class="bh-lb-paginatekst">
     Pagina <?= (int)$pagina ?> van <?= (int)$max_pagina ?> &middot; <?= number_format($totaal, 0, ',', '.') ?> gebeurtenissen
   </span>
   <?php if ($pagina < $max_pagina): ?>
-    <a href="<?= h($url(['p' => $pagina + 1])) ?>" class="ds-btn ds-btn-secundair ds-btn-sm">Volgende &rarr;</a>
+    <a href="<?= h($url(['p' => $pagina + 1])) ?>" class="ds-btn ds-btn-secundair ds-btn-sm">Volgende <?= icoon('pijl-rechts', 14) ?></a>
   <?php endif; ?>
 </div>
 <?php endif; ?>

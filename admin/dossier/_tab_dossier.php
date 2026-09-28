@@ -173,7 +173,7 @@ if ($_iv) {
       <div class="bh-kaartkop">
         <h2>Uit het kennismakingsformulier</h2>
         <?php if (empty($tab_dossier['blk_ingediend_op'])): ?><?= bh_badge('Concept', 'oranje') ?><?php endif; ?>
-        <a class="bh-kaartkop-link" href="<?= h(dossier_url((int)$_s['id'], 'formulier')) ?>">Volledig formulier →</a>
+        <a class="bh-kaartkop-link" href="<?= h(dossier_url((int)$_s['id'], 'formulier')) ?>">Volledig formulier <?= icoon('chevron', 14) ?></a>
       </div>
       <div class="bh-gegevensraster twee">
         <?php
@@ -310,7 +310,7 @@ if ($_iv) {
       </ul>
       <?php if ($_doc['totaal'] > 0): ?>
         <a class="bh-kaartkop-link bh-taken-voet" href="<?= h(dossier_url((int)$_s['id'], 'ondertekeningen')) ?>">
-          Ondertekeningen · <?= $_doc['gedaan'] ?> van <?= $_doc['totaal'] ?> →
+          Ondertekeningen · <?= $_doc['gedaan'] ?> van <?= $_doc['totaal'] ?> <?= icoon('chevron', 14) ?>
         </a>
       <?php endif; ?>
     </section>
@@ -337,7 +337,7 @@ if ($_iv) {
     </section>
 
     <?php // De tijdlijn staat op zijn eigen tabblad (Tijdlijn); hier stond hij dubbel. ?>
-    <a class="bh-kaartkop-link" href="<?= h(dossier_url((int)$_s['id'], 'tijdlijn')) ?>">Tijdlijn bekijken →</a>
+    <a class="bh-kaartkop-link" href="<?= h(dossier_url((int)$_s['id'], 'tijdlijn')) ?>">Tijdlijn bekijken <?= icoon('chevron', 14) ?></a>
 
     <script>
       // Haalt de inhoud op na het laden; stond eerder alleen in het paneel, dat hem zelf

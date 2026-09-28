@@ -191,7 +191,7 @@ require __DIR__ . '/layout_top.php';
         <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm bh-bb-pop-knop" onclick="bbZet('beschikbaar')"><?= icoon('vink', 14) ?> Beschikbaar maken</button>
         <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm bh-bb-pop-knop" onclick="bbZet('niet_beschikbaar')"><?= icoon('kruis', 14) ?> Niet beschikbaar maken</button>
         <input type="text" id="bbPopReden" placeholder="reden (optioneel)" class="bh-bb-pop-reden">
-        <button type="button" class="btn btn-sm bh-bb-herstel" id="bbHerstelKnop" onclick="bbHerstel()" hidden>↩ Aanpassing terugdraaien</button>
+        <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm bh-bb-herstel" id="bbHerstelKnop" onclick="bbHerstel()" hidden><?= icoon('terug', 14) ?> Aanpassing terugdraaien</button>
       </div>
       <button type="button" onclick="bbSluitPop()" class="bh-bb-pop-sluit"><?= icoon('kruis', 14) ?></button>
     </div>

@@ -105,17 +105,6 @@ function mail_templates_auto_setup(): void {
     if (function_exists('sjablonen_auto_setup')) sjablonen_auto_setup();
 }
 
-// Haal hero image URL op (configureerbaar via admin)
-function mail_hero_image(): string {
-    try {
-        $s = db()->prepare("SELECT body_html FROM mail_templates WHERE slug='_hero_image'");
-        $s->execute(); $r = $s->fetch();
-        if ($r && !empty(trim($r['body_html']))) return trim($r['body_html']);
-    } catch (Exception $e) {}
-    // Default: mooie strandlifeguard foto (Unsplash, vrij te gebruiken)
-    return 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1120&q=80&fm=jpg&fit=crop';
-}
-
 function mail_vervang(string $tekst, array $vars): string {
     // Variabelen die bewust HTML bevatten (door het systeem zelf opgebouwd, geen
     // gebruikersinvoer) mogen NIET ge-escaped worden — anders zie je de rauwe HTML-code
@@ -157,7 +146,7 @@ function mail_shortcodes(string $html): string {
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:4px 0 20px">
   <tr><td style="background:#fffbeb;border-left:4px solid #f59e0b;border-radius:0 6px 6px 0;
       padding:14px 18px;font-family:Arial,sans-serif;font-size:14px;color:#374151;line-height:1.65">
-    ⚠️ ' . $m[1] . '
+    <strong>Let op:</strong> ' . $m[1] . '
   </td></tr>
 </table>', $html);
     // [code]...[/code]
