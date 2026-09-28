@@ -120,14 +120,13 @@
   const terugKnop = el('blkTerug');
   if (terugKnop) terugKnop.addEventListener('click', function () { if (huidig > 1) toonStap(huidig - 1); });
   const volgKnop = el('blkVolgende');
-  if (volgKnop) volgKnop.addEventListener('click', function () {
-    if (huidig < CFG.totaal) { gaNaar(huidig + 1); return; }
-    if (!valideer()) return;
-    /* form.submit() slaat de submit-gebeurtenis over, dus actie.js ziet dit niet vanzelf:
-       de laadstand hier expliciet via P13Actie. Geen disabled (CLAUDE.md: "acties voelen instant"). */
-    if (window.P13Actie) P13Actie.bezig(form, volgKnop);
+  /* De knop is een echte submit (werkt zonder JavaScript). Hier: tussenstappen en een mislukte
+     controle tegenhouden; bij de laatste stap gaat het gewone versturen door, zodat actie.js de
+     laadstand geeft. Ook Enter in een veld komt hier langs (de browser klikt dan deze knop). */
+  if (volgKnop) volgKnop.addEventListener('click', function (e) {
+    if (huidig < CFG.totaal) { e.preventDefault(); gaNaar(huidig + 1); return; }
+    if (!valideer()) { e.preventDefault(); return; }
     if (concept) concept.stop(); // het echte opslaan neemt het over; geen concept meer sturen
-    form.submit();
   });
 
   /* ── Validatie vóór inleveren ─────────────────────────────────── */
@@ -327,6 +326,7 @@
   }
 
   /* ── Start ───────────────────────────────────────────────────── */
+  form.classList.add('blk-js');   // pas nu één stap tegelijk (zie stijl.css)
   toonStap(huidig, huidig !== 1);
   // Terug van de server met een fout: meteen naar het veld dat het betreft.
   const serverFout = form.querySelector('[aria-invalid="true"]');

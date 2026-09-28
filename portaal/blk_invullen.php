@@ -418,7 +418,8 @@ require __DIR__ . '/_kop.php';
     <button type="button" class="blk-knop-terug" id="blkTerug" hidden>Terug</button>
     <div class="blk-voet-rechts">
       <a class="blk-knop-later" href="<?= h(portaal_terug_url()) ?>">Later afmaken</a>
-      <button type="button" class="blk-knop-volgende" id="blkVolgende"><span class="tekst">Volgende</span><?= icoon('pijl-rechts', 18) ?></button>
+      <?php // Een echte verzendknop: zonder JavaScript lever je hiermee in; blk.js maakt er per stap "Volgende" van. ?>
+      <button type="submit" class="blk-knop-volgende" id="blkVolgende"><span class="tekst"><?= $is_ingediend ? 'Formulier bijwerken' : 'Formulier inleveren' ?></span><?= icoon('pijl-rechts', 18) ?></button>
     </div>
   </footer>
 </form>
