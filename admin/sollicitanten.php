@@ -20,6 +20,17 @@ vereis_recht('sollicitanten', 'lezen');
 $db      = db();
 $seizoen = actief_seizoen();
 $sid     = $seizoen ? (int)$seizoen['id'] : 0;
+// Fase-acties vanaf de lijst: actie => [naar, alleen vanuit deze fases (null = elke), tekst voor de telling].
+// Aannemen alleen vanuit het eind van de procedure: wie "Alle" selecteert, mag niet in één klik ook
+// nieuwe aanmelders aannemen. Zonder weekend-module mag het al na de uitnodiging.
+$aannemen_van = module_aan('trainingsweekend') ? ['tw_geweest'] : ['uitgenodigd_tw', 'tw_geweest'];
+$bulk = [
+    'uitnodigen_selectie' => ['uitgenodigd_selectie', ['aangemeld'],           'uitnodiging(en)'],
+    'uitnodigen_tw'       => ['uitgenodigd_tw',       ['selectiedag_geweest'], 'TW-uitnodiging(en)'],
+    'aannemen'            => ['aangenomen',           $aannemen_van,           'welkomstbericht(en)'],
+    'aangenomen'          => ['aangenomen',           $aannemen_van,           'welkomstbericht(en)'],
+    'afgewezen'           => ['afgewezen',            null,                    'bericht(en)'],
+];
 
 /* ── POST: bulkacties en losse fase-stappen ──────────────────────
    Alles gaat via de centrale fase-functies, zodat een overgang vanaf de lijst
@@ -39,9 +50,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Tussenscherm: eerst laten zien wat er gebeurt, dan pas doen. Dat werkt zonder
     // JavaScript en is daardoor ook te screenshotten in het harnas.
-    if ($ids && $actie !== '' && empty($_POST['bevestigd'])
-        && in_array($actie, ['uitnodigen_selectie', 'uitnodigen_tw', 'aannemen', 'aangenomen', 'afgewezen'], true)) {
-        $toon_bevestiging = ['actie' => $actie, 'ids' => $ids];
+    if ($ids && empty($_POST['bevestigd']) && isset($bulk[$actie])) {
+        // Het tussenscherm noemt alleen wie de actie echt raakt; de rest wordt overgeslagen.
+        $_totaal = count($ids);
+        if ($bulk[$actie][1] !== null) {
+            $_fq = $db->prepare("SELECT id FROM sollicitaties WHERE id IN (" . implode(',', array_fill(0, count($ids), '?')) . ")
+                                 AND fase IN (" . implode(',', array_fill(0, count($bulk[$actie][1]), '?')) . ")");
+            $_fq->execute(array_merge($ids, $bulk[$actie][1]));
+            $ids = array_map('intval', $_fq->fetchAll(PDO::FETCH_COLUMN));
+        }
+        if (!$ids) {
+            flash('waarschuwing', 'Niemand in je selectie staat in de fase ' . implode(' of ', array_map('fase_label', $bulk[$actie][1]))
+                . '. Er is niets veranderd.');
+        } else {
+            $toon_bevestiging = ['actie' => $actie, 'ids' => $ids, 'overgeslagen' => $_totaal - count($ids)];
+        }
     }
 
     if (empty($toon_bevestiging) && $ids && $actie === 'bericht_sturen') {
@@ -53,13 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($toon_bevestiging) && $ids && $actie !== '' && function_exists('fase_zetten_bulk')) {
         vereis_recht('sollicitanten', 'bewerken');
         // Bij meer dan 10 personen gaan de berichten via de wachtrij (cron).
-        $bulk = [
-            'uitnodigen_selectie' => ['uitgenodigd_selectie', ['aangemeld'],           'uitnodiging(en)'],
-            'uitnodigen_tw'       => ['uitgenodigd_tw',       ['selectiedag_geweest'], 'TW-uitnodiging(en)'],
-            'aannemen'            => ['aangenomen',           null,                    'welkomstbericht(en)'],
-            'aangenomen'          => ['aangenomen',           null,                    'welkomstbericht(en)'],
-            'afgewezen'           => ['afgewezen',            null,                    'bericht(en)'],
-        ];
+        // alleen_van houdt ook hier de fase vast: de ids komen uit een formulier.
         if (isset($bulk[$actie])) {
             $opties = ['seizoen_id' => $sid];
             if ($bulk[$actie][1] !== null) $opties['alleen_van'] = $bulk[$actie][1];
@@ -217,6 +234,11 @@ require __DIR__ . '/layout_top.php';
     foreach ($_bq->fetchAll() as $_r) $_bnamen[] = volledige_naam($_r);
 
     $bev       = bh_gevolgen($toon_bevestiging['actie'], $toon_bevestiging['ids']);
+    if ($toon_bevestiging['overgeslagen'] > 0) {
+        $bev['regels'][] = $toon_bevestiging['overgeslagen'] . ' van je selectie ' . ($toon_bevestiging['overgeslagen'] === 1 ? 'staat' : 'staan')
+            . ' niet in de fase ' . implode(' of ', array_map('fase_label', $bulk[$toon_bevestiging['actie']][1]))
+            . ' en ' . ($toon_bevestiging['overgeslagen'] === 1 ? 'wordt' : 'worden') . ' overgeslagen.';
+    }
     $bev_form  = ['actie' => soll_url(),
                   'velden' => ['bulk_actie' => $toon_bevestiging['actie'],
                                'bevestigd'  => '1',
@@ -312,7 +334,8 @@ endif; ?>
        'mail' => true, 'alleen_fases' => ['aangemeld'], 'recht' => ['sollicitanten', 'bewerken']],
       ['actie' => 'uitnodigen_tw', 'label' => 'Uitnodigen trainingsweekend', 'toon' => 'primair',
        'mail' => true, 'alleen_fases' => ['selectiedag_geweest'], 'recht' => ['sollicitanten', 'bewerken']],
-      ['actie' => 'aannemen', 'label' => 'Aannemen', 'mail' => true, 'recht' => ['sollicitanten', 'bewerken']],
+      ['actie' => 'aannemen', 'label' => 'Aannemen', 'mail' => true, 'alleen_fases' => $aannemen_van,
+       'recht' => ['sollicitanten', 'bewerken']],
       ['actie' => 'afgewezen', 'label' => 'Afwijzen', 'toon' => 'gevaar', 'mail' => false,
        'recht' => ['sollicitanten', 'bewerken']],
       ['actie' => 'bericht_sturen', 'label' => 'Bericht', 'mail' => false, 'recht' => ['mailing', 'lezen']],
