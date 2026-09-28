@@ -230,7 +230,8 @@ if ($_iv) {
       <summary><h2>Sollicitant verwijderen</h2></summary>
       <p>
         Hiermee verdwijnen het kennismakingsformulier, de beschikbaarheid, alle notities en
-        observaties, de ondertekende documenten en het loondossier. Berichten blijven in het
+        observaties en de ondertekende documenten. Een loondossier dat de penningmeester al heeft
+        verwerkt blijft staan tot het einde van de wettelijke bewaarplicht. Berichten blijven in het
         logboek staan zonder inhoud en zonder adres. Dit kun je niet terugdraaien.
       </p>
       <p>
@@ -242,7 +243,8 @@ if ($_iv) {
         <?= csrf_input() ?>
         <input type="hidden" name="id" value="<?= (int)$_s['id'] ?>">
         <button type="submit" name="verwijder" value="sollicitatie" class="ds-btn ds-btn-gevaar">Alleen deze sollicitatie…</button>
-        <button type="submit" name="verwijder" value="persoon" class="ds-btn ds-btn-secundair">Alles van deze persoon…</button>
+        <?php // Beide gevaar: allebei onomkeerbaar; "alles" is zelfs de zwaarste. Het tussenscherm noemt de gevolgen. ?>
+        <button type="submit" name="verwijder" value="persoon" class="ds-btn ds-btn-gevaar">Alles van deze persoon…</button>
       </form>
     </details>
     <?php endif; ?>
@@ -267,7 +269,8 @@ if ($_iv) {
             <?php // Wijkt de stap af van de gewone volgorde, dan vraagt fasWijzigen() om een
                   // (optionele) reden; die komt als notitie in de tijdlijn. ?>
             <button type="button" class="bh-fasechip ds-fase-<?= h(fase_kleur($_f)) ?>"
-                    onclick="fasWijzigen(<?= (int)$_s['id'] ?>, '<?= h($_f) ?>', '<?= h(fase_label($_f)) ?>', <?= bh_fase_afwijkend((string)$_s['fase'], $_f) ? 'true' : 'false' ?>)">
+                    data-bevestig="<?= h(bh_fase_bevestig_tekst($_f, (string)($_s['voornaam'] ?? ''))) ?>"
+                    onclick="fasWijzigen(<?= (int)$_s['id'] ?>, '<?= h($_f) ?>', '<?= h(fase_label($_f)) ?>', <?= bh_fase_afwijkend((string)$_s['fase'], $_f) ? 'true' : 'false' ?>, this.dataset.bevestig, <?= $_f === 'afgewezen' ? 'true' : 'false' ?>)">
               <?= h(fase_label_kort($_f, 'mini')) ?>
             </button>
           <?php else: ?>

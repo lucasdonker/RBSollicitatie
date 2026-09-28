@@ -52,12 +52,14 @@ function openPaneel(id) {
    Dan volgt na de bevestiging één vraag om een reden. Die is optioneel — een lege reden
    blokkeert niets — en komt als notitie in de tijdlijn. Annuleren bij die vraag breekt
    de hele wijziging af. */
-function fasWijzigen(solId, naar, label, afwijkend) {
+/* tekst = bh_fase_bevestig_tekst() uit PHP (wie, of er bericht uitgaat); gevaar bij afwijzen. */
+function fasWijzigen(solId, naar, label, afwijkend, tekst, gevaar) {
   bhBevestig({
     titel: 'Fase wijzigen naar "' + label + '"?',
-    tekst: 'Hoort bij deze overgang een bericht, dan gaat dat automatisch de deur uit.'
+    tekst: (tekst || 'Hoort bij deze overgang een bericht, dan gaat dat automatisch de deur uit.')
          + (afwijkend ? ' Deze stap wijkt af van de gewone volgorde; hierna kun je een reden opgeven.' : ''),
     knop:  afwijkend ? 'Verder' : 'Ja, wijzigen',
+    gevaar: !!gevaar,
     // Heb je al gebeld, of corrigeer je een fase die verkeerd stond? Dan hoeft er
     // geen standaardbericht uit. Tot nu toe kon dat alleen door het hele kanaal
     // tijdelijk uit te zetten bij Instellingen — en dat raakte iedereen.

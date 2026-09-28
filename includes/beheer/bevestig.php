@@ -31,6 +31,20 @@ function bh_melding_gaat_uit(array $typen): bool {
 }
 
 /**
+ * Bevestigtekst voor één fasewissel in het dossier (de fasechips): wie, naar welke fase, gaat er
+ * bericht uit (volgens de instellingen) en wat er verder vanzelf gebeurt.
+ */
+function bh_fase_bevestig_tekst(string $naar, string $voornaam): string {
+    $wie   = $voornaam !== '' ? $voornaam : 'Deze sollicitant';
+    $tekst = $wie . ' gaat naar "' . fase_label($naar) . '". ';
+    $tekst .= bh_melding_gaat_uit(fase_meldingstypen($naar))
+        ? 'Er gaat automatisch een bericht uit, tenzij je hieronder "zonder bericht" aanvinkt. Een verstuurd bericht neem je niet terug.'
+        : 'Er gaat geen automatisch bericht uit.';
+    if ($naar === 'aangenomen') $tekst .= ' De formulieren voor aangenomen strandwachten komen meteen in het portaal te staan.';
+    return $tekst;
+}
+
+/**
  * @param string $actie   sleutel uit de bulkbalk of een rij-actie
  * @param int[]  $ids     de betrokken sollicitaties
  * @return array{titel:string,regels:string[],bericht:?string,onomkeerbaar:bool,knop:string,toon:string}
