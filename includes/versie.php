@@ -3,10 +3,22 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.128.2');
+define('APP_VERSIE', '2.128.3');
 
 function app_changelog(): array {
     return [
+        '2.128.3' => [
+            'datum'  => '2026-09-28',
+            'titel'  => 'Grote beslissingen zeggen vooraf wat er gebeurt',
+            'punten' => [
+                'Trainingsweekend-gesprek: de afgesproken inzet staat pas vast na aannemen, niet meer bij twijfel. De bevestiging noemt de naam, zegt of er een mail uitgaat en wat er vastligt; afwijzen is rood en de focus staat op Annuleren',
+                'Bellijst: "Meteen doorvoeren" staat standaard uit. De tekst zegt of er echt een bericht uitgaat (de afwijsmail staat standaard uit), en na doorvoeren zie je wat er is verstuurd. "Alle gebelde doorvoeren" is een echte knop',
+                'Dossier: de fasechips zeggen met naam of er bericht uitgaat; afwijzen is rood. Verwijderen: beide knoppen rood, en de tekst over het loondossier klopt weer',
+                'Tablet bij de ingang: "Dit ben ik niet" draait een verkeerd getikte naam binnen een minuut terug. Bij drie treffers "Typ verder". De pincode wordt niet meer stil gewist; wissen is een eigen knop',
+                'Bij elke gevaarlijke bevestiging staat de focus op Annuleren',
+                'Getypte tekst gaat niet meer ongemerkt verloren: aantekening zonder besluit (nabespreking), vraag aan beoordelaars alleen bij twijfel (evaluatie), "Kan niet" wacht op de reden (voorbereiden), en het bericht in het TW-gesprek blijft staan als je tussendoor feedback vastlegt',
+            ],
+        ],
         '2.128.2' => [
             'datum'  => '2026-09-28',
             'titel'  => 'Fouten uit de UX-audit opgelost',
