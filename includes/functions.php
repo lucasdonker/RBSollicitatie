@@ -552,11 +552,20 @@ function get_flash(): ?array { sessie_start(); if (isset($_SESSION['flash'])) { 
 /* Een fout wordt meteen voorgelezen (role=alert), de rest als status. Alleen een
    succesmelding verdwijnt vanzelf (layout_bottom.php); een fout of waarschuwing blijft
    staan tot de volgende pagina — wegvagen voordat je hem gelezen hebt helpt niemand (WCAG 2.2.1). */
+/* Eén melding voor beheer én portaal: de bouwsteen ds-melding (kleuren via tokens, ook donker).
+   De portaalkop (portaal/_kop.php) en layout_top.php roepen dit aan; zet een melding dus altijd met
+   flash($type, $tekst): succes | info | waarschuwing | fout. De klassen flash/flash-<type> blijven
+   als haak (layout_bottom.php laat alleen succes vervagen). */
 function toon_flash(): void {
     $f = get_flash();
     if (!$f) return;
-    $rol = in_array($f['type'], ['fout', 'error', 'waarschuwing'], true) ? 'alert' : 'status';
-    echo '<div class="flash flash-' . h($f['type']) . '" role="' . $rol . '">' . h($f['msg']) . '</div>';
+    $type = (string)$f['type'];
+    $rol  = in_array($type, ['fout', 'error', 'waarschuwing'], true) ? 'alert' : 'status';
+    $stijl = ['succes' => ['ok', 'vink-cirkel'], 'fout' => ['error', 'let-op'], 'error' => ['error', 'let-op'],
+              'waarschuwing' => ['warn', 'waarschuwing']][$type] ?? ['info', 'info'];
+    $ico = function_exists('icoon') ? icoon($stijl[1], 18) : '';
+    echo '<div class="ds-melding ds-melding-' . $stijl[0] . ' flash flash-' . h($type) . '" role="' . $rol . '">'
+       . $ico . '<span>' . h((string)$f['msg']) . '</span></div>';
 }
 
 // ── Seizoen ───────────────────────────────────────────────────

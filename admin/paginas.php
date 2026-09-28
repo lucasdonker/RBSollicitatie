@@ -58,7 +58,6 @@ require __DIR__ . '/layout_top.php';
     <?php endif; ?>
   </div>
 
-  <?php toon_flash(); ?>
 
   <?php if (!$rewrite_ok): ?>
   <div class="ds-melding ds-melding-warn" role="status">

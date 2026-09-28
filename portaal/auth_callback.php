@@ -110,7 +110,7 @@ if (!$fout) {
     if (!$sol) {
         // Geen bestaande sollicitatie én geen beheer — kan een nieuwe sollicitant zijn
         unset($_SESSION['portaal_sso_state'], $_SESSION['portaal_sso_email']);
-        $_SESSION['portaal_flash'] = 'Je Authentik-account is herkend, maar er is nog geen sollicitatie. Vul eerst het aanmeldformulier in.';
+        flash('info', 'Je Paal 13-account is herkend, maar er is nog geen sollicitatie. Vul eerst het aanmeldformulier in.');
         redirect(APP_URL . '/portaal/');
     }
 

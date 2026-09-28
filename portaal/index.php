@@ -207,21 +207,9 @@ else { $portaal_status_fase = $sol['fase']; }
 require __DIR__ . '/_kop.php';
 ?>
 
-  <?php toon_flash(); ?>
+  <?php // De melding van de vorige actie toont _kop.php (toon_flash). ?>
   <?php if ($fout && !in_array($stap, ['code', 'login'], true)): // inlog- en codescherm tonen de fout zelf, bij het veld ?>
-  <div class="flash flash-fout" style="margin-bottom:12px"><?= h($fout) ?></div><?php endif; ?>
-  <?php if (!empty($_SESSION['portaal_flash'])): ?>
-    <div class="flash flash-info" style="margin-bottom:12px"><?= h($_SESSION['portaal_flash']) ?></div>
-    <?php unset($_SESSION['portaal_flash']); ?>
-  <?php endif; ?>
-  <?php if (!empty($_SESSION['flash_portaal'])): ?>
-    <div class="flash flash-succes" style="margin-bottom:12px"><?= h($_SESSION['flash_portaal']) ?></div>
-    <?php unset($_SESSION['flash_portaal']); ?>
-  <?php endif; ?>
-  <?php if (!empty($_SESSION['flash_portaal_fout'])): ?>
-    <div class="flash flash-fout" style="margin-bottom:12px"><?= h($_SESSION['flash_portaal_fout']) ?></div>
-    <?php unset($_SESSION['flash_portaal_fout']); ?>
-  <?php endif; ?>
+  <div class="ds-melding ds-melding-error flash" role="alert"><?= icoon('let-op', 18) ?><span><?= h($fout) ?></span></div><?php endif; ?>
 
 <?php if ($stap === 'inloglink'): ?>
   <?php /* De link uit de mail of WhatsApp. Eén knop en je bent binnen — maar wel een

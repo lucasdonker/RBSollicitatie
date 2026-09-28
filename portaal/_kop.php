@@ -87,3 +87,5 @@ $_bel = '<a href="' . APP_URL . '/portaal/berichten.php" class="pt-topbar-actie"
 
   <!-- Pagina-inhoud -->
   <main class="pt-main">
+  <?php // De melding van de vorige actie (flash()), op elke portaalpagina op dezelfde plek. ?>
+  <?php toon_flash(); ?>

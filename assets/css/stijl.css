@@ -363,14 +363,8 @@ textarea { resize: vertical; min-height: 80px; }
 .paneel-acties .btn { width: 100%; justify-content: center; }
 
 /* ── Flash berichten ────────────────────────────────────────── */
-.flash { padding: 11px 14px; border-radius: var(--radius); margin-bottom: 14px; font-size: 13px; display: flex; align-items: flex-start; gap: 7px; }
-.flash-succes      { background: var(--groen-bg); color: #085041; border: 1px solid rgba(29,158,117,.3); }
-.flash-fout        { background: var(--rood-bg);  color: #c53030; border: 1px solid rgba(229,62,62,.3); }
-.flash-info        { background: var(--blauw-bg); color: #1a56a0; border: 1px solid rgba(49,130,206,.3); }
-.flash-waarschuwing{ background: #fffbeb;          color: #92400e; border: 1px solid #fde68a; }
-html[data-theme="dark"] .flash-succes { color: #6ee7b7; }
-html[data-theme="dark"] .flash-fout   { color: #fc8181; }
-html[data-theme="dark"] .flash-info   { color: #90cdf4; }
+/* Flash-meldingen zijn ds-melding (toon_flash()); .flash regelt alleen de ruimte eronder. */
+.flash { margin-bottom: 14px; }
 
 /* ── Login ──────────────────────────────────────────────────── */
 .login-wrapper { min-height: 100vh; background: var(--navy); display: flex; align-items: center; justify-content: center; padding: 20px; }

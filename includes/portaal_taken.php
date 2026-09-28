@@ -446,15 +446,15 @@ function portaal_taken_post_afhandelen(int $sol_id): void {
         $tel_ok = preg_match_all('/\d/', $o_tel) >= 8;
         $sol_nu = portaal_sollicitant_laden($sol_id) ?: [];
         if (function_exists('portaal_is_eindfase') && portaal_is_eindfase((string)($sol_nu['fase'] ?? ''))) {
-            $_SESSION['flash_portaal_fout'] = 'Je sollicitatie loopt niet meer; er hoeft niets meer getekend te worden.';
+            flash('fout', 'Je sollicitatie loopt niet meer; er hoeft niets meer getekend te worden.');
         } elseif (function_exists('rate_limit') && !rate_limit('ouder_gegevens', (string)$sol_id, 5, 3600)) {
             // Elke keer opslaan stuurt de ouder een mail (naar een mogelijk nieuw adres): begrensd,
             // zodat het formulier geen manier wordt om willekeurige adressen te bestoken.
-            $_SESSION['flash_portaal_fout'] = 'Je hebt dit het afgelopen uur al een paar keer verstuurd. Probeer het over een uur opnieuw, of neem contact op.';
+            flash('fout', 'Je hebt dit het afgelopen uur al een paar keer verstuurd. Probeer het over een uur opnieuw, of neem contact op.');
         } elseif ($o_email !== '' && strcasecmp($o_email, trim((string)($sol_nu['email'] ?? ''))) === 0) {
             // De ouder tekent als wettelijk vertegenwoordiger (ook een SEPA-machtiging): de link mag niet
             // naar het eigen adres van de sollicitant gaan.
-            $_SESSION['flash_portaal_fout'] = 'Vul het e-mailadres van je ouder of verzorger in, niet je eigen adres.';
+            flash('fout', 'Vul het e-mailadres van je ouder of verzorger in, niet je eigen adres.');
         } elseif ($o_naam && filter_var($o_email, FILTER_VALIDATE_EMAIL) && $tel_ok) {
             $opgeslagen = false;
             // Stap 1: gegevens opslaan (dit is de kern — moet lukken)
@@ -479,11 +479,11 @@ function portaal_taken_post_afhandelen(int $sol_id): void {
                     $opgeslagen = true;
                 } else {
                     error_log('ouder_submit: geen persoon_id voor sollicitatie ' . $sol_id);
-                    $_SESSION['flash_portaal_fout'] = 'Er ging iets mis bij het opslaan (kon je gegevens niet koppelen). Neem contact op.';
+                    flash('fout', 'Er ging iets mis bij het opslaan (kon je gegevens niet koppelen). Neem contact op.');
                 }
             } catch (\Throwable $e) {
                 error_log('ouder_submit opslaan: ' . $e->getMessage());
-                $_SESSION['flash_portaal_fout'] = 'Er ging iets mis bij het opslaan van de gegevens. Probeer het later opnieuw of neem contact op via ' . portaal_contact_email() . '.';
+                flash('fout', 'Er ging iets mis bij het opslaan van de gegevens. Probeer het later opnieuw of neem contact op via ' . portaal_contact_email() . '.');
             }
             // Stap 2: vervolgstappen — mogen falen zonder de bevestiging te blokkeren
             if ($opgeslagen) {
@@ -502,15 +502,15 @@ function portaal_taken_post_afhandelen(int $sol_id): void {
                 if (!empty($res['ouder_gemaild'])) {
                     try { if (function_exists('melding_verstuur')) melding_verstuur('ouder_gegevens_ontvangen', $sol_id, [], ['prioriteit' => 'na_antwoord']); }
                     catch (\Throwable $e) { error_log('melding ouder_gegevens_ontvangen: ' . $e->getMessage()); }
-                    $_SESSION['flash_portaal'] = 'Bedankt! Je ouder/verzorger ontvangt nu een mail op ' . $o_email . ' om de formulieren te ondertekenen.';
+                    flash('succes', 'Bedankt! Je ouder/verzorger ontvangt nu een mail op ' . $o_email . ' om de formulieren te ondertekenen.');
                 } elseif ($lid !== 'mislukt' && empty($res['aangemaakt']) && !array_filter(portaal_ouder_docs($sol_id), fn($d) => !$d['klaar'])) {
-                    $_SESSION['flash_portaal'] = 'De gegevens zijn opgeslagen. Er staat niets meer open om te ondertekenen, dus er ging geen mail uit.';
+                    flash('succes', 'De gegevens zijn opgeslagen. Er staat niets meer open om te ondertekenen, dus er ging geen mail uit.');
                 } else {
-                    $_SESSION['flash_portaal_fout'] = 'De gegevens zijn opgeslagen, maar de mail naar je ouder/verzorger ging niet de deur uit. Probeer het later opnieuw of neem contact op via ' . portaal_contact_email() . '.';
+                    flash('fout', 'De gegevens zijn opgeslagen, maar de mail naar je ouder/verzorger ging niet de deur uit. Probeer het later opnieuw of neem contact op via ' . portaal_contact_email() . '.');
                 }
             }
         } else {
-            $_SESSION['flash_portaal_fout'] = 'Vul een geldige naam, e-mailadres én telefoonnummer in.';
+            flash('fout', 'Vul een geldige naam, e-mailadres én telefoonnummer in.');
         }
         redirect($terug);
     }
@@ -528,11 +528,11 @@ function portaal_taken_post_afhandelen(int $sol_id): void {
         } catch (\Throwable $e) { $s = []; }
         // Alleen zolang je voor dit evenement bent uitgenodigd; daarna valt er niets meer te bevestigen.
         if (!$d || !in_array($s['fase'] ?? '', $d['voor_fases'], true) || !in_array($stand, ['komt', 'komt_niet'], true)) {
-            $_SESSION['flash_portaal_fout'] = 'Dit kun je nu niet meer doorgeven. Neem contact op als er iets verandert.';
+            flash('fout', 'Dit kun je nu niet meer doorgeven. Neem contact op als er iets verandert.');
         } elseif (!evenement_bevestigen($ev, (int)$s['seizoen_id'], $sol_id, $stand, (string)($_POST['reden'] ?? ''), 'portaal')) {
-            $_SESSION['flash_portaal_fout'] = 'Vertel kort waarom je niet kunt; dan kan het bestuur met je meedenken.';
+            flash('fout', 'Vertel kort waarom je niet kunt; dan kan het bestuur met je meedenken.');
         } else {
-            $_SESSION['flash_portaal'] = $stand === 'komt' ? 'Genoteerd: je komt. Tot dan!' : 'Genoteerd. Het bestuur bekijkt je afmelding en laat je weten wat het besluit is.';
+            flash('succes', $stand === 'komt' ? 'Genoteerd: je komt. Tot dan!' : 'Genoteerd. Het bestuur bekijkt je afmelding en laat je weten wat het besluit is.');
         }
         redirect($terug);
     }
@@ -546,10 +546,10 @@ function portaal_taken_post_afhandelen(int $sol_id): void {
             $pid = (int)$q->fetchColumn();
             if ($pid > 0 && $_POST['seintje_actie'] === 'aan') {
                 seintje_geven($pid, 'portaal');
-                $_SESSION['flash_portaal'] = 'Genoteerd: je krijgt een seintje als de werving weer opent.';
+                flash('succes', 'Genoteerd: je krijgt een seintje als de werving weer opent.');
             } elseif ($pid > 0) {
                 seintje_intrekken($pid, 'portaal');
-                $_SESSION['flash_portaal'] = 'Genoteerd: je krijgt geen seintje.';
+                flash('succes', 'Genoteerd: je krijgt geen seintje.');
             }
         } catch (\Throwable $e) { error_log('seintje portaal: ' . $e->getMessage()); }
         redirect($terug);
@@ -588,7 +588,7 @@ function portaal_taken_post_afhandelen(int $sol_id): void {
         if ($ond_id && function_exists('portaal_is_eindfase') && portaal_is_eindfase($_fase)) $ond_id = 0;   // afgelopen: niets meer te tekenen
         if ($ond_id) {
             if (function_exists('rate_limit') && !rate_limit('ouder_herinner', $sol_id . ':' . $ond_id, 1, 900)) {
-                $_SESSION['flash_portaal'] = 'We hebben net al een link gestuurd. Kijk ook in de spam-map; over een kwartier kun je het opnieuw proberen.';
+                flash('succes', 'We hebben net al een link gestuurd. Kijk ook in de spam-map; over een kwartier kun je het opnieuw proberen.');
                 redirect($terug);
             }
             try {
@@ -604,16 +604,16 @@ function portaal_taken_post_afhandelen(int $sol_id): void {
                         'ondertekening:' . $ond_id)
                     : null;
                 if ($r && in_array($r['status'] ?? '', ['verstuurd', 'wacht'], true)) {
-                    $_SESSION['flash_portaal'] = 'De link is opnieuw gestuurd naar ' . $o['ondertekenaar_email'] . '. Klopt dit adres niet? Pas het aan bij "Gegevens ouder/verzorger".';
+                    flash('succes', 'De link is opnieuw gestuurd naar ' . $o['ondertekenaar_email'] . '. Klopt dit adres niet? Pas het aan bij "Gegevens ouder/verzorger".');
                     if (function_exists('audit_log')) audit_log('ouder_link_opnieuw', 'sollicitatie', $sol_id, ['ondertekening' => $ond_id, 'via' => 'portaal']);
                 } elseif ($r) {
-                    $_SESSION['flash_portaal_fout'] = 'Versturen lukte nu niet. Probeer het later opnieuw of neem contact op via ' . portaal_contact_email() . '.';
+                    flash('fout', 'Versturen lukte nu niet. Probeer het later opnieuw of neem contact op via ' . portaal_contact_email() . '.');
                 } else {
-                    $_SESSION['flash_portaal_fout'] = 'Versturen lukte niet. Controleer het e-mailadres van je ouder/verzorger.';
+                    flash('fout', 'Versturen lukte niet. Controleer het e-mailadres van je ouder/verzorger.');
                 }
             } catch (\Throwable $e) {
                 error_log('ouder_herinner: ' . $e->getMessage());
-                $_SESSION['flash_portaal_fout'] = 'Versturen lukte niet. Probeer het later opnieuw.';
+                flash('fout', 'Versturen lukte niet. Probeer het later opnieuw.');
             }
         }
         redirect($terug);

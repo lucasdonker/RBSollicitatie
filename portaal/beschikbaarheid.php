@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['actie'] ?? '') === 'defini
     csrf_check();
     if (function_exists('beschikbaarheid2_definitief_maken') && beschikbaarheid2_definitief_maken($sol_id)) {
         if (function_exists('audit_log')) { try { audit_log('beschikbaarheid_definitief', 'sollicitatie', $sol_id, ['via' => 'portaal']); } catch (\Throwable $e) {} }
-        $_SESSION['flash_portaal'] = 'Je beschikbaarheid staat nu definitief. Bedankt!';
+        flash('succes', 'Je beschikbaarheid staat nu definitief. Bedankt!');
         redirect(portaal_terug_url());
     }
     $flash_fout = 'Er staat nog geen beschikbaarheid om definitief te maken. Vul die eerst in.';

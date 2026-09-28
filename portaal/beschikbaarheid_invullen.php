@@ -46,7 +46,6 @@ $lw = end($alle_weken)['week'];
 reset($alle_weken);
 
 // ── POST-verwerking: beschikbaarheid opslaan via de gedeelde functie ──
-$flash_ok = '';
 // ── AI-beschikbaarheid: interpreteer ingesproken/getypte tekst → voorstel ──
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ai_besch_submit'])) {
     header('Content-Type: application/json');
@@ -76,9 +75,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['besch_submit'])) {
     csrf_check();
     try {
         $waarschuwingen = beschikbaarheid_opslaan_uit_post($sol_id, $_POST);
-        if ($waarschuwingen) {
-            $_SESSION['b2_vz_waarschuwing'] = implode(' ', $waarschuwingen);
-        }
         // Losse dagen (concrete datums) — zelfde als in het BLK
         if (function_exists('beschikbaarheid_dagen_opslaan')) {
             $dd = $_POST['b2_dag_datum'] ?? []; $ds = $_POST['b2_dag_soort'] ?? []; $dr = $_POST['b2_dag_reden'] ?? [];
@@ -100,22 +96,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['besch_submit'])) {
                     ? count(portaal_taken_open(portaal_taken($_sol_na, blk_van($sol_id)))) : 0;
                 if ($_sol_na) $hierna = ' ' . portaal_hierna($_sol_na, $_open_na);
             }
-            $_SESSION['flash_portaal'] = 'Je beschikbaarheid is opgeslagen. Bedankt!' . $hierna;
+            flash('succes', 'Je beschikbaarheid is opgeslagen. Bedankt!' . $hierna);
             redirect(portaal_terug_url());
         }
-        $_SESSION['flash_besch_ok'] = 'Je beschikbaarheid is opgeslagen. Bedankt!';
+        // Opgeslagen, met iets om naar te kijken: één melding (flash() bewaart er één).
+        flash('waarschuwing', 'Je beschikbaarheid is opgeslagen. Let op: ' . implode(' ', $waarschuwingen));
     } catch (\Exception $e) {
         error_log('beschikbaarheid losse pagina: ' . $e->getMessage());
-        $_SESSION['flash_besch_fout'] = 'Er ging iets mis bij het opslaan. Probeer het later opnieuw.';
+        flash('fout', 'Er ging iets mis bij het opslaan. Probeer het later opnieuw.');
     }
     // Waarschuwing of fout: terug naar het formulier (herkomst bewaren voor de volgende poging)
     redirect(portaal_url_met_terug(APP_URL . '/portaal/beschikbaarheid_invullen.php', portaal_terug_param()));
 }
-
-$flash_ok = $_SESSION['flash_besch_ok'] ?? '';
-$flash_fout = $_SESSION['flash_besch_fout'] ?? '';
-$vz_waarschuwing = $_SESSION['b2_vz_waarschuwing'] ?? '';
-unset($_SESSION['flash_besch_ok'], $_SESSION['flash_besch_fout'], $_SESSION['b2_vz_waarschuwing']);
 
 $portaal_titel = 'Beschikbaarheid doorgeven';
 $portaal_terug = portaal_terug_url();
@@ -148,16 +140,6 @@ require __DIR__ . '/_kop.php';
 <h1 style="font:var(--text-title);margin-bottom:6px">Beschikbaarheid doorgeven</h1>
 <p style="color:var(--ink-soft);font-size:14px;margin-bottom:10px">Welke weken kun je werken dit seizoen? Geef het hieronder aan — je kunt het later altijd aanpassen.</p>
 <span class="pt-autosave <?= $concept_ok ? 'ok' : '' ?>" id="beschAutosave" aria-live="polite"><?= icoon('vink', 13) ?><span id="beschAutosaveTekst"><?= h($concept_tekst) ?></span></span>
-
-<?php if ($flash_ok): ?>
-  <div class="ds-melding ds-melding-ok" style="margin-bottom:16px"><?= icoon('vink', 18) ?> <?= h($flash_ok) ?></div>
-<?php endif; ?>
-<?php if ($flash_fout): ?>
-  <div class="ds-melding ds-melding-error" style="margin-bottom:16px"><?= icoon('let-op', 18) ?> <?= h($flash_fout) ?></div>
-<?php endif; ?>
-<?php if ($vz_waarschuwing): ?>
-  <div class="ds-melding ds-melding-warn" style="margin-bottom:16px"><?= icoon('waarschuwing', 18) ?> <?= h($vz_waarschuwing) ?></div>
-<?php endif; ?>
 
 <?php if ($ai_aan): ?>
 <!-- ══ AI-WIZARD (stap 1 t/m 4) — alleen als AI-hulp aan staat ══ -->

@@ -123,7 +123,6 @@ require __DIR__ . '/layout_top.php';
     <span class="ds-badge <?= $badge ?>"><?= h(pag_statussen()[$pagina['status']] ?? '') ?></span>
   </div>
 
-  <?php toon_flash(); ?>
 
   <dl class="pg-cijfers pg-cijfers-groot">
     <div><dt>Unieke bezoekers</dt><dd><?= (int)$stat['uniek'] ?></dd></div>

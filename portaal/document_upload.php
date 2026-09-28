@@ -55,11 +55,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     if ($fout === '') {
-        $_SESSION['flash_portaal'] = $succes;
+        flash('succes', $succes);
         redirect(APP_URL . '/portaal/document_upload.php?taak=' . urlencode($taak_slug) . (portaal_terug_param() === 'taken' ? '&terug=taken' : ''));
     }
 }
-if (!empty($_SESSION['flash_portaal'])) { $succes = (string)$_SESSION['flash_portaal']; unset($_SESSION['flash_portaal']); }
+// Deze pagina toont de melding in de kaart, bij het document (niet bovenaan via _kop.php).
+if ($_f = get_flash()) { if ($_f['type'] === 'succes') $succes = (string)$_f['msg']; else $fout = (string)$_f['msg']; }
 
 // ── Weergave ──────────────────────────────────────────────────
 $docs   = documenten_van($sol_id);
