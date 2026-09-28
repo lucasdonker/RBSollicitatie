@@ -130,7 +130,7 @@ require __DIR__ . '/layout_top.php';
   <div class="ds-kaart ds-kaart-p">
     <?php
       $leeg_titel = $sid ? 'Nog niemand op de selectiedag' : 'Geen actief seizoen';
-      $leeg_tekst = $sid ? 'Zodra er kandidaten zijn uitgenodigd, kun je ze hier beoordelen.'
+      $leeg_tekst = $sid ? 'Zodra er sollicitanten zijn uitgenodigd, kun je ze hier beoordelen.'
                          : 'Maak eerst een seizoen aan.';
       $leeg_icoon = 'mensen';
       require __DIR__ . '/_leeg.php';
@@ -151,7 +151,7 @@ require __DIR__ . '/layout_top.php';
       $_klaar = count(array_filter($lijst, fn($k) => ($voortgang[(int)$k['sol_id']] ?? 0) >= $totaal_criteria && $totaal_criteria > 0));
     ?>
     <div class="bh-beoordeel-stand">
-      <span><?= count($lijst) ?> kandidaten</span>
+      <span><?= count($lijst) ?> sollicitanten</span>
       <span class="bh-beoordeel-klaar"><?= $_klaar ?> klaar</span>
     </div>
     <?= bh_voortgang($_klaar, max(1, count($lijst)), ['label' => '']) ?>
@@ -210,7 +210,7 @@ require __DIR__ . '/layout_top.php';
         <span class="bh-beoordeel-naam"><?= h((string)$huidig['naam']) ?></span>
         <span class="bh-meta">
           <?= $huidig['groep_id'] ? h($groep_naam[$huidig['groep_id']] ?? '') . ' · ' : '' ?>
-          <?= !empty($huidig['is_lifeguard']) ? 'terugkerende lifeguard · ' : '' ?>
+          <?= !empty($huidig['is_lifeguard']) ? 'terugkerende strandwacht · ' : '' ?>
           <?= (int)($voortgang[$hid] ?? 0) ?> van <?= (int)$totaal_criteria ?> criteria
         </span>
       </span>
@@ -235,7 +235,7 @@ require __DIR__ . '/layout_top.php';
     <?php if (empty($huidig['aanwezig'])): ?>
       <div class="ds-melding ds-melding-info">
         <?= icoon('info', 16) ?>
-        <span>Deze kandidaat is niet ingecheckt. Beoordelen kan, maar controleer eerst of de kandidaat er is.</span>
+        <span>Deze sollicitant is niet ingecheckt. Beoordelen kan, maar controleer eerst of de sollicitant er is.</span>
       </div>
     <?php endif; ?>
 

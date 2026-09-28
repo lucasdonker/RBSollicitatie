@@ -162,7 +162,7 @@ function ai_queue_verwerk(int $max = 5): array {
             $bq = db()->prepare("SELECT * FROM blk_formulieren WHERE sollicitatie_id=?");
             $bq->execute([$sol_id]); $blk = $bq->fetch();
             if (!$blk) {
-                db()->prepare("UPDATE ai_queue SET status='fout', fout='Geen BLK gevonden' WHERE id=?")->execute([$item['id']]);
+                db()->prepare("UPDATE ai_queue SET status='fout', fout='Geen kennismakingsformulier gevonden' WHERE id=?")->execute([$item['id']]);
                 $res['fouten']++; continue;
             }
 

@@ -301,7 +301,7 @@ function aanmeld_pagina_html(string $inhoud, array $o = []): string {
     $root = dirname(__DIR__);
     $v = static fn(string $pad): string => APP_URL . $pad . '?v=' . (@filemtime($root . $pad) ?: '1');
     $ingebed = !empty($o['ingebed']);
-    $titel = (string)($o['titel'] ?? 'Aanmelden als lifeguard — Reddingsbrigade Paal 13');
+    $titel = (string)($o['titel'] ?? 'Aanmelden als strandwacht — Reddingsbrigade Paal 13');
 
     $uit  = "<!DOCTYPE html>\n<html lang=\"nl\">\n<head>\n<meta charset=\"UTF-8\">\n"
           . "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n"
@@ -312,7 +312,7 @@ function aanmeld_pagina_html(string $inhoud, array $o = []): string {
     if (!$ingebed) {
         $uit .= "<header class=\"af-hero\">\n"
               . '  <img src="' . APP_URL . '/assets/img/logo.png" alt="Reddingsbrigade Paal 13" width="120" height="46">' . "\n"
-              . '  <h1>' . h((string)($o['h1'] ?? 'Word lifeguard op het strand')) . "</h1>\n"
+              . '  <h1>' . h((string)($o['h1'] ?? 'Word strandwacht bij Paal 13')) . "</h1>\n"
               . '  <p>' . h((string)($o['sub'] ?? 'Reddingsbrigade Callantsoog & Groote Keeten')) . "</p>\n"
               . "</header>\n";
     }

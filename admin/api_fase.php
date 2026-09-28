@@ -50,8 +50,8 @@ try {
 
     // Bepaal de volgende snelle actie voor in de tabel-rij
     $snelle_actie = match($naar) {
-        'aangemeld'          => ['label' => 'Uitnodigen SD', 'bulk' => 'uitnodigen_selectie', 'kleur' => 'groen'],
-        'selectiedag_geweest'=> ['label' => 'Uitnodigen TW', 'bulk' => 'uitnodigen_tw',       'kleur' => 'primary'],
+        'aangemeld'          => ['label' => 'Uitnodigen selectiedag', 'bulk' => 'uitnodigen_selectie', 'kleur' => 'groen'],
+        'selectiedag_geweest'=> ['label' => 'Uitnodigen weekend', 'bulk' => 'uitnodigen_tw',       'kleur' => 'primary'],
         default              => null,
     };
 

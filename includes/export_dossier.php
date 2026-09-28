@@ -115,7 +115,7 @@ function export_dossier_van(int $sol_id, bool $met_formulier = false): array {
         'Opleiding'       => $blk['opleiding'] ?? '',
         'Werkervaring'    => $blk['werkervaring'] ?? '',
         'Diploma\'s'      => $blk['diplomas'] ?? '',
-        'Motivatie lifeguard'  => $blk['motivatie_lifeguard'] ?? '',
+        'Motivatie strandwacht' =>$blk['motivatie_lifeguard'] ?? '',
         'Motivatie strand'     => $blk['motivatie_strand'] ?? '',
         'Bijzonderheden'  => $blk['bijzonderheden'] ?? '',
     ] : [
@@ -123,7 +123,7 @@ function export_dossier_van(int $sol_id, bool $met_formulier = false): array {
     ];
     return $basis + $formulier + [
         'Beschikbaarheid' => export_beschikbaarheid_tekst($sol_id),
-        'BLK ingediend op' => $blk_op ? date('d-m-Y H:i', strtotime($blk_op))
+        'Kennismakingsformulier ingediend op' =>$blk_op ? date('d-m-Y H:i', strtotime($blk_op))
                                       : ($blk ? '(concept, nog niet ingediend)' : '(nog niet ingevuld)'),
         'Ondertekeningen' => export_ondertekeningen_tekst($sol_id),
         'Loondossier'     => export_loondossier_tekst($sol_id),

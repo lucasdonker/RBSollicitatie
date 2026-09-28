@@ -49,8 +49,8 @@ function log_actie_register(): array {
         // Sollicitatie
         'fase_gewijzigd'          => ['Fase gewijzigd', 'pijl-rechts'],
         'sollicitatie_verwijderd' => ['Sollicitatie verwijderd', 'prullenbak'],
-        'blk_ingediend'           => ['BLK ingeleverd', 'document'],
-        'blk_gewijzigd'           => ['BLK gewijzigd', 'document'],
+        'blk_ingediend'           => ['Kennismakingsformulier ingeleverd', 'document'],
+        'blk_gewijzigd'           => ['Kennismakingsformulier gewijzigd', 'document'],
 
         // Beschikbaarheid
         'beschikbaarheid_ingevuld'   => ['Beschikbaarheid ingevuld', 'kalender'],
@@ -105,8 +105,8 @@ function log_actie_register(): array {
 
         // Selectiedag en trainingsweekend (2.117 e.v.)
         'tw_evaluatie'               => ['Eerste indruk trainingsweekend vastgelegd', 'vink'],
-        'lg_feedback_vastgelegd'     => ['Feedback van een lifeguard vastgelegd', 'chat'],
-        'lg_feedback_gewist'         => ['Feedback van een lifeguard verwijderd', 'prullenbak'],
+        'lg_feedback_vastgelegd'     => ['Feedback van een strandwacht vastgelegd', 'chat'],
+        'lg_feedback_gewist'         => ['Feedback van een strandwacht verwijderd', 'prullenbak'],
         'loonplan_opgave_overgenomen'=> ['Opgave overgenomen in de loonplanning', 'kalender'],
         'herinneringen_gedraaid' => ['Herinneringen gedraaid', 'klok'],
 
@@ -121,7 +121,7 @@ function log_actie_register(): array {
 
         // AVG-opschoning (categorieën uit opschoon_log)
         'afgewezen_geanonimiseerd'  => ['Afgewezen sollicitaties geanonimiseerd', 'slot'],
-        'aangenomen_geanonimiseerd' => ['Oud-lifeguards geanonimiseerd', 'slot'],
+        'aangenomen_geanonimiseerd' => ['Oud-strandwachten geanonimiseerd', 'slot'],
         'wachtrij_opgeschoond'      => ['Berichtenwachtrij opgeschoond', 'slot'],
         'foutenlog_verwijderd'      => ['Foutenlog opgeschoond', 'slot'],
         'gezondheid_verwijderd'     => ['Gezondheidsgegevens verwijderd', 'slot'],

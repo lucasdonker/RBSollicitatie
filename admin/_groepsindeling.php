@@ -52,7 +52,7 @@ $_gi_lg    = count(array_filter($gi_kandidaten, fn($k) => !empty($k['is_lifeguar
   </div>
 
   <p class="bh-indeel-uitleg">
-    Het voorstel maakt gelijke groepen, gemengd op leeftijd en geslacht<?= $_gi_lg > 1 ? ', met de ' . $_gi_lg . ' terugkerende lifeguards verspreid' : '' ?>,
+    Het voorstel maakt gelijke groepen, gemengd op leeftijd en geslacht<?= $_gi_lg > 1 ? ', met de ' . $_gi_lg . ' terugkerende strandwachten verspreid' : '' ?>,
     en houdt uit elkaar wie niet samen mag. Daarna verplaats je zelf: slepen, of per kaartje met de keuzelijst "Naar groep".
     <?php if ($gi_mag_bewerken): ?>Klik op een naam om aan te geven wie níét bij elkaar mogen<?= $gi_ev === 'tw' ? ' — dat is dezelfde lijst als op de selectiedag' : '' ?>.<?php endif; ?>
   </p>

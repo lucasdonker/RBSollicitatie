@@ -105,7 +105,7 @@ if (!$open) {
 }
 
 echo aanmeld_pagina_html($formulier, [
-    'titel'        => 'Aanmelden als lifeguard — Reddingsbrigade Paal 13',
+    'titel'        => 'Aanmelden als strandwacht — Reddingsbrigade Paal 13',
     'beschrijving' => 'Meld je aan voor de selectieprocedure van Reddingsbrigade Paal 13 in Callantsoog en Groote Keeten.',
     'ingebed'      => $ingebed,
 ]);

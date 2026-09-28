@@ -47,7 +47,7 @@ require __DIR__ . '/layout_top.php';
   <div class="ds-kaart ds-kaart-p">
     <?php
       $leeg_titel = $sid ? 'Nog niemand uitgenodigd' : 'Geen actief seizoen';
-      $leeg_tekst = $sid ? 'Zodra er kandidaten voor de selectiedag zijn uitgenodigd, verdeel je ze hier in groepen.' : '';
+      $leeg_tekst = $sid ? 'Zodra er sollicitanten voor de selectiedag zijn uitgenodigd, verdeel je ze hier in groepen.' : '';
       $leeg_icoon = 'mensen';
       $leeg_knop  = $sid && mag('sollicitanten', 'lezen') ? ['tekst' => 'Naar sollicitanten', 'url' => APP_URL . '/admin/sollicitanten.php'] : null;
       require __DIR__ . '/_leeg.php';

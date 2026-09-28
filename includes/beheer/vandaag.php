@@ -226,7 +226,7 @@ function bh_vandaag_hoofdtaak_bepalen(int $sid, string $seizoen_fase, ?array $se
             $n = (int)($t['aangemeld'] ?? 0);
             if ($n === 0) {
                 return $niets('Nog geen nieuwe aanmeldingen',
-                              'Zodra iemand zich via een wervingspagina aanmeldt, staat die hier.');
+                              'Zodra iemand zich via een landingspagina aanmeldt, staat die hier.');
             }
             return $taak(['titel' => $n === 1 ? 'Eén aanmelding uitnodigen' : $n . ' aanmeldingen uitnodigen',
                     'tekst'  => 'Deze mensen hebben zich aangemeld en wachten op een uitnodiging voor de selectiedag.',
@@ -252,7 +252,7 @@ function bh_vandaag_hoofdtaak_bepalen(int $sid, string $seizoen_fase, ?array $se
         case 'selectiedag':
             $n = (int)($t['aangemeld_selectie'] ?? 0);
             return $taak(['titel' => 'Vandaag is de selectiedag',
-                    'tekst'  => $n > 0 ? $n . ' kandidaten worden verwacht. Inchecken gaat op de tablet bij de ingang.'
+                    'tekst'  => $n > 0 ? $n . ' sollicitanten worden verwacht. Inchecken gaat op de tablet bij de ingang.'
                                        : 'Inchecken gaat op de tablet bij de ingang.',
                     'knop'   => 'Naar inchecken', 'url' => APP_URL . '/admin/selectie_inchecken.php',
                     'gedaan' => (int)($t['selectiedag_geweest'] ?? 0), 'totaal' => $n + (int)($t['selectiedag_geweest'] ?? 0),
@@ -277,8 +277,8 @@ function bh_vandaag_hoofdtaak_bepalen(int $sid, string $seizoen_fase, ?array $se
                 $open = $ongebeld + $gebeld;
 
                 if ($zonder > 0 && $open === 0) {
-                    return $taak(['titel' => $zonder === 1 ? 'Eén kandidaat zonder besluit' : $zonder . ' kandidaten zonder besluit',
-                            'tekst'  => 'Leg eerst in de nabespreking per kandidaat een besluit vast; daarna bel je.',
+                    return $taak(['titel' => $zonder === 1 ? 'Eén sollicitant zonder besluit' : $zonder . ' sollicitanten zonder besluit',
+                            'tekst'  => 'Leg eerst in de nabespreking per sollicitant een besluit vast; daarna bel je.',
                             'knop'   => 'Naar de nabespreking', 'url' => APP_URL . '/admin/selectie_nabespreking.php?filter=open',
                             'gedaan' => $doorgevoerd, 'totaal' => $doorgevoerd + $zonder + $twijfel, 'klaar' => false],
                         'selectiedag', 'bewerken');
@@ -286,7 +286,7 @@ function bh_vandaag_hoofdtaak_bepalen(int $sid, string $seizoen_fase, ?array $se
                 if ($open === 0) {
                     $titel = $twijfel > 0 ? 'Alleen twijfelgevallen over' : 'De bellijst is leeg';
                     $tekst = ($twijfel > 0 ? $twijfel . ' op twijfel: daar moet iemand over bellen. ' : '')
-                           . (int)($t['uitgenodigd_tw'] ?? 0) . ' kandidaten zijn uitgenodigd voor het trainingsweekend.';
+                           . (int)($t['uitgenodigd_tw'] ?? 0) . ' sollicitanten zijn uitgenodigd voor het trainingsweekend.';
                     if (!bh_seizoen_module_aan('trainingsweekend')) return $niets($titel, $tekst);
                     return $vervolg($titel, $tekst . ' Volgende stap: het weekend voorbereiden — bevestigingen en beschikbaarheid.',
                                     'Naar Trainingsweekend › Voorbereiden', APP_URL . '/admin/trainingsweekend.php?stap=voorbereiden',
@@ -306,10 +306,10 @@ function bh_vandaag_hoofdtaak_bepalen(int $sid, string $seizoen_fase, ?array $se
             $door = (int)($t['uitgenodigd_tw'] ?? 0);
             if ($n === 0) {
                 return $niets('Iedereen heeft een besluit',
-                              'De bellijst is leeg. ' . $door . ' kandidaten zijn uitgenodigd voor het trainingsweekend.');
+                              'De bellijst is leeg. ' . $door . ' sollicitanten zijn uitgenodigd voor het trainingsweekend.');
             }
             return $taak(['titel' => 'De bellijst afwerken',
-                    'tekst'  => $n . ' kandidaten van de selectiedag zijn nog niet doorgevoerd.',
+                    'tekst'  => $n . ' sollicitanten van de selectiedag zijn nog niet doorgevoerd.',
                     'knop'   => 'Bellijst openen', 'url' => APP_URL . '/admin/selectie_nabespreking.php?tab=bellijst',
                     'gedaan' => $door, 'totaal' => $n + $door, 'klaar' => false], 'selectiedag', 'bewerken');
 
@@ -318,7 +318,7 @@ function bh_vandaag_hoofdtaak_bepalen(int $sid, string $seizoen_fase, ?array $se
             // Inchecken zet tw_geweest, "niet gekomen" niet; de voortgang komt dus uit tw_deelname.
             $st = ($sid && function_exists('tw_stand_seizoen')) ? tw_stand_seizoen($sid) : null;
             return $taak(['titel' => 'Het trainingsweekend',
-                    'tekst'  => $n . ' kandidaten zijn uitgenodigd.'
+                    'tekst'  => $n . ' sollicitanten zijn uitgenodigd.'
                               . ($st && $st['onbekend'] > 0 ? ' ' . $st['onbekend'] . ' nog niet afgevinkt.' : ''),
                     'knop'   => 'Naar het trainingsweekend', 'url' => APP_URL . '/admin/trainingsweekend.php',
                     'gedaan' => $st ? (int)$st['aanwezig'] + (int)$st['afwezig'] : (int)($t['tw_geweest'] ?? 0),
@@ -375,7 +375,7 @@ function bh_vandaag_hoofdtaak_bepalen(int $sid, string $seizoen_fase, ?array $se
                 $ng = (int)($st['niet_gekomen'] ?? 0);
                 if ($ng > 0) {
                     return $taak(['titel' => $ng . ' niet gekomen, besluit nodig',
-                            'tekst' => ($ng === 1 ? 'Deze kandidaat was' : 'Deze kandidaten waren') . ' niet op het trainingsweekend. '
+                            'tekst' => ($ng === 1 ? 'Deze sollicitant was' : 'Deze sollicitanten waren') . ' niet op het trainingsweekend. '
                                      . 'Leg in de gesprekken vast of ' . ($ng === 1 ? 'die afvalt of een uitzondering krijgt.' : 'zij afvallen of een uitzondering krijgen.'),
                             'knop' => 'Naar de gesprekken', 'url' => $besluit_url] + $voortgang, 'trainingsweekend', 'bewerken');
                 }
@@ -470,12 +470,12 @@ function bh_vandaag_werkbak(?array $seizoen, array $hoofdtaak): array {
         if (!empty($seizoen['datum_selectiedag']) && $vandaag > $seizoen['datum_selectiedag']) {
             $n = $tel("SELECT COUNT(*) FROM sollicitaties s LEFT JOIN selectie_besluit b ON b.sollicitatie_id=s.id
                        WHERE s.seizoen_id=? AND s.fase='selectiedag_geweest' AND (b.besluit IS NULL OR b.besluit='')", [$sid]);
-            $zet($n, 'kandidaat van de selectiedag zonder besluit', 'kandidaten van de selectiedag zonder besluit', $a . 'selectie_nabespreking.php?filter=open', 'Nabespreken', 'oranje', 'vink');
+            $zet($n, 'sollicitant van de selectiedag zonder besluit', 'sollicitanten van de selectiedag zonder besluit', $a . 'selectie_nabespreking.php?filter=open', 'Nabespreken', 'oranje', 'vink');
         }
         // Tot en met de selectiedag zelf: wie nog in geen groep zit.
         if (empty($seizoen['datum_selectiedag']) || $vandaag <= substr((string)$seizoen['datum_selectiedag'], 0, 10)) {
-            $zet(bh_sd_niet_ingedeeld($sid), 'kandidaat nog niet ingedeeld in een groep voor de selectiedag',
-                 'kandidaten nog niet ingedeeld in een groep voor de selectiedag', $a . 'selectie_indeling.php', 'Indelen', 'oranje', 'mensen');
+            $zet(bh_sd_niet_ingedeeld($sid), 'sollicitant nog niet ingedeeld in een groep voor de selectiedag',
+                 'sollicitanten nog niet ingedeeld in een groep voor de selectiedag', $a . 'selectie_indeling.php', 'Indelen', 'oranje', 'mensen');
         }
     }
     if ($mag('loonplanning', 'bewerken') && bh_seizoen_module_aan('loonplanning')) {
@@ -639,7 +639,7 @@ function bh_vandaag_kengetallen(?array $seizoen): array {
         ['waarde' => $n('r30'), 'label' => 'Laatste 30 dagen', 'sub' => '30 dagen daarvoor ' . $n('r30v'), 'url' => $url('toon=30d')],
         ['waarde' => $n('lopend'), 'label' => 'In de procedure', 'sub' => 'nog niet besloten', 'url' => $url('toon=lopend')],
         ['waarde' => $n('aangenomen'), 'label' => 'Aangenomen', 'sub' => 'dit seizoen', 'url' => $url('fase=aangenomen')],
-        ['waarde' => $n('lifeguards'), 'label' => 'Terugkerende lifeguards', 'sub' => 'met een Authentik-account', 'url' => $url('terug=lg')],
+        ['waarde' => $n('lifeguards'), 'label' => 'Terugkerende strandwachten', 'sub' => 'met een Authentik-account', 'url' => $url('terug=lg')],
         ['waarde' => $n('terug'), 'label' => 'Terugkerende sollicitanten', 'sub' => 'eerder gesolliciteerd', 'url' => $url('terug=sol')],
     ];
 }

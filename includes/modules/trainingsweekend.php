@@ -9,7 +9,7 @@ return [
         'trainingsweekend' => ['label' => 'Trainingsweekend', 'groep' => 'Selectie', 'acties' => ['lezen', 'bewerken']],
     ],
     'nav'          => [
-        ['groep' => 'Kandidaten', 'positie' => 30, 'id' => 'trainingsweekend', 'label' => 'Trainingsweekend',
+        ['groep' => 'Selectie', 'positie' => 30, 'id' => 'trainingsweekend', 'label' => 'Trainingsweekend',
          'url' => 'trainingsweekend.php', 'icoon' => 'reddingsboei', 'module' => 'trainingsweekend'],
     ],
 ];

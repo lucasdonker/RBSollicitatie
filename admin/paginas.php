@@ -6,7 +6,7 @@
 require_once __DIR__ . '/../includes/functions.php';
 vereis_recht('paginas', 'lezen');
 
-$pagina_titel = "Wervingspagina's";
+$pagina_titel = "Landingspagina's";
 $actieve_nav  = 'paginas';
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
@@ -50,8 +50,8 @@ require __DIR__ . '/layout_top.php';
 <div class="pg-wrap">
   <div class="pg-titelrij">
     <div>
-      <h1 class="pg-h1">Wervingspagina's</h1>
-      <p class="pg-sub">Eigen wervingspagina's per doelgroep, met het aanmeldformulier erin.</p>
+      <h1 class="pg-h1">Landingspagina's</h1>
+      <p class="pg-sub">Eigen landingspagina's per doelgroep, met het aanmeldformulier erin.</p>
     </div>
     <?php if ($mag_bewerken): ?>
     <button type="button" class="ds-btn ds-btn-primair" data-open="pg-nieuw"><?= icoon('plus', 18) ?> Nieuwe pagina</button>
@@ -94,7 +94,7 @@ RewriteRule ^p/([a-z0-9\-]{1,80})/([A-Za-z0-9._\-]+)$ uploads/paginas/$1/assets/
       <?= csrf_input() ?><input type="hidden" name="actie" value="nieuw">
       <div class="ds-veld">
         <label class="ds-label" for="pg-titel">Titel</label>
-        <input class="ds-input" type="text" id="pg-titel" name="titel" required placeholder="Word lifeguard — zomer 2027">
+        <input class="ds-input" type="text" id="pg-titel" name="titel" required placeholder="Word strandwacht — zomer 2027">
       </div>
       <div class="ds-veld">
         <label class="ds-label" for="pg-slug">Adres</label>
@@ -111,7 +111,7 @@ RewriteRule ^p/([a-z0-9\-]{1,80})/([A-Za-z0-9._\-]+)$ uploads/paginas/$1/assets/
 
   <?php if (!$paginas): ?>
     <div class="ds-kaart ds-kaart-p ds-leeg">
-      <p>Er is nog geen wervingspagina. Maak er een aan en upload het ontwerp als HTML-bestand.</p>
+      <p>Er is nog geen landingspagina. Maak er een aan en upload het ontwerp als HTML-bestand.</p>
     </div>
   <?php else: ?>
     <ul class="pg-lijst">

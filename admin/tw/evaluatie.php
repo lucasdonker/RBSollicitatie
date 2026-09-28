@@ -65,8 +65,8 @@ $_kleur = ['aannemen' => 'groen', 'twijfel' => 'oranje', 'afwijzen' => 'rood'];
         <?= bh_meta([tw_aanwezigheid_tekst($_k),
                      count($_obs[$_id] ?? []) ? $_pos . ' positief · ' . $_aan . ' aandacht' : 'nog geen observaties',
                      $_gem !== null ? 'selectiedag ' . cijfer_nl((float)$_gem) : '',
-                     !empty($_lgf[$_id]) ? count($_lgf[$_id]) . ' van lifeguards' : '',
-                     !empty($_k['is_lifeguard']) ? 'terugkerende lifeguard' : '']) ?>
+                     !empty($_lgf[$_id]) ? count($_lgf[$_id]) . ' van strandwachten' : '',
+                     !empty($_k['is_lifeguard']) ? 'terugkerende strandwacht' : '']) ?>
         <?php if ($_e !== '' && !empty($_k['evaluatie_door'])): ?>
           <span class="bh-meta"><?= h((string)$_k['evaluatie_door']) ?>, <?= h(datum_dag_nl((string)$_k['evaluatie_op'])) ?> <?= h(date('H:i', strtotime((string)$_k['evaluatie_op']))) ?></span>
         <?php endif; ?>

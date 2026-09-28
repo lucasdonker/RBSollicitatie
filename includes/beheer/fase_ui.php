@@ -50,11 +50,11 @@ function bh_fase_actie(string $fase, array $ctx = []): array {
     ];
 }
 
-/** Hetzelfde label, maar kort genoeg voor een tabelcel ("Uitnodigen TW"). */
+/** Hetzelfde label, maar kort genoeg voor een tabelcel ("Uitnodigen weekend"). */
 function bh_fase_actie_kort(array $actie): string {
     return [
-        'uitnodigen_selectie' => 'Uitnodigen SD',
-        'uitnodigen_tw'       => 'Uitnodigen TW',
+        'uitnodigen_selectie' => 'Uitnodigen selectiedag',
+        'uitnodigen_tw'       => 'Uitnodigen weekend',
         'aannemen'            => 'Aannemen',
     ][$actie['actie'] ?? ''] ?? ($actie['label'] ?? '');
 }

@@ -154,8 +154,8 @@ require __DIR__ . '/layout_top.php';
 <?php if (!$sid || !$kandidaten): ?>
   <div class="ds-kaart ds-kaart-p">
     <?php
-      $leeg_titel = $sid ? 'Nog geen kandidaten' : 'Geen actief seizoen';
-      $leeg_tekst = $sid ? 'Zodra er kandidaten op de selectiedag zijn geweest, bespreek je ze hier na.' : '';
+      $leeg_titel = $sid ? 'Nog geen sollicitanten' : 'Geen actief seizoen';
+      $leeg_tekst = $sid ? 'Zodra er sollicitanten op de selectiedag zijn geweest, bespreek je ze hier na.' : '';
       $leeg_icoon = 'mensen';
       require __DIR__ . '/_leeg.php';
     ?>
@@ -179,7 +179,7 @@ require __DIR__ . '/layout_top.php';
   <div class="bh-nb-uitleg">
     <?= icoon('info', 16) ?>
     <span>
-      Alles per kandidaat bij elkaar. De scores zijn een advies; jullie gesprek bepaalt het besluit.
+      Alles per sollicitant bij elkaar. De scores zijn een advies; jullie gesprek bepaalt het besluit.
       Als iedereen een besluit heeft, ga je naar de <a href="?tab=bellijst">bellijst</a> om te bellen
       en per persoon door te voeren.
     </span>
@@ -311,7 +311,7 @@ require __DIR__ . '/layout_top.php';
   <?php if ($tel['door'] + $tel['niet'] + $tel['twijfel'] > 0): ?>
   <div class="bh-nb-afsluiten">
     <div>
-      <strong><?= $tel['door'] + $tel['niet'] + $tel['twijfel'] ?> kandidaten hebben een besluit.</strong>
+      <strong><?= $tel['door'] + $tel['niet'] + $tel['twijfel'] ?> sollicitanten hebben een besluit.</strong>
       <span class="bh-meta">
         Bellen doe je op de bellijst, ook de twijfelgevallen: daar wordt het na het gesprek door of niet.
         Je voert per persoon door, zodat er pas bericht uitgaat nadat je hebt gebeld.

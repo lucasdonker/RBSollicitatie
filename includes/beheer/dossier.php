@@ -318,7 +318,7 @@ function bh_dossier_advies(array $dossier): ?array {
     } elseif ($score >= $twijfel) {
         $stand = 'twijfel'; $label = 'Twijfel'; $kleur = 'oranje';
         $reden = 'Score ' . cijfer_nl((float)$score) . ' ligt net onder de drempel van '
-               . cijfer_nl((float)$drempel) . '. Bespreek deze kandidaat.';
+               . cijfer_nl((float)$drempel) . '. Bespreek deze sollicitant.';
     } else {
         $stand = 'niet'; $label = 'Niet';   $kleur = 'rood';
         $reden = 'Score ' . cijfer_nl((float)$score) . ' ligt onder de drempel van '

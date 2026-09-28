@@ -19,7 +19,7 @@ Deze handleiding is twee dingen tegelijk:
 
 In het beheer lees je deze handleiding met een zoekveld en een inhoudsopgave die meeloopt; het
 vraagteken op elk scherm brengt je naar het juiste hoofdstuk, en bij veel hoofdstukken staat de
-knop **Laat zien op het scherm**. Voor de penningmeester, de sollicitant, de wervingspagina's en
+knop **Laat zien op het scherm**. Voor de penningmeester, de sollicitant, de landingspagina's en
 het technisch beheer zijn er aparte handleidingen.
 
 ## Inhoud
@@ -28,7 +28,7 @@ het technisch beheer zijn er aparte handleidingen.
 3. [Inloggen en rollen](#inloggen-en-rollen)
 4. [Vandaag](#vandaag)
 5. [Seizoen opzetten](#seizoen-opzetten)
-6. [Wervingspagina's](#wervingspaginas)
+6. [Landingspagina's](#landingspaginas)
 7. [Sollicitanten](#sollicitanten)
 8. [Het dossier](#het-dossier)
 9. [De fases en wat er automatisch gebeurt](#de-fases-en-wat-er-automatisch-gebeurt)
@@ -63,11 +63,11 @@ het technisch beheer zijn er aparte handleidingen.
 
 ### Het systeem in vijf zinnen
 
-1. Iemand meldt zich aan via de website, een wervingspagina of wordt door het bestuur handmatig
+1. Iemand meldt zich aan via de website, een landingspagina of wordt door het bestuur handmatig
    toegevoegd; daarmee staat die in fase Aangemeld van het huidige seizoen.
 2. Het bestuur nodigt uit voor de selectiedag; het systeem zet dan de formulieren klaar, stuurt de
    uitnodiging en herinnert automatisch wie nog iets moet doen.
-3. Op de selectiedag checken kandidaten in, worden ze beoordeeld, en daarna besluit het bestuur
+3. Op de selectiedag checken sollicitanten in, worden ze beoordeeld, en daarna besluit het bestuur
    wie door mag naar het trainingsweekend en belt iedereen persoonlijk.
 4. Na het trainingsweekend neemt het bestuur aan of wijst af; wie is aangenomen krijgt in het
    portaal de taken voor het loondossier en het lidmaatschap.
@@ -93,7 +93,7 @@ beheerder kan ze per rol aanpassen (zie [Beheerders en rechten](#beheerders-en-r
 | **Beheerder** (technisch: admin) | Sol-Admin | Alles, ook beheerders, rechten, logboek en systeem. Kan zichzelf nooit buitensluiten. | Alles |
 
 Goed om te weten over de begeleider: met de standaardrechten (Selectiedag: alleen lezen) kan een
-begeleider op de selectiedag de groepen bekijken, kandidaten inchecken (**Aanwezig** en
+begeleider op de selectiedag de groepen bekijken, sollicitanten inchecken (**Aanwezig** en
 **Ongedaan**), cijfers geven en wissen, observaties plaatsen en de eigen observaties verwijderen.
 In het trainingsweekend vinkt een begeleider af en observeert. De toegangscode voor de tablet, de
 groepsindeling, de nabespreking, de bellijst en het besluit na het trainingsweekend blijven bij het
@@ -131,7 +131,7 @@ groep die toegang geeft. Zie [Inloggen en rollen](#inloggen-en-rollen).
   vindt mensen op naam of e-mailadres (over alle seizoenen, het huidige seizoen eerst) en
   schermen, ook instellingen-tabbladen. Met de pijltjes kies je, met Enter open je.
 - **Deze handleiding** staat onder **Hulp en handleidingen**, samen met die voor de penningmeester,
-  voor sollicitanten, voor de wervingspagina's en (alleen voor beheerders) het runbook voor het
+  voor sollicitanten, voor de landingspagina's en (alleen voor beheerders) het runbook voor het
   technisch beheer. Je leest ze daar met een zoekveld; van elke handleiding is er ook een
   Word-versie om af te drukken of uit te delen. Afvinklijsten zoals hieronder kun je in het beheer
   echt aanvinken; dat wordt op je eigen apparaat onthouden.
@@ -151,7 +151,7 @@ groep die toegang geeft. Zie [Inloggen en rollen](#inloggen-en-rollen).
 - [ ] Open [Sollicitanten](#sollicitanten), klik de fase-tabs langs en open één dossier
    ([Het dossier](#het-dossier)). Kijk vooral naar de kaart Taken: zo ziet de sollicitant het ook.
 - [ ] Bekijk bij [Sjablonen](#sjablonen) de uitnodiging voor de selectiedag, zodat je weet wat
-   kandidaten van ons krijgen.
+   sollicitanten van ons krijgen.
 - [ ] Lees [De fases en wat er automatisch gebeurt](#de-fases-en-wat-er-automatisch-gebeurt) voordat
    je voor het eerst op een uitnodigknop drukt.
 - [ ] Kijk op [Selectiedag](#selectiedag) en [Trainingsweekend](#trainingsweekend) hoe de schermen er
@@ -215,14 +215,14 @@ Hoe Vandaag de seizoensfase bepaalt:
 | Werkperiode, hoofdseizoen, selectiedag en trainingsweekend invullen (datum, tijden, adres, wat meenemen). | De datums komen in de mails en in het portaal; herinneringen rekenen ermee. | [Seizoen](#seizoen-opzetten) |
 | De sjablonen nalezen, vooral de uitnodigingen. Beslissen of de afwijzingsmail aan moet (staat standaard uit). | | [Sjablonen](#sjablonen), [Instellingen](#instellingen) |
 | De herinneringen en de uitnodig-modus controleren (Uit, Suggestie of Automatisch). | | [Geplande berichten en herinneringen](#geplande-berichten-en-herinneringen), [Instellingen](#instellingen) |
-| Een wervingspagina maken of bijwerken. | Telt bezoekers anoniem en meet per stap van het formulier waar mensen afhaken. | [Wervingspagina's](#wervingspaginas) |
+| Een landingspagina maken of bijwerken. | Telt bezoekers anoniem en meet per stap van het formulier waar mensen afhaken. | [Landingspagina's](#landingspaginas) |
 | (Beheerder) Bewaartermijnen aanzetten en controleren. | | [Bewaartermijnen](#bewaartermijnen) |
 
 ### Moment 2: aanmelding open
 
 | Wat jij doet | Wat het systeem doet | Scherm |
 |---|---|---|
-| Op **Aanmelding openen** klikken en bevestigen met **Ja, aanmelding openen**. | Het aanmeldformulier (website, wervingspagina's, WordPress-plugin) gaat aan. Het formulier heeft drie korte stappen: naam, een paar gegevens, contact. | [Seizoen](#seizoen-opzetten) |
+| Op **Aanmelding openen** klikken en bevestigen met **Ja, aanmelding openen**. | Het aanmeldformulier (website, landingspagina's, WordPress-plugin) gaat aan. Het formulier heeft drie korte stappen: naam, een paar gegevens, contact. | [Seizoen](#seizoen-opzetten) |
 | Aanmeldingen bekijken en uitnodigen (zie moment 3). | Elke aanmelder krijgt de mail "Bevestiging van aanmelding"; het bestuur krijgt "Nieuwe aanmelding". Vandaag toont "... aanmeldingen uitnodigen". | [Vandaag](#vandaag), [Sollicitanten](#sollicitanten) |
 | | Staat de uitnodig-modus op Automatisch, dan nodigt het systeem zelf uit wie binnen de leeftijdsgrenzen valt (standaard 16 tot en met 30), na de ingestelde vertraging (standaard 24 uur). | [Instellingen](#instellingen) |
 | | Staan er in het portaal taken open, dan gaat 5 dagen na de laatste fasewijziging de herinnering "Openstaande taken", daarna elke 7 dagen, maximaal 3 keer. | |
@@ -231,9 +231,9 @@ Hoe Vandaag de seizoensfase bepaalt:
 
 | Wat jij doet | Wat het systeem doet | Scherm |
 |---|---|---|
-| Kandidaten uitnodigen: per rij **Uitnodigen SD**, in het dossier **Uitnodigen selectiedag**, of meerdere tegelijk via de bulkbalk. | Zet de ondertekeningen klaar (18+: gezondheidsverklaring en intake als taak; jonger dan 18: wacht op de oudergegevens en mailt dan de ouder). Stuurt "Uitnodiging selectiedag" per e-mail en WhatsApp/sms. | [Sollicitanten](#sollicitanten) |
-| De aanmelding sluiten zodra je genoeg kandidaten hebt: **Aanmelding sluiten**. | Het aanmeldformulier gaat uit. Zodra niemand meer op een uitnodiging wacht, springt Vandaag naar "Formulieren" en telt wie het kennismakingsformulier nog niet inleverde; daarna wijst het naar de groepsindeling. | [Seizoen](#seizoen-opzetten) |
-| | Wie het formulier "Beter leren kennen" inlevert, gaat vanzelf naar Aangemeld selectiedag en krijgt een bevestiging. | |
+| Sollicitanten uitnodigen: **Uitnodigen selectiedag** per rij, in het dossier of voor meerdere tegelijk via de bulkbalk. | Zet de ondertekeningen klaar (18+: gezondheidsverklaring en intake als taak; jonger dan 18: wacht op de oudergegevens en mailt dan de ouder). Stuurt "Uitnodiging selectiedag" per e-mail en WhatsApp/sms. | [Sollicitanten](#sollicitanten) |
+| De aanmelding sluiten zodra je genoeg sollicitanten hebt: **Aanmelding sluiten**. | Het aanmeldformulier gaat uit. Zodra niemand meer op een uitnodiging wacht, springt Vandaag naar "Formulieren" en telt wie het kennismakingsformulier nog niet inleverde; daarna wijst het naar de groepsindeling. | [Seizoen](#seizoen-opzetten) |
+| | Wie het kennismakingsformulier inlevert, gaat vanzelf naar Aangemeld selectiedag en krijgt een bevestiging. | |
 | | Herinnering "Nog niet aangemeld voor de selectiedag": alleen als de selectiedag binnen 14 dagen is, 3 dagen na de uitnodiging, daarna elke 4 dagen, maximaal 3 keer. | |
 | | Herinnering aan minderjarigen die de oudergegevens nog niet invulden: na 2 dagen, elke 4 dagen, maximaal 3 keer. | |
 | | Herinnering aan wie een document nog niet tekende: na 3 dagen, elke 5 dagen, maximaal 2 keer. | [Ondertekeningen](#ondertekeningen) |
@@ -245,14 +245,14 @@ Hoe Vandaag de seizoensfase bepaalt:
 | Wat jij doet | Wat het systeem doet | Scherm |
 |---|---|---|
 | De tablet bij de ingang klaarzetten met de tablet-link. | Vandaag toont "Vandaag is de selectiedag" met de knop **Naar inchecken**. | [Selectiedag](#selectiedag) |
-| Inchecken (of kandidaten checken zelf in op de tablet). | Wie wordt ingecheckt, gaat meteen naar fase Selectiedag geweest. Geen bericht. | [Selectiedag](#selectiedag) |
+| Inchecken (of sollicitanten checken zelf in op de tablet). | Wie wordt ingecheckt, gaat meteen naar fase Selectiedag geweest. Geen bericht. | [Selectiedag](#selectiedag) |
 | Beoordelen: cijfers per criterium en observaties. | Tikken is opslaan; het systeem berekent per criterium het gemiddelde van alle beoordelaars. | [Selectiedag](#selectiedag) |
 
 ### Moment 5: nabespreking en bellen
 
 | Wat jij doet | Wat het systeem doet | Scherm |
 |---|---|---|
-| Per kandidaat een besluit nemen: Door, Twijfel of Niet. | Een besluit verandert nog niets aan de fase en stuurt niets. | [Selectiedag](#selectiedag) |
+| Per sollicitant een besluit nemen: Door, Twijfel of Niet. | Een besluit verandert nog niets aan de fase en stuurt niets. | [Selectiedag](#selectiedag) |
 | Iedereen met Door of Niet persoonlijk bellen en daarna doorvoeren. | Door wordt Uitgenodigd trainingsweekend met de uitnodiging (e-mail en WhatsApp/sms). Niet wordt Afgewezen; de afwijzingsmail staat standaard uit. De afgewezen sollicitant ziet in het portaal de knop voor een seintje bij de volgende werving. | [Selectiedag](#selectiedag) |
 | Twijfelgevallen later zelf afhandelen. | Twijfel blijft staan; die gaat nooit vanzelf de deur uit. | |
 | | De uitnodiging voor het trainingsweekend vraagt de beschikbaarheid in te vullen. De deadline daarvoor is 14 dagen vóór het trainingsweekend. Vanaf 14 dagen vóór die deadline gaat de herinnering "Beschikbaarheid nog voorlopig" (elke 4 dagen, na de deadline elke 2 dagen, maximaal 5 keer). | [Beschikbaarheid, dekking en loonplanning](#beschikbaarheid-dekking-en-loonplanning) |
@@ -262,14 +262,14 @@ Hoe Vandaag de seizoensfase bepaalt:
 
 | Wat jij doet | Wat het systeem doet | Scherm |
 |---|---|---|
-| Tablet klaarzetten (toegangscode en pincode) en nalopen wie er komt. | Sollicitanten checken zelf in; dat zet de fase op TW geweest. | [Trainingsweekend](#trainingsweekend) |
+| Tablet klaarzetten (toegangscode en pincode) en nalopen wie er komt. | Sollicitanten checken zelf in; dat zet de fase op Trainingsweekend geweest. | [Trainingsweekend](#trainingsweekend) |
 | Observaties noteren op je telefoon (bestuur en begeleiders). | Tikken is opslaan; er gaat geen bericht uit. | [Trainingsweekend](#trainingsweekend) |
 
 ### Moment 7: aannemen
 
 | Wat jij doet | Wat het systeem doet | Scherm |
 |---|---|---|
-| In het gesprek met het bestuur per kandidaat de inzet afspreken en een besluit vastleggen (Aannemen, Twijfel, Afwijzen), met een bericht aan de sollicitant. Het gaat meteen door. | Aangenomen: het kennismakingspakket gaat klaar in het portaal (upload identiteitsbewijs en bankpas, loonheffingsformulier, inschrijving als lid als er nog geen verenigingsaccount is, huisregels, verenigingsaccount) en de mail "Welkom: aangenomen" gaat uit. Afgewezen: zoals bij moment 5. | [Trainingsweekend](#trainingsweekend) |
+| In het gesprek met het bestuur per sollicitant de inzet afspreken en een besluit vastleggen (Aannemen, Twijfel, Afwijzen), met een bericht aan de sollicitant. Het gaat meteen door. | Aangenomen: het kennismakingspakket gaat klaar in het portaal (upload identiteitsbewijs en bankpas, loonheffingsformulier, inschrijving als lid als er nog geen verenigingsaccount is, huisregels, verenigingsaccount) en de mail "Welkom: aangenomen" gaat uit. Afgewezen: zoals bij moment 5. | [Trainingsweekend](#trainingsweekend) |
 | Twijfelgevallen bellen en daarna het gesprek opnieuw openen en het besluit vastleggen. | | [Trainingsweekend](#trainingsweekend) |
 | Na het weekend de loonplanning definitief maken. | Pas dan ziet de sollicitant de afgesproken inzet. | [Beschikbaarheid, dekking en loonplanning](#beschikbaarheid-dekking-en-loonplanning) |
 
@@ -356,9 +356,9 @@ Bovenaan staat **Vandaag**, daaronder vier groepen:
 
 | Groep | Onderdelen |
 |---|---|
-| Kandidaten | Sollicitanten, Selectiedag, Trainingsweekend, Ondertekeningen |
+| Sollicitanten | Sollicitanten, Selectiedag, Trainingsweekend, Ondertekeningen |
 | Inzet & loon | Beschikbaarheid, Dekking, Loonplanning, Loondossiers |
-| Communicatie | Berichten, Wervingspagina's |
+| Communicatie | Berichten, Landingspagina's |
 | Systeem | Seizoen, Instellingen, Beheerders & rechten, Logboek |
 
 Een groep waar je niets in mag, verdwijnt helemaal. Een getal achter een menu-item betekent dat
@@ -437,8 +437,8 @@ seizoensfase:
 | Werving | "... aanmeldingen uitnodigen" (fase Aangemeld) | **Naar de aanmeldingen** |
 | Formulieren | "... wachten nog op hun formulier" (fase Uitgenodigd selectiedag), met hoe de automatische herinnering nu is ingesteld | **Bekijk wie** |
 | Selectiedag | "Vandaag is de selectiedag" | **Naar inchecken** |
-| Bellijst | "... kandidaten zonder besluit" zolang er nog niemand op de bellijst staat, daarna "De bellijst afwerken" met hoeveel er nog niet gebeld, gebeld maar niet doorgevoerd of op twijfel staan | **Naar de nabespreking** of **Bellijst openen** |
-| Trainingsweekend | "Het trainingsweekend", met hoeveel kandidaten nog niet zijn afgevinkt | **Naar het trainingsweekend** |
+| Bellijst | "... sollicitanten zonder besluit" zolang er nog niemand op de bellijst staat, daarna "De bellijst afwerken" met hoeveel er nog niet gebeld, gebeld maar niet doorgevoerd of op twijfel staan | **Naar de nabespreking** of **Bellijst openen** |
+| Trainingsweekend | "Het trainingsweekend", met hoeveel sollicitanten nog niet zijn afgevinkt | **Naar het trainingsweekend** |
 | Aanname | "... wachten op een besluit", daarna "... besluiten nog doorvoeren" en "... op twijfel" (uit het trainingsweekend) | **Naar het besluit** |
 
 Naast de taak staan blokjes en "x gedaan · y open". Is er niets te doen, dan zegt het blok dat
@@ -449,7 +449,7 @@ scherm ook mag openen.
 
 ### Waar staat iedereen
 
-Een staaf per fase met het aantal kandidaten in dit seizoen. Klik op een staaf om de
+Een staaf per fase met het aantal sollicitanten in dit seizoen. Klik op een staaf om de
 sollicitantenlijst met die fase te openen. Zolang er niemand is, staat er "Nog niemand
 aangemeld".
 
@@ -514,7 +514,7 @@ seizoen gaat werken.
      elke week daartussen als tegel. Zonder werkperiode kunnen ze hun beschikbaarheid niet invullen.
    - **Hoofdseizoen vanaf week** en **Hoofdseizoen tot en met week**. Daarbuiten zijn de posten
      alleen in het weekend bemand en rekent de dekking daarmee. Leeg is: elke week hoofdseizoen.
-   - **Selectiedag**: **Datum**, **Locatie**, **Verzameltijd** (hoe laat kandidaten er moeten
+   - **Selectiedag**: **Datum**, **Locatie**, **Verzameltijd** (hoe laat sollicitanten er moeten
      zijn), **Start programma**, **Eindtijd (ongeveer)** (het portaal toont "tot ongeveer ..."),
      **Adres** en **Wat neem je mee**.
    - **Trainingsweekend**: **Start**, **Eind**, **Locatie**, **Verzameltijd**, **Start programma**,
@@ -524,7 +524,7 @@ seizoen gaat werken.
    bevestigingsmail van elke aanmelder). Staat de aanmelding van een ander seizoen nog open, dan gaat
    die vanzelf dicht en stapt het beheer over naar dit seizoen. Klik op **Ja, aanmelding openen**. Met
    **Aanmeldformulier bekijken** open je het formulier in een nieuw tabblad.
-4. **Aanmelding sluiten** zodra je genoeg kandidaten hebt: **Aanmelding sluiten**, bevestigen met
+4. **Aanmelding sluiten** zodra je genoeg sollicitanten hebt: **Aanmelding sluiten**, bevestigen met
    **Ja, aanmelding sluiten**. Alleen het aanmeldformulier gaat uit; het seizoen zelf loopt door en
    alle gegevens blijven bewaard. Je kunt later weer openen.
 5. **Procedure doorlopen** bij [Selectiedag](#selectiedag) en [Trainingsweekend](#trainingsweekend).
@@ -563,15 +563,15 @@ het seizoen leeg is).
 
 ---
 
-## Wervingspagina's
+## Landingspagina's
 
-**Waar:** Communicatie › Wervingspagina's  
+**Waar:** Communicatie › Landingspagina's  
 **Wie:** bestuur en beheerder.
 
-> **In het kort:** een wervingspagina is een eigen pagina voor één doelgroep met het
+> **In het kort:** een landingspagina is een eigen pagina voor één doelgroep met het
 > aanmeldformulier erin, op `/p/<adres>`. Je uploadt een HTML-ontwerp, controleert het rapport en
 > zet de pagina op Gepubliceerd. Per pagina zie je bezoekers, aanmeldingen en waar mensen afhaken.
-> De volledige uitleg staat in de aparte handleiding voor wervingspagina's.
+> De volledige uitleg staat in de aparte handleiding voor landingspagina's.
 
 ### Het overzicht van de pagina's
 
@@ -590,17 +590,17 @@ heeft een bron-code die meereist tot in het dossier. De pagina zet geen cookies;
 anoniem geteld. Die telling zet je uit onder Instellingen › Bewaren & opschonen.
 
 Het ontwerp maken, de markeringen zoals `[[formulier]]`, afbeeldingen, het scanrapport, versies en
-problemen oplossen staan in de **Handleiding wervingspagina's** (overzicht Handleidingen).
+problemen oplossen staan in de **Handleiding landingspagina's** (overzicht Handleidingen).
 
 ---
 
 ## Sollicitanten
 
-**Waar:** Kandidaten › Sollicitanten  
+**Waar:** Selectie › Sollicitanten  
 **Wie:** bestuur en beheerder (bekijken, bewerken, verwijderen); penningmeester alleen bekijken.
 Begeleiders hebben hier geen toegang.
 
-> **In het kort:** de lijst van alle kandidaten in het huidige seizoen. Kies een fase-tab, filter
+> **In het kort:** de lijst van alle sollicitanten in het huidige seizoen. Kies een fase-tab, filter
 > of zoek, en klik op een naam om het dossier te openen. De knop in de kolom Actie zet de volgende
 > stap; met vinkjes doe je hetzelfde voor meerdere mensen tegelijk. Elke stap die bericht stuurt,
 > laat eerst zien wat er gaat gebeuren.
@@ -608,7 +608,8 @@ Begeleiders hebben hier geen toegang.
 ### Fase-tabs
 
 Bovenaan staat **Alle** met het totaal, daarna een tab per fase met het aantal: Aangemeld,
-Uitgenodigd SD, Aangemeld SD, SD geweest, Uitgenodigd TW, TW geweest, Aangenomen, Afgewezen. Een
+Uitgenodigd selectiedag, Aangemeld selectiedag, Selectiedag geweest, Uitgenodigd weekend, Weekend
+geweest, Aangenomen, Afgewezen. Een
 tab zonder mensen verdwijnt. Staat iemand in een fase die in deze periode van het seizoen nog niet
 aan de beurt is (bijvoorbeeld al aangenomen terwijl de selectiedag nog moet komen, na een import of
 correctie), dan staat onder de tabs "... in een fase die nu niet aan de beurt is" met de link
@@ -617,7 +618,7 @@ correctie), dan staat onder de tabs "... in een fase die nu niet aan de beurt is
 ### Filterbalk
 
 - **Zoek naam of e-mail**: filtert terwijl je typt.
-- **Alle kandidaten** of **Alleen terugkerend**.
+- **Alle sollicitanten** of **Alleen terugkerend**.
 - **Formulier: alle**, **Formulier ingediend** of **Formulier open** (het kennismakingsformulier;
   een concept telt als open).
 - **Competentie** (alleen als de koppeling met Authentik is ingericht).
@@ -629,11 +630,11 @@ correctie), dan staat onder de tabs "... in een fase die nu niet aan de beurt is
 ### Kolommen kiezen en sorteren
 
 Standaard zie je Naam (met e-mailadres eronder), Lft, Woonplaats, Status, Aangemeld en Actie. In
-de kolom Status staat de fase, het label **terug** bij een terugkerende kandidaat, en een
+de kolom Status staat de fase, het label **terug** bij een terugkerende sollicitant, en een
 waarschuwing als er iets mis is ("mail mislukt" of "geen adres"; houd je muis erop voor de reden).
 Staat de uitnodig-modus op Suggestie, dan krijgt een aanmelding die binnen de leeftijdsgrenzen valt
 het groene label **Uitnodigen?**. Dat is een voorstel; uitnodigen doe je zelf. Afgewezen
-kandidaten staan gedempt.
+sollicitanten staan gedempt.
 
 Met **Kolommen** zet je extra kolommen aan of uit: Telefoon en de velden uit het
 kennismakingsformulier (Straat, Huisnr., Postcode, Opleiding, Werkervaring, Diploma's, Motivatie,
@@ -652,12 +653,12 @@ Per fase is er hooguit één knop, voor iedereen dezelfde:
 
 | Fase | Knop |
 |---|---|
-| Aangemeld | **Uitnodigen SD** |
-| SD geweest | **Uitnodigen TW** |
-| TW geweest | **Aannemen** |
+| Aangemeld | **Uitnodigen selectiedag** |
+| Selectiedag geweest | **Uitnodigen weekend** |
+| Weekend geweest | **Aannemen** |
 
 In de andere fases wacht het systeem op de sollicitant of op de selectiedag, en is er dus niets
-te doen. Staat er een probleem bij de kandidaat, dan staat ervoor **Adres corrigeren** of **Adres
+te doen. Staat er een probleem bij de sollicitant, dan staat ervoor **Adres corrigeren** of **Adres
 invullen** (houd je muis erop voor de reden). Die knop opent het dossier met de kaart
 [Gegevens corrigeren](#gegevens-corrigeren) open. De kolom Actie ontbreekt als je geen bewerkrecht
 hebt.
@@ -670,7 +671,7 @@ Een knop in de kolom Actie opent eerst het tussenscherm (zie hieronder).
 2. Onderaan verschijnt een donkere balk met "... geselecteerd" en de knoppen **Uitnodigen
    selectiedag**, **Uitnodigen trainingsweekend**, **Aannemen**, **Afwijzen**, **Bericht** en
    **Exporteren**. Een uitnodigknop verschijnt alleen als iedereen in je selectie in de juiste fase
-   staat (Aangemeld voor de selectiedag, SD geweest voor het trainingsweekend).
+   staat (Aangemeld voor de selectiedag, Selectiedag geweest voor het trainingsweekend).
 3. Klik op een knop. Bij een fasestap zie je eerst het tussenscherm; **Bericht** opent Berichten
    met deze mensen als ontvangers; **Exporteren** downloadt alleen de gekozen mensen.
 
@@ -741,7 +742,7 @@ personen zijn aangemaakt, bijgewerkt en overgeslagen, plus eventuele fouten per 
   Kwam je uit een lijst met meer mensen, dan staat er "4 van 12 in ..." met **← Vorige** en
   **Volgende →**. Die volgen de filters en de sortering van de lijst.
 - De **kop** toont foto of initialen, naam, fase, het label **Eerder gesolliciteerd** bij een
-  terugkerende kandidaat, en leeftijd, woonplaats, e-mail en telefoon. Een oranje melding
+  terugkerende sollicitant, en leeftijd, woonplaats, e-mail en telefoon. Een oranje melding
   waarschuwt rond de leeftijdsgrens van 16: "Wordt pas 16 op ..." of "Was 15 bij de start van het
   seizoen, inmiddels 16".
 - De **knoppen** in de kop (alleen met bewerkrecht): de volgende stap (**Uitnodigen
@@ -759,7 +760,7 @@ Een tabblad dat niets te tonen heeft, verschijnt niet.
 | Tabblad | Wat erin staat |
 |---|---|
 | Dossier | Het complete beeld (zie hieronder). Altijd aanwezig. |
-| Kennismakingsformulier | Het formulier "Beter leren kennen" voluit. Alleen met het recht op de kennismakingsformulieren en als er een formulier is. |
+| Kennismakingsformulier | Het kennismakingsformulier voluit. Alleen met het recht op de kennismakingsformulieren en als er een formulier is. |
 | Beschikbaarheid | De weken die de sollicitant kan werken. |
 | Selectiedag | Cijfers en observaties van de selectiedag, met het aantal observaties. |
 | Ondertekeningen | De documenten, met "x/y" getekend. |
@@ -843,7 +844,7 @@ het besluit van de nabespreking, met wie het nam en wanneer er is gebeld.
 
 Alleen met leesrecht op de loonplanning. Per week: wat de sollicitant opgaf, de vastgestelde
 **afspraak** (groen, zodra de loonplanning definitief is) en hoe de persoon in elk scenario staat
-(de ster is het actieve). Bovenaan of de persoon vaststaat na het TW-gesprek. Via **Naar de
+(de ster is het actieve). Bovenaan of de persoon vaststaat na het gesprek op het trainingsweekend. Via **Naar de
 loonplanning** pas je het aan.
 
 ### Tabblad Trainingsweekend
@@ -933,13 +934,13 @@ trainingsweekend.
 
 | Fase | Wat het bestuur doet | Wat het systeem doet |
 |---|---|---|
-| **Aangemeld** | Niets; de aanmelding komt binnen via de website, een wervingspagina of handmatig. | Stuurt "Bevestiging van aanmelding" (e-mail) en aan het bestuur "Nieuwe aanmelding". Bij uitnodig-modus Automatisch nodigt het zelf uit wie binnen de leeftijdsgrenzen valt, na de ingestelde vertraging. |
-| **Uitgenodigd selectiedag** | **Uitnodigen SD** (lijst), **Uitnodigen selectiedag** (dossier of bulk). | Zet de ondertekeningen klaar: 18+ gezondheidsverklaring en intake als taak in het portaal; onder de 18 wacht het tot de sollicitant de oudergegevens invult en mailt dan de ouder. Stuurt "Uitnodiging selectiedag" (standaard e-mail én WhatsApp/sms). |
-| **Aangemeld selectiedag** | Niets; de sollicitant levert het formulier "Beter leren kennen" in. | Stuurt "Bevestiging aanmelding selectiedag" (e-mail) en aan het bestuur "Formulier ingeleverd" (standaard uit). |
-| **Selectiedag geweest** | Inchecken op de selectiedag, of de kandidaat checkt zelf in op de tablet. | Zet de fase bij het inchecken. Geen bericht. |
-| **Uitgenodigd trainingsweekend** | Doorvoeren van Door op de bellijst, of **Uitnodigen TW** / **Uitnodigen trainingsweekend**. | Stuurt "Uitnodiging trainingsweekend" (standaard e-mail én WhatsApp/sms) met het verzoek de beschikbaarheid door te geven. |
-| **TW geweest** | Met de hand zetten in de fasekaart van het dossier. | Zet de fase. Geen bericht. Het afvinken in het trainingsweekend zet deze fase niet. |
-| **Aangenomen** | Doorvoeren bij Trainingsweekend, **Aannemen** in de lijst (vanaf TW geweest), in het dossier of in de bulkbalk. | Zet het kennismakingspakket klaar in het portaal en stuurt "Welkom: aangenomen" (e-mail). Zodra loonheffing, kopie ID en kopie bankpas binnen zijn, krijgt de penningmeester "Loondossier compleet". |
+| **Aangemeld** | Niets; de aanmelding komt binnen via de website, een landingspagina of handmatig. | Stuurt "Bevestiging van aanmelding" (e-mail) en aan het bestuur "Nieuwe aanmelding". Bij uitnodig-modus Automatisch nodigt het zelf uit wie binnen de leeftijdsgrenzen valt, na de ingestelde vertraging. |
+| **Uitgenodigd selectiedag** | **Uitnodigen selectiedag** (lijst, dossier of bulk). | Zet de ondertekeningen klaar: 18+ gezondheidsverklaring en intake als taak in het portaal; onder de 18 wacht het tot de sollicitant de oudergegevens invult en mailt dan de ouder. Stuurt "Uitnodiging selectiedag" (standaard e-mail én WhatsApp/sms). |
+| **Aangemeld selectiedag** | Niets; de sollicitant levert het kennismakingsformulier in. | Stuurt "Bevestiging aanmelding selectiedag" (e-mail) en aan het bestuur "Formulier ingeleverd" (standaard uit). |
+| **Selectiedag geweest** | Inchecken op de selectiedag, of de sollicitant checkt zelf in op de tablet. | Zet de fase bij het inchecken. Geen bericht. |
+| **Uitgenodigd trainingsweekend** | Doorvoeren van Door op de bellijst, of **Uitnodigen weekend** (lijst) / **Uitnodigen trainingsweekend** (dossier of bulk). | Stuurt "Uitnodiging trainingsweekend" (standaard e-mail én WhatsApp/sms) met het verzoek de beschikbaarheid door te geven. |
+| **Trainingsweekend geweest** | Met de hand zetten in de fasekaart van het dossier. | Zet de fase. Geen bericht. Het afvinken in het trainingsweekend zet deze fase niet. |
+| **Aangenomen** | Doorvoeren bij Trainingsweekend, **Aannemen** in de lijst (vanaf Trainingsweekend geweest), in het dossier of in de bulkbalk. | Zet het kennismakingspakket klaar in het portaal en stuurt "Welkom: aangenomen" (e-mail). Zodra loonheffing, kopie ID en kopie bankpas binnen zijn, krijgt de penningmeester "Loondossier compleet". |
 | **Afgewezen** | Doorvoeren van Niet op de bellijst of van Afwijzen bij Trainingsweekend, of **Afwijzen** in de bulkbalk. | Stuurt "Niet geselecteerd", maar die staat standaard **uit**: het bestuur belt of mailt persoonlijk. Onder die mail staat, als hij aan staat, altijd de knop **Stuur me een seintje**. |
 
 ### Het seintje bij afwijzing
@@ -977,7 +978,7 @@ altijd het ingestelde bericht uit.
 
 ### Goed om te weten
 
-- **Terugzetten** naar Aangemeld, Selectiedag geweest of TW geweest stuurt nooit een bericht. Alleen
+- **Terugzetten** naar Aangemeld, Selectiedag geweest of Trainingsweekend geweest stuurt nooit een bericht. Alleen
   de overgangen naar Uitgenodigd selectiedag, Aangemeld selectiedag, Uitgenodigd trainingsweekend,
   Aangenomen en Afgewezen kunnen een melding sturen. Bij terugzetten of een stap overslaan in de
   fasekaart kun je een reden opgeven die in de tijdlijn komt.
@@ -998,14 +999,14 @@ altijd het ingestelde bericht uit.
 
 ## Selectiedag
 
-**Waar:** Kandidaten › Selectiedag, met bovenaan de stappen Groepen, Inchecken, Beoordelen,
+**Waar:** Selectie › Selectiedag, met bovenaan de stappen Groepen, Inchecken, Beoordelen,
 Nabespreking en Bellijst.  
 **Wie:** bestuur en beheerder alles. Een begeleider bekijkt de groepen, checkt in en beoordeelt;
 de tabletcode, de groepsindeling, Nabespreking en Bellijst blijven bij het bestuur.
 
 > **In het kort:** vijf stappen voor één dag. Vooraf deel je groepen in en maak je de
-> toegangscode voor de tablet. Op de dag check je in (of kandidaten doen dat zelf) en beoordeel je
-> per kandidaat. Daarna neem je aan tafel een besluit, bel je iedereen en voer je pas dan door.
+> toegangscode voor de tablet. Op de dag check je in (of sollicitanten doen dat zelf) en beoordeel je
+> per sollicitant. Daarna neem je aan tafel een besluit, bel je iedereen en voer je pas dan door.
 
 De selectiedag werkt met iedereen in de fases Uitgenodigd selectiedag, Aangemeld selectiedag en
 Selectiedag geweest. Staat er nog niemand in die fases, dan staat er "Nog niemand uitgenodigd".
@@ -1031,17 +1032,17 @@ Het beste op een laptop.
 
 Gemaakt voor een tablet bij de ingang. Twee manieren, door elkaar te gebruiken:
 
-- **Tablet bij de ingang** (kandidaten melden zichzelf aan):
+- **Tablet bij de ingang** (sollicitanten melden zichzelf aan):
   1. Een bestuurslid klikt op **Toegangscode aanmaken**. Er verschijnen een **Toegangscode** en een
      **Tablet-link**.
   2. Klik op **Kopiëren** of **Openen** en zet die pagina klaar op de tablets.
-  3. De kandidaat typt de eigen naam, tikt zichzelf aan en ziet meteen in welke groep die zit ("Ga
+  3. De sollicitant typt de eigen naam, tikt zichzelf aan en ziet meteen in welke groep die zit ("Ga
      naar de tafel van je groep"). Met **Volgende persoon** is de tablet klaar voor de volgende. Wie
      al is aangemeld ziet "al aangemeld"; staat iemand er niet in, dan staat er "Vraag het
      organisatieteam om hulp".
   4. **Nieuwe code aanmaken** maakt een nieuwe code; de tablets die openstaan werken daarna niet
      meer en moet je opnieuw openen met de nieuwe link.
-- **Aanwezigheidslijst**: per groep een rij per kandidaat met de knop **Aanwezig** (na aantikken
+- **Aanwezigheidslijst**: per groep een rij per sollicitant met de knop **Aanwezig** (na aantikken
   wordt het **Ongedaan**). De teller "x/y aanwezig" loopt mee; met **Zoek op naam** vind je iemand
   snel. Tikken is opslaan. Ook begeleiders kunnen hier inchecken; de toegangscode aanmaken kan
   alleen het bestuur.
@@ -1051,14 +1052,14 @@ is ingecheckt, telt als niet verschenen. Onderaan brengt **Naar beoordelen** je 
 
 ### Stap 3: beoordelen
 
-Gemaakt voor een telefoon, met één kandidaat tegelijk. Je werkt onder je eigen weergavenaam.
+Gemaakt voor een telefoon, met één sollicitant tegelijk. Je werkt onder je eigen weergavenaam.
 Bestuur, beheerder en begeleiders kunnen beoordelen; niemand overschrijft de cijfers van een ander.
 
 1. Kies bovenaan eventueel een groep (**Alle** of een groepsnaam). Links (op een telefoon erboven)
-   staat de lijst met per kandidaat "nog niet begonnen", "x van y criteria", "klaar" of "niet
+   staat de lijst met per sollicitant "nog niet begonnen", "x van y criteria", "klaar" of "niet
    verschenen", en het aantal observaties.
-2. Het systeem opent de eerste kandidaat die jij nog niet af hebt. Een waarschuwing toont
-   bijzonderheden uit het kennismakingsformulier; een melding zegt het als de kandidaat niet is
+2. Het systeem opent de eerste sollicitant die jij nog niet af hebt. Een waarschuwing toont
+   bijzonderheden uit het kennismakingsformulier; een melding zegt het als de sollicitant niet is
    ingecheckt. Zonder het recht op de kennismakingsformulieren (zoals een begeleider) staat daar
    alleen "Let op: er is een bijzonderheid bekend bij het bestuur" met het verzoek bij een
    bestuurslid na te vragen waar je op moet letten.
@@ -1076,11 +1077,11 @@ Bestuur, beheerder en begeleiders kunnen beoordelen; niemand overschrijft de cij
 
 ### Stap 4: nabespreken
 
-Alleen bestuur en beheerder. Per kandidaat staan observaties en scores bij elkaar, met
-bijzonderheden, groep en of de kandidaat aanwezig was. De scores zijn een advies; jullie gesprek
+Alleen bestuur en beheerder. Per sollicitant staan observaties en scores bij elkaar, met
+bijzonderheden, groep en of de sollicitant aanwezig was. De scores zijn een advies; jullie gesprek
 bepaalt het besluit. Filter op **Iedereen**, **Nog open**, **Door**, **Twijfel** of **Niet**.
 
-1. Klik per kandidaat op **Door**, **Twijfel** of **Niet**, en typ eventueel een korte reden in het
+1. Klik per sollicitant op **Door**, **Twijfel** of **Niet**, en typ eventueel een korte reden in het
    veld ernaast. Dit wordt direct opgeslagen ("opgeslagen") en verandert nog niets aan de fase.
 2. Een ander besluit kies je door op een andere knop te klikken. Klik je nog een keer op het
    besluit dat al gekozen is, dan wordt het gewist, samen met de reden ("besluit gewist").
@@ -1114,7 +1115,7 @@ gesprek wordt het door of niet. Is iedereen doorgevoerd, dan staat er "De bellij
 
 ## Trainingsweekend
 
-**Waar:** Kandidaten › Trainingsweekend, met zes stappen: Voorbereiden, Groepen, Inchecken,
+**Waar:** Selectie › Trainingsweekend, met zes stappen: Voorbereiden, Groepen, Inchecken,
 Beoordelen, Evaluatie en Gesprekken.  
 **Wie:** de eerste vier: bestuur, beheerder en begeleiders. Evaluatie en Gesprekken: alleen bestuur en beheerder.
 
@@ -1123,7 +1124,7 @@ Beoordelen, Evaluatie en Gesprekken.
 > met het bestuur, met alle informatie bij elkaar. Aannemen of afwijzen gaat in dat gesprek meteen
 > door, met jullie eigen bericht in de mail. Twijfel blijft staan.
 
-Op dit scherm staat iedereen in de fases Uitgenodigd trainingsweekend en TW geweest, plus wie hier
+Op dit scherm staat iedereen in de fases Uitgenodigd trainingsweekend en Trainingsweekend geweest, plus wie hier
 al is doorgevoerd. Naast de titel staat de periode van het weekend. Vóór het weekend opent het
 scherm op Voorbereiden, daarna op Beoordelen.
 
@@ -1143,7 +1144,7 @@ er nog geen beschikbaarheid hebben opgegeven. Die heb je nodig voor het gesprek.
 ### Stap 2: inchecken
 
 Op de tablet typt de sollicitant minstens drie letters van de naam en tikt op zichzelf (met foto).
-Er staat nooit een volledige lijst op de tablet. Inchecken zet de fase op TW geweest.
+Er staat nooit een volledige lijst op de tablet. Inchecken zet de fase op Trainingsweekend geweest.
 
 Is de gezondheidsverklaring of het intakeformulier nog niet getekend (selectiedag en weekend),
 dan zegt de tablet dat en gaat de link meteen uit: per mail en WhatsApp naar wie 18+ is, per mail
@@ -1187,7 +1188,7 @@ op het selectiedag-cijfer.
    Instellingen › Uitnodigen & automatisch). De **Interne notitie** is alleen voor het bestuur.
 4. Klik op **Besluit vastleggen** en bevestig. Aannemen en afwijzen gaan **meteen door**: de fase
    verandert en het bericht gaat uit. Aangenomen heeft direct het kennismakingspakket (de
-   formulieren) in het portaal. Twijfel blijft staan: bel de kandidaat na het weekend, open het
+   formulieren) in het portaal. Twijfel blijft staan: bel de sollicitant na het weekend, open het
    gesprek opnieuw en leg dan het besluit vast.
 5. **Terug zonder besluit** geeft het gesprek weer vrij.
 
@@ -1208,7 +1209,7 @@ Liever per persoon, of met de keuze zonder bericht? Dat kan ook bij
 ---
 ## Ondertekeningen
 
-**Waar:** Kandidaten › Ondertekeningen, en per persoon het tabblad Ondertekeningen in het dossier.  
+**Waar:** Selectie › Ondertekeningen, en per persoon het tabblad Ondertekeningen in het dossier.  
 **Wie:** bestuur en beheerder. Het loonheffingsformulier en de inschrijving als lid openen alleen
 penningmeester en beheerder.
 
@@ -1258,7 +1259,7 @@ voortgangsbalk en **Compleet** of "x open". Per document:
   aangekomen.
 
 Het getal achter Ondertekeningen in het menu en de melding op Vandaag tellen documenten die langer
-dan 3 dagen openstaan (afgewezen kandidaten tellen niet mee).
+dan 3 dagen openstaan (afgewezen sollicitanten tellen niet mee).
 
 ### Een verkeerd e-mailadres van de ouder
 
@@ -1429,7 +1430,7 @@ Elke wijziging wordt direct opgeslagen. Met alleen leesrecht op Loonplanning kun
 Het scherm heeft dezelfde opbouw als Beschikbaarheid, van boven naar beneden:
 
 - **Scenario**: de knoppen met de scenario's; de ster is de actieve planning (die zie je ook in het
-  TW-gesprek). **Kopie maken** dupliceert het getoonde scenario en opent de kopie. Bij een scenario
+  gesprek op het trainingsweekend). **Kopie maken** dupliceert het getoonde scenario en opent de kopie. Bij een scenario
   dat niet actief is staan **Maak actief** en **Verwijderen**.
 - **Loonkosten, werkdagen en budget**: de kosten van betaalde dagen, het aantal werkdagen (en
   hoeveel daarvan onbetaald) en de budgetbalk met wat er nog over is.
@@ -1462,7 +1463,7 @@ opgegeven** kan ook, maar dan is de cel rood: bespreek het met de sollicitant.
 **Een persoon**: klik op de naam. Je ziet de **Functie** ("voorstel": nieuw = Aspirant, anders de
 Lifeguard-rang uit Authentik; Postcommandant kies je zelf), de totalen, de **afspraak** (na definitief
 maken: bijwerken naar dit scenario als het afwijkt, of vaststellen voor wie later is aangenomen) en
-of de persoon **vaststaat na het TW-gesprek**. Vaststaan betekent: in alle scenario's gelijk en op
+of de persoon **vaststaat na het gesprek op het trainingsweekend**. Vaststaan betekent: in alle scenario's gelijk en op
 slot. **Ontgrendelen** vraagt een reden (die komt in het logboek); zet het daarna weer vast met
 **Vastzetten vanuit dit scenario**.
 Het dagloon rekent met de leeftijd op de maandag van elke week: wie halverwege het seizoen jarig
@@ -1755,7 +1756,7 @@ Instellingen › Kanalen & meldingen.
 Wil je weten wie er een herinnering zou krijgen? Een admin opent Instellingen › **Systeem &
 updates** en gaat naar de kaart **Herinneringen**.
 
-1. Klik op **Proefdraaien (niets versturen)**. Per regel zie je hoeveel kandidaten er zijn, hoeveel
+1. Klik op **Proefdraaien (niets versturen)**. Per regel zie je hoeveel sollicitanten er zijn, hoeveel
    berichten er uit zouden gaan en wie wordt overgeslagen, met de naam en de reden.
 2. Klopt het en wil je niet op de volgende automatische ronde wachten, klik dan op **Nu draaien** en
    bevestig met **Ja, versturen**. De berichten gaan via de wachtrij.
@@ -1777,15 +1778,15 @@ Op die kaart staat ook wanneer de automatische taken voor het laatst draaiden.
      aan** zet de regel aan.
 4. Klik op **Opslaan**.
 
-Je kunt kiezen uit deze gebeurtenissen: Aanmelding (datum van aanmelden), Formulier "Beter leren
-kennen" ingeleverd, Beschikbaarheid definitief gemaakt, Selectiedag (datum uit het seizoen),
+Je kunt kiezen uit deze gebeurtenissen: Aanmelding (datum van aanmelden), Kennismakingsformulier
+ingeleverd, Beschikbaarheid definitief gemaakt, Selectiedag (datum uit het seizoen),
 Trainingsweekend (startdatum uit het seizoen), en per fase "Fase gewijzigd naar …".
 
 In de lijst **Regels** staat per regel **Aan** of **Uit**, met een samenvatting zoals "10 dagen
 na aanmelding · sjabloon "Magazine" · E-mail · max 1× per persoon". Per regel heb je:
 
 - **Proefdraaien**: toont bovenaan een **Proefrun** met het label "Niets verstuurd", het aantal
-  kandidaten, hoeveel er een bericht zouden krijgen en wie wordt overgeslagen;
+  sollicitanten, hoeveel er een bericht zouden krijgen en wie wordt overgeslagen;
 - **Bewerken**;
 - **Verwijderen**, met bevestiging. Berichten die al zijn verstuurd blijven in het log staan.
 
@@ -1851,7 +1852,7 @@ eronder, en die zet het systeem er zelf onder.
 
 ### Seintje buiten het seizoen (nog niet gesolliciteerd)
 
-Staat de aanmelding dicht, dan zie je op het aanmeldformulier, op elke wervingspagina en in het
+Staat de aanmelding dicht, dan zie je op het aanmeldformulier, op elke landingspagina en in het
 formulier op paal13.com niet meer "De aanmelding is gesloten", maar: **De aanmelding voor het
 volgende seizoen is nog niet open. Laat je e-mailadres achter, dan sturen we je één bericht zodra je
 je kunt aanmelden.** De bezoeker vult voornaam en e-mailadres in en zet een vinkje.
@@ -1908,7 +1909,7 @@ alleen welk veld is gewijzigd, nooit de waarde.
 | Groep | Tabblad | Wat je hier instelt |
 |---|---|---|
 | Organisatie | **Algemeen** | Naam van de organisatie; logo (PNG, JPG of WebP) en favicon (PNG of ICO), als upload of pad/URL; SVG wordt geweigerd, want daar kan script in zitten; de welkomsttekst op de portaal-login; de huisregels (pdf) voor de taak "Huisregels lezen" van aangenomen strandwachten (zonder document blijft de taak staan als "volgt binnenkort"; **Losmaken van de taak** koppelt hem los). Bij Aanmeldformulier staat de vaste tekst "De minimumleeftijd is 15 jaar"; die is niet in te stellen. |
-| Selectie & seizoen | **Uitnodigen & automatisch** | **Seizoen en selectie**: de **Seizoensfase** (standaard "Automatisch (uit de datums van het seizoen)"; kies alleen een vaste fase als de datums niet kloppen, en zet hem daarna terug) en de **Advies-drempel selectiedag** (1 tot 5, standaard 3,5), vanaf waar het dossier "Door" adviseert. Auto-invite: modus Uit, Suggestie (markeert in de lijst met **Uitnodigen?**) of Automatisch (nodigt uit na de vertraging in uren), met de leeftijdsgrenzen (standaard 16 tot 30). De automatisering bij een fasewijziging: **Ondertekeningen bij SD-uitnodiging** en **Kennismakingspakket bij aangenomen**. De ingebouwde herinneringen, de rustperiode, het anti-loop-plafond, de grens voor e-mailbijlagen en het maximum aantal WhatsApp-berichten per uur (zie [Geplande berichten en herinneringen](#geplande-berichten-en-herinneringen)). |
+| Selectie & seizoen | **Uitnodigen & automatisch** | **Seizoen en selectie**: de **Seizoensfase** (standaard "Automatisch (uit de datums van het seizoen)"; kies alleen een vaste fase als de datums niet kloppen, en zet hem daarna terug) en de **Advies-drempel selectiedag** (1 tot 5, standaard 3,5), vanaf waar het dossier "Door" adviseert. Auto-invite: modus Uit, Suggestie (markeert in de lijst met **Uitnodigen?**) of Automatisch (nodigt uit na de vertraging in uren), met de leeftijdsgrenzen (standaard 16 tot 30). De automatisering bij een fasewijziging: **Ondertekeningen bij uitnodiging selectiedag** en **Kennismakingspakket bij aangenomen**. De ingebouwde herinneringen, de rustperiode, het anti-loop-plafond, de grens voor e-mailbijlagen en het maximum aantal WhatsApp-berichten per uur (zie [Geplande berichten en herinneringen](#geplande-berichten-en-herinneringen)). |
 | Selectie & seizoen | **Beoordelingscriteria** | Per test (Sporttest en Zwemtest) het icoon, de naam en de criteria, één per regel. Beoordelaars scoren elk criterium van 1 tot 5. **Standaard uit het draaiboek herstellen** zet de ingebouwde lijst terug. |
 | Selectie & seizoen | **Posten & bezetting** | De posten en per post de rollen: naam, competentie, minimale rang uit Authentik en aantal personen. Per post het vinkje "nooit 2 aspiranten samen". **+ Post toevoegen**, **+ Rol**, **Opslaan**, **Standaard herstellen**. Dekking en de norm in het beschikbaarheidsraster rekenen hiermee. De postcommandant valt erbuiten. |
 | Inzet & loon | **Functies** | Per functie de naam, de factor voor het dagloon, de minimum- en maximumleeftijd en de volgorde, met **Sla op** en een voorbeeldberekening. |
@@ -1918,7 +1919,7 @@ alleen welk veld is gewijzigd, nooit de waarde.
 | Berichten | **E-mailserver** | Host, poort, beveiliging (STARTTLS, SSL/TLS of Geen), gebruikersnaam, wachtwoord, afzenderadres en afzendernaam. Daaronder **Testmail versturen**: sla eerst op, vul het adres in en klik op **Verstuur testmail**. |
 | Koppelingen | **Authentik** | De status van de SSO-koppeling, het **Authentik API-token** voor het inloggen van terugkerende sollicitanten via Authentik (verwijderd is alleen inloggen per mail), de **Toegestane admin-groepen** (standaard "Bestuur,Sol-Admin,Sol-Begeleider,Sol-Penningmeester"), de koppeling voor competenties (basis-URL en **API-token (service-account)**, **Test verbinding**, **Nu alle sollicitanten verversen**) en de groep-indeling van de competenties (alleen te bekijken). De tokens zijn geheime velden. |
 | Koppelingen | **Website & API** | De geheime sleutel voor de WordPress-plugin (**Kopieer**; **Nieuwe sleutel genereren** maakt de oude meteen ongeldig), de toegestane websites (CORS, één per regel) en de adressen die de plugin nodig heeft. De sleutel zelf zien, kopiëren en vernieuwen kan alleen wie Systeem mag bewerken (standaard admin); anderen zien **Ingesteld**. |
-| Koppelingen | **AI-analyse** | De **Gemini API-sleutel** (geheim veld) en het **Model**: Gemini 2.5 Flash (standaard), Gemini 2.5 Flash-Lite (sneller, goedkoper) of Gemini 2.5 Pro (grondiger, trager); een oud model dat Google heeft uitgezet valt vanzelf terug op de standaard. Het vinkje **AI-hulp bij beschikbaarheid** (experimenteel). Het blok **Wat er naar Google gaat**: de instructie voor de analyse staat vast in de code en is niet te bewerken; per sollicitant gaan alleen leeftijdscategorie, opleiding, diploma's en certificaten, werkervaring, de twee motivaties en het aantal beschikbare weken mee, niet de naam, contactgegevens, het adres, de foto of de bijzonderheden. **Automatisch analyseren na ontvangst BLK** (standaard aan): uit betekent alleen handmatig, met **Analyseer nu** bij het volledige formulier. |
+| Koppelingen | **AI-analyse** | De **Gemini API-sleutel** (geheim veld) en het **Model**: Gemini 2.5 Flash (standaard), Gemini 2.5 Flash-Lite (sneller, goedkoper) of Gemini 2.5 Pro (grondiger, trager); een oud model dat Google heeft uitgezet valt vanzelf terug op de standaard. Het vinkje **AI-hulp bij beschikbaarheid** (experimenteel). Het blok **Wat er naar Google gaat**: de instructie voor de analyse staat vast in de code en is niet te bewerken; per sollicitant gaan alleen leeftijdscategorie, opleiding, diploma's en certificaten, werkervaring, de twee motivaties en het aantal beschikbare weken mee, niet de naam, contactgegevens, het adres, de foto of de bijzonderheden. **Automatisch analyseren na ontvangst kennismakingsformulier** (standaard aan): uit betekent alleen handmatig, met **Analyseer nu** bij het volledige formulier. |
 | Privacy & onderhoud | **Bewaren & opschonen** | Een rode waarschuwing zolang automatisch opschonen uit staat. **Automatisch opschonen inschakelen**, de termijnen per soort gegeven (ook het logboek, het foutenlog en de kopie bankpas), de schakelaars voor de downloadmail aan het bestuur en de bezoekersstatistiek, en het **Opschoon-logboek**. Daaronder de cronjob-regel voor Plesk met **Handmatig uitvoeren** en **Nieuw token maken** (alleen voor wie Systeem mag bewerken) en de stand van de AI- en mailwachtrij. Zie [Bewaartermijnen](#bewaartermijnen). |
 
 Onder de tabbladen:
@@ -1936,7 +1937,7 @@ Seizoen; zie [Seizoen opzetten](#seizoen-opzetten).
 De handleidingen en rondleidingen hebben geen tabblad in Instellingen. Je komt er op drie manieren:
 
 - via **Hulp en handleidingen** onderin het menu: het overzicht met de rondleidingen per rol en de
-  handleiding beheer, wervingspagina's, penningmeester, sollicitant en, voor wie Systeem mag
+  handleiding beheer, landingspagina's, penningmeester, sollicitant en, voor wie Systeem mag
   lezen, het runbook systeembeheer;
 - via het vraagteken rechtsboven op een scherm: **Lees meer in de handleiding** opent het juiste
   hoofdstuk, **Rondleiding van dit scherm** loopt het scherm met je door;
@@ -2070,7 +2071,7 @@ Zo staat het op een nieuwe installatie (l = lezen, b = bewerken, v = verwijderen
 | Onderdeel | Begeleider | Bestuur | Penningmeester | Admin |
 |---|---|---|---|---|
 | Sollicitanten | – | l b v | l | alles |
-| Wervingspagina's | – | l b v | – | alles |
+| Landingspagina's | – | l b v | – | alles |
 | Kennismakingsformulier | – | l b | – | alles |
 | Selectiedag | l | l b | – | alles |
 | Ondertekeningen | – | l b | – | alles |
@@ -2150,7 +2151,7 @@ opschoon-logboek geldt geen automatische termijn. Zie [Bewaartermijnen](#bewaart
 
 ## Privacy en AVG-verzoeken
 
-**Waar:** het dossier van de sollicitant (Sollicitanten › naam), het portaal (Mijn gegevens), en de privacyverklaring op `/privacy.php`  
+**Waar:** het dossier van de sollicitant (Selectie › naam), het portaal (Mijn gegevens), en de privacyverklaring op `/privacy.php`  
 **Wie:** bestuur en admin. Een dossier verwijderen vraagt verwijderrecht op Sollicitanten, gegevens corrigeren bewerkrecht.
 
 > **In het kort:** Een sollicitant kan veel zelf in het portaal: alle gegevens downloaden, het account
@@ -2201,7 +2202,7 @@ seintje-vraag (zie [Seintje bij de volgende werving](#seintje-bij-de-volgende-we
 
 ### De privacyverklaring
 
-De privacyverklaring staat op `/privacy.php`. Het aanmeldformulier, de wervingspagina's en de
+De privacyverklaring staat op `/privacy.php`. Het aanmeldformulier, de landingspagina's en de
 WordPress-plugin linken ernaar. De bewaartermijnen in de tekst komen uit dezelfde instellingen als
 het opschonen, en een alinea over AI, WhatsApp of SMS verschijnt alleen als die dienst aanstaat.
 Bij elke aanmelding wordt vastgelegd welke versie iemand las (nu 2026-09c). Daarin staan de
@@ -2330,14 +2331,14 @@ uitzondering: daar heeft 0 een eigen betekenis (zie de tabel).
 |---|---|---|
 | Afgewezen sollicitanten | **Afgewezen sollicitanten, in weken** (4) | Gerekend vanaf de laatste wijziging van de sollicitatie, bij een afwijzing het moment van afwijzen. De persoon wordt geanonimiseerd: formulier, foto, beschikbaarheid, notities, beoordelingen, taken en documenten weg, adressen en inhoud in het berichtenlog weg. De statistiek blijft. Alleen als élke sollicitatie van die persoon is afgewezen; wie om een seintje vroeg, blijft tot dat verloopt. |
 | Seintje bij de volgende werving | **Seintje bij de volgende werving** (12 maanden, maximaal 12) | Zo lang geldt de toestemming. Daarna wordt de persoon geanonimiseerd zoals hierboven. |
-| Oud-strandwachten | **Oud-lifeguards, in jaren** (2) | Gerekend vanaf het einde van het laatste seizoen waarin iemand werkte. Het dossier wordt leeggemaakt; loonheffing en ID-kopie blijven staan tot de penningmeester ze vernietigt, en pas daarna wordt ook de naam geanonimiseerd. Wie een nieuwe sollicitatie heeft lopen, valt erbuiten. |
+| Oud-strandwachten | **Oud-strandwachten, in jaren** (2) | Gerekend vanaf het einde van het laatste seizoen waarin iemand werkte. Het dossier wordt leeggemaakt; loonheffing en ID-kopie blijven staan tot de penningmeester ze vernietigt, en pas daarna wordt ook de naam geanonimiseerd. Wie een nieuwe sollicitatie heeft lopen, valt erbuiten. |
 | Gezondheidsgegevens | **Gezondheidsgegevens** (0) | 0 betekent: na afloop van het seizoen, en meteen bij afwijzen. Een ander getal betekent zoveel maanden na ondertekening. Het gaat om de gezondheidsverklaring en de gezondheidsvragen in de intake, ook in de verzegelde PDF. Het feit dát er getekend is blijft. |
 | AI-invoertekst | **AI-invoertekst** (3 maanden) | De vrije beschikbaarheidstekst die naar de AI-dienst ging wordt gewist. |
 | Niet-voltooide aanmeldingen | **Niet-voltooide aanmeldingen** (3 maanden) | Aanmeldingen die op Aangemeld bleven staan zonder formulier of beschikbaarheid worden verwijderd. |
 | Berichtenlog | **Berichtenlog (alle kanalen)** (12 maanden) | De logregels worden verwijderd. |
 | Inhoud van berichten | **Inhoud van berichten** (3 maanden) | Alleen de tekst wordt leeggemaakt; onderwerp en samenvatting blijven. |
 | Losse bijlagen | **Losse bijlagen** (12 maanden) | Bestanden die aan geen sjabloon meer hangen worden verwijderd. |
-| Bezoekersstatistiek | **Bezoekersstatistiek wervingspagina's** (13 maanden) | De aantallen worden verwijderd. |
+| Bezoekersstatistiek | **Bezoekersstatistiek landingspagina's** (13 maanden) | De aantallen worden verwijderd. |
 | Herkenning unieke bezoekers | **Herkenning unieke bezoekers** (30 dagen) | Het dag-pseudoniem wordt gewist; de aantallen blijven. |
 | Auditregels (logboek) | **Auditlog (wie deed wat)** (12 maanden) | De regels worden verwijderd. |
 | Foutenlog | **Foutenlog** (90 dagen) | Technische foutmeldingen, waarin een e-mailadres of een webadres kan staan, worden verwijderd. |
@@ -2349,7 +2350,7 @@ Onder de termijnen staan nog twee schakelaars, allebei standaard aan:
 
 - **Mail naar het bestuur bij elke download van een loondocument**: zo valt onverwachte inzage op.
   De mail bevat geen document.
-- **Bezoekersstatistiek op de wervingspagina's en het aanmeldformulier**: telt bezoeken en bij
+- **Bezoekersstatistiek op de landingspagina's en het aanmeldformulier**: telt bezoeken en bij
   welke stap mensen afhaken, zonder cookies en persoonsgegevens. Uit is: er wordt niets meer
   geteld.
 
@@ -2584,15 +2585,15 @@ Onderin het menu onder **Hulp en handleidingen**. Ook via het vraagteken rechtsb
 
 **Bellijst** — de lijst bij de nabespreking van de selectiedag: iedereen met het besluit Door of Niet die nog persoonlijk gebeld moet worden, voordat het besluit wordt doorgevoerd.
 
-**BLK** — "Beter leren kennen": het kennismakingsformulier dat de sollicitant na de uitnodiging invult (opleiding, diploma's, motivatie, adres, foto). In het dossier heet het tabblad Kennismakingsformulier.
-
 **Correctie** — een aanpassing van de beschikbaarheid door het bestuur, altijd met reden. Die overschrijft wat de sollicitant opgaf en staat in de tijdlijn.
 
 **Cron** — de automatische taken, via één geplande taak in Plesk die elke minuut draait: berichten en AI elke minuut, herinneringen, geplande berichten en automatisch uitnodigen elk kwartier, en één keer per dag de Authentik-synchronisatie en het opschonen. Draait de geplande taak niet, dan gebeurt er niets van dit alles: een bezoek aan het beheer of portaal vangt het niet meer op.
 
 **Dossier** — de pagina van één sollicitant, met de tabbladen Dossier, Kennismakingsformulier, Beschikbaarheid, Selectiedag, Ondertekeningen en Tijdlijn.
 
-**Fase** — de stap waarin een sollicitant staat: Aangemeld, Uitgenodigd selectiedag, Aangemeld selectiedag, Selectiedag geweest, Uitgenodigd trainingsweekend, TW geweest, Aangenomen of Afgewezen. Een fasewijziging kan automatisch een bericht en taken in gang zetten.
+**Fase** — de stap waarin een sollicitant staat: Aangemeld, Uitgenodigd selectiedag, Aangemeld selectiedag, Selectiedag geweest, Uitgenodigd trainingsweekend, Trainingsweekend geweest, Aangenomen of Afgewezen. Een fasewijziging kan automatisch een bericht en taken in gang zetten.
+
+**Kennismakingsformulier** — het formulier dat de sollicitant na de uitnodiging voor de selectiedag invult (opleiding, diploma's, motivatie, adres, foto). In het dossier is het een eigen tabblad. Heette eerder "Beter leren kennen" (BLK).
 
 **Kluis** — de versleutelde opslag voor gevoelige stukken: BSN, IBAN, kopie identiteitsbewijs en bankpas. Zonder werkende kluis zijn die uploads geblokkeerd.
 
@@ -2608,15 +2609,17 @@ Onderin het menu onder **Hulp en handleidingen**. Ook via het vraagteken rechtsb
 
 **Scenario** — een versie van de loonplanning. Eén scenario is actief (de ster); de andere gebruik je om alternatieven door te rekenen.
 
-**SD** — selectiedag: de dag waarop kandidaten worden getest en beoordeeld.
-
 **Seintje** — de toestemming van een afgewezen sollicitant om bij de volgende werving een bericht te krijgen. Geldt maximaal twaalf maanden en is altijd in te trekken.
 
 **Seizoen** — één wervingsronde met eigen datums voor werkperiode, selectiedag en trainingsweekend. Alles in het beheer draait om het huidige seizoen.
 
+**Selectiedag** — de dag waarop sollicitanten worden getest en beoordeeld. In oudere teksten afgekort als SD.
+
 **Sjabloon** — de vaste tekst van een bericht: e-mail, korte tekst en samenvatting. Elk automatisch bericht heeft er een; eigen sjablonen gebruik je bij Berichten en Gepland.
 
-**TW** — trainingsweekend: het weekend na de selectiedag, waarna het besluit over aannemen valt.
+**Strandwacht** — iemand die voor de brigade op het strand werkt; het werk waarvoor sollicitanten zich aanmelden. Heette eerder "lifeguard". De diplomanamen (Junior Lifeguard, Lifeguard, Senior Lifeguard) en de functie Aspirant blijven zoals ze zijn.
+
+**Trainingsweekend** — het weekend na de selectiedag, waarna het besluit over aannemen valt. In oudere teksten afgekort als TW; in korte lijsten staat "Weekend geweest" voor de fase Trainingsweekend geweest.
 
 **Wachtrij** — berichten die niet meteen worden verstuurd maar door de cron in de komende minuten, bijvoorbeeld bij meer dan tien ontvangers tegelijk.
 

@@ -23,7 +23,7 @@ $_functies_opt = array_column($functies, 'naam', 'sleutel');
 
     <div class="bh-zijpaneel-body">
       <p class="bh-lp-vastmelding" data-lp-vastmelding hidden><?= icoon('slot', 15) ?>
-        <span>Vast na het TW-gesprek: dit is met de sollicitant besproken. Aanpassen kan via de persoon (naam aanklikken) → Ontgrendelen.</span></p>
+        <span>Vast na het gesprek op het trainingsweekend: dit is met de sollicitant besproken. Aanpassen kan via de persoon (naam aanklikken) → Ontgrendelen.</span></p>
 
       <!-- Stand: week -->
       <div data-lp-stand="week" hidden>

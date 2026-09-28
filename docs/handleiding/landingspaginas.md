@@ -1,13 +1,13 @@
-# Wervingspagina's — handleiding
+# Landingspagina's — handleiding
 
 Versie 2.101 · september 2026
 
-Een wervingspagina (ook wel landingspagina) is een eigen pagina voor één doelgroep, met het
+Een landingspagina is een eigen pagina voor één doelgroep, met het
 aanmeldformulier erin. Je maakt het ontwerp waar je wilt (bijvoorbeeld in Claude Design) en
 uploadt het hier als HTML-bestand.
 
-Te vinden onder **Beheer › Wervingspagina's** (menugroep Communicatie). Je hebt het recht
-Wervingspagina's (`paginas`) nodig; dat hebben standaard het bestuur en de admin.
+Te vinden onder **Beheer › Landingspagina's** (menugroep Communicatie). Je hebt het recht
+Landingspagina's (`paginas`) nodig; dat hebben standaard het bestuur en de admin.
 
 ## Inhoud
 
@@ -32,10 +32,10 @@ Wervingspagina's (`paginas`) nodig; dat hebben standaard het bestuur en de admin
 > status op Gepubliceerd. Dan staat de pagina op `https://sollicitatie.paal13.com/p/<adres>`.
 > Datums en loon komen via markeringen uit het seizoen, dus de pagina veroudert niet.
 
-**Je eerste wervingspagina in 6 stappen:**
+**Je eerste landingspagina in 6 stappen:**
 
-1. **Pagina aanmaken.** Ga naar Beheer › Wervingspagina's en klik op **Nieuwe pagina**. Vul een
-   titel in (bijvoorbeeld "Word lifeguard — zomer 2027") en een adres (bijvoorbeeld `zomer-2027`;
+1. **Pagina aanmaken.** Ga naar Beheer › Landingspagina's en klik op **Nieuwe pagina**. Vul een
+   titel in (bijvoorbeeld "Word strandwacht — zomer 2027") en een adres (bijvoorbeeld `zomer-2027`;
    kleine letters, cijfers en koppeltekens). Klik op **Aanmaken**. Kies het adres meteen goed:
    links en QR-codes hangen eraan.
 2. **Ontwerp maken.** Maak één `.html`-bestand en zet `[[formulier]]` op de plek waar het
@@ -277,7 +277,7 @@ Standaard staat een pagina op "niet vindbaar via Google". Wil je dat wel, vink d
   Meld de sitemap één keer aan in Google Search Console.
 
 **Startpagina van het domein.** Vink bij "Gegevens" **Startpagina van sollicitatie.paal13.com** aan
-bij de belangrijkste wervingspagina. Wie dan naar `https://sollicitatie.paal13.com/` gaat en niet is
+bij de belangrijkste landingspagina. Wie dan naar `https://sollicitatie.paal13.com/` gaat en niet is
 ingelogd, komt op die pagina uit; ingelogde sollicitanten en beheerders gaan naar hun eigen
 omgeving. Dat is goed voor Google (de voorpagina is het sterkste adres) en voor bezoekers die het
 adres intypen. Zet op die pagina wel een link "Al gesolliciteerd? Log in" naar `/portaal/`. Er is
@@ -352,7 +352,7 @@ wordt het adres van de pagina gebruikt. De code reist mee tot in het dossier van
 dus je ziet later precies welke pagina welke aanmeldingen heeft opgeleverd, en hoeveel daarvan
 uiteindelijk zijn aangenomen.
 
-Dat overzicht staat onderaan het overzicht van wervingspagina's, onder **Waar komen aanmeldingen
+Dat overzicht staat onderaan het overzicht van landingspagina's, onder **Waar komen aanmeldingen
 vandaan?**: per bron het aantal aanmeldingen, het aantal aangenomen en het aandeel. Kwamen er
 aanmeldingen binnen via een campagnelink, dan staan de campagnes eronder, elk met hun eigen
 aantallen, plus een regel "zonder campagne" voor de rest.
@@ -398,7 +398,7 @@ Om unieke bezoekers te kunnen tellen wordt een versleutelde code bewaard die elk
 verandert en niet naar een persoon te herleiden is. Die code wordt na 30 dagen gewist; de
 aantallen blijven. De cijfers zelf verdwijnen na 13 maanden. Beide termijnen staan bij
 **Instellingen › Bewaren & opschonen** ("Herkenning unieke bezoekers" en "Bezoekersstatistiek
-wervingspagina's"). Het wissen gebeurt alleen als daar "Automatisch opschonen inschakelen" aan
+landingspagina's"). Het wissen gebeurt alleen als daar "Automatisch opschonen inschakelen" aan
 staat.
 
 Dezelfde bezoeker telt hooguit **eens per 30 minuten** als bezoek op dezelfde pagina.
@@ -411,7 +411,7 @@ stap 2 bereikt, stap 3 bereikt, verstuurd. Daarvan staat alleen het stapnummer g
 nooit iets wat iemand heeft ingetypt.
 
 Wil je helemaal niets meten, zet dan onder **Instellingen › Bewaren & opschonen** het vinkje
-**Bezoekersstatistiek op de wervingspagina's en het aanmeldformulier** uit (standaard staat het
+**Bezoekersstatistiek op de landingspagina's en het aanmeldformulier** uit (standaard staat het
 aan). Dan schrijft het systeem geen enkele gebeurtenis meer weg en verdwijnt ook het meetadres uit
 de pagina. Wat al geteld is, blijft staan volgens de termijnen hierboven.
 

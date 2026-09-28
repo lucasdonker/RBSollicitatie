@@ -28,7 +28,7 @@ try {
         case 'verwijder_blk':
             if (function_exists('foto_van_sollicitatie_verwijderen')) foto_van_sollicitatie_verwijderen($sol_id);
             db()->prepare("DELETE FROM blk_formulieren WHERE sollicitatie_id = ?")->execute([$sol_id]);
-            echo json_encode(['ok' => true, 'msg' => 'BLK formulier verwijderd.']);
+            echo json_encode(['ok' => true, 'msg' => 'Kennismakingsformulier verwijderd.']);
             break;
 
         case 'verwijder_sollicitatie':   // alleen deze sollicitatie; de persoon blijft

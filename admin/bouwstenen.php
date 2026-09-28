@@ -138,7 +138,7 @@ require __DIR__ . '/_tabel.php';
 $tabel = bh_kolommen('proef_leeg', ['naam' => ['kop' => 'Naam'], 'status' => ['kop' => 'Status']]);
 $tabel_rijen = [];
 $tabel_rij   = __DIR__ . '/_rij_sollicitant.php';
-$tabel_leeg  = ['titel' => 'Geen kandidaten in deze fase',
+$tabel_leeg  = ['titel' => 'Geen sollicitanten in deze fase',
                 'tekst' => 'Zodra er iemand doorschuift, staat hij hier.'];
 require __DIR__ . '/_tabel.php';
 ?>
@@ -147,7 +147,7 @@ require __DIR__ . '/_tabel.php';
 <div class="ds-kaart ds-kaart-p">
   <?php
     $leeg_titel = 'Bellijst is leeg';
-    $leeg_tekst = 'Alle 12 kandidaten hebben een besluit. De berichten zijn verstuurd om 20:14.';
+    $leeg_tekst = 'Alle 12 sollicitanten hebben een besluit. De berichten zijn verstuurd om 20:14.';
     $leeg_toon  = 'groen';
     $leeg_icoon = 'vink';
     require __DIR__ . '/_leeg.php';
@@ -156,7 +156,7 @@ require __DIR__ . '/_tabel.php';
 <div class="ds-kaart bh-bs-leegkaart">
   <?php
     $leeg_titel = 'Nog geen aanmeldingen';
-    $leeg_tekst = 'Zodra iemand zich via een wervingspagina aanmeldt, verschijnt hij hier.';
+    $leeg_tekst = 'Zodra iemand zich via een landingspagina aanmeldt, verschijnt hij hier.';
     require __DIR__ . '/_leeg.php';
   ?>
 </div>

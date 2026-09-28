@@ -274,7 +274,7 @@ function pag_vacature_schema(array $pagina, ?array $seizoen, ?array $versie = nu
     if ($g['trainingsweekend_datum'] !== '') $punten[] = 'Trainingsweekend: ' . $g['trainingsweekend_datum'];
     if ($g['aanmelden_tot'] !== '')          $punten[] = 'Aanmelden kan tot en met ' . $g['aanmelden_tot'];
     $punten[] = 'Geen ervaring nodig';
-    $beschrijving = '<p>Word lifeguard bij Reddingsbrigade Paal 13 op het strand van Callantsoog.</p><ul>';
+    $beschrijving = '<p>Word strandwacht bij Reddingsbrigade Paal 13 op het strand van Callantsoog.</p><ul>';
     foreach ($punten as $p) $beschrijving .= '<li>' . h($p) . '</li>';
     $beschrijving .= '</ul>';
     if ($loon['rijen'] && $loon['min'] !== null) {

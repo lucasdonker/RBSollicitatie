@@ -47,7 +47,7 @@ function bh_inst_tabs_alle(): array {
     return [
       'Organisatie' => [
         ['algemeen',    'Algemeen',                  'instellingen', 'brigade naam logo contact adres portaal url tijdzone leeftijd minimumleeftijd'],
-        ['modules',     'Modules',                   'systeem',      'module aan uit selectiedag trainingsweekend loonplanning dekking wervingspagina onderdeel'],
+        ['modules',     'Modules',                   'systeem',      'module aan uit selectiedag trainingsweekend loonplanning dekking landingspagina wervingspagina onderdeel'],
       ],
       'Selectie & seizoen' => [
         ['uitnodiging', 'Uitnodigen & automatisch',  'bliksem',      'automatisch uitnodigen herinnering deadline drempel'],

@@ -110,7 +110,7 @@ if (!$rapport_versie) {
 require __DIR__ . '/layout_top.php';
 ?>
 <div class="pg-wrap">
-  <a class="pg-terug" href="<?= APP_URL ?>/admin/paginas.php"><?= icoon('terug', 16) ?> Alle wervingspagina's</a>
+  <a class="pg-terug" href="<?= APP_URL ?>/admin/paginas.php"><?= icoon('terug', 16) ?> Alle landingspagina's</a>
 
   <div class="pg-titelrij">
     <div>

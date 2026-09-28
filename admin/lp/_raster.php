@@ -63,7 +63,7 @@ require __DIR__ . '/../_filterbalk.php';
               <span class="bh-lp-naamsub"><?= h(implode(' · ', array_filter([$_functie_naam[$_m['functie']] ?? $_m['functie'],
                   $_m['leeftijd'] ? $_m['leeftijd'] . ' jr' : '', $_m['fase'] === 'aangenomen' ? 'aangenomen' : '']))) ?></span>
             </button>
-            <?php if ($_m['vast']): ?><span class="bh-lp-slot" title="Vast na het TW-gesprek"><?= icoon('slot', 14) ?><span class="bh-vw">vast na het gesprek</span></span><?php endif; ?>
+            <?php if ($_m['vast']): ?><span class="bh-lp-slot" title="Vast na het gesprek op het trainingsweekend"><?= icoon('slot', 14) ?><span class="bh-vw">vast na het gesprek</span></span><?php endif; ?>
             <?php if (!empty($_m['signalen'])): ?>
               <span title="<?= h(implode("\n", $_m['signalen'])) ?>"><?= bh_chip('let op', 'oranje') ?><span class="bh-vw">: <?= h(implode(' ', $_m['signalen'])) ?></span></span>
             <?php endif; ?>

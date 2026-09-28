@@ -23,7 +23,7 @@ if (!$sol) { unset($_SESSION['portaal_sol_id']); redirect(APP_URL . '/portaal/')
 
 // Het formulier hoort bij de selectiedag-fase; daarbuiten terug naar de startpagina.
 if (!in_array($sol['fase'] ?? '', blk_fases_zichtbaar(), true)) {
-    flash('info', 'Het Beter Leren Kennen-formulier is op dit moment niet in te vullen.');
+    flash('info', 'Het kennismakingsformulier is op dit moment niet in te vullen.');
     redirect(APP_URL . '/portaal/');
 }
 
@@ -151,7 +151,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['blk_submit'])) {
                 try { $fase_res = fase_zetten($sol_id, 'aangemeld_selectie', 'blk', ['alleen_van' => ['uitgenodigd_selectie'], 'prioriteit' => 'na_antwoord']); } catch (\Throwable $e) {}
             }
             if (!empty($fase_res['ongewijzigd']) && function_exists('melding_verstuur')) {
-                try { melding_verstuur('taak_afgerond', $sol_id, ['taak_naam' => 'Beter leren kennen-formulier'], ['prioriteit' => 'na_antwoord']); } catch (\Throwable $e) {}
+                try { melding_verstuur('taak_afgerond', $sol_id, ['taak_naam' => 'Kennismakingsformulier'], ['prioriteit' => 'na_antwoord']); } catch (\Throwable $e) {}
             }
         }
         // Definitief ingediend markeren (de betrouwbare "taak afgerond"-indicator, los van de fase)
@@ -176,8 +176,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['blk_submit'])) {
             $hierna = ' ' . portaal_hierna($_sol_na, $_open_na);
         }
         flash('succes', ($is_edit
-            ? 'Je wijzigingen aan het Beter Leren Kennen-formulier zijn opgeslagen.'
-            : 'Je Beter Leren Kennen-formulier is ingeleverd. Bedankt!') . $hierna);
+            ? 'Je wijzigingen aan het kennismakingsformulier zijn opgeslagen.'
+            : 'Je kennismakingsformulier is ingeleverd. Bedankt!') . $hierna);
         redirect(portaal_terug_url());
     }
 }
@@ -219,7 +219,7 @@ $fout_attr = fn(string $n): string => ' aria-describedby="blk-' . $n . '-fout"' 
 $fout_plek = fn(string $n): string => '<span class="pt-inline-fout blk-veldfout" id="blk-' . $n . '-fout"'
     . ($fout_veld === $n ? '>' . h($fout) : ' hidden>') . '</span>';
 
-$portaal_titel = 'Beter Leren Kennen';
+$portaal_titel = 'Kennismakingsformulier';
 $portaal_terug = portaal_terug_url();
 require __DIR__ . '/_kop.php';
 ?>
@@ -234,7 +234,7 @@ require __DIR__ . '/_kop.php';
   <header class="blk-kop">
     <div class="blk-kop-rij">
       <div class="blk-kop-titel">
-        <span class="blk-kop-naam">Beter Leren Kennen</span>
+        <span class="blk-kop-naam">Kennismakingsformulier</span>
         <span class="blk-kop-stap"><span id="blkStapNr">Stap 1 van 4</span><span class="blk-kop-stapnaam" id="blkStapNaam"></span></span>
       </div>
     </div>
@@ -326,7 +326,7 @@ require __DIR__ . '/_kop.php';
       <section class="blk-stap" id="fs3">
         <div class="blk-sectie"><span class="blk-sectie-titel">Motivatie</span><div class="blk-sectie-streep"></div></div>
         <div class="blk-kaart">
-          <label class="blk-veld"><span class="blk-lbl">Waarom wil je lifeguard worden? <span class="ster">*</span></span>
+          <label class="blk-veld"><span class="blk-lbl">Waarom wil je strandwacht worden? <span class="ster">*</span></span>
             <span class="blk-hint">Een paar zinnen is genoeg — we zijn vooral nieuwsgierig naar jouw reden.</span>
             <textarea class="blk-textarea" name="motivatie_lifeguard" rows="5" maxlength="1000" placeholder="Vertel ons wat je motiveert..." data-verplicht="3" data-teller="motTeller"<?= $fout_attr('motivatie_lifeguard') ?>><?= $v('motivatie_lifeguard') ?></textarea></label>
           <?= $fout_plek('motivatie_lifeguard') ?>

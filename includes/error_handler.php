@@ -28,8 +28,8 @@ const FOUTCODES = [
     'P13-A001' => 'Aanmelding opslaan mislukt',
     'P13-A002' => 'Dubbele aanmelding',
     // BLK
-    'P13-B001' => 'BLK opslaan mislukt',
-    'P13-B002' => 'BLK foto upload mislukt',
+    'P13-B001' => 'Kennismakingsformulier opslaan mislukt',
+    'P13-B002' => 'Foto-upload kennismakingsformulier mislukt',
     // Loon
     'P13-L001' => 'Loonberekening mislukt',
     'P13-L002' => 'Loontarief niet gevonden',

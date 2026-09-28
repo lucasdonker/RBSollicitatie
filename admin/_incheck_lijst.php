@@ -49,7 +49,7 @@ $_open_f = function_exists('evenement_open_formulieren_seizoen') ? evenement_ope
     <div class="bh-incheck-leeg">
       <?php
         $leeg_titel = 'Nog niemand uitgenodigd';
-        $leeg_tekst = 'Zodra er kandidaten zijn uitgenodigd, staan ze hier.';
+        $leeg_tekst = 'Zodra er sollicitanten zijn uitgenodigd, staan ze hier.';
         $leeg_icoon = 'mensen';
         require __DIR__ . '/_leeg.php';
       ?>

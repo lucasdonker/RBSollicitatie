@@ -12,7 +12,7 @@ is ook voor je ouder of verzorger als je nog geen 18 bent.
 2. [Inloggen](#inloggen)
 3. [De drie tabbladen](#de-drie-tabbladen)
 4. [Wat je stap voor stap doet](#wat-je-stap-voor-stap-doet)
-5. [Beter Leren Kennen](#beter-leren-kennen)
+5. [Kennismakingsformulier](#kennismakingsformulier)
 6. [Beschikbaarheid doorgeven](#beschikbaarheid-doorgeven)
 7. [Ondertekenen](#ondertekenen)
 8. [Als je nog geen 18 bent](#als-je-nog-geen-18-bent)
@@ -30,7 +30,7 @@ is ook voor je ouder of verzorger als je nog geen 18 bent.
 > zijn. Ben je nog geen 16, dan geeft je ouder of verzorger toestemming.
 
 Het formulier staat op `https://sollicitatie.paal13.com/aanmelden.php`, op paal13.com en op
-wervingspagina's van Paal 13. Het is overal hetzelfde formulier.
+landingspagina's van Paal 13. Het is overal hetzelfde formulier.
 
 1. **Naam:** je voornaam, tussenvoegsel (als je dat hebt) en achternaam.
 2. **Jij:** je geboortedatum. Je geslacht mag je invullen, maar het hoeft niet. We gebruiken het
@@ -92,7 +92,7 @@ vijf pogingen om de code goed in te vullen; daarna vraag je een nieuwe aan.
   een knop naar de eerste taak.
 - **Taken:** al je taken bij elkaar: "Nu te doen", "Wacht op je ouder/verzorger" en "Afgerond".
   Het getal bij Taken zegt hoeveel er nog open staan. Bij een afgeronde taak kun je vaak nog op
-  **Bekijken** of **Wijzigen** klikken. Na de selectiedag staat bij Beter Leren Kennen alleen nog
+  **Bekijken** of **Wijzigen** klikken. Na de selectiedag staat bij het kennismakingsformulier alleen nog
   "Ingeleverd" met de datum.
 - **Gegevens:** wat we van je weten, hoe je berichten wilt krijgen, je gegevens downloaden of
   laten verwijderen, en uitloggen.
@@ -110,7 +110,7 @@ privacyverklaring.
 | Stap | Wat er gebeurt | Wat jij doet |
 |---|---|---|
 | 1 Aangemeld | We hebben je aanmelding | Wachten op de uitnodiging |
-| 2 Selectiedag | Je bent uitgenodigd en krijgt de datum | Beter Leren Kennen invullen, beschikbaarheid doorgeven, de gezondheidsverklaring en het intakeformulier ondertekenen (of laten ondertekenen door je ouder) |
+| 2 Selectiedag | Je bent uitgenodigd en krijgt de datum | Kennismakingsformulier invullen, beschikbaarheid doorgeven, de gezondheidsverklaring en het intakeformulier ondertekenen (of laten ondertekenen door je ouder) |
 | 3 Na de selectie | Het bestuur bespreekt de selectiedag | Wachten; je hoort binnen twee weken of je door mag |
 | 4 Trainingsweekend | Je bent uitgenodigd voor het weekend | Laten weten of je komt, meedoen, en aan het eind een gesprek met het bestuur |
 | 5 Aangenomen | Welkom bij de brigade | Het takenpakket afronden (zie verderop) |
@@ -133,7 +133,7 @@ dan staan je formulieren meteen in het portaal.
 Als je een taak hebt afgerond, zegt het portaal wat er daarna gebeurt. Bijvoorbeeld: "Er staat
 hierna nog één ding open", of "Dat was het voor nu. We zien je op zaterdag 11 april."
 
-## Beter Leren Kennen
+## Kennismakingsformulier
 
 > **In het kort:** een formulier van vier korte stappen waarmee we je leren kennen. Het wordt
 > vanzelf bewaard. Invullen kan zolang je bent uitgenodigd voor de selectiedag.
@@ -318,8 +318,8 @@ Op de pagina **Gegevens**:
 - **Wat we van je weten:** je naam, e-mailadres, telefoonnummer, geboortedatum, wanneer je je
   aanmeldde en waar je sollicitatie nu staat. Klopt je naam, e-mailadres of telefoonnummer niet?
   Klik op **Stel een vraag via Berichten** en schrijf wat er anders moet. Het bestuur past het dan
-  aan. Je telefoonnummer en adres kun je ook zelf aanpassen in Beter Leren Kennen, zolang dat
-  formulier open is.
+  aan. Je telefoonnummer en adres kun je ook zelf aanpassen in het kennismakingsformulier, zolang
+  dat formulier open is.
 - **Al mijn gegevens downloaden:** klik op **Download als JSON**. Je krijgt een bestand met alles
   wat we over je hebben vastgelegd (recht op inzage). Daarin staan je gegevens, je formulieren, je
   beschikbaarheid, de cijfers en besluiten van de selectiedag en het trainingsweekend, de
@@ -348,7 +348,7 @@ Op de pagina **Gegevens**:
   ze allemaal**. Op elk apparaat moet je dan opnieuw inloggen.
 
 **Advies van de computer (AI).** Als het bestuur dat gebruikt, geeft een computerprogramma van
-Google een advies over je formulier Beter Leren Kennen. Het programma krijgt je leeftijdsgroep en
+Google een advies over je kennismakingsformulier. Het programma krijgt je leeftijdsgroep en
 je antwoorden over opleiding, diploma's, werkervaring, motivatie en beschikbaarheid. Het krijgt
 niet je naam, adres, e-mailadres, telefoonnummer of foto, en ook niet wat je invult bij
 bijzonderheden. Het advies is een hulpmiddel: een mens beslist altijd. Wil je dit niet? Stel een
@@ -392,7 +392,7 @@ Laat je ouder de link kopiëren en in de browser plakken. Werkt hij niet meer, k
 taak op "Link opnieuw sturen". Klopt het e-mailadres niet, klik dan op "Wijzigen" bij "Gegevens
 ouder/verzorger".
 
-**Ik heb een fout gemaakt in Beter Leren Kennen.**  
+**Ik heb een fout gemaakt in het kennismakingsformulier.**  
 Zolang je uitgenodigd bent voor de selectiedag: open het formulier opnieuw, pas het aan en
 schrijf kort op wat je hebt veranderd. Daarna kan het niet meer zelf; stel een vraag via Berichten.
 
@@ -401,12 +401,12 @@ Ja. Open Mijn beschikbaarheid en klik op "Aanpassen".
 
 **Ik heb een nieuw telefoonnummer of e-mailadres, of mijn naam klopt niet.**  
 Stel een vraag via Berichten (het belletje), dan past het bestuur het aan. Na een nieuw
-e-mailadres log je voortaan met dat adres in. Je telefoonnummer kun je ook zelf aanpassen in Beter
-Leren Kennen, zolang dat formulier open is.
+e-mailadres log je voortaan met dat adres in. Je telefoonnummer kun je ook zelf aanpassen in het
+kennismakingsformulier, zolang dat formulier open is.
 
 **Mijn foto wordt geweigerd.**  
-Voor het takenpakket: gebruik jpg, png of pdf, maximaal 10 MB. Voor de foto in Beter Leren
-Kennen: maximaal 5 MB. Foto's van een iPhone (HEIC) kun je als jpg laten opslaan: zet in de
+Voor het takenpakket: gebruik jpg, png of pdf, maximaal 10 MB. Voor de foto in het
+kennismakingsformulier: maximaal 5 MB. Foto's van een iPhone (HEIC) kun je als jpg laten opslaan: zet in de
 instellingen van de camera "Meest compatibel" aan.
 
 **Wie ziet mijn bijzonderheden (bijvoorbeeld medische informatie)?**  

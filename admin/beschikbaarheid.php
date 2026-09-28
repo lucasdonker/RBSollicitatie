@@ -151,7 +151,7 @@ require __DIR__ . '/layout_top.php';
       $leeg_icoon = 'zoek';
   } else {
       $leeg_titel = 'Nog niemand met een ingevuld formulier';
-      $leeg_tekst = 'Zodra een sollicitant het "Beter leren kennen"-formulier invult, verschijnt de beschikbaarheid hier.';
+      $leeg_tekst = 'Zodra een sollicitant het kennismakingsformulier invult, verschijnt de beschikbaarheid hier.';
       $leeg_icoon = 'kalender';
   }
   require __DIR__ . '/_leeg.php';

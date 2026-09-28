@@ -179,7 +179,7 @@ require __DIR__ . '/layout_top.php';
       <ul class="bh-imp-uitleg">
         <li>Personen worden aangemaakt of bijgewerkt op e-mailadres</li>
         <li>Beschikbaarheid (week 23–35) wordt geïmporteerd</li>
-        <li>Motivatie, ervaring en diploma's worden geïmporteerd als BLK-formulier</li>
+        <li>Motivatie, ervaring en diploma's worden geïmporteerd als kennismakingsformulier</li>
         <li>CSV formaat: zoals geëxporteerd uit het huidige Google Sheets systeem</li>
       </ul>
     </div>

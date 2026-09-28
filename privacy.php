@@ -25,7 +25,7 @@ $contact = instelling('mail.bestuur_email', 'bestuur@paal13.com');
 <header class="af-hero">
   <img src="<?= APP_URL ?>/assets/img/logo.png" alt="Reddingsbrigade Paal 13" width="120" height="46">
   <h1>Privacyverklaring</h1>
-  <p>Voor iedereen die solliciteert als lifeguard</p>
+  <p>Voor iedereen die solliciteert als strandwacht</p>
 </header>
 
 <main>

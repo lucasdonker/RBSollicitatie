@@ -179,7 +179,7 @@ function evenement_beoordeel_secties(array $lijst, array $voorop = [], string $v
     $uit = [];
     if ($s['voorop'])    $uit[] = ['sleutel' => 'voorop', 'titel' => $voorop_titel, 'uitleg' => $voorop_uitleg, 'rijen' => $s['voorop']];
     if ($s['nieuw'])     $uit[] = ['sleutel' => 'nieuw', 'titel' => $s['voorop'] ? 'Overige sollicitanten' : null, 'uitleg' => '', 'rijen' => $s['nieuw']];
-    if ($s['lifeguard']) $uit[] = ['sleutel' => 'lifeguard', 'titel' => 'Terugkerende lifeguards', 'uitleg' => 'Al lifeguard bij de brigade; ze doen mee voor de groepen.', 'rijen' => $s['lifeguard']];
+    if ($s['lifeguard']) $uit[] = ['sleutel' => 'lifeguard', 'titel' => 'Terugkerende strandwachten', 'uitleg' => 'Al strandwacht bij de brigade; ze doen mee voor de groepen.', 'rijen' => $s['lifeguard']];
     return $uit;
 }
 

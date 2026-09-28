@@ -72,7 +72,7 @@ $moment = function (array $r) use ($gebeurtenissen): string {
   <?php foreach ($proef as $pr): ?>
     <p>
       <strong><?= h($pr['naam']) ?></strong><br>
-      <?= bh_meta([(int)$pr['kandidaten'] . ' ' . ((int)$pr['kandidaten'] === 1 ? 'kandidaat' : 'kandidaten'),
+      <?= bh_meta([(int)$pr['kandidaten'] . ' ' . ((int)$pr['kandidaten'] === 1 ? 'sollicitant' : 'sollicitanten'),
                    (int)$pr['verstuurd'] . ' zou versturen',
                    (int)$pr['overgeslagen'] . ' overgeslagen',
                    (string)($pr['fout'] ?? '')]) ?>

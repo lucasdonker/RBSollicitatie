@@ -74,7 +74,7 @@ $_aanw  = 'tw_aanwezigheid_tekst';
         <span class="bh-beoordeel-naam"><?= h((string)$huidig['naam']) ?></span>
         <?php /* Geen telefoonnummer: een beoordelaar belt niet (dataminimalisatie). */ ?>
         <?= bh_meta([$huidig['leeftijd'] ? $huidig['leeftijd'] . ' jaar' : '', $bo_gnaam[(int)($huidig['groep_id'] ?? 0)] ?? '',
-                     $_aanw($huidig), !empty($huidig['is_lifeguard']) ? 'terugkerende lifeguard' : '']) ?>
+                     $_aanw($huidig), !empty($huidig['is_lifeguard']) ? 'terugkerende strandwacht' : '']) ?>
       </span>
       <?php if ($mag_dossier): ?>
         <a class="ds-btn ds-btn-secundair ds-btn-sm" href="<?= APP_URL ?>/admin/sollicitant.php?id=<?= $hid ?>">Dossier</a>

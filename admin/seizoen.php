@@ -287,7 +287,7 @@ require __DIR__ . '/layout_top.php';
           <label class="ds-label" for="sz_aanmelden_tot">Aanmelden kan tot</label>
           <input class="ds-input" type="date" id="sz_aanmelden_tot" name="aanmelden_tot" value="<?= h((string)($huidig['aanmelden_tot'] ?? '')) ?>" aria-describedby="sz_aanmelden_tot_hint">
           <p class="ds-veld-hint" id="sz_aanmelden_tot_hint">
-            De sollicitatiedeadline, tot en met deze dag. Staat op de wervingspagina's
+            De sollicitatiedeadline, tot en met deze dag. Staat op de landingspagina's
             (<code>[[aanmelden_tot]]</code>) en in de vacature voor Google, die daarna vanzelf verloopt.
             Het formulier sluit hier niet vanzelf door: dat doe je met "Aanmelding sluiten".
           </p>
@@ -345,7 +345,7 @@ require __DIR__ . '/layout_top.php';
           <div class="ds-veld">
             <label class="ds-label" for="sz_sd_verzamel">Verzameltijd</label>
             <input class="ds-input" type="time" id="sz_sd_verzamel" name="selectiedag_verzameltijd" value="<?= h((string)($huidig['selectiedag_verzameltijd'] ?? '')) ?>">
-            <p class="ds-veld-hint">Hoe laat kandidaten er moeten zijn.</p>
+            <p class="ds-veld-hint">Hoe laat sollicitanten er moeten zijn.</p>
           </div>
           <div class="ds-veld">
             <label class="ds-label" for="sz_sd_start">Start programma</label>

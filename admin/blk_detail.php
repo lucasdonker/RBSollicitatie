@@ -164,7 +164,7 @@ require __DIR__ . '/layout_top.php';
 <div class="ds-kaart">
   <div class="bh-kaartkop"><h2>Motivatie</h2></div>
   <div class="bh-kaartbody">
-    <?php foreach (['Motivatie lifeguard'=>'motivatie_lifeguard','Strand motivatie'=>'motivatie_strand'] as $l=>$k): ?>
+    <?php foreach (['Motivatie strandwacht'=>'motivatie_lifeguard','Strand motivatie'=>'motivatie_strand'] as $l=>$k): ?>
     <div class="bh-blkveld">
       <div class="bh-veldlabel"><?= $l ?></div>
       <?php if ($blk[$k]): ?><div class="bh-blkwaarde"><?= h($blk[$k]) ?></div>

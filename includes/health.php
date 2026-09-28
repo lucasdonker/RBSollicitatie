@@ -354,7 +354,7 @@ function health_check_configuratie(): array {
     }
     // Huisregels horen bij het takenpakket voor aangenomen lifeguards; staat dat uit, dan maakt het niet uit.
     if ($inst('auto.kennismakingspakket', '1') === '1' && (function_exists('instelling_int') ? instelling_int('taken.huisregels_bijlage_id', 0) : 0) <= 0) {
-        $punten[] = health_punt('huisregels', 'waarschuwing', 'Er is geen huisregels-PDF gekozen: aangenomen lifeguards zien bij die taak "volgt binnenkort".', 'algemeen', 'Huisregels kiezen');
+        $punten[] = health_punt('huisregels', 'waarschuwing', 'Er is geen huisregels-PDF gekozen: aangenomen strandwachten zien bij die taak "volgt binnenkort".', 'algemeen', 'Huisregels kiezen');
     }
     // Informatief: geen fout, wel handig om te weten bij de eerste keer instellen.
     $sz = function_exists('actief_seizoen') ? actief_seizoen() : null;

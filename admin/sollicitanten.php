@@ -26,7 +26,7 @@ $sid     = $seizoen ? (int)$seizoen['id'] : 0;
 $aannemen_van = module_aan('trainingsweekend') ? ['tw_geweest'] : ['uitgenodigd_tw', 'tw_geweest'];
 $bulk = [
     'uitnodigen_selectie' => ['uitgenodigd_selectie', ['aangemeld'],           'uitnodiging(en)'],
-    'uitnodigen_tw'       => ['uitgenodigd_tw',       ['selectiedag_geweest'], 'TW-uitnodiging(en)'],
+    'uitnodigen_tw'       => ['uitgenodigd_tw',       ['selectiedag_geweest'], 'uitnodiging(en) voor het trainingsweekend'],
     'aannemen'            => ['aangenomen',           $aannemen_van,           'welkomstbericht(en)'],
     'aangenomen'          => ['aangenomen',           $aannemen_van,           'welkomstbericht(en)'],
     'afgewezen'           => ['afgewezen',            null,                    'bericht(en)'],
@@ -265,8 +265,8 @@ endif; ?>
   $filter_velden = [
       ['soort' => 'zoek', 'naam' => 'q', 'label' => 'Zoek naam of e-mail', 'waarde' => $zoek, 'breed' => true],
       ['soort' => 'keuze', 'naam' => 'terug', 'label' => 'Terugkerend', 'waarde' => $filter_terug,
-       'opties' => ['' => 'Alle kandidaten', '1' => 'Alle terugkerenden', 'lg' => 'Terugkerende lifeguards',
-                    'sol' => 'Eerder gesolliciteerd (geen lifeguard)']],
+       'opties' => ['' => 'Alle sollicitanten', '1' => 'Alle terugkerenden', 'lg' => 'Terugkerende strandwachten',
+                    'sol' => 'Eerder gesolliciteerd (geen strandwacht)']],
       ['soort' => 'keuze', 'naam' => 'toon', 'label' => 'Toon', 'waarde' => $filter_toon,
        'opties' => ['' => 'Iedereen', 'lopend' => 'In de procedure', '30d' => 'Aangemeld in de laatste 30 dagen']],
       ['soort' => 'keuze', 'naam' => 'blk', 'label' => 'Kennismakingsformulier', 'waarde' => $filter_blk,
@@ -300,8 +300,8 @@ endif; ?>
       $_blk_export = mag('blk', 'lezen');
       $filter_acties[] = ['label' => $_blk_export ? 'Exporteren' : 'Exporteren (basis)', 'icoon' => 'export',
                           'toon' => 'secundair',
-                          'titel' => $_blk_export ? 'Alle kandidaten van dit seizoen, met formulier en adres'
-                                                  : 'Alle kandidaten van dit seizoen, zonder adres en formuliervelden',
+                          'titel' => $_blk_export ? 'Alle sollicitanten van dit seizoen, met formulier en adres'
+                                                  : 'Alle sollicitanten van dit seizoen, zonder adres en formuliervelden',
                           'url' => APP_URL . '/admin/export_blk.php?formaat=excel&seizoen=' . $sid];
   }
   $filter_wissen = $heeft_filter ? APP_URL . '/admin/sollicitanten.php' : null;
@@ -322,8 +322,8 @@ endif; ?>
   $tabel_rij_cls  = fn(array $r) => ($r['fase'] === 'afgewezen' ? 'bh-rij-gedempt' : '');
   $tabel_rij_data = fn(array $r) => ['fase' => $r['fase']];   // de bulkbalk leest dit
   $tabel_leeg     = $heeft_filter
-      ? ['titel' => 'Niemand gevonden', 'tekst' => 'Geen kandidaat voldoet aan deze filters. Wis ze om iedereen te zien.']
-      : ['titel' => 'Nog geen aanmeldingen', 'tekst' => 'Zodra iemand zich via een wervingspagina aanmeldt, verschijnt de aanmelding hier.'];
+      ? ['titel' => 'Niemand gevonden', 'tekst' => 'Geen sollicitant voldoet aan deze filters. Wis ze om iedereen te zien.']
+      : ['titel' => 'Nog geen aanmeldingen', 'tekst' => 'Zodra iemand zich via een landingspagina aanmeldt, verschijnt de aanmelding hier.'];
   require __DIR__ . '/_tabel.php';
 ?>
 

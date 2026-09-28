@@ -9,7 +9,7 @@ return [
         'selectiedag' => ['label' => 'Selectiedag', 'groep' => 'Selectie', 'acties' => ['lezen', 'bewerken']],
     ],
     'nav'          => [
-        ['groep' => 'Kandidaten', 'positie' => 20, 'id' => 'selectiedag', 'label' => 'Selectiedag',
+        ['groep' => 'Selectie', 'positie' => 20, 'id' => 'selectiedag', 'label' => 'Selectiedag',
          // ?start=1: begint op de stap die op dat moment aan de beurt is (admin/selectie_indeling.php).
          'url' => 'selectie_indeling.php?start=1', 'icoon' => 'kalender', 'module' => 'selectiedag'],
     ],

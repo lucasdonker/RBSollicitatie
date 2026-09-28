@@ -14,7 +14,7 @@ zodat het bestuur en een opvolger altijd de actuele versie hebben.
 2. [Overzicht](#overzicht)
 3. [Hosting en vaste verwerkers](#hosting-en-vaste-verwerkers)
 4. [Aanmelding en sollicitatie](#aanmelding-en-sollicitatie)
-5. [Kennismakingsformulier (BLK) en foto](#kennismakingsformulier-blk-en-foto)
+5. [Kennismakingsformulier en foto](#kennismakingsformulier-en-foto)
 6. [Selectiedag en trainingsweekend](#selectiedag-en-trainingsweekend)
 7. [Gezondheidsverklaring en intake](#gezondheidsverklaring-en-intake)
 8. [Ondertekening en bewijslog](#ondertekening-en-bewijslog)
@@ -23,7 +23,7 @@ zodat het bestuur en een opvolger altijd de actuele versie hebben.
 11. [Lidmaatschap](#lidmaatschap)
 12. [Berichten](#berichten)
 13. [AI-analyse](#ai-analyse)
-14. [Wervingspagina's en bezoekersstatistiek](#wervingspaginas-en-bezoekersstatistiek)
+14. [Landingspagina's en bezoekersstatistiek](#landingspaginas-en-bezoekersstatistiek)
 15. [Beheerders en logboek](#beheerders-en-logboek)
 16. [Productiekopie op de testomgeving](#productiekopie-op-de-testomgeving)
 17. [Seintje bij de volgende werving](#seintje-bij-de-volgende-werving)
@@ -87,7 +87,7 @@ verklaring leest dezelfde instellingen voor de termijnen.
 | Lidmaatschap | art. 6 lid 1 sub b | volgt het dossier; ledenadministratie daarbuiten |
 | Berichten | art. 6 lid 1 sub b | overzicht 12 maanden, inhoud 3 maanden |
 | AI-analyse | art. 6 lid 1 sub f; beschikbaarheidshulp sub b | analyse volgt het dossier; invoertekst 3 maanden |
-| Wervingspagina's en statistiek | art. 6 lid 1 sub f | pseudoniem 30 dagen, telling 13 maanden |
+| Landingspagina's en statistiek | art. 6 lid 1 sub f | pseudoniem 30 dagen, telling 13 maanden |
 | Beheerders en logboek | art. 6 lid 1 sub f en art. 32 | logboek 12 maanden, fouten 90 dagen |
 | Productiekopie op de testomgeving | art. 6 lid 1 sub f en art. 32 | echte gegevens alleen de minuten tussen importeren en anonimiseren; exportbestand direct weg |
 | Seintje bij de volgende werving | art. 6 lid 1 sub a; oud-strandwachten sub f | maximaal 12 maanden |
@@ -115,7 +115,7 @@ bedrijf daarbij is aangesloten, of op standaardcontractbepalingen.
 
 ## Aanmelding en sollicitatie
 
-> **In het kort:** iemand meldt zich aan via het formulier (op deze site, een wervingspagina of
+> **In het kort:** iemand meldt zich aan via het formulier (op deze site, een landingspagina of
 > paal13.com) en volgt daarna de sollicitatie in het portaal. We verwerken dat om een
 > arbeidsovereenkomst te kunnen sluiten, niet op basis van toestemming.
 
@@ -131,14 +131,14 @@ bedrijf daarbij is aangesloten, of op standaardcontractbepalingen.
 | Bewaartermijn | Afgewezen of afgehaakt: anonimiseren 4 weken na het besluit (`bewaar.afgewezen_weken`, standaard 4); met een seintje maximaal 12 maanden (zie [Seintje bij de volgende werving](#seintje-bij-de-volgende-werving)). Aanmelding niet afgemaakt (fase aangemeld, geen formulier, geen beschikbaarheid): verwijderen na 3 maanden (`bewaar.onvoltooid_mnd`, standaard 3). Aangenomen: zolang iemand bij ons werkt en daarna 2 jaar na het laatste seizoen (`bewaar.aangenomen_jaar`, standaard 2); dan wordt het dossier leeggemaakt en de persoon geanonimiseerd zodra er geen loondocumenten meer zijn. "Blijf ingelogd": 60 dagen (vast), en weg bij wissen of anonimiseren. Wat er bij anonimiseren verdwijnt, staat op één plek: `avg_sollicitatie_leegmaken()` in `includes/avg_wissen.php` (formulieren, beschikbaarheid, selectiedag, trainingsweekend, notities, AI-gegevens, apparaten, bewijsspoor van ondertekeningen). De sollicitatierij zelf blijft zonder persoonsgegevens staan voor de statistiek, net als de loonplanning (zonder notitie). |
 | Beveiliging | Https, CSRF-bescherming en snelheidsbegrenzing op formulieren en API, inloggen in het portaal met een eenmalige code of inloglink (bevestigingsklik, geen inloggen op een GET), roulerend "blijf ingelogd"-token dat bij hergebruik alle apparaten intrekt, rechten per module voor beheerders, logboek van handelingen. |
 
-## Kennismakingsformulier (BLK) en foto
+## Kennismakingsformulier en foto
 
-> **In het kort:** het formulier "Beter leren kennen" met adres, opleiding, ervaring, motivatie en
+> **In het kort:** het kennismakingsformulier met adres, opleiding, ervaring, motivatie en
 > een foto. De foto staat buiten het webbereik en is alleen te zien met de juiste rechten.
 
 | Onderdeel | Inhoud |
 |---|---|
-| Doel | De sollicitant leren kennen om te beslissen over een uitnodiging voor de selectiedag, en de foto om kandidaten op de selectiedag te herkennen. |
+| Doel | De sollicitant leren kennen om te beslissen over een uitnodiging voor de selectiedag, en de foto om sollicitanten op de selectiedag te herkennen. |
 | Grondslag | Art. 6 lid 1 sub b AVG. |
 | Betrokkenen | Sollicitanten. |
 | Persoonsgegevens | Adres (straat, huisnummer, postcode, woonplaats), opleiding, werkervaring, diploma's en certificaten, motivatie, beschikbaarheidsintentie, bijzonderheden (vrije tekst; kan gezondheidsinformatie bevatten), foto, wijzigingen met reden (`blk_wijzigingen`). Tabel `blk_formulieren`. |
@@ -150,23 +150,23 @@ bedrijf daarbij is aangesloten, of op standaardcontractbepalingen.
 ## Selectiedag en trainingsweekend
 
 > **In het kort:** groepsindeling, aanwezigheid, cijfers, observaties en besluiten. Beoordelen doen
-> we op grond van gerechtvaardigd belang: goede lifeguards kiezen voor de veiligheid op het strand.
+> we op grond van gerechtvaardigd belang: goede strandwachten kiezen voor de veiligheid op het strand.
 
 | Onderdeel | Inhoud |
 |---|---|
-| Doel | De selectiedag en het trainingsweekend organiseren en kandidaten beoordelen om te besluiten over aannemen. |
+| Doel | De selectiedag en het trainingsweekend organiseren en sollicitanten beoordelen om te besluiten over aannemen. |
 | Grondslag | Organiseren: art. 6 lid 1 sub b AVG. Beoordelen, observaties en besluit: art. 6 lid 1 sub f (gerechtvaardigd belang: veilige bezetting van het strand). Een mens beslist altijd. |
-| Betrokkenen | Sollicitanten die zijn uitgenodigd; beoordelaars (hun naam staat bij hun cijfers en observaties); lifeguards van wie het bestuur feedback vastlegt (hun naam staat bij die feedback, niet in de inzage voor de sollicitant). |
-| Persoonsgegevens | Groepsindeling en "houd uit elkaar"-relaties (`selectie_indeling`, `selectie_relatie`), aanwezigheid en incheckmoment, cijfers per test en criterium per beoordelaar (`selectie_score`), vrije observaties (`selectie_observatie`, `tw_observatie`), besluit met notitie en belnotitie (`selectie_besluit`), deelname, afmeldreden en besluit trainingsweekend (`tw_deelname`). Per evenement de bevestiging "ik kom / ik kan niet" met reden en bron (portaal, bellijst of bestuur). Van het gesprek op het trainingsweekend: het besluit, een interne notitie en het bericht aan de sollicitant (`tw_deelname.gesprek_bericht`, gaat mee in de mail). Wie een bellijst-regel of gesprek open heeft staat maximaal 30 minuten bij de rij (`bel_door`, `gesprek_door`). Sinds 2.117: groepsindeling van het weekend (`tw_groep`, `tw_deelname.groep_id`); "houd uit elkaar" geldt voor beide evenementen. Of iemand een terugkerende lifeguard is, wordt afgeleid uit de bestaande Authentik-koppeling (niets nieuws opgeslagen). Sinds 2.118: de eerste indruk van het bestuur tijdens het weekend (sowieso aannemen / twijfel / sowieso afwijzen) met bij twijfel een vraag aan de beoordelaars (`tw_deelname.evaluatie*`). Sinds 2.119: feedback die een lifeguard het bestuur gaf, door het bestuur vastgelegd: van wie, wanneer gezien, soort en tekst (`lifeguard_feedback`). |
-| Ontvangers en verwerkers | Bestuur (modules `selectiedag` en `trainingsweekend`, bewerken). Begeleiders (rol `begeleider`): alleen lezen, inchecken, eigen cijfers en observaties geven, geen dossier en geen telefoonnummers. Van de evaluatie zien begeleiders alleen wie op twijfel staat ("extra aandacht gevraagd") met de vraag van het bestuur; sowieso aannemen of afwijzen zien ze niet. Lifeguard-feedback is alleen zichtbaar met dossierrecht (bestuur, penningmeester). Op de incheck-tablet ziet iemand na minstens 3 getypte letters hooguit 3 namen met foto — nooit een volledige lijst. Cloud86. |
+| Betrokkenen | Sollicitanten die zijn uitgenodigd; beoordelaars (hun naam staat bij hun cijfers en observaties); strandwachten van wie het bestuur feedback vastlegt (hun naam staat bij die feedback, niet in de inzage voor de sollicitant). |
+| Persoonsgegevens | Groepsindeling en "houd uit elkaar"-relaties (`selectie_indeling`, `selectie_relatie`), aanwezigheid en incheckmoment, cijfers per test en criterium per beoordelaar (`selectie_score`), vrije observaties (`selectie_observatie`, `tw_observatie`), besluit met notitie en belnotitie (`selectie_besluit`), deelname, afmeldreden en besluit trainingsweekend (`tw_deelname`). Per evenement de bevestiging "ik kom / ik kan niet" met reden en bron (portaal, bellijst of bestuur). Van het gesprek op het trainingsweekend: het besluit, een interne notitie en het bericht aan de sollicitant (`tw_deelname.gesprek_bericht`, gaat mee in de mail). Wie een bellijst-regel of gesprek open heeft staat maximaal 30 minuten bij de rij (`bel_door`, `gesprek_door`). Sinds 2.117: groepsindeling van het weekend (`tw_groep`, `tw_deelname.groep_id`); "houd uit elkaar" geldt voor beide evenementen. Of iemand een terugkerende strandwacht is, wordt afgeleid uit de bestaande Authentik-koppeling (niets nieuws opgeslagen). Sinds 2.118: de eerste indruk van het bestuur tijdens het weekend (sowieso aannemen / twijfel / sowieso afwijzen) met bij twijfel een vraag aan de beoordelaars (`tw_deelname.evaluatie*`). Sinds 2.119: feedback die een strandwacht het bestuur gaf, door het bestuur vastgelegd: van wie, wanneer gezien, soort en tekst (`lifeguard_feedback`). |
+| Ontvangers en verwerkers | Bestuur (modules `selectiedag` en `trainingsweekend`, bewerken). Begeleiders (rol `begeleider`): alleen lezen, inchecken, eigen cijfers en observaties geven, geen dossier en geen telefoonnummers. Van de evaluatie zien begeleiders alleen wie op twijfel staat ("extra aandacht gevraagd") met de vraag van het bestuur; sowieso aannemen of afwijzen zien ze niet. Feedback van strandwachten is alleen zichtbaar met dossierrecht (bestuur, penningmeester). Op de incheck-tablet ziet iemand na minstens 3 getypte letters hooguit 3 namen met foto — nooit een volledige lijst. Cloud86. |
 | Doorgifte buiten de EER | Nee. |
-| Bewaartermijn | Volgt het dossier: bij afwijzen 4 weken, bij aannemen 2 jaar na het laatste seizoen. Bij wissen gaan indeling, relaties (in beide richtingen), cijfers, observaties, besluiten, deelname (met evaluatie) en lifeguard-feedback weg. |
+| Bewaartermijn | Volgt het dossier: bij afwijzen 4 weken, bij aannemen 2 jaar na het laatste seizoen. Bij wissen gaan indeling, relaties (in beide richtingen), cijfers, observaties, besluiten, deelname (met evaluatie) en feedback van strandwachten weg. |
 | Beveiliging | Rechten per module; begeleiders kunnen alleen hun eigen observaties verwijderen; incheck-tablet met een eigen code per evenement, snelheidsbegrenzing en een gehashte pincode om af te sluiten; logboek. |
 
 ## Gezondheidsverklaring en intake
 
 > **In het kort:** vóór de selectiedag vragen we een gezondheidsverklaring en een intake, omdat
-> kandidaten het water in gaan. Dat zijn bijzondere persoonsgegevens (art. 9). Na het seizoen of bij
+> sollicitanten het water in gaan. Dat zijn bijzondere persoonsgegevens (art. 9). Na het seizoen of bij
 > afwijzing gaan de gezondheidsgegevens weg; het feit dát er is getekend blijft.
 
 | Onderdeel | Inhoud |
@@ -282,23 +282,23 @@ gaan meteen ook naam en geboortedatum weg: `documenten_loondossier_vernietigen()
 
 | Onderdeel | Inhoud |
 |---|---|
-| Doel | BLK-analyse: het bestuur een korte beoordeling met advies geven als hulpmiddel. Beschikbaarheidshulp: de sollicitant helpen het rooster in te vullen. |
-| Grondslag | BLK-analyse: art. 6 lid 1 sub f AVG (gerechtvaardigd belang: zorgvuldig en efficiënt selecteren); de sollicitant kan bezwaar maken via een vraag in Berichten of per mail. Het bestuur legt dat vast met de knop "Bezwaar vastleggen" bij de AI-analyse op het kennismakingsformulier in het beheer (`admin/blk_detail.php`, via `admin/api_ai_analyse.php` naar `ai_bezwaar_zetten()`; recht `sollicitanten` bewerken): de vlag `sollicitaties.ai_bezwaar` wordt gezet, de analyse gewist, en de wachtrij slaat de sollicitant daarna over. Beschikbaarheidshulp: art. 6 lid 1 sub b; het gebruik is vrijwillig, handmatig invullen kan altijd. Geen geautomatiseerd besluit in de zin van art. 22. Geen bijzondere persoonsgegevens: het veld bijzonderheden (medicatie, allergieën) gaat niet naar de AI, want daarvoor is geen grondslag onder art. 9. |
+| Doel | Analyse kennismakingsformulier: het bestuur een korte beoordeling met advies geven als hulpmiddel. Beschikbaarheidshulp: de sollicitant helpen het rooster in te vullen. |
+| Grondslag | Analyse kennismakingsformulier: art. 6 lid 1 sub f AVG (gerechtvaardigd belang: zorgvuldig en efficiënt selecteren); de sollicitant kan bezwaar maken via een vraag in Berichten of per mail. Het bestuur legt dat vast met de knop "Bezwaar vastleggen" bij de AI-analyse op het kennismakingsformulier in het beheer (`admin/blk_detail.php`, via `admin/api_ai_analyse.php` naar `ai_bezwaar_zetten()`; recht `sollicitanten` bewerken): de vlag `sollicitaties.ai_bezwaar` wordt gezet, de analyse gewist, en de wachtrij slaat de sollicitant daarna over. Beschikbaarheidshulp: art. 6 lid 1 sub b; het gebruik is vrijwillig, handmatig invullen kan altijd. Geen geautomatiseerd besluit in de zin van art. 22. Geen bijzondere persoonsgegevens: het veld bijzonderheden (medicatie, allergieën) gaat niet naar de AI, want daarvoor is geen grondslag onder art. 9. |
 | Betrokkenen | Sollicitanten die het kennismakingsformulier indienen of de beschikbaarheidshulp gebruiken. |
-| Persoonsgegevens | BLK-analyse, wat naar Google gaat: leeftijdscategorie (geen geboortedatum), opleiding, diploma's, werkervaring, motivatie, aantal weken beschikbaar. Niet: naam, adres, e-mail, telefoon, foto, bijzonderheden. De uitkomst staat in `blk_formulieren.ai_analyse`. Beschikbaarheidshulp: de vrije tekst (maximaal 1500 tekens) en de weken van het seizoen; de tekst wordt bewaard in `ai_beschikbaarheid_log`. Let op: dit is pseudonimisering, geen anonimisering. Vrije tekst kan zelf herleidbare of gezondheidsinformatie bevatten. |
+| Persoonsgegevens | Analyse kennismakingsformulier, wat naar Google gaat: leeftijdscategorie (geen geboortedatum), opleiding, diploma's, werkervaring, motivatie, aantal weken beschikbaar. Niet: naam, adres, e-mail, telefoon, foto, bijzonderheden. De uitkomst staat in `blk_formulieren.ai_analyse`. Beschikbaarheidshulp: de vrije tekst (maximaal 1500 tekens) en de weken van het seizoen; de tekst wordt bewaard in `ai_beschikbaarheid_log`. Let op: dit is pseudonimisering, geen anonimisering. Vrije tekst kan zelf herleidbare of gezondheidsinformatie bevatten. |
 | Ontvangers en verwerkers | Google (Gemini API), alleen als `ai.api_key` gevuld is. De analyse is zichtbaar voor het bestuur (module `blk`) en voor de sollicitant in de download (inzage). Automatisch starten na indienen alleen als `ai.auto_analyse` aan staat (standaard aan); anders alleen met de knop in het beheer. Beschikbaarheidshulp alleen als `ai.beschikbaarheid_hulp` aan staat (standaard uit). |
 | Doorgifte buiten de EER | Ja, Google LLC (VS), op grond van het EU-VS Data Privacy Framework of standaardcontractbepalingen. Gebruik een betaald API-account met verwerkersvoorwaarden: bij het gratis niveau mag Google de invoer gebruiken om zijn diensten te verbeteren. |
-| Bewaartermijn | Analyse: volgt het BLK-formulier (en daarmee het dossier); bij bezwaar direct weg. Invoertekst beschikbaarheidshulp: 3 maanden (`bewaar.ai_invoer_mnd`, standaard 3). Wachtrij en invoerlog gaan mee met het wissen van het dossier. |
+| Bewaartermijn | Analyse: volgt het kennismakingsformulier (en daarmee het dossier); bij bezwaar direct weg. Invoertekst beschikbaarheidshulp: 3 maanden (`bewaar.ai_invoer_mnd`, standaard 3). Wachtrij en invoerlog gaan mee met het wissen van het dossier. |
 | Beveiliging | Alleen de cron roept de API aan (wachtrij `ai_queue`), met backoff en een maximum aantal pogingen; de cron controleert vlak voor het versturen opnieuw op bezwaar; de API-sleutel wordt in het beheer nooit teruggetoond; strikte prompt en validatie op de server. |
 
 AI die sollicitanten beoordeelt valt onder de AI-verordening in de categorie hoog risico (bijlage
 III, punt 4). Voor de vereniging als gebruiker betekent dat onder meer: menselijk toezicht, de
 sollicitant informeren en de werking kunnen verantwoorden. Het bestuur toetst dit voordat de
-BLK-analyse op productie aan gaat.
+analyse van het kennismakingsformulier op productie aan gaat.
 
-## Wervingspagina's en bezoekersstatistiek
+## Landingspagina's en bezoekersstatistiek
 
-> **In het kort:** we tellen bezoeken en afhakers op de wervingspagina's en het aanmeldformulier,
+> **In het kort:** we tellen bezoeken en afhakers op de landingspagina's en het aanmeldformulier,
 > zonder cookies en zonder IP-adres op te slaan. Een dagpseudoniem maakt "uniek" tellen mogelijk en
 > wordt na 30 dagen gewist.
 
@@ -306,12 +306,12 @@ BLK-analyse op productie aan gaat.
 |---|---|
 | Doel | Zien welke wervingskanalen werken en waar mensen in het formulier afhaken, om de werving en het formulier te verbeteren. |
 | Grondslag | Art. 6 lid 1 sub f AVG (gerechtvaardigd belang). Geen cookies of volgtechnieken, dus geen toestemming nodig onder de Telecommunicatiewet. |
-| Betrokkenen | Bezoekers van wervingspagina's (`/p/<slug>`) en het aanmeldformulier; sollicitanten (bron van hun aanmelding). |
+| Betrokkenen | Bezoekers van landingspagina's (`/p/<slug>`) en het aanmeldformulier; sollicitanten (bron van hun aanmelding). |
 | Persoonsgegevens | Per gebeurtenis (`pagina_events`): type (bezoek, formulier gestart, stap, verlaten, klaar, geweigerd), pagina, bron, stapnummer, tijdstip en een dagpseudoniem: een HMAC-SHA-256 van IP-adres en browser met een dagsleutel, die is afgeleid van de datum en een geheim zout (`paginas.pseudoniem_zout`, 32 willekeurige bytes, eenmalig aangemaakt). Zonder het zout niet terug te rekenen, en elke dag anders, dus niet over dagen te volgen. Geen IP-adres, geen browser, niets wat is ingevuld. Bij de sollicitatie: `bron_code` en `bron_label`. |
 | Ontvangers en verwerkers | Bestuur (module `paginas`). Cloud86. |
 | Doorgifte buiten de EER | Nee. |
 | Bewaartermijn | Dagpseudoniem gewist na 30 dagen (`bewaar.pagina_hash_dagen`, standaard 30); gebeurtenis verwijderd na 13 maanden (`bewaar.pagina_events_mnd`, standaard 13). Bron bij de sollicitatie: volgt het dossier. Aan- en uitzetten: `paginas.tracking` (standaard aan). |
-| Beveiliging | Bots worden niet geteld; herhaalde weergaven binnen 30 minuten tellen niet opnieuw; de wervingspagina's draaien onder een strikte Content-Security-Policy (`connect-src 'none'`). |
+| Beveiliging | Bots worden niet geteld; herhaalde weergaven binnen 30 minuten tellen niet opnieuw; de landingspagina's draaien onder een strikte Content-Security-Policy (`connect-src 'none'`). |
 
 ## Beheerders en logboek
 
@@ -365,20 +365,20 @@ BLK-analyse op productie aan gaat.
 | Beveiliging | Toestemming geven nooit op een GET (mailscanners), alleen na een klik op een knop; intrekken via de afmeldlink of in het portaal. |
 
 **Seintje buiten het seizoen.** Staat de aanmelding dicht, dan tonen het aanmeldformulier, de
-wervingspagina's en het formulier op paal13.com een klein formulier: "laat je e-mailadres achter,
+landingspagina's en het formulier op paal13.com een klein formulier: "laat je e-mailadres achter,
 dan sturen we je één bericht zodra je je kunt aanmelden" (`includes/seintje_werving.php`).
 
 | Onderdeel | Inhoud |
 |---|---|
 | Doel | Mensen die nog niet solliciteerden één bericht sturen als de aanmelding opengaat. |
 | Grondslag | Art. 6 lid 1 sub a AVG, toestemming: een apart, niet vooraf aangevinkt vakje "Ja, stuur me één bericht als de werving opent", met de privacyverklaring erbij. Dubbele bevestiging (double opt-in): pas na de klik in de bevestigingsmail staat het seintje aan, want iedereen kan elk adres invullen (AVG art. 7 lid 1 aantoonbaarheid, Telecommunicatiewet art. 11.7). |
-| Betrokkenen | Bezoekers van het aanmeldformulier, een wervingspagina of paal13.com buiten de aanmeldperiode. |
+| Betrokkenen | Bezoekers van het aanmeldformulier, een landingspagina of paal13.com buiten de aanmeldperiode. |
 | Persoonsgegevens | Voornaam, e-mailadres, bron (pagina of campagne, voor de statistiek), moment van aanvragen, bevestigen en versturen, en een token (alleen als sha256-hash). Tabel `werving_seintje`. Het IP-adres komt alleen in het logboek (bevestigen, intrekken) en in de snelheidsbegrenzing, niet in de tabel. |
 | Ontvangers en verwerkers | Bestuur (module `mailing`, Berichten › groep Seintje gevraagd). E-mailprovider. Alleen e-mail; geen WhatsApp of sms (geen telefoonnummer). |
 | Doorgifte buiten de EER | Nee. |
 | Bewaartermijn | Onbevestigd: 7 dagen, daarna weg (altijd, ook met `bewaar.actief` uit: zonder bevestiging is er geen toestemming). Bevestigd: tot het openingsbericht is verstuurd (een dag later weg), en uiterlijk `bewaar.seintje_mnd` maanden (standaard en maximaal 12) na de bevestiging. Intrekken: meteen weg. |
 | Intrekken | De link in de bevestigingsmail en de afmeldlink onder het openingsbericht leiden naar `/seintje.php` met de knop "Toch geen seintje"; die verwijdert de rij direct (art. 7 lid 3). |
-| Beveiliging | Anti-bot-token (wervingspagina, paal13.com) of csrf (`/aanmelden.php`), honeypot, maximaal 10 aanvragen per uur per IP-adres en maximaal 3 bevestigingsmails per adres per dag. Bevestigen en intrekken alleen met een knop die post, niet op een GET (mailscanners). Het scherm verklapt nooit of een adres al bekend is. De bevestigingsmail wordt niet gelogd (`body_loggen` uit). |
+| Beveiliging | Anti-bot-token (landingspagina, paal13.com) of csrf (`/aanmelden.php`), honeypot, maximaal 10 aanvragen per uur per IP-adres en maximaal 3 bevestigingsmails per adres per dag. Bevestigen en intrekken alleen met een knop die post, niet op een GET (mailscanners). Het scherm verklapt nooit of een adres al bekend is. De bevestigingsmail wordt niet gelogd (`body_loggen` uit). |
 
 ## Bijzonderheden
 
@@ -469,9 +469,9 @@ gebruiken. Het datalekregister zelf houdt het bestuur buiten dit systeem bij.
 |---|---|
 | 18 september 2026 | Eerste register voor het aangenomen-takenpakket (loonheffing, kopie ID, bankpas, lidmaatschap, bewijs van ondertekening), bijgehouden in de lokale projectnotities. |
 | 24 september 2026 | Verhuisd naar `docs/handleiding/verwerkingsregister.md` (in Git en in het beheer) en uitgebreid tot alle verwerkingen van het sollicitatiesysteem, gecontroleerd tegen de code van versie 2.101. |
-| 24 september 2026 | AVG-gaten gedicht: wissen neemt selectiedag, trainingsweekend, alle beschikbaarheidstabellen, BLK-wijzigingen, apparaten, AI-wachtrij en het bewijsspoor mee; bijzonderheden niet meer naar de AI; `ai.model` en `ai.auto_analyse` worden gevolgd; bezwaar tegen AI-analyse (`ai_bezwaar`); volledige inzage; zelf verwijderen met een verwerkt loondossier; geheim, dagelijks wisselend bezoekerspseudoniem; IBAN gemaskeerd in de mail aan de ledenservice; privacyverklaring bijgewerkt (EasySendSMS, oud-strandwachten). |
+| 24 september 2026 | AVG-gaten gedicht: wissen neemt selectiedag, trainingsweekend, alle beschikbaarheidstabellen, wijzigingen aan het kennismakingsformulier, apparaten, AI-wachtrij en het bewijsspoor mee; bijzonderheden niet meer naar de AI; `ai.model` en `ai.auto_analyse` worden gevolgd; bezwaar tegen AI-analyse (`ai_bezwaar`); volledige inzage; zelf verwijderen met een verwerkt loondossier; geheim, dagelijks wisselend bezoekerspseudoniem; IBAN gemaskeerd in de mail aan de ledenservice; privacyverklaring bijgewerkt (EasySendSMS, oud-strandwachten). |
 | 24 september 2026 | Het lettertype (Instrument Sans) staat nu op de eigen server; er gaat geen IP-adres meer naar Google Fonts. Google Fonts uit de lijst met verwerkers gehaald. |
-| 24 september 2026 | Beschikbaarheid exporteren naar Excel (per week of per dag, met redenen van afwezigheid): alleen naam, fase en opgave, geen contactgegevens of geboortedatum; elke export in het logboek. Loonplanning: vastzetten na het TW-gesprek (`loon_vergrendeling`: wie en wanneer; ontgrendelen met reden in het logboek). |
+| 24 september 2026 | Beschikbaarheid exporteren naar Excel (per week of per dag, met redenen van afwezigheid): alleen naam, fase en opgave, geen contactgegevens of geboortedatum; elke export in het logboek. Loonplanning: vastzetten na het gesprek op het trainingsweekend (`loon_vergrendeling`: wie en wanneer; ontgrendelen met reden in het logboek). |
 | 24 september 2026 | Selectiedag en trainingsweekend: bevestiging "ik kom / ik kan niet" met reden, het gesprek met het bestuur (besluit, interne notitie, bericht aan de sollicitant), vergrendeling "bezig door" en de incheck-tablet met foto. Alles zit in de inzage en gaat mee bij wissen. |
 | 27 september 2026 | Seintje buiten het seizoen: wie nog niet solliciteerde kan bij een gesloten aanmelding om één bericht vragen (voornaam, e-mail, bron; dubbele bevestiging; onbevestigd 7 dagen, daarna tot het bericht en maximaal 12 maanden). Tabel `werving_seintje`; privacyverklaring bijgewerkt. |
 | 27 september 2026 | Drie punten uit "Nog vast te leggen" zijn gebouwd en naar hun hoofdstuk verplaatst: de knop "Bezwaar vastleggen" voor de AI-analyse, naam en geboortedatum weg na het vernietigen van een bewaard loondossier, en de wachtrijtekst van niet-gelogde berichten leeg na verzending. Lidmaatschap van minderjarigen: de ouder of verzorger tekent, de SEPA-machtiging tekent de rekeninghouder (in aanbouw). Privacyverklaring: de termijn van de gezondheidsgegevens volgt nu `bewaar.gezondheid_mnd`, en het tekenen van het lidmaatschap door de ouder staat erin. |

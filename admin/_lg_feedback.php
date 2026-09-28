@@ -29,7 +29,7 @@ $_lgf_klein = !$_lgf_kaart && !$_lgf_rijen;
 <<?= $_lgf_kaart ? 'section class="ds-kaart ds-kaart-p"' : 'div class="bh-lgf-blok' . ($_lgf_klein ? ' klein' : '') . '"' ?> id="lg-feedback-<?= $_lgf_id ?>">
   <?php if (!$_lgf_klein): ?>
   <div class="bh-kaartkop">
-    <<?= $_lgf_kop ?>>Feedback van lifeguards</<?= $_lgf_kop ?>>
+    <<?= $_lgf_kop ?>>Feedback van strandwachten</<?= $_lgf_kop ?>>
     <?php if ($_lgf_rijen): ?><span class="bh-meta"><?= count($_lgf_rijen) ?></span><?php endif; ?>
   </div>
   <?php endif; ?>
@@ -41,14 +41,14 @@ $_lgf_klein = !$_lgf_kaart && !$_lgf_rijen;
       $obs_wis_form = ['url' => APP_URL . '/admin/api_lg_feedback.php', 'actie' => 'lg_feedback_wis', 'velden' => ['terug' => $lgf_terug]];
       require __DIR__ . '/_observaties.php';
   elseif ($lgf_mag_bewerken): ?>
-    <p class="bh-meta">Nog niets. Vertelde een lifeguard je iets over <?= $lgf_moment === 'tw' ? 'het weekend' : 'de selectiedag' ?>? Leg het hier vast.</p>
+    <p class="bh-meta">Nog niets. Vertelde een strandwacht je iets over <?= $lgf_moment === 'tw' ? 'het weekend' : 'de selectiedag' ?>? Leg het hier vast.</p>
   <?php else: ?>
-    <p class="bh-meta">Geen feedback van lifeguards.</p>
+    <p class="bh-meta">Geen feedback van strandwachten.</p>
   <?php endif; ?>
 
   <?php if ($lgf_mag_bewerken): $_lgf_namen = lg_feedback_namen($lgf_seizoen_id); ?>
   <details class="bh-lgf">
-    <summary><?= $_lgf_klein ? 'Feedback van een lifeguard vastleggen' : 'Feedback vastleggen' ?></summary>
+    <summary><?= $_lgf_klein ? 'Feedback van een strandwacht vastleggen' : 'Feedback vastleggen' ?></summary>
     <form method="post" action="<?= APP_URL ?>/admin/api_lg_feedback.php" class="bh-lgf-form">
       <?= csrf_input() ?>
       <input type="hidden" name="actie" value="lg_feedback">
@@ -59,7 +59,7 @@ $_lgf_klein = !$_lgf_kaart && !$_lgf_rijen;
         <div class="ds-veld">
           <label class="ds-label" for="lgf-van-<?= $_lgf_id ?>">Van wie</label>
           <input type="text" class="ds-input" id="lgf-van-<?= $_lgf_id ?>" name="van" maxlength="100" required autocomplete="off"
-                 <?= $_lgf_namen ? 'list="lgf-namen"' : '' ?> placeholder="Naam van de lifeguard">
+                 <?= $_lgf_namen ? 'list="lgf-namen"' : '' ?> placeholder="Naam van de strandwacht">
         </div>
         <div class="ds-veld">
           <label class="ds-label" for="lgf-soort-<?= $_lgf_id ?>">Soort</label>
@@ -71,7 +71,7 @@ $_lgf_klein = !$_lgf_kaart && !$_lgf_rijen;
       <div class="ds-veld">
         <label class="ds-label" for="lgf-tekst-<?= $_lgf_id ?>">Wat zei hij of zij?</label>
         <textarea class="ds-textarea" id="lgf-tekst-<?= $_lgf_id ?>" name="tekst" rows="3" maxlength="2000" required></textarea>
-        <p class="ds-veld-hint">Alleen voor het bestuur. De sollicitant kan dit opvragen (AVG), zonder de naam van de lifeguard.</p>
+        <p class="ds-veld-hint">Alleen voor het bestuur. De sollicitant kan dit opvragen (AVG), zonder de naam van de strandwacht.</p>
       </div>
       <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm">Vastleggen</button>
     </form>

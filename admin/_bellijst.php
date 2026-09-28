@@ -88,7 +88,7 @@ foreach ($bel_lijst as $_k) if ((int)$_k['sol_id'] === $_open) $_huidig = $_k;
     <table class="bh-tabel bh-bel-tabel" style="--bh-tracks:minmax(150px,2fr) 66px minmax(96px,1fr) 104px">
       <thead>
         <tr>
-          <th scope="col">Kandidaat</th>
+          <th scope="col">Sollicitant</th>
           <th scope="col" class="bh-rechts">Score</th>
           <th scope="col">Besluit</th>
           <th scope="col" class="bh-rechts">Gebeld</th>
@@ -104,7 +104,7 @@ foreach ($bel_lijst as $_k) if ((int)$_k['sol_id'] === $_open) $_huidig = $_k;
           $_bezig = !$_gebeld && evenement_claim_actief($_b['bel_door'] ?? null, $_b['bel_sinds'] ?? null, $_ik);
         ?>
           <tr class="<?= $_isnu ? 'bh-rij-gemarkeerd' : '' ?><?= $_gebeld ? ' bh-rij-gedempt' : '' ?>">
-            <td data-label="Kandidaat">
+            <td data-label="Sollicitant">
               <a class="bh-naamcel" href="?tab=bellijst&bel=<?= $_id ?>">
                 <span class="bh-naamcel-tekst">
                   <span class="bh-naamcel-naam"><?= h((string)$_k['naam']) ?></span>
@@ -184,7 +184,7 @@ foreach ($bel_lijst as $_k) if ((int)$_k['sol_id'] === $_open) $_huidig = $_k;
 
       <?php if (!empty($bel_lgf[$_id])): ?>
         <div>
-          <span class="bh-veldlabel">Feedback van lifeguards</span>
+          <span class="bh-veldlabel">Feedback van strandwachten</span>
           <?php $obs_lijst = lg_feedback_als_observaties($bel_lgf[$_id]); $obs_plat = true; $obs_eigen = null; require __DIR__ . '/_observaties.php'; ?>
         </div>
       <?php endif; ?>
@@ -214,7 +214,7 @@ foreach ($bel_lijst as $_k) if ((int)$_k['sol_id'] === $_open) $_huidig = $_k;
       <?php if (!$_claim['ok']): ?>
         <div class="ds-melding ds-melding-warn">
           <?= icoon('telefoon', 16) ?>
-          <span><?= h(evenement_claim_naam($_claim['door'])) ?> is deze kandidaat aan het bellen (sinds <?= h(date('H:i', strtotime((string)$_claim['sinds']))) ?>).
+          <span><?= h(evenement_claim_naam($_claim['door'])) ?> is deze sollicitant aan het bellen (sinds <?= h(date('H:i', strtotime((string)$_claim['sinds']))) ?>).
             Na 30 minuten komt hij weer vrij.</span>
         </div>
       <?php elseif ($_gebeld): ?>

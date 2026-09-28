@@ -178,7 +178,7 @@ require __DIR__ . '/layout_top.php';
       <div class="bh-sys-herinnering">
         <div><strong><?= h($hr['naam']) ?></strong>
           <?php if (!$hr['aan']): ?><span class="badge">uit</span>
-          <?php else: ?> — <?= (int)$hr['kandidaten'] ?> kandidaat/-aten, <?= (int)$hr['verstuurd'] ?> <?= $herinnering_echt ? 'in de wachtrij' : 'zou versturen' ?>, <?= (int)$hr['overgeslagen'] ?> overgeslagen<?php endif; ?>
+          <?php else: ?> — <?= (int)$hr['kandidaten'] ?> sollicitant(en), <?= (int)$hr['verstuurd'] ?> <?= $herinnering_echt ? 'in de wachtrij' : 'zou versturen' ?>, <?= (int)$hr['overgeslagen'] ?> overgeslagen<?php endif; ?>
         </div>
         <?php if (!empty($hr['lijst'])): ?>
         <div class="bh-sys-herinnering-lijst">

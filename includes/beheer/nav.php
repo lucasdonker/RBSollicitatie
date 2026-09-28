@@ -32,8 +32,8 @@ function bh_nav_groepen(array $tellers = [], bool $alles = false): array {
     // De kern. Items van losse modules (selectiedag, loonplanning, …) komen uit het
     // moduleregister (includes/modules/) en schuiven op 'positie' tussen deze in.
     $items = [
-        ['groep' => 'Kandidaten',   'positie' => 10, 'id' => 'sollicitanten',   'label' => 'Sollicitanten',   'url' => 'sollicitanten.php',   'icoon' => 'mensen',       'module' => 'sollicitanten'],
-        ['groep' => 'Kandidaten',   'positie' => 40, 'id' => 'ondertekeningen', 'label' => 'Ondertekeningen', 'url' => 'ondertekeningen.php', 'icoon' => 'ondertekenen', 'module' => 'ondertekeningen'],
+        ['groep' => 'Selectie',      'positie' => 10, 'id' => 'sollicitanten',   'label' => 'Sollicitanten',   'url' => 'sollicitanten.php',   'icoon' => 'mensen',       'module' => 'sollicitanten'],
+        ['groep' => 'Selectie',      'positie' => 40, 'id' => 'ondertekeningen', 'label' => 'Ondertekeningen', 'url' => 'ondertekeningen.php', 'icoon' => 'ondertekenen', 'module' => 'ondertekeningen'],
         ['groep' => 'Inzet & loon', 'positie' => 10, 'id' => 'beschikbaarheid', 'label' => 'Beschikbaarheid', 'url' => 'beschikbaarheid.php', 'icoon' => 'klok',         'module' => 'beschikbaarheid'],
         ['groep' => 'Inzet & loon', 'positie' => 40, 'id' => 'documenten',      'label' => 'Loondossiers',    'url' => 'documenten.php',      'icoon' => 'slot',         'module' => 'documenten'],
         ['groep' => 'Communicatie', 'positie' => 10, 'id' => 'berichten',       'label' => 'Berichten',       'url' => 'berichten.php',       'icoon' => 'mail',         'module' => 'mailing'],
@@ -45,7 +45,7 @@ function bh_nav_groepen(array $tellers = [], bool $alles = false): array {
     if (function_exists('modules_nav')) $items = array_merge($items, modules_nav());
     usort($items, fn($a, $b) => $a['positie'] <=> $b['positie']);
 
-    $groepen = array_fill_keys(['Kandidaten', 'Inzet & loon', 'Communicatie', 'Systeem'], []);
+    $groepen = array_fill_keys(['Selectie', 'Inzet & loon', 'Communicatie', 'Systeem'], []);
     foreach ($items as $i) {
         $groepen[$i['groep']][] = ['id' => $i['id'], 'label' => $i['label'], 'url' => $basis . $i['url'],
                                    'icoon' => $i['icoon'], 'module' => $i['module']];

@@ -146,7 +146,7 @@ function portaal_taken(array $sol, ?array $blk = null, bool $vangnet = true): ar
         $op    = $blk['definitief_op'] ?? ($blk['ingevuld_op'] ?? null);
         $taken[] = array_merge($std, [
             'id'          => 'blk',
-            'titel'       => $klaar ? 'Beter Leren Kennen' : 'Beter Leren Kennen invullen',
+            'titel'       => $klaar ? 'Kennismakingsformulier' : 'Kennismakingsformulier invullen',
             'sub'         => $klaar
                 ? 'Ingeleverd' . ($op ? ' ' . datum_nl(substr($op, 0, 10)) : '')
                 : '± 8 minuten' . (!empty($sol['datum_selectiedag']) ? ' · vóór ' . portaal_datum_kort($sol['datum_selectiedag']) : ''),

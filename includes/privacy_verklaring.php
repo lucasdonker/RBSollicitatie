@@ -60,7 +60,7 @@ function privacy_verklaring_html(): string {
 
     ob_start();
 ?>
-<p class="af-pv-intro">Als je solliciteert als lifeguard bij <?= $h($org) ?>, hebben we gegevens van je nodig.
+<p class="af-pv-intro">Als je solliciteert als strandwacht bij <?= $h($org) ?>, hebben we gegevens van je nodig.
 Hier lees je welke, waarvoor, wie ze ziet en hoe lang we ze bewaren. Ook lees je wat je zelf kunt
 doen: je gegevens bekijken, laten verbeteren of laten verwijderen.</p>
 
@@ -148,7 +148,7 @@ aangenomen.</p>
     <tr><td>Je sollicitatie behandelen, contact met je houden, de selectiedag en het trainingsweekend</td>
         <td>Het is nodig om met je een arbeidsovereenkomst te kunnen sluiten. Jij vroeg daarom door te solliciteren (art. 6 lid 1 sub b AVG).</td></tr>
     <tr><td>Je beoordelen en de aantekeningen van de selectiecommissie</td>
-        <td>Ons gerechtvaardigd belang: goede lifeguards kiezen, omdat zij verantwoordelijk zijn voor de veiligheid op het strand (art. 6 lid 1 sub f).</td></tr>
+        <td>Ons gerechtvaardigd belang: goede strandwachten kiezen, omdat zij verantwoordelijk zijn voor de veiligheid op het strand (art. 6 lid 1 sub f).</td></tr>
     <tr><td>Je loon uitbetalen en je arbeidsovereenkomst uitvoeren</td>
         <td>Nodig voor de overeenkomst (art. 6 lid 1 sub b).</td></tr>
     <tr><td>BSN, kopie identiteitsbewijs en loonheffing</td>

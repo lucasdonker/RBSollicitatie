@@ -37,7 +37,7 @@ function bh_soll_filter(array $q, int $sid): array {
         $delen[] = 'terugkerend';
     } elseif ($terug === 'lg') {
         $where .= " AND $_lg = 1";
-        $delen[] = 'terugkerende lifeguard';
+        $delen[] = 'terugkerende strandwacht';
     } elseif ($terug === 'sol') {
         $where .= " AND s.terugkerend = 1 AND $_lg = 0";
         $delen[] = 'eerder gesolliciteerd';
@@ -88,7 +88,7 @@ function bh_soll_filter(array $q, int $sid): array {
         'where'        => $where,
         'params'       => $params,
         'actief'       => (bool)$delen,
-        'omschrijving' => $delen ? implode(' · ', $delen) : 'alle kandidaten',
+        'omschrijving' => $delen ? implode(' · ', $delen) : 'alle sollicitanten',
     ];
 }
 

@@ -79,7 +79,7 @@ je die mee.
 | Configuratie per omgeving | `includes/config.php` op de server | nee, nooit |
 | Geheimen van koppelingen (API, AI, WhatsApp, sms, SMTP) | tabel `instellingen` in de database | nee |
 | Versleutelde documenten, foto's, zegelcertificaat | `DOCUMENTEN_MAP` op de server, buiten de webroot | nee |
-| Overige uploads (logo, wervingspagina's, bijlagen) | `uploads/` in de webroot | nee, behalve `uploads/.htaccess` en `uploads/branding/.htaccess` |
+| Overige uploads (logo, landingspagina's, bijlagen) | `uploads/` in de webroot | nee, behalve `uploads/.htaccess` en `uploads/branding/.htaccess` |
 | Geplande taak | Plesk › Geplande taken | nee |
 | Versie en changelog | Beheer › Systeem & Updates (bron: `includes/versie.php`) | ja |
 | Logboek (acties, berichten, fouten) | Beheer › Logboek | nee (database) |
@@ -172,12 +172,12 @@ e-mailadres.
   maar wacht de bezoeker tot het werk klaar is.
 - **Twee kanten:** het portaal voor sollicitanten (`/portaal/`) en het beheer (`/admin/`).
   Daarnaast de openbare adressen `/aanmelden.php` (aanmeldformulier), `/privacy.php`
-  (privacyverklaring), `/p/<naam>` (wervingspagina's), `/foto.php` (foto van een sollicitant,
+  (privacyverklaring), `/p/<naam>` (landingspagina's), `/foto.php` (foto van een sollicitant,
   alleen met toegang), `/d/<code>` (tijdelijke downloadlink van een bijlage), `/track.php`
   (anonieme tellingen van het aanmeldformulier), `/api/` (voor de WordPress-plugin) en
   `/cron/run.php`.
 - **Het aanmeldformulier bestaat één keer:** de HTML komt uit `includes/aanmeldformulier.php`,
-  de verwerking uit `includes/aanmelden_kern.php`. `/aanmelden.php` en de wervingspagina's roepen
+  de verwerking uit `includes/aanmelden_kern.php`. `/aanmelden.php` en de landingspagina's roepen
   die aan; de WordPress-plugin haalt het formulier op via `GET /api/formulier.php` en post via
   `POST /api/aanmelden.php`.
 - **Inloggen:** beheerders via Authentik (OIDC). Sollicitanten met een code of een eenmalige
@@ -321,7 +321,7 @@ bij een fout wordt niets gewijzigd. Twee keer draaien kan geen kwaad. Per tabel 
 **Wat het script bewust niet doet.** De kluis repareren. `DOCUMENTEN_MAP` en `KLUIS_SLEUTEL` van
 productie komen niet mee naar test. Documenten, verzegelde PDF's en foto's uit de kopie zijn op test
 dus niet te openen, en de systeemcontrole kan de kluis rood kleuren. Dat is de bedoeling. Ook de
-ontwerpen van wervingspagina's (in `uploads/`) komen niet mee.
+ontwerpen van landingspagina's (in `uploads/`) komen niet mee.
 
 **Vooraf controleren op test** (`includes/config.php` van test):
 
@@ -497,7 +497,7 @@ Let op:
   [Toegangsbeheer](#toegangsbeheer)); laat ze de app daarna opnieuw instellen in Mijn profiel, of
   reset hun tweestaps bij Beheerders.
 - Het logboek bevat per batch `kluis_herversleuteld` met aantallen; nooit een sleutel.
-- Formulieren op wervingspagina's die op het moment van wisselen open staan, kunnen één keer
+- Formulieren op landingspagina's die op het moment van wisselen open staan, kunnen één keer
   worden geweigerd als hun beveiliging op de sleutel terugvalt; opnieuw versturen werkt.
 
 ## Geheimen die in de database staan
@@ -780,7 +780,7 @@ logins voor dat account.
   loopt tot 5 jaar na het einde van het jaar waarin het dienstverband eindigde, en dat weet het
   systeem niet. De penningmeester vernietigt ze op Loondossiers via de kaart "Te beoordelen voor
   vernietiging" (`documenten_te_vernietigen()`, `documenten_loondossier_vernietigen()`); in het
-  logboek staat dan `loondossier_vernietigd`. Een oud-lifeguard wordt pas geanonimiseerd als die
+  logboek staat dan `loondossier_vernietigd`. Een oud-strandwacht wordt pas geanonimiseerd als die
   stukken weg zijn.
 - De opschoning draait één keer per dag via de echte cron (`includes/opschonen.php`). Wat er is
   opgeschoond staat in het Opschoon-logboek onderaan hetzelfde tabblad en in Logboek, bron AVG-opschoning.
@@ -793,7 +793,7 @@ logins voor dat account.
 |---|---|---|
 | Afgewezen of afgehaakte sollicitanten (anonimiseren) | 4 weken na het besluit | `bewaar.afgewezen_weken` |
 | Seintje bij de volgende werving | max 12 maanden | `bewaar.seintje_mnd` |
-| Oud-lifeguards | 2 jaar na het laatste seizoen | `bewaar.aangenomen_jaar` |
+| Oud-strandwachten | 2 jaar na het laatste seizoen | `bewaar.aangenomen_jaar` |
 | Gezondheidsgegevens | einde seizoen, direct bij afwijzing | `bewaar.gezondheid_mnd` (0) |
 | AI-invoertekst | 3 maanden | `bewaar.ai_invoer_mnd` |
 | Niet-voltooide aanmeldingen | 3 maanden | `bewaar.onvoltooid_mnd` |
@@ -811,7 +811,7 @@ logins voor dat account.
 Alles in deze tabel staat nu als veld op het tabblad Bewaren & opschonen, behalve wat "vast" is en
 `bewaar.loondocumenten_jaar`. Daar staan ook de schakelaars `documenten.download_melding` (mail
 aan het bestuur bij elke download van een loondocument, standaard aan) en `paginas.tracking`
-(bezoekersstatistiek van wervingspagina's en aanmeldformulier, standaard aan). Een AVG-verzoek
+(bezoekersstatistiek van landingspagina's en aanmeldformulier, standaard aan). Een AVG-verzoek
 (`includes/avg_wissen.php`) neemt ook de rijen van die persoon in `mail_queue` mee, net als
 selectiedag, trainingsweekend, beschikbaarheid, `portaal_apparaten` en het IP-adres in het
 bewijsspoor van ondertekeningen. Wat er gewist wordt (`avg_sollicitatie_leegmaken()`) en wat de
@@ -885,7 +885,7 @@ blijven geldig; noteer de nieuwe vingerafdruk (staat in het Logboek bij
    zegel (`zegel/`).
 3. **`includes/config.php`** van elke omgeving, met daarin de `KLUIS_SLEUTEL`. Bewaar die sleutel
    óók los in de wachtwoordkluis van het bestuur, niet in dezelfde back-up.
-4. **`uploads/`**: logo, ontwerpen van wervingspagina's en bijlagen van sjablonen. De
+4. **`uploads/`**: logo, ontwerpen van landingspagina's en bijlagen van sjablonen. De
    `.htaccess`-bestanden in `uploads/` en `uploads/branding/` staan in Git.
 
 De code zelf staat in Git en hoeft niet in de back-up.
@@ -1093,7 +1093,7 @@ back-up met hersteltest, incidentprocedure) volgen de zorgplicht als goede prakt
 - **Lettertype:** Instrument Sans staat zelf gehost in `assets/fonts/` (woff2, met de licentie
   `OFL.txt`, SIL Open Font License). Er gaat geen verzoek en dus geen IP-adres meer naar Google
   Fonts. Voeg geen externe lettertypen of stylesheets toe: de CSP blokkeert ze, en het zou een
-  nieuwe doorgifte zijn die in het verwerkingsregister en de privacyverklaring moet. Wervingspagina's hebben een eigen, strengere CSP met
+  nieuwe doorgifte zijn die in het verwerkingsregister en de privacyverklaring moet. Landingspagina's hebben een eigen, strengere CSP met
   `connect-src 'none'`. Logo en favicon in `uploads/branding/` krijgen via hun eigen `.htaccess`
   een CSP met `sandbox`.
 - **CSRF:** elk formulier en elke beheer-API met token.
@@ -1138,7 +1138,7 @@ back-up met hersteltest, incidentprocedure) volgen de zorgplicht als goede prakt
 - De AVG-opschoning heeft geen proefdraaistand in het beheer.
 - WhatsApp loopt via WhatsReach (geen officiële Meta-koppeling). Het bestuur kan het per
   meldingstype uitzetten; bij storing valt alles terug op e-mail.
-- "Halverwege weggegaan" in de trechter bij Wervingspagina's is een aanwijzing, geen telling:
+- "Halverwege weggegaan" in de trechter bij Landingspagina's is een aanwijzing, geen telling:
   het signaal komt van een tabblad dat naar de achtergrond gaat, en sommigen komen terug.
 - Het formulier bewaart tijdens het invullen wat iemand intypt in `sessionStorage` van de eigen
   browser, zodat de terugknop niet alles wist. Dat verdwijnt zodra het tabblad sluit en bij het

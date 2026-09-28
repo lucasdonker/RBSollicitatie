@@ -40,7 +40,7 @@ $_groep = (int)($_kand['groep_id'] ?? 0);
     <?= !empty($_kand['geslacht']) ? strtoupper(substr((string)$_kand['geslacht'], 0, 1)) : '' ?>
   </span>
   <?php if (!empty($_kand['is_lifeguard'])): ?>
-    <?= bh_badge('Lifeguard', 'blauw', ['titel' => 'Terugkerende lifeguard: wordt over de groepen verspreid']) ?>
+    <?= bh_badge('Strandwacht', 'blauw', ['titel' => 'Terugkerende strandwacht: wordt over de groepen verspreid']) ?>
   <?php endif; ?>
   <?php if ($_conflict): ?>
     <span class="bh-kandkaart-botst" title="Zit bij iemand die uit elkaar moet">

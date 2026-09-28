@@ -75,7 +75,7 @@ $_kop = function () use ($_wkn): string {
             $_lp ? ($_af ? 'afspraak vastgesteld ' . date('d-m-Y', strtotime((string)$_af['vastgesteld_op'])) . ', ' . ($_fn[$_af['functie_sleutel']] ?? $_af['functie_sleutel'])
                          : 'nog geen vastgestelde afspraak') : '',
             $_lp && $_actief ? 'planning = scenario "' . $_actief['naam'] . '"' : '',
-            $_slot ? 'vast na het TW-gesprek' : '',
+            $_slot ? 'vast na het gesprek op het trainingsweekend' : '',
             $_mag_corr ? 'klik een week van de opgave om te corrigeren' : '',
       ]))) ?>
     </span>

@@ -154,20 +154,20 @@ endif;
   <?php if ($buren['totaal'] > 1): ?>
     <span class="bh-kruimel-positie">
       <?= (int)$buren['positie'] ?> van <?= (int)$buren['totaal'] ?>
-      <?php if ($buren['omschrijving'] !== 'alle kandidaten'): ?>
+      <?php if (!in_array($buren['omschrijving'], ['alle sollicitanten', 'alle kandidaten'], true)): ?>
         in <?= h($buren['omschrijving']) ?>
       <?php endif; ?>
     </span>
     <span class="bh-kruimel-pijlen">
       <?php if ($buren['vorige']): ?>
         <a class="ds-btn ds-btn-secundair ds-btn-sm" href="<?= h(dossier_url((int)$buren['vorige'], $tab)) ?>"
-           rel="prev" aria-label="Vorige kandidaat">← Vorige</a>
+           rel="prev" aria-label="Vorige sollicitant">← Vorige</a>
       <?php else: ?>
         <span class="ds-btn ds-btn-zacht ds-btn-sm" aria-disabled="true">← Vorige</span>
       <?php endif; ?>
       <?php if ($buren['volgende']): ?>
         <a class="ds-btn ds-btn-secundair ds-btn-sm" href="<?= h(dossier_url((int)$buren['volgende'], $tab)) ?>"
-           rel="next" aria-label="Volgende kandidaat">Volgende →</a>
+           rel="next" aria-label="Volgende sollicitant">Volgende →</a>
       <?php else: ?>
         <span class="ds-btn ds-btn-zacht ds-btn-sm" aria-disabled="true">Volgende →</span>
       <?php endif; ?>

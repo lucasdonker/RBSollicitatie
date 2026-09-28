@@ -82,7 +82,7 @@ Elke stap heet in het systeem een **fase**. Zo loopt het, met wat er voor geld e
 | **Uitgenodigd selectiedag**, **Aangemeld selectiedag** | Het bestuur nodigt uit. De sollicitant vult het kennismakingsformulier in en kan vanaf nu de beschikbaarheid opgeven. | Wie beschikbaarheid opgeeft, verschijnt in de Loonplanning. |
 | **Selectiedag geweest** | Een dag met testen en beoordelingen. Het bestuur besluit wie door mag. | Wie afvalt, verdwijnt uit de Loonplanning. |
 | **Uitgenodigd trainingsweekend** | De uitnodiging vraagt de beschikbaarheid in te vullen en definitief te maken, uiterlijk 14 dagen vóór het weekend. | Nu vult de Loonplanning zich echt. Tijd om een eerste planning te maken. |
-| **TW geweest** (TW = trainingsweekend) | De sollicitant was op het weekend. Daar is een gesprek met het bestuur. | In het gesprek wordt de inzet afgesproken; die staat daarna vast. |
+| **Trainingsweekend geweest** | De sollicitant was op het weekend. Daar is een gesprek met het bestuur. | In het gesprek wordt de inzet afgesproken; die staat daarna vast. |
 | **Aangenomen** | Het bestuur neemt aan in het gesprek. De sollicitant krijgt het takenpakket in het portaal. | Er verschijnt een loondossier. Na het weekend wordt de loonplanning definitief. |
 | **Afgewezen**, **Afgehaakt** | Niet door, of zelf gestopt. | Verdwijnt uit de Loonplanning; kost niets. |
 
@@ -196,7 +196,7 @@ Kies **Inloggen via Authentik**. In het menu zie je:
   "2 loondossiers te verwerken" met de knop **Naar de loondossiers**, of "aangenomen zonder
   vastgestelde afspraak" met **Naar de loonplanning**. Ligt er niets, dan zie je wat het bestuur op
   dat moment doet.
-- **Sollicitanten** (in de groep Kandidaten): alleen lezen. Zo kun je een dossier openen en zien wie
+- **Sollicitanten** (in de groep Sollicitanten): alleen lezen. Zo kun je een dossier openen en zien wie
   iemand is, wat die opgaf en wat er is afgesproken.
 - **Loonplanning** (in de groep Inzet & loon): wie er wordt ingezet en wat dat kost. Zie
   [Loonplanning](#loonplanning).
@@ -402,7 +402,7 @@ sollicitant besproken is niet meer doordat iemand met een ander scenario speelt.
 je gewoon verder puzzelen. Bij **Afwijzen** wordt niets vastgezet.
 
 In de Loonplanning zie je dat aan het slotje en "vast na het gesprek". Klik je een week aan, dan staat
-er "Vast na het TW-gesprek: dit is met de sollicitant besproken." Aanpassen kan dan niet.
+er "Vast na het gesprek op het trainingsweekend: dit is met de sollicitant besproken." Aanpassen kan dan niet.
 
 Moet het toch anders, in een bijzondere situatie:
 
@@ -480,7 +480,7 @@ Op dat tabblad kiest het bestuur bovenaan het **Jaar**. Daaronder:
   dan alleen de kosten. Het budget hoort bij één jaar: een volgend jaar begint zonder budget.
 - **Vakantietoeslag & werkuren …** en het vaste weekbedrag van de postcommandant.
 - **Minimumlonen per leeftijd …**: bedragen per uur, zonder vakantietoeslag, voor juni en voor
-  juli tot en met september. Ernaast staat als voorbeeld het dagloon van een lifeguard.
+  juli tot en met september. Ernaast staat als voorbeeld het dagloon van de functie Lifeguard.
 
 **Een nieuw jaar.** Met **Nieuw jaar … op basis van …** kopieert het bestuur de tarieven,
 vakantietoeslag, werkuren en postcommandant van het laatste jaar; het budget niet. Daarna vult het
@@ -540,7 +540,7 @@ het bestuur. Een beheerder kan de rechten per rol aanpassen.
 
 ## Trainingsweekend en het gesprek
 
-**Waar:** menu › Kandidaten › **Trainingsweekend** (alleen bestuur, beheerder en begeleiders)  
+**Waar:** menu › Selectie › **Trainingsweekend** (alleen bestuur, beheerder en begeleiders)  
 **Wie:** het bestuur voert de gesprekken. Jij hebt standaard geen toegang tot dit scherm; het
 resultaat zie je in de Loonplanning, in het dossier en in Loondossiers.
 
@@ -557,7 +557,7 @@ Het scherm Trainingsweekend heeft zes stappen:
    beschikbaarheid, en de tablet voor het inchecken.
 2. **Groepen**: de groepsindeling.
 3. **Inchecken**: sollicitanten checken zelf in op een tablet. Wie is ingecheckt, gaat naar fase
-   **TW geweest**.
+   **Trainingsweekend geweest**.
 4. **Beoordelen**: begeleiders en bestuur noteren op hun telefoon wat hen opvalt.
 5. **Evaluatie**: het bestuur geeft per persoon een eerste indruk (sowieso aannemen, twijfel, sowieso
    afwijzen). Dat is nog geen besluit en er gaat niets de deur uit.
@@ -968,15 +968,15 @@ hebben weggehaald, of de module Loonplanning staat uit. Vraag de beheerder.
 | **Afspraak** | De vastgestelde inzet van een aangenomen strandwacht: functie, en per week dagen en betaald of niet. Ontstaat bij definitief maken. De basis voor loon en rooster. |
 | **Dagloon** | Wat één betaalde werkdag bruto kost, inclusief vakantietoeslag. |
 | **Definitief maken** | De planning omzetten in afspraken voor iedereen die is aangenomen. |
-| **Factor** | Vermenigvuldiger per functie op het minimumloon (bijvoorbeeld 1,20 voor een lifeguard). |
+| **Factor** | Vermenigvuldiger per functie op het minimumloon (bijvoorbeeld 1,20 voor de functie Lifeguard). |
 | **Fase** | De stap waarin een sollicitant zit, van Aangemeld tot Aangenomen of Afgewezen. |
 | **Loondossier** | Loonheffingsformulier, kopie identiteitsbewijs en kopie bankpas van één strandwacht. |
 | **Onbetaald** | Echte, afgesproken werkdagen zonder loon. Tellen mee voor bezetting en rooster. |
 | **Opgave** | Wat de sollicitant zelf opgaf over beschikbaarheid; per week hooguit zoveel dagen. |
 | **Scenario** | Een complete planning in de Loonplanning. Er kunnen er meerdere naast elkaar bestaan. |
-| **SD** | Afkorting voor selectiedag, zoals op sommige schermen staat. |
+| **SD** | Oude afkorting voor selectiedag; op de schermen staat nu het hele woord. |
 | **Tariefjaar** | Het kalenderjaar waarvan de minimumlonen en het budget komen: het jaar waarin de werkperiode begint. |
-| **TW** | Afkorting voor trainingsweekend, zoals in "TW geweest" en "Vast na het TW-gesprek". |
+| **TW** | Oude afkorting voor trainingsweekend; op de schermen staat nu het hele woord (of kort "weekend", zoals in "Weekend geweest"). |
 | **Vastzetten** | Na het gesprek op het trainingsweekend de inzet van één persoon in alle scenario's gelijk maken en op slot zetten. |
 | **Verzoek om minder dagen** | Vraag van een sollicitant om in bepaalde weken minder te werken; telt pas mee na goedkeuring door het bestuur. |
 | **Voorlopig / definitief** (beschikbaarheid) | Of de sollicitant de opgave al als zeker heeft bevestigd. Los van het definitief maken van de loonplanning. |

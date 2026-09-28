@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['sc_actie'])) {
         flash('fout', 'Dupliceren mislukt.');
     } elseif ($a === 'activeer') {
         loonplan_scenario_activeer($sid, $scenario_id);
-        flash('succes', 'Dit scenario is nu de actieve planning (die zie je ook in het TW-gesprek).');
+        flash('succes', 'Dit scenario is nu de actieve planning (die zie je ook in het gesprek op het trainingsweekend).');
     } elseif ($a === 'verwijder') {
         if (loonplan_scenario_verwijder($sid, $scenario_id)) { flash('succes', 'Scenario verwijderd.'); redirect(APP_URL . '/admin/loonplanning.php'); }
         flash('fout', 'Het laatste scenario kan niet worden verwijderd.');
@@ -61,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['sc_actie'])) {
     } elseif ($a === 'opgave' && $sol) {
         // Eén persoon: planning = wat hij of zij opgaf (overschrijft dit scenario voor die persoon).
         $n = loonplan_opgave_overnemen($scenario_id, $sol, $seizoen);
-        flash($n === null ? 'fout' : 'succes', $n === null ? 'Niet gedaan: deze persoon staat vast na het TW-gesprek.' : 'Opgave overgenomen: ' . $n . ' weken ingepland.');
+        flash($n === null ? 'fout' : 'succes', $n === null ? 'Niet gedaan: deze persoon staat vast na het gesprek op het trainingsweekend.' : 'Opgave overgenomen: ' . $n . ' weken ingepland.');
     } elseif ($a === 'opgave_alle') {
         // Iedereen die in dit scenario nog niets gepland heeft; wie al gepland is of vaststaat blijft zoals het is.
         $mensen = 0;
@@ -123,7 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_loon'])) {
     $sol = (int)($_POST['sol_id'] ?? 0);
     if (!$sid || !$scenario_id) { echo json_encode(['ok' => false, 'fout' => 'Geen scenario.']); exit; }
     if (loonplan_slot_in_scenario($scenario_id, $sol)) {
-        echo json_encode(['ok' => false, 'fout' => 'Staat vast na het TW-gesprek. Ontgrendel eerst (met een reden).']); exit;
+        echo json_encode(['ok' => false, 'fout' => 'Staat vast na het gesprek op het trainingsweekend. Ontgrendel eerst (met een reden).']); exit;
     }
     $wat = (string)($_POST['wat'] ?? 'cel');
     $gelukt = true;

@@ -157,7 +157,7 @@
     var vast = knop.dataset.vast;
     var st = $('[data-lp-slottekst]');
     if (st) {
-      st.textContent = vast ? 'Vastgezet op ' + vast + ', in alle scenario\'s.' : 'Nog niet vast. Na aannemen in het TW-gesprek gebeurt dit vanzelf.';
+      st.textContent = vast ? 'Vastgezet op ' + vast + ', in alle scenario\'s.' : 'Nog niet vast. Na aannemen in het gesprek op het trainingsweekend gebeurt dit vanzelf.';
       $('[data-lp-vastzetform]').hidden = !!vast;
       $('[data-lp-ontgrendelform]').hidden = !vast;
     }

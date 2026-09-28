@@ -35,7 +35,7 @@ function gepland_auto_setup(): void {
 function gepland_gebeurtenissen(): array {
     $uit = [
         'aangemeld'                 => 'Aanmelding (datum van aanmelden)',
-        'blk_ingediend'             => 'Formulier "Beter leren kennen" ingeleverd',
+        'blk_ingediend'             => 'Kennismakingsformulier ingeleverd',
         'beschikbaarheid_definitief'=> 'Beschikbaarheid definitief gemaakt',
         'selectiedag'               => 'Selectiedag (datum uit het seizoen)',
         'trainingsweekend'          => 'Trainingsweekend (startdatum uit het seizoen)',

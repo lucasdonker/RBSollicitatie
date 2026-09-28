@@ -61,7 +61,7 @@ function blk_veld_labels(): array {
         'opleiding'                      => 'Opleiding',
         'werkervaring'                   => 'Werkervaring',
         'diplomas'                       => "Diploma's",
-        'motivatie_lifeguard'            => 'Motivatie lifeguard',
+        'motivatie_lifeguard'            => 'Motivatie strandwacht',
         'motivatie_strand'               => 'Strand motivatie',
         'beschikbaarheid_intentie'       => 'Beschikbaarheid',
         'beschikbaarheid_uitzonderingen' => 'Uitzonderingen',

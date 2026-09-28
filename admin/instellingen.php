@@ -986,7 +986,7 @@ require __DIR__ . '/layout_top.php';
             <label>
               <input type="hidden" name="inst[auto.ondertekening_sd]" value="0">
               <input type="checkbox" name="inst[auto.ondertekening_sd]" value="1" <?= instelling('auto.ondertekening_sd', '1') === '1' ? 'checked' : '' ?>>
-              Ondertekeningen bij SD-uitnodiging
+              Ondertekeningen bij uitnodiging selectiedag
             </label>
             <div class="ds-veld-hint">18+: gezondheid + intake als portaal-taak. Minderjarig: ouder krijgt automatisch mail zodra sollicitant ouder-gegevens invult.</div>
           </div>
@@ -1184,7 +1184,7 @@ require __DIR__ . '/layout_top.php';
           <label class="bh-inst-vinkregel">
             <input type="hidden" name="inst[ai.auto_analyse]" value="0">
             <input type="checkbox" name="inst[ai.auto_analyse]" value="1" <?= instelling('ai.auto_analyse', '1') === '1' ? 'checked' : '' ?>>
-            <span>Automatisch analyseren na ontvangst BLK</span>
+            <span>Automatisch analyseren na ontvangst kennismakingsformulier</span>
           </label>
           <div class="ds-veld-hint">Uit = alleen handmatig, met de knop "Analyseer nu" bij het volledige formulier.</div>
         </div>
@@ -1578,7 +1578,7 @@ require __DIR__ . '/layout_top.php';
       </div>
       <div class="bh-veldrij">
         <div class="ds-veld">
-          <label>Oud-lifeguards, in jaren <?= bh_tip('Gerekend vanaf het einde van het laatste seizoen waarin iemand werkte. Daarna worden formulier, beschikbaarheid, notities, foto en documenten gewist. Loonheffing en kopie ID blijven staan tot de penningmeester ze op Loondossiers vernietigt; pas daarna wordt ook de naam geanonimiseerd. De AP gaat voor een personeelsdossier uit van 2 jaar.') ?></label>
+          <label>Oud-strandwachten, in jaren <?= bh_tip('Gerekend vanaf het einde van het laatste seizoen waarin iemand werkte. Daarna worden formulier, beschikbaarheid, notities, foto en documenten gewist. Loonheffing en kopie ID blijven staan tot de penningmeester ze op Loondossiers vernietigt; pas daarna wordt ook de naam geanonimiseerd. De AP gaat voor een personeelsdossier uit van 2 jaar.') ?></label>
           <input type="number" name="inst[bewaar.aangenomen_jaar]" value="<?= instelling_int('bewaar.aangenomen_jaar',2) ?>" min="0" max="10">
           <div class="ds-veld-hint">Na het laatste seizoen. De privacyverklaring noemt dit getal.</div>
         </div>
@@ -1619,7 +1619,7 @@ require __DIR__ . '/layout_top.php';
       </div>
       <div class="bh-veldrij">
         <div class="ds-veld">
-          <label>Bezoekersstatistiek wervingspagina's <?= bh_tip('Aantallen bezoeken en aanmeldingen per wervingspagina. Bevat geen persoonsgegevens.') ?></label>
+          <label>Bezoekersstatistiek landingspagina's <?= bh_tip('Aantallen bezoeken en aanmeldingen per landingspagina. Bevat geen persoonsgegevens.') ?></label>
           <input type="number" name="inst[bewaar.pagina_events_mnd]" value="<?= instelling_int('bewaar.pagina_events_mnd',13) ?>" min="0" max="60">
           <div class="ds-veld-hint">Daarna verwijderen (0 = bewaren)</div>
         </div>
@@ -1664,7 +1664,7 @@ require __DIR__ . '/layout_top.php';
         <label for="inst-privacy-url">Adres van de privacyverklaring</label>
         <input type="text" id="inst-privacy-url" name="inst[privacy.url]" value="<?= h(instelling('privacy.url', '')) ?>"
                placeholder="<?= h(APP_URL . '/privacy.php') ?>" class="bh-inst-urlveld" inputmode="url" aria-describedby="inst-privacy-url-hint">
-        <div class="ds-veld-hint" id="inst-privacy-url-hint">Leeg = de verklaring in dit systeem, die de termijnen hierboven automatisch noemt. Vul alleen een ander adres in (https, of een pad dat met / begint) als de verklaring op de website staat; die moet je dan zelf bijhouden. Het aanmeldformulier, de wervingspagina's en de WordPress-plugin linken hiernaar.</div>
+        <div class="ds-veld-hint" id="inst-privacy-url-hint">Leeg = de verklaring in dit systeem, die de termijnen hierboven automatisch noemt. Vul alleen een ander adres in (https, of een pad dat met / begint) als de verklaring op de website staat; die moet je dan zelf bijhouden. Het aanmeldformulier, de landingspagina's en de WordPress-plugin linken hiernaar.</div>
       </div>
 
       <h3>Meldingen en statistiek</h3>
@@ -1680,7 +1680,7 @@ require __DIR__ . '/layout_top.php';
         <label class="checkbox-label">
           <input type="hidden" name="inst[paginas.tracking]" value="0">
           <input type="checkbox" name="inst[paginas.tracking]" value="1" <?= instelling_bool('paginas.tracking', true) ? 'checked' : '' ?> aria-describedby="inst-tracking-hint">
-          Bezoekersstatistiek op de wervingspagina's en het aanmeldformulier
+          Bezoekersstatistiek op de landingspagina's en het aanmeldformulier
         </label>
         <div class="ds-veld-hint" id="inst-tracking-hint">Telt bezoeken en bij welke stap mensen afhaken, zonder cookies en zonder persoonsgegevens. Uit = er wordt niets meer geteld; wat al geteld is blijft volgens de termijn hierboven.</div>
       </div>

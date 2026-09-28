@@ -432,7 +432,7 @@ function dashboard_meldingen(int $sid): array {
         $q->execute([$sid]);
         $n = (int)$q->fetchColumn();
         if ($n > 0) $m[] = ['type'=>'info', 'aantal'=>$n,
-            'tekst'=> $n === 1 ? '1 kandidaat heeft het formulier ingevuld en wacht op beoordeling' : "$n kandidaten hebben hun formulier ingevuld en wachten op beoordeling",
+            'tekst'=> $n === 1 ? '1 sollicitant heeft het formulier ingevuld en wacht op beoordeling' : "$n sollicitanten hebben hun formulier ingevuld en wachten op beoordeling",
             'link'=> APP_URL.'/admin/sollicitanten.php?fase=aangemeld'];
     } catch (\Exception $e) {}
 
