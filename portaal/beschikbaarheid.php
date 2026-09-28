@@ -57,7 +57,7 @@ $deadline = function_exists('beschikbaarheid2_deadline') ? beschikbaarheid2_dead
 $dgn_tot = $deadline ? (int)floor(($deadline->getTimestamp() - strtotime('today')) / 86400) : null;
 
 $logo = function_exists('site_logo_url') ? (site_logo_url() ?: '') : '';
-$dagnamen = ['',' maandag','dinsdag','woensdag','donderdag','vrijdag','zaterdag','zondag'];
+$dagnamen = dagen_nl();
 $portaal_titel = 'Mijn beschikbaarheid';
 $portaal_nav = 'start';
 $portaal_terug = portaal_terug_url();

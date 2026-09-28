@@ -67,7 +67,7 @@ $_functies = functies_ophalen();
   </table>
   <p class="bh-meta" data-af-totaal>
     <?= (int)($_m['totaal_dagen'] ?? 0) ?> dagen<?= !empty($_m['dagen_onbetaald']) ? ', waarvan ' . (int)$_m['dagen_onbetaald'] . ' onbetaald' : '' ?>
-    · € <?= number_format((float)($_m['totaal_kosten'] ?? 0), 0, ',', '.') ?> bruto
+    · <?= h(euro((float)($_m['totaal_kosten'] ?? 0))) ?> bruto
   </p>
 </section>
 <script src="<?= APP_URL ?>/assets/js/afspraak.js?v=<?= @filemtime(__DIR__ . '/../assets/js/afspraak.js') ?>" defer></script>

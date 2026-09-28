@@ -13,7 +13,7 @@ if (!isset($sol)) { return; }
 $b2  = $b2 ?? (function_exists('beschikbaarheid2_van') ? beschikbaarheid2_van($sol['id']) : ['profiel'=>null,'blokken'=>[],'afwezig'=>[],'verzoeken'=>[]]);
 $b2p = $b2['profiel'] ?? null;
 $losse_dagen = function_exists('beschikbaarheid_dagen') ? beschikbaarheid_dagen($sol['id']) : [];
-$dag_namen = [1=>'ma',2=>'di',3=>'wo',4=>'do',5=>'vr',6=>'za',7=>'zo'];
+$dag_namen = dagen_kort_nl();
 $ico = function($naam, $g=18) { return function_exists('icoon') ? icoon($naam, $g) : ''; };
 
 // Opgeslagen data → gedeeld JS-formaat (zelfde vorm als het concept en het AI-voorstel)

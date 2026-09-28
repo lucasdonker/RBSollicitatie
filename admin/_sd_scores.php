@@ -25,7 +25,7 @@ $_per_test = bh_dossier_score_per_test($scs_dossier);
         <span class="bh-scorebalk-spoor">
           <span class="bh-scorebalk-vul" style="--w: <?= (int)round(((float)$_sd['gem']) / 5 * 100) ?>%"></span>
         </span>
-        <span class="bh-scorebalk-getal bh-num"><?= h(number_format((float)$_sd['gem'], 1, ',', '')) ?></span>
+        <span class="bh-scorebalk-getal bh-num"><?= h(cijfer_nl((float)$_sd['gem'])) ?></span>
       </div>
       <?php if (count($_sd['allen']) > 1): ?>
         <div class="bh-scorebalk-wie">

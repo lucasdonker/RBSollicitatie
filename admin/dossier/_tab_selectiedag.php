@@ -54,7 +54,7 @@ if (!$_scores && !$_obs && !$_lgf) {
     <?php if ($_gem !== null): ?>
     <section class="ds-kaart ds-kaart-p">
       <div class="bh-kaartkop"><h2>Totaal</h2></div>
-      <p class="bh-grootgetal bh-num"><?= h(number_format($_gem, 1, ',', '')) ?></p>
+      <p class="bh-grootgetal bh-num"><?= h(cijfer_nl((float)$_gem)) ?></p>
       <span class="bh-meta">gemiddelde over alle criteria</span>
     </section>
     <?php endif; ?>

@@ -17,7 +17,7 @@ function export_beschikbaarheid_tekst(int $sol_id): string {
     $b = beschikbaarheid2_van($sol_id);
     $delen = [];
 
-    $dag_nl = [1=>'ma',2=>'di',3=>'wo',4=>'do',5=>'vr',6=>'za',7=>'zo'];
+    $dag_nl = dagen_kort_nl();
 
     // Werkperiodes
     foreach ($b['blokken'] as $blok) {

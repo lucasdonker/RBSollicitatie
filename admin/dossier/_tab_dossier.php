@@ -107,7 +107,7 @@ if ($_iv) {
               <span class="bh-scorebalk-spoor">
                 <span class="bh-scorebalk-vul" style="--w: <?= (int)round($_sc / 5 * 100) ?>%"></span>
               </span>
-              <span class="bh-scorebalk-getal bh-num"><?= h(number_format($_sc, 1, ',', '')) ?></span>
+              <span class="bh-scorebalk-getal bh-num"><?= h(cijfer_nl((float)$_sc)) ?></span>
             </div>
           <?php endforeach; ?>
         </div>

@@ -313,16 +313,16 @@ function bh_dossier_advies(array $dossier): ?array {
 
     if ($score >= $drempel) {
         $stand = 'door';  $label = 'Door';    $kleur = 'groen';
-        $reden = 'Score ' . number_format($score, 1, ',', '') . ' ligt boven de drempel van '
-               . number_format($drempel, 1, ',', '') . '.';
+        $reden = 'Score ' . cijfer_nl((float)$score) . ' ligt boven de drempel van '
+               . cijfer_nl((float)$drempel) . '.';
     } elseif ($score >= $twijfel) {
         $stand = 'twijfel'; $label = 'Twijfel'; $kleur = 'oranje';
-        $reden = 'Score ' . number_format($score, 1, ',', '') . ' ligt net onder de drempel van '
-               . number_format($drempel, 1, ',', '') . '. Bespreek deze kandidaat.';
+        $reden = 'Score ' . cijfer_nl((float)$score) . ' ligt net onder de drempel van '
+               . cijfer_nl((float)$drempel) . '. Bespreek deze kandidaat.';
     } else {
         $stand = 'niet'; $label = 'Niet';   $kleur = 'rood';
-        $reden = 'Score ' . number_format($score, 1, ',', '') . ' ligt onder de drempel van '
-               . number_format($drempel, 1, ',', '') . '.';
+        $reden = 'Score ' . cijfer_nl((float)$score) . ' ligt onder de drempel van '
+               . cijfer_nl((float)$drempel) . '.';
     }
     return ['stand' => $stand, 'label' => $label, 'kleur' => $kleur, 'reden' => $reden];
 }

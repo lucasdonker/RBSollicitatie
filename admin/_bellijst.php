@@ -113,7 +113,7 @@ foreach ($bel_lijst as $_k) if ((int)$_k['sol_id'] === $_open) $_huidig = $_k;
               </a>
             </td>
             <td data-label="Score" class="bh-rechts bh-num">
-              <?= $_gem !== null ? h(number_format($_gem, 1, ',', '')) : '—' ?>
+              <?= h(cijfer_nl($_gem)) ?>
             </td>
             <td data-label="Besluit">
               <?= bh_badge(ucfirst((string)($_b['besluit'] ?? '')), $_besluit_kleur[$_b['besluit'] ?? ''] ?? 'grijs') ?>

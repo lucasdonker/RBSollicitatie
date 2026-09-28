@@ -101,9 +101,8 @@ if (function_exists('beschikbaarheid_dagen')) {
     }
 }
 
-$dagen_nl   = [1=>'ma',2=>'di',3=>'wo',4=>'do',5=>'vr',6=>'za',7=>'zo'];
-$maanden_nl = [1=>'januari',2=>'februari',3=>'maart',4=>'april',5=>'mei',6=>'juni',
-               7=>'juli',8=>'augustus',9=>'september',10=>'oktober',11=>'november',12=>'december'];
+$dagen_nl   = dagen_kort_nl();
+$maanden_nl = maanden_nl();
 
 require __DIR__ . '/layout_top.php';
 ?>

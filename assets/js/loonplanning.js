@@ -18,7 +18,8 @@
 
   function $(sel) { return paneel.querySelector(sel); }
   function fout(t) { if (window.bhToast) window.bhToast(t, 'fout'); }
-  function geld(n) { return '€ ' + Number(n).toLocaleString('nl-NL', { maximumFractionDigits: 0 }); }
+  // Zelfde notatie als euro() in includes/opmaak.php: euroteken + vaste spatie.
+  function geld(n) { return '€ ' + Number(n).toLocaleString('nl-NL', { maximumFractionDigits: 0 }); }
   function initialen(naam) { return naam.split(' ').filter(Boolean).map(function (d) { return d[0]; }).slice(0, 2).join('').toUpperCase(); }
   function persoonKnop(sol) { return raster.querySelector('[data-lp-persoon="' + sol + '"]'); }
   function isVast(sol) { var k = persoonKnop(sol); return !!(k && k.dataset.vast); }

@@ -73,7 +73,7 @@ require __DIR__ . '/../_filterbalk.php';
           </th>
           <td class="bh-raster-wkn bh-lp-tot" data-lp-tot="<?= (int)$_sol ?>">
             <strong><?= (int)$_m['totaal_dagen'] ?> d</strong>
-            <span>€ <?= number_format((float)$_m['totaal_kosten'], 0, ',', '.') ?></span>
+            <span><?= h(euro((float)$_m['totaal_kosten'])) ?></span>
           </td>
           <?php foreach ($weken as $_wn => $_w):
             $_cw = $_m['weken'][$_wn] ?? ['opgenomen' => 0, 'dagen' => 0, 'betaald' => 1, 'max' => 0];

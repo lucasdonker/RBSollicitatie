@@ -234,7 +234,7 @@ require __DIR__ . '/layout_top.php';
       </span>
       <?php if ($_gem !== null): ?>
         <span class="bh-nb-score">
-          <span class="bh-num"><?= h(number_format($_gem, 1, ',', '')) ?></span>
+          <span class="bh-num"><?= h(cijfer_nl((float)$_gem)) ?></span>
           <span class="bh-meta">gemiddeld</span>
         </span>
       <?php endif; ?>
@@ -276,7 +276,7 @@ require __DIR__ . '/layout_top.php';
                 <span class="bh-scorebalk-spoor">
                   <span class="bh-scorebalk-vul" style="--w: <?= (int)round($_tg / 5 * 100) ?>%"></span>
                 </span>
-                <span class="bh-scorebalk-getal bh-num"><?= h(number_format($_tg, 1, ',', '')) ?></span>
+                <span class="bh-scorebalk-getal bh-num"><?= h(cijfer_nl((float)$_tg)) ?></span>
               </div>
             <?php endforeach; ?>
           </div>

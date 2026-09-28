@@ -66,12 +66,7 @@ if ($_f = get_flash()) { if ($_f['type'] === 'succes') $succes = (string)$_f['ms
 $docs   = documenten_van($sol_id);
 $klaar  = documenten_taak_klaar($sol_id, $taak_slug, $docs);
 $id_type = (string)($docs['id_voor']['extra'] ?? '');
-$maanden = ['januari', 'februari', 'maart', 'april', 'mei', 'juni', 'juli', 'augustus', 'september', 'oktober', 'november', 'december'];
-$wanneer = function (?string $dt) use ($maanden): string {
-    if (!$dt) return '';
-    $t = strtotime($dt);
-    return date('j', $t) . ' ' . $maanden[(int)date('n', $t) - 1] . ' om ' . date('H:i', $t);
-};
+$wanneer = fn(?string $dt): string => $dt ? datum_lang_nl($dt, false, false) . ' om ' . date('H:i', strtotime($dt)) : '';
 $grootte = fn(int $b): string => $b >= 1048576 ? round($b / 1048576, 1) . ' MB' : max(1, (int)round($b / 1024)) . ' kB';
 $terug_url = portaal_terug_url();
 

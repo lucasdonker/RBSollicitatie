@@ -365,8 +365,7 @@ $aan = fn(string $k, string $waarde = '1'): string => ($na_fout && (string)($_PO
 $sel = fn(string $k, string $waarde): string => ($na_fout && (string)($_POST[$k] ?? '') === $waarde) ? ' selected' : '';
 $u   = $is_ouder; // aanspreekvorm: ouder = u, sollicitant = je
 $ondertekend_op = $is_ondertekend ? strtotime($rec['ondertekend_op']) : null;
-$maanden = ['januari', 'februari', 'maart', 'april', 'mei', 'juni', 'juli', 'augustus', 'september', 'oktober', 'november', 'december'];
-$ondertekend_tekst = $ondertekend_op ? 'Ondertekend ' . date('j', $ondertekend_op) . ' ' . $maanden[(int)date('n', $ondertekend_op) - 1] . ' om ' . date('H:i', $ondertekend_op) : '';
+$ondertekend_tekst = $ondertekend_op ? 'Ondertekend ' . datum_lang_nl(date('Y-m-d', $ondertekend_op), false, false) . ' om ' . date('H:i', $ondertekend_op) : '';
 
 $portaal_titel = $titel_kort;
 if ($eigen_ingelogd) {

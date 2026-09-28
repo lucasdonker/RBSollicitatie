@@ -621,36 +621,8 @@ function seizoen_op_id(int $id): ?array {
 function h(string $s): string { return htmlspecialchars($s, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); }
 function redirect(string $url): never { header('Location: ' . $url); exit; }
 
-/** De Nederlandse maandafkortingen, 1-gebaseerd. Eén bron: DateTime::format('M') is Engels. */
-function maanden_kort_nl(): array {
-    return [1=>'jan',2=>'feb',3=>'mrt',4=>'apr',5=>'mei',6=>'jun',7=>'jul',8=>'aug',9=>'sep',10=>'okt',11=>'nov',12=>'dec'];
-}
-
-function datum_nl(?string $d): string {
-    if (!$d) return '—';
-    try { $dt = new DateTime($d); return $dt->format('j') . ' ' . maanden_kort_nl()[(int)$dt->format('n')] . ' ' . $dt->format('Y'); }
-    catch (Exception $e) { return $d; }
-}
-
-/**
- * "22 jun" — dag en maand zonder jaartal, voor weekranges en rasterkoppen.
- * Neemt een DateTime of een datumstring; format('j M') gaf hier overal "22 Jun".
- */
-function datum_kort_nl($d): string {
-    if (!$d) return '';
-    try { $dt = $d instanceof DateTimeInterface ? $d : new DateTime((string)$d); }
-    catch (Exception $e) { return (string)$d; }
-    return $dt->format('j') . ' ' . maanden_kort_nl()[(int)$dt->format('n')];
-}
-
-/** "zaterdag 3 mei" — weekdag, dag en maand, voor koppen per dag (observaties van het weekend). */
-function datum_dag_nl($d): string {
-    if (!$d) return '';
-    try { $dt = $d instanceof DateTimeInterface ? $d : new DateTime((string)$d); }
-    catch (Exception $e) { return (string)$d; }
-    $dagen = ['', 'maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag', 'zondag'];
-    return $dagen[(int)$dt->format('N')] . ' ' . datum_kort_nl($dt);
-}
+// Datums, maand- en dagnamen, bedragen en cijfers: includes/opmaak.php (één bron).
+require_once __DIR__ . '/opmaak.php';
 
 function volledige_naam(array $p): string {
     return implode(' ', array_filter([$p['voornaam'] ?? '', $p['tussenvoegsel'] ?? '', $p['achternaam'] ?? '']));

@@ -6,6 +6,7 @@
  * index.php, taken.php, berichten.php én _kop.php/_voet.php dezelfde bron gebruiken.
  * Geen HTML hier; alleen data en teksten.
  */
+require_once __DIR__ . '/opmaak.php';   // datum_lang_nl() e.d.
 
 if (!function_exists('portaal_sollicitant_laden')) {
 
@@ -360,19 +361,12 @@ function portaal_contact_email(): string {
 
 /** "2026-04-11" → "Zaterdag 11 april" (zonder jaar; ontwerp-notatie). */
 function portaal_datum_lang(?string $d): string {
-    if (!$d) return '';
-    try { $dt = new DateTime($d); } catch (\Exception $e) { return $d; }
-    $dagen   = ['Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag', 'Zondag'];
-    $maanden = ['januari', 'februari', 'maart', 'april', 'mei', 'juni', 'juli', 'augustus', 'september', 'oktober', 'november', 'december'];
-    return $dagen[(int)$dt->format('N') - 1] . ' ' . $dt->format('j') . ' ' . $maanden[(int)$dt->format('n') - 1];
+    return ucfirst(datum_lang_nl($d, true, false));
 }
 
 /** "2026-04-11" → "11 april" (kort, zonder jaar). */
 function portaal_datum_kort(?string $d): string {
-    if (!$d) return '';
-    try { $dt = new DateTime($d); } catch (\Exception $e) { return $d; }
-    $maanden = ['januari', 'februari', 'maart', 'april', 'mei', 'juni', 'juli', 'augustus', 'september', 'oktober', 'november', 'december'];
-    return $dt->format('j') . ' ' . $maanden[(int)$dt->format('n') - 1];
+    return datum_lang_nl($d, false, false);
 }
 
 /** "08:45:00" → "08:45". Leeg blijft leeg. */

@@ -39,7 +39,7 @@
         rij.classList.toggle('ingepland', !!w.opgenomen);
       });
       blok.querySelector('[data-af-totaal]').textContent = d.dagen + ' dagen' + (d.onbetaald ? ', waarvan ' + d.onbetaald + ' onbetaald' : '')
-        + ' · € ' + Number(d.kosten).toLocaleString('nl-NL', { maximumFractionDigits: 0 }) + ' bruto';
+        + ' · € ' + Number(d.kosten).toLocaleString('nl-NL', { maximumFractionDigits: 0 }) + ' bruto';
     }
 
     function post(velden) {

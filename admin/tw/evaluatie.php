@@ -64,7 +64,7 @@ $_kleur = ['aannemen' => 'groen', 'twijfel' => 'oranje', 'afwijzen' => 'rood'];
         <span class="bh-twgesprek-naam"><?= h((string)$_k['naam']) ?></span>
         <?= bh_meta([tw_aanwezigheid_tekst($_k),
                      count($_obs[$_id] ?? []) ? $_pos . ' positief · ' . $_aan . ' aandacht' : 'nog geen observaties',
-                     $_gem !== null ? 'selectiedag ' . number_format($_gem, 1, ',', '') : '',
+                     $_gem !== null ? 'selectiedag ' . cijfer_nl((float)$_gem) : '',
                      !empty($_lgf[$_id]) ? count($_lgf[$_id]) . ' van lifeguards' : '',
                      !empty($_k['is_lifeguard']) ? 'terugkerende lifeguard' : '']) ?>
         <?php if ($_e !== '' && !empty($_k['evaluatie_door'])): ?>

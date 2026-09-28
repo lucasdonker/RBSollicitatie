@@ -42,7 +42,7 @@ $_tarief = $analyse['tarieven'] ?? loonplan_tarief_info($seizoen);
   <div class="bh-lp-stand">
     <div class="bh-lp-getal">
       <span class="bh-veldlabel">Loonkosten</span>
-      <strong data-lp="kosten">€ <?= number_format((float)$_tot['kosten'], 0, ',', '.') ?></strong>
+      <strong data-lp="kosten"><?= h(euro((float)$_tot['kosten'])) ?></strong>
     </div>
     <div class="bh-lp-getal">
       <span class="bh-veldlabel">Werkdagen</span>
@@ -51,11 +51,11 @@ $_tarief = $analyse['tarieven'] ?? loonplan_tarief_info($seizoen);
     </div>
     <div class="bh-lp-budget">
       <?php if ($_budget > 0): ?>
-        <span class="bh-veldlabel">Budget € <?= number_format($_budget, 0, ',', '.') ?></span>
+        <span class="bh-veldlabel">Budget <?= h(euro((float)$_budget)) ?></span>
         <span class="bh-lp-budgetbalk"><span class="bh-lp-budgetvul ds-fase-<?= ['goed' => 'groen', 'krap' => 'oranje', 'slecht' => 'rood'][$_stand] ?>" data-lp="budgetvul" style="--w: <?= $_pct ?>%"></span></span>
         <span data-lp="budgetzin"><?= bh_stoplicht($_stand, !empty($_tot['over_budget'])
-            ? 'Over budget: € ' . number_format(abs((float)$_tot['restant']), 0, ',', '.')
-            : 'Nog € ' . number_format((float)$_tot['restant'], 0, ',', '.') . ' over') ?></span>
+            ? 'Over budget: ' . euro(abs((float)$_tot['restant']))
+            : 'Nog ' . euro((float)$_tot['restant']) . ' over') ?></span>
       <?php else: ?>
         <span class="bh-meta">Geen budget ingesteld voor <?= $_tarief['jaar'] ?><?= mag('instellingen', 'bewerken') ? ' — <a href="' . APP_URL . '/admin/instellingen.php?tab=loon&amp;jaar=' . $_tarief['jaar'] . '">instellen</a>' : '' ?>.</span>
       <?php endif; ?>

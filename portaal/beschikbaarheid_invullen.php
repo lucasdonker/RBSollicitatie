@@ -26,7 +26,7 @@ if (!$week_start || !$week_eind) {
 $dag  = new DateTime($week_start);
 $eind = new DateTime($week_eind);
 while ($dag->format('N') != 1) $dag->modify('+1 day'); // naar maandag
-$mnd_nl = [1=>'jan',2=>'feb',3=>'mrt',4=>'apr',5=>'mei',6=>'jun',7=>'jul',8=>'aug',9=>'sep',10=>'okt',11=>'nov',12=>'dec'];
+$mnd_nl = maanden_kort_nl();
 while ($dag <= $eind) {
     $wk = (int)$dag->format('W');
     $alle_weken[] = [
@@ -214,7 +214,7 @@ require __DIR__ . '/_kop.php';
   // Weeklabels voor de dropdowns ("W27 · 29 jun") en de datumrange per week voor de subregel
   // van de periode-kaart ("29 juni t/m 9 augustus · 6 weken"), direct uit $alle_weken.
   $week_labels = []; $week_datums = [];
-  $mnd_lang = [1=>'januari',2=>'februari',3=>'maart',4=>'april',5=>'mei',6=>'juni',7=>'juli',8=>'augustus',9=>'september',10=>'oktober',11=>'november',12=>'december'];
+  $mnd_lang = maanden_nl();
   foreach ($alle_weken as $w) {
       $delen = explode('–', (string)($w['periode'] ?? ''));
       $week_labels[$w['week']] = 'W' . $w['week'] . ' · ' . trim($delen[0]);

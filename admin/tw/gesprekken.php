@@ -76,7 +76,7 @@ $_te_spreken = count($_alle) - $_tel['niet_gekomen'];
       <span class="bh-twgesprek-wie">
         <span class="bh-twgesprek-naam"><?= h((string)$_k['naam']) ?></span>
         <?= bh_meta([$_k['leeftijd'] !== null ? $_k['leeftijd'] . ' jaar' : '',
-                     $_k['_sd'] !== null ? 'selectiedag ' . number_format($_k['_sd'], 1, ',', '') : '',
+                     $_k['_sd'] !== null ? 'selectiedag ' . cijfer_nl((float)$_k['_sd']) : '',
                      tw_aanwezigheid_tekst($_k),
                      $_groep !== 'gehad' && !empty($_k['evaluatie']) ? 'indruk: ' . mb_strtolower(tw_evaluatie_standen()[$_k['evaluatie']] ?? '') : '',
                      $_groep === 'bezig' ? 'bezig door ' . evenement_claim_naam((int)$_k['gesprek_door'])

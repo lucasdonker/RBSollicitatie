@@ -23,8 +23,8 @@ $_lt_jaar = (int)$_lt_info['jaar'];
         <tr>
           <th scope="row"><?= $_l ?> jr</th>
           <?php foreach ($functies as $_f): ?>
-            <td>€ <?= number_format(bereken_dagloon($_l, $_f['sleutel'], 'jun', null, $_lt_jaar), 2, ',', '.') ?></td>
-            <td>€ <?= number_format(bereken_dagloon($_l, $_f['sleutel'], 'jul_sep', null, $_lt_jaar), 2, ',', '.') ?></td>
+            <td><?= h(euro(bereken_dagloon($_l, $_f['sleutel'], 'jun', null, $_lt_jaar), 2)) ?></td>
+            <td><?= h(euro(bereken_dagloon($_l, $_f['sleutel'], 'jul_sep', null, $_lt_jaar), 2)) ?></td>
           <?php endforeach; ?>
         </tr>
         <?php endfor; ?>

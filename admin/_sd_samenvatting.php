@@ -24,7 +24,7 @@ $_bsl_label = ['door' => 'Door', 'twijfel' => 'Twijfel', 'niet' => 'Niet door'][
   <summary>
     Selectiedag
     <span class="bh-meta"><?= h(implode(' · ', array_filter([
-        $_gem !== null ? 'gemiddeld ' . number_format($_gem, 1, ',', '') : '',
+        $_gem !== null ? 'gemiddeld ' . cijfer_nl((float)$_gem) : '',
         $_bsl_label ? 'besluit: ' . mb_strtolower($_bsl_label) : '',
         $_obs ? count($_obs) . ' ' . (count($_obs) === 1 ? 'observatie' : 'observaties') : '',
     ]))) ?></span>

@@ -10,6 +10,7 @@
  * Wat hier uitkomt is HTML (al ge-escaped) voor op de plek van een markering. De markeringen zelf
  * en het vervangen staan in render.php (pag_placeholders).
  */
+require_once __DIR__ . '/../opmaak.php';   // euro(), datums
 
 if (!function_exists('pag_werving_gegevens')) {
 
@@ -25,7 +26,7 @@ function pag_nog_onbekend(): string {
 
 /** "€ 4,97" met een vaste spatie (breekt nooit af tussen teken en bedrag). */
 function pag_euro(float $v): string {
-    return "€\u{00A0}" . number_format($v, 2, ',', '.');
+    return euro($v, 2);   // includes/opmaak.php: één notatie voor het hele systeem
 }
 
 /**

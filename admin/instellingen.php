@@ -718,7 +718,7 @@ require __DIR__ . '/layout_top.php';
       </div>
       <div class="bh-functie-voorbeeld">
         Voorbeeldberekening 20 jaar, juni <?= $loon_jaar_nu ?>:
-        <strong>€<?= number_format(bereken_dagloon(20, (string)$f['sleutel'], 'jun', null, $loon_jaar_nu), 2, ',', '.') ?>/dag</strong>
+        <strong><?= h(euro(bereken_dagloon(20, (string)$f['sleutel'], 'jun', null, $loon_jaar_nu), 2)) ?>/dag</strong>
         <?= $f['sleutel'] === 'postcommandant' ? '(vast weekbedrag ÷ 5)'
             : h('(uurloon × ' . loon_getal($loon_nu['uren_per_dag']) . ' × ' . loon_getal((float)$f['factor']) . ' × ' . loon_getal(1 + $loon_nu['vt_percentage'] / 100) . ')') ?>
       </div>
@@ -885,7 +885,7 @@ require __DIR__ . '/layout_top.php';
                 </span>
               </td>
               <td class="bh-meta" id="prev-<?= $periode ?>-<?= $l ?>">
-                <?= $dagl ? '€'.number_format($dagl,2,',','.') : '—' ?>
+                <?= $dagl ? h(euro((float)$dagl, 2)) : '—' ?>
               </td>
             </tr>
             <?php endforeach; ?>
