@@ -668,7 +668,7 @@ span.bh-incheck-code {
 .bh-ick-letop { display: block; margin-top: 4px; }
 .bh-ick-knoppen { display: flex; gap: 8px; flex: none; }
 .bh-ick-knoppen button { min-height: 50px; border-radius: 11px; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
-.bh-ick-aanwezig { background: #1f7a3d; border: 1px solid #1f7a3d; color: #fff; padding: 0 26px; }
+.bh-ick-aanwezig { background: var(--ok); border: 1px solid var(--ok); color: #fff; padding: 0 26px; }
 .bh-ick-niet, .bh-ick-ongedaan { background: var(--surface); border: 1px solid var(--border); color: var(--ink-soft); padding: 0 18px; }
 .bh-ick-rij[data-stand="verwacht"] .bh-ick-ongedaan,
 .bh-ick-rij[data-stand="aanwezig"] .bh-ick-aanwezig, .bh-ick-rij[data-stand="aanwezig"] .bh-ick-niet,
@@ -1181,7 +1181,7 @@ a.bh-naamcel:hover .bh-naamcel-naam { color: var(--navy); text-decoration: under
 .bh-bulkbalk {
   position: sticky; bottom: 14px; z-index: 40;
   display: flex; align-items: center; gap: 11px; flex-wrap: wrap;
-  background: #1a2230; color: #fff;
+  background: var(--ink); color: #fff;
   border-radius: 12px; padding: 12px 18px; margin: 14px 0 0;
   box-shadow: var(--shadow-float);
 }
@@ -1226,7 +1226,7 @@ a.bh-naamcel:hover .bh-naamcel-naam { color: var(--navy); text-decoration: under
 }
 .bh-toast {
   display: flex; align-items: center; gap: 10px;
-  background: #1a2230; color: #fff; border-radius: 11px;
+  background: var(--ink); color: #fff; border-radius: 11px;
   padding: 13px 16px; font-size: 14px; box-shadow: var(--shadow-modal);
   border-left: 3px solid var(--ink-muted);
   transition: opacity .4s, transform .4s;
