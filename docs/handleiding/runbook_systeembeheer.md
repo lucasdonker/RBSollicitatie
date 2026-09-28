@@ -20,6 +20,7 @@ je die mee.
 2. [Omgevingen en branches](#omgevingen-en-branches)
 3. [Hoe het systeem in elkaar zit](#hoe-het-systeem-in-elkaar-zit)
 4. [Uitrollen naar productie (checklist)](#uitrollen-naar-productie-checklist)
+   - [Generale repetitie op test (geanonimiseerde productiekopie)](#generale-repetitie-op-test-geanonimiseerde-productiekopie)
 5. [Nieuwe server installeren](#nieuwe-server-installeren)
 6. [config.php: alle instellingen](#configphp-alle-instellingen)
 7. [Geheimen die in de database staan](#geheimen-die-in-de-database-staan)
@@ -31,6 +32,7 @@ je die mee.
 13. [Systeemcontrole (health check)](#systeemcontrole-health-check)
 14. [Back-up en herstel](#back-up-en-herstel)
 15. [Terugdraaien (rollback)](#terugdraaien-rollback)
+   - [Regels voor database-wijzigingen](#regels-voor-database-wijzigingen)
 16. [Logs lezen](#logs-lezen)
 17. [Datalek of beveiligingsincident](#datalek-of-beveiligingsincident)
 18. [Beveiligingsmaatregelen in het kort](#beveiligingsmaatregelen-in-het-kort)
@@ -208,35 +210,53 @@ e-mailadres.
    en via de WordPress-plugin, inloggen op het portaal met code en met inloglink, een formulier
    invullen, een fase wijzigen in het beheer, een bericht versturen, en de systeemcontrole
    groen. De uitgebreide testlijst houdt de ontwikkelaar bij in `docs/ai/` (niet in Git).
+   - **Generale repetitie gedaan** (vóór de merge naar `main`): deze versie heeft op test gedraaid
+     tegen een verse, geanonimiseerde kopie van productie, de controle-uitvoer van het script had geen
+     onverklaarde waarschuwingen, en het exportbestand is weggegooid. Zie
+     [Generale repetitie op test](#generale-repetitie-op-test-geanonimiseerde-productiekopie).
+   - **Migratiecontrole** (ontwikkelaar): `php docs/ai/harnas/migratie_check.php` geeft
+     "0 onbekend". Zie [Regels voor database-wijzigingen](#regels-voor-database-wijzigingen).
 2. Maak een back-up van de productiedatabase (Plesk › Databases › Exporteren) en van
-   `DOCUMENTEN_MAP`.
-3. Merge `Development` naar `main` (GitHub Desktop of een pull request). Push.
+   `DOCUMENTEN_MAP`. Het systeem maakt vóór de database-update ook zelf een back-up (zie stap 8);
+   deze handmatige is het extra vangnet, en de enige van `DOCUMENTEN_MAP`.
+3. Merge `Development` naar `main` (GitHub Desktop of een pull request). Push. GitHub zet daarna
+   zelf het versielabel `v<versie>` op die commit (tabblad Actions › Versielabel; bij Tags zie je
+   hem staan). Daarmee kun je later precies terug naar deze versie (zie [Terugdraaien](#terugdraaien-rollback)).
 
 **Uitrollen**
 
-4. Plesk › Git › productie-repository › **Deploy**. Wacht tot de deploy klaar is.
-5. (eenmalig) Vul `includes/config.php` op productie aan met de sleutels die sinds augustus
-   zijn bijgekomen (zie [config.php: alle instellingen](#configphp-alle-instellingen)):
+4. (eenmalig, en **vóór** het uitrollen) Vul `includes/config.php` op productie aan met de sleutels
+   die sinds augustus zijn bijgekomen (zie [config.php: alle instellingen](#configphp-alle-instellingen)).
+   Eerst, omdat de nieuwe versie op productie **geen database-update doet zonder geslaagde
+   back-up**, en die back-up hoort in een map buiten de webroot:
    - `KLUIS_SLEUTEL` — genereer een nieuwe: `php -r "echo base64_encode(random_bytes(32));"`.
      **Bewaar een kopie in de wachtwoordkluis van het bestuur.** Kwijt = alle documenten kwijt.
    - `KLUIS_SLEUTEL_VERSIE` = `1`.
    - `DOCUMENTEN_MAP` = een map **buiten** `httpdocs`, bijvoorbeeld
      `/var/www/vhosts/paal13.com/private/sollicitatie-documenten`. Maak de map aan; de
-     PHP-gebruiker van de site moet er kunnen schrijven (rechten 700).
+     PHP-gebruiker van de site moet er kunnen schrijven (rechten 700). De automatische back-ups
+     komen in `<DOCUMENTEN_MAP>/db-backups`, of in `BACKUP_MAP` als je die apart instelt.
    - Controleer dat de laatste regels `error_reporting(0);` en `ini_set('display_errors', 0);`
      erin staan. De `.htaccess` regelt dit niet onder PHP-FPM.
+   - `MAIL_OMLEIDEN` staat op productie **leeg**.
+5. Plesk › Git › productie-repository › **Deploy**. Wacht tot de deploy klaar is.
 6. (eenmalig) Verwijder op de productieserver de mappen `setup/` en `_backups/` als die er nog
    staan (`_backups/` bevat kopieën van oude configuraties met wachtwoorden).
 7. Open één willekeurige pagina, bijvoorbeeld `https://sollicitatie.paal13.com/portaal/`.
-   Daarmee draait de zelfherstelronde voor deze versie.
+   Daarmee draait de zelfherstelronde voor deze versie: **eerst een volledige back-up van de
+   database, dan pas de updates**. Lukt de back-up niet, dan wordt er niets aan de database
+   veranderd en is de check "Back-up vóór updates" rood; los dat op (map, rechten) en klik op
+   Migraties uitvoeren.
 8. Log in op het beheer en ga naar **Systeem & Updates**:
+   - Kijk eerst bij **Back-up vóór updates**: daar hoort "Laatste automatische back-up: …, vóór
+     de update van <oude versie> naar <nieuwe versie>" te staan.
    - Klik **Migraties uitvoeren**. Dat forceert de zelfherstelronde nog eens (`db_failsafe`) en
      is veilig om vaker te doen.
    - Klik **SQL-migraties** (opent `/admin/update.php`; vraagt het recht Systeem bewerken) en
      kijk of er losse SQL-migraties uit `sql/` op "pending" staan. Normaal is dat nul; de laatste
      is `migratie_0022_blk_uitbreiding` (vroeger dubbel genummerd als `0002`; die naam bestaat
      niet meer).
-   - Kijk bij **Systeemgezondheid** of alle elf checks groen zijn. Kluis en zegel horen groen te
+   - Kijk bij **Systeemgezondheid** of alle twaalf checks groen zijn. Kluis en zegel horen groen te
      zijn; het zegelcertificaat wordt bij de eerste keer automatisch aangemaakt. Staat er bij een
      check een lijstje met knoppen (SMTP, Authentik, adressen, huisregels), werk dat dan af; op
      Vandaag staat hetzelfde als **Nog in te stellen**. Op productie hoort "E-mail en testmodus"
@@ -283,6 +303,103 @@ e-mailadres.
     Systeem & Updates.
 19. Kijk de volgende ochtend in Logboek › Fouten of er sinds de uitrol iets nieuws bij is.
 
+## Generale repetitie op test (geanonimiseerde productiekopie)
+
+> **In het kort:** vóór elke productie-uitrol zet je een kopie van de productiedatabase op test,
+> maak je die meteen anoniem met `tools/anonimiseer_testkopie.php`, en test je de nieuwe versie
+> tegen de echte opbouw en aantallen van productie. Echte mensen komen er daarna niet meer in voor.
+> Het exportbestand gooi je direct weg.
+
+**Waarom.** Op test staan verzonnen sollicitanten in een database die met de code is meegegroeid.
+Productie heeft oudere rijen, meer data en andere randgevallen. Een nieuwe versie voert bij het
+eerste verzoek zijn schema-updates uit (`db_failsafe()`); de generale repetitie laat zien of dat op
+een database met de vorm van productie goed gaat, vóórdat het op productie gebeurt.
+
+**Wat het script doet.** Het vervangt namen, e-mailadressen, telefoonnummers, adressen, vrije
+teksten (motivatie, notities, observaties, redenen), berichtinhoud, IP-adressen en browsers door
+nepwaarden in dezelfde vorm. Geboortedatums schuiven hooguit een half jaar, zodat de leeftijdslogica
+blijft werken. Handtekeningen, versleutelde BSN/IBAN-velden, formulierantwoorden en foto's gaan weg.
+De wachtrijen (berichten, AI) en alle inlogcodes, "blijf ingelogd"-tokens en tellers worden geleegd.
+In de instellingen worden alle sleutels en wachtwoorden leeggemaakt of vernieuwd, en WhatsApp en
+sms gaan uit; de rest van de instellingen blijft, want die wil je juist testen. `db.failsafe_versie`
+blijft staan, zodat de nieuwe versie zijn updates echt uitvoert. Alles gebeurt in één transactie:
+bij een fout wordt niets gewijzigd. Twee keer draaien kan geen kwaad. Per tabel en kolom staat in
+`anon_regels()` bovenin het script wat er gebeurt.
+
+**Wat het script bewust niet doet.** De kluis repareren. `DOCUMENTEN_MAP` en `KLUIS_SLEUTEL` van
+productie komen niet mee naar test. Documenten, verzegelde PDF's en foto's uit de kopie zijn op test
+dus niet te openen, en de systeemcontrole kan de kluis rood kleuren. Dat is de bedoeling. Ook de
+ontwerpen van wervingspagina's (in `uploads/`) komen niet mee.
+
+**Vooraf controleren op test** (`includes/config.php` van test):
+
+- `APP_URL` is het test-adres. Het script weigert als het systeem de omgeving niet als test herkent.
+- `MAIL_OMLEIDEN` is gevuld met jouw adres. Het script weigert als dat leeg is.
+- Test heeft een eigen `KLUIS_SLEUTEL` en een eigen `DOCUMENTEN_MAP`, nooit die van productie.
+
+**Stappen**
+
+1. **Zet de cron van test uit:** Plesk › test-domein › Geplande taken › de taak met
+   `cron/run.php` › uitschakelen. Tussen importeren en anonimiseren staan de echte gegevens en de
+   sleutels van productie op test. Een cron zou dan bijvoorbeeld de AI-wachtrij met de
+   productiesleutel naar Google sturen of met Authentik synchroniseren. Open in die tijd ook geen
+   pagina van test.
+2. **Exporteer productie:** Plesk › Databases › de productiedatabase › Dump exporteren. Sla de
+   dump op in een map op de server buiten `httpdocs` en zet "automatisch downloaden" uit, als test
+   en productie in hetzelfde Plesk-abonnement staan. Moet hij toch via je laptop: bewaar hem niet in
+   een map die naar de cloud synchroniseert (OneDrive, Dropbox).
+3. **Importeer op test:** Plesk › Databases › de **test**database (controleer de naam) › Dump
+   importeren, en kies het bestand van stap 2. Tabellen uit de dump vervangen die van test.
+4. **Anonimiseer meteen.** Kies één van twee manieren:
+   - **Met SSH** (als je abonnement dat heeft): ga naar de map van de testsite en draai
+     ```
+     /opt/plesk/php/8.3/bin/php tools/anonimiseer_testkopie.php --ja --email=jij@domein.nl --behoud-beheerder=jij@domein.nl
+     ```
+   - **Zonder SSH, via een geplande taak:** Plesk › test-domein › Geplande taken › Taak toevoegen ›
+     **PHP-script uitvoeren**. Script: het volledige pad naar `tools/anonimiseer_testkopie.php` van de
+     testsite (de documentroot staat bij Hosting-instellingen). Argumenten:
+     `--ja --email=jij@domein.nl --behoud-beheerder=jij@domein.nl`. PHP-versie 8.3. Kies een
+     schema dat niet vanzelf binnenkort draait (bijvoorbeeld jaarlijks op 1 januari) en klik na
+     opslaan op **Nu uitvoeren**. Plesk toont de uitvoer. Verwijder de taak daarna meteen.
+
+   De opties: `--ja` is verplicht. `--email=basis@domein` maakt van elk nepadres een plus-adres
+   op jouw adres (`basis+p123@domein`): zo kun je als elke sollicitant inloggen en komt alle
+   test-mail bij jou binnen. Zonder deze optie worden het onbestelbare adressen
+   (`test+p123@example.invalid`). `--behoud-beheerder` (kommagescheiden) houdt naam, e-mailadres en
+   Authentik-koppeling van die beheerders, zodat je via Authentik op test kunt inloggen. Wachtwoord
+   en tweestaps gaan ook bij hen weg; de noodingang met wachtwoord werkt op de kopie dus niet.
+5. **Lees de controle-uitvoer.** Staat er `GEWEIGERD` of `FOUT, alles teruggedraaid`, dan is er
+   niets veranderd; los de oorzaak op en draai opnieuw. Onderaan staat de controle:
+   - "tabel X staat niet in de regellijst": een nieuwe tabel die het script nog niet kent. Kijk wat
+     erin staat. Persoonsgegevens? Dan eerst het script aanvullen (`anon_regels()`) en opnieuw draaien.
+   - "mogelijk nog persoonsgegevens in tabel.kolom": in die kolom staat iets dat op een
+     e-mailadres, telefoonnummer of IBAN lijkt. Kijk het na in phpMyAdmin. Is het van een persoon,
+     vul dan het script aan en draai opnieuw. Is het van de vereniging (bijvoorbeeld het nummer van de
+     post bij een seizoen), noteer het dan en ga door.
+   - Een vrije tekst zonder e-mailadres of telefoonnummer ziet de controle niet. Daarom staat elke
+     bekende tekstkolom in de regellijst; bij een nieuwe tabel is de melding dus het signaal.
+6. **Gooi het exportbestand weg**, nu meteen: op de server, in je downloads en in de prullenbak.
+   Het is een volledige kopie van alle persoonsgegevens (AVG: niet langer bewaren dan nodig). Zet
+   geen kopie in e-mail, chat of een gedeelde map.
+7. **Zet de cron van test weer aan.** Het script maakt een nieuw `cron.token`. Draait de taak als
+   PHP-script (`cron/run.php`), dan hoef je niets te doen; gebruikt hij de HTTP-regel met het token,
+   neem dan de nieuwe regel over uit Instellingen › Bewaren & opschonen › Cronjob.
+8. **Zet de nieuwe versie op test:** push naar `Development` (of Plesk › Git › Deploy als hij er al
+   staat) en open één pagina. De zelfherstelronde van de nieuwe versie draait nu op de kopie. Kijk
+   in Systeem & Updates of de migraties en de systeemcontrole goed zijn. Verwacht: "E-mail en
+   testmodus" oranje (testmodus) en mogelijk de kluis rood (zie hierboven). Al het andere hoort groen.
+9. **Doorloop de testlijst** met de kopie: de rooktest uit de
+   [checklist](#uitrollen-naar-productie-checklist), plus de schermen die van aantallen afhangen
+   (Vandaag, de lijst sollicitanten, een dossier, selectiedag, trainingsweekend, loonplanning,
+   beschikbaarheid en de exports). Inloggen als sollicitant: gebruik het plus-adres van die persoon
+   (`basis+p<persoon-id>@domein`); de code komt via `MAIL_OMLEIDEN` bij jou.
+10. **Noteer** datum, versie en eventuele waarschuwingen uit stap 5. Daarna kan de uitrol verder
+    met de [checklist](#uitrollen-naar-productie-checklist).
+
+De geanonimiseerde kopie mag op test blijven staan tot de volgende generale repetitie. Houd de
+toegang tot het beheer van test even beperkt als die van productie: de gegevens zijn
+geanonimiseerd, maar aanmelddata, fases en aantallen zijn nog echt.
+
 ## Nieuwe server installeren
 
 > **In het kort:** Alleen bij een verhuizing of een extra omgeving. Database aanmaken, repo
@@ -327,7 +444,7 @@ Alle andere mappen alleen-lezen is prima.
 | `APP_URL` | Volledig webadres van deze omgeving, zonder slash aan het eind | Bepaalt test/productie, https-detectie en alle links in mails |
 | `MAIL_FROM`, `MAIL_FROM_NAME` | Afzender van alle e-mail | Moet een adres zijn op een domein met geldige SPF, DKIM en DMARC |
 | `MAIL_BESTUUR` | Terugval voor het bestuursadres | Het adres in Instellingen › Afzender & adressen gaat voor; de systeemcontrole kijkt in dezelfde volgorde |
-| `MAIL_OMLEIDEN` | **Testmodus**: één e-mailadres waar álle e-mail naartoe gaat | Alleen op test en bij een hersteltest; op productie altijd leeg. Onderwerp krijgt `[TEST, voor <echte ontvanger>]`; WhatsApp en sms gaan niet de deur uit (de tekst komt als mail op dit adres, het logboek zegt "testmodus"). Bewust een constante en geen instelling: een teruggezette productiedatabase zet hem niet uit. Het beheer toont dan bovenaan een balk |
+| `MAIL_OMLEIDEN` | **Testmodus**: één e-mailadres waar álle e-mail naartoe gaat | Op test **verplicht** (de systeemcontrole is anders rood), ook bij een hersteltest; op productie altijd leeg. Onderwerp krijgt `[TEST, voor <echte ontvanger>]`; WhatsApp en sms gaan niet de deur uit (de tekst komt als mail op dit adres, het logboek zegt "testmodus"). Bewust een constante en geen instelling: een teruggezette productiedatabase zet hem niet uit. Het beheer toont dan bovenaan een balk |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_ENCRYPT` | Mailserver | Worden overschreven door Instellingen › E-mailserver als daar een host staat. Allebei leeg (of nog `{{SMTP_HOST}}`) = PHP `mail()`, alleen als noodoplossing. Let op: ook dan gaat er gewoon mail de deur uit; tegenhouden doe je met `MAIL_OMLEIDEN` |
 | `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `OIDC_ISSUER`, `OIDC_SLUG` | Authentik-provider | Leeg (of nog een `{{…}}`-plaatshouder) = SSO uit; alleen wachtwoordlogin voor beheerders. De systeemcontrole waarschuwt |
 | `OIDC_REDIRECT_URI` | Callback voor het beheer | `<APP_URL>/admin/auth_callback.php`; het portaal gebruikt vast `<APP_URL>/portaal/auth_callback.php` |
@@ -335,6 +452,7 @@ Alle andere mappen alleen-lezen is prima.
 | `KLUIS_SLEUTEL_VERSIE` | Nummer van de sleutel | Begint op `1`; gaat alleen omhoog bij het wisselen van de sleutel, samen met `KLUIS_SLEUTEL_OUD` |
 | `KLUIS_SLEUTEL_OUD`, `KLUIS_SLEUTEL_OUD_VERSIE` | Vorige sleutel + versie, alleen tijdens het wisselen | Normaal afwezig. Weghalen zodra Systeem › Kluissleutel wisselen 0 over toont; de systeemcontrole herinnert eraan |
 | `DOCUMENTEN_MAP` | Map voor versleutelde documenten, foto's en het zegel | Buiten de webroot. Leeg = `uploads/documenten` (afgeschermd, maar de systeemcontrole waarschuwt) |
+| `BACKUP_MAP` | Map voor de automatische back-up vóór elke update | Optioneel; standaard `<DOCUMENTEN_MAP>/db-backups`. Moet buiten de webroot staan en schrijfbaar zijn: op productie gaat een update anders niet door (zie [Back-up en herstel](#back-up-en-herstel)) |
 | `ZEGEL_MAP`, `ZEGEL_NAAM`, `ZEGEL_ORGANISATIE` | Documentzegel (optioneel) | Standaard `<DOCUMENTEN_MAP>/zegel`, automatisch aangemaakt |
 | `ZEGEL_OPENSSL_CNF` | Pad naar `openssl.cnf` (optioneel) | Alleen nodig als openssl zijn configuratie niet zelf vindt; op Cloud86 niet |
 | `SESSION_NAME` | Naam van de sessiecookie | Laten staan (`p13sess`). De sessie leeft vast acht uur (`sessie_start()`); daar is geen constante voor. Staat er in een oude `config.php` nog `SESSION_LIFETIME`, dan mag die regel weg |
@@ -723,7 +841,7 @@ persoonsgegevens hoort in allebei en in het verwerkingsregister.
 
 ## Systeemcontrole (health check)
 
-> **In het kort:** Beheer › Systeem & Updates › Systeemgezondheid voert elf checks uit en kan
+> **In het kort:** Beheer › Systeem & Updates › Systeemgezondheid voert twaalf checks uit en kan
 > een deel zelf herstellen. Ligt een van de drie cron-groepen stil, dan waarschuwt de check Cron
 > daarvoor. Wat bij de eerste keer instellen nog openstaat, staat op Vandaag als **Nog in te
 > stellen**, elk punt met een knop naar het juiste tabblad.
@@ -741,7 +859,8 @@ bewerken).
 | Mailwachtrij | Niets ouder dan 1 uur in "wacht", niets definitief mislukt in 24 uur | Berichten blijven hangen, of berichten staan na drie pogingen op "fout" (de ontvanger heeft ze nooit gehad) | Cron en E-mailserver-instellingen; Logboek › Berichten voor de reden |
 | Opschoning | AVG-opschoning < 3 dagen geleden | Fout als "Automatisch opschonen" uit staat; waarschuwing als hij nog nooit of langer geleden draaide | Opschonen aanzetten; draait de echte cron? |
 | Mappen | `uploads/` schrijfbaar | Niet schrijfbaar | Maprechten in Plesk |
-| E-mail en testmodus | SMTP ingesteld, testmodus uit | Geen SMTP (mail gaat via PHP `mail()`, komt vaak niet aan); of `MAIL_OMLEIDEN` staat aan | Instellingen › E-mailserver; op productie `MAIL_OMLEIDEN` leegmaken |
+| Back-up vóór updates | Veilige back-upmap buiten de webroot; laatste automatische back-up zichtbaar | Fout (productie): geen back-upmap, of een update is tegengehouden omdat de back-up mislukte | `DOCUMENTEN_MAP` of `BACKUP_MAP` in config (buiten `httpdocs`, schrijfbaar), dan Migraties uitvoeren |
+| E-mail en testmodus | Productie: SMTP ingesteld, testmodus uit. Test: testmodus aan | Geen SMTP (mail gaat via PHP `mail()`, komt vaak niet aan); op productie staat `MAIL_OMLEIDEN` aan; **fout** op test als `MAIL_OMLEIDEN` leeg is | Instellingen › E-mailserver; op productie `MAIL_OMLEIDEN` leegmaken, op test invullen |
 | Inloggen (Authentik) | `OIDC_CLIENT_ID` en `OIDC_ISSUER` ingevuld | Leeg of nog een `{{…}}`-plaatshouder: alleen de wachtwoord-noodingang werkt | `config.php`, zie [Authentik (SSO)](#authentik-sso) |
 | Configuratie | Cron-token, bestuursadres, adres penningmeester en ledenservice, huisregels-PDF | Iets ontbreekt. Zonder adres voor penningmeester of ledenservice gaan loondocumenten en lidmaatschapsinschrijvingen (met IBAN) naar het bestuursadres. Geen open seizoen staat er alleen ter informatie bij | Knop bij het punt; adressen in Instellingen › Afzender & adressen, huisregels in Instellingen › Algemeen |
 | Kluis | Werkt, documentenmap buiten webroot | Sleutel ontbreekt/ongeldig, map niet schrijfbaar of in webroot; gegevens nog op een oude sleutel, of `KLUIS_SLEUTEL_OUD` staat er nog terwijl niets hem meer nodig heeft | `KLUIS_SLEUTEL`, `DOCUMENTEN_MAP` in config; rechten van de map; [Kluissleutel wisselen](#kluissleutel-wisselen) |
@@ -751,7 +870,7 @@ Het bestuursadres telt als ingesteld zodra het niet leeg en geen plaatshouder is
 `bestuur@paal13.com` geeft bewust geen waarschuwing, want dat is het echte adres van de brigade.
 
 **Nog in te stellen** (Vandaag, alleen voor wie Systeem mag bewerken) verzamelt de punten uit
-Configuratie, E-mail, Inloggen en Opschoning: rood eerst, dan oranje, dan informatief. Een
+Back-up, Configuratie, E-mail, Inloggen en Opschoning: rood eerst, dan oranje, dan informatief. Een
 nieuwe installatie werk je van boven naar beneden af tot de lijst leeg is. De punten komen uit
 `health_nog_in_te_stellen()` in `includes/health.php`; een nieuw punt is één `health_punt()` in
 de check waar het bij hoort.
@@ -778,6 +897,25 @@ blijven geldig; noteer de nieuwe vingerafdruk (staat in het Logboek bij
    `.htaccess`-bestanden in `uploads/` en `uploads/branding/` staan in Git.
 
 De code zelf staat in Git en hoeft niet in de back-up.
+
+**Automatische back-up vóór elke update (sinds 2.128).** Komt er een nieuwe versie binnen, dan
+maakt het systeem bij het eerste verzoek eerst een volledige dump van de database, en pas daarna
+past het de database aan. Op productie is dat een harde voorwaarde: lukt de back-up niet, dan
+verandert er niets aan de database, wordt de check "Back-up vóór updates" rood en krijgt het
+bestuursadres een foutmelding (P13-D001). Het volgende verzoek probeert het opnieuw.
+
+- Waar: `BACKUP_MAP` uit `config.php`, anders `<DOCUMENTEN_MAP>/db-backups`. Nooit binnen de
+  webroot; staat de map daar toch, dan weigert het systeem hem.
+- Naam: `db-<datum>-<tijd>-v<oud>-naar-v<nieuw>.sql.gz`, rechten 600.
+- Bewaard: altijd de laatste 3; de rest wordt na 30 dagen opgeruimd.
+- Dit vervangt de dagelijkse Plesk-back-up niet: die blijft nodig, ook voor `DOCUMENTEN_MAP`.
+
+**Een automatische back-up terugzetten** (alleen als een update echt data heeft beschadigd):
+zet eerst de code terug op de vorige versie (zie [Terugdraaien](#terugdraaien-rollback)), download
+het bestand via Plesk › Bestandsbeheer, en importeer het via Plesk › Databases › Importeren (het
+`.sql.gz`-bestand kan direct). Het bestand begint per tabel met `DROP TABLE IF EXISTS`: de
+database staat daarna precies zoals vlak vóór de update. Alles wat daarna is ingevoerd
+(aanmeldingen, ondertekeningen) ben je dan kwijt; doe dit dus alleen als de schade groter is.
 
 **Bewaartermijn van back-ups:** houd een rollend venster van ongeveer 30 dagen aan en laat oudere
 back-ups automatisch vervallen (Plesk › Back-up › Instellingen). Bewaar back-ups niet jaren: dan
@@ -812,16 +950,50 @@ bewust: een gelekte back-up zonder sleutel is waardeloos voor een aanvaller.
 > **In het kort:** Code terugzetten via Plesk en een pagina openen. Nooit een oude
 > database-back-up terugzetten alleen om code terug te draaien.
 
+Elke productie-uitrol heeft een **versielabel** in Git (`v2.128.0` enz.), dat GitHub automatisch
+zet bij de merge naar `main` (workflow `.github/workflows/versielabel.yml`). Een label blijft
+altijd op dezelfde commit staan; zo weet je precies waar je naar terug kunt.
+
 Blijkt een release kapot op productie:
 
-1. Plesk › Git › kies de vorige commit op `main` (of zet in Git `main` terug met een revert en push).
-2. Deploy.
-3. Open een pagina. De zelfherstelronde draait opnieuw voor de oudere versie; nieuwe kolommen die
-   de nieuwe versie heeft aangemaakt blijven staan, en dat is onschadelijk.
-4. Meld het aan de ontwikkelaar, zodat het in de volgende release wordt opgelost.
+1. Zoek op GitHub bij **Tags** het label van de vorige, goede versie (bijvoorbeeld `v2.127.1`).
+2. Zet `main` terug op die versie. Het eenvoudigst in GitHub Desktop: kies de branch `main`, open
+   History, klik met rechts op de merge-commit van de kapotte versie en kies **Revert changes in
+   commit**; push. (Wie de opdrachtregel gebruikt: `git revert -m 1 <merge-commit>` en push.)
+   Je maakt zo een nieuwe commit die de wijzigingen ongedaan maakt; de geschiedenis blijft heel.
+3. Plesk › Git › productie-repository › **Deploy**.
+4. Open een pagina. De zelfherstelronde draait opnieuw voor de oudere versie (met eerst weer een
+   automatische back-up); nieuwe kolommen die de nieuwe versie heeft aangemaakt blijven staan, en
+   dat is onschadelijk: de regels voor database-wijzigingen zorgen dat een oudere versie ermee kan
+   werken.
+5. Meld het aan de ontwikkelaar, zodat het in de volgende release wordt opgelost.
 
 Zet nooit een oudere database-back-up terug alleen om code terug te draaien: dan verlies je
-aanmeldingen en ondertekeningen van na de back-up.
+aanmeldingen en ondertekeningen van na de back-up. De database terugzetten is alleen voor het
+geval dat een update echt data heeft beschadigd (zie [Back-up en herstel](#back-up-en-herstel)).
+
+## Regels voor database-wijzigingen
+
+> **In het kort:** Een release voegt alleen toe. Weghalen gebeurt in twee releases, en een
+> controle bewaakt dat vóór elke merge naar `main`.
+
+Zodat een update nooit data kan kwijtmaken, en terugdraaien van code altijd veilig is:
+
+1. **Alleen toevoegen:** nieuwe tabellen, kolommen, indexen en ENUM-waarden (achteraan). Een oudere
+   versie van de code negeert wat hij niet kent.
+2. **Weghalen of verkleinen in twee releases:** een kolom of tabel weghalen, een kolom inkorten,
+   een ENUM-waarde schrappen, een type versmallen of iets hernoemen. Release 1: de code gebruikt
+   het niet meer. Release 2 (minstens één uitrol later): het wordt opgeruimd — met de automatische
+   back-up van die release als vangnet.
+3. **Een ENUM omzetten naar VARCHAR mag** (alle waarden blijven), en een oude index weghalen nádat
+   de vervanger bestaat.
+4. **Controle vóór elke merge naar `main`:** `php docs/ai/harnas/migratie_check.php` zoekt in de
+   code alle plekken die iets aan het schema weghalen of wijzigen en vergelijkt die met een lijst
+   van bekende, beoordeelde plekken (met reden). Een nieuwe plek geeft een fout totdat iemand hem
+   bewust beoordeelt.
+5. **Generale repetitie:** elke release met database-wijzigingen draait eerst op test tegen een
+   geanonimiseerde kopie van productie (zie
+   [Generale repetitie op test](#generale-repetitie-op-test-geanonimiseerde-productiekopie)).
 
 ## Logs lezen
 

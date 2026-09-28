@@ -85,6 +85,8 @@ loonplanning</a></li>
 <li><a href="#wervingspaginas-en-bezoekersstatistiek">Wervingspagina&#39;s
 en bezoekersstatistiek</a></li>
 <li><a href="#beheerders-en-logboek">Beheerders en logboek</a></li>
+<li><a href="#productiekopie-op-de-testomgeving">Productiekopie op de
+testomgeving</a></li>
 <li><a href="#seintje-bij-de-volgende-werving">Seintje bij de volgende
 werving</a></li>
 <li><a href="#bijzonderheden">Bijzonderheden</a></li>
@@ -230,6 +232,12 @@ verwerking</td>
 <td>Beheerders en logboek</td>
 <td>art. 6 lid 1 sub f en art. 32</td>
 <td>logboek 12 maanden, fouten 90 dagen</td>
+</tr>
+<tr>
+<td>Productiekopie op de testomgeving</td>
+<td>art. 6 lid 1 sub f en art. 32</td>
+<td>echte gegevens alleen de minuten tussen importeren en anonimiseren;
+exportbestand direct weg</td>
 </tr>
 <tr>
 <td>Seintje bij de volgende werving</td>
@@ -1277,6 +1285,87 @@ in geen enkele logboekweergave voor.</td>
 </tr>
 </tbody>
 </table>
+<h1 id="productiekopie-op-de-testomgeving">Productiekopie op de
+testomgeving</h1>
+<blockquote>
+<p><strong>In het kort:</strong> vóór elke productie-uitrol gaat een
+kopie van de productiedatabase naar de testomgeving (zelfde hoster) en
+wordt die meteen geanonimiseerd. De echte gegevens staan daar alleen de
+paar minuten tussen importeren en anonimiseren; het exportbestand wordt
+direct weggegooid.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Onderdeel</th>
+<th>Inhoud</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Doel</td>
+<td>Een nieuwe versie testen tegen de echte opbouw en aantallen van
+productie (&quot;generale repetitie&quot;), zodat fouten niet pas op productie en
+bij echte sollicitanten optreden.</td>
+</tr>
+<tr>
+<td>Grondslag</td>
+<td>Art. 6 lid 1 sub f AVG (gerechtvaardigd belang: een betrouwbaar
+systeem) en art. 32 (testen hoort bij passende beveiliging). Het gebruik
+is verenigbaar met het oorspronkelijke doel (art. 6 lid 4): zelfde
+verantwoordelijke, zelfde hoster, kort, en direct geanonimiseerd.</td>
+</tr>
+<tr>
+<td>Betrokkenen</td>
+<td>Alle betrokkenen van wie gegevens in de productiedatabase
+staan.</td>
+</tr>
+<tr>
+<td>Persoonsgegevens</td>
+<td>Tijdelijk de hele database. Daarna vervangt
+<code>tools/anonimiseer_testkopie.php</code> namen, e-mailadressen,
+telefoonnummers, adressen, vrije teksten, berichtinhoud, IP-adressen en
+browsers door nepwaarden; geboortedatums schuiven hooguit een half jaar;
+handtekeningen, versleutelde BSN/IBAN-velden, formulierantwoorden en
+foto&#39;s gaan weg; inlogcodes, tokens en wachtrijen worden geleegd;
+sleutels van koppelingen worden leeggemaakt of vernieuwd. De bestanden
+in de kluis (<code>DOCUMENTEN_MAP</code>) en de kluissleutel van
+productie gaan niet mee, dus documenten zijn op test onleesbaar. Wat
+blijft: fases, seizoenen, data van aanmelden en ondertekenen, aantallen
+en instellingen. Strikt genomen is dat pseudonimisering, geen volledige
+anonimisering: met kennis van buiten (wie wanneer solliciteerde) is een
+rij soms nog te herleiden.</td>
+</tr>
+<tr>
+<td>Ontvangers en verwerkers</td>
+<td>Alleen de technisch beheerder en wie toegang heeft tot het beheer
+van test. Cloud86 (zelfde hoster als productie). Geen externe diensten:
+WhatsApp en sms gaan uit, de AI-sleutel wordt leeggemaakt en
+<code>MAIL_OMLEIDEN</code> leidt alle e-mail naar de tester (het script
+weigert zonder).</td>
+</tr>
+<tr>
+<td>Doorgifte buiten de EER</td>
+<td>Nee.</td>
+</tr>
+<tr>
+<td>Bewaartermijn</td>
+<td>Echte gegevens op test: alleen tussen importeren en het script
+(minuten). Het exportbestand: direct na het script verwijderen, van de
+server en van de laptop. De geanonimiseerde kopie blijft tot de volgende
+generale repetitie.</td>
+</tr>
+<tr>
+<td>Beveiliging</td>
+<td>De cron van test staat uit tijdens importeren en anonimiseren; het
+script draait alleen vanaf de opdrachtregel, alleen op test, alleen met
+<code>--ja</code>, in één transactie, en controleert na afloop alle
+tekstkolommen op overgebleven e-mailadressen, telefoonnummers en IBAN&#39;s.
+Stappen in het Runbook systeembeheer, hoofdstuk &quot;Generale repetitie op
+test&quot;.</td>
+</tr>
+</tbody>
+</table>
 <h1 id="seintje-bij-de-volgende-werving">Seintje bij de volgende
 werving</h1>
 <blockquote>
@@ -1672,6 +1761,14 @@ tekent, de SEPA-machtiging tekent de rekeninghouder (in aanbouw).
 Privacyverklaring: de termijn van de gezondheidsgegevens volgt nu
 <code>bewaar.gezondheid_mnd</code>, en het tekenen van het lidmaatschap
 door de ouder staat erin.</td>
+</tr>
+<tr>
+<td>28 september 2026</td>
+<td>Nieuwe verwerking: productiekopie op de testomgeving (generale
+repetitie vóór elke uitrol), direct geanonimiseerd met
+<code>tools/anonimiseer_testkopie.php</code>; exportbestand direct weg.
+Interne verwerking bij dezelfde hoster, geen wijziging in de
+privacyverklaring nodig.</td>
 </tr>
 </tbody>
 </table>

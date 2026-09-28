@@ -14,6 +14,9 @@
  * faalt stil (met een log-regel), zodat een probleem met één tabel de rest niet raakt.
  */
 
+// Back-up vóór elke schema-update (backup_maak), zie includes/backup.php.
+if (file_exists(__DIR__ . '/backup.php')) require_once __DIR__ . '/backup.php';
+
 if (!function_exists('db_failsafe')) {
 
 /**
@@ -139,12 +142,52 @@ function db_failsafe(bool $forceer = false): void {
 
     $versie = defined('APP_VERSIE') ? APP_VERSIE : '0';
     $GLOBALS['_p13_schema_actueel'] = false;
-    if (!$forceer) {
-        try {
-            $q = db()->prepare("SELECT waarde FROM instellingen WHERE sleutel = 'db.failsafe_versie' LIMIT 1");
-            $q->execute();
-            if ((string)$q->fetchColumn() === $versie) { $GLOBALS['_p13_schema_actueel'] = true; return; }
-        } catch (\Throwable $e) { /* tabel bestaat nog niet: gewoon de volledige run doen */ }
+    $vorige = '';
+    try {
+        $q = db()->prepare("SELECT waarde FROM instellingen WHERE sleutel = 'db.failsafe_versie' LIMIT 1");
+        $q->execute();
+        $vorige = (string)$q->fetchColumn();
+    } catch (\Throwable $e) { /* tabel bestaat nog niet: gewoon de volledige run doen */ }
+    if (!$forceer && $vorige === $versie) { $GLOBALS['_p13_schema_actueel'] = true; return; }
+
+    // Eén tegelijk: komen er twee eerste verzoeken na een uitrol tegelijk binnen, dan doet de één
+    // de back-up en de update; de ander slaat hem over (en ziet het schema bij het volgende verzoek).
+    $db_lock = null;
+    try { $db_lock = db(); $slot = (int)$db_lock->query("SELECT GET_LOCK('p13_db_failsafe', 0)")->fetchColumn(); }
+    catch (\Throwable $e) { $slot = 1; $db_lock = null; }   // geen GET_LOCK (bijv. SQLite in tests): gewoon door
+    if ($slot !== 1) { $GLOBALS['_p13_schema_actueel'] = true; return; }
+    $los = function () use ($db_lock): void {
+        if ($db_lock) { try { $db_lock->query("SELECT RELEASE_LOCK('p13_db_failsafe')"); } catch (\Throwable $e) {} }
+    };
+
+    // Een echte versiewissel op een bestaande database? Dan eerst een volledige back-up, vóór er
+    // ook maar één tabel of kolom verandert. Op productie is die voorwaarde hard: mislukt de
+    // back-up, dan voeren we niets door (de setups slaan zich deze request over via de vlag) en
+    // probeert het volgende verzoek het opnieuw. Op test alleen een waarschuwing.
+    if ($vorige !== $versie && $vorige !== '' && function_exists('backup_maak')) {
+        $res = backup_maak(db(), 'v' . $vorige . '-naar-v' . $versie);
+        if ($res['ok']) {
+            try {
+                db()->prepare("INSERT INTO instellingen (sleutel, waarde) VALUES ('db.laatste_backup', ?) ON DUPLICATE KEY UPDATE waarde = VALUES(waarde)")
+                    ->execute([json_encode(['bestand' => basename((string)$res['bestand']), 'op' => date('Y-m-d H:i:s'),
+                                            'van' => $vorige, 'naar' => $versie, 'grootte' => $res['grootte']])]);
+                db()->prepare("DELETE FROM instellingen WHERE sleutel = 'db.backup_fout'")->execute();
+            } catch (\Throwable $e) {}
+        } else {
+            $melding = 'Back-up vóór de update van ' . $vorige . ' naar ' . $versie . ' mislukt: ' . $res['fout'];
+            error_log('db_failsafe: ' . $melding);
+            try {
+                db()->prepare("INSERT INTO instellingen (sleutel, waarde) VALUES ('db.backup_fout', ?) ON DUPLICATE KEY UPDATE waarde = VALUES(waarde)")
+                    ->execute([json_encode(['melding' => $melding, 'op' => date('Y-m-d H:i:s')])]);
+            } catch (\Throwable $e) {}
+            if (!(function_exists('is_test_omgeving') && is_test_omgeving())) {
+                if (function_exists('p13_fout')) { try { p13_fout('P13-D001', $melding, null); } catch (\Throwable $e) {} }
+                $GLOBALS['_p13_schema_actueel'] = true;   // geblokkeerd: geen enkele setup doet nu iets
+                $GLOBALS['_p13_update_geblokkeerd'] = $melding;
+                $los();
+                return;
+            }
+        }
     }
 
     // 1. Alle bekende auto_setup-functies aanroepen (elk heeft zijn eigen guard + try/catch).
@@ -298,6 +341,7 @@ function db_failsafe(bool $forceer = false): void {
     } catch (\Exception $e) {
         error_log('db_failsafe kolom-check: ' . $e->getMessage());
     }
+    $los();
 }
 
 /**

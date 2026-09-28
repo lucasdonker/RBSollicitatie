@@ -3,10 +3,22 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.127.1');
+define('APP_VERSIE', '2.128.0');
 
 function app_changelog(): array {
     return [
+        '2.128.0' => [
+            'datum'  => '2026-09-28',
+            'titel'  => 'Veilig uitrollen naar productie',
+            'punten' => [
+                'Automatische back-up van de database vóór elke update; op productie gaat een update zonder geslaagde back-up niet door (check "Back-up vóór updates", melding P13-D001)',
+                'Eén update tegelijk: twee gelijktijdige eerste verzoeken na een uitrol draaien de update niet dubbel',
+                'Op de testomgeving is de testmodus (MAIL_OMLEIDEN) verplicht: de systeemcontrole is anders rood',
+                'tools/anonimiseer_testkopie.php: productiekopie op test geanonimiseerd (generale repetitie); weigert op productie',
+                'Versielabel v<versie> automatisch bij elke merge naar main (GitHub Actions); terugdraaien per label',
+                'Regels voor database-wijzigingen (alleen toevoegen; weghalen in twee releases) in het runbook, met controle vóór elke merge',
+            ],
+        ],
         '2.127.1' => [
             'datum'  => '2026-09-27',
             'titel'  => 'Salaristabel per leeftijd en diploma',

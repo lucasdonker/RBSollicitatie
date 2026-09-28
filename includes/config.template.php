@@ -32,7 +32,8 @@ define('MAIL_BESTUUR',   '{{MAIL_BESTUUR}}');
 // begint met "[TEST, voor <echte ontvanger>]") en worden WhatsApp en sms NIET verstuurd: de tekst komt
 // als e-mail op dit adres binnen en het logboek zegt "testmodus". In het beheer staat dan bovenaan een balk.
 // Bewust hier en niet in de database: een teruggezette productiedatabase zet hem zo nooit uit.
-// Op PRODUCTIE altijd leeg laten.
+// Op PRODUCTIE altijd leeg laten. Op de TESTOMGEVING verplicht invullen: daar kan een (geanonimiseerde)
+// productiekopie staan, en de systeemcontrole wordt rood zolang dit op test leeg is.
 define('MAIL_OMLEIDEN', '');
 
 // ── SMTP ──
@@ -65,6 +66,10 @@ define('KLUIS_SLEUTEL_VERSIE', 1);
 // Map voor de versleutelde documenten, bij voorkeur BUITEN de webroot (Plesk: /var/www/vhosts/<domein>/private/documenten).
 // Leeg laten = uploads/documenten binnen de webroot (afgeschermd met .htaccess; de health-check waarschuwt).
 define('DOCUMENTEN_MAP', '');
+// Automatische back-up vóór elke database-update (includes/backup.php). Standaard <DOCUMENTEN_MAP>/db-backups.
+// Moet BUITEN de webroot staan en schrijfbaar zijn: op productie weigert het systeem een update zonder
+// geslaagde back-up (de systeemcontrole wordt dan rood). Laatste 3 blijven altijd, de rest max. 30 dagen.
+// define('BACKUP_MAP', '/var/www/vhosts/<domein>/private/db-backups');
 // Documentzegel (digitale handtekening op PDF's): certificaat + sleutel worden automatisch aangemaakt in
 // <DOCUMENTEN_MAP>/zegel. Optioneel een eigen map, naam en organisatie voor het certificaat:
 // define('ZEGEL_MAP', '');  define('ZEGEL_NAAM', 'Reddingsbrigade Paal 13 - Documentzegel');  define('ZEGEL_ORGANISATIE', 'Reddingsbrigade Paal 13');

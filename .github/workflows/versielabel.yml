@@ -1,0 +1,46 @@
+# Zet bij elke push naar main automatisch een versielabel (git tag) op de commit die naar productie
+# gaat, bijvoorbeeld v2.128.0. De versie komt uit includes/versie.php (APP_VERSIE).
+#
+# Waarom: een tag blijft staan waar hij staat (een branch schuift door). Zo zie je altijd welke code
+# er in productie draait, en is terugdraaien eenvoudig: main terugzetten op de vorige tag en in Plesk
+# opnieuw uitrollen (zie het runbook, "Terugdraaien").
+#
+# Bestaat het label al (dezelfde versie opnieuw gepusht), dan gebeurt er niets: een tag wordt nooit
+# verplaatst of overschreven.
+name: Versielabel
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Versie lezen uit includes/versie.php
+        id: versie
+        run: |
+          VERSIE=$(grep -oP "define\('APP_VERSIE',\s*'\K[0-9]+\.[0-9]+\.[0-9]+" includes/versie.php | head -n1)
+          if [ -z "$VERSIE" ]; then echo "Geen APP_VERSIE gevonden in includes/versie.php"; exit 1; fi
+          echo "versie=$VERSIE" >> "$GITHUB_OUTPUT"
+          echo "Versie: $VERSIE"
+
+      - name: Label zetten (als het nog niet bestaat)
+        run: |
+          TAG="v${{ steps.versie.outputs.versie }}"
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "Label $TAG bestaat al; niets te doen."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "Productie-uitrol $TAG" "$GITHUB_SHA"
+          git push origin "$TAG"
+          echo "Label $TAG gezet op $GITHUB_SHA."

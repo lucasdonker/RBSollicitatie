@@ -25,12 +25,13 @@ zodat het bestuur en een opvolger altijd de actuele versie hebben.
 13. [AI-analyse](#ai-analyse)
 14. [Wervingspagina's en bezoekersstatistiek](#wervingspaginas-en-bezoekersstatistiek)
 15. [Beheerders en logboek](#beheerders-en-logboek)
-16. [Seintje bij de volgende werving](#seintje-bij-de-volgende-werving)
-17. [Bijzonderheden](#bijzonderheden)
-18. [Rechten van betrokkenen](#rechten-van-betrokkenen)
-19. [Datalekken](#datalekken)
-20. [Nog vast te leggen](#nog-vast-te-leggen)
-21. [Wijzigingen](#wijzigingen)
+16. [Productiekopie op de testomgeving](#productiekopie-op-de-testomgeving)
+17. [Seintje bij de volgende werving](#seintje-bij-de-volgende-werving)
+18. [Bijzonderheden](#bijzonderheden)
+19. [Rechten van betrokkenen](#rechten-van-betrokkenen)
+20. [Datalekken](#datalekken)
+21. [Nog vast te leggen](#nog-vast-te-leggen)
+22. [Wijzigingen](#wijzigingen)
 
 ---
 
@@ -88,6 +89,7 @@ verklaring leest dezelfde instellingen voor de termijnen.
 | AI-analyse | art. 6 lid 1 sub f; beschikbaarheidshulp sub b | analyse volgt het dossier; invoertekst 3 maanden |
 | Wervingspagina's en statistiek | art. 6 lid 1 sub f | pseudoniem 30 dagen, telling 13 maanden |
 | Beheerders en logboek | art. 6 lid 1 sub f en art. 32 | logboek 12 maanden, fouten 90 dagen |
+| Productiekopie op de testomgeving | art. 6 lid 1 sub f en art. 32 | echte gegevens alleen de minuten tussen importeren en anonimiseren; exportbestand direct weg |
 | Seintje bij de volgende werving | art. 6 lid 1 sub a; oud-strandwachten sub f | maximaal 12 maanden |
 | Seintje buiten het seizoen (nog niet gesolliciteerd) | art. 6 lid 1 sub a, met dubbele bevestiging | onbevestigd 7 dagen; na het bericht weg; maximaal 12 maanden |
 
@@ -328,6 +330,24 @@ BLK-analyse op productie aan gaat.
 | Bewaartermijn | Logboek: 12 maanden (`bewaar.audit_maanden`, standaard 12). Foutenlog: 90 dagen (`bewaar.foutenlog_dagen`, standaard 90). Mislukte inlogpogingen: 24 uur (vast). Tellingen snelheidsbegrenzing: na verlopen (vast). Beheerdersaccount: zolang iemand toegang nodig heeft; bij vertrek uit de Authentik-groep halen. |
 | Beveiliging | Inloggen via Authentik (OIDC) met tweestapsverificatie, rollen met rechten per module, de berichtinhoud (`mail_log.body`) komt in geen enkele logboekweergave voor. |
 
+## Productiekopie op de testomgeving
+
+> **In het kort:** vóór elke productie-uitrol gaat een kopie van de productiedatabase naar de
+> testomgeving (zelfde hoster) en wordt die meteen geanonimiseerd. De echte gegevens staan daar
+> alleen de paar minuten tussen importeren en anonimiseren; het exportbestand wordt direct
+> weggegooid.
+
+| Onderdeel | Inhoud |
+|---|---|
+| Doel | Een nieuwe versie testen tegen de echte opbouw en aantallen van productie ("generale repetitie"), zodat fouten niet pas op productie en bij echte sollicitanten optreden. |
+| Grondslag | Art. 6 lid 1 sub f AVG (gerechtvaardigd belang: een betrouwbaar systeem) en art. 32 (testen hoort bij passende beveiliging). Het gebruik is verenigbaar met het oorspronkelijke doel (art. 6 lid 4): zelfde verantwoordelijke, zelfde hoster, kort, en direct geanonimiseerd. |
+| Betrokkenen | Alle betrokkenen van wie gegevens in de productiedatabase staan. |
+| Persoonsgegevens | Tijdelijk de hele database. Daarna vervangt `tools/anonimiseer_testkopie.php` namen, e-mailadressen, telefoonnummers, adressen, vrije teksten, berichtinhoud, IP-adressen en browsers door nepwaarden; geboortedatums schuiven hooguit een half jaar; handtekeningen, versleutelde BSN/IBAN-velden, formulierantwoorden en foto's gaan weg; inlogcodes, tokens en wachtrijen worden geleegd; sleutels van koppelingen worden leeggemaakt of vernieuwd. De bestanden in de kluis (`DOCUMENTEN_MAP`) en de kluissleutel van productie gaan niet mee, dus documenten zijn op test onleesbaar. Wat blijft: fases, seizoenen, data van aanmelden en ondertekenen, aantallen en instellingen. Strikt genomen is dat pseudonimisering, geen volledige anonimisering: met kennis van buiten (wie wanneer solliciteerde) is een rij soms nog te herleiden. |
+| Ontvangers en verwerkers | Alleen de technisch beheerder en wie toegang heeft tot het beheer van test. Cloud86 (zelfde hoster als productie). Geen externe diensten: WhatsApp en sms gaan uit, de AI-sleutel wordt leeggemaakt en `MAIL_OMLEIDEN` leidt alle e-mail naar de tester (het script weigert zonder). |
+| Doorgifte buiten de EER | Nee. |
+| Bewaartermijn | Echte gegevens op test: alleen tussen importeren en het script (minuten). Het exportbestand: direct na het script verwijderen, van de server en van de laptop. De geanonimiseerde kopie blijft tot de volgende generale repetitie. |
+| Beveiliging | De cron van test staat uit tijdens importeren en anonimiseren; het script draait alleen vanaf de opdrachtregel, alleen op test, alleen met `--ja`, in één transactie, en controleert na afloop alle tekstkolommen op overgebleven e-mailadressen, telefoonnummers en IBAN's. Stappen in het Runbook systeembeheer, hoofdstuk "Generale repetitie op test". |
+
 ## Seintje bij de volgende werving
 
 > **In het kort:** een afgewezen sollicitant kan met één knop vragen om bericht als we weer mensen
@@ -455,3 +475,4 @@ gebruiken. Het datalekregister zelf houdt het bestuur buiten dit systeem bij.
 | 24 september 2026 | Selectiedag en trainingsweekend: bevestiging "ik kom / ik kan niet" met reden, het gesprek met het bestuur (besluit, interne notitie, bericht aan de sollicitant), vergrendeling "bezig door" en de incheck-tablet met foto. Alles zit in de inzage en gaat mee bij wissen. |
 | 27 september 2026 | Seintje buiten het seizoen: wie nog niet solliciteerde kan bij een gesloten aanmelding om één bericht vragen (voornaam, e-mail, bron; dubbele bevestiging; onbevestigd 7 dagen, daarna tot het bericht en maximaal 12 maanden). Tabel `werving_seintje`; privacyverklaring bijgewerkt. |
 | 27 september 2026 | Drie punten uit "Nog vast te leggen" zijn gebouwd en naar hun hoofdstuk verplaatst: de knop "Bezwaar vastleggen" voor de AI-analyse, naam en geboortedatum weg na het vernietigen van een bewaard loondossier, en de wachtrijtekst van niet-gelogde berichten leeg na verzending. Lidmaatschap van minderjarigen: de ouder of verzorger tekent, de SEPA-machtiging tekent de rekeninghouder (in aanbouw). Privacyverklaring: de termijn van de gezondheidsgegevens volgt nu `bewaar.gezondheid_mnd`, en het tekenen van het lidmaatschap door de ouder staat erin. |
+| 28 september 2026 | Nieuwe verwerking: productiekopie op de testomgeving (generale repetitie vóór elke uitrol), direct geanonimiseerd met `tools/anonimiseer_testkopie.php`; exportbestand direct weg. Interne verwerking bij dezelfde hoster, geen wijziging in de privacyverklaring nodig. |

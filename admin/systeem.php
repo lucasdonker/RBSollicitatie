@@ -107,7 +107,7 @@ require __DIR__ . '/layout_top.php';
           'opschoning' => 'AVG-opschoning', 'mappen' => 'Mappen & rechten', 'configuratie' => 'Configuratie',
           'berichten' => 'E-mail en testmodus', 'inloggen' => 'Inloggen (Authentik)',
           'kluis' => 'Kluis (versleutelde documenten)', 'zegel' => 'Documentzegel (PDF)',
-          'snelheid' => 'Snel antwoorden (PHP-FPM)',
+          'snelheid' => 'Snel antwoorden (PHP-FPM)', 'backup' => 'Back-up vóór updates',
         ];
         foreach ($health['checks'] as $sleutel => $check):
           $ck = $check['status'];
