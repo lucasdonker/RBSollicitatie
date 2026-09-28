@@ -115,7 +115,9 @@
       // Zonder showModal() (heel oude browser) gewoon open zetten: nooit terugvallen op
       // confirm(), die afspraak geldt ook hier (CLAUDE.md).
       if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
-      ja.focus();
+      // Bij iets gevaarlijks (verwijderen, afwijzen) staat de focus op Annuleren: een Enter
+      // uit gewoonte mag dan niets onherroepelijks doen.
+      (opt.gevaar ? nee : ja).focus();
     });
   }
 
@@ -410,7 +412,9 @@
      Eén haak voor alle schermen, zodat er geen confirm() terugsluipt. Zonder
      JavaScript verzendt het formulier gewoon — net als voorheen. Is de actie
      onomkeerbaar én raakt hij persoonsgegevens, gebruik dan een tussenscherm
-     (_bevestig.php): dat is te screenshotten en werkt ook zonder JS. */
+     (_bevestig.php): dat is te screenshotten en werkt ook zonder JS.
+     Per keuze een eigen tekst: zet data-bevestig(-titel/-knop/-gevaar) op de radioknoppen;
+     die van de aangevinkte keuze gaat voor (bijv. aannemen / twijfel / afwijzen). */
   function bevestigFormKoppelen(form) {
     if (form.dataset.bhBevestigGekoppeld) return;
     form.dataset.bhBevestigGekoppeld = '1';
@@ -421,11 +425,12 @@
       var knop = e.submitter || null;
       if (knop && knop.hasAttribute('data-zonder-bevestig')) return;
       e.preventDefault();
+      var bron = form.querySelector('input:checked[data-bevestig]') || form;
       bhBevestig({
-        titel: form.dataset.bevestigTitel || 'Weet je het zeker?',
-        tekst: form.dataset.bevestig,
-        knop:  form.dataset.bevestigKnop || 'Doorgaan',
-        gevaar: form.dataset.bevestigGevaar === '1'
+        titel: bron.dataset.bevestigTitel || form.dataset.bevestigTitel || 'Weet je het zeker?',
+        tekst: bron.dataset.bevestig,
+        knop:  bron.dataset.bevestigKnop || form.dataset.bevestigKnop || 'Doorgaan',
+        gevaar: bron.dataset.bevestigGevaar === '1'
       }).then(function (ja) {
         if (!ja) return;
         form.dataset.bhAkkoord = '1';

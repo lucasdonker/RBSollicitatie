@@ -1191,7 +1191,7 @@ op het selectiedag-cijfer.
    gesprek opnieuw en leg dan het besluit vast.
 5. **Terug zonder besluit** geeft het gesprek weer vrij.
 
-Bij aannemen of twijfel wordt de inzet van die persoon uit het actieve scenario naar **alle**
+Bij aannemen wordt de inzet van die persoon uit het actieve scenario naar **alle**
 scenario's gekopieerd en daar vastgezet: wat met de sollicitant besproken is, verandert niet meer
 doordat iemand met een ander scenario speelt. Met de anderen kun je gewoon verder puzzelen. Moet
 het toch anders (bijzondere situatie), klik dan op **Toch aanpassen**, geef een reden (die komt in

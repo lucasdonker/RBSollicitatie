@@ -20,6 +20,17 @@
 if (!function_exists('bh_gevolgen')) {
 
 /**
+ * Staat er voor minstens één van deze meldingstypen een kanaal aan (dus: gaat er bij deze
+ * overgang automatisch bericht uit)? Voor bevestigteksten; zie de LET OP hierboven.
+ */
+function bh_melding_gaat_uit(array $typen): bool {
+    foreach ($typen as $t) {
+        if (!function_exists('melding_kanaalmodus') || melding_kanaalmodus((string)$t) !== 'uit') return true;
+    }
+    return false;
+}
+
+/**
  * @param string $actie   sleutel uit de bulkbalk of een rij-actie
  * @param int[]  $ids     de betrokken sollicitaties
  * @return array{titel:string,regels:string[],bericht:?string,onomkeerbaar:bool,knop:string,toon:string}

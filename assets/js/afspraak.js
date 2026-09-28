@@ -21,7 +21,7 @@
       var tekst = blok.querySelector('[data-af-slottekst]');
       tekst.textContent = slot
         ? 'Vastgezet na het gesprek (' + d.slot.op + '), in alle scenario\'s.'
-        : 'Wijzigingen gaan meteen in het actieve scenario. Na het besluit staat dit vast in alle scenario\'s.';
+        : 'Wijzigingen gaan meteen in het actieve scenario. Na aannemen staat dit vast in alle scenario\'s.';
       var o = blok.querySelector('[data-af-ontgrendel]'), v = blok.querySelector('[data-af-vastzetten]');
       if (o) o.hidden = !slot;
       if (v) v.hidden = slot;

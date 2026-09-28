@@ -156,8 +156,24 @@ $_niet     = tw_niet_gekomen($_k);   // was er niet: geen gesprek, wel een beslu
           <?php if (!empty($_k['evaluatie_bericht'])): ?><span class="bh-meta"><?= h((string)$_k['evaluatie_bericht']) ?></span><?php endif; ?>
         </p>
       <?php endif; ?>
+      <?php
+        // Per besluit zeggen wat er echt gebeurt: met naam, of er mail uitgaat (instellingen) en of het vastligt.
+        $_voor  = (string)($_k['voornaam'] ?? '') ?: (string)$_k['naam'];
+        $_mail  = fn(array $t) => bh_melding_gaat_uit($t)
+            ? $_voor . ' krijgt nu een mail met jullie bericht.' : 'Er gaat geen mail uit (staat uit bij Instellingen).';
+        $_afw_t = [$_niet && function_exists('melding_definitie') && melding_definitie('tw_niet_gekomen') ? 'tw_niet_gekomen' : 'tw_afgewezen'];
+        $_bev = [
+            'aannemen' => [$_k['naam'] . ' aannemen?', 'De fase wordt Aangenomen en de formulieren staan meteen in het portaal. '
+                          . $_mail(['aangenomen']) . ' De afgesproken inzet staat daarna vast in alle scenario\'s. '
+                          . 'Terugzetten kan in het dossier, maar een verstuurde mail neem je niet terug.', 'Ja, aannemen', ''],
+            'twijfel'  => ['Op twijfel zetten?', 'Er verandert niets: geen nieuwe fase, geen mail, de inzet staat nog niet vast. '
+                          . 'Bel ' . $_voor . ' na het weekend en open dit gesprek dan opnieuw.', 'Op twijfel zetten', ''],
+            'afwijzen' => [$_k['naam'] . ' afwijzen?', 'De fase wordt Afgewezen. ' . $_mail($_afw_t)
+                          . ' Terugzetten kan in het dossier, maar een verstuurde mail neem je niet terug.', 'Ja, afwijzen', '1'],
+        ];
+      ?>
       <form method="post" class="bh-twgesprek-form"<?= $_mag_form ? '' : ' inert' ?>
-            data-bevestig="Besluit vastleggen? Bij aannemen of afwijzen gaat het meteen door: de fase verandert en de sollicitant krijgt bericht, met jullie tekst. Twijfel blijft staan.">
+            data-bevestig="Besluit vastleggen?">
         <?= csrf_input() ?>
         <input type="hidden" name="actie" value="gesprek">
         <input type="hidden" name="sol_id" value="<?= $_id ?>">
@@ -165,7 +181,9 @@ $_niet     = tw_niet_gekomen($_k);   // was er niet: geen gesprek, wel een beslu
           <legend class="bh-vw">Besluit over <?= h((string)$_k['naam']) ?></legend>
           <?php foreach (['aannemen' => 'Aannemen', 'twijfel' => 'Twijfel', 'afwijzen' => 'Afwijzen'] as $_w => $_l): ?>
             <label class="bh-twoptie <?= h($_w) ?>">
-              <input type="radio" name="besluit" value="<?= h($_w) ?>" required<?= $_b === $_w ? ' checked' : '' ?>>
+              <input type="radio" name="besluit" value="<?= h($_w) ?>" required<?= $_b === $_w ? ' checked' : '' ?>
+                     data-bevestig-titel="<?= h($_bev[$_w][0]) ?>" data-bevestig="<?= h($_bev[$_w][1]) ?>"
+                     data-bevestig-knop="<?= h($_bev[$_w][2]) ?>" data-bevestig-gevaar="<?= $_bev[$_w][3] ?>">
               <span><?= h($_l) ?></span>
             </label>
           <?php endforeach; ?>

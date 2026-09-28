@@ -396,7 +396,7 @@ bijvoorbeeld te zien "wat als we in juni twee mensen minder inzetten?".
 ### Vastzetten na het gesprek
 
 In het gesprek op het trainingsweekend spreekt het bestuur de inzet af met de sollicitant. Leggen ze
-**Aannemen** of **Twijfel** vast, dan zet het systeem de weken en de functie van die persoon uit het
+**Aannemen** vast, dan zet het systeem de weken en de functie van die persoon uit het
 actieve scenario over naar **alle** scenario's, en zet ze daar op slot. Zo verandert wat met de
 sollicitant besproken is niet meer doordat iemand met een ander scenario speelt. Met de anderen kun
 je gewoon verder puzzelen. Bij **Afwijzen** wordt niets vastgezet.
@@ -577,8 +577,8 @@ Daarna legt het bestuur het besluit vast:
 - **Aannemen**: gaat meteen door. De fase wordt Aangenomen, de sollicitant krijgt een mail met het
   bericht van het bestuur, en het takenpakket staat direct in het portaal. De inzet wordt vastgezet in
   alle scenario's.
-- **Twijfel**: er gebeurt nog niets met de fase. De inzet wordt wel vastgezet. Het bestuur belt na het
-  weekend en legt dan alsnog het besluit vast.
+- **Twijfel**: er gebeurt nog niets met de fase, en de inzet staat nog niet vast (twijfel is nog geen
+  afspraak). Het bestuur belt na het weekend en legt dan alsnog het besluit vast.
 - **Afwijzen**: gaat meteen door. De sollicitant verdwijnt uit de Loonplanning en kost niets.
 
 **Niet gekomen.** Was iemand er niet (afgemeld, of niet verschenen toen het inchecken werd
@@ -589,7 +589,7 @@ die verdwijnt na het afwijzen vanzelf.
 
 ### Wat jij ervan ziet
 
-- **In de Loonplanning**: het slotje "vast na het gesprek" bij wie is aangenomen of op twijfel staat,
+- **In de Loonplanning**: het slotje "vast na het gesprek" bij wie is aangenomen,
   en "aangenomen" onder de naam. Met **Toon** › **Vast na het gesprek** of **Nog niet vast** zie je
   hoe ver het bestuur is.
 - **In het dossier** (via Sollicitanten): het tabblad **Trainingsweekend** met de deelname (kwam

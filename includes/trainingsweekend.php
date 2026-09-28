@@ -414,9 +414,10 @@ function tw_gesprek_afronden(int $seizoen_id, int $sol_id, string $besluit, stri
        ->execute([$bericht !== '' ? $bericht : null, $seizoen_id, $sol_id]);
     if (function_exists('audit_log')) audit_log('tw_gesprek', 'sollicitatie', $sol_id, ['besluit' => $besluit, 'door' => $beheerder_id]);
 
-    // Wat in het gesprek over de inzet is besproken, staat daarna vast in alle scenario's
-    // (includes/loonplan_slot.php). Bij afwijzen valt de persoon uit de planning; niets vast te zetten.
-    if ($besluit !== 'afwijzen' && function_exists('loonplan_vastzetten') && (!function_exists('module_aan') || module_aan('loonplanning'))) {
+    // Wat in het gesprek over de inzet is besproken, staat na AANNEMEN vast in alle scenario's
+    // (includes/loonplan_slot.php). Twijfel is nog geen afspraak (besluit Lucas, 2.128.2); bij
+    // afwijzen valt de persoon uit de planning.
+    if ($besluit === 'aannemen' && function_exists('loonplan_vastzetten') && (!function_exists('module_aan') || module_aan('loonplanning'))) {
         $sc = loonplan_actief_scenario($seizoen_id);
         if ($sc) loonplan_vastzetten($seizoen_id, $sol_id, (int)$sc['id'], $beheerder_id);
     }
