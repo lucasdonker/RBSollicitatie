@@ -572,11 +572,11 @@ function selectie_gebeld_zetten(int $seizoen_id, int $sol_id, string $notitie, s
     $db->prepare("UPDATE selectie_besluit SET gebeld_op=NOW(), gebeld_door=?, gebeld_notitie=?, bel_door=NULL, bel_sinds=NULL $zet_besluit
                   WHERE sollicitatie_id=? AND seizoen_id=?")
        ->execute([$door, mb_substr(trim($notitie), 0, 300), $sol_id, $seizoen_id]);
-    $doorgevoerd = false;
+    $doorgevoerd = false; $fase_res = null;
     if ($meteen_doorvoeren) {
-        $doorgevoerd = selectie_besluit_doorvoeren_een($seizoen_id, $sol_id);
+        $doorgevoerd = selectie_besluit_doorvoeren_een($seizoen_id, $sol_id, $fase_res);
     }
-    return ['gebeld' => true, 'doorgevoerd' => $doorgevoerd];
+    return ['gebeld' => true, 'doorgevoerd' => $doorgevoerd, 'fase_res' => $fase_res];
 }
 
 /** Verwijder de gebeld-markering (per ongeluk aangevinkt). */
@@ -586,8 +586,11 @@ function selectie_gebeld_wissen(int $seizoen_id, int $sol_id): void {
        ->execute([$sol_id, $seizoen_id]);
 }
 
-/** Voer één kandidaat door (door → uitgenodigd_tw, niet → afgewezen). Retourneert of het lukte. */
-function selectie_besluit_doorvoeren_een(int $seizoen_id, int $sol_id): bool {
+/**
+ * Voer één kandidaat door (door → uitgenodigd_tw, niet → afgewezen). Retourneert of het lukte;
+ * $uit krijgt het resultaat van fase_zetten() (voor fase_melding_tekst(): wat er is verstuurd).
+ */
+function selectie_besluit_doorvoeren_een(int $seizoen_id, int $sol_id, ?array &$uit = null): bool {
     selectiedag_auto_setup();
     $db = db();
     $q = $db->prepare("SELECT besluit FROM selectie_besluit WHERE sollicitatie_id=? AND seizoen_id=?");
@@ -605,6 +608,7 @@ function selectie_besluit_doorvoeren_een(int $seizoen_id, int $sol_id): bool {
         'seizoen_id' => $seizoen_id,
         'alleen_van' => ['uitgenodigd_selectie', 'aangemeld_selectie', 'selectiedag_geweest'],
     ]);
+    $uit = $res;
     if ($res['ok'] && !$res['ongewijzigd']) {
         $db->prepare("UPDATE selectie_besluit SET doorgevoerd_op=NOW() WHERE sollicitatie_id=? AND seizoen_id=?")
            ->execute([$sol_id, $seizoen_id]);

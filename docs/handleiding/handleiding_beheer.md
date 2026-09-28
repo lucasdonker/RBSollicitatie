@@ -1088,27 +1088,27 @@ bepaalt het besluit. Filter op **Iedereen**, **Nog open**, **Door**, **Twijfel**
 
 ### Stap 5: de bellijst
 
-Links wie er gebeld moet worden (iedereen met Door of Niet die nog niet is doorgevoerd), met
+Links wie er gebeld moet worden (iedereen met Door, Twijfel of Niet die nog niet is doorgevoerd), met
 telefoonnummer, score, besluit en of er al gebeld is. Bovenaan "x van y gebeld". Rechts de
-kandidaat die aan de beurt is, met de reden bij het besluit en de observaties.
+sollicitant die aan de beurt is, met de reden bij het besluit en de observaties. Wie een collega al
+aan het bellen is, slaat de lijst over; open je een ander, dan komt de vorige weer vrij.
 
 1. Klik op **Bellen** (op een telefoon belt dat direct) en vertel de uitslag.
 2. Schrijf bij "Wat heb je verteld?" een korte aantekening.
 3. Kies:
-   - **Gebeld — doorzetten** of **Gebeld — afwijzen**: markeert als gebeld en voert meteen door
-     (na bevestiging met **Ja, doorvoeren**).
-   - **Gebeld, later doorvoeren**: markeert alleen als gebeld.
+   - **Gebeld**: markeert als gebeld. Het vinkje **Meteen doorvoeren** staat standaard uit; zet je het
+     aan, dan voert het na bevestiging meteen door. De tekst erbij zegt of er dan een bericht uitgaat.
+   - Bij twijfel: **Gebeld — toch door** of **Gebeld — niet door**.
    - **Overslaan**: naar de volgende zonder iets vast te leggen.
 4. Bij iemand die al gebeld is: **Doorzetten naar trainingsweekend** of **Afwijzen doorvoeren**, of
-   **Toch niet gebeld** als je je vergiste.
+   **Toch niet gebeld** als je je vergiste. Na doorvoeren zie je bovenaan wat er is verstuurd.
 5. **Alle gebelde doorvoeren** (bovenaan de lijst) voert iedereen door die als gebeld staat.
 
 Doorvoeren van Door zet de fase op Uitgenodigd trainingsweekend en stuurt de uitnodiging.
 Doorvoeren van Niet zet de fase op Afgewezen; de afwijzingsmail gaat alleen als je die hebt
 aangezet (zie [De fases en wat er automatisch gebeurt](#de-fases-en-wat-er-automatisch-gebeurt)).
-Een verstuurd bericht kun je niet terugnemen. Twijfelgevallen staan niet op de bellijst; die
-handel je af via de nabespreking of het dossier. Is iedereen doorgevoerd, dan staat er "De
-bellijst is leeg".
+Een verstuurd bericht kun je niet terugnemen. Twijfelgevallen staan ook op de bellijst: na het
+gesprek wordt het door of niet. Is iedereen doorgevoerd, dan staat er "De bellijst is leeg".
 
 ---
 

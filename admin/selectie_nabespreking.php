@@ -16,6 +16,13 @@ $seizoen = actief_seizoen();
 $sid = $seizoen ? (int)$seizoen['id'] : 0;
 $ik  = $_SESSION['bhd_naam'] ?? 'onbekend';
 
+/** Na doorvoeren: zeggen wat er gebeurde, als melding op de herladen pagina (fase + bericht). */
+function nb_doorvoer_melding(bool $ok, ?array $res): void {
+    if (!$ok) { flash('fout', 'Doorvoeren lukte niet' . (!empty($res['fout']) ? ': ' . $res['fout'] : '') . '.'); return; }
+    $bericht = function_exists('fase_melding_tekst') ? fase_melding_tekst($res ?? []) : '';
+    flash('succes', 'Doorgevoerd: ' . fase_label((string)($res['nieuw'] ?? '')) . '. ' . ($bericht !== '' ? $bericht : 'Er is geen bericht verstuurd.'));
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $sid) {
     csrf_check();
     $actie = (string)($_POST['actie'] ?? '');
@@ -60,7 +67,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $sid) {
         }
         $res = selectie_gebeld_zetten($sid, $sol, (string)($_POST['gebeld_notitie'] ?? ''), $ik,
                                       !empty($_POST['meteen_doorvoeren']), in_array($nieuw, ['door', 'niet'], true) ? $nieuw : null);
-        echo json_encode(['ok' => true] + $res);
+        if (!empty($_POST['meteen_doorvoeren'])) nb_doorvoer_melding((bool)$res['doorgevoerd'], $res['fase_res']);
+        echo json_encode(['ok' => true, 'gebeld' => true, 'doorgevoerd' => $res['doorgevoerd']]);
         exit;
     }
     if ($actie === 'bel_los') {
@@ -77,14 +85,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $sid) {
     }
     if ($actie === 'doorvoeren_een') {
         header('Content-Type: application/json');
-        echo json_encode(['ok' => selectie_besluit_doorvoeren_een($sid, (int)$_POST['sol_id'])]);
+        $_res = null;
+        $_ok  = selectie_besluit_doorvoeren_een($sid, (int)$_POST['sol_id'], $_res);
+        nb_doorvoer_melding($_ok, $_res);
+        echo json_encode(['ok' => $_ok]);
         exit;
     }
     // Alles in één keer doorvoeren (actie 'doorvoeren') is bewust weg: dan gaat er bericht
     // uit vóórdat er gebeld is. Doorvoeren gaat via de bellijst, per persoon of per gebelde.
     if ($actie === 'gebelde_doorvoeren') {
         $n = selectie_gebelde_doorvoeren($sid);
-        flash('succes', $n . ' gebelde kandidaten doorgezet naar hun nieuwe fase.');
+        flash('succes', $n . ' gebelde ' . ($n === 1 ? 'sollicitant' : 'sollicitanten') . ' doorgevoerd naar de nieuwe fase. Wat er aan berichten uitging, staat in het berichtenlog.');
         redirect(APP_URL . '/admin/selectie_nabespreking.php?tab=bellijst');
     }
 }

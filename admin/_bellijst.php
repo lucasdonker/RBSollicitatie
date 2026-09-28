@@ -35,6 +35,13 @@ $bel_gebeld     = (int)($bel_gebeld ?? 0);
 $bel_ongebeld   = (int)($bel_ongebeld ?? 0);
 $_ik            = (int)($_SESSION['bhd_id'] ?? 0);
 $_besluit_kleur = ['door' => 'groen', 'twijfel' => 'oranje', 'niet' => 'rood'];
+// Wat doorvoeren doet, in woorden die kloppen met de meldingsinstellingen (de afwijsmail staat standaard uit).
+$_doorvoer_tekst = static function (bool $door): string {
+    $mail = bh_melding_gaat_uit(fase_meldingstypen($door ? 'uitgenodigd_tw' : 'afgewezen'));
+    return ($door ? 'De fase wordt Uitgenodigd trainingsweekend' : 'De fase wordt Afgewezen')
+         . ($mail ? ' en het bericht gaat meteen uit. Een verstuurd bericht neem je niet terug.'
+                  : '. Er gaat geen bericht uit (staat uit bij Instellingen).');
+};
 
 if (!$bel_lijst) {
     echo '<div class="ds-kaart ds-kaart-p">';
@@ -68,12 +75,12 @@ foreach ($bel_lijst as $_k) if ((int)$_k['sol_id'] === $_open) $_huidig = $_k;
     <div class="bh-bel-kop">
       <span><strong class="bh-num"><?= $bel_gebeld ?></strong> van <strong class="bh-num"><?= $bel_gebeld + $bel_ongebeld ?></strong> gebeld</span>
       <?php if ($bel_gebeld > 0): ?>
-        <form method="post" id="alleDoorForm" class="bh-bel-alledoor">
+        <form method="post" class="bh-bel-alledoor" data-bevestig-titel="<?= $bel_gebeld ?> gebelde doorvoeren?"
+              data-bevestig="Iedereen die als gebeld staat, gaat naar de nieuwe fase: door naar het trainingsweekend, niet door naar Afgewezen. Berichten gaan uit volgens de instellingen; een verstuurd bericht neem je niet terug."
+              data-bevestig-knop="Ja, doorvoeren">
           <?= csrf_input() ?>
           <input type="hidden" name="actie" value="gebelde_doorvoeren">
-          <button type="button" class="bh-doc-actie" onclick="alleGebeldeDoorvoeren(<?= $bel_gebeld ?>)">
-            Alle gebelde doorvoeren
-          </button>
+          <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm">Alle gebelde doorvoeren (<?= $bel_gebeld ?>)</button>
         </form>
       <?php endif; ?>
     </div>
@@ -215,8 +222,8 @@ foreach ($bel_lijst as $_k) if ((int)$_k['sol_id'] === $_open) $_huidig = $_k;
           <?= icoon('vink-cirkel', 16) ?>
           <span>Gebeld op <?= h(datum_nl(substr((string)$_b['gebeld_op'], 0, 10))) ?>. Nog niet doorgevoerd.</span>
         </div>
-        <button type="button" class="ds-btn ds-btn-primair"
-                onclick="doorvoerenEen(<?= $_id ?>, <?= $_door ? 'true' : 'false' ?>)">
+        <button type="button" class="ds-btn ds-btn-primair" data-doorvoer-tekst="<?= h($_doorvoer_tekst($_door)) ?>"
+                onclick="doorvoerenEen(<?= $_id ?>, <?= $_door ? 'true' : 'false' ?>, this.dataset.doorvoerTekst)">
           <?= $_door ? 'Doorzetten naar trainingsweekend' : 'Afwijzen doorvoeren' ?>
         </button>
         <button type="button" class="ds-btn ds-btn-zacht" onclick="gebeldWissen(<?= $_id ?>)">
@@ -227,13 +234,14 @@ foreach ($bel_lijst as $_k) if ((int)$_k['sol_id'] === $_open) $_huidig = $_k;
         <button type="button" class="ds-btn ds-btn-secundair" onclick="gebeldZet(<?= $_id ?>, false, 'niet')">Gebeld — niet door</button>
         <button type="button" class="ds-btn ds-btn-zacht" onclick="volgendeBellen(<?= $_id ?>)">Overslaan</button>
       <?php else: ?>
-        <?php // Eén knop; het vinkje bepaalt of het meteen doorgaat (standaard wel, met bevestiging). ?>
+        <?php // Eén knop; het vinkje bepaalt of het meteen doorgaat. Standaard uit (besluit Lucas, 2.128.3):
+              // doorvoeren is een bewuste tweede stap, per persoon of "alle gebelde doorvoeren". ?>
         <label class="bh-zijpaneel-vink bh-bel-meteen">
-          <input type="checkbox" id="meteen-<?= $_id ?>" checked>
-          <span>Meteen doorvoeren: fase <?= $_door ? 'naar het trainingsweekend' : 'afgewezen' ?> en het bericht gaat uit</span>
+          <input type="checkbox" id="meteen-<?= $_id ?>">
+          <span>Meteen doorvoeren. <?= h($_doorvoer_tekst($_door)) ?></span>
         </label>
-        <button type="button" class="ds-btn <?= $_door ? 'ds-btn-primair' : 'ds-btn-gevaar' ?>"
-                onclick="gebeldZet(<?= $_id ?>, document.getElementById('meteen-<?= $_id ?>').checked)">Gebeld</button>
+        <button type="button" class="ds-btn ds-btn-primair" data-doorvoer-tekst="<?= h($_doorvoer_tekst($_door)) ?>"
+                onclick="gebeldZet(<?= $_id ?>, document.getElementById('meteen-<?= $_id ?>').checked, '', this.dataset.doorvoerTekst)">Gebeld</button>
         <button type="button" class="ds-btn ds-btn-zacht" onclick="volgendeBellen(<?= $_id ?>)">Overslaan</button>
       <?php endif; ?>
     </footer>
@@ -254,7 +262,7 @@ function belPost(body) {
   }).then(function (r) { return r.json(); });
 }
 
-function gebeldZet(solId, meteen, nieuwBesluit) {
+function gebeldZet(solId, meteen, nieuwBesluit, doorvoerTekst) {
   const notitie = document.getElementById('gesprek-' + solId).value;
   const velden = { actie: 'gebeld', sol_id: solId, gebeld_notitie: notitie, meteen_doorvoeren: meteen ? '1' : '', nieuw_besluit: nieuwBesluit || '' };
   // "Komt op het TW?" alleen meesturen als het door wordt (door, of twijfel die door wordt).
@@ -275,7 +283,7 @@ function gebeldZet(solId, meteen, nieuwBesluit) {
   if (!meteen) { doen(); return; }
   bhBevestig({
     titel: 'Gebeld en meteen doorvoeren?',
-    tekst: 'De fase gaat om en het bijbehorende bericht gaat uit. Dat kun je niet terugnemen.',
+    tekst: doorvoerTekst || 'De fase gaat om.',
     knop: 'Ja, doorvoeren'
   }).then(function (ja) { if (ja) doen(); });
 }
@@ -289,10 +297,10 @@ function gebeldWissen(solId) {
     .catch(function () { bhToast('Geen verbinding — probeer opnieuw.', 'fout'); });
 }
 
-function doorvoerenEen(solId, isDoor) {
+function doorvoerenEen(solId, isDoor, doorvoerTekst) {
   bhBevestig({
-    titel: isDoor ? 'Doorzetten naar het trainingsweekend?' : 'Deze kandidaat afwijzen?',
-    tekst: 'De fase gaat om en het bijbehorende bericht gaat uit. Dat kun je niet terugnemen.',
+    titel: isDoor ? 'Doorzetten naar het trainingsweekend?' : 'Deze sollicitant afwijzen?',
+    tekst: doorvoerTekst || 'De fase gaat om.',
     knop: isDoor ? 'Ja, doorzetten' : 'Ja, afwijzen', gevaar: !isDoor
   }).then(function (ja) {
     if (!ja) return;
@@ -303,15 +311,6 @@ function doorvoerenEen(solId, isDoor) {
       })
       .catch(function () { bhToast('Geen verbinding — probeer opnieuw.', 'fout'); });
   });
-}
-
-function alleGebeldeDoorvoeren(n) {
-  bhBevestig({
-    titel: n + ' gebelde kandidaten doorvoeren?',
-    tekst: 'Iedereen die je als gebeld hebt gemarkeerd gaat naar de nieuwe fase, en de bijbehorende '
-         + 'berichten gaan uit. Dat kun je niet terugnemen.',
-    knop: 'Ja, doorvoeren'
-  }).then(function (ja) { if (ja) document.getElementById('alleDoorForm').submit(); });
 }
 
 function volgendeBellen(solId) {
