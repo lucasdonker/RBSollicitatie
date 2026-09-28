@@ -35,11 +35,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     vereis_recht('instellingen', 'bewerken');
 
     $actie = $_POST['actie'] ?? '';
+    // Technische acties vragen Systeem › bewerken, los van het tabblad in de URL: de check
+    // hierboven kijkt alleen naar ?tab=, en een POST kan elke actie meesturen.
+    $technische_acties = ['authentik_test', 'authentik_bulk_sync', 'cron_token_vernieuw', 'modules_opslaan',
+                          'cron_nu', 'api_sleutel_genereer', 'api_opslaan', 'smtp_opslaan', 'smtp_test'];
+    if (in_array($actie, $technische_acties, true)) vereis_recht('systeem', 'bewerken');
 
     if ($actie === 'instellingen') {
         // Alleen sleutels die als veld op dít tabblad staan (whitelist in includes/instellingen.php).
         // Geheimen volgen daarna apart: leeg = ongewijzigd.
-        $inst_waarschuwing   = '';
+        // flash() bewaart één melding: verzamel waarschuwingen, anders overschrijft "opgeslagen" ze.
+        $inst_waarschuwing   = [];
         $toegestaan_sleutels = instellingen_formulier_sleutels($tab);
         $geheim_sleutels     = instellingen_geheime_sleutels();
         $wis_geheim          = array_map('strval', (array)($_POST['geheim_wis'] ?? []));
@@ -71,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pu = trim((string)$velden['privacy.url']);
             $pu_ok = $pu === '' || (str_starts_with($pu, '/') && !str_starts_with($pu, '//'))
                   || (str_starts_with(strtolower($pu), 'https://') && filter_var($pu, FILTER_VALIDATE_URL));
-            if (!$pu_ok) { unset($velden['privacy.url']); $inst_waarschuwing = 'De rest is opgeslagen, maar het adres van de privacyverklaring niet: gebruik een https-adres of een pad dat met / begint.'; }
+            if (!$pu_ok) { unset($velden['privacy.url']); $inst_waarschuwing[] = 'Het adres van de privacyverklaring is niet opgeslagen: gebruik een https-adres of een pad dat met / begint.'; }
         }
         // Loondocumenten: nooit korter dan de wettelijke vijf jaar (documenten_loon_bewaarjaren doet hetzelfde).
         if (isset($velden['bewaar.loondocumenten_jaar'])) {
@@ -91,11 +97,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $ext = strtolower(pathinfo((string)$bron['name'], PATHINFO_EXTENSION));
             $mime = function_exists('finfo_open') ? (string)finfo_file(finfo_open(FILEINFO_MIME_TYPE), $bron['tmp_name']) : '';
             if ($bron['size'] >= 2*1024*1024) {
-                flash('waarschuwing', $naam_veld . ' niet opgeslagen: het bestand is groter dan 2 MB.');
+                $inst_waarschuwing[] = $naam_veld . ' niet opgeslagen: het bestand is groter dan 2 MB.';
                 continue;
             }
             if (!isset($upload_types[$veld][$ext]) || ($mime !== '' && !in_array($mime, $upload_types[$veld][$ext], true))) {
-                flash('waarschuwing', $naam_veld . ' niet opgeslagen: alleen ' . ($veld === 'logo' ? 'PNG, JPG of WebP' : 'PNG of ICO') . ' is toegestaan. SVG kan script bevatten en weigeren we daarom.');
+                $inst_waarschuwing[] = $naam_veld . ' niet opgeslagen: alleen ' . ($veld === 'logo' ? 'PNG, JPG of WebP' : 'PNG of ICO') . ' is toegestaan. SVG kan script bevatten en weigeren we daarom.';
                 continue;
             }
             $dir = __DIR__ . '/../uploads/branding/';
@@ -113,7 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $velden['taken.huisregels_bijlage_id'] = (string)$hu['id'];
                 if (function_exists('audit_log')) audit_log('gewijzigd', 'instelling', null, ['veld' => 'taken.huisregels_bijlage_id', 'bijlage' => $hu['id']]);
             } else {
-                flash('waarschuwing', 'Huisregels niet opgeslagen: ' . $hu['fout']);
+                $inst_waarschuwing[] = 'Huisregels niet opgeslagen: ' . $hu['fout'];
             }
         }
         if ($tab === 'algemeen' && !empty($_POST['huisregels_los'])) $velden['taken.huisregels_bijlage_id'] = '0';
@@ -130,7 +136,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         // Alleen wélke sleutels veranderden, nooit de waarden (daar zitten geheimen tussen).
         if ($gewijzigd && function_exists('audit_log')) audit_log('gewijzigd', 'instelling', null, ['tab' => $tab, 'velden' => $gewijzigd]);
-        if (!empty($inst_waarschuwing)) flash('waarschuwing', $inst_waarschuwing);
+        if ($inst_waarschuwing) flash('waarschuwing', 'De rest is opgeslagen. ' . implode(' ', $inst_waarschuwing));
         else flash('succes', 'Instellingen opgeslagen.');
         redirect(APP_URL . '/admin/instellingen.php?tab=' . $tab);
     }
@@ -142,8 +148,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($actie === 'cron_token_vernieuw') {
-        // Alleen voor Systeem-bewerken: wie het token niet mag zien, kan het ook niet vervangen.
-        vereis_recht('systeem', 'bewerken');
+        // Technisch (zie $technische_acties): wie het token niet mag zien, kan het ook niet vervangen.
         instelling_opslaan('cron.token', bin2hex(random_bytes(24)));
         if (function_exists('audit_log')) audit_log('gewijzigd', 'instelling', null, ['veld' => 'cron.token', 'actie' => 'nieuw token gemaakt']);
         flash('succes', 'Nieuw cron-token gemaakt. Zet de nieuwe regel in de geplande taak in Plesk; de oude werkt niet meer.');
@@ -151,8 +156,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($actie === 'modules_opslaan') {
-        // Een module uitzetten haalt voor iedereen schermen weg: dat is Systeem, niet alleen Instellingen.
-        vereis_recht('systeem', 'bewerken');
+        // Een module uitzetten haalt voor iedereen schermen weg: dat is Systeem (zie $technische_acties).
         $gewijzigd = [];
         foreach (modules_alle() as $sleutel => $m) {
             $aan = !empty($_POST['module'][$sleutel]) ? '1' : '0';
@@ -166,7 +170,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($actie === 'cron_nu') {
-        vereis_recht('systeem', 'bewerken');
         @set_time_limit(300);
         $res = cron_taken_uitvoeren('alles');
         $fouten = [];
@@ -180,8 +183,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($actie === 'api_sleutel_genereer') {
-        // Alleen voor Systeem-bewerken: een sleutel die je niet kunt kopiëren, kun je ook niet in de plugin zetten.
-        vereis_recht('systeem', 'bewerken');
+        // Technisch (zie $technische_acties): een sleutel die je niet kunt kopiëren, kun je ook niet in de plugin zetten.
         // Nieuwe geheime sleutel genereren (32 bytes, hex).
         $nieuw = bin2hex(random_bytes(32));
         instelling_opslaan('api.sleutel', $nieuw);
@@ -196,6 +198,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($actie === 'berichten_opslaan') {
+        // De koppelingen (SMS-gateway, WhatsReach, sleutels) zijn technisch; de keuze per melding niet.
+        // Zonder Systeem › bewerken staan die velden niet op het scherm en worden ze hier ook niet gelezen.
+        if ($mag_systeem) {
         // SMS
         instelling_opslaan('sms.actief', !empty($_POST['sms_actief']) ? '1' : '0');
         instelling_opslaan('sms.gateway', $_POST['sms_gateway'] ?? '');
@@ -212,6 +217,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         instelling_opslaan('wa.actief', !empty($_POST['wa_actief']) ? '1' : '0');
         instelling_opslaan('wa.base_url', trim($_POST['wa_base_url'] ?? '') ?: 'https://api.whatsreach.co/api/v1');
         instelling_opslaan('wa.afzender_nummer', trim($_POST['wa_afzender_nummer'] ?? ''));
+        }
         // Per-melding kanaalmodus (email | kort | beide | uit)
         if (function_exists('meldingen_register')) {
             $modi_ok = array_keys(meldingen_kanaalmodi());
@@ -1940,6 +1946,13 @@ require __DIR__ . '/layout_top.php';
       <?= csrf_input() ?>
       <input type="hidden" name="actie" value="berichten_opslaan">
 
+      <?php if (!$mag_systeem): ?>
+      <p class="bh-inst-uitleg bh-inst-uitleg-12">
+        SMS staat <strong><?= instelling('sms.actief', '0') === '1' ? 'aan' : 'uit' ?></strong>, WhatsApp staat
+        <strong><?= instelling('wa.actief', '0') === '1' ? 'aan' : 'uit' ?></strong>. De koppeling met die diensten
+        (sleutels en verzendmethode) stelt systeembeheer in.
+      </p>
+      <?php else: ?>
       <!-- SMS -->
       <div class="bh-subkaart">
         <label class="inst-toggle bh-inst-kanaalschakel">
@@ -2016,6 +2029,7 @@ require __DIR__ . '/layout_top.php';
         <input type="text" name="wa_afzender_nummer" value="<?= h(instelling('wa.afzender_nummer','')) ?>" class="bh-inst-volbreed" placeholder="+31612345678">
         <p class="bh-wa-nummeruitleg">Het WhatsApp-nummer waarvandaan berichten verstuurd worden (het "from"-apparaat uit WhatsReach). Laat leeg als je maar één apparaat hebt gekoppeld.</p>
       </div>
+      <?php endif; ?>
 
       <!-- Kanaal per melding -->
       <div class="bh-subkaart">

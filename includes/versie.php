@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.128.1');
+define('APP_VERSIE', '2.128.2');
 
 function app_changelog(): array {
     return [
+        '2.128.2' => [
+            'datum'  => '2026-09-28',
+            'titel'  => 'Fouten uit de UX-audit opgelost',
+            'punten' => [
+                'Instellingen: de technische acties (e-mailserver, Authentik, website-koppeling, modules, automatische taken) vragen nu altijd het recht Systeem › bewerken, ook als iemand ze via een ander tabblad probeert. De koppeling met SMS en WhatsApp (sleutels) zie en wijzig je alleen met dat recht; de keuze per melding blijft voor het bestuur',
+                'Instellingen: een waarschuwing over een upload (logo, favicon, huisregels) werd overschreven door "opgeslagen". Nu zie je allebei',
+                'Beheerders: het recht op beheerders is geen opstap meer naar admin. Een admin-account aanpassen (rol, wachtwoord, uitzetten) en de rol admin toekennen kan alleen een admin; je eigen rol wijzig je niet zelf; alleen bestaande rollen',
+            ],
+        ],
         '2.128.1' => [
             'datum'  => '2026-09-28',
             'titel'  => 'Uitrollen: eenvoudiger, test = productie',

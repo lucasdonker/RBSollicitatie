@@ -31,11 +31,24 @@ function beheerder_rij($db, int $id): ?array {
     return $q->fetch() ?: null;
 }
 
+$rolnamen = [];
+foreach (rollen_alle() as $_r) $rolnamen[$_r['sleutel']] = $_r['naam'];
+
+// Het recht "beheerders" mag geen opstap naar admin zijn: een admin-account aanpassen
+// (rol, wachtwoord, uitzetten) en de rol admin toekennen kan alleen een admin.
+$mag_aanpassen = fn(?array $b): bool => $b !== null && ($ben_admin || ($b['rol'] ?? '') !== 'admin');
+$mag_toekennen = fn(string $rol): bool => isset($rolnamen[$rol]) && ($ben_admin || $rol !== 'admin');
+
 // ── Verwerken ────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
     $actie = (string)($_POST['actie'] ?? '');
     $bid   = (int)($_POST['bid'] ?? 0);
+
+    if (in_array($actie, ['wachtwoord', 'rol', 'deactiveer', 'activeer'], true) && !$mag_aanpassen(beheerder_rij($db, $bid))) {
+        $fout = 'Een account met de rol ' . ($rolnamen['admin'] ?? 'admin') . ' kan alleen door een ' . ($rolnamen['admin'] ?? 'admin') . ' worden aangepast.';
+        $actie = '';
+    }
 
     if ($actie === 'nieuw') {
         $naam  = trim((string)($_POST['naam'] ?? ''));
@@ -48,6 +61,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $fout = 'Dat e-mailadres klopt niet.';
         } elseif (strlen($ww) < 8) {
             $fout = 'Het wachtwoord moet minstens 8 tekens hebben.';
+        } elseif (!$mag_toekennen($rol)) {
+            $fout = 'Die rol kun je niet toekennen.';
         } else {
             try {
                 $db->prepare("INSERT INTO beheerders (naam,email,wachtwoord,rol) VALUES(?,?,?,?)")
@@ -78,7 +93,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($actie === 'rol') {
         $nieuw = (string)($_POST['rol'] ?? '');
         $oud   = (string)(beheerder_rij($db, $bid)['rol'] ?? '');
-        if ($nieuw !== '' && $nieuw !== $oud) {
+        if ($bid === $mij) {
+            $fout = 'Je kunt je eigen rol niet wijzigen. Vraag een andere beheerder.';
+        } elseif (!$mag_toekennen($nieuw)) {
+            $fout = 'Die rol kun je niet toekennen.';
+        } elseif ($nieuw !== $oud) {
             $db->prepare("UPDATE beheerders SET rol=? WHERE id=?")->execute([$nieuw, $bid]);
             audit_log('beheerder_gewijzigd', 'beheerder', $bid, ['rol' => ['oud' => $oud, 'nieuw' => $nieuw]]);
             flash('succes', 'Rol bijgewerkt.');
@@ -117,12 +136,10 @@ $bev_actie = (string)($_GET['bevestig'] ?? '');
 $bev_b     = null;
 if (in_array($bev_actie, ['deactiveer', 'activeer', 'tweestaps_reset'], true)) {
     $bev_b = beheerder_rij($db, (int)($_GET['id'] ?? 0));
-    if (!$bev_b || ($bev_actie === 'tweestaps_reset' && (!$ben_admin || !tweestaps_aan($bev_b)))) { $bev_b = null; $bev_actie = ''; }
+    if (!$mag_aanpassen($bev_b) || ($bev_actie === 'tweestaps_reset' && (!$ben_admin || !tweestaps_aan($bev_b)))) { $bev_b = null; $bev_actie = ''; }
 }
 
 $beheerders = $db->query("SELECT * FROM beheerders ORDER BY actief DESC, rol DESC, naam")->fetchAll();
-$rolnamen   = [];
-foreach (rollen_alle() as $_r) $rolnamen[$_r['sleutel']] = $_r['naam'];
 
 require __DIR__ . '/layout_top.php';
 ?>
@@ -216,28 +233,35 @@ require __DIR__ . '/layout_top.php';
             </span>
           </span>
 
+          <?php $_aanpasbaar = $mag_aanpassen($b); ?>
+          <?php if ($_aanpasbaar && !$_ik): ?>
           <form class="bh-bhrij-rol" method="POST">
             <?= csrf_input() ?>
             <input type="hidden" name="actie" value="rol">
             <input type="hidden" name="bid" value="<?= (int)$b['id'] ?>">
             <label class="sr-only" for="rol-<?= (int)$b['id'] ?>">Rol van <?= h((string)$b['naam']) ?></label>
             <select class="ds-select bh-veld-smal" id="rol-<?= (int)$b['id'] ?>" name="rol">
-              <?php foreach ($rolnamen as $_sl => $_nm): ?>
+              <?php foreach ($rolnamen as $_sl => $_nm): if (!$mag_toekennen($_sl)) continue; ?>
                 <option value="<?= h($_sl) ?>" <?= $b['rol'] === $_sl ? 'selected' : '' ?>><?= h($_nm) ?></option>
               <?php endforeach; ?>
             </select>
             <button type="submit" class="ds-btn ds-btn-zacht ds-btn-sm">Rol opslaan</button>
           </form>
+          <?php else: ?>
+          <span class="bh-bhrij-rol"><?= h($rolnamen[$b['rol']] ?? (string)$b['rol']) ?></span>
+          <?php endif; ?>
 
           <span class="bh-bhrij-acties">
+            <?php if ($_aanpasbaar): ?>
             <a class="ds-btn ds-btn-zacht ds-btn-sm" href="#ww-<?= (int)$b['id'] ?>"
                onclick="bhWachtwoord(<?= (int)$b['id'] ?>); return false;">Wachtwoord</a>
+            <?php endif; ?>
             <?php if ($ben_admin && tweestaps_aan($b)): ?>
               <a class="ds-btn ds-btn-zacht ds-btn-sm" href="?bevestig=tweestaps_reset&amp;id=<?= (int)$b['id'] ?>">Tweestaps resetten</a>
             <?php endif; ?>
             <?php if ($_ik): ?>
               <span class="bh-meta" title="Je kunt je eigen account niet uitzetten">jouw account</span>
-            <?php else: ?>
+            <?php elseif ($_aanpasbaar): ?>
               <a class="ds-btn <?= $_actief ? 'ds-btn-gevaar' : 'ds-btn-secundair' ?> ds-btn-sm"
                  href="?bevestig=<?= $_actief ? 'deactiveer' : 'activeer' ?>&amp;id=<?= (int)$b['id'] ?>">
                 <?= $_actief ? 'Uitzetten' : 'Aanzetten' ?>
@@ -292,7 +316,7 @@ require __DIR__ . '/layout_top.php';
       <div class="ds-veld">
         <label class="ds-label" for="nb_rol">Rol</label>
         <select class="ds-select" id="nb_rol" name="rol">
-          <?php foreach ($rolnamen as $_sl => $_nm): ?>
+          <?php foreach ($rolnamen as $_sl => $_nm): if (!$mag_toekennen($_sl)) continue; ?>
             <option value="<?= h($_sl) ?>" <?= $_sl === 'bestuur' ? 'selected' : '' ?>><?= h($_nm) ?></option>
           <?php endforeach; ?>
         </select>
