@@ -80,7 +80,9 @@ function aanmeld_fout_veld(string $code): string {
 
 /** In welke stap staat een veld? 0 = niet gevonden. */
 function aanmeld_veld_stap(string $naam): int {
-    if ($naam === 'akkoord' || $naam === 'ouder_toestemming_naam' || $naam === 'ouder_akkoord') return 3;
+    if ($naam === 'akkoord') return 3;
+    // Het ouderblok staat bij de geboortedatum (aanmeld_ouderblok_html in stap 2).
+    if ($naam === 'ouder_toestemming_naam' || $naam === 'ouder_akkoord') return 2;
     foreach (aanmeld_velden() as $v) {
         if ($v['naam'] === $naam) return (int)$v['stap'];
     }

@@ -311,7 +311,8 @@ require __DIR__ . '/_kop.php';
                Zonder JavaScript gaan de vakjes als code_cijfer[] mee; de server plakt ze aan elkaar. */ ?>
       <div class="ds-code-inputs" role="group" aria-labelledby="codeLbl" aria-describedby="codeFout">
         <?php for ($i = 0; $i < 6; $i++): ?>
-        <input type="text" inputmode="numeric" pattern="[0-9]" maxlength="1" class="code-cijfer ds-code-cijfer"
+        <?php /* Vakje 1 zonder maxlength: de telefoon vult daar de hele code in (one-time-code); het script verdeelt hem. */ ?>
+        <input type="text" inputmode="numeric" pattern="[0-9]*"<?= $i === 0 ? '' : ' maxlength="1"' ?> class="code-cijfer ds-code-cijfer"
                name="code_cijfer[]" aria-label="Cijfer <?= $i + 1 ?> van 6"<?= !empty($fout) ? ' aria-invalid="true"' : '' ?>
                autocomplete="<?= $i === 0 ? 'one-time-code' : 'off' ?>">
         <?php endfor; ?>
@@ -344,14 +345,21 @@ require __DIR__ . '/_kop.php';
     var form = document.getElementById('codeForm'), knop = document.getElementById('submitBtn'), foutPlek = document.getElementById('codeFout');
     function code() { return Array.prototype.map.call(inp, function (i) { return i.value; }).join(''); }
     function upd() { var c = code(); verborgen.value = c; if (c.length === 6) knop.focus(); }
+    // Meer cijfers tegelijk (plakken, of de telefoon die de code uit de sms invult): over de vakjes verdelen.
+    function verdeel(v, vanaf) {
+      v.split('').slice(0, 6 - vanaf).forEach(function (c, j) { inp[vanaf + j].value = c; });
+      inp[Math.min(vanaf + v.length, 5)].focus(); upd();
+    }
     inp.forEach(function (el, i) {
-      el.addEventListener('input', function () { el.value = el.value.replace(/\D/g, '').slice(-1); if (el.value && i < 5) inp[i + 1].focus(); upd(); });
+      el.addEventListener('input', function () {
+        var v = el.value.replace(/\D/g, '');
+        if (v.length > 1) { verdeel(v, i); return; }
+        el.value = v; if (v && i < 5) inp[i + 1].focus(); upd();
+      });
       el.addEventListener('keydown', function (e) { if (e.key === 'Backspace' && !el.value && i > 0) inp[i - 1].focus(); });
       el.addEventListener('paste', function (e) {
         e.preventDefault();
-        var v = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
-        v.split('').forEach(function (c, j) { if (inp[j]) inp[j].value = c; });
-        inp[Math.min(v.length, 5)].focus(); upd();
+        verdeel((e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6), 0);
       });
     });
     form.addEventListener('submit', function (e) {
@@ -369,14 +377,15 @@ require __DIR__ . '/_kop.php';
     // vindbaar blijft voor een schermlezer en het formulier niet stil vastzit.
     var t = 60, teller = document.getElementById('teller'), opnieuw = document.getElementById('opnieuwBtn');
     opnieuw.setAttribute('aria-disabled', 'true');
-    teller.textContent = ' (0:60)';
+    var mmss = function (s) { return ' (' + Math.floor(s / 60) + ':' + (s % 60 < 10 ? '0' : '') + (s % 60) + ')'; };
+    teller.textContent = mmss(t);
     document.getElementById('opnieuwForm').addEventListener('submit', function (e) {
       if (opnieuw.getAttribute('aria-disabled') === 'true') e.preventDefault();
     });
     var iv = setInterval(function () {
       t--;
       if (t <= 0) { clearInterval(iv); opnieuw.removeAttribute('aria-disabled'); teller.textContent = ''; }
-      else teller.textContent = ' (0:' + (t < 10 ? '0' : '') + t + ')';
+      else teller.textContent = mmss(t);
     }, 1000);
   })();
   </script>
