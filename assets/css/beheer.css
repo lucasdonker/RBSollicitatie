@@ -1140,6 +1140,17 @@ a.bh-naamcel:hover .bh-naamcel-naam { color: var(--navy); text-decoration: under
 }
 .bh-tabs-voet a { color: var(--navy); font-weight: 600; }
 
+/* ── Begrippen (admin/_begrippen.php) ── */
+.bh-begrippen { font: var(--text-meta); color: var(--ink-muted); }
+.bh-begrippen summary { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; color: var(--navy); font-weight: 600; min-height: 32px; }
+.bh-begrippen dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 16px; margin: 8px 0 0; }
+.bh-begrippen dt { font-weight: 600; color: var(--ink); }
+.bh-begrippen dd { margin: 0; }
+@media (max-width: 600px) {
+  .bh-begrippen dl { grid-template-columns: 1fr; gap: 2px; }
+  .bh-begrippen dd { margin-bottom: 8px; }
+}
+
 /* ── Filterbalk ── */
 .bh-filterbalk {
   display: flex; gap: 9px; align-items: center; flex-wrap: wrap;

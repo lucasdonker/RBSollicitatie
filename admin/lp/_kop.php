@@ -101,4 +101,18 @@ $_tarief = $analyse['tarieven'] ?? loonplan_tarief_info($seizoen);
       </details>
     </span>
   </div>
+
+  <?php
+    $begrippen_titel = 'Hoe werkt de loonplanning?';
+    $begrippen = [
+        'Opgave'          => 'Wat de sollicitant zelf aan beschikbaarheid opgaf. Met "Opgave overnemen" zet je die als startpunt in het scenario.',
+        'Scenario'        => 'Een proefplanning: wie werkt wanneer, betaald of onbetaald. Maak een kopie om varianten naast elkaar te zetten.',
+        'Actief scenario' => 'Het scenario met de ster. Dat telt: hierin schrijven de gesprekken van het trainingsweekend, en dit wordt de afspraak bij "Definitief maken".',
+        'Concept'         => 'Zolang de planning niet definitief is, kun je alles nog wijzigen en ziet de sollicitant niets.',
+        'Vast na het gesprek' => 'Wie in het gesprek van het trainingsweekend is aangenomen, staat in alle scenario\'s gelijk en op slot. Twijfel zet niets vast.',
+        'Definitief maken' => 'Het actieve scenario wordt de afspraak van iedereen die is aangenomen. Dat kan later opnieuw; de oude afspraak wordt dan vervangen.',
+        'Afspraak'        => 'Wat is vastgesteld. Die ziet de sollicitant in het portaal, en het dossier en de export voor de loonadministratie gebruiken hem.',
+    ];
+    require __DIR__ . '/../_begrippen.php';
+  ?>
 </section>
