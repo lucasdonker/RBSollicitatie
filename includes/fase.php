@@ -25,16 +25,12 @@ if (!function_exists('fase_zetten')) {
 
 /** Alle fases (sleutel => label). Eén bron voor validatie in beheer-schermen. */
 function fasen(): array {
-    return [
-        'aangemeld'            => 'Aangemeld',
-        'uitgenodigd_selectie' => 'Uitgenodigd selectiedag',
-        'aangemeld_selectie'   => 'Aangemeld selectiedag',
-        'selectiedag_geweest'  => 'Selectiedag geweest',
-        'uitgenodigd_tw'       => 'Uitgenodigd trainingsweekend',
-        'tw_geweest'           => 'TW geweest',
-        'aangenomen'           => 'Aangenomen',
-        'afgewezen'            => 'Afgewezen',
-    ];
+    $uit = [];
+    foreach (['aangemeld', 'uitgenodigd_selectie', 'aangemeld_selectie', 'selectiedag_geweest',
+              'uitgenodigd_tw', 'tw_geweest', 'aangenomen', 'afgewezen'] as $f) {
+        $uit[$f] = fase_label($f);   // de namen staan op één plek (includes/functions.php)
+    }
+    return $uit;
 }
 
 /**
@@ -59,28 +55,23 @@ function fase_meldingstypen(string $naar): array {
 
 /**
  * Korte labels voor plekken waar de volle naam niet past: een tabelkolom, een
- * filterchip, de fase-knoppenrij in het dossier. Bewust hier en niet per scherm —
- * anders staat er op het ene scherm "Uitgenodigd TW" en op het andere "Uitg. TW".
+ * filterchip, de fase-knoppenrij in het dossier. Bewust hier en niet per scherm.
+ * Geen afkortingen als "SD", "TW" of "Uitg.": die kent een vrijwilliger niet, en een
+ * tooltip werkt op de tablet niet (UX-audit 28 sep 2026). "Weekend" is kort genoeg.
  *
- * @param string $lengte 'kort' (tabel, chips) of 'mini' (knoppenrij dossier)
+ * @param string $lengte 'kort' (tabel, chips) of 'mini' (knoppenrij dossier); nu gelijk
  */
 function fase_label_kort(string $fase, string $lengte = 'kort'): string {
     $kort = [
         'aangemeld'            => 'Aangemeld',
-        'uitgenodigd_selectie' => 'Uitgenodigd SD',
-        'aangemeld_selectie'   => 'Aangemeld SD',
-        'selectiedag_geweest'  => 'SD geweest',
-        'uitgenodigd_tw'       => 'Uitgenodigd TW',
-        'tw_geweest'           => 'TW geweest',
+        'uitgenodigd_selectie' => 'Uitgenodigd selectiedag',
+        'aangemeld_selectie'   => 'Aangemeld selectiedag',
+        'selectiedag_geweest'  => 'Selectiedag geweest',
+        'uitgenodigd_tw'       => 'Uitgenodigd weekend',
+        'tw_geweest'           => 'Weekend geweest',
         'aangenomen'           => 'Aangenomen',
         'afgewezen'            => 'Afgewezen',
     ];
-    $mini = [
-        'uitgenodigd_selectie' => 'Uitg. SD',
-        'aangemeld_selectie'   => 'Aangem. SD',
-        'uitgenodigd_tw'       => 'Uitg. TW',
-    ];
-    if ($lengte === 'mini' && isset($mini[$fase])) return $mini[$fase];
     return $kort[$fase] ?? fase_label($fase);
 }
 

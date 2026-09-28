@@ -635,8 +635,9 @@ function leeftijd(?string $dob): string {
 
 function genereer_token(int $bytes = 32): string { return bin2hex(random_bytes($bytes)); }
 
+/** De naam van een fase in het beheer. Eén bron: fasen() in includes/fase.php leest hieruit. */
 function fase_label(string $f): string {
-    return ['aangemeld' => 'Aangemeld', 'uitgenodigd_selectie' => 'Uitgenodigd selectiedag', 'aangemeld_selectie' => 'Aangemeld selectiedag', 'selectiedag_geweest' => 'Selectiedag geweest', 'uitgenodigd_tw' => 'Uitgenodigd trainingsweekend', 'tw_geweest' => 'TW geweest', 'aangenomen' => 'Aangenomen', 'afgewezen' => 'Afgewezen',
+    return ['aangemeld' => 'Aangemeld', 'uitgenodigd_selectie' => 'Uitgenodigd selectiedag', 'aangemeld_selectie' => 'Aangemeld selectiedag', 'selectiedag_geweest' => 'Selectiedag geweest', 'uitgenodigd_tw' => 'Uitgenodigd trainingsweekend', 'tw_geweest' => 'Trainingsweekend geweest', 'aangenomen' => 'Aangenomen', 'afgewezen' => 'Afgewezen',
             // Eindstanden buiten de procedure: geen knop in fasen(), wel een leesbare naam.
             'afgehaakt' => 'Afgehaakt', 'verwijderd_door_sollicitant' => 'Zelf verwijderd'][$f] ?? $f;
 }
