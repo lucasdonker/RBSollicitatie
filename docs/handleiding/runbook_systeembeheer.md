@@ -200,35 +200,32 @@ e-mailadres.
 
 ## Uitrollen naar productie (checklist)
 
-> **In het kort:** Doorloop dit bij elke release, van back-up tot rooktest. Stappen met
-> "(eenmalig)" horen bij de eerste productie-uitrol sinds augustus 2026 en kun je daarna
-> overslaan.
+> **In het kort:** Werkt het op test, dan gaat het naar productie: back-up, mergen, uitrollen,
+> controleren. Stappen met "(eenmalig)" horen bij de eerste productie-uitrol sinds augustus 2026
+> en kun je daarna overslaan.
+
+**Het uitgangspunt:** test en productie draaien exact dezelfde code. Ze verschillen alleen in
+`config.php` (adres, database, sleutels) en in de data. Zorg daarnaast dat de serverinstellingen
+gelijk zijn: dezelfde PHP-versie en extensies, PHP-FPM, een cron, en dezelfde instellingen in
+Plesk. Bewust anders op test: het oranje label TESTOMGEVING en dat Google test nooit indexeert.
 
 **Vooraf**
 
-1. Alles is op de testomgeving getest. Minimaal deze rooktest: aanmelden via `/aanmelden.php`
+1. De nieuwe versie werkt op test. Minimaal deze rooktest: aanmelden via `/aanmelden.php`
    en via de WordPress-plugin, inloggen op het portaal met code en met inloglink, een formulier
    invullen, een fase wijzigen in het beheer, een bericht versturen, en de systeemcontrole
    groen. De uitgebreide testlijst houdt de ontwikkelaar bij in `docs/ai/` (niet in Git).
-   - **Generale repetitie gedaan** (vóór de merge naar `main`): deze versie heeft op test gedraaid
-     tegen een verse, geanonimiseerde kopie van productie, de controle-uitvoer van het script had geen
-     onverklaarde waarschuwingen, en het exportbestand is weggegooid. Zie
-     [Generale repetitie op test](#generale-repetitie-op-test-geanonimiseerde-productiekopie).
-   - **Migratiecontrole** (ontwikkelaar): `php docs/ai/harnas/migratie_check.php` geeft
-     "0 onbekend". Zie [Regels voor database-wijzigingen](#regels-voor-database-wijzigingen).
 2. Maak een back-up van de productiedatabase (Plesk › Databases › Exporteren) en van
-   `DOCUMENTEN_MAP`. Het systeem maakt vóór de database-update ook zelf een back-up (zie stap 8);
-   deze handmatige is het extra vangnet, en de enige van `DOCUMENTEN_MAP`.
+   `DOCUMENTEN_MAP`. Het systeem maakt vóór een database-update zelf ook nog een back-up, als extra.
 3. Merge `Development` naar `main` (GitHub Desktop of een pull request). Push. GitHub zet daarna
-   zelf het versielabel `v<versie>` op die commit (tabblad Actions › Versielabel; bij Tags zie je
-   hem staan). Daarmee kun je later precies terug naar deze versie (zie [Terugdraaien](#terugdraaien-rollback)).
+   zelf een versielabel (`v<versie>`) op die commit; daar hoef je niets voor te doen. Het helpt
+   bij [Terugdraaien](#terugdraaien-rollback).
 
 **Uitrollen**
 
-4. (eenmalig, en **vóór** het uitrollen) Vul `includes/config.php` op productie aan met de sleutels
-   die sinds augustus zijn bijgekomen (zie [config.php: alle instellingen](#configphp-alle-instellingen)).
-   Eerst, omdat de nieuwe versie op productie **geen database-update doet zonder geslaagde
-   back-up**, en die back-up hoort in een map buiten de webroot:
+4. (eenmalig) Vul `includes/config.php` op productie aan met de sleutels die sinds augustus zijn
+   bijgekomen (zie [config.php: alle instellingen](#configphp-alle-instellingen)). Doe dit vóór de
+   deploy, dan is alles in één keer goed:
    - `KLUIS_SLEUTEL` — genereer een nieuwe: `php -r "echo base64_encode(random_bytes(32));"`.
      **Bewaar een kopie in de wachtwoordkluis van het bestuur.** Kwijt = alle documenten kwijt.
    - `KLUIS_SLEUTEL_VERSIE` = `1`.
@@ -243,13 +240,8 @@ e-mailadres.
 6. (eenmalig) Verwijder op de productieserver de mappen `setup/` en `_backups/` als die er nog
    staan (`_backups/` bevat kopieën van oude configuraties met wachtwoorden).
 7. Open één willekeurige pagina, bijvoorbeeld `https://sollicitatie.paal13.com/portaal/`.
-   Daarmee draait de zelfherstelronde voor deze versie: **eerst een volledige back-up van de
-   database, dan pas de updates**. Lukt de back-up niet, dan wordt er niets aan de database
-   veranderd en is de check "Back-up vóór updates" rood; los dat op (map, rechten) en klik op
-   Migraties uitvoeren.
+   Daarmee draait de zelfherstelronde voor deze versie (eerst een back-up, dan de updates).
 8. Log in op het beheer en ga naar **Systeem & Updates**:
-   - Kijk eerst bij **Back-up vóór updates**: daar hoort "Laatste automatische back-up: …, vóór
-     de update van <oude versie> naar <nieuwe versie>" te staan.
    - Klik **Migraties uitvoeren**. Dat forceert de zelfherstelronde nog eens (`db_failsafe`) en
      is veilig om vaker te doen.
    - Klik **SQL-migraties** (opent `/admin/update.php`; vraagt het recht Systeem bewerken) en
@@ -305,9 +297,9 @@ e-mailadres.
 
 ## Generale repetitie op test (geanonimiseerde productiekopie)
 
-> **In het kort:** vóór elke productie-uitrol zet je een kopie van de productiedatabase op test,
-> maak je die meteen anoniem met `tools/anonimiseer_testkopie.php`, en test je de nieuwe versie
-> tegen de echte opbouw en aantallen van productie. Echte mensen komen er daarna niet meer in voor.
+> **In het kort:** optioneel, geen vaste stap. Wil je een versie met grote database-wijzigingen
+> eens testen tegen de echte opbouw en aantallen van productie, dan kun je een kopie van de
+> productiedatabase op test zetten en die meteen anoniem maken met `tools/anonimiseer_testkopie.php`.
 > Het exportbestand gooi je direct weg.
 
 **Waarom.** Op test staan verzonnen sollicitanten in een database die met de code is meegegroeid.
@@ -444,7 +436,7 @@ Alle andere mappen alleen-lezen is prima.
 | `APP_URL` | Volledig webadres van deze omgeving, zonder slash aan het eind | Bepaalt test/productie, https-detectie en alle links in mails |
 | `MAIL_FROM`, `MAIL_FROM_NAME` | Afzender van alle e-mail | Moet een adres zijn op een domein met geldige SPF, DKIM en DMARC |
 | `MAIL_BESTUUR` | Terugval voor het bestuursadres | Het adres in Instellingen › Afzender & adressen gaat voor; de systeemcontrole kijkt in dezelfde volgorde |
-| `MAIL_OMLEIDEN` | **Testmodus**: één e-mailadres waar álle e-mail naartoe gaat | Op test **verplicht** (de systeemcontrole is anders rood), ook bij een hersteltest; op productie altijd leeg. Onderwerp krijgt `[TEST, voor <echte ontvanger>]`; WhatsApp en sms gaan niet de deur uit (de tekst komt als mail op dit adres, het logboek zegt "testmodus"). Bewust een constante en geen instelling: een teruggezette productiedatabase zet hem niet uit. Het beheer toont dan bovenaan een balk |
+| `MAIL_OMLEIDEN` | **Testmodus**: één e-mailadres waar álle e-mail naartoe gaat | Alleen op test en bij een hersteltest (vooral als daar een kopie van echte gegevens staat); op productie altijd leeg. Onderwerp krijgt `[TEST, voor <echte ontvanger>]`; WhatsApp en sms gaan niet de deur uit (de tekst komt als mail op dit adres, het logboek zegt "testmodus"). Bewust een constante en geen instelling: een teruggezette productiedatabase zet hem niet uit. Het beheer toont dan bovenaan een balk |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_ENCRYPT` | Mailserver | Worden overschreven door Instellingen › E-mailserver als daar een host staat. Allebei leeg (of nog `{{SMTP_HOST}}`) = PHP `mail()`, alleen als noodoplossing. Let op: ook dan gaat er gewoon mail de deur uit; tegenhouden doe je met `MAIL_OMLEIDEN` |
 | `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `OIDC_ISSUER`, `OIDC_SLUG` | Authentik-provider | Leeg (of nog een `{{…}}`-plaatshouder) = SSO uit; alleen wachtwoordlogin voor beheerders. De systeemcontrole waarschuwt |
 | `OIDC_REDIRECT_URI` | Callback voor het beheer | `<APP_URL>/admin/auth_callback.php`; het portaal gebruikt vast `<APP_URL>/portaal/auth_callback.php` |
@@ -859,8 +851,8 @@ bewerken).
 | Mailwachtrij | Niets ouder dan 1 uur in "wacht", niets definitief mislukt in 24 uur | Berichten blijven hangen, of berichten staan na drie pogingen op "fout" (de ontvanger heeft ze nooit gehad) | Cron en E-mailserver-instellingen; Logboek › Berichten voor de reden |
 | Opschoning | AVG-opschoning < 3 dagen geleden | Fout als "Automatisch opschonen" uit staat; waarschuwing als hij nog nooit of langer geleden draaide | Opschonen aanzetten; draait de echte cron? |
 | Mappen | `uploads/` schrijfbaar | Niet schrijfbaar | Maprechten in Plesk |
-| Back-up vóór updates | Veilige back-upmap buiten de webroot; laatste automatische back-up zichtbaar | Fout (productie): geen back-upmap, of een update is tegengehouden omdat de back-up mislukte | `DOCUMENTEN_MAP` of `BACKUP_MAP` in config (buiten `httpdocs`, schrijfbaar), dan Migraties uitvoeren |
-| E-mail en testmodus | Productie: SMTP ingesteld, testmodus uit. Test: testmodus aan | Geen SMTP (mail gaat via PHP `mail()`, komt vaak niet aan); op productie staat `MAIL_OMLEIDEN` aan; **fout** op test als `MAIL_OMLEIDEN` leeg is | Instellingen › E-mailserver; op productie `MAIL_OMLEIDEN` leegmaken, op test invullen |
+| Back-up vóór updates | Veilige back-upmap buiten de webroot; laatste automatische back-up zichtbaar | Waarschuwing: geen back-upmap, of de laatste back-up vóór een update mislukte (de update zelf ging wel door) | `DOCUMENTEN_MAP` of `BACKUP_MAP` in config (buiten `httpdocs`, schrijfbaar) |
+| E-mail en testmodus | SMTP ingesteld, testmodus uit | Geen SMTP (mail gaat via PHP `mail()`, komt vaak niet aan); of `MAIL_OMLEIDEN` staat aan | Instellingen › E-mailserver; op productie `MAIL_OMLEIDEN` leegmaken |
 | Inloggen (Authentik) | `OIDC_CLIENT_ID` en `OIDC_ISSUER` ingevuld | Leeg of nog een `{{…}}`-plaatshouder: alleen de wachtwoord-noodingang werkt | `config.php`, zie [Authentik (SSO)](#authentik-sso) |
 | Configuratie | Cron-token, bestuursadres, adres penningmeester en ledenservice, huisregels-PDF | Iets ontbreekt. Zonder adres voor penningmeester of ledenservice gaan loondocumenten en lidmaatschapsinschrijvingen (met IBAN) naar het bestuursadres. Geen open seizoen staat er alleen ter informatie bij | Knop bij het punt; adressen in Instellingen › Afzender & adressen, huisregels in Instellingen › Algemeen |
 | Kluis | Werkt, documentenmap buiten webroot | Sleutel ontbreekt/ongeldig, map niet schrijfbaar of in webroot; gegevens nog op een oude sleutel, of `KLUIS_SLEUTEL_OUD` staat er nog terwijl niets hem meer nodig heeft | `KLUIS_SLEUTEL`, `DOCUMENTEN_MAP` in config; rechten van de map; [Kluissleutel wisselen](#kluissleutel-wisselen) |
@@ -900,9 +892,8 @@ De code zelf staat in Git en hoeft niet in de back-up.
 
 **Automatische back-up vóór elke update (sinds 2.128).** Komt er een nieuwe versie binnen, dan
 maakt het systeem bij het eerste verzoek eerst een volledige dump van de database, en pas daarna
-past het de database aan. Op productie is dat een harde voorwaarde: lukt de back-up niet, dan
-verandert er niets aan de database, wordt de check "Back-up vóór updates" rood en krijgt het
-bestuursadres een foutmelding (P13-D001). Het volgende verzoek probeert het opnieuw.
+past het de database aan. Lukt de back-up niet (bijvoorbeeld geen schrijfbare map), dan gaat de
+update gewoon door en meldt de check "Back-up vóór updates" het in het oranje.
 
 - Waar: `BACKUP_MAP` uit `config.php`, anders `<DOCUMENTEN_MAP>/db-backups`. Nooit binnen de
   webroot; staat de map daar toch, dan weigert het systeem hem.
@@ -991,8 +982,8 @@ Zodat een update nooit data kan kwijtmaken, en terugdraaien van code altijd veil
    code alle plekken die iets aan het schema weghalen of wijzigen en vergelijkt die met een lijst
    van bekende, beoordeelde plekken (met reden). Een nieuwe plek geeft een fout totdat iemand hem
    bewust beoordeelt.
-5. **Generale repetitie:** elke release met database-wijzigingen draait eerst op test tegen een
-   geanonimiseerde kopie van productie (zie
+5. **Testen op test:** elke release draait eerst op test. Wie een grote database-wijziging extra
+   wil controleren, kan dat optioneel doen tegen een geanonimiseerde kopie van productie (zie
    [Generale repetitie op test](#generale-repetitie-op-test-geanonimiseerde-productiekopie)).
 
 ## Logs lezen

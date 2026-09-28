@@ -161,9 +161,8 @@ function db_failsafe(bool $forceer = false): void {
     };
 
     // Een echte versiewissel op een bestaande database? Dan eerst een volledige back-up, vóór er
-    // ook maar één tabel of kolom verandert. Op productie is die voorwaarde hard: mislukt de
-    // back-up, dan voeren we niets door (de setups slaan zich deze request over via de vlag) en
-    // probeert het volgende verzoek het opnieuw. Op test alleen een waarschuwing.
+    // ook maar één tabel of kolom verandert. Lukt die niet, dan gaat de update tóch door (anders
+    // draait nieuwe code op een oud schema): de systeemcontrole wordt oranje en het staat in het log.
     if ($vorige !== $versie && $vorige !== '' && function_exists('backup_maak')) {
         $res = backup_maak(db(), 'v' . $vorige . '-naar-v' . $versie);
         if ($res['ok']) {
@@ -180,13 +179,6 @@ function db_failsafe(bool $forceer = false): void {
                 db()->prepare("INSERT INTO instellingen (sleutel, waarde) VALUES ('db.backup_fout', ?) ON DUPLICATE KEY UPDATE waarde = VALUES(waarde)")
                     ->execute([json_encode(['melding' => $melding, 'op' => date('Y-m-d H:i:s')])]);
             } catch (\Throwable $e) {}
-            if (!(function_exists('is_test_omgeving') && is_test_omgeving())) {
-                if (function_exists('p13_fout')) { try { p13_fout('P13-D001', $melding, null); } catch (\Throwable $e) {} }
-                $GLOBALS['_p13_schema_actueel'] = true;   // geblokkeerd: geen enkele setup doet nu iets
-                $GLOBALS['_p13_update_geblokkeerd'] = $melding;
-                $los();
-                return;
-            }
         }
     }
 

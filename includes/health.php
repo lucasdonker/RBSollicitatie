@@ -280,18 +280,11 @@ function health_check_berichten(): array {
     if (class_exists('Mailer') && !Mailer::smtpActief()) {
         $punten[] = health_punt('smtp', 'waarschuwing', 'Er is geen SMTP-server ingesteld: e-mail gaat via PHP mail() en komt op gedeelde hosting vaak niet aan of in de spam.', 'smtp', 'SMTP instellen');
     }
-    $test = function_exists('mail_omleiden') ? mail_omleiden() : '';
-    $is_test = function_exists('is_test_omgeving') && is_test_omgeving();
-    // Op test hoort de testmodus AAN: daar kan een (geanonimiseerde) productiekopie staan, en
-    // zonder omleiding zouden berichten naar echte adressen kunnen gaan.
-    if ($is_test && $test === '') {
-        $punten[] = health_punt('testmodus', 'fout', 'Dit is de testomgeving, maar de testmodus staat uit: berichten kunnen echte mensen bereiken. Zet MAIL_OMLEIDEN in config.php op je eigen adres.', '/admin/systeem.php', 'Systeem');
-    }
     $uit = health_uit_punten($punten, 'E-mail gaat via de ingestelde SMTP-server.');
+    $test = function_exists('mail_omleiden') ? mail_omleiden() : '';
     if ($test !== '') {
         $uit['uitleg'] = health_testmodus_tekst($test) . ($punten ? ' ' . $uit['uitleg'] : '');
-        // Op productie is een actieve testmodus een waarschuwing; op test is het precies goed.
-        if ($uit['status'] === 'ok' && !$is_test) $uit['status'] = 'waarschuwing';
+        if ($uit['status'] === 'ok') $uit['status'] = 'waarschuwing';
     }
     return $uit;
 }
@@ -302,16 +295,14 @@ function health_check_berichten(): array {
  */
 function health_check_backup(): array {
     $punten = [];
-    $is_test = function_exists('is_test_omgeving') && is_test_omgeving();
     $fout = json_decode((string)(function_exists('instelling') ? instelling('db.backup_fout', '') : ''), true);
     if (is_array($fout) && !empty($fout['melding'])) {
-        $punten[] = health_punt('backup_geblokkeerd', $is_test ? 'waarschuwing' : 'fout',
-            ($is_test ? '' : 'De update van de database is tegengehouden: ') . $fout['melding']
-            . ' Los het op (back-upmap schrijfbaar maken) en klik op Migraties uitvoeren.', '/admin/systeem.php', 'Systeem');
+        $punten[] = health_punt('backup_mislukt', 'waarschuwing',
+            $fout['melding'] . ' De update is wel uitgevoerd. Zorg dat de back-upmap schrijfbaar is voor de volgende keer.', '/admin/systeem.php', 'Systeem');
     }
     if (function_exists('backup_map') && !backup_map()) {
-        $punten[] = health_punt('backup_map', $is_test ? 'waarschuwing' : 'fout',
-            'Er is geen veilige map voor back-ups: vul BACKUP_MAP of DOCUMENTEN_MAP in config.php in, buiten de webroot en schrijfbaar. Zonder back-up voert een nieuwe versie op productie geen database-updates uit.',
+        $punten[] = health_punt('backup_map', 'waarschuwing',
+            'Er is geen veilige map voor de automatische back-up vóór updates: vul DOCUMENTEN_MAP (of BACKUP_MAP) in config.php in, buiten de webroot en schrijfbaar. Updates gaan wel door, alleen zonder deze extra back-up.',
             '/admin/systeem.php', 'Systeem');
     }
     $laatste = json_decode((string)(function_exists('instelling') ? instelling('db.laatste_backup', '') : ''), true);

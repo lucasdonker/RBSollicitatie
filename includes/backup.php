@@ -3,9 +3,8 @@
  * Paal 13 — Automatische databaseback-up vóór een schema-update.
  *
  * Een nieuwe versie past bij het eerste verzoek het schema aan (db_failsafe). Vóór dat gebeurt,
- * maakt dit bestand een volledige dump van de database. Op productie is dat een harde voorwaarde:
- * lukt de back-up niet, dan voert db_failsafe() niets door (en probeert het bij het volgende
- * verzoek opnieuw). Zo kan een release nooit echte data wijzigen zonder dat er een terugweg is.
+ * maakt dit bestand een volledige dump van de database, als extra terugweg naast de dagelijkse
+ * Plesk-back-up. Lukt hij niet, dan gaat de update gewoon door en meldt de systeemcontrole het.
  *
  * Opslag: BACKUP_MAP uit config.php, anders <DOCUMENTEN_MAP>/db-backups (buiten de webroot).
  * Bestanden: db-<datum>-<tijd>-v<van>-naar-v<naar>.sql.gz, rechten 0600, met een .htaccess die
@@ -27,7 +26,7 @@ function backup_bewaar_dagen(): int { return 30; }
 /**
  * De map voor back-ups, aangemaakt en afgeschermd; null als er niet te schrijven valt.
  * Een back-up is de hele database: hij mag nooit binnen de webroot staan (een .htaccess helpt
- * niet als nginx de bestanden serveert). Alleen op de testomgeving mag dat als noodoplossing.
+ * niet als nginx de bestanden serveert). Test en productie gedragen zich hierin gelijk.
  */
 function backup_map(): ?string {
     $dir = '';
@@ -35,16 +34,13 @@ function backup_map(): ?string {
         $dir = rtrim((string)BACKUP_MAP, '/\\');
     } elseif (defined('DOCUMENTEN_MAP') && trim((string)DOCUMENTEN_MAP) !== '' && !str_contains((string)DOCUMENTEN_MAP, '{{')) {
         $dir = rtrim((string)DOCUMENTEN_MAP, '/\\') . '/db-backups';
-    } elseif (function_exists('is_test_omgeving') && is_test_omgeving() && function_exists('documenten_map') && ($doc = documenten_map())) {
-        $dir = $doc . '/db-backups';
     }
     if ($dir === '') return null;
     if (!is_dir($dir)) @mkdir($dir, 0700, true);
     if (!is_dir($dir) || !is_writable($dir)) return null;
     $web = realpath(dirname(__DIR__));
     $echt = realpath($dir);
-    if ($web && $echt && str_starts_with($echt . DIRECTORY_SEPARATOR, $web . DIRECTORY_SEPARATOR)
-        && !(function_exists('is_test_omgeving') && is_test_omgeving())) {
+    if ($web && $echt && str_starts_with($echt . DIRECTORY_SEPARATOR, $web . DIRECTORY_SEPARATOR)) {
         error_log('backup_map: ' . $echt . ' staat binnen de webroot; geen back-up daar');
         return null;
     }

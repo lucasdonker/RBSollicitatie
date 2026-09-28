@@ -415,48 +415,39 @@ voor alle schermen tegelijk.</li>
 <h1 id="uitrollen-naar-productie-checklist">Uitrollen naar productie
 (checklist)</h1>
 <blockquote>
-<p><strong>In het kort:</strong> Doorloop dit bij elke release, van
-back-up tot rooktest. Stappen met &quot;(eenmalig)&quot; horen bij de eerste
-productie-uitrol sinds augustus 2026 en kun je daarna overslaan.</p>
+<p><strong>In het kort:</strong> Werkt het op test, dan gaat het naar
+productie: back-up, mergen, uitrollen, controleren. Stappen met
+&quot;(eenmalig)&quot; horen bij de eerste productie-uitrol sinds augustus 2026 en
+kun je daarna overslaan.</p>
 </blockquote>
+<p><strong>Het uitgangspunt:</strong> test en productie draaien exact
+dezelfde code. Ze verschillen alleen in <code>config.php</code> (adres,
+database, sleutels) en in de data. Zorg daarnaast dat de
+serverinstellingen gelijk zijn: dezelfde PHP-versie en extensies,
+PHP-FPM, een cron, en dezelfde instellingen in Plesk. Bewust anders op
+test: het oranje label TESTOMGEVING en dat Google test nooit
+indexeert.</p>
 <p><strong>Vooraf</strong></p>
 <ol type="1">
-<li>Alles is op de testomgeving getest. Minimaal deze rooktest:
-aanmelden via <code>/aanmelden.php</code> en via de WordPress-plugin,
-inloggen op het portaal met code en met inloglink, een formulier
-invullen, een fase wijzigen in het beheer, een bericht versturen, en de
-systeemcontrole groen. De uitgebreide testlijst houdt de ontwikkelaar
-bij in <code>docs/ai/</code> (niet in Git).
-<ul>
-<li><strong>Generale repetitie gedaan</strong> (vóór de merge naar
-<code>main</code>): deze versie heeft op test gedraaid tegen een verse,
-geanonimiseerde kopie van productie, de controle-uitvoer van het script
-had geen onverklaarde waarschuwingen, en het exportbestand is
-weggegooid. Zie <a href="#generale-repetitie-op-test-geanonimiseerde-productiekopie">Generale
-repetitie op test</a>.</li>
-<li><strong>Migratiecontrole</strong> (ontwikkelaar):
-<code>php docs/ai/harnas/migratie_check.php</code> geeft &quot;0 onbekend&quot;.
-Zie <a href="#regels-voor-database-wijzigingen">Regels voor
-database-wijzigingen</a>.</li>
-</ul></li>
+<li>De nieuwe versie werkt op test. Minimaal deze rooktest: aanmelden
+via <code>/aanmelden.php</code> en via de WordPress-plugin, inloggen op
+het portaal met code en met inloglink, een formulier invullen, een fase
+wijzigen in het beheer, een bericht versturen, en de systeemcontrole
+groen. De uitgebreide testlijst houdt de ontwikkelaar bij in
+<code>docs/ai/</code> (niet in Git).</li>
 <li>Maak een back-up van de productiedatabase (Plesk › Databases ›
 Exporteren) en van <code>DOCUMENTEN_MAP</code>. Het systeem maakt vóór
-de database-update ook zelf een back-up (zie stap 8); deze handmatige is
-het extra vangnet, en de enige van <code>DOCUMENTEN_MAP</code>.</li>
+een database-update zelf ook nog een back-up, als extra.</li>
 <li>Merge <code>Development</code> naar <code>main</code> (GitHub
-Desktop of een pull request). Push. GitHub zet daarna zelf het
-versielabel <code>v&lt;versie&gt;</code> op die commit (tabblad Actions
-› Versielabel; bij Tags zie je hem staan). Daarmee kun je later precies
-terug naar deze versie (zie <a href="#terugdraaien-rollback">Terugdraaien</a>).</li>
+Desktop of een pull request). Push. GitHub zet daarna zelf een
+versielabel (<code>v&lt;versie&gt;</code>) op die commit; daar hoef je
+niets voor te doen. Het helpt bij <a href="#terugdraaien-rollback">Terugdraaien</a>.</li>
 </ol>
 <p><strong>Uitrollen</strong></p>
 <ol start="4" type="1">
-<li>(eenmalig, en <strong>vóór</strong> het uitrollen) Vul
-<code>includes/config.php</code> op productie aan met de sleutels die
-sinds augustus zijn bijgekomen (zie <a href="#configphp-alle-instellingen">config.php: alle instellingen</a>).
-Eerst, omdat de nieuwe versie op productie <strong>geen database-update
-doet zonder geslaagde back-up</strong>, en die back-up hoort in een map
-buiten de webroot:
+<li>(eenmalig) Vul <code>includes/config.php</code> op productie aan met
+de sleutels die sinds augustus zijn bijgekomen (zie <a href="#configphp-alle-instellingen">config.php: alle instellingen</a>).
+Doe dit vóór de deploy, dan is alles in één keer goed:
 <ul>
 <li><code>KLUIS_SLEUTEL</code> — genereer een nieuwe:
 <code>php -r &quot;echo base64_encode(random_bytes(32));&quot;</code>.
@@ -484,17 +475,11 @@ tot de deploy klaar is.</li>
 wachtwoorden).</li>
 <li>Open één willekeurige pagina, bijvoorbeeld
 <code>https://sollicitatie.paal13.com/portaal/</code>. Daarmee draait de
-zelfherstelronde voor deze versie: <strong>eerst een volledige back-up
-van de database, dan pas de updates</strong>. Lukt de back-up niet, dan
-wordt er niets aan de database veranderd en is de check &quot;Back-up vóór
-updates&quot; rood; los dat op (map, rechten) en klik op Migraties
-uitvoeren.</li>
+zelfherstelronde voor deze versie (eerst een back-up, dan de
+updates).</li>
 <li>Log in op het beheer en ga naar <strong>Systeem &amp;
 Updates</strong>:
 <ul>
-<li>Kijk eerst bij <strong>Back-up vóór updates</strong>: daar hoort
-&quot;Laatste automatische back-up: …, vóór de update van <oude versie> naar
-<nieuwe versie>&quot; te staan.</li>
 <li>Klik <strong>Migraties uitvoeren</strong>. Dat forceert de
 zelfherstelronde nog eens (<code>db_failsafe</code>) en is veilig om
 vaker te doen.</li>
@@ -570,12 +555,12 @@ iets nieuws bij is.</li>
 <h1 id="generale-repetitie-op-test-geanonimiseerde-productiekopie">Generale
 repetitie op test (geanonimiseerde productiekopie)</h1>
 <blockquote>
-<p><strong>In het kort:</strong> vóór elke productie-uitrol zet je een
-kopie van de productiedatabase op test, maak je die meteen anoniem met
-<code>tools/anonimiseer_testkopie.php</code>, en test je de nieuwe
-versie tegen de echte opbouw en aantallen van productie. Echte mensen
-komen er daarna niet meer in voor. Het exportbestand gooi je direct
-weg.</p>
+<p><strong>In het kort:</strong> optioneel, geen vaste stap. Wil je een
+versie met grote database-wijzigingen eens testen tegen de echte opbouw
+en aantallen van productie, dan kun je een kopie van de
+productiedatabase op test zetten en die meteen anoniem maken met
+<code>tools/anonimiseer_testkopie.php</code>. Het exportbestand gooi je
+direct weg.</p>
 </blockquote>
 <p><strong>Waarom.</strong> Op test staan verzonnen sollicitanten in een
 database die met de code is meegegroeid. Productie heeft oudere rijen,
@@ -802,13 +787,13 @@ systeemcontrole kijkt in dezelfde volgorde</td>
 <td><code>MAIL_OMLEIDEN</code></td>
 <td><strong>Testmodus</strong>: één e-mailadres waar álle e-mail naartoe
 gaat</td>
-<td>Op test <strong>verplicht</strong> (de systeemcontrole is anders
-rood), ook bij een hersteltest; op productie altijd leeg. Onderwerp
-krijgt <code>[TEST, voor &lt;echte ontvanger&gt;]</code>; WhatsApp en
-sms gaan niet de deur uit (de tekst komt als mail op dit adres, het
-logboek zegt &quot;testmodus&quot;). Bewust een constante en geen instelling: een
-teruggezette productiedatabase zet hem niet uit. Het beheer toont dan
-bovenaan een balk</td>
+<td>Alleen op test en bij een hersteltest (vooral als daar een kopie van
+echte gegevens staat); op productie altijd leeg. Onderwerp krijgt
+<code>[TEST, voor &lt;echte ontvanger&gt;]</code>; WhatsApp en sms gaan
+niet de deur uit (de tekst komt als mail op dit adres, het logboek zegt
+&quot;testmodus&quot;). Bewust een constante en geen instelling: een teruggezette
+productiedatabase zet hem niet uit. Het beheer toont dan bovenaan een
+balk</td>
 </tr>
 <tr>
 <td><code>SMTP_HOST</code>, <code>SMTP_PORT</code>,
@@ -1634,21 +1619,18 @@ nooit of langer geleden draaide</td>
 <td>Back-up vóór updates</td>
 <td>Veilige back-upmap buiten de webroot; laatste automatische back-up
 zichtbaar</td>
-<td>Fout (productie): geen back-upmap, of een update is tegengehouden
-omdat de back-up mislukte</td>
+<td>Waarschuwing: geen back-upmap, of de laatste back-up vóór een update
+mislukte (de update zelf ging wel door)</td>
 <td><code>DOCUMENTEN_MAP</code> of <code>BACKUP_MAP</code> in config
-(buiten <code>httpdocs</code>, schrijfbaar), dan Migraties
-uitvoeren</td>
+(buiten <code>httpdocs</code>, schrijfbaar)</td>
 </tr>
 <tr>
 <td>E-mail en testmodus</td>
-<td>Productie: SMTP ingesteld, testmodus uit. Test: testmodus aan</td>
+<td>SMTP ingesteld, testmodus uit</td>
 <td>Geen SMTP (mail gaat via PHP <code>mail()</code>, komt vaak niet
-aan); op productie staat <code>MAIL_OMLEIDEN</code> aan;
-<strong>fout</strong> op test als <code>MAIL_OMLEIDEN</code> leeg
-is</td>
+aan); of <code>MAIL_OMLEIDEN</code> staat aan</td>
 <td>Instellingen › E-mailserver; op productie <code>MAIL_OMLEIDEN</code>
-leegmaken, op test invullen</td>
+leegmaken</td>
 </tr>
 <tr>
 <td>Inloggen (Authentik)</td>
@@ -1731,10 +1713,9 @@ wervingspagina&#39;s en bijlagen van sjablonen. De
 <p><strong>Automatische back-up vóór elke update (sinds 2.128).</strong>
 Komt er een nieuwe versie binnen, dan maakt het systeem bij het eerste
 verzoek eerst een volledige dump van de database, en pas daarna past het
-de database aan. Op productie is dat een harde voorwaarde: lukt de
-back-up niet, dan verandert er niets aan de database, wordt de check
-&quot;Back-up vóór updates&quot; rood en krijgt het bestuursadres een foutmelding
-(P13-D001). Het volgende verzoek probeert het opnieuw.</p>
+de database aan. Lukt de back-up niet (bijvoorbeeld geen schrijfbare
+map), dan gaat de update gewoon door en meldt de check &quot;Back-up vóór
+updates&quot; het in het oranje.</p>
 <ul>
 <li>Waar: <code>BACKUP_MAP</code> uit <code>config.php</code>, anders
 <code>&lt;DOCUMENTEN_MAP&gt;/db-backups</code>. Nooit binnen de webroot;
@@ -1856,9 +1837,9 @@ blijven), en een oude index weghalen nádat de vervanger bestaat.</li>
 plekken die iets aan het schema weghalen of wijzigen en vergelijkt die
 met een lijst van bekende, beoordeelde plekken (met reden). Een nieuwe
 plek geeft een fout totdat iemand hem bewust beoordeelt.</li>
-<li><strong>Generale repetitie:</strong> elke release met
-database-wijzigingen draait eerst op test tegen een geanonimiseerde
-kopie van productie (zie <a href="#generale-repetitie-op-test-geanonimiseerde-productiekopie">Generale
+<li><strong>Testen op test:</strong> elke release draait eerst op test.
+Wie een grote database-wijziging extra wil controleren, kan dat
+optioneel doen tegen een geanonimiseerde kopie van productie (zie <a href="#generale-repetitie-op-test-geanonimiseerde-productiekopie">Generale
 repetitie op test</a>).</li>
 </ol>
 <h1 id="logs-lezen">Logs lezen</h1>

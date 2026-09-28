@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.128.0');
+define('APP_VERSIE', '2.128.1');
 
 function app_changelog(): array {
     return [
+        '2.128.1' => [
+            'datum'  => '2026-09-28',
+            'titel'  => 'Uitrollen: eenvoudiger, test = productie',
+            'punten' => [
+                'De automatische back-up vóór een update houdt nooit meer iets tegen: mislukt hij, dan gaat de update door en meldt de systeemcontrole het in het oranje',
+                'Testmodus op test is weer optioneel; test en productie gedragen zich gelijk (back-upmap op beide nooit in de webroot)',
+                'Generale repetitie met het anonimiseerscript is optioneel, geen vaste stap meer; checklist terug naar de kern',
+            ],
+        ],
         '2.128.0' => [
             'datum'  => '2026-09-28',
             'titel'  => 'Veilig uitrollen naar productie',
