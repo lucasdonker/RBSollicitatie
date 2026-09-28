@@ -23,10 +23,28 @@ function mail_datum_lang(?string $d): string {
     return datum_nl($d);
 }
 
+/**
+ * Een gegeven van het seizoen voor in een mailzin. Ontbreekt het (null óf leeg), dan een tekst die
+ * midden in een zin past ("Waar: nog niet bekend", "op een datum die nog volgt") — eerder stond daar
+ * "Nader te bepalen" met hoofdletter midden in de zin, of niets ("Wanneer:  t/m ").
+ */
+function mail_of_onbekend($waarde, string $onbekend = 'nog niet bekend'): string {
+    $w = trim((string)($waarde ?? ''));
+    return $w !== '' ? $w : $onbekend;
+}
+
+/** "vrijdag 3 juli t/m zondag 5 juli", één dag, of "een datum die nog volgt". Voor {{tw_periode}}. */
+function mail_tw_periode(array $seizoen): string {
+    $van = mail_datum_lang($seizoen['datum_tw_start'] ?? null);
+    $tot = mail_datum_lang($seizoen['datum_tw_eind'] ?? null);
+    if ($van === '') return 'een datum die nog volgt';
+    return ($tot === '' || $tot === $van) ? $van : $van . ' t/m ' . $tot;
+}
+
 function mail_variabelen(array $sol, array $seizoen = []): array {
-    $sd_datum = !empty($seizoen['datum_selectiedag']) ? mail_datum_lang($seizoen['datum_selectiedag']) : 'Nader te bepalen';
+    $sd_datum = !empty($seizoen['datum_selectiedag']) ? mail_datum_lang($seizoen['datum_selectiedag']) : 'een datum die nog volgt';
     $sd_tijd  = !empty($seizoen['selectiedag_verzameltijd']) ? ' om ' . substr($seizoen['selectiedag_verzameltijd'], 0, 5) : '';
-    $sd_loc   = $seizoen['locatie_selectiedag'] ?? 'Nader te bepalen';
+    $sd_loc   = mail_of_onbekend($seizoen['locatie_selectiedag'] ?? null);
 
     return [
         // Lange namen (bestaand)
@@ -38,15 +56,15 @@ function mail_variabelen(array $sol, array $seizoen = []): array {
         'seizoen.naam'                => $seizoen['naam'] ?? '',
         'selectiedag.datum'           => datum_nl($seizoen['datum_selectiedag'] ?? null),
         'selectiedag.locatie'         => $sd_loc,
-        'selectiedag.starttijd'       => $seizoen['selectiedag_starttijd'] ?? 'Nader te bepalen',
-        'selectiedag.verzameltijd'    => $seizoen['selectiedag_verzameltijd'] ?? 'Nader te bepalen',
+        'selectiedag.starttijd'       => mail_of_onbekend($seizoen['selectiedag_starttijd'] ?? null),
+        'selectiedag.verzameltijd'    => mail_of_onbekend($seizoen['selectiedag_verzameltijd'] ?? null),
         'selectiedag.eindtijd'        => !empty($seizoen['selectiedag_eindtijd']) ? substr($seizoen['selectiedag_eindtijd'], 0, 5) : '',
         'selectiedag.adres'           => $seizoen['adres_selectiedag'] ?? '',
         'selectiedag.meenemen'        => $seizoen['selectiedag_meenemen'] ?? '',
         'tw.datum_start'              => datum_nl($seizoen['datum_tw_start'] ?? null),
         'tw.datum_eind'               => datum_nl($seizoen['datum_tw_eind'] ?? null),
-        'tw.locatie'                  => $seizoen['locatie_tw'] ?? 'Nader te bepalen',
-        'tw.verzameltijd'             => $seizoen['tw_verzameltijd'] ?? 'Nader te bepalen',
+        'tw.locatie'                  => mail_of_onbekend($seizoen['locatie_tw'] ?? null),
+        'tw.verzameltijd'             => mail_of_onbekend($seizoen['tw_verzameltijd'] ?? null),
         'tw.eindtijd'                 => !empty($seizoen['tw_eindtijd']) ? substr($seizoen['tw_eindtijd'], 0, 5) : '',
         'tw.adres'                    => $seizoen['adres_tw'] ?? '',
         'tw.meenemen'                 => $seizoen['tw_meenemen'] ?? '',
@@ -63,10 +81,11 @@ function mail_variabelen(array $sol, array $seizoen = []): array {
         'selectiedag_datum'           => $sd_datum,
         'selectiedag_tijd'            => $sd_tijd,
         'selectiedag_locatie'         => $sd_loc,
-        'tw_datum_start'              => mail_datum_lang($seizoen['datum_tw_start'] ?? null) ?: datum_nl($seizoen['datum_tw_start'] ?? null),
+        'tw_datum_start'              => mail_datum_lang($seizoen['datum_tw_start'] ?? null) ?: 'een datum die nog volgt',
         'tw_datum_eind'               => mail_datum_lang($seizoen['datum_tw_eind'] ?? null) ?: datum_nl($seizoen['datum_tw_eind'] ?? null),
-        'tw_locatie'                  => $seizoen['locatie_tw'] ?? 'Nader te bepalen',
-        'tw_verzameltijd'             => $seizoen['tw_verzameltijd'] ?? 'Nader te bepalen',
+        'tw_locatie'                  => mail_of_onbekend($seizoen['locatie_tw'] ?? null),
+        'tw_verzameltijd'             => mail_of_onbekend($seizoen['tw_verzameltijd'] ?? null),
+        'tw_periode'                  => mail_tw_periode($seizoen),
         'bestuur_email'               => defined('MAIL_BESTUUR') ? MAIL_BESTUUR : '',
     ];
 }

@@ -70,6 +70,7 @@ function aanmeld_velden(): array {
 function aanmeld_fout_veld(string $code): string {
     return [
         'email_ongeldig' => 'email',
+        'telefoon_ongeldig' => 'telefoon',
         'al_aangemeld'   => 'email',
         'dob_ongeldig'   => 'geboortedatum',
         'te_jong'        => 'geboortedatum',
@@ -123,7 +124,10 @@ function aanmeld_veld_html(array $veld, array $waarden, string $foutveld, string
     if (!empty($veld['autocomplete'])) $attr .= ' autocomplete="' . h((string)$veld['autocomplete']) . '"';
     if (!empty($veld['placeholder']))  $attr .= ' placeholder="' . h((string)$veld['placeholder']) . '"';
     if ($fout)                         $attr .= ' aria-invalid="true"';
-    if ($naam === 'geboortedatum')     $attr .= ' data-geboortedatum data-af-minleeftijd="15" data-af-ouderleeftijd="16"';
+    // min/max: de datumkiezer (vooral op Android) begint dan in een zinnig jaar en weigert onzin.
+    // max = 15 jaar geleden (minimumleeftijd), min = 80 jaar geleden.
+    if ($naam === 'geboortedatum')     $attr .= ' data-geboortedatum data-af-minleeftijd="15" data-af-ouderleeftijd="16"'
+                                             . ' max="' . date('Y-m-d', strtotime('-15 years')) . '" min="' . date('Y-m-d', strtotime('-80 years')) . '"';
 
     $klasse = 'af-groep af-' . (string)($veld['breedte'] ?? 'vol');
 
@@ -157,9 +161,9 @@ function aanmeld_ouderblok_html(array $waarden, string $foutveld, string $p): st
     $inv_naam = $foutveld === 'ouder_toestemming_naam' ? ' aria-invalid="true"' : '';
 
     return '<div class="af-ouder" id="' . h($p) . '-ouderblok" hidden data-ouder-blok>'
-         . '<h3 class="af-subkop">Toestemming van je ouder of verzorger</h3>'
-         . '<p class="af-hulp">Je bent nog geen 16. Daarom hebben we toestemming van een ouder of verzorger '
-         . 'nodig om je gegevens te mogen verwerken. Vul samen even dit blok in.</p>'
+         . '<h3 class="af-subkop">Akkoord van je ouder of verzorger</h3>'
+         . '<p class="af-hulp">Je bent nog geen 16. Daarom moet een ouder of verzorger het goed vinden dat je '
+         . 'solliciteert. Vul samen even dit blok in.</p>'
          . '<div class="af-groep af-vol" data-af-veld="ouder_toestemming_naam">'
          . '<label for="' . h($p) . '-oudernaam">Naam ouder of verzorger</label>'
          . '<input type="text" id="' . h($p) . '-oudernaam" name="ouder_toestemming_naam"'
@@ -171,8 +175,10 @@ function aanmeld_ouderblok_html(array $waarden, string $foutveld, string $p): st
          . '<input type="checkbox" id="' . h($p) . '-ouderakkoord" name="ouder_akkoord" value="1"'
          . (!empty($waarden['ouder_akkoord']) ? ' checked' : '')
          . ' aria-describedby="' . h($p) . '-ouderakkoord-fout">'
-         . '<label for="' . h($p) . '-ouderakkoord">Als ouder of verzorger geef ik toestemming voor het verwerken '
-         . 'van de gegevens van mijn kind, volgens de <a href="' . h($privacy) . '" target="_blank" rel="noopener">privacyverklaring</a>.</label>'
+         // Geen "toestemming voor verwerken": de grondslag is de (voorbereiding van de) overeenkomst,
+         // niet toestemming (privacyverklaring). De ouder gaat akkoord met het solliciteren zelf.
+         . '<label for="' . h($p) . '-ouderakkoord">Ik ben ouder of verzorger en vind het goed dat mijn kind solliciteert. '
+         . 'Ik heb de <a href="' . h($privacy) . '" target="_blank" rel="noopener">privacyverklaring</a> gelezen.</label>'
          . '<p class="af-veldfout" id="' . h($p) . '-ouderakkoord-fout" data-af-veldfout></p>'
          . '</div>'
          . '</div>';

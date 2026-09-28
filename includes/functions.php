@@ -770,7 +770,7 @@ function personen_ouder_auto_setup(): void {
 // 2026-09d: lidmaatschap onder 18 getekend door ouder/verzorger (SEPA door de rekeninghouder),
 //           termijn gezondheidsverklaring volgt de instelling
 // 2026-09e: seintje via de website buiten het seizoen (voornaam + e-mail, dubbele bevestiging)
-if (!defined('PRIVACY_VERSIE')) define('PRIVACY_VERSIE', '2026-09e');
+if (!defined('PRIVACY_VERSIE')) define('PRIVACY_VERSIE', '2026-09f');
 
 if (!function_exists('consent_auto_setup')) {
 /**

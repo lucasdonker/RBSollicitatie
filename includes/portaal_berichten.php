@@ -201,7 +201,7 @@ function portaal_vraag_verwerk(array $sol): array {
     if (mb_strlen($vraag) > 1500) $vraag = mb_substr($vraag, 0, 1500);
 
     if (function_exists('rate_limit') && !rate_limit('portaal_vraag', (string)$sol_id, 3, 3600)) {
-        $uit['fout'] = 'Je hebt net al een paar vragen gestuurd. Wacht even, of mail ons rechtstreeks.';
+        $uit['fout'] = 'Je hebt net al een paar vragen gestuurd. Wacht even, of mail ons rechtstreeks op ' . (function_exists('portaal_contact_email') ? portaal_contact_email() : 'sollicitatie@paal13.com') . '.';
         return $uit;
     }
 
@@ -215,7 +215,7 @@ function portaal_vraag_verwerk(array $sol): array {
             // Naar het contactadres voor sollicitanten (Instellingen › Mail), niet het algemene bestuursadres.
             'ontvanger' => ['email' => portaal_contact_email(), 'naam' => 'Paal 13', 'rol' => 'bestuur']]);
         if (($res['status'] ?? '') === 'mislukt') {
-            $uit['fout'] = 'Versturen lukte niet. Probeer het later opnieuw, of mail ons rechtstreeks.';
+            $uit['fout'] = 'Versturen lukte niet. Probeer het later opnieuw, of mail ons rechtstreeks op ' . (function_exists('portaal_contact_email') ? portaal_contact_email() : 'sollicitatie@paal13.com') . '.';
             return $uit;
         }
         if (function_exists('audit_log')) audit_log('vraag_gesteld', 'sollicitatie', $sol_id, ['lengte' => mb_strlen($vraag)]);

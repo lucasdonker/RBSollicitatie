@@ -94,9 +94,9 @@ function meldingen_register(): array {
             'seed' => [
                 'onderwerp' => 'Je bent uitgenodigd voor het trainingsweekend — Paal 13',
                 'hero_titel' => 'Trainingsweekend', 'hero_subtitel' => 'Je bent door de selectie!',
-                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Geweldig nieuws: je bent door de selectiedag en we nodigen je uit voor het <strong>trainingsweekend</strong>.</p>\n[info]Wanneer: {{tw_datum_start}} t/m {{tw_datum_eind}}<br>Waar: {{tw_locatie}}<br>Verzamelen: {{tw_verzameltijd}}[/info]\n<p>Geef in je portaal je beschikbaarheid voor de zomer door; die hebben we nodig voor de planning.</p>\n[knop href=\"$portaal\"]Beschikbaarheid doorgeven[/knop]\n<p>We zien je graag op het trainingsweekend!</p>",
+                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Geweldig nieuws: je bent door de selectiedag en we nodigen je uit voor het <strong>trainingsweekend</strong>.</p>\n[info]Wanneer: {{tw_periode}}<br>Waar: {{tw_locatie}}<br>Verzamelen: {{tw_verzameltijd}}[/info]\n<p>Geef in je portaal je beschikbaarheid voor de zomer door; die hebben we nodig voor de planning.</p>\n[knop href=\"$portaal\"]Beschikbaarheid doorgeven[/knop]\n<p>We zien je graag op het trainingsweekend!</p>",
                 'tekst_kort' => "Hoi {{voornaam}}, je bent uitgenodigd voor het trainingsweekend van Paal 13 ({{tw_datum_start}}). Geef je beschikbaarheid door in je portaal: $portaal",
-                'samenvatting' => 'Je bent door! Trainingsweekend {{tw_datum_start}} t/m {{tw_datum_eind}}.',
+                'samenvatting' => 'Je bent door! Trainingsweekend {{tw_periode}}.',
             ],
         ]),
         'aangenomen' => array_merge($std, [
@@ -185,7 +185,7 @@ function meldingen_register(): array {
             'seed' => [
                 'onderwerp' => 'Handtekening nodig: formulieren voor {{voornaam}} — Reddingsbrigade Paal 13',
                 'hero_titel' => 'Handtekening gevraagd', 'hero_subtitel' => 'Voor de selectiedag van {{voornaam}}',
-                'body_html' => "<p>Beste {{ouder_naam}},</p>\n<p><strong>{{voornaam}}</strong> heeft gesolliciteerd als strandwacht bij Reddingsbrigade Paal 13 in Callantsoog en is uitgenodigd voor onze selectiedag. Daar maken we kennis en testen we de zwemvaardigheid in het zwembad.</p>\n<p>Omdat {{voornaam}} nog geen 18 jaar is, hebben wij uw toestemming en handtekening nodig op onderstaande documenten. Het ondertekenen gebeurt volledig digitaal en duurt ongeveer 3 minuten per formulier.</p>\n{{formulieren_blok}}\n<p><strong>Goed om te weten:</strong> uw gegevens worden alleen gebruikt voor deze verklaringen en vertrouwelijk behandeld. De ondertekening is 1 jaar geldig. Zonder deze formulieren kan {{voornaam}} helaas niet deelnemen aan de selectiedag.</p>\n<p>Heeft u vragen? Mail ons gerust.</p>\n<p>Met vriendelijke groet,<br><strong>Reddingsbrigade Paal 13</strong><br>Callantsoog</p>",
+                'body_html' => "<p>Beste {{ouder_naam}},</p>\n<p><strong>{{voornaam}}</strong> heeft gesolliciteerd als strandwacht bij Reddingsbrigade Paal 13 in Callantsoog en is uitgenodigd voor onze selectiedag. Daar maken we kennis en testen we de zwemvaardigheid in het zwembad.</p>\n<p>Omdat {{voornaam}} nog geen 18 jaar is, hebben wij uw toestemming en handtekening nodig op onderstaande documenten. Het ondertekenen gebeurt volledig digitaal en duurt ongeveer 3 minuten per formulier.</p>\n{{formulieren_blok}}\n<p><strong>Goed om te weten:</strong> uw gegevens worden alleen gebruikt voor deze verklaringen en vertrouwelijk behandeld. De ondertekening is 1 jaar geldig. Zonder deze formulieren kan {{voornaam}} helaas niet deelnemen aan de selectiedag.</p>\n<p>Heeft u vragen? Mail ons gerust via <a href=\"mailto:{{contact_email}}\">{{contact_email}}</a>.</p>\n<p>Met vriendelijke groet,<br><strong>Reddingsbrigade Paal 13</strong><br>Callantsoog</p>",
                 'tekst_kort' => '',
                 'samenvatting' => 'Ondertekenverzoek verstuurd aan je ouder/verzorger.',
             ],
@@ -247,8 +247,8 @@ function meldingen_register(): array {
             'vars' => ['document_naam', 'ontvanger_naam'],
             'seed' => [
                 'onderwerp' => 'Kopie ondertekend: {{document_naam}} — Paal 13',
-                'hero_titel' => 'Kopie van je ondertekening', 'hero_subtitel' => 'Voor je administratie',
-                'body_html' => "<p>Beste {{ontvanger_naam}},</p>\n<p>Bedankt voor het ondertekenen van <strong>{{document_naam}}</strong> voor {{volledige_naam}}.</p>\n<p>In de bijlage vind je een kopie van het ondertekende document, zodat je kunt terugzien waar je je handtekening onder hebt gezet.</p>\n<p>Met vriendelijke groet,<br><strong>Team Sollicitaties</strong><br>Reddingsbrigade Paal 13</p>",
+                'hero_titel' => 'Kopie van de ondertekening', 'hero_subtitel' => 'Voor de eigen administratie',
+                'body_html' => "<p>Beste {{ontvanger_naam}},</p>\n<p>Bedankt voor het ondertekenen van <strong>{{document_naam}}</strong> voor {{volledige_naam}}.</p>\n<p>In de bijlage staat een kopie van het ondertekende document, om later terug te kunnen zien wat er is ondertekend.</p>\n<p>Met vriendelijke groet,<br><strong>Team Sollicitaties</strong><br>Reddingsbrigade Paal 13</p>",
                 'tekst_kort' => '', 'samenvatting' => '',
             ],
         ]),
@@ -406,8 +406,8 @@ function meldingen_register(): array {
             'beschrijving' => 'Een paar dagen vóór het trainingsweekend, naar iedereen die is uitgenodigd.',
             'seed' => [
                 'onderwerp' => 'Bijna zover: het trainingsweekend — Paal 13',
-                'hero_titel' => 'Trainingsweekend', 'hero_subtitel' => '{{tw_datum_start}} t/m {{tw_datum_eind}}',
-                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Het trainingsweekend komt eraan!</p>\n[info]Wanneer: {{tw_datum_start}} t/m {{tw_datum_eind}}<br>Waar: {{tw_locatie}}<br>Adres: {{tw_adres}}<br>Verzamelen: {{tw_verzameltijd}}<br>Meenemen: {{tw_meenemen}}[/info]\n[knop href=\"$portaal\"]Naar mijn portaal[/knop]\n<p>Tot dan!<br>Reddingsbrigade Paal 13</p>",
+                'hero_titel' => 'Trainingsweekend', 'hero_subtitel' => '{{tw_periode}}',
+                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Het trainingsweekend komt eraan!</p>\n[info]Wanneer: {{tw_periode}}<br>Waar: {{tw_locatie}}<br>Adres: {{tw_adres}}<br>Verzamelen: {{tw_verzameltijd}}<br>Meenemen: {{tw_meenemen}}[/info]\n[knop href=\"$portaal\"]Naar mijn portaal[/knop]\n<p>Tot dan!<br>Reddingsbrigade Paal 13</p>",
                 'tekst_kort' => "Hoi {{voornaam}}, het trainingsweekend start {{tw_datum_start}}. Verzamelen {{tw_verzameltijd}} bij {{tw_locatie}}. Alle info: $portaal",
                 'samenvatting' => 'Het trainingsweekend start {{tw_datum_start}}.',
             ],

@@ -31,6 +31,11 @@
 
 # Eigen 404-pagina (huisstijl) voor adressen die niet bestaan, ook onder /portaal/ en /admin/
 ErrorDocument 404 /404.php
+# 403 (verboden map, afgeschermd bestand) toont dezelfde "niet gevonden": zo verklapt de server
+# niet dat er op dat adres wél iets staat. Storingen krijgen de storingspagina i.p.v. die van Plesk.
+ErrorDocument 403 /404.php
+ErrorDocument 500 /500.php
+ErrorDocument 503 /500.php
 
 # Toon geen PHP-fouten aan bezoekers (fouten gaan naar het log)
 <IfModule mod_php.c>

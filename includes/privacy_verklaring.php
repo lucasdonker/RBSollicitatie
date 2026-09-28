@@ -95,7 +95,7 @@ aangenomen.</p>
   <li>Via welke pagina of advertentie je bij het formulier kwam.</li>
   <li>Wanneer je deze verklaring hebt gelezen, welke versie het was en vanaf welk IP-adres.
       Zo kunnen we laten zien dat je deze informatie hebt gekregen.</li>
-  <li>Ben je 15? Dan ook de naam van je ouder of verzorger en het moment waarop die toestemming gaf.</li>
+  <li>Ben je 15? Dan ook de naam van je ouder of verzorger en het moment waarop die akkoord gaf.</li>
 </ul>
 <h3>Tijdens de sollicitatie</h3>
 <ul>
@@ -176,7 +176,9 @@ voor alles wat hier staat: waar we je toestemming nodig hebben, vragen we die ap
 <h2 id="jong">4. Als je jonger bent dan 18</h2>
 <ul>
   <li>Je kunt je aanmelden vanaf 15 jaar.</li>
-  <li>Ben je 15, dan moet je ouder of verzorger bij het aanmelden toestemming geven.</li>
+  <li>Ben je 15, dan moet je ouder of verzorger bij het aanmelden laten weten dat die het goed vindt
+      dat je solliciteert. Dat is een akkoord met de sollicitatie, geen toestemming als grondslag: de
+      grondslag blijft dat we een overeenkomst voorbereiden.</li>
   <li>Ben je jonger dan 18, dan vragen we de naam, het e-mailadres en het telefoonnummer van je
       ouder of verzorger. Je ouder of verzorger ondertekent dan de gezondheidsverklaring, de
       intake en, als je wordt aangenomen, je inschrijving als lid van de vereniging. Betaal je de

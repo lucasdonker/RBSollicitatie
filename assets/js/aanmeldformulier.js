@@ -30,7 +30,7 @@
     teOud:       'Controleer je geboortedatum even.',
     akkoord:     'Zet een vinkje om te laten weten dat je de privacyverklaring hebt gelezen.',
     ouderNaam:   'Vul de naam van je ouder of verzorger in.',
-    ouderVink:   'Je ouder of verzorger moet hier toestemming geven.'
+    ouderVink:   'Je ouder of verzorger moet dit aanvinken.'
   };
 
   // ── Kleine hulpjes ───────────────────────────────────────────────

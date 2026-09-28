@@ -119,6 +119,21 @@ function sjablonen_migreer_slugs($db): void {
                             'herinnering_selectie_aanmelden', 'ondertekening_verzoek_ouder', 'lidmaatschap_verzoek_ouder'];
         $db->exec("UPDATE mail_templates SET body_html=REPLACE(body_html,'{{bestuur_email}}','{{contact_email}}')
                    WHERE body_html LIKE '%{{bestuur_email}}%' AND slug IN ('" . implode("','", $aan_sollicitant) . "')");
+        // 2.130.0: "{{tw_datum_start}} t/m {{tw_datum_eind}}" gaf "Wanneer:  t/m " zolang de datum nog niet
+        // bekend was. {{tw_periode}} levert altijd een hele zin (ook één dag, of "een datum die nog volgt").
+        // 2.130.0: "Mail ons gerust." zonder adres in het ouderverzoek; de kopie-mail (naar ouders én
+        // 18-plussers) sprak met "je" terwijl oudermails "u" zeggen — nu zonder aanspreekvorm.
+        $db->exec("UPDATE mail_templates SET body_html=REPLACE(body_html,'<p>Heeft u vragen? Mail ons gerust.</p>',
+                   '<p>Heeft u vragen? Mail ons gerust via <a href=\"mailto:{{contact_email}}\">{{contact_email}}</a>.</p>')
+                   WHERE slug='ondertekening_verzoek_ouder' AND body_html LIKE '%Mail ons gerust.</p>%'");
+        $db->exec("UPDATE mail_templates SET hero_titel='Kopie van de ondertekening', hero_subtitel='Voor de eigen administratie',
+                   body_html=REPLACE(body_html,'<p>In de bijlage vind je een kopie van het ondertekende document, zodat je kunt terugzien waar je je handtekening onder hebt gezet.</p>',
+                   '<p>In de bijlage staat een kopie van het ondertekende document, om later terug te kunnen zien wat er is ondertekend.</p>')
+                   WHERE slug='ondertekening_kopie' AND hero_titel='Kopie van je ondertekening'");
+        foreach (['onderwerp', 'body_html', 'tekst_kort', 'samenvatting'] as $_kol) {
+            $db->exec("UPDATE mail_templates SET `$_kol`=REPLACE(`$_kol`,'{{tw_datum_start}} t/m {{tw_datum_eind}}','{{tw_periode}}')
+                       WHERE `$_kol` LIKE '%{{tw_datum_start}} t/m {{tw_datum_eind}}%'");
+        }
     } catch (\Throwable $e) {}
 }
 

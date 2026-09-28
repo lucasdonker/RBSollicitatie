@@ -36,11 +36,15 @@ function sollicitatie_aanmaken(array $in, array $context = []): array {
     // Validatie — exact zoals het interne formulier
     if (!$voornaam || !$achternaam || !$email || !$tel || !$dob) return ['ok'=>false,'fout'=>'Vul alle verplichte velden in.','code'=>'velden_incompleet'];
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) return ['ok'=>false,'fout'=>'Ongeldig e-mailadres.','code'=>'email_ongeldig'];
+    // Server-side, want het formulier kan ook zonder de browsercontrole binnenkomen (plugin, API).
+    if (function_exists('telefoon_geldig') && !telefoon_geldig($tel)) {
+        return ['ok'=>false,'fout'=>'Vul een geldig telefoonnummer in, bijvoorbeeld 06 12 34 56 78.','code'=>'telefoon_ongeldig'];
+    }
     if ($leeftijd === null) return ['ok'=>false,'fout'=>'Vul een geldige geboortedatum in.','code'=>'dob_ongeldig'];
     if ($leeftijd < 15) return ['ok'=>false,'fout'=>'Je moet minimaal 15 jaar zijn om je aan te melden.','code'=>'te_jong'];
     if (!$akkoord) return ['ok'=>false,'fout'=>'Zet een vinkje om te laten weten dat je de privacyverklaring hebt gelezen.','code'=>'geen_akkoord'];
     if ($leeftijd < 16 && (!$ouder_akkoord || $ouder_naam === '')) {
-        return ['ok'=>false,'fout'=>'Omdat je nog geen 16 bent, hebben we de toestemming en naam van je ouder/verzorger nodig.','code'=>'ouder_nodig'];
+        return ['ok'=>false,'fout'=>'Omdat je nog geen 16 bent, hebben we het akkoord en de naam van je ouder of verzorger nodig.','code'=>'ouder_nodig'];
     }
 
     // Persoon opzoeken of aanmaken. Een bestaand persoon wordt NIET overschreven: dit formulier is

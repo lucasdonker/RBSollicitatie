@@ -50,6 +50,20 @@ function telefoon_opmaak(string $tel): string {
     return $t;
 }
 
+/**
+ * Is dit een bruikbaar telefoonnummer voor sms/WhatsApp? Nederlands: 10 cijfers met een 0 vooraan
+ * (06…, 020…), of +31/0031 gevolgd door 9 cijfers. Buitenlands (+xx): 8 tot 15 cijfers.
+ * Spaties, streepjes en haakjes mogen; letters niet.
+ */
+function telefoon_geldig(string $tel): bool {
+    $t = trim($tel);
+    if ($t === '' || preg_match('/[^0-9+\s\-().]/', $t)) return false;
+    $c = preg_replace('/\D+/', '', $t);
+    if (str_starts_with($t, '+31') || str_starts_with($c, '0031')) return strlen(preg_replace('/^(0031|31)/', '', $c)) === 9;
+    if (str_starts_with($t, '+') || str_starts_with($c, '00'))    return strlen(ltrim($c, '0')) >= 8 && strlen(ltrim($c, '0')) <= 15;
+    return strlen($c) === 10 && $c[0] === '0';
+}
+
 /** Voorletters uit de voornamen: "Lieke Anne-Marie" → "L.A.M.". */
 function naam_voorletters(string $voornamen): string {
     $uit = '';

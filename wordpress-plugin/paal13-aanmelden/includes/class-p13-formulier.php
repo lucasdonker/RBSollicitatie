@@ -103,9 +103,35 @@ class P13_Formulier {
         $html = self::velden_injecteren($html, $bron);
 
         if ($uit && !$uit['ok']) {
+            // Mislukt: de invoer terug in het formulier, zodat niemand alles opnieuw hoeft te typen.
+            // (Met JavaScript deed het script dat al uit de sessie; dit is voor wie zonder werkt.)
+            $html = self::waarden_terugzetten($html, self::invoer());
             $html = self::foutblok($uit['fout']) . $html;
         }
 
+        return $html;
+    }
+
+    /**
+     * Ingevulde waarden terugzetten in de HTML van het formulier (tekstvelden en de keuzelijst).
+     * De vinkjes niet: akkoord geven moet iemand zelf opnieuw doen.
+     */
+    private static function waarden_terugzetten(string $html, array $invoer): string {
+        foreach (['voornaam', 'tussenvoegsel', 'achternaam', 'email', 'telefoon', 'geboortedatum', 'ouder_toestemming_naam'] as $naam) {
+            $waarde = (string)($invoer[$naam] ?? '');
+            if ($waarde === '') continue;
+            $html = preg_replace_callback('/<input\b[^>]*\bname="' . preg_quote($naam, '/') . '"[^>]*>/i', function ($m) use ($waarde) {
+                $tag = preg_replace('/\svalue="[^"]*"/i', '', $m[0]);
+                return preg_replace('/^<input\b/i', '<input value="' . esc_attr($waarde) . '"', $tag);
+            }, $html, 1);
+        }
+        $geslacht = (string)($invoer['geslacht'] ?? '');
+        if ($geslacht !== '' && $geslacht !== 'onbekend') {
+            $html = preg_replace_callback('/<select\b[^>]*\bname="geslacht"[^>]*>.*?<\/select>/is', function ($m) use ($geslacht) {
+                $s = preg_replace('/\sselected\b/i', '', $m[0]);
+                return preg_replace('/(<option value="' . preg_quote(esc_attr($geslacht), '/') . '")/', '$1 selected', $s, 1);
+            }, $html, 1);
+        }
         return $html;
     }
 

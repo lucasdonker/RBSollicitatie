@@ -66,7 +66,7 @@ function pag_formulier_verwerk(array $pagina, array $post, string $campagne = ''
     if (!function_exists('sollicitatie_aanmaken')) {
         error_log('pag_formulier_verwerk: aanmelden_kern.php ontbreekt');
         return ['ok' => false, 'code' => 'kern_ontbreekt',
-                'fout' => 'Aanmelden lukt op dit moment niet. Probeer het later opnieuw of mail ons.'];
+                'fout' => 'Aanmelden lukt op dit moment niet. Probeer het later opnieuw of mail ons op ' . (function_exists('portaal_contact_email') ? portaal_contact_email() : 'sollicitatie@paal13.com') . '.'];
     }
 
     // De paginabron blijft voorop staan (per-pagina-cijfers kloppen); de campagne komt erachter.

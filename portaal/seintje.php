@@ -36,16 +36,18 @@ require __DIR__ . '/_kop.php';
       <div class="ds-login-logo"><?= icoon('golf', 26) ?></div>
       <?php if (!$persoon): ?>
         <h1>Link niet herkend</h1>
-        <p>Deze link is ongeldig of je gegevens zijn al verwijderd. Wil je een seintje? Mail ons gerust.</p>
+        <?php $_contact = function_exists('portaal_contact_email') ? portaal_contact_email() : 'sollicitatie@paal13.com'; ?>
+        <p>Deze link is ongeldig of je gegevens zijn al verwijderd. Wil je een seintje? Mail ons gerust op
+           <a href="mailto:<?= h($_contact) ?>"><?= h($_contact) ?></a>.</p>
       <?php elseif ($heeft): ?>
         <h1><?= $klaar === 'aan' ? 'Top, we laten van ons horen' : 'Je krijgt een seintje' ?></h1>
         <p>Zodra de werving voor een nieuw seizoen opent, sturen we je een bericht. We bewaren je naam
-           en contactgegevens daarvoor maximaal een jaar.</p>
+           en contactgegevens daarvoor maximaal <?= h(seintje_termijn_tekst()) ?>.</p>
       <?php else: ?>
         <h1><?= $klaar === 'uit' ? 'Geen seintje' : 'Volgend jaar weer?' ?></h1>
         <p><?= $klaar === 'uit'
             ? 'We sturen je geen bericht bij een nieuwe werving. Je gegevens verwijderen we binnen ' . seintje_afwijs_termijn_tekst() . ' na de afwijzing.'
-            : 'Wil je een bericht als de werving voor een nieuw seizoen opent? Dan bewaren we je naam en contactgegevens daarvoor maximaal een jaar.' ?></p>
+            : 'Wil je een bericht als de werving voor een nieuw seizoen opent? Dan bewaren we je naam en contactgegevens daarvoor maximaal ' . seintje_termijn_tekst() . '.' ?></p>
       <?php endif; ?>
     </div>
 

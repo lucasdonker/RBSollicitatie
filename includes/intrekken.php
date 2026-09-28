@@ -66,12 +66,12 @@ function intrek_aanvragen(int $sol_id, string $reden, bool $seintje): string {
     } catch (\Exception $e) { $s = null; }
     if (!$s || !in_array((string)$s['fase'], intrek_fases(), true)) return 'Je sollicitatie loopt niet meer; er valt niets in te trekken.';
     if (intrek_open_van($sol_id)) return 'Je verzoek staat al klaar. We nemen contact met je op.';
-    if (function_exists('rate_limit') && !rate_limit('intrekken', (string)$sol_id, 3, 86400)) return 'Probeer het morgen opnieuw, of mail ons.';
+    if (function_exists('rate_limit') && !rate_limit('intrekken', (string)$sol_id, 3, 86400)) return 'Probeer het morgen opnieuw, of mail ons op ' . (function_exists('portaal_contact_email') ? portaal_contact_email() : 'sollicitatie@paal13.com') . '.';
     $reden = mb_substr(trim($reden), 0, 1000);
     try {
         db()->prepare("INSERT INTO intrek_verzoek (sollicitatie_id, reden, seintje) VALUES (?,?,?)")
            ->execute([$sol_id, $reden !== '' ? $reden : null, $seintje ? 1 : 0]);
-    } catch (\Exception $e) { error_log('intrek_aanvragen: ' . $e->getMessage()); return 'Dat lukte niet. Probeer het later opnieuw, of mail ons.'; }
+    } catch (\Exception $e) { error_log('intrek_aanvragen: ' . $e->getMessage()); return 'Dat lukte niet. Probeer het later opnieuw, of mail ons op ' . (function_exists('portaal_contact_email') ? portaal_contact_email() : 'sollicitatie@paal13.com') . '.'; }
     // Toestemming voor een seintje: bewust het bestaande mechanisme (vervalt na maximaal een jaar).
     if ($seintje && function_exists('seintje_geven')) seintje_geven((int)$s['persoon_id'], 'intrekken');
     if (function_exists('audit_log')) audit_log('intrekverzoek', 'sollicitatie', $sol_id, ['seintje' => $seintje]);

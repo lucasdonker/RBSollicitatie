@@ -180,7 +180,7 @@ $modus  = $def && function_exists('melding_kanaalmodus') ? melding_kanaalmodus($
 
 $vars_basis = ['voornaam', 'achternaam', 'volledige_naam', 'sollicitant_email', 'sollicitant_telefoon', 'seizoen_naam',
                'selectiedag_datum', 'selectiedag_tijd', 'selectiedag_locatie', 'selectiedag_adres', 'selectiedag_eindtijd', 'selectiedag_meenemen',
-               'tw_datum_start', 'tw_datum_eind', 'tw_locatie', 'tw_adres', 'tw_verzameltijd', 'tw_eindtijd', 'tw_meenemen',
+               'tw_periode', 'tw_datum_start', 'tw_datum_eind', 'tw_locatie', 'tw_adres', 'tw_verzameltijd', 'tw_eindtijd', 'tw_meenemen',
                'portaal_url', 'contact_email', 'bestuur_email', 'afmeld_url'];
 $vars_type  = $def['vars'] ?? [];
 

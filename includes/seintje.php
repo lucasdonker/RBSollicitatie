@@ -46,6 +46,12 @@ function seintje_termijn_mnd(): int {
     return ($m > 0 && $m <= 12) ? $m : 12;   // de teksten beloven "maximaal een jaar"
 }
 
+/** "een jaar" / "6 maanden": hoe lang we gegevens voor een seintje bewaren (volgt de instelling). */
+function seintje_termijn_tekst(): string {
+    $m = seintje_termijn_mnd();
+    return $m === 12 ? 'een jaar' : ($m === 1 ? 'een maand' : $m . ' maanden');
+}
+
 /** "vier weken" / "6 weken": hoe snel gegevens van een afgewezen sollicitant zonder seintje weg zijn. */
 function seintje_afwijs_termijn_tekst(): string {
     $w = function_exists('instelling_int') ? instelling_int('bewaar.afgewezen_weken', 4) : 4;

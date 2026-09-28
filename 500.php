@@ -5,6 +5,8 @@
  * database of de configuratie juist het probleem zijn. Wat er al geladen is (icoon(), het
  * contactadres) gebruiken we; anders een vaste terugval.
  */
+// Ook bruikbaar als Apache-ErrorDocument (500/503, root .htaccess): dan zet niemand anders de status.
+if (!headers_sent() && http_response_code() < 500) http_response_code(500);
 $foutcode_html = isset($foutcode_html) ? htmlspecialchars($foutcode_html) : 'P13-S001';
 $app_url_500   = defined('APP_URL') ? APP_URL : '';
 $esc  = fn(string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');

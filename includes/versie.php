@@ -3,10 +3,25 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.129.0');
+define('APP_VERSIE', '2.130.0');
 
 function app_changelog(): array {
     return [
+        '2.130.0' => [
+            'datum'  => '2026-09-28',
+            'titel'  => 'Selectiedag voorbereiden, toegankelijkheid en publieke teksten',
+            'punten' => [
+                'Selectiedag heeft nu ook de stap Voorbereiden (wie komt, wie kan niet, welke formulieren nog open staan), dezelfde als bij het trainingsweekend. Vóór de dag opent Selectiedag daar',
+                'Voorbereiden (selectiedag en weekend) en de nabespreking hebben zoeken en filters; de nabespreking sorteert ook op cijfer, net als de gesprekken',
+                'Toegankelijkheid: alle velden hebben een label, tabbladen zijn navigatie, een duidelijke focusrand overal, betere contrasten, grotere raakvlakken, elke pagina een kop, knoppen noemen de naam van de persoon, meldingen verdwijnen niet meer vanzelf',
+                'Aanmelden onder de 16: de ouder geeft akkoord op het solliciteren (geen "toestemming voor verwerken"); privacyverklaring bijgewerkt',
+                'Mails: geen "Nader te bepalen" of "Wanneer:  t/m " meer als een datum of plek nog niet bekend is ({{tw_periode}}); het contactadres staat overal waar "mail ons" staat; de kopie van een ondertekening spreekt niemand verkeerd aan',
+                'De platte-tekstversie van mails is leesbaar, met de links erin',
+                'Aanmelden via de website: na een fout blijft je invoer staan; telefoonnummer wordt gecontroleerd; de datumkiezer begint bij een zinnig jaar',
+                'Een offline landingspagina verwijst naar paal13.com en het aanmeldformulier in plaats van het inlogscherm; storingen en verboden adressen tonen onze eigen pagina',
+                'Te veel inloglinks aangevraagd? Dat zegt het scherm nu gewoon',
+            ],
+        ],
         '2.129.0' => [
             'datum'  => '2026-09-28',
             'titel'  => 'Overal dezelfde woorden, knoppen en kleuren',

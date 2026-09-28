@@ -77,6 +77,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['email_submit'])) {
         // Per adres: maximaal 10 code-aanvragen per uur, ongeacht het e-mailadres. De throttle
         // hieronder is per e-mailadres en houdt dus niemand tegen die veel adressen afgaat.
         $ip_ok = !function_exists('rate_limit') || rate_limit('otp_aanvraag', rate_identiteit(), 10, 3600);
+        if (!$ip_ok) {
+            // Eerlijk zeggen in plaats van stil "we stuurden een link". Dit verklapt niets over een
+            // account: de limiet telt per netwerkadres, voor bestaande en niet-bestaande adressen gelijk.
+            $fout = 'Er zijn vanaf dit netwerk te veel inloglinks aangevraagd. Probeer het over een uur opnieuw.';
+        }
         if ($persoon && $ip_ok) {
             // Atomische throttle: is er afgelopen 60s al een actieve OTP gegenereerd?
             $rl = db()->prepare("SELECT 1 FROM otp_tokens WHERE email=? AND type='portaal' AND gebruikt=0 AND aangemaakt_op > DATE_SUB(NOW(), INTERVAL 60 SECOND) LIMIT 1");
@@ -95,8 +100,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['email_submit'])) {
             }
             // Als wel recent: bestaande code blijft geldig, geen nieuwe mail
         }
-        $_SESSION['otp_email'] = $email;
-        redirect(APP_URL . '/portaal/?stap=code');
+        if ($ip_ok) {
+            $_SESSION['otp_email'] = $email;
+            redirect(APP_URL . '/portaal/?stap=code');
+        }
     }
 }
 

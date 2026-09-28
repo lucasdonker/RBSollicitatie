@@ -156,6 +156,32 @@ class Mailer
     }
 
     /**
+     * De platte-tekstversie van een HTML-mail, voor wie geen HTML toont (en voor spamfilters).
+     * Eerder was dit strip_tags van alles: de CSS uit <style> stond dan bovenaan de mail en elke
+     * link verdween. Nu: kop/stijl/script weg, links als "tekst (adres)", blokken op eigen regels.
+     */
+    public static function tekstVersie(string $html): string {
+        $t = preg_replace('#<(head|style|script|title)\b[^>]*>.*?</\1>#is', '', $html);
+        $t = preg_replace('/<!--.*?-->/s', '', $t);
+        $t = preg_replace_callback('#<a\b[^>]*\bhref=(["\'])(.*?)\1[^>]*>(.*?)</a>#is', function ($m) {
+            $url   = html_entity_decode($m[2], ENT_QUOTES, 'UTF-8');
+            $tekst = trim(html_entity_decode(strip_tags($m[3]), ENT_QUOTES, 'UTF-8'));
+            if (stripos($url, 'mailto:') === 0) $url = substr($url, 7);
+            if ($tekst === '' || $tekst === $url) return $url;
+            return $tekst . ' (' . $url . ')';
+        }, $t);
+        $t = preg_replace('#<br\s*/?>#i', "\n", $t);
+        $t = preg_replace('#<(ul|ol)\b[^>]*>#i', "\n", $t);
+        $t = preg_replace('#<li\b[^>]*>#i', '- ', $t);
+        $t = preg_replace('#</(div|li|tr)>#i', "\n", $t);
+        $t = preg_replace('#</(p|h[1-6]|ul|ol|table|blockquote)>#i', "\n\n", $t);
+        $t = html_entity_decode(strip_tags($t), ENT_QUOTES, 'UTF-8');
+        $t = preg_replace('/[ \t\x{00A0}]+/u', ' ', $t);
+        $t = preg_replace('/ *\n */', "\n", $t);
+        return trim(preg_replace('/\n{3,}/', "\n\n", $t));
+    }
+
+    /**
      * De MIME-inhoud, gedeeld door SMTP en mail(): tekst + HTML (multipart/alternative), met
      * bijlagen eromheen als multipart/mixed. Zonder de adresheaders (From/To/Subject), want die
      * geeft mail() apart mee.
@@ -164,10 +190,7 @@ class Mailer
     public static function mimeInhoud(string $naam, string $onderwerp, string $body, array $bijlagen = []): array {
         $boundary = md5(uniqid((string)mt_rand(), true));
 
-        // Plain text versie (strip HTML tags)
-        $plain = strip_tags(preg_replace('/<br\s*\/?>/i', "\n", $body));
-        $plain = html_entity_decode($plain, ENT_QUOTES, 'UTF-8');
-        $plain = preg_replace('/\n{3,}/', "\n\n", trim($plain));
+        $plain = self::tekstVersie($body);
 
         // Het inhoudsdeel (tekst + HTML) — altijd multipart/alternative
         $altBody =
