@@ -4,7 +4,7 @@
 return [
     'sleutel'      => 'selectiedag',
     'label'        => 'Selectiedag',
-    'omschrijving' => 'Groepen indelen, inchecken (ook op een tablet), beoordelen, nabespreken en de bellijst.',
+    'omschrijving' => 'Voorbereiden (wie komt er), groepen indelen, inchecken (ook op een tablet), beoordelen, nabespreken en de bellijst.',
     'rechten'      => [
         'selectiedag' => ['label' => 'Selectiedag', 'groep' => 'Selectie', 'acties' => ['lezen', 'bewerken']],
     ],
@@ -14,7 +14,7 @@ return [
          'url' => 'selectie_indeling.php?start=1', 'icoon' => 'kalender', 'module' => 'selectiedag'],
     ],
     'nav_alias'    => [
-        'selectie_indeling' => 'selectiedag', 'selectie_inchecken' => 'selectiedag',
+        'selectie_indeling' => 'selectiedag', 'selectie_inchecken' => 'selectiedag', 'selectie_voorbereiden' => 'selectiedag',
         'selectie_nabespreking' => 'selectiedag',
     ],
 ];

@@ -525,6 +525,30 @@ function selectie_besluit_labels(): array {
     return ['door' => ['Door', 'groen'], 'twijfel' => ['Twijfel', 'oranje'], 'niet' => ['Niet door', 'rood']];
 }
 
+/**
+ * De lijst van de nabespreking gefilterd en gesorteerd — zelfde mogelijkheden als Gesprekken
+ * bij het trainingsweekend (zoeken op naam, op besluit, sorteren op naam of cijfer). Geen HTML.
+ * @param array $f  ['q' => naamdeel, 'besluit' => ''|'open'|'door'|'twijfel'|'niet', 'sort' => 'naam'|'score']
+ */
+function selectie_nabespreking_lijst(array $kandidaten, array $besluiten, array $scores_alle, array $f): array {
+    $q = trim((string)($f['q'] ?? ''));
+    $q = function_exists('mb_strtolower') ? mb_strtolower($q) : strtolower($q);
+    $b_filter = (string)($f['besluit'] ?? '');
+    $uit = array_values(array_filter($kandidaten, function ($k) use ($q, $b_filter, $besluiten) {
+        $naam = (string)($k['naam'] ?? '');
+        $naam = function_exists('mb_strtolower') ? mb_strtolower($naam) : strtolower($naam);
+        if ($q !== '' && strpos($naam, $q) === false) return false;
+        $b = $besluiten[(int)$k['sol_id']]['besluit'] ?? '';
+        if ($b_filter === 'open') return $b === '';
+        return $b_filter === '' || $b_filter === 'alle' || $b === $b_filter;
+    }));
+    if (($f['sort'] ?? 'naam') === 'score') {
+        usort($uit, fn($a, $b) => (selectie_gemiddelde($scores_alle[(int)$b['sol_id']] ?? []) ?? -1)
+                               <=> (selectie_gemiddelde($scores_alle[(int)$a['sol_id']] ?? []) ?? -1));
+    }
+    return $uit;
+}
+
 /** Het besluit van één kandidaat ophalen (of null). */
 function selectie_besluit_van(int $seizoen_id, int $sol_id): ?array {
     selectiedag_auto_setup();

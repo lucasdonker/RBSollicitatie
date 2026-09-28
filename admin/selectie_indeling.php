@@ -15,12 +15,13 @@ $sid = $seizoen ? (int)$seizoen['id'] : 0;
 $mag_bewerken = mag('selectiedag', 'bewerken');
 
 // Vanuit het menu (?start=1) beginnen waar je op dat moment bent, net als het trainingsweekend:
-// vóór de dag de groepen, op de dag beoordelen, daarna (bestuur) de nabespreking.
+// vóór de dag Voorbereiden (wie komt er), op de dag beoordelen, daarna (bestuur) de nabespreking.
 $_sd_datum = (string)($seizoen['datum_selectiedag'] ?? '');
-if (!empty($_GET['start']) && $_sd_datum !== '' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+if (!empty($_GET['start']) && $_SERVER['REQUEST_METHOD'] === 'GET') {
     $_vandaag = date('Y-m-d');
-    if ($_vandaag > $_sd_datum && $mag_bewerken) redirect(APP_URL . '/admin/selectie_nabespreking.php');
-    if ($_vandaag >= $_sd_datum)                 redirect(APP_URL . '/admin/selectiedag.php');
+    if ($_sd_datum !== '' && $_vandaag > $_sd_datum && $mag_bewerken) redirect(APP_URL . '/admin/selectie_nabespreking.php');
+    if ($_sd_datum !== '' && $_vandaag >= $_sd_datum)                 redirect(APP_URL . '/admin/selectiedag.php');
+    redirect(APP_URL . '/admin/selectie_voorbereiden.php');
 }
 
 $kandidaten = $sid ? selectie_kandidaten($sid) : [];

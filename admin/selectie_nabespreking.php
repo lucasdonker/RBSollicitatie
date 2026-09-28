@@ -112,7 +112,10 @@ $lgf_alle    = $sid ? lg_feedback_alle($sid) : [];   // feedback van lifeguards,
 $groep_naam = [];
 foreach ($groepen as $g) $groep_naam[$g['id']] = $g['naam'] ?: 'Groep ' . $g['nummer'];
 
-$filter = (string)($_GET['filter'] ?? 'alle');
+$filter = (string)($_GET['filter'] ?? '');
+if ($filter === 'alle') $filter = '';
+$zoek   = (string)($_GET['q'] ?? '');
+$sort   = ($_GET['sort'] ?? '') === 'score' ? 'score' : 'naam';
 $tab    = (string)($_GET['tab'] ?? 'nabespreken');
 
 $tel = ['door' => 0, 'twijfel' => 0, 'niet' => 0, 'open' => 0];
@@ -121,13 +124,7 @@ foreach ($kandidaten as $k) {
     $tel[$b ?: 'open']++;
 }
 
-$zichtbaar = array_values(array_filter($kandidaten, function ($k) use ($filter, $besluiten) {
-    $b = $besluiten[(int)$k['sol_id']]['besluit'] ?? '';
-    return match ($filter) {
-        'door' => $b === 'door', 'twijfel' => $b === 'twijfel',
-        'niet' => $b === 'niet', 'open' => $b === '', default => true,
-    };
-}));
+$zichtbaar = selectie_nabespreking_lijst($kandidaten, $besluiten, $scores_alle, ['q' => $zoek, 'besluit' => $filter, 'sort' => $sort]);
 
 // Bellijst: wie een besluit heeft maar nog niet is doorgevoerd — ook twijfel: die bel je
 // ook, en na het gesprek wordt het door of niet.
@@ -185,23 +182,26 @@ require __DIR__ . '/layout_top.php';
     </span>
   </div>
 
-  <div class="bh-groepkeuze bh-nb-filter">
-    <?php
-      $_f = ['alle' => ['Iedereen', count($kandidaten), 'grijs'], 'open' => ['Nog open', $tel['open'], 'grijs']];
-      foreach (selectie_besluit_labels() as $_bk => $_bd) $_f[$_bk] = [$_bd[0], $tel[$_bk], $_bd[1]];
-      foreach ($_f as $_k => $_d):
-        if ($_k !== 'alle' && $_d[1] === 0) continue;   // een filter zonder mensen is ruis
-    ?>
-      <a class="bh-groepchip ds-fase-<?= h($_d[2]) ?><?= $filter === $_k ? ' actief' : '' ?>"
-         href="?filter=<?= h($_k) ?>"><?= h($_d[0]) ?> <span><?= (int)$_d[1] ?></span></a>
-    <?php endforeach; ?>
-  </div>
+  <?php
+    // Zelfde filterbalk als Gesprekken bij het trainingsweekend.
+    $_opties = ['' => 'Iedereen (' . count($kandidaten) . ')', 'open' => 'Nog open (' . $tel['open'] . ')'];
+    foreach (selectie_besluit_labels() as $_bk => $_bd) $_opties[$_bk] = $_bd[0] . ' (' . $tel[$_bk] . ')';
+    $filter_velden = [
+        ['soort' => 'zoek',  'naam' => 'q',      'label' => 'Zoek op naam', 'waarde' => $zoek, 'breed' => true],
+        ['soort' => 'keuze', 'naam' => 'filter', 'label' => 'Besluit', 'waarde' => $filter, 'opties' => $_opties],
+        ['soort' => 'keuze', 'naam' => 'sort',   'label' => 'Sorteren', 'waarde' => $sort,
+         'opties' => ['naam' => 'Op naam', 'score' => 'Op cijfer (hoog eerst)']],
+    ];
+    $filter_wissen = ($zoek !== '' || $filter !== '' || $sort !== 'naam') ? APP_URL . '/admin/selectie_nabespreking.php' : null;
+    require __DIR__ . '/_filterbalk.php';
+  ?>
 
   <?php if (!$zichtbaar): ?>
     <div class="ds-kaart ds-kaart-p">
       <?php
-        $leeg_titel = 'Niemand in deze selectie';
-        $leeg_tekst = 'Kies een ander filter om de rest te zien.';
+        $leeg_titel = 'Niemand gevonden';
+        $leeg_tekst = 'Pas de zoekterm of de filters aan.';
+        $leeg_icoon = 'zoek';
         require __DIR__ . '/_leeg.php';
       ?>
     </div>

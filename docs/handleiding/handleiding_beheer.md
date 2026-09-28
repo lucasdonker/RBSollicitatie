@@ -999,18 +999,30 @@ altijd het ingestelde bericht uit.
 
 ## Selectiedag
 
-**Waar:** Selectie › Selectiedag, met bovenaan de stappen Groepen, Inchecken, Beoordelen,
-Nabespreking en Bellijst.  
-**Wie:** bestuur en beheerder alles. Een begeleider bekijkt de groepen, checkt in en beoordeelt;
-de tabletcode, de groepsindeling, Nabespreking en Bellijst blijven bij het bestuur.
+**Waar:** Selectie › Selectiedag, met bovenaan de stappen Voorbereiden, Groepen, Inchecken, Beoordelen,
+Nabespreking en Bellijst. Vóór de dag opent het scherm op Voorbereiden, op de dag op Beoordelen.  
+**Wie:** bestuur en beheerder alles. Een begeleider bekijkt Voorbereiden en de groepen, checkt in en beoordeelt;
+wie komt wijzigen, de tabletcode, de groepsindeling, Nabespreking en Bellijst blijven bij het bestuur.
 
-> **In het kort:** vijf stappen voor één dag. Vooraf deel je groepen in en maak je de
+> **In het kort:** zes stappen voor één dag. Vooraf kijk je wie er komt, deel je groepen in en maak je de
 > toegangscode voor de tablet. Op de dag check je in (of sollicitanten doen dat zelf) en beoordeel je
 > per sollicitant. Daarna neem je aan tafel een besluit, bel je iedereen en voer je pas dan door.
 
 De selectiedag werkt met iedereen in de fases Uitgenodigd selectiedag, Aangemeld selectiedag en
 Selectiedag geweest. Staat er nog niemand in die fases, dan staat er "Nog niemand uitgenodigd".
 Naast de titel staat de datum van de selectiedag.
+
+### Voorbereiden: wie komt er
+
+Dezelfde stap als bij het trainingsweekend. Bovenaan staat hoeveel mensen komen, niet kunnen en
+nog niets lieten weten. Per sollicitant zie je of alle formulieren (gezondheidsverklaring, intake)
+getekend zijn; wat openstaat moet vóór het water getekend zijn, en bij het inchecken krijgt de
+sollicitant de link opnieuw.
+
+1. Zoek op naam of filter op **Komt?** (Komt, Kan niet, Nog niet bekend).
+2. Bel je iemand, kies dan bij de naam **Komt** of **Kan niet**. Bij Kan niet is een opmerking
+   verplicht; pas daarna wordt het opgeslagen. "Kan niet" verandert de fase niet: dat beslis je
+   op Vandaag (afmelden of een uitzondering).
 
 ### Stap 1: groepen indelen
 
@@ -1079,9 +1091,10 @@ Bestuur, beheerder en begeleiders kunnen beoordelen; niemand overschrijft de cij
 
 Alleen bestuur en beheerder. Per sollicitant staan observaties en scores bij elkaar, met
 bijzonderheden, groep en of de sollicitant aanwezig was. De scores zijn een advies; jullie gesprek
-bepaalt het besluit. Filter op **Iedereen**, **Nog open**, **Door**, **Twijfel** of **Niet**.
+bepaalt het besluit. Zoek op naam, filter op besluit (**Iedereen**, **Nog open**, **Door**, **Twijfel**
+of **Niet door**) of sorteer op cijfer, net als bij de gesprekken van het trainingsweekend.
 
-1. Klik per sollicitant op **Door**, **Twijfel** of **Niet**, en typ eventueel een korte reden in het
+1. Klik per sollicitant op **Door**, **Twijfel** of **Niet door**, en typ eventueel een korte reden in het
    veld ernaast. Dit wordt direct opgeslagen ("opgeslagen") en verandert nog niets aan de fase.
 2. Een ander besluit kies je door op een andere knop te klikken. Klik je nog een keer op het
    besluit dat al gekozen is, dan wordt het gewist, samen met de reden ("besluit gewist").

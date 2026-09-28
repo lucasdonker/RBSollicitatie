@@ -9,13 +9,14 @@
  * stukje CSS erbij.
  *
  * Verwacht:
- *   $subnav_actief  string  groepen|inchecken|beoordelen|nabespreking|bellijst
+ *   $subnav_actief  string  voorbereiden|groepen|inchecken|beoordelen|nabespreking|bellijst
  *   $subnav_datum   ?string optioneel: de datum van de selectiedag, in de kop
  */
 $subnav_actief = $subnav_actief ?? '';
 $subnav_datum  = $subnav_datum ?? null;
 
 $_stappen = [
+    'voorbereiden' => ['Voorbereiden', 'selectie_voorbereiden.php',  'selectiedag', 'lezen'],
     'groepen'      => ['Groepen',      'selectie_indeling.php',      'selectiedag', 'lezen'],
     'inchecken'    => ['Inchecken',    'selectie_inchecken.php',     'selectiedag', 'lezen'],
     'beoordelen'   => ['Beoordelen',   'selectiedag.php',            'selectiedag', 'lezen'],

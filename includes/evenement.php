@@ -290,6 +290,29 @@ function evenement_bevestig_standen(): array {
 }
 
 /**
+ * Zoeken en filteren in een deelnemerslijst (Voorbereiden, beoordelen): op naam en op bevestiging.
+ * Dezelfde regel voor selectiedag en trainingsweekend. Geen HTML.
+ * @param string $q      deel van de naam (hoofdletterongevoelig); leeg = iedereen
+ * @param string $stand  een sleutel uit evenement_bevestig_standen(); leeg = alle
+ */
+function evenement_lijst_filter(array $lijst, string $q = '', string $stand = ''): array {
+    $q = function_exists('mb_strtolower') ? mb_strtolower(trim($q)) : strtolower(trim($q));
+    return array_values(array_filter($lijst, function ($k) use ($q, $stand) {
+        if ($q !== '') {
+            $naam = (string)($k['naam'] ?? '');
+            $naam = function_exists('mb_strtolower') ? mb_strtolower($naam) : strtolower($naam);
+            if (strpos($naam, $q) === false) return false;
+        }
+        if ($stand !== '') {
+            $st = (string)($k['bevestiging'] ?? 'onbekend');
+            if (!isset(evenement_bevestig_standen()[$st])) $st = 'onbekend';
+            if ($st !== $stand) return false;
+        }
+        return true;
+    }));
+}
+
+/**
  * Bevestiging vastleggen, met een opmerking (kolom bevestiging_reden). Bij "kan niet" is die
  * verplicht; bij "ik kom" mag hij er ook staan ("ik ben er pas om 14 uur") en wordt hij bewaard —
  * tot 2.117.0 viel hij dan stil weg. De fase verandert niet: het bestuur beslist op Vandaag

@@ -830,7 +830,6 @@ span.bh-incheck-code {
   font-size: 14px; line-height: 1.55; color: var(--ink-soft);
 }
 .bh-nb-uitleg a { color: var(--navy); font-weight: 600; }
-.bh-nb-filter { margin-bottom: 14px; }
 
 .bh-nb-kaart {
   background: var(--surface); border: 1px solid var(--border);
@@ -2035,13 +2034,14 @@ body.bh-paneel-open .bh-inhoud { transition: padding-right .15s ease; }
 .bh-twoptie.afwijzen input:checked + span { background: var(--fase-rood-vlak); border-color: var(--fase-rood); color: var(--fase-rood); }
 
 /* Voorbereiden: wie komt er. */
-.bh-twvoor { --bh-tracks: minmax(0, 2fr) minmax(0, 1.4fr) 140px minmax(0, 2.2fr); }
-.bh-twvoor td, .bh-twvoor tbody th { white-space: normal; overflow: visible; }
-.bh-twvoor th.bh-twvoor-wie { display: flex; align-items: center; gap: 10px; text-align: left; font-weight: 600; text-transform: none; letter-spacing: 0; font-size: 14px; color: var(--ink); }
-.bh-twvoor-wie > span { display: flex; flex-direction: column; gap: 1px; }
-.bh-twvoor td .bh-meta { display: block; margin-top: 3px; }
-.bh-twvoor-form { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-.bh-twvoor-form .ds-select, .bh-twvoor-form .ds-input { height: 38px; font-size: 13px; width: auto; min-width: 130px; }
+/* Voorbereiden (admin/_voorbereiden.php), selectiedag en trainingsweekend */
+.bh-voor { --bh-tracks: minmax(0, 2fr) minmax(0, 1.4fr) minmax(120px, 1.2fr) minmax(0, 2.2fr); }
+.bh-voor td, .bh-voor tbody th { white-space: normal; overflow: visible; }
+.bh-voor th.bh-voor-wie { display: flex; align-items: center; gap: 10px; text-align: left; font-weight: 600; text-transform: none; letter-spacing: 0; font-size: 14px; color: var(--ink); }
+.bh-voor-wie > span { display: flex; flex-direction: column; gap: 1px; }
+.bh-voor td .bh-meta { display: block; margin-top: 3px; }
+.bh-voor-form { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.bh-voor-form .ds-select, .bh-voor-form .ds-input { height: 38px; font-size: 13px; width: auto; min-width: 130px; }
 
 /* Gesprekken: de lijst, in drie groepen. */
 .bh-twgesprekken { padding: 16px 20px; }

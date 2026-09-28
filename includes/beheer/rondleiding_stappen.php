@@ -127,9 +127,11 @@ function rl_schermen(): array {
             'titel' => 'Selectiedag', 'bestand' => 'selectie_indeling.php', 'module' => 'selectiedag', 'hulp' => 'selectiedag',
             'stappen' => [
                 ['doel' => null, 'titel' => 'De selectiedag',
-                 'tekst' => 'Vijf stappen voor één dag: groepen, inchecken, beoordelen, nabespreken en bellen.'],
+                 'tekst' => 'Zes stappen voor één dag: voorbereiden, groepen, inchecken, beoordelen, nabespreken en bellen.'],
                 ['doel' => '.bh-substappen', 'titel' => 'De stappen',
                  'tekst' => 'Wissel hier tussen de stappen. Nabespreking en Bellijst zijn bestuurswerk en zie je alleen met bewerkrecht.'],
+                ['doel' => '.bh-substappen a[href$="selectie_voorbereiden.php"]', 'titel' => 'Voorbereiden',
+                 'tekst' => 'Wie komt er, wie kan niet, en wie moet nog een formulier tekenen. Bel je iemand, vul het daar in. Zelfde stap als bij het trainingsweekend.'],
                 ['doel' => '.bh-indeel-balk', 'titel' => 'Groepen maken',
                  'tekst' => 'Stel het aantal groepen in en laat het systeem een voorstel maken, gemengd op leeftijd en geslacht, met de terugkerende strandwachten verspreid. Een nieuw voorstel overschrijft de bestaande indeling.'],
                 ['doel' => '.bh-groepgrid', 'titel' => 'Slepen en koppels',
