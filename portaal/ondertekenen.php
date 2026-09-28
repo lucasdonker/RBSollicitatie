@@ -203,6 +203,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_ondertekend) {
                 'zenuwstelsel' => !empty($_POST['a_zenuwstelsel']),
                 'gehoororgaan' => !empty($_POST['a_gehoor']),
                 'overig'       => trim($_POST['a_overig'] ?? ''),
+                // Sinds 2.128.2 twee losse vragen; eerder was het één vinkje "diabetes of breuken".
+                'los_breuken'  => true,
             ];
         } else {
             $form['geslacht'] = $_POST['geslacht'] ?? '';
@@ -218,7 +220,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_ondertekend) {
                 'naar_waarheid'    => !empty($_POST['v_waarheid']),
                 'goede_gezondheid' => !empty($_POST['v_gezondheid']),
                 'eigen_risico'     => !empty($_POST['v_eigenrisico']),
-                'leeftijd_16'      => !empty($_POST['v_leeftijd']),
+                'leeftijd_18'      => !empty($_POST['v_leeftijd']),
             ];
         }
 

@@ -161,7 +161,13 @@ function ondertekening_pdf_bouwen_standaard($pdf, array $rec, array $sol): void 
         $para('Ondergetekende verklaart bekend te zijn met het feit dat het bovenstaande verhoogde eisen stelt aan de fysieke toestand van de deelnemer, en verklaart het risico van deelname te aanvaarden en de organisatie en de Koninklijke Nederlandse Bond tot het Redden van Drenkelingen te vrijwaren van aansprakelijkheid voor gebeurtenissen die voortvloeien uit de vermelde gezondheidsrisico\'s.');
         $kop('Gemelde aandoeningen');
         $a = $form['aandoeningen'] ?? [];
-        $vinkje(!empty($a['diabetes']), 'Diabetes (suikerziekte) of breuken');
+        // Oudere formulieren hadden één vinkje voor beide; toon wat er toen getekend is.
+        if (!empty($a['los_breuken'])) {
+            $vinkje(!empty($a['diabetes']), 'Diabetes (suikerziekte)');
+            $vinkje(!empty($a['breuken']), 'Botbreuken');
+        } else {
+            $vinkje(!empty($a['diabetes']), 'Diabetes (suikerziekte) of breuken');
+        }
         $vinkje(!empty($a['hart_vaat']), 'Hart- en vaataandoeningen (benauwdheid, snelle vermoeidheid, hartkloppingen)');
         $vinkje(!empty($a['ademhaling']), 'Astma / bronchitis');
         $vinkje(!empty($a['zenuwstelsel']), 'Duizeligheid, flauwtes, wegrakingen, epilepsie');
@@ -179,7 +185,8 @@ function ondertekening_pdf_bouwen_standaard($pdf, array $rec, array $sol): void 
         $vinkje(!empty($v['naar_waarheid']), 'Formulier naar waarheid ingevuld.');
         $vinkje(!empty($v['goede_gezondheid']), 'In goede gezondheid om deel te nemen aan sportieve activiteiten.');
         $vinkje(!empty($v['eigen_risico']), 'Deelname op eigen risico; organisatie niet aansprakelijk voor letsel uit verzwegen of onbekende omstandigheden.');
-        if (!empty($v['leeftijd_16'])) $vinkje(true, '16 jaar of ouder en bevoegd om zelfstandig te ondertekenen.');
+        if (!empty($v['leeftijd_18'])) $vinkje(true, '18 jaar of ouder en bevoegd om zelfstandig te ondertekenen.');
+        elseif (!empty($v['leeftijd_16'])) $vinkje(true, '16 jaar of ouder en bevoegd om zelfstandig te ondertekenen.'); // vóór 2.128.2
     }
 
     ondertekening_pdf_ondertekenblok($pdf, $rec);

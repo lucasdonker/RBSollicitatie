@@ -61,7 +61,8 @@ $_check = function (string $naam, string $tekst, bool $verplicht = false) use ($
     <span class="ond-kaart-lbl"><?= icoon('reddingsboei', 18) ?>Gezondheid</span>
     <span class="ond-kaart-tekst">Vink aan wat <?= $u ? 'voor uw kind' : 'voor jou' ?> geldt. Niets van toepassing? Laat alles leeg.</span>
     <div class="ond-lijst">
-      <?= $_check('a_diabetes', 'Diabetes (suikerziekte) of breuken') ?>
+      <?= $_check('a_diabetes', 'Diabetes (suikerziekte)') ?>
+      <?= $_check('a_breuken', 'Botbreuken') ?>
       <?= $_check('a_hartvaat', 'Hart- en vaataandoeningen (benauwdheid, snelle vermoeidheid, hartkloppingen)') ?>
       <?= $_check('a_ademhaling', 'Astma / bronchitis') ?>
       <?= $_check('a_zenuwstelsel', 'Duizeligheid, flauwtes, wegrakingen, epilepsie') ?>
@@ -103,7 +104,8 @@ $_check = function (string $naam, string $tekst, bool $verplicht = false) use ($
                                      : 'Ik verklaar dat ik in goede gezondheid verkeer om deel te nemen aan sportieve activiteiten.', true) ?>
       <?= $_check('v_eigenrisico', 'Deelname is op eigen risico. De organisatie is niet aansprakelijk voor letsel dat voortkomt uit verzwegen of onbekende omstandigheden.', true) ?>
       <?php if ($type === 'intake'): ?>
-        <?= $_check('v_leeftijd', 'Ik ben 16 jaar of ouder en bevoegd om dit formulier zelfstandig te ondertekenen.', true) ?>
+        <?php /* Zelf tekenen = 18+ (onder de 18 krijgt de ouder intake_ouder); de 15/16-grens is een andere. */ ?>
+        <?= $_check('v_leeftijd', 'Ik ben 18 jaar of ouder en bevoegd om dit formulier zelfstandig te ondertekenen.', true) ?>
       <?php endif; ?>
     </div>
     <span class="ond-kaart-tekst">De verklaringen zijn nodig om te kunnen ondertekenen. Het fotobeleid is optioneel.</span>

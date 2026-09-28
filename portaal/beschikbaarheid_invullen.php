@@ -6,36 +6,9 @@
  */
 require_once __DIR__ . '/../includes/functions.php';
 
-portaal_vereis_login();
-
-$email = $_SESSION['portaal_email'] ?? '';
-// Haal seizoen op met graceful fallback als de datum_werk-kolommen ontbreken (net als het BLK).
-try {
-    $stmt = db()->prepare("
-        SELECT s.*, p.voornaam, p.achternaam, p.email, sz.naam AS seizoen_naam,
-               sz.datum_werk_start, sz.datum_werk_eind, sz.id AS seizoen_id
-        FROM sollicitaties s
-        JOIN personen p ON p.id = s.persoon_id
-        LEFT JOIN seizoenen sz ON sz.id = s.seizoen_id
-        WHERE p.email = ?
-        ORDER BY s.id DESC LIMIT 1
-    ");
-    $stmt->execute([$email]);
-    $sol = $stmt->fetch();
-} catch (\PDOException $e) {
-    // Oude database zonder datum_werk-kolommen → zonder die kolommen ophalen
-    $stmt = db()->prepare("
-        SELECT s.*, p.voornaam, p.achternaam, p.email, sz.naam AS seizoen_naam,
-               NULL AS datum_werk_start, NULL AS datum_werk_eind, sz.id AS seizoen_id
-        FROM sollicitaties s
-        JOIN personen p ON p.id = s.persoon_id
-        LEFT JOIN seizoenen sz ON sz.id = s.seizoen_id
-        WHERE p.email = ?
-        ORDER BY s.id DESC LIMIT 1
-    ");
-    $stmt->execute([$email]);
-    $sol = $stmt->fetch();
-}
+// De sollicitatie waarmee iemand is ingelogd, niet "de nieuwste op dit e-mailadres": wie vaker
+// solliciteerde, zou anders de beschikbaarheid van een andere sollicitatie overschrijven.
+$sol = portaal_sollicitant_laden(portaal_vereis_login());
 if (!$sol) { redirect(APP_URL . '/portaal/'); }
 
 $sol_id = (int)$sol['id'];
