@@ -568,7 +568,7 @@ function meldingen_register(): array {
            'beide' als standaardkanaal: via WhatsApp komt de link sneller aan en staat
            hij in de app waar de sollicitant toch al is. */
         'portaal_code' => array_merge($std, [
-            'naam' => 'Portaal-inlogcode', 'categorie' => 'systeem', 'ontvanger' => 'direct',
+            'naam' => 'Inloglink portaal (met code)', 'categorie' => 'systeem', 'ontvanger' => 'direct',
             'kanaal_standaard' => 'beide', 'dedup_min' => 0, 'body_loggen' => false,
             'beschrijving' => 'De inloglink én de eenmalige code voor het portaal. De inhoud wordt nooit gelogd.',
             'vars' => ['otp_code', 'inloglink', 'inlogknop'],

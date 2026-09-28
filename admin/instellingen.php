@@ -674,7 +674,7 @@ require __DIR__ . '/layout_top.php';
             <?= h($_l) ?><?= $_vast ? ' (altijd, wettelijk document)' : '' ?>
           </label>
         <?php endforeach; ?>
-        <div class="ds-veld-hint">Besluit 2.91.0: de inschrijving als lid vraagt geen code — een verenigingsformulier, geen wettelijk document.</div>
+        <div class="ds-veld-hint">De inschrijving als lid vraagt nooit een code: het is een verenigingsformulier, geen wettelijk document.</div>
       </fieldset>
       <button type="submit" class="ds-btn ds-btn-primair">Opslaan</button>
     </form>
@@ -950,9 +950,9 @@ require __DIR__ . '/layout_top.php';
       <?php endif; ?>
 
       <div class="bh-instsectie">
-        <h3>Auto-invite op basis van leeftijd</h3>
+        <h3>Automatisch uitnodigen voor de selectiedag</h3>
         <p class="ds-veld-hint bh-mb">
-          Sollicitanten binnen de leeftijdsgrenzen worden automatisch of als suggestie weergegeven voor uitnodiging.
+          Sollicitanten binnen de leeftijdsgrenzen worden automatisch uitgenodigd, of je krijgt ze als voorstel te zien.
         </p>
         <div class="ds-veld">
           <label>Modus</label>
@@ -1053,7 +1053,7 @@ require __DIR__ . '/layout_top.php';
             <div class="ds-veld-hint">Maximaal één "zachte" herinnering per sollicitant per zoveel dagen.</div>
           </div>
           <div class="ds-veld">
-            <label>Anti-loop: zelfde bericht per dag</label>
+            <label>Hoe vaak hetzelfde bericht per dag</label>
             <input type="number" name="inst[melding.plafond_dag]" value="<?= instelling_int('melding.plafond_dag', 8) ?>" min="1" max="50">
             <div class="ds-veld-hint">Vaker hetzelfde automatische bericht naar dezelfde ontvanger in 24 uur wordt overgeslagen (zie het logboek).
               Andere berichtsoorten, bestuursmeldingen en wat je zelf in gang zet (fase omzetten, bulk, handmatig) tellen niet mee.</div>
@@ -1207,15 +1207,15 @@ require __DIR__ . '/layout_top.php';
   <div class="bh-kaartkop"><h2>Authentik SSO</h2></div>
   <div class="bh-kaartbody">
     <p class="bh-inst-intro bh-inst-intro-14">
-      Authentik is geconfigureerd via <code>includes/config.php</code> (OIDC_ISSUER, OIDC_CLIENT_ID).
-      Met een extra API-token kunnen <strong>terugkerende sollicitanten</strong> inloggen via Authentik
-      (in plaats van per-e-mail OTP code).
+      De koppeling met Authentik staat in <code>includes/config.php</code> (OIDC_ISSUER, OIDC_CLIENT_ID).
+      Met een extra API-token kunnen <strong>terugkerende sollicitanten</strong> met hun Paal 13-account
+      inloggen, in plaats van met een inloglink per e-mail.
     </p>
 
     <div class="info-blok bh-inst-status">
       <div class="bh-inst-status-kop">Status</div>
-      <div>OIDC config: <?= authentik_actief() ? '<span class="bh-tekst-ok">aanwezig</span>' : '<span class="bh-tekst-fout">ontbreekt</span>' ?></div>
-      <div>API-token: <?= instelling('authentik.api_token') ? '<span class="bh-tekst-ok">ingesteld</span>' : '<span class="bh-tekst-grijs">— geen (alleen OTP)</span>' ?></div>
+      <div>Koppeling in config.php: <?= authentik_actief() ? '<span class="bh-tekst-ok">aanwezig</span>' : '<span class="bh-tekst-fout">ontbreekt</span>' ?></div>
+      <div>API-token: <?= instelling('authentik.api_token') ? '<span class="bh-tekst-ok">ingesteld</span>' : '<span class="bh-tekst-grijs">— geen (alleen inloglink per e-mail)</span>' ?></div>
       <div>Issuer: <code><?= defined('OIDC_ISSUER') ? h(OIDC_ISSUER) : '—' ?></code></div>
     </div>
 
@@ -1227,11 +1227,11 @@ require __DIR__ . '/layout_top.php';
             'Maak in Authentik onder Directory › Tokens een long-lived token aan, met scope <code>core/users</code> (view). Verwijder het token om SSO voor het portaal uit te zetten; inloggen met een code blijft werken.') ?>
 
       <div class="ds-veld">
-        <label>Toegestane admin-groepen <?= bh_tip('Authentik group namen die admin-toegang krijgen. Andere gebruikers kunnen alleen via portaal inloggen.') ?></label>
+        <label>Groepen met toegang tot het beheer <?= bh_tip('Namen van groepen in Authentik die in het beheer mogen. Andere gebruikers kunnen alleen in het portaal inloggen.') ?></label>
         <input type="text" name="inst[authentik.admin_groepen]" value="<?= h(instelling('authentik.admin_groepen', AUTHENTIK_STANDAARD_GROEPEN)) ?>"
                placeholder="<?= h(AUTHENTIK_STANDAARD_GROEPEN) ?>">
         <div class="ds-veld-hint">
-          Comma-separated. Gebruikers met een van deze groepen krijgen toegang tot <code>/admin</code>.
+          Scheid meerdere groepen met een komma. Wie in een van deze groepen zit, komt in het beheer.
         </div>
       </div>
 
@@ -1241,10 +1241,10 @@ require __DIR__ . '/layout_top.php';
     <div class="bh-inst-werking">
       <div class="bh-inst-werking-kop">Werking</div>
       <ul class="bh-inst-werking-lijst">
-        <li>Sollicitant vult email in op <code>/portaal/</code></li>
-        <li>Bestaat dit email in Authentik? → SSO-login (geen OTP nodig)</li>
-        <li>Niet in Authentik? → Code per mail (fallback, blijft werken)</li>
-        <li>Admin-login via <code>/admin/</code> werkt onveranderd</li>
+        <li>De sollicitant vult het e-mailadres in op het portaal.</li>
+        <li>Staat dat adres in Authentik? Dan gaat het inloggen met het Paal 13-account.</li>
+        <li>Staat het er niet in? Dan volgt een inloglink per e-mail (dat blijft altijd werken).</li>
+        <li>Inloggen in het beheer verandert hier niet door.</li>
       </ul>
     </div>
   </div>
@@ -1732,7 +1732,7 @@ require __DIR__ . '/layout_top.php';
      ook de AVG-opschoning hierboven, dus die hoort hier. -->
     <!-- ── Cronjob ───────────────────────────────────────────── -->
     <div class="bh-cron">
-      <h3 class="bh-cron-kop">Cronjob (automatische taken)</h3>
+      <h3 class="bh-cron-kop">Automatische taken</h3>
       <?php
       $cron_token = instelling('cron.token');
       if (empty($cron_token)) {
