@@ -339,7 +339,7 @@ endif; ?>
        'recht' => ['sollicitanten', 'bewerken']],
       ['actie' => 'afgewezen', 'label' => 'Afwijzen', 'toon' => 'gevaar', 'mail' => false,
        'recht' => ['sollicitanten', 'bewerken']],
-      ['actie' => 'bericht_sturen', 'label' => 'Bericht', 'mail' => false, 'recht' => ['mailing', 'lezen']],
+      ['actie' => 'bericht_sturen', 'label' => 'Bericht', 'mail' => false, 'recht' => ['mailing', 'bewerken']],
       ['actie' => 'exporteren', 'label' => 'Exporteren', 'mail' => false],
   ];
   $bulk_voet = 'Elke actie vraagt bevestiging en meldt of er bericht uitgaat';

@@ -13,6 +13,7 @@ require_once __DIR__ . '/../includes/beheer/laden.php';
 // Geheimen die je moet kunnen kopiëren (API-sleutel, cron-token) en de links naar
 // Systeem & updates zijn er alleen voor wie Systeem mag bewerken.
 $mag_systeem = mag('systeem', 'bewerken');
+$mag_sjablonen = mag('mailing', 'bewerken');   // Sjablonen (mail_templates.php) eist bewerkrecht
 
 $db = db();
 // Triggers auto-setup van alle tabellen
@@ -489,12 +490,14 @@ require __DIR__ . '/layout_top.php';
         </a>
       <?php endforeach; ?>
     <?php endforeach; ?>
+    <?php if ($mag_sjablonen): ?>
     <div class="bh-instnav-extra" data-instgroep>
       <a class="bh-instnav-link" href="<?= APP_URL ?>/admin/mail_templates.php"
          data-instzoek="sjabloon template mail tekst bericht opmaak">
         <?= icoon('document', 16) ?>Sjablonen voor mails
       </a>
     </div>
+    <?php endif; ?>
   </nav>
 
   <script>
@@ -1005,7 +1008,7 @@ require __DIR__ . '/layout_top.php';
         <h3>Herinneringen</h3>
         <p class="ds-veld-hint bh-mb">
           Automatische herinneringen, gecontroleerd op wat er echt verstuurd is (niet dubbel). Inhoud en kanaal per type:
-          <a href="<?= APP_URL ?>/admin/mail_templates.php" class="bh-let-op">Sjablonen</a> en
+          <?php if ($mag_sjablonen): ?><a href="<?= APP_URL ?>/admin/mail_templates.php" class="bh-let-op">Sjablonen</a> en<?php endif; ?>
           <a href="<?= APP_URL ?>/admin/instellingen.php?tab=berichten" class="bh-let-op">Kanalen &amp; meldingen</a>.
           <?php if ($mag_systeem): ?>Proefdraaien zonder te versturen: <a href="<?= APP_URL ?>/admin/systeem.php#herinneringen" class="bh-let-op">Systeem › Herinneringen</a>.<?php endif; ?>
         </p>
@@ -2040,14 +2043,15 @@ require __DIR__ . '/layout_top.php';
         <p class="bh-inst-uitleg bh-inst-uitleg-12">
           <strong>E-mail</strong> = alleen e-mail. <strong>WhatsApp/SMS</strong> = kort bericht via het kanaal dat de sollicitant koos (standaard WhatsApp; SMS als WhatsApp niet kan);
           lukt dat niet, dan alsnog per e-mail. <strong>Beide</strong> = e-mail én kort bericht. <strong>Uit</strong> = niet versturen.
-          Ouders en het bestuur krijgen altijd e-mail. Teksten bewerken: <a href="<?= APP_URL ?>/admin/mail_templates.php" class="bh-let-op">Sjablonen</a>.
+          Ouders en het bestuur krijgen altijd e-mail.
+          <?php if ($mag_sjablonen): ?>Teksten bewerken: <a href="<?= APP_URL ?>/admin/mail_templates.php" class="bh-let-op">Sjablonen</a>.<?php endif; ?>
         </p>
         <?php if (function_exists('meldingen_per_categorie')): $kmodi = meldingen_kanaalmodi(); foreach (meldingen_per_categorie() as $ck => $typen): if ($ck === 'handmatig') continue; ?>
         <div class="bh-meldkanaal-groep"><?= h(meldingen_categorieen()[$ck] ?? $ck) ?></div>
         <table class="bh-meldkanaaltabel">
           <?php foreach ($typen as $type => $mdef): $mm = melding_kanaalmodus($type); ?>
           <tr>
-            <td><a href="<?= APP_URL ?>/admin/mail_templates.php?slug=<?= h($type) ?>" class="bh-meldkanaal-naam"><?= h($mdef['naam']) ?></a>
+            <td><?php if ($mag_sjablonen): ?><a href="<?= APP_URL ?>/admin/mail_templates.php?slug=<?= h($type) ?>" class="bh-meldkanaal-naam"><?= h($mdef['naam']) ?></a><?php else: ?><span class="bh-meldkanaal-naam"><?= h($mdef['naam']) ?></span><?php endif; ?>
               <div class="ds-veld-hint"><?= h($mdef['beschrijving'] ?? '') ?></div></td>
             <td class="bh-meldkanaal-keuze">
               <select name="notif[<?= h($type) ?>]">

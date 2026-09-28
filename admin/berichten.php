@@ -69,8 +69,9 @@ function berichten_inhoud(array $post, $db): array {
 $voorbeeld = null; $resultaat = null; $fout = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tab === 'nieuw') {
     csrf_check();
-    if (!$mag_bewerken) { http_response_code(403); die('Geen recht om berichten te versturen.'); }
     $actie  = $_POST['actie'] ?? '';
+    // Een voorbeeld verstuurt niets: dat mag met leesrecht, versturen en testen niet.
+    if (!$mag_bewerken && $actie !== 'voorbeeld') { http_response_code(403); die('Geen recht om berichten te versturen.'); }
     $modus  = isset($modi[$_POST['kanaalmodus'] ?? '']) ? $_POST['kanaalmodus'] : 'email';
     $ids    = array_values(array_unique(array_filter(array_map('intval', $_POST['ontvangers'] ?? []))));
     $bi     = berichten_inhoud($_POST, $db);
@@ -426,22 +427,25 @@ require __DIR__ . '/layout_top.php';
 
         <p id="sjabloonInfo" class="ds-veld-hint" hidden>
           De inhoud komt uit het gekozen sjabloon.
-          <a href="<?= APP_URL ?>/admin/mail_templates.php">Sjabloon bewerken</a>
+          <?php if ($mag_bewerken): ?><a href="<?= APP_URL ?>/admin/mail_templates.php">Sjabloon bewerken</a><?php endif; ?>
         </p>
       </section>
 
       <section class="ds-kaart bh-verzendbalk">
+        <?php if ($mag_bewerken): ?>
         <button type="submit" class="ds-btn ds-btn-primair" id="verzendKnop"
-                onclick="return verzendBevestig(event)" <?= $mag_bewerken ? '' : 'disabled' ?>>
+                onclick="return verzendBevestig(event)">
           Versturen naar <span id="verzendTeller">0</span>
         </button>
+        <?php endif; ?>
         <button type="submit" class="ds-btn ds-btn-secundair"
                 onclick="document.getElementById('actieVeld').value='voorbeeld'">Voorbeeld bekijken</button>
+        <?php if ($mag_bewerken): ?>
         <button type="submit" class="ds-btn ds-btn-zacht"
-                onclick="document.getElementById('actieVeld').value='test'" <?= $mag_bewerken ? '' : 'disabled' ?>>
+                onclick="document.getElementById('actieVeld').value='test'">
           Testmail naar mijzelf
         </button>
-        <?php if (!$mag_bewerken): ?>
+        <?php else: ?>
           <span class="bh-meta">Je mag berichten lezen, niet versturen.</span>
         <?php endif; ?>
       </section>

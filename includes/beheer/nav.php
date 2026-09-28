@@ -37,9 +37,11 @@ function bh_nav_groepen(array $tellers = [], bool $alles = false): array {
         ['groep' => 'Inzet & loon', 'positie' => 10, 'id' => 'beschikbaarheid', 'label' => 'Beschikbaarheid', 'url' => 'beschikbaarheid.php', 'icoon' => 'klok',         'module' => 'beschikbaarheid'],
         ['groep' => 'Inzet & loon', 'positie' => 40, 'id' => 'documenten',      'label' => 'Loondossiers',    'url' => 'documenten.php',      'icoon' => 'slot',         'module' => 'documenten'],
         ['groep' => 'Communicatie', 'positie' => 10, 'id' => 'berichten',       'label' => 'Berichten',       'url' => 'berichten.php',       'icoon' => 'mail',         'module' => 'mailing'],
-        ['groep' => 'Systeem',      'positie' => 10, 'id' => 'seizoen',         'label' => 'Seizoen',         'url' => 'seizoen.php',         'icoon' => 'strand',       'module' => 'seizoen'],
+        // Seizoen en Beheerders eisen 'bewerken' (het scherm doet vereis_recht(..., 'bewerken')):
+        // met alleen leesrecht zou het menu-item op een weigering uitkomen.
+        ['groep' => 'Systeem',      'positie' => 10, 'id' => 'seizoen',         'label' => 'Seizoen',         'url' => 'seizoen.php',         'icoon' => 'strand',       'module' => 'seizoen', 'actie' => 'bewerken'],
         ['groep' => 'Systeem',      'positie' => 20, 'id' => 'instellingen',    'label' => 'Instellingen',    'url' => 'instellingen.php',    'icoon' => 'instellingen', 'module' => 'instellingen'],
-        ['groep' => 'Systeem',      'positie' => 30, 'id' => 'beheerders',      'label' => 'Beheerders & rechten', 'url' => 'beheerders.php', 'icoon' => 'sleutel',      'module' => 'beheerders'],
+        ['groep' => 'Systeem',      'positie' => 30, 'id' => 'beheerders',      'label' => 'Beheerders & rechten', 'url' => 'beheerders.php', 'icoon' => 'sleutel',      'module' => 'beheerders', 'actie' => 'bewerken'],
         ['groep' => 'Systeem',      'positie' => 40, 'id' => 'logboek',         'label' => 'Logboek',         'url' => 'logboek.php',         'icoon' => 'auditlog',     'module' => 'logboek'],
     ];
     if (function_exists('modules_nav')) $items = array_merge($items, modules_nav());
@@ -48,12 +50,12 @@ function bh_nav_groepen(array $tellers = [], bool $alles = false): array {
     $groepen = array_fill_keys(['Selectie', 'Inzet & loon', 'Communicatie', 'Systeem'], []);
     foreach ($items as $i) {
         $groepen[$i['groep']][] = ['id' => $i['id'], 'label' => $i['label'], 'url' => $basis . $i['url'],
-                                   'icoon' => $i['icoon'], 'module' => $i['module']];
+                                   'icoon' => $i['icoon'], 'module' => $i['module'], 'actie' => $i['actie'] ?? 'lezen'];
     }
 
     $zichtbaar = function (array $item) use ($alles): bool {
         if ($alles || $item['module'] === null) return true;
-        return !function_exists('mag') || mag($item['module'], 'lezen');
+        return !function_exists('mag') || mag($item['module'], $item['actie'] ?? 'lezen');
     };
 
     $los = array_values(array_filter($los, $zichtbaar));

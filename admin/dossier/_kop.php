@@ -50,7 +50,7 @@ $_mag  = mag('sollicitanten', 'bewerken');
       <button type="submit" name="fase_actie" value="<?= h($_act['actie']) ?>"
               class="ds-btn ds-btn-primair"><?= h($_act['label']) ?></button>
     <?php endif; ?>
-    <?php if (mag('mailing', 'lezen')): ?>
+    <?php if (mag('mailing', 'bewerken')): ?>
       <a class="ds-btn ds-btn-secundair" href="<?= APP_URL ?>/admin/berichten.php?ids=<?= (int)$_s['id'] ?>">Bericht</a>
     <?php endif; ?>
     <?php if (!empty($_s['telefoon'])): ?>
