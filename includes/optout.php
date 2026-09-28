@@ -50,6 +50,21 @@ function optout_is_afgemeld(int $persoon_id): bool {
     } catch (\Exception $e) { return false; }
 }
 
+/**
+ * Wie hoort bij dit token, zonder iets te veranderen: ['voornaam', 'afgemeld' => bool] of null.
+ * Voor de GET van de afmeldpagina: mailscanners openen links vooraf.
+ */
+function optout_persoon(string $token): ?array {
+    optout_auto_setup();
+    if ($token === '') return null;
+    try {
+        $q = db()->prepare("SELECT voornaam, mailing_afgemeld FROM personen WHERE afmeld_token=?");
+        $q->execute([$token]);
+        $p = $q->fetch();
+        return $p ? ['voornaam' => (string)($p['voornaam'] ?? ''), 'afgemeld' => (int)$p['mailing_afgemeld'] === 1] : null;
+    } catch (\Exception $e) { return null; }
+}
+
 /** Meld iemand af op basis van het token. Retourneert de naam bij succes, anders null. */
 function optout_afmelden(string $token): ?string {
     optout_auto_setup();

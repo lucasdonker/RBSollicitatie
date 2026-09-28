@@ -326,6 +326,29 @@ function aanmeld_pagina_html(string $inhoud, array $o = []): string {
     return $uit;
 }
 
+/**
+ * Eén meldingskaart op een publieke tokenpagina (seintje, afmelden), optioneel met één knop die
+ * post. Een knop in plaats van een link: alleen bekijken mag niets veranderen (mailscanners).
+ * $tekst is HTML (de aanroeper escapet); titel en knoptekst worden hier geëscapet.
+ *
+ * $o: klasse, klein (HTML), knop => ['actie','tekst','klasse'?], post_naar + token (bij een knop)
+ */
+function aanmeld_kaart_html(string $titel, string $tekst, array $o = []): string {
+    $klasse = (string)($o['klasse'] ?? '');
+    $uit = '<div class="af-kaart af-melding af-zelfstandig' . ($klasse !== '' ? ' ' . $klasse : '') . '" id="aanmelden" role="status" tabindex="-1" data-formulier-succes>'
+         . '<h2 class="af-titel">' . h($titel) . '</h2><p>' . $tekst . '</p>';
+    if (!empty($o['knop'])) {
+        $k = $o['knop'];
+        $uit .= '<form method="post" action="' . h((string)$o['post_naar']) . '" class="af-form af-seintje-knop">'
+              . '<input type="hidden" name="t" value="' . h((string)($o['token'] ?? '')) . '">'
+              . '<input type="hidden" name="actie" value="' . h((string)$k['actie']) . '">'
+              . '<div class="af-acties"><button type="submit" class="' . h((string)($k['klasse'] ?? 'af-knop')) . '">' . h((string)$k['tekst']) . '</button></div>'
+              . '</form>';
+    }
+    if (!empty($o['klein'])) $uit .= '<p class="af-klein">' . $o['klein'] . '</p>';
+    return $uit . '</div>';
+}
+
 /** Bevestiging na een geslaagde aanmelding. */
 function aanmeld_succes_html(array $opties = []): string {
     return '<div class="af-kaart af-melding af-succes' . aanmeld_extra_class($opties) . '" id="aanmelden" role="status" tabindex="-1" data-formulier-succes>'

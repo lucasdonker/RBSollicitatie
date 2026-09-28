@@ -33,19 +33,9 @@ $aanmeld_url = APP_URL . '/aanmelden.php';
 $opnieuw = '<a href="' . h($aanmeld_url) . '">Vraag het opnieuw aan</a>';
 
 /** Eén meldingskaart, optioneel met een knop die post (bevestigen of intrekken). */
-$kaart = static function (string $titel, string $tekst, string $klasse = '', ?array $knop = null, string $klein = '') use ($token): string {
-    $uit = '<div class="af-kaart af-melding af-zelfstandig' . ($klasse !== '' ? ' ' . $klasse : '') . '" id="aanmelden" role="status" tabindex="-1" data-formulier-succes>'
-         . '<h2 class="af-titel">' . h($titel) . '</h2><p>' . $tekst . '</p>';
-    if ($knop) {
-        $uit .= '<form method="post" action="' . h(APP_URL . '/seintje.php') . '" class="af-form af-seintje-knop">'
-              . '<input type="hidden" name="t" value="' . h($token) . '">'
-              . '<input type="hidden" name="actie" value="' . h($knop['actie']) . '">'
-              . '<div class="af-acties"><button type="submit" class="' . h($knop['klasse'] ?? 'af-knop') . '">' . h($knop['tekst']) . '</button></div>'
-              . '</form>';
-    }
-    if ($klein !== '') $uit .= '<p class="af-klein">' . $klein . '</p>';
-    return $uit . '</div>';
-};
+$kaart = static fn(string $titel, string $tekst, string $klasse = '', ?array $knop = null, string $klein = ''): string =>
+    aanmeld_kaart_html($titel, $tekst, ['klasse' => $klasse, 'knop' => $knop, 'klein' => $klein,
+                                        'post_naar' => APP_URL . '/seintje.php', 'token' => $token]);
 
 switch ($s['stand']) {
     case 'te_vaak':
