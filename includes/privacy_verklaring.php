@@ -33,7 +33,8 @@ function privacy_verklaring_html(): string {
     $int = fn(string $k, int $d) => function_exists('instelling_int') ? instelling_int($k, $d) : $d;
 
     $org      = $in('site.naam', 'Reddingsbrigade Paal 13');
-    $contact  = $in('mail.bestuur_email', 'bestuur@paal13.com');
+    // Eén adres voor sollicitanten en ouders, ook voor privacyvragen (besluit Lucas, 2.129.0).
+    $contact  = function_exists('portaal_contact_email') ? portaal_contact_email() : $in('mail.contact_email', 'sollicitatie@paal13.com');
     $weken    = $int('bewaar.afgewezen_weken', 4);
     $seintje  = $int('bewaar.seintje_mnd', 12);
     $onvolt   = $int('bewaar.onvoltooid_mnd', 3);

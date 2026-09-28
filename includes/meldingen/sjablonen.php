@@ -112,6 +112,13 @@ function sjablonen_migreer_slugs($db): void {
         $welkom = 'We zijn blij dat je aan boord komt voor {{seizoen_naam}}.</p>';
         $db->prepare("UPDATE mail_templates SET body_html=REPLACE(body_html,?,?) WHERE slug='aangenomen' AND body_html LIKE ? AND body_html NOT LIKE '%{{gesprek_bericht}}%'")
            ->execute([$welkom, $welkom . "\n<p>{{gesprek_bericht}}</p>", '%' . $welkom . '%']);
+        // 2.129.0 (besluit Lucas): sollicitanten en ouders bereiken ons via het contactadres
+        // (sollicitatie@paal13.com), niet het bestuursadres. Alleen de mails aan hen.
+        $aan_sollicitant = ['aanmelding_bevestiging', 'aangenomen', 'afgewezen', 'tw_niet_gekomen', 'tw_afgewezen',
+                            'ondertekening_verzoek_zelf', 'intrekverzoek_niet_doorgevoerd', 'deelname_afgemeld',
+                            'herinnering_selectie_aanmelden', 'ondertekening_verzoek_ouder', 'lidmaatschap_verzoek_ouder'];
+        $db->exec("UPDATE mail_templates SET body_html=REPLACE(body_html,'{{bestuur_email}}','{{contact_email}}')
+                   WHERE body_html LIKE '%{{bestuur_email}}%' AND slug IN ('" . implode("','", $aan_sollicitant) . "')");
     } catch (\Throwable $e) {}
 }
 
@@ -197,6 +204,8 @@ function melding_vars(int $sol_id, array $extra = []): array {
     $vars['tw_eindtijd']          = !empty($seizoen['tw_eindtijd']) ? substr($seizoen['tw_eindtijd'], 0, 5) : '';
     $vars['bestuur_email']        = function_exists('bestuur_email') ? bestuur_email() : ($vars['bestuur_email'] ?? '');
     $vars['bestuur.email']        = $vars['bestuur_email'];
+    // Het adres waar sollicitanten en ouders ons bereiken (besluit: altijd sollicitatie@paal13.com, instelbaar).
+    $vars['contact_email']        = function_exists('portaal_contact_email') ? portaal_contact_email() : $vars['bestuur_email'];
     $vars['ouder_naam']           = $sol['ouder_naam'] ?? '';
     if (!empty($sol['persoon_id']) && function_exists('optout_link')) {
         try { $vars['afmeld_url'] = optout_link((int)$sol['persoon_id']); } catch (\Throwable $e) { $vars['afmeld_url'] = ''; }

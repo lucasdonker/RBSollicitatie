@@ -61,7 +61,7 @@ function meldingen_register(): array {
             'seed' => [
                 'onderwerp' => 'Je aanmelding voor {{seizoen_naam}} is ontvangen',
                 'hero_titel' => 'Aanmelding ontvangen', 'hero_subtitel' => 'Welkom, {{voornaam}}',
-                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Bedankt voor je aanmelding bij <strong>Reddingsbrigade Paal 13</strong> voor {{seizoen_naam}}!</p>\n<p>We hebben je aanmelding ontvangen en beoordelen deze. Word je uitgenodigd voor de selectiedag, dan krijg je bericht van ons.</p>\n<p>In de tussentijd kun je je gegevens bekijken in het portaal:</p>\n[knop href=\"$portaal\"]Naar het portaal[/knop]\n<p>Vragen? Mail naar <a href=\"mailto:{{bestuur_email}}\">{{bestuur_email}}</a>.</p>",
+                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Bedankt voor je aanmelding bij <strong>Reddingsbrigade Paal 13</strong> voor {{seizoen_naam}}!</p>\n<p>We hebben je aanmelding ontvangen en beoordelen deze. Word je uitgenodigd voor de selectiedag, dan krijg je bericht van ons.</p>\n<p>In de tussentijd kun je je gegevens bekijken in het portaal:</p>\n[knop href=\"$portaal\"]Naar het portaal[/knop]\n<p>Vragen? Mail naar <a href=\"mailto:{{contact_email}}\">{{contact_email}}</a>.</p>",
                 'tekst_kort' => "Hoi {{voornaam}}, we hebben je aanmelding bij Paal 13 ontvangen. Je hoort van ons over de selectiedag. Volg je status: $portaal",
                 'samenvatting' => 'Welkom. We hebben je aanmelding binnen.',
             ],
@@ -106,7 +106,7 @@ function meldingen_register(): array {
             'seed' => [
                 'onderwerp' => 'Welkom bij Paal 13, {{voornaam}}!',
                 'hero_titel' => 'Welkom bij Paal 13!', 'hero_subtitel' => 'Aangenomen voor {{seizoen_naam}}',
-                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p><strong>Van harte welkom bij Reddingsbrigade Paal 13!</strong> We zijn blij dat je aan boord komt voor {{seizoen_naam}}.</p>\n<p>{{gesprek_bericht}}</p>\n<h3>Wat gebeurt er nu?</h3>\n<p>In het portaal staan een paar taken die je nog afrondt:</p>\n<ul>\n  <li>Bevestig je lidmaatschap</li>\n  <li>Vul het loonheffingsformulier in</li>\n  <li>Neem de huisregels door</li>\n  <li>Wacht op de uitnodiging voor je Paal 13-account</li>\n</ul>\n[knop href=\"$portaal\"]Open het portaal[/knop]\n<p>Vragen? Mail naar <a href=\"mailto:{{bestuur_email}}\">{{bestuur_email}}</a>.</p>\n<p>Tot snel op het strand!<br><strong>Team Sollicitaties</strong></p>",
+                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p><strong>Van harte welkom bij Reddingsbrigade Paal 13!</strong> We zijn blij dat je aan boord komt voor {{seizoen_naam}}.</p>\n<p>{{gesprek_bericht}}</p>\n<h3>Wat gebeurt er nu?</h3>\n<p>In het portaal staan een paar taken die je nog afrondt:</p>\n<ul>\n  <li>Bevestig je lidmaatschap</li>\n  <li>Vul het loonheffingsformulier in</li>\n  <li>Neem de huisregels door</li>\n  <li>Wacht op de uitnodiging voor je Paal 13-account</li>\n</ul>\n[knop href=\"$portaal\"]Open het portaal[/knop]\n<p>Vragen? Mail naar <a href=\"mailto:{{contact_email}}\">{{contact_email}}</a>.</p>\n<p>Tot snel op het strand!<br><strong>Team Sollicitaties</strong></p>",
                 'tekst_kort' => "Hoi {{voornaam}}, welkom bij Paal 13! Je bent aangenomen. In je portaal staan een paar taken klaar: $portaal",
                 'samenvatting' => 'Je bent aangenomen. Welkom bij Paal 13!',
             ],
@@ -119,7 +119,7 @@ function meldingen_register(): array {
             'seed' => [
                 'onderwerp' => 'Terugkoppeling selectieprocedure {{seizoen_naam}}',
                 'hero_titel' => 'Terugkoppeling', 'hero_subtitel' => '',
-                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Na zorgvuldige beoordeling hebben we helaas besloten je niet verder mee te nemen in de selectieprocedure voor {{seizoen_naam}}.</p>\n<p>We hebben dit jaar veel aanmeldingen ontvangen en de keuze was moeilijk. Bedankt voor je enthousiasme en de moeite die je hebt gedaan.</p>\n<p>Vragen over onze beslissing? Neem gerust contact op via <a href=\"mailto:{{bestuur_email}}\">{{bestuur_email}}</a>.</p>\n<p>We hopen je misschien in een volgend seizoen weer te zien.</p>",
+                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Na zorgvuldige beoordeling hebben we helaas besloten je niet verder mee te nemen in de selectieprocedure voor {{seizoen_naam}}.</p>\n<p>We hebben dit jaar veel aanmeldingen ontvangen en de keuze was moeilijk. Bedankt voor je enthousiasme en de moeite die je hebt gedaan.</p>\n<p>Vragen over onze beslissing? Neem gerust contact op via <a href=\"mailto:{{contact_email}}\">{{contact_email}}</a>.</p>\n<p>We hopen je misschien in een volgend seizoen weer te zien.</p>",
                 'tekst_kort' => '',
                 'samenvatting' => 'Terugkoppeling over je sollicitatie.',
             ],
@@ -147,7 +147,7 @@ function meldingen_register(): array {
             'seed' => [
                 'onderwerp' => 'Je sollicitatie voor {{seizoen_naam}} — Paal 13',
                 'hero_titel' => 'Terugkoppeling', 'hero_subtitel' => '{{seizoen_naam}}',
-                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Hierbij laten we je weten hoe het verder gaat met je sollicitatie voor {{seizoen_naam}}.</p>\n<p>{{gesprek_bericht}}</p>\n<p>Vragen? Mail gerust naar <a href=\"mailto:{{bestuur_email}}\">{{bestuur_email}}</a>.</p>\n<p>Met vriendelijke groet,<br>Het bestuur van Paal 13</p>",
+                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Hierbij laten we je weten hoe het verder gaat met je sollicitatie voor {{seizoen_naam}}.</p>\n<p>{{gesprek_bericht}}</p>\n<p>Vragen? Mail gerust naar <a href=\"mailto:{{contact_email}}\">{{contact_email}}</a>.</p>\n<p>Met vriendelijke groet,<br>Het bestuur van Paal 13</p>",
                 'tekst_kort' => "Hoi {{voornaam}}, je was niet op het trainingsweekend van Paal 13. Daarom gaan we dit seizoen niet met je verder. Meer uitleg staat in je mail en in je portaal: $portaal",
                 'samenvatting' => 'Je sollicitatie loopt dit seizoen niet verder.',
             ],
@@ -211,7 +211,7 @@ function meldingen_register(): array {
             'seed' => [
                 'onderwerp' => 'Onderteken: {{document_naam}} — Paal 13',
                 'hero_titel' => 'Handtekening gevraagd', 'hero_subtitel' => '{{document_naam}}',
-                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Voor je sollicitatie bij Reddingsbrigade Paal 13 vragen we je <strong>{{document_naam}}</strong> digitaal te ondertekenen. Dit duurt ongeveer 3 minuten.</p>\n[knop href=\"{{onderteken_url}}\"]Formulier openen[/knop]\n<p>Vragen? Mail naar <a href=\"mailto:{{bestuur_email}}\">{{bestuur_email}}</a>.</p>",
+                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Voor je sollicitatie bij Reddingsbrigade Paal 13 vragen we je <strong>{{document_naam}}</strong> digitaal te ondertekenen. Dit duurt ongeveer 3 minuten.</p>\n[knop href=\"{{onderteken_url}}\"]Formulier openen[/knop]\n<p>Vragen? Mail naar <a href=\"mailto:{{contact_email}}\">{{contact_email}}</a>.</p>",
                 'tekst_kort' => "Hoi {{voornaam}}, wil je {{document_naam}} digitaal ondertekenen voor Paal 13? Dat kan hier: {{onderteken_url}}",
                 'samenvatting' => 'Onderteken {{document_naam}}.',
             ],
@@ -277,7 +277,7 @@ function meldingen_register(): array {
             'seed' => [
                 'onderwerp' => 'Je sollicitatie loopt door — Paal 13',
                 'hero_titel' => 'Je sollicitatie loopt door', 'hero_subtitel' => '{{seizoen_naam}}',
-                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Je vroeg ons om je sollicitatie in te trekken. We hebben dat met je besproken en zoals afgesproken loopt je sollicitatie gewoon door.</p>\n<p>In je portaal zie je wat er nog voor je openstaat.</p>\n[knop href=\"$portaal\"]Naar mijn portaal[/knop]\n<p>Wil je toch stoppen? Laat het ons weten via <a href=\"mailto:{{bestuur_email}}\">{{bestuur_email}}</a>.</p>",
+                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Je vroeg ons om je sollicitatie in te trekken. We hebben dat met je besproken en zoals afgesproken loopt je sollicitatie gewoon door.</p>\n<p>In je portaal zie je wat er nog voor je openstaat.</p>\n[knop href=\"$portaal\"]Naar mijn portaal[/knop]\n<p>Wil je toch stoppen? Laat het ons weten via <a href=\"mailto:{{contact_email}}\">{{contact_email}}</a>.</p>",
                 'tekst_kort' => "Hoi {{voornaam}}, zoals besproken loopt je sollicitatie bij Paal 13 gewoon door. Kijk in je portaal wat er nog openstaat: $portaal",
                 'samenvatting' => 'Zoals besproken loopt je sollicitatie door.',
             ],
@@ -289,7 +289,7 @@ function meldingen_register(): array {
             'seed' => [
                 'onderwerp' => 'Je bent afgemeld voor de {{evenement}} — Paal 13',
                 'hero_titel' => 'Afgemeld', 'hero_subtitel' => '{{evenement}}',
-                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Je gaf door dat je niet kunt komen op de {{evenement}}. We hebben je afmelding besproken en je afgemeld. Je sollicitatie voor {{seizoen_naam}} stopt daarmee.</p>\n<p>Jammer dat het dit keer niet lukt. Volgend seizoen ben je van harte welkom om je opnieuw aan te melden.</p>\n<p>In je portaal lees je wat er met je gegevens gebeurt.</p>\n[knop href=\"$portaal\"]Naar mijn portaal[/knop]\n<p>Klopt dit niet? Laat het ons weten via <a href=\"mailto:{{bestuur_email}}\">{{bestuur_email}}</a>.</p>",
+                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Je gaf door dat je niet kunt komen op de {{evenement}}. We hebben je afmelding besproken en je afgemeld. Je sollicitatie voor {{seizoen_naam}} stopt daarmee.</p>\n<p>Jammer dat het dit keer niet lukt. Volgend seizoen ben je van harte welkom om je opnieuw aan te melden.</p>\n<p>In je portaal lees je wat er met je gegevens gebeurt.</p>\n[knop href=\"$portaal\"]Naar mijn portaal[/knop]\n<p>Klopt dit niet? Laat het ons weten via <a href=\"mailto:{{contact_email}}\">{{contact_email}}</a>.</p>",
                 'tekst_kort' => "Hoi {{voornaam}}, je bent afgemeld voor de {{evenement}} van Paal 13; je sollicitatie stopt daarmee. Klopt dit niet? Laat het ons weten. $portaal",
                 'samenvatting' => 'Je bent afgemeld voor de {{evenement}}; je sollicitatie stopt.',
             ],
@@ -362,7 +362,7 @@ function meldingen_register(): array {
             'seed' => [
                 'onderwerp' => 'Bevestig je deelname aan de selectiedag — Paal 13',
                 'hero_titel' => 'Kom je ook?', 'hero_subtitel' => 'Selectiedag {{selectiedag_datum}}', 'hero_kleur' => '#D43D00',
-                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>De selectiedag op <strong>{{selectiedag_datum}}</strong> komt eraan, maar je hebt je deelname nog niet bevestigd. Dat doe je door het \"Beter leren kennen\"-formulier in je portaal in te vullen.</p>\n[knop href=\"$portaal\"]Formulier invullen[/knop]\n<p>Kun je niet? Laat het ons even weten via <a href=\"mailto:{{bestuur_email}}\">{{bestuur_email}}</a>.</p>",
+                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>De selectiedag op <strong>{{selectiedag_datum}}</strong> komt eraan, maar je hebt je deelname nog niet bevestigd. Dat doe je door het \"Beter leren kennen\"-formulier in je portaal in te vullen.</p>\n[knop href=\"$portaal\"]Formulier invullen[/knop]\n<p>Kun je niet? Laat het ons even weten via <a href=\"mailto:{{contact_email}}\">{{contact_email}}</a>.</p>",
                 'tekst_kort' => "Hoi {{voornaam}}, de selectiedag op {{selectiedag_datum}} komt eraan. Bevestig je deelname via het formulier in je portaal: $portaal",
                 'samenvatting' => 'Je hebt je deelname aan de selectiedag nog niet bevestigd.',
             ],

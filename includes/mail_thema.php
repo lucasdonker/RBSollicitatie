@@ -50,7 +50,9 @@ function mail_thema(): array {
         'hero_badge'    => '',          // bijv. 'Selectie 2026' (leeg = geen badge)
 
         // ── Footer ────────────────────────────────────────────
-        'footer_email'  => function_exists('bestuur_email') ? bestuur_email() : (defined('MAIL_BESTUUR') ? MAIL_BESTUUR : ''),
+        // Het contactadres voor sollicitanten en ouders (besluit: sollicitatie@paal13.com).
+        'footer_email'  => function_exists('portaal_contact_email') ? portaal_contact_email()
+                           : (function_exists('bestuur_email') ? bestuur_email() : (defined('MAIL_BESTUUR') ? MAIL_BESTUUR : '')),
         'footer_website'=> 'paal13.com',
         'footer_website_url' => 'https://paal13.com',
     ];

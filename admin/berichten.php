@@ -538,7 +538,7 @@ require __DIR__ . '/layout_top.php';
       <section class="ds-kaart ds-kaart-p">
         <div class="bh-kaartkop"><h2>Variabelen</h2></div>
         <div class="bh-varchips">
-          <?php foreach (['voornaam', 'achternaam', 'volledige_naam', 'seizoen_naam', 'selectiedag_datum', 'selectiedag_locatie', 'tw_datum_start', 'tw_locatie', 'portaal_url', 'aanmeld_url', 'bestuur_email'] as $v): ?>
+          <?php foreach (['voornaam', 'achternaam', 'volledige_naam', 'seizoen_naam', 'selectiedag_datum', 'selectiedag_locatie', 'tw_datum_start', 'tw_locatie', 'portaal_url', 'aanmeld_url', 'contact_email', 'bestuur_email'] as $v): ?>
           <button type="button" class="bh-varchip" onclick="P13Editor.insert('bericht','{{<?= h($v) ?>}}')">{{<?= h($v) ?>}}</button>
           <?php endforeach; ?>
         </div>
