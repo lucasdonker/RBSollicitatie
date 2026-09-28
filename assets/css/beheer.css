@@ -3208,6 +3208,15 @@ hr.bh-blk-scheiding { border: none; border-top: 1px solid var(--rand); margin: 1
 .bh-ssofout-knoppen { display: flex; flex-direction: column; gap: 8px; }
 .bh-ssofout-knoppen .ds-btn { justify-content: center; }
 /* Tooltip ([data-tip]) uit admin/layout_bottom.php: alleen positie en zichtbaarheid zet het script. */
+/* Info-knopje bij een veld (bh_tip()). Klein in beeld, maar een raakvlak van 24px (WCAG 2.5.8). */
+.bh-tip {
+  display: inline-flex; align-items: center; justify-content: center; vertical-align: middle;
+  min-width: 24px; min-height: 24px; margin-left: 2px; padding: 0; border: 0; border-radius: 50%;
+  background: none; color: var(--ink-soft); cursor: help;
+}
+.bh-tip:hover, .bh-tip:focus-visible { color: var(--navy); }
+.bh-tip:focus-visible { outline: 2px solid var(--navy); outline-offset: 1px; }
+
 .bh-tooltip {
   position: absolute; background: var(--navy); color: var(--op-vol); padding: 8px 12px; border-radius: 6px;
   font-size: 12px; line-height: 1.5; max-width: 260px; z-index: 10000; pointer-events: none;

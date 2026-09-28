@@ -117,6 +117,17 @@ function bh_avatar(array $persoon, int $px = 30, array $opt = []): string {
          . ' aria-label="' . h($label) . '">' . $img . '</button>';
 }
 
+/**
+ * Uitleg bij een veld: een info-knopje dat de tekst toont bij aanwijzen, tikken of toetsenbordfocus.
+ * Een knop en geen losse span: met Tab bereikbaar, en een schermlezer leest de uitleg voor
+ * (aria-label). Het tonen doet layout_bottom.php ([data-tip]).
+ */
+function bh_tip(string $tekst): string {
+    if (trim($tekst) === '') return '';
+    return '<button type="button" class="bh-tip" data-tip="' . h($tekst) . '" aria-label="Uitleg: ' . h($tekst) . '">'
+         . icoon('info', 14) . '</button>';
+}
+
 /** Chip voor een los kenmerk: diploma, competentie, "terugkerend". */
 function bh_chip(string $tekst, string $kleur = 'grijs'): string {
     if (trim($tekst) === '') return '';

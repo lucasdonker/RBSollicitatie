@@ -742,7 +742,8 @@ window.sluitSidebar = function() {
    met bijschrift, een sluitknop en focus die terugkeert naar de knop. */
 
 /* ── Tooltip systeem ──────────────────────────────────────────
-   Gebruik: <span class="tip" data-tip="Uitleg hier">ℹ</span> */
+   Gebruik: bh_tip('Uitleg hier') (een knop), of data-tip op een bestaand element.
+   Ook bij toetsenbordfocus; Esc sluit. */
 document.addEventListener('DOMContentLoaded', () => {
   const tooltipEl = document.createElement('div');
   tooltipEl.id = 'p13-tooltip';
@@ -780,6 +781,15 @@ document.addEventListener('DOMContentLoaded', () => {
       else { huidige = t; toon(t); }
     }
   });
+  // Toetsenbord: tonen bij focus, weg bij verlaten of Esc (WCAG 1.4.13).
+  document.body.addEventListener('focusin', e => {
+    const t = e.target.closest('[data-tip]');
+    if (t) { huidige = t; toon(t); }
+  });
+  document.body.addEventListener('focusout', e => {
+    if (e.target.closest('[data-tip]')) { verberg(); huidige = null; }
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { verberg(); huidige = null; } });
 });
 
 /* ── Flash berichten ────────────────────────────────────────── */

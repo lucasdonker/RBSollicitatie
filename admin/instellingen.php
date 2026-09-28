@@ -554,13 +554,13 @@ require __DIR__ . '/layout_top.php';
         </div>
         <div class="bh-veldrij">
           <div class="ds-veld">
-            <label>Logo <span class="tip" data-tip="Upload een bestand of vul een URL in. Wordt links bovenin getoond in admin én portaal. PNG, JPG of WebP; geen SVG, want daar kan script in zitten."></span></label>
+            <label>Logo <?= bh_tip('Upload een bestand of vul een URL in. Wordt links bovenin getoond in admin én portaal. PNG, JPG of WebP; geen SVG, want daar kan script in zitten.') ?></label>
             <input type="file" name="logo_upload" accept="image/png,image/jpeg,image/webp">
             <div class="ds-veld-hint">Of vul een pad/URL in:</div>
             <input type="text" name="inst[site.logo_url]" value="<?= h(instelling('site.logo_url')) ?>" placeholder="/uploads/branding/logo.png" class="bh-inst-urlveld">
           </div>
           <div class="ds-veld">
-            <label>Favicon <span class="tip" data-tip="Pictogram in de browsertab. PNG of ICO."></span></label>
+            <label>Favicon <?= bh_tip('Pictogram in de browsertab. PNG of ICO.') ?></label>
             <input type="file" name="favicon_upload" accept="image/png,image/x-icon,image/vnd.microsoft.icon">
             <div class="ds-veld-hint">Of vul een pad/URL in:</div>
             <input type="text" name="inst[site.favicon_url]" value="<?= h(instelling('site.favicon_url')) ?>" placeholder="/uploads/branding/favicon.png" class="bh-inst-urlveld">
@@ -577,7 +577,7 @@ require __DIR__ . '/layout_top.php';
       <div class="bh-instsectie">
         <h3>Portaal</h3>
         <div class="ds-veld">
-          <label>Welkomsttekst op portaal login <span class="tip" data-tip="Tekst die sollicitanten zien voordat ze inloggen via OTP-code."></span></label>
+          <label>Welkomsttekst op portaal login <?= bh_tip('Tekst die sollicitanten zien op het inlogscherm van het portaal, voordat ze inloggen.') ?></label>
           <textarea name="inst[portaal.welkomst_tekst]" rows="3"><?= h(instelling('portaal.welkomst_tekst','Welkom op het sollicitantenportaal van Paal 13.')) ?></textarea>
         </div>
       </div>
@@ -589,7 +589,7 @@ require __DIR__ . '/layout_top.php';
           $_hr_rij = ($_hr_id > 0 && function_exists('bijlage_rij')) ? bijlage_rij($_hr_id) : null;
         ?>
         <div class="ds-veld">
-          <label>Huisregels (pdf) <span class="tip" data-tip="Aangenomen strandwachten krijgen de taak 'Huisregels lezen' met een link naar dit document. Zonder document blijft de taak staan als 'volgt binnenkort'."></span></label>
+          <label>Huisregels (pdf) <?= bh_tip('Aangenomen strandwachten krijgen de taak \'Huisregels lezen\' met een link naar dit document. Zonder document blijft de taak staan als \'volgt binnenkort\'.') ?></label>
           <?php if ($_hr_rij): ?>
             <div class="bh-inst-huisregels">
               <span class="ds-badge-fase ds-fase-groen">In gebruik</span>
@@ -813,19 +813,19 @@ require __DIR__ . '/layout_top.php';
         <input type="hidden" name="jaar" value="<?= $loon_jaar ?>">
         <div class="bh-veldrij">
           <div class="ds-veld">
-            <label for="lj-vt">Vakantietoeslag % <span class="tip" data-tip="Wordt automatisch opgeteld bij de uurlonen in de loonplanning. Standaard 8%."></span></label>
+            <label for="lj-vt">Vakantietoeslag % <?= bh_tip('Wordt automatisch opgeteld bij de uurlonen in de loonplanning. Standaard 8%.') ?></label>
             <input type="number" id="lj-vt" name="lj[vt_percentage]" value="<?= h((string)$loon_t['vt_percentage']) ?>" min="0" max="50" step="0.01">
             <div class="ds-veld-hint">Standaard 8% (wettelijk minimum)</div>
           </div>
           <div class="ds-veld">
-            <label for="lj-uren">Werkuren per dag <span class="tip" data-tip="Gebruikt voor dagloon-berekening: uurloon × dit getal × functie-factor × VT."></span></label>
+            <label for="lj-uren">Werkuren per dag <?= bh_tip('Gebruikt voor dagloon-berekening: uurloon × dit getal × functie-factor × VT.') ?></label>
             <input type="number" id="lj-uren" name="lj[uren_per_dag]" value="<?= h((string)$loon_t['uren_per_dag']) ?>" min="1" max="12" step="0.25">
             <div class="ds-veld-hint">Standaard 8 uur (40u/week ÷ 5)</div>
           </div>
         </div>
         <div class="bh-veldrij">
           <div class="ds-veld">
-            <label for="lj-pc-jun">Vast weekbedrag postcommandant (juni) <span class="tip" data-tip="Postcommandant heeft vast bedrag per week, niet gerelateerd aan leeftijd."></span></label>
+            <label for="lj-pc-jun">Vast weekbedrag postcommandant (juni) <?= bh_tip('Postcommandant heeft vast bedrag per week, niet gerelateerd aan leeftijd.') ?></label>
             <div class="bh-inst-euro"><span aria-hidden="true">€</span>
             <input type="number" id="lj-pc-jun" name="lj[pc_vast_juni]" value="<?= h((string)$loon_t['pc_vast_juni']) ?>" min="0" max="99999" step="0.01"></div>
           </div>
@@ -1224,7 +1224,7 @@ require __DIR__ . '/layout_top.php';
             'Maak in Authentik onder Directory › Tokens een long-lived token aan, met scope <code>core/users</code> (view). Verwijder het token om SSO voor het portaal uit te zetten; inloggen met een code blijft werken.') ?>
 
       <div class="ds-veld">
-        <label>Toegestane admin-groepen <span class="tip" data-tip="Authentik group namen die admin-toegang krijgen. Andere gebruikers kunnen alleen via portaal inloggen."></span></label>
+        <label>Toegestane admin-groepen <?= bh_tip('Authentik group namen die admin-toegang krijgen. Andere gebruikers kunnen alleen via portaal inloggen.') ?></label>
         <input type="text" name="inst[authentik.admin_groepen]" value="<?= h(instelling('authentik.admin_groepen', AUTHENTIK_STANDAARD_GROEPEN)) ?>"
                placeholder="<?= h(AUTHENTIK_STANDAARD_GROEPEN) ?>">
         <div class="ds-veld-hint">
@@ -1540,11 +1540,12 @@ require __DIR__ . '/layout_top.php';
   <div class="bh-kaartkop"><h2>Bewaartermijnen</h2></div>
   <div class="bh-kaartbody">
     <div class="ds-melding ds-melding-info bh-inst-bewaaruitleg">
-      <strong>Automatisch opschonen.</strong> Volgens de AVG mag je persoonsgegevens niet langer bewaren dan nodig.
+      <?= icoon('info', 16) ?>
+      <span><strong>Automatisch opschonen.</strong> Volgens de AVG mag je persoonsgegevens niet langer bewaren dan nodig.
       Hieronder stel je in na hoeveel tijd welke gegevens worden opgeschoond. Dat geldt ook voor wie is aangenomen:
-      het dossier van een oud-lifeguard wordt leeggemaakt na de termijn na het laatste seizoen. Loondocumenten zijn
-      de uitzondering; die vernietigt de penningmeester met de hand. Zet een termijn op <code>0</code> om die
-      categorie niet automatisch op te schonen.
+      het dossier van een oud-strandwacht wordt leeggemaakt na de termijn na het laatste seizoen. Loondocumenten zijn
+      de uitzondering; die vernietigt de penningmeester met de hand. Een termijn op <strong>0</strong> betekent: niet
+      automatisch opschonen. Behalve bij <strong>Gezondheidsgegevens</strong>: daar betekent 0 juist direct na het seizoen.</span>
     </div>
 
     <form method="POST">
@@ -1563,36 +1564,36 @@ require __DIR__ . '/layout_top.php';
       <h3>Termijnen (in maanden, tenzij anders vermeld)</h3>
       <div class="bh-veldrij">
         <div class="ds-veld">
-          <label>Afgewezen sollicitanten, in weken <span class="tip" data-tip="Gerekend vanaf de afwijzing. Daarna worden persoonsgegevens, formulier, beschikbaarheid, notities en documenten gewist; de geanonimiseerde statistiek blijft. De Autoriteit Persoonsgegevens gaat uit van 4 weken."></span></label>
+          <label>Afgewezen sollicitanten, in weken <?= bh_tip('Gerekend vanaf de afwijzing. Daarna worden persoonsgegevens, formulier, beschikbaarheid, notities en documenten gewist; de geanonimiseerde statistiek blijft. De Autoriteit Persoonsgegevens gaat uit van 4 weken.') ?></label>
           <input type="number" name="inst[bewaar.afgewezen_weken]" value="<?= instelling_int('bewaar.afgewezen_weken',4) ?>" min="0" max="52">
           <div class="ds-veld-hint">Daarna anonimiseren. Wie om een seintje vroeg, blijft tot dat verloopt.</div>
         </div>
         <div class="ds-veld">
-          <label>Seintje bij de volgende werving <span class="tip" data-tip="Zo lang geldt de toestemming die een afgewezen sollicitant gaf via &quot;Stuur me een seintje&quot;. Daarna vervalt die en worden de gegevens geanonimiseerd. De tekst in de mail en het portaal zegt &quot;maximaal een jaar&quot;: ga daar niet boven."></span></label>
+          <label>Seintje bij de volgende werving <?= bh_tip('Zo lang geldt de toestemming die een afgewezen sollicitant gaf via "Stuur me een seintje". Daarna vervalt die en worden de gegevens geanonimiseerd. De tekst in de mail en het portaal zegt "maximaal een jaar": ga daar niet boven.') ?></label>
           <input type="number" name="inst[bewaar.seintje_mnd]" value="<?= instelling_int('bewaar.seintje_mnd',12) ?>" min="1" max="12">
           <div class="ds-veld-hint">Maximaal 12, want dat beloven we</div>
         </div>
       </div>
       <div class="bh-veldrij">
         <div class="ds-veld">
-          <label>Oud-lifeguards, in jaren <span class="tip" data-tip="Gerekend vanaf het einde van het laatste seizoen waarin iemand werkte. Daarna worden formulier, beschikbaarheid, notities, foto en documenten gewist. Loonheffing en kopie ID blijven staan tot de penningmeester ze op Loondossiers vernietigt; pas daarna wordt ook de naam geanonimiseerd. De AP gaat voor een personeelsdossier uit van 2 jaar."></span></label>
+          <label>Oud-lifeguards, in jaren <?= bh_tip('Gerekend vanaf het einde van het laatste seizoen waarin iemand werkte. Daarna worden formulier, beschikbaarheid, notities, foto en documenten gewist. Loonheffing en kopie ID blijven staan tot de penningmeester ze op Loondossiers vernietigt; pas daarna wordt ook de naam geanonimiseerd. De AP gaat voor een personeelsdossier uit van 2 jaar.') ?></label>
           <input type="number" name="inst[bewaar.aangenomen_jaar]" value="<?= instelling_int('bewaar.aangenomen_jaar',2) ?>" min="0" max="10">
           <div class="ds-veld-hint">Na het laatste seizoen. De privacyverklaring noemt dit getal.</div>
         </div>
         <div class="ds-veld">
-          <label>Gezondheidsgegevens <span class="tip" data-tip="0 = na afloop van het seizoen, en meteen bij afwijzen of afhaken. Anders: zoveel maanden na ondertekening. Geldt voor de gezondheidsverklaring en de gezondheidsvragen in de intake, ook in de verzegelde PDF."></span></label>
+          <label>Gezondheidsgegevens <?= bh_tip('0 = na afloop van het seizoen, en meteen bij afwijzen of afhaken. Anders: zoveel maanden na ondertekening. Geldt voor de gezondheidsverklaring en de gezondheidsvragen in de intake, ook in de verzegelde PDF.') ?></label>
           <input type="number" name="inst[bewaar.gezondheid_mnd]" value="<?= instelling_int('bewaar.gezondheid_mnd',0) ?>" min="0" max="60">
           <div class="ds-veld-hint">0 = na het seizoen, of meteen bij afwijzing</div>
         </div>
       </div>
       <div class="bh-veldrij">
         <div class="ds-veld">
-          <label>AI-invoertekst <span class="tip" data-tip="De vrije beschikbaarheidstekst die naar de AI-dienst is gestuurd."></span></label>
+          <label>AI-invoertekst <?= bh_tip('De vrije beschikbaarheidstekst die naar de AI-dienst is gestuurd.') ?></label>
           <input type="number" name="inst[bewaar.ai_invoer_mnd]" value="<?= instelling_int('bewaar.ai_invoer_mnd',3) ?>" min="0" max="60">
           <div class="ds-veld-hint">Daarna wissen</div>
         </div>
         <div class="ds-veld">
-          <label>Niet-voltooide aanmeldingen <span class="tip" data-tip="Aanmeldingen die in de fase 'aangemeld' bleven staan en nooit een formulier of beschikbaarheid kregen."></span></label>
+          <label>Niet-voltooide aanmeldingen <?= bh_tip('Aanmeldingen die in de fase \'aangemeld\' bleven staan en nooit een formulier of beschikbaarheid kregen.') ?></label>
           <input type="number" name="inst[bewaar.onvoltooid_mnd]" value="<?= instelling_int('bewaar.onvoltooid_mnd',3) ?>" min="0" max="60">
           <div class="ds-veld-hint">Daarna verwijderen</div>
         </div>
@@ -1604,48 +1605,48 @@ require __DIR__ . '/layout_top.php';
           <div class="ds-veld-hint">Daarna de logregels verwijderen</div>
         </div>
         <div class="ds-veld">
-          <label>Inhoud van berichten <span class="tip" data-tip="De volledige tekst van verstuurde berichten (leesbaar in het portaal en het berichtenlog). Daarna blijft alleen onderwerp + samenvatting over."></span></label>
+          <label>Inhoud van berichten <?= bh_tip('De volledige tekst van verstuurde berichten (leesbaar in het portaal en het berichtenlog). Daarna blijft alleen onderwerp + samenvatting over.') ?></label>
           <input type="number" name="inst[bewaar.maillog_body_mnd]" value="<?= instelling_int('bewaar.maillog_body_mnd',3) ?>" min="0" max="24">
           <div class="ds-veld-hint">Daarna de inhoud leegmaken</div>
         </div>
         <div class="ds-veld">
-          <label>Losse bijlagen <span class="tip" data-tip="Geüploade bestanden die aan geen enkel sjabloon meer hangen."></span></label>
+          <label>Losse bijlagen <?= bh_tip('Geüploade bestanden die aan geen enkel sjabloon meer hangen.') ?></label>
           <input type="number" name="inst[bewaar.bijlagen_mnd]" value="<?= instelling_int('bewaar.bijlagen_mnd',12) ?>" min="0" max="60">
           <div class="ds-veld-hint">Daarna verwijderen</div>
         </div>
       </div>
       <div class="bh-veldrij">
         <div class="ds-veld">
-          <label>Bezoekersstatistiek wervingspagina's <span class="tip" data-tip="Aantallen bezoeken en aanmeldingen per wervingspagina. Bevat geen persoonsgegevens."></span></label>
+          <label>Bezoekersstatistiek wervingspagina's <?= bh_tip('Aantallen bezoeken en aanmeldingen per wervingspagina. Bevat geen persoonsgegevens.') ?></label>
           <input type="number" name="inst[bewaar.pagina_events_mnd]" value="<?= instelling_int('bewaar.pagina_events_mnd',13) ?>" min="0" max="60">
           <div class="ds-veld-hint">Daarna verwijderen (0 = bewaren)</div>
         </div>
         <div class="ds-veld">
-          <label>Herkenning unieke bezoekers <span class="tip" data-tip="Een dag-gebonden pseudoniem om unieke bezoekers te tellen. Wordt hierna gewist; de aantallen blijven staan."></span></label>
+          <label>Herkenning unieke bezoekers <?= bh_tip('Een dag-gebonden pseudoniem om unieke bezoekers te tellen. Wordt hierna gewist; de aantallen blijven staan.') ?></label>
           <input type="number" name="inst[bewaar.pagina_hash_dagen]" value="<?= instelling_int('bewaar.pagina_hash_dagen',30) ?>" min="0" max="365">
           <div class="ds-veld-hint">Dagen, daarna wissen</div>
         </div>
       </div>
       <div class="bh-veldrij">
         <div class="ds-veld">
-          <label for="inst-audit-maanden">Auditlog (wie deed wat) <span class="tip" data-tip="Het logboek van handelingen in het beheer, inclusief wie welk dossier inzag. Nodig om een melding of datalek te herleiden."></span></label>
+          <label for="inst-audit-maanden">Auditlog (wie deed wat) <?= bh_tip('Het logboek van handelingen in het beheer, inclusief wie welk dossier inzag. Nodig om een melding of datalek te herleiden.') ?></label>
           <input type="number" id="inst-audit-maanden" name="inst[bewaar.audit_maanden]" value="<?= instelling_int('bewaar.audit_maanden',12) ?>" min="0" max="60">
           <div class="ds-veld-hint">Maanden, daarna verwijderen</div>
         </div>
         <div class="ds-veld">
-          <label for="inst-foutenlog-dagen">Foutenlog <span class="tip" data-tip="Technische foutmeldingen. Kunnen een e-mailadres of een adres van een pagina bevatten."></span></label>
+          <label for="inst-foutenlog-dagen">Foutenlog <?= bh_tip('Technische foutmeldingen. Kunnen een e-mailadres of een adres van een pagina bevatten.') ?></label>
           <input type="number" id="inst-foutenlog-dagen" name="inst[bewaar.foutenlog_dagen]" value="<?= instelling_int('bewaar.foutenlog_dagen',90) ?>" min="0" max="730">
           <div class="ds-veld-hint">Dagen, daarna verwijderen</div>
         </div>
         <div class="ds-veld">
-          <label for="inst-bankpas-dagen">Kopie bankpas <span class="tip" data-tip="Gerekend vanaf het moment dat de penningmeester het loondossier op Verwerkt zet."></span></label>
+          <label for="inst-bankpas-dagen">Kopie bankpas <?= bh_tip('Gerekend vanaf het moment dat de penningmeester het loondossier op Verwerkt zet.') ?></label>
           <input type="number" id="inst-bankpas-dagen" name="inst[bewaar.bankpas_na_verwerking_dagen]" value="<?= instelling_int('bewaar.bankpas_na_verwerking_dagen',30) ?>" min="0" max="365">
           <div class="ds-veld-hint">Dagen na verwerking, daarna vernietigen</div>
         </div>
       </div>
       <div class="bh-veldrij">
         <div class="ds-veld">
-          <label for="inst-loondoc-jaar">Loondocumenten, in jaren <span class="tip" data-tip="Loonheffingsformulier en kopie identiteitsbewijs. De fiscale bewaarplicht loopt tot vijf jaar na het einde van het kalenderjaar waarin het dienstverband eindigde. Minder dan 5 kan niet."></span></label>
+          <label for="inst-loondoc-jaar">Loondocumenten, in jaren <?= bh_tip('Loonheffingsformulier en kopie identiteitsbewijs. De fiscale bewaarplicht loopt tot vijf jaar na het einde van het kalenderjaar waarin het dienstverband eindigde. Minder dan 5 kan niet.') ?></label>
           <input type="number" id="inst-loondoc-jaar" name="inst[bewaar.loondocumenten_jaar]" value="<?= max(5, instelling_int('bewaar.loondocumenten_jaar', 5)) ?>" min="5" max="10" aria-describedby="inst-loondoc-jaar-hint">
           <div class="ds-veld-hint" id="inst-loondoc-jaar-hint">Na het laatste seizoen. Daarna komt het dossier op de lijst "Te beoordelen voor vernietiging" op Loondossiers; het wordt nooit automatisch gewist.</div>
         </div>
