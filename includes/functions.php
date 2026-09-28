@@ -200,6 +200,9 @@ function sessie_start(): void {
            eigen token (includes/portaal_login.php) en niet via deze cookie — een
            sessiecookie van zestig dagen zou óók voor het beheer gelden. */
         session_set_cookie_params(['lifetime' => 8 * 3600, 'path' => '/', 'secure' => is_https(), 'httponly' => true, 'samesite' => 'Lax']);
+        // De sessie op de server even lang laten leven als de cookie; de PHP-standaard is 24 minuten,
+        // dus wie een formulier even liet liggen, verloor bij versturen alles.
+        ini_set('session.gc_maxlifetime', (string)(8 * 3600));
         session_start();
         if (!isset($_SESSION['_t'])) { $_SESSION['_t'] = time(); }
         elseif (time() - $_SESSION['_t'] > 1800) { session_regenerate_id(true); $_SESSION['_t'] = time(); }
@@ -511,10 +514,36 @@ function otp_verifieer(string $email, string $code, string $type = 'portaal'): b
 // ── CSRF ──────────────────────────────────────────────────────
 function csrf_token(): string { sessie_start(); if (empty($_SESSION['csrf'])) { $_SESSION['csrf'] = bin2hex(random_bytes(32)); } return $_SESSION['csrf']; }
 function csrf_input(): string { return '<input type="hidden" name="_csrf" value="' . csrf_token() . '">'; }
+/**
+ * Klopt het formulier-token niet (meestal: de sessie is verlopen), dan geen kale 403 met platte
+ * tekst maar iets waar de gebruiker mee verder kan. Een fetch krijgt JSON (de schermen tonen
+ * 'fout'); een gewoon formulier gaat terug naar dezelfde pagina met een melding. Die pagina
+ * stuurt wie niet meer is ingelogd vanzelf naar het inlogscherm, waar de melding ook staat.
+ */
 function csrf_check(): void {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
     sessie_start();
-    if (!hash_equals($_SESSION['csrf'] ?? '', $_POST['_csrf'] ?? '')) { http_response_code(403); die('Sessie verlopen. Ga terug en probeer opnieuw.'); }
+    if (hash_equals($_SESSION['csrf'] ?? '', (string)($_POST['_csrf'] ?? ''))) return;
+    $tekst = 'Je sessie was verlopen, daardoor is dit niet opgeslagen. Probeer het nog een keer.';
+    $modus = (string)($_SERVER['HTTP_SEC_FETCH_MODE'] ?? '');
+    if (($modus !== '' && $modus !== 'navigate') || !empty($_POST['ajax']) || !empty($_SERVER['HTTP_X_REQUESTED_WITH'])) {
+        http_response_code(403);
+        header('Content-Type: application/json');
+        echo json_encode(['ok' => false, 'fout' => $tekst . ' Ververs de pagina.']);
+        exit;
+    }
+    flash('waarschuwing', $tekst);
+    // Terug naar de pagina met het formulier (sommige formulieren posten naar een los script),
+    // maar alleen binnen dit domein: nooit een open redirect.
+    $terug = (string)($_SERVER['REQUEST_URI'] ?? '/');
+    $ref   = (string)($_SERVER['HTTP_REFERER'] ?? '');
+    $pad   = (string)(parse_url($ref, PHP_URL_PATH) ?: '/');
+    if ($ref !== '' && strcasecmp((string)parse_url($ref, PHP_URL_HOST), (string)parse_url('//' . ($_SERVER['HTTP_HOST'] ?? ''), PHP_URL_HOST)) === 0
+        && str_starts_with($pad, '/') && !str_starts_with($pad, '//') && !str_contains($pad, '\\')) {
+        $terug = $pad . (($q = parse_url($ref, PHP_URL_QUERY)) ? '?' . $q : '');
+    }
+    header('Location: /' . ltrim($terug, '/'), true, 303);
+    exit;
 }
 
 // ── Flash ──────────────────────────────────────────────────────

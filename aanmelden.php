@@ -29,10 +29,14 @@ $ingebed = !empty($_GET['ingebed']);
 $bron_code = substr(trim((string)($_POST['bron_code'] ?? $_GET['bron'] ?? '')), 0, 80);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $open) {
-    csrf_check();
+    // csrf, maar bij een verlopen sessie het formulier opnieuw mét de invoer (zoals het seintje hieronder),
+    // in plaats van een lege pagina via csrf_check().
+    csrf_token();
     // Zelfde bescherming als het formulier op landingspagina's (includes/paginas/formulier.php):
     // een verborgen veld dat alleen bots invullen, en maximaal 5 aanmeldingen per uur per adres.
-    if (trim((string)($_POST['p13_w'] ?? '')) !== '') {
+    if (!hash_equals((string)($_SESSION['csrf'] ?? ''), (string)($_POST['_csrf'] ?? ''))) {
+        $fout = 'Je sessie was verlopen. Controleer je gegevens en verstuur het formulier nog een keer.';
+    } elseif (trim((string)($_POST['p13_w'] ?? '')) !== '') {
         $fout = 'Het formulier kon niet worden verwerkt. Ververs de pagina en probeer het opnieuw.';
     } elseif (function_exists('rate_limit') && !rate_limit('aanmelding', rate_identiteit(), 5, 3600)) {
         $fout = 'Er zijn in korte tijd te veel aanmeldingen vanaf dit adres gedaan. Probeer het over een uur opnieuw.';

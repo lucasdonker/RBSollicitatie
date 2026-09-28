@@ -13,7 +13,7 @@
  *
  * Wat iemand invult wordt bewaard in sessionStorage, zodat een vergissing of een terugknop
  * niet betekent dat alles opnieuw moet. Dat blijft op het apparaat zelf, verdwijnt zodra het
- * tabblad dichtgaat, en wordt bij het verzenden gewist.
+ * tabblad dichtgaat, en wordt gewist zodra de aanmelding binnen is (de succesmelding).
  *
  * Geen afhankelijkheden, werkt op meerdere formulieren op dezelfde pagina.
  */
@@ -167,10 +167,6 @@
           : (el.value === '');
         if (leeg) el.value = data[naam];
       });
-    }
-
-    function wisOpslag() {
-      try { sessionStorage.removeItem(sleutel); } catch (e) {}
     }
 
     // ── Veldfouten ─────────────────────────────────────────────────
@@ -421,8 +417,9 @@
         return;
       }
 
+      // De opslag blijft staan tot de aanmelding echt binnen is (zie start()): gaat er op de
+      // server iets mis (sessie verlopen, al aangemeld), dan staat de invoer er nog.
       verzonden = true;
-      wisOpslag();
       if (stapVeld) stapVeld.value = String(hoogste);
       if (verzendKnop) {
         verzendKnop.setAttribute('aria-busy', 'true');
@@ -463,6 +460,15 @@
   // ── Starten ──────────────────────────────────────────────────────
 
   function start() {
+    // Aanmelding binnen: de bewaarde invoer op dit apparaat mag weg.
+    if (document.querySelector('[data-formulier-succes]') && window.sessionStorage) {
+      try {
+        for (var i = sessionStorage.length - 1; i >= 0; i--) {
+          var k = sessionStorage.key(i);
+          if (k && k.indexOf('p13af:') === 0) sessionStorage.removeItem(k);
+        }
+      } catch (e) {}
+    }
     var kaarten = document.querySelectorAll('[data-af-kaart]');
     Array.prototype.forEach.call(kaarten, function (kaart) { Formulier(kaart); });
 
