@@ -150,7 +150,7 @@ html[data-theme="dark"] .bh-nav-link.actief { background: var(--surface); color:
   border: 0; background: none; border-radius: var(--radius-sm); color: var(--ink);
 }
 .bh-zoekrij:hover, .bh-zoekrij.aangewezen { background: var(--bg-subtle); }
-.bh-zoekrij-icoon { flex: none; color: var(--ink-muted); display: inline-flex; }
+
 .bh-zoekrij-tekst { min-width: 0; display: flex; flex-direction: column; }
 .bh-zoekrij-titel {
   font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -546,16 +546,7 @@ html[data-theme="dark"] .bh-fasechip.nu { color: var(--bg); }
 
 /* Weekrij in het beschikbaarheid-tabblad — losse tegels, niet het raster.
    De rastercel van bh_weekcel() heet .bh-weekcel; dit is de grotere tegel. */
-.bh-weekrij { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 4px; }
-.bh-weektegel {
-  display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer;
-  min-width: 52px; min-height: 52px; padding: 8px 6px; border-radius: var(--radius-sm);
-  background: var(--f-vlak); border: 1px solid var(--f-rand); color: var(--f-tekst);
-  font-family: inherit;
-}
-.bh-weektegel:hover { border-color: var(--f-tekst); }
-.bh-weektegel-nr { font-size: 11px; font-weight: 600; opacity: .8; }
-.bh-weektegel-dagen { font-size: 15px; font-weight: 700; }
+
 .bh-weeklegenda { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 12px; font: var(--text-meta); color: var(--ink-soft); }
 .bh-weeklegenda > span { display: inline-flex; align-items: center; gap: 6px; }
 .bh-legenda-blok { width: 12px; height: 12px; border-radius: 3px; background: var(--f-vlak); border: 1px solid var(--f-rand); }
@@ -644,43 +635,6 @@ span.bh-incheck-code {
 .bh-incheck-linkrij .ds-input { flex: 1; min-width: 180px; height: 42px; font-size: 13px; }
 .bh-incheck-nieuw { margin-top: 10px; }
 
-.bh-incheck-kop {
-  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
-  padding: 14px 18px; border-bottom: 1px solid var(--border);
-}
-.bh-incheck-teller { display: flex; align-items: baseline; gap: 7px; }
-.bh-incheck-getal { font-size: 22px; font-weight: 700; color: var(--ink); }
-.bh-incheck-kop .bh-zoek { flex: 1; min-width: 180px; height: 48px; }
-
-.bh-incheck-groep {
-  display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  padding: 9px 18px; background: var(--bg-subtle);
-  font-size: 12px; font-weight: 700; letter-spacing: .06em;
-  text-transform: uppercase; color: var(--ink-soft);
-}
-.bh-incheck-rij {
-  display: flex; align-items: center; gap: 13px;
-  padding: 11px 18px; border-bottom: 1px solid var(--bg);
-}
-.bh-incheck-rij[hidden], .bh-incheck-groep[hidden] { display: none; }
-.bh-incheck-rij.aanwezig { background: var(--ok-soft); }
-.bh-incheck-rij.aanwezig .ds-avatar { background: var(--ok-soft); color: var(--ok); }
-.bh-incheck-naam { flex: 1; min-width: 0; font-size: 16px; font-weight: 600; color: var(--ink); }
-.bh-incheck-sub { display: block; font-size: 12px; font-weight: 400; color: var(--ink-muted); margin-top: 1px; }
-.bh-aanwezig {
-  flex: none; min-width: 124px; min-height: 48px; padding: 0 20px;
-  border-radius: var(--radius-md); border: 1.5px solid var(--border-strong);
-  background: var(--surface); color: var(--ink-soft);
-  font: var(--text-label); font-size: 15px; cursor: pointer; font-family: inherit;
-}
-.bh-aanwezig.ja { background: var(--ok); border-color: var(--ok); color: var(--op-vol); }
-.bh-aanwezig:disabled { opacity: .6; }
-.bh-incheck-voet {
-  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
-  padding: 14px 18px; border-top: 1px solid var(--border);
-}
-.bh-incheck-voet .ds-btn { margin-left: auto; }
-
 /* Bellijst: "komt op het trainingsweekend?" (admin/_bellijst.php) */
 .bh-bel-tw { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
 .bh-bel-tw legend { padding: 0; margin-bottom: 6px; }
@@ -728,9 +682,7 @@ span.bh-incheck-code {
   .bh-ick-knoppen button { flex: 1; }
   .bh-selectiekop { padding: 12px 14px; }
   .bh-substappen { margin-left: 0; gap: 14px; width: 100%; overflow-x: auto; }
-  .bh-incheck-rij { padding: 11px 14px; }
-  .bh-aanwezig { min-width: 104px; padding: 0 14px; }
-  .bh-incheck-voet .ds-btn { margin-left: 0; width: 100%; }
+
 }
 
 /* ── Beoordelen: telefoon, buiten, één duim ─────────────────────
@@ -2528,9 +2480,7 @@ kbd {
 .bh-hb-tekst p { margin: 0 0 12px; }
 .bh-hb-tekst ul, .bh-hb-tekst ol { margin: 0 0 14px; padding-left: 22px; }
 .bh-hb-tekst li { margin-bottom: 4px; }
-.bh-hb-tekst ul.task-list { list-style: none; padding-left: 4px; }
-.bh-hb-tekst ul.task-list input { width: 17px; height: 17px; margin: 0 8px 0 0; accent-color: var(--navy); vertical-align: -3px; cursor: pointer; }
-.bh-hb-tekst ul.task-list label { cursor: pointer; }
+
 .bh-hb-tekst a { color: var(--accent); font-weight: 600; }
 .bh-hb-tekst code {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px;
@@ -2580,8 +2530,7 @@ mark.bh-hb-treffer { background: var(--geel-bg, #fff3b0); color: inherit; border
 .bh-gegevenskaart .bh-veldrij + .bh-veldrij { margin-top: 12px; }
 .bh-gegevenskaart .bh-veldrij > .ds-veld { margin-top: 0; }
 .bh-gevaarblok-knoppen { display: flex; gap: 8px; flex-wrap: wrap; }
-.bh-weektegel-vast { cursor: default; }
-.bh-weektegel-vast:hover { border-color: var(--f-rand); }
+
 .bh-knop-onder { margin-top: 10px; }
 .bh-normform { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; margin-top: 10px; }
 .bh-normform .ds-veld { width: 100%; }
@@ -2713,16 +2662,7 @@ input.bh-inst-herinnering-info { margin-top: 6px; }
   border: 1px solid var(--oranje); border-radius: 4px; padding: 1px 6px; margin-left: 6px; vertical-align: middle;
 }
 .bh-inst-experiment-uitleg { display: block; font-size: 12px; color: var(--tekst-zacht); margin-top: 4px; font-weight: 400; }
-.bh-inst-promptcode { background: var(--grijs-bg); padding: 1px 5px; border-radius: 3px; }
-.bh-inst-variabelen {
-  background: var(--grijs-bg); border: 1px solid var(--rand); border-radius: 6px;
-  padding: 12px 14px; margin-bottom: 12px; font-size: 12px;
-}
-.bh-inst-variabelen-lijst {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 4px 14px; margin-top: 8px;
-  font-family: 'SF Mono', Menlo, Consolas, monospace; font-size: 11.5px;
-}
-.ds-veld > textarea.bh-inst-prompt { font-family: 'SF Mono', Menlo, Consolas, monospace; font-size: 12.5px; line-height: 1.6; white-space: pre-wrap; }
+
 .bh-inst-vinkregel { display: flex; align-items: center; gap: 8px; }
 
 /* Authentik */
@@ -2933,7 +2873,7 @@ select.bh-testbericht-kanaal { width: 120px; }
 
 /* ── Selectiedag: bellijst, nabespreking ── */
 .bh-bel-alledoor { margin-left: auto; }
-.bh-observaties.bh-bel-observaties { margin-top: 8px; }
+
 .ds-melding.bh-bel-gebeld { width: 100%; }
 .bh-scorebalken.bh-scorebalken-los { margin-top: 0; }
 
