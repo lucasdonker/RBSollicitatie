@@ -211,6 +211,21 @@ class Mailer
         return ['content_type' => "multipart/mixed; boundary=\"{$mixed}\"", 'body' => $inhoud];
     }
 
+    /**
+     * Waar "Beantwoorden" heen gaat: het contactadres voor sollicitanten (mail.contact_email,
+     * sollicitatie@paal13.com), anders het bestuursadres, anders de afzender. Zonder deze header
+     * kwam een antwoord op het afzenderadres uit, en dat kan een noreply-adres zijn.
+     */
+    private static function replyTo(string $from): string {
+        foreach (['portaal_contact_email', 'bestuur_email'] as $f) {
+            if (function_exists($f)) {
+                $a = trim((string)$f());
+                if ($a !== '' && filter_var($a, FILTER_VALIDATE_EMAIL)) return $a;
+            }
+        }
+        return $from;
+    }
+
     // ── SMTP verzending ───────────────────────────────────────
     private static function viaSMTP(string $naar, string $naam, string $onderwerp, string $body, array $bijlagen = []): bool
     {
@@ -330,6 +345,7 @@ class Mailer
             "Message-ID: <" . md5(uniqid()) . "@paal13.com>\r\n" .
             "From: {$vanEnc} <{$from}>\r\n" .
             "To: {$naamEnc} <{$naar}>\r\n" .
+            "Reply-To: " . self::replyTo($from) . "\r\n" .
             "Subject: {$ondEnc}\r\n" .
             "MIME-Version: 1.0\r\n" .
             "Content-Type: {$mime['content_type']}\r\n" .
@@ -359,7 +375,7 @@ class Mailer
     {
         $from     = self::inst('smtp.from', 'MAIL_FROM', 'noreply@paal13.com');
         $fromName = self::inst('smtp.from_naam', 'MAIL_FROM_NAME', 'Paal 13');
-        $reply    = function_exists('bestuur_email') && bestuur_email() !== '' ? bestuur_email() : $from;
+        $reply    = self::replyTo($from);
         $mime     = self::mimeInhoud($naam, $onderwerp, $body, $bijlagen);
         $headers  = implode("\r\n", [
             "MIME-Version: 1.0",

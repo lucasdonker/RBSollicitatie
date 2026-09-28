@@ -106,7 +106,7 @@ function meldingen_register(): array {
             'seed' => [
                 'onderwerp' => 'Welkom bij Paal 13, {{voornaam}}!',
                 'hero_titel' => 'Welkom bij Paal 13!', 'hero_subtitel' => 'Aangenomen voor {{seizoen_naam}}',
-                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p><strong>Van harte welkom bij Reddingsbrigade Paal 13!</strong> We zijn blij dat je aan boord komt voor {{seizoen_naam}}.</p>\n<h3>Wat gebeurt er nu?</h3>\n<p>In het portaal staan een paar taken die je nog afrondt:</p>\n<ul>\n  <li>Bevestig je lidmaatschap</li>\n  <li>Vul het loonheffingsformulier in</li>\n  <li>Neem de huisregels door</li>\n  <li>Wacht op de uitnodiging voor je Paal 13-account</li>\n</ul>\n[knop href=\"$portaal\"]Open het portaal[/knop]\n<p>Vragen? Mail naar <a href=\"mailto:{{bestuur_email}}\">{{bestuur_email}}</a>.</p>\n<p>Tot snel op het strand!<br><strong>Team Sollicitaties</strong></p>",
+                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p><strong>Van harte welkom bij Reddingsbrigade Paal 13!</strong> We zijn blij dat je aan boord komt voor {{seizoen_naam}}.</p>\n<p>{{gesprek_bericht}}</p>\n<h3>Wat gebeurt er nu?</h3>\n<p>In het portaal staan een paar taken die je nog afrondt:</p>\n<ul>\n  <li>Bevestig je lidmaatschap</li>\n  <li>Vul het loonheffingsformulier in</li>\n  <li>Neem de huisregels door</li>\n  <li>Wacht op de uitnodiging voor je Paal 13-account</li>\n</ul>\n[knop href=\"$portaal\"]Open het portaal[/knop]\n<p>Vragen? Mail naar <a href=\"mailto:{{bestuur_email}}\">{{bestuur_email}}</a>.</p>\n<p>Tot snel op het strand!<br><strong>Team Sollicitaties</strong></p>",
                 'tekst_kort' => "Hoi {{voornaam}}, welkom bij Paal 13! Je bent aangenomen. In je portaal staan een paar taken klaar: $portaal",
                 'samenvatting' => 'Je bent aangenomen. Welkom bij Paal 13!',
             ],
@@ -320,7 +320,7 @@ function meldingen_register(): array {
             'seed' => [
                 'onderwerp' => 'Vraag van {{volledige_naam}} ({{fase_label}})',
                 'hero_titel' => 'Vraag uit het portaal', 'hero_subtitel' => '{{volledige_naam}} · {{fase_label}}',
-                'body_html' => "<p><strong>{{volledige_naam}}</strong> ({{fase_label}}) stelde deze vraag via het portaal:</p>\n[info]{{vraag}}[/info]\n<p>Antwoorden kan rechtstreeks op {{email}}.</p>",
+                'body_html' => "<p><strong>{{volledige_naam}}</strong> ({{fase_label}}) stelde deze vraag via het portaal:</p>\n[info]{{vraag}}[/info]\n<p>Antwoorden kan rechtstreeks op <a href=\"mailto:{{sollicitant_email}}\">{{sollicitant_email}}</a>.</p>",
                 'tekst_kort' => '', 'samenvatting' => 'Vraag van {{volledige_naam}}: {{vraag}}',
             ],
         ]),

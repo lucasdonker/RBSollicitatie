@@ -609,11 +609,11 @@ function portaal_taken_post_afhandelen(int $sol_id): void {
                 } elseif ($r) {
                     $_SESSION['flash_portaal_fout'] = 'Versturen lukte nu niet. Probeer het later opnieuw of neem contact op via ' . portaal_contact_email() . '.';
                 } else {
-                    $_SESSION['flash_portaal'] = 'Versturen lukte niet. Controleer het e-mailadres van je ouder/verzorger.';
+                    $_SESSION['flash_portaal_fout'] = 'Versturen lukte niet. Controleer het e-mailadres van je ouder/verzorger.';
                 }
             } catch (\Throwable $e) {
                 error_log('ouder_herinner: ' . $e->getMessage());
-                $_SESSION['flash_portaal'] = 'Versturen lukte niet. Probeer het later opnieuw.';
+                $_SESSION['flash_portaal_fout'] = 'Versturen lukte niet. Probeer het later opnieuw.';
             }
         }
         redirect($terug);

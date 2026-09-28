@@ -104,6 +104,14 @@ function sjablonen_migreer_slugs($db): void {
                             AND (body_html LIKE '%{{door}}%' OR body_html LIKE '%ouder%' OR onderwerp LIKE '%ouder%')")
                ->execute([$s['onderwerp'], $s['hero_titel'], $s['hero_subtitel'], $s['body_html'], $s['tekst_kort'], $s['samenvatting']]);
         }
+        // T/m 2.128.1: de vraag-mail noemde {{email}} (bestaat niet, werd weggehaald: "rechtstreeks op .").
+        $db->exec("UPDATE mail_templates SET body_html=REPLACE(body_html,'rechtstreeks op {{email}}.','rechtstreeks op <a href=\"mailto:{{sollicitant_email}}\">{{sollicitant_email}}</a>.') WHERE slug='sollicitant_vraag' AND body_html LIKE '%{{email}}%'");
+        $db->exec("UPDATE mail_templates SET body_html=REPLACE(body_html,'{{email}}','{{sollicitant_email}}') WHERE slug='sollicitant_vraag' AND body_html LIKE '%{{email}}%'");
+        // T/m 2.128.1: de aangenomen-mail gebruikte {{gesprek_bericht}} niet, dus het bericht uit het
+        // TW-gesprek kwam nooit aan. Alleen in de ongewijzigde standaardtekst invoegen.
+        $welkom = 'We zijn blij dat je aan boord komt voor {{seizoen_naam}}.</p>';
+        $db->prepare("UPDATE mail_templates SET body_html=REPLACE(body_html,?,?) WHERE slug='aangenomen' AND body_html LIKE ? AND body_html NOT LIKE '%{{gesprek_bericht}}%'")
+           ->execute([$welkom, $welkom . "\n<p>{{gesprek_bericht}}</p>", '%' . $welkom . '%']);
     } catch (\Throwable $e) {}
 }
 
@@ -254,6 +262,8 @@ function melding_render(string $type, array $vars, array $override = []): ?array
     $body = (string)$t['body_html'];
     $body = function_exists('mail_vervang') ? mail_vervang(mail_vervang($body, $vars), $vars) : tekst_vervang(tekst_vervang($body, $vars), $vars);
     $body = (string)preg_replace('/\{\{[a-z0-9_.]+\}\}/i', '', $body);
+    // Een lege variabele in een eigen alinea (bijv. geen gespreksbericht) laat geen gat achter.
+    $body = (string)preg_replace('#<p>\s*</p>\s*#i', '', $body);
     if (!empty($override['bijlagen_blok_html'])) $body .= $override['bijlagen_blok_html'];
     // Vast blok onder de tekst (bijv. de seintje-vraag); vóór de shortcodes, want het gebruikt [knop].
     if (!empty($override['blok_html'])) $body .= $override['blok_html'];
