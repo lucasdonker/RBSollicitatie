@@ -182,7 +182,7 @@ require __DIR__ . '/layout_top.php';
     <div class="bh-blkveld">
       <div class="bh-veldlabel">Voorkeur weken (uit het kennismakingsformulier, <?= count($blk_weken) ?> weken)</div>
       <div class="bh-blk-weken bh-blk-weken-ruim">
-        <?php foreach ($blk_weken as $w): ?><span class="badge badge-blauw bh-blk-weekbadge">Week <?= (int)$w ?></span><?php endforeach; ?>
+        <?php foreach ($blk_weken as $w): ?><?= bh_badge('Week ' . (int)$w, 'blauw') ?><?php endforeach; ?>
       </div>
     </div>
     <?php elseif ($blk['beschikbaarheid_intentie']): ?>
@@ -203,7 +203,7 @@ require __DIR__ . '/layout_top.php';
     <div class="bh-blkveld">
       <div class="bh-veldlabel">Definitief opgegeven door sollicitant (<?= count($weken_sol) ?> weken)</div>
       <div class="bh-blk-weken">
-        <?php foreach ($weken_sol as $w): ?><span class="badge badge-blauw">W<?= $w ?></span><?php endforeach; ?>
+        <?php foreach ($weken_sol as $w): ?><?= bh_badge('Week ' . (int)$w, 'blauw') ?><?php endforeach; ?>
       </div>
     </div>
     <?php endif; ?>
@@ -211,7 +211,7 @@ require __DIR__ . '/layout_top.php';
     <div class="bh-blkveld">
       <div class="bh-veldlabel">Definitief ingepland door beheerder (<?= count($weken_def) ?> weken · <?= count($weken_def)*5 ?> werkdagen)</div>
       <div class="bh-blk-weken">
-        <?php foreach ($weken_def as $w): ?><span class="badge badge-oranje">W<?= $w ?></span><?php endforeach; ?>
+        <?php foreach ($weken_def as $w): ?><?= bh_badge('Week ' . (int)$w, 'oranje') ?><?php endforeach; ?>
       </div>
     </div>
     <?php endif; ?>

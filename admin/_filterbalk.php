@@ -8,7 +8,7 @@
  *
  * Verwacht:
  *   $filter_actie   string  form-action (standaard: de huidige pagina)
- *   $filter_velden  array   elk: ['soort'=>'zoek'|'keuze', 'naam','label',
+ *   $filter_velden  array   elk: ['soort'=>'zoek'|'keuze'|'datum', 'naam','label',
  *                                 'waarde', 'opties'=>[waarde=>label], 'breed'=>bool]
  *   $filter_verborgen array optioneel: [naam => waarde] die in de URL moet blijven
  *                           (bijv. de actieve fase-tab)
@@ -34,6 +34,11 @@ $filter_wissen    = $filter_wissen ?? null;
         <span class="bh-vw"><?= h($_f['label'] ?? 'Zoeken') ?></span>
         <input type="search" name="<?= h($_f['naam']) ?>" value="<?= h((string)($_f['waarde'] ?? '')) ?>"
                placeholder="<?= h($_f['label'] ?? 'Zoeken') ?>">
+      </label>
+    <?php elseif ($_f['soort'] === 'datum'): ?>
+      <label class="bh-filter-keuze bh-filter-datum">
+        <span><?= h($_f['label'] ?? '') ?></span>
+        <input type="date" name="<?= h($_f['naam']) ?>" value="<?= h((string)($_f['waarde'] ?? '')) ?>" class="ds-input">
       </label>
     <?php else: ?>
       <label class="bh-filter-keuze">

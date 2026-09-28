@@ -16,14 +16,16 @@
  *   $tabs_url    callable  fn(string $sleutel): string
  *   $tabs_totaal int       aantal achter "Alle"
  *   $tabs_voet   ?string   optioneel: extra regel onder de tabs
+ *   $tabs_label  ?string   optioneel: toegankelijke naam van de balk (standaard "Filter op fase")
  */
 $tabs_data   = $tabs_data ?? ['tabs' => [], 'vreemd' => [], 'vreemd_aantal' => 0];
 $tabs_actief = $tabs_actief ?? 'alle';
 $tabs_url    = $tabs_url ?? fn($s) => '?fase=' . urlencode($s);
 $tabs_totaal = $tabs_totaal ?? 0;
 $tabs_voet   = $tabs_voet ?? null;
+$tabs_label  = $tabs_label ?? 'Filter op fase';
 ?>
-<div class="bh-tabs" role="tablist" aria-label="Filter op fase">
+<div class="bh-tabs" role="tablist" aria-label="<?= h($tabs_label) ?>">
   <a class="bh-tab<?= $tabs_actief === 'alle' ? ' actief' : '' ?>"
      href="<?= h($tabs_url('alle')) ?>" role="tab"
      aria-selected="<?= $tabs_actief === 'alle' ? 'true' : 'false' ?>">
@@ -49,4 +51,4 @@ $tabs_voet   = $tabs_voet ?? null;
   <div class="bh-tabs-voet"><?= h($tabs_voet) ?></div>
 <?php endif; ?>
 <?php
-$tabs_data = null; $tabs_actief = 'alle'; $tabs_totaal = 0; $tabs_voet = null;
+$tabs_data = null; $tabs_actief = 'alle'; $tabs_totaal = 0; $tabs_voet = null; $tabs_label = null;

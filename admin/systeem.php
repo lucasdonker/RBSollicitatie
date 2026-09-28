@@ -177,7 +177,7 @@ require __DIR__ . '/layout_top.php';
       <?php foreach ($herinnering_resultaat as $hs => $hr): ?>
       <div class="bh-sys-herinnering">
         <div><strong><?= h($hr['naam']) ?></strong>
-          <?php if (!$hr['aan']): ?><span class="badge">uit</span>
+          <?php if (!$hr['aan']): ?><?= bh_badge('Uit', 'grijs') ?>
           <?php else: ?> — <?= (int)$hr['kandidaten'] ?> sollicitant(en), <?= (int)$hr['verstuurd'] ?> <?= $herinnering_echt ? 'in de wachtrij' : 'zou versturen' ?>, <?= (int)$hr['overgeslagen'] ?> overgeslagen<?php endif; ?>
         </div>
         <?php if (!empty($hr['lijst'])): ?>

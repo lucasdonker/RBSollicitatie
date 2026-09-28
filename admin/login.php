@@ -136,7 +136,6 @@ $methode = $wacht_b ? tweestaps_methode($wacht_b) : '';
 .sso-icoon { width:24px;height:24px;border-radius:5px;background:var(--accent);display:flex;align-items:center;justify-content:center;color:var(--op-vol);font-size:13px;font-weight:700;flex-shrink:0; }
 .scheiding { display:flex;align-items:center;gap:10px;margin:16px 0;color:var(--grijs);font-size:12px; }
 .scheiding::before,.scheiding::after { content:'';flex:1;height:1px;background:var(--rand); }
-.login-knop { width:100%;justify-content:center; }
 .login-voet { text-align:center;font-size:12px;color:var(--grijs);margin-top:16px; }
 .login-stap { display:flex;flex-direction:column;gap:12px;margin-top:12px; }
 .login-stap details { font-size:13px; }
@@ -183,14 +182,14 @@ $methode = $wacht_b ? tweestaps_methode($wacht_b) : '';
               'id' => 'code', 'label' => $methode === 'app' ? 'Code uit je app' : 'Code uit de e-mail',
               'autofocus' => true, 'fout' => $code_fout,
           ]; require __DIR__ . '/_tweestaps_codeveld.php'; ?>
-          <button type="submit" class="btn btn-primary btn-lg login-knop">Inloggen</button>
+          <button type="submit" class="ds-btn ds-btn-primair ds-btn-vol">Inloggen</button>
         </form>
 
         <?php if ($methode === 'mail'): ?>
           <form method="POST">
             <?= csrf_input() ?>
             <input type="hidden" name="actie" value="nieuwe_mail">
-            <button type="submit" class="btn btn-outline login-knop">Stuur een nieuwe code</button>
+            <button type="submit" class="ds-btn ds-btn-secundair ds-btn-vol">Stuur een nieuwe code</button>
           </form>
           <p class="ds-veld-hint">
             Sneller en veiliger: stel na het inloggen een authenticator-app in via
@@ -206,7 +205,7 @@ $methode = $wacht_b ? tweestaps_methode($wacht_b) : '';
                   'id' => 'herstelcode', 'label' => 'Herstelcode', 'herstel' => true, 'fout' => $herstel_fout,
                   'hint' => 'Een van de codes die je bij het instellen kreeg, bijvoorbeeld ABCDE-FGH23. Elke code werkt één keer.',
               ]; require __DIR__ . '/_tweestaps_codeveld.php'; ?>
-              <button type="submit" class="btn btn-outline login-knop">Inloggen met herstelcode</button>
+              <button type="submit" class="ds-btn ds-btn-secundair ds-btn-vol">Inloggen met herstelcode</button>
             </form>
           </details>
         <?php endif; ?>
@@ -214,7 +213,7 @@ $methode = $wacht_b ? tweestaps_methode($wacht_b) : '';
         <form method="POST">
           <?= csrf_input() ?>
           <input type="hidden" name="actie" value="annuleren">
-          <button type="submit" class="btn btn-outline login-knop">Annuleren</button>
+          <button type="submit" class="ds-btn ds-btn-secundair ds-btn-vol">Annuleren</button>
         </form>
       </div>
     <?php else: ?>
@@ -239,7 +238,7 @@ $methode = $wacht_b ? tweestaps_methode($wacht_b) : '';
         <label for="wachtwoord">Wachtwoord</label>
         <input type="password" id="wachtwoord" name="wachtwoord" required autocomplete="current-password" placeholder="••••••••">
       </div>
-      <button type="submit" class="btn btn-primary btn-lg login-knop">
+      <button type="submit" class="ds-btn ds-btn-primair ds-btn-vol">
         Inloggen
       </button>
     </form>

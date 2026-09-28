@@ -126,14 +126,20 @@ if (!$fout) {
 <html lang="nl">
 <head>
 <meta charset="UTF-8">
-<title>Inloggen mislukt</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Inloggen mislukt — Paal 13</title>
 <link rel="stylesheet" href="<?= APP_URL ?>/assets/css/stijl.css">
 </head>
-<body style="background:var(--navy);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px">
-  <div style="background:#fff;border-radius:12px;padding:30px;max-width:420px;text-align:center">
-    <h2 style="color:#e53e3e;margin-bottom:10px">Inloggen mislukt</h2>
-    <p style="color:#4a5568;font-size:14px;margin-bottom:20px"><?= htmlspecialchars($fout) ?></p>
-    <a href="<?= APP_URL ?>/portaal/" class="btn btn-primary">Opnieuw proberen</a>
+<body>
+<main class="login-wrapper">
+  <div class="login-kaart">
+    <div class="login-logo">
+      <h1>Inloggen mislukt</h1>
+    </div>
+    <div class="ds-melding ds-melding-error" role="alert"><?= icoon('let-op', 16) ?><span><?= h($fout) ?></span></div>
+    <a href="<?= APP_URL ?>/portaal/" class="ds-btn ds-btn-primair ds-btn-vol">Opnieuw proberen</a>
   </div>
+</main>
 </body>
 </html>

@@ -154,13 +154,13 @@ function log_actie_icoon(?string $slug): string {
     return $r[(string)$slug][1] ?? 'punt';
 }
 
-/** De actor, met een badge-kleur per soort. */
+/** De actor, met een badge-kleur (bh_badge()) per soort. */
 function log_wie_soorten(): array {
     return [
-        'beheerder'   => ['Beheerder', 'badge-blauw'],
-        'sollicitant' => ['Sollicitant', 'badge-teal'],
-        'systeem'     => ['Systeem', 'badge-grijs'],
-        'onbekend'    => ['Onbekend', 'badge-oranje'],
+        'beheerder'   => ['Beheerder', 'blauw'],
+        'sollicitant' => ['Sollicitant', 'teal'],
+        'systeem'     => ['Systeem', 'grijs'],
+        'onbekend'    => ['Onbekend', 'oranje'],
     ];
 }
 
@@ -173,17 +173,17 @@ function log_wie_naam(array $r): string {
     return $s[$r['wie_type'] ?? 'systeem'][0] ?? 'Systeem';
 }
 
-/** Badge-klasse voor het actortype. */
-function log_wie_klasse(?string $type): string {
+/** Badge-kleur (bh_badge()) voor het actortype. */
+function log_wie_kleur(?string $type): string {
     $s = log_wie_soorten();
-    return $s[(string)$type][1] ?? 'badge-grijs';
+    return $s[(string)$type][1] ?? 'grijs';
 }
 
-/** Badge-klasse per ernst. */
-function log_ernst_klasse(?string $ernst): string {
-    if ($ernst === 'fout') return 'badge-rood';
-    if ($ernst === 'waarschuwing') return 'badge-oranje';
-    return 'badge-grijs';
+/** Badge-kleur (bh_badge()) per ernst. */
+function log_ernst_kleur(?string $ernst): string {
+    if ($ernst === 'fout') return 'rood';
+    if ($ernst === 'waarschuwing') return 'oranje';
+    return 'grijs';
 }
 
 /**

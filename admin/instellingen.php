@@ -1783,14 +1783,14 @@ require __DIR__ . '/layout_top.php';
           if (function_exists('ai_queue_auto_setup'))   { ai_queue_auto_setup();   $q_stats['ai']   = db()->query("SELECT status,COUNT(*) n FROM ai_queue   GROUP BY status")->fetchAll(PDO::FETCH_KEY_PAIR); }
           if (function_exists('mail_queue_auto_setup')) { mail_queue_auto_setup(); $q_stats['mail'] = db()->query("SELECT status,COUNT(*) n FROM mail_queue GROUP BY status")->fetchAll(PDO::FETCH_KEY_PAIR); }
       } catch (\Exception $e) {}
-      $kleuren = ['wacht'=>'badge-blauw','bezig'=>'badge-oranje','klaar'=>'badge-groen','fout'=>'badge-rood'];
+      $q_standen = ['wacht' => ['Wacht', 'blauw'], 'bezig' => ['Bezig', 'oranje'], 'klaar' => ['Klaar', 'groen'], 'fout' => ['Mislukt', 'rood']];
       ?>
-      <?php foreach (['ai'=>'AI analyses', 'mail'=>'Mail wachtrij'] as $sleutel => $label): if (!empty($q_stats[$sleutel])): ?>
+      <?php foreach (['ai'=>'AI-analyses', 'mail'=>'Mails in de wachtrij'] as $sleutel => $label): if (!empty($q_stats[$sleutel])): ?>
       <div class="bh-cron-wachtrijblok">
         <div class="bh-cron-wachtrij"><?= h($label) ?></div>
         <div class="bh-chiprij">
-          <?php foreach ($q_stats[$sleutel] as $st => $n): ?>
-          <span class="badge <?=$kleuren[$st] ?? 'badge-grijs' ?>"><?= h($st) ?>: <?= $n ?></span>
+          <?php foreach ($q_stats[$sleutel] as $st => $n): $_qs = $q_standen[$st] ?? [ucfirst((string)$st), 'grijs']; ?>
+          <?= bh_badge($_qs[0] . ': ' . (int)$n, $_qs[1]) ?>
           <?php endforeach; ?>
         </div>
       </div>
