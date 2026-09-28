@@ -67,7 +67,7 @@ $_open_f = function_exists('evenement_open_formulieren_seizoen') ? evenement_ope
         <?= h($_k['naam']) ?>
         <span class="bh-ick-regel" data-ick-regel><?php
           if ($_k['stand'] === 'aanwezig')  echo 'ingecheckt ' . h($_tijd);
-          elseif ($_k['stand'] === 'niet')  echo h($_k['afgemeld_reden'] ?: 'niet verschenen');
+          elseif ($_k['stand'] === 'niet')  echo h($_k['afgemeld_reden'] ?: 'niet gekomen');
           else                              echo h($_sub);
           if ($_k['stand'] === 'verwacht' && ($_k['bevestiging'] ?? '') === 'komt_niet') echo ' · gaf door niet te kunnen';
         ?></span>
@@ -80,9 +80,10 @@ $_open_f = function_exists('evenement_open_formulieren_seizoen') ? evenement_ope
       </span>
       <?php if ($ick_mag): ?>
         <span class="bh-ick-knoppen">
-          <button type="button" class="bh-ick-aanwezig" data-ick="aanwezig">Aanwezig</button>
-          <button type="button" class="bh-ick-niet" data-ick="niet">Niet</button>
-          <button type="button" class="bh-ick-ongedaan" data-ick="ongedaan">Ongedaan</button>
+          <?php // De naam in het label (met de zichtbare tekst voorop, WCAG 2.5.3): anders hoort een schermlezer 40× "Aanwezig". ?>
+          <button type="button" class="bh-ick-aanwezig" data-ick="aanwezig" aria-label="Aanwezig: <?= h($_k['naam']) ?>">Aanwezig</button>
+          <button type="button" class="bh-ick-niet" data-ick="niet" aria-label="Niet gekomen: <?= h($_k['naam']) ?>">Niet</button>
+          <button type="button" class="bh-ick-ongedaan" data-ick="ongedaan" aria-label="Ongedaan maken: <?= h($_k['naam']) ?>">Ongedaan</button>
         </span>
       <?php else: ?>
         <?= $_k['stand'] === 'aanwezig' ? bh_badge('Aanwezig', 'groen') : ($_k['stand'] === 'niet' ? bh_badge('Niet gekomen', 'rood') : bh_badge('Verwacht', 'grijs')) ?>

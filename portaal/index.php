@@ -427,7 +427,7 @@ require __DIR__ . '/_kop.php';
   <div class="pt-melding ok">
     <?= icoon('vink-cirkel', 20) ?>
     <div class="pt-melding-tekst">
-      <span class="pt-melding-titel"><?= h($begroet['titel']) ?></span>
+      <h1 class="pt-melding-titel"><?= h($begroet['titel']) ?></h1>
       <span class="pt-melding-body"><?= h($begroet['tekst']) ?></span>
     </div>
   </div>

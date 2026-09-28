@@ -114,7 +114,7 @@ require __DIR__ . '/layout_top.php';
 
   <div class="pg-titelrij">
     <div>
-      <h1 class="pg-h1"><?= h((string)$pagina['titel']) ?></h1>
+      <h2 class="pg-h1"><?= h((string)$pagina['titel']) ?></h2>
       <p class="pg-sub">
         <a href="<?= APP_URL ?>/p/<?= h((string)$pagina['slug']) ?>" target="_blank" rel="noopener"><?= h(APP_URL) ?>/p/<?= h((string)$pagina['slug']) ?></a>
       </p>

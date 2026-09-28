@@ -33,6 +33,11 @@
    hetzelfde lapmiddel. Eén keer hier, dan hoeft dat nergens meer. */
 [hidden] { display: none !important; }
 
+/* Eén zichtbare toetsenbordfocus voor alles wat geen eigen regel heeft. In de navy
+   zijbalk en balk is navy onzichtbaar, daar is hij wit. */
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.bh-zijbalk :focus-visible, .sidebar :focus-visible, .pt-topbar :focus-visible { outline-color: #ffffff; }
+
 /* ── CSS Custom Properties ─────────────────────────────────────
    Alle kleuren, letters, ruimte en vormen staan in één blok: ONTWERP-FUNDAMENT
    verderop (met de donkere modus eronder). Hier alleen de maten van de beheerindeling.
@@ -184,7 +189,7 @@ input[type=password], input[type=number], input[type=url], select, textarea {
 }
 input:focus, select:focus, textarea:focus {
   outline: none; border-color: var(--navy);
-  box-shadow: 0 0 0 3px var(--fase-blauw-rand);
+  box-shadow: var(--focus-ring);
 }
 textarea { resize: vertical; min-height: 80px; }
 
@@ -553,7 +558,7 @@ table.tabel td, table.tabel th { overflow-wrap: normal; word-break: normal; }
   --accent-soft:   #fdf1ea;   /* zachte accent-achtergrond */
   --ink:           #1a2230;   /* primaire tekst */
   --ink-soft:      #5a6478;   /* secundaire tekst */
-  --ink-muted:     #8a93a6;   /* tertiaire tekst / labels */
+  --ink-muted:     #647085;   /* tertiaire tekst / labels — 5,0:1 op wit, 4,7:1 op --bg (was #8a93a6, 3,0:1) */
   --bg:            #f4f6f9;   /* pagina-achtergrond */
   --bg-subtle:     #f8fafc;
   --surface:       #ffffff;   /* kaarten */
@@ -567,6 +572,11 @@ table.tabel td, table.tabel th { overflow-wrap: normal; word-break: normal; }
      accent en navy donker, dus wit. In donker worden ze juist licht en zakt wit naar
      2,3–2,8:1 — daar hoort donkere tekst. Eén token, twee waarden. */
   --op-vol:        #ffffff;
+
+  /* Toetsenbordfocus. De ring haalt ≥3:1 tegen wit (WCAG 1.4.11 / 2.4.7); de oude
+     ringen van 12–20% dekking waren nauwelijks te zien. */
+  --focus:         #054d8a;
+  --focus-ring:    0 0 0 3px rgba(5,77,138,.6);
 
   /* ── Zijbalk ── */
   --zijbalk:       #043d6e;   /* in licht dónkerder navy dan de pagina */
@@ -670,6 +680,8 @@ html[data-theme="dark"] {
   --warn:          #e0a944;   --warn-soft:  rgba(224,169,68,.14);
   --error:         #ef8078;   --error-soft: rgba(239,128,120,.14);
   --op-vol:        #0b1420;   /* wit haalt hier 2,3–2,8:1; donkere tekst 6,5–8,0:1 */
+  --focus:         #7bbcec;
+  --focus-ring:    0 0 0 3px rgba(123,188,236,.75);
 
   --zijbalk:       #081120;   /* donkerder dan de pagina — omgekeerd aan licht */
   --zijbalk-tekst: #c3d2e0;
@@ -803,7 +815,7 @@ button.ds-avatar { padding: 0; border: 0; font-family: inherit; }
 .ds-input:focus, .ds-select:focus, .ds-textarea:focus,
 .ds-veld > input:focus, .ds-veld > select:focus, .ds-veld > textarea:focus {
   outline: none; border-color: var(--navy);
-  box-shadow: 0 0 0 3px rgba(5,77,138,.12);
+  box-shadow: var(--focus-ring);
 }
 /* Idem voor het label: binnen .ds-veld is een <label> vanzelf het veldlabel. */
 .ds-veld > label { font: var(--text-label); color: var(--ink); }
@@ -933,7 +945,7 @@ button.ds-avatar { padding: 0; border: 0; font-family: inherit; }
 }
 .ds-code-cijfer:focus {
   outline: none; border-color: var(--navy);
-  box-shadow: 0 0 0 3px rgba(5,77,138,.12);
+  box-shadow: var(--focus-ring);
 }
 @media (max-width: 380px) {
   .ds-code-cijfer { width: 42px; height: 52px; font-size: 21px; }
@@ -942,7 +954,8 @@ button.ds-avatar { padding: 0; border: 0; font-family: inherit; }
 
 /* Link-knop (tekst die als link oogt maar een knop is, bv "opnieuw sturen") */
 .ds-link-knop {
-  background: none; border: none; padding: 0; cursor: pointer;
+  background: none; border: none; padding: 4px 0; cursor: pointer;
+  min-height: 32px; display: inline-flex; align-items: center;   /* ≥24px raakvlak (WCAG 2.5.8) */
   color: var(--accent); font: var(--text-meta); font-weight: 600;
   text-decoration: none;
 }
@@ -1114,7 +1127,9 @@ a.pt-taakrij:hover { background: var(--bg); }
 .pt-taakrij-chevron { color: var(--ink-muted); flex: none; display: flex; }
 .pt-taakrij-actie {
   font: var(--text-label); font-size: 13px; color: var(--navy); flex: none;
-  background: none; border: none; padding: 0; cursor: pointer;
+  background: none; border: none; padding: 0 6px; cursor: pointer;
+  /* Portaal = telefoon: 44px raakvlak, ook al is de tekst klein. */
+  min-height: 44px; display: inline-flex; align-items: center;
 }
 .pt-taakrij-scheiding { height: 1px; background: var(--border); margin: 0 14px; }
 .pt-taakrij-knop { display: none; }
@@ -1400,7 +1415,7 @@ a.pt-taakrij:hover { background: var(--bg); }
 }
 .ui-info-knop .ic { stroke: var(--navy); }
 .ui-info-knop:hover { border-color: var(--navy); background: #eef2f8; }
-.ui-info-knop:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(5,77,138,.2); }
+.ui-info-knop:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 .ui-info-knop[aria-expanded="true"] { background: var(--navy); border-color: var(--navy); }
 .ui-info-knop[aria-expanded="true"] .ic { stroke: #fff; }
 /* Mobiel: het uitlegblokje komt onderin het scherm (altijd volledig leesbaar, nooit afgekapt door een kaart).
@@ -1505,7 +1520,7 @@ body.heeft-nav .ui-info-paneel { bottom: calc(90px + env(safe-area-inset-bottom,
 .ond-radio-box::after { content: ''; width: 10px; height: 10px; border-radius: 5px; background: #fff; display: none; }
 .ond-check input:checked + .ond-check-box, .ond-radio input:checked + .ond-radio-box { background: var(--navy); border-color: var(--navy); }
 .ond-check input:checked + .ond-check-box .ic, .ond-radio input:checked + .ond-radio-box::after { display: block; }
-.ond-check input:focus-visible + .ond-check-box, .ond-radio input:focus-visible + .ond-radio-box { box-shadow: 0 0 0 3px rgba(5,77,138,.2); }
+.ond-check input:focus-visible + .ond-check-box, .ond-radio input:focus-visible + .ond-radio-box { box-shadow: var(--focus-ring); }
 .ond-check-tekst, .ond-radio-tekst { font-size: 14px; line-height: 1.55; color: var(--ink); }
 .ond-lijst { display: flex; flex-direction: column; gap: 12px; }
 
@@ -1985,7 +2000,7 @@ details.b2-uitz > div { padding: 0 16px 16px; }
   font-size: 15px; line-height: 1.6; font-family: 'Instrument Sans', sans-serif; resize: vertical;
   color: var(--ink);
 }
-.wiz1-veldkaart textarea:focus { border-color: var(--navy); box-shadow: 0 0 0 3px rgba(5,77,138,.12); outline: none; }
+.wiz1-veldkaart textarea:focus { border-color: var(--navy); box-shadow: var(--focus-ring); outline: none; }
 .wiz1-voorbeelden { display: flex; flex-direction: column; gap: 8px; }
 .wiz1-vb-lbl { font-size: 12px; color: var(--ink-muted); }
 .wiz1-chips { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -2113,7 +2128,7 @@ details.b2-uitz > div { padding: 0 16px 16px; }
 }
 .blk-input { height: 48px; padding: 0 14px; }
 .blk-textarea { padding: 13px 14px; line-height: 1.6; resize: vertical; }
-.blk-input:focus, .blk-textarea:focus { border-color: var(--navy); box-shadow: 0 0 0 3px rgba(5,77,138,.12); outline: none; }
+.blk-input:focus, .blk-textarea:focus { border-color: var(--navy); box-shadow: var(--focus-ring); outline: none; }
 .blk-input:disabled { border-color: var(--border); background: var(--bg); color: var(--ink-soft); }
 .blk-input.fout, .blk-textarea.fout { border-color: var(--error); }
 .blk-rij { display: flex; gap: 12px; }

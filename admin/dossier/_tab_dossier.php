@@ -39,15 +39,16 @@ if ($_iv) {
         <span class="bh-veldwaarde"><?= h(datum_nl($_s['aangemeld_op'] ?? null)) ?></span>
       </div>
       <div>
-        <span class="bh-veldlabel">Berichten via</span>
         <?php if ($_mag_bewerken): ?>
-          <select class="ds-select bh-veld-smal"
+          <label class="bh-veldlabel" for="kanaal-<?= (int)$_s['pid'] ?>">Berichten via</label>
+          <select id="kanaal-<?= (int)$_s['pid'] ?>" class="ds-select bh-veld-smal"
                   onchange="kanaalVoorkeurZet(<?= (int)$_s['pid'] ?>, this.value, this)">
             <?php foreach (['whatsapp' => 'WhatsApp', 'sms' => 'Sms', 'email' => 'Alleen e-mail'] as $_k => $_l): ?>
               <option value="<?= h($_k) ?>"<?= ($_s['kanaal_voorkeur'] ?? '') === $_k ? ' selected' : '' ?>><?= h($_l) ?></option>
             <?php endforeach; ?>
           </select>
         <?php else: ?>
+          <span class="bh-veldlabel">Berichten via</span>
           <span class="bh-veldwaarde"><?= h(ucfirst((string)($_s['kanaal_voorkeur'] ?? '—'))) ?></span>
         <?php endif; ?>
       </div>
@@ -329,7 +330,7 @@ if ($_iv) {
       <?php if ($_mag_bewerken): ?>
       <div class="bh-notitie-nieuw">
         <textarea id="nieuwe-notitie-<?= (int)$_s['id'] ?>" class="ds-textarea" rows="2"
-                  placeholder="Notitie plaatsen…"></textarea>
+                  aria-label="Nieuwe notitie" placeholder="Notitie plaatsen…"></textarea>
         <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm"
                 onclick="notitieToevoegen(<?= (int)$_s['id'] ?>)">Plaatsen</button>
       </div>

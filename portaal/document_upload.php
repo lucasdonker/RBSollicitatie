@@ -78,7 +78,7 @@ require __DIR__ . '/_kop.php';
 <div class="ond du">
   <header class="ond-kop">
     <div class="ond-kop-titel">
-      <span class="ond-kop-naam"><?= h($taak['titel']) ?></span>
+      <h1 class="ond-kop-naam"><?= h($taak['titel']) ?></h1>
       <span class="ond-kop-sub"><?= $klaar ? 'Ontvangen' : 'Nog te doen' ?> · <?= h($taak['sub']) ?></span>
     </div>
     <span class="ond-chip<?= $klaar ? ' ok' : '' ?>"><span class="ond-chip-stip"></span><?= $klaar ? 'Ontvangen' : 'Nog te doen' ?></span>

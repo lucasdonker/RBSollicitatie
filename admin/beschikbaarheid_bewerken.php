@@ -129,11 +129,11 @@ require __DIR__ . '/layout_top.php';
   <?php endif; ?>
 
   <!-- Tabs -->
-  <div class="bh-bb-tabs" role="tablist">
-    <button type="button" class="bb-tab bh-bb-tab bb-tab-actief" data-tab="perdag" onclick="bbTab('perdag')">
+  <div class="bh-bb-tabs" role="group" aria-label="Weergave">
+    <button type="button" class="bb-tab bh-bb-tab bb-tab-actief" data-tab="perdag" aria-pressed="true" onclick="bbTab('perdag')">
       Per dag
     </button>
-    <button type="button" class="bb-tab bh-bb-tab" data-tab="formulier" onclick="bbTab('formulier')">
+    <button type="button" class="bb-tab bh-bb-tab" data-tab="formulier" aria-pressed="false" onclick="bbTab('formulier')">
       Formulier (portaal-stijl)
     </button>
   </div>
@@ -269,6 +269,7 @@ function bbTab(naam) {
   document.getElementById('bb-' + naam).hidden = false;
   document.querySelectorAll('.bb-tab').forEach(t => {
     t.classList.toggle('bb-tab-actief', t.dataset.tab === naam);
+    t.setAttribute('aria-pressed', t.dataset.tab === naam ? 'true' : 'false');
   });
 }
 

@@ -21,12 +21,11 @@ $_bt = [
     'sjablonen' => ['Sjablonen',   APP_URL . '/admin/mail_templates.php',      !function_exists('mag') || mag('mailing', 'bewerken')],
 ];
 ?>
-<div class="bh-tabs" role="tablist" aria-label="Berichten">
+<nav class="bh-tabs" aria-label="Berichten">
   <?php foreach ($_bt as $_k => $_t): ?>
     <?php if (!$_t[2]) continue; ?>
-    <a class="bh-tab<?= $bt_actief === $_k ? ' actief' : '' ?>" href="<?= h($_t[1]) ?>" role="tab"
-       aria-selected="<?= $bt_actief === $_k ? 'true' : 'false' ?>"><?= h($_t[0]) ?></a>
+    <a class="bh-tab<?= $bt_actief === $_k ? ' actief' : '' ?>" href="<?= h($_t[1]) ?>"<?= $bt_actief === $_k ? ' aria-current="page"' : '' ?>><?= h($_t[0]) ?></a>
   <?php endforeach; ?>
-</div>
+</nav>
 <?php
 $bt_actief = 'nieuw';

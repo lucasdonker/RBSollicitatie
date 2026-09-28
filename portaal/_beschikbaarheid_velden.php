@@ -73,7 +73,7 @@ $sectie_kop = function(string $titel) use ($ico): string {
         <?php endforeach; ?>
       </div>
       <span class="bs-uitz-uitleg">Bijvoorbeeld vanwege school of een bijbaan. Weekenden kunnen niet vast vrij.</span>
-      <input type="text" name="b2_vaste_toelichting" id="beschVasteToelichting" placeholder="Toelichting (optioneel)" class="bs-invoer" maxlength="300">
+      <input type="text" name="b2_vaste_toelichting" id="beschVasteToelichting" aria-label="Toelichting bij je vaste vrije dag (optioneel)" placeholder="Toelichting (optioneel)" class="bs-invoer" maxlength="300">
     </div>
   </div>
 

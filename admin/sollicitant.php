@@ -177,16 +177,15 @@ endif;
 
 <?php $kop_dossier = $d; require __DIR__ . '/dossier/_kop.php'; ?>
 
-<div class="bh-dossiertabs" role="tablist">
+<nav class="bh-dossiertabs" aria-label="Onderdelen van het dossier">
   <?php foreach ($tabs as $_t): ?>
     <a class="bh-dossiertab<?= $_t['actief'] ? ' actief' : '' ?>"
-       href="<?= h(dossier_url($id, $_t['sleutel'])) ?>" role="tab"
-       aria-selected="<?= $_t['actief'] ? 'true' : 'false' ?>">
+       href="<?= h(dossier_url($id, $_t['sleutel'])) ?>"<?= $_t['actief'] ? ' aria-current="page"' : '' ?>>
       <?= h($_t['label']) ?>
       <?php if ($_t['aantal'] !== null): ?><span class="bh-dossiertab-getal"><?= h((string)$_t['aantal']) ?></span><?php endif; ?>
     </a>
   <?php endforeach; ?>
-</div>
+</nav>
 
 <?php
 $_bestand = __DIR__ . '/dossier/_tab_' . preg_replace('/[^a-z]/', '', $tab) . '.php';

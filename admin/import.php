@@ -195,8 +195,8 @@ require __DIR__ . '/layout_top.php';
         <input type="hidden" name="start_import" value="1">
         <?= csrf_input() ?>
         <div class="ds-veld">
-          <label>Seizoen</label>
-          <select name="seizoen_id" required>
+          <label for="veld-seizoen-id">Seizoen</label>
+          <select id="veld-seizoen-id" name="seizoen_id" required>
             <?php foreach ($seizoenen as $s): ?>
             <option value="<?= $s['id'] ?>" <?= $s === reset($seizoenen) ? 'selected' : '' ?>>
               <?= h($s['naam']) ?> (<?= $s['status'] ?>)
@@ -205,8 +205,8 @@ require __DIR__ . '/layout_top.php';
           </select>
         </div>
         <div class="ds-veld">
-          <label>Beginfase</label>
-          <select name="fase">
+          <label for="veld-fase">Beginfase</label>
+          <select id="veld-fase" name="fase">
             <option value="aangemeld">Aangemeld (nieuw)</option>
             <option value="uitgenodigd_selectie">Uitgenodigd selectiedag</option>
             <option value="aangemeld_selectie">Aangemeld selectiedag</option>
@@ -217,8 +217,8 @@ require __DIR__ . '/layout_top.php';
           <div class="ds-veld-hint">Kies de juiste fase voor de te importeren sollicitanten. Als ze allemaal al een selectiedag hebben gehad, kies dan "Selectiedag geweest".</div>
         </div>
         <div class="ds-veld">
-          <label>CSV bestand</label>
-          <input type="file" name="csv_bestand" accept=".csv" required>
+          <label for="veld-csv-bestand">CSV bestand</label>
+          <input id="veld-csv-bestand" type="file" name="csv_bestand" accept=".csv" required>
           <div class="ds-veld-hint">Exporteer uit Google Sheets als CSV (kommagescheiden, UTF-8)</div>
         </div>
         <button type="submit" class="ds-btn ds-btn-primair">Import starten</button>

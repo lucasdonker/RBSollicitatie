@@ -9,13 +9,12 @@
  */
 $bt_actief = $bt_actief ?? 'beheerders';
 ?>
-<div class="bh-tabs" role="tablist" aria-label="Beheerders en rechten">
+<?php // Links naar een andere pagina zijn navigatie, geen tabpaneel: nav + aria-current. ?>
+<nav class="bh-tabs" aria-label="Beheerders en rechten">
   <a class="bh-tab<?= $bt_actief === 'beheerders' ? ' actief' : '' ?>"
-     href="<?= APP_URL ?>/admin/beheerders.php" role="tab"
-     aria-selected="<?= $bt_actief === 'beheerders' ? 'true' : 'false' ?>">Beheerders</a>
+     href="<?= APP_URL ?>/admin/beheerders.php"<?= $bt_actief === 'beheerders' ? ' aria-current="page"' : '' ?>>Beheerders</a>
   <a class="bh-tab<?= $bt_actief === 'rollen' ? ' actief' : '' ?>"
-     href="<?= APP_URL ?>/admin/rollen.php" role="tab"
-     aria-selected="<?= $bt_actief === 'rollen' ? 'true' : 'false' ?>">Rollen &amp; rechten</a>
-</div>
+     href="<?= APP_URL ?>/admin/rollen.php"<?= $bt_actief === 'rollen' ? ' aria-current="page"' : '' ?>>Rollen &amp; rechten</a>
+</nav>
 <?php
 $bt_actief = 'beheerders';

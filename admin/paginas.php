@@ -50,7 +50,7 @@ require __DIR__ . '/layout_top.php';
 <div class="pg-wrap">
   <div class="pg-titelrij">
     <div>
-      <h1 class="pg-h1">Landingspagina's</h1>
+      <h2 class="pg-h1">Landingspagina's</h2>
       <p class="pg-sub">Eigen landingspagina's per doelgroep, met het aanmeldformulier erin.</p>
     </div>
     <?php if ($mag_bewerken): ?>

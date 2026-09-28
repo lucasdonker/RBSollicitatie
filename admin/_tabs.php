@@ -25,20 +25,19 @@ $tabs_totaal = $tabs_totaal ?? 0;
 $tabs_voet   = $tabs_voet ?? null;
 $tabs_label  = $tabs_label ?? 'Filter op fase';
 ?>
-<div class="bh-tabs" role="tablist" aria-label="<?= h($tabs_label) ?>">
+<?php // Elke tab is een link (nieuwe pagina), dus nav + aria-current — geen role="tab". ?>
+<nav class="bh-tabs" aria-label="<?= h($tabs_label) ?>">
   <a class="bh-tab<?= $tabs_actief === 'alle' ? ' actief' : '' ?>"
-     href="<?= h($tabs_url('alle')) ?>" role="tab"
-     aria-selected="<?= $tabs_actief === 'alle' ? 'true' : 'false' ?>">
+     href="<?= h($tabs_url('alle')) ?>"<?= $tabs_actief === 'alle' ? ' aria-current="page"' : '' ?>>
     Alle <span class="bh-tab-getal"><?= (int)$tabs_totaal ?></span>
   </a>
   <?php foreach ($tabs_data['tabs'] as $_t): ?>
     <a class="bh-tab ds-fase-<?= h($_t['kleur']) ?><?= $tabs_actief === $_t['sleutel'] ? ' actief' : '' ?><?= $_t['actueel'] ? '' : ' bh-tab-buiten' ?>"
-       href="<?= h($tabs_url($_t['sleutel'])) ?>" role="tab"
-       aria-selected="<?= $tabs_actief === $_t['sleutel'] ? 'true' : 'false' ?>">
+       href="<?= h($tabs_url($_t['sleutel'])) ?>"<?= $tabs_actief === $_t['sleutel'] ? ' aria-current="page"' : '' ?>>
       <?= h($_t['label']) ?> <span class="bh-tab-getal"><?= (int)$_t['aantal'] ?></span>
     </a>
   <?php endforeach; ?>
-</div>
+</nav>
 <?php if ($tabs_data['vreemd_aantal'] > 0): ?>
   <?php $_n = (int)$tabs_data['vreemd_aantal']; ?>
   <div class="bh-tabs-voet">

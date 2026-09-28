@@ -221,16 +221,16 @@ require __DIR__ . '/layout_top.php';
 
   <form method="POST" class="bh-mt-zijform">
     <?= csrf_input() ?><input type="hidden" name="actie" value="nieuw">
-    <div class="veld-label">Nieuw eigen sjabloon</div>
-    <input type="text" name="naam" placeholder="Naam, bv. Magazine seizoen" required class="bh-mt-zijveld">
+    <label for="mtNieuwNaam" class="veld-label">Nieuw eigen sjabloon</label>
+    <input type="text" id="mtNieuwNaam" name="naam" placeholder="Naam, bv. Magazine seizoen" required class="bh-mt-zijveld">
     <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm bh-mt-zijknop">Aanmaken</button>
     <div class="bh-mt-zijhint">Voor handmatige en geplande berichten.</div>
   </form>
 
   <form method="POST" class="bh-mt-zijform">
     <?= csrf_input() ?><input type="hidden" name="actie" value="hero_image">
-    <div class="veld-label">Standaard hero-afbeelding (URL)</div>
-    <input type="text" name="hero_url" value="<?= h($hero_row['body_html'] ?? '') ?>" placeholder="https://.../foto.jpg" class="bh-mt-zijveld bh-mt-zijveld-url">
+    <label for="mtHeroUrl" class="veld-label">Standaard hero-afbeelding (URL)</label>
+    <input type="text" id="mtHeroUrl" name="hero_url" value="<?= h($hero_row['body_html'] ?? '') ?>" placeholder="https://.../foto.jpg" class="bh-mt-zijveld bh-mt-zijveld-url">
     <div class="bh-mt-zijhint bh-mt-zijhint-boven">Leeg = standaard strandfoto</div>
     <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm bh-mt-zijknop">Opslaan</button>
   </form>
@@ -253,8 +253,8 @@ require __DIR__ . '/layout_top.php';
     <?php if ($def): ?>
     <form method="POST" class="bh-mt-kanaal">
       <?= csrf_input() ?><input type="hidden" name="actie" value="kanaal"><input type="hidden" name="slug" value="<?= h($actief_slug) ?>">
-      <label class="bh-mt-kanaal-label">Kanaal</label>
-      <select name="kanaalmodus" onchange="this.form.submit()" class="bh-mt-kanaal-keuze">
+      <label for="veld-kanaalmodus" class="bh-mt-kanaal-label">Kanaal</label>
+      <select id="veld-kanaalmodus" name="kanaalmodus" onchange="this.form.submit()" class="bh-mt-kanaal-keuze">
         <?php foreach ($modi as $mk => $ml): if ($mk !== 'email' && $mk !== 'uit' && !$def['kort_toegestaan']) continue; ?>
         <option value="<?= $mk ?>" <?= $modus === $mk ? 'selected' : '' ?>><?= h($ml) ?></option>
         <?php endforeach; ?>
@@ -271,21 +271,21 @@ require __DIR__ . '/layout_top.php';
       <div class="tmpl-velden">
         <?php if (!$def): ?>
         <div class="bh-mt-breed">
-          <label class="veld-label">Naam</label>
-          <input type="text" name="naam" value="<?= h($actief['naam'] ?? '') ?>">
+          <label for="veld-naam" class="veld-label">Naam</label>
+          <input id="veld-naam" type="text" name="naam" value="<?= h($actief['naam'] ?? '') ?>">
         </div>
         <?php endif; ?>
         <div>
-          <label class="veld-label">Onderwerpregel (e-mail)</label>
-          <input type="text" name="onderwerp" value="<?= h($actief['onderwerp'] ?? '') ?>" required>
+          <label for="veld-onderwerp" class="veld-label">Onderwerpregel (e-mail)</label>
+          <input id="veld-onderwerp" type="text" name="onderwerp" value="<?= h($actief['onderwerp'] ?? '') ?>" required>
         </div>
         <div>
-          <label class="veld-label">Hero-titel</label>
-          <input type="text" name="hero_titel" value="<?= h($actief['hero_titel'] ?? '') ?>" placeholder="Leeg = onderwerp">
+          <label for="veld-hero-titel" class="veld-label">Hero-titel</label>
+          <input id="veld-hero-titel" type="text" name="hero_titel" value="<?= h($actief['hero_titel'] ?? '') ?>" placeholder="Leeg = onderwerp">
         </div>
         <div>
-          <label class="veld-label">Hero-subtitel</label>
-          <input type="text" name="hero_subtitel" value="<?= h($actief['hero_subtitel'] ?? '') ?>">
+          <label for="veld-hero-subtitel" class="veld-label">Hero-subtitel</label>
+          <input id="veld-hero-subtitel" type="text" name="hero_subtitel" value="<?= h($actief['hero_subtitel'] ?? '') ?>">
         </div>
         <div>
           <label class="veld-label">Hero-kleur</label>
@@ -315,8 +315,8 @@ require __DIR__ . '/layout_top.php';
           <div class="bh-mt-hulp">Platte tekst, max 400 tekens, geen opmaak. Zelfde variabelen als de e-mail.</div>
         </div>
         <div>
-          <label class="veld-label">Samenvatting (portaal)</label>
-          <textarea name="samenvatting" rows="5" maxlength="200" class="bh-mt-tekstvak"><?= h($actief['samenvatting'] ?? '') ?></textarea>
+          <label for="veld-samenvatting" class="veld-label">Samenvatting (portaal)</label>
+          <textarea id="veld-samenvatting" name="samenvatting" rows="5" maxlength="200" class="bh-mt-tekstvak"><?= h($actief['samenvatting'] ?? '') ?></textarea>
           <div class="bh-mt-hulp">Eén regel onder de titel in het berichtenoverzicht van de sollicitant.</div>
         </div>
       </div>

@@ -234,14 +234,14 @@ require __DIR__ . '/_kop.php';
   <header class="blk-kop">
     <div class="blk-kop-rij">
       <div class="blk-kop-titel">
-        <span class="blk-kop-naam">Kennismakingsformulier</span>
+        <h1 class="blk-kop-naam">Kennismakingsformulier</h1>
         <span class="blk-kop-stap"><span id="blkStapNr">Stap 1 van 4</span><span class="blk-kop-stapnaam" id="blkStapNaam"></span></span>
       </div>
     </div>
     <div class="blk-kop-rechts">
-      <div class="blk-tabs" role="tablist">
+      <div class="blk-tabs" role="group" aria-label="Stappen van het formulier">
         <?php foreach ($stappen as $nr => $naam): ?>
-        <button type="button" class="blk-tab" data-stap="<?= $nr ?>" role="tab"><span class="blk-tab-nr"><?= $nr ?></span><span class="blk-tab-lbl"><?= h($naam) ?></span></button>
+        <button type="button" class="blk-tab" data-stap="<?= $nr ?>"><span class="blk-tab-nr"><?= $nr ?></span><span class="blk-tab-lbl"><?= h($naam) ?></span></button>
         <?php endforeach; ?>
       </div>
       <span class="blk-autosave <?= $concept_ok ? 'ok' : '' ?>" id="blkAutosave" aria-live="polite"><?= icoon('vink', 13) ?><span id="blkAutosaveTekst"><?= h($concept_tekst) ?></span></span>

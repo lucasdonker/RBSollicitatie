@@ -26,7 +26,8 @@
       const n = parseInt(t.dataset.stap, 10);
       t.classList.toggle('actief', n === nr);
       t.classList.toggle('klaar', n < nr);
-      t.setAttribute('aria-selected', n === nr ? 'true' : 'false');
+      // Stapnavigatie, geen tabpaneel: de huidige stap krijgt aria-current (WCAG 4.1.2).
+      if (n === nr) t.setAttribute('aria-current', 'step'); else t.removeAttribute('aria-current');
     });
     alle('.blk-ov-rij').forEach(function (r) {
       const n = parseInt(r.dataset.stap, 10);

@@ -33,7 +33,7 @@ $_s = $tab_dossier['sol'];
       </div>
       <?php if (mag('sollicitanten', 'bewerken')): ?>
       <div class="bh-notitie-nieuw">
-        <textarea id="nieuwe-notitie-<?= (int)$_s['id'] ?>" class="ds-textarea" rows="2"
+        <textarea id="nieuwe-notitie-<?= (int)$_s['id'] ?>" class="ds-textarea" rows="2" aria-label="Nieuwe notitie"
                   placeholder="Notitie plaatsen…"></textarea>
         <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm"
                 onclick="notitieToevoegen(<?= (int)$_s['id'] ?>)">Plaatsen</button>

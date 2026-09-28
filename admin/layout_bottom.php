@@ -796,14 +796,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /* ── Flash berichten ────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
-  // Alleen succes vervaagt; een fout of waarschuwing moet je kunnen lezen (zie toon_flash()).
-  document.querySelectorAll('.flash.flash-succes').forEach(el => {
-    setTimeout(() => {
-      el.style.transition = 'opacity .4s';
-      el.style.opacity = '0';
-      setTimeout(() => el.remove(), 400);
-    }, 5000);
-  });
+  // Meldingen boven de pagina blijven staan: wie traag leest of een schermlezer gebruikt,
+  // mag ze niet missen (WCAG 2.2.1). Ze verdwijnen bij de volgende pagina vanzelf.
   // Oude links met ?panel=<id> (bladwijzers, mails) gaan naar het dossier.
   const panelId = new URLSearchParams(window.location.search).get('panel');
   if (panelId && /^\d+$/.test(panelId)) openPaneel(panelId);

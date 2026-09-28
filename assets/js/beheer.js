@@ -35,13 +35,33 @@
     return h;
   }
 
+  // Een fout blijft staan tot je hem sluit; een bevestiging gaat na 8 seconden weg, maar
+  // wacht zolang de muis of de focus erop staat (WCAG 2.2.1: genoeg tijd om te lezen).
   function bhToast(tekst, soort) {
     var d = document.createElement('div');
     d.className = 'bh-toast' + (soort ? ' ' + soort : '');
-    d.textContent = tekst;
+    if (soort === 'fout') d.setAttribute('role', 'alert');
+    var t = document.createElement('span');
+    t.textContent = tekst;
+    d.appendChild(t);
+    var sluit = document.createElement('button');
+    sluit.type = 'button';
+    sluit.className = 'bh-toast-sluit';
+    sluit.setAttribute('aria-label', 'Melding sluiten');
+    sluit.textContent = '×';
+    d.appendChild(sluit);
     toastHost().appendChild(d);
-    setTimeout(function () { d.classList.add('weg'); }, 4200);
-    setTimeout(function () { d.remove(); }, 4700);
+
+    var klok = null;
+    function weg() { d.classList.add('weg'); setTimeout(function () { d.remove(); }, 400); }
+    function start() { if (soort !== 'fout') klok = setTimeout(weg, 8000); }
+    function pauze() { clearTimeout(klok); }
+    sluit.addEventListener('click', weg);
+    d.addEventListener('mouseenter', pauze);
+    d.addEventListener('mouseleave', start);
+    d.addEventListener('focusin', pauze);
+    d.addEventListener('focusout', start);
+    start();
     return d;
   }
 
@@ -363,9 +383,17 @@
     var knop = document.getElementById('hamburger');
     var laag = document.getElementById('navoverlay');
     if (!balk || !knop) return;
+    var smal = window.matchMedia('(max-width: 900px)');
+
+    // Op een smal scherm is een dichte zijbalk buiten beeld geschoven; zonder inert kon je er
+    // met Tab nog in belanden zonder iets te zien (WCAG 2.4.3 / 2.4.7). Breed: altijd bereikbaar.
+    function inertZetten() {
+      balk.inert = smal.matches && !balk.classList.contains('open');
+    }
 
     function zet(open) {
       balk.classList.toggle('open', open);
+      inertZetten();
       knop.setAttribute('aria-expanded', open ? 'true' : 'false');
       if (laag) {
         laag.hidden = !open;
@@ -387,6 +415,8 @@
     window.addEventListener('resize', function () {
       if (window.innerWidth > 900 && balk.classList.contains('open')) zet(false);
     });
+    if (smal.addEventListener) smal.addEventListener('change', inertZetten);
+    inertZetten();
   }
 
   /* ── Hulppaneel in de topbalk ─────────────────────────────────── */

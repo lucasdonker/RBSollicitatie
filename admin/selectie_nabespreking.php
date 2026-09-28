@@ -296,6 +296,7 @@ require __DIR__ . '/layout_top.php';
         <?php endforeach; ?>
       </div>
       <input type="text" class="ds-input bh-nb-notitie" id="notitie-<?= $_id ?>"
+             aria-label="Reden of aantekening bij <?= h((string)$k['naam']) ?>"
              value="<?= h((string)$_not) ?>" placeholder="Korte reden of aantekening…"
              onchange="besluitZet(<?= $_id ?>, null)">
       <span class="bh-nb-stand" id="stand-<?= $_id ?>" aria-live="polite"></span>

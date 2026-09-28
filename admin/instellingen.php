@@ -552,21 +552,21 @@ require __DIR__ . '/layout_top.php';
       <div class="bh-instsectie">
         <h3>Organisatie</h3>
         <div class="ds-veld">
-          <label>Naam van de organisatie</label>
-          <input type="text" name="inst[site.naam]" value="<?= h(instelling('site.naam','Reddingsbrigade Paal 13')) ?>">
+          <label for="veld-inst-site-naam">Naam van de organisatie</label>
+          <input id="veld-inst-site-naam" type="text" name="inst[site.naam]" value="<?= h(instelling('site.naam','Reddingsbrigade Paal 13')) ?>">
         </div>
         <div class="bh-veldrij">
           <div class="ds-veld">
-            <label>Logo <?= bh_tip('Upload een bestand of vul een URL in. Wordt links bovenin getoond in admin én portaal. PNG, JPG of WebP; geen SVG, want daar kan script in zitten.') ?></label>
-            <input type="file" name="logo_upload" accept="image/png,image/jpeg,image/webp">
+            <label for="veld-logo-upload">Logo <?= bh_tip('Upload een bestand of vul een URL in. Wordt links bovenin getoond in admin én portaal. PNG, JPG of WebP; geen SVG, want daar kan script in zitten.') ?></label>
+            <input id="veld-logo-upload" type="file" name="logo_upload" accept="image/png,image/jpeg,image/webp">
             <div class="ds-veld-hint">Of vul een pad/URL in:</div>
-            <input type="text" name="inst[site.logo_url]" value="<?= h(instelling('site.logo_url')) ?>" placeholder="/uploads/branding/logo.png" class="bh-inst-urlveld">
+            <input type="text" name="inst[site.logo_url]" aria-label="Of een pad of URL naar het logo" value="<?= h(instelling('site.logo_url')) ?>" placeholder="/uploads/branding/logo.png" class="bh-inst-urlveld">
           </div>
           <div class="ds-veld">
-            <label>Favicon <?= bh_tip('Pictogram in de browsertab. PNG of ICO.') ?></label>
-            <input type="file" name="favicon_upload" accept="image/png,image/x-icon,image/vnd.microsoft.icon">
+            <label for="veld-favicon-upload">Favicon <?= bh_tip('Pictogram in de browsertab. PNG of ICO.') ?></label>
+            <input id="veld-favicon-upload" type="file" name="favicon_upload" accept="image/png,image/x-icon,image/vnd.microsoft.icon">
             <div class="ds-veld-hint">Of vul een pad/URL in:</div>
-            <input type="text" name="inst[site.favicon_url]" value="<?= h(instelling('site.favicon_url')) ?>" placeholder="/uploads/branding/favicon.png" class="bh-inst-urlveld">
+            <input type="text" name="inst[site.favicon_url]" aria-label="Of een pad of URL naar het favicon" value="<?= h(instelling('site.favicon_url')) ?>" placeholder="/uploads/branding/favicon.png" class="bh-inst-urlveld">
           </div>
         </div>
         <?php $logo = instelling('site.logo_url'); if ($logo): ?>
@@ -580,8 +580,8 @@ require __DIR__ . '/layout_top.php';
       <div class="bh-instsectie">
         <h3>Portaal</h3>
         <div class="ds-veld">
-          <label>Welkomsttekst op portaal login <?= bh_tip('Tekst die sollicitanten zien op het inlogscherm van het portaal, voordat ze inloggen.') ?></label>
-          <textarea name="inst[portaal.welkomst_tekst]" rows="3"><?= h(instelling('portaal.welkomst_tekst','Welkom op het sollicitantenportaal van Paal 13.')) ?></textarea>
+          <label for="veld-inst-portaal-welkomst-tekst">Welkomsttekst op portaal login <?= bh_tip('Tekst die sollicitanten zien op het inlogscherm van het portaal, voordat ze inloggen.') ?></label>
+          <textarea id="veld-inst-portaal-welkomst-tekst" name="inst[portaal.welkomst_tekst]" rows="3"><?= h(instelling('portaal.welkomst_tekst','Welkom op het sollicitantenportaal van Paal 13.')) ?></textarea>
         </div>
       </div>
 
@@ -605,7 +605,7 @@ require __DIR__ . '/layout_top.php';
           <?php else: ?>
             <div class="ds-veld-hint bh-inst-huisregels-stand">Nog geen document. De taak "Huisregels lezen" staat bij aangenomen sollicitanten al klaar en krijgt automatisch een link zodra je hier een pdf plaatst.</div>
           <?php endif; ?>
-          <input type="file" name="huisregels_upload" accept="application/pdf">
+          <input type="file" name="huisregels_upload" accept="application/pdf" aria-label="Huisregels uploaden (pdf)">
           <div class="ds-veld-hint">Een nieuwe pdf vervangt de link in de taak. Het bestand komt in de bijlagenbibliotheek; de sollicitant opent het via een tijdelijke, persoonlijke downloadlink.</div>
         </div>
       </div>
@@ -696,24 +696,24 @@ require __DIR__ . '/layout_top.php';
       <input type="hidden" name="functie_id" value="<?= $f['id'] ?>">
       <div class="bh-functie-rij">
         <div class="ds-veld">
-          <label>Naam</label>
-          <input type="text" name="naam" value="<?= h($f['naam']) ?>">
+          <label for="veld-naam-<?= (int)$f['id'] ?>">Naam</label>
+          <input id="veld-naam-<?= (int)$f['id'] ?>" type="text" name="naam" value="<?= h($f['naam']) ?>">
         </div>
         <div class="ds-veld">
-          <label>Factor</label>
-          <input type="number" name="factor" value="<?= $f['factor'] ?>" step="0.01" min="0" max="5">
+          <label for="veld-factor-<?= (int)$f['id'] ?>">Factor</label>
+          <input id="veld-factor-<?= (int)$f['id'] ?>" type="number" name="factor" value="<?= $f['factor'] ?>" step="0.01" min="0" max="5">
         </div>
         <div class="ds-veld">
-          <label>Min leeftijd</label>
-          <input type="number" name="min_leeftijd" value="<?= $f['min_leeftijd'] ?>" min="14" max="99">
+          <label for="veld-min-leeftijd-<?= (int)$f['id'] ?>">Min leeftijd</label>
+          <input id="veld-min-leeftijd-<?= (int)$f['id'] ?>" type="number" name="min_leeftijd" value="<?= $f['min_leeftijd'] ?>" min="14" max="99">
         </div>
         <div class="ds-veld">
-          <label>Max leeftijd</label>
-          <input type="number" name="max_leeftijd" value="<?= $f['max_leeftijd'] ?>" min="14" max="99">
+          <label for="veld-max-leeftijd-<?= (int)$f['id'] ?>">Max leeftijd</label>
+          <input id="veld-max-leeftijd-<?= (int)$f['id'] ?>" type="number" name="max_leeftijd" value="<?= $f['max_leeftijd'] ?>" min="14" max="99">
         </div>
         <div class="ds-veld">
-          <label>Volgorde</label>
-          <input type="number" name="volgorde" value="<?= $f['volgorde'] ?>" min="0" max="99">
+          <label for="veld-volgorde-<?= (int)$f['id'] ?>">Volgorde</label>
+          <input id="veld-volgorde-<?= (int)$f['id'] ?>" type="number" name="volgorde" value="<?= $f['volgorde'] ?>" min="0" max="99">
         </div>
         <div class="bh-functie-knop">
           <button type="submit" class="ds-btn ds-btn-primair ds-btn-sm">Sla op</button>
@@ -955,8 +955,8 @@ require __DIR__ . '/layout_top.php';
           Sollicitanten binnen de leeftijdsgrenzen worden automatisch uitgenodigd, of je krijgt ze als voorstel te zien.
         </p>
         <div class="ds-veld">
-          <label>Modus</label>
-          <select name="inst[invite.modus]">
+          <label for="veld-inst-invite-modus">Modus</label>
+          <select id="veld-inst-invite-modus" name="inst[invite.modus]">
             <?php foreach (['uit'=>'Uit — geen automatisering','suggestie'=>'Suggestie — markeer in de lijst, admin handelt','auto'=>'Automatisch — nodig uit na ingestelde vertraging'] as $v=>$l): ?>
             <option value="<?= $v ?>" <?= instelling('invite.modus') === $v ? 'selected' : '' ?>><?= $l ?></option>
             <?php endforeach; ?>
@@ -964,17 +964,17 @@ require __DIR__ . '/layout_top.php';
         </div>
         <div class="bh-veldrij">
           <div class="ds-veld">
-            <label>Minimumleeftijd</label>
-            <input type="number" name="inst[invite.min_leeftijd]" value="<?= instelling_int('invite.min_leeftijd',16) ?>" min="14" max="40">
+            <label for="veld-inst-invite-min-leeftijd">Minimumleeftijd</label>
+            <input id="veld-inst-invite-min-leeftijd" type="number" name="inst[invite.min_leeftijd]" value="<?= instelling_int('invite.min_leeftijd',16) ?>" min="14" max="40">
           </div>
           <div class="ds-veld">
-            <label>Maximumleeftijd</label>
-            <input type="number" name="inst[invite.max_leeftijd]" value="<?= instelling_int('invite.max_leeftijd',30) ?>" min="14" max="65">
+            <label for="veld-inst-invite-max-leeftijd">Maximumleeftijd</label>
+            <input id="veld-inst-invite-max-leeftijd" type="number" name="inst[invite.max_leeftijd]" value="<?= instelling_int('invite.max_leeftijd',30) ?>" min="14" max="65">
           </div>
         </div>
         <div class="ds-veld" id="delay_veld"<?= instelling('invite.modus') !== 'auto' ? ' hidden' : '' ?>>
-          <label>Vertraging in uren (alleen bij automatisch)</label>
-          <input type="number" name="inst[invite.delay_uur]" value="<?= instelling_int('invite.delay_uur',24) ?>" min="0" max="168">
+          <label for="veld-inst-invite-delay-uur">Vertraging in uren (alleen bij automatisch)</label>
+          <input id="veld-inst-invite-delay-uur" type="number" name="inst[invite.delay_uur]" value="<?= instelling_int('invite.delay_uur',24) ?>" min="0" max="168">
           <div class="ds-veld-hint">0 = direct uitnodigen. 24 = na 24 uur automatisch uitnodigen.</div>
         </div>
       </div>
@@ -1048,24 +1048,24 @@ require __DIR__ . '/layout_top.php';
 
         <div class="bh-veldrij">
           <div class="ds-veld">
-            <label>Rustperiode (dagen)</label>
-            <input type="number" name="inst[herinnering.rust_dagen]" value="<?= instelling_int('herinnering.rust_dagen', 3) ?>" min="0" max="30">
+            <label for="veld-inst-herinnering-rust-dagen">Rustperiode (dagen)</label>
+            <input id="veld-inst-herinnering-rust-dagen" type="number" name="inst[herinnering.rust_dagen]" value="<?= instelling_int('herinnering.rust_dagen', 3) ?>" min="0" max="30">
             <div class="ds-veld-hint">Maximaal één "zachte" herinnering per sollicitant per zoveel dagen.</div>
           </div>
           <div class="ds-veld">
-            <label>Hoe vaak hetzelfde bericht per dag</label>
-            <input type="number" name="inst[melding.plafond_dag]" value="<?= instelling_int('melding.plafond_dag', 8) ?>" min="1" max="50">
+            <label for="veld-inst-melding-plafond-dag">Hoe vaak hetzelfde bericht per dag</label>
+            <input id="veld-inst-melding-plafond-dag" type="number" name="inst[melding.plafond_dag]" value="<?= instelling_int('melding.plafond_dag', 8) ?>" min="1" max="50">
             <div class="ds-veld-hint">Vaker hetzelfde automatische bericht naar dezelfde ontvanger in 24 uur wordt overgeslagen (zie het logboek).
               Andere berichtsoorten, bestuursmeldingen en wat je zelf in gang zet (fase omzetten, bulk, handmatig) tellen niet mee.</div>
           </div>
           <div class="ds-veld">
-            <label>Bijlage als e-mailbijlage tot (MB)</label>
-            <input type="number" name="inst[bijlage.mail_max_mb]" value="<?= instelling_int('bijlage.mail_max_mb', 15) ?>" min="1" max="25">
+            <label for="veld-inst-bijlage-mail-max-mb">Bijlage als e-mailbijlage tot (MB)</label>
+            <input id="veld-inst-bijlage-mail-max-mb" type="number" name="inst[bijlage.mail_max_mb]" value="<?= instelling_int('bijlage.mail_max_mb', 15) ?>" min="1" max="25">
             <div class="ds-veld-hint">Grotere bestanden gaan als downloadknop in de mail (link 14 dagen geldig). Weigert de mailserver een bijlage toch, dan gaat de mail automatisch opnieuw met een downloadknop.</div>
           </div>
           <div class="ds-veld">
-            <label>WhatsApp per uur (max)</label>
-            <input type="number" name="inst[wa.max_per_uur]" value="<?= instelling_int('wa.max_per_uur', 30) ?>" min="1" max="500">
+            <label for="veld-inst-wa-max-per-uur">WhatsApp per uur (max)</label>
+            <input id="veld-inst-wa-max-per-uur" type="number" name="inst[wa.max_per_uur]" value="<?= instelling_int('wa.max_per_uur', 30) ?>" min="1" max="500">
             <div class="ds-veld-hint">Boven dit aantal valt de kern terug op SMS/e-mail.</div>
           </div>
         </div>
@@ -1085,32 +1085,32 @@ require __DIR__ . '/layout_top.php';
         <h3>E-mailadressen</h3>
         <div class="bh-veldrij">
           <div class="ds-veld">
-            <label>Foutmeldingen sturen naar</label>
-            <input type="email" name="inst[mail.fout_email]" value="<?= h(instelling('mail.fout_email','website@paal13.com')) ?>">
+            <label for="veld-inst-mail-fout-email">Foutmeldingen sturen naar</label>
+            <input id="veld-inst-mail-fout-email" type="email" name="inst[mail.fout_email]" value="<?= h(instelling('mail.fout_email','website@paal13.com')) ?>">
             <div class="ds-veld-hint">Ontvangt automatisch een mail bij technische fouten (foutcode + details)</div>
           </div>
           <div class="ds-veld">
-            <label>Bestuur e-mail</label>
-            <input type="email" name="inst[mail.bestuur_email]" value="<?= h(instelling('mail.bestuur_email','bestuur@paal13.com')) ?>">
+            <label for="veld-inst-mail-bestuur-email">Bestuur e-mail</label>
+            <input id="veld-inst-mail-bestuur-email" type="email" name="inst[mail.bestuur_email]" value="<?= h(instelling('mail.bestuur_email','bestuur@paal13.com')) ?>">
             <div class="ds-veld-hint">Ontvangt notificaties bij nieuwe aanmeldingen</div>
           </div>
         </div>
         <div class="bh-veldrij">
           <div class="ds-veld">
-            <label>Contact voor sollicitanten</label>
-            <input type="email" name="inst[mail.contact_email]" value="<?= h(instelling('mail.contact_email','sollicitatie@paal13.com')) ?>">
+            <label for="veld-inst-mail-contact-email">Contact voor sollicitanten</label>
+            <input id="veld-inst-mail-contact-email" type="email" name="inst[mail.contact_email]" value="<?= h(instelling('mail.contact_email','sollicitatie@paal13.com')) ?>">
             <div class="ds-veld-hint">Staat in het portaal onder Contact en onderaan elke pagina; vragen uit het portaal komen hier binnen. Leeg = bestuursadres</div>
           </div>
         </div>
         <div class="bh-veldrij">
           <div class="ds-veld">
-            <label>Penningmeester e-mail</label>
-            <input type="email" name="inst[mail.penningmeester_email]" value="<?= h(instelling('mail.penningmeester_email','')) ?>">
+            <label for="veld-inst-mail-penningmeester-email">Penningmeester e-mail</label>
+            <input id="veld-inst-mail-penningmeester-email" type="email" name="inst[mail.penningmeester_email]" value="<?= h(instelling('mail.penningmeester_email','')) ?>">
             <div class="ds-veld-hint">Ontvangt de melding "loondossier compleet" (loonheffing, kopie ID, bankpas). Leeg = bestuursadres</div>
           </div>
           <div class="ds-veld">
-            <label>Ledenservice e-mail</label>
-            <input type="email" name="inst[mail.ledenservice_email]" value="<?= h(instelling('mail.ledenservice_email','')) ?>">
+            <label for="veld-inst-mail-ledenservice-email">Ledenservice e-mail</label>
+            <input id="veld-inst-mail-ledenservice-email" type="email" name="inst[mail.ledenservice_email]" value="<?= h(instelling('mail.ledenservice_email','')) ?>">
             <div class="ds-veld-hint">Ontvangt de ondertekende inschrijving als lid/donateur (met PDF). Leeg = bestuursadres</div>
           </div>
         </div>
@@ -1141,8 +1141,8 @@ require __DIR__ . '/layout_top.php';
             <?= bh_geheim_veld('inst[ai.api_key]', 'ai.api_key', 'Gemini API-sleutel', instelling('ai.api_key', '') !== '',
                   '<a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" class="bh-let-op">Gratis sleutel aanvragen bij Google AI Studio</a>') ?>
             <div class="ds-veld">
-              <label>Model</label>
-              <select name="inst[ai.model]">
+              <label for="veld-inst-ai-model">Model</label>
+              <select id="veld-inst-ai-model" name="inst[ai.model]">
                 <?php // Zelfde standaard als ai_model() in includes/ai_analyse.php; uitgezette modellen vallen daar terug.
                       $m = function_exists('ai_model') ? ai_model() : instelling('ai.model', 'gemini-2.5-flash'); ?>
                 <option value="gemini-2.5-flash"      <?= $m==='gemini-2.5-flash'?'selected':'' ?>>Gemini 2.5 Flash (standaard)</option>
@@ -1227,8 +1227,8 @@ require __DIR__ . '/layout_top.php';
             'Maak in Authentik onder Directory › Tokens een long-lived token aan, met scope <code>core/users</code> (view). Verwijder het token om SSO voor het portaal uit te zetten; inloggen met een code blijft werken.') ?>
 
       <div class="ds-veld">
-        <label>Groepen met toegang tot het beheer <?= bh_tip('Namen van groepen in Authentik die in het beheer mogen. Andere gebruikers kunnen alleen in het portaal inloggen.') ?></label>
-        <input type="text" name="inst[authentik.admin_groepen]" value="<?= h(instelling('authentik.admin_groepen', AUTHENTIK_STANDAARD_GROEPEN)) ?>"
+        <label for="veld-inst-authentik-admin-groepen">Groepen met toegang tot het beheer <?= bh_tip('Namen van groepen in Authentik die in het beheer mogen. Andere gebruikers kunnen alleen in het portaal inloggen.') ?></label>
+        <input id="veld-inst-authentik-admin-groepen" type="text" name="inst[authentik.admin_groepen]" value="<?= h(instelling('authentik.admin_groepen', AUTHENTIK_STANDAARD_GROEPEN)) ?>"
                placeholder="<?= h(AUTHENTIK_STANDAARD_GROEPEN) ?>">
         <div class="ds-veld-hint">
           Scheid meerdere groepen met een komma. Wie in een van deze groepen zit, komt in het beheer.
@@ -1280,8 +1280,8 @@ require __DIR__ . '/layout_top.php';
       <?= csrf_input() ?><input type="hidden" name="actie" value="instellingen">
       <div class="bh-veldrij">
         <div class="ds-veld">
-          <label>Authentik basis-URL</label>
-          <input type="url" name="inst[authentik.url]" value="<?= h($a_url) ?>" placeholder="<?= $a_url_bestaand ? h($a_url_bestaand) . ' (uit SSO-config)' : 'https://auth.paal13.com' ?>">
+          <label for="veld-inst-authentik-url">Authentik basis-URL</label>
+          <input id="veld-inst-authentik-url" type="url" name="inst[authentik.url]" value="<?= h($a_url) ?>" placeholder="<?= $a_url_bestaand ? h($a_url_bestaand) . ' (uit SSO-config)' : 'https://auth.paal13.com' ?>">
           <?php if (!$a_url && $a_url_bestaand): ?><div class="bh-inst-klein bh-tekst-ok">Gebruikt automatisch de SSO-URL: <?= h($a_url_bestaand) ?></div><?php endif; ?>
         </div>
         <?= bh_geheim_veld('inst[authentik.token]', 'authentik.token', 'API-token (service-account)', $a_token !== '',
@@ -1569,66 +1569,66 @@ require __DIR__ . '/layout_top.php';
       <h3>Termijnen (in maanden, tenzij anders vermeld)</h3>
       <div class="bh-veldrij">
         <div class="ds-veld">
-          <label>Afgewezen sollicitanten, in weken <?= bh_tip('Gerekend vanaf de afwijzing. Daarna worden persoonsgegevens, formulier, beschikbaarheid, notities en documenten gewist; de geanonimiseerde statistiek blijft. De Autoriteit Persoonsgegevens gaat uit van 4 weken.') ?></label>
-          <input type="number" name="inst[bewaar.afgewezen_weken]" value="<?= instelling_int('bewaar.afgewezen_weken',4) ?>" min="0" max="52">
+          <label for="veld-inst-bewaar-afgewezen-weken">Afgewezen sollicitanten, in weken <?= bh_tip('Gerekend vanaf de afwijzing. Daarna worden persoonsgegevens, formulier, beschikbaarheid, notities en documenten gewist; de geanonimiseerde statistiek blijft. De Autoriteit Persoonsgegevens gaat uit van 4 weken.') ?></label>
+          <input id="veld-inst-bewaar-afgewezen-weken" type="number" name="inst[bewaar.afgewezen_weken]" value="<?= instelling_int('bewaar.afgewezen_weken',4) ?>" min="0" max="52">
           <div class="ds-veld-hint">Daarna anonimiseren. Wie om een seintje vroeg, blijft tot dat verloopt.</div>
         </div>
         <div class="ds-veld">
-          <label>Seintje bij de volgende werving <?= bh_tip('Zo lang geldt de toestemming die een afgewezen sollicitant gaf via "Stuur me een seintje". Daarna vervalt die en worden de gegevens geanonimiseerd. De tekst in de mail en het portaal zegt "maximaal een jaar": ga daar niet boven.') ?></label>
-          <input type="number" name="inst[bewaar.seintje_mnd]" value="<?= instelling_int('bewaar.seintje_mnd',12) ?>" min="1" max="12">
+          <label for="veld-inst-bewaar-seintje-mnd">Seintje bij de volgende werving <?= bh_tip('Zo lang geldt de toestemming die een afgewezen sollicitant gaf via "Stuur me een seintje". Daarna vervalt die en worden de gegevens geanonimiseerd. De tekst in de mail en het portaal zegt "maximaal een jaar": ga daar niet boven.') ?></label>
+          <input id="veld-inst-bewaar-seintje-mnd" type="number" name="inst[bewaar.seintje_mnd]" value="<?= instelling_int('bewaar.seintje_mnd',12) ?>" min="1" max="12">
           <div class="ds-veld-hint">Maximaal 12, want dat beloven we</div>
         </div>
       </div>
       <div class="bh-veldrij">
         <div class="ds-veld">
-          <label>Oud-strandwachten, in jaren <?= bh_tip('Gerekend vanaf het einde van het laatste seizoen waarin iemand werkte. Daarna worden formulier, beschikbaarheid, notities, foto en documenten gewist. Loonheffing en kopie ID blijven staan tot de penningmeester ze op Loondossiers vernietigt; pas daarna wordt ook de naam geanonimiseerd. De AP gaat voor een personeelsdossier uit van 2 jaar.') ?></label>
-          <input type="number" name="inst[bewaar.aangenomen_jaar]" value="<?= instelling_int('bewaar.aangenomen_jaar',2) ?>" min="0" max="10">
+          <label for="veld-inst-bewaar-aangenomen-jaar">Oud-strandwachten, in jaren <?= bh_tip('Gerekend vanaf het einde van het laatste seizoen waarin iemand werkte. Daarna worden formulier, beschikbaarheid, notities, foto en documenten gewist. Loonheffing en kopie ID blijven staan tot de penningmeester ze op Loondossiers vernietigt; pas daarna wordt ook de naam geanonimiseerd. De AP gaat voor een personeelsdossier uit van 2 jaar.') ?></label>
+          <input id="veld-inst-bewaar-aangenomen-jaar" type="number" name="inst[bewaar.aangenomen_jaar]" value="<?= instelling_int('bewaar.aangenomen_jaar',2) ?>" min="0" max="10">
           <div class="ds-veld-hint">Na het laatste seizoen. De privacyverklaring noemt dit getal.</div>
         </div>
         <div class="ds-veld">
-          <label>Gezondheidsgegevens <?= bh_tip('0 = na afloop van het seizoen, en meteen bij afwijzen of afhaken. Anders: zoveel maanden na ondertekening. Geldt voor de gezondheidsverklaring en de gezondheidsvragen in de intake, ook in de verzegelde PDF.') ?></label>
-          <input type="number" name="inst[bewaar.gezondheid_mnd]" value="<?= instelling_int('bewaar.gezondheid_mnd',0) ?>" min="0" max="60">
+          <label for="veld-inst-bewaar-gezondheid-mnd">Gezondheidsgegevens <?= bh_tip('0 = na afloop van het seizoen, en meteen bij afwijzen of afhaken. Anders: zoveel maanden na ondertekening. Geldt voor de gezondheidsverklaring en de gezondheidsvragen in de intake, ook in de verzegelde PDF.') ?></label>
+          <input id="veld-inst-bewaar-gezondheid-mnd" type="number" name="inst[bewaar.gezondheid_mnd]" value="<?= instelling_int('bewaar.gezondheid_mnd',0) ?>" min="0" max="60">
           <div class="ds-veld-hint">0 = na het seizoen, of meteen bij afwijzing</div>
         </div>
       </div>
       <div class="bh-veldrij">
         <div class="ds-veld">
-          <label>AI-invoertekst <?= bh_tip('De vrije beschikbaarheidstekst die naar de AI-dienst is gestuurd.') ?></label>
-          <input type="number" name="inst[bewaar.ai_invoer_mnd]" value="<?= instelling_int('bewaar.ai_invoer_mnd',3) ?>" min="0" max="60">
+          <label for="veld-inst-bewaar-ai-invoer-mnd">AI-invoertekst <?= bh_tip('De vrije beschikbaarheidstekst die naar de AI-dienst is gestuurd.') ?></label>
+          <input id="veld-inst-bewaar-ai-invoer-mnd" type="number" name="inst[bewaar.ai_invoer_mnd]" value="<?= instelling_int('bewaar.ai_invoer_mnd',3) ?>" min="0" max="60">
           <div class="ds-veld-hint">Daarna wissen</div>
         </div>
         <div class="ds-veld">
-          <label>Niet-voltooide aanmeldingen <?= bh_tip('Aanmeldingen die in de fase \'aangemeld\' bleven staan en nooit een formulier of beschikbaarheid kregen.') ?></label>
-          <input type="number" name="inst[bewaar.onvoltooid_mnd]" value="<?= instelling_int('bewaar.onvoltooid_mnd',3) ?>" min="0" max="60">
+          <label for="veld-inst-bewaar-onvoltooid-mnd">Niet-voltooide aanmeldingen <?= bh_tip('Aanmeldingen die in de fase \'aangemeld\' bleven staan en nooit een formulier of beschikbaarheid kregen.') ?></label>
+          <input id="veld-inst-bewaar-onvoltooid-mnd" type="number" name="inst[bewaar.onvoltooid_mnd]" value="<?= instelling_int('bewaar.onvoltooid_mnd',3) ?>" min="0" max="60">
           <div class="ds-veld-hint">Daarna verwijderen</div>
         </div>
       </div>
       <div class="bh-veldrij">
         <div class="ds-veld">
-          <label>Berichtenlog (alle kanalen)</label>
-          <input type="number" name="inst[bewaar.maillog_mnd]" value="<?= instelling_int('bewaar.maillog_mnd',12) ?>" min="0" max="60">
+          <label for="veld-inst-bewaar-maillog-mnd">Berichtenlog (alle kanalen)</label>
+          <input id="veld-inst-bewaar-maillog-mnd" type="number" name="inst[bewaar.maillog_mnd]" value="<?= instelling_int('bewaar.maillog_mnd',12) ?>" min="0" max="60">
           <div class="ds-veld-hint">Daarna de logregels verwijderen</div>
         </div>
         <div class="ds-veld">
-          <label>Inhoud van berichten <?= bh_tip('De volledige tekst van verstuurde berichten (leesbaar in het portaal en het berichtenlog). Daarna blijft alleen onderwerp + samenvatting over.') ?></label>
-          <input type="number" name="inst[bewaar.maillog_body_mnd]" value="<?= instelling_int('bewaar.maillog_body_mnd',3) ?>" min="0" max="24">
+          <label for="veld-inst-bewaar-maillog-body-mnd">Inhoud van berichten <?= bh_tip('De volledige tekst van verstuurde berichten (leesbaar in het portaal en het berichtenlog). Daarna blijft alleen onderwerp + samenvatting over.') ?></label>
+          <input id="veld-inst-bewaar-maillog-body-mnd" type="number" name="inst[bewaar.maillog_body_mnd]" value="<?= instelling_int('bewaar.maillog_body_mnd',3) ?>" min="0" max="24">
           <div class="ds-veld-hint">Daarna de inhoud leegmaken</div>
         </div>
         <div class="ds-veld">
-          <label>Losse bijlagen <?= bh_tip('Geüploade bestanden die aan geen enkel sjabloon meer hangen.') ?></label>
-          <input type="number" name="inst[bewaar.bijlagen_mnd]" value="<?= instelling_int('bewaar.bijlagen_mnd',12) ?>" min="0" max="60">
+          <label for="veld-inst-bewaar-bijlagen-mnd">Losse bijlagen <?= bh_tip('Geüploade bestanden die aan geen enkel sjabloon meer hangen.') ?></label>
+          <input id="veld-inst-bewaar-bijlagen-mnd" type="number" name="inst[bewaar.bijlagen_mnd]" value="<?= instelling_int('bewaar.bijlagen_mnd',12) ?>" min="0" max="60">
           <div class="ds-veld-hint">Daarna verwijderen</div>
         </div>
       </div>
       <div class="bh-veldrij">
         <div class="ds-veld">
-          <label>Bezoekersstatistiek landingspagina's <?= bh_tip('Aantallen bezoeken en aanmeldingen per landingspagina. Bevat geen persoonsgegevens.') ?></label>
-          <input type="number" name="inst[bewaar.pagina_events_mnd]" value="<?= instelling_int('bewaar.pagina_events_mnd',13) ?>" min="0" max="60">
+          <label for="veld-inst-bewaar-pagina-events-mnd">Bezoekersstatistiek landingspagina's <?= bh_tip('Aantallen bezoeken en aanmeldingen per landingspagina. Bevat geen persoonsgegevens.') ?></label>
+          <input id="veld-inst-bewaar-pagina-events-mnd" type="number" name="inst[bewaar.pagina_events_mnd]" value="<?= instelling_int('bewaar.pagina_events_mnd',13) ?>" min="0" max="60">
           <div class="ds-veld-hint">Daarna verwijderen (0 = bewaren)</div>
         </div>
         <div class="ds-veld">
-          <label>Herkenning unieke bezoekers <?= bh_tip('Een dag-gebonden pseudoniem om unieke bezoekers te tellen. Wordt hierna gewist; de aantallen blijven staan.') ?></label>
-          <input type="number" name="inst[bewaar.pagina_hash_dagen]" value="<?= instelling_int('bewaar.pagina_hash_dagen',30) ?>" min="0" max="365">
+          <label for="veld-inst-bewaar-pagina-hash-dagen">Herkenning unieke bezoekers <?= bh_tip('Een dag-gebonden pseudoniem om unieke bezoekers te tellen. Wordt hierna gewist; de aantallen blijven staan.') ?></label>
+          <input id="veld-inst-bewaar-pagina-hash-dagen" type="number" name="inst[bewaar.pagina_hash_dagen]" value="<?= instelling_int('bewaar.pagina_hash_dagen',30) ?>" min="0" max="365">
           <div class="ds-veld-hint">Dagen, daarna wissen</div>
         </div>
       </div>
@@ -1818,24 +1818,24 @@ require __DIR__ . '/layout_top.php';
         <input type="hidden" name="actie" value="smtp_opslaan">
         <div class="bh-smtpraster">
           <div class="bh-smtpraster-breed">
-            <label class="ds-label">SMTP-server (host)</label>
-            <input type="text" name="smtp_host" value="<?= h($s_host) ?>" placeholder="mail.paal13.com" class="ds-input">
+            <label for="veld-smtp-host" class="ds-label">SMTP-server (host)</label>
+            <input id="veld-smtp-host" type="text" name="smtp_host" value="<?= h($s_host) ?>" placeholder="mail.paal13.com" class="ds-input">
           </div>
           <div>
-            <label class="ds-label">Poort</label>
-            <input type="text" name="smtp_port" value="<?= h($s_port) ?>" placeholder="587" class="ds-input">
+            <label for="veld-smtp-port" class="ds-label">Poort</label>
+            <input id="veld-smtp-port" type="text" name="smtp_port" value="<?= h($s_port) ?>" placeholder="587" class="ds-input">
           </div>
           <div>
-            <label class="ds-label">Beveiliging</label>
-            <select name="smtp_encrypt" class="ds-input">
+            <label for="veld-smtp-encrypt" class="ds-label">Beveiliging</label>
+            <select id="veld-smtp-encrypt" name="smtp_encrypt" class="ds-input">
               <option value="tls" <?= $s_encrypt==='tls'?'selected':'' ?>>STARTTLS (poort 587) — meest gebruikt</option>
               <option value="ssl" <?= $s_encrypt==='ssl'?'selected':'' ?>>SSL/TLS (poort 465)</option>
               <option value="none" <?= $s_encrypt==='none'?'selected':'' ?>>Geen (afgeraden)</option>
             </select>
           </div>
           <div>
-            <label class="ds-label">Gebruikersnaam</label>
-            <input type="text" name="smtp_user" value="<?= h($s_user) ?>" placeholder="website@paal13.com" class="ds-input">
+            <label for="veld-smtp-user" class="ds-label">Gebruikersnaam</label>
+            <input id="veld-smtp-user" type="text" name="smtp_user" value="<?= h($s_user) ?>" placeholder="website@paal13.com" class="ds-input">
           </div>
           <div>
             <?php $_ww_db = instelling('smtp.pass', '') !== ''; ?>
@@ -1843,12 +1843,12 @@ require __DIR__ . '/layout_top.php';
                   (!$_ww_db && $s_heeft_ww) ? 'Nu uit config.php.' : '', $_ww_db) ?>
           </div>
           <div>
-            <label class="ds-label">Afzender-adres</label>
-            <input type="text" name="smtp_from" value="<?= h($s_from) ?>" placeholder="no-reply@paal13.com" class="ds-input">
+            <label for="veld-smtp-from" class="ds-label">Afzender-adres</label>
+            <input id="veld-smtp-from" type="text" name="smtp_from" value="<?= h($s_from) ?>" placeholder="no-reply@paal13.com" class="ds-input">
           </div>
           <div>
-            <label class="ds-label">Afzender-naam</label>
-            <input type="text" name="smtp_from_naam" value="<?= h($s_fromnaam) ?>" placeholder="Reddingsbrigade Paal 13" class="ds-input">
+            <label for="veld-smtp-from-naam" class="ds-label">Afzender-naam</label>
+            <input id="veld-smtp-from-naam" type="text" name="smtp_from_naam" value="<?= h($s_fromnaam) ?>" placeholder="Reddingsbrigade Paal 13" class="ds-input">
           </div>
         </div>
         <div class="bh-smtp-voet">
@@ -1868,8 +1868,8 @@ require __DIR__ . '/layout_top.php';
         <?= csrf_input() ?>
         <input type="hidden" name="actie" value="smtp_test">
         <div class="bh-inst-testnaar">
-          <label class="ds-label">Stuur test naar</label>
-          <input type="email" name="smtp_test_naar" value="<?= h(huidige_beheerder()['email'] ?? '') ?>" placeholder="jouw@email.nl" class="ds-input">
+          <label for="veld-smtp-test-naar" class="ds-label">Stuur test naar</label>
+          <input id="veld-smtp-test-naar" type="email" name="smtp_test_naar" value="<?= h(huidige_beheerder()['email'] ?? '') ?>" placeholder="jouw@email.nl" class="ds-input">
         </div>
         <button type="submit" class="ds-btn ds-btn-secundair">Verstuur testmail</button>
       </form>
@@ -1923,7 +1923,7 @@ require __DIR__ . '/layout_top.php';
       <p class="bh-inst-uitleg bh-inst-uitleg-6">
         Eén per regel. De hoofdsite (paal13.com) is altijd toegestaan. Voeg hier extra domeinen toe als de plugin op een ander adres draait.
       </p>
-      <textarea name="api_origins" rows="3" class="bh-inst-origins" placeholder="https://paal13.com"><?= h($api_origins) ?></textarea>
+      <textarea name="api_origins" aria-label="Extra toegestane domeinen, één per regel" rows="3" class="bh-inst-origins" placeholder="https://paal13.com"><?= h($api_origins) ?></textarea>
       <div class="bh-api-voet"><button type="submit" class="ds-btn ds-btn-primair ds-btn-sm">Opslaan</button></div>
     </form>
 
@@ -1966,7 +1966,7 @@ require __DIR__ . '/layout_top.php';
           SMS inschakelen
         </label>
 
-        <label class="ds-label">Gateway (verzendmethode)</label>
+        <label for="smsGateway" class="ds-label">Gateway (verzendmethode)</label>
         <select name="sms_gateway" id="smsGateway" onchange="smsGatewayToon()" class="bh-sms-gateway">
           <option value="">— kies —</option>
           <option value="eigen_telefoon" <?= $sms_gw==='eigen_telefoon'?'selected':'' ?>>Eigen telefoon / VoIP (goedkoopst)</option>
@@ -1981,20 +1981,20 @@ require __DIR__ . '/layout_top.php';
         </p>
 
         <div class="bh-sms-afzenderveld">
-          <label class="ds-label">Afzendernaam</label>
-          <input type="text" name="sms_afzender" value="<?= h(instelling('sms.afzender','Paal13')) ?>" class="bh-sms-afzender" maxlength="11">
+          <label for="veld-sms-afzender" class="ds-label">Afzendernaam</label>
+          <input id="veld-sms-afzender" type="text" name="sms_afzender" value="<?= h(instelling('sms.afzender','Paal13')) ?>" class="bh-sms-afzender" maxlength="11">
           <span class="ds-veld-hint">max 11 tekens</span>
         </div>
 
         <!-- HTTP / eigen telefoon velden -->
         <div class="sms-veld" data-voor="eigen_telefoon http_gateway" hidden>
-          <label class="ds-label bh-mt">Webadres (URL) van de gateway</label>
-          <input type="text" name="sms_http_url" value="<?= h(instelling('sms.http_url','')) ?>" class="bh-inst-volbreed" placeholder="https://.../send?to={nummer}&text={tekst}">
+          <label for="veld-sms-http-url" class="ds-label bh-mt">Webadres (URL) van de gateway</label>
+          <input id="veld-sms-http-url" type="text" name="sms_http_url" value="<?= h(instelling('sms.http_url','')) ?>" class="bh-inst-volbreed" placeholder="https://.../send?to={nummer}&text={tekst}">
           <p class="bh-sms-plekhouders">Je mag <code>{nummer}</code> en <code>{tekst}</code> als plek-houders gebruiken. Anders worden ze als POST-velden meegestuurd.</p>
           <div class="bh-sms-httprij">
             <div>
-              <label class="ds-label">Methode</label>
-              <select name="sms_http_method" class="bh-sms-methode">
+              <label for="veld-sms-http-method" class="ds-label">Methode</label>
+              <select id="veld-sms-http-method" name="sms_http_method" class="bh-sms-methode">
                 <option value="POST" <?= instelling('sms.http_method','POST')==='POST'?'selected':'' ?>>POST</option>
                 <option value="GET" <?= instelling('sms.http_method','POST')==='GET'?'selected':'' ?>>GET</option>
               </select>
@@ -2029,10 +2029,10 @@ require __DIR__ . '/layout_top.php';
           staat daarom standaard uit.
         </div>
         <?= bh_geheim_veld('wa_api_sleutel', 'wa.api_sleutel', 'WhatsReach API-sleutel (X-API-Key)', instelling('wa.api_sleutel', '') !== '') ?>
-        <label class="ds-label">Base URL</label>
-        <input type="text" name="wa_base_url" value="<?= h(instelling('wa.base_url','https://api.whatsreach.co/api/v1')) ?>" class="bh-inst-volbreed bh-wa-baseurl">
-        <label class="ds-label">Afzendernummer <span class="bh-label-optioneel">(optioneel — bij meerdere gekoppelde apparaten)</span></label>
-        <input type="text" name="wa_afzender_nummer" value="<?= h(instelling('wa.afzender_nummer','')) ?>" class="bh-inst-volbreed" placeholder="+31612345678">
+        <label for="veld-wa-base-url" class="ds-label">Base URL</label>
+        <input id="veld-wa-base-url" type="text" name="wa_base_url" value="<?= h(instelling('wa.base_url','https://api.whatsreach.co/api/v1')) ?>" class="bh-inst-volbreed bh-wa-baseurl">
+        <label for="veld-wa-afzender-nummer" class="ds-label">Afzendernummer <span class="bh-label-optioneel">(optioneel — bij meerdere gekoppelde apparaten)</span></label>
+        <input id="veld-wa-afzender-nummer" type="text" name="wa_afzender_nummer" value="<?= h(instelling('wa.afzender_nummer','')) ?>" class="bh-inst-volbreed" placeholder="+31612345678">
         <p class="bh-wa-nummeruitleg">Het WhatsApp-nummer waarvandaan berichten verstuurd worden (het "from"-apparaat uit WhatsReach). Laat leeg als je maar één apparaat hebt gekoppeld.</p>
       </div>
       <?php endif; ?>
@@ -2076,16 +2076,16 @@ require __DIR__ . '/layout_top.php';
         <?= csrf_input() ?>
         <input type="hidden" name="actie" value="bericht_test">
         <div>
-          <label class="ds-label">Telefoonnummer</label>
-          <input type="text" name="test_nummer" placeholder="06..." class="bh-testbericht-nummer">
+          <label for="veld-test-nummer" class="ds-label">Telefoonnummer</label>
+          <input id="veld-test-nummer" type="text" name="test_nummer" placeholder="06..." class="bh-testbericht-nummer">
         </div>
         <div>
-          <label class="ds-label">E-mail (terugval)</label>
-          <input type="email" name="test_email" value="<?= h($_SESSION['bhd_email'] ?? '') ?>" class="bh-testbericht-email">
+          <label for="veld-test-email" class="ds-label">E-mail (terugval)</label>
+          <input id="veld-test-email" type="email" name="test_email" value="<?= h($_SESSION['bhd_email'] ?? '') ?>" class="bh-testbericht-email">
         </div>
         <div>
-          <label class="ds-label">Via</label>
-          <select name="test_kanaal" class="bh-testbericht-kanaal">
+          <label for="veld-test-kanaal" class="ds-label">Via</label>
+          <select id="veld-test-kanaal" name="test_kanaal" class="bh-testbericht-kanaal">
             <option value="wa">WhatsApp</option>
             <option value="sms">SMS</option>
             <option value="email">E-mail</option>

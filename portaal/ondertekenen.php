@@ -50,7 +50,7 @@ if (!$rec || !$sol) {
     ?>
   <div class="pt-leeg groot ond-ongeldig">
     <span class="pt-leeg-icoon warn"><?= icoon('klok', 26) ?></span>
-    <span class="pt-leeg-titel">Deze link werkt niet meer</span>
+    <h1 class="pt-leeg-titel">Deze link werkt niet meer</h1>
     <span class="pt-leeg-tekst">De link is ongeldig of niet meer geldig. Vraag zo nodig een nieuwe aan bij het bestuur.</span>
     <span class="pt-hulp">Lukt het niet? Mail <a href="mailto:<?= h($contact) ?>"><?= h($contact) ?></a></span>
   </div>
@@ -85,13 +85,13 @@ if ($type === 'lidmaatschap' && !$is_ondertekend && $leeftijd !== null
   <div class="pt-leeg groot ond-ongeldig">
     <span class="pt-leeg-icoon"><?= icoon($_naar_ouder ? 'ouders' : 'vink', 26) ?></span>
     <?php if ($_naar_ouder): ?>
-      <span class="pt-leeg-titel">Dit formulier tekent je ouder of verzorger</span>
+      <h1 class="pt-leeg-titel">Dit formulier tekent je ouder of verzorger</h1>
       <span class="pt-leeg-tekst">Omdat je jonger bent dan 18, schrijft je ouder of verzorger je in als lid van de vereniging en tekent namens jou. <?= $_stand === 'wacht_op_ouder'
         ? 'Vul in je portaal de gegevens van je ouder of verzorger in; daarna krijgt die een mail met een eigen link.'
         : 'Je ouder of verzorger krijgt daarvoor een mail met een eigen link. In je portaal zie je wanneer het rond is.' ?></span>
       <a href="<?= h(APP_URL . '/portaal/taken.php') ?>" class="ds-btn ds-btn-primair">Naar mijn taken</a>
     <?php else: ?>
-      <span class="pt-leeg-titel">U hoeft hier niets meer te doen</span>
+      <h1 class="pt-leeg-titel">U hoeft hier niets meer te doen</h1>
       <span class="pt-leeg-tekst"><?= h($voornaam) ?> is inmiddels 18 en schrijft zich daarom zelf in als lid, via het eigen portaal. Deze link is niet meer geldig.</span>
     <?php endif; ?>
     <span class="pt-hulp">Vragen? Mail <a href="mailto:<?= h($contact) ?>"><?= h($contact) ?></a></span>
@@ -382,7 +382,7 @@ require __DIR__ . '/_kop.php';
   <!-- Na ondertekenen (ontwerp 09: bevestiging met kopie) -->
   <div class="ond-klaar">
     <span class="ond-klaar-icoon"><?= icoon('vink', 30) ?></span>
-    <span class="ond-klaar-titel">Bedankt, ondertekend</span>
+    <h1 class="ond-klaar-titel">Bedankt, ondertekend</h1>
     <?php if (!empty($rec['pdf_sha256'])): ?>
       <span class="ond-klaar-zegel"><?= icoon('schild', 14) ?>Digitaal verzegeld · controlehash <?= h(substr((string)$rec['pdf_sha256'], 0, 12)) ?>…</span>
     <?php endif; ?>
@@ -425,7 +425,7 @@ require __DIR__ . '/_kop.php';
     <!-- Kop: titel + status (mobiel: witte balk onder de topbar; desktop: kaartkop met chip) -->
     <header class="ond-kop">
       <div class="ond-kop-titel">
-        <span class="ond-kop-naam"><?= h($titel_kort) ?></span>
+        <h1 class="ond-kop-naam"><?= h($titel_kort) ?></h1>
         <span class="ond-kop-sub"><?= $eigen_ingelogd ? 'Nog te ondertekenen' : h($naam_sol) . ' · ' . h($sol['seizoen_naam']) ?></span>
       </div>
       <span class="ond-chip"><span class="ond-chip-stip"></span>Nog te ondertekenen</span>

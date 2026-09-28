@@ -97,8 +97,10 @@ if ($tabel && $tabel_rij !== ''):
     <tr<?= $_id !== '' ? ' data-id="' . h((string)$_id) . '"' : '' ?><?= $_dat ?><?= $_rcl ? ' class="' . h($_rcl) . '"' : '' ?>>
       <?php if ($tabel_selectie): ?>
         <td class="bh-kol-kies">
+          <?php // De naam in het label: 40× "Selecteer deze regel" zegt een schermlezer niets.
+                $_rnaam = trim((string)($rij['naam'] ?? (($rij['voornaam'] ?? '') . ' ' . (($rij['tussenvoegsel'] ?? '') ? $rij['tussenvoegsel'] . ' ' : '') . ($rij['achternaam'] ?? '')))); ?>
           <input type="checkbox" name="ids[]" value="<?= h((string)$_id) ?>" class="bh-kies"
-                 aria-label="Selecteer deze regel">
+                 aria-label="<?= h($_rnaam !== '' ? 'Selecteer ' . $_rnaam : 'Selecteer deze regel') ?>">
         </td>
       <?php endif; ?>
       <?php require $tabel_rij; ?>
