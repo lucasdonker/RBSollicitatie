@@ -13,6 +13,9 @@
   var zoek = document.getElementById('kioskZoek');
   var lijst = root.querySelector('[data-resultaten]');
   var timer = null, terug = null;
+  var laatste = null;   // {sol_id, token} van de laatste check-in, voor "Dit ben ik niet"
+  var nietIk = root.querySelector('[data-niet-ik]');
+  var melding = root.querySelector('[data-kiosk-melding]');
 
   function post(velden) {
     var body = new URLSearchParams(Object.assign({ ev: ev, code: code }, velden));
@@ -43,6 +46,8 @@
       li.appendChild(av); li.appendChild(tekst); li.appendChild(knop);
       lijst.appendChild(li);
     });
+    // De server geeft er hooguit drie: misschien staat je naam er dan nog niet bij.
+    if (res.length >= 3) lijst.appendChild(el('li', 'pt-kiosk-geen', 'Staat je naam er niet bij? Typ verder.'));
   }
 
   function inchecken(k, knop) {
@@ -69,6 +74,10 @@
         letop.querySelector('[data-letop-wat]').textContent = open.join(' en ');
         letop.querySelector('[data-letop-tekst]').textContent = d.formulieren_tekst || '';
       }
+      // Verkeerde naam getikt? Binnen een minuut terug te draaien (alleen een nieuwe check-in).
+      laatste = d.ongedaan ? { sol_id: k.sol_id, token: d.ongedaan } : null;
+      nietIk.hidden = !laatste;
+      if (melding) melding.textContent = '';
       root.querySelector('[data-stap="zoek"]').hidden = true;
       root.querySelector('[data-stap="klaar"]').hidden = false;
       terug = setTimeout(opnieuw, open.length ? 25000 : 10000);
@@ -80,6 +89,7 @@
 
   function opnieuw() {
     clearTimeout(terug);
+    laatste = null; nietIk.hidden = true;
     zoek.value = ''; lijst.innerHTML = '';
     root.querySelector('[data-stap="klaar"]').hidden = true;
     root.querySelector('[data-stap="zoek"]').hidden = false;
@@ -95,6 +105,14 @@
     }, 250);
   });
   root.querySelector('[data-volgende]').addEventListener('click', opnieuw);
+  nietIk.addEventListener('click', function () {
+    if (!laatste) return;
+    var l = laatste;
+    post({ actie: 'ongedaan', sol_id: l.sol_id, token: l.token }).then(function (d) {
+      opnieuw();
+      if (melding) melding.textContent = d.ok ? 'Teruggedraaid. Zoek nu je eigen naam.' : (d.fout || 'Dat lukte niet.');
+    }).catch(function () { if (melding) melding.textContent = 'Geen verbinding. Vraag iemand van de organisatie.'; });
+  });
 
   root.querySelector('[data-afsluiten]').addEventListener('submit', function (e) {
     e.preventDefault();

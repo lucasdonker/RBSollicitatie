@@ -59,6 +59,34 @@ function evenement_rij_verzeker(string $ev, int $seizoen_id, int $sol_id): void 
 }
 
 /**
+ * "Dit ben ik niet" op de tablet: wie per ongeluk op de verkeerde naam tikte, mag die ene
+ * check-in binnen een minuut terugdraaien. Het token bindt evenement, seizoen, persoon en tijd
+ * (HMAC met de kluissleutel), zodat niemand bij de ingang willekeurig anderen kan uitchecken.
+ */
+function evenement_ongedaan_token(string $ev, int $seizoen_id, int $sol_id, int $ts): string {
+    $sleutel = defined('KLUIS_SLEUTEL') ? (string)KLUIS_SLEUTEL : '';
+    return $ts . '.' . substr(hash_hmac('sha256', "kiosk-ongedaan|$ev|$seizoen_id|$sol_id|$ts", $sleutel), 0, 32);
+}
+
+function evenement_ongedaan_token_ok(string $ev, int $seizoen_id, int $sol_id, string $token): bool {
+    $delen = explode('.', $token, 2);
+    $ts = (int)$delen[0];
+    if ($ts <= 0 || time() - $ts > 60 || $ts > time() + 5) return false;
+    return hash_equals(evenement_ongedaan_token($ev, $seizoen_id, $sol_id, $ts), $token);
+}
+
+/** Staat deze persoon al als aanwezig? (Voor de tablet: alleen een nieuwe check-in mag terug.) */
+function evenement_is_aanwezig(string $ev, int $seizoen_id, int $sol_id): bool {
+    $d = evenement_def($ev);
+    if (!$d) return false;
+    try {
+        $q = db()->prepare("SELECT aanwezig FROM `{$d['tabel']}` WHERE seizoen_id=? AND sollicitatie_id=?");
+        $q->execute([$seizoen_id, $sol_id]);
+        return (int)$q->fetchColumn() === 1;
+    } catch (\Exception $e) { return false; }
+}
+
+/**
  * Inchecken of ongedaan maken. Tablet en beheer gebruiken allebei deze functie.
  * Een laatkomer na het afsluiten checkt gewoon in: de afmelding ("niet verschenen") vervalt dan.
  * Retourneert ['aanwezig' => bool, 'groep_nummer' => ?int, 'groep_naam' => ?string].

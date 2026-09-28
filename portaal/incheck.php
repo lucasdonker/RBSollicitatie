@@ -42,15 +42,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $toegang && $sid) {
     if ($actie === 'inchecken') {
         $sol_id = (int)($_POST['sol_id'] ?? 0);
         if (!evenement_is_kandidaat($ev, $sid, $sol_id)) { echo json_encode(['ok' => false]); exit; }
+        $was = evenement_is_aanwezig($ev, $sid, $sol_id);
         $r = evenement_inchecken($ev, $sid, $sol_id, true, 'tablet');
         // Nog iets te tekenen? Dan de link sturen en het op de tablet zeggen (alleen de naam van het formulier).
         $f = evenement_formulieren_melden($sol_id);
-        echo json_encode(['ok' => true] + $r + ['formulieren' => $f['open'], 'formulieren_tekst' => $f['tekst']]);
+        // Alleen een nieuwe check-in mag via "Dit ben ik niet" terug (was iemand er al, dan niet).
+        $ongedaan = $was ? null : evenement_ongedaan_token($ev, $sid, $sol_id, time());
+        echo json_encode(['ok' => true] + $r + ['formulieren' => $f['open'], 'formulieren_tekst' => $f['tekst'], 'ongedaan' => $ongedaan]);
+        exit;
+    }
+    if ($actie === 'ongedaan') {
+        $sol_id = (int)($_POST['sol_id'] ?? 0);
+        if (!evenement_ongedaan_token_ok($ev, $sid, $sol_id, (string)($_POST['token'] ?? ''))) {
+            echo json_encode(['ok' => false, 'fout' => 'Dat kan nu niet meer. Vraag iemand van de organisatie.']);
+            exit;
+        }
+        evenement_inchecken($ev, $sid, $sol_id, false, 'tablet');
+        echo json_encode(['ok' => true]);
         exit;
     }
     if ($actie === 'afsluiten') {
         // Pincode raden: 5 pogingen per kwartier, los van de zoeklimiet.
-        if (!rate_limit('kiosk_pin', rate_identiteit(), 5, 900) || !evenement_pin_ok($ev, (string)($_POST['pin'] ?? ''))) {
+        if (!rate_limit('kiosk_pin', rate_identiteit(), 5, 900)) {
+            echo json_encode(['ok' => false, 'fout' => 'Te vaak geprobeerd. Probeer het over een kwartier opnieuw.']);
+            exit;
+        }
+        if (!evenement_pin_ok($ev, (string)($_POST['pin'] ?? ''))) {
             echo json_encode(['ok' => false, 'fout' => 'Onjuiste pincode.']);
             exit;
         }
@@ -100,6 +117,7 @@ $logo  = function_exists('site_logo_url') ? (site_logo_url() ?: '') : '';
     <input type="text" id="kioskZoek" class="pt-kiosk-zoek" autocomplete="off" autocapitalize="words" spellcheck="false"
            placeholder="Je voor- of achternaam" aria-describedby="kioskHint">
     <p id="kioskHint" class="pt-kiosk-hint">Na drie letters verschijnt je naam.</p>
+    <p class="pt-kiosk-hint" data-kiosk-melding role="status"></p>
     <ul class="pt-kiosk-lijst" data-resultaten aria-live="polite"></ul>
   </section>
 
@@ -116,6 +134,7 @@ $logo  = function_exists('site_logo_url') ? (site_logo_url() ?: '') : '';
       </div>
     </div>
     <button type="button" class="ds-btn ds-btn-primair pt-kiosk-volgende" data-volgende>Volgende persoon</button>
+    <button type="button" class="ds-btn ds-btn-zacht pt-kiosk-volgende" data-niet-ik hidden>Dit ben ik niet</button>
   </section>
 
   <footer class="pt-kiosk-voet">
