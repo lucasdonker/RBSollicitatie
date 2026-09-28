@@ -282,7 +282,8 @@ endif; ?>
                           'waarde' => $filter_comp, 'opties' => $_opties];
   }
   $filter_verborgen = array_filter(['fase' => $fase_filter === 'alle' ? null : $fase_filter,
-                                    'sort' => $tabel['sort'], 'per' => $per !== 25 ? $per : null]);
+                                    'sort' => $tabel['sort'], 'richting' => $tabel['richting'] ?? null,
+                                    'per' => $per !== 25 ? $per : null]);
   $filter_acties = [];
   if (mag('sollicitanten', 'bewerken')) {
       $filter_acties[] = ['label' => 'Toevoegen', 'icoon' => 'plus', 'toon' => 'primair',

@@ -574,7 +574,7 @@ function laadNotities(solId) {
           <div class="bh-notitie notitie-item" data-id="${n.id}">
             <div class="notitie-tekst">${tekstEscaped}</div>
             <div class="bh-notitie-wie">
-              ${n.beheerder_naam || 'Onbekend'} · ${formatDatum(n.aangemaakt_op)}
+              ${bhTekst(n.beheerder_naam || 'Onbekend')} · ${formatDatum(n.aangemaakt_op)}
               ${n.gewijzigd_op !== n.aangemaakt_op ? ' (bewerkt)' : ''}
             </div>
             ${acties}

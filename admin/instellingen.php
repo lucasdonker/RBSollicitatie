@@ -1385,15 +1385,17 @@ require __DIR__ . '/layout_top.php';
   const COMP_CATS = <?= json_encode(array_map(fn($c) => ['label'=>$c['label'], 'groepen'=>$c['groepen'] ?? []], $comp_map)) ?>;
   let SJABLONEN = <?= json_encode($sjab) ?>;
 
+  // Eigen escape: render() draait meteen, vóórdat beheer.js (bhTekst) onderaan de pagina laadt.
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   function catOpties(sel) {
     let h = '';
-    for (const c in COMP_CATS) h += '<option value="'+c+'"'+(c===sel?' selected':'')+'>'+COMP_CATS[c].label+'</option>';
+    for (const c in COMP_CATS) h += '<option value="'+esc(c)+'"'+(c===sel?' selected':'')+'>'+esc(COMP_CATS[c].label)+'</option>';
     return h;
   }
   function rangOpties(cat, sel) {
     const groepen = COMP_CATS[cat]?.groepen || {};
     let h = '';
-    for (const g in groepen) h += '<option value="'+groepen[g]+'"'+(parseInt(groepen[g])===parseInt(sel)?' selected':'')+'>'+groepen[g]+' — '+g+' of hoger</option>';
+    for (const g in groepen) h += '<option value="'+esc(groepen[g])+'"'+(parseInt(groepen[g])===parseInt(sel)?' selected':'')+'>'+esc(groepen[g])+' — '+esc(g)+' of hoger</option>';
     return h || '<option value="1">1</option>';
   }
 

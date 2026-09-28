@@ -75,7 +75,7 @@ if ($tabel && $tabel_rij !== ''):
             data-kolom="<?= h($_s) ?>"<?= $_stand ? ' aria-sort="' . $_stand . '"' : '' ?>>
           <?php if ($_url): ?>
             <a href="<?= h($_url) ?>"><?= h($_k['kop']) ?><?php
-              if ($_stand) echo icoon($_stand === 'ascending' ? 'chevron' : 'chevron', 12);
+              if ($_stand) echo icoon($_stand === 'ascending' ? 'chevron-op' : 'chevron-neer', 12);
             ?></a>
           <?php else: ?>
             <?= h($_k['kop']) ?>
