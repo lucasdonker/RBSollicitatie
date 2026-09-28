@@ -441,6 +441,34 @@
     });
   }
 
+  /* ── Concept bewaren ──────────────────────────────────────────
+     <form data-concept="sleutel">: wat je in de tekstvelden typt blijft op dit apparaat
+     (sessionStorage, weg als het tabblad dichtgaat) tot het formulier is verstuurd. Voor
+     schermen waar een ánder formulier de pagina herlaadt (bijv. feedback vastleggen in het
+     TW-gesprek): anders was het half getypte bericht weg. Teruggezet wordt alleen in een
+     veld dat nog de waarde van de server heeft. */
+  function conceptKoppelen(form) {
+    if (form.dataset.bhConceptGekoppeld || !window.sessionStorage) return;
+    form.dataset.bhConceptGekoppeld = '1';
+    var sleutel = 'bhconcept:' + form.dataset.concept;
+    var velden = form.querySelectorAll('textarea[name], input[type=text][name]');
+    try {
+      var bewaard = JSON.parse(sessionStorage.getItem(sleutel) || '{}');
+      velden.forEach(function (v) {
+        if (bewaard[v.name] != null && v.value === v.defaultValue && bewaard[v.name] !== v.value) v.value = bewaard[v.name];
+      });
+    } catch (e) {}
+    form.addEventListener('input', function () {
+      var uit = {};
+      velden.forEach(function (v) { if (v.value !== v.defaultValue) uit[v.name] = v.value; });
+      try { sessionStorage.setItem(sleutel, JSON.stringify(uit)); } catch (e) {}
+    });
+    // Alleen wissen als het echt verstuurd wordt (niet bij de eerste submit die op bevestiging wacht).
+    form.addEventListener('submit', function (e) {
+      if (!e.defaultPrevented) { try { sessionStorage.removeItem(sleutel); } catch (err) {} }
+    });
+  }
+
   /* ── Snelzoeker (Ctrl+K) ──────────────────────────────────────
      Eén veld voor "waar staat die persoon" en "waar stond die instelling". De
      server beslist wát je mag vinden (admin/api_zoek.php → bh_zoek()); hier staat
@@ -595,6 +623,7 @@
     (wortel || document).querySelectorAll('[data-kolomkiezer]').forEach(kiezerKoppelen);
     (wortel || document).querySelectorAll('.bh-filterbalk').forEach(filterKoppelen);
     (wortel || document).querySelectorAll('form[data-bevestig]').forEach(bevestigFormKoppelen);
+    (wortel || document).querySelectorAll('form[data-concept]').forEach(conceptKoppelen);
     if (!wortel || wortel === document) { zijbalkKoppelen(); hulpKoppelen(); zoekKoppelen(); }
   }
 

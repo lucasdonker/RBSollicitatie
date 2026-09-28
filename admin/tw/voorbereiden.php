@@ -68,7 +68,8 @@ $_bron     = ['portaal' => 'zelf doorgegeven', 'bellijst' => 'via de bellijst', 
               <input type="hidden" name="sol_id" value="<?= $_id ?>">
               <label class="bh-vw" for="bev-<?= $_id ?>">Komt <?= h((string)$_k['naam']) ?>?</label>
               <select name="stand" id="bev-<?= $_id ?>" class="ds-select">
-                <?php foreach ($_standen as $_w => $_l): ?><option value="<?= h($_w) ?>"<?= $_w === $_st ? ' selected' : '' ?>><?= h($_l) ?></option><?php endforeach; ?>
+                <?php // "Kan niet" vraagt eerst een reden (direct_opslaan.js wacht dan met opslaan). ?>
+                <?php foreach ($_standen as $_w => $_l): ?><option value="<?= h($_w) ?>"<?= $_w === $_st ? ' selected' : '' ?><?= $_w === 'komt_niet' ? ' data-vraagt="#red-' . $_id . '"' : '' ?>><?= h($_l) ?></option><?php endforeach; ?>
               </select>
               <label class="bh-vw" for="red-<?= $_id ?>">Opmerking (verplicht bij kan niet)</label>
               <input type="text" name="reden" id="red-<?= $_id ?>" class="ds-input" maxlength="300" placeholder="Opmerking (verplicht bij kan niet)" value="<?= h((string)($_k['bevestiging_reden'] ?? '')) ?>">

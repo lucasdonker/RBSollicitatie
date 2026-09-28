@@ -2104,6 +2104,9 @@ body.bh-paneel-open .bh-inhoud { transition: padding-right .15s ease; }
 .bh-twevaluatie-form .bh-twkeuze { flex: 1 1 100%; }
 .bh-twevaluatie-form .bh-twoptie { min-width: 0; }
 .bh-twevaluatie-form .ds-input { flex: 1 1 220px; height: 38px; font-size: 13px; }
+.bh-twevaluatie-vraag { display: flex; flex: 1 1 220px; }
+/* De vraag aan de beoordelaars wordt alleen bij twijfel bewaard, dus alleen dan in beeld. */
+.bh-twevaluatie-form:not(:has(input[value="twijfel"]:checked)) .bh-twevaluatie-vraag { display: none; }
 @media (max-width: 860px) { .bh-twevaluatie-rij { grid-template-columns: 1fr; } }
 .bh-twevaluatie-obs { grid-column: 1 / -1; border-top: 1px solid var(--bg-subtle); padding-top: 4px; }
 .bh-twevaluatie-obs > summary { cursor: pointer; min-height: 36px; display: flex; align-items: center; font-size: 13px; color: var(--ink-soft); }

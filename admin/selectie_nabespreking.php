@@ -303,7 +303,7 @@ require __DIR__ . '/layout_top.php';
       <input type="text" class="ds-input bh-nb-notitie" id="notitie-<?= $_id ?>"
              value="<?= h((string)$_not) ?>" placeholder="Korte reden of aantekening…"
              onchange="besluitZet(<?= $_id ?>, null)">
-      <span class="bh-nb-stand" id="stand-<?= $_id ?>"></span>
+      <span class="bh-nb-stand" id="stand-<?= $_id ?>" aria-live="polite"></span>
     </footer>
   </section>
   <?php endforeach; ?>
@@ -338,7 +338,11 @@ function besluitZet(solId, besluit) {
   const huidig = !aan ? '' : aan.classList.contains('door') ? 'door'
                : (aan.classList.contains('twijfel') ? 'twijfel' : 'niet');
   if (besluit === null) {
-    if (!huidig) return;                    // nog geen besluit: notitie heeft geen huis
+    if (!huidig) {                          // nog geen besluit: de notitie gaat mee zodra je er een kiest
+      const st = document.getElementById('stand-' + solId);
+      if (st) st.textContent = 'nog niet opgeslagen: kies een besluit, dan gaat de aantekening mee';
+      return;
+    }
     besluit = huidig;
   } else if (besluit === huidig) {
     besluit = '';                           // zelfde knop nogmaals: wissen

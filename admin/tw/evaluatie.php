@@ -90,9 +90,12 @@ $_kleur = ['aannemen' => 'groen', 'twijfel' => 'oranje', 'afwijzen' => 'rood'];
         <?php endforeach; ?>
         <label class="bh-twoptie"><input type="radio" name="evaluatie" value=""<?= $_e === '' ? ' checked' : '' ?>><span>Nog niet</span></label>
       </fieldset>
-      <label class="bh-vw" for="evb-<?= $_id ?>">Vraag aan de beoordelaars, alleen bij twijfel</label>
-      <input type="text" class="ds-input" id="evb-<?= $_id ?>" name="evaluatie_bericht" maxlength="500"
-             placeholder="Bij twijfel: waar moeten de beoordelaars op letten?" value="<?= h((string)($_k['evaluatie_bericht'] ?? '')) ?>">
+      <?php // Alleen bij twijfel zichtbaar (CSS :has): bij de andere keuzes wordt de vraag niet bewaard. ?>
+      <span class="bh-twevaluatie-vraag">
+        <label class="bh-vw" for="evb-<?= $_id ?>">Vraag aan de beoordelaars</label>
+        <input type="text" class="ds-input" id="evb-<?= $_id ?>" name="evaluatie_bericht" maxlength="500"
+               placeholder="Waar moeten de beoordelaars op letten?" value="<?= h((string)($_k['evaluatie_bericht'] ?? '')) ?>">
+      </span>
       <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm" data-direct-knop>Opslaan</button>
       <span class="bh-meta bh-direct-status" data-direct-status aria-live="polite"></span>
     </form>
@@ -108,7 +111,7 @@ $_kleur = ['aannemen' => 'groen', 'twijfel' => 'oranje', 'afwijzen' => 'rood'];
   </li>
   <?php endforeach; ?>
 </ul>
-<p class="bh-meta">Een keuze wordt meteen opgeslagen, de vraag zodra je het veld verlaat. De vraag bij twijfel zien de beoordelaars
-  bij die persoon; bij sowieso aannemen of afwijzen wordt hij niet bewaard.</p>
+<p class="bh-meta">Een keuze wordt meteen opgeslagen, de vraag zodra je het veld verlaat. Bij twijfel verschijnt een veld voor
+  een vraag aan de beoordelaars; die zien ze bij die persoon.</p>
 <?php endif; ?>
 <script src="<?= APP_URL ?>/assets/js/direct_opslaan.js?v=<?= @filemtime(__DIR__ . '/../../assets/js/direct_opslaan.js') ?>" defer></script>

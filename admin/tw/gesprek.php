@@ -172,8 +172,9 @@ $_niet     = tw_niet_gekomen($_k);   // was er niet: geen gesprek, wel een beslu
                           . ' Terugzetten kan in het dossier, maar een verstuurde mail neem je niet terug.', 'Ja, afwijzen', '1'],
         ];
       ?>
+      <?php // data-concept: feedback vastleggen hierboven herlaadt de pagina; het getypte bericht blijft (beheer.js). ?>
       <form method="post" class="bh-twgesprek-form"<?= $_mag_form ? '' : ' inert' ?>
-            data-bevestig="Besluit vastleggen?">
+            data-bevestig="Besluit vastleggen?" data-concept="twgesprek-<?= (int)$sid ?>-<?= $_id ?>">
         <?= csrf_input() ?>
         <input type="hidden" name="actie" value="gesprek">
         <input type="hidden" name="sol_id" value="<?= $_id ?>">
