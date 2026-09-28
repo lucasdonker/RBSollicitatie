@@ -51,6 +51,11 @@ $afspraak = (function_exists('module_aan') && module_aan('loonplanning') && func
     ? inzet_afspraak_van($sol_id) : null;
 $functie_namen = function_exists('functies_ophalen') ? array_column(functies_ophalen(), 'naam', 'sleutel') : [];
 $voorlopig = $heeft_besch && !empty($b2p['voorlopig']);
+// Losse dagen die de sollicitant zelf opgaf (zelfde sectie als in het formulier); stonden hier eerder niet.
+$losse = function_exists('beschikbaarheid_dagen')
+    ? array_values(array_filter(beschikbaarheid_dagen($sol_id), fn($d) => ($d['bron'] ?? '') !== 'bestuur'
+                                && in_array($d['soort'] ?? '', ['niet_beschikbaar', 'voorkeur_vrij'], true)))
+    : [];
 
 // Deadline
 $deadline = function_exists('beschikbaarheid2_deadline') ? beschikbaarheid2_deadline($seizoen) : null;
@@ -136,21 +141,30 @@ require __DIR__ . '/_kop.php';
     </div>
 
     <!-- Afwezigheid + voorkeuren -->
-    <?php if ($b2['afwezig'] || !empty($b2p['vaste_dagen_uit'])): ?>
+    <?php // Zelfde namen als de secties in het formulier (_beschikbaarheid_velden.php). ?>
+    <?php if ($b2['afwezig'] || !empty($b2p['vaste_dagen_uit']) || $losse): ?>
     <div class="pt-kaart">
       <h2 class="pt-kaart-titel"><?= icoon('info', 18) ?> Verder doorgegeven</h2>
       <?php if ($b2['afwezig']): ?>
         <div class="bk-rij">
-          <strong>Afwezig:</strong>
+          <strong>Vakanties:</strong>
           <?= implode(', ', array_map(fn($a) => h(datum_nl($a['van_datum'])) . ' t/m ' . h(datum_nl($a['tot_datum'])) . ($a['label'] ? ' (' . h($a['label']) . ')' : ''), $b2['afwezig'])) ?>
         </div>
       <?php endif; ?>
       <?php if (!empty($b2p['vaste_dagen_uit'])): ?>
         <div class="bk-rij">
-          <strong>Voorkeur vrij:</strong>
+          <strong>Vaste vrije dag:</strong>
           <?= implode(', ', array_map(fn($d) => trim($dagnamen[$d]), $b2p['vaste_dagen_uit'])) ?>
           <span class="bk-zacht">(voorkeur — de planner beslist)</span>
           <?php if (!empty($b2p['vaste_toelichting'])): ?><br><span class="bk-klein"><?= h($b2p['vaste_toelichting']) ?></span><?php endif; ?>
+        </div>
+      <?php endif; ?>
+      <?php if ($losse): ?>
+        <div class="bk-rij">
+          <strong>Losse dagen niet beschikbaar:</strong>
+          <?= implode(', ', array_map(fn($d) => h(datum_nl((string)$d['datum']))
+              . (($d['soort'] ?? '') === 'voorkeur_vrij' ? ' (liever vrij)' : '')
+              . (!empty($d['reden']) ? ' — ' . h((string)$d['reden']) : ''), $losse)) ?>
         </div>
       <?php endif; ?>
     </div>
@@ -159,7 +173,7 @@ require __DIR__ . '/_kop.php';
     <!-- Verzoeken minder dagen + status (status in woorden én kleur, nooit alleen kleur) -->
     <?php if ($b2['verzoeken']): ?>
     <div class="pt-kaart">
-      <h2 class="pt-kaart-titel"><?= icoon('lijst', 18) ?> Verzoeken (minder dagen)</h2>
+      <h2 class="pt-kaart-titel"><?= icoon('lijst', 18) ?> Minder dagen werken</h2>
       <?php foreach ($b2['verzoeken'] as $vz):
         $st = $vz['status'];
         $st_klasse = $st === 'goedgekeurd' ? 'ok' : ($st === 'afgewezen' ? 'error' : 'open');

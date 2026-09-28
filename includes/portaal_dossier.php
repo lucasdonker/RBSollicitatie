@@ -137,9 +137,9 @@ function portaal_voortgang_toelichting(string $fase): string {
         'aangemeld'            => 'Word je uitgenodigd, dan krijg je bericht en verschijnen hier je taken.',
         'uitgenodigd_selectie',
         'aangemeld_selectie'   => 'Na de selectiedag hoor je of je door mag naar het trainingsweekend.',
-        'selectiedag_geweest'  => 'Het bestuur bespreekt de selectiedag. Je hoort of je door mag naar het trainingsweekend.',
+        'selectiedag_geweest'  => 'Het bestuur bespreekt de selectiedag. Je hoort ' . portaal_uitslag_termijn() . ' of je door mag naar het trainingsweekend.',
         'uitgenodigd_tw'       => 'Na het trainingsweekend hoor je of je bent aangenomen.',
-        'tw_geweest'           => 'Het bestuur bespreekt het trainingsweekend. Je hoort snel of je bent aangenomen.',
+        'tw_geweest'           => 'Het bestuur bespreekt het trainingsweekend. Je hoort ' . portaal_uitslag_termijn() . ' of je bent aangenomen.',
         'aangenomen'           => 'Je hebt alle stappen doorlopen. Welkom bij Paal 13.',
         default                => '',
     };
@@ -161,12 +161,12 @@ function portaal_begroeting(array $sol, int $open): array {
             if ($open > 0) return ['titel' => 'Je bent uitgenodigd', 'tekst' => $n . ' te doen' . ($sd ? ' vóór ' . lcfirst($sd) : '') . '.'];
             return ['titel' => 'Je bent uitgenodigd', 'tekst' => 'Alles is binnen.' . ($sd ? ' Tot ' . lcfirst($sd) . '!' : ' Tot op de selectiedag!')];
         case 'selectiedag_geweest':
-            return ['titel' => 'Hoi ' . $naam, 'tekst' => 'Je hebt de selectiedag gedaan. We laten snel weten hoe het verder gaat.'];
+            return ['titel' => 'Hoi ' . $naam, 'tekst' => 'Je hebt de selectiedag gedaan. Je hoort ' . portaal_uitslag_termijn() . ' hoe het verder gaat.'];
         case 'uitgenodigd_tw':
             if ($open > 0) return ['titel' => 'Door naar het trainingsweekend', 'tekst' => $n . ' te doen' . ($tw ? ' vóór ' . lcfirst($tw) : '') . '.'];
             return ['titel' => 'Door naar het trainingsweekend', 'tekst' => 'Je bent erbij.' . ($tw ? ' Tot ' . lcfirst($tw) . '!' : '')];
         case 'tw_geweest':
-            return ['titel' => 'Hoi ' . $naam, 'tekst' => 'Het trainingsweekend zit erop. We laten snel weten hoe het verder gaat.'];
+            return ['titel' => 'Hoi ' . $naam, 'tekst' => 'Het trainingsweekend zit erop. Je hoort ' . portaal_uitslag_termijn() . ' hoe het verder gaat.'];
         case 'aangenomen':
             return ['titel' => 'Welkom bij Paal 13', 'tekst' => 'Je bent aangenomen als strandwacht voor ' . ($sol['sz_naam'] ?? 'dit seizoen') . '.'];
         case 'afgewezen':
@@ -320,11 +320,11 @@ function portaal_hierna(array $sol, int $open = 0): string {
         'aangemeld_selectie'   => $sd !== ''
             ? 'Dat was het voor nu. We zien je op ' . lcfirst($sd) . ' — je krijgt daarvoor nog een herinnering.'
             : 'Dat was het voor nu. Je krijgt bericht met de details van de selectiedag.',
-        'selectiedag_geweest'  => 'Dat was het voor nu. Het bestuur bespreekt de selectiedag; je hoort binnen twee weken of je door mag.',
+        'selectiedag_geweest'  => 'Dat was het voor nu. Het bestuur bespreekt de selectiedag; je hoort ' . portaal_uitslag_termijn() . ' of je door mag.',
         'uitgenodigd_tw'       => $tw !== ''
             ? 'Dat was het voor nu. We zien je op ' . lcfirst($tw) . '.'
             : 'Dat was het voor nu. Je krijgt bericht met de details van het trainingsweekend.',
-        'tw_geweest'           => 'Dat was het voor nu. Je hoort binnen twee weken of je bent aangenomen.',
+        'tw_geweest'           => 'Dat was het voor nu. Je hoort ' . portaal_uitslag_termijn() . ' of je bent aangenomen.',
         'aangenomen'           => 'Dat was het — je bent helemaal rond. Tot op het strand.',
         default                => 'Dat was het voor nu. Je hoort van ons zodra er nieuws is.',
     };
@@ -357,6 +357,14 @@ function portaal_contact_email(): string {
     $e = function_exists('instelling') ? trim((string)instelling('mail.contact_email', '')) : '';
     if ($e === '' && function_exists('instelling')) $e = trim((string)instelling('mail.bestuur_email', ''));
     return $e !== '' ? $e : 'sollicitatie@paal13.com';
+}
+
+/**
+ * Wanneer een sollicitant na de selectiedag of het weekend de uitslag hoort. Eén belofte, op één
+ * plek: eerder stond er op de ene plek "binnen twee weken" en op de andere "snel".
+ */
+function portaal_uitslag_termijn(): string {
+    return 'binnen twee weken';
 }
 
 /** "2026-04-11" → "Zaterdag 11 april" (zonder jaar; ontwerp-notatie). */
