@@ -393,6 +393,17 @@ function evenement_claim_los(string $tabel, string $soort, int $seizoen_id, int 
 }
 
 /**
+ * Al je andere claims van deze soort in dit seizoen loslaten. Je belt of spreekt één persoon
+ * tegelijk: wie naar een ander gaat (of terug naar het overzicht, $behalve = 0), houdt de vorige
+ * niet nog 30 minuten vast voor collega's.
+ */
+function evenement_claim_los_overige(string $tabel, string $soort, int $seizoen_id, int $beheerder_id, int $behalve = 0): void {
+    if (!in_array($tabel, ['selectie_besluit', 'tw_deelname'], true) || !in_array($soort, ['bel', 'gesprek'], true)) return;
+    db()->prepare("UPDATE `$tabel` SET `{$soort}_door`=NULL, `{$soort}_sinds`=NULL WHERE seizoen_id=? AND `{$soort}_door`=? AND sollicitatie_id<>?")
+       ->execute([$seizoen_id, $beheerder_id, $behalve]);
+}
+
+/**
  * Een claim van een ander bewust overnemen (bijv. iemand liep weg met het gesprek open).
  * Alleen als de claim nog bij $van ligt — de persoon die in de bevestiging werd genoemd. Heeft
  * intussen een derde hem, dan gebeurt er niets (je bevestigde iets anders). Geaudit.

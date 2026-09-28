@@ -20,6 +20,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $sid) {
     csrf_check();
     $actie = (string)($_POST['actie'] ?? '');
 
+    // Een verouderd tabblad op een tweede tablet mag niet over het werk van een collega heen:
+    // weigeren als iemand anders deze persoon aan het bellen is, of als hij niet (meer) op de
+    // selectiedag-lijst staat (bijv. al doorgevoerd).
+    if (in_array($actie, ['besluit', 'gebeld', 'gebeld_wissen', 'doorvoeren_een'], true)) {
+        $_sol  = (int)($_POST['sol_id'] ?? 0);
+        $_rij  = selectie_besluit_van($sid, $_sol) ?? [];
+        $_fout = !selectie_is_kandidaat($sid, $_sol)
+            ? 'Deze persoon staat niet meer op de lijst van de selectiedag. Ververs de pagina.'
+            : (evenement_claim_actief($_rij['bel_door'] ?? null, $_rij['bel_sinds'] ?? null, (int)($_SESSION['bhd_id'] ?? 0))
+                ? evenement_claim_naam((int)$_rij['bel_door']) . ' is deze persoon aan het bellen. Ververs de pagina.'
+                : '');
+        if ($_fout !== '') {
+            header('Content-Type: application/json');
+            echo json_encode(['ok' => false, 'fout' => $_fout]);
+            exit;
+        }
+    }
+
     if ($actie === 'besluit') {
         header('Content-Type: application/json');
         selectie_besluit_zetten($sid, (int)$_POST['sol_id'], (string)($_POST['besluit'] ?? ''),
@@ -325,7 +343,7 @@ function besluitZet(solId, besluit) {
   })
   .then(r => r.json())
   .then(d => {
-    if (!d.ok) throw new Error();
+    if (!d.ok) throw new Error(d.fout || '');
     rij.querySelectorAll('.bh-besluitknop').forEach(function (b) {
       const aan = besluit !== '' && b.classList.contains(besluit);
       b.classList.toggle('aan', aan);
@@ -338,7 +356,7 @@ function besluitZet(solId, besluit) {
     if (besluit === '') document.getElementById('notitie-' + solId).value = '';
     if (stand) stand.textContent = besluit === '' ? 'besluit gewist' : 'opgeslagen';
   })
-  .catch(() => { if (stand) stand.textContent = 'niet opgeslagen'; bhToast('Opslaan mislukt.', 'fout'); });
+  .catch((e) => { if (stand) stand.textContent = 'niet opgeslagen'; bhToast((e && e.message) || 'Opslaan mislukt.', 'fout'); });
 }
 </script>
 

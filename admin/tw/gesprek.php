@@ -27,6 +27,8 @@ $_klaar = !empty($_k['doorgevoerd_op']);
 $_claim = ['ok' => true, 'door' => null];
 if (!$_klaar) {
     tw_rij_verzeker($sid, $_id);
+    // Eén gesprek tegelijk: wie je hiervoor open had, komt vrij voor je collega's.
+    evenement_claim_los_overige('tw_deelname', 'gesprek', $sid, $ik_id, $_id);
     $_claim = evenement_claim('tw_deelname', 'gesprek', $sid, $_id, $ik_id);
 }
 $_mag_form = !$_klaar && $_claim['ok'];
@@ -88,7 +90,7 @@ $_niet     = tw_niet_gekomen($_k);   // was er niet: geen gesprek, wel een beslu
 
     <section class="ds-kaart ds-kaart-p">
       <?php
-        $af_sol_id = $_id; $af_seizoen = $seizoen;
+        $af_sol_id = $_id; $af_seizoen = $seizoen; $af_alleen_lezen = !$_claim['ok'];
         if (module_aan('loonplanning') && mag('loonplanning', 'lezen')) {
             require __DIR__ . '/../_afspraak_editor.php';
         } else {

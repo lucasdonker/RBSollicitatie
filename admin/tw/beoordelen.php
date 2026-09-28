@@ -128,7 +128,8 @@ $_aanw  = 'tw_aanwezigheid_tekst';
       ?>
     </div>
 
-    <?php $d = bh_dossier($hid); if ($d) { $sds_dossier = $d; require __DIR__ . '/../_sd_samenvatting.php'; } ?>
+    <?php // Beoordelaars zien de observaties van de selectiedag, niet het besluit van het bestuur.
+      $d = bh_dossier($hid); if ($d) { $sds_dossier = $d; $sds_zonder_besluit = true; require __DIR__ . '/../_sd_samenvatting.php'; } ?>
 
     <footer class="bh-beoordeel-voet">
       <?php $_v = $pos > 0 ? $bo_lijst[$pos - 1] : null; $_n = $bo_lijst[$pos + 1] ?? null; ?>

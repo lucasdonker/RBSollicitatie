@@ -7,12 +7,15 @@
  * Verwacht:
  *   $sds_dossier  array  uit bh_dossier()
  *   $sds_open     bool   optioneel, standaard dicht
+ *   $sds_zonder_besluit bool optioneel: geen advies, besluit en notities van het bestuur — voor
+ *                 beoordelaars op het trainingsweekend (need-to-know; zij zien nooit een besluit)
  * Toont niets als de module Selectiedag uitstaat of er niets is vastgelegd.
  */
 if (function_exists('module_aan') && !module_aan('selectiedag')) return;
-$_adv   = bh_dossier_advies($sds_dossier);
+$_zonder = !empty($sds_zonder_besluit);
+$_adv   = $_zonder ? null : bh_dossier_advies($sds_dossier);
 $_gem   = bh_dossier_score($sds_dossier);
-$_bsl   = $sds_dossier['besluit'] ?? null;
+$_bsl   = $_zonder ? null : ($sds_dossier['besluit'] ?? null);
 $_obs   = $sds_dossier['observaties'] ?? [];
 if (!$_adv && !$_bsl && !$_obs) return;
 $_bsl_label = ['door' => 'Door', 'twijfel' => 'Twijfel', 'niet' => 'Niet door'][$_bsl['besluit'] ?? ''] ?? null;
@@ -39,4 +42,4 @@ $_bsl_label = ['door' => 'Door', 'twijfel' => 'Twijfel', 'niet' => 'Niet door'][
     <?php if ($_obs) { $obs_lijst = $_obs; $obs_eigen = null; require __DIR__ . '/_observaties.php'; } ?>
   </div>
 </details>
-<?php $sds_open = false;
+<?php $sds_open = false; $sds_zonder_besluit = false;

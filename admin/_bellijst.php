@@ -48,11 +48,14 @@ if (!$bel_lijst) {
     return;
 }
 
-// Wie is aan de beurt: de eerste die nog niet gebeld is.
+// Wie is aan de beurt: de eerste die nog niet gebeld is en die geen collega al aan het bellen is.
 $_open = (int)($_GET['bel'] ?? 0);
 if (!$_open) {
     foreach ($bel_lijst as $_k) {
-        if (empty($bel_besluiten[(int)$_k['sol_id']]['gebeld_op'])) { $_open = (int)$_k['sol_id']; break; }
+        $_kb = $bel_besluiten[(int)$_k['sol_id']] ?? [];
+        if (empty($_kb['gebeld_op']) && !evenement_claim_actief($_kb['bel_door'] ?? null, $_kb['bel_sinds'] ?? null, $_ik)) {
+            $_open = (int)$_k['sol_id']; break;
+        }
     }
     if (!$_open) $_open = (int)$bel_lijst[0]['sol_id'];
 }
@@ -133,6 +136,8 @@ foreach ($bel_lijst as $_k) if ((int)$_k['sol_id'] === $_open) $_huidig = $_k;
     $_door = $_besl === 'door';
     $_gebeld = !empty($_b['gebeld_op']);
     // Openen = claimen (30 minuten). Heeft een ander hem, dan kijk je mee maar bel je niet.
+    // Je belt één persoon tegelijk: wie je hiervoor open had, komt vrij voor je collega's.
+    evenement_claim_los_overige('selectie_besluit', 'bel', $bel_sid, $_ik, $_id);
     $_claim = $_gebeld ? ['ok' => true] : evenement_claim('selectie_besluit', 'bel', $bel_sid, $_id, $_ik);
     $_tw = evenement_bevestiging_van('tw', $bel_sid, $_id);
   ?>
@@ -155,7 +160,7 @@ foreach ($bel_lijst as $_k) if ((int)$_k['sol_id'] === $_open) $_huidig = $_k;
       <?php endif; ?>
     </header>
 
-    <div class="bh-bel-inhoud">
+    <div class="bh-bel-inhoud"<?= $_claim['ok'] ? '' : ' inert' ?>>
       <?php if (!empty($_b['notitie'])): ?>
         <div>
           <span class="bh-veldlabel">Reden bij het besluit</span>
@@ -277,7 +282,10 @@ function gebeldZet(solId, meteen, nieuwBesluit) {
 
 function gebeldWissen(solId) {
   belPost({ actie: 'gebeld_wissen', sol_id: solId })
-    .then(function () { location.reload(); })
+    .then(function (d) {
+      if (!d.ok) { bhToast(d.fout || 'Opslaan mislukt.', 'fout'); return; }
+      location.reload();
+    })
     .catch(function () { bhToast('Geen verbinding — probeer opnieuw.', 'fout'); });
 }
 
@@ -290,7 +298,7 @@ function doorvoerenEen(solId, isDoor) {
     if (!ja) return;
     belPost({ actie: 'doorvoeren_een', sol_id: solId })
       .then(function (d) {
-        if (!d.ok) { bhToast('Doorvoeren mislukt.', 'fout'); return; }
+        if (!d.ok) { bhToast(d.fout || 'Doorvoeren mislukt.', 'fout'); return; }
         location.reload();
       })
       .catch(function () { bhToast('Geen verbinding — probeer opnieuw.', 'fout'); });

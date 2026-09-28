@@ -11,6 +11,7 @@
  * Verwacht:
  *   $af_sol_id  int
  *   $af_seizoen array  het actieve seizoen
+ *   $af_alleen_lezen bool optioneel: alleen tonen (bijv. een collega heeft het gesprek open)
  * Toont niets als de module Loonplanning uitstaat of je die niet mag lezen; zonder bewerkrecht
  * alleen lezen. Gedrag: assets/js/afspraak.js. Opslaan: admin/api_afspraak.php.
  */
@@ -20,7 +21,8 @@ $_sc  = $_sid ? loonplan_actief_scenario($_sid) : null;
 if (!$_sc) return;
 $_m    = loonplan_analyse($_sid, (int)$_sc['id'], $af_seizoen, (int)$af_sol_id)['mensen'][(int)$af_sol_id] ?? null;
 $_slot = loonplan_sloten($_sid)[(int)$af_sol_id] ?? null;
-$_mag  = mag('loonplanning', 'bewerken');
+$_mag  = mag('loonplanning', 'bewerken') && empty($af_alleen_lezen);
+$af_alleen_lezen = false;
 $_kan  = $_mag && !$_slot;
 $_wd   = seizoen_weken_datums($af_seizoen);
 $_functies = functies_ophalen();

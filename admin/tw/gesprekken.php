@@ -7,6 +7,8 @@
  * Zoeken en filteren via de gedeelde filterbalk (werkt zonder JavaScript).
  * Onderdeel van admin/trainingsweekend.php; het gesprek zelf staat in admin/tw/gesprek.php.
  */
+// Terug in het overzicht = in geen gesprek meer: je open gesprek komt vrij voor je collega's.
+if (!empty($ik_id)) evenement_claim_los_overige('tw_deelname', 'gesprek', $sid, $ik_id);
 $_f = ['q' => (string)($_GET['q'] ?? ''), 'stand' => (string)($_GET['stand'] ?? ''),
        'besluit' => (string)($_GET['besluit'] ?? ''), 'sort' => (string)($_GET['sort'] ?? 'naam')];
 $_sd  = (module_aan('selectiedag') && function_exists('selectie_scores_alle')) ? selectie_scores_alle($sid) : [];
