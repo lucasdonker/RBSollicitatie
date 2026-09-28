@@ -182,10 +182,14 @@ function portaal_bericht_laden(int $sol_id, int $id): ?array {
  * Begrenzing: drie vragen per uur per sollicitant. Genoeg voor wie iets wil weten,
  * te weinig om er een verzendkanaal van te maken.
  *
+ * Gelukt = doorsturen naar dezelfde pagina (komt niet terug); de bevestiging staat dan in 'flash'.
+ *
  * @return array{gedaan:bool,flash:?string,fout:?string}
  */
 function portaal_vraag_verwerk(array $sol): array {
     $uit = ['gedaan' => false, 'flash' => null, 'fout' => null];
+    // Na een geslaagde vraag is er doorgestuurd (hieronder); de bevestiging staat dan in de sessie.
+    if (!empty($_SESSION['portaal_vraag_flash'])) { $uit['flash'] = (string)$_SESSION['portaal_vraag_flash']; unset($_SESSION['portaal_vraag_flash']); }
     if ($_SERVER['REQUEST_METHOD'] !== 'POST' || empty($_POST['vraag_versturen'])) return $uit;
 
     csrf_check();
@@ -215,11 +219,14 @@ function portaal_vraag_verwerk(array $sol): array {
             return $uit;
         }
         if (function_exists('audit_log')) audit_log('vraag_gesteld', 'sollicitatie', $sol_id, ['lengte' => mb_strlen($vraag)]);
-        $uit['flash'] = 'Je vraag is verstuurd. Je krijgt antwoord per e-mail — meestal binnen een paar dagen.';
+        $_SESSION['portaal_vraag_flash'] = 'Je vraag is verstuurd. Je krijgt antwoord per e-mail — meestal binnen een paar dagen.';
     } catch (\Throwable $e) {
         error_log('portaal_vraag: ' . $e->getMessage());
         $uit['fout'] = 'Versturen lukte niet. Probeer het later opnieuw.';
+        return $uit;
     }
+    // Doorsturen (Post/Redirect/Get): verversen mag de vraag niet nog eens versturen.
+    redirect(APP_URL . '/portaal/' . basename((string)($_SERVER['SCRIPT_NAME'] ?? 'contact.php')));
     return $uit;
 }
 

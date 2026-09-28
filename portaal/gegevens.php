@@ -23,43 +23,52 @@ if (!$mij) redirect(APP_URL . '/portaal/');
 $kanaal_opties = ['whatsapp' => 'WhatsApp', 'sms' => 'Sms', 'email' => 'Alleen e-mail'];
 if (!function_exists('wa_actief') || !wa_actief()) unset($kanaal_opties['whatsapp']);
 if (!function_exists('sms_actief') || !sms_actief()) unset($kanaal_opties['sms']);
-$kanaal_flash = null;
+/* Na een geslaagde actie sturen we door naar deze pagina (Post/Redirect/Get: verversen doet
+   hem niet nog eens); de bevestiging reist mee in de sessie. */
+$_gf = $_SESSION['gegevens_flash'] ?? [];
+unset($_SESSION['gegevens_flash']);
+$gegevens_klaar = function (string $soort, string $tekst): void {
+    $_SESSION['gegevens_flash'] = [$soort => $tekst];
+    redirect(APP_URL . '/portaal/gegevens.php');
+};
+$kanaal_flash = $_gf['kanaal'] ?? null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['kanaal_opslaan'])) {
     csrf_check();
     $keuze = (string)($_POST['kanaal_voorkeur'] ?? 'email');
     if (!in_array($keuze, ['email', 'whatsapp', 'sms'], true)) $keuze = 'email';
+    $kanaal_ok = false;
     try {
         $db->prepare("UPDATE personen SET kanaal_voorkeur=?, kanaal_gewijzigd_op=NOW(), kanaal_bron='portaal' WHERE id=?")->execute([$keuze, (int)$mij['persoon_id']]);
         if (function_exists('audit_log')) audit_log('kanaal_voorkeur', 'persoon', (int)$mij['persoon_id'], ['naar' => $keuze, 'via' => 'portaal']);
-        $mij['kanaal_voorkeur'] = $keuze;
-        $kanaal_flash = 'Je voorkeur is opgeslagen.';
+        $kanaal_ok = true;
     } catch (Exception $e) { $kanaal_flash = null; }
+    if ($kanaal_ok) $gegevens_klaar('kanaal', 'Je voorkeur is opgeslagen.');
 }
 
 /* "Blijf ingelogd" moet je ook kunnen terugdraaien — bijvoorbeeld als je je telefoon
    kwijt bent. Dit trekt álle apparaten in, ook het huidige; daarna moet overal opnieuw
    worden ingelogd. Dat is de bedoeling. */
-$apparaten_flash = null;
+$apparaten_flash = $_gf['apparaten'] ?? null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['apparaten_vergeten'])) {
     csrf_check();
     if (function_exists('portaal_onthoud_intrekken_alle')) {
         portaal_onthoud_intrekken_alle($sol_id);
         portaal_onthoud_cookie('');
         if (function_exists('audit_log')) audit_log('apparaten_vergeten', 'sollicitatie', $sol_id, ['via' => 'portaal']);
-        $apparaten_flash = 'Klaar — op elk apparaat moet nu opnieuw worden ingelogd.';
+        $gegevens_klaar('apparaten', 'Klaar — op elk apparaat moet nu opnieuw worden ingelogd.');
     }
 }
 $apparaten_aantal = function_exists('portaal_onthoud_aantal') ? portaal_onthoud_aantal($sol_id) : 0;
 
 // ── Verzoek om in te trekken (portaal/_intrekken.php, includes/intrekken.php) ──
-$intrek_flash = null; $intrek_fout = null;
+$intrek_flash = $_gf['intrek'] ?? null; $intrek_fout = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['intrek_actie']) && function_exists('intrek_aanvragen')) {
     csrf_check();
     if ($_POST['intrek_actie'] === 'annuleren') {
-        $intrek_flash = intrek_annuleren($sol_id) ? 'Je verzoek is geannuleerd. Je sollicitatie loopt gewoon door.' : null;
+        if (intrek_annuleren($sol_id)) $gegevens_klaar('intrek', 'Je verzoek is geannuleerd. Je sollicitatie loopt gewoon door.');
     } else {
         $intrek_fout = intrek_aanvragen($sol_id, (string)($_POST['reden'] ?? ''), !empty($_POST['seintje'])) ?: null;
-        if (!$intrek_fout) $intrek_flash = 'Je verzoek is verstuurd. We nemen contact met je op.';
+        if (!$intrek_fout) $gegevens_klaar('intrek', 'Je verzoek is verstuurd. We nemen contact met je op.');
     }
 }
 
@@ -115,8 +124,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verwijder'])) {
             $db->commit();
             if (function_exists('avg_na_commit')) avg_na_commit();
             if (function_exists('portaal_onthoud_cookie')) portaal_onthoud_cookie('');
+            // session_destroy() leegt $_SESSION niet in dit verzoek: zonder dit toonde de kop
+            // hieronder nog de navigatie en de naam van wie net is verwijderd.
+            $_SESSION = [];
             session_destroy();
             $verwijderd = true;
+            $portaal_geen_nav = true;
         } catch (Exception $e) {
             if ($db->inTransaction()) $db->rollBack();
             if (function_exists('avg_na_rollback')) avg_na_rollback();
