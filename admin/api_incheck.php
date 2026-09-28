@@ -71,7 +71,7 @@ if ($actie !== 'zet' || !in_array($stand, ['aanwezig', 'ongedaan', 'niet'], true
 }
 if ($stand === 'niet') {
     evenement_inchecken($ev, $sid, $sol, false, 'beheer');
-    evenement_afmelden($ev, $sid, $sol, 'Niet gekomen');
+    evenement_afmelden($ev, $sid, $sol, 'Afgemeld bij het inchecken');
     echo json_encode(['ok' => true, 'stand' => 'niet']);
 } else {
     $r = evenement_inchecken($ev, $sid, $sol, $stand === 'aanwezig', 'beheer');

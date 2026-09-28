@@ -187,13 +187,8 @@ require __DIR__ . '/layout_top.php';
 
   <div class="bh-groepkeuze bh-nb-filter">
     <?php
-      $_f = [
-        'alle'    => ['Iedereen', count($kandidaten), 'grijs'],
-        'open'    => ['Nog open', $tel['open'], 'grijs'],
-        'door'    => ['Door', $tel['door'], 'groen'],
-        'twijfel' => ['Twijfel', $tel['twijfel'], 'oranje'],
-        'niet'    => ['Niet', $tel['niet'], 'rood'],
-      ];
+      $_f = ['alle' => ['Iedereen', count($kandidaten), 'grijs'], 'open' => ['Nog open', $tel['open'], 'grijs']];
+      foreach (selectie_besluit_labels() as $_bk => $_bd) $_f[$_bk] = [$_bd[0], $tel[$_bk], $_bd[1]];
       foreach ($_f as $_k => $_d):
         if ($_k !== 'alle' && $_d[1] === 0) continue;   // een filter zonder mensen is ruis
     ?>
@@ -294,10 +289,10 @@ require __DIR__ . '/layout_top.php';
 
     <footer class="bh-nb-besluit">
       <div class="bh-nb-knoppen" id="besluit-<?= $_id ?>">
-        <?php foreach (['door' => 'Door', 'twijfel' => 'Twijfel', 'niet' => 'Niet'] as $_bk => $_bl): ?>
+        <?php foreach (selectie_besluit_labels() as $_bk => $_bd): ?>
           <button type="button" class="bh-besluitknop <?= $_bk ?><?= $_b === $_bk ? ' aan' : '' ?>"
                   aria-pressed="<?= $_b === $_bk ? 'true' : 'false' ?>"
-                  onclick="besluitZet(<?= $_id ?>, '<?= $_bk ?>')"><?= h($_bl) ?></button>
+                  onclick="besluitZet(<?= $_id ?>, '<?= $_bk ?>')"><?= h($_bd[0]) ?></button>
         <?php endforeach; ?>
       </div>
       <input type="text" class="ds-input bh-nb-notitie" id="notitie-<?= $_id ?>"

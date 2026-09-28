@@ -320,7 +320,7 @@ function bh_dossier_advies(array $dossier): ?array {
         $reden = 'Score ' . cijfer_nl((float)$score) . ' ligt net onder de drempel van '
                . cijfer_nl((float)$drempel) . '. Bespreek deze sollicitant.';
     } else {
-        $stand = 'niet'; $label = 'Niet';   $kleur = 'rood';
+        $stand = 'niet'; $label = 'Niet door'; $kleur = 'rood';
         $reden = 'Score ' . cijfer_nl((float)$score) . ' ligt onder de drempel van '
                . cijfer_nl((float)$drempel) . '.';
     }

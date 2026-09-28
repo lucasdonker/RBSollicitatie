@@ -155,7 +155,7 @@ foreach ($bel_lijst as $_k) if ((int)$_k['sol_id'] === $_open) $_huidig = $_k;
         <span class="bh-beoordeel-naam"><?= h((string)$_huidig['naam']) ?></span>
         <span class="bh-meta">
           <?= $_huidig['leeftijd'] ? $_huidig['leeftijd'] . ' jaar · ' : '' ?>
-          besluit: <?= h((string)($_b['besluit'] ?? '')) ?>
+          besluit: <?= h(mb_strtolower(selectie_besluit_labels()[$_b['besluit'] ?? ''][0] ?? 'nog geen')) ?>
         </span>
       </span>
       <?php if (!empty($_huidig['telefoon'])): ?>

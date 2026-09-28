@@ -18,7 +18,7 @@ $_gem   = bh_dossier_score($sds_dossier);
 $_bsl   = $_zonder ? null : ($sds_dossier['besluit'] ?? null);
 $_obs   = $sds_dossier['observaties'] ?? [];
 if (!$_adv && !$_bsl && !$_obs) return;
-$_bsl_label = ['door' => 'Door', 'twijfel' => 'Twijfel', 'niet' => 'Niet door'][$_bsl['besluit'] ?? ''] ?? null;
+$_bsl_label = selectie_besluit_labels()[$_bsl['besluit'] ?? ''][0] ?? null;
 ?>
 <details class="bh-sdsamen"<?= !empty($sds_open) ? ' open' : '' ?>>
   <summary>

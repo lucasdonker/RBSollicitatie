@@ -58,8 +58,8 @@ $_bev = evenement_bevestig_standen();
     <?php if (!empty($_tw['besluit'])): ?>
     <section class="ds-kaart ds-kaart-p">
       <div class="bh-kaartkop"><h2>Gesprek en besluit</h2></div>
-      <?= bh_badge(['aannemen' => 'Aangenomen', 'twijfel' => 'Twijfel', 'afwijzen' => 'Afgewezen'][$_tw['besluit']] ?? (string)$_tw['besluit'],
-                   ['aannemen' => 'groen', 'twijfel' => 'oranje', 'afwijzen' => 'rood'][$_tw['besluit']] ?? 'grijs') ?>
+      <?php $_bd = tw_besluit_labels()[$_tw['besluit']] ?? [(string)$_tw['besluit'], 'grijs']; ?>
+      <?= bh_badge($_bd[0], $_bd[1]) ?>
       <?php if (!empty($_tw['besluit_notitie'])): ?>
         <p class="bh-dossier-tekst bh-dossier-besluittekst"><strong>Intern:</strong> <?= nl2br(h((string)$_tw['besluit_notitie'])) ?></p>
       <?php endif; ?>

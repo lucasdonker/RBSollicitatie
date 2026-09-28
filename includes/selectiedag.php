@@ -517,6 +517,14 @@ function selectie_observatie_tellingen(int $seizoen_id): array {
 //  Nabespreking (fase 4): eindbesluit per kandidaat
 // ─────────────────────────────────────────────────────────────
 
+/**
+ * De besluiten van de nabespreking met hun tekst en kleur — de enige plek voor die woorden.
+ * @return array<string,array{0:string,1:string}>  besluit => [label, kleur]
+ */
+function selectie_besluit_labels(): array {
+    return ['door' => ['Door', 'groen'], 'twijfel' => ['Twijfel', 'oranje'], 'niet' => ['Niet door', 'rood']];
+}
+
 /** Het besluit van één kandidaat ophalen (of null). */
 function selectie_besluit_van(int $seizoen_id, int $sol_id): ?array {
     selectiedag_auto_setup();

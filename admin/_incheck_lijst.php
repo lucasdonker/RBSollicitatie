@@ -85,7 +85,7 @@ $_open_f = function_exists('evenement_open_formulieren_seizoen') ? evenement_ope
           <button type="button" class="bh-ick-ongedaan" data-ick="ongedaan">Ongedaan</button>
         </span>
       <?php else: ?>
-        <?= $_k['stand'] === 'aanwezig' ? bh_badge('Aanwezig', 'groen') : ($_k['stand'] === 'niet' ? bh_badge('Niet', 'rood') : bh_badge('Verwacht', 'grijs')) ?>
+        <?= $_k['stand'] === 'aanwezig' ? bh_badge('Aanwezig', 'groen') : ($_k['stand'] === 'niet' ? bh_badge('Niet gekomen', 'rood') : bh_badge('Verwacht', 'grijs')) ?>
       <?php endif; ?>
     </li>
     <?php endforeach; ?>

@@ -57,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $sid) {
             echo json_encode(['ok' => evenement_is_kandidaat('tw', $sid, $sol) && tw_observatie_toevoegen($sid, $sol, (string)($_POST['tekst'] ?? ''),
                                                  (string)($_POST['soort'] ?? 'neutraal'), $ik, $ik_id)]);
         } else {
-            echo json_encode(['ok' => tw_observatie_wissen((int)($_POST['id'] ?? 0), $ik, $ik_id)]);
+            echo json_encode(['ok' => tw_observatie_wissen((int)($_POST['id'] ?? 0), $ik, $ik_id, $mag_beslissen)]);
         }
         exit;
     }

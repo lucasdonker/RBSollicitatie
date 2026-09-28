@@ -122,7 +122,7 @@ $_aanw  = 'tw_aanwezigheid_tekst';
 
       <?php
         $obs_lijst = $obs_alle[$hid] ?? [];
-        $obs_eigen = fn($o) => tw_observatie_is_eigen($o, $ik, $ik_id);
+        $obs_eigen = fn($o) => tw_observatie_is_eigen($o, $ik, $ik_id, $mag_beslissen);
         if ($obs_lijst) require __DIR__ . '/../_observaties.php';
         else echo '<p class="bh-meta">Nog niets opgeschreven.</p>';
       ?>

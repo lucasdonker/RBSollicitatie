@@ -206,12 +206,12 @@ function evenement_afmelden(string $ev, int $seizoen_id, int $sol_id, string $re
     if (!$d) return;
     evenement_rij_verzeker($ev, $seizoen_id, $sol_id);
     db()->prepare("UPDATE `{$d['tabel']}` SET aanwezig=0, ingecheckt_op=NULL, afgemeld_reden=? WHERE seizoen_id=? AND sollicitatie_id=?")
-       ->execute([mb_substr(trim($reden), 0, 200) ?: 'Niet verschenen', $seizoen_id, $sol_id]);
+       ->execute([mb_substr(trim($reden), 0, 200) ?: 'Geen reden opgegeven', $seizoen_id, $sol_id]);
 }
 
 /**
  * "Inchecken afsluiten": wie dan nog niet is ingecheckt (en niet al is afgemeld) staat op
- * "Niet verschenen". Een laatkomer kan daarna nog steeds inchecken. Retourneert het aantal.
+ * "niet gekomen" (reden: niet ingecheckt). Een laatkomer kan daarna nog steeds inchecken. Retourneert het aantal.
  */
 function evenement_afsluiten(string $ev, int $seizoen_id, int $door): int {
     $d = evenement_def($ev);
@@ -224,7 +224,7 @@ function evenement_afsluiten(string $ev, int $seizoen_id, int $door): int {
                   SELECT seizoen_id, id FROM sollicitaties WHERE seizoen_id=? AND fase IN ($ph)")
        ->execute(array_merge([$seizoen_id], $d['kandidaat_fases']));
     $u = $db->prepare("UPDATE `{$d['tabel']}` t JOIN sollicitaties s ON s.id = t.sollicitatie_id
-                       SET t.afgemeld_reden='Niet verschenen'
+                       SET t.afgemeld_reden='Niet ingecheckt'
                        WHERE t.seizoen_id=? AND t.ingecheckt_op IS NULL AND t.aanwezig=0 AND t.afgemeld_reden IS NULL
                          AND s.fase IN ($ph)");
     $u->execute(array_merge([$seizoen_id], $d['kandidaat_fases']));

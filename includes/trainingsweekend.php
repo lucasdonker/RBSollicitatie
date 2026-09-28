@@ -197,21 +197,28 @@ function tw_observatie_toevoegen(int $seizoen_id, int $sol_id, string $tekst, st
 }
 
 /**
- * Een observatie wissen. Alleen de eigen observatie; wat een ander zag blijft staan.
+ * Een observatie wissen: de eigen observatie, of elke als bestuur (bewerkrecht) — dezelfde
+ * regel als op de selectiedag (selectie_observatie_verwijderen()).
  * Eigen = zelfde beoordelaar-id; oude rijen zonder id vallen terug op de naam.
  */
-function tw_observatie_wissen(int $obs_id, string $door, int $beoordelaar_id = 0): bool {
+function tw_observatie_wissen(int $obs_id, string $door, int $beoordelaar_id = 0, bool $mag_alles = false): bool {
     tw_auto_setup();
     try {
-        $q = db()->prepare("DELETE FROM tw_observatie WHERE id=?
-                            AND (beoordelaar_id=? OR (beoordelaar_id IS NULL AND beoordelaar=?))");
-        $q->execute([$obs_id, $beoordelaar_id, $door]);
+        if ($mag_alles) {
+            $q = db()->prepare("DELETE FROM tw_observatie WHERE id=?");
+            $q->execute([$obs_id]);
+        } else {
+            $q = db()->prepare("DELETE FROM tw_observatie WHERE id=?
+                                AND (beoordelaar_id=? OR (beoordelaar_id IS NULL AND beoordelaar=?))");
+            $q->execute([$obs_id, $beoordelaar_id, $door]);
+        }
         return $q->rowCount() > 0;
     } catch (\Exception $e) { return false; }
 }
 
-/** Is dit mijn observatie? (Voor de wisknop; de server controleert bij het wissen opnieuw.) */
-function tw_observatie_is_eigen(array $o, string $door, int $beoordelaar_id): bool {
+/** Mag ik deze observatie wissen? (Voor de wisknop; de server controleert bij het wissen opnieuw.) */
+function tw_observatie_is_eigen(array $o, string $door, int $beoordelaar_id, bool $mag_alles = false): bool {
+    if ($mag_alles) return true;
     return !empty($o['beoordelaar_id']) ? (int)$o['beoordelaar_id'] === $beoordelaar_id : ($o['beoordelaar'] ?? '') === $door;
 }
 
@@ -251,7 +258,7 @@ function tw_doorgevoerd_markeren(int $seizoen_id, int $sol_id): void {
 }
 
 /**
- * Was deze persoon er niet? Staat op "niet gekomen" (met reden, of "Niet verschenen" na het
+ * Was deze persoon er niet? Staat op "niet gekomen" (met reden, of "Niet ingecheckt" na het
  * afsluiten van het inchecken) en is niet alsnog ingecheckt. Eén definitie voor alle schermen.
  */
 function tw_niet_gekomen(array $k): bool {
@@ -340,6 +347,14 @@ function tw_besluit_fase(string $besluit): ?string {
 // Het doel: de beoordelaars kijken de rest van het weekend vooral naar de twijfelgevallen.
 // Beoordelaars zien daarom ALLEEN wie op twijfel staat ("extra aandacht gevraagd", met de
 // vraag van het bestuur); aannemen of afwijzen zien ze nooit — dat zou hun blik kleuren.
+
+/**
+ * Het besluit na het gesprek, zoals het in lijsten en badges staat — de enige plek voor die woorden.
+ * @return array<string,array{0:string,1:string}>  besluit => [label, kleur]
+ */
+function tw_besluit_labels(): array {
+    return ['aannemen' => ['Aangenomen', 'groen'], 'twijfel' => ['Twijfel', 'oranje'], 'afwijzen' => ['Afgewezen', 'rood']];
+}
 
 /** De keuzes, in de volgorde van het scherm. */
 function tw_evaluatie_standen(): array {

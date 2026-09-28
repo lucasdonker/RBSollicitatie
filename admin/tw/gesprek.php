@@ -145,7 +145,8 @@ $_niet     = tw_niet_gekomen($_k);   // was er niet: geen gesprek, wel een beslu
     <section class="ds-kaart ds-kaart-p">
       <h3>Besluit</h3>
       <?php if ($_klaar): ?>
-        <p><?= bh_badge(['aannemen' => 'Aangenomen', 'afwijzen' => 'Afgewezen', 'twijfel' => 'Twijfel'][$_b] ?? 'Doorgevoerd', ['aannemen' => 'groen', 'afwijzen' => 'rood'][$_b] ?? 'oranje') ?>
+        <?php $_bd = tw_besluit_labels()[$_b] ?? ['Doorgevoerd', 'grijs']; ?>
+        <p><?= bh_badge($_bd[0], $_bd[1]) ?>
           <span class="bh-meta">doorgevoerd op <?= h(datum_nl(substr((string)$_k['doorgevoerd_op'], 0, 10))) ?><?= !empty($_k['besluit_door']) ? ' door ' . h((string)$_k['besluit_door']) : '' ?></span></p>
         <?php if (!empty($_k['besluit_notitie'])): ?><p><strong>Intern:</strong> <?= h((string)$_k['besluit_notitie']) ?></p><?php endif; ?>
         <p><strong>Aan de sollicitant:</strong> <?= nl2br(h((string)($_k['gesprek_bericht'] ?: tw_standaard_bericht($_b, $_niet)))) ?></p>
