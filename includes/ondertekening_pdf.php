@@ -94,11 +94,22 @@ function ondertekening_pdf_stream(array $rec, array $sol, string $bestandsnaam):
 }
 
 /** Handtekening-afbeelding (data-URL PNG) passend in een kader van $w x $h mm (verhouding behouden); retourneert of het gelukt is. */
-function ondertekening_pdf_handtekening($pdf, ?string $data_url, float $x, float $y, float $w, float $h = 22): bool {
-    if (!$data_url || strpos($data_url, 'data:image/png;base64,') !== 0) return false;
-    $bin = base64_decode(substr($data_url, strlen('data:image/png;base64,')), true);
-    if ($bin === false || $bin === '') return false;
-    try { $pdf->Image('@' . $bin, $x, $y, $w, $h, 'PNG', '', '', false, 300, '', false, false, 0, true); return true; } catch (\Throwable $e) { return false; }
+function ondertekening_pdf_handtekening($pdf, ?string $data_url, float $x, float $y, float $w, float $h = 22, string $getypt = ''): bool {
+    if ($data_url && strpos($data_url, 'data:image/png;base64,') === 0) {
+        $bin = base64_decode(substr($data_url, strlen('data:image/png;base64,')), true);
+        if ($bin !== false && $bin !== '') {
+            try { $pdf->Image('@' . $bin, $x, $y, $w, $h, 'PNG', '', '', false, 300, '', false, false, 0, true); return true; } catch (\Throwable $e) {}
+        }
+    }
+    // Geen getekende handtekening: de getypte naam geldt als handtekening (sinds 2.128.2 een keuze
+    // voor wie niet kan tekenen). Zo staat er in het kader nooit niets.
+    if ($getypt === '') return false;
+    $pdf->SetXY($x, $y + 2);
+    $pdf->SetFont('helvetica', 'I', 12);
+    $pdf->Cell($w, 7, $getypt, 0, 2);
+    $pdf->SetFont('helvetica', '', 7);
+    $pdf->Cell($w, 4, '(getypte naam als handtekening)', 0, 0);
+    return true;
 }
 
 /** Standaardlayout (gezondheidsverklaring, intake): logo, titel, gegevens, vragen, ondertekening. */
@@ -205,7 +216,7 @@ function ondertekening_pdf_ondertekenblok($pdf, array $rec): void {
     $veld('Naam (getypt)', (string)($rec['ondertekenaar_naam'] ?? ''));
     $pdf->SetFont('helvetica', '', 9); $pdf->SetTextColor(...$GRIJS); $pdf->Cell(45, 6, 'Handtekening', 0, 0);
     $y_hdt = $pdf->GetY();
-    if (ondertekening_pdf_handtekening($pdf, $rec['handtekening_beeld'] ?? null, 65, $y_hdt - 1, 60)) $pdf->Ln(24); else $pdf->Ln(6);
+    if (ondertekening_pdf_handtekening($pdf, $rec['handtekening_beeld'] ?? null, 65, $y_hdt - 1, 60, 22, (string)($rec['ondertekenaar_naam'] ?? ''))) $pdf->Ln(24); else $pdf->Ln(6);
     $veld('Plaats', (string)($rec['plaats'] ?? ''));
     if (!empty($rec['ondertekend_op'])) $veld('Datum & tijd', date('d-m-Y H:i', strtotime($rec['ondertekend_op'])));
     if (!empty($rec['geldig_tot']))     $veld('Geldig tot', datum_nl($rec['geldig_tot']));

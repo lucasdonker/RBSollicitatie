@@ -171,7 +171,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_ondertekend) {
     elseif (!$akkoord)                   { $fout = 'Vink het akkoord aan.'; $fout_veld = 'akkoord'; }
     elseif (strlen($naam_getypt) < 3)    { $fout = ($is_ouder ? 'Vul uw' : 'Vul je') . ' volledige naam in ter ondertekening.'; $fout_veld = 'naam_getypt'; }
     elseif (!$plaats)                    { $fout = 'Vul de plaats van ondertekening in.'; $fout_veld = 'plaats'; }
-    elseif ($handtekening === '')        { $fout = ($is_ouder ? 'Zet uw' : 'Zet je') . ' handtekening in het vak.'; $fout_veld = 'handtekening'; }
+    elseif ($handtekening === '' && empty($_POST['hdt_getypt'])) {
+        $fout = ($is_ouder ? 'Zet uw' : 'Zet je') . ' handtekening in het vak, of vink aan dat de getypte naam als handtekening geldt.'; $fout_veld = 'handtekening';
+    }
     else {
         // Verzamel form-data (verschilt per type). Vertrouwelijke waarden (BSN, IBAN) gaan apart de kluis in.
         $form = []; $vertrouwelijk = null;
@@ -487,6 +489,12 @@ require __DIR__ . '/_kop.php';
           </div>
           <?= ondertekening_veldfout_html('handtekening', $fout_veld, $fout) ?>
           <input type="hidden" name="handtekening_beeld" id="hdtData" value="<?= $v('handtekening_beeld') ?>">
+          <?php // Wie niet kan tekenen (toetsenbord, schermlezer, motoriek) tekent met de getypte naam. ?>
+          <label class="ond-check">
+            <input type="checkbox" name="hdt_getypt" id="hdtGetypt" value="1"<?= $aan('hdt_getypt') ?>>
+            <span class="ond-check-box"><?= icoon('vink', 14) ?></span>
+            <span class="ond-check-tekst">Ik kan hier niet tekenen. Gebruik mijn getypte naam als handtekening.</span>
+          </label>
           <?php if ($twee_fa): $tel_masker = ondertekening_tel_masker($is_ouder ? ($sol['ouder_telefoon'] ?? '') : ($sol['telefoon'] ?? '')); require __DIR__ . '/_ondertekenen_2fa.php'; endif; ?>
           <label class="ond-check<?= $fout_veld === 'akkoord' ? ' fout' : '' ?>">
             <input type="checkbox" name="akkoord" value="1"<?= $aan('akkoord') ?> required<?= ondertekening_veldfout_attr('akkoord', $fout_veld) ?>>

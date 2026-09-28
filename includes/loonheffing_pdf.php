@@ -143,7 +143,7 @@ function loonheffing_pdf_bouwen($pdf, array $rec, array $sol): void {
         if ($p === 2 && function_exists('ondertekening_pdf_handtekening')) {
             $h = $posities['handtekening'];
             // Handtekening-PNG passend in het kader (breedte begrensd; canvas is ~2.6:1 dus hoogte past)
-            ondertekening_pdf_handtekening($pdf, $rec['handtekening_beeld'] ?? null, $h['x'] + 1.5, $h['y'] + 1.2, $h['w'] - 3.0, $h['h'] - 2.4);
+            ondertekening_pdf_handtekening($pdf, $rec['handtekening_beeld'] ?? null, $h['x'] + 1.5, $h['y'] + 1.2, $h['w'] - 3.0, $h['h'] - 2.4, (string)($rec['ondertekenaar_naam'] ?? ''));
         }
     }
     $pdf->SetAutoPageBreak(true, 20);
