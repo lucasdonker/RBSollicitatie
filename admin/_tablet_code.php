@@ -46,7 +46,7 @@ $_url  = APP_URL . '/portaal/incheck.php?ev=' . urlencode($tc_ev) . '&code=' . u
       <?= csrf_input() ?>
       <input type="hidden" name="ev" value="<?= h($tc_ev) ?>">
       <input type="hidden" name="actie" value="code_genereren">
-      <button type="submit" class="<?= $_code !== '' ? 'bh-doc-actie' : 'ds-btn ds-btn-primair' ?>"><?= $_code !== '' ? 'Nieuwe code aanmaken' : 'Toegangscode aanmaken' ?></button>
+      <button type="submit" class="ds-btn <?= $_code !== '' ? 'ds-btn-secundair ds-btn-sm' : 'ds-btn-primair' ?>"><?= $_code !== '' ? 'Nieuwe code aanmaken' : 'Toegangscode aanmaken' ?></button>
     </form>
     <form method="post" action="<?= APP_URL ?>/admin/api_incheck.php" class="bh-incheck-pin">
       <?= csrf_input() ?>
@@ -54,9 +54,19 @@ $_url  = APP_URL . '/portaal/incheck.php?ev=' . urlencode($tc_ev) . '&code=' . u
       <input type="hidden" name="actie" value="pin_zetten">
       <label for="afsluitPin-<?= h($tc_ev) ?>" class="bh-veldlabel">Pincode om op de tablet af te sluiten <?= $_pin ? '(ingesteld)' : '(nog niet ingesteld)' ?></label>
       <div class="bh-incheck-linkrij">
-        <input type="password" inputmode="numeric" autocomplete="new-password" id="afsluitPin-<?= h($tc_ev) ?>" name="pin" class="ds-input" placeholder="minstens 4 cijfers; leeg = wissen">
+        <input type="password" inputmode="numeric" autocomplete="new-password" id="afsluitPin-<?= h($tc_ev) ?>" name="pin" class="ds-input"
+               placeholder="minstens 4 cijfers" minlength="4" pattern="[0-9]{4,}" required>
         <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm">Opslaan</button>
       </div>
     </form>
+    <?php if ($_pin): ?>
+    <form method="post" action="<?= APP_URL ?>/admin/api_incheck.php" class="bh-incheck-nieuw"
+          data-bevestig="Pincode wissen? Dan kan het inchecken alleen nog in het beheer worden afgesloten, niet op de tablet.">
+      <?= csrf_input() ?>
+      <input type="hidden" name="ev" value="<?= h($tc_ev) ?>">
+      <input type="hidden" name="actie" value="pin_wissen">
+      <button type="submit" class="ds-btn ds-btn-zacht ds-btn-sm">Pincode wissen</button>
+    </form>
+    <?php endif; ?>
   <?php endif; ?>
 </section>
