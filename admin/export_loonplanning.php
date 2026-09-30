@@ -4,6 +4,7 @@
  *
  *   ?bron=afspraak             de vastgestelde afspraken (standaard; alleen na "definitief maken")
  *   ?bron=scenario&scenario=N  één scenario, met CONCEPT bovenaan elk tabblad
+ *   ?seizoen=N                 de vastgestelde afspraken van een eerder seizoen (archief)
  *
  * Tabbladen en opbouw: includes/loonplan_export.php. Elke export komt in het auditlog: het
  * bestand bevat persoonsgegevens (naam, geboortedatum, inzet, loon).
@@ -13,6 +14,12 @@ vereis_recht('loonplanning', 'lezen');
 
 $seizoen = actief_seizoen();
 $sid     = $seizoen ? (int)$seizoen['id'] : 0;
+// ?seizoen=N: een eerder seizoen uit het archief (Seizoen › Archief), alleen de vastgestelde afspraken.
+$ander = (int)($_GET['seizoen'] ?? 0);
+if ($ander > 0 && $ander !== $sid) {
+    $sid = function_exists('seizoen_op_id') && seizoen_op_id($ander) ? $ander : 0;
+    $_GET['bron'] = 'afspraak';
+}
 if (!$sid) { flash('fout', 'Geen actief seizoen.'); redirect(APP_URL . '/admin/loonplanning.php'); }
 
 $bron = ($_GET['bron'] ?? 'afspraak') === 'scenario' ? 'scenario' : 'afspraak';

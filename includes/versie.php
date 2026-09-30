@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.142.0');
+define('APP_VERSIE', '2.143.0');
 
 function app_changelog(): array {
     return [
+        '2.143.0' => [
+            'datum'  => '2026-09-30',
+            'titel'  => 'Seizoen: rustiger instellen en eerdere seizoenen terugkijken',
+            'punten' => [
+                'Het seizoenformulier in vier blokken met in de kop wat er staat ("12 apr · 09:30 · Paal 13"). Wat nog niet is ingevuld staat open',
+                'Waar sta je? staat ingeklapt, met de stand in de kop',
+                'Nieuw tabblad Archief: elk seizoen terugkijken met de aantallen per fase, waar de aanmeldingen vandaan kwamen, de loonkosten tegen het budget en de dossiers. Alleen lezen',
+                'Vanuit het archief de sollicitanten en de loonadministratie van dat seizoen exporteren',
+            ],
+        ],
         '2.142.0' => [
             'datum'  => '2026-09-30',
             'titel'  => 'Landingspagina\'s: overzicht van alle bronnen, ook de website',

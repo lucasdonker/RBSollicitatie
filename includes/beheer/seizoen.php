@@ -189,6 +189,87 @@ function bh_seizoen_loon_bewaard(int $sid): int {
     }
 }
 
+/**
+ * Een regel samenvatting per sectie van het seizoenformulier, voor de kop van het inklapblok, en
+ * of die sectie compleet is (anders staat hij standaard open: daar moet je nog iets doen).
+ * @return array ['aanmelding'|'werkperiode'|'selectiedag'|'tw' => ['tekst', 'compleet' => bool]]
+ */
+function bh_seizoen_secties(array $sz): array {
+    $d = fn($k) => !empty($sz[$k]) ? datum_kort_nl((string)$sz[$k]) : '';
+    $t = fn(array $delen) => implode(' · ', array_filter($delen, fn($x) => $x !== ''));
+    $hs = !empty($sz['hoofdseizoen_start_week']) && !empty($sz['hoofdseizoen_eind_week'])
+        ? 'hoofdseizoen week ' . (int)$sz['hoofdseizoen_start_week'] . '–' . (int)$sz['hoofdseizoen_eind_week'] : '';
+    return [
+        'aanmelding'  => ['tekst' => $d('aanmelden_tot') !== '' ? 'aanmelden kan tot ' . $d('aanmelden_tot') : 'geen einddatum ingevuld',
+                          'compleet' => true],
+        'werkperiode' => ['tekst' => $d('datum_werk_start') !== '' ? $t([$d('datum_werk_start') . ' – ' . $d('datum_werk_eind'), $hs]) : 'nog niet ingevuld',
+                          'compleet' => !empty($sz['datum_werk_start']) && !empty($sz['datum_werk_eind'])],
+        'selectiedag' => ['tekst' => $d('datum_selectiedag') !== ''
+                              ? $t([$d('datum_selectiedag'), (string)($sz['selectiedag_verzameltijd'] ?? '') !== '' ? substr((string)$sz['selectiedag_verzameltijd'], 0, 5) : '',
+                                    (string)($sz['locatie_selectiedag'] ?? '')])
+                              : 'nog geen datum',
+                          'compleet' => !empty($sz['datum_selectiedag'])],
+        'tw'          => ['tekst' => $d('datum_tw_start') !== ''
+                              ? $t([$d('datum_tw_start') . ($d('datum_tw_eind') !== '' ? ' – ' . $d('datum_tw_eind') : ''), (string)($sz['locatie_tw'] ?? '')])
+                              : 'nog geen datum',
+                          'compleet' => !empty($sz['datum_tw_start'])],
+    ];
+}
+
+/**
+ * Kerncijfers van alle seizoenen in één query, voor het archief.
+ * @return array [seizoen_id => ['aanmeldingen','aangenomen','terugkerend','per_fase' => [fase => n]]]
+ */
+function bh_seizoen_kerncijfers(): array {
+    $uit = [];
+    try {
+        foreach (db()->query("SELECT seizoen_id, fase, COUNT(*) AS n, SUM(terugkerend) AS terug FROM sollicitaties GROUP BY seizoen_id, fase")->fetchAll() as $r) {
+            $s = (int)$r['seizoen_id'];
+            $uit[$s] = $uit[$s] ?? ['aanmeldingen' => 0, 'aangenomen' => 0, 'terugkerend' => 0, 'per_fase' => []];
+            $uit[$s]['aanmeldingen'] += (int)$r['n'];
+            $uit[$s]['terugkerend']  += (int)$r['terug'];
+            $uit[$s]['per_fase'][(string)$r['fase']] = (int)$r['n'];
+            if ($r['fase'] === 'aangenomen') $uit[$s]['aangenomen'] = (int)$r['n'];
+        }
+    } catch (\Throwable $e) { error_log('bh_seizoen_kerncijfers: ' . $e->getMessage()); }
+    return $uit;
+}
+
+/**
+ * Alles om één seizoen terug te kijken (alleen lezen).
+ * @return array ['kern' => bh_seizoen_kerncijfers()[$sid], 'bronnen' => pag_werving_overzicht($sid) (top 5),
+ *                'loon' => ?['kosten','dagen','budget','personen'] (vastgestelde afspraken, alleen met module en recht),
+ *                'personen' => [['id','naam','fase','aangemeld_op','bron']]]  (alleen met recht op sollicitanten)
+ */
+function bh_seizoen_archief(int $sid, bool $met_personen, bool $met_loon): array {
+    $kern = bh_seizoen_kerncijfers()[$sid] ?? ['aanmeldingen' => 0, 'aangenomen' => 0, 'terugkerend' => 0, 'per_fase' => []];
+    $bronnen = function_exists('pag_werving_overzicht') ? array_slice(pag_werving_overzicht($sid), 0, 5) : [];
+
+    $loon = null;
+    if ($met_loon && function_exists('loonplan_export_personen') && function_exists('inzet_afspraken_seizoen') && inzet_afspraken_seizoen($sid)) {
+        $p = loonplan_export_personen($sid, 'afspraak', 0);
+        $sz = function_exists('seizoen_op_id') ? seizoen_op_id($sid) : null;
+        $loon = ['kosten' => round(array_sum(array_column($p, 'kosten')), 2), 'dagen' => (int)array_sum(array_column($p, 'dagen_betaald')),
+                 'budget' => function_exists('loonplan_budget') ? (float)loonplan_budget($sz) : 0.0, 'personen' => count($p)];
+    }
+
+    $personen = [];
+    if ($met_personen) {
+        try {
+            $q = db()->prepare("SELECT s.id, s.fase, s.aangemeld_op, s.bron_code, p.voornaam, p.tussenvoegsel, p.achternaam
+                                FROM sollicitaties s JOIN personen p ON p.id = s.persoon_id
+                                WHERE s.seizoen_id = ? ORDER BY p.achternaam, p.voornaam");
+            $q->execute([$sid]);
+            foreach ($q->fetchAll() as $r) {
+                $personen[] = ['id' => (int)$r['id'], 'fase' => (string)$r['fase'], 'aangemeld_op' => (string)$r['aangemeld_op'],
+                               'bron' => (string)($r['bron_code'] ?? ''),
+                               'naam' => trim($r['voornaam'] . ' ' . ($r['tussenvoegsel'] ? $r['tussenvoegsel'] . ' ' : '') . $r['achternaam'])];
+            }
+        } catch (\Throwable $e) { error_log('bh_seizoen_archief: ' . $e->getMessage()); }
+    }
+    return ['kern' => $kern, 'bronnen' => $bronnen, 'loon' => $loon, 'personen' => $personen];
+}
+
 /** De sollicitatie-id's van een seizoen. */
 function bh_seizoen_sollicitatie_ids(int $sid): array {
     try {

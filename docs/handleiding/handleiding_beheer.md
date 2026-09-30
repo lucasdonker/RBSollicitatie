@@ -501,6 +501,7 @@ alleen de beheerder.
 > **In het kort:** hier maak je één keer per jaar een seizoen aan, vul je de datums in en zet je
 > het open zodra aanmelden mag. Het blok "Waar sta je?" rechts laat zien welke stap nu aan de
 > beurt is. Openen, sluiten en verwijderen gaan altijd via een tussenscherm dat zegt wat er gebeurt.
+> Onder het tabblad **Archief** kijk je elk seizoen terug.
 
 ### Welk seizoen is het huidige?
 
@@ -522,7 +523,10 @@ seizoen gaat werken.
 1. **Nieuw seizoen aanmaken.** Vul bij "Nieuw seizoen aanmaken" een **Naam** in (bijvoorbeeld
    "Zomer 2027") en klik op **Aanmaken**. Het seizoen begint gesloten; gegevens van vorige
    seizoenen blijven staan. Je komt meteen in het nieuwe seizoen terecht om de datums in te vullen.
-2. **Datums invullen** in de kaart "... instellen" en klik op **Opslaan**:
+2. **Datums invullen** in de kaart "... instellen" en klik op **Opslaan**. De kaart heeft vier
+   blokken (Aanmelding, Werkperiode, Selectiedag, Trainingsweekend), elk met in de kop wat er nu staat,
+   bijvoorbeeld "12 apr · 09:30 · Paal 13". Een blok dat nog niet is ingevuld staat open; klik op de
+   kop om een blok open of dicht te klappen. Ook dichtgeklapte velden worden opgeslagen.
    - **Werkperiode**: **Eerste werkdag** en **Laatste werkdag**. Sollicitanten zien in het portaal
      elke week daartussen als tegel. Zonder werkperiode kunnen ze hun beschikbaarheid niet invullen.
    - **Hoofdseizoen vanaf week** en **Hoofdseizoen tot en met week**. Daarbuiten zijn de posten
@@ -546,9 +550,11 @@ seizoen gaat werken.
 
 ### Waar sta je?
 
-Rechts staan vijf stappen: Seizoen aangemaakt, Datums ingevuld, Seizoen geopend, Procedure
-doorlopen, Seizoen gesloten. Een vinkje betekent af; de eerste stap die nog niet af is, krijgt het
-label **nu**. "Datums ingevuld" is pas af als selectiedag, begin trainingsweekend en eerste
+Rechts staat het blok **Waar sta je?**, ingeklapt; de kop zegt al hoeveel stappen af zijn en welke
+nu aan de beurt is ("4 van 7 af · nu: trainingsweekend en gesprekken"). Uitgeklapt zie je alle
+stappen: Seizoen aangemaakt, Datums ingevuld, Aanmelding geopend, de selectiedag, het
+trainingsweekend, Afspraken vastgesteld (met loonplanning) en Aanmelding gesloten. Een vinkje
+betekent af; de eerste stap die nog niet af is, krijgt het label **nu**. "Datums ingevuld" is pas af als selectiedag, begin trainingsweekend en eerste
 werkdag zijn ingevuld.
 
 ### Wat de sollicitant ervan ziet
@@ -573,6 +579,24 @@ van dat seizoen met hun formulieren, beoordelingen van de selectiedag, beschikba
 ondertekeningen. Er is geen prullenbak. Wil je de gegevens bewaren, sluit het seizoen dan in
 plaats van het te verwijderen. De knop heet **Ja, verwijder alles** (of **Ja, verwijderen** als
 het seizoen leeg is).
+
+### Archief: een seizoen terugkijken
+
+Het tabblad **Archief** toont alle seizoenen met het aantal aanmeldingen, aangenomen en
+terugkerende sollicitanten en de datum van de selectiedag. Met **Bekijken** open je één seizoen,
+alleen lezen:
+
+- de kerncijfers, en met recht op Loonplanning de **loonkosten** van de vastgestelde afspraken
+  tegen het budget van dat jaar;
+- **Waar iedereen eindigde**: het aantal per fase;
+- **Waar aanmeldingen vandaan kwamen**: de vijf grootste bronnen, met hoeveel er zijn aangenomen;
+- **Exporteren**: de sollicitanten van dat seizoen (Excel, met de taak Exporteren bij Sollicitanten)
+  en de loonadministratie van dat seizoen (Excel, alleen als er afspraken zijn vastgesteld);
+- **Sollicitanten** (ingeklapt, alleen met recht op Sollicitanten): naam, fase, aanmelddatum en
+  bron, met een link naar het dossier. Afgewezen en afgehaakte dossiers zijn na de bewaartermijn
+  geanonimiseerd; dan staat er geen naam meer.
+
+Niets in het archief verandert iets. Openen, sluiten en verwijderen doe je op **Instellen**.
 
 ---
 

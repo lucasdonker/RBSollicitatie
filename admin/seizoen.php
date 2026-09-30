@@ -229,6 +229,18 @@ require __DIR__ . '/layout_top.php';
   <?php return; ?>
 <?php endif; ?>
 
+<?php $_tab = ($_GET['tab'] ?? '') === 'archief' ? 'archief' : 'instellen'; ?>
+<nav class="bh-tabs" aria-label="Seizoen">
+  <a class="bh-tab<?= $_tab === 'instellen' ? ' actief' : '' ?>" href="<?= APP_URL ?>/admin/seizoen.php"<?= $_tab === 'instellen' ? ' aria-current="page"' : '' ?>>Instellen</a>
+  <a class="bh-tab<?= $_tab === 'archief' ? ' actief' : '' ?>" href="<?= APP_URL ?>/admin/seizoen.php?tab=archief"<?= $_tab === 'archief' ? ' aria-current="page"' : '' ?>>Archief (<?= count($seizoenen) ?>)</a>
+</nav>
+
+<?php if ($_tab === 'archief'): ?>
+  <?php $ar_seizoenen = $seizoenen; $ar_id = (int)($_GET['id'] ?? 0); $ar_actief_id = $actief_id; require __DIR__ . '/_seizoen_archief.php'; ?>
+  <?php require __DIR__ . '/layout_bottom.php'; ?>
+  <?php return; ?>
+<?php endif; ?>
+
 <?php if ($huidig && !$bewerkt_actief && $actief): ?>
   <div class="ds-melding ds-melding-info bh-seizoen-anders" role="status">
     <?= icoon('info', 16) ?>
@@ -275,14 +287,17 @@ require __DIR__ . '/layout_top.php';
       <input type="hidden" name="seizoen_id" value="<?= (int)$huidig['id'] ?>">
 
       <div class="bh-kaartkop"><h2><?= h((string)$huidig['naam']) ?> instellen</h2></div>
+      <?php $_secties = bh_seizoen_secties($huidig); /* samenvatting per blok; wat nog leeg is staat open */ ?>
 
       <div class="ds-veld">
         <label class="ds-label" for="sz_naam">Naam van het seizoen</label>
         <input class="ds-input" type="text" id="sz_naam" name="naam" value="<?= h((string)$huidig['naam']) ?>" required>
       </div>
 
-      <fieldset class="bh-veldgroep">
-        <legend>Aanmelding</legend>
+      <details class="bh-klap bh-szsectie" data-klap-id="sz-aanmelding"<?= $_secties['aanmelding']['compleet'] ? '' : ' open' ?>>
+        <summary><span class="bh-klap-titel">Aanmelding</span><span class="bh-klap-sam"><?= h($_secties['aanmelding']['tekst']) ?></span></summary>
+      <fieldset class="bh-veldgroep bh-klap-inhoud">
+        <legend class="bh-vw">Aanmelding</legend>
         <div class="ds-veld">
           <label class="ds-label" for="sz_aanmelden_tot">Aanmelden kan tot</label>
           <input class="ds-input" type="date" id="sz_aanmelden_tot" name="aanmelden_tot" value="<?= h((string)($huidig['aanmelden_tot'] ?? '')) ?>" aria-describedby="sz_aanmelden_tot_hint">
@@ -293,9 +308,12 @@ require __DIR__ . '/layout_top.php';
           </p>
         </div>
       </fieldset>
+      </details>
 
-      <fieldset class="bh-veldgroep">
-        <legend>Werkperiode</legend>
+      <details class="bh-klap bh-szsectie" data-klap-id="sz-werkperiode"<?= $_secties['werkperiode']['compleet'] ? '' : ' open' ?>>
+        <summary><span class="bh-klap-titel">Werkperiode</span><span class="bh-klap-sam"><?= h($_secties['werkperiode']['tekst']) ?></span></summary>
+      <fieldset class="bh-veldgroep bh-klap-inhoud">
+        <legend class="bh-vw">Werkperiode</legend>
         <p class="ds-veld-hint">
           Sollicitanten zien in het portaal elke week tussen deze twee datums als een aan te
           klikken tegel. Zonder werkperiode kunnen ze hun beschikbaarheid niet invullen.
@@ -327,9 +345,12 @@ require __DIR__ . '/layout_top.php';
           rekent daar dan ook mee. Laat je dit leeg, dan telt elke week als hoofdseizoen.
         </p>
       </fieldset>
+      </details>
 
-      <fieldset class="bh-veldgroep">
-        <legend>Selectiedag</legend>
+      <details class="bh-klap bh-szsectie" data-klap-id="sz-selectiedag"<?= $_secties['selectiedag']['compleet'] ? '' : ' open' ?>>
+        <summary><span class="bh-klap-titel">Selectiedag</span><span class="bh-klap-sam"><?= h($_secties['selectiedag']['tekst']) ?></span></summary>
+      <fieldset class="bh-veldgroep bh-klap-inhoud">
+        <legend class="bh-vw">Selectiedag</legend>
         <div class="bh-veldrij">
           <div class="ds-veld">
             <label class="ds-label" for="sz_sd_datum">Datum</label>
@@ -371,9 +392,12 @@ require __DIR__ . '/layout_top.php';
           <p class="ds-veld-hint">Staat op de selectiedag-kaart in het portaal en is in mails te gebruiken als {{selectiedag.meenemen}}.</p>
         </div>
       </fieldset>
+      </details>
 
-      <fieldset class="bh-veldgroep">
-        <legend>Trainingsweekend</legend>
+      <details class="bh-klap bh-szsectie" data-klap-id="sz-tw"<?= $_secties['tw']['compleet'] ? '' : ' open' ?>>
+        <summary><span class="bh-klap-titel">Trainingsweekend</span><span class="bh-klap-sam"><?= h($_secties['tw']['tekst']) ?></span></summary>
+      <fieldset class="bh-veldgroep bh-klap-inhoud">
+        <legend class="bh-vw">Trainingsweekend</legend>
         <div class="bh-veldrij">
           <div class="ds-veld">
             <label class="ds-label" for="sz_tw_start">Start</label>
@@ -417,6 +441,7 @@ require __DIR__ . '/layout_top.php';
           <p class="ds-veld-hint">Staat op de trainingsweekend-kaart in het portaal en is in mails te gebruiken als {{tw.meenemen}}.</p>
         </div>
       </fieldset>
+      </details>
 
       <div class="bh-veldform-voet">
         <button type="submit" class="ds-btn ds-btn-primair">Opslaan</button>
@@ -454,8 +479,16 @@ require __DIR__ . '/layout_top.php';
   </div>
 
   <aside class="bh-seizoen-zij">
-    <section class="ds-kaart ds-kaart-p">
-      <div class="bh-kaartkop"><h2>Waar sta je?</h2></div>
+    <?php
+      $_af  = count(array_filter($stappen, fn($s) => $s['af']));
+      $_nu  = array_values(array_filter($stappen, fn($s) => $s['nu']))[0]['titel'] ?? null;
+    ?>
+    <details class="ds-kaart bh-klap bh-szstappen" data-klap-id="sz-stappen">
+      <summary>
+        <span class="bh-klap-titel">Waar sta je?</span>
+        <span class="bh-klap-sam"><?= $_af ?> van <?= count($stappen) ?> af<?= $_nu ? ' · nu: ' . h(mb_strtolower($_nu)) : '' ?></span>
+      </summary>
+      <div class="bh-klap-inhoud">
       <ol class="bh-stappen">
         <?php foreach ($stappen as $_i => $_s): ?>
         <li class="bh-stap<?= $_s['af'] ? ' af' : '' ?><?= $_s['nu'] ? ' nu' : '' ?>">
@@ -468,7 +501,8 @@ require __DIR__ . '/layout_top.php';
         </li>
         <?php endforeach; ?>
       </ol>
-    </section>
+      </div>
+    </details>
 
     <section class="ds-kaart ds-kaart-p">
       <div class="bh-kaartkop"><h2>Alle seizoenen</h2></div>

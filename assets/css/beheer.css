@@ -2058,6 +2058,21 @@ body.bh-paneel-open .bh-inhoud { transition: padding-right .15s ease; }
 .bh-seizoen-kolommen { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
 .bh-seizoen-hoofd { flex: 1.8; min-width: 400px; display: flex; flex-direction: column; gap: 14px; }
 .bh-seizoen-zij { flex: 1; min-width: 290px; display: flex; flex-direction: column; gap: 14px; }
+/* Seizoen: het formulier in inklapblokken (.bh-szsectie), het stappenplan ingeklapt (.bh-szstappen). */
+.bh-szsectie { border-top: 1px solid var(--bg-subtle); margin-top: 12px; }
+.bh-szsectie > .bh-veldgroep { border-top: none; padding-top: 4px; padding-bottom: 12px; }
+.bh-szstappen > summary { padding: 12px 18px; }
+.bh-szstappen > .bh-klap-inhoud { padding: 0 18px 16px; }
+/* Seizoen › Archief (admin/_seizoen_archief.php) */
+.bh-archief { margin-top: 14px; }
+.bh-archief .pg-cijfers { margin-top: 10px; }
+.bh-archief-kolommen { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; margin-top: 14px; }
+.bh-archief-fases { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.bh-archief-fases li { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; font-size: 14px; align-items: baseline; }
+.bh-archief-fases li > .bh-meta, .bh-archief-balk { grid-column: 1 / -1; }
+.bh-archief-balk { display: block; height: 6px; border-radius: 3px; background: var(--bg-subtle); overflow: hidden; }
+.bh-archief-balk > span { display: block; height: 100%; width: var(--w, 0%); background: var(--navy); }
+.bh-archief .bh-lijstkop-acties { margin: 0 0 8px; }
 
 /* Veldform: een kaartformulier in blokken (bh-veldgroep) met een voet. Seizoen,
    Beheerders en Gepland gebruiken hem; bouw geen eigen variant per scherm. */
@@ -2111,7 +2126,7 @@ body.bh-paneel-open .bh-inhoud { transition: padding-right .15s ease; }
 .bh-seizoenrij:last-child { border-bottom: none; }
 .bh-seizoenrij-naam { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 13px; font-weight: 600; color: var(--ink); }
 .bh-seizoenrij-sub { flex-basis: 100%; font: var(--text-meta); color: var(--ink-muted); }
-.bh-seizoenrij-acties { margin-left: auto; display: flex; gap: 6px; }
+.bh-seizoenrij-acties { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; align-items: center; }
 
 /* ============================================================
    BEHEERDERS — wie kan erin, via welke weg, met welke rol
