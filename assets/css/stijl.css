@@ -812,6 +812,9 @@ button.ds-avatar { padding: 0; border: 0; font-family: inherit; }
   background: var(--surface); color: var(--ink); width: 100%;
 }
 .ds-textarea, .ds-veld > textarea { height: auto; padding: 12px 14px; min-height: 90px; resize: vertical; }
+/* Bestandskiezer in een veld: zelfde 48px-doos, knop verticaal in het midden (zonder dit
+   viel de native knop per browser anders in de vaste hoogte). */
+.ds-veld > input[type=file] { height: auto; min-height: 48px; padding: 6px; font-size: 14px; color: var(--ink-soft); }
 .ds-input:focus, .ds-select:focus, .ds-textarea:focus,
 .ds-veld > input:focus, .ds-veld > select:focus, .ds-veld > textarea:focus {
   outline: none; border-color: var(--navy);

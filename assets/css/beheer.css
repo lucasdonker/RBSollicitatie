@@ -513,11 +513,7 @@ html[data-theme="dark"] .bh-fasechip.nu { color: var(--bg); }
 .bh-obsdagen { display: flex; flex-direction: column; gap: 6px; }
 .bh-obsdag { border-top: 1px solid var(--bg-subtle); }
 .bh-obsdag:first-child { border-top: 0; }
-.bh-obsdag > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; list-style: none; }
-.bh-obsdag > summary::-webkit-details-marker { display: none; }
-.bh-obsdag > summary::after { content: "+"; margin-left: auto; font-size: 18px; color: var(--ink-muted); }
-.bh-obsdag[open] > summary::after { content: "\2212"; }
-.bh-obsdag > summary:focus-visible { outline: 2px solid var(--navy); outline-offset: 3px; border-radius: var(--radius-sm); }
+/* Summary en chevron komen van .bh-klap; hier alleen wat een dag anders maakt. */
 .bh-obsdag-titel { font-size: 14px; font-weight: 600; color: var(--ink); }
 .bh-obsdag[open] > summary { margin-bottom: 8px; }
 .bh-obsdag > .bh-observaties { padding-bottom: 12px; }
@@ -635,6 +631,9 @@ span.bh-incheck-code {
 .bh-incheck-linkrij { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .bh-incheck-linkrij .ds-input { flex: 1; min-width: 180px; height: 42px; font-size: 13px; }
 .bh-incheck-nieuw { margin-top: 10px; }
+.bh-incheck-tablet > .bh-klap-inhoud { display: flex; flex-direction: column; gap: 12px; }
+.bh-incheck-tablet > .bh-klap-inhoud > p { margin: 0; }
+.bh-incheck-tablet .bh-incheck-nieuw { margin-top: 0; }
 
 /* Bellijst: "komt op het trainingsweekend?" (admin/_bellijst.php) */
 .bh-bel-tw { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
@@ -749,20 +748,25 @@ span.bh-incheck-code {
 .bh-beoordeel-bijz { margin: 14px 18px 0; }
 .bh-beoordeel-kaart > .ds-melding { margin: 14px 18px 0; }
 
-.bh-testblok { padding: 6px 18px 4px; border-bottom: 1px solid var(--bg-subtle); }
-.bh-testblok > summary {
-  cursor: pointer; min-height: 44px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; list-style: none;
+/* Een test is een .bh-klap: standaard dicht, en dicht moet eruitzien als iets om op te tikken
+   (rand, grote tikzone, "Openen"), niet als een losse kop. */
+.bh-beoordeel-hint {
+  display: flex; align-items: center; gap: 8px; margin: 14px 18px 0;
+  font: var(--text-meta); color: var(--ink-soft);
 }
-.bh-testblok > summary::-webkit-details-marker { display: none; }
-.bh-testblok > summary::after { content: "+"; margin-left: auto; font-size: 18px; color: var(--ink-muted); }
-.bh-testblok[open] > summary::after { content: "\2212"; }
-.bh-testblok[open] > summary { margin-bottom: 4px; }
+.bh-beoordeel-hint svg { flex: none; color: var(--navy); }
+.bh-testblok { margin: 12px 18px 0; border: 1px solid var(--border-strong); border-radius: 13px; background: var(--surface); }
+.bh-klap.bh-testblok > summary { padding: 8px 16px; min-height: 60px; }
+.bh-testblok[open] > summary { border-bottom: 1px solid var(--bg-subtle); }
+.bh-klap.bh-testblok > .bh-klap-inhoud { padding: 12px 12px 1px; }
+.bh-testblok h3 { font-size: 16px; font-weight: 600; color: var(--ink); margin: 0; }
+.bh-testblok-tik { font: var(--text-meta); font-weight: 600; color: var(--navy); margin-left: auto; }
+.bh-testblok[open] .bh-testblok-tik { display: none; }
+.bh-klap.bh-testblok > summary::after { margin-left: 4px; }
+.bh-klap.bh-testblok[open] > summary::after { margin-left: auto; }
+.bh-testblok > summary:hover { background: var(--bg-subtle); border-radius: 12px; }
+.bh-testblok[open] > summary:hover { border-radius: 12px 12px 0 0; }
 .bh-testblok:not([open]) [data-test-stand].nog { color: var(--oranje); font-weight: 600; }  /* dicht, maar nog niet af */
-.bh-testblok > summary:focus-visible { outline: 2px solid var(--navy); outline-offset: 3px; border-radius: var(--radius-sm); }
-.bh-testblok h3 {
-  font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
-  color: var(--ink-muted); margin: 0;
-}
 .bh-criterium {
   border: 1.5px solid var(--fase-oranje-rand); border-radius: 13px;
   padding: 13px; margin-bottom: 11px; background: var(--surface);
@@ -793,10 +797,27 @@ span.bh-incheck-code {
 }
 .bh-soortkeuze { display: flex; gap: 6px; }
 .bh-soort {
-  flex: 1; min-height: 46px; border-radius: var(--radius-sm); cursor: pointer;
+  flex: 1; min-height: 48px; border-radius: var(--radius-sm); cursor: pointer;
   border: 1px solid var(--border); background: var(--bg-subtle);
-  font-size: 13px; font-weight: 600; color: var(--ink-soft); font-family: inherit;
+  font-size: 14px; font-weight: 600; color: var(--ink-soft); font-family: inherit;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
 }
+.bh-soort:hover { border-color: var(--border-strong); color: var(--ink); }
+/* Observatie-invoer (admin/_observatie_invoer.php): de gekozen soort kleurt de rand van het
+   tekstvak mee, zodat je vóór opslaan ziet wat je gaat plaatsen. */
+.bh-obsinvoer { display: flex; flex-direction: column; gap: 8px; }
+.bh-obsinvoer textarea { min-height: 84px; border-left-width: 4px; }
+.bh-obsinvoer[data-soort="positief"] textarea { border-left-color: var(--ok); }
+.bh-obsinvoer[data-soort="aandacht"] textarea { border-left-color: var(--error); }
+.bh-obsinvoer-voet { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.bh-obsinvoer-voet .ds-btn { margin-left: auto; min-width: 160px; justify-content: center; }
+.bh-obsinvoer-stand { font: var(--text-meta); color: var(--ink-soft); }
+.bh-obsinvoer-stand.ok { color: var(--ok); font-weight: 600; }
+@media (max-width: 560px) {
+  .bh-obsinvoer-voet .ds-btn { width: 100%; margin-left: 0; }
+  .bh-obsinvoer-toets { display: none; }
+}
+@media (pointer: coarse) { .bh-obsinvoer-toets { display: none; } }
 .bh-soort.positief.gekozen { background: var(--ok); border-color: var(--ok); color: var(--op-vol); }
 .bh-soort.neutraal.gekozen { background: var(--navy); border-color: var(--navy); color: var(--op-vol); }
 .bh-soort.aandacht.gekozen { background: var(--error); border-color: var(--error); color: var(--op-vol); }
@@ -813,10 +834,23 @@ span.bh-incheck-code {
 .bh-beoordeel-volgende { margin-left: auto; }
 .bh-beoordeel-voet [aria-disabled="true"] { opacity: .45; }
 
+/* Knop die op een telefoon de kandidatenlijst in- en uitklapt (assets/js/beoordelen.js).
+   Zonder JavaScript staat de lijst gewoon open. */
+.bh-beoordeel-lijstknop { display: none; }
 @media (max-width: 900px) {
   .bh-beoordeel-lijst { flex: 1 1 100%; }
   .bh-beoordeel-kaart { min-width: 100%; }
-  .bh-kandidaatlijst { max-height: 260px; overflow-y: auto; }
+  .bh-beoordeel-lijstknop {
+    display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px;
+    background: none; border: 0; padding: 0; font: var(--text-label); color: var(--navy); cursor: pointer;
+  }
+  .bh-beoordeel-lijstknop::after {
+    content: ""; flex: none; margin-left: auto; width: 8px; height: 8px;
+    border-right: 2px solid currentColor; border-bottom: 2px solid currentColor;
+    transform: translateY(2px) rotate(-135deg);
+  }
+  .bh-beoordeel-lijst.dicht .bh-beoordeel-lijstknop::after { transform: translateY(-2px) rotate(45deg); }
+  .bh-beoordeel-lijst.dicht > :not(.bh-beoordeel-lijstknop):not(.bh-beoordeel-stand):not(.bh-voortgang) { display: none; }
 }
 @media (max-width: 560px) {
   .bh-cijfer { min-height: 56px; font-size: 18px; }
@@ -1122,7 +1156,12 @@ a.bh-naamcel:hover .bh-naamcel-naam { color: var(--navy); text-decoration: under
    Chips, geen onderstreepte tabs: er zijn er maximaal negen en ze moeten op een
    telefoon kunnen doorlopen. Een tab met 0 bestaat niet, dus er is nooit een
    uitgegrijsde chip. */
-.bh-tabs { display: flex; gap: 6px; flex-wrap: wrap; padding: 2px 0; }
+/* Vaste ruimte eronder (gelijk aan het kaartritme van 14px): anders plakt de eerste kaart
+   tegen de chips op elk scherm zonder filterbalk. Staat er een voetregel onder, dan draagt
+   die de ruimte. */
+.bh-tabs { display: flex; gap: 6px; flex-wrap: wrap; padding: 2px 0; margin-bottom: 14px; }
+.bh-tabs:has(+ .bh-tabs-voet) { margin-bottom: 0; }
+.bh-tabs + .bh-filterbalk { padding-top: 0; }
 .bh-tab {
   display: inline-flex; align-items: center; gap: 7px;
   padding: 7px 13px; border-radius: var(--radius-full);
@@ -1139,8 +1178,10 @@ a.bh-naamcel:hover .bh-naamcel-naam { color: var(--navy); text-decoration: under
 .bh-tab-buiten { opacity: .72; border-style: dashed; }
 .bh-tabs-voet {
   display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
-  font: var(--text-meta); color: var(--ink-soft); padding: 8px 2px 0;
+  font: var(--text-meta); color: var(--ink-soft); padding: 8px 2px 0; margin-bottom: 14px;
 }
+.bh-tabs-voet + .bh-filterbalk { padding-top: 0; }
+.bh-tabs-voet svg { flex: none; }
 .bh-tabs-voet a { color: var(--navy); font-weight: 600; }
 
 /* ── Begrippen (admin/_begrippen.php) ── */
@@ -1153,6 +1194,34 @@ a.bh-naamcel:hover .bh-naamcel-naam { color: var(--navy); text-decoration: under
   .bh-begrippen dl { grid-template-columns: 1fr; gap: 2px; }
   .bh-begrippen dd { margin-bottom: 8px; }
 }
+
+/* ── Inklapblok (.bh-klap) ──────────────────────────────────────
+   Eén vorm voor alles wat in- en uitklapt: een native <details>, dus zonder JavaScript
+   bruikbaar en met het toetsenbord te bedienen.
+     <details class="bh-klap" data-klap-id="uniek">
+       <summary><span class="bh-klap-titel">Titel</span><span class="bh-klap-sam">samenvatting</span></summary>
+       <div class="bh-klap-inhoud">…</div>
+     </details>
+   Met data-klap-id onthoudt assets/js/inklap.js de stand binnen de sessie. Als losse kaart:
+   class="bh-klap ds-kaart". De chevron komt uit ::after, zodat er niets in de markup hoeft. */
+.bh-klap > summary {
+  list-style: none; cursor: pointer; display: flex; align-items: center; gap: 6px 10px; flex-wrap: wrap;
+  min-height: 48px; padding: 10px 0;
+}
+.bh-klap > summary::-webkit-details-marker { display: none; }
+.bh-klap > summary::after {
+  content: ""; flex: none; margin-left: auto; width: 8px; height: 8px;
+  border-right: 2px solid var(--ink-muted); border-bottom: 2px solid var(--ink-muted);
+  transform: translateY(-2px) rotate(45deg); transition: transform .15s;
+}
+.bh-klap[open] > summary::after { transform: translateY(2px) rotate(-135deg); }
+.bh-klap > summary:hover::after { border-color: var(--navy); }
+.bh-klap > summary:focus-visible { outline: 2px solid var(--navy); outline-offset: 2px; border-radius: var(--radius-sm); }
+.bh-klap-titel { font: var(--text-label); font-size: 15px; color: var(--ink); margin: 0; }
+.bh-klap-sam { font: var(--text-meta); color: var(--ink-soft); display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.bh-klap.ds-kaart > summary { padding: 12px 18px; }
+.bh-klap.ds-kaart > .bh-klap-inhoud { padding: 0 18px 16px; }
+@media (prefers-reduced-motion: reduce) { .bh-klap > summary::after { transition: none; } }
 
 /* ── Filterbalk ── */
 .bh-filterbalk {
@@ -1178,6 +1247,37 @@ a.bh-naamcel:hover .bh-naamcel-naam { color: var(--navy); text-decoration: under
 .bh-filter-acties { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; }
 /* Zonder JS is dit de knop die filtert; met JS mag hij weg. */
 .bh-filterbalk.js .bh-filter-verzend { display: none; }
+/* Sorteren: een keuzelijst met een icoon ervoor, zodat hij niet voor een filter doorgaat. */
+.bh-filter-sorteer { position: relative; display: inline-flex; align-items: center; }
+.bh-filter-sorteer-icoon { position: absolute; left: 12px; display: flex; color: var(--ink-muted); pointer-events: none; }
+.bh-filter-sorteer .ds-select { padding-left: 34px; }
+/* "Meer filters": een knop in de balk met een paneel eronder. Een filter kiezen stuurt het
+   formulier meteen (beheer.js), dus het paneel hoeft nergens "toepassen" te hebben. */
+.bh-filter-meer { position: relative; }
+.bh-filter-meer > summary { list-style: none; height: 42px; cursor: pointer; }
+.bh-filter-meer > summary::-webkit-details-marker { display: none; }
+.bh-filter-meer[open] > summary { background: var(--bg-subtle); border-color: var(--navy); }
+.bh-filter-meer-velden {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 30; min-width: 280px;
+  display: flex; flex-direction: column; gap: 9px; padding: 12px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md);
+  box-shadow: var(--shadow-float);
+}
+.bh-filter-meer-velden .bh-filter-keuze .ds-select { width: 100%; }
+@media (max-width: 760px) {
+  .bh-filter-meer { flex: 1 1 100%; }
+  .bh-filter-meer-velden { position: static; margin-top: 8px; box-shadow: none; }
+}
+/* Actieve filters als chips: in één oogopslag wat je nu ziet, en met één tik weer weg. */
+.bh-filterchips { display: flex; align-items: center; gap: 6px 8px; flex-wrap: wrap; margin: -4px 0 14px; }
+.bh-filterchips-telling { font: var(--text-meta); color: var(--ink-soft); margin-right: 4px; }
+.bh-filterchip {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 4px 10px 4px 12px;
+  border-radius: var(--radius-full); background: var(--fase-blauw-vlak); border: 1px solid var(--fase-blauw-rand);
+  color: var(--navy); font-size: 13px; font-weight: 600; text-decoration: none;
+}
+.bh-filterchip:hover { border-color: var(--navy); }
+.bh-filterchip svg { flex: none; }
 
 /* ── Bulkbalk ───────────────────────────────────────────────────
    Donker blok dat over de lijst hangt zodra er iets is aangevinkt. */
@@ -1352,11 +1452,14 @@ a.bh-naamcel:hover .bh-naamcel-naam { color: var(--navy); text-decoration: under
 .bh-persoonchip a { color: var(--ink-soft); display: inline-flex; }
 .bh-persoonchip a:hover { color: var(--accent); }
 
-.bh-tip {
+/* Uitlegregel met icoon boven een blok. Heette eerst .bh-tip, maar die naam is van het
+   info-knopje van bh_tip(): de 14px marge lekte naar elk label met een ⓘ en liet velden
+   naast elkaar verspringen. */
+.bh-tiptekst {
   display: flex; align-items: flex-start; gap: 8px; margin: 0 0 14px;
   font: var(--text-meta); color: var(--ink-soft);
 }
-.bh-tip svg { flex: none; margin-top: 1px; }
+.bh-tiptekst svg { flex: none; margin-top: 1px; }
 
 /* ── Dekkingsgrafiek ── */
 .bh-dekgrafiek { padding: 18px 22px; margin-bottom: 14px; }

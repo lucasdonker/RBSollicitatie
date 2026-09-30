@@ -1,9 +1,10 @@
 <?php
 /**
- * Beheer — Trainingsweekend. Zes stappen (de laatste twee alleen met bewerkrecht), zelfde opbouw als de selectiedag:
+ * Beheer — Trainingsweekend. Zes stappen, zelfde opbouw als de selectiedag. Wie alleen meedraait
+ * (lezen) ziet er twee: inchecken en beoordelen.
  *
- *   voorbereiden — wie komt er (bevestiging), wie mist nog beschikbaarheid, de tablet     (lezen; wijzigen = bestuur)
- *   groepen      — groepsindeling, gedeeld met de selectiedag (admin/_groepsindeling.php) (lezen; wijzigen = bestuur)
+ *   voorbereiden — wie komt er (bevestiging), wie mist nog beschikbaarheid, de tablet     (bewerken)
+ *   groepen      — groepsindeling, gedeeld met de selectiedag (admin/_groepsindeling.php) (bewerken)
  *   inchecken    — gedeelde incheck-lijst; de tablet doet hetzelfde                       (lezen)
  *   beoordelen   — vrijwilligers op hun telefoon: observaties per persoon, met foto;
  *                  twijfelgevallen van het bestuur bovenaan ("extra aandacht")             (lezen)
@@ -54,8 +55,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $sid) {
     if ($json) {
         if ($actie === 'observatie') {
             // Alleen wie nog in het weekend zit; na het besluit is het dossier de plek.
-            echo json_encode(['ok' => evenement_is_kandidaat('tw', $sid, $sol) && tw_observatie_toevoegen($sid, $sol, (string)($_POST['tekst'] ?? ''),
-                                                 (string)($_POST['soort'] ?? 'neutraal'), $ik, $ik_id)]);
+            $ok = evenement_is_kandidaat('tw', $sid, $sol) && tw_observatie_toevoegen($sid, $sol, (string)($_POST['tekst'] ?? ''),
+                                                                                  (string)($_POST['soort'] ?? 'neutraal'), $ik, $ik_id);
+            // De nieuwe lijst gaat als HTML mee (assets/js/beoordelen.js vervangt hem zonder herladen).
+            $html = '';
+            if ($ok) {
+                $obs_lijst = tw_observaties_alle($sid)[$sol] ?? [];
+                $obs_eigen = fn($o) => tw_observatie_is_eigen($o, $ik, $ik_id, $mag_beslissen);
+                ob_start();
+                require __DIR__ . '/_observatie_lijst.php';
+                $html = (string)ob_get_clean();
+            }
+            echo json_encode(['ok' => $ok, 'html' => $html]);
         } else {
             echo json_encode(['ok' => tw_observatie_wissen((int)($_POST['id'] ?? 0), $ik, $ik_id, $mag_beslissen)]);
         }
@@ -126,13 +137,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $sid) {
 }
 
 // ── Welke stap ──
-$stappen = ['voorbereiden' => 'Voorbereiden', 'groepen' => 'Groepen', 'inchecken' => 'Inchecken', 'beoordelen' => 'Beoordelen'];
-if ($mag_beslissen) $stappen += ['evaluatie' => 'Evaluatie', 'gesprekken' => 'Gesprekken'];
+// Wie alleen meedraait ziet Inchecken en Beoordelen (zoals op de selectiedag); de rest is bestuurswerk.
+$stappen = $mag_beslissen
+    ? ['voorbereiden' => 'Voorbereiden', 'groepen' => 'Groepen', 'inchecken' => 'Inchecken', 'beoordelen' => 'Beoordelen',
+       'evaluatie' => 'Evaluatie', 'gesprekken' => 'Gesprekken']
+    : ['inchecken' => 'Inchecken', 'beoordelen' => 'Beoordelen'];
 $stap = (string)($_GET['stap'] ?? '');
 $stap = ['weekend' => 'beoordelen', 'besluit' => 'gesprekken'][$stap] ?? $stap;   // oude links
 if (!isset($stappen[$stap])) {
     $begin = (string)($seizoen['datum_tw_start'] ?? '');
-    $stap  = ($begin !== '' && date('Y-m-d') < $begin) ? 'voorbereiden' : 'beoordelen';
+    $stap  = ($mag_beslissen && $begin !== '' && date('Y-m-d') < $begin) ? 'voorbereiden' : 'beoordelen';
 }
 
 $kandidaten = $sid ? tw_kandidaten($sid) : [];

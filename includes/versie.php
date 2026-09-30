@@ -3,10 +3,24 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.132.2');
+define('APP_VERSIE', '2.133.0');
 
 function app_changelog(): array {
     return [
+        '2.133.0' => [
+            'datum'  => '2026-09-30',
+            'titel'  => 'Beoordelen op de telefoon rustiger, en overal netjes uitgelijnd',
+            'punten' => [
+                'Beoordelen (selectiedag en trainingsweekend): de testen staan standaard dicht en zien eruit als iets om op te tikken ("6 van 6 gescoord · Openen"). Wat je openklapt blijft open bij de volgende persoon, handig per teststation',
+                'Observatie plaatsen: grote knoppen positief / neutraal / aandacht, opslaan zonder dat de pagina herlaadt, Ctrl+Enter op een computer. Tik je met tekst in het veld op Volgende of een naam, dan wordt die eerst opgeslagen; mislukt dat, dan blijft je tekst staan',
+                'Na Volgende sta je meteen bij de persoon, niet bovenaan de pagina. Op een telefoon is de lijst met sollicitanten ingeklapt',
+                'Wie alleen meedraait (begeleider) ziet bij selectiedag en weekend alleen Inchecken en Beoordelen, en komt vanuit het menu altijd bij Beoordelen uit',
+                'Inchecken: het blok "Tablet bij de ingang" is in te klappen zodra de tablet is ingericht',
+                'Voorbereiden: "2 open" met de namen van de formulieren eronder; de tekst liep eerst de volgende kolom in',
+                'Overal: ruimte tussen de filterknoppen bovenaan en de eerste kaart; velden met een (i) staan niet meer lager dan velden zonder; bestandskiezers even hoog als andere velden',
+                'Filters: actieve filters staan als chips onder de balk en zijn met één tik weg te halen. Nieuwe bouwstenen voor sorteren, "Meer filters" en inklapbare blokken, die de volgende schermen gaan gebruiken',
+            ],
+        ],
         '2.132.2' => [
             'datum'  => '2026-09-30',
             'titel'  => 'Competenties en terugkerende strandwachten volgens het nieuwe groepenmodel',

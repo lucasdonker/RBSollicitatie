@@ -53,7 +53,7 @@ $_obs_rij = function (array $_o) use ($_soortlabel, $obs_eigen, $obs_wis_form): 
 <?php else: $_obs_eerste = true; ?>
 <div class="bh-obsdagen">
   <?php foreach ($_obs_dagen as $_dag => $_rijen): ?>
-  <details class="bh-obsdag"<?= $_obs_eerste ? ' open' : '' ?>>
+  <details class="bh-klap bh-obsdag"<?= $_obs_eerste ? ' open' : '' ?>>
     <summary><span class="bh-obsdag-titel"><?= h($_dag !== '' ? datum_dag_nl($_dag) : 'Zonder datum') ?></span>
       <span class="bh-meta"><?= count($_rijen) ?> <?= count($_rijen) === 1 ? 'observatie' : 'observaties' ?></span></summary>
     <ul class="bh-observaties">

@@ -176,7 +176,7 @@ require __DIR__ . '/_dekkinggrafiek.php';
 ?>
 
 <?php if ($geen_grens): ?>
-<p class="bh-tip">
+<p class="bh-tiptekst">
   <?= icoon('info', 15) ?>
   Het hoofdseizoen is nog niet ingesteld, dus elke week telt nu als hoofdseizoen. Stel het in bij
   <a href="<?= APP_URL ?>/admin/seizoen.php">Seizoen</a> — dan rekenen voor- en naseizoen op het weekend.

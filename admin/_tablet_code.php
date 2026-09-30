@@ -8,17 +8,23 @@
  *   $tc_mag_bewerken bool  code en pin aanmaken/wijzigen (bewerken op de module)
  * Opslaan: admin/api_incheck.php (actie code_genereren / pin_zetten). Bevestigen via
  * data-bevestig (beheer.js); geen eigen script.
+ *
+ * Inklapbaar: is de tablet eenmaal ingericht, dan heb je dit blok op de dag zelf niet nodig en
+ * staat de lijst bovenaan. Zonder code staat het open, want dan moet er nog iets gebeuren.
  */
 $_def  = evenement_def($tc_ev);
 $_code = (string)instelling($_def['code'], '');
 $_pin  = (string)instelling($_def['pin'], '') !== '';
 $_url  = APP_URL . '/portaal/incheck.php?ev=' . urlencode($tc_ev) . '&code=' . urlencode($_code);
+$_sam  = $_code !== '' ? 'code ' . $_code . ' · ' . ($_pin ? 'pincode ingesteld' : 'nog geen pincode') : 'nog niet ingericht';
 ?>
-<section class="ds-kaart ds-kaart-p bh-incheck-tablet">
-  <div class="bh-kaartkop">
-    <h2>Tablet bij de ingang</h2>
-    <span class="bh-meta">sollicitanten melden zichzelf aan</span>
-  </div>
+<details class="bh-klap ds-kaart bh-incheck-tablet"<?= $_code === '' ? ' open' : ' data-klap-id="tablet-' . h($tc_ev) . '"' ?>>
+  <summary>
+    <span class="bh-klap-titel">Tablet bij de ingang</span>
+    <span class="bh-klap-sam"><?= h($_sam) ?></span>
+  </summary>
+  <div class="bh-klap-inhoud">
+  <p class="bh-meta">Sollicitanten melden zich op de tablet zelf aan.</p>
   <?php if ($_code !== ''): ?>
     <div class="bh-incheck-coderij">
       <div class="bh-incheck-codeblok">
@@ -69,4 +75,5 @@ $_url  = APP_URL . '/portaal/incheck.php?ev=' . urlencode($tc_ev) . '&code=' . u
     </form>
     <?php endif; ?>
   <?php endif; ?>
-</section>
+  </div>
+</details>

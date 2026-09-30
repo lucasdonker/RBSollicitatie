@@ -15,9 +15,12 @@
 $subnav_actief = $subnav_actief ?? '';
 $subnav_datum  = $subnav_datum ?? null;
 
+// Wie alleen meedraait (begeleider, 'lezen') ziet Inchecken en Beoordelen: meer heeft hij op de
+// dag niet nodig, en op een telefoon is elke extra stap ruis. Voorbereiden en Groepen blijven via
+// een directe link te lezen, maar staan niet in de balk.
 $_stappen = [
-    'voorbereiden' => ['Voorbereiden', 'selectie_voorbereiden.php',  'selectiedag', 'lezen'],
-    'groepen'      => ['Groepen',      'selectie_indeling.php',      'selectiedag', 'lezen'],
+    'voorbereiden' => ['Voorbereiden', 'selectie_voorbereiden.php',  'selectiedag', 'bewerken'],
+    'groepen'      => ['Groepen',      'selectie_indeling.php',      'selectiedag', 'bewerken'],
     'inchecken'    => ['Inchecken',    'selectie_inchecken.php',     'selectiedag', 'lezen'],
     'beoordelen'   => ['Beoordelen',   'selectiedag.php',            'selectiedag', 'lezen'],
     // Beslissen en bellen is bestuurswerk: een begeleider ziet deze twee niet.

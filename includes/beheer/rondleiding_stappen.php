@@ -149,7 +149,7 @@ function rl_schermen(): array {
             'titel' => 'Trainingsweekend', 'bestand' => 'trainingsweekend.php', 'module' => 'trainingsweekend', 'hulp' => 'trainingsweekend',
             'stappen' => [
                 ['doel' => null, 'titel' => 'Het trainingsweekend',
-                 'tekst' => 'Zes stappen: voorbereiden, groepen, inchecken, beoordelen, en voor het bestuur de evaluatie en de gesprekken.'],
+                 'tekst' => 'Zes stappen: voorbereiden, groepen, inchecken, beoordelen, evaluatie en gesprekken. Wie alleen meedraait, ziet alleen inchecken en beoordelen.'],
                 ['doel' => '.bh-substappen a[href$="stap=voorbereiden"]', 'titel' => 'Voorbereiden',
                  'tekst' => 'Wie komt er, wie kan niet (met hun opmerking), en wie mist nog beschikbaarheid.'],
                 ['doel' => '.bh-substappen a[href$="stap=groepen"]', 'titel' => 'Groepen',

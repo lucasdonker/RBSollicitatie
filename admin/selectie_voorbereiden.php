@@ -59,7 +59,8 @@ else:
     $vb_mag_dossier  = $mag_dossier;
     $vb_klaar_kop    = 'Formulieren';
     $vb_klaar        = fn($k) => !empty($_open[(int)$k['sol_id']])
-        ? ['Open: ' . implode(', ', $_open[(int)$k['sol_id']]), 'oranje'] : ['Alles getekend', 'groen'];
+        ? [count($_open[(int)$k['sol_id']]) . ' open', 'oranje', implode(', ', $_open[(int)$k['sol_id']])]
+        : ['Alles getekend', 'groen'];
     $vb_mist         = $_n_open > 0
         ? $_n_open . ' ' . ($_n_open === 1 ? 'persoon moet' : 'personen moeten') . ' nog een formulier tekenen — dat moet vóór het water. Bij het inchecken krijgen ze de link opnieuw.'
         : '';

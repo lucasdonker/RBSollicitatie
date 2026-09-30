@@ -16,7 +16,10 @@
  *   $vb_mag_wijzigen bool     bevestiging aanpassen (bestuur)
  *   $vb_mag_dossier bool      naam linkt naar het dossier
  *   $vb_klaar_kop   string    kop van de controlekolom ("Beschikbaarheid", "Formulieren")
- *   $vb_klaar       callable  fn(array $k): array [tekst, kleur] voor die kolom
+ *   $vb_klaar       callable  fn(array $k): array [tekst, kleur, ?detail] voor die kolom. De badge
+ *                             houdt het kort ("2 open"); het detail (welke formulieren) staat eronder
+ *                             als gewone tekst die mag afbreken — een badge breekt niet af en liep
+ *                             anders de volgende kolom in.
  *   $vb_mist        string    optioneel: zin over wat nog ontbreekt (leeg = niets)
  *   $vb_leeg        array     ['titel','tekst','icoon'] als er nog niemand is uitgenodigd
  */
@@ -89,7 +92,8 @@ $_gefilterd = $_q !== '' || $_fstand !== '';
               <?= bh_badge($_standen[$_st], $_kl) ?>
               <?php if (!empty($_k['bevestiging_reden'])): ?><span class="bh-meta"><?= h((string)$_k['bevestiging_reden']) ?></span><?php endif; ?>
             </td>
-            <td data-label="<?= h($vb_klaar_kop) ?>"><?= bh_badge($_klaar[0], $_klaar[1]) ?></td>
+            <td data-label="<?= h($vb_klaar_kop) ?>"><?= bh_badge($_klaar[0], $_klaar[1]) ?>
+              <?php if (($_klaar[2] ?? '') !== ''): ?><span class="bh-meta bh-voor-detail"><?= h((string)$_klaar[2]) ?></span><?php endif; ?></td>
             <?php if ($vb_mag_wijzigen): ?>
             <td>
               <form method="post" action="<?= h($vb_post_url) ?>" class="bh-voor-form" data-direct-opslaan>

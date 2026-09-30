@@ -19,6 +19,7 @@ $mag_bewerken = mag('selectiedag', 'bewerken');
 $_sd_datum = (string)($seizoen['datum_selectiedag'] ?? '');
 if (!empty($_GET['start']) && $_SERVER['REQUEST_METHOD'] === 'GET') {
     $_vandaag = date('Y-m-d');
+    if (!$mag_bewerken) redirect(APP_URL . '/admin/selectiedag.php');   // begeleider: altijd beoordelen
     if ($_sd_datum !== '' && $_vandaag > $_sd_datum && $mag_bewerken) redirect(APP_URL . '/admin/selectie_nabespreking.php');
     if ($_sd_datum !== '' && $_vandaag >= $_sd_datum)                 redirect(APP_URL . '/admin/selectiedag.php');
     redirect(APP_URL . '/admin/selectie_voorbereiden.php');

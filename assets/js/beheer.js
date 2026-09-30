@@ -371,6 +371,16 @@
     form.addEventListener('change', function (e) {
       if (e.target.matches('select')) form.submit();
     });
+    // "Meer filters" is een paneel: klik ernaast of Escape sluit het weer.
+    var meer = form.querySelector('.bh-filter-meer');
+    if (meer) {
+      document.addEventListener('click', function (e) {
+        if (meer.open && !meer.contains(e.target)) meer.open = false;
+      });
+      meer.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && meer.open) { meer.open = false; meer.querySelector('summary').focus(); }
+      });
+    }
   }
 
   /* ── Zijbalk op mobiel ────────────────────────────────────────

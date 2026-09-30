@@ -3,7 +3,7 @@
  * TW-stap Beoordelen: vrijwilligers op hun telefoon. Links (of bovenaan op een telefoon) de
  * lijst met foto, rechts de persoon: observaties toevoegen, en ingeklapt wat er op de
  * selectiedag over hem of haar is gezegd. Onderdeel van admin/trainingsweekend.php.
- * Gedrag: assets/js/tw_beoordelen.js (tikken is opslaan).
+ * Gedrag: assets/js/beoordelen.js (gedeeld met de selectiedag); de invoer is admin/_observatie_invoer.php.
  */
 $obs_alle  = tw_observaties_alle($sid);
 // Groep kiezen (zoals op de selectiedag); de keuze reist mee in elke link.
@@ -27,8 +27,11 @@ $pos    = array_search($huidig_id, $ids, true);
 $huidig = $pos !== false ? $bo_lijst[$pos] : null;
 $_aanw  = 'tw_aanwezigheid_tekst';
 ?>
-<div class="bh-beoordeel" data-twbeoordeel data-endpoint="<?= APP_URL ?>/admin/trainingsweekend.php" data-csrf="<?= h(csrf_token()) ?>">
+<div class="bh-beoordeel" data-beoordeel data-endpoint="<?= APP_URL ?>/admin/trainingsweekend.php" data-csrf="<?= h(csrf_token()) ?>">
   <aside class="bh-beoordeel-lijst">
+    <button type="button" class="bh-beoordeel-lijstknop" data-lijstknop aria-expanded="true">
+      Groep en alle deelnemers
+    </button>
     <?php
       $gk_groepen = $bo_groepen; $gk_kandidaten = $kandidaten; $gk_gekozen = $bo_groep;
       $gk_url = fn(string $g) => $bo_url(null, $g);
@@ -101,32 +104,18 @@ $_aanw  = 'tw_aanwezigheid_tekst';
       </div>
     <?php endif; ?>
 
-    <div class="bh-observatieblok">
-      <h3>Wat valt op?</h3>
-      <?php if ($mag_meedraaien && !empty($huidig['doorgevoerd_op'])): ?>
-        <p class="bh-meta">Over <?= h((string)$huidig['voornaam']) ?> is al besloten; nieuwe observaties horen nu in het dossier.</p>
-      <?php elseif ($mag_meedraaien): ?>
-        <?php if (tw_niet_gekomen($huidig)): ?>
-          <p class="bh-meta"><?= h((string)$huidig['voornaam']) ?> staat op niet gekomen. Toch gezien? Check dan eerst alsnog in bij <a href="<?= h(tw_url('inchecken')) ?>">Inchecken</a>.</p>
-        <?php endif; ?>
-        <div class="bh-soortkeuze" role="group" aria-label="Soort observatie">
-          <button type="button" class="bh-soort positief" data-soort="positief" aria-pressed="false">Positief</button>
-          <button type="button" class="bh-soort neutraal gekozen" data-soort="neutraal" aria-pressed="true">Neutraal</button>
-          <button type="button" class="bh-soort aandacht" data-soort="aandacht" aria-pressed="false">Aandacht</button>
-        </div>
-        <label class="bh-vw" for="obs-<?= $hid ?>">Observatie over <?= h((string)$huidig['naam']) ?></label>
-        <textarea class="ds-textarea" id="obs-<?= $hid ?>" data-obs-tekst rows="3" maxlength="2000" placeholder="Bijvoorbeeld: pakt aan zonder vragen, gaat goed om met kritiek…"></textarea>
-        <button type="button" class="ds-btn ds-btn-primair ds-btn-vol" data-obs-opslaan>Observatie opslaan</button>
-        <p class="ds-veld-hint">Voor het gesprek met het bestuur. De sollicitant ziet dit niet.</p>
-      <?php endif; ?>
-
-      <?php
-        $obs_lijst = $obs_alle[$hid] ?? [];
-        $obs_eigen = fn($o) => tw_observatie_is_eigen($o, $ik, $ik_id, $mag_beslissen);
-        if ($obs_lijst) require __DIR__ . '/../_observaties.php';
-        else echo '<p class="bh-meta">Nog niets opgeschreven.</p>';
-      ?>
-    </div>
+    <?php
+      $_besloten = !empty($huidig['doorgevoerd_op']);
+      $oi_sol = $hid; $oi_naam = (string)$huidig['naam']; $oi_titel = 'Wat valt op?';
+      $oi_mag = $mag_meedraaien && !$_besloten;
+      $oi_melding = $_besloten
+          ? 'Over ' . $huidig['voornaam'] . ' is al besloten; nieuwe observaties horen nu in het dossier.'
+          : (tw_niet_gekomen($huidig) ? $huidig['voornaam'] . ' staat op niet gekomen. Toch gezien? Check dan eerst alsnog in bij Inchecken.' : null);
+      $oi_voorbeeld = 'Bijvoorbeeld: pakt aan zonder vragen, gaat goed om met kritiek…';
+      $obs_lijst = $obs_alle[$hid] ?? [];
+      $obs_eigen = fn($o) => tw_observatie_is_eigen($o, $ik, $ik_id, $mag_beslissen);
+      require __DIR__ . '/../_observatie_invoer.php';
+    ?>
 
     <?php // Beoordelaars zien de observaties van de selectiedag, niet het besluit van het bestuur.
       $d = bh_dossier($hid); if ($d) { $sds_dossier = $d; $sds_zonder_besluit = true; require __DIR__ . '/../_sd_samenvatting.php'; } ?>
@@ -145,4 +134,4 @@ $_aanw  = 'tw_aanwezigheid_tekst';
   </section>
   <?php endif; ?>
 </div>
-<script src="<?= APP_URL ?>/assets/js/tw_beoordelen.js?v=<?= @filemtime(__DIR__ . '/../../assets/js/tw_beoordelen.js') ?>" defer></script>
+<script src="<?= APP_URL ?>/assets/js/beoordelen.js?v=<?= @filemtime(__DIR__ . '/../../assets/js/beoordelen.js') ?>" defer></script>

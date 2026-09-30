@@ -54,7 +54,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $sid) {
     if ($actie === 'observatie') {
         $id = selectie_observatie_toevoegen($sid, (int)$_POST['sol_id'], (string)($_POST['tekst'] ?? ''),
                                             (string)($_POST['soort'] ?? 'neutraal'), $ik, (int)($_SESSION['bhd_id'] ?? 0) ?: null);
-        echo json_encode(['ok' => $id !== null, 'id' => $id, 'door' => $ik]);
+        // De nieuwe lijst gaat als HTML mee: het scherm vervangt hem zonder te herladen (assets/js/beoordelen.js).
+        $html = '';
+        if ($id !== null) {
+            $obs_lijst = selectie_observaties_van($sid, (int)$_POST['sol_id']);
+            $obs_eigen = fn($o) => $mag_alles || ($o['beoordelaar'] ?? '') === $ik;
+            ob_start();
+            require __DIR__ . '/_observatie_lijst.php';
+            $html = (string)ob_get_clean();
+        }
+        echo json_encode(['ok' => $id !== null, 'id' => $id, 'html' => $html]);
         exit;
     }
     if ($actie === 'observatie_wis') {
@@ -106,13 +115,14 @@ $posities = array_map(fn($k) => (int)$k['sol_id'], $lijst);
 $pos      = array_search($huidig_id, $posities, true);
 $huidig   = $pos !== false ? $lijst[$pos] : null;
 
-/** URL naar dit scherm met een andere kandidaat of groep. */
+/** URL naar dit scherm met een andere kandidaat of groep. Met een kandidaat springt hij naar de
+ *  kaart (#kandidaat): op een telefoon sta je anders na elke "Volgende" weer bovenaan. */
 function bd_url(?int $k = null, ?string $groep = null): string {
     $p = [];
     $g = $groep ?? (string)($_GET['groep'] ?? '');
     if ($g !== '') $p['groep'] = $g;
     if ($k)        $p['k'] = $k;
-    return APP_URL . '/admin/selectiedag.php' . ($p ? '?' . http_build_query($p) : '');
+    return APP_URL . '/admin/selectiedag.php' . ($p ? '?' . http_build_query($p) : '') . ($k ? '#kandidaat' : '');
 }
 
 $pagina_titel = 'Beoordelen';
@@ -138,9 +148,12 @@ require __DIR__ . '/layout_top.php';
   </div>
 <?php else: ?>
 
-<div class="bh-beoordeel">
+<div class="bh-beoordeel" data-beoordeel data-endpoint="<?= APP_URL ?>/admin/selectiedag.php" data-csrf="<?= h(csrf_token()) ?>">
 
   <aside class="bh-beoordeel-lijst">
+    <button type="button" class="bh-beoordeel-lijstknop" data-lijstknop aria-expanded="true">
+      Groep en alle sollicitanten
+    </button>
     <?php
       $gk_groepen = $groepen; $gk_kandidaten = $kandidaten; $gk_gekozen = $gekozen_groep;
       $gk_url = fn(string $g) => bd_url(null, $g);
@@ -203,7 +216,7 @@ require __DIR__ . '/layout_top.php';
     $scores = selectie_scores_van($sid, $hid, $ik);
     $observaties = selectie_observaties_van($sid, $hid);
   ?>
-  <section class="bh-beoordeel-kaart" id="kandidaat">
+  <section class="bh-beoordeel-kaart" id="kandidaat" data-sol="<?= $hid ?>">
     <header class="bh-beoordeel-kop">
       <?= bh_avatar($huidig, 56, ['vergroot' => true]) ?>
       <span class="bh-beoordeel-wie">
@@ -240,74 +253,58 @@ require __DIR__ . '/layout_top.php';
     <?php endif; ?>
 
     <?php if ($mag_beoordelen): ?>
-      <p class="bh-zijpaneel-hint">Tikken is opslaan. Tik nog een keer op hetzelfde cijfer om het te wissen.</p>
+      <p class="bh-beoordeel-hint"><?= icoon('info', 16) ?>
+        <span>Een cijfer tikken is meteen opslaan. Nog een keer tikken wist het.</span></p>
     <?php endif; ?>
 
     <?php foreach ($criteria as $_ts => $_test):
-      // Inklapbaar, zodat je snel bij de observaties bent; een test die je helemaal hebt gescoord begint dicht.
+      // Standaard dicht, zodat je in één oogopslag beide testen én de observaties ziet. Wat je
+      // openklapt blijft open bij de volgende kandidaat (inklap.js, per sessie): wie bij de
+      // zwemtest staat, hoeft niet steeds opnieuw te openen.
       $_tot = count($_test['criteria']);
       $_klaar = count(array_filter($_test['criteria'], fn($c) => (int)($scores[$_ts][$c['sleutel']]['eigen'] ?? 0) > 0));
     ?>
-      <details class="bh-testblok" data-test="<?= h($_ts) ?>"<?= $_klaar < $_tot ? ' open' : '' ?>>
+      <details class="bh-klap bh-testblok" data-test="<?= h($_ts) ?>" data-klap-id="sd-test-<?= h($_ts) ?>">
         <summary><h3><?= h($_test['naam']) ?></h3>
-          <span class="bh-meta<?= $_klaar < $_tot ? ' nog' : '' ?>" data-test-stand><?= $_klaar ?> van <?= $_tot ?> gescoord</span></summary>
+          <span class="bh-meta<?= $_klaar < $_tot ? ' nog' : '' ?>" data-test-stand><?= $_klaar ?> van <?= $_tot ?> gescoord</span>
+          <span class="bh-testblok-tik" aria-hidden="true">Openen</span></summary>
+        <div class="bh-klap-inhoud">
         <?php foreach ($_test['criteria'] as $_crit):
           $_sc = $scores[$_ts][$_crit['sleutel']] ?? ['eigen' => 0, 'allen' => [], 'gem' => 0];
           $_eigen = (int)$_sc['eigen'];
-          $_key = $hid . '-' . $_ts . '-' . $_crit['sleutel'];
         ?>
-          <div class="bh-criterium<?= $_eigen ? ' gedaan' : '' ?>" id="crit-<?= h($_key) ?>">
+          <div class="bh-criterium<?= $_eigen ? ' gedaan' : '' ?>">
             <div class="bh-criterium-kop">
               <span class="bh-criterium-naam"><?= h($_crit['label']) ?></span>
-              <span class="bh-criterium-stand" id="stand-<?= h($_key) ?>">
+              <span class="bh-criterium-stand" aria-live="polite">
                 <?= $_eigen ? icoon('vink', 12) . 'opgeslagen' : 'nog niet' ?>
               </span>
             </div>
-            <div class="bh-cijfers" role="group" aria-label="<?= h($_crit['label']) ?>">
+            <div class="bh-cijfers" role="group" aria-label="<?= h($_crit['label']) ?>"
+                 data-test="<?= h($_ts) ?>" data-crit="<?= h($_crit['sleutel']) ?>">
               <?php for ($_s = 1; $_s <= 5; $_s++): ?>
                 <button type="button" class="bh-cijfer<?= $_s === $_eigen ? ' gekozen' : '' ?>"
-                        <?= $mag_beoordelen ? '' : 'disabled' ?>
-                        aria-pressed="<?= $_s === $_eigen ? 'true' : 'false' ?>"
-                        data-klik="zetScore(this, <?= $hid ?>, '<?= h($_ts) ?>', '<?= h($_crit['sleutel']) ?>', <?= $_s ?>)"><?= $_s ?></button>
+                        <?= $mag_beoordelen ? '' : 'disabled' ?> data-cijfer="<?= $_s ?>"
+                        aria-pressed="<?= $_s === $_eigen ? 'true' : 'false' ?>"><?= $_s ?></button>
               <?php endfor; ?>
             </div>
-            <span class="bh-criterium-gem" id="gem-<?= h($_key) ?>">
+            <span class="bh-criterium-gem">
               <?php if (count($_sc['allen']) > 1): ?>
                 gemiddelde van <?= count($_sc['allen']) ?> beoordelaars: <?= h((string)$_sc['gem']) ?>
               <?php endif; ?>
             </span>
           </div>
         <?php endforeach; ?>
+        </div>
       </details>
     <?php endforeach; ?>
 
-    <div class="bh-observatieblok" id="observaties">
-      <h3>Observatie plaatsen</h3>
-      <?php if ($mag_beoordelen): ?>
-        <div class="bh-soortkeuze" id="soort-<?= $hid ?>" role="group" aria-label="Soort observatie">
-          <button type="button" class="bh-soort positief" data-soort="positief" aria-pressed="false"
-                  data-klik="kiesSoort(<?= $hid ?>, 'positief', this)">Positief</button>
-          <button type="button" class="bh-soort neutraal gekozen" data-soort="neutraal" aria-pressed="true"
-                  data-klik="kiesSoort(<?= $hid ?>, 'neutraal', this)">Neutraal</button>
-          <button type="button" class="bh-soort aandacht" data-soort="aandacht" aria-pressed="false"
-                  data-klik="kiesSoort(<?= $hid ?>, 'aandacht', this)">Aandacht</button>
-        </div>
-        <label class="bh-vw" for="obs-<?= $hid ?>">Observatie over <?= h((string)$huidig['naam']) ?></label>
-        <textarea class="ds-textarea" id="obs-<?= $hid ?>" rows="2" placeholder="Wat viel je op…"></textarea>
-        <button type="button" class="ds-btn ds-btn-primair ds-btn-vol" data-klik="obsToevoegen(<?= $hid ?>)">
-          Observatie opslaan
-        </button>
-      <?php endif; ?>
-
-      <?php
-        // Gedeelde weergave (admin/_observaties.php); wissen via data-obs-wis, zie obsWis() hieronder.
-        if ($observaties) {
-            $obs_lijst = $observaties;
-            $obs_eigen = fn($o) => $mag_alles || ($o['beoordelaar'] ?? '') === $ik;
-            require __DIR__ . '/_observaties.php';
-        }
-      ?>
-    </div>
+    <?php
+      $oi_sol = $hid; $oi_naam = (string)$huidig['naam']; $oi_mag = $mag_beoordelen; $oi_titel = 'Observatie plaatsen';
+      $obs_lijst = $observaties;
+      $obs_eigen = fn($o) => $mag_alles || ($o['beoordelaar'] ?? '') === $ik;
+      require __DIR__ . '/_observatie_invoer.php';
+    ?>
 
     <footer class="bh-beoordeel-voet">
       <?php $_vorige = $pos > 0 ? $lijst[$pos - 1] : null; $_volgende = isset($lijst[$pos + 1]) ? $lijst[$pos + 1] : null; ?>
@@ -328,130 +325,7 @@ require __DIR__ . '/layout_top.php';
   <?php endif; ?>
 </div>
 
-<script nonce="<?= h(csp_nonce()) ?>">
-// window.CSRF, geen const: layout_bottom.php declareert CSRF ook, en een tweede const
-// brak dat hele script af (SyntaxError) — thema, meldingen en fase wijzigen deden niets.
-window.CSRF = window.CSRF || '<?= csrf_token() ?>';
-const soortKeuze = {};
-
-/* Tikken ís opslaan. De knop springt meteen aan en het vinkje verschijnt; gaat het
-   opslaan mis, dan valt hij terug en zegt een toast waarom. */
-function zetScore(knop, solId, test, crit, score) {
-  const rij = knop.closest('.bh-cijfers');
-  const vorige = rij.querySelector('.gekozen');
-  const key = solId + '-' + test + '-' + crit;
-  const stand = document.getElementById('stand-' + key);
-  const kaart = document.getElementById('crit-' + key);
-  // Nogmaals op het gekozen cijfer tikken wist je score (de server wist bij 0).
-  const wissen = knop === vorige;
-
-  function toon(actief) {
-    rij.querySelectorAll('.bh-cijfer').forEach(function (b) {
-      b.classList.toggle('gekozen', b === actief);
-      b.setAttribute('aria-pressed', b === actief ? 'true' : 'false');
-    });
-    if (kaart) kaart.classList.toggle('gedaan', !!actief);
-    const blok = rij.closest('.bh-testblok');
-    const tel = blok && blok.querySelector('[data-test-stand]');
-    if (tel) {
-      const klaar = blok.querySelectorAll('.bh-criterium.gedaan').length, tot = blok.querySelectorAll('.bh-criterium').length;
-      tel.textContent = klaar + ' van ' + tot + ' gescoord';
-      tel.classList.toggle('nog', klaar < tot);
-    }
-  }
-
-  toon(wissen ? null : knop);
-  if (stand) stand.textContent = wissen ? 'wissen…' : 'opslaan…';
-
-  fetch(location.pathname, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ actie: 'score', sol_id: solId, test: test, criterium: crit,
-                                score: wissen ? 0 : score, _csrf: CSRF })
-  })
-  .then(r => r.json())
-  .then(d => {
-    if (!d.ok) throw new Error(d.fout || 'mislukt');
-    if (stand) stand.textContent = wissen ? 'gewist' : 'opgeslagen';
-    const gem = document.getElementById('gem-' + key);
-    if (gem) gem.textContent = d.aantal > 1 ? 'gemiddelde van ' + d.aantal + ' beoordelaars: ' + d.gem : '';
-  })
-  .catch(() => {
-    toon(vorige);
-    if (stand) stand.textContent = wissen ? 'niet gewist' : 'niet opgeslagen';
-    bhToast('Score niet opgeslagen — probeer opnieuw.', 'fout');
-  });
-}
-
-function kiesSoort(solId, soort, knop) {
-  soortKeuze[solId] = soort;
-  document.getElementById('soort-' + solId).querySelectorAll('.bh-soort')
-    .forEach(function (b) {
-      b.classList.toggle('gekozen', b === knop);
-      b.setAttribute('aria-pressed', b === knop ? 'true' : 'false');
-    });
-}
-
-function obsToevoegen(solId) {
-  const veld = document.getElementById('obs-' + solId);
-  const tekst = veld.value.trim();
-  if (!tekst) { bhToast('Schrijf eerst iets op.', 'fout'); return; }
-  fetch(location.pathname, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      actie: 'observatie', sol_id: solId, tekst: tekst,
-      soort: soortKeuze[solId] || 'neutraal', _csrf: CSRF
-    })
-  })
-  .then(r => r.json())
-  .then(d => {
-    if (!d.ok) { bhToast('Opslaan mislukt.', 'fout'); return; }
-    veld.value = '';
-    bhToast('Observatie opgeslagen.', 'succes');
-    setTimeout(function () { location.hash = 'observaties'; location.reload(); }, 600);
-  })
-  .catch(() => bhToast('Geen verbinding — probeer opnieuw.', 'fout'));
-}
-
-// Wat je in- of uitklapt blijft zo, ook bij de volgende kandidaat (alleen in deze browser).
-(function () {
-  let stand = {};
-  try { stand = JSON.parse(sessionStorage.getItem('p13-sd-testen') || '{}'); } catch (e) {}
-  document.querySelectorAll('.bh-testblok[data-test]').forEach(function (d) {
-    if (d.dataset.test in stand) d.open = stand[d.dataset.test];
-    d.addEventListener('toggle', function () {
-      stand[d.dataset.test] = d.open;
-      try { sessionStorage.setItem('p13-sd-testen', JSON.stringify(stand)); } catch (e) {}
-    });
-  });
-})();
-
-// De wisknop komt uit de gedeelde partial (data-obs-wis); één haak op de pagina.
-document.addEventListener('click', function (e) {
-  const k = e.target.closest('[data-obs-wis]');
-  if (k) obsWis(parseInt(k.dataset.obsWis, 10));
-});
-
-function obsWis(id) {
-  bhBevestig({ titel: 'Observatie verwijderen?', knop: 'Ja, verwijderen', gevaar: true })
-    .then(function (ja) {
-      if (!ja) return;
-      fetch(location.pathname, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ actie: 'observatie_wis', id: id, _csrf: CSRF })
-      })
-      .then(r => r.json())
-      .then(d => {
-        if (!d.ok) { bhToast('Verwijderen mislukt.', 'fout'); return; }
-        const el = document.querySelector('[data-obs="' + id + '"]');
-        if (el) el.remove();
-      })
-      .catch(() => bhToast('Geen verbinding — probeer opnieuw.', 'fout'));
-    });
-}
-</script>
+<script src="<?= APP_URL ?>/assets/js/beoordelen.js?v=<?= @filemtime(__DIR__ . '/../assets/js/beoordelen.js') ?>" defer></script>
 
 <?php endif; ?>
 <?php require __DIR__ . '/layout_bottom.php'; ?>
