@@ -246,7 +246,8 @@ function bh_dossier_taken(array $dossier): array {
  * iedereen met leesrecht op ondertekeningen. Eén regel, hier.
  *
  *   gezondheid*  medische gegevens  -> bestuur en hoger
- *   loonheffing  BSN                -> alleen met het loondossier-recht (penningmeester/admin)
+ *   loonheffing  BSN                -> alleen wie de kluis mag openen (mag_kluis(): de penningmeester,
+ *                                      niet vanzelf de admin)
  *   lidmaatschap IBAN               -> idem
  *   intake*      gewone afspraken   -> iedereen met leesrecht op ondertekeningen
  *
@@ -263,10 +264,22 @@ function bh_mag_document(string $type): array {
         return [$mag, $mag ? null : 'Alleen ondertekeningen-recht'];
     }
     if (in_array($type, ['loonheffing', 'lidmaatschap'], true)) {
-        $mag = mag('documenten', 'bewerken');
-        return [$mag, $mag ? null : 'Alleen loondossier'];
+        $mag = mag_kluis();
+        return [$mag, $mag ? null : 'Alleen de penningmeester'];
     }
-    return [true, null];
+    $mag = mag('ondertekeningen', 'lezen');
+    return [$mag, $mag ? null : 'Alleen ondertekeningen-recht'];
+}
+
+/**
+ * Waar de PDF van een ondertekening te openen is. Met BSN of IBAN (loonheffing, lidmaatschap) via de
+ * gelogde kluisdownload, anders via Ondertekeningen. Recht eerst checken met bh_mag_document().
+ */
+function bh_ondertekening_pdf_url(int $id, string $type): string {
+    if (in_array($type, ['loonheffing', 'lidmaatschap'], true)) {
+        return APP_URL . '/admin/document_download.php?ond=' . $id . '&t=' . urlencode(csrf_token());
+    }
+    return APP_URL . '/admin/ondertekeningen.php?export=' . $id;
 }
 
 /**

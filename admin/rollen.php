@@ -344,10 +344,13 @@ require __DIR__ . '/layout_top.php';
                 <?php if (!in_array($ak, $mdef['acties'], true)): ?>
                   <span class="bh-matrix-nvt" title="<?= h($mdef['label']) ?> kent geen <?= h(strtolower($al)) ?>"
                         aria-label="niet van toepassing">–</span>
-                <?php elseif ($_admin): ?>
+                <?php elseif ($_admin):
+                  // Loondossiers: de admin ziet de status, maar opent de stukken niet (mag_kluis()).
+                  $_vast = $mod === 'documenten' ? 'Admin ziet de loondossiers, maar alleen de penningmeester opent de stukken'
+                                                 : 'Admin heeft altijd volledige toegang'; ?>
                   <input type="checkbox" checked disabled
-                         aria-label="<?= h($_label) ?> — vast, admin heeft altijd volledige toegang"
-                         title="Admin heeft altijd volledige toegang">
+                         aria-label="<?= h($_label) ?> — vast. <?= h($_vast) ?>"
+                         title="<?= h($_vast) ?>">
                 <?php else: ?>
                   <input type="checkbox"
                          name="recht[<?= h($rol['sleutel']) ?>][<?= h($mod) ?>][<?= h($ak) ?>]"

@@ -15,6 +15,8 @@ function app_changelog(): array {
                 'Wie het beheer in mag, bepaalt alleen nog de koppeling rol → Authentik-groep onder Rollen & rechten. De aparte lijst "toegestane groepen" bij Instellingen › Authentik is weg; de systeemcontrole meldt groepen uit die lijst die bij geen rol horen',
                 'De standaardgroepen heten app-sol-admin, app-sol-bestuur, app-sol-penningmeester en app-sol-begeleider. Rollen die nog op de oude standaardnaam stonden, gaan vanzelf mee; een zelf gekozen groep blijft staan',
                 'Nieuwe rol Planner (groep app-sol-planner): beschikbaarheid en dekking bekijken, zonder lonen of dossiers. Met een eigen rondleiding. De export voor het rooster (geen bedragen, alleen dagen) staat nu ook bij Beschikbaarheid',
+                'Loondossiers: de inhoud (kopie ID, bankpas, BSN, IBAN, loonheffingsformulier) opent alleen de penningmeester. De beheerder ziet of de stukken er zijn, volgt de status en kan vernietigen; een geweigerde poging komt in het logboek. Privacyverklaring bijgewerkt (versie 2026-09g)',
+                'De PDF-knop bij ondertekeningen in het dossier werkte niet (verkeerde link); nu opent hij de juiste route',
                 'De naam van een rol komt overal uit Rollen & rechten; wie meerdere rollen heeft, ziet ze allemaal in de zijbalk en op Mijn profiel',
             ],
         ],

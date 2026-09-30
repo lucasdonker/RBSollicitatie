@@ -75,6 +75,7 @@ function log_actie_register(): array {
         // Documenten en kluis
         'document_geupload'   => ['Document geüpload', 'document'],
         'document_gedownload' => ['Document gedownload', 'download'],
+        'document_geweigerd'  => ['Loondossier openen geweigerd (niet de penningmeester)', 'slot'],
         'document_verwijderd' => ['Document verwijderd', 'prullenbak'],
         'document_vernietigd' => ['Document vernietigd', 'prullenbak'],
         'loondossier_verwerkt'=> ['Loondossier verwerkt', 'vink'],

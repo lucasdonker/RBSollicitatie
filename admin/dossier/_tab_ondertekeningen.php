@@ -75,7 +75,7 @@ $_mag_bewerken = mag('ondertekeningen', 'bewerken');
                   </span>
                 <?php else: ?>
                   <a class="ds-btn ds-btn-secundair ds-btn-sm"
-                     href="<?= APP_URL ?>/admin/document_download.php?ondertekening=<?= (int)$_r['id'] ?>">
+                     href="<?= h(bh_ondertekening_pdf_url((int)$_r['id'], (string)$_r['type'])) ?>">
                     <?= icoon('download', 14) ?> PDF
                   </a>
                 <?php endif; ?>

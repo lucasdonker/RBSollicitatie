@@ -31,6 +31,13 @@ if (!empty($_GET['ond'])) {
     $soort = (string)$rij['soort'];
 }
 vereis_recht(document_recht_module($soort), 'bewerken');
+// Loondossier-inhoud (ID, bankpas, BSN, IBAN): niet vanzelf voor de admin, alleen voor de penningmeester.
+if (document_recht_module($soort) === 'documenten' && !mag_kluis()) {
+    if (function_exists('audit_log')) audit_log('document_geweigerd', 'document', $rij ? (int)$rij['id'] : null,
+        ['soort' => $soort, 'ondertekening_id' => $ond ? (int)$ond['id'] : null]);
+    http_response_code(403);
+    exit('Alleen de penningmeester kan de inhoud van een loondossier openen. Als beheerder zie je wel of de stukken er zijn.');
+}
 
 // Inhoud ophalen (kluis) — of, voor oudere ondertekeningen zonder opgeslagen PDF, on-the-fly genereren
 $inhoud = null; $naam = ''; $mime = 'application/octet-stream';

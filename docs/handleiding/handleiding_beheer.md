@@ -91,7 +91,7 @@ beheerder kan ze per rol aanpassen (zie [Beheerders en rechten](#beheerders-en-r
 | **Planner** | app-sol-planner | Het rooster maken: beschikbaarheid en dekking bekijken. Alleen lezen, geen lonen en geen dossiers. | Vandaag, Beschikbaarheid, Dekking |
 | **Bestuur** | app-sol-bestuur | De hele werving: uitnodigen, selectiedag indelen en beoordelen, nabespreken en bellen, aannemen, berichten, seizoen en instellingen. | Alles behalve Loondossiers, Beheerders & rechten en Logboek |
 | **Penningmeester** | app-sol-penningmeester | Het loondossier: loonheffing, kopie ID en bankpas inzien, downloaden, als verwerkt markeren en na de bewaarplicht vernietigen. De loonplanning bekijken en bewerken (kosten, scenario's, Excel-export). Sollicitanten alleen bekijken. | Vandaag, Sollicitanten, Loonplanning, Loondossiers |
-| **Beheerder** (technisch: admin) | app-sol-admin | Alles, ook beheerders, rechten, logboek en systeem. Kan zichzelf nooit buitensluiten. | Alles |
+| **Beheerder** (technisch: admin) | app-sol-admin | Alles, ook beheerders, rechten, logboek en systeem. Kan zichzelf nooit buitensluiten. Eén uitzondering: de *inhoud* van een loondossier (kopie ID, bankpas, BSN, IBAN) opent alleen de penningmeester; de beheerder ziet wel of de stukken er zijn en kan ze vernietigen. | Alles |
 
 Zit je in meerdere van deze groepen, bijvoorbeeld bestuur én penningmeester, dan tellen de rechten
 op. Het hele groepenmodel van de vereniging staat in `docs/handleiding/authentik_groepen.md`.
@@ -2588,7 +2588,8 @@ koppel de rol onder Rollen & rechten aan een andere groep.
 
 **Ik zie een onderdeel niet in het menu.**  
 Dan heeft je rol daar geen leesrecht op. Vraag een admin om je rol te controleren onder Beheerders
-& rechten. Loondossiers is bewust alleen voor penningmeester en admin; Logboek, Beheerders &
+& rechten. Loondossiers is bewust alleen voor penningmeester en admin (de stukken zelf openen kan
+alleen de penningmeester); Logboek, Beheerders &
 rechten en Systeem & Updates alleen voor admin.
 
 **Waar vind ik de handleidingen?**  

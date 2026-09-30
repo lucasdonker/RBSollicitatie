@@ -666,8 +666,11 @@ tweede stap (zie [Toegangsbeheer](#toegangsbeheer)).
   en het cron-token, en toegang tot de SQL-migraties. Instellingen bewerken (standaard bestuur en
   admin) toont geen geheimen, maar kan ze wel vervangen of wissen.
 - [ ] Wie heeft de module Documenten (BSN, IBAN, ID)? Standaard alleen penningmeester en admin.
-- [ ] Staat de penningmeester (of iemand met een eigen rol) in Beheerders als Begeleider? Dat is
-  een restant van vóór 2.101; zet de rol goed.
+  De inhoud openen kan alleen een rol die het recht zelf heeft (de penningmeester); de admin-rol
+  telt daarvoor niet. Staat er een admin in `app-sol-penningmeester` die geen penningmeester is?
+  Dat is een noodgreep; haal die weer weg.
+- [ ] Wie zit er in de `app-sol-*`-groepen in Authentik? Klopt dat met de functies? Zie
+  [authentik_groepen.md](authentik_groepen.md).
 - [ ] Sinds 2.102 heeft de penningmeester lees- en bewerkrecht op Loonplanning. Een bestaande
   installatie kreeg dat één keer automatisch (vlag `rechten.toegevoegd.penningmeester.loonplanning`
   in `instellingen`, logboekregel `rol_gewijzigd` "door systeem"). Haalt een admin het weg in

@@ -213,7 +213,8 @@ zonder AI invullen.</p>
 <p>Binnen de vereniging ziet iedereen alleen wat nodig is voor de eigen taak:</p>
 <ul>
   <li><strong>Het bestuur en de selectiecommissie</strong> zien je sollicitatie, je beschikbaarheid en de beoordelingen.</li>
-  <li><strong>De penningmeester</strong> ziet je loongegevens (BSN, IBAN, identiteitsbewijs, loonheffing). Alleen de penningmeester en de beheerder van het systeem kunnen die openen.</li>
+  <li><strong>De planner</strong> van het rooster ziet wanneer je kunt en hoeveel dagen per week je werkt, maar niet je dossier of contactgegevens.</li>
+  <li><strong>De penningmeester</strong> ziet je loongegevens (BSN, IBAN, identiteitsbewijs, loonheffing). Alleen de penningmeester kan die openen; de beheerder van het systeem ziet alleen of ze er zijn.</li>
   <li><strong>De ledenadministratie</strong> krijgt je inschrijving als lid.</li>
 </ul>
 <p>We verkopen je gegevens nooit. Buiten de vereniging werken we met deze partijen. Ze mogen je

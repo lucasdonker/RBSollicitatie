@@ -108,7 +108,8 @@ function rechten_standaard_rollen(): array {
                 'mailing'         => 'rw',
                 'seizoen'         => 'rw',
                 'instellingen'    => 'rw',
-                // GEEN beheerders/systeem — dat blijft admin. GEEN documenten (BSN/ID): penningmeester + admin.
+                // GEEN beheerders/systeem — dat blijft admin. GEEN documenten (BSN/ID): de inhoud opent
+                // alleen de penningmeester (mag_kluis()); de admin ziet alleen of de stukken er zijn.
             ],
         ],
         'penningmeester' => [
@@ -347,6 +348,25 @@ function mag(string $module, string $actie = 'lezen'): bool {
     foreach ($rollen as $rol) {
         if (!isset($cache[$rol])) $cache[$rol] = rol_rechten($rol);
         if (!empty($cache[$rol][$module][$actie])) return true;
+    }
+    return false;
+}
+
+/**
+ * Mag de ingelogde beheerder de INHOUD van een loondossier openen: kopie ID, bankpas, BSN, IBAN en het
+ * loonheffingsformulier? Anders dan mag() telt de admin-rol hier niet vanzelf: een beheerder ziet dat de
+ * stukken er zijn, volgt de status en kan vernietigen, maar opent ze alleen met een rol die het
+ * loondossier-recht zelf heeft (de penningmeester). Noodgeval: de beheerder zet zichzelf in Authentik in
+ * de penningmeestersgroep; dat staat dan in beide logboeken. Besluit Lucas, 30 sep 2026 (AVG art. 5 en 32).
+ */
+function mag_kluis(): bool {
+    rechten_auto_setup();
+    if (function_exists('module_recht_actief') && !module_recht_actief('documenten')) return false;
+    static $cache = [];
+    foreach (huidige_rollen() as $rol) {
+        if ($rol === 'admin') continue;
+        if (!isset($cache[$rol])) $cache[$rol] = rol_rechten($rol);
+        if (!empty($cache[$rol]['documenten']['bewerken'])) return true;
     }
     return false;
 }

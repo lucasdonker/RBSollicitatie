@@ -20,6 +20,10 @@ $bhd = huidige_beheerder();
 
 $mag_bewerken    = mag('documenten', 'bewerken');
 $mag_verwijderen = mag('documenten', 'verwijderen');
+// De inhoud openen (ID, bankpas, BSN, IBAN) kan alleen de penningmeester, niet vanzelf de beheerder.
+$mag_openen      = mag_kluis();
+$alleen_pm       = '<span class="bh-meta" title="De inhoud van een loondossier opent alleen de penningmeester">'
+                 . icoon('slot', 14) . ' Alleen de penningmeester</span>';
 
 // Wat er met de bankpasfoto gebeurt, eerlijk: automatisch alleen als opschonen aanstaat én er een termijn is.
 $bp_dagen = instelling_int('bewaar.bankpas_na_verwerking_dagen', 30);
@@ -222,6 +226,11 @@ require __DIR__ . '/layout_top.php';
     identiteitsbewijs of de bankpas komt automatisch een watermerk; op een PDF niet. Download
     alleen op een apparaat dat je vertrouwt en verwijder het bestand zodra het in de
     loonadministratie staat.
+    <?php if (!$mag_openen): ?>
+      <span class="bh-avgkader-regel">Als beheerder zie je of de stukken er zijn en kun je ze vernietigen;
+        openen kan alleen de penningmeester. Moet je er in een noodgeval toch in, zet jezelf dan in
+        Authentik in de penningmeestersgroep. Dat wordt vastgelegd.</span>
+    <?php endif; ?>
     <span class="bh-avgkader-regel"><?= h($bp_zin) ?></span>
     <span class="bh-avgkader-regel">
       Het loonheffingsformulier en de ID-kopie blijven staan tot jij ze vernietigt: de bewaarplicht
@@ -322,11 +331,13 @@ require __DIR__ . '/layout_top.php';
             <?php endif; ?>
           </span>
           <span class="bh-dosstuk-actie">
-            <?php if ($lh && !empty($lh['ondertekend_op']) && $mag_bewerken): ?>
+            <?php if ($lh && !empty($lh['ondertekend_op']) && $mag_openen): ?>
               <a class="ds-btn ds-btn-secundair ds-btn-sm"
                  href="<?= APP_URL ?>/admin/document_download.php?ond=<?= (int)$lh['id'] ?>&amp;t=<?= urlencode($tok) ?>">
                 <?= icoon('download', 14) ?> PDF
               </a>
+            <?php elseif ($lh && !empty($lh['ondertekend_op'])): ?>
+              <?= $alleen_pm ?>
             <?php endif; ?>
           </span>
         </li>
@@ -360,10 +371,12 @@ require __DIR__ . '/layout_top.php';
             <?php endif; ?>
           </span>
           <span class="bh-dosstuk-actie">
-            <?php if ($doc && mag(document_recht_module($soort), 'bewerken')): ?>
+            <?php if ($doc && $mag_openen): ?>
               <a class="ds-btn ds-btn-secundair ds-btn-sm" href="<?= h($dl((int)$doc['id'])) ?>">
                 <?= icoon('download', 14) ?> Download
               </a>
+            <?php elseif ($doc): ?>
+              <?= $alleen_pm ?>
             <?php endif; ?>
             <?php if ($doc && $soort === 'bankpas' && $mag_verwijderen): ?>
               <a class="ds-btn ds-btn-gevaar ds-btn-sm" href="?bevestig=vernietig&amp;doc=<?= (int)$doc['id'] ?><?= $sz_q !== '' ? '&amp;' . $sz_q : '' ?>">
@@ -387,11 +400,13 @@ require __DIR__ . '/layout_top.php';
             <?php endif; ?>
           </span>
           <span class="bh-dosstuk-actie">
-            <?php if ($lid && !empty($lid['ondertekend_op']) && $mag_bewerken): ?>
+            <?php if ($lid && !empty($lid['ondertekend_op']) && $mag_openen): ?>
               <a class="ds-btn ds-btn-secundair ds-btn-sm"
                  href="<?= APP_URL ?>/admin/document_download.php?ond=<?= (int)$lid['id'] ?>&amp;t=<?= urlencode($tok) ?>">
                 <?= icoon('download', 14) ?> PDF
               </a>
+            <?php elseif ($lid && !empty($lid['ondertekend_op'])): ?>
+              <?= $alleen_pm ?>
             <?php endif; ?>
           </span>
         </li>
