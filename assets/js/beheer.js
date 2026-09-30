@@ -385,6 +385,18 @@
     var p = e.target.closest && e.target.closest('details.bh-filter-meer[open], details.bh-filter-menu[open]');
     if (p) { p.open = false; p.querySelector('summary').focus(); }
   });
+  // Een zwevend paneel opent aan de kant waar het past: staat de knop rechts in de balk, dan
+  // hangt het paneel naar links (anders valt het half buiten beeld). 'toggle' borrelt niet op: capture.
+  document.addEventListener('toggle', function (e) {
+    var d = e.target;
+    if (!d.matches || !d.matches('details.bh-filter-meer, details.bh-filter-menu') || !d.open) return;
+    var paneel = d.querySelector('.bh-filter-meer-velden, .bh-filter-menu-lijst');
+    if (!paneel || getComputedStyle(paneel).position !== 'absolute') return;
+    d.classList.remove('bh-paneel-links', 'bh-paneel-rechts');
+    var r = paneel.getBoundingClientRect(), w = document.documentElement.clientWidth;
+    if (r.right > w - 8) d.classList.add('bh-paneel-links');
+    else if (r.left < 8) d.classList.add('bh-paneel-rechts');
+  }, true);
 
   /* ── Zijbalk op mobiel ────────────────────────────────────────
      Eén implementatie. Eerder stond deze twee keer — in layout_top én in

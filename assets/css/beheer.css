@@ -1302,6 +1302,9 @@ a.bh-naamcel:hover .bh-naamcel-naam { color: var(--navy); text-decoration: under
   box-shadow: var(--shadow-float);
 }
 .bh-filter-meer-velden .bh-filter-keuze .ds-select { width: 100%; }
+/* beheer.js kiest bij openen de kant die past (knop rechts in de balk → paneel naar links). */
+.bh-paneel-links > .bh-filter-meer-velden, .bh-paneel-links > .bh-filter-menu-lijst { left: auto; right: 0; }
+.bh-paneel-rechts > .bh-filter-meer-velden, .bh-paneel-rechts > .bh-filter-menu-lijst { left: 0; right: auto; }
 @media (max-width: 600px) {
   /* Op een telefoon elke keuzelijst over de volle breedte: anders staan ze rafelig onder elkaar. */
   .bh-filterbalk > .bh-filter-keuze { flex: 1 1 100%; }
