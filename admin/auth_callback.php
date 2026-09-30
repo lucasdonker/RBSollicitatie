@@ -187,7 +187,7 @@ if (!$fout) {
     if (!$fout && (!$b || !$b['actief'])) {
         $fout = 'Account is niet actief of kon niet worden aangemaakt. Vraag een admin om toegang.';
     } elseif (!$fout) {
-        login_beheerder($b, 'authentik');
+        login_beheerder($b, 'authentik', $groups);
         redirect(toegang_veilige_terug($terug));
     }
 }

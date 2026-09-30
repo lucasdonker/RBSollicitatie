@@ -353,6 +353,37 @@ function mag(string $module, string $actie = 'lezen'): bool {
 }
 
 /**
+ * Waarom heb je (g)een rol? Per rol: de gekoppelde groep, of Authentik die groep bij deze login stuurde,
+ * en of de rol in deze sessie actief is. Voor Mijn profiel. Geen HTML.
+ *
+ * status: 'actief'          rol geldt nu
+ *         'opnieuw_inloggen' de groep kwam wel mee, maar de rol staat niet in de sessie (hoort niet te gebeuren)
+ *         'geen_groep'       de rol heeft geen gekoppelde groep
+ *         'niet_in_groep'    de gekoppelde groep zat niet bij wat Authentik stuurde
+ *         'onbekend'         geen SSO-login in deze sessie: we weten niet welke groepen je hebt
+ * @return array{groepen: string[], rollen: array<int, array{sleutel:string, naam:string, groep:string, status:string}>}
+ */
+function rechten_diagnose(): array {
+    $groepen = (array)($_SESSION['bhd_groepen'] ?? []);
+    // Een sessie van vóór 2.132.1 heeft geen groepen bewaard: dan weten we het niet.
+    $via_sso = ($_SESSION['bhd_via'] ?? '') === 'authentik' && isset($_SESSION['bhd_groepen']);
+    $sessie  = huidige_rollen();
+    $laag    = array_map('strtolower', array_map('trim', $groepen));
+    $uit = [];
+    foreach (rollen_alle() as $r) {
+        $groep = trim((string)($r['authentik_groep'] ?? ''));
+        $in_groep = $groep !== '' && in_array(strtolower($groep), $laag, true);
+        if (in_array($r['sleutel'], $sessie, true)) $status = 'actief';
+        elseif ($groep === '')                     $status = 'geen_groep';
+        elseif (!$via_sso)                         $status = 'onbekend';
+        elseif ($in_groep)                         $status = 'opnieuw_inloggen';
+        else                                       $status = 'niet_in_groep';
+        $uit[] = ['sleutel' => (string)$r['sleutel'], 'naam' => rol_naam((string)$r['sleutel']), 'groep' => $groep, 'status' => $status];
+    }
+    return ['groepen' => $groepen, 'via_sso' => $via_sso, 'rollen' => $uit];
+}
+
+/**
  * Mag de ingelogde beheerder de INHOUD van een loondossier openen: kopie ID, bankpas, BSN, IBAN en het
  * loonheffingsformulier? Anders dan mag() telt de admin-rol hier niet vanzelf: een beheerder ziet dat de
  * stukken er zijn, volgt de status en kan vernietigen, maar opent ze alleen met een rol die het

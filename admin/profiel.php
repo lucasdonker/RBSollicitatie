@@ -184,6 +184,34 @@ require __DIR__ . '/layout_top.php';
     </form>
   </section>
 
+  <?php /* Waarom heb je (g)een rol? Rollen komen bij elke SSO-login uit de Authentik-groepen. */
+        $_diag = rechten_diagnose();
+        $_st = ['actief'           => ['Actief', 'groen'],
+                'opnieuw_inloggen' => ['Log opnieuw in', 'oranje'],
+                'niet_in_groep'    => ['Niet in deze groep', 'grijs'],
+                'geen_groep'       => ['Geen groep gekoppeld', 'grijs'],
+                'onbekend'         => ['Onbekend: log in via Authentik', 'grijs']]; ?>
+  <section class="ds-kaart ds-kaart-p bh-profiel-breed">
+    <div class="bh-kaartkop"><h2>Mijn rollen</h2></div>
+    <p class="bh-dossier-tekst">
+      Je rollen komen bij elke login via Authentik uit je groepen daar; met meerdere rollen tellen de
+      rechten op. Ben je net aan een groep toegevoegd? Log dan uit en opnieuw in via Authentik.
+    </p>
+    <ul class="bh-dosstukken">
+      <?php foreach ($_diag['rollen'] as $_r): ?>
+        <li>
+          <span class="bh-dosstuk-wat"><strong><?= h($_r['naam']) ?></strong></span>
+          <span class="bh-dosstuk-stand"><?= $_r['groep'] !== '' ? 'groep <code>' . h($_r['groep']) . '</code>' : '' ?></span>
+          <span class="bh-dosstuk-actie"><?= bh_badge($_st[$_r['status']][0], $_st[$_r['status']][1]) ?></span>
+        </li>
+      <?php endforeach; ?>
+    </ul>
+    <?php if ($_diag['via_sso']): ?>
+      <p class="bh-meta">Authentik stuurde bij deze login:
+        <?= $_diag['groepen'] ? h(implode(', ', $_diag['groepen'])) : 'geen groepen (controleer de scope mapping "groups")' ?></p>
+    <?php endif; ?>
+  </section>
+
   <section class="ds-kaart ds-kaart-p">
     <div class="bh-kaartkop"><h2>Wachtwoord</h2></div>
     <?php if (empty($rec['wachtwoord'])): ?>

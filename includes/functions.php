@@ -239,7 +239,7 @@ function is_ingelogd(): bool {
     $laatst = (int)($_SESSION['bhd_actief'] ?? 0);
     if ($laatst > 0 && time() - $laatst > BEHEER_INACTIEF_SECONDEN) {
         if (function_exists('audit_log')) audit_log('uitgelogd', 'beheerder', (int)$_SESSION['bhd_id'], ['reden' => 'inactief']);
-        unset($_SESSION['bhd_id'], $_SESSION['bhd_naam'], $_SESSION['bhd_email'], $_SESSION['bhd_rol'], $_SESSION['bhd_rollen'], $_SESSION['bhd_via'], $_SESSION['bhd_actief']);
+        unset($_SESSION['bhd_id'], $_SESSION['bhd_naam'], $_SESSION['bhd_email'], $_SESSION['bhd_rol'], $_SESSION['bhd_rollen'], $_SESSION['bhd_groepen'], $_SESSION['bhd_via'], $_SESSION['bhd_actief']);
         session_regenerate_id(true);
         flash('info', 'Je was twee uur niet actief in het beheer en bent daarom uitgelogd. Log opnieuw in om verder te gaan.');
         return false;
@@ -345,15 +345,25 @@ if (!function_exists('is_test_omgeving')) {
 function is_test_omgeving(): bool { return omgeving() === 'test'; }
 }
 
-function login_beheerder(array $b, string $via = 'wachtwoord'): void {
+/**
+ * @param array $groepen  de groepen die Authentik bij deze login stuurde (leeg bij wachtwoord of wisselen).
+ *                        Alleen voor de uitleg op Mijn profiel en het logboek: welke rol kwam waarvandaan.
+ */
+function login_beheerder(array $b, string $via = 'wachtwoord', array $groepen = []): void {
     sessie_start();
     session_regenerate_id(true);
     $_SESSION['bhd_id'] = $b['id']; $_SESSION['bhd_naam'] = $b['naam'];
     $_SESSION['bhd_email'] = $b['email']; $_SESSION['bhd_rol'] = $b['rol'];
     $_SESSION['bhd_rollen'] = array_values(array_filter(explode(',', (string)($b['extra_rollen'] ?? ''))));
+    $_SESSION['bhd_groepen'] = array_slice(array_values(array_map('strval', $groepen)), 0, 50);
     $_SESSION['bhd_via'] = $via; $_SESSION['_t'] = time(); $_SESSION['bhd_actief'] = time();
     try { db()->prepare("UPDATE beheerders SET laatste_login = NOW() WHERE id = ?")->execute([$b['id']]); } catch (Exception $e) {}
-    if (function_exists('audit_log')) audit_log('ingelogd', 'beheerder', (int)$b['id'], ['via' => $via]);
+    if (function_exists('audit_log')) {
+        $details = ['via' => $via];
+        if (function_exists('huidige_rollen')) $details['rollen'] = huidige_rollen();
+        if ($groepen) $details['groepen'] = $_SESSION['bhd_groepen'];
+        audit_log('ingelogd', 'beheerder', (int)$b['id'], $details);
+    }
 }
 
 // ── Brute-force bescherming (login) ───────────────────────────

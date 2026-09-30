@@ -44,7 +44,7 @@ if ($naar === 'portaal') {
         redirect(APP_URL . '/admin/');
     }
     // Beheerder-sessie afsluiten, portaal-sessie openen.
-    unset($_SESSION['bhd_id'], $_SESSION['bhd_naam'], $_SESSION['bhd_email'], $_SESSION['bhd_rol'], $_SESSION['bhd_rollen'], $_SESSION['bhd_via']);
+    unset($_SESSION['bhd_id'], $_SESSION['bhd_naam'], $_SESSION['bhd_email'], $_SESSION['bhd_rol'], $_SESSION['bhd_rollen'], $_SESSION['bhd_groepen'], $_SESSION['bhd_via']);
     toegang_login_als_sollicitant($email);
     if (function_exists('audit_log')) audit_log('gewisseld', 'toegang', null, ['naar' => 'portaal']);
     redirect(APP_URL . '/portaal/');

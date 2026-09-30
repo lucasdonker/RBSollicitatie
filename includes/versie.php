@@ -3,10 +3,18 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.132.0');
+define('APP_VERSIE', '2.132.1');
 
 function app_changelog(): array {
     return [
+        '2.132.1' => [
+            'datum'  => '2026-09-30',
+            'titel'  => 'Zien waar je rollen vandaan komen',
+            'punten' => [
+                'Mijn profiel toont per rol de gekoppelde Authentik-groep en of die rol nu actief is, plus de groepen die Authentik bij de login stuurde. Zo zie je meteen of een groep niet matcht of dat je opnieuw moet inloggen',
+                'Het logboek legt bij elke login vast welke rollen je kreeg en welke groepen Authentik stuurde',
+            ],
+        ],
         '2.132.0' => [
             'datum'  => '2026-09-30',
             'titel'  => 'Rollen uit Authentik opnieuw ingedeeld',
