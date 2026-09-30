@@ -14,7 +14,7 @@ $sol   = (int)($_POST['sol_id'] ?? 0);
 $keuze = (string)($_POST['keuze'] ?? '');
 $def   = evenement_def($ev);
 if (!$def) redirect(APP_URL . '/admin/');
-vereis_recht($def['module'], 'bewerken');
+vereis_recht($def['module'], 'voorbereiden');   // taak, zelfde naam bij SD en TW
 
 $sz = actief_seizoen();
 $ok = $sz && evenement_afmelding_besluiten($ev, (int)$sz['id'], $sol, $keuze);

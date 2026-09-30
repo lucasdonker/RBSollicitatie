@@ -3,10 +3,21 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.140.0');
+define('APP_VERSIE', '2.141.0');
 
 function app_changelog(): array {
     return [
+        '2.141.0' => [
+            'datum'  => '2026-09-30',
+            'titel'  => 'Rechten per taak, en Beheerders heet nu Accounts',
+            'punten' => [
+                'Per onderdeel stel je taken in in plaats van alleen lezen, bewerken en verwijderen. Bij de selectiedag en het trainingsweekend: bekijken, inchecken, beoordelen, voorbereiden en nabespreken of gesprekken. Zo kan een begeleider bijvoorbeeld meepraten bij de nabespreking zonder groepen in te delen',
+                'Ook los in te stellen: berichten versturen los van sjablonen en geplande berichten, in de loonplanning plannen los van definitief maken, en sollicitanten exporteren',
+                'De matrix staat per onderdeel ingeklapt met per rol hoeveel taken aanstaan, en een vinkje Alles per rol',
+                'Tot je de matrix opslaat, houdt iedereen precies de rechten die hij had',
+                'Beheerders & rechten heet nu Accounts & rechten',
+            ],
+        ],
         '2.140.0' => [
             'datum'  => '2026-09-30',
             'titel'  => 'Loonplanning: budget voorop, extra personen, sorteren en weekbereik',

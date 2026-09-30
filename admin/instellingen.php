@@ -13,7 +13,7 @@ require_once __DIR__ . '/../includes/beheer/laden.php';
 // Geheimen die je moet kunnen kopiëren (API-sleutel, cron-token) en de links naar
 // Systeem & updates zijn er alleen voor wie Systeem mag bewerken.
 $mag_systeem = mag('systeem', 'bewerken');
-$mag_sjablonen = mag('mailing', 'bewerken');   // Sjablonen (mail_templates.php) eist bewerkrecht
+$mag_sjablonen = mag('mailing', 'sjablonen');   // Sjablonen (mail_templates.php) eist die taak
 
 $db = db();
 // Triggers auto-setup van alle tabellen

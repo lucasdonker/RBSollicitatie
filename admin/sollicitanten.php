@@ -317,7 +317,7 @@ endif; ?>
   // De lijstacties staan in de lijstkop hieronder (niet in de filterbalk, die dan op één regel past).
   // Wat je zelden doet, in één menu: importeren (alleen admin, import.php: vereist_rol('admin')) en exporteren.
   $_menu = [];
-  if ($sid) {
+  if ($sid && mag('sollicitanten', 'exporteren')) {
       // Zonder recht op het kennismakingsformulier bevat de export alleen de basisgegevens
       // (export_dossier_van); het label zegt dat, zodat niemand een half bestand verwacht.
       $_blk_export = mag('blk', 'lezen');
@@ -372,8 +372,8 @@ endif; ?>
       ['actie' => 'afgewezen', 'label' => 'Afwijzen', 'toon' => 'gevaar', 'mail' => false,
        'recht' => ['sollicitanten', 'bewerken']],
       ['actie' => 'herinneren', 'label' => 'Herinnering', 'mail' => true, 'recht' => ['sollicitanten', 'bewerken']],
-      ['actie' => 'bericht_sturen', 'label' => 'Bericht', 'mail' => false, 'recht' => ['mailing', 'bewerken']],
-      ['actie' => 'exporteren', 'label' => 'Exporteren', 'mail' => false],
+      ['actie' => 'bericht_sturen', 'label' => 'Bericht', 'mail' => false, 'recht' => ['mailing', 'versturen']],
+      ['actie' => 'exporteren', 'label' => 'Exporteren', 'mail' => false, 'recht' => ['sollicitanten', 'exporteren']],
   ];
   $bulk_voet = 'Elke actie vraagt bevestiging en meldt of er bericht uitgaat';
   require __DIR__ . '/_bulkbalk.php';

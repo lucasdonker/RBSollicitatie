@@ -15,17 +15,16 @@
 $subnav_actief = $subnav_actief ?? '';
 $subnav_datum  = $subnav_datum ?? null;
 
-// Wie alleen meedraait (begeleider, 'lezen') ziet Inchecken en Beoordelen: meer heeft hij op de
-// dag niet nodig, en op een telefoon is elke extra stap ruis. Voorbereiden en Groepen blijven via
-// een directe link te lezen, maar staan niet in de balk.
+// Per stap de taak (includes/modules/selectiedag.php). Een begeleider heeft standaard inchecken en
+// beoordelen: meer heeft hij op de dag niet nodig, en op een telefoon is elke extra stap ruis.
+// Beoordelen staat er ook voor wie alleen mag bekijken: dan alleen-lezen.
 $_stappen = [
-    'voorbereiden' => ['Voorbereiden', 'selectie_voorbereiden.php',  'selectiedag', 'bewerken'],
-    'groepen'      => ['Groepen',      'selectie_indeling.php',      'selectiedag', 'bewerken'],
-    'inchecken'    => ['Inchecken',    'selectie_inchecken.php',     'selectiedag', 'lezen'],
+    'voorbereiden' => ['Voorbereiden', 'selectie_voorbereiden.php',  'selectiedag', 'voorbereiden'],
+    'groepen'      => ['Groepen',      'selectie_indeling.php',      'selectiedag', 'voorbereiden'],
+    'inchecken'    => ['Inchecken',    'selectie_inchecken.php',     'selectiedag', 'inchecken'],
     'beoordelen'   => ['Beoordelen',   'selectiedag.php',            'selectiedag', 'lezen'],
-    // Beslissen en bellen is bestuurswerk: een begeleider ziet deze twee niet.
-    'nabespreking' => ['Nabespreking', 'selectie_nabespreking.php',  'selectiedag', 'bewerken'],
-    'bellijst'     => ['Bellijst',     'selectie_nabespreking.php?tab=bellijst', 'selectiedag', 'bewerken'],
+    'nabespreking' => ['Nabespreking', 'selectie_nabespreking.php',  'selectiedag', 'nabespreken'],
+    'bellijst'     => ['Bellijst',     'selectie_nabespreking.php?tab=bellijst', 'selectiedag', 'nabespreken'],
 ];
 $sb_stappen = [];
 foreach ($_stappen as $_k => $_s) {

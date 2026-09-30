@@ -89,19 +89,19 @@ beheerder kan ze per rol aanpassen (zie [Beheerders en rechten](#beheerders-en-r
 |---|---|---|---|
 | **Begeleider** | app-sol-begeleider | Op de selectiedag inchecken en beoordelen (cijfers en observaties), in het trainingsweekend aanwezigheid afvinken en observaties noteren. Geen toegang tot persoonsgegevens of dossiers. | Vandaag, Selectiedag, Trainingsweekend, Dekking |
 | **Planner** | app-sol-planner | Het rooster maken: beschikbaarheid en dekking bekijken. Alleen lezen, geen lonen en geen dossiers. | Vandaag, Beschikbaarheid, Dekking |
-| **Bestuur** | app-sol-bestuur | De hele werving: uitnodigen, selectiedag indelen en beoordelen, nabespreken en bellen, aannemen, berichten, seizoen en instellingen. | Alles behalve Loondossiers, Beheerders & rechten en Logboek |
+| **Bestuur** | app-sol-bestuur | De hele werving: uitnodigen, selectiedag indelen en beoordelen, nabespreken en bellen, aannemen, berichten, seizoen en instellingen. | Alles behalve Loondossiers, Accounts & rechten en Logboek |
 | **Penningmeester** | app-sol-penningmeester | Het loondossier: loonheffing, kopie ID en bankpas inzien, downloaden, als verwerkt markeren en na de bewaarplicht vernietigen. De loonplanning bekijken en bewerken (kosten, scenario's, Excel-export). Sollicitanten alleen bekijken. | Vandaag, Sollicitanten, Loonplanning, Loondossiers |
 | **Beheerder** (technisch: admin) | app-sol-admin | Alles, ook beheerders, rechten, logboek en systeem. Kan zichzelf nooit buitensluiten. Eén uitzondering: de *inhoud* van een loondossier (kopie ID, bankpas, BSN, IBAN) opent alleen de penningmeester; de beheerder ziet wel of de stukken er zijn en kan ze vernietigen. | Alles |
 
 Zit je in meerdere van deze groepen, bijvoorbeeld bestuur én penningmeester, dan tellen de rechten
 op. Het hele groepenmodel van de vereniging staat in `docs/handleiding/authentik_groepen.md`.
 
-Goed om te weten over de begeleider: met de standaardrechten (Selectiedag: alleen lezen) kan een
+Goed om te weten over de begeleider: met de standaardrechten (Selectiedag: Bekijken, Inchecken en Beoordelen) kan een
 begeleider op de selectiedag de groepen bekijken, sollicitanten inchecken (**Aanwezig** en
 **Ongedaan**), cijfers geven en wissen, observaties plaatsen en de eigen observaties verwijderen.
 In het trainingsweekend vinkt een begeleider af en observeert. De toegangscode voor de tablet, de
 groepsindeling, de nabespreking, de bellijst en het besluit na het trainingsweekend blijven bij het
-bestuur. Bijzonderheden uit het kennismakingsformulier (vaak medisch) ziet een begeleider niet; wel
+bestuur, tenzij je de begeleider die taken geeft onder Rollen & rechten. Bijzonderheden uit het kennismakingsformulier (vaak medisch) ziet een begeleider niet; wel
 de melding "Let op: er is een bijzonderheid bekend bij het bestuur" met het verzoek het na te
 vragen. De knop naar het dossier en telefoonnummers ziet alleen wie Sollicitanten mag lezen.
 
@@ -308,7 +308,7 @@ binnen het beheer waar je heen wilde, of op Vandaag. Een adres buiten het beheer
 na het inloggen nooit.
 
 Eén instelling bepaalt of en hoe je binnenkomt: **welke Authentik-groep bij welke rol hoort**, onder
-Beheerders & rechten › Rollen (standaard app-sol-admin = Beheerder, app-sol-bestuur = Bestuur,
+Accounts & rechten › Rollen (standaard app-sol-admin = Beheerder, app-sol-bestuur = Bestuur,
 app-sol-penningmeester = Penningmeester, app-sol-begeleider = Begeleider).
 
 - Zit je in geen van die groepen, dan zie je "Je account heeft geen toegang tot het beheer". Dat
@@ -356,7 +356,7 @@ Bovenaan staat **Vandaag**, daaronder vier groepen:
 | Sollicitanten | Sollicitanten, Selectiedag, Trainingsweekend, Ondertekeningen |
 | Inzet & loon | Beschikbaarheid, Dekking, Loonplanning, Loondossiers |
 | Communicatie | Berichten, Landingspagina's |
-| Systeem | Seizoen, Instellingen, Beheerders & rechten, Logboek |
+| Systeem | Seizoen, Instellingen, Accounts & rechten, Logboek |
 
 Een groep waar je niets in mag, verdwijnt helemaal. Een getal achter een menu-item betekent dat
 er iets op je wacht: bij Vandaag het aantal openstaande stappen van de huidige taak, bij
@@ -2097,13 +2097,13 @@ Een nieuwe installatie werkt pas goed als je deze tabbladen hebt nagelopen:
 
 ## Beheerders en rechten
 
-**Waar:** zijbalk › Systeem › Beheerders & rechten, met de tabbladen **Beheerders** en **Rollen & rechten**  
-**Wie:** bewerkrecht op Beheerders & rollen (standaard alleen admin).
+**Waar:** zijbalk › Systeem › Accounts & rechten, met de tabbladen **Accounts** en **Rollen & rechten**  
+**Wie:** bewerkrecht op Accounts & rollen (standaard alleen admin). Tot versie 2.141 heette dit Beheerders & rechten.
 
 > **In het kort:** Iemand komt normaal binnen via Authentik: de groep in Authentik bepaalt de rol,
 > en het account ontstaat bij de eerste keer inloggen. Een wachtwoord geef je alleen als
 > noodingang. Onder Rollen & rechten koppel je een rol aan een Authentik-groep en stel je per
-> onderdeel in wat een rol mag. Admin heeft altijd alles.
+> onderdeel per taak in wat een rol mag. Admin heeft altijd alles.
 
 ### Iemand toegang geven
 
@@ -2130,7 +2130,7 @@ Haal de persoon in Authentik uit alle groepen die aan een rol gekoppeld zijn. Da
 meer via Authentik inloggen, ook niet met een bestaand account. Heeft het account ook een
 wachtwoord als noodingang, zet het account dan hier ook uit met **Uitzetten**.
 
-### Het tabblad Beheerders
+### Het tabblad Accounts
 
 Per account zie je de naam (met "jij" bij jezelf en "Uitgezet" bij een uitgezet account), het
 e-mailadres, hoe iemand inlogt (**Authentik**, **Wachtwoord**, of de waarschuwing **Geen
@@ -2148,7 +2148,7 @@ wachtwoord vraagt een code uit een authenticator-app) of **Tweestaps uit** (oran
 dus een code per e-mail). Zie [Wachtwoord als noodingang](#wachtwoord-als-noodingang).
 
 **Tweestaps resetten** staat alleen bij een account met tweestaps aan, en alleen voor wie de rol
-Beheerder (admin) heeft; het recht op Beheerders & rollen is niet genoeg. Gebruik het alleen als
+Beheerder (admin) heeft; het recht op Accounts & rollen is niet genoeg. Gebruik het alleen als
 iemand de telefoon met de app kwijt is én geen herstelcodes meer heeft:
 
 1. Controleer eerst dat het verzoek echt van die persoon komt: bel of spreek elkaar. Een mail of
@@ -2190,40 +2190,60 @@ Onder **Nieuwe rol toevoegen** maak je een extra rol: naam, Authentik-groep en r
 of **2 — uitgebreid**), met **Rol toevoegen**. Een nieuwe rol begint met alle rechten uit. De rang
 bepaalt alleen welke rol wint bij iemand in meer groepen.
 
-De matrix **Wat mag welke rol?** toont per onderdeel en per rol de vinkjes Lezen, Bewerken en
-Verwijderen. Een streepje betekent dat die actie voor dat onderdeel niet bestaat. Bewerken of
-verwijderen zet lezen vanzelf aan. Admin staat vast op alles. **Rechten opslaan** bewaart de hele
-matrix in één keer; elke wijziging komt in het logboek.
+De matrix **Wat mag welke rol?** staat per onderdeel ingeklapt; de kop zegt per rol hoeveel taken
+aanstaan ("Begeleider 3/5 · Bestuur 5/5"). Uitgeklapt zie je per **taak** een regel met uitleg en
+per rol een vinkje. Met **Alles bij …** zet je in één keer alle taken van dat onderdeel aan of uit
+voor een rol (half gevuld = een deel staat aan). Elke taak houdt in dat de rol het onderdeel mag
+bekijken. Admin staat vast op alles. **Rechten opslaan** bewaart de hele matrix in één keer; elke
+wijziging komt in het logboek als rolwijziging met de taken van voor en na.
 
-Zo staat het op een nieuwe installatie (l = lezen, b = bewerken, v = verwijderen):
+Onderdelen met eigen taken (de rest heeft **Bekijken**, **Wijzigen** en waar het bestaat
+**Verwijderen**):
 
-| Onderdeel | Begeleider | Bestuur | Penningmeester | Admin |
-|---|---|---|---|---|
-| Sollicitanten | – | l b v | l | alles |
-| Landingspagina's | – | l b v | – | alles |
-| Kennismakingsformulier | – | l b | – | alles |
-| Selectiedag | l | l b | – | alles |
-| Ondertekeningen | – | l b | – | alles |
-| Loondossiers (ID, bankpas, loonheffing) | – | – | l b v | alles |
-| Beschikbaarheid | – | l b | – | alles |
-| Dekking | l | l | – | alles |
-| Loonplanning | – | l b | l b | alles |
-| Berichten & sjablonen | – | l b | – | alles |
-| Seizoen | – | l b | – | alles |
-| Instellingen | – | l b | – | alles |
-| Beheerders & rollen | – | – | – | alles |
-| Systeem, updates & logs | – | – | – | alles |
-| Logboek (alle logs) | – | – | – | alles |
+| Onderdeel | Taken |
+|---|---|
+| Selectiedag | Bekijken · Inchecken · Beoordelen · Voorbereiden (wie komt er, groepen, afmeldingen, tablet en pincode, afsluiten) · Nabespreken en besluiten (nabespreking, bellijst, observaties van anderen weghalen) |
+| Trainingsweekend | Bekijken · Inchecken · Beoordelen · Voorbereiden · Gesprekken en besluiten (evaluatie, gesprekken, aannemen of afwijzen) |
+| Sollicitanten | Bekijken · Exporteren · Wijzigen (gegevens, fase, uitnodigen, afwijzen, herinneren) · Verwijderen |
+| Berichten & sjablonen | Bekijken · Versturen · Sjablonen en gepland |
+| Loonplanning | Bekijken · Plannen (weken, scenario's, extra personen, afspraak in het TW-gesprek) · Definitief maken (afspraken vastleggen, vastzetten en ontgrendelen) |
+
+Voorbeeld: een ervaren begeleider die mag meepraten bij de nabespreking maar niet mag indelen,
+krijgt bij Selectiedag **Nabespreken en besluiten** erbij en houdt **Voorbereiden** uit.
+
+Zo staat het op een nieuwe installatie (l = lezen, b = bewerken, v = verwijderen; een taak volgt
+het recht waar hij bij hoort, dus "l" = alle taken die bij bekijken horen, zoals Inchecken en
+Beoordelen):
+
+| Onderdeel | Begeleider | Bestuur | Penningmeester | Planner | Admin |
+|---|---|---|---|---|---|
+| Sollicitanten | – | l b v | l | – | alles |
+| Landingspagina's | – | l b v | – | – | alles |
+| Kennismakingsformulier | – | l b | – | – | alles |
+| Selectiedag | l | l b | – | – | alles |
+| Trainingsweekend | l | l b | – | – | alles |
+| Ondertekeningen | – | l b | – | – | alles |
+| Loondossiers (ID, bankpas, loonheffing) | – | – | l b v | – | alles |
+| Beschikbaarheid | – | l b | – | l | alles |
+| Dekking | l | l | – | l | alles |
+| Loonplanning | – | l b | l b | – | alles |
+| Berichten & sjablonen | – | l b | – | – | alles |
+| Seizoen | – | l b | – | – | alles |
+| Instellingen | – | l b | – | – | alles |
+| Accounts & rollen | – | – | – | – | alles |
+| Systeem, updates & logs | – | – | – | – | alles |
+| Logboek (alle logs) | – | – | – | – | alles |
 
 Het recht Loonplanning voor de penningmeester is er sinds versie 2.102. Een bestaande installatie
 krijgt het één keer automatisch (in het logboek als rolwijziging "door systeem"); bestaande
 rechten worden daarbij nooit verlaagd. Wil je het niet, haal het dan weg onder Rollen & rechten
 en klik op **Rechten opslaan**: het systeem zet het daarna niet opnieuw aan.
 
-Wat Selectiedag lezen voor de begeleider betekent: groepen bekijken, inchecken, cijfers en
-observaties geven en de eigen observaties verwijderen. Bewerken (bestuur) voegt de tabletcode, de
-groepsindeling, de nabespreking, de bellijst en het besluit na het trainingsweekend toe.
-
+Taken bestaan sinds versie 2.141. Tot je de matrix de eerste keer opslaat, volgt elke taak het oude
+recht, dus niemand kan meer of minder dan daarvoor. Zet je één taak met basis "bewerken" uit
+(bijvoorbeeld **Definitief maken** bij de loonplanning), dan telt dat onderdeel voor schermen die
+nog op het oude bewerkrecht controleren als "niet bewerken": streng, zodat een losse taak nooit
+meer opent dan bedoeld.
 Twee onderdelen vragen extra zorg. **Loondossiers** bevat BSN en identiteitsbewijzen en hoort
 alleen bij de penningmeester en admin. **Logboek** laat zien wie welke persoonsgegevens heeft
 ingezien. Geef die niet zomaar aan een andere rol.

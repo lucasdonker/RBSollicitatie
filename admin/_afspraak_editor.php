@@ -21,7 +21,9 @@ $_sc  = $_sid ? loonplan_actief_scenario($_sid) : null;
 if (!$_sc) return;
 $_m    = loonplan_analyse($_sid, (int)$_sc['id'], $af_seizoen, (int)$af_sol_id)['mensen'][(int)$af_sol_id] ?? null;
 $_slot = loonplan_sloten($_sid)[(int)$af_sol_id] ?? null;
-$_mag  = mag('loonplanning', 'bewerken') && empty($af_alleen_lezen);
+// Taken (includes/modules/loonplanning.php): plannen = weken en functie; definitief = vastzetten/ontgrendelen.
+$_mag  = mag('loonplanning', 'plannen') && empty($af_alleen_lezen);
+$_mag_slot = $_mag && mag('loonplanning', 'definitief');
 $af_alleen_lezen = false;
 $_kan  = $_mag && !$_slot;
 $_wd   = seizoen_weken_datums($af_seizoen);
@@ -44,9 +46,13 @@ $_functies = functies_ophalen();
 
   <div class="bh-afspraak-slot" data-af-slotbalk role="status">
     <span data-af-slottekst><?php if ($_slot): ?><?= icoon('slot', 15) ?> Vastgezet na het gesprek (<?= h(date('d-m H:i', strtotime((string)$_slot['vergrendeld_op']))) ?>), in alle scenario's.<?php else: ?>Wijzigingen gaan meteen in het actieve scenario. Na aannemen staat dit vast in alle scenario's.<?php endif; ?></span>
-    <?php if ($_mag): ?>
+    <?php if ($_mag_slot): ?>
       <button type="button" class="bh-doc-actie" data-af-ontgrendel<?= $_slot ? '' : ' hidden' ?>>Toch aanpassen</button>
+    <?php endif; ?>
+    <?php if ($_mag): ?>
       <button type="button" class="bh-doc-actie" data-af-opgave<?= $_slot ? ' hidden' : '' ?>>Opgave overnemen</button>
+    <?php endif; ?>
+    <?php if ($_mag_slot): ?>
       <button type="button" class="bh-doc-actie" data-af-vastzetten<?= $_slot ? ' hidden' : '' ?>>Nu vastzetten</button>
     <?php endif; ?>
   </div>

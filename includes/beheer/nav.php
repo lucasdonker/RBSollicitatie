@@ -41,7 +41,7 @@ function bh_nav_groepen(array $tellers = [], bool $alles = false): array {
         // met alleen leesrecht zou het menu-item op een weigering uitkomen.
         ['groep' => 'Systeem',      'positie' => 10, 'id' => 'seizoen',         'label' => 'Seizoen',         'url' => 'seizoen.php',         'icoon' => 'strand',       'module' => 'seizoen', 'actie' => 'bewerken'],
         ['groep' => 'Systeem',      'positie' => 20, 'id' => 'instellingen',    'label' => 'Instellingen',    'url' => 'instellingen.php',    'icoon' => 'instellingen', 'module' => 'instellingen'],
-        ['groep' => 'Systeem',      'positie' => 30, 'id' => 'beheerders',      'label' => 'Beheerders & rechten', 'url' => 'beheerders.php', 'icoon' => 'sleutel',      'module' => 'beheerders', 'actie' => 'bewerken'],
+        ['groep' => 'Systeem',      'positie' => 30, 'id' => 'beheerders',      'label' => 'Accounts & rechten', 'url' => 'beheerders.php', 'icoon' => 'sleutel',      'module' => 'beheerders', 'actie' => 'bewerken'],
         ['groep' => 'Systeem',      'positie' => 40, 'id' => 'logboek',         'label' => 'Logboek',         'url' => 'logboek.php',         'icoon' => 'auditlog',     'module' => 'logboek'],
     ];
     if (function_exists('modules_nav')) $items = array_merge($items, modules_nav());

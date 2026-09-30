@@ -78,10 +78,12 @@ $_tarief = $analyse['tarieven'] ?? loonplan_tarief_info($seizoen);
         van iedereen die is aangenomen (<?= $_n_aangenomen ?>).<?= $_n_vast ? ' ' . $_n_vast . ' ' . ($_n_vast === 1 ? 'persoon staat' : 'personen staan') . ' al vast na het gesprek.' : '' ?></span>
     <?php endif; ?>
     <span class="bh-lp-knoppen">
-      <?php if ($mag_bewerken): ?>
+      <?php if ($mag_definitief): ?>
         <form method="post" data-bevestig="Loonplanning definitief maken? Dit scenario wordt de actieve planning en de afspraak van iedereen die is aangenomen. Die afspraak zien de sollicitant, het dossier en de loonadministratie. Een eerdere afspraak van dezelfde persoon wordt vervangen.">
           <?= csrf_input() ?><input type="hidden" name="sc_actie" value="definitief">
           <button type="submit" class="ds-btn ds-btn-primair ds-btn-sm"><?= icoon('vink', 14) ?> <?= $definitief_op ? 'Opnieuw definitief maken' : 'Definitief maken' ?></button></form>
+      <?php endif; ?>
+      <?php if ($mag_bewerken): ?>
 
         <?php /* Wat je zelden doet, in een menu: de kop blijft rustig en het budget staat voorop. */ ?>
         <details class="bh-filter-menu" data-actiemenu>

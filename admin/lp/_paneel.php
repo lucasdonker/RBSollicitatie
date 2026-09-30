@@ -110,7 +110,9 @@ $_functies_opt = array_column($functies, 'naam', 'sleutel');
           </form>
           <p class="bh-zijpaneel-hint">Plant elke week zoveel dagen als de sollicitant opgaf. Daarna kun je per week bijsturen.</p>
         </section>
+        <?php endif; ?>
 
+        <?php if ($mag_definitief): /* taak Definitief maken (includes/modules/loonplanning.php) */ ?>
         <?php /* Twee verschillende dingen, bewust apart:
                  afspraak = wat de sollicitant ziet en naar de loonadministratie gaat (na "definitief maken");
                  vastzetten = de planning op slot in álle scenario's, zodat puzzelen hem niet verschuift. */ ?>

@@ -6,7 +6,15 @@ return [
     'label'        => 'Selectiedag',
     'omschrijving' => 'Voorbereiden (wie komt er), groepen indelen, inchecken (ook op een tablet), beoordelen, nabespreken en de bellijst.',
     'rechten'      => [
-        'selectiedag' => ['label' => 'Selectiedag', 'groep' => 'Selectie', 'acties' => ['lezen', 'bewerken']],
+        'selectiedag' => ['label' => 'Selectiedag', 'groep' => 'Selectie', 'acties' => ['lezen', 'bewerken'],
+            // Taakrechten (includes/rechten_taken.php). Standaard: begeleider = de drie met basis lezen.
+            'taken' => [
+                'bekijken'     => ['label' => 'Bekijken',     'basis' => 'lezen',    'uitleg' => 'De groepsindeling en de kandidaten zien.'],
+                'inchecken'    => ['label' => 'Inchecken',    'basis' => 'lezen',    'uitleg' => 'Aanwezig of afgemeld tikken bij binnenkomst.'],
+                'beoordelen'   => ['label' => 'Beoordelen',   'basis' => 'lezen',    'uitleg' => 'Cijfers geven en observaties plaatsen (en de eigen observaties weer weghalen).'],
+                'voorbereiden' => ['label' => 'Voorbereiden', 'basis' => 'bewerken', 'uitleg' => 'Wie komt er, groepen indelen, afmeldingen, de tabletcode en pincode, en het inchecken afsluiten.'],
+                'nabespreken'  => ['label' => 'Nabespreken en besluiten', 'basis' => 'bewerken', 'uitleg' => 'De nabespreking, het besluit per kandidaat, de bellijst en observaties van anderen weghalen.'],
+            ]],
     ],
     'nav'          => [
         ['groep' => 'Selectie', 'positie' => 20, 'id' => 'selectiedag', 'label' => 'Selectiedag',

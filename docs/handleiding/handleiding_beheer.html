@@ -185,7 +185,7 @@ lezen, geen lonen en geen dossiers.</td>
 <td>De hele werving: uitnodigen, selectiedag indelen en beoordelen,
 nabespreken en bellen, aannemen, berichten, seizoen en
 instellingen.</td>
-<td>Alles behalve Loondossiers, Beheerders &amp; rechten en Logboek</td>
+<td>Alles behalve Loondossiers, Accounts &amp; rechten en Logboek</td>
 </tr>
 <tr>
 <td><strong>Penningmeester</strong></td>
@@ -213,17 +213,18 @@ penningmeester, dan tellen de rechten op. Het hele groepenmodel van de
 vereniging staat in
 <code>docs/handleiding/authentik_groepen.md</code>.</p>
 <p>Goed om te weten over de begeleider: met de standaardrechten
-(Selectiedag: alleen lezen) kan een begeleider op de selectiedag de
-groepen bekijken, sollicitanten inchecken (<strong>Aanwezig</strong> en
-<strong>Ongedaan</strong>), cijfers geven en wissen, observaties
-plaatsen en de eigen observaties verwijderen. In het trainingsweekend
-vinkt een begeleider af en observeert. De toegangscode voor de tablet,
-de groepsindeling, de nabespreking, de bellijst en het besluit na het
-trainingsweekend blijven bij het bestuur. Bijzonderheden uit het
-kennismakingsformulier (vaak medisch) ziet een begeleider niet; wel de
-melding &quot;Let op: er is een bijzonderheid bekend bij het bestuur&quot; met het
-verzoek het na te vragen. De knop naar het dossier en telefoonnummers
-ziet alleen wie Sollicitanten mag lezen.</p>
+(Selectiedag: Bekijken, Inchecken en Beoordelen) kan een begeleider op
+de selectiedag de groepen bekijken, sollicitanten inchecken
+(<strong>Aanwezig</strong> en <strong>Ongedaan</strong>), cijfers geven
+en wissen, observaties plaatsen en de eigen observaties verwijderen. In
+het trainingsweekend vinkt een begeleider af en observeert. De
+toegangscode voor de tablet, de groepsindeling, de nabespreking, de
+bellijst en het besluit na het trainingsweekend blijven bij het bestuur,
+tenzij je de begeleider die taken geeft onder Rollen &amp; rechten.
+Bijzonderheden uit het kennismakingsformulier (vaak medisch) ziet een
+begeleider niet; wel de melding &quot;Let op: er is een bijzonderheid bekend
+bij het bestuur&quot; met het verzoek het na te vragen. De knop naar het
+dossier en telefoonnummers ziet alleen wie Sollicitanten mag lezen.</p>
 <h2 id="je-eerste-keer-inloggen">Je eerste keer inloggen</h2>
 <ol type="1">
 <li>Vraag een beheerder om je in Authentik in de juiste groep te zetten
@@ -771,7 +772,7 @@ Authentik en je komt terug op het scherm binnen het beheer waar je heen
 wilde, of op Vandaag. Een adres buiten het beheer volgt het systeem na
 het inloggen nooit.</p>
 <p>Eén instelling bepaalt of en hoe je binnenkomt: <strong>welke
-Authentik-groep bij welke rol hoort</strong>, onder Beheerders &amp;
+Authentik-groep bij welke rol hoort</strong>, onder Accounts &amp;
 rechten › Rollen (standaard app-sol-admin = Beheerder, app-sol-bestuur =
 Bestuur, app-sol-penningmeester = Penningmeester, app-sol-begeleider =
 Begeleider).</p>
@@ -846,7 +847,7 @@ tweede stap en hoef je hier niets te doen.</p>
 </tr>
 <tr>
 <td>Systeem</td>
-<td>Seizoen, Instellingen, Beheerders &amp; rechten, Logboek</td>
+<td>Seizoen, Instellingen, Accounts &amp; rechten, Logboek</td>
 </tr>
 </tbody>
 </table>
@@ -3429,18 +3430,18 @@ de technisch beheerder dat doen.</li>
 </ol>
 <hr />
 <h1 id="beheerders-en-rechten">Beheerders en rechten</h1>
-<p><strong>Waar:</strong> zijbalk › Systeem › Beheerders &amp; rechten,
-met de tabbladen <strong>Beheerders</strong> en <strong>Rollen &amp;
+<p><strong>Waar:</strong> zijbalk › Systeem › Accounts &amp; rechten,
+met de tabbladen <strong>Accounts</strong> en <strong>Rollen &amp;
 rechten</strong><br />
-<strong>Wie:</strong> bewerkrecht op Beheerders &amp; rollen (standaard
-alleen admin).</p>
+<strong>Wie:</strong> bewerkrecht op Accounts &amp; rollen (standaard
+alleen admin). Tot versie 2.141 heette dit Beheerders &amp; rechten.</p>
 <blockquote>
 <p><strong>In het kort:</strong> Iemand komt normaal binnen via
 Authentik: de groep in Authentik bepaalt de rol, en het account ontstaat
 bij de eerste keer inloggen. Een wachtwoord geef je alleen als
 noodingang. Onder Rollen &amp; rechten koppel je een rol aan een
-Authentik-groep en stel je per onderdeel in wat een rol mag. Admin heeft
-altijd alles.</p>
+Authentik-groep en stel je per onderdeel per taak in wat een rol mag.
+Admin heeft altijd alles.</p>
 </blockquote>
 <h2 id="iemand-toegang-geven">Iemand toegang geven</h2>
 <ol type="1">
@@ -3473,7 +3474,7 @@ gekoppeld zijn. Daarna kan die niet meer via Authentik inloggen, ook
 niet met een bestaand account. Heeft het account ook een wachtwoord als
 noodingang, zet het account dan hier ook uit met
 <strong>Uitzetten</strong>.</p>
-<h2 id="het-tabblad-beheerders">Het tabblad Beheerders</h2>
+<h2 id="het-tabblad-accounts">Het tabblad Accounts</h2>
 <p>Per account zie je de naam (met &quot;jij&quot; bij jezelf en &quot;Uitgezet&quot; bij
 een uitgezet account), het e-mailadres, hoe iemand inlogt
 (<strong>Authentik</strong>, <strong>Wachtwoord</strong>, of de
@@ -3496,7 +3497,7 @@ vraagt een code uit een authenticator-app) of <strong>Tweestaps
 uit</strong> (oranje: nog geen app, dus een code per e-mail). Zie <a href="#wachtwoord-als-noodingang">Wachtwoord als noodingang</a>.</p>
 <p><strong>Tweestaps resetten</strong> staat alleen bij een account met
 tweestaps aan, en alleen voor wie de rol Beheerder (admin) heeft; het
-recht op Beheerders &amp; rollen is niet genoeg. Gebruik het alleen als
+recht op Accounts &amp; rollen is niet genoeg. Gebruik het alleen als
 iemand de telefoon met de app kwijt is én geen herstelcodes meer
 heeft:</p>
 <ol type="1">
@@ -3551,14 +3552,62 @@ naam, Authentik-groep en rang (<strong>1 — basis</strong> of <strong>2 —
 uitgebreid</strong>), met <strong>Rol toevoegen</strong>. Een nieuwe rol
 begint met alle rechten uit. De rang bepaalt alleen welke rol wint bij
 iemand in meer groepen.</p>
-<p>De matrix <strong>Wat mag welke rol?</strong> toont per onderdeel en
-per rol de vinkjes Lezen, Bewerken en Verwijderen. Een streepje betekent
-dat die actie voor dat onderdeel niet bestaat. Bewerken of verwijderen
-zet lezen vanzelf aan. Admin staat vast op alles. <strong>Rechten
+<p>De matrix <strong>Wat mag welke rol?</strong> staat per onderdeel
+ingeklapt; de kop zegt per rol hoeveel taken aanstaan (&quot;Begeleider 3/5 ·
+Bestuur 5/5&quot;). Uitgeklapt zie je per <strong>taak</strong> een regel met
+uitleg en per rol een vinkje. Met <strong>Alles bij …</strong> zet je in
+één keer alle taken van dat onderdeel aan of uit voor een rol (half
+gevuld = een deel staat aan). Elke taak houdt in dat de rol het
+onderdeel mag bekijken. Admin staat vast op alles. <strong>Rechten
 opslaan</strong> bewaart de hele matrix in één keer; elke wijziging komt
-in het logboek.</p>
+in het logboek als rolwijziging met de taken van voor en na.</p>
+<p>Onderdelen met eigen taken (de rest heeft <strong>Bekijken</strong>,
+<strong>Wijzigen</strong> en waar het bestaat
+<strong>Verwijderen</strong>):</p>
+<table>
+<thead>
+<tr>
+<th>Onderdeel</th>
+<th>Taken</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Selectiedag</td>
+<td>Bekijken · Inchecken · Beoordelen · Voorbereiden (wie komt er,
+groepen, afmeldingen, tablet en pincode, afsluiten) · Nabespreken en
+besluiten (nabespreking, bellijst, observaties van anderen
+weghalen)</td>
+</tr>
+<tr>
+<td>Trainingsweekend</td>
+<td>Bekijken · Inchecken · Beoordelen · Voorbereiden · Gesprekken en
+besluiten (evaluatie, gesprekken, aannemen of afwijzen)</td>
+</tr>
+<tr>
+<td>Sollicitanten</td>
+<td>Bekijken · Exporteren · Wijzigen (gegevens, fase, uitnodigen,
+afwijzen, herinneren) · Verwijderen</td>
+</tr>
+<tr>
+<td>Berichten &amp; sjablonen</td>
+<td>Bekijken · Versturen · Sjablonen en gepland</td>
+</tr>
+<tr>
+<td>Loonplanning</td>
+<td>Bekijken · Plannen (weken, scenario&#39;s, extra personen, afspraak in
+het TW-gesprek) · Definitief maken (afspraken vastleggen, vastzetten en
+ontgrendelen)</td>
+</tr>
+</tbody>
+</table>
+<p>Voorbeeld: een ervaren begeleider die mag meepraten bij de
+nabespreking maar niet mag indelen, krijgt bij Selectiedag
+<strong>Nabespreken en besluiten</strong> erbij en houdt
+<strong>Voorbereiden</strong> uit.</p>
 <p>Zo staat het op een nieuwe installatie (l = lezen, b = bewerken, v =
-verwijderen):</p>
+verwijderen; een taak volgt het recht waar hij bij hoort, dus &quot;l&quot; = alle
+taken die bij bekijken horen, zoals Inchecken en Beoordelen):</p>
 <table>
 <thead>
 <tr>
@@ -3566,6 +3615,7 @@ verwijderen):</p>
 <th>Begeleider</th>
 <th>Bestuur</th>
 <th>Penningmeester</th>
+<th>Planner</th>
 <th>Admin</th>
 </tr>
 </thead>
@@ -3575,12 +3625,14 @@ verwijderen):</p>
 <td>–</td>
 <td>l b v</td>
 <td>l</td>
+<td>–</td>
 <td>alles</td>
 </tr>
 <tr>
 <td>Landingspagina&#39;s</td>
 <td>–</td>
 <td>l b v</td>
+<td>–</td>
 <td>–</td>
 <td>alles</td>
 </tr>
@@ -3589,12 +3641,22 @@ verwijderen):</p>
 <td>–</td>
 <td>l b</td>
 <td>–</td>
+<td>–</td>
 <td>alles</td>
 </tr>
 <tr>
 <td>Selectiedag</td>
 <td>l</td>
 <td>l b</td>
+<td>–</td>
+<td>–</td>
+<td>alles</td>
+</tr>
+<tr>
+<td>Trainingsweekend</td>
+<td>l</td>
+<td>l b</td>
+<td>–</td>
 <td>–</td>
 <td>alles</td>
 </tr>
@@ -3603,6 +3665,7 @@ verwijderen):</p>
 <td>–</td>
 <td>l b</td>
 <td>–</td>
+<td>–</td>
 <td>alles</td>
 </tr>
 <tr>
@@ -3610,6 +3673,7 @@ verwijderen):</p>
 <td>–</td>
 <td>–</td>
 <td>l b v</td>
+<td>–</td>
 <td>alles</td>
 </tr>
 <tr>
@@ -3617,6 +3681,7 @@ verwijderen):</p>
 <td>–</td>
 <td>l b</td>
 <td>–</td>
+<td>l</td>
 <td>alles</td>
 </tr>
 <tr>
@@ -3624,6 +3689,7 @@ verwijderen):</p>
 <td>l</td>
 <td>l</td>
 <td>–</td>
+<td>l</td>
 <td>alles</td>
 </tr>
 <tr>
@@ -3631,12 +3697,14 @@ verwijderen):</p>
 <td>–</td>
 <td>l b</td>
 <td>l b</td>
+<td>–</td>
 <td>alles</td>
 </tr>
 <tr>
 <td>Berichten &amp; sjablonen</td>
 <td>–</td>
 <td>l b</td>
+<td>–</td>
 <td>–</td>
 <td>alles</td>
 </tr>
@@ -3645,6 +3713,7 @@ verwijderen):</p>
 <td>–</td>
 <td>l b</td>
 <td>–</td>
+<td>–</td>
 <td>alles</td>
 </tr>
 <tr>
@@ -3652,10 +3721,12 @@ verwijderen):</p>
 <td>–</td>
 <td>l b</td>
 <td>–</td>
+<td>–</td>
 <td>alles</td>
 </tr>
 <tr>
-<td>Beheerders &amp; rollen</td>
+<td>Accounts &amp; rollen</td>
+<td>–</td>
 <td>–</td>
 <td>–</td>
 <td>–</td>
@@ -3666,10 +3737,12 @@ verwijderen):</p>
 <td>–</td>
 <td>–</td>
 <td>–</td>
+<td>–</td>
 <td>alles</td>
 </tr>
 <tr>
 <td>Logboek (alle logs)</td>
+<td>–</td>
 <td>–</td>
 <td>–</td>
 <td>–</td>
@@ -3683,15 +3756,17 @@ logboek als rolwijziging &quot;door systeem&quot;); bestaande rechten worden
 daarbij nooit verlaagd. Wil je het niet, haal het dan weg onder Rollen
 &amp; rechten en klik op <strong>Rechten opslaan</strong>: het systeem
 zet het daarna niet opnieuw aan.</p>
-<p>Wat Selectiedag lezen voor de begeleider betekent: groepen bekijken,
-inchecken, cijfers en observaties geven en de eigen observaties
-verwijderen. Bewerken (bestuur) voegt de tabletcode, de groepsindeling,
-de nabespreking, de bellijst en het besluit na het trainingsweekend
-toe.</p>
-<p>Twee onderdelen vragen extra zorg. <strong>Loondossiers</strong>
-bevat BSN en identiteitsbewijzen en hoort alleen bij de penningmeester
-en admin. <strong>Logboek</strong> laat zien wie welke persoonsgegevens
-heeft ingezien. Geef die niet zomaar aan een andere rol.</p>
+<p>Taken bestaan sinds versie 2.141. Tot je de matrix de eerste keer
+opslaat, volgt elke taak het oude recht, dus niemand kan meer of minder
+dan daarvoor. Zet je één taak met basis &quot;bewerken&quot; uit (bijvoorbeeld
+<strong>Definitief maken</strong> bij de loonplanning), dan telt dat
+onderdeel voor schermen die nog op het oude bewerkrecht controleren als
+&quot;niet bewerken&quot;: streng, zodat een losse taak nooit meer opent dan
+bedoeld. Twee onderdelen vragen extra zorg.
+<strong>Loondossiers</strong> bevat BSN en identiteitsbewijzen en hoort
+alleen bij de penningmeester en admin. <strong>Logboek</strong> laat
+zien wie welke persoonsgegevens heeft ingezien. Geef die niet zomaar aan
+een andere rol.</p>
 <hr />
 <h1 id="logboek">Logboek</h1>
 <p><strong>Waar:</strong> zijbalk › Systeem › Logboek<br />

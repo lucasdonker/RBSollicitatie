@@ -510,7 +510,7 @@ function bh_vandaag_werkbak(?array $seizoen, array $hoofdtaak): array {
     }
     // Seintjes van de website (aanmelding was dicht): zodra de aanmelding open staat, wachten zij op
     // precies dat bericht. Versturen gaat via Berichten, groep "Seintje gevraagd".
-    if ($mag('mailing', 'bewerken') && function_exists('seintje_wachtend_aantal') && function_exists('seizoen_voor_werving')
+    if ($mag('mailing', 'versturen') && function_exists('seintje_wachtend_aantal') && function_exists('seizoen_voor_werving')
         && (seizoen_voor_werving()['status'] ?? '') === 'open') {
         $zet(seintje_wachtend_aantal(), 'persoon wacht op een seintje dat de aanmelding open is', 'mensen wachten op een seintje dat de aanmelding open is',
              $a . 'berichten.php', 'Seintje sturen', 'oranje', 'bel');

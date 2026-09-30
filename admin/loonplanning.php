@@ -21,7 +21,10 @@ $pagina_titel = 'Loonplanning';
 $actieve_nav  = 'loonplanning';
 $pagina_breed = true;
 vereis_recht('loonplanning', 'lezen');
-$mag_bewerken = mag('loonplanning', 'bewerken');
+// Taken (includes/modules/loonplanning.php): plannen = alles in het concept; definitief = wat de
+// sollicitant ziet of vastligt (definitief maken, afspraak, vastzetten, ontgrendelen).
+$mag_bewerken   = mag('loonplanning', 'plannen');
+$mag_definitief = mag('loonplanning', 'definitief');
 try { instellingen_laden(); } catch (Exception $e) {}
 
 $seizoen = actief_seizoen();
@@ -39,8 +42,12 @@ $terug = APP_URL . '/admin/loonplanning.php?scenario=' . $scenario_id;
 // ── Scenario- en persoonsacties (gewone formulieren) ─────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['sc_actie'])) {
     csrf_check();
-    if (!$mag_bewerken) { flash('fout', 'Je hebt geen bewerkrecht op de loonplanning.'); redirect($terug); }
     $a   = (string)$_POST['sc_actie'];
+    $_definitief_actie = in_array($a, ['definitief', 'afspraak', 'vastzetten', 'ontgrendel'], true);
+    if (!($_definitief_actie ? $mag_definitief : $mag_bewerken)) {
+        flash('fout', $_definitief_actie ? 'Definitief maken, afspraken en vastzetten horen niet bij jouw taken.' : 'Je hebt geen bewerkrecht op de loonplanning.');
+        redirect($terug);
+    }
     $sol = (int)($_POST['sol_id'] ?? 0);
     // Een extra persoon (negatief id) heeft geen opgave, afspraak of slot: die acties bestaan niet voor hem.
     if ($sol < 0 && in_array($a, ['opgave', 'afspraak', 'vastzetten', 'ontgrendel'], true)) {

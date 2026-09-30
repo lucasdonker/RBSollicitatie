@@ -19,7 +19,7 @@ if (!in_array($tab, ['nieuw', 'log'], true)) $tab = 'nieuw';
 $modi    = function_exists('meldingen_kanaalmodi') ? meldingen_kanaalmodi() : ['email' => 'E-mail'];
 unset($modi['uit']);
 $fases   = function_exists('fasen') ? fasen() : [];
-$mag_bewerken = function_exists('mag') ? mag('mailing', 'bewerken') : true;
+$mag_bewerken = function_exists('mag') ? mag('mailing', 'versturen') : true;   // taak (includes/rechten.php)
 
 // ── Sollicitanten (voor de ontvangerskiezer) ──────────────────
 $alle = [];

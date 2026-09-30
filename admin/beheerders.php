@@ -12,7 +12,7 @@
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/beheer/laden.php';
 require_once __DIR__ . '/../includes/tweestaps.php';
-$pagina_titel = 'Beheerders & rechten';
+$pagina_titel = 'Accounts & rechten';
 $actieve_nav  = 'beheerders';
 vereis_recht('beheerders', 'bewerken');
 
@@ -190,7 +190,7 @@ require __DIR__ . '/layout_top.php';
   <div class="bh-beheerders-hoofd">
     <section class="ds-kaart bh-beheerderslijst">
       <div class="bh-loglijst-kop">
-        <h2>Beheerders</h2>
+        <h2>Accounts</h2>
         <span class="bh-meta"><?= count($beheerders) ?> <?= count($beheerders) === 1 ? 'account' : 'accounts' ?></span>
       </div>
 

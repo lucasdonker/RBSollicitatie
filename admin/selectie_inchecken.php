@@ -18,10 +18,11 @@ vereis_recht('selectiedag', 'lezen');
 $seizoen = actief_seizoen();
 $sid = $seizoen ? (int)$seizoen['id'] : 0;
 
-// meedraaien — aanwezig/ongedaan tikken: begeleiderswerk, dus 'lezen' (zie rechten.php).
-// bewerken   — de tablet-code en pin, en afsluiten: bestuur.
-$mag_meedraaien = mag('selectiedag', 'lezen');
-$mag_bewerken   = mag('selectiedag', 'bewerken');
+// Taken (includes/modules/selectiedag.php):
+//   inchecken    — aanwezig/ongedaan tikken: begeleiderswerk.
+//   voorbereiden — de tablet-code en pin, en afsluiten: bestuur.
+$mag_meedraaien = mag('selectiedag', 'inchecken');
+$mag_bewerken   = mag('selectiedag', 'voorbereiden');
 
 $pagina_titel = 'Inchecken';
 $actieve_nav  = 'selectiedag';

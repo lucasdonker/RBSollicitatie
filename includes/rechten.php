@@ -4,10 +4,12 @@
  *
  * Eén bron van waarheid voor "wie mag wat". Rollen staan in de database (toe te
  * voegen/hernoemen), elke rol koppelt aan een Authentik-groep, en per rol/module
- * zijn er drie rechten: lezen, bewerken, verwijderen.
+ * zijn er drie rechten: lezen, bewerken, verwijderen — en daarbinnen benoemde taken
+ * (includes/rechten_taken.php: hoe die twee samenhangen staat daar).
  *
  * Gebruik in pagina's:   vereis_recht('sollicitanten', 'lezen');
  * Gebruik in het menu:    if (mag('sollicitanten', 'lezen')) { ... toon item ... }
+ * Een taak:               mag('selectiedag', 'beoordelen')
  */
 
 if (!function_exists('rechten_modules')) {
@@ -20,18 +22,31 @@ if (!function_exists('rechten_modules')) {
 function rechten_modules(): array {
     // De kern. Rechten van losse modules (selectiedag, loonplanning, …) komen uit het
     // moduleregister (includes/modules/), en alleen als die module aanstaat.
+    // 'taken' (includes/rechten_taken.php): alleen waar een scherm het verschil maakt; de rest krijgt
+    // automatisch Bekijken / Wijzigen / Verwijderen.
     $kern = [
-        'sollicitanten'   => ['label' => 'Sollicitanten',          'groep' => 'Werving',        'acties' => ['lezen','bewerken','verwijderen']],
+        'sollicitanten'   => ['label' => 'Sollicitanten',          'groep' => 'Werving',        'acties' => ['lezen','bewerken','verwijderen'],
+            'taken' => [
+                'bekijken'   => ['label' => 'Bekijken',   'basis' => 'lezen',       'uitleg' => 'De lijst en het dossier openen, met contactgegevens.'],
+                'exporteren' => ['label' => 'Exporteren', 'basis' => 'lezen',       'uitleg' => 'De lijst als Excel downloaden (met adres en formulier alleen met recht op het kennismakingsformulier).'],
+                'wijzigen'   => ['label' => 'Wijzigen',   'basis' => 'bewerken',    'uitleg' => 'Gegevens en notities aanpassen, de fase wijzigen, uitnodigen, afwijzen en herinneren.'],
+                'wissen'     => ['label' => 'Verwijderen','basis' => 'verwijderen', 'uitleg' => 'Een dossier definitief verwijderen.'],
+            ]],
         'blk'             => ['label' => 'Kennismakingsformulier',   'groep' => 'Werving',       'acties' => ['lezen','bewerken']],
         'ondertekeningen' => ['label' => 'Ondertekeningen',        'groep' => 'Selectie',       'acties' => ['lezen','bewerken']],
         'documenten'      => ['label' => 'Loondossiers (ID, bankpas, loonheffing)', 'groep' => 'Beheer', 'acties' => ['lezen','bewerken','verwijderen']],
         'beschikbaarheid' => ['label' => 'Beschikbaarheid',        'groep' => 'Planning',       'acties' => ['lezen','bewerken']],
-        'mailing'         => ['label' => 'Berichten & sjablonen',  'groep' => 'Communicatie',   'acties' => ['lezen','bewerken']],
+        'mailing'         => ['label' => 'Berichten & sjablonen',  'groep' => 'Communicatie',   'acties' => ['lezen','bewerken'],
+            'taken' => [
+                'bekijken'  => ['label' => 'Bekijken',  'basis' => 'lezen',    'uitleg' => 'Verzonden berichten en hun afleverstatus zien.'],
+                'versturen' => ['label' => 'Versturen', 'basis' => 'bewerken', 'uitleg' => 'Een bericht sturen, ook vanuit het dossier of de lijst.'],
+                'sjablonen' => ['label' => 'Sjablonen en gepland', 'basis' => 'bewerken', 'uitleg' => 'Sjablonen aanpassen en geplande berichten beheren. Die gaan naar iedereen.'],
+            ]],
         // 'verwijderen' bestaat hier apart omdat een seizoen wissen ook alle sollicitaties
         // van dat jaar wist. Standaard heeft alleen de beheerder het; bestuur krijgt 'rw'.
         'seizoen'         => ['label' => 'Seizoen',                'groep' => 'Beheer',         'acties' => ['lezen','bewerken','verwijderen']],
         'instellingen'    => ['label' => 'Instellingen',           'groep' => 'Beheer',         'acties' => ['lezen','bewerken']],
-        'beheerders'      => ['label' => 'Beheerders & rollen',    'groep' => 'Beheer',         'acties' => ['lezen','bewerken']],
+        'beheerders'      => ['label' => 'Accounts & rollen',      'groep' => 'Beheer',         'acties' => ['lezen','bewerken']],
         'systeem'         => ['label' => 'Systeem, updates & logs','groep' => 'Beheer',         'acties' => ['lezen','bewerken']],
         // Apart van 'systeem': het logboek toont wie-wat-wanneer over personen (inclusief wie een
         // kopie identiteitsbewijs downloadde). Inzage daarin hoort niet vanzelf bij het recht om
@@ -43,21 +58,6 @@ function rechten_modules(): array {
     $volgorde = array_flip(['Werving', 'Selectie', 'Planning', 'Communicatie', 'Beheer']);
     uasort($alle, fn($a, $b) => ($volgorde[$a['groep']] ?? 99) <=> ($volgorde[$b['groep']] ?? 99));
     return $alle;
-}
-
-/** De drie mogelijke acties, in vaste volgorde. */
-function rechten_acties(): array {
-    return ['lezen' => 'Lezen', 'bewerken' => 'Bewerken', 'verwijderen' => 'Verwijderen'];
-}
-
-/**
- * Rechten van één module als korte notatie: 'rwd', 'rw', 'r' of 'geen'.
- * Dezelfde letters als in rechten_standaard_rollen(); handig om in het logboek te tonen
- * wat er precies veranderde zonder drie booleans uit te schrijven.
- */
-function rechten_bits(array $r): string {
-    $bits = (!empty($r['lezen']) ? 'r' : '') . (!empty($r['bewerken']) ? 'w' : '') . (!empty($r['verwijderen']) ? 'd' : '');
-    return $bits === '' ? 'geen' : $bits;
 }
 
 /**
@@ -168,6 +168,15 @@ function rechten_auto_setup(): void {
             PRIMARY KEY (`rol_sleutel`, `module`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+        // 2.141.0: taakrechten (includes/rechten_taken.php). Leeg tot de matrix wordt opgeslagen.
+        $db->exec("CREATE TABLE IF NOT EXISTS `rol_taak` (
+            `rol_sleutel` VARCHAR(40) NOT NULL,
+            `module` VARCHAR(40) NOT NULL,
+            `taak` VARCHAR(40) NOT NULL,
+            `toegestaan` TINYINT(1) NOT NULL DEFAULT 0,
+            PRIMARY KEY (`rol_sleutel`, `module`, `taak`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
         // Rollen naast de hoofdrol (beheerders.rol), komma-gescheiden. Gevuld bij elke SSO-login uit
         // de Authentik-groepen; zie huidige_rollen().
         db_kolom_verzeker($db, 'beheerders', 'extra_rollen', 'VARCHAR(255) DEFAULT NULL');
@@ -271,6 +280,9 @@ function rechten_nieuwe_standaarden(): void {
                                               bewerken = GREATEST(bewerken, VALUES(bewerken)),
                                               verwijderen = GREATEST(verwijderen, VALUES(verwijderen))")
            ->execute([$item[0], $item[1], $l, $w, $d]);
+        if (function_exists('rol_taken_ophogen')) {
+            rol_taken_ophogen($item[0], $item[1], array_keys(array_filter(['lezen' => $l, 'bewerken' => $w, 'verwijderen' => $d])));
+        }
         instelling_opslaan($vlag, date('Y-m-d'));
         if (function_exists('audit_log')) {
             audit_log('rol_gewijzigd', 'rol', null, ['rol' => $item[0], 'module' => $item[1], 'rechten' => $item[2],
@@ -333,6 +345,8 @@ function huidige_rollen(): array {
 
 /**
  * De kernfunctie: mag de ingelogde beheerder deze actie op deze module?
+ * $actie is een oud recht (lezen, bewerken, verwijderen) of een taak van de module
+ * (includes/rechten_taken.php, bijv. mag('selectiedag', 'beoordelen')).
  * Met meerdere rollen volstaat één rol die het mag. De admin-rol mag altijd alles (kan zichzelf
  * nooit buitensluiten).
  */
@@ -340,14 +354,25 @@ function mag(string $module, string $actie = 'lezen'): bool {
     rechten_auto_setup();
     // Een uitgezette module bestaat niet, ook niet voor de admin (zie includes/modules.php).
     if (function_exists('module_recht_actief') && !module_recht_actief($module)) return false;
+    $is_taak = !in_array($actie, ['lezen', 'bewerken', 'verwijderen'], true);
+    if ($is_taak && function_exists('rechten_taken') && !isset(rechten_taken($module)[$actie])) {
+        // Een tikfout in een taaknaam mag nooit stil toegang geven, ook niet aan de admin.
+        error_log("mag(): onbekende taak '$actie' voor module '$module'");
+        return false;
+    }
     $rollen = huidige_rollen();
     if (in_array('admin', $rollen, true)) return true; // admin: altijd volledige toegang
 
     // Cache per request
-    static $cache = [];
+    static $cache = [], $taken = [];
     foreach ($rollen as $rol) {
         if (!isset($cache[$rol])) $cache[$rol] = rol_rechten($rol);
-        if (!empty($cache[$rol][$module][$actie])) return true;
+        if (!$is_taak) {
+            if (!empty($cache[$rol][$module][$actie])) return true;
+            continue;
+        }
+        if (!isset($taken[$rol])) $taken[$rol] = rol_taken($rol);
+        if (rol_taak_mag($cache[$rol], $taken[$rol], $module, $actie)) return true;
     }
     return false;
 }

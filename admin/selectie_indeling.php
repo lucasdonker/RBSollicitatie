@@ -12,16 +12,21 @@ vereis_recht('selectiedag', 'lezen');
 
 $seizoen = actief_seizoen();
 $sid = $seizoen ? (int)$seizoen['id'] : 0;
-$mag_bewerken = mag('selectiedag', 'bewerken');
+$mag_bewerken = mag('selectiedag', 'voorbereiden');   // taakrechten: includes/modules/selectiedag.php
 
 // Vanuit het menu (?start=1) beginnen waar je op dat moment bent, net als het trainingsweekend:
-// vóór de dag Voorbereiden (wie komt er), op de dag beoordelen, daarna (bestuur) de nabespreking.
+// vóór de dag Voorbereiden (wie komt er), op de dag beoordelen, daarna de nabespreking — elk
+// alleen als je die taak hebt.
 $_sd_datum = (string)($seizoen['datum_selectiedag'] ?? '');
 if (!empty($_GET['start']) && $_SERVER['REQUEST_METHOD'] === 'GET') {
     $_vandaag = date('Y-m-d');
-    if (!$mag_bewerken) redirect(APP_URL . '/admin/selectiedag.php');   // begeleider: altijd beoordelen
-    if ($_sd_datum !== '' && $_vandaag > $_sd_datum && $mag_bewerken) redirect(APP_URL . '/admin/selectie_nabespreking.php');
-    if ($_sd_datum !== '' && $_vandaag >= $_sd_datum)                 redirect(APP_URL . '/admin/selectiedag.php');
+    $_na      = $_sd_datum !== '' && $_vandaag > $_sd_datum;
+    $_op_dag  = $_sd_datum !== '' && $_vandaag >= $_sd_datum;
+    if ($_na && mag('selectiedag', 'nabespreken'))     redirect(APP_URL . '/admin/selectie_nabespreking.php');
+    if (($_op_dag || !$mag_bewerken) && !mag('selectiedag', 'beoordelen') && mag('selectiedag', 'inchecken')) {
+        redirect(APP_URL . '/admin/selectie_inchecken.php');
+    }
+    if ($_op_dag || !$mag_bewerken)                    redirect(APP_URL . '/admin/selectiedag.php');
     redirect(APP_URL . '/admin/selectie_voorbereiden.php');
 }
 

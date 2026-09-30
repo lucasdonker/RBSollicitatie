@@ -16,7 +16,7 @@ if (!$afmeldingen) return;
 $_afm_mag = false;
 foreach ($afmeldingen as $_a) {
     $_def = evenement_def($_a['evenement']);
-    if ($_def && mag($_def['module'], 'bewerken')) { $_afm_mag = true; break; }
+    if ($_def && mag($_def['module'], 'voorbereiden')) { $_afm_mag = true; break; }
 }
 ?>
 <section class="ds-kaart ds-kaart-p bh-afmeldingen" aria-labelledby="bh-afm-kop">
@@ -28,7 +28,7 @@ foreach ($afmeldingen as $_a) {
           <a href="<?= APP_URL ?>/admin/sollicitant.php?id=<?= (int)$_a['sol_id'] ?>" class="bh-link-navy"><?= h($_a['naam']) ?></a>
           <span class="bh-meta"><?= h($_a['label']) ?><?= $_a['reden'] ? ' · ' . h($_a['reden']) : '' ?></span>
         </div>
-        <?php if ($_def && mag($_def['module'], 'bewerken')): ?>
+        <?php if ($_def && mag($_def['module'], 'voorbereiden')): ?>
         <div class="bh-knoprij">
           <form method="POST" action="<?= APP_URL ?>/admin/afmelding.php"
                 data-bevestig="<?= h($_a['naam']) ?> afmelden? De fase wordt Afgehaakt; er gaat geen bericht uit.">

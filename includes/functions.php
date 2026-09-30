@@ -42,6 +42,7 @@ if (file_exists(__DIR__ . '/lidmaatschap.php')) require_once __DIR__ . '/lidmaat
 // Moduleregister vóór de rechten: rechten_modules() en mag() vragen het register wat aanstaat.
 if (file_exists(__DIR__ . '/modules.php')) require_once __DIR__ . '/modules.php';
 if (file_exists(__DIR__ . '/rechten.php')) require_once __DIR__ . '/rechten.php';
+if (file_exists(__DIR__ . '/rechten_taken.php')) require_once __DIR__ . '/rechten_taken.php';   // taakrechten (2.141.0)
 if (file_exists(__DIR__ . '/beschikbaarheid_dagen.php')) require_once __DIR__ . '/beschikbaarheid_dagen.php';
 if (file_exists(__DIR__ . '/beschikbaarheid2.php')) require_once __DIR__ . '/beschikbaarheid2.php';
 if (file_exists(__DIR__ . '/beschikbaarheid_post.php')) require_once __DIR__ . '/beschikbaarheid_post.php';

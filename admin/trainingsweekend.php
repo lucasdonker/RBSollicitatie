@@ -1,15 +1,16 @@
 <?php
 /**
- * Beheer — Trainingsweekend. Zes stappen, zelfde opbouw als de selectiedag. Wie alleen meedraait
- * (lezen) ziet er twee: inchecken en beoordelen.
+ * Beheer — Trainingsweekend. Zes stappen, zelfde opbouw als de selectiedag. Welke je ziet, hangt af
+ * van je taken (includes/modules/trainingsweekend.php); een begeleider heeft standaard inchecken en
+ * beoordelen.
  *
- *   voorbereiden — wie komt er (bevestiging), wie mist nog beschikbaarheid, de tablet     (bewerken)
- *   groepen      — groepsindeling, gedeeld met de selectiedag (admin/_groepsindeling.php) (bewerken)
- *   inchecken    — gedeelde incheck-lijst; de tablet doet hetzelfde                       (lezen)
+ *   voorbereiden — wie komt er (bevestiging), wie mist nog beschikbaarheid, de tablet     (voorbereiden)
+ *   groepen      — groepsindeling, gedeeld met de selectiedag (admin/_groepsindeling.php) (voorbereiden)
+ *   inchecken    — gedeelde incheck-lijst; de tablet doet hetzelfde                       (inchecken)
  *   beoordelen   — vrijwilligers op hun telefoon: observaties per persoon, met foto;
- *                  twijfelgevallen van het bestuur bovenaan ("extra aandacht")             (lezen)
- *   evaluatie    — het bestuur zegt alvast sowieso aannemen / twijfel / sowieso afwijzen   (bewerken)
- *   gesprekken   — het bestuur spreekt iedereen, in vrije volgorde, en beslist ter plekke (bewerken)
+ *                  twijfelgevallen van het bestuur bovenaan ("extra aandacht")             (beoordelen; zonder: alleen lezen)
+ *   evaluatie    — het bestuur zegt alvast sowieso aannemen / twijfel / sowieso afwijzen   (gesprekken)
+ *   gesprekken   — het bestuur spreekt iedereen, in vrije volgorde, en beslist ter plekke (gesprekken)
  *
  * Dit bestand is alleen de router: rechten, POST-acties en welke stap. De stappen staan in
  * admin/tw/*.php; de logica in includes/trainingsweekend.php en includes/evenement.php.
@@ -29,9 +30,11 @@ $sid     = $seizoen ? (int)$seizoen['id'] : 0;
 $ik      = (string)($_SESSION['bhd_naam'] ?? 'onbekend');
 $ik_id   = (int)($_SESSION['bhd_id'] ?? 0);
 
-// lezen = meedraaien (inchecken, observeren: begeleiderswerk), bewerken = bestuur.
-$mag_meedraaien = mag('trainingsweekend', 'lezen');
-$mag_beslissen  = mag('trainingsweekend', 'bewerken');
+// Taken (includes/modules/trainingsweekend.php).
+$mag_inchecken    = mag('trainingsweekend', 'inchecken');
+$mag_beoordelen   = mag('trainingsweekend', 'beoordelen');
+$mag_voorbereiden = mag('trainingsweekend', 'voorbereiden');
+$mag_beslissen    = mag('trainingsweekend', 'gesprekken');   // ook observaties van anderen weghalen
 // Dataminimalisatie: BLK-bijzonderheden (vaak medisch) alleen met BLK-recht,
 // dossier en telefoonnummer alleen met dossierrecht.
 $mag_blk     = mag('blk', 'lezen');
@@ -53,6 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $sid) {
     csrf_check();
 
     if ($json) {
+        if (!$mag_beoordelen && !$mag_beslissen) { echo json_encode(['ok' => false, 'fout' => 'geen_rechten']); exit; }
         if ($actie === 'observatie') {
             // Alleen wie nog in het weekend zit; na het besluit is het dossier de plek.
             $ok = evenement_is_kandidaat('tw', $sid, $sol) && tw_observatie_toevoegen($sid, $sol, (string)($_POST['tekst'] ?? ''),
@@ -73,10 +77,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $sid) {
         exit;
     }
 
-    if (!$mag_beslissen) { http_response_code(403); exit('Dit is bestuurswerk.'); }
+    // Per actie de taak: voorbereiden (groepen, bevestiging) of gesprekken (evaluatie, gesprek).
+    $_eis = function (bool $mag): void { if (!$mag) { http_response_code(403); exit('Dit hoort niet bij jouw taken.'); } };
+    $_eis($mag_voorbereiden || $mag_beslissen);
 
     // Groepsindeling (admin/tw/groepen.php): zelfde handelingen als op de selectiedag.
-    bh_groepsindeling_post('tw', $sid, tw_kandidaten($sid), tw_url('groepen'));
+    if ($mag_voorbereiden) bh_groepsindeling_post('tw', $sid, tw_kandidaten($sid), tw_url('groepen'));
 
     // Direct opslaan (assets/js/direct_opslaan.js stuurt ajax=1): JSON terug, geen herlaadactie.
     // Zonder JavaScript: gewoon formulier met Opslaan-knop, flash + redirect.
@@ -87,10 +93,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $sid) {
         redirect($terug);
     };
     if ($actie === 'bevestiging') {
+        $_eis($mag_voorbereiden);
         $ok = evenement_is_kandidaat('tw', $sid, $sol)
            && evenement_bevestigen('tw', $sid, $sol, (string)($_POST['stand'] ?? ''), (string)($_POST['reden'] ?? ''), 'beheer');
         $_klaar($ok, 'Opgeslagen.', 'Niet opgeslagen: bij "kan niet" hoort een opmerking.', tw_url('voorbereiden'));
     }
+    if (in_array($actie, ['evaluatie', 'gesprek_los', 'gesprek_overnemen', 'gesprek'], true)) $_eis($mag_beslissen);
     if ($actie === 'evaluatie') {
         $ok = evenement_is_kandidaat('tw', $sid, $sol)
            && tw_evaluatie_zetten($sid, $sol, (string)($_POST['evaluatie'] ?? ''), (string)($_POST['evaluatie_bericht'] ?? ''), $ik);
@@ -137,16 +145,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $sid) {
 }
 
 // ── Welke stap ──
-// Wie alleen meedraait ziet Inchecken en Beoordelen (zoals op de selectiedag); de rest is bestuurswerk.
-$stappen = $mag_beslissen
-    ? ['voorbereiden' => 'Voorbereiden', 'groepen' => 'Groepen', 'inchecken' => 'Inchecken', 'beoordelen' => 'Beoordelen',
-       'evaluatie' => 'Evaluatie', 'gesprekken' => 'Gesprekken']
-    : ['inchecken' => 'Inchecken', 'beoordelen' => 'Beoordelen'];
+// De stappen volgen de taken; Beoordelen staat er altijd (zonder die taak: alleen lezen).
+$stappen = [];
+if ($mag_voorbereiden) $stappen += ['voorbereiden' => 'Voorbereiden', 'groepen' => 'Groepen'];
+if ($mag_inchecken)    $stappen['inchecken'] = 'Inchecken';
+$stappen['beoordelen'] = 'Beoordelen';
+if ($mag_beslissen)    $stappen += ['evaluatie' => 'Evaluatie', 'gesprekken' => 'Gesprekken'];
 $stap = (string)($_GET['stap'] ?? '');
 $stap = ['weekend' => 'beoordelen', 'besluit' => 'gesprekken'][$stap] ?? $stap;   // oude links
 if (!isset($stappen[$stap])) {
     $begin = (string)($seizoen['datum_tw_start'] ?? '');
-    $stap  = ($mag_beslissen && $begin !== '' && date('Y-m-d') < $begin) ? 'voorbereiden' : 'beoordelen';
+    $stap  = ($mag_voorbereiden && $begin !== '' && date('Y-m-d') < $begin) ? 'voorbereiden' : 'beoordelen';
 }
 
 $kandidaten = $sid ? tw_kandidaten($sid) : [];

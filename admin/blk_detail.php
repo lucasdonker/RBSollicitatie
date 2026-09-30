@@ -104,6 +104,7 @@ require __DIR__ . '/layout_top.php';
     <button type="button" class="ds-btn ds-btn-zacht ds-btn-sm" data-klik="window.print()">
       <?= icoon('printer', 14) ?> Afdrukken
     </button>
+    <?php if (mag('sollicitanten', 'exporteren')): ?>
     <a class="ds-btn ds-btn-zacht ds-btn-sm" target="_blank" rel="noopener"
        href="<?= APP_URL ?>/admin/export_blk.php?formaat=pdf&amp;id=<?= $sol_id ?>">
       <?= icoon('document', 14) ?> PDF
@@ -112,6 +113,7 @@ require __DIR__ . '/layout_top.php';
        href="<?= APP_URL ?>/admin/export_blk.php?formaat=excel&amp;ids=<?= $sol_id ?>">
       <?= icoon('export', 14) ?> Excel
     </a>
+    <?php endif; ?>
   </div>
 </header>
 

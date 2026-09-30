@@ -5,12 +5,12 @@
  * Twee tabbladen omdat het twee momenten zijn: aan tafel het besluit nemen, en daarna
  * de mensen bellen. De scores zijn een advies, het gesprek bepaalt (ontwerpfilosofie §3).
  *
- * Dit is bestuurswerk: een begeleider komt hier niet.
+ * Dit is bestuurswerk: taak Nabespreken (includes/modules/selectiedag.php).
  */
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/beheer/laden.php';
 
-vereis_recht('selectiedag', 'bewerken');
+vereis_recht('selectiedag', 'nabespreken');
 
 $seizoen = actief_seizoen();
 $sid = $seizoen ? (int)$seizoen['id'] : 0;

@@ -12,7 +12,7 @@
  * zonder dat recht bevat de export de basisgegevens en de woonplaats.
  */
 require_once __DIR__ . '/../includes/functions.php';
-vereis_recht('sollicitanten', 'lezen');
+vereis_recht('sollicitanten', 'exporteren');   // taak (includes/rechten.php)
 
 $db = db();
 $formaat = $_GET['formaat'] ?? 'excel';

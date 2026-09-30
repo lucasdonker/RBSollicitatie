@@ -46,7 +46,7 @@ if (isset($_GET['preview'])) {
 
 $pagina_titel = 'Sjablonen';
 $actieve_nav  = 'mail_templates';
-vereis_recht('mailing', 'bewerken');
+vereis_recht('mailing', 'sjablonen');
 $db = db();
 if (function_exists('sjablonen_auto_setup')) sjablonen_auto_setup();
 

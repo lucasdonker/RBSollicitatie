@@ -11,7 +11,7 @@ require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/beheer/laden.php';
 $pagina_titel = 'Berichten';
 $actieve_nav  = 'geplande_berichten';   // eigen hulptekst; bh_nav_actief() laat Berichten oplichten
-vereis_recht('mailing', 'bewerken');
+vereis_recht('mailing', 'sjablonen');
 $db = db();
 
 $gebeurtenissen = function_exists('gepland_gebeurtenissen') ? gepland_gebeurtenissen() : [];

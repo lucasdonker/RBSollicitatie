@@ -11,7 +11,7 @@
  */
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/beheer/laden.php';
-$pagina_titel = 'Rollen & rechten';
+$pagina_titel = 'Accounts & rechten';
 $actieve_nav  = 'rollen';
 // Via het modulerecht en niet via de rolrang, net als beheerders.php. In de
 // standaardmatrix heeft alleen de beheerder 'beheerders', dus wie er nu in kan
@@ -110,6 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         . '. Geef die eerst een andere rol.');
         } else {
             $db->prepare("DELETE FROM rol_rechten WHERE rol_sleutel=?")->execute([$sleutel]);
+            $db->prepare("DELETE FROM rol_taak WHERE rol_sleutel=?")->execute([$sleutel]);
             $db->prepare("DELETE FROM rollen WHERE sleutel=?")->execute([$sleutel]);
             audit_log('rol_verwijderd', 'rol', null, ['rol' => $sleutel]);
             flash('succes', 'Rol verwijderd.');
@@ -118,29 +119,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($actie === 'rechten_opslaan') {
-        $matrix = $_POST['recht'] ?? [];   // recht[rol_sleutel][module][actie] = 1
+        // taak[rol_sleutel][module][taak] = 1. Per rol de hele matrix; de oude rechten (lezen/bewerken/
+        // verwijderen) leidt rol_taken_opslaan() eruit af (includes/rechten_taken.php).
+        $matrix = (array)($_POST['taak'] ?? []);
         foreach (rollen_alle() as $rol) {
             if ($rol['sleutel'] === 'admin') continue;   // admin blijft altijd alles
-            $voor = rol_rechten($rol['sleutel']);
-            $na   = [];
-            foreach (rechten_modules() as $mod => $mdef) {
-                $l = !empty($matrix[$rol['sleutel']][$mod]['lezen']) ? 1 : 0;
-                $w = !empty($matrix[$rol['sleutel']][$mod]['bewerken']) ? 1 : 0;
-                $d = !empty($matrix[$rol['sleutel']][$mod]['verwijderen']) ? 1 : 0;
-                // Bewerken of verwijderen zonder lezen bestaat niet; dat zetten we recht.
-                if ($w || $d) $l = 1;
-                $db->prepare("INSERT INTO rol_rechten (rol_sleutel, module, lezen, bewerken, verwijderen) VALUES (?,?,?,?,?)
-                              ON DUPLICATE KEY UPDATE lezen=VALUES(lezen), bewerken=VALUES(bewerken), verwijderen=VALUES(verwijderen)")
-                   ->execute([$rol['sleutel'], $mod, $l, $w, $d]);
-                $na[$mod] = ['lezen' => (bool)$l, 'bewerken' => (bool)$w, 'verwijderen' => (bool)$d];
+            $verschil = rol_taken_opslaan($rol['sleutel'], (array)($matrix[$rol['sleutel']] ?? []));
+            // Wie een rol meer of minder taken geeft, moet herleidbaar zijn.
+            if ($verschil) {
+                $log = [];
+                foreach ($verschil as $mod => $v) $log[$mod] = ['oud' => implode(', ', $v['oud']), 'nieuw' => implode(', ', $v['nieuw'])];
+                audit_log('rol_gewijzigd', 'rol', null, array_merge(['rol' => $rol['sleutel']], $log));
             }
-            // Wie een rol meer of minder rechten geeft, moet herleidbaar zijn.
-            $verschil = [];
-            foreach ($na as $mod => $nieuw) {
-                $oud = $voor[$mod] ?? ['lezen' => false, 'bewerken' => false, 'verwijderen' => false];
-                if ($oud != $nieuw) $verschil[$mod] = ['oud' => rechten_bits($oud), 'nieuw' => rechten_bits($nieuw)];
-            }
-            if ($verschil) audit_log('rol_gewijzigd', 'rol', null, array_merge(['rol' => $rol['sleutel']], $verschil));
         }
         flash('succes', 'Rechten opgeslagen.');
         redirect(APP_URL . '/admin/rollen.php');
@@ -156,12 +146,11 @@ if (($_GET['bevestig'] ?? '') === 'verwijder') {
 
 $rollen  = rollen_alle();
 $modules = rechten_modules();
-$acties  = rechten_acties();
 
-$rechten_per_rol = [];
+$taken_per_rol = [];
 $gebruikers_per_rol = [];
 foreach ($rollen as $rol) {
-    $rechten_per_rol[$rol['sleutel']]    = rol_rechten($rol['sleutel']);
+    $taken_per_rol[$rol['sleutel']]      = rol_taken_effectief($rol['sleutel']);
     $gebruikers_per_rol[$rol['sleutel']] = rol_gebruikers($db, $rol['sleutel']);
 }
 
@@ -298,103 +287,101 @@ require __DIR__ . '/layout_top.php';
   </details>
 </section>
 
-<form method="POST" class="ds-kaart bh-matrixkaart">
+<?php
+  // De matrix per onderdeel: taken als rijen, rollen als kolommen (includes/rechten_taken.php).
+  // Ingeklapt per onderdeel, met in de kop per rol hoeveel taken aanstaan.
+  $_rol_namen = [];
+  foreach ($rollen as $rol) $_rol_namen[$rol['sleutel']] = (string)$rol['naam'];
+?>
+<form method="POST" class="ds-kaart bh-matrixkaart" data-taakmatrix>
   <?= csrf_input() ?>
   <input type="hidden" name="actie" value="rechten_opslaan">
 
-  <div class="bh-loglijst-kop">
-    <h2>Wat mag welke rol?</h2>
-    <span class="bh-meta">bewerken of verwijderen zet lezen vanzelf aan</span>
+  <div class="bh-lijstkop">
+    <div>
+      <h2>Wat mag welke rol?</h2>
+      <p class="bh-meta">Per onderdeel de taken. Elke taak houdt in dat je het onderdeel mag bekijken.</p>
+    </div>
+    <span class="bh-lijstkop-acties">
+      <button type="button" class="ds-btn ds-btn-zacht ds-btn-sm" data-klap-alles=".bh-taakblok">Alles uitklappen</button>
+    </span>
   </div>
 
-  <div class="bh-matrixrol">
-    <table class="bh-matrix">
-      <caption class="sr-only">Rechten per rol en per onderdeel</caption>
-      <thead>
-        <tr>
-          <th scope="col" rowspan="2" class="bh-matrix-mod">Onderdeel</th>
-          <?php foreach ($rollen as $rol): ?>
-            <th scope="colgroup" colspan="<?= count($acties) ?>" class="bh-matrix-rol"><?= h((string)$rol['naam']) ?></th>
-          <?php endforeach; ?>
-        </tr>
-        <tr>
-          <?php foreach ($rollen as $rol): ?>
-            <?php foreach ($acties as $ak => $al): ?>
-              <th scope="col" class="bh-matrix-actie"><?= h($al) ?></th>
-            <?php endforeach; ?>
-          <?php endforeach; ?>
-        </tr>
-      </thead>
-      <tbody>
-        <?php foreach ($modules_per_groep as $groep => $mods): ?>
-          <tr class="bh-matrix-groep">
-            <th scope="colgroup" colspan="<?= 1 + count($rollen) * count($acties) ?>"><?= h((string)$groep) ?></th>
-          </tr>
-          <?php foreach ($mods as $mod => $mdef): ?>
-          <tr>
-            <th scope="row" class="bh-matrix-mod"><?= h((string)$mdef['label']) ?></th>
-            <?php foreach ($rollen as $rol):
-              $_admin = $rol['sleutel'] === 'admin';
-              $_r = $rechten_per_rol[$rol['sleutel']][$mod] ?? ['lezen' => false, 'bewerken' => false, 'verwijderen' => false];
-            ?>
-              <?php foreach ($acties as $ak => $al):
-                $_label = $rol['naam'] . ' mag ' . $mdef['label'] . ' ' . strtolower($al);
+  <?php foreach ($modules_per_groep as $groep => $mods): ?>
+    <h3 class="bh-taakgroep"><?= h((string)$groep) ?></h3>
+    <?php foreach ($mods as $mod => $mdef):
+      $_taken = rechten_taken($mod);
+      $_sam = [];
+      foreach ($rollen as $rol) {
+          if ($rol['sleutel'] === 'admin') continue;
+          $_n = count(array_filter($taken_per_rol[$rol['sleutel']][$mod] ?? []));
+          if ($_n > 0) $_sam[] = $rol['naam'] . ' ' . $_n . '/' . count($_taken);
+      }
+    ?>
+    <details class="bh-klap bh-taakblok" data-klap-id="rechten-<?= h($mod) ?>" data-mod="<?= h($mod) ?>">
+      <summary>
+        <span class="bh-klap-titel"><?= h((string)$mdef['label']) ?></span>
+        <span class="bh-klap-sam" data-taak-sam><?= h($_sam ? implode(' · ', $_sam) : 'alleen Admin') ?></span>
+      </summary>
+      <div class="bh-klap-inhoud bh-matrixrol">
+        <table class="bh-matrix bh-taakmatrix">
+          <caption class="sr-only">Taken bij <?= h((string)$mdef['label']) ?>, per rol</caption>
+          <thead>
+            <tr>
+              <th scope="col" class="bh-matrix-mod">Taak</th>
+              <?php foreach ($rollen as $rol): ?><th scope="col" class="bh-matrix-rol"><?= h((string)$rol['naam']) ?></th><?php endforeach; ?>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="bh-taak-alles">
+              <th scope="row" class="bh-matrix-mod">Alles bij <?= h((string)$mdef['label']) ?></th>
+              <?php foreach ($rollen as $rol): ?>
+                <td>
+                  <?php if ($rol['sleutel'] === 'admin'): ?>
+                    <input type="checkbox" checked disabled aria-label="Admin: alle taken bij <?= h((string)$mdef['label']) ?> — vast">
+                  <?php else: ?>
+                    <input type="checkbox" data-taak-alles="<?= h($rol['sleutel']) ?>"
+                           aria-label="<?= h($rol['naam']) ?>: alle taken bij <?= h((string)$mdef['label']) ?> aan of uit">
+                  <?php endif; ?>
+                </td>
+              <?php endforeach; ?>
+            </tr>
+            <?php foreach ($_taken as $taak => $tdef): ?>
+            <tr>
+              <th scope="row" class="bh-matrix-mod">
+                <span class="bh-taak-label"><?= h($tdef['label']) ?></span>
+                <span class="bh-taak-uitleg"><?= h($tdef['uitleg']) ?></span>
+              </th>
+              <?php foreach ($rollen as $rol):
+                $_label = $rol['naam'] . ' mag bij ' . $mdef['label'] . ': ' . $tdef['label'];
               ?>
               <td>
-                <?php if (!in_array($ak, $mdef['acties'], true)): ?>
-                  <span class="bh-matrix-nvt" title="<?= h($mdef['label']) ?> kent geen <?= h(strtolower($al)) ?>"
-                        aria-label="niet van toepassing">–</span>
-                <?php elseif ($_admin):
+                <?php if ($rol['sleutel'] === 'admin'):
                   // Loondossiers: de admin ziet de status, maar opent de stukken niet (mag_kluis()).
                   $_vast = $mod === 'documenten' ? 'Admin ziet de loondossiers, maar alleen de penningmeester opent de stukken'
                                                  : 'Admin heeft altijd volledige toegang'; ?>
-                  <input type="checkbox" checked disabled
-                         aria-label="<?= h($_label) ?> — vast. <?= h($_vast) ?>"
-                         title="<?= h($_vast) ?>">
+                  <input type="checkbox" checked disabled aria-label="<?= h($_label) ?> — vast. <?= h($_vast) ?>" title="<?= h($_vast) ?>">
                 <?php else: ?>
-                  <input type="checkbox"
-                         name="recht[<?= h($rol['sleutel']) ?>][<?= h($mod) ?>][<?= h($ak) ?>]"
-                         value="1" <?= !empty($_r[$ak]) ? 'checked' : '' ?>
-                         aria-label="<?= h($_label) ?>"
-                         data-rol="<?= h($rol['sleutel']) ?>" data-mod="<?= h($mod) ?>" data-actie="<?= h($ak) ?>">
+                  <input type="checkbox" name="taak[<?= h($rol['sleutel']) ?>][<?= h($mod) ?>][<?= h($taak) ?>]" value="1"
+                         <?= !empty($taken_per_rol[$rol['sleutel']][$mod][$taak]) ? 'checked' : '' ?>
+                         aria-label="<?= h($_label) ?>" data-taak-rol="<?= h($rol['sleutel']) ?>">
                 <?php endif; ?>
               </td>
               <?php endforeach; ?>
+            </tr>
             <?php endforeach; ?>
-          </tr>
-          <?php endforeach; ?>
-        <?php endforeach; ?>
-      </tbody>
-    </table>
-  </div>
+          </tbody>
+        </table>
+      </div>
+    </details>
+    <?php endforeach; ?>
+  <?php endforeach; ?>
 
   <div class="bh-matrix-voet">
     <button type="submit" class="ds-btn ds-btn-primair">Rechten opslaan</button>
-    <span class="bh-meta">De hele matrix wordt in één keer opgeslagen.</span>
+    <span class="bh-meta">De hele matrix wordt in één keer opgeslagen. Elke wijziging komt in het logboek.</span>
   </div>
 </form>
-
-<script nonce="<?= h(csp_nonce()) ?>">
-/* Bewerken staat per rol ingeklapt: de kaart moet leesbaar blijven, en een rol
-   bewerken is een uitzondering. */
-function rolBewerk(sleutel) {
-  var f = document.getElementById('rolform-' + sleutel);
-  if (!f) return;
-  f.hidden = !f.hidden;
-  if (!f.hidden) { var v = f.querySelector('input[type=text]:not([readonly])'); if (v) v.focus(); }
-}
-
-/* Bewerken of verwijderen zonder lezen bestaat niet. De server zet dat ook recht;
-   hier gebeurt het meteen, zodat je ziet wat je opslaat. */
-document.querySelectorAll('.bh-matrix input[type=checkbox]').forEach(function (cb) {
-  cb.addEventListener('change', function () {
-    if (!this.checked) return;
-    if (this.dataset.actie !== 'bewerken' && this.dataset.actie !== 'verwijderen') return;
-    var lees = document.querySelector('input[data-rol="' + this.dataset.rol + '"]'
-             + '[data-mod="' + this.dataset.mod + '"][data-actie="lezen"]');
-    if (lees) lees.checked = true;
-  });
-});
-</script>
+<script src="<?= APP_URL ?>/assets/js/rollen.js?v=<?= @filemtime(__DIR__ . '/../assets/js/rollen.js') ?>" defer></script>
 
 <?php require __DIR__ . '/layout_bottom.php'; ?>

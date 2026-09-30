@@ -107,7 +107,7 @@ $_aanw  = 'tw_aanwezigheid_tekst';
     <?php
       $_besloten = !empty($huidig['doorgevoerd_op']);
       $oi_sol = $hid; $oi_naam = (string)$huidig['naam']; $oi_titel = 'Wat valt op?';
-      $oi_mag = $mag_meedraaien && !$_besloten;
+      $oi_mag = $mag_beoordelen && !$_besloten;
       $oi_melding = $_besloten
           ? 'Over ' . $huidig['voornaam'] . ' is al besloten; nieuwe observaties horen nu in het dossier.'
           : (tw_niet_gekomen($huidig) ? $huidig['voornaam'] . ' staat op niet gekomen. Toch gezien? Check dan eerst alsnog in bij Inchecken.' : null);

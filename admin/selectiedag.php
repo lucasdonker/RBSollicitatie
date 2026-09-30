@@ -19,13 +19,14 @@ $seizoen = actief_seizoen();
 $sid = $seizoen ? (int)$seizoen['id'] : 0;
 $ik  = $_SESSION['bhd_naam'] ?? 'onbekend';
 
-// Zelfde niveaus als het trainingsweekend (admin/trainingsweekend.php):
-//   beoordelen — cijfers geven/wissen en observaties plaatsen, en je eígen observaties
-//                verwijderen. Dat is het werk van de begeleider op de dag, dus 'lezen'.
-//   bewerken   — observaties van anderen verwijderen: bestuur.
+// Zelfde taken als het trainingsweekend (admin/trainingsweekend.php):
+//   beoordelen  — cijfers geven/wissen en observaties plaatsen, en je eígen observaties
+//                 verwijderen. Het werk van de begeleider op de dag (basis 'lezen').
+//   nabespreken — ook observaties van anderen verwijderen: bestuur.
+// Zonder beoordelen is dit scherm alleen-lezen.
 // Scores en observaties zijn per beoordelaar ($ik): niemand overschrijft een ander.
-$mag_beoordelen = mag('selectiedag', 'lezen');
-$mag_alles      = mag('selectiedag', 'bewerken');
+$mag_beoordelen = mag('selectiedag', 'beoordelen');    // taakrechten: includes/modules/selectiedag.php
+$mag_alles      = mag('selectiedag', 'nabespreken');   // ook observaties van anderen weghalen
 // Dataminimalisatie (AVG art. 5 lid 1c): de BLK-bijzonderheden (vaak medisch) alleen met
 // BLK-recht; de begeleider ziet dat er iets is, niet wat. Het dossier alleen met dossierrecht.
 $mag_blk     = mag('blk', 'lezen');

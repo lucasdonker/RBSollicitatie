@@ -3,7 +3,7 @@
  * Selectiedag › Voorbereiden — wie komt er en welke formulieren staan nog open.
  * Zelfde stap als bij het trainingsweekend; de weergave is gedeeld (admin/_voorbereiden.php).
  *
- * Lezen = meekijken (begeleider), bevestiging wijzigen = bestuur (selectiedag › bewerken).
+ * Lezen = meekijken, bevestiging wijzigen = taak Voorbereiden (includes/modules/selectiedag.php).
  */
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/beheer/laden.php';
@@ -12,7 +12,7 @@ vereis_recht('selectiedag', 'lezen');
 
 $seizoen      = actief_seizoen();
 $sid          = $seizoen ? (int)$seizoen['id'] : 0;
-$mag_bewerken = mag('selectiedag', 'bewerken');
+$mag_bewerken = mag('selectiedag', 'voorbereiden');
 $mag_dossier  = mag('sollicitanten', 'lezen');
 $hier         = APP_URL . '/admin/selectie_voorbereiden.php';
 

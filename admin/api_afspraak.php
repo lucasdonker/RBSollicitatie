@@ -4,11 +4,11 @@
  * van de loonplanning: dat blijft concept tot "Loonplanning definitief maken".
  *
  * GET  sol_id                          → de stand van die persoon (live bijwerken; lezen)
- * POST wat=cel     sol_id, week_nr, dagen, opgenomen (0/1), betaald (0/1)   (bewerken)
- * POST wat=functie sol_id, functie                                            (bewerken)
- * POST wat=opgave  sol_id              → planning = eigen opgave (bewerken)
- * POST wat=vastzetten sol_id           → naar alle scenario's kopiëren + op slot (bewerken)
- * POST wat=ontgrendelen sol_id, reden  → slot eraf, reden verplicht (bewerken)
+ * POST wat=cel     sol_id, week_nr, dagen, opgenomen (0/1), betaald (0/1)   (taak plannen)
+ * POST wat=functie sol_id, functie                                            (taak plannen)
+ * POST wat=opgave  sol_id              → planning = eigen opgave (taak plannen)
+ * POST wat=vastzetten sol_id           → naar alle scenario's kopiëren + op slot (taak definitief)
+ * POST wat=ontgrendelen sol_id, reden  → slot eraf, reden verplicht (taak definitief)
  * Staat iemand op slot, dan weigeren cel en functie (includes/loonplan_slot.php).
  */
 require_once __DIR__ . '/../includes/functions.php';
@@ -43,8 +43,10 @@ function afspraak_stand(int $sid, array $sc, int $sol, array $seizoen): array {
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { echo json_encode(afspraak_stand($sid, $sc, $sol, $seizoen)); exit; }
 
 csrf_check();
-if (!mag('loonplanning', 'bewerken')) { http_response_code(403); echo json_encode(['ok' => false, 'fout' => 'Je hebt geen bewerkrecht op de loonplanning.']); exit; }
 $wat = (string)($_POST['wat'] ?? 'cel');
+// Taken (includes/modules/loonplanning.php): vastzetten en ontgrendelen = definitief, de rest = plannen.
+$_taak = in_array($wat, ['vastzetten', 'ontgrendelen'], true) ? 'definitief' : 'plannen';
+if (!mag('loonplanning', $_taak)) { http_response_code(403); echo json_encode(['ok' => false, 'fout' => 'Dit hoort niet bij jouw taken in de loonplanning.']); exit; }
 
 if ($wat === 'vastzetten') {
     $ok = loonplan_vastzetten($sid, $sol, (int)$sc['id'], $ik);

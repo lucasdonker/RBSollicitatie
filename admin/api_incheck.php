@@ -3,8 +3,9 @@
  * Inchecken vanuit het beheer, voor de selectiedag én het trainingsweekend (admin/_incheck_lijst.php).
  *
  * POST ev=selectiedag|tw, actie=zet, sol_id, stand=aanwezig|ongedaan|niet
- *      → lezen op de module (begeleiders draaien mee)
- * POST ev, actie=afsluiten → bewerken (bestuur); geen JSON maar een redirect terug
+ *      → taak inchecken (begeleiders draaien mee)
+ * POST ev, actie=afsluiten, tabletcode en pincode → taak voorbereiden (bestuur); geen JSON maar een redirect terug
+ * Beide evenementen hebben dezelfde taaknamen (includes/modules/selectiedag.php, trainingsweekend.php).
  *
  * Alles loopt via includes/evenement.php, dezelfde laag als de tablet.
  */
@@ -22,7 +23,7 @@ $sid = $sz ? (int)$sz['id'] : 0;
 if ($actie === 'code_genereren' || $actie === 'pin_zetten' || $actie === 'pin_wissen') {
     csrf_check();
     if (!$def) redirect(APP_URL . '/admin/');
-    vereis_recht($def['module'], 'bewerken');
+    vereis_recht($def['module'], 'voorbereiden');
     if ($actie === 'code_genereren') {
         // Leesbare code: geen tekens die je kunt verwarren (0/O, 1/I/L).
         $alfabet = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
@@ -51,7 +52,7 @@ if ($actie === 'code_genereren' || $actie === 'pin_zetten' || $actie === 'pin_wi
 if ($actie === 'afsluiten') {
     csrf_check();
     if (!$def) redirect(APP_URL . '/admin/');
-    vereis_recht($def['module'], 'bewerken');
+    vereis_recht($def['module'], 'voorbereiden');
     $n = $sid ? evenement_afsluiten($ev, $sid, (int)($_SESSION['bhd_id'] ?? 0)) : 0;
     flash('succes', 'Inchecken afgesloten: ' . $n . ' ' . ($n === 1 ? 'persoon staat' : 'personen staan') . ' op niet verschenen. Laatkomers kun je nog inchecken.');
     $terug = (string)($_SERVER['HTTP_REFERER'] ?? '');
@@ -61,7 +62,7 @@ if ($actie === 'afsluiten') {
 header('Content-Type: application/json; charset=utf-8');
 csrf_check();
 if (!$def) { echo json_encode(['ok' => false, 'fout' => 'onbekend']); exit; }
-vereis_recht($def['module'], 'lezen');
+vereis_recht($def['module'], 'inchecken');
 
 $sol   = (int)($_POST['sol_id'] ?? 0);
 $stand = (string)($_POST['stand'] ?? '');
