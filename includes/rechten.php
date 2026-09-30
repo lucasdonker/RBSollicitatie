@@ -156,6 +156,10 @@ function rechten_auto_setup(): void {
             PRIMARY KEY (`rol_sleutel`, `module`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+        // Rollen naast de hoofdrol (beheerders.rol), komma-gescheiden. Gevuld bij elke SSO-login uit
+        // de Authentik-groepen; zie huidige_rollen().
+        db_kolom_verzeker($db, 'beheerders', 'extra_rollen', 'VARCHAR(255) DEFAULT NULL');
+
         // Standaardrollen die nog ontbreken (verse database: allemaal; bestaande database: nieuwe rollen zoals
         // 'penningmeester') aanmaken met hun standaardrechten. Bestaande rollen worden nooit overschreven.
         $bestaand = $db->query("SELECT sleutel FROM rollen")->fetchAll(PDO::FETCH_COLUMN);
@@ -254,23 +258,35 @@ function rol_rechten(string $rol_sleutel): array {
 }
 
 /**
+ * Alle rollen van de ingelogde beheerder: de hoofdrol (bhd_rol) plus de extra rollen. Iemand kan
+ * bestuurslid én penningmeester zijn; de rechten van al zijn rollen tellen op (zie mag()).
+ */
+function huidige_rollen(): array {
+    $rollen = (array)($_SESSION['bhd_rollen'] ?? []);
+    $hoofd  = (string)($_SESSION['bhd_rol'] ?? '');
+    if ($hoofd !== '') array_unshift($rollen, $hoofd);
+    return array_values(array_unique(array_filter(array_map('strval', $rollen))));
+}
+
+/**
  * De kernfunctie: mag de ingelogde beheerder deze actie op deze module?
- * admin-rol mag altijd alles (kan zichzelf nooit buitensluiten).
+ * Met meerdere rollen volstaat één rol die het mag. De admin-rol mag altijd alles (kan zichzelf
+ * nooit buitensluiten).
  */
 function mag(string $module, string $actie = 'lezen'): bool {
     rechten_auto_setup();
     // Een uitgezette module bestaat niet, ook niet voor de admin (zie includes/modules.php).
     if (function_exists('module_recht_actief') && !module_recht_actief($module)) return false;
-    $rol = $_SESSION['bhd_rol'] ?? '';
-    if ($rol === '') return false;
-    if ($rol === 'admin') return true; // admin: altijd volledige toegang
+    $rollen = huidige_rollen();
+    if (in_array('admin', $rollen, true)) return true; // admin: altijd volledige toegang
 
     // Cache per request
     static $cache = [];
-    if (!isset($cache[$rol])) $cache[$rol] = rol_rechten($rol);
-    $r = $cache[$rol][$module] ?? null;
-    if (!$r) return false;
-    return !empty($r[$actie]);
+    foreach ($rollen as $rol) {
+        if (!isset($cache[$rol])) $cache[$rol] = rol_rechten($rol);
+        if (!empty($cache[$rol][$module][$actie])) return true;
+    }
+    return false;
 }
 
 /**
@@ -317,21 +333,27 @@ function vereis_recht(string $module, string $actie = 'lezen'): void {
       . '<p><a href="' . htmlspecialchars($terug) . '">Terug naar Vandaag</a></p></div>');
 }
 
-/** Zet Authentik-groepen om naar een rol-sleutel op basis van de rollen-tabel. */
-function rol_uit_authentik_groepen(array $groups): ?string {
+/**
+ * Alle rollen waarvan de gekoppelde Authentik-groep in $groups zit (exacte naam, hoofdletterongevoelig),
+ * hoogste rang eerst. De eerste is de hoofdrol; de rest wordt extra_rollen.
+ */
+function rollen_uit_authentik_groepen(array $groups): array {
     rechten_auto_setup();
+    $uit = [];
     try {
-        // Hoogste rang wint als iemand in meerdere groepen zit
-        $rollen = db()->query("SELECT sleutel, authentik_groep, rang FROM rollen WHERE authentik_groep IS NOT NULL AND authentik_groep<>'' ORDER BY rang DESC")->fetchAll();
+        $rollen = db()->query("SELECT sleutel, authentik_groep FROM rollen WHERE authentik_groep IS NOT NULL AND authentik_groep<>'' ORDER BY rang DESC, sleutel")->fetchAll();
         foreach ($rollen as $rol) {
             foreach ($groups as $g) {
-                if (strcasecmp(trim($rol['authentik_groep']), trim($g)) === 0) {
-                    return $rol['sleutel'];
-                }
+                if (strcasecmp(trim($rol['authentik_groep']), trim((string)$g)) === 0) { $uit[] = $rol['sleutel']; break; }
             }
         }
     } catch (\Exception $e) {}
-    return null;
+    return $uit;
+}
+
+/** De hoofdrol uit de Authentik-groepen (hoogste rang), of null. */
+function rol_uit_authentik_groepen(array $groups): ?string {
+    return rollen_uit_authentik_groepen($groups)[0] ?? null;
 }
 
 }

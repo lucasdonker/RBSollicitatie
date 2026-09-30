@@ -239,7 +239,7 @@ function is_ingelogd(): bool {
     $laatst = (int)($_SESSION['bhd_actief'] ?? 0);
     if ($laatst > 0 && time() - $laatst > BEHEER_INACTIEF_SECONDEN) {
         if (function_exists('audit_log')) audit_log('uitgelogd', 'beheerder', (int)$_SESSION['bhd_id'], ['reden' => 'inactief']);
-        unset($_SESSION['bhd_id'], $_SESSION['bhd_naam'], $_SESSION['bhd_email'], $_SESSION['bhd_rol'], $_SESSION['bhd_via'], $_SESSION['bhd_actief']);
+        unset($_SESSION['bhd_id'], $_SESSION['bhd_naam'], $_SESSION['bhd_email'], $_SESSION['bhd_rol'], $_SESSION['bhd_rollen'], $_SESSION['bhd_via'], $_SESSION['bhd_actief']);
         session_regenerate_id(true);
         flash('info', 'Je was twee uur niet actief in het beheer en bent daarom uitgelogd. Log opnieuw in om verder te gaan.');
         return false;
@@ -350,6 +350,7 @@ function login_beheerder(array $b, string $via = 'wachtwoord'): void {
     session_regenerate_id(true);
     $_SESSION['bhd_id'] = $b['id']; $_SESSION['bhd_naam'] = $b['naam'];
     $_SESSION['bhd_email'] = $b['email']; $_SESSION['bhd_rol'] = $b['rol'];
+    $_SESSION['bhd_rollen'] = array_values(array_filter(explode(',', (string)($b['extra_rollen'] ?? ''))));
     $_SESSION['bhd_via'] = $via; $_SESSION['_t'] = time(); $_SESSION['bhd_actief'] = time();
     try { db()->prepare("UPDATE beheerders SET laatste_login = NOW() WHERE id = ?")->execute([$b['id']]); } catch (Exception $e) {}
     if (function_exists('audit_log')) audit_log('ingelogd', 'beheerder', (int)$b['id'], ['via' => $via]);
@@ -747,8 +748,21 @@ function authentik_email_bestaat(string $email): array|false {
 }
 
 /**
- * Map Authentik groups naar app-rol (de rolsleutel uit de rollen-tabel). Toegang zelf bepaalt
- * auth_callback.php met de toegestane groepen; dit kiest alleen de rol.
+ * Alle app-rollen bij deze Authentik-groepen, hoogste rang eerst (leeg = geen match). De rechten van
+ * al die rollen tellen op; de eerste is de hoofdrol.
+ */
+function authentik_groups_naar_rollen(array $groups): array {
+    // De rollen-tabel (beheerd via Rollen & rechten).
+    if (function_exists('rollen_uit_authentik_groepen')) {
+        $r = rollen_uit_authentik_groepen($groups);
+        if ($r) return $r;
+    }
+    $r = authentik_groups_naar_rol($groups);
+    return $r !== null ? [$r] : [];
+}
+
+/**
+ * Map Authentik groups naar één app-rol (de hoofdrol). Voor alle rollen: authentik_groups_naar_rollen().
  * Returns: rolsleutel (bv. 'admin' | 'bestuur' | 'penningmeester' | 'begeleider') | null (geen match)
  */
 function authentik_groups_naar_rol(array $groups): ?string {

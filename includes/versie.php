@@ -3,10 +3,17 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.131.0');
+define('APP_VERSIE', '2.132.0');
 
 function app_changelog(): array {
     return [
+        '2.132.0' => [
+            'datum'  => '2026-09-30',
+            'titel'  => 'Rollen uit Authentik opnieuw ingedeeld',
+            'punten' => [
+                'Iemand kan meerdere rollen hebben (bijvoorbeeld bestuur én penningmeester); de rechten tellen op. Eerder won één rol en verloor een penningmeester die ook bestuurslid is een deel van zijn rechten',
+            ],
+        ],
         '2.131.0' => [
             'datum'  => '2026-09-30',
             'titel'  => 'Beveiliging aangescherpt (NIS2-zorgplicht)',

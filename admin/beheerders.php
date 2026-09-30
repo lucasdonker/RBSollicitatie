@@ -228,6 +228,11 @@ require __DIR__ . '/layout_top.php';
                 <?= icoon('waarschuwing', 14) ?> Geen inlogmethode
               </span>
             <?php endif; ?>
+            <?php $_extra = array_filter(explode(',', (string)($b['extra_rollen'] ?? ''))); if ($_extra): ?>
+              <span class="bh-bhrij-via" title="Extra rollen uit Authentik; de rechten tellen op">
+                ook <?= h(implode(', ', array_map(fn($r) => $rolnamen[$r] ?? $r, $_extra))) ?>
+              </span>
+            <?php endif; ?>
             <span class="bh-bhrij-laatst">
               <?= !empty($b['laatste_login']) ? 'laatst ' . h(datum_kort_nl(substr((string)$b['laatste_login'], 0, 10))) : 'nog nooit ingelogd' ?>
             </span>

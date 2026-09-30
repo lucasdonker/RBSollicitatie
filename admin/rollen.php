@@ -22,10 +22,10 @@ rechten_auto_setup();
 $db   = db();
 $fout = '';
 
-/** Hoeveel beheerders hebben deze rol? */
+/** Hoeveel beheerders hebben deze rol (als hoofdrol of als extra rol)? */
 function rol_gebruikers($db, string $sleutel): int {
-    $q = $db->prepare("SELECT COUNT(*) FROM beheerders WHERE rol=?");
-    $q->execute([$sleutel]);
+    $q = $db->prepare("SELECT COUNT(*) FROM beheerders WHERE rol=? OR FIND_IN_SET(?, extra_rollen)");
+    $q->execute([$sleutel, $sleutel]);
     return (int)$q->fetchColumn();
 }
 

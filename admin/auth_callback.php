@@ -157,8 +157,10 @@ if (!$fout) {
         }
     }
 
-    // Bepaal app-rol op basis van match
-    $rol_uit_groups = authentik_groups_naar_rol($groups);
+    // Alle app-rollen bij deze groepen (hoogste rang eerst); de rechten tellen op.
+    $rollen_uit_groups = authentik_groups_naar_rollen($groups);
+    $rol_uit_groups    = $rollen_uit_groups[0] ?? null;
+    $extra_rollen      = implode(',', array_slice($rollen_uit_groups, 1)) ?: null;
 
     $db = db();
     $stmt = $db->prepare("SELECT * FROM beheerders WHERE (authentik_uid = ? AND authentik_uid IS NOT NULL) OR email = ? LIMIT 1");
@@ -185,15 +187,16 @@ if (!$fout) {
         // toegestane groepen = hierboven al geweigerd.) Nieuwe accounts krijgen de laagste rol.
         if ($b) {
             $nieuwe_rol = $rol_uit_groups ?: ($b['rol'] !== '' ? $b['rol'] : 'begeleider');
-            $db->prepare("UPDATE beheerders SET authentik_uid = ?, naam = ?, rol = ?, laatste_login = NOW() WHERE id = ?")
-               ->execute([$sub, $naam, $nieuwe_rol, $b['id']]);
+            $db->prepare("UPDATE beheerders SET authentik_uid = ?, naam = ?, rol = ?, extra_rollen = ?, laatste_login = NOW() WHERE id = ?")
+               ->execute([$sub, $naam, $nieuwe_rol, $extra_rollen, $b['id']]);
             $b['naam'] = $naam;
             $b['rol']  = $nieuwe_rol;
+            $b['extra_rollen'] = $extra_rollen;
         } else {
             // Nieuw account
             $rol = $rol_uit_groups ?: 'begeleider';
-            $db->prepare("INSERT INTO beheerders (naam, email, wachtwoord, rol, authentik_uid) VALUES (?, ?, NULL, ?, ?)")
-               ->execute([$naam, $email, $rol, $sub]);
+            $db->prepare("INSERT INTO beheerders (naam, email, wachtwoord, rol, extra_rollen, authentik_uid) VALUES (?, ?, NULL, ?, ?, ?)")
+               ->execute([$naam, $email, $rol, $extra_rollen, $sub]);
             $new_id = (int)$db->lastInsertId();
             $stmt_b = $db->prepare("SELECT * FROM beheerders WHERE id = ?");
             $stmt_b->execute([$new_id]);

@@ -88,7 +88,7 @@ function bh_zoek_plekken(bool $alles = false): array {
     // vereist_rol); anders "module" (lezen) of "module.actie" (bv. systeem.bewerken).
     $mag_zien = function (?string $module) use ($alles): bool {
         if ($alles || $module === null) return true;
-        if (str_starts_with($module, 'rol:')) return ($_SESSION['bhd_rol'] ?? '') === substr($module, 4);
+        if (str_starts_with($module, 'rol:')) return in_array(substr($module, 4), huidige_rollen(), true);
         $delen = explode('.', $module);
         return !function_exists('mag') || mag($delen[0], $delen[1] ?? 'lezen');
     };
