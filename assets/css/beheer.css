@@ -880,6 +880,15 @@ span.bh-incheck-code {
 .bh-nb-score { display: flex; flex-direction: column; align-items: flex-end; }
 .bh-nb-score .bh-num { font-size: 20px; font-weight: 700; color: var(--ink); }
 .bh-nb-kaart .ds-melding { margin: 0 18px 10px; }
+/* Signalen: de reden om over iemand te praten, als chips onder de naam (bh_chip, tekst + kleur). */
+.bh-nb-signalen { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 18px 10px 77px; }
+.bh-nb-meer { margin: 0 18px; border-top: 1px solid var(--bg-subtle); }
+.bh-nb-meer > .bh-nb-kolommen { padding: 4px 0 14px; }
+.bh-nb-lijstkop { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 0 0 10px; }
+.bh-nb-snel { font: var(--text-label); font-size: 14px; color: var(--navy); margin-left: 12px; }
+.bh-scorebalk.laag .bh-scorebalk-getal { color: var(--error); }
+.bh-scorebalk.laag .bh-scorebalk-vul { background: var(--error); }
+@media (max-width: 600px) { .bh-nb-signalen { padding-left: 18px; } }
 .bh-nb-kolommen { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; padding: 4px 18px 14px; }
 .bh-nb-kolommen h3 {
   font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
@@ -1264,8 +1273,14 @@ a.bh-naamcel:hover .bh-naamcel-naam { color: var(--navy); text-decoration: under
   box-shadow: var(--shadow-float);
 }
 .bh-filter-meer-velden .bh-filter-keuze .ds-select { width: 100%; }
+@media (max-width: 600px) {
+  /* Op een telefoon elke keuzelijst over de volle breedte: anders staan ze rafelig onder elkaar. */
+  .bh-filterbalk > .bh-filter-keuze { flex: 1 1 100%; }
+  .bh-filterbalk > .bh-filter-keuze .ds-select { width: 100%; }
+}
 @media (max-width: 760px) {
   .bh-filter-meer { flex: 1 1 100%; }
+  .bh-filter-meer > summary { width: 100%; justify-content: center; }
   .bh-filter-meer-velden { position: static; margin-top: 8px; box-shadow: none; }
 }
 /* Actieve filters als chips: in één oogopslag wat je nu ziet, en met één tik weer weg. */

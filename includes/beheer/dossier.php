@@ -318,10 +318,22 @@ function bh_dossier_score_per_test(array $dossier): array {
  * @return array{stand:string,label:string,kleur:string,reden:string}|null
  */
 function bh_dossier_advies(array $dossier): ?array {
-    $score = bh_dossier_score($dossier);
+    return bh_advies_bij_score(bh_dossier_score($dossier));
+}
+
+/** De drempel van de selectiedag (instelling selectie.drempel); onder drempel − 0,5 is het "niet door". */
+function bh_advies_drempel(): float {
+    return function_exists('instelling') ? (float)instelling('selectie.drempel', '3.5') : 3.5;
+}
+
+/**
+ * Het advies bij een gemiddeld cijfer — één regel voor dossier, samenvatting en nabespreking.
+ * @return array{stand:string,label:string,kleur:string,reden:string}|null  null zonder cijfer
+ */
+function bh_advies_bij_score(?float $score): ?array {
     if ($score === null) return null;
 
-    $drempel = function_exists('instelling') ? (float)instelling('selectie.drempel', '3.5') : 3.5;
+    $drempel = bh_advies_drempel();
     $twijfel = $drempel - 0.5;
 
     if ($score >= $drempel) {

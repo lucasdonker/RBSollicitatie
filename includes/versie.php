@@ -3,10 +3,21 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.133.0');
+define('APP_VERSIE', '2.134.0');
 
 function app_changelog(): array {
     return [
+        '2.134.0' => [
+            'datum'  => '2026-09-30',
+            'titel'  => 'Nabespreking: de randgevallen springen eruit',
+            'punten' => [
+                'Per sollicitant staan de signalen als korte zinnen onder de naam: dicht bij de drempel, laag op een onderdeel (met welk), twee keer of vaker aandacht, beoordelaars oneens, cijfers die ontbreken, een aandachtspunt van een strandwacht, niet aanwezig',
+                'Bovenaan hoeveel er nog zonder besluit zijn en een snelkoppeling "N randgevallen om eerst te bespreken"',
+                'Filteren op signaal (of alleen randgevallen), besluit, advies, groep en aanwezig; sorteren op laagste of hoogste cijfer, meeste signalen, meeste aandacht, meest oneens of dichtst bij de drempel',
+                'Elke kaart toont het advies op cijfer; observaties, cijfers per onderdeel (ook per beoordelaar) en feedback klappen uit, of allemaal tegelijk met "Alles uitklappen"',
+                'Cijfers per onderdeel tonen overal de echte naam van het onderdeel (ook in het dossier en het TW-gesprek); een 2 of lager staat in het rood',
+            ],
+        ],
         '2.133.0' => [
             'datum'  => '2026-09-30',
             'titel'  => 'Beoordelen op de telefoon rustiger, en overal netjes uitgelijnd',
