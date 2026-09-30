@@ -2317,35 +2317,49 @@ je:</p>
 <li><strong>Openstaande verzoeken: N</strong> (alleen als die er zijn):
 verzoeken om in bepaalde weken minder dagen te werken. Zie <a href="#een-verzoek-om-minder-dagen-beoordelen">Een verzoek om minder
 dagen beoordelen</a>.</li>
-<li><strong>Nog voorlopig: N personen</strong> (alleen als die er zijn):
-wie de beschikbaarheid nog niet definitief heeft gemaakt. Er staat de
-deadline bij, met het aantal dagen dat nog rest of &quot;verstreken&quot;. Deze
-mensen krijgen vanaf twee weken vóór de deadline vanzelf herinneringen.
-Je hoeft ze niet zelf na te bellen. Met het envelopje bij een naam mail
-je iemand direct.</li>
-<li><strong>Filters en export</strong>: zoek op naam, kies wie
-(iedereen, nog in de procedure, aangenomen), nieuw of terugkerend, en
-toon alleen wie een open verzoek heeft of nog voorlopig is. Grafiek,
-raster en totalen volgen de filter. <strong>Export per week</strong>
-geeft een Excel met per persoon per week het aantal dagen;
-<strong>Export per dag</strong> per persoon per datum ja / nee / liever
-niet, met een tabblad met de redenen. Beide exports volgen de filter en
-komen in het logboek.</li>
-<li><strong>Dekking per week</strong>: een staafgrafiek met per week het
-aantal mensen dat telt. In het hoofdseizoen is dat het weektotaal. In
-het voor- en naseizoen zijn de posten alleen in het weekend bemand, dus
-telt dan het aantal dat het weekend dekt. De norm is de optelsom van
-alle rollen onder Instellingen › Posten &amp; bezetting. Rechtsboven
-staat in woorden welke weken onder de norm zitten, of &quot;Alle weken
-gedekt&quot;. Is er nog geen post ingesteld, dan staat er dat er geen norm
-is.</li>
+<li><strong>Nog voorlopig: N personen</strong> (alleen als die er zijn,
+ingeklapt): wie de beschikbaarheid nog niet definitief heeft gemaakt. In
+de kop staat de deadline, met het aantal dagen dat nog rest of
+&quot;verstreken&quot;. Deze mensen krijgen vanaf twee weken vóór de deadline
+vanzelf herinneringen. Je hoeft ze niet zelf na te bellen. Klap open
+voor de namen; met het envelopje mail je iemand direct.</li>
+<li><strong>Filters</strong>: zoek op naam, kies wie (iedereen, nog in
+de procedure, aangenomen), de <strong>weergave</strong> (per week of per
+dag) en de <strong>sortering</strong> (naam, meeste weken, meeste dagen,
+minste weken, laatst aangemeld). Onder <strong>Meer filters</strong>:
+een weekbereik (vanaf / tot en met), minimaal zoveel weken beschikbaar,
+nieuw of terugkerend, alleen wie een open verzoek heeft of nog voorlopig
+is, en alleen wie ergens liever vrij is. Grafiek, raster en totalen
+volgen de filter.</li>
+<li><strong>Exporteren</strong> (menu rechts): <strong>Excel per
+week</strong> met per persoon per week het aantal dagen en een kolom
+Liever vrij; <strong>Excel per dag</strong> per persoon per datum ja /
+nee / liever niet, met een tabblad met de redenen; en, met de
+loonplanning aan, de <strong>Export voor het rooster</strong>. De
+exports volgen de filter en het weekbereik, en komen in het
+logboek.</li>
+<li><strong>Dekking per week</strong> (ingeklapt; de kop zegt al &quot;Alle
+weken gedekt&quot; of welke weken te krap zijn): een staafgrafiek met per
+week het aantal mensen dat telt. In het hoofdseizoen is dat het
+weektotaal. In het voor- en naseizoen zijn de posten alleen in het
+weekend bemand, dus telt dan het aantal dat het weekend dekt. De norm is
+de optelsom van alle rollen onder Instellingen › Posten &amp; bezetting.
+Is er nog geen post ingesteld, dan staat er dat er geen norm is.</li>
 <li>Een tip als het <strong>hoofdseizoen</strong> nog niet is ingesteld.
 Elke week telt dan als hoofdseizoen. Je stelt het hoofdseizoen in bij <a href="#seizoen-opzetten">Seizoen</a>.</li>
-<li><strong>Raster</strong>: een rij per sollicitant en een kolom per
-week van de werkperiode. De kolom &quot;wkn&quot; telt het aantal beschikbare
-weken.</li>
+<li><strong>Raster per week</strong>: een rij per sollicitant en een
+kolom per week. De kolom &quot;wkn&quot; telt het aantal beschikbare weken (wijs
+aan voor het aantal dagen). De kolom <strong>Liever vrij</strong> toont
+de vaste weekdagen die iemand liever vrij heeft (paars, bijvoorbeeld &quot;wo
+za&quot;) en het aantal losse datums; wijs aan voor de datums.</li>
+<li><strong>Raster per dag</strong>: een rij per sollicitant en een
+kolom per dag, standaard deze en volgende week (kies andere weken onder
+Meer filters). <strong>ja</strong> = kan, <strong>lv</strong> = liever
+niet, <strong>—</strong> = kan niet; wijs een cel aan voor de reden. Het
+komt uit dezelfde bron als het rooster. Corrigeren doe je in de
+weekweergave.</li>
 </ul>
-<p>Een cel in het raster betekent het volgende:</p>
+<p>Een cel in het raster per week betekent het volgende:</p>
 <table>
 <thead>
 <tr>
@@ -2371,20 +2385,23 @@ weken.</li>
 <td>aangepast door het bestuur</td>
 </tr>
 <tr>
+<td>&quot;2 lv&quot; klein eronder</td>
+<td>die week twee dagen liever vrij (een voorkeur, de planner
+beslist)</td>
+</tr>
+<tr>
 <td>—</td>
 <td>niet beschikbaar</td>
 </tr>
 </tbody>
 </table>
 <p>Achter een naam kunnen labels staan: <strong>terug</strong>
-(terugkerende sollicitant), een oranje label zoals <strong>3d</strong>
-(afwijkende norm van dat aantal dagen per week) en een paars label
-<strong>vrij ma di</strong> (de dagen die iemand liever vrij heeft; de
-planner beslist). De onderste rij toont per week &quot;aantal beschikbaar /
-aantal dat het weekend dekt&quot;. Een rood getal zit onder de norm. Onderaan
-staat wanneer de gegevens voor het laatst veranderden.</p>
-<p>Met een klik op een naam open je het dossier op het tabblad
-Beschikbaarheid.</p>
+(terugkerende sollicitant) en een oranje label zoals <strong>3d</strong>
+(afwijkende norm van dat aantal dagen per week). De onderste rij toont
+per week &quot;aantal beschikbaar / aantal dat het weekend dekt&quot;. Een rood
+getal zit onder de norm. Onderaan staat wanneer de gegevens voor het
+laatst veranderden. Met een klik op een naam open je het dossier op het
+tabblad Beschikbaarheid.</p>
 <h2 id="een-verzoek-om-minder-dagen-beoordelen">Een verzoek om minder
 dagen beoordelen</h2>
 <p>Een sollicitant kan in het portaal vragen om in bepaalde weken minder

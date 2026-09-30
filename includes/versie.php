@@ -3,10 +3,21 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.138.0');
+define('APP_VERSIE', '2.139.0');
 
 function app_changelog(): array {
     return [
+        '2.139.0' => [
+            'datum'  => '2026-09-30',
+            'titel'  => 'Beschikbaarheid: per dag, liever vrij, meer filters en sorteren',
+            'punten' => [
+                'Nieuwe weergave Per dag: per persoon per dag ja, liever niet of kan niet, met de reden bij aanwijzen. Standaard deze en volgende week; kies zelf andere weken',
+                'Liever vrij is duidelijker: een eigen kolom met de vaste dagen en het aantal losse datums, en in de weekcel "2 lv" als iemand die week twee dagen liever vrij is',
+                'Sorteren op meeste of minste weken, meeste dagen of laatst aangemeld. Onder Meer filters: een weekbereik, minimaal aantal weken en alleen wie ergens liever vrij is',
+                'Dekking per week en "Nog voorlopig" staan ingeklapt, met de stand in de kop',
+                'Exporteren in één menu; de Excel volgt ook het weekbereik en heeft een kolom Liever vrij',
+            ],
+        ],
         '2.138.0' => [
             'datum'  => '2026-09-30',
             'titel'  => 'Berichten: standaard WhatsApp/sms, opmaak, alle variabelen, goed op de telefoon',

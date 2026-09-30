@@ -49,12 +49,13 @@ function besch_export_boek(?array $seizoen, array $raster, array $filter, string
         $bladen[] = ['naam' => 'Per dag', 'kop' => $kop, 'breedte' => array_merge([26, 20], array_fill(0, count($datums), 10)), 'rijen' => $rijen, 'boven' => $boven];
         $bladen[] = ['naam' => 'Redenen', 'kop' => ['Naam', 'Datum', 'Soort', 'Reden'], 'breedte' => [26, 12, 12, 50], 'rijen' => $redenen, 'boven' => $boven];
     } else {
-        $kop = ['Naam', 'Fase', 'Nieuw of terug', 'Weken'];
+        $kop = ['Naam', 'Fase', 'Nieuw of terug', 'Weken', 'Liever vrij'];
         foreach ($weken as $wn => $w) $kop[] = 'W' . $wn . ' (' . $w['kort'] . ')';
         $rijen = [];
         foreach ($raster['lijst'] as $p) {
             $sol = (int)$p['sol_id'];
-            $rij = [$p['naam'], $fase($p['fase']), !empty($p['terugkerend']) ? 'terug' : 'nieuw', (int)($raster['weken_count'][$sol] ?? 0)];
+            $rij = [$p['naam'], $fase($p['fase']), !empty($p['terugkerend']) ? 'terug' : 'nieuw', (int)($raster['weken_count'][$sol] ?? 0),
+                    bh_besch_liever_tekst($raster['vaste'][$sol] ?? null, $raster['liever'][$sol] ?? [])];
             foreach ($weken as $wn => $_) {
                 $c = $raster['eff'][$sol][$wn] ?? null;
                 $t = bh_besch_cel_tekst($c);
@@ -66,10 +67,10 @@ function besch_export_boek(?array $seizoen, array $raster, array $filter, string
             }
             $rijen[] = $rij;
         }
-        $tot = ['Totaal beschikbaar', '', '', ''];
+        $tot = ['Totaal beschikbaar', '', '', '', ''];
         foreach ($weken as $wn => $_) $tot[] = ['v' => (int)$raster['tot_per_week'][$wn]['aantal'], 's' => 'vet'];
         $rijen[] = $tot;
-        $bladen[] = ['naam' => 'Per week', 'kop' => $kop, 'breedte' => array_merge([26, 20, 12, 8], array_fill(0, count($weken), 12)), 'rijen' => $rijen, 'boven' => $boven];
+        $bladen[] = ['naam' => 'Per week', 'kop' => $kop, 'breedte' => array_merge([26, 20, 12, 8, 26], array_fill(0, count($weken), 12)), 'rijen' => $rijen, 'boven' => $boven];
     }
 
     $uitleg = [
@@ -81,7 +82,11 @@ function besch_export_boek(?array $seizoen, array $raster, array $filter, string
             ['proces' => 'nog in de procedure', 'aangenomen' => 'aangenomen'][$filter['groep']] ?? '',
             ['nieuw' => 'alleen nieuw', 'terug' => 'alleen terugkerend'][$filter['type']] ?? '',
             ['verzoek' => 'met open verzoek', 'voorlopig' => 'nog voorlopig'][$filter['toon']] ?? '',
+            ($filter['van'] ?? '') !== '' || ($filter['tot'] ?? '') !== '' ? 'weken ' . ($filter['van'] ?: 'begin') . ' t/m ' . ($filter['tot'] ?: 'eind') : '',
+            ($filter['min'] ?? '') !== '' ? 'minimaal ' . $filter['min'] . ' weken' : '',
+            ($filter['lv'] ?? '') === 'ja' ? 'alleen wie ergens liever vrij is' : '',
         ])) : 'geen: iedereen met een opgave'],
+        ['Liever vrij', 'Vaste voorkeur-vrije weekdagen ("wo") en losse datums waarop iemand liever vrij is. Een voorkeur, geen blokkade: de planner beslist.'],
         ['Gemaakt', date('d-m-Y H:i')],
     ];
     $bladen[] = ['naam' => 'Uitleg', 'kop' => ['', ''], 'breedte' => [14, 110], 'rijen' => $uitleg];

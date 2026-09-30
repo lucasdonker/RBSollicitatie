@@ -1522,6 +1522,9 @@ a.bh-naamcel:hover .bh-naamcel-naam { color: var(--navy); text-decoration: under
 
 /* ── Dekkingsgrafiek ── */
 .bh-dekgrafiek { padding: 18px 22px; margin-bottom: 14px; }
+.bh-dekgrafiek.bh-klap { padding: 4px 22px; }
+.bh-dekgrafiek.bh-klap > summary { align-items: center; }
+.bh-dekgrafiek.bh-klap[open] { padding-bottom: 18px; }
 .bh-dekgrafiek-kop { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
 .bh-dekgrafiek-kop h2 { margin: 0; font-size: 16px; font-weight: 600; color: var(--ink); }
 .bh-dekgrafiek-norm { font: var(--text-meta); color: var(--ink-soft); }
@@ -1596,6 +1599,14 @@ button.bh-dekstaaf:hover .bh-dekstaaf-bak { outline: 2px solid var(--accent); ou
 
 .bh-raster-wkn { display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: var(--ink-soft); }
 .bh-rastertabel thead .bh-raster-wkn { font-size: 11px; }
+/* Kolom "Liever vrij": vaste voorkeursdagen als chip, losse datums als aantal (datums in de tooltip). */
+.bh-raster-lv { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; padding: 4px 6px; font-size: 12px; min-width: 0; }
+.bh-rastertabel thead .bh-raster-lv { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); }
+/* Dagweergave: een lijn vóór elke maandag, het weekend iets gekleurd. */
+.bh-dagraster .bh-dag-maandag { box-shadow: inset 2px 0 0 var(--border-strong); }
+.bh-dagraster thead .bh-dag-weekend { background: var(--bg-subtle); }
+.bh-klap.bh-actiekaart { padding: 4px 20px; }
+.bh-klap.bh-actiekaart > .bh-klap-inhoud { padding: 0 0 14px; }
 
 .bh-raster-wk { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 7px 2px; }
 .bh-raster-wknr { font-size: 11px; font-weight: 700; color: var(--ink-soft); }

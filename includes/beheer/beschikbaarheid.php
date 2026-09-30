@@ -9,19 +9,123 @@
 
 if (!function_exists('bh_besch_filter')) {
 
-/** De filters uit de URL, genormaliseerd. q, groep (''|proces|aangenomen), type (''|nieuw|terug), toon (''|verzoek|voorlopig). */
+/**
+ * De filters uit de URL, genormaliseerd.
+ *   q · groep (''|proces|aangenomen) · type (''|nieuw|terug) · toon (''|verzoek|voorlopig)
+ *   van, tot  weeknummers (leeg = hele werkperiode) · min  minimaal zoveel weken beschikbaar
+ *   lv        'ja' = alleen wie ergens liever vrij is · sort (zie bh_besch_sorteringen)
+ *   weergave  'week' | 'dag' (per dag: kan / liever niet / niet)
+ */
 function bh_besch_filter(array $get): array {
     $f = ['q' => trim((string)($get['q'] ?? '')), 'groep' => (string)($get['groep'] ?? ''),
-          'type' => (string)($get['type'] ?? ''), 'toon' => (string)($get['toon'] ?? '')];
+          'type' => (string)($get['type'] ?? ''), 'toon' => (string)($get['toon'] ?? ''),
+          'van' => (string)($get['van'] ?? ''), 'tot' => (string)($get['tot'] ?? ''), 'min' => (string)($get['min'] ?? ''),
+          'lv' => (string)($get['lv'] ?? ''), 'sort' => (string)($get['sort'] ?? ''), 'weergave' => (string)($get['weergave'] ?? '')];
     if (!in_array($f['groep'], ['', 'proces', 'aangenomen'], true)) $f['groep'] = '';
     if (!in_array($f['type'], ['', 'nieuw', 'terug'], true)) $f['type'] = '';
     if (!in_array($f['toon'], ['', 'verzoek', 'voorlopig'], true)) $f['toon'] = '';
+    foreach (['van', 'tot'] as $k) if ($f[$k] !== '' && !(ctype_digit($f[$k]) && (int)$f[$k] >= 1 && (int)$f[$k] <= 53)) $f[$k] = '';
+    if ($f['min'] !== '' && !(ctype_digit($f['min']) && (int)$f['min'] <= 60)) $f['min'] = '';
+    if ($f['lv'] !== 'ja') $f['lv'] = '';
+    if (!isset(bh_besch_sorteringen()[$f['sort']])) $f['sort'] = '';
+    if ($f['weergave'] !== 'dag') $f['weergave'] = '';
     return $f;
 }
 
-/** Staat er een filter aan? */
+/** Sorteringen van het raster: sleutel => label. */
+function bh_besch_sorteringen(): array {
+    return ['' => 'Op naam', 'weken' => 'Meeste weken eerst', 'dagen' => 'Meeste dagen eerst',
+            'minst' => 'Minste weken eerst', 'aangemeld' => 'Laatst aangemeld eerst'];
+}
+
+/** Staat er een filter aan (sorteren en weergave tellen niet)? */
 function bh_besch_gefilterd(array $f): bool {
-    return $f['q'] !== '' || $f['groep'] !== '' || $f['type'] !== '' || $f['toon'] !== '';
+    foreach (['q', 'groep', 'type', 'toon', 'van', 'tot', 'min', 'lv'] as $k) if (($f[$k] ?? '') !== '') return true;
+    return false;
+}
+
+/**
+ * Het weekbereik toepassen. In de dagweergave zonder bereik: twee weken, vanaf deze week als die in
+ * de werkperiode valt, anders vanaf het begin — een dagraster over het hele seizoen is onleesbaar.
+ */
+function bh_besch_weken_bereik(array $weken, array $f): array {
+    $van = $f['van'] !== '' ? (int)$f['van'] : null;
+    $tot = $f['tot'] !== '' ? (int)$f['tot'] : null;
+    if (($f['weergave'] ?? '') === 'dag' && $van === null && $tot === null && $weken) {
+        $nu = (int)date('W');
+        $van = isset($weken[$nu]) ? $nu : (int)array_key_first($weken);
+        $sleutels = array_keys($weken);
+        $i = array_search($van, $sleutels, true);
+        $tot = (int)($sleutels[min(count($sleutels) - 1, $i + 1)]);
+    }
+    if ($van === null && $tot === null) return $weken;
+    // Volgorde van de werkperiode aanhouden (een seizoen over de jaargrens heeft weeknummers die terugspringen).
+    $uit = []; $binnen = $van === null;
+    foreach ($weken as $wn => $w) {
+        if ($wn === $van) $binnen = true;
+        if ($binnen) $uit[$wn] = $w;
+        if ($tot !== null && $wn === $tot) break;
+    }
+    return $uit ?: $weken;
+}
+
+/**
+ * "Liever vrij" per persoon per week, uit de losse dagen (beschikbaarheid_dag, soort voorkeur_vrij)
+ * in één query voor iedereen: [sol_id][wn] => [Y-m-d, …]. Vaste voorkeur-vrije weekdagen staan
+ * apart (bh_besch_raster 'vaste').
+ */
+function bh_besch_liever_vrij(array $sol_ids, array $weken): array {
+    if (!$sol_ids || !$weken) return [];
+    $van = reset($weken)['start'];
+    $tot = (new DateTime(end($weken)['start']))->modify('+6 days')->format('Y-m-d');
+    $uit = [];
+    try {
+        $q = db()->prepare("SELECT sollicitatie_id, datum FROM beschikbaarheid_dag
+                            WHERE soort='voorkeur_vrij' AND status='goedgekeurd' AND datum BETWEEN ? AND ?
+                              AND sollicitatie_id IN (" . implode(',', array_fill(0, count($sol_ids), '?')) . ")
+                            ORDER BY datum");
+        $q->execute(array_merge([$van, $tot], array_values($sol_ids)));
+        foreach ($q->fetchAll() as $r) {
+            $wn = (int)(new DateTime((string)$r['datum']))->format('W');
+            if (isset($weken[$wn])) $uit[(int)$r['sollicitatie_id']][$wn][] = (string)$r['datum'];
+        }
+    } catch (\Throwable $e) {}
+    return $uit;
+}
+
+/**
+ * "Liever vrij" van één persoon in woorden: vaste weekdagen en losse datums ("wo · 12 aug, 19 aug").
+ * @param mixed $vaste  JSON of array met weekdagen (1–7), zoals in beschikbaarheid_profiel
+ */
+function bh_besch_liever_tekst($vaste, array $per_week): string {
+    $dagen = is_array($vaste) ? $vaste : (json_decode((string)$vaste, true) ?: []);
+    $delen = [];
+    if ($dagen) $delen[] = implode(' ', array_map(fn($d) => dag_kort((int)$d), $dagen));
+    $datums = [];
+    foreach ($per_week as $lijst) foreach ($lijst as $d) $datums[] = datum_kort_nl($d);
+    if ($datums) $delen[] = implode(', ', $datums);
+    return implode(' · ', $delen);
+}
+
+/**
+ * De dagweergave: per persoon per dag 'ja' (kan), 'liever' (liever niet), 'nee' (kan niet) met de reden.
+ * Uit beschikbaarheid_per_dag() — dezelfde bron als het rooster. Alleen voor het gekozen weekbereik.
+ * @return array [sol_id][Y-m-d] => ['stand' => ja|liever|nee, 'reden' => string]
+ */
+function bh_besch_dagen(array $lijst, array $weken): array {
+    if (!$weken || !function_exists('beschikbaarheid_per_dag')) return [];
+    $van = reset($weken)['start'];
+    $tot = (new DateTime(end($weken)['start']))->modify('+6 days')->format('Y-m-d');
+    $uit = [];
+    foreach ($lijst as $p) {
+        foreach (beschikbaarheid_per_dag((int)$p['sol_id'], $van, $tot) as $d => $info) {
+            $uit[(int)$p['sol_id']][$d] = [
+                'stand' => !empty($info['beschikbaar']) ? 'ja' : (($info['hardheid'] ?? '') === 'zacht' ? 'liever' : 'nee'),
+                'reden' => (string)($info['reden'] ?? ''),
+            ];
+        }
+    }
+    return $uit;
 }
 
 /** De weken van de werkperiode: [wn => ['wn','kort','eind','weektype','start' => Y-m-d]]. */
@@ -53,19 +157,23 @@ function bh_besch_weken(?array $seizoen): array {
  * Het raster: personen (gefilterd) met per week de effectieve opgave.
  *
  * @return array ['weken','lijst','eff' => [sol][wn] => [dagen,weekend,soort,welke,verzoek],
- *                'weken_count','vaste','tot_per_week','totaal_zonder_filter']
+ *                'weken_count','dagen_totaal','vaste','liever' => [sol][wn] => [datums],'tot_per_week',
+ *                'totaal_zonder_filter','alle_weken']
  */
 function bh_besch_raster(?array $seizoen, array $f): array {
+    $f    += ['van' => '', 'tot' => '', 'min' => '', 'lv' => '', 'sort' => '', 'weergave' => ''];
     $sid   = $seizoen ? (int)$seizoen['id'] : 0;
-    $weken = bh_besch_weken($seizoen);
-    $uit = ['weken' => $weken, 'lijst' => [], 'eff' => [], 'weken_count' => [], 'vaste' => [], 'tot_per_week' => [], 'totaal_zonder_filter' => 0];
+    $alle_weken = bh_besch_weken($seizoen);
+    $weken = bh_besch_weken_bereik($alle_weken, $f);
+    $uit = ['weken' => $weken, 'alle_weken' => $alle_weken, 'lijst' => [], 'eff' => [], 'weken_count' => [], 'dagen_totaal' => [],
+            'vaste' => [], 'liever' => [], 'tot_per_week' => [], 'totaal_zonder_filter' => 0];
     foreach ($weken as $wn => $_) $uit['tot_per_week'][$wn] = ['aantal' => 0, 'weekend' => 0];
     if (!$sid) return $uit;
 
     if (function_exists('beschikbaarheid2_auto_setup')) beschikbaarheid2_auto_setup(); // beschikbaarheid_blok moet bestaan
     // Wie een formulier of een beschikbaarheid heeft. Zelfde uitsluiting als het dekkingsscherm.
     $q = db()->prepare("
-        SELECT s.id sol_id, s.fase, s.terugkerend,
+        SELECT s.id sol_id, s.fase, s.terugkerend, s.aangemeld_op,
                p.voornaam, p.tussenvoegsel, p.achternaam,
                bsch.weken_json,
                prof.norm_dagen
@@ -87,6 +195,8 @@ function bh_besch_raster(?array $seizoen, array $f): array {
         foreach (beschikbaarheid2_voorlopigen($sid) as $v) $voorlopig[(int)$v['sol_id']] = true;
     }
 
+    $liever = bh_besch_liever_vrij(array_map(fn($p) => (int)$p['sol_id'], $alle), $weken);
+
     foreach ($alle as $p) {
         $sol_id = (int)$p['sol_id'];
         $naam = trim($p['voornaam'] . ' ' . ($p['tussenvoegsel'] ? $p['tussenvoegsel'] . ' ' : '') . $p['achternaam']);
@@ -98,17 +208,33 @@ function bh_besch_raster(?array $seizoen, array $f): array {
         if ($f['toon'] === 'voorlopig' && empty($voorlopig[$sol_id])) continue;
 
         $pw = bh_besch_persoon_weken($sol_id, $weken, $seizoen, $p['weken_json'] ?? null);
-        if ($pw['vaste']) $uit['vaste'][$sol_id] = $pw['vaste'];
         if ($f['toon'] === 'verzoek' && !$pw['open_verzoek']) continue;
+        if ($f['min'] !== '' && count($pw['weken']) < (int)$f['min']) continue;
+        if ($f['lv'] === 'ja' && empty($liever[$sol_id]) && !$pw['vaste']) continue;
+        if ($pw['vaste']) $uit['vaste'][$sol_id] = $pw['vaste'];
+        if (!empty($liever[$sol_id])) $uit['liever'][$sol_id] = $liever[$sol_id];
+        $dagen = 0;
         foreach ($pw['weken'] as $wn => $c) {
             $uit['eff'][$sol_id][$wn] = $c;
             $uit['tot_per_week'][$wn]['aantal']++;
             if ($c['weekend']) $uit['tot_per_week'][$wn]['weekend']++;
+            $dagen += (int)$c['dagen'];
         }
         $uit['weken_count'][$sol_id] = count($pw['weken']);
+        $uit['dagen_totaal'][$sol_id] = $dagen;
         $p['naam'] = $naam;
         $uit['lijst'][] = $p;
     }
+
+    // Sorteren (naam is de volgorde van de query).
+    $wk = $uit['weken_count']; $dg = $uit['dagen_totaal'];
+    $cmp = [
+        'weken'     => fn($a, $b) => ($wk[(int)$b['sol_id']] ?? 0) <=> ($wk[(int)$a['sol_id']] ?? 0),
+        'dagen'     => fn($a, $b) => ($dg[(int)$b['sol_id']] ?? 0) <=> ($dg[(int)$a['sol_id']] ?? 0),
+        'minst'     => fn($a, $b) => ($wk[(int)$a['sol_id']] ?? 0) <=> ($wk[(int)$b['sol_id']] ?? 0),
+        'aangemeld' => fn($a, $b) => strcmp((string)$b['aangemeld_op'], (string)$a['aangemeld_op']),
+    ][$f['sort']] ?? null;
+    if ($cmp) usort($uit['lijst'], fn($a, $b) => $cmp($a, $b) ?: strcasecmp($a['naam'], $b['naam']));
     return $uit;
 }
 

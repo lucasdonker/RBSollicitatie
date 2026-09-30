@@ -1393,27 +1393,36 @@ beneden zie je:
 
 - **Openstaande verzoeken: N** (alleen als die er zijn): verzoeken om in bepaalde weken minder
   dagen te werken. Zie [Een verzoek om minder dagen beoordelen](#een-verzoek-om-minder-dagen-beoordelen).
-- **Nog voorlopig: N personen** (alleen als die er zijn): wie de beschikbaarheid nog niet
-  definitief heeft gemaakt. Er staat de deadline bij, met het aantal dagen dat nog rest of
+- **Nog voorlopig: N personen** (alleen als die er zijn, ingeklapt): wie de beschikbaarheid nog niet
+  definitief heeft gemaakt. In de kop staat de deadline, met het aantal dagen dat nog rest of
   "verstreken". Deze mensen krijgen vanaf twee weken vóór de deadline vanzelf herinneringen. Je
-  hoeft ze niet zelf na te bellen. Met het envelopje bij een naam mail je iemand direct.
-- **Filters en export**: zoek op naam, kies wie (iedereen, nog in de procedure, aangenomen), nieuw
-  of terugkerend, en toon alleen wie een open verzoek heeft of nog voorlopig is. Grafiek, raster
-  en totalen volgen de filter. **Export per week** geeft een Excel met per persoon per week het
-  aantal dagen; **Export per dag** per persoon per datum ja / nee / liever niet, met een tabblad
-  met de redenen. Beide exports volgen de filter en komen in het logboek.
-- **Dekking per week**: een staafgrafiek met per week het aantal mensen dat telt. In het
-  hoofdseizoen is dat het weektotaal. In het voor- en naseizoen zijn de posten alleen in het
-  weekend bemand, dus telt dan het aantal dat het weekend dekt. De norm is de optelsom van alle
-  rollen onder Instellingen › Posten & bezetting. Rechtsboven staat in woorden welke weken onder
-  de norm zitten, of "Alle weken gedekt". Is er nog geen post ingesteld, dan staat er dat er geen
-  norm is.
+  hoeft ze niet zelf na te bellen. Klap open voor de namen; met het envelopje mail je iemand direct.
+- **Filters**: zoek op naam, kies wie (iedereen, nog in de procedure, aangenomen), de **weergave**
+  (per week of per dag) en de **sortering** (naam, meeste weken, meeste dagen, minste weken, laatst
+  aangemeld). Onder **Meer filters**: een weekbereik (vanaf / tot en met), minimaal zoveel weken
+  beschikbaar, nieuw of terugkerend, alleen wie een open verzoek heeft of nog voorlopig is, en alleen
+  wie ergens liever vrij is. Grafiek, raster en totalen volgen de filter.
+- **Exporteren** (menu rechts): **Excel per week** met per persoon per week het aantal dagen en een
+  kolom Liever vrij; **Excel per dag** per persoon per datum ja / nee / liever niet, met een tabblad
+  met de redenen; en, met de loonplanning aan, de **Export voor het rooster**. De exports volgen de
+  filter en het weekbereik, en komen in het logboek.
+- **Dekking per week** (ingeklapt; de kop zegt al "Alle weken gedekt" of welke weken te krap zijn):
+  een staafgrafiek met per week het aantal mensen dat telt. In het hoofdseizoen is dat het
+  weektotaal. In het voor- en naseizoen zijn de posten alleen in het weekend bemand, dus telt dan
+  het aantal dat het weekend dekt. De norm is de optelsom van alle rollen onder Instellingen ›
+  Posten & bezetting. Is er nog geen post ingesteld, dan staat er dat er geen norm is.
 - Een tip als het **hoofdseizoen** nog niet is ingesteld. Elke week telt dan als hoofdseizoen.
   Je stelt het hoofdseizoen in bij [Seizoen](#seizoen-opzetten).
-- **Raster**: een rij per sollicitant en een kolom per week van de werkperiode. De kolom "wkn"
-  telt het aantal beschikbare weken.
+- **Raster per week**: een rij per sollicitant en een kolom per week. De kolom "wkn" telt het aantal
+  beschikbare weken (wijs aan voor het aantal dagen). De kolom **Liever vrij** toont de vaste
+  weekdagen die iemand liever vrij heeft (paars, bijvoorbeeld "wo za") en het aantal losse datums;
+  wijs aan voor de datums.
+- **Raster per dag**: een rij per sollicitant en een kolom per dag, standaard deze en volgende week
+  (kies andere weken onder Meer filters). **ja** = kan, **lv** = liever niet, **—** = kan niet;
+  wijs een cel aan voor de reden. Het komt uit dezelfde bron als het rooster. Corrigeren doe je in
+  de weekweergave.
 
-Een cel in het raster betekent het volgende:
+Een cel in het raster per week betekent het volgende:
 
 | In de cel | Betekenis |
 |---|---|
@@ -1421,14 +1430,13 @@ Een cel in het raster betekent het volgende:
 | wk | alleen het weekend |
 | een getal (minder dagen) | minder dan vijf dagen die week |
 | een getal (correctie) | aangepast door het bestuur |
+| "2 lv" klein eronder | die week twee dagen liever vrij (een voorkeur, de planner beslist) |
 | — | niet beschikbaar |
 
-Achter een naam kunnen labels staan: **terug** (terugkerende sollicitant), een oranje label
-zoals **3d** (afwijkende norm van dat aantal dagen per week) en een paars label **vrij ma di**
-(de dagen die iemand liever vrij heeft; de planner beslist). De onderste rij toont per week
+Achter een naam kunnen labels staan: **terug** (terugkerende sollicitant) en een oranje label
+zoals **3d** (afwijkende norm van dat aantal dagen per week). De onderste rij toont per week
 "aantal beschikbaar / aantal dat het weekend dekt". Een rood getal zit onder de norm. Onderaan
 staat wanneer de gegevens voor het laatst veranderden.
-
 Met een klik op een naam open je het dossier op het tabblad Beschikbaarheid.
 
 ### Een verzoek om minder dagen beoordelen

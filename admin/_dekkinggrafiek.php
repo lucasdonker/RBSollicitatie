@@ -8,6 +8,8 @@
  *   $_titel    ?string kop boven de grafiek       (standaard "Dekking per week")
  *   $_klik     ?string JS-sjabloon met %d voor het weeknummer; maakt de staven klikbaar
  *   $_woord    ?string wat de getallen zijn: "beschikbaar" (standaard) of "ingepland"
+ *   $_klap     ?string id om de grafiek in te klappen (.bh-klap, standaard dicht; de stand staat dan
+ *                      in de kop, zodat je zonder openen ziet of er een probleem is). Leeg = altijd open.
  *
  * De grafiek staat bovenaan het scherm omdat de eerste vraag "is er een probleem?"
  * is en niet "wie is er beschikbaar?" (ontwerpfilosofie §1). De knelpunten staan
@@ -19,15 +21,18 @@ $_weken = $_weken ?? [];
 $_titel = $_titel ?? 'Dekking per week';
 $_klik  = $_klik  ?? null;
 $_woord = $_woord ?? 'beschikbaar';
-if (!$_dek) return;
+$_klap  = $_klap  ?? '';
+if (!$_dek) { $_klap = ''; return; }
 
 $_norm  = (int)(reset($_dek)['norm'] ?? 0);
 $_max   = bh_dekking_max($_dek);
 $_knel  = bh_dekking_knelpunten($_dek);
 $_zin   = bh_dekking_zin($_knel);
+$_tag   = $_klap !== '' ? 'details' : 'section';
+$_kop   = $_klap !== '' ? 'summary' : 'header';
 ?>
-<section class="bh-kaart bh-dekgrafiek">
-  <header class="bh-dekgrafiek-kop">
+<<?= $_tag ?> class="ds-kaart bh-dekgrafiek<?= $_klap !== '' ? ' bh-klap' : '' ?>"<?= $_klap !== '' ? ' data-klap-id="' . h($_klap) . '"' : '' ?>>
+  <<?= $_kop ?> class="bh-dekgrafiek-kop">
     <h2><?= h($_titel) ?></h2>
     <?php if ($_norm > 0): ?>
       <span class="bh-dekgrafiek-norm">minimaal <?= $_norm ?> <?= $_norm === 1 ? 'persoon' : 'mensen' ?> per dienst</span>
@@ -42,7 +47,7 @@ $_zin   = bh_dekking_zin($_knel);
         Stel de posten in bij <a href="<?= APP_URL ?>/admin/instellingen.php?tab=bezetting">Posten &amp; bezetting</a>.
       </span>
     <?php endif; ?>
-  </header>
+  </<?= $_kop ?>>
 
   <?php
   // De normlijn is een waarde, geen opmaak — vandaar als variabele op het element,
@@ -77,6 +82,6 @@ $_zin   = bh_dekking_zin($_knel);
     voor- en naseizoen het aantal dat het <strong>weekend</strong> dekt — dan staan de posten
     alleen in het weekend bemand.
   </p>
-</section>
+</<?= $_tag ?>>
 <?php
-$_klik = null; $_titel = 'Dekking per week'; $_woord = 'beschikbaar';
+$_klik = null; $_titel = 'Dekking per week'; $_woord = 'beschikbaar'; $_klap = '';
