@@ -799,14 +799,25 @@ Een tabblad dat niets te tonen heeft, verschijnt niet.
 
 ### Tabblad Dossier, links: lezen
 
+Bovenaan staat altijd de kaart **Nu**: in één zin waar de sollicitant staat (bijvoorbeeld "Selectiedag
+geweest. Besluit: door. Bellen en uitnodigen voor het trainingsweekend gaat via de bellijst"), en
+onder **Wacht op** de taken die nog openstaan, met "(wacht op ouder)" als een ouder aan zet is. Staat
+er iets open, dan stuurt **Herinnering sturen** (na een korte vraag) dezelfde herinnering als de
+bulkknop op de lijst. De stap vooruit zelf staat in de kop, niet in deze kaart.
+
+Alles daaronder staat ingeklapt, met een samenvatting op één regel (bijvoorbeeld "Advies · Door ·
+4,3 gemiddeld"). Klik om te openen; wat je openklapt blijft open zolang je werkt, ook bij de
+volgende sollicitant. Na de selectiedag staat het advies standaard open, en een gemelde
+bijzonderheid zie je als rood label zonder uit te klappen.
+
 - **Gegevens**: Geboortedatum, Aangemeld, **Berichten via** (WhatsApp, Sms of Alleen e-mail; met
   bewerkrecht kies je hier een ander kanaal, bijvoorbeeld als iemand geen WhatsApp wil; de wijziging
   wordt opgeslagen en gelogd), Adres, **Toestemming privacy** ("Gegeven" met datum, of "Nog niet
   gegeven") en **Ouderlijke toestemming** ("Nodig — tekent via een ouder" onder de 18, anders
   "Niet nodig — 18 of ouder"). Het volledige adres zie je alleen met het recht op de
   kennismakingsformulieren; zonder dat recht staat er alleen de **Woonplaats**.
-- **Gegevens corrigeren** (met bewerkrecht): een uitklapper om naam, e-mail, telefoon of
-  geboortedatum te verbeteren. Zie [Gegevens corrigeren](#gegevens-corrigeren).
+- **Gegevens corrigeren** (met bewerkrecht, onderaan de kaart Gegevens): een uitklapper om naam,
+  e-mail, telefoon of geboortedatum te verbeteren. Zie [Gegevens corrigeren](#gegevens-corrigeren).
 - **Advies**: zodra er cijfers zijn, een advies Door, Twijfel of Niet met de reden ("Score ... ligt
   boven de drempel van 3,5"), en een balk per test. Het label zegt het al: advies, geen besluit.
   Is er een besluit uit de nabespreking, dan staat dat eronder.
@@ -828,15 +839,15 @@ Een tabblad dat niets te tonen heeft, verschijnt niet.
   "Waarom wijk je af? (optioneel)". Wat je daar typt, komt als notitie in de tijdlijn; leeg laten
   mag. Wat een overgang in gang zet, staat in
   [De fases en wat er automatisch gebeurt](#de-fases-en-wat-er-automatisch-gebeurt).
-- **Taken**: de taken precies zoals de sollicitant ze in het portaal ziet, met "x / y afgerond"
+- **Taken** (ingeklapt, "x van y afgerond"): de taken precies zoals de sollicitant ze in het portaal ziet, met "x / y afgerond"
   en per taak Afgerond, Open of Wacht op ouder. Bij een open ondertekening staat **Link kopiëren**:
   plak die link in een mail of app als de automatische mail niet aankwam. Onderaan de link naar het
   tabblad Ondertekeningen.
 - **Notities**: interne opmerkingen, alleen zichtbaar in het beheer, voor iedereen die het dossier
   mag lezen (ook de penningmeester). Plaatsen vraagt bewerkrecht: typ en klik op **Plaatsen**. Je
   eigen notities kun je bewerken en verwijderen; een beheerder kan dat bij alle notities.
-- **Tijdlijn**: de laatste gebeurtenissen.
-- **Eerdere seizoenen**: eerdere sollicitaties van dezelfde persoon, met de fase waarin die eindigden.
+- **Eerdere seizoenen** (ingeklapt): eerdere sollicitaties van dezelfde persoon, met de fase waarin die eindigden.
+- **Tijdlijn bekijken** opent het tabblad Tijdlijn.
 
 ### Tabblad Kennismakingsformulier
 

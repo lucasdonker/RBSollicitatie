@@ -425,6 +425,14 @@ a.bh-kengetal:focus-visible { outline: 2px solid var(--navy); outline-offset: 2p
 .bh-dossiertab-getal { color: var(--ink-muted); font-variant-numeric: tabular-nums; }
 
 .bh-dossier-kolommen { display: flex; gap: 18px; align-items: flex-start; flex-wrap: wrap; }
+/* Kaart "Nu" (admin/dossier/_nu.php): de enige die altijd open staat, met een accentrand. */
+.bh-nu { border-left: 4px solid var(--navy); display: flex; flex-direction: column; gap: 12px; }
+.bh-nu .bh-kaartkop { margin: 0; }
+.bh-nu-zin { margin: 0; font-size: 16px; line-height: 1.5; color: var(--ink); }
+.bh-nu-wacht { display: flex; flex-direction: column; gap: 6px; }
+.bh-nu-acties { margin: 0; }
+.bh-dossier-hoofd > .bh-klap.ds-kaart .bh-klap-inhoud > * + *,
+.bh-dossier-zij > .bh-klap.ds-kaart .bh-klap-inhoud > * + * { margin-top: 12px; }
 .bh-dossier-hoofd { flex: 1.75; min-width: 400px; display: flex; flex-direction: column; gap: 14px; }
 .bh-dossier-zij   { flex: 1;    min-width: 290px; display: flex; flex-direction: column; gap: 14px; }
 .bh-dossier-tekst { margin: 0; font-size: 14px; line-height: 1.65; color: var(--ink-soft); }
@@ -594,7 +602,8 @@ html[data-theme="dark"] .bh-fasechip.nu { color: var(--bg); }
   .bh-gegevensraster, .bh-gegevensraster.twee { grid-template-columns: repeat(2, minmax(0,1fr)); }
   .bh-dossierkop-naam h2 { font-size: 22px; }
   .bh-kruimel-positie { margin-left: 0; width: 100%; }
-  .bh-dossiertabs { gap: 16px; overflow-x: auto; }
+  .bh-dossiertabs { gap: 16px; overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; }
+  .bh-dossiertabs::-webkit-scrollbar { display: none; }
 }
 @media (max-width: 520px) {
   .bh-gegevensraster, .bh-gegevensraster.twee { grid-template-columns: 1fr; }
@@ -2696,12 +2705,9 @@ mark.bh-hb-treffer { background: var(--geel-bg, #fff3b0); color: inherit; border
 /* ── DOSSIER — fixes 2.100 ───────────────────────────────────────
    Gegevens corrigeren (uitklapper), verwijderknoppen, niet-klikbare weektegel, norm,
    en het smalle formulier van Handmatig toevoegen. */
-.bh-gegevenskaart > summary { cursor: pointer; list-style: none; }
-.bh-gegevenskaart > summary::-webkit-details-marker { display: none; }
-.bh-gegevenskaart > summary::after { content: "+"; margin-left: auto; font-size: 18px; color: var(--ink-muted); }
-.bh-gegevenskaart[open] > summary::after { content: "\2212"; }
-.bh-gegevenskaart > summary:focus-visible { outline: 2px solid var(--navy); outline-offset: 3px; border-radius: var(--radius-sm); }
-.bh-gegevenskaart .bh-veldform { margin-top: 14px; }
+/* Summary en chevron komen van .bh-klap; binnen de kaart Gegevens. */
+.bh-gegevenskaart { margin-top: 14px; border-top: 1px solid var(--bg-subtle); }
+.bh-gegevenskaart .bh-veldform { margin-top: 4px; }
 .bh-gegevenskaart .ds-veld + .ds-veld,
 .bh-gegevenskaart .bh-veldrij + .ds-veld,
 .bh-gegevenskaart .ds-veld + .bh-veldrij,

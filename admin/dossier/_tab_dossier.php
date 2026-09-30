@@ -1,10 +1,14 @@
 <?php
 /**
- * Tabblad: Dossier — het complete beeld dat je nodig hebt om te beslissen.
+ * Tabblad: Dossier — eerst wat je nú nodig hebt, de rest ingeklapt maar met één tik bereikbaar.
  *
- * Twee kolommen. Links wat je leest om een oordeel te vormen (gegevens, advies,
- * selectiedag, formulier, AI-analyse). Rechts wat je doet en wat er loopt (fase,
- * documenten, notities en tijdlijn, eerdere seizoenen).
+ * Links bovenaan de kaart "Nu" (waar staat iemand, waar wacht het op, herinnering sturen). Daaronder
+ * alles om een oordeel te vormen of iets op te zoeken, elk als inklapblok (.bh-klap) met een
+ * samenvatting op één regel: gegevens, advies, competenties, formulier, AI-analyse, verwijderen.
+ * Rechts wat je doet en wat er loopt: fase, notities, taken, eerdere seizoenen.
+ *
+ * Een blok onthoudt binnen de sessie of je het open had (data-klap-id, assets/js/inklap.js); de
+ * standaardstand volgt de fase (het advies staat open na de selectiedag).
  *
  * Verwacht: $tab_dossier  array  uitkomst van bh_dossier()
  */
@@ -18,108 +22,130 @@ $_doc = bh_dossier_documenten($tab_dossier);
 $_taken = bh_dossier_taken($tab_dossier);
 $_mag_bewerken = mag('sollicitanten', 'bewerken');
 $_mag_blk = mag('blk', 'lezen');
+$_fase = (string)$_s['fase'];
 // Openstaand verzoek om in te trekken: bovenaan, met dezelfde knoppen als op Vandaag.
 $_iv = function_exists('intrek_open_van') ? intrek_open_van((int)$_s['id']) : null;
 if ($_iv) {
-    $intrekverzoeken = [$_iv + ['sol_id' => (int)$_s['id'], 'fase' => (string)$_s['fase'], 'naam' => volledige_naam($_s)]];
+    $intrekverzoeken = [$_iv + ['sol_id' => (int)$_s['id'], 'fase' => $_fase, 'naam' => volledige_naam($_s)]];
     require __DIR__ . '/../_intrekverzoeken.php';
 }
+
+// AVG (dataminimalisatie): het volledige adres alleen met het recht op het kennismakingsformulier,
+// net als blk_detail.php en de lijstkolommen; anders de woonplaats.
+if ($_mag_blk) {
+    // straat/huisnummer/woonplaats zijn later toegevoegde kolommen; het oudere vrije veld `adres`
+    // is de terugval voor dossiers van vóór die splitsing.
+    $_str = trim(($_blk['straat'] ?? '') . ' ' . ($_blk['huisnummer'] ?? ''));
+    $_pl  = trim((string)($_blk['woonplaats'] ?? ''));
+    $_adres = trim($_str . ($_str !== '' && $_pl !== '' ? ', ' : '') . $_pl);
+    if ($_adres === '') $_adres = trim((string)($_blk['adres'] ?? ''));
+} else {
+    $_adres = $_blk ? blk_woonplaats($_blk) : '';
+}
+$_kanalen = ['whatsapp' => 'WhatsApp', 'sms' => 'Sms', 'email' => 'Alleen e-mail'];
+$_kanaal  = $_kanalen[$_s['kanaal_voorkeur'] ?? ''] ?? ucfirst((string)($_s['kanaal_voorkeur'] ?? '—'));
+$_bijz    = $_blk && $_mag_blk && trim((string)($_blk['bijzonderheden'] ?? '')) !== '';
+$_corrigeer = !empty($_GET['corrigeer']);
 ?>
 <div class="bh-dossier-kolommen">
 
   <div class="bh-dossier-hoofd">
 
-    <section class="ds-kaart ds-kaart-p bh-gegevensraster">
-      <div>
-        <span class="bh-veldlabel">Geboortedatum</span>
-        <span class="bh-veldwaarde"><?= h(datum_nl($_s['geboortedatum'] ?? null)) ?></span>
-      </div>
-      <div>
-        <span class="bh-veldlabel">Aangemeld</span>
-        <span class="bh-veldwaarde"><?= h(datum_nl($_s['aangemeld_op'] ?? null)) ?></span>
-      </div>
-      <div>
-        <?php if ($_mag_bewerken): ?>
-          <label class="bh-veldlabel" for="kanaal-<?= (int)$_s['pid'] ?>">Berichten via</label>
-          <select id="kanaal-<?= (int)$_s['pid'] ?>" class="ds-select bh-veld-smal"
-                  data-wijzig="kanaalVoorkeurZet(<?= (int)$_s['pid'] ?>, this.value, this)">
-            <?php foreach (['whatsapp' => 'WhatsApp', 'sms' => 'Sms', 'email' => 'Alleen e-mail'] as $_k => $_l): ?>
-              <option value="<?= h($_k) ?>"<?= ($_s['kanaal_voorkeur'] ?? '') === $_k ? ' selected' : '' ?>><?= h($_l) ?></option>
-            <?php endforeach; ?>
-          </select>
-        <?php else: ?>
-          <span class="bh-veldlabel">Berichten via</span>
-          <span class="bh-veldwaarde"><?= h(ucfirst((string)($_s['kanaal_voorkeur'] ?? '—'))) ?></span>
-        <?php endif; ?>
-      </div>
-      <div>
-        <?php // AVG (dataminimalisatie): het volledige adres alleen met het recht op het
-              // kennismakingsformulier, net als blk_detail.php en de lijstkolommen; anders de woonplaats. ?>
-        <span class="bh-veldlabel"><?= $_mag_blk ? 'Adres' : 'Woonplaats' ?></span>
-        <span class="bh-veldwaarde">
-          <?php
-            if ($_mag_blk) {
-                // straat/huisnummer/woonplaats zijn later toegevoegde kolommen; het oudere
-                // vrije veld `adres` is de terugval voor dossiers van vóór die splitsing.
-                $_str = trim(($_blk['straat'] ?? '') . ' ' . ($_blk['huisnummer'] ?? ''));
-                $_pl  = trim((string)($_blk['woonplaats'] ?? ''));
-                $_adres = trim($_str . ($_str !== '' && $_pl !== '' ? ', ' : '') . $_pl);
-                if ($_adres === '') $_adres = trim((string)($_blk['adres'] ?? ''));
-            } else {
-                $_adres = $_blk ? blk_woonplaats($_blk) : '';
-            }
-            echo $_adres !== '' ? h($_adres) : '—';
-          ?>
-        </span>
-      </div>
-      <div>
-        <span class="bh-veldlabel">Toestemming privacy</span>
-        <span class="bh-veldwaarde<?= !empty($_s['privacy_akkoord_op']) ? ' goed' : '' ?>">
-          <?= !empty($_s['privacy_akkoord_op'])
-              ? 'Gegeven · ' . h(datum_nl(substr((string)$_s['privacy_akkoord_op'], 0, 10)))
-              : 'Nog niet gegeven' ?>
-        </span>
-      </div>
-      <div>
-        <span class="bh-veldlabel">Ouderlijke toestemming</span>
-        <span class="bh-veldwaarde<?= $tab_dossier['minderjarig'] ? '' : ' zacht' ?>">
-          <?php // 18 is de ondertekeningsgrens — een andere grens dan de 16 hierboven. ?>
-          <?= $tab_dossier['minderjarig'] ? 'Nodig — tekent via een ouder' : 'Niet nodig — 18 of ouder' ?>
-        </span>
-      </div>
-    </section>
+    <?php $nu_dossier = $tab_dossier; $nu_taken = $_taken; require __DIR__ . '/_nu.php'; ?>
 
-    <?php if ($_mag_bewerken) { $geg_dossier = $tab_dossier; require __DIR__ . '/_gegevens.php'; } ?>
-
-    <?php if ($_adv): ?>
-    <section class="ds-kaart ds-kaart-p">
-      <div class="bh-kaartkop">
-        <h2>Advies</h2>
-        <?= bh_badge($_adv['label'], $_adv['kleur']) ?>
-        <span class="bh-meta">advies, geen besluit</span>
-      </div>
-      <p class="bh-dossier-tekst"><?= h($_adv['reden']) ?></p>
-      <?php $_per_test = bh_dossier_score_per_test($tab_dossier); ?>
-      <?php if ($_per_test): ?>
-        <div class="bh-scorebalken">
-          <?php foreach ($_per_test as $_test => $_sc): ?>
-            <div class="bh-scorebalk">
-              <span class="bh-scorebalk-naam"><?= h(ucfirst((string)$_test)) ?></span>
-              <span class="bh-scorebalk-spoor">
-                <span class="bh-scorebalk-vul" style="--w: <?= (int)round($_sc / 5 * 100) ?>%"></span>
-              </span>
-              <span class="bh-scorebalk-getal bh-num"><?= h(cijfer_nl((float)$_sc)) ?></span>
-            </div>
-          <?php endforeach; ?>
+    <details class="bh-klap ds-kaart" id="gegevens"<?= $_corrigeer ? ' open' : ' data-klap-id="dossier-gegevens"' ?>>
+      <summary>
+        <span class="bh-klap-titel">Gegevens</span>
+        <span class="bh-klap-sam"><?= h(implode(' · ', array_filter([
+            $tab_dossier['leeftijd'] !== null ? $tab_dossier['leeftijd'] . ' jaar' : '',
+            $_adres, 'berichten via ' . mb_strtolower($_kanaal),
+            empty($_s['privacy_akkoord_op']) ? 'privacy nog niet akkoord' : '',
+        ]))) ?></span>
+      </summary>
+      <div class="bh-klap-inhoud">
+        <div class="bh-gegevensraster">
+          <div>
+            <span class="bh-veldlabel">Geboortedatum</span>
+            <span class="bh-veldwaarde"><?= h(datum_nl($_s['geboortedatum'] ?? null)) ?></span>
+          </div>
+          <div>
+            <span class="bh-veldlabel">Aangemeld</span>
+            <span class="bh-veldwaarde"><?= h(datum_nl($_s['aangemeld_op'] ?? null)) ?></span>
+          </div>
+          <div>
+            <?php if ($_mag_bewerken): ?>
+              <label class="bh-veldlabel" for="kanaal-<?= (int)$_s['pid'] ?>">Berichten via</label>
+              <select id="kanaal-<?= (int)$_s['pid'] ?>" class="ds-select bh-veld-smal"
+                      data-wijzig="kanaalVoorkeurZet(<?= (int)$_s['pid'] ?>, this.value, this)">
+                <?php foreach ($_kanalen as $_k => $_l): ?>
+                  <option value="<?= h($_k) ?>"<?= ($_s['kanaal_voorkeur'] ?? '') === $_k ? ' selected' : '' ?>><?= h($_l) ?></option>
+                <?php endforeach; ?>
+              </select>
+            <?php else: ?>
+              <span class="bh-veldlabel">Berichten via</span>
+              <span class="bh-veldwaarde"><?= h($_kanaal) ?></span>
+            <?php endif; ?>
+          </div>
+          <div>
+            <span class="bh-veldlabel"><?= $_mag_blk ? 'Adres' : 'Woonplaats' ?></span>
+            <span class="bh-veldwaarde"><?= $_adres !== '' ? h($_adres) : '—' ?></span>
+          </div>
+          <div>
+            <span class="bh-veldlabel">Toestemming privacy</span>
+            <span class="bh-veldwaarde<?= !empty($_s['privacy_akkoord_op']) ? ' goed' : '' ?>">
+              <?= !empty($_s['privacy_akkoord_op'])
+                  ? 'Gegeven · ' . h(datum_nl(substr((string)$_s['privacy_akkoord_op'], 0, 10)))
+                  : 'Nog niet gegeven' ?>
+            </span>
+          </div>
+          <div>
+            <span class="bh-veldlabel">Ouderlijke toestemming</span>
+            <span class="bh-veldwaarde<?= $tab_dossier['minderjarig'] ? '' : ' zacht' ?>">
+              <?php // 18 is de ondertekeningsgrens — een andere grens dan de 16 (aanmelden, AVG). ?>
+              <?= $tab_dossier['minderjarig'] ? 'Nodig — tekent via een ouder' : 'Niet nodig — 18 of ouder' ?>
+            </span>
+          </div>
         </div>
-      <?php endif; ?>
-      <?php if (!empty($tab_dossier['besluit']['besluit'])): ?>
-        <p class="bh-meta bh-dossier-besluitregel">
-          Besluit van de nabespreking:
-          <strong><?= h(ucfirst((string)$tab_dossier['besluit']['besluit'])) ?></strong>
-        </p>
-      <?php endif; ?>
-    </section>
+        <?php if ($_mag_bewerken) { $geg_dossier = $tab_dossier; require __DIR__ . '/_gegevens.php'; } ?>
+      </div>
+    </details>
+
+    <?php if ($_adv): $_per_test = bh_dossier_score_per_test($tab_dossier); ?>
+    <details class="bh-klap ds-kaart" data-klap-id="dossier-advies"<?= $_fase === 'selectiedag_geweest' ? ' open' : '' ?>>
+      <summary>
+        <span class="bh-klap-titel">Advies</span>
+        <span class="bh-klap-sam">
+          <?= bh_badge($_adv['label'], $_adv['kleur']) ?>
+          <?= h(implode(' · ', array_filter([
+              ($_score = bh_dossier_score($tab_dossier)) !== null ? cijfer_nl($_score) . ' gemiddeld' : '',
+              !empty($tab_dossier['besluit']['besluit']) ? 'besluit: ' . (string)$tab_dossier['besluit']['besluit'] : '',
+          ]))) ?>
+        </span>
+      </summary>
+      <div class="bh-klap-inhoud">
+        <p class="bh-dossier-tekst"><?= h($_adv['reden']) ?> Dit is een advies, geen besluit.</p>
+        <?php if ($_per_test): ?>
+          <div class="bh-scorebalken">
+            <?php $_crit = selectie_criteria(); foreach ($_per_test as $_test => $_sc): ?>
+              <div class="bh-scorebalk">
+                <span class="bh-scorebalk-naam"><?= h((string)($_crit[$_test]['naam'] ?? ucfirst((string)$_test))) ?></span>
+                <span class="bh-scorebalk-spoor">
+                  <span class="bh-scorebalk-vul" style="--w: <?= (int)round($_sc / 5 * 100) ?>%"></span>
+                </span>
+                <span class="bh-scorebalk-getal bh-num"><?= h(cijfer_nl((float)$_sc)) ?></span>
+              </div>
+            <?php endforeach; ?>
+          </div>
+        <?php endif; ?>
+        <?php if (!empty($tab_dossier['besluit']['besluit'])): ?>
+          <p class="bh-meta bh-dossier-besluitregel">
+            Besluit van de nabespreking:
+            <strong><?= h(ucfirst((string)$tab_dossier['besluit']['besluit'])) ?></strong>
+          </p>
+        <?php endif; ?>
+        <a class="bh-kaartkop-link" href="<?= h(dossier_url((int)$_s['id'], 'selectiedag')) ?>">Cijfers en observaties <?= icoon('chevron', 14) ?></a>
+      </div>
+    </details>
     <?php endif; ?>
 
     <?php
@@ -129,98 +155,107 @@ if ($_iv) {
       $_sync  = $_comp_aan && function_exists('competentie_sync_info') ? competentie_sync_info((int)$_s['id']) : [];
     ?>
     <?php if ($_comp_aan): ?>
-    <section class="ds-kaart ds-kaart-p">
-      <div class="bh-kaartkop">
-        <h2>Competenties</h2>
+    <details class="bh-klap ds-kaart" data-klap-id="dossier-competenties">
+      <summary>
+        <span class="bh-klap-titel">Competenties</span>
+        <span class="bh-klap-sam"><?= $_comps ? h(implode(', ', array_map(fn($c) => competentie_groep_label((string)$c['groep']), $_comps))) : 'geen gevonden' ?></span>
+      </summary>
+      <div class="bh-klap-inhoud">
+        <div id="compChips-<?= (int)$_s['id'] ?>">
+          <?php if ($_comps): ?>
+            <div class="bh-chiprij">
+              <?php foreach ($_comps as $_c): ?><?= bh_chip(competentie_groep_label((string)$_c['groep']), 'blauw') ?><?php endforeach; ?>
+            </div>
+          <?php else: ?>
+            <p class="bh-dossier-tekst zacht">Geen competenties gevonden in Authentik.</p>
+          <?php endif; ?>
+        </div>
+        <span class="bh-meta bh-dossier-voetregel" id="compStatus-<?= (int)$_s['id'] ?>">
+          <?php if (!empty($_sync['laatst_gesynct'])): ?>
+            Laatst opgehaald <?= h(datum_nl(substr((string)$_sync['laatst_gesynct'], 0, 10))) ?>
+            <?php if (($_sync['sync_status'] ?? '') === 'niet_gevonden'): ?> · geen match gevonden<?php endif; ?>
+          <?php else: ?>
+            Nog niet opgehaald.
+          <?php endif; ?>
+        </span>
         <?php if ($_mag_bewerken): ?>
           <button type="button" class="bh-kaartkop-link bh-kaartkop-linkknop"
                   data-klik="competentieVerversen(<?= (int)$_s['id'] ?>)">Synchroniseren</button>
         <?php endif; ?>
-      </div>
-      <div id="compChips-<?= (int)$_s['id'] ?>">
-        <?php if ($_comps): ?>
-          <div class="bh-chiprij">
-            <?php foreach ($_comps as $_c): ?><?= bh_chip(competentie_groep_label((string)$_c['groep']), 'blauw') ?><?php endforeach; ?>
+        <?php if ($_mag_bewerken && (($_sync['sync_status'] ?? '') === 'niet_gevonden' || !$_comps)): ?>
+          <div class="bh-comp-koppel">
+            <label class="bh-veldlabel" for="compUsername-<?= (int)$_s['id'] ?>">
+              Handmatig koppelen op Authentik-gebruikersnaam
+            </label>
+            <div class="bh-notitie-nieuw bh-comp-koppelrij">
+              <input type="text" class="ds-input" id="compUsername-<?= (int)$_s['id'] ?>" placeholder="gebruikersnaam">
+              <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm"
+                      data-klik="competentieKoppelen(<?= (int)$_s['id'] ?>)">Koppelen</button>
+            </div>
           </div>
-        <?php else: ?>
-          <p class="bh-dossier-tekst zacht">Geen competenties gevonden in Authentik.</p>
         <?php endif; ?>
       </div>
-      <span class="bh-meta bh-dossier-voetregel" id="compStatus-<?= (int)$_s['id'] ?>">
-        <?php if (!empty($_sync['laatst_gesynct'])): ?>
-          Laatst opgehaald <?= h(datum_nl(substr((string)$_sync['laatst_gesynct'], 0, 10))) ?>
-          <?php if (($_sync['sync_status'] ?? '') === 'niet_gevonden'): ?> · geen match gevonden<?php endif; ?>
-        <?php else: ?>
-          Nog niet opgehaald.
-        <?php endif; ?>
-      </span>
-      <?php if ($_mag_bewerken && (($_sync['sync_status'] ?? '') === 'niet_gevonden' || !$_comps)): ?>
-        <div class="bh-comp-koppel">
-          <label class="bh-veldlabel" for="compUsername-<?= (int)$_s['id'] ?>">
-            Handmatig koppelen op Authentik-gebruikersnaam
-          </label>
-          <div class="bh-notitie-nieuw bh-comp-koppelrij">
-            <input type="text" class="ds-input" id="compUsername-<?= (int)$_s['id'] ?>" placeholder="gebruikersnaam">
-            <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm"
-                    data-klik="competentieKoppelen(<?= (int)$_s['id'] ?>)">Koppelen</button>
-          </div>
-        </div>
-      <?php endif; ?>
-    </section>
+    </details>
     <?php endif; ?>
 
     <?php if ($_blk && $_mag_blk): ?>
-    <section class="ds-kaart ds-kaart-p">
-      <div class="bh-kaartkop">
-        <h2>Uit het kennismakingsformulier</h2>
-        <?php if (empty($tab_dossier['blk_ingediend_op'])): ?><?= bh_badge('Concept', 'oranje') ?><?php endif; ?>
-        <a class="bh-kaartkop-link" href="<?= h(dossier_url((int)$_s['id'], 'formulier')) ?>">Volledig formulier <?= icoon('chevron', 14) ?></a>
-      </div>
-      <div class="bh-gegevensraster twee">
+    <details class="bh-klap ds-kaart" data-klap-id="dossier-formulier">
+      <summary>
+        <span class="bh-klap-titel">Uit het kennismakingsformulier</span>
+        <span class="bh-klap-sam">
+          <?php if (empty($tab_dossier['blk_ingediend_op'])): ?><?= bh_badge('Concept', 'oranje') ?><?php endif; ?>
+          <?php // Een bijzonderheid (vaak medisch) moet je zien zonder uit te klappen. ?>
+          <?= $_bijz ? bh_badge('Bijzonderheid gemeld', 'rood') : 'opleiding, werkervaring, diploma\'s, motivatie' ?>
+        </span>
+      </summary>
+      <div class="bh-klap-inhoud">
+        <div class="bh-gegevensraster twee">
+          <?php
+            // Veldnamen exact zoals in blk_formulieren; werkervaring en motivatie_*
+            // heten anders dan je zou gokken.
+            $_velden = ['opleiding' => 'Opleiding', 'werkervaring' => 'Werkervaring',
+                        'diplomas' => 'Diploma\'s', 'bijzonderheden' => 'Bijzonderheden'];
+            foreach ($_velden as $_v => $_l):
+              $_w = trim((string)($_blk[$_v] ?? ''));
+              $_isbijz = $_v === 'bijzonderheden' && $_w !== '';
+          ?>
+            <div>
+              <span class="bh-veldlabel"><?= h($_l) ?></span>
+              <?php // "Niet ingevuld" is iets anders dan leeg: dat onderscheid moet zichtbaar blijven. ?>
+              <span class="bh-veldwaarde<?= $_w === '' ? ' zacht' : ($_isbijz ? ' let-op' : '') ?>">
+                <?= $_w === '' ? 'Niet ingevuld' : h($_w) ?>
+              </span>
+            </div>
+          <?php endforeach; ?>
+        </div>
         <?php
-          // Veldnamen exact zoals in blk_formulieren; werkervaring en motivatie_*
-          // heten anders dan je zou gokken.
-          $_velden = ['opleiding' => 'Opleiding', 'werkervaring' => 'Werkervaring',
-                      'diplomas' => 'Diploma\'s', 'bijzonderheden' => 'Bijzonderheden'];
-          foreach ($_velden as $_v => $_l):
-            $_w = trim((string)($_blk[$_v] ?? ''));
-            $_bijz = $_v === 'bijzonderheden' && $_w !== '';
+          $_moties = ['motivatie_lifeguard' => 'Waarom strandwacht?',
+                      'motivatie_strand'    => 'Waarom juist dit strand?'];
+          foreach ($_moties as $_mv => $_ml):
+            $_mot = trim((string)($_blk[$_mv] ?? ''));
+            if ($_mot === '') continue;
         ?>
-          <div>
-            <span class="bh-veldlabel"><?= h($_l) ?></span>
-            <?php // "Niet ingevuld" is iets anders dan leeg: dat onderscheid moet zichtbaar blijven. ?>
-            <span class="bh-veldwaarde<?= $_w === '' ? ' zacht' : ($_bijz ? ' let-op' : '') ?>">
-              <?= $_w === '' ? 'Niet ingevuld' : h($_w) ?>
-            </span>
+          <div class="bh-dossier-motivatie">
+            <span class="bh-veldlabel"><?= h($_ml) ?></span>
+            <p class="bh-dossier-tekst"><?= nl2br(h($_mot)) ?></p>
           </div>
         <?php endforeach; ?>
+        <a class="bh-kaartkop-link" href="<?= h(dossier_url((int)$_s['id'], 'formulier')) ?>">Volledig formulier <?= icoon('chevron', 14) ?></a>
       </div>
-      <?php
-        $_moties = ['motivatie_lifeguard' => 'Waarom strandwacht?',
-                    'motivatie_strand'    => 'Waarom juist dit strand?'];
-        foreach ($_moties as $_mv => $_ml):
-          $_mot = trim((string)($_blk[$_mv] ?? ''));
-          if ($_mot === '') continue;
-      ?>
-        <div class="bh-dossier-motivatie">
-          <span class="bh-veldlabel"><?= h($_ml) ?></span>
-          <p class="bh-dossier-tekst"><?= nl2br(h($_mot)) ?></p>
-        </div>
-      <?php endforeach; ?>
-    </section>
+    </details>
     <?php endif; ?>
 
     <?php if ($_blk && !empty($_blk['ai_analyse']) && $_mag_blk): ?>
-    <section class="ds-kaart ds-kaart-p">
-      <div class="bh-kaartkop">
-        <h2>AI-analyse</h2>
-        <?= bh_badge('Geanonimiseerd · AVG-conform', 'grijs') ?>
-        <?php if (!empty($_blk['ai_analyse_op'])): ?>
-          <span class="bh-meta"><?= h(datum_nl(substr((string)$_blk['ai_analyse_op'], 0, 10))) ?></span>
-        <?php endif; ?>
+    <details class="bh-klap ds-kaart" data-klap-id="dossier-ai">
+      <summary>
+        <span class="bh-klap-titel">AI-analyse</span>
+        <span class="bh-klap-sam"><?= bh_badge('Geanonimiseerd', 'grijs') ?>
+          <?= !empty($_blk['ai_analyse_op']) ? h(datum_nl(substr((string)$_blk['ai_analyse_op'], 0, 10))) : '' ?></span>
+      </summary>
+      <div class="bh-klap-inhoud">
+        <p class="bh-dossier-tekst"><?= nl2br(h((string)$_blk['ai_analyse'])) ?></p>
       </div>
-      <p class="bh-dossier-tekst"><?= nl2br(h((string)$_blk['ai_analyse'])) ?></p>
-    </section>
+    </details>
     <?php endif; ?>
 
     <?php if (mag('sollicitanten', 'verwijderen')): ?>
@@ -260,7 +295,7 @@ if ($_iv) {
       </div>
       <div class="bh-fasekeuze">
         <?php foreach (fasen() as $_f => $_lbl):
-          $_nu = $_f === $_s['fase'];
+          $_nu = $_f === $_fase;
         ?>
           <?php if ($_nu): ?>
             <span class="bh-fasechip nu ds-fase-<?= h(fase_kleur($_f)) ?>" aria-current="true">
@@ -271,7 +306,7 @@ if ($_iv) {
                   // (optionele) reden; die komt als notitie in de tijdlijn. ?>
             <button type="button" class="bh-fasechip ds-fase-<?= h(fase_kleur($_f)) ?>"
                     data-bevestig="<?= h(bh_fase_bevestig_tekst($_f, (string)($_s['voornaam'] ?? ''))) ?>"
-                    data-klik="fasWijzigen(<?= (int)$_s['id'] ?>, '<?= h($_f) ?>', '<?= h(fase_label($_f)) ?>', <?= bh_fase_afwijkend((string)$_s['fase'], $_f) ? 'true' : 'false' ?>, this.dataset.bevestig, <?= $_f === 'afgewezen' ? 'true' : 'false' ?>)">
+                    data-klik="fasWijzigen(<?= (int)$_s['id'] ?>, '<?= h($_f) ?>', '<?= h(fase_label($_f)) ?>', <?= bh_fase_afwijkend($_fase, $_f) ? 'true' : 'false' ?>, this.dataset.bevestig, <?= $_f === 'afgewezen' ? 'true' : 'false' ?>)">
               <?= h(fase_label_kort($_f, 'mini')) ?>
             </button>
           <?php else: ?>
@@ -281,49 +316,12 @@ if ($_iv) {
       </div>
     </section>
 
-    <?php if ($_taken['totaal'] > 0): ?>
-    <section class="ds-kaart ds-kaart-p">
-      <div class="bh-kaartkop">
-        <h2>Taken</h2>
-        <span class="bh-meta">zoals de sollicitant ze in het portaal ziet</span>
-      </div>
-      <?= bh_voortgang($_taken['gedaan'], $_taken['totaal'], ['label' => $_taken['gedaan'] . ' / ' . $_taken['totaal'] . ' afgerond']) ?>
-      <ul class="bh-doclijst">
-        <?php foreach ($_taken['rijen'] as $_r):
-          $_stand = $_r['done'] ? 'klaar' : ($_r['wacht'] ? 'wacht' : 'open');
-        ?>
-          <li class="<?= $_stand ?>">
-            <span class="bh-doc-vink">
-              <?= $_r['done'] ? icoon('vink', 14) : '<span class="bh-doc-stip"></span>' ?>
-            </span>
-            <span class="bh-doc-naam">
-              <?= h($_r['titel']) ?>
-              <?php if ($_r['sub'] !== ''): ?><span class="bh-doc-sub"><?= h($_r['sub']) ?></span><?php endif; ?>
-            </span>
-            <?php // Status altijd ook in woorden, niet alleen met kleur. ?>
-            <span class="bh-doc-datum"><?= $_r['done'] ? 'Afgerond' : ($_r['wacht'] ? 'Wacht op ouder' : 'Open') ?></span>
-            <?php if (!$_r['done'] && $_r['token'] && $_mag_bewerken): ?>
-              <button type="button" class="bh-doc-actie"
-                      data-klik="kopieerOndertekenlink('<?= h($_r['token']) ?>', this)">Link kopiëren</button>
-            <?php endif; ?>
-          </li>
-        <?php endforeach; ?>
-      </ul>
-      <?php if ($_doc['totaal'] > 0): ?>
-        <a class="bh-kaartkop-link bh-taken-voet" href="<?= h(dossier_url((int)$_s['id'], 'ondertekeningen')) ?>">
-          Ondertekeningen · <?= $_doc['gedaan'] ?> van <?= $_doc['totaal'] ?> <?= icoon('chevron', 14) ?>
-        </a>
-      <?php endif; ?>
-    </section>
-    <?php endif; ?>
-
     <section class="ds-kaart ds-kaart-p">
       <div class="bh-kaartkop">
         <h2>Notities</h2>
         <span class="bh-meta">alleen zichtbaar in het beheer</span>
       </div>
-      <?php // De id's zijn die van laadNotities()/laadTimeline() in layout_bottom.php;
-            // die JS wordt in een volgende stap naar beheer.js verhuisd. ?>
+      <?php // De id's zijn die van laadNotities() in layout_bottom.php. ?>
       <div id="notities-lijst-<?= (int)$_s['id'] ?>">
         <?php $laden_rijen = 2; $laden_tegel = false; require __DIR__ . '/../_laden.php'; ?>
       </div>
@@ -337,30 +335,73 @@ if ($_iv) {
       <?php endif; ?>
     </section>
 
-    <?php // De tijdlijn staat op zijn eigen tabblad (Tijdlijn); hier stond hij dubbel. ?>
+    <?php if ($_taken['totaal'] > 0): ?>
+    <details class="bh-klap ds-kaart" id="taken" data-klap-id="dossier-taken">
+      <summary>
+        <span class="bh-klap-titel">Taken</span>
+        <span class="bh-klap-sam"><?= $_taken['gedaan'] ?> van <?= $_taken['totaal'] ?> afgerond</span>
+      </summary>
+      <div class="bh-klap-inhoud">
+        <p class="bh-meta">Zoals de sollicitant ze in het portaal ziet.</p>
+        <?= bh_voortgang($_taken['gedaan'], $_taken['totaal'], ['label' => $_taken['gedaan'] . ' / ' . $_taken['totaal'] . ' afgerond']) ?>
+        <ul class="bh-doclijst">
+          <?php foreach ($_taken['rijen'] as $_r):
+            $_stand = $_r['done'] ? 'klaar' : ($_r['wacht'] ? 'wacht' : 'open');
+          ?>
+            <li class="<?= $_stand ?>">
+              <span class="bh-doc-vink">
+                <?= $_r['done'] ? icoon('vink', 14) : '<span class="bh-doc-stip"></span>' ?>
+              </span>
+              <span class="bh-doc-naam">
+                <?= h($_r['titel']) ?>
+                <?php if ($_r['sub'] !== ''): ?><span class="bh-doc-sub"><?= h($_r['sub']) ?></span><?php endif; ?>
+              </span>
+              <?php // Status altijd ook in woorden, niet alleen met kleur. ?>
+              <span class="bh-doc-datum"><?= $_r['done'] ? 'Afgerond' : ($_r['wacht'] ? 'Wacht op ouder' : 'Open') ?></span>
+              <?php if (!$_r['done'] && $_r['token'] && $_mag_bewerken): ?>
+                <button type="button" class="bh-doc-actie"
+                        data-klik="kopieerOndertekenlink('<?= h($_r['token']) ?>', this)">Link kopiëren</button>
+              <?php endif; ?>
+            </li>
+          <?php endforeach; ?>
+        </ul>
+        <?php if ($_doc['totaal'] > 0): ?>
+          <a class="bh-kaartkop-link bh-taken-voet" href="<?= h(dossier_url((int)$_s['id'], 'ondertekeningen')) ?>">
+            Ondertekeningen · <?= $_doc['gedaan'] ?> van <?= $_doc['totaal'] ?> <?= icoon('chevron', 14) ?>
+          </a>
+        <?php endif; ?>
+      </div>
+    </details>
+    <?php endif; ?>
+
+    <?php if ($tab_dossier['eerder']): ?>
+    <details class="bh-klap ds-kaart" data-klap-id="dossier-eerder">
+      <summary>
+        <span class="bh-klap-titel">Eerdere seizoenen</span>
+        <span class="bh-klap-sam"><?= count($tab_dossier['eerder']) ?> eerder</span>
+      </summary>
+      <div class="bh-klap-inhoud">
+        <ul class="bh-eerder">
+          <?php foreach ($tab_dossier['eerder'] as $_e): ?>
+            <li>
+              <strong><?= h($_e['seizoen_naam']) ?></strong>
+              <?= bh_fase_badge((string)$_e['fase'], ['lengte' => 'kort']) ?>
+            </li>
+          <?php endforeach; ?>
+        </ul>
+      </div>
+    </details>
+    <?php endif; ?>
+
+    <?php // De tijdlijn staat op zijn eigen tabblad (Tijdlijn). ?>
     <a class="bh-kaartkop-link" href="<?= h(dossier_url((int)$_s['id'], 'tijdlijn')) ?>">Tijdlijn bekijken <?= icoon('chevron', 14) ?></a>
 
     <script nonce="<?= h(csp_nonce()) ?>">
-      // Haalt de inhoud op na het laden; stond eerder alleen in het paneel, dat hem zelf
-      // aanriep nadat innerHTML de scripts had ingeslikt.
+      // Haalt de notities op na het laden.
       document.addEventListener('DOMContentLoaded', function () {
         if (window.laadNotities) laadNotities(<?= (int)$_s['id'] ?>);
       });
     </script>
-
-    <?php if ($tab_dossier['eerder']): ?>
-    <section class="ds-kaart ds-kaart-p">
-      <div class="bh-kaartkop"><h2>Eerdere seizoenen</h2></div>
-      <ul class="bh-eerder">
-        <?php foreach ($tab_dossier['eerder'] as $_e): ?>
-          <li>
-            <strong><?= h($_e['seizoen_naam']) ?></strong>
-            <?= bh_fase_badge((string)$_e['fase'], ['lengte' => 'kort']) ?>
-          </li>
-        <?php endforeach; ?>
-      </ul>
-    </section>
-    <?php endif; ?>
   </aside>
 </div>
 <?php

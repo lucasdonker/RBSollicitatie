@@ -49,6 +49,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
         }
+    } elseif ($_d0 && ($_POST['herinneren'] ?? '') === '1') {
+        // Vanuit de kaart "Nu": dezelfde herinnering als de bulkknop op de lijst.
+        vereis_recht('sollicitanten', 'bewerken');
+        $_r = sollicitant_herinneren([$_pid]);
+        flash($_r['sollicitanten'] + $_r['ouders'] > 0 ? 'succes' : 'info', bh_herinner_uitkomst($_r));
     } elseif ($_d0 && !empty($_POST['verwijder'])) {
         vereis_recht('sollicitanten', 'verwijderen');
         $_omvang = $_POST['verwijder'] === 'persoon' ? 'persoon' : 'sollicitatie';

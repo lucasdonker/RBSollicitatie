@@ -2,8 +2,9 @@
 /**
  * Partial: Gegevens corrigeren (AVG art. 16) — naam, e-mail, telefoon, geboortedatum.
  *
- * Een uitklapper, dicht tenzij je hier via een link komt (?corrigeer=1#gegevens: de knop
- * "Adres corrigeren" in de lijst en "Gegevens corrigeren" bij een mislukt bericht). Het
+ * Een uitklapper binnen de kaart Gegevens (admin/dossier/_tab_dossier.php), dicht tenzij je hier via
+ * een link komt (?corrigeer=1#gegevens: de knop "Adres corrigeren" in de lijst en "Gegevens
+ * corrigeren" bij een mislukt bericht; dan staat ook de kaart eromheen open). Het
  * formulier is een gewone POST naar admin/api_gegevens.php, dat terugstuurt naar het
  * dossier met een melding; de validatie en het logboek staan in bh_gegevens_corrigeren().
  *
@@ -18,10 +19,10 @@ $_gs = $geg_dossier['sol'];
 $_gid = (int)$_gs['id'];
 $_open = !empty($_GET['corrigeer']);
 ?>
-<details class="ds-kaart ds-kaart-p bh-gegevenskaart" id="gegevens"<?= $_open ? ' open' : '' ?>>
-  <summary class="bh-kaartkop">
-    <h2>Gegevens corrigeren</h2>
-    <span class="bh-meta">naam, e-mail, telefoon, geboortedatum</span>
+<details class="bh-klap bh-gegevenskaart"<?= $_open ? ' open' : '' ?>>
+  <summary>
+    <span class="bh-klap-titel">Gegevens corrigeren</span>
+    <span class="bh-klap-sam">naam, e-mail, telefoon, geboortedatum</span>
   </summary>
 
   <form method="post" action="<?= APP_URL ?>/admin/api_gegevens.php" class="bh-veldform">

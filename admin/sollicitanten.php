@@ -78,13 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $toon_bevestiging = ['actie' => $actie, 'ids' => $ids, 'overgeslagen' => 0];
         } else {
             $r = sollicitant_herinneren($ids);
-            $delen = array_filter([
-                $r['sollicitanten'] ? $r['sollicitanten'] . ' ' . ($r['sollicitanten'] === 1 ? 'sollicitant' : 'sollicitanten') . ' herinnerd aan openstaande taken' : '',
-                $r['ouders'] ? $r['ouders'] . ' ' . ($r['ouders'] === 1 ? 'ouder' : 'ouders') . ' herinnerd om te ondertekenen' : '',
-                $r['dubbel'] ? $r['dubbel'] . ' overgeslagen (het afgelopen uur al herinnerd)' : '',
-                $r['niets'] ? $r['niets'] . ' zonder iets open' : '',
-            ]);
-            flash($r['sollicitanten'] + $r['ouders'] > 0 ? 'succes' : 'info', $delen ? ucfirst(implode('; ', $delen)) . '.' : 'Er is niets verstuurd.');
+            flash($r['sollicitanten'] + $r['ouders'] > 0 ? 'succes' : 'info', bh_herinner_uitkomst($r));
             redirect(APP_URL . '/admin/sollicitanten.php' . (empty($_GET) ? '' : '?' . http_build_query($_GET)));
         }
     }

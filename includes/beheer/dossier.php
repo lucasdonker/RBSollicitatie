@@ -239,6 +239,72 @@ function bh_dossier_taken(array $dossier): array {
 }
 
 /**
+ * Wat er nu speelt bij deze sollicitant — bovenaan het dossier, voor het dagelijks gebruik: één zin
+ * over waar iemand staat, en waar het op wacht. De rest van het dossier staat ingeklapt.
+ * De hoofdactie (de stap vooruit) staat in de kop (bh_fase_actie); die herhalen we hier niet.
+ *
+ * @param array $taken  uitkomst van bh_dossier_taken()
+ * @return array{zin:string, wacht:array<int,array{tekst:string,kleur:string}>, meer:int, herinner:bool}
+ */
+function bh_dossier_nu(array $d, array $taken): array {
+    $s    = $d['sol'];
+    $id   = (int)$s['id'];
+    $szid = (int)$s['seizoen_id'];
+    $fase = (string)$s['fase'];
+    $sz   = function_exists('actief_seizoen') ? actief_seizoen() : null;
+    $sz   = ($sz && (int)$sz['id'] === $szid) ? $sz : [];
+    $sd   = !empty($sz['datum_selectiedag']) ? ' van ' . datum_nl($sz['datum_selectiedag']) : '';
+    $komt = function (string $ev) use ($szid, $id): string {
+        if (!function_exists('evenement_bevestiging_van')) return '';
+        $b = evenement_bevestiging_van($ev, $szid, $id);
+        return ['komt' => ' Komt.', 'komt_niet' => ' Kan niet' . (!empty($b['reden']) ? ': ' . $b['reden'] : '') . '.'][$b['stand']]
+            ?? ' Nog niet laten weten of hij of zij komt.';
+    };
+    $open = array_values(array_filter($taken['rijen'], fn($r) => !$r['done']));
+    $sd_besluit = (string)($d['besluit']['besluit'] ?? '');
+    $tw_besluit = (string)($d['tw']['besluit'] ?? '');
+
+    $zin = match ($fase) {
+        'aangemeld'            => empty($d['blk_ingediend_op'])
+                                    ? 'Nieuwe aanmelding; het kennismakingsformulier is nog niet ingestuurd.'
+                                    : 'Nieuwe aanmelding met ingestuurd formulier. Beoordeel en nodig uit voor de selectiedag.',
+        'uitgenodigd_selectie' => 'Uitgenodigd voor de selectiedag' . $sd . '. Wacht tot de sollicitant zich aanmeldt.',
+        'aangemeld_selectie'   => 'Aangemeld voor de selectiedag' . $sd . '.' . $komt('selectiedag'),
+        'selectiedag_geweest'  => 'Selectiedag geweest. ' . match ($sd_besluit) {
+                                    'door'    => 'Besluit: door. Bellen en uitnodigen voor het trainingsweekend gaat via de bellijst.',
+                                    'twijfel' => 'Besluit: twijfel. Bellen via de bellijst; daar wordt het door of niet.',
+                                    'niet'    => 'Besluit: niet door. Bellen en doorvoeren via de bellijst.',
+                                    default   => 'Nog geen besluit in de nabespreking.',
+                                  },
+        'uitgenodigd_tw'       => 'Uitgenodigd voor het trainingsweekend.' . $komt('tw'),
+        'tw_geweest'           => 'Trainingsweekend geweest. ' . ($tw_besluit === 'twijfel'
+                                    ? 'Twijfel na het gesprek: nabellen en dan besluiten.'
+                                    : 'Het gesprek en het besluit volgen bij Trainingsweekend › Gesprekken.'),
+        'aangenomen'           => $open ? 'Aangenomen. Nog ' . count($open) . ' ' . (count($open) === 1 ? 'taak' : 'taken') . ' open.'
+                                        : 'Aangenomen, en alles is rond.',
+        'afgewezen'            => 'Afgewezen.',
+        'afgehaakt'            => 'Afgehaakt.',
+        default                => fase_label($fase) . '.',
+    };
+
+    $wacht = [];
+    foreach ($open as $r) {
+        $wacht[] = ['tekst' => $r['titel'] . ($r['wacht'] ? ' (wacht op ouder)' : ''), 'kleur' => $r['wacht'] ? 'paars' : 'oranje'];
+    }
+    if (empty($s['email']) && empty($s['telefoon'])) {
+        array_unshift($wacht, ['tekst' => 'Geen e-mail en geen telefoonnummer', 'kleur' => 'rood']);
+    }
+    $max = 6;
+    return [
+        'zin'      => $zin,
+        'wacht'    => array_slice($wacht, 0, $max),
+        'meer'     => max(0, count($wacht) - $max),
+        // Afgewezen of afgehaakt: niemand herinneren.
+        'herinner' => (bool)$open && !in_array($fase, ['afgewezen', 'afgehaakt'], true),
+    ];
+}
+
+/**
  * Wie mag een ondertekend document daadwerkelijk ópenen?
  *
  * Dit stond op twee plekken met twee antwoorden: het dossiertabblad liet een

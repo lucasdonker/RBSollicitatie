@@ -3,10 +3,21 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.136.0');
+define('APP_VERSIE', '2.137.0');
 
 function app_changelog(): array {
     return [
+        '2.137.0' => [
+            'datum'  => '2026-09-30',
+            'titel'  => 'Dossier: eerst wat nu speelt',
+            'punten' => [
+                'Bovenaan het dossier de kaart "Nu": in één zin waar iemand staat, waar het op wacht (taken, handtekeningen, een ouder) en een knop om een herinnering te sturen',
+                'Gegevens, advies, competenties, het kennismakingsformulier, de AI-analyse, taken en eerdere seizoenen staan ingeklapt met een samenvatting op één regel. Wat je openklapt blijft open zolang je werkt; na de selectiedag staat het advies open',
+                'Een gemelde bijzonderheid is zichtbaar zonder uit te klappen',
+                'Gegevens corrigeren staat onderaan de kaart Gegevens',
+                'Op een telefoon schuiven de dossiertabbladen in één rij',
+            ],
+        ],
         '2.136.0' => [
             'datum'  => '2026-09-30',
             'titel'  => 'Sollicitanten: rustiger bovenbalk, meer filters, herinnering in bulk',

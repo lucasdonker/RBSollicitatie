@@ -49,6 +49,17 @@ function bh_fase_bevestig_tekst(string $naar, string $voornaam): string {
  * @param int[]  $ids     de betrokken sollicitaties
  * @return array{titel:string,regels:string[],bericht:?string,onomkeerbaar:bool,knop:string,toon:string}
  */
+/** De uitkomst van sollicitant_herinneren() als één zin voor de melding na afloop (lijst en dossier). */
+function bh_herinner_uitkomst(array $r): string {
+    $delen = array_filter([
+        $r['sollicitanten'] ? $r['sollicitanten'] . ' ' . ($r['sollicitanten'] === 1 ? 'sollicitant' : 'sollicitanten') . ' herinnerd aan openstaande taken' : '',
+        $r['ouders'] ? $r['ouders'] . ' ' . ($r['ouders'] === 1 ? 'ouder' : 'ouders') . ' herinnerd om te ondertekenen' : '',
+        $r['dubbel'] ? $r['dubbel'] . ' niet opnieuw (het afgelopen uur al herinnerd)' : '',
+        $r['niets'] ? $r['niets'] . ' zonder iets open' : '',
+    ]);
+    return $delen ? ucfirst(implode('; ', $delen)) . '.' : 'Er is niets verstuurd.';
+}
+
 function bh_gevolgen(string $actie, array $ids): array {
     $n = count($ids);
     $mensen = $n === 1 ? 'één persoon' : $n . ' mensen';
