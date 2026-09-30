@@ -140,7 +140,7 @@ if ($_iv) {
       <div id="compChips-<?= (int)$_s['id'] ?>">
         <?php if ($_comps): ?>
           <div class="bh-chiprij">
-            <?php foreach ($_comps as $_c): ?><?= bh_chip((string)$_c['groep'], 'blauw') ?><?php endforeach; ?>
+            <?php foreach ($_comps as $_c): ?><?= bh_chip(competentie_groep_label((string)$_c['groep']), 'blauw') ?><?php endforeach; ?>
           </div>
         <?php else: ?>
           <p class="bh-dossier-tekst zacht">Geen competenties gevonden in Authentik.</p>

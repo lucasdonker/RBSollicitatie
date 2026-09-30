@@ -1327,6 +1327,7 @@ require __DIR__ . '/layout_top.php';
     <p class="ds-veld-hint bh-mb">
       Welke Authentik-groepen tellen als competentie, en hun rangorde. Per categorie tonen we alleen de <strong>hoogste</strong> rang die iemand heeft
       (bijv. wie Chauffeur is, hoeft niet ook als Opstapper Auto te verschijnen). Groepen die hier niet staan, worden genegeerd.
+      Terugkerend is alleen wie in <code>lid-strandploeg</code> of <code>lid-oud-strandploeg</code> zit; een diploma alleen is niet genoeg.
     </p>
     <div class="bh-tabel-wrap">
       <table class="bh-inst-comptabel">
@@ -1343,12 +1344,13 @@ require __DIR__ . '/layout_top.php';
           ?>
           <tr>
             <td class="bh-compcel"><?= icoon(bh_icoonnaam((string)($def['icoon'] ?? '')), 15) ?><?= h($def['label'] ?? $cat) ?>
-              <div class="bh-inst-compsub"><?= ($def['ranking'] ?? true) ? 'met rangorde' : 'los (geen rangorde)' ?></div>
+              <div class="bh-inst-compsub"><?= !empty($def['verborgen']) ? 'bepaalt "terugkerend", geen competentie'
+                                               : (($def['ranking'] ?? true) ? 'met rangorde' : 'los (geen rangorde)') ?></div>
             </td>
             <td class="bh-cel">
               <?php foreach ($groepen as $groep => $rang): ?>
                 <span class="bh-inst-groepchip">
-                  <?php if ($def['ranking'] ?? true): ?><span class="bh-tekst-grijs"><?= (int)$rang ?>.</span> <?php endif; ?><?= h($groep) ?>
+                  <?php if ($def['ranking'] ?? true): ?><span class="bh-tekst-grijs"><?= (int)$rang ?>.</span> <?php endif; ?><code><?= h($groep) ?></code>
                 </span>
               <?php endforeach; ?>
             </td>
@@ -1394,7 +1396,15 @@ require __DIR__ . '/layout_top.php';
   </div>
 
   <script nonce="<?= h(csp_nonce()) ?>">
-  const COMP_CATS = <?= json_encode(array_map(fn($c) => ['label'=>$c['label'], 'groepen'=>$c['groepen'] ?? []], $comp_map)) ?>;
+  <?php // Leesbare groepsnamen in de rangkeuze; een verborgen categorie (strandploeg) is geen eis voor een post.
+        $_cats = [];
+        foreach ($comp_map as $_k => $_c) {
+            if (!empty($_c['verborgen'])) continue;
+            $_g = [];
+            foreach ((array)($_c['groepen'] ?? []) as $_naam => $_rang) $_g[competentie_groep_label((string)$_naam)] = $_rang;
+            $_cats[$_k] = ['label' => $_c['label'], 'groepen' => $_g];
+        } ?>
+  const COMP_CATS = <?= json_encode($_cats) ?>;
   let SJABLONEN = <?= json_encode($sjab) ?>;
 
   // Eigen escape: render() draait meteen, vóórdat beheer.js (bhTekst) onderaan de pagina laadt.

@@ -11,48 +11,87 @@
  * Match: op e-mail, met handmatige koppeling (authentik_username) als fallback.
  */
 
-// ── Defaults op basis van de echte Authentik-groepen ─────────
-// categorie => [ 'label'=>..., 'rang' => [ 'Group Naam' => rang_int, ... ] ]
+// ── Defaults op basis van het groepenmodel (docs/handleiding/authentik_groepen.md) ──
+// categorie => [ 'label'=>..., 'icoon'=> naam uit includes/iconen.php, 'groepen' => [ 'groep' => rang, ... ] ]
+// 'verborgen' => true: wordt gesynct maar niet als competentie getoond (alleen voor "terugkerend").
 function competentie_default_mapping(): array {
     return [
         'lifeguard' => [
             'label'   => 'Lifeguard',
-            'icoon'   => '🏊',
+            'icoon'   => 'reddingsboei',
             'ranking' => true,
             'groepen' => [
-                'Aspirant Lifeguard' => 1,
-                'Junior Lifeguard'   => 2,
-                'Lifeguard'          => 3,
-                'Senior Lifeguard'   => 4,
+                'kw-lifeguard-aspirant' => 1,
+                'kw-lifeguard-junior'   => 2,
+                'kw-lifeguard'          => 3,
+                'kw-lifeguard-senior'   => 4,
             ],
         ],
         'varen' => [
             'label'   => 'Varen',
-            'icoon'   => '⛵',
+            'icoon'   => 'golf',
             'ranking' => true,
             'groepen' => [
-                'Opstapper Boot' => 1,
-                'Schipper'       => 2,
+                'kw-boot-opstapper' => 1,
+                'kw-boot-schipper'  => 2,
             ],
         ],
         'rijden' => [
             'label'   => 'Rijden',
-            'icoon'   => '🚗',
+            'icoon'   => 'wissel',
             'ranking' => true,
             'groepen' => [
-                'Opstapper Auto' => 1,
-                'Chauffeur'      => 2,
+                'kw-auto-opstapper' => 1,
+                'kw-auto-chauffeur' => 2,
             ],
         ],
         'overig' => [
             'label'   => 'Overig',
-            'icoon'   => '🔔',
+            'icoon'   => 'schild',
             'ranking' => false,
             'groepen' => [
-                'Alarmploeg' => 1,
+                'kw-postcommandant' => 1,
+                'kw-bevelvoerder'   => 1,
+                'lid-alarmploeg'    => 1,
+            ],
+        ],
+        // Terugkerende strandwacht (authentik_lifeguard_sql). Bewust niet kw-lifeguard-*: er zijn mensen
+        // met een diploma die nooit of lang geleden werkten. Besluit Lucas, 30 sep 2026.
+        'strandploeg' => [
+            'label'     => 'Strandploeg',
+            'icoon'     => 'strand',
+            'ranking'   => false,
+            'verborgen' => true,
+            'groepen'   => [
+                'lid-strandploeg'     => 2,
+                'lid-oud-strandploeg' => 1,
             ],
         ],
     ];
+}
+
+/**
+ * De groepsnamen van vóór 2.132.2, en hun opvolger. Alleen voor een eerder opgeslagen mapping
+ * (instelling authentik.mapping): de standaard hierboven heeft de nieuwe namen al.
+ */
+function competentie_oude_groepnamen(): array {
+    return ['Aspirant Lifeguard' => 'kw-lifeguard-aspirant', 'Junior Lifeguard' => 'kw-lifeguard-junior',
+            'Lifeguard' => 'kw-lifeguard', 'Senior Lifeguard' => 'kw-lifeguard-senior',
+            'Opstapper Boot' => 'kw-boot-opstapper', 'Schipper' => 'kw-boot-schipper',
+            'Opstapper Auto' => 'kw-auto-opstapper', 'Chauffeur' => 'kw-auto-chauffeur',
+            'Alarmploeg' => 'lid-alarmploeg', 'Strandploeg' => 'lid-strandploeg'];
+}
+
+/**
+ * Leesbare naam van een groep voor op het scherm: "kw-lifeguard-senior" → "Senior Lifeguard".
+ * De oude Authentik-namen wáren de leesbare namen; wat daar niet in staat: voorvoegsel eraf.
+ */
+function competentie_groep_label(string $groep): string {
+    static $label = null;
+    if ($label === null) $label = array_flip(competentie_oude_groepnamen());
+    if (isset($label[$groep])) return $label[$groep];
+    $kaal = preg_replace('/^(kw|lid|fn)-/', '', $groep);
+    return ucfirst(str_replace('-', ' ', (string)$kaal));
 }
 
 /** Actieve mapping: uit instelling (JSON) of default. */
@@ -60,7 +99,17 @@ function competentie_mapping(): array {
     $json = instelling('authentik.mapping', '');
     if ($json) {
         $m = json_decode($json, true);
-        if (is_array($m) && $m) return $m;
+        if (is_array($m) && $m) {
+            // Eerder opgeslagen met de oude groepsnamen: omzetten, anders matcht niets meer. De
+            // categorie strandploeg ontbreekt daar; die komt uit de standaard (nodig voor "terugkerend").
+            $oud = competentie_oude_groepnamen();
+            foreach ($m as $cat => $def) {
+                $nieuw = [];
+                foreach ((array)($def['groepen'] ?? []) as $g => $rang) $nieuw[$oud[$g] ?? $g] = $rang;
+                $m[$cat]['groepen'] = $nieuw;
+            }
+            return $m + ['strandploeg' => competentie_default_mapping()['strandploeg']];
+        }
     }
     return competentie_default_mapping();
 }
@@ -76,6 +125,11 @@ function competentie_group_index(): array {
         foreach ($def['groepen'] ?? [] as $groep => $rang) {
             $idx[$groep] = ['categorie' => $cat, 'rang' => (int)$rang];
         }
+    }
+    // Overgang: zolang Authentik nog de oude groepsnamen heeft, tellen die als hun opvolger.
+    // Zo breekt de dekking niet als deze versie eerder live staat dan de hernoeming in Authentik.
+    foreach (competentie_oude_groepnamen() as $oud => $nieuw) {
+        if (isset($idx[$nieuw]) && !isset($idx[$oud])) $idx[$oud] = $idx[$nieuw];
     }
     return $idx;
 }
@@ -285,16 +339,17 @@ function competenties_van(int $sol_id): array {
 
     $uit = [];
     foreach ($mapping as $cat => $def) {
+        if (!empty($def['verborgen'])) continue;   // bv. strandploeg: alleen voor "terugkerend"
         $ranking = $def['ranking'] ?? true;
         if ($ranking) {
             if (isset($hoogste[$cat])) {
-                $uit[] = ['categorie'=>$cat, 'label'=>$def['label'], 'icoon'=>$def['icoon'] ?? '•', 'groep'=>$hoogste[$cat]['groep'], 'rang'=>$hoogste[$cat]['rang']];
+                $uit[] = ['categorie'=>$cat, 'label'=>$def['label'], 'icoon'=>$def['icoon'] ?? 'punt', 'groep'=>$hoogste[$cat]['groep'], 'rang'=>$hoogste[$cat]['rang']];
             }
         } else {
             // Losse competenties: toon elke die iemand heeft
             foreach ($rijen as $r) {
                 if ($r['categorie'] === $cat) {
-                    $uit[] = ['categorie'=>$cat, 'label'=>$def['label'], 'icoon'=>$def['icoon'] ?? '•', 'groep'=>$r['groep'], 'rang'=>(int)$r['rang']];
+                    $uit[] = ['categorie'=>$cat, 'label'=>$def['label'], 'icoon'=>$def['icoon'] ?? 'punt', 'groep'=>$r['groep'], 'rang'=>(int)$r['rang']];
                 }
             }
         }
@@ -303,15 +358,17 @@ function competenties_van(int $sol_id): array {
 }
 
 /**
- * SQL-expressie (0/1): heeft deze sollicitatie een Authentik-account, dus een terugkerende
- * lifeguard? Een nieuwe sollicitant heeft er geen; wie al bij de brigade zit wel. De sync
- * zet sync_status 'ok' alleen als de gebruiker in Authentik gevonden is.
+ * SQL-expressie (0/1): is dit een terugkerende strandwacht? Ja als de sync bij deze sollicitatie een
+ * groep uit de categorie strandploeg vond: lid-strandploeg (dit seizoen) of lid-oud-strandploeg
+ * (afgelopen 3 seizoenen, bijgehouden door het Verenigingsportaal). Een Authentik-account of een
+ * lifeguard-diploma (kw-*) is bewust niet genoeg: dat hebben ook mensen die nooit of lang geleden
+ * werkten (besluit Lucas, 30 sep 2026). Zolang de sync niet gedraaid heeft, telt iemand als nieuw.
  * Gebruik: "SELECT …, " . authentik_lifeguard_sql('s.id') . " AS is_lifeguard FROM sollicitaties s …"
  */
 function authentik_lifeguard_sql(string $sol_kolom): string {
     if (!preg_match('/^[a-z_]+\.[a-z_]+$/', $sol_kolom)) $sol_kolom = 's.id';
-    return "(CASE WHEN EXISTS (SELECT 1 FROM authentik_koppeling ak WHERE ak.sollicitatie_id = $sol_kolom
-                 AND ak.sync_status = 'ok' AND ak.authentik_pk IS NOT NULL AND ak.authentik_pk <> '') THEN 1 ELSE 0 END)";
+    return "(CASE WHEN EXISTS (SELECT 1 FROM competenties cp WHERE cp.sollicitatie_id = $sol_kolom
+                 AND cp.categorie = 'strandploeg') THEN 1 ELSE 0 END)";
 }
 
 /** Sync-status van een sollicitatie voor weergave. */

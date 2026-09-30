@@ -277,7 +277,7 @@ endif; ?>
   ];
   if (function_exists('competentie_sync_klaar') && competentie_sync_klaar()) {
       $_opties = ['' => 'Competentie: alle'];
-      foreach (competentie_mapping() as $_cat => $_def) $_opties[$_cat] = $_def['label'];
+      foreach (competentie_mapping() as $_cat => $_def) if (empty($_def['verborgen'])) $_opties[$_cat] = $_def['label'];
       $filter_velden[] = ['soort' => 'keuze', 'naam' => 'comp', 'label' => 'Competentie',
                           'waarde' => $filter_comp, 'opties' => $_opties];
   }
