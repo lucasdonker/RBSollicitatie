@@ -97,7 +97,7 @@ verwijderen</a></li>
 <p><strong>Waar:</strong> het beheer,
 <code>https://sollicitatie.paal13.com/admin/</code><br />
 <strong>Wie:</strong> de penningmeester (Authentik-groep
-<code>Sol-Penningmeester</code>).</p>
+<code>app-sol-penningmeester</code>).</p>
 <blockquote>
 <p><strong>In het kort:</strong> jij bewaakt de loonkosten en zet de
 gegevens van aangenomen strandwachten in de loonadministratie. In de
@@ -176,7 +176,7 @@ te maken, uiterlijk 14 dagen vóór het weekend.</td>
 maken.</td>
 </tr>
 <tr>
-<td><strong>TW geweest</strong> (TW = trainingsweekend)</td>
+<td><strong>Trainingsweekend geweest</strong></td>
 <td>De sollicitant was op het weekend. Daar is een gesprek met het
 bestuur.</td>
 <td>In het gesprek wordt de inzet afgesproken; die staat daarna
@@ -334,7 +334,7 @@ Loondossiers.</p>
 <p><strong>Waar:</strong>
 <code>https://sollicitatie.paal13.com/admin/</code><br />
 <strong>Wie:</strong> je Authentik-account zit in de groep
-<code>Sol-Penningmeester</code>.</p>
+<code>app-sol-penningmeester</code>.</p>
 <p>Kies <strong>Inloggen via Authentik</strong>. In het menu zie je:</p>
 <ul>
 <li><strong>Vandaag</strong>: het startscherm. Voor jou staat daar
@@ -343,7 +343,7 @@ verwerken&quot; met de knop <strong>Naar de loondossiers</strong>, of
 &quot;aangenomen zonder vastgestelde afspraak&quot; met <strong>Naar de
 loonplanning</strong>. Ligt er niets, dan zie je wat het bestuur op dat
 moment doet.</li>
-<li><strong>Sollicitanten</strong> (in de groep Kandidaten): alleen
+<li><strong>Sollicitanten</strong> (in de groep Sollicitanten): alleen
 lezen. Zo kun je een dossier openen en zien wie iemand is, wat die opgaf
 en wat er is afgesproken.</li>
 <li><strong>Loonplanning</strong> (in de groep Inzet &amp; loon): wie er
@@ -473,27 +473,43 @@ dagen in dit scenario.</li>
 met …&quot;, dan rekent het systeem met de minimumlonen van een eerder jaar.
 Zie <a href="#budget-en-loontarieven-per-jaar">Budget en loontarieven
 per jaar</a>.</li>
+<li><strong>Waar zit het geld?</strong> (klik om te openen; de kop noemt
+al de duurste persoon en week): de vijf duurste mensen met hun aandeel
+in het totaal, de drie duurste weken, weken met meer mensen dan de norm
+(daar kun je schuiven zonder dat de bezetting te krap wordt) en wat er
+nog bij komt als je alle opgegeven maar niet geplande weken inplant.
+<strong>Raster sorteren op kosten</strong> zet de duurste bovenaan. Dit
+blok is de stand bij het openen van de pagina; vernieuw na het
+plannen.</li>
 <li><strong>Concept</strong> of <strong>Definitief sinds …</strong>: of
 de afspraken al zijn vastgesteld. Bij Concept staat erbij hoeveel mensen
 er zijn aangenomen en hoeveel er al vaststaan na het gesprek.</li>
-<li>De knoppen: <strong>Maak actief</strong> en
-<strong>Verwijderen</strong> (alleen bij een scenario dat niet actief
-is), <strong>Opgave overnemen (wie nog leeg is)</strong>,
-<strong>Definitief maken</strong> (later: <strong>Opnieuw definitief
-maken</strong>) en <strong>Exporteren</strong>.</li>
+<li>De knoppen: <strong>Definitief maken</strong> (later:
+<strong>Opnieuw definitief maken</strong>), het menu
+<strong>Scenario</strong> (<strong>Opgave overnemen (wie nog leeg
+is)</strong>, en bij een scenario dat niet actief is <strong>Maak dit
+scenario actief</strong> en <strong>Scenario verwijderen</strong>),
+<strong>Extra persoon</strong> (zie <a href="#extra-personen">Extra
+personen</a>) en <strong>Exporteren</strong>.</li>
 </ul>
 <p><strong>2. Ingepland per week</strong></p>
 <p>Een staafgrafiek met per week hoeveel mensen je hebt ingepland, tegen
-de norm die het bestuur voor de posten heeft ingesteld. Rood is te
+de norm die het bestuur voor de posten heeft ingesteld. Hij staat
+ingeklapt; de kop zegt al of er weken onder de norm zitten. Rood is te
 weinig. Dit gaat over bezetting, niet over geld, maar het helpt om te
 zien waar je niet kunt bezuinigen.</p>
-<p><strong>3. Filters</strong></p>
-<p>Zoek op naam, of kies <strong>Functie</strong>, <strong>Wie</strong>
-(Iedereen, Nog in de procedure, Aangenomen) en <strong>Toon</strong>
-(Alles, Met een afwijking, Nog niet ingepland, Vast na het gesprek, Nog
-niet vast). &quot;Met een afwijking&quot; toont wie ergens meer is ingepland dan
-opgegeven, in een week die niet is opgegeven, meer dan vijf dagen in een
-week, of twee weken achter elkaar samen meer dan tien dagen.</p>
+<p><strong>3. Filters en sorteren</strong></p>
+<p>Zoek op naam, of kies <strong>Wie</strong> (Iedereen, Nog in de
+procedure, Aangenomen, Extra personen), <strong>Toon</strong> (Alles,
+Met een afwijking, Nog niet ingepland, Vast na het gesprek, Nog niet
+vast) en <strong>Sorteren</strong> (op naam, duurste eerst, meeste dagen
+eerst, hoogste dagloon eerst, oudste of jongste eerst). Onder
+<strong>Meer filters</strong>: <strong>Functie</strong>, <strong>Vanaf
+week</strong> en <strong>Tot en met week</strong>, en <strong>Alleen het
+hoofdseizoen</strong>. &quot;Met een afwijking&quot; toont wie ergens meer is
+ingepland dan opgegeven, in een week die niet is opgegeven, meer dan
+vijf dagen in een week, of twee weken achter elkaar samen meer dan tien
+dagen.</p>
 <p><strong>4. De planning</strong></p>
 <p>Een rij per persoon en een kolom per week van de werkperiode (W27,
 W28, …, met de datum). In de naamkolom staan de functie, de leeftijd en
@@ -560,9 +576,9 @@ gaan gewoon naar het rooster.</li>
 <li>Onderaan staan eventuele signalen, bijvoorbeeld &quot;Meer dagen dan
 opgegeven&quot; of &quot;Alleen te vullen met dagen die iemand liever vrij
 heeft&quot;.</li>
-<li><strong>Zelfde voor de volgende opgegeven weken</strong> plant elke
-volgende opgegeven week met hetzelfde aantal dagen, nooit meer dan
-iemand die week opgaf.</li>
+<li><strong>Zelfde voor de volgende weken</strong> plant elke volgende
+opgegeven week met hetzelfde aantal dagen, nooit meer dan iemand die
+week opgaf.</li>
 </ol>
 <p>Elke wijziging slaat meteen op. De kosten bovenaan en onderaan lopen
 direct mee.</p>
@@ -576,6 +592,9 @@ Postcommandant kies je altijd zelf. De functie bepaalt mee het dagloon
 en geldt per scenario.</li>
 <li>de totalen van deze persoon in dit scenario, en <strong>Dossier
 openen</strong>;</li>
+<li><strong>Alle geplande weken</strong>: met <strong>Betaald</strong>
+of <strong>Onbetaald</strong> zet je in dit scenario elke geplande week
+van deze persoon in één keer om;</li>
 <li><strong>Opgave overnemen</strong> met <strong>Neem de opgave
 over</strong>: vervangt de planning van deze persoon in dit scenario
 door wat die zelf opgaf. Daarna kun je per week bijsturen;</li>
@@ -589,6 +608,28 @@ strandwacht ziet de nieuwe afspraak in het portaal; er gaat geen bericht
 uit, dus laat het bestuur het vertellen;</li>
 <li><strong>Vast in alle scenario&#39;s</strong>: zie <a href="#vastzetten-na-het-gesprek">Vastzetten na het gesprek</a>.</li>
 </ul>
+<h2 id="extra-personen">Extra personen</h2>
+<p>Iemand die geen sollicitant is maar wel loon kost en meetelt voor de
+bezetting, zoals de postcommandant. Die zet je er zelf bij, zodat het
+budget klopt.</p>
+<ol type="1">
+<li>Klik in de kop op <strong>Extra persoon</strong>.</li>
+<li>Vul <strong>Naam</strong> in en kies de <strong>Functie</strong>
+(standaard Postcommandant). <strong>Geboortedatum</strong> is optioneel:
+alleen nodig als het dagloon van de leeftijd afhangt; leeg rekent het
+systeem met 18 jaar. <strong>Notitie</strong> is ook optioneel.</li>
+<li>Klik op <strong>Toevoegen</strong>. De rij staat in de planning met
+het label <strong>extra</strong>; plan hem zoals iedereen.</li>
+</ol>
+<p>Verschillen met een sollicitant: er is geen opgave, dus je plant vrij
+en er komt nooit &quot;meer dan opgegeven&quot;; <strong>Zelfde voor de volgende
+weken</strong> vult alle weken erna. De functie geldt in alle
+scenario&#39;s. Er is geen afspraak of slot, geen dossier, geen portaal en
+geen berichten, en de persoon staat niet bij Sollicitanten. Wijzigen en
+<strong>Verwijderen</strong> doe je in het paneel (naam aanklikken);
+verwijderen haalt ook de planning uit alle scenario&#39;s weg. In de Excel
+voor de loonadministratie staat hij met de status &quot;Extra persoon (actief
+scenario)&quot;: de planning komt altijd uit het actieve scenario.</p>
 <h2 id="scenarios-gebruiken">Scenario&#39;s gebruiken</h2>
 <p>Een scenario is een complete planning. Je kunt er zoveel naast elkaar
 hebben als je wilt, om bijvoorbeeld te zien &quot;wat als we in juni twee
@@ -598,29 +639,30 @@ mensen minder inzetten?&quot;.</p>
 kopie</strong> een naam (bijvoorbeeld &quot;Krap budget&quot;) en klik op
 <strong>Maak kopie</strong>. Je werkt dan in de kopie; het origineel
 blijft zoals het was.</li>
-<li><strong>Maak actief</strong>: dit scenario wordt de actieve planning
-(de ster). Dat is de planning die het bestuur in de gesprekken op het
-trainingsweekend ziet en aanpast. Maak een scenario alleen actief als
-het bestuur dat heeft besloten.</li>
-<li><strong>Verwijderen</strong> (met bevestiging): de ingeplande dagen
-van dat scenario verdwijnen; de beschikbaarheid van de sollicitanten
-blijft staan. Het laatste scenario kan niet weg.</li>
-<li><strong>Opgave overnemen (wie nog leeg is)</strong>: vult voor
-iedereen die in dit scenario nog niets gepland heeft de eigen opgave in.
-Wie al gepland is of vaststaat, blijft zoals die is.</li>
+<li><strong>Scenario › Maak dit scenario actief</strong>: dit scenario
+wordt de actieve planning (de ster). Dat is de planning die het bestuur
+in de gesprekken op het trainingsweekend ziet en aanpast. Maak een
+scenario alleen actief als het bestuur dat heeft besloten.</li>
+<li><strong>Scenario › Scenario verwijderen</strong> (met bevestiging):
+de ingeplande dagen van dat scenario verdwijnen; de beschikbaarheid van
+de sollicitanten blijft staan. Het laatste scenario kan niet weg.</li>
+<li><strong>Scenario › Opgave overnemen (wie nog leeg is)</strong>: vult
+voor iedereen die in dit scenario nog niets gepland heeft de eigen
+opgave in. Wie al gepland is of vaststaat, blijft zoals die is.</li>
 </ul>
 <h2 id="vastzetten-na-het-gesprek">Vastzetten na het gesprek</h2>
 <p>In het gesprek op het trainingsweekend spreekt het bestuur de inzet
-af met de sollicitant. Leggen ze <strong>Aannemen</strong> of
-<strong>Twijfel</strong> vast, dan zet het systeem de weken en de
-functie van die persoon uit het actieve scenario over naar
-<strong>alle</strong> scenario&#39;s, en zet ze daar op slot. Zo verandert
-wat met de sollicitant besproken is niet meer doordat iemand met een
-ander scenario speelt. Met de anderen kun je gewoon verder puzzelen. Bij
-<strong>Afwijzen</strong> wordt niets vastgezet.</p>
+af met de sollicitant. Leggen ze <strong>Aannemen</strong> vast, dan zet
+het systeem de weken en de functie van die persoon uit het actieve
+scenario over naar <strong>alle</strong> scenario&#39;s, en zet ze daar op
+slot. Zo verandert wat met de sollicitant besproken is niet meer doordat
+iemand met een ander scenario speelt. Met de anderen kun je gewoon
+verder puzzelen. Bij <strong>Afwijzen</strong> wordt niets
+vastgezet.</p>
 <p>In de Loonplanning zie je dat aan het slotje en &quot;vast na het
-gesprek&quot;. Klik je een week aan, dan staat er &quot;Vast na het TW-gesprek:
-dit is met de sollicitant besproken.&quot; Aanpassen kan dan niet.</p>
+gesprek&quot;. Klik je een week aan, dan staat er &quot;Vast na het gesprek op het
+trainingsweekend: dit is met de sollicitant besproken.&quot; Aanpassen kan
+dan niet.</p>
 <p>Moet het toch anders, in een bijzondere situatie:</p>
 <ol type="1">
 <li>Klik op de naam. Vul bij <strong>Waarom pas je het aan? (komt in het
@@ -716,7 +758,7 @@ budget hoort bij één jaar: een volgend jaar begint zonder budget.</li>
 weekbedrag van de postcommandant.</li>
 <li><strong>Minimumlonen per leeftijd …</strong>: bedragen per uur,
 zonder vakantietoeslag, voor juni en voor juli tot en met september.
-Ernaast staat als voorbeeld het dagloon van een lifeguard.</li>
+Ernaast staat als voorbeeld het dagloon van de functie Lifeguard.</li>
 </ul>
 <p><strong>Een nieuw jaar.</strong> Met <strong>Nieuw jaar … op basis
 van …</strong> kopieert het bestuur de tarieven, vakantietoeslag,
@@ -827,7 +869,7 @@ ontgrendelen gaan over afspraken met mensen: stem die af met het
 bestuur. Een beheerder kan de rechten per rol aanpassen.</p>
 <h1 id="trainingsweekend-en-het-gesprek">Trainingsweekend en het
 gesprek</h1>
-<p><strong>Waar:</strong> menu › Kandidaten ›
+<p><strong>Waar:</strong> menu › Selectie ›
 <strong>Trainingsweekend</strong> (alleen bestuur, beheerder en
 begeleiders)<br />
 <strong>Wie:</strong> het bestuur voert de gesprekken. Jij hebt
@@ -848,7 +890,7 @@ sollicitant zelf in), wie mist nog beschikbaarheid, en de tablet voor
 het inchecken.</li>
 <li><strong>Groepen</strong>: de groepsindeling.</li>
 <li><strong>Inchecken</strong>: sollicitanten checken zelf in op een
-tablet. Wie is ingecheckt, gaat naar fase <strong>TW
+tablet. Wie is ingecheckt, gaat naar fase <strong>Trainingsweekend
 geweest</strong>.</li>
 <li><strong>Beoordelen</strong>: begeleiders en bestuur noteren op hun
 telefoon wat hen opvalt.</li>
@@ -873,9 +915,9 @@ actieve planning vóór het weekend kloppen.</p>
 Aangenomen, de sollicitant krijgt een mail met het bericht van het
 bestuur, en het takenpakket staat direct in het portaal. De inzet wordt
 vastgezet in alle scenario&#39;s.</li>
-<li><strong>Twijfel</strong>: er gebeurt nog niets met de fase. De inzet
-wordt wel vastgezet. Het bestuur belt na het weekend en legt dan alsnog
-het besluit vast.</li>
+<li><strong>Twijfel</strong>: er gebeurt nog niets met de fase, en de
+inzet staat nog niet vast (twijfel is nog geen afspraak). Het bestuur
+belt na het weekend en legt dan alsnog het besluit vast.</li>
 <li><strong>Afwijzen</strong>: gaat meteen door. De sollicitant
 verdwijnt uit de Loonplanning en kost niets.</li>
 </ul>
@@ -889,10 +931,9 @@ afwijzen vanzelf.</p>
 <h2 id="wat-jij-ervan-ziet">Wat jij ervan ziet</h2>
 <ul>
 <li><strong>In de Loonplanning</strong>: het slotje &quot;vast na het
-gesprek&quot; bij wie is aangenomen of op twijfel staat, en &quot;aangenomen&quot;
-onder de naam. Met <strong>Toon</strong> › <strong>Vast na het
-gesprek</strong> of <strong>Nog niet vast</strong> zie je hoe ver het
-bestuur is.</li>
+gesprek&quot; bij wie is aangenomen, en &quot;aangenomen&quot; onder de naam. Met
+<strong>Toon</strong> › <strong>Vast na het gesprek</strong> of
+<strong>Nog niet vast</strong> zie je hoe ver het bestuur is.</li>
 <li><strong>In het dossier</strong> (via Sollicitanten): het tabblad
 <strong>Trainingsweekend</strong> met de deelname (kwam wel of niet) en
 het besluit, en het tabblad <strong>Beschikbaarheid &amp; inzet</strong>
@@ -1416,7 +1457,7 @@ aangenomen.</td>
 <tr>
 <td><strong>Factor</strong></td>
 <td>Vermenigvuldiger per functie op het minimumloon (bijvoorbeeld 1,20
-voor een lifeguard).</td>
+voor de functie Lifeguard).</td>
 </tr>
 <tr>
 <td><strong>Fase</strong></td>
@@ -1445,7 +1486,8 @@ naast elkaar bestaan.</td>
 </tr>
 <tr>
 <td><strong>SD</strong></td>
-<td>Afkorting voor selectiedag, zoals op sommige schermen staat.</td>
+<td>Oude afkorting voor selectiedag; op de schermen staat nu het hele
+woord.</td>
 </tr>
 <tr>
 <td><strong>Tariefjaar</strong></td>
@@ -1454,8 +1496,8 @@ jaar waarin de werkperiode begint.</td>
 </tr>
 <tr>
 <td><strong>TW</strong></td>
-<td>Afkorting voor trainingsweekend, zoals in &quot;TW geweest&quot; en &quot;Vast na
-het TW-gesprek&quot;.</td>
+<td>Oude afkorting voor trainingsweekend; op de schermen staat nu het
+hele woord (of kort &quot;weekend&quot;, zoals in &quot;Weekend geweest&quot;).</td>
 </tr>
 <tr>
 <td><strong>Vastzetten</strong></td>

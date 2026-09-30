@@ -51,6 +51,7 @@ if (file_exists(__DIR__ . '/bezetting.php')) require_once __DIR__ . '/bezetting.
 if (file_exists(__DIR__ . '/loonplan.php')) require_once __DIR__ . '/loonplan.php';
 if (file_exists(__DIR__ . '/loonplan_afspraak.php')) require_once __DIR__ . '/loonplan_afspraak.php';
 if (file_exists(__DIR__ . '/loonplan_slot.php')) require_once __DIR__ . '/loonplan_slot.php';
+if (file_exists(__DIR__ . '/loonplan_extra.php')) require_once __DIR__ . '/loonplan_extra.php';   // extra personen (postcommandant e.d.)
 if (file_exists(__DIR__ . '/inzet_rooster.php')) require_once __DIR__ . '/inzet_rooster.php';
 if (file_exists(__DIR__ . '/loonplan_export.php')) require_once __DIR__ . '/loonplan_export.php';
 if (file_exists(__DIR__ . '/xlsx.php')) require_once __DIR__ . '/xlsx.php';

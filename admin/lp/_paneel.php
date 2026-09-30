@@ -5,7 +5,10 @@
  *   week    — één week van één persoon: welke dagen iemand kan (uit de opgave, met redenen),
  *             plannen ja/nee, aantal dagen, betaald, en kopiëren naar de volgende weken.
  *             Elke wijziging slaat meteen op.
- *   persoon — functie, totalen, de afspraak en het slot na het TW-gesprek (gewone formulieren).
+ *   persoon — functie, totalen, alle weken betaald/onbetaald, de afspraak en het slot na het
+ *             TW-gesprek (gewone formulieren).
+ * Een extra persoon (postcommandant e.d.) heeft geen opgave, afspraak of slot: blokken met
+ * data-lp-alleensol verdwijnen dan, blokken met data-lp-alleenextra (gegevens, verwijderen) komen erbij.
  * Onderdeel van admin/loonplanning.php.
  */
 $_functies_opt = array_column($functies, 'naam', 'sleutel');
@@ -27,12 +30,13 @@ $_functies_opt = array_column($functies, 'naam', 'sleutel');
 
       <!-- Stand: week -->
       <div data-lp-stand="week" hidden>
-        <section class="bh-zijpaneel-blok">
+        <section class="bh-zijpaneel-blok" data-lp-alleensol>
           <h3>Wat kan <span data-lp-voornaam></span> deze week?</h3>
           <ul class="bh-lp-dagen" data-lp-dagen aria-live="polite"></ul>
           <p class="bh-zijpaneel-hint" data-lp-opgave></p>
           <ul class="bh-lp-redenen" data-lp-redenen></ul>
         </section>
+        <p class="bh-zijpaneel-hint" data-lp-alleenextra>Extra persoon: er is geen opgave, dus je plant vrij. Het rooster ziet elke dag als beschikbaar.</p>
 
         <section class="bh-zijpaneel-blok">
           <h3>Plannen</h3>
@@ -50,8 +54,9 @@ $_functies_opt = array_column($functies, 'naam', 'sleutel');
         </section>
 
         <section class="bh-zijpaneel-blok" data-lp-alleenbewerken>
-          <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" data-lp-kopieer>Zelfde voor de volgende opgegeven weken</button>
-          <p class="bh-zijpaneel-hint">Plant elke volgende week die is opgegeven met hetzelfde aantal dagen (nooit meer dan opgegeven).</p>
+          <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" data-lp-kopieer>Zelfde voor de volgende weken</button>
+          <p class="bh-zijpaneel-hint" data-lp-alleensol>Plant elke volgende week die is opgegeven met hetzelfde aantal dagen (nooit meer dan opgegeven).</p>
+          <p class="bh-zijpaneel-hint" data-lp-alleenextra>Plant elke volgende week van het seizoen met hetzelfde aantal dagen.</p>
         </section>
       </div>
 
@@ -62,13 +67,42 @@ $_functies_opt = array_column($functies, 'naam', 'sleutel');
           <select id="lpFunctie" class="ds-select" data-lp-functie>
             <?php foreach ($_functies_opt as $_k => $_n): ?><option value="<?= h($_k) ?>"><?= h($_n) ?></option><?php endforeach; ?>
           </select>
-          <p class="bh-zijpaneel-hint">Voorstel: nieuw = Aspirant, anders de Lifeguard-rang uit Authentik. Postcommandant kies je zelf.</p>
+          <p class="bh-zijpaneel-hint" data-lp-alleensol>Voorstel: nieuw = Aspirant, anders de strandwacht-rang uit Authentik. Postcommandant kies je zelf.</p>
+          <p class="bh-zijpaneel-hint" data-lp-alleenextra>Geldt in alle scenario's.</p>
           <p class="bh-zijpaneel-status" data-lp-totaal></p>
-          <a class="bh-doc-actie" data-lp-dossier href="#">Dossier openen</a>
+          <a class="bh-doc-actie" data-lp-dossier data-lp-alleensol href="#">Dossier openen</a>
         </section>
 
         <?php if ($mag_bewerken): ?>
-        <section class="bh-zijpaneel-blok">
+        <section class="bh-zijpaneel-blok" data-lp-alleenbewerken>
+          <h3>Alle geplande weken</h3>
+          <span class="bh-lp-knoppen">
+            <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" data-lp-allebetaald="1">Betaald</button>
+            <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" data-lp-allebetaald="0">Onbetaald</button>
+          </span>
+          <p class="bh-zijpaneel-hint">Zet in dit scenario elke geplande week van deze persoon in één keer op betaald of onbetaald.</p>
+        </section>
+
+        <section class="bh-zijpaneel-blok" data-lp-alleenextra>
+          <h3>Gegevens</h3>
+          <form method="post" class="bh-lp-extraform">
+            <?= csrf_input() ?><input type="hidden" name="sc_actie" value="extra_opslaan"><input type="hidden" name="extra_id" value="">
+            <input type="hidden" name="functie" value="" data-lp-extrafunctie>
+            <label class="bh-veldlabel" for="lpExNaam">Naam</label>
+            <input type="text" id="lpExNaam" name="naam" class="ds-input" required maxlength="100" data-lp-exveld="naam">
+            <label class="bh-veldlabel" for="lpExGeb">Geboortedatum <span class="bh-meta">(optioneel)</span></label>
+            <input type="date" id="lpExGeb" name="geboortedatum" class="ds-input" data-lp-exveld="geb">
+            <label class="bh-veldlabel" for="lpExNotitie">Notitie <span class="bh-meta">(optioneel)</span></label>
+            <input type="text" id="lpExNotitie" name="notitie" class="ds-input" maxlength="255" data-lp-exveld="notitie">
+            <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm">Opslaan</button>
+          </form>
+          <form method="post" data-bevestig="Deze extra persoon verwijderen? De planning verdwijnt uit alle scenario's.">
+            <?= csrf_input() ?><input type="hidden" name="sc_actie" value="extra_verwijder"><input type="hidden" name="extra_id" value="">
+            <button type="submit" class="ds-btn ds-btn-zacht ds-btn-sm"><?= icoon('prullenbak', 14) ?> Verwijderen</button>
+          </form>
+        </section>
+
+        <section class="bh-zijpaneel-blok" data-lp-alleensol>
           <h3>Opgave overnemen</h3>
           <form method="post" data-bevestig="De planning van deze persoon in dit scenario vervangen door wat hij of zij zelf opgaf?">
             <?= csrf_input() ?><input type="hidden" name="sc_actie" value="opgave"><input type="hidden" name="sol_id" value="">
@@ -89,7 +123,7 @@ $_functies_opt = array_column($functies, 'naam', 'sleutel');
           </form>
         </section>
 
-        <section class="bh-zijpaneel-blok">
+        <section class="bh-zijpaneel-blok" data-lp-alleensol>
           <h3>Vast in alle scenario's <span class="bh-meta">na het gesprek</span></h3>
           <p class="bh-zijpaneel-status" data-lp-slottekst></p>
           <form method="post" data-lp-vastzetform>

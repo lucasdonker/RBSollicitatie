@@ -43,12 +43,25 @@ function loonplan_export_personen(int $seizoen_id, string $bron, int $scenario_i
                              'status' => 'Vastgesteld ' . date('d-m-Y', strtotime($a['vastgesteld_op'])),
                              'weken' => $a['weken'], 'opgave' => [], 'kosten' => 0.0, 'dagen_betaald' => 0, 'dagen_onbetaald' => 0];
         }
+        // Extra personen (postcommandant e.d.) hebben geen afspraak: hun planning uit het actieve scenario,
+        // zodat de loonadministratie het hele plaatje heeft.
+        $actief = function_exists('loonplan_actief_scenario') ? loonplan_actief_scenario($seizoen_id) : null;
+        if ($actief && function_exists('loonplan_extra_personen') && loonplan_extra_personen($seizoen_id)) {
+            foreach (loonplan_analyse($seizoen_id, (int)$actief['id'], $seizoen)['mensen'] as $key => $m) {
+                if ($key >= 0 || $m['totaal_dagen'] <= 0) continue;
+                $weken = [];
+                foreach ($m['weken'] as $wk => $w) if ($w['opgenomen'] && $w['dagen'] > 0) $weken[$wk] = ['dagen' => $w['dagen'], 'betaald' => (int)$w['betaald']];
+                $uit[$key] = ['naam' => $m['naam'], 'geboortedatum' => $m['geboortedatum'] ?: null, 'leeftijd' => null, 'functie' => $m['functie'],
+                              'status' => 'Extra persoon (actief scenario)', 'weken' => $weken, 'opgave' => [],
+                              'kosten' => 0.0, 'dagen_betaald' => 0, 'dagen_onbetaald' => 0];
+            }
+        }
     }
     if (!$uit) return [];
 
-    // Naam en geboortedatum in één query (niet per persoon).
-    try {
-        $ids = array_keys($uit);
+    // Naam en geboortedatum in één query (niet per persoon). Extra personen (negatieve sleutel) hebben die al.
+    $ids = array_values(array_filter(array_keys($uit), fn($i) => $i > 0));
+    if ($ids) try {
         $q = db()->prepare("SELECT s.id, p.voornaam, p.tussenvoegsel, p.achternaam, p.geboortedatum
                             FROM sollicitaties s JOIN personen p ON p.id = s.persoon_id
                             WHERE s.id IN (" . implode(',', array_fill(0, count($ids), '?')) . ")");
@@ -73,7 +86,7 @@ function loonplan_export_personen(int $seizoen_id, string $bron, int $scenario_i
                 if ($w['betaald']) $p['dagen_betaald'] += $w['dagen']; else $p['dagen_onbetaald'] += $w['dagen'];
             }
             unset($w);
-            $eff = function_exists('beschikbaarheid2_effectief') ? beschikbaarheid2_effectief($sol_id, $seizoen) : [];
+            $eff = $sol_id > 0 && function_exists('beschikbaarheid2_effectief') ? beschikbaarheid2_effectief($sol_id, $seizoen) : [];
             foreach ($eff as $wk => $e) $p['opgave'][$wk] = (int)$e['dagen_max'];
         }
     }

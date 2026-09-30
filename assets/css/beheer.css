@@ -1326,6 +1326,13 @@ a.bh-naamcel:hover .bh-naamcel-naam { color: var(--navy); text-decoration: under
   color: var(--ink); text-decoration: none; font-size: 14px;
 }
 .bh-filter-menu-lijst a:hover, .bh-filter-menu-lijst a:focus-visible { background: var(--bg-subtle); color: var(--navy); }
+/* Een menu-item dat iets doet (POST) is een knop in een eigen formulier, en ziet eruit als een link-item. */
+.bh-filter-menu-lijst form { margin: 0; }
+.bh-filter-menu-lijst form > button:not(.ds-btn) {
+  display: flex; align-items: center; gap: 8px; width: 100%; min-height: 40px; padding: 0 10px; border: 0; border-radius: var(--radius-sm);
+  background: none; color: var(--ink); font: inherit; font-size: 14px; text-align: left; cursor: pointer;
+}
+.bh-filter-menu-lijst form > button:not(.ds-btn):hover, .bh-filter-menu-lijst form > button:not(.ds-btn):focus-visible { background: var(--bg-subtle); color: var(--navy); }
 
 /* Actieve filters als chips: in één oogopslag wat je nu ziet, en met één tik weer weg. */
 .bh-filterchips { display: flex; align-items: center; gap: 6px 8px; flex-wrap: wrap; margin: -4px 0 14px; }
@@ -3036,6 +3043,22 @@ select.bh-testbericht-kanaal { width: 120px; }
 }
 .bh-lp-exportlijst a { display: block; padding: 8px 10px; border-radius: var(--radius-sm); font-size: 13px; color: var(--ink); text-decoration: none; }
 .bh-lp-exportlijst a:hover, .bh-lp-exportlijst a:focus-visible { background: var(--bg-subtle); }
+/* Extra persoon toevoegen (menu in de kop) en wijzigen (paneel): velden onder elkaar. */
+.bh-lp-extraform { display: flex; flex-direction: column; gap: 6px; }
+.bh-filter-menu-lijst.bh-lp-extraform { width: 300px; max-width: calc(100vw - 32px); padding: 14px; }
+.bh-lp-extraform > p { margin: 0 0 4px; }
+.bh-lp-extraform > .ds-btn { align-self: flex-start; margin-top: 6px; }
+
+/* Waar zit het geld? (admin/lp/_geld.php) */
+.bh-lp-geld { border-top: 1px solid var(--bg-subtle); }
+.bh-lp-geldraster { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px 24px; padding-bottom: 4px; }
+.bh-lp-geldraster h3 { margin: 0 0 6px; font: var(--text-label); color: var(--ink-soft); }
+.bh-lp-geldlijst { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.bh-lp-geldlijst li { display: grid; grid-template-columns: 1fr auto; gap: 0 10px; font-size: 13px; }
+.bh-lp-geldlijst li > .bh-meta { grid-column: 1 / -1; }
+.bh-lp-geldlijst strong { font-variant-numeric: tabular-nums; }
+.bh-lp-geldraster > .bh-doc-actie, .bh-lp-geldraster section > .bh-doc-actie { margin-top: 8px; display: inline-flex; }
+.bh-lp-geldvoet { grid-column: 1 / -1; margin: 0; }
 
 .bh-lp-smal { display: none; margin: 0; padding: 12px 20px; font: var(--text-meta); color: var(--ink-soft); }
 .bh-lp-naam { gap: 6px; }
@@ -3054,7 +3077,7 @@ select.bh-testbericht-kanaal { width: 120px; }
 .bh-lp-weekkosten { font-size: 11px; font-weight: 500; color: var(--ink-soft); }
 
 /* Het zijpaneel */
-.bh-lp-paneel[hidden] { display: none; }
+.bh-lp-paneel[hidden], .bh-lp-paneel [hidden] { display: none !important; }
 .bh-lp-vastmelding { display: flex; gap: 8px; align-items: flex-start; margin: 0; padding: 10px 12px; border-radius: var(--radius-sm);
   background: var(--fase-groen-vlak); color: var(--fase-groen); font-size: 13px; }
 .bh-lp-vastmelding[hidden] { display: none; }
@@ -3084,6 +3107,9 @@ select.bh-testbericht-kanaal { width: 120px; }
 @media (max-width: 760px) {
   .bh-lp-smal { display: block; }
   .bh-lp-stand { gap: 16px; }
+  /* Op een telefoon klapt een menu in de kop open in de stroom: een zwevend paneel valt links van het scherm. */
+  .bh-lp-knoppen .bh-filter-menu[open] { flex: 1 1 100%; }
+  .bh-lp-knoppen .bh-filter-menu-lijst { position: static; margin-top: 6px; box-shadow: none; width: auto; }
 }
 /* ── Gedeelde bouwstenen met een waarde uit data ──
    De waarde komt als custom property uit PHP (style="--w: 42%" / "--h: 30px");

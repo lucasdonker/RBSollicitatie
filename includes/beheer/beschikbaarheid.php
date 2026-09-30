@@ -70,6 +70,21 @@ function bh_besch_weken_bereik(array $weken, array $f): array {
 }
 
 /**
+ * De twee filtervelden van het weekbereik (voor admin/_filterbalk.php), gedeeld door Beschikbaarheid
+ * en Loonplanning. $weken = wn => ['kort', …]; $f heeft 'van' en 'tot'. Staan onder "Meer filters".
+ */
+function bh_weekbereik_velden(array $weken, array $f): array {
+    $opt = [];
+    foreach ($weken as $wn => $w) $opt[(string)$wn] = 'W' . $wn . ' (' . $w['kort'] . ')';
+    return [
+        ['soort' => 'keuze', 'naam' => 'van', 'label' => 'Vanaf week', 'waarde' => $f['van'], 'meer' => true,
+         'opties' => ['' => 'Vanaf: begin'] + array_map(fn($l) => 'Vanaf ' . $l, $opt)],
+        ['soort' => 'keuze', 'naam' => 'tot', 'label' => 'Tot en met week', 'waarde' => $f['tot'], 'meer' => true,
+         'opties' => ['' => 'Tot: eind'] + array_map(fn($l) => 't/m ' . $l, $opt)],
+    ];
+}
+
+/**
  * "Liever vrij" per persoon per week, uit de losse dagen (beschikbaarheid_dag, soort voorkeur_vrij)
  * in één query voor iedereen: [sol_id][wn] => [Y-m-d, …]. Vaste voorkeur-vrije weekdagen staan
  * apart (bh_besch_raster 'vaste').

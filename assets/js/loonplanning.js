@@ -23,6 +23,15 @@
   function initialen(naam) { return naam.split(' ').filter(Boolean).map(function (d) { return d[0]; }).slice(0, 2).join('').toUpperCase(); }
   function persoonKnop(sol) { return raster.querySelector('[data-lp-persoon="' + sol + '"]'); }
   function isVast(sol) { var k = persoonKnop(sol); return !!(k && k.dataset.vast); }
+  // Extra persoon (postcommandant e.d.): negatief id, geen opgave, afspraak, slot of dossier.
+  function isExtra(sol) { return parseInt(sol, 10) < 0; }
+  function kanBewerken(sol) { return mag && !isVast(sol); }
+  function toonVoor(sol) {
+    var ex = isExtra(sol);
+    paneel.querySelectorAll('[data-lp-alleensol]').forEach(function (b) { b.hidden = ex; });
+    paneel.querySelectorAll('[data-lp-alleenextra]').forEach(function (b) { b.hidden = !ex; });
+    paneel.querySelectorAll('[data-lp-alleenbewerken]').forEach(function (b) { b.hidden = !kanBewerken(sol); });
+  }
 
   // ── Paneel openen / sluiten ──
   function open(stand, sol, sub) {
@@ -32,6 +41,7 @@
     $('[data-lp-initialen]').textContent = initialen(naam);
     $('[data-lp-sub]').textContent = sub;
     paneel.querySelectorAll('[data-lp-stand]').forEach(function (s) { s.hidden = s.dataset.lpStand !== stand; });
+    toonVoor(sol);
     $('[data-lp-vastmelding]').hidden = !isVast(sol);
     terugFocus = document.activeElement;
     paneel.hidden = false;
@@ -55,6 +65,7 @@
     $('[data-lp-dagen]').innerHTML = '<li class="bh-meta">Laden…</li>';
     $('[data-lp-redenen]').innerHTML = '';
     weekVelden();
+    if (isExtra(sol)) return;   // geen opgave om op te halen
     fetch(url + '?dagen=1&scenario=' + sc + '&sol_id=' + sol + '&week=' + wk, { credentials: 'same-origin' })
       .then(function (r) { return r.json(); })
       .then(function (d) { if (d.ok && huidig && huidig.cel === cel) weekDagen(d); })
@@ -63,17 +74,16 @@
 
   /** De invoer volgt de cel (data-attributen): die is na elke opslag bijgewerkt. */
   function weekVelden() {
-    var c = huidig.cel.dataset, kan = mag && !isVast(huidig.sol);
+    var c = huidig.cel.dataset, kan = kanBewerken(huidig.sol);
     var op = $('[data-lp-veld="opgen"]'), bt = $('[data-lp-veld="betaald"]');
     op.checked = c.opgen === '1'; bt.checked = c.betaald !== '0';
     $('[data-lp-dagenwaarde]').textContent = c.opgen === '1' ? c.dagen : 0;
     op.disabled = !kan; bt.disabled = !kan || !op.checked;
     $('[data-lp-min]').disabled = $('[data-lp-plus]').disabled = !kan || !op.checked;
-    paneel.querySelectorAll('[data-lp-alleenbewerken]').forEach(function (b) { b.hidden = !kan; });
     var max = parseInt(c.max, 10) || 0, dg = parseInt(c.dagen, 10) || 0;
     $('[data-lp-opgave]').textContent = max ? 'Opgegeven: hooguit ' + max + (max === 1 ? ' dag' : ' dagen') + ' deze week.' : 'Deze week is niet opgegeven.';
     var s = [];
-    if (c.opgen === '1' && dg > 0 && (max === 0 || dg > max)) s.push(max === 0 ? 'Gepland in een week die niet is opgegeven: bespreek dit met de sollicitant.' : 'Meer dagen dan opgegeven (' + max + '): bespreek dit met de sollicitant.');
+    if (!isExtra(huidig.sol) && c.opgen === '1' && dg > 0 && (max === 0 || dg > max)) s.push(max === 0 ? 'Gepland in een week die niet is opgegeven: bespreek dit met de sollicitant.' : 'Meer dagen dan opgegeven (' + max + '): bespreek dit met de sollicitant.');
     $('[data-lp-signalen]').textContent = s.join(' ');
   }
 
@@ -104,11 +114,14 @@
     if (d.signalen_tekst && d.signalen_tekst.length) $('[data-lp-signalen]').textContent = d.signalen_tekst.join('. ') + '.';
   }
 
+  /** Bij aanvinken: wat iemand opgaf (hooguit 5), zonder opgave 5. */
+  function standaardDagen(c) { return Math.min(5, parseInt(c.max, 10) || 5); }
+
   function celOpslaan(extra) {
     var c = huidig.cel.dataset;
     var op = $('[data-lp-veld="opgen"]').checked, bt = $('[data-lp-veld="betaald"]').checked;
     var dg = parseInt($('[data-lp-dagenwaarde]').textContent, 10) || 0;
-    if (op && dg === 0) dg = Math.min(5, parseInt(c.max, 10) || 5);
+    if (op && dg === 0) dg = standaardDagen(c);
     if (!op) dg = 0;
     bewaar(Object.assign({ sol_id: c.sol, week_nr: c.week, dagen: dg, opgenomen: op ? '1' : '0', betaald: bt ? '1' : '0' }, extra || {}));
   }
@@ -117,13 +130,24 @@
     if (!huidig) return;
     if (e.target.matches('[data-lp-veld]')) {
       if (e.target.dataset.lpVeld === 'opgen' && e.target.checked && $('[data-lp-dagenwaarde]').textContent === '0') {
-        $('[data-lp-dagenwaarde]').textContent = Math.min(5, parseInt(huidig.cel.dataset.max, 10) || 5);
+        $('[data-lp-dagenwaarde]').textContent = standaardDagen(huidig.cel.dataset);
       }
       celOpslaan();
     }
-    if (e.target.matches('[data-lp-functie]')) bewaar({ wat: 'functie', sol_id: huidig.sol, functie: e.target.value });
+    if (e.target.matches('[data-lp-functie]')) {
+      var ef = $('[data-lp-extrafunctie]');
+      if (ef) ef.value = e.target.value;
+      bewaar({ wat: 'functie', sol_id: huidig.sol, functie: e.target.value });
+    }
   });
   paneel.addEventListener('click', function (e) {
+    var ab = e.target.closest('[data-lp-allebetaald]');
+    if (ab && huidig && huidig.persoon) {
+      var b = ab.dataset.lpAllebetaald;
+      bewaar({ wat: 'betaald_alle', sol_id: huidig.sol, betaald: b },
+             function () { if (window.bhToast) window.bhToast(b === '1' ? 'Alle geplande weken staan op betaald.' : 'Alle geplande weken staan op onbetaald.'); });
+      return;
+    }
     if (!huidig || !huidig.cel) return;
     var w = $('[data-lp-dagenwaarde]'), n = parseInt(w.textContent, 10) || 0;
     if (e.target.closest('[data-lp-min]') && n > 1) { w.textContent = n - 1; celOpslaan(); }
@@ -131,7 +155,7 @@
     if (e.target.closest('[data-lp-kopieer]')) {
       var dg = parseInt(w.textContent, 10) || 0;
       bewaar({ wat: 'kopieer', sol_id: huidig.sol, week_nr: huidig.week, dagen: dg, betaald: $('[data-lp-veld="betaald"]').checked ? '1' : '0' },
-             function () { if (window.bhToast) window.bhToast('Gekopieerd naar de volgende opgegeven weken.'); });
+             function () { if (window.bhToast) window.bhToast(isExtra(huidig.sol) ? 'Gekopieerd naar de volgende weken.' : 'Gekopieerd naar de volgende opgegeven weken.'); });
     }
   });
 
@@ -140,15 +164,23 @@
     var sol = knop.dataset.lpPersoon;
     huidig = { sol: sol, persoon: knop };
     open('persoon', sol, knop.dataset.fase);
-    var fn = $('[data-lp-functie]'); fn.value = knop.dataset.functie; fn.disabled = !mag || isVast(sol);
+    var fn = $('[data-lp-functie]'); fn.value = knop.dataset.functie; fn.disabled = !kanBewerken(sol);
     var tot = raster.querySelector('[data-lp-tot="' + sol + '"]');
     $('[data-lp-totaal]').textContent = tot ? tot.textContent.replace(/\s+/g, ' ').trim() + ' in dit scenario' : '';
     $('[data-lp-dossier]').href = raster.dataset.dossier + sol;
     paneel.querySelectorAll('input[name="sol_id"]').forEach(function (i) { i.value = sol; });
+    if (isExtra(sol)) {
+      // De gegevens van de extra persoon in het wijzigformulier.
+      paneel.querySelectorAll('input[name="extra_id"]').forEach(function (i) { i.value = knop.dataset.extra; });
+      var ef = $('[data-lp-extrafunctie]');
+      if (ef) ef.value = knop.dataset.functie;
+      var velden = { naam: knop.dataset.naam, geb: knop.dataset.geb, notitie: knop.dataset.notitie };
+      Object.keys(velden).forEach(function (k) { var v = $('[data-lp-exveld="' + k + '"]'); if (v) v.value = velden[k] || ''; });
+    }
     var ab = $('[data-lp-afspraakblok]');
     if (ab) {
       var defi = raster.dataset.definitief === '1', af = knop.dataset.afspraak;
-      ab.hidden = !defi;
+      ab.hidden = !defi || isExtra(sol);
       $('[data-lp-afspraaktekst]').textContent = af === 'ja' ? 'Vastgesteld; komt overeen met dit scenario.'
         : (af === 'wijkt_af' ? 'Vastgesteld, maar dit scenario wijkt ervan af.' : 'Nog geen afspraak vastgesteld.');
       $('[data-lp-afspraakknop]').textContent = af ? 'Afspraak bijwerken uit dit scenario' : 'Afspraak vastleggen uit dit scenario';
@@ -230,4 +262,7 @@
   // Vanuit het dossier (?persoon=<sol_id>): meteen het paneel van die persoon open.
   var vanuit = new URLSearchParams(location.search).get('persoon');
   if (vanuit && /^\d+$/.test(vanuit) && persoonKnop(vanuit)) persoonOpen(persoonKnop(vanuit));
+  // Net een extra persoon toegevoegd (#lp-rij--3): die rij in beeld en de naam in focus.
+  var rij = /^#lp-rij-(-?\d+)$/.exec(location.hash);
+  if (rij && persoonKnop(rij[1])) { persoonKnop(rij[1]).scrollIntoView({ block: 'center' }); persoonKnop(rij[1]).focus({ preventScroll: true }); }
 })();

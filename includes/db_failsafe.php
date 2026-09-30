@@ -199,6 +199,7 @@ function db_failsafe(bool $forceer = false): void {
         'loonplan_auto_setup',
         'inzet_afspraak_auto_setup',     // na loonplan: de vastgestelde afspraak
         'loonplan_slot_auto_setup',      // vastzetten na het TW-gesprek
+        'loonplan_extra_auto_setup',     // extra personen in de loonplanning (2.140.0)
         'rechten_auto_setup',
         'beschikbaarheid_dag_auto_setup',
         'audit_dag_auto_setup',

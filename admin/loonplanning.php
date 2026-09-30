@@ -3,10 +3,12 @@
  * Beheer — Loonplanning: wie werkt welke week hoeveel dagen, en wat kost het.
  *
  * Opbouw, van boven naar beneden (zelfde taal als Beschikbaarheid):
- *   1. scenario's + stand (concept/definitief, budget)      admin/lp/_kop.php
- *   2. dekking per week (wie is ingepland tegen de norm)     admin/_dekkinggrafiek.php
+ *   1. scenario's + budget groot, waar het geld zit, acties  admin/lp/_kop.php, admin/lp/_geld.php
+ *   2. dekking per week (ingeklapt; de stand staat in de kop) admin/_dekkinggrafiek.php
  *   3. filters + raster: per cel wat je plant, daaronder wat iemand opgaf   admin/lp/_raster.php
  *   4. zijpaneel: één week van één persoon, of de persoon zelf               admin/lp/_paneel.php
+ * Extra personen (postcommandant e.d., includes/loonplan_extra.php) staan in het raster met een
+ * negatief id; toevoegen in de kop, wijzigen en verwijderen in het paneel.
  * Logica: includes/loonplan*.php (planning, afspraak, slot) en includes/beheer/loonplanning.php
  * (filters en cellen). Gedrag: assets/js/loonplanning.js.
  *
@@ -40,7 +42,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['sc_actie'])) {
     if (!$mag_bewerken) { flash('fout', 'Je hebt geen bewerkrecht op de loonplanning.'); redirect($terug); }
     $a   = (string)$_POST['sc_actie'];
     $sol = (int)($_POST['sol_id'] ?? 0);
-    if ($a === 'dupliceer') {
+    // Een extra persoon (negatief id) heeft geen opgave, afspraak of slot: die acties bestaan niet voor hem.
+    if ($sol < 0 && in_array($a, ['opgave', 'afspraak', 'vastzetten', 'ontgrendel'], true)) {
+        flash('fout', 'Dit kan niet bij een extra persoon.'); redirect($terug);
+    }
+    if ($a === 'extra_opslaan') {
+        $eid = (int)($_POST['extra_id'] ?? 0);
+        $fn  = (string)($_POST['functie'] ?? '');
+        if (!in_array($fn, array_column(functies_ophalen(), 'sleutel'), true)) $fn = 'postcommandant';
+        $nieuw = loonplan_extra_opslaan($sid, $eid ?: null, (string)($_POST['naam'] ?? ''), $fn,
+                                        (string)($_POST['geboortedatum'] ?? '') ?: null, (string)($_POST['notitie'] ?? ''));
+        flash($nieuw ? 'succes' : 'fout', $nieuw ? ($eid ? 'Extra persoon bijgewerkt.' : 'Extra persoon toegevoegd. Klik een week in de rij om te plannen.') : 'Geef een naam op.');
+        redirect($terug . ($nieuw && !$eid ? '#lp-rij--' . $nieuw : ''));
+    } elseif ($a === 'extra_verwijder') {
+        $ok = loonplan_extra_verwijderen($sid, (int)($_POST['extra_id'] ?? 0));
+        flash($ok ? 'succes' : 'fout', $ok ? 'Extra persoon verwijderd, met de planning in alle scenario\'s.' : 'Verwijderen lukte niet.');
+    } elseif ($a === 'dupliceer') {
         $nieuw = loonplan_scenario_dupliceer($sid, $scenario_id, trim((string)($_POST['naam'] ?? 'Kopie')));
         if ($nieuw) { flash('succes', 'Scenario gedupliceerd. Je werkt nu in de kopie.'); redirect(APP_URL . '/admin/loonplanning.php?scenario=' . $nieuw); }
         flash('fout', 'Dupliceren mislukt.');
@@ -108,8 +125,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['dagen'])) {
     if (!$m || !isset($wd[$wk])) { echo json_encode(['ok' => false]); exit; }
     $ma = $wd[$wk]['start']->format('Y-m-d');
     $w  = $m['weken'][$wk];
-    $r  = inzet_rooster_week((int)$w['opgenomen'] ? (int)$w['dagen'] : 0, (bool)$w['betaald'],
-                             beschikbaarheid_per_dag($sol, $ma, date('Y-m-d', strtotime($ma . ' +6 days'))), (int)$w['max']);
+    if ($sol < 0) {
+        // Extra persoon: geen opgave, dus geen dagen te tonen.
+        $r = ['beschikbaar' => [], 'liever_niet' => [], 'niet' => [], 'signalen' => [], 'extra' => true];
+    } else {
+        $r = inzet_rooster_week((int)$w['opgenomen'] ? (int)$w['dagen'] : 0, (bool)$w['betaald'],
+                                beschikbaarheid_per_dag($sol, $ma, date('Y-m-d', strtotime($ma . ' +6 days'))), (int)$w['max']);
+    }
     $r['signalen_tekst'] = array_map('inzet_rooster_signaal_tekst', $r['signalen']);
     echo json_encode(['ok' => true, 'periode' => datum_kort_nl($wd[$wk]['start']) . ' – ' . datum_kort_nl($wd[$wk]['eind'])] + $r);
     exit;
@@ -122,6 +144,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_loon'])) {
     if (!$mag_bewerken) { http_response_code(403); echo json_encode(['ok' => false, 'fout' => 'Je hebt geen bewerkrecht op de loonplanning.']); exit; }
     $sol = (int)($_POST['sol_id'] ?? 0);
     if (!$sid || !$scenario_id) { echo json_encode(['ok' => false, 'fout' => 'Geen scenario.']); exit; }
+    if ($sol < 0 && !isset(loonplan_extra_personen($sid)[-$sol])) { echo json_encode(['ok' => false, 'fout' => 'Onbekende persoon.']); exit; }
     if (loonplan_slot_in_scenario($scenario_id, $sol)) {
         echo json_encode(['ok' => false, 'fout' => 'Staat vast na het gesprek op het trainingsweekend. Ontgrendel eerst (met een reden).']); exit;
     }
@@ -132,11 +155,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_loon'])) {
         $gelukt = in_array($fn, array_column(functies_ophalen(), 'sleutel'), true) && loonplan_functie_zetten($scenario_id, $sol, $fn);
     } elseif ($wat === 'kopieer') {
         // Zelfde plan voor de volgende weken die iemand opgaf, hooguit het opgegeven aantal dagen.
+        // Een extra persoon heeft geen opgave: dan alle volgende weken.
         $van = (int)($_POST['week_nr'] ?? 0); $dagen = (int)($_POST['dagen'] ?? 0); $betaald = ($_POST['betaald'] ?? '1') === '1' ? 1 : 0;
         $m = loonplan_analyse($sid, $scenario_id, $seizoen, $sol)['mensen'][$sol] ?? null;
         foreach (($m['weken'] ?? []) as $wk => $w) {
-            if ($wk <= $van || (int)$w['max'] <= 0) continue;
-            $gelukt = loonplan_cel_opslaan($scenario_id, $sol, (int)$wk, $jaar, min($dagen, (int)$w['max']), $dagen > 0 ? 1 : 0, $betaald) && $gelukt;
+            if ($wk <= $van || ($sol > 0 && (int)$w['max'] <= 0)) continue;
+            $gelukt = loonplan_cel_opslaan($scenario_id, $sol, (int)$wk, $jaar, $sol > 0 ? min($dagen, (int)$w['max']) : $dagen, $dagen > 0 ? 1 : 0, $betaald) && $gelukt;
+        }
+    } elseif ($wat === 'betaald_alle') {
+        // Alle geplande weken van deze persoon in één keer betaald of onbetaald.
+        $betaald = ($_POST['betaald'] ?? '1') === '1' ? 1 : 0;
+        $m = loonplan_analyse($sid, $scenario_id, $seizoen, $sol)['mensen'][$sol] ?? null;
+        foreach (($m['weken'] ?? []) as $wk => $w) {
+            if (empty($w['opgenomen']) || (int)$w['dagen'] <= 0 || (int)$w['betaald'] === $betaald) continue;
+            $gelukt = loonplan_cel_opslaan($scenario_id, $sol, (int)$wk, $jaar, (int)$w['dagen'], 1, $betaald) && $gelukt;
         }
     } else {
         $gelukt = loonplan_cel_opslaan($scenario_id, $sol, (int)($_POST['week_nr'] ?? 0), $jaar, (int)($_POST['dagen'] ?? 0),
@@ -152,10 +184,13 @@ $analyse  = ($sid && $scenario_id) ? loonplan_analyse($sid, $scenario_id, $seizo
           : ['mensen' => [], 'per_week' => [], 'totaal' => ['kosten' => 0, 'dagen' => 0, 'dagen_onbetaald' => 0, 'budget' => 0, 'over_budget' => false, 'restant' => null], 'dekking' => [], 'signalen' => []];
 $sloten   = $sid ? loonplan_sloten($sid) : [];
 $rijen    = bh_lp_rijen($analyse, $filter, $sloten);
-$weken    = bh_besch_weken($seizoen);
+$weken_alle = bh_besch_weken($seizoen);
+$weken    = bh_lp_weken($weken_alle, $filter);   // wat het raster en de grafiek tonen
 $functies = functies_ophalen();
 $definitief_op = $sid ? loonplan_definitief_op($sid) : null;
-$dekking  = bh_dekking_weken($weken, bh_lp_tot_per_week($analyse['mensen'], $weken), bh_dekking_norm());
+$dekking_alle = bh_dekking_weken($weken_alle, bh_lp_tot_per_week($analyse['mensen'], $weken_alle), bh_dekking_norm());
+$dekking  = array_intersect_key($dekking_alle, $weken);
+$geld     = bh_lp_geld($analyse, $dekking_alle);         // het budget gaat over het hele seizoen
 
 require __DIR__ . '/layout_top.php';
 ?>
@@ -173,7 +208,7 @@ require __DIR__ . '/layout_top.php';
       <?php $leeg_titel = 'Nog niets te plannen'; $leeg_tekst = 'Zodra sollicitanten hun beschikbaarheid opgeven, staan ze hier.'; $leeg_icoon = 'kalender'; require __DIR__ . '/_leeg.php'; ?>
     </div>
   <?php else: ?>
-    <?php $_dek = $dekking; $_weken = $weken; $_titel = 'Ingepland per week'; $_woord = 'ingepland'; require __DIR__ . '/_dekkinggrafiek.php'; ?>
+    <?php $_dek = $dekking; $_weken = $weken; $_titel = 'Ingepland per week'; $_woord = 'ingepland'; $_klap = 'lp-dekking'; require __DIR__ . '/_dekkinggrafiek.php'; ?>
     <?php require __DIR__ . '/lp/_raster.php'; ?>
     <?php require __DIR__ . '/lp/_paneel.php'; ?>
     <?php require __DIR__ . '/lp/_loontabel.php'; ?>

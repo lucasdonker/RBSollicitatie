@@ -1,7 +1,8 @@
 <?php
 /**
- * Loonplanning — de kop: welk scenario, is het concept of definitief, wat kost het en de exports.
- * Onderdeel van admin/loonplanning.php (zet $scenarios, $scenario_id, $analyse, $definitief_op, …).
+ * Loonplanning — de kop: welk scenario, wat kost het tegen het budget, waar zit het geld (_geld.php),
+ * concept of definitief, en de acties (zelden gebruikte in een menu: Scenario, Extra persoon, Exporteren).
+ * Onderdeel van admin/loonplanning.php (zet $scenarios, $scenario_id, $analyse, $geld, $functies, $definitief_op, …).
  * De getallen hebben data-lp-* zodat assets/js/loonplanning.js ze na elke wijziging bijwerkt.
  */
 $_tot    = $analyse['totaal'];
@@ -65,6 +66,8 @@ $_tarief = $analyse['tarieven'] ?? loonplan_tarief_info($seizoen);
     </div>
   </div>
 
+  <?php require __DIR__ . '/_geld.php'; ?>
+
   <div class="bh-lp-status">
     <?php if ($definitief_op): ?>
       <?= bh_badge('Definitief sinds ' . date('d-m-Y', strtotime($definitief_op)), 'groen') ?>
@@ -75,20 +78,47 @@ $_tarief = $analyse['tarieven'] ?? loonplan_tarief_info($seizoen);
         van iedereen die is aangenomen (<?= $_n_aangenomen ?>).<?= $_n_vast ? ' ' . $_n_vast . ' ' . ($_n_vast === 1 ? 'persoon staat' : 'personen staan') . ' al vast na het gesprek.' : '' ?></span>
     <?php endif; ?>
     <span class="bh-lp-knoppen">
-      <?php if ($mag_bewerken && !$_dit_actief): ?>
-        <form method="post"><?= csrf_input() ?><input type="hidden" name="sc_actie" value="activeer">
-          <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm"><?= icoon('ster', 14) ?> Maak actief</button></form>
-        <form method="post" data-bevestig="Scenario verwijderen? De ingeplande dagen in dit scenario verdwijnen mee; de beschikbaarheid van de sollicitanten blijft staan.">
-          <?= csrf_input() ?><input type="hidden" name="sc_actie" value="verwijder">
-          <button type="submit" class="ds-btn ds-btn-zacht ds-btn-sm">Verwijderen</button></form>
-      <?php endif; ?>
       <?php if ($mag_bewerken): ?>
-        <form method="post" data-bevestig="Voor iedereen die in dit scenario nog niets gepland heeft de eigen opgave overnemen? Wie al gepland is of vaststaat, blijft zoals het is.">
-          <?= csrf_input() ?><input type="hidden" name="sc_actie" value="opgave_alle">
-          <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm">Opgave overnemen (wie nog leeg is)</button></form>
         <form method="post" data-bevestig="Loonplanning definitief maken? Dit scenario wordt de actieve planning en de afspraak van iedereen die is aangenomen. Die afspraak zien de sollicitant, het dossier en de loonadministratie. Een eerdere afspraak van dezelfde persoon wordt vervangen.">
           <?= csrf_input() ?><input type="hidden" name="sc_actie" value="definitief">
           <button type="submit" class="ds-btn ds-btn-primair ds-btn-sm"><?= icoon('vink', 14) ?> <?= $definitief_op ? 'Opnieuw definitief maken' : 'Definitief maken' ?></button></form>
+
+        <?php /* Wat je zelden doet, in een menu: de kop blijft rustig en het budget staat voorop. */ ?>
+        <details class="bh-filter-menu" data-actiemenu>
+          <summary class="ds-btn ds-btn-secundair ds-btn-sm">Scenario</summary>
+          <div class="bh-filter-menu-lijst">
+            <form method="post" data-bevestig="Voor iedereen die in dit scenario nog niets gepland heeft de eigen opgave overnemen? Wie al gepland is of vaststaat, blijft zoals het is.">
+              <?= csrf_input() ?><input type="hidden" name="sc_actie" value="opgave_alle">
+              <button type="submit"><?= icoon('lijst', 15) ?> Opgave overnemen (wie nog leeg is)</button></form>
+            <?php if (!$_dit_actief): ?>
+              <form method="post"><?= csrf_input() ?><input type="hidden" name="sc_actie" value="activeer">
+                <button type="submit"><?= icoon('ster', 15) ?> Maak dit scenario actief</button></form>
+              <form method="post" data-bevestig="Scenario verwijderen? De ingeplande dagen in dit scenario verdwijnen mee; de beschikbaarheid van de sollicitanten blijft staan.">
+                <?= csrf_input() ?><input type="hidden" name="sc_actie" value="verwijder">
+                <button type="submit"><?= icoon('prullenbak', 15) ?> Scenario verwijderen</button></form>
+            <?php endif; ?>
+          </div>
+        </details>
+
+        <details class="bh-filter-menu" data-actiemenu>
+          <summary class="ds-btn ds-btn-secundair ds-btn-sm"><?= icoon('plus', 14) ?> Extra persoon</summary>
+          <form method="post" class="bh-filter-menu-lijst bh-lp-extraform">
+            <?= csrf_input() ?><input type="hidden" name="sc_actie" value="extra_opslaan">
+            <p class="bh-meta">Iemand die geen sollicitant is maar wel meetelt in kosten, budget, dekking en rooster, zoals de postcommandant.</p>
+            <label class="bh-veldlabel" for="lpExtraNaam">Naam</label>
+            <input type="text" id="lpExtraNaam" name="naam" class="ds-input" required maxlength="100">
+            <label class="bh-veldlabel" for="lpExtraFunctie">Functie</label>
+            <select id="lpExtraFunctie" name="functie" class="ds-select">
+              <?php foreach ($functies as $_f): ?><option value="<?= h($_f['sleutel']) ?>"<?= $_f['sleutel'] === 'postcommandant' ? ' selected' : '' ?>><?= h($_f['naam']) ?></option><?php endforeach; ?>
+            </select>
+            <label class="bh-veldlabel" for="lpExtraGeb">Geboortedatum <span class="bh-meta">(optioneel)</span></label>
+            <input type="date" id="lpExtraGeb" name="geboortedatum" class="ds-input">
+            <span class="bh-meta">Alleen nodig voor een dagloon naar leeftijd; leeg = gerekend als 18 jaar.</span>
+            <label class="bh-veldlabel" for="lpExtraNotitie">Notitie <span class="bh-meta">(optioneel)</span></label>
+            <input type="text" id="lpExtraNotitie" name="notitie" class="ds-input" maxlength="255">
+            <button type="submit" class="ds-btn ds-btn-primair ds-btn-sm">Toevoegen</button>
+          </form>
+        </details>
       <?php endif; ?>
       <details class="bh-lp-export">
         <summary class="ds-btn ds-btn-secundair ds-btn-sm"><?= icoon('download', 14) ?> Exporteren</summary>

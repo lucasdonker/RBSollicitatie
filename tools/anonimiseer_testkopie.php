@@ -132,6 +132,8 @@ function anon_regels(): array {
         'loon_scenario'             => ['notitie' => 'tekst', 'naam' => 'bewaar'],
         'loon_scenario_persoon'     => ['*' => 'bewaar'],
         'loon_vergrendeling'        => ['*' => 'bewaar'],
+        'loon_extra_persoon'        => ['naam' => 'naam:Extra', 'geboortedatum' => 'datum_schuif', 'notitie' => 'tekst', 'functie_sleutel' => 'bewaar'],
+        'loon_extra_planning'       => ['*' => 'bewaar'],
         'inzet_afspraak'            => ['notitie' => 'tekst'],
         'inzet_afspraak_week'       => ['*' => 'bewaar'],
 

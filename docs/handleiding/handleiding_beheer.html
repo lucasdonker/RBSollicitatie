@@ -2527,23 +2527,38 @@ beneden:</p>
 <li><strong>Scenario</strong>: de knoppen met de scenario&#39;s; de ster is
 de actieve planning (die zie je ook in het gesprek op het
 trainingsweekend). <strong>Kopie maken</strong> dupliceert het getoonde
-scenario en opent de kopie. Bij een scenario dat niet actief is staan
-<strong>Maak actief</strong> en <strong>Verwijderen</strong>.</li>
+scenario en opent de kopie.</li>
 <li><strong>Loonkosten, werkdagen en budget</strong>: de kosten van
 betaalde dagen, het aantal werkdagen (en hoeveel daarvan onbetaald) en
 de budgetbalk met wat er nog over is.</li>
+<li><strong>Waar zit het geld?</strong> (ingeklapt; de kop noemt de
+duurste persoon en week): de vijf duurste mensen met hun aandeel, de
+drie duurste weken, weken met meer mensen dan de norm (daar kun je
+schuiven) en wat er nog bij komt als je alle opgegeven maar niet
+geplande weken inplant. Dit blok toont de stand bij het openen van de
+pagina; de kop erboven werkt direct bij.</li>
 <li><strong>Concept of definitief</strong>: <strong>Definitief
 maken</strong> maakt het getoonde scenario de actieve planning én de
 afspraak van iedereen die is aangenomen. Wie is aangenomen maar nergens
 staat ingepland, krijgt geen afspraak; die naam staat in de melding.
-Onder <strong>Exporteren</strong>: de Excel voor de loonadministratie
-(vastgesteld of dit scenario) en de export voor het rooster (Excel of
-JSON; zie <a href="rooster_koppeling.md">Rooster-koppeling</a>).</li>
-<li><strong>Ingepland per week</strong>: hoeveel mensen je per week hebt
-ingepland, tegen de norm van de posten.</li>
-<li><strong>Filters</strong>: zoek op naam, functie, wie (in de
-procedure of aangenomen) en toon alleen wie een afwijking heeft, nog
-niet is ingepland, of wel of niet vaststaat na het gesprek.</li>
+Onder <strong>Scenario</strong>: <strong>Opgave overnemen (wie nog leeg
+is)</strong>, en bij een scenario dat niet actief is <strong>Maak dit
+scenario actief</strong> en <strong>Scenario verwijderen</strong>. Onder
+<strong>Extra persoon</strong>: iemand toevoegen die geen sollicitant is
+(zie hieronder). Onder <strong>Exporteren</strong>: de Excel voor de
+loonadministratie (vastgesteld of dit scenario) en de export voor het
+rooster (Excel of JSON; zie <a href="rooster_koppeling.md">Rooster-koppeling</a>).</li>
+<li><strong>Ingepland per week</strong> (ingeklapt; de kop zegt of er
+weken onder de norm zitten): hoeveel mensen je per week hebt ingepland,
+tegen de norm van de posten.</li>
+<li><strong>Filters</strong>: zoek op naam, <strong>Wie</strong> (in de
+procedure, aangenomen of extra personen), <strong>Toon</strong> (met een
+afwijking, nog niet ingepland, wel of niet vast na het gesprek) en
+<strong>Sorteren</strong> (op naam, duurste eerst, meeste dagen, hoogste
+dagloon, oudste of jongste). Onder <strong>Meer filters</strong>:
+functie, een weekbereik en <strong>Alleen het hoofdseizoen</strong>. Met
+een weekbereik heet de kolom Totaal &quot;Seizoen&quot;: die telt het hele
+seizoen.</li>
 <li><strong>De planning</strong>: per persoon per week staat groot wat
 je plant en klein wat iemand opgaf (&quot;kan 4&quot;; &quot;niet opg.&quot; als de week
 niet is opgegeven). Blauw is gepland, oranje met &quot;onb.&quot; is onbetaald,
@@ -2558,7 +2573,7 @@ inplannen</strong> aan (dat zet vijf dagen, of minder als iemand minder
 opgaf), zet het aantal dagen met <strong>−</strong> en
 <strong>+</strong>, en zet <strong>Betaald</strong> uit voor een
 onbetaalde week. Elke wijziging slaat meteen op. <strong>Zelfde voor de
-volgende opgegeven weken</strong> plant de weken erna hetzelfde, nooit
+volgende weken</strong> plant de opgegeven weken erna hetzelfde, nooit
 met meer dagen dan iemand opgaf.</p>
 <p><strong>Onbetaalde weken</strong> zijn echte werkdagen die je met de
 sollicitant afspreekt; alleen het loon valt weg. Ze tellen mee in de
@@ -2570,16 +2585,33 @@ dan opgegeven</strong> kan ook, maar dan is de cel rood: bespreek het
 met de sollicitant.</p>
 <p><strong>Een persoon</strong>: klik op de naam. Je ziet de
 <strong>Functie</strong> (&quot;voorstel&quot;: nieuw = Aspirant, anders de
-Lifeguard-rang uit Authentik; Postcommandant kies je zelf), de totalen,
-de <strong>afspraak</strong> (na definitief maken: bijwerken naar dit
+strandwacht-rang uit Authentik; Postcommandant kies je zelf), de
+totalen, <strong>Alle geplande weken</strong> (in één keer
+<strong>Betaald</strong> of <strong>Onbetaald</strong>), de
+<strong>afspraak</strong> (na definitief maken: bijwerken naar dit
 scenario als het afwijkt, of vaststellen voor wie later is aangenomen)
 en of de persoon <strong>vaststaat na het gesprek op het
 trainingsweekend</strong>. Vaststaan betekent: in alle scenario&#39;s gelijk
 en op slot. <strong>Ontgrendelen</strong> vraagt een reden (die komt in
 het logboek); zet het daarna weer vast met <strong>Vastzetten vanuit dit
-scenario</strong>. Het dagloon rekent met de leeftijd op de maandag van
-elke week: wie halverwege het seizoen jarig is, krijgt vanaf die week
-het hogere tarief.</p>
+scenario</strong>.</p>
+<p><strong>Extra personen</strong> (bijvoorbeeld de postcommandant):
+iemand die geen sollicitant is maar wel meetelt in de kosten, het
+budget, de dekking, de Excel voor de loonadministratie en het rooster.
+Toevoegen via <strong>Extra persoon</strong> in de kop: naam, functie en
+optioneel een geboortedatum (alleen nodig voor een dagloon naar
+leeftijd; leeg = gerekend als 18 jaar) en een notitie. De rij heeft het
+label <strong>extra</strong>. Plannen gaat zoals bij iedereen, alleen is
+er geen opgave: je plant vrij, er komt geen &quot;meer dan opgegeven&quot;, en
+<strong>Zelfde voor de volgende weken</strong> vult alle weken erna. De
+functie geldt in alle scenario&#39;s. Wijzigen en
+<strong>Verwijderen</strong> doe je in het paneel (naam aanklikken);
+verwijderen haalt ook de planning uit alle scenario&#39;s weg. Een extra
+persoon staat niet bij Sollicitanten, krijgt geen berichten of portaal
+en heeft geen afspraak of slot. In de export voor de loonadministratie
+staat hij met &quot;Extra persoon (actief scenario)&quot;. Het dagloon rekent met
+de leeftijd op de maandag van elke week: wie halverwege het seizoen
+jarig is, krijgt vanaf die week het hogere tarief.</p>
 <p><strong>Excel voor de loonadministratie</strong> (onder Exporteren):
 vastgesteld (pas na definitief maken) of dit scenario (met CONCEPT
 bovenaan elk tabblad). Vier tabbladen: Per persoon (geboortedatum,

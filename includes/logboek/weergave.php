@@ -111,6 +111,8 @@ function log_actie_register(): array {
         'taken_herinnerd'            => ['Herinnering openstaande taken verstuurd', 'bel'],
         'lg_feedback_gewist'         => ['Feedback van een strandwacht verwijderd', 'prullenbak'],
         'loonplan_opgave_overgenomen'=> ['Opgave overgenomen in de loonplanning', 'kalender'],
+        'loonplan_extra_opgeslagen'  => ['Extra persoon in de loonplanning opgeslagen', 'persoon'],
+        'loonplan_extra_verwijderd'  => ['Extra persoon uit de loonplanning verwijderd', 'prullenbak'],
         'herinneringen_gedraaid' => ['Herinneringen gedraaid', 'klok'],
 
         // Landingspagina's

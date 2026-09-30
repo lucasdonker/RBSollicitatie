@@ -8,7 +8,7 @@
 
 ## Wat erin staat
 
-Per persoon: `sollicitatie_id`, `naam`, `functie` (sleutel uit Instellingen › Functies) en per
+Per persoon: `sollicitatie_id` (of `extra_id`, zie onder), `naam`, `functie` (sleutel uit Instellingen › Functies) en per
 week:
 
 | Veld | Betekenis |
@@ -24,6 +24,11 @@ week:
 
 Bron: de **vastgestelde afspraak** zodra de loonplanning definitief is gemaakt (`bron: "afspraak"`);
 daarvóór het actieve scenario (`bron: "concept"`). Plan het echte rooster alleen op de afspraak.
+
+**Extra personen** uit de loonplanning (bijvoorbeeld de postcommandant; geen sollicitant) staan er
+ook in, met `sollicitatie_id: null` en een `extra_id`. Zij hebben geen opgave en geen afspraak: hun
+weken komen altijd uit het actieve scenario, elke dag staat in `beschikbaar`, `opgave_max` is `null`
+en `signalen` is leeg. Een koppeling die op `sollicitatie_id` matcht, moet deze rijen apart herkennen.
 
 De dagen komen uit `beschikbaarheid_per_dag()`, in lagen: de opgegeven periodes en het regime
 (hele week of alleen weekend), vaste vrije dagen (voorkeur of hard), vakanties, losse dagen

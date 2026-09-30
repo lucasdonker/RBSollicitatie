@@ -297,24 +297,34 @@ open hem op een groter scherm om te plannen."
 - Staat er een waarschuwing "Tarieven … nog niet ingevuld, we rekenen met …", dan rekent het
   systeem met de minimumlonen van een eerder jaar. Zie
   [Budget en loontarieven per jaar](#budget-en-loontarieven-per-jaar).
+- **Waar zit het geld?** (klik om te openen; de kop noemt al de duurste persoon en week): de vijf
+  duurste mensen met hun aandeel in het totaal, de drie duurste weken, weken met meer mensen dan de
+  norm (daar kun je schuiven zonder dat de bezetting te krap wordt) en wat er nog bij komt als je
+  alle opgegeven maar niet geplande weken inplant. **Raster sorteren op kosten** zet de duurste
+  bovenaan. Dit blok is de stand bij het openen van de pagina; vernieuw na het plannen.
 - **Concept** of **Definitief sinds …**: of de afspraken al zijn vastgesteld. Bij Concept staat
   erbij hoeveel mensen er zijn aangenomen en hoeveel er al vaststaan na het gesprek.
-- De knoppen: **Maak actief** en **Verwijderen** (alleen bij een scenario dat niet actief is),
-  **Opgave overnemen (wie nog leeg is)**, **Definitief maken** (later: **Opnieuw definitief maken**)
+- De knoppen: **Definitief maken** (later: **Opnieuw definitief maken**), het menu **Scenario**
+  (**Opgave overnemen (wie nog leeg is)**, en bij een scenario dat niet actief is **Maak dit scenario
+  actief** en **Scenario verwijderen**), **Extra persoon** (zie [Extra personen](#extra-personen))
   en **Exporteren**.
 
 **2. Ingepland per week**
 
 Een staafgrafiek met per week hoeveel mensen je hebt ingepland, tegen de norm die het bestuur voor de
-posten heeft ingesteld. Rood is te weinig. Dit gaat over bezetting, niet over geld, maar het helpt om
-te zien waar je niet kunt bezuinigen.
+posten heeft ingesteld. Hij staat ingeklapt; de kop zegt al of er weken onder de norm zitten. Rood is
+te weinig. Dit gaat over bezetting, niet over geld, maar het helpt om te zien waar je niet kunt
+bezuinigen.
 
-**3. Filters**
+**3. Filters en sorteren**
 
-Zoek op naam, of kies **Functie**, **Wie** (Iedereen, Nog in de procedure, Aangenomen) en **Toon**
-(Alles, Met een afwijking, Nog niet ingepland, Vast na het gesprek, Nog niet vast). "Met een
-afwijking" toont wie ergens meer is ingepland dan opgegeven, in een week die niet is opgegeven, meer
-dan vijf dagen in een week, of twee weken achter elkaar samen meer dan tien dagen.
+Zoek op naam, of kies **Wie** (Iedereen, Nog in de procedure, Aangenomen, Extra personen), **Toon**
+(Alles, Met een afwijking, Nog niet ingepland, Vast na het gesprek, Nog niet vast) en **Sorteren**
+(op naam, duurste eerst, meeste dagen eerst, hoogste dagloon eerst, oudste of jongste eerst). Onder
+**Meer filters**: **Functie**, **Vanaf week** en **Tot en met week**, en **Alleen het
+hoofdseizoen**. "Met een afwijking" toont wie ergens meer is ingepland dan opgegeven, in een week
+die niet is opgegeven, meer dan vijf dagen in een week, of twee weken achter elkaar samen meer dan
+tien dagen.
 
 **4. De planning**
 
@@ -356,7 +366,7 @@ Klik op een cel. Rechts opent een paneel.
    naar het rooster.
 5. Onderaan staan eventuele signalen, bijvoorbeeld "Meer dagen dan opgegeven" of "Alleen te vullen
    met dagen die iemand liever vrij heeft".
-6. **Zelfde voor de volgende opgegeven weken** plant elke volgende opgegeven week met hetzelfde
+6. **Zelfde voor de volgende weken** plant elke volgende opgegeven week met hetzelfde
    aantal dagen, nooit meer dan iemand die week opgaf.
 
 Elke wijziging slaat meteen op. De kosten bovenaan en onderaan lopen direct mee.
@@ -369,6 +379,8 @@ Klik op een naam. In het paneel staan:
   Lifeguard-rang uit Authentik. Postcommandant kies je altijd zelf. De functie bepaalt mee het
   dagloon en geldt per scenario.
 - de totalen van deze persoon in dit scenario, en **Dossier openen**;
+- **Alle geplande weken**: met **Betaald** of **Onbetaald** zet je in dit scenario elke geplande week
+  van deze persoon in één keer om;
 - **Opgave overnemen** met **Neem de opgave over**: vervangt de planning van deze persoon in dit
   scenario door wat die zelf opgaf. Daarna kun je per week bijsturen;
 - **Afspraak** (pas nadat de loonplanning definitief is gemaakt): "Vastgesteld; komt overeen met dit
@@ -378,6 +390,26 @@ Klik op een naam. In het paneel staan:
   afspraak in het portaal; er gaat geen bericht uit, dus laat het bestuur het vertellen;
 - **Vast in alle scenario's**: zie [Vastzetten na het gesprek](#vastzetten-na-het-gesprek).
 
+### Extra personen
+
+Iemand die geen sollicitant is maar wel loon kost en meetelt voor de bezetting, zoals de
+postcommandant. Die zet je er zelf bij, zodat het budget klopt.
+
+1. Klik in de kop op **Extra persoon**.
+2. Vul **Naam** in en kies de **Functie** (standaard Postcommandant). **Geboortedatum** is optioneel:
+   alleen nodig als het dagloon van de leeftijd afhangt; leeg rekent het systeem met 18 jaar.
+   **Notitie** is ook optioneel.
+3. Klik op **Toevoegen**. De rij staat in de planning met het label **extra**; plan hem zoals
+   iedereen.
+
+Verschillen met een sollicitant: er is geen opgave, dus je plant vrij en er komt nooit "meer dan
+opgegeven"; **Zelfde voor de volgende weken** vult alle weken erna. De functie geldt in alle
+scenario's. Er is geen afspraak of slot, geen dossier, geen portaal en geen berichten, en de persoon
+staat niet bij Sollicitanten. Wijzigen en **Verwijderen** doe je in het paneel (naam aanklikken);
+verwijderen haalt ook de planning uit alle scenario's weg. In de Excel voor de loonadministratie
+staat hij met de status "Extra persoon (actief scenario)": de planning komt altijd uit het actieve
+scenario.
+
 ### Scenario's gebruiken
 
 Een scenario is een complete planning. Je kunt er zoveel naast elkaar hebben als je wilt, om
@@ -385,12 +417,12 @@ bijvoorbeeld te zien "wat als we in juni twee mensen minder inzetten?".
 
 - **Kopie maken**: typ bij **Naam van de kopie** een naam (bijvoorbeeld "Krap budget") en klik op
   **Maak kopie**. Je werkt dan in de kopie; het origineel blijft zoals het was.
-- **Maak actief**: dit scenario wordt de actieve planning (de ster). Dat is de planning die het
+- **Scenario › Maak dit scenario actief**: dit scenario wordt de actieve planning (de ster). Dat is de planning die het
   bestuur in de gesprekken op het trainingsweekend ziet en aanpast. Maak een scenario alleen actief
   als het bestuur dat heeft besloten.
-- **Verwijderen** (met bevestiging): de ingeplande dagen van dat scenario verdwijnen; de
+- **Scenario › Scenario verwijderen** (met bevestiging): de ingeplande dagen van dat scenario verdwijnen; de
   beschikbaarheid van de sollicitanten blijft staan. Het laatste scenario kan niet weg.
-- **Opgave overnemen (wie nog leeg is)**: vult voor iedereen die in dit scenario nog niets gepland
+- **Scenario › Opgave overnemen (wie nog leeg is)**: vult voor iedereen die in dit scenario nog niets gepland
   heeft de eigen opgave in. Wie al gepland is of vaststaat, blijft zoals die is.
 
 ### Vastzetten na het gesprek

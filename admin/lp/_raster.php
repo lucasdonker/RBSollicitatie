@@ -3,18 +3,26 @@
  * Loonplanning — filters en het raster. Per cel: groot wat je plant, klein wat iemand opgaf
  * ("kan 4"). Klik op een cel = zijpaneel voor die week; klik op een naam = de persoon.
  * Onderdeel van admin/loonplanning.php. Cellen: bh_lp_cel() in includes/beheer/loonplanning.php.
+ * $weken = de getoonde weken (weekbereik), $weken_alle = het hele seizoen. Extra personen hebben
+ * een negatief id, de chip "extra" en data-extra op de naamknop.
  */
 $_functie_naam = array_column($functies, 'naam', 'sleutel');
 $filter_verborgen = ['scenario' => $scenario_id];
-$filter_velden = [
-  ['soort' => 'zoek', 'naam' => 'q', 'label' => 'Zoek op naam', 'waarde' => $filter['q'], 'breed' => true],
-  ['soort' => 'keuze', 'naam' => 'functie', 'label' => 'Functie', 'waarde' => $filter['functie'], 'opties' => ['' => 'Alle functies'] + $_functie_naam],
+$filter_velden = array_merge([
+  ['soort' => 'zoek', 'naam' => 'q', 'label' => 'Zoek op naam', 'waarde' => $filter['q']],
   ['soort' => 'keuze', 'naam' => 'groep', 'label' => 'Wie', 'waarde' => $filter['groep'],
-   'opties' => ['' => 'Iedereen', 'proces' => 'Nog in de procedure', 'aangenomen' => 'Aangenomen']],
+   'opties' => ['' => 'Iedereen', 'proces' => 'Nog in de procedure', 'aangenomen' => 'Aangenomen', 'extra' => 'Extra personen']],
   ['soort' => 'keuze', 'naam' => 'toon', 'label' => 'Toon', 'waarde' => $filter['toon'],
    'opties' => ['' => 'Alles', 'let' => 'Met een afwijking', 'niet_ingepland' => 'Nog niet ingepland', 'vast' => 'Vast na het gesprek', 'open' => 'Nog niet vast']],
-];
-$filter_wissen = bh_lp_gefilterd($filter) ? APP_URL . '/admin/loonplanning.php?scenario=' . $scenario_id : null;
+  ['soort' => 'sorteer', 'naam' => 'sort', 'label' => 'Sorteren', 'waarde' => $filter['sort'], 'opties' => bh_lp_sorteringen()],
+  ['soort' => 'keuze', 'naam' => 'functie', 'label' => 'Functie', 'waarde' => $filter['functie'], 'meer' => true, 'opties' => ['' => 'Alle functies'] + $_functie_naam],
+], bh_weekbereik_velden($weken_alle, $filter), [
+  ['soort' => 'keuze', 'naam' => 'hoofd', 'label' => 'Weken', 'waarde' => $filter['hoofd'], 'meer' => true,
+   'opties' => ['' => 'Voor-, hoofd- en naseizoen', '1' => 'Alleen het hoofdseizoen']],
+]);
+$filter_wissen  = bh_lp_gefilterd($filter) ? APP_URL . '/admin/loonplanning.php?scenario=' . $scenario_id : null;
+$filter_telling = bh_lp_gefilterd($filter) ? count($rijen) . ' van ' . count($analyse['mensen']) . ' personen'
+                  . (count($weken) < count($weken_alle) ? ', ' . count($weken) . ' van ' . count($weken_alle) . ' weken' : '') : null;
 require __DIR__ . '/../_filterbalk.php';
 ?>
 <section class="ds-kaart bh-raster bh-lp-raster" data-lp-raster data-mag="<?= $mag_bewerken ? '1' : '0' ?>" data-csrf="<?= h(csrf_token()) ?>"
@@ -43,7 +51,7 @@ require __DIR__ . '/../_filterbalk.php';
       <thead>
         <tr>
           <th scope="col" class="bh-raster-naam">Naam (<?= count($rijen) ?><?= bh_lp_gefilterd($filter) ? ' van ' . count($analyse['mensen']) : '' ?>)</th>
-          <th scope="col" class="bh-raster-wkn">Totaal</th>
+          <th scope="col" class="bh-raster-wkn"<?= count($weken) < count($weken_alle) ? ' title="Het hele seizoen, ook de weken die nu niet getoond worden"' : '' ?>><?= count($weken) < count($weken_alle) ? 'Seizoen' : 'Totaal' ?></th>
           <?php foreach ($weken as $_wn => $_w): ?>
             <th scope="col" class="bh-raster-wk bh-wk-<?= h((string)$_w['weektype']) ?><?= ($dekking[$_wn]['stand'] ?? '') === 'slecht' ? ' bh-wk-laag' : '' ?>">
               <span class="bh-raster-wknr">W<?= (int)$_wn ?></span><span class="bh-raster-wkdat"><?= h($_w['kort']) ?></span>
@@ -52,17 +60,21 @@ require __DIR__ . '/../_filterbalk.php';
         </tr>
       </thead>
       <tbody>
-        <?php foreach ($rijen as $_sol => $_m): ?>
-        <tr data-lp-rij="<?= (int)$_sol ?>">
+        <?php foreach ($rijen as $_sol => $_m): $_ex = !empty($_m['extra']); ?>
+        <tr data-lp-rij="<?= (int)$_sol ?>" id="lp-rij-<?= (int)$_sol ?>">
           <th scope="row" class="bh-raster-naam bh-lp-naam">
+            <?php /* Een extra persoon (negatief id) heeft geen fase, afspraak of dossier: data-extra zegt het paneel dat. */ ?>
             <button type="button" class="bh-lp-persoonknop" data-lp-persoon="<?= (int)$_sol ?>" data-naam="<?= h($_m['naam']) ?>"
-                    data-functie="<?= h($_m['functie']) ?>" data-fase="<?= h(fase_label($_m['fase'])) ?>"
+                    data-functie="<?= h($_m['functie']) ?>" data-fase="<?= h($_ex ? 'Extra persoon' : fase_label($_m['fase'])) ?>"
                     data-vast="<?= $_m['vast'] ? h(date('d-m H:i', strtotime((string)$_m['vast']['vergrendeld_op']))) : '' ?>"
-                    data-afspraak="<?= $_m['afspraak'] ? ($_m['afspraak']['wijkt_af'] ? 'wijkt_af' : 'ja') : '' ?>">
+                    data-afspraak="<?= $_m['afspraak'] ? ($_m['afspraak']['wijkt_af'] ? 'wijkt_af' : 'ja') : '' ?>"
+                    <?php if ($_ex): ?>data-extra="<?= -(int)$_sol ?>" data-geb="<?= h($_m['geboortedatum']) ?>" data-notitie="<?= h($_m['notitie']) ?>"<?php endif; ?>>
               <span class="bh-lp-naamtekst"><?= h($_m['naam']) ?></span>
               <span class="bh-lp-naamsub"><?= h(implode(' · ', array_filter([$_functie_naam[$_m['functie']] ?? $_m['functie'],
-                  $_m['leeftijd'] ? $_m['leeftijd'] . ' jr' : '', $_m['fase'] === 'aangenomen' ? 'aangenomen' : '']))) ?></span>
+                  $_ex ? ($_m['geboortedatum'] !== '' ? $_m['leeftijd'] . ' jr' : '') : ($_m['leeftijd'] ? $_m['leeftijd'] . ' jr' : ''),
+                  $_m['fase'] === 'aangenomen' ? 'aangenomen' : '', $_ex ? $_m['notitie'] : '']))) ?></span>
             </button>
+            <?php if ($_ex): ?><?= bh_chip('extra', 'blauw') ?><?php endif; ?>
             <?php if ($_m['vast']): ?><span class="bh-lp-slot" title="Vast na het gesprek op het trainingsweekend"><?= icoon('slot', 14) ?><span class="bh-vw">vast na het gesprek</span></span><?php endif; ?>
             <?php if (!empty($_m['signalen'])): ?>
               <span title="<?= h(implode("\n", $_m['signalen'])) ?>"><?= bh_chip('let op', 'oranje') ?><span class="bh-vw">: <?= h(implode(' ', $_m['signalen'])) ?></span></span>

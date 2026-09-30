@@ -3,10 +3,21 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.139.0');
+define('APP_VERSIE', '2.140.0');
 
 function app_changelog(): array {
     return [
+        '2.140.0' => [
+            'datum'  => '2026-09-30',
+            'titel'  => 'Loonplanning: budget voorop, extra personen, sorteren en weekbereik',
+            'punten' => [
+                'Extra personen, zoals de postcommandant: toevoegen via Extra persoon in de kop. Ze tellen mee in kosten, budget, dekking, de export voor de loonadministratie en het rooster, maar staan niet bij Sollicitanten, Berichten of Vandaag',
+                'Onder het budget "Waar zit het geld?": de duurste mensen en weken, weken met meer mensen dan de norm, en wat er nog bij komt als je alle opgave inplant',
+                'Sorteren op kosten, dagen, dagloon of leeftijd. Onder Meer filters: functie, een weekbereik en alleen het hoofdseizoen',
+                'In het paneel van een persoon: alle geplande weken in één keer betaald of onbetaald',
+                'Ingepland per week staat ingeklapt, met de stand in de kop. Scenario-acties staan in een menu, zodat de kop rustig blijft',
+            ],
+        ],
         '2.139.0' => [
             'datum'  => '2026-09-30',
             'titel'  => 'Beschikbaarheid: per dag, liever vrij, meer filters en sorteren',

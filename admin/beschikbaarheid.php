@@ -132,19 +132,14 @@ require __DIR__ . '/layout_top.php';
 <?php
   // Filteren, sorteren en de weergave. De export volgt precies wat het scherm toont.
   $_exp  = http_build_query(array_filter($filter, fn($v) => $v !== ''));
-  $_wkop = ['' => ''];
-  foreach ($raster['alle_weken'] as $_wn => $_w) $_wkop[(string)$_wn] = 'W' . $_wn . ' (' . $_w['kort'] . ')';
-  $filter_velden = [
+  $filter_velden = array_merge([
     ['soort' => 'zoek', 'naam' => 'q', 'label' => 'Zoek op naam', 'waarde' => $filter['q']],
     ['soort' => 'keuze', 'naam' => 'groep', 'label' => 'Wie', 'waarde' => $filter['groep'],
      'opties' => ['' => 'Iedereen', 'proces' => 'Nog in de procedure', 'aangenomen' => 'Aangenomen']],
     ['soort' => 'keuze', 'naam' => 'weergave', 'label' => 'Weergave', 'waarde' => $filter['weergave'],
      'opties' => ['' => 'Per week', 'dag' => 'Per dag (kan, liever niet, niet)']],
     ['soort' => 'sorteer', 'naam' => 'sort', 'label' => 'Sorteren', 'waarde' => $filter['sort'], 'opties' => bh_besch_sorteringen()],
-    ['soort' => 'keuze', 'naam' => 'van', 'label' => 'Vanaf week', 'waarde' => $filter['van'], 'meer' => true,
-     'opties' => ['' => 'Vanaf: begin'] + array_map(fn($l) => 'Vanaf ' . $l, array_slice($_wkop, 1, null, true))],
-    ['soort' => 'keuze', 'naam' => 'tot', 'label' => 'Tot en met week', 'waarde' => $filter['tot'], 'meer' => true,
-     'opties' => ['' => 'Tot: eind'] + array_map(fn($l) => 't/m ' . $l, array_slice($_wkop, 1, null, true))],
+  ], bh_weekbereik_velden($raster['alle_weken'], $filter), [
     ['soort' => 'keuze', 'naam' => 'min', 'label' => 'Minimaal weken', 'waarde' => $filter['min'], 'meer' => true,
      'opties' => ['' => 'Weken: alle'] + array_combine(array_map('strval', [2, 4, 6, 8, 10]), array_map(fn($n) => 'Minimaal ' . $n . ' weken', [2, 4, 6, 8, 10]))],
     ['soort' => 'keuze', 'naam' => 'type', 'label' => 'Nieuw of terug', 'waarde' => $filter['type'], 'meer' => true,
@@ -153,7 +148,7 @@ require __DIR__ . '/layout_top.php';
      'opties' => ['' => 'Alle opgaven', 'verzoek' => 'Met open verzoek', 'voorlopig' => 'Nog voorlopig']],
     ['soort' => 'keuze', 'naam' => 'lv', 'label' => 'Liever vrij', 'waarde' => $filter['lv'], 'meer' => true,
      'opties' => ['' => 'Liever vrij: iedereen', 'ja' => 'Alleen wie ergens liever vrij is']],
-  ];
+  ]);
   $filter_wissen = bh_besch_gefilterd($filter) ? APP_URL . '/admin/beschikbaarheid.php' . ($filter['weergave'] ? '?weergave=dag' : '') : null;
   // Exporteren staat in één menu: dezelfde filters en hetzelfde weekbereik als het scherm.
   $_exporten = [

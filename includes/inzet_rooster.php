@@ -61,7 +61,9 @@ function inzet_rooster_signaal_tekst(string $s): string {
  *
  * @param string $bron 'auto' (afspraak als definitief, anders actief scenario), 'afspraak' of 'scenario'
  * @return array ['bron' => 'afspraak'|'concept', 'scenario_id' => ?int, 'gemaakt' => ISO-8601,
- *                'personen' => [ ['sollicitatie_id','naam','functie','weken' => [wk => inzet_rooster_week() + 'week','maandag']] ]]
+ *                'personen' => [ ['sollicitatie_id','extra_id','naam','functie','weken' => [wk => inzet_rooster_week() + 'week','maandag']] ]]
+ *         Een extra persoon uit de loonplanning (postcommandant e.d.) heeft sollicitatie_id null en een extra_id,
+ *         elke dag beschikbaar, opgave_max null en geen signalen — ook bij bron 'afspraak' (uit het actieve scenario).
  */
 function inzet_rooster(int $seizoen_id, string $bron = 'auto', int $scenario_id = 0): array {
     $seizoen = seizoen_op_id($seizoen_id);
@@ -81,19 +83,25 @@ function inzet_rooster(int $seizoen_id, string $bron = 'auto', int $scenario_id 
                 $plan[$sol]['opgave'][$wk] = (int)$w['dagen_max'];
             }
         }
-    } elseif ($scenario_id) {
-        foreach (loonplan_analyse($seizoen_id, $scenario_id, $seizoen)['mensen'] as $sol => $m) {
+    }
+
+    // Het scenario; bij een afspraak alleen voor de extra personen (postcommandant e.d.), die hebben er geen.
+    $namen = [];
+    $sc_bron = $bron === 'afspraak' ? (int)(loonplan_actief_scenario($seizoen_id)['id'] ?? 0) : $scenario_id;
+    if ($sc_bron && ($bron !== 'afspraak' || (function_exists('loonplan_extra_personen') && loonplan_extra_personen($seizoen_id)))) {
+        foreach (loonplan_analyse($seizoen_id, $sc_bron, $seizoen)['mensen'] as $sol => $m) {
+            if ($bron === 'afspraak' && $sol > 0) continue;
             $weken = [];
             foreach ($m['weken'] as $wk => $w) if ($w['opgenomen'] && $w['dagen'] > 0) $weken[$wk] = [(int)$w['dagen'], (bool)$w['betaald']];
             if (!$weken) continue;
             $plan[$sol] = ['functie' => $m['functie'], 'weken' => $weken, 'opgave' => $m['beschikbaar']];
+            if ($sol < 0) $namen[$sol] = $m['naam'];
         }
     }
 
-    $namen = [];
-    if ($plan) {
+    $ids = array_values(array_filter(array_keys($plan), fn($i) => $i > 0));
+    if ($ids) {
         try {
-            $ids = array_keys($plan);
             $q = db()->prepare("SELECT s.id, p.voornaam, p.tussenvoegsel, p.achternaam FROM sollicitaties s JOIN personen p ON p.id = s.persoon_id
                                 WHERE s.id IN (" . implode(',', array_fill(0, count($ids), '?')) . ")");
             $q->execute($ids);
@@ -108,11 +116,22 @@ function inzet_rooster(int $seizoen_id, string $bron = 'auto', int $scenario_id 
             if (!isset($wd[$wk])) continue;
             $ma = $wd[$wk]['start']->format('Y-m-d');
             $zo = date('Y-m-d', strtotime($ma . ' +6 days'));
-            $dag_info = function_exists('beschikbaarheid_per_dag') ? beschikbaarheid_per_dag($sol, $ma, $zo) : [];
-            $weken[$wk] = ['week' => $wk, 'maandag' => $ma] + inzet_rooster_week($w[0], $w[1], $dag_info, (int)($p['opgave'][$wk] ?? 0));
+            if ($sol < 0) {
+                // Extra persoon: geen opgave, dus elke dag kan en er zijn geen signalen.
+                $dag_info = [];
+                for ($d = 0; $d < 7; $d++) $dag_info[date('Y-m-d', strtotime($ma . " +$d days"))] = ['beschikbaar' => true];
+                $week = inzet_rooster_week($w[0], $w[1], $dag_info, 7);
+                $week['opgave_max'] = null;
+                $week['signalen']   = [];
+            } else {
+                $dag_info = function_exists('beschikbaarheid_per_dag') ? beschikbaarheid_per_dag($sol, $ma, $zo) : [];
+                $week = inzet_rooster_week($w[0], $w[1], $dag_info, (int)($p['opgave'][$wk] ?? 0));
+            }
+            $weken[$wk] = ['week' => $wk, 'maandag' => $ma] + $week;
         }
         ksort($weken);
-        $personen[] = ['sollicitatie_id' => $sol, 'naam' => $namen[$sol] ?? '', 'functie' => $p['functie'], 'weken' => $weken];
+        $personen[] = ['sollicitatie_id' => $sol > 0 ? $sol : null, 'extra_id' => $sol < 0 ? -$sol : null,
+                       'naam' => $namen[$sol] ?? '', 'functie' => $p['functie'], 'weken' => $weken];
     }
     usort($personen, fn($a, $b) => strcmp($a['naam'], $b['naam']));
     return ['bron' => $bron === 'afspraak' ? 'afspraak' : 'concept', 'scenario_id' => $bron === 'afspraak' ? null : $scenario_id,

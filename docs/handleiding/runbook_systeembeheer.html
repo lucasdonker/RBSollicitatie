@@ -125,8 +125,8 @@ onderhoudskalender hieronder het systeem gezond.</p>
 (Cloud86) voor het domein <code>sollicitatie.paal13.com</code>,
 inclusief de subdomeinen voor test.</label></li>
 <li><label><input type="checkbox"></input>Een
-<strong>Authentik-account</strong> in de groep <code>Sol-Admin</code>.
-Log één keer in op
+<strong>Authentik-account</strong> in de groep
+<code>app-sol-admin</code>. Log één keer in op
 <code>https://test.sollicitatie.paal13.com/admin/</code> en op
 productie.</label></li>
 <li><label><input type="checkbox"></input>Toegang tot de
@@ -195,7 +195,7 @@ er níét staat.</label></li>
 <td>nee</td>
 </tr>
 <tr>
-<td>Overige uploads (logo, wervingspagina&#39;s, bijlagen)</td>
+<td>Overige uploads (logo, landingspagina&#39;s, bijlagen)</td>
 <td><code>uploads/</code> in de webroot</td>
 <td>nee, behalve <code>uploads/.htaccess</code> en
 <code>uploads/branding/.htaccess</code></td>
@@ -373,7 +373,7 @@ bezoeker tot het werk klaar is.</li>
 (<code>/portaal/</code>) en het beheer (<code>/admin/</code>). Daarnaast
 de openbare adressen <code>/aanmelden.php</code> (aanmeldformulier),
 <code>/privacy.php</code> (privacyverklaring),
-<code>/p/&lt;naam&gt;</code> (wervingspagina&#39;s), <code>/foto.php</code>
+<code>/p/&lt;naam&gt;</code> (landingspagina&#39;s), <code>/foto.php</code>
 (foto van een sollicitant, alleen met toegang),
 <code>/d/&lt;code&gt;</code> (tijdelijke downloadlink van een bijlage),
 <code>/track.php</code> (anonieme tellingen van het aanmeldformulier),
@@ -382,7 +382,7 @@ de openbare adressen <code>/aanmelden.php</code> (aanmeldformulier),
 <li><strong>Het aanmeldformulier bestaat één keer:</strong> de HTML komt
 uit <code>includes/aanmeldformulier.php</code>, de verwerking uit
 <code>includes/aanmelden_kern.php</code>. <code>/aanmelden.php</code> en
-de wervingspagina&#39;s roepen die aan; de WordPress-plugin haalt het
+de landingspagina&#39;s roepen die aan; de WordPress-plugin haalt het
 formulier op via <code>GET /api/formulier.php</code> en post via
 <code>POST /api/aanmelden.php</code>.</li>
 <li><strong>Inloggen:</strong> beheerders via Authentik (OIDC).
@@ -515,14 +515,12 @@ wachtwoord; sinds 2.94.0 zet het systeem het automatisch uit.</li>
 <li>Controleer de cron in Plesk (zie <a href="#cron">Cron</a>) en kijk
 na een kwartier of de systeemcontrole bij Cron alle groepen op tijd
 meldt.</li>
-<li>(eenmalig) Authentik: controleer de redirect-URI&#39;s en de groep
-<code>Sol-Penningmeester</code>, en controleer dat die groep bij
-<strong>Instellingen › Authentik</strong> in de lijst met toegestane
-groepen staat (standaard sinds 2.101; een eerder zelf aangepaste lijst
-blijft ongewijzigd). Kijk bij <strong>Beheerders</strong> of de
-penningmeester als Begeleider staat: vóór 2.101 werd die rol stil leeg
-opgeslagen (de kolom was een ENUM), en <code>db_failsafe</code> zet een
-lege rol nu op <code>begeleider</code>. Zet de rol eenmalig goed. Zie <a href="#authentik-sso">Authentik</a>.</li>
+<li>(eenmalig) Authentik: controleer de redirect-URI&#39;s en onder
+<strong>Rollen &amp; rechten</strong> welke groep bij elke rol hoort
+(sinds 2.132.0 standaard <code>app-sol-*</code>, en de enige bron voor
+toegang). Meldt de systeemcontrole groepen die &quot;bij geen rol horen&quot;,
+koppel die dan eerst: wie alleen daarin zit, komt anders niet meer
+binnen. Zie <a href="#authentik-sso">Authentik</a> en <a href="authentik_groepen.md">authentik_groepen.md</a>.</li>
 <li>(eenmalig) <strong>Instellingen › Afzender &amp; adressen</strong>:
 vul het penningmeester-adres en het ledenservice-adres in en laat
 &quot;loondossier-stukken als bijlage meesturen&quot; uit. Plaats onder
@@ -588,7 +586,7 @@ gebeurt.</p>
 komen niet mee naar test. Documenten, verzegelde PDF&#39;s en foto&#39;s uit de
 kopie zijn op test dus niet te openen, en de systeemcontrole kan de
 kluis rood kleuren. Dat is de bedoeling. Ook de ontwerpen van
-wervingspagina&#39;s (in <code>uploads/</code>) komen niet mee.</p>
+landingspagina&#39;s (in <code>uploads/</code>) komen niet mee.</p>
 <p><strong>Vooraf controleren op test</strong>
 (<code>includes/config.php</code> van test):</p>
 <ul>
@@ -732,8 +730,8 @@ door nginx uit.</p></li>
 <li><p>Open een pagina; de zelfherstelronde maakt de rest van de
 tabellen aan.</p></li>
 <li><p>Log in via Authentik met een account in de groep
-<code>Sol-Admin</code>; dat account wordt automatisch beheerder met rol
-admin. Er is geen standaardaccount met wachtwoord meer.</p></li>
+<code>app-sol-admin</code>; dat account wordt automatisch beheerder met
+rol admin. Er is geen standaardaccount met wachtwoord meer.</p></li>
 <li><p>Stel de cron in en doorloop de rest van de checklist vanaf stap
 8.</p></li>
 <li><p>Werk op Vandaag de lijst <strong>Nog in te stellen</strong> af
@@ -950,7 +948,7 @@ opnieuw instellen in Mijn profiel, of reset hun tweestaps bij
 Beheerders.</li>
 <li>Het logboek bevat per batch <code>kluis_herversleuteld</code> met
 aantallen; nooit een sleutel.</li>
-<li>Formulieren op wervingspagina&#39;s die op het moment van wisselen open
+<li>Formulieren op landingspagina&#39;s die op het moment van wisselen open
 staan, kunnen één keer worden geweigerd als hun beveiliging op de
 sleutel terugvalt; opnieuw versturen werkt.</li>
 </ul>
@@ -959,9 +957,22 @@ staan</h1>
 <blockquote>
 <p><strong>In het kort:</strong> Sleutels van koppelingen staan in de
 tabel <code>instellingen</code> en vul je in het beheer in. Het beheer
-toont ze nooit terug, maar een database-export bevat ze wel: behandel
-exports als geheim.</p>
+toont ze nooit terug. Wachtwoorden en API-sleutels staan sinds 2.130.0
+versleuteld in de database (<code>kluis:…</code>, met
+<code>KLUIS_SLEUTEL</code>); een export bevat ze dus niet leesbaar.
+Behandel exports toch als geheim: ze bevatten persoonsgegevens.</p>
 </blockquote>
+<p>Welke sleutels versleuteld worden: <code>smtp.pass</code>,
+<code>ai.api_key</code>, <code>authentik.api_token</code>,
+<code>authentik.token</code>, <code>sms.http_token</code>,
+<code>sms.easysendsms_key</code>, <code>sms.messagebird_key</code> en
+<code>wa.api_sleutel</code>
+(<code>instellingen_geheime_sleutels()</code>). Een oude, nog leesbare
+waarde wordt bij de eerste keer lezen vanzelf versleuteld. Bij het
+wisselen van de kluissleutel gaan ze mee (bron &quot;Wachtwoorden en sleutels
+van koppelingen&quot; op het kluisscherm). Werkt de kluis niet, dan blijven
+de koppelingen werken met een leesbare waarde en meldt de
+systeemcontrole het.</p>
 <p>In het beheer staat bij een geheim alleen <strong>Ingesteld</strong>
 of <strong>Nog niet ingesteld</strong>. Een leeg veld laat de waarde
 staan; met <strong>Huidige waarde verwijderen</strong> maak je hem leeg.
@@ -1004,10 +1015,10 @@ config</td>
 </tr>
 <tr>
 <td><code>authentik.url</code>, <code>authentik.api_token</code>,
-<code>authentik.token</code>, <code>authentik.admin_groepen</code></td>
+<code>authentik.token</code></td>
 <td>Instellingen › Authentik</td>
-<td>Portaal-SSO, competentie-sync en de groepen die het beheer in
-mogen</td>
+<td>Portaal-SSO en competentie-sync (wie het beheer in mag: Rollen &amp;
+rechten)</td>
 </tr>
 <tr>
 <td><code>sms.*</code>, <code>wa.*</code></td>
@@ -1157,27 +1168,27 @@ rol.</p>
 sollicitanten die via Authentik inloggen &quot;Redirect URI Error&quot;.</li>
 <li>Scopes <code>openid profile email</code>, en de groepen in het token
 (claim <code>groups</code>).</li>
-<li>Groepen en rollen: <code>Sol-Admin</code> (rol admin, alles),
-<code>Bestuur</code> (rol bestuur), <code>Sol-Penningmeester</code> (rol
-penningmeester: loondossiers, loonplanning en sollicitanten lezen),
-<code>Sol-Begeleider</code> (rol begeleider: selectiedag en dekking
-lezen). Welke groep bij welke rol hoort en wat een rol mag, pas je aan
-in Beheer › Rollen &amp; rechten.</li>
-<li><strong>Toegestane groepen:</strong> Instellingen › Authentik, veld
-met groepen die het beheer in mogen
-(<code>authentik.admin_groepen</code>, standaard
-<code>Bestuur,Sol-Admin,Sol-Begeleider,Sol-Penningmeester</code>). Stond
-daar nog de oude standaardwaarde zonder <code>Sol-Penningmeester</code>,
-dan werkt het systeem die vanzelf bij; een eigen waarde blijft staan
-zoals die was. De groepsnamen moeten exact kloppen (hoofdletters maken
-niet uit): <code>oud-bestuur</code> telt niet als
-<code>Bestuur</code>.</li>
-<li><strong>Geen toegestane groep = geen toegang via SSO</strong>, ook
-voor een bestaand account. De poging komt in het logboek als &quot;Inloggen
-via Authentik geweigerd (geen toegestane groep)&quot;. Zit iemand wel in een
-toegestane groep die aan geen rol gekoppeld is, dan blijft de rol die
-een admin koos; een nieuw account krijgt dan de rol
-<code>begeleider</code>.</li>
+<li>Groepen en rollen: <code>app-sol-admin</code> (rol admin, alles),
+<code>app-sol-bestuur</code> (rol bestuur),
+<code>app-sol-penningmeester</code> (rol penningmeester: loondossiers,
+loonplanning en sollicitanten lezen), <code>app-sol-begeleider</code>
+(rol begeleider: selectiedag en dekking lezen). Welke groep bij welke
+rol hoort en wat een rol mag, pas je aan in Beheer › Rollen &amp;
+rechten. Het groepenmodel van de vereniging, de testgroepen
+(<code>app-soltest-*</code>) en de afvinklijst voor Authentik staan in
+<a href="authentik_groepen.md">authentik_groepen.md</a>.</li>
+<li><strong>Die koppeling is de enige bron voor toegang</strong> (sinds
+2.132.0; de oude lijst <code>authentik.admin_groepen</code> wordt niet
+meer gebruikt). Geen gekoppelde groep = geen toegang via SSO, ook voor
+een bestaand account. De poging komt in het logboek als &quot;Inloggen via
+Authentik geweigerd&quot;. Met meerdere gekoppelde groepen tellen de rechten
+op. Groepsnamen moeten exact kloppen (hoofdletters maken niet uit).
+Stonden rollen nog op de oude standaardnamen (<code>Sol-Admin</code>,
+<code>Bestuur</code>, <code>Sol-Penningmeester</code>,
+<code>Sol-Begeleider</code>), dan zet de update die om naar
+<code>app-sol-*</code>; een zelf gekozen groep blijft staan. Groepen die
+in de oude lijst stonden maar bij geen rol horen, meldt de
+systeemcontrole.</li>
 <li><strong>Terug na het inloggen</strong> gaat alleen naar een pad
 binnen <code>/admin/</code>; een extern adres in <code>terug=</code>
 wordt genegeerd.</li>
@@ -1193,12 +1204,12 @@ Die noodingang heeft een eigen tweede stap (zie <a href="#toegangsbeheer">Toegan
 <h1 id="toegangsbeheer">Toegangsbeheer</h1>
 <blockquote>
 <p><strong>In het kort:</strong> Toegang loopt via Authentik-groepen:
-uit alle toegestane groepen halen trekt de SSO-toegang in. Heeft het
-account ook een wachtwoord, zet het dan daarnaast op non-actief in
-Beheerders. Controleer de toegang elk seizoen en houd de noodingang met
-wachtwoord tot één account. De noodingang vraagt altijd een tweede stap
-(NIS2): een code uit een authenticator-app of, zonder app, een code per
-e-mail.</p>
+uit alle aan een rol gekoppelde groepen halen trekt de SSO-toegang in.
+Heeft het account ook een wachtwoord, zet het dan daarnaast op
+non-actief in Beheerders. Controleer de toegang elk seizoen en houd de
+noodingang met wachtwoord tot één account. De noodingang vraagt altijd
+een tweede stap (NIS2): een code uit een authenticator-app of, zonder
+app, een code per e-mail.</p>
 </blockquote>
 <p><strong>Iemand erbij</strong></p>
 <ol type="1">
@@ -1236,10 +1247,14 @@ cron-token, en toegang tot de SQL-migraties. Instellingen bewerken
 (standaard bestuur en admin) toont geen geheimen, maar kan ze wel
 vervangen of wissen.</label></li>
 <li><label><input type="checkbox"></input>Wie heeft de module Documenten (BSN,
-IBAN, ID)? Standaard alleen penningmeester en admin.</label></li>
-<li><label><input type="checkbox"></input>Staat de penningmeester (of iemand
-met een eigen rol) in Beheerders als Begeleider? Dat is een restant van
-vóór 2.101; zet de rol goed.</label></li>
+IBAN, ID)? Standaard alleen penningmeester en admin. De inhoud openen
+kan alleen een rol die het recht zelf heeft (de penningmeester); de
+admin-rol telt daarvoor niet. Staat er een admin in
+<code>app-sol-penningmeester</code> die geen penningmeester is? Dat is
+een noodgreep; haal die weer weg.</label></li>
+<li><label><input type="checkbox"></input>Wie zit er in de
+<code>app-sol-*</code>-groepen in Authentik? Klopt dat met de functies?
+Zie <a href="authentik_groepen.md">authentik_groepen.md</a>.</label></li>
 <li><label><input type="checkbox"></input>Sinds 2.102 heeft de penningmeester
 lees- en bewerkrecht op Loonplanning. Een bestaande installatie kreeg
 dat één keer automatisch (vlag
@@ -1405,7 +1420,7 @@ van het jaar waarin het dienstverband eindigde, en dat weet het systeem
 niet. De penningmeester vernietigt ze op Loondossiers via de kaart &quot;Te
 beoordelen voor vernietiging&quot; (<code>documenten_te_vernietigen()</code>,
 <code>documenten_loondossier_vernietigen()</code>); in het logboek staat
-dan <code>loondossier_vernietigd</code>. Een oud-lifeguard wordt pas
+dan <code>loondossier_vernietigd</code>. Een oud-strandwacht wordt pas
 geanonimiseerd als die stukken weg zijn.</li>
 <li>De opschoning draait één keer per dag via de echte cron
 (<code>includes/opschonen.php</code>). Wat er is opgeschoond staat in
@@ -1435,7 +1450,7 @@ eerst zien werken, zet hem dan eerst op de testomgeving.</li>
 <td><code>bewaar.seintje_mnd</code></td>
 </tr>
 <tr>
-<td>Oud-lifeguards</td>
+<td>Oud-strandwachten</td>
 <td>2 jaar na het laatste seizoen</td>
 <td><code>bewaar.aangenomen_jaar</code></td>
 </tr>
@@ -1517,7 +1532,7 @@ opschonen, behalve wat &quot;vast&quot; is en
 <code>bewaar.loondocumenten_jaar</code>. Daar staan ook de schakelaars
 <code>documenten.download_melding</code> (mail aan het bestuur bij elke
 download van een loondocument, standaard aan) en
-<code>paginas.tracking</code> (bezoekersstatistiek van wervingspagina&#39;s
+<code>paginas.tracking</code> (bezoekersstatistiek van landingspagina&#39;s
 en aanmeldformulier, standaard aan). Een AVG-verzoek
 (<code>includes/avg_wissen.php</code>) neemt ook de rijen van die
 persoon in <code>mail_queue</code> mee, net als selectiedag,
@@ -1705,7 +1720,7 @@ versleutelde documenten, de foto&#39;s (<code>fotos/</code>) en het zegel
 met daarin de <code>KLUIS_SLEUTEL</code>. Bewaar die sleutel óók los in
 de wachtwoordkluis van het bestuur, niet in dezelfde back-up.</li>
 <li><strong><code>uploads/</code></strong>: logo, ontwerpen van
-wervingspagina&#39;s en bijlagen van sjablonen. De
+landingspagina&#39;s en bijlagen van sjablonen. De
 <code>.htaccess</code>-bestanden in <code>uploads/</code> en
 <code>uploads/branding/</code> staan in Git.</li>
 </ol>
@@ -1995,6 +2010,68 @@ daar een vroege waarschuwing binnen 24 uur en een melding binnen 72 uur
 bij het CSIRT bij. De maatregelen in dit runbook (toegangsbeheer,
 logging, back-up met hersteltest, incidentprocedure) volgen de
 zorgplicht als goede praktijk.</p>
+<p><strong>Kwetsbaarheid gemeld?</strong> Het systeem publiceert
+<code>/.well-known/security.txt</code> (RFC 9116) met het adres voor
+foutmeldingen (Instellingen › Mail). Een melding van buiten behandel je
+als incident: bevestig de ontvangst, zoek het uit met de ontwikkelaar,
+los het op, en laat de melder weten dat het klaar is. Test nooit met
+echte persoonsgegevens.</p>
+<h2 id="wat-buiten-de-code-geregeld-moet-worden-nis2-zorgplicht-als-goede-praktijk">Wat
+buiten de code geregeld moet worden (NIS2-zorgplicht als goede
+praktijk)</h2>
+<table>
+<thead>
+<tr>
+<th>Maatregel</th>
+<th>Wie</th>
+<th>Wanneer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Plesk › Hosting › <strong>Permanente 301 van http naar
+https</strong> aan (test én productie)</td>
+<td>systeembeheer</td>
+<td>eenmalig, bij inrichten</td>
+</tr>
+<tr>
+<td>Authentik: <strong>MFA verplicht</strong> in de login-flow voor de
+groepen die het beheer in mogen</td>
+<td>Authentik-beheer</td>
+<td>eenmalig; jaarlijks nalopen</td>
+</tr>
+<tr>
+<td>Verwerkersovereenkomsten met Cloud86, WhatsReach, sms-dienst en
+Google (Gemini) afgesloten en bewaard</td>
+<td>bestuur</td>
+<td>vóór productie; bij elke nieuwe leverancier</td>
+</tr>
+<tr>
+<td>TCPDF en FPDI (<code>includes/lib/</code>) naast de laatste versie
+leggen; beveiligingsupdates meenemen</td>
+<td>ontwikkelaar</td>
+<td>elk seizoen vóór de werving</td>
+</tr>
+<tr>
+<td>Toegang nalopen: wie heeft een beheerdersaccount, welke
+Authentik-groepen, wie heeft Plesk</td>
+<td>bestuur + systeembeheer</td>
+<td>elk seizoen (zie <a href="#toegangsbeheer">Toegangsbeheer</a>)</td>
+</tr>
+<tr>
+<td>Hersteltest van de back-up</td>
+<td>systeembeheer</td>
+<td>elk seizoen (zie <a href="#back-up-en-herstel">Back-up en
+herstel</a>)</td>
+</tr>
+<tr>
+<td>Korte uitleg &quot;veilig werken&quot; aan nieuwe beheerders (zie handleiding
+beheer)</td>
+<td>bestuur</td>
+<td>bij elke nieuwe beheerder</td>
+</tr>
+</tbody>
+</table>
 <h1 id="beveiligingsmaatregelen-in-het-kort">Beveiligingsmaatregelen in
 het kort</h1>
 <blockquote>
@@ -2022,8 +2099,29 @@ watermerk op ID- en bankpasfoto&#39;s.</li>
 <li><strong>Headers:</strong> Content-Security-Policy (scripts en
 verbindingen alleen van de eigen host), HSTS, X-Frame-Options, nosniff,
 Referrer-Policy, Permissions-Policy, gezet in PHP
-(<code>security_headers()</code>), niet in <code>.htaccess</code>.
-Stijlen en lettertypen komen alleen van de eigen host:
+(<code>security_headers()</code>), niet in <code>.htaccess</code>. Sinds
+2.130.0 staat de CSP <strong>geen inline JavaScript</strong> meer toe:
+<code>script-src &#39;self&#39; &#39;nonce-…&#39;</code>, met een nieuwe nonce per
+verzoek (<code>csp_nonce()</code>). Knoppen gebruiken
+<code>data-klik=&quot;functie(…)&quot;</code> in plaats van <code>onclick</code>
+(<code>assets/js/klik.js</code>); een inline <code>&lt;script&gt;</code>
+heeft <code>nonce=&quot;&lt;?= h(csp_nonce()) ?&gt;&quot;</code> nodig, anders
+draait hij niet. Zo kan geïnjecteerde HTML geen script uitvoeren. HSTS
+staat ook op de API en de landingspagina&#39;s.</li>
+<li><strong>Sessie beheer:</strong> na twee uur zonder activiteit
+uitgelogd (<code>BEHEER_INACTIEF_SECONDEN</code>), ook al leeft de
+cookie acht uur.</li>
+<li><strong>Direct opvragen:</strong> partials
+(<code>admin/_*.php</code>) en de mappen <code>admin/dossier</code>,
+<code>admin/tw</code>, <code>admin/lp</code> zijn via
+<code>.htaccess</code> afgeschermd; ze draaien alleen als include.</li>
+<li><strong>OIDC:</strong> state met <code>hash_equals</code>, PKCE
+(S256) naar Authentik, TLS-controle bij elke uitgaande verbinding. De
+Gemini-sleutel gaat als header mee, niet in de URL.</li>
+<li><strong>Wachtwoorden:</strong> <code>password_hash</code> met
+automatische rehash bij inloggen; mislukte pogingen staan 12 maanden in
+de audit (de tellers voor de blokkade 24 uur). Stijlen en lettertypen
+komen alleen van de eigen host:
 <code>style-src &#39;self&#39; &#39;unsafe-inline&#39;</code> en
 <code>font-src &#39;self&#39; data:</code>, zonder externe domeinen.</li>
 <li><strong>Lettertype:</strong> Instrument Sans staat zelf gehost in
@@ -2031,7 +2129,7 @@ Stijlen en lettertypen komen alleen van de eigen host:
 SIL Open Font License). Er gaat geen verzoek en dus geen IP-adres meer
 naar Google Fonts. Voeg geen externe lettertypen of stylesheets toe: de
 CSP blokkeert ze, en het zou een nieuwe doorgifte zijn die in het
-verwerkingsregister en de privacyverklaring moet. Wervingspagina&#39;s
+verwerkingsregister en de privacyverklaring moet. Landingspagina&#39;s
 hebben een eigen, strengere CSP met <code>connect-src &#39;none&#39;</code>.
 Logo en favicon in <code>uploads/branding/</code> krijgen via hun eigen
 <code>.htaccess</code> een CSP met <code>sandbox</code>.</li>
@@ -2042,7 +2140,7 @@ token.</li>
 voor paal13.com en de ingestelde websites.</li>
 <li><strong>Toegang na inloggen:</strong> terugsturen alleen naar een
 pad binnen <code>/admin/</code> (geen open redirect); SSO weigert wie in
-geen toegestane groep meer zit.</li>
+geen aan een rol gekoppelde groep meer zit.</li>
 <li><strong>Instellingen:</strong> opslaan vraagt bewerkrecht en neemt
 alleen de velden van het open tabblad aan; geheimen gaan nooit terug
 naar het scherm.</li>
@@ -2095,7 +2193,7 @@ vernietigd.</li>
 <li>WhatsApp loopt via WhatsReach (geen officiële Meta-koppeling). Het
 bestuur kan het per meldingstype uitzetten; bij storing valt alles terug
 op e-mail.</li>
-<li>&quot;Halverwege weggegaan&quot; in de trechter bij Wervingspagina&#39;s is een
+<li>&quot;Halverwege weggegaan&quot; in de trechter bij Landingspagina&#39;s is een
 aanwijzing, geen telling: het signaal komt van een tabblad dat naar de
 achtergrond gaat, en sommigen komen terug.</li>
 <li>Het formulier bewaart tijdens het invullen wat iemand intypt in

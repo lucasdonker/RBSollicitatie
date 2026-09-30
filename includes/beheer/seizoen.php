@@ -246,7 +246,9 @@ function bh_seizoen_verwijderen(int $sid): array {
         // Een tabel die (nog) niet bestaat, slaat avg_stap stil over. De afspraakweken gaan mee (FK).
         // Volgorde: eerst wat naar een ander verwijst (planning → scenario, indeling → groep).
         if ($ids) avg_stap($db, "DELETE FROM loon_planning WHERE sollicitatie_id IN (" . implode(',', array_fill(0, count($ids), '?')) . ")", $ids);
-        foreach (['inzet_afspraak', 'loon_vergrendeling', 'loon_scenario', 'lifeguard_feedback',
+        // Extra personen in de loonplanning (postcommandant e.d.): hun planning, dan zijzelf.
+        avg_stap($db, "DELETE FROM loon_extra_planning WHERE extra_id IN (SELECT id FROM loon_extra_persoon WHERE seizoen_id = ?)", [$sid]);
+        foreach (['inzet_afspraak', 'loon_vergrendeling', 'loon_scenario', 'loon_extra_persoon', 'lifeguard_feedback',
                   'selectie_besluit', 'selectie_score', 'selectie_observatie', 'selectie_indeling', 'selectie_relatie', 'selectie_groep',
                   'tw_observatie', 'tw_deelname', 'tw_groep'] as $_t) {
             avg_stap($db, "DELETE FROM `$_t` WHERE seizoen_id = ?", [$sid]);

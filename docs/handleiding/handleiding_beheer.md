@@ -1538,18 +1538,27 @@ Elke wijziging wordt direct opgeslagen. Met alleen leesrecht op Loonplanning kun
 Het scherm heeft dezelfde opbouw als Beschikbaarheid, van boven naar beneden:
 
 - **Scenario**: de knoppen met de scenario's; de ster is de actieve planning (die zie je ook in het
-  gesprek op het trainingsweekend). **Kopie maken** dupliceert het getoonde scenario en opent de kopie. Bij een scenario
-  dat niet actief is staan **Maak actief** en **Verwijderen**.
+  gesprek op het trainingsweekend). **Kopie maken** dupliceert het getoonde scenario en opent de kopie.
 - **Loonkosten, werkdagen en budget**: de kosten van betaalde dagen, het aantal werkdagen (en
   hoeveel daarvan onbetaald) en de budgetbalk met wat er nog over is.
+- **Waar zit het geld?** (ingeklapt; de kop noemt de duurste persoon en week): de vijf duurste
+  mensen met hun aandeel, de drie duurste weken, weken met meer mensen dan de norm (daar kun je
+  schuiven) en wat er nog bij komt als je alle opgegeven maar niet geplande weken inplant. Dit blok
+  toont de stand bij het openen van de pagina; de kop erboven werkt direct bij.
 - **Concept of definitief**: **Definitief maken** maakt het getoonde scenario de actieve planning én
   de afspraak van iedereen die is aangenomen. Wie is aangenomen maar nergens staat ingepland, krijgt
-  geen afspraak; die naam staat in de melding. Onder **Exporteren**: de Excel voor de
-  loonadministratie (vastgesteld of dit scenario) en de export voor het rooster (Excel of JSON; zie
-  [Rooster-koppeling](rooster_koppeling.md)).
-- **Ingepland per week**: hoeveel mensen je per week hebt ingepland, tegen de norm van de posten.
-- **Filters**: zoek op naam, functie, wie (in de procedure of aangenomen) en toon alleen wie een
-  afwijking heeft, nog niet is ingepland, of wel of niet vaststaat na het gesprek.
+  geen afspraak; die naam staat in de melding. Onder **Scenario**: **Opgave overnemen (wie nog leeg
+  is)**, en bij een scenario dat niet actief is **Maak dit scenario actief** en **Scenario
+  verwijderen**. Onder **Extra persoon**: iemand toevoegen die geen sollicitant is (zie hieronder).
+  Onder **Exporteren**: de Excel voor de loonadministratie (vastgesteld of dit scenario) en de export
+  voor het rooster (Excel of JSON; zie [Rooster-koppeling](rooster_koppeling.md)).
+- **Ingepland per week** (ingeklapt; de kop zegt of er weken onder de norm zitten): hoeveel mensen
+  je per week hebt ingepland, tegen de norm van de posten.
+- **Filters**: zoek op naam, **Wie** (in de procedure, aangenomen of extra personen), **Toon** (met
+  een afwijking, nog niet ingepland, wel of niet vast na het gesprek) en **Sorteren** (op naam,
+  duurste eerst, meeste dagen, hoogste dagloon, oudste of jongste). Onder **Meer filters**: functie,
+  een weekbereik en **Alleen het hoofdseizoen**. Met een weekbereik heet de kolom Totaal "Seizoen":
+  die telt het hele seizoen.
 - **De planning**: per persoon per week staat groot wat je plant en klein wat iemand opgaf ("kan 4";
   "niet opg." als de week niet is opgegeven). Blauw is gepland, oranje met "onb." is onbetaald, rood
   met een stippelrand is meer dan opgegeven. Een streepje met "kan 4" is opgegeven maar niet
@@ -1559,7 +1568,7 @@ Het scherm heeft dezelfde opbouw als Beschikbaarheid, van boven naar beneden:
 niet kan (met de reden: vakantie, bijbaan, en dergelijke). Vink **Deze week inplannen** aan (dat
 zet vijf dagen, of minder als iemand minder opgaf), zet het aantal dagen met **−** en **+**, en zet
 **Betaald** uit voor een onbetaalde week. Elke wijziging slaat meteen op. **Zelfde voor de volgende
-opgegeven weken** plant de weken erna hetzelfde, nooit met meer dagen dan iemand opgaf.
+weken** plant de opgegeven weken erna hetzelfde, nooit met meer dagen dan iemand opgaf.
 
 **Onbetaalde weken** zijn echte werkdagen die je met de sollicitant afspreekt; alleen het loon valt
 weg. Ze tellen mee in de dekking, staan in de afspraak en gaan gewoon naar het rooster.
@@ -1569,11 +1578,23 @@ afspraak zegt 3, en het rooster kiest 3 van de 4 dagen waarop iemand kan. **Meer
 opgegeven** kan ook, maar dan is de cel rood: bespreek het met de sollicitant.
 
 **Een persoon**: klik op de naam. Je ziet de **Functie** ("voorstel": nieuw = Aspirant, anders de
-Lifeguard-rang uit Authentik; Postcommandant kies je zelf), de totalen, de **afspraak** (na definitief
+strandwacht-rang uit Authentik; Postcommandant kies je zelf), de totalen, **Alle geplande weken**
+(in één keer **Betaald** of **Onbetaald**), de **afspraak** (na definitief
 maken: bijwerken naar dit scenario als het afwijkt, of vaststellen voor wie later is aangenomen) en
 of de persoon **vaststaat na het gesprek op het trainingsweekend**. Vaststaan betekent: in alle scenario's gelijk en op
 slot. **Ontgrendelen** vraagt een reden (die komt in het logboek); zet het daarna weer vast met
 **Vastzetten vanuit dit scenario**.
+
+**Extra personen** (bijvoorbeeld de postcommandant): iemand die geen sollicitant is maar wel
+meetelt in de kosten, het budget, de dekking, de Excel voor de loonadministratie en het rooster.
+Toevoegen via **Extra persoon** in de kop: naam, functie en optioneel een geboortedatum (alleen
+nodig voor een dagloon naar leeftijd; leeg = gerekend als 18 jaar) en een notitie. De rij heeft het
+label **extra**. Plannen gaat zoals bij iedereen, alleen is er geen opgave: je plant vrij, er komt
+geen "meer dan opgegeven", en **Zelfde voor de volgende weken** vult alle weken erna. De functie
+geldt in alle scenario's. Wijzigen en **Verwijderen** doe je in het paneel (naam aanklikken);
+verwijderen haalt ook de planning uit alle scenario's weg. Een extra persoon staat niet bij
+Sollicitanten, krijgt geen berichten of portaal en heeft geen afspraak of slot. In de export voor
+de loonadministratie staat hij met "Extra persoon (actief scenario)".
 Het dagloon rekent met de leeftijd op de maandag van elke week: wie halverwege het seizoen jarig
 is, krijgt vanaf die week het hogere tarief.
 

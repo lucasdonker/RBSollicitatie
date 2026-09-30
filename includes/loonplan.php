@@ -124,6 +124,7 @@ function loonplan_scenario_dupliceer(int $seizoen_id, int $bron_id, string $naam
         $db->prepare("INSERT INTO loon_scenario_persoon (scenario_id, sollicitatie_id, functie_sleutel)
                       SELECT ?, sollicitatie_id, functie_sleutel FROM loon_scenario_persoon WHERE scenario_id = ?")
            ->execute([$nieuw, $bron_id]);
+        if (function_exists('loonplan_extra_scenario_dupliceer')) loonplan_extra_scenario_dupliceer($bron_id, $nieuw);
         return $nieuw;
     } catch (\Exception $e) { error_log('scenario dupliceren: ' . $e->getMessage()); return null; }
 }
@@ -135,6 +136,7 @@ function loonplan_scenario_verwijder(int $seizoen_id, int $scenario_id): bool {
         if (count($s) <= 1) return false; // laatste scenario niet verwijderen
         db()->prepare("DELETE FROM loon_planning WHERE scenario_id=?")->execute([$scenario_id]);
         db()->prepare("DELETE FROM loon_scenario_persoon WHERE scenario_id=?")->execute([$scenario_id]);
+        if (function_exists('loonplan_extra_scenario_wissen')) loonplan_extra_scenario_wissen($scenario_id);
         db()->prepare("DELETE FROM loon_scenario WHERE id=? AND seizoen_id=?")->execute([$scenario_id, $seizoen_id]);
         // Als het actieve is verwijderd: eerste weer actief maken
         $rest = loonplan_scenarios($seizoen_id);
@@ -203,7 +205,7 @@ function loonplan_analyse(int $seizoen_id, int $scenario_id, ?array $seizoen = n
     $weken_datums = function_exists('seizoen_weken_datums') ? seizoen_weken_datums($seizoen) : [];
     // $alleen_sol: alleen deze persoon doorrekenen (afspraak-editor, weekpaneel). Totalen en dekking
     // gaan dan alleen over die persoon — gebruik alleen ['mensen'][$alleen_sol].
-    $een = $alleen_sol !== null && $alleen_sol > 0;
+    $een = $alleen_sol !== null && $alleen_sol !== 0;   // negatief = één extra persoon
 
     // Mensen van dit seizoen
     try {
@@ -228,6 +230,19 @@ function loonplan_analyse(int $seizoen_id, int $scenario_id, ?array $seizoen = n
     $functies_sc = loonplan_functies_scenario($scenario_id);
     $afspraken   = function_exists('inzet_afspraken_seizoen') ? inzet_afspraken_seizoen($seizoen_id) : [];
 
+    // Extra personen (includes/loonplan_extra.php), bijv. een postcommandant: sleutel -id, geen opgave,
+    // geen afspraak, geen portaal. Ze tellen mee in kosten, budget, dekking en rooster.
+    $extra = [];
+    if (function_exists('loonplan_extra_personen') && (!$een || $alleen_sol < 0)) {
+        foreach (loonplan_extra_personen($seizoen_id) as $eid => $e) {
+            if ($een && -$eid !== $alleen_sol) continue;
+            $extra[-$eid] = $e;
+            $rijen[] = ['sol_id' => -$eid, 'fase' => 'extra', 'terugkerend' => 0, 'voornaam' => (string)$e['naam'],
+                        'tussenvoegsel' => '', 'achternaam' => '', 'geboortedatum' => (string)($e['geboortedatum'] ?? '')];
+        }
+        foreach (loonplan_extra_planning($scenario_id, $jaar, $een ? -$alleen_sol : null) as $eid => $weken_ex) $plan[-$eid] = $weken_ex;
+    }
+
     $mensen   = [];
     $per_week = [];
     $pool     = [];   // voor de dekkingscheck: wie is er INGEPLAND per week
@@ -241,18 +256,21 @@ function loonplan_analyse(int $seizoen_id, int $scenario_id, ?array $seizoen = n
         $start_seizoen = $seizoen['datum_werk_start'] ?? date('Y-m-d');
         $lft  = $geb !== '' ? leeftijd_op_datum($geb, $start_seizoen) : 18;
 
-        $comp = function_exists('bezetting_comp_van') ? bezetting_comp_van($sol_id) : [];
-        $eff  = function_exists('beschikbaarheid2_effectief') ? beschikbaarheid2_effectief($sol_id, $seizoen) : [];
+        $is_extra = $sol_id < 0;
+        $comp = !$is_extra && function_exists('bezetting_comp_van') ? bezetting_comp_van($sol_id) : [];
+        $eff  = !$is_extra && function_exists('beschikbaarheid2_effectief') ? beschikbaarheid2_effectief($sol_id, $seizoen) : [];
 
         $beschikbaar = [];
         foreach ($eff as $wk => $w) $beschikbaar[$wk] = (int)$w['dagen_max'];
 
         // Wie niets opgaf en nergens is ingepland, hoort niet in het raster (nog geen beschikbaarheid).
-        if (!$beschikbaar && empty($plan[$sol_id]) && !isset($afspraken[$sol_id])) continue;
+        // Een extra persoon staat er altijd: die is juist toegevoegd om te plannen.
+        if (!$is_extra && !$beschikbaar && empty($plan[$sol_id]) && !isset($afspraken[$sol_id])) continue;
 
         // Functie: wat in dit scenario is gekozen, anders de oude per-week-waarde, anders het voorstel.
-        $functie_bron = 'scenario';
-        $fn = $functies_sc[$sol_id] ?? null;
+        // Een extra persoon heeft één functie, in alle scenario's.
+        $functie_bron = $is_extra ? 'extra' : 'scenario';
+        $fn = $is_extra ? (string)$extra[$sol_id]['functie_sleutel'] : ($functies_sc[$sol_id] ?? null);
         if ($fn === null) foreach ($plan[$sol_id] ?? [] as $pl) { if (!empty($pl['functie_sleutel'])) { $fn = $pl['functie_sleutel']; break; } }
         if ($fn === null) { $fn = function_exists('inzet_rol_voorstel') ? inzet_rol_voorstel($sol_id, $comp) : 'aspirant'; $functie_bron = 'voorstel'; }
 
@@ -284,6 +302,7 @@ function loonplan_analyse(int $seizoen_id, int $scenario_id, ?array $seizoen = n
                 'max'       => $max,
                 'opgave_dagen' => array_map('intval', $eff[$wk]['dagen'] ?? []),   // weekdagen 1–7 die iemand opgaf
                 'leeftijd'  => $lft_wk,
+                'extra'     => $is_extra,   // geen opgave: "niet opgegeven" is dan geen afwijking
             ];
 
             if ($opgen && $dagen > 0) {
@@ -297,8 +316,10 @@ function loonplan_analyse(int $seizoen_id, int $scenario_id, ?array $seizoen = n
                 // Deze persoon telt mee voor de dekking van die week
                 $pool[$wk][] = ['sol_id'=>$sol_id, 'naam'=>$naam, 'comp'=>$comp, 'dagen'=>$dagen];
 
-                // ── Signalen ──
-                if ($max === 0) {
+                // ── Signalen ── (een extra persoon heeft geen opgave om van af te wijken)
+                if ($is_extra) {
+                    // alleen de algemene signalen hieronder
+                } elseif ($max === 0) {
                     $signalen[] = ['soort'=>'niet_opgegeven', 'sol_id'=>$sol_id, 'naam'=>$naam, 'week'=>$wk,
                         'tekst'=>"$naam is week $wk ingepland, maar gaf die week niet op als beschikbaar."];
                 } elseif ($dagen > $max) {
@@ -335,6 +356,9 @@ function loonplan_analyse(int $seizoen_id, int $scenario_id, ?array $seizoen = n
         $mensen[$sol_id] = [
             'naam'            => $naam,
             'fase'            => (string)$r['fase'],
+            'extra'           => $is_extra,
+            'notitie'         => $is_extra ? (string)($extra[$sol_id]['notitie'] ?? '') : '',
+            'geboortedatum'   => $is_extra ? (string)($extra[$sol_id]['geboortedatum'] ?? '') : '',
             'leeftijd'        => $lft,
             'functie'         => $fn,
             'functie_bron'    => $functie_bron,
@@ -388,6 +412,8 @@ function loonplan_periode(int $week, ?array $seizoen = null): string {
  */
 function loonplan_cel_opslaan(int $scenario_id, int $sol_id, int $week, int $jaar, int $dagen, int $opgenomen,
                               int $betaald = 1, ?array $weekdagen = null): bool {
+    // Negatieve sleutel = extra persoon (includes/loonplan_extra.php), eigen tabel.
+    if ($sol_id < 0) return function_exists('loonplan_extra_cel_opslaan') && loonplan_extra_cel_opslaan($scenario_id, -$sol_id, $week, $jaar, $dagen, $opgenomen, $betaald);
     loonplan_auto_setup();
     // Na het TW-gesprek staat iemand op slot in alle scenario's (includes/loonplan_slot.php).
     if (function_exists('loonplan_slot_in_scenario') && loonplan_slot_in_scenario($scenario_id, $sol_id)) return false;
@@ -415,6 +441,7 @@ function loonplan_cel_opslaan(int $scenario_id, int $sol_id, int $week, int $jaa
  * @return ?int  aantal ingeplande weken; null = niet gedaan (slot, of al gepland bij $alleen_leeg)
  */
 function loonplan_opgave_overnemen(int $scenario_id, int $sol_id, ?array $seizoen, bool $alleen_leeg = false): ?int {
+    if ($sol_id < 0) return null;   // een extra persoon heeft geen opgave
     loonplan_auto_setup();
     if (function_exists('loonplan_slot_in_scenario') && loonplan_slot_in_scenario($scenario_id, $sol_id)) return null;
     $jaar = loonplan_jaar($seizoen);
@@ -441,6 +468,7 @@ function loonplan_opgave_overnemen(int $scenario_id, int $sol_id, ?array $seizoe
 
 /** De functie van één persoon in één scenario vastleggen (niet als die persoon op slot staat). */
 function loonplan_functie_zetten(int $scenario_id, int $sol_id, string $functie): bool {
+    if ($sol_id < 0) return function_exists('loonplan_extra_functie_zetten') && loonplan_extra_functie_zetten(-$sol_id, $functie);
     loonplan_auto_setup();
     if (function_exists('loonplan_slot_in_scenario') && loonplan_slot_in_scenario($scenario_id, $sol_id)) return false;
     try {
