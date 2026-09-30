@@ -9,7 +9,7 @@ portaal_alleen_include(__FILE__);
 $_od  = $_t['inline_data'] ?? [];
 $_af  = !empty($_t['done']);
 ?>
-<form method="POST" class="pt-taakrij-inline" onsubmit="return ouderValideer(this)"<?= $_af ? ' hidden' : '' ?>>
+<form method="POST" class="pt-taakrij-inline" data-verzend="return ouderValideer(this)"<?= $_af ? ' hidden' : '' ?>>
   <?= csrf_input() ?>
   <input type="hidden" name="ouder_submit" value="1">
   <input type="hidden" name="terug" value="<?= h($taak_terug ?? 'start') ?>">

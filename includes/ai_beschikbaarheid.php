@@ -73,14 +73,17 @@ function ai_besch_verwerk(string $tekst, array $geldige_weken, ?array $seizoen =
         'generationConfig' => ['temperature' => 0.1, 'responseMimeType' => 'application/json'],
     ]);
 
-    $ch = curl_init("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$api_key");
+    // Zelfde model als de BLK-analyse (Instellingen › AI) en de sleutel als header, niet in de URL.
+    $model = function_exists('ai_model') ? ai_model() : 'gemini-2.5-flash';
+    $ch = curl_init('https://generativelanguage.googleapis.com/v1beta/models/' . rawurlencode($model) . ':generateContent');
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_POST           => true,
         CURLOPT_POSTFIELDS     => $payload,
-        CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
+        CURLOPT_HTTPHEADER     => ['Content-Type: application/json', 'x-goog-api-key: ' . $api_key],
         CURLOPT_TIMEOUT        => 20,
         CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_SSL_VERIFYHOST => 2,
     ]);
     $resp = curl_exec($ch);
     $http = curl_getinfo($ch, CURLINFO_HTTP_CODE);

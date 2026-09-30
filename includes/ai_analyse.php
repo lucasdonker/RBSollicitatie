@@ -255,14 +255,16 @@ Schrijf een beknopt assessment in dit exacte format (geen inleiding, direct begi
         'generationConfig' => ['temperature' => 0.2]
     ]);
 
-    $ch = curl_init('https://generativelanguage.googleapis.com/v1beta/models/' . rawurlencode(ai_model()) . ':generateContent?key=' . rawurlencode($api_key));
+    // De sleutel als header, niet in de URL: een URL belandt in logs van proxy's en servers.
+    $ch = curl_init('https://generativelanguage.googleapis.com/v1beta/models/' . rawurlencode(ai_model()) . ':generateContent');
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_POST           => true,
         CURLOPT_POSTFIELDS     => $payload,
-        CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
+        CURLOPT_HTTPHEADER     => ['Content-Type: application/json', 'x-goog-api-key: ' . $api_key],
         CURLOPT_TIMEOUT        => 20,
         CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_SSL_VERIFYHOST => 2,
     ]);
     $resp = curl_exec($ch);
     $http = curl_getinfo($ch, CURLINFO_HTTP_CODE);

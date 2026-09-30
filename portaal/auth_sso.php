@@ -28,7 +28,7 @@ $params = http_build_query([
     'scope'         => 'openid profile email',
     'state'         => $state,
     'login_hint'    => $email, // Authentik pre-fills het email veld
-]);
+] + oidc_pkce_start('portaal_sso_pkce'));
 
 header('Location: ' . rtrim(OIDC_ISSUER, '/') . '/application/o/authorize/?' . $params);
 exit;

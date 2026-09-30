@@ -85,6 +85,8 @@ function pag_headers_zet(array $pagina, array $opties = []): void {
     header('X-Content-Type-Options: nosniff');
     header('Referrer-Policy: strict-origin-when-cross-origin');
     header('Permissions-Policy: geolocation=(), camera=(), microphone=(), payment=(), interest-cohort=()');
+    // Zelfde HSTS als beheer en portaal: na één bezoek alleen nog https (NIS2: versleuteld transport).
+    if (function_exists('is_https') && is_https()) header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
 
     if (!pag_indexeerbaar($pagina)) {
         header('X-Robots-Tag: noindex, nofollow');

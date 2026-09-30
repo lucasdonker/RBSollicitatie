@@ -254,7 +254,7 @@ require __DIR__ . '/layout_top.php';
           <span class="bh-bhrij-acties">
             <?php if ($_aanpasbaar): ?>
             <a class="ds-btn ds-btn-zacht ds-btn-sm" href="#ww-<?= (int)$b['id'] ?>"
-               onclick="bhWachtwoord(<?= (int)$b['id'] ?>); return false;">Wachtwoord</a>
+               data-klik-voorkom data-klik="bhWachtwoord(<?= (int)$b['id'] ?>)">Wachtwoord</a>
             <?php endif; ?>
             <?php if ($ben_admin && tweestaps_aan($b)): ?>
               <a class="ds-btn ds-btn-zacht ds-btn-sm" href="?bevestig=tweestaps_reset&amp;id=<?= (int)$b['id'] ?>">Tweestaps resetten</a>
@@ -278,7 +278,7 @@ require __DIR__ . '/layout_top.php';
               <input class="ds-input" type="password" id="wwv-<?= (int)$b['id'] ?>" name="nieuw_wachtwoord"
                      minlength="8" autocomplete="new-password" placeholder="Minimaal 8 tekens" required>
               <button type="submit" class="ds-btn ds-btn-primair ds-btn-sm">Opslaan</button>
-              <button type="button" class="ds-btn ds-btn-zacht ds-btn-sm" onclick="bhWachtwoord(<?= (int)$b['id'] ?>)">Annuleren</button>
+              <button type="button" class="ds-btn ds-btn-zacht ds-btn-sm" data-klik="bhWachtwoord(<?= (int)$b['id'] ?>)">Annuleren</button>
             </div>
             <p class="ds-veld-hint">
               Het systeem verstuurt dit niet. Geef het zelf door en laat de persoon het daarna wijzigen.
@@ -352,7 +352,7 @@ require __DIR__ . '/layout_top.php';
   </aside>
 </div>
 
-<script>
+<script nonce="<?= h(csp_nonce()) ?>">
 /* Het wachtwoordformulier staat standaard dicht: het is een uitzonderingsactie, en
    een open wachtwoordveld per rij maakt de lijst onleesbaar. */
 function bhWachtwoord(id) {

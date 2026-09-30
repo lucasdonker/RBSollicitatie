@@ -35,8 +35,12 @@
     return parseInt(p[2]) + ' ' + MND[parseInt(p[1])];
   }
   function wisBtn() {
-    return '<button type="button" class="bs-item-wis" onclick="this.closest(\'.besch-rij\').remove(); beschHerbereken()" aria-label="Verwijderen">' + SVG_WIS + '</button>';
+    return '<button type="button" class="bs-item-wis" data-klik="beschRijWeg(this)" aria-label="Verwijderen">' + SVG_WIS + '</button>';
   }
+  // Knoppen gaan via data-klik (assets/js/klik.js; geen inline JavaScript door de CSP).
+  // Wat eerder twee regels in één onclick was, is hier één functie.
+  window.beschRijWeg = function (btn) { var rij = btn.closest('.besch-rij'); if (rij) rij.remove(); beschHerbereken(); };
+  window.beschDagpil = function (cb) { beschDagpilToggle(cb); beschHerbereken(); };
   function veld(lbl, inner) { return '<label class="bs-item-veld"><span class="bs-item-lbl">' + lbl + '</span>' + inner + '</label>'; }
 
   /* ── Sectie 1: werkperiodes (uitklapbare kaart) ─────────────── */
@@ -60,25 +64,25 @@
     const wkd = (data.wkdagen && data.wkdagen.length ? data.wkdagen : [6, 7]).map(String);
     div.innerHTML =
       '<div class="bp-kop">' +
-        '<button type="button" class="bp-toggle" aria-expanded="' + (open ? 'true' : 'false') + '" onclick="beschPeriodeToggle(this)">' +
+        '<button type="button" class="bp-toggle" aria-expanded="' + (open ? 'true' : 'false') + '" data-klik="beschPeriodeToggle(this)">' +
           '<span class="bp-titel">Week ' + vanW + ' t/m ' + totW + '</span>' +
           '<span class="bp-sub"></span>' +
         '</button>' +
         '<span class="bp-chev" aria-hidden="true">' + SVG_CHEV + '</span>' +
-        '<button type="button" class="bp-wis" onclick="this.closest(\'.besch-rij\').remove(); beschHerbereken()" aria-label="Periode verwijderen">' + SVG_WIS + '</button>' +
+        '<button type="button" class="bp-wis" data-klik="beschRijWeg(this)" aria-label="Periode verwijderen">' + SVG_WIS + '</button>' +
       '</div>' +
       '<div class="bp-body">' +
         '<div class="bp-velden">' +
           '<label class="bp-veld"><span class="bp-veld-lbl">Van week</span>' +
-            '<select name="b2_blok_van[]" class="bp-select" onchange="beschHerbereken()">' + weekOpties(vanW) + '</select>' +
+            '<select name="b2_blok_van[]" class="bp-select" data-wijzig="beschHerbereken()">' + weekOpties(vanW) + '</select>' +
           '</label>' +
           '<label class="bp-veld"><span class="bp-veld-lbl">Tot en met</span>' +
-            '<select name="b2_blok_tot[]" class="bp-select" onchange="beschHerbereken()">' + weekOpties(totW) + '</select>' +
+            '<select name="b2_blok_tot[]" class="bp-select" data-wijzig="beschHerbereken()">' + weekOpties(totW) + '</select>' +
           '</label>' +
         '</div>' +
         '<div class="bp-segment">' +
-          '<button type="button" class="bp-seg' + (regime === 'vijf' ? ' actief' : '') + '" onclick="beschRegimeKies(this,\'vijf\')">Hele week</button>' +
-          '<button type="button" class="bp-seg' + (regime === 'weekend' ? ' actief' : '') + '" onclick="beschRegimeKies(this,\'weekend\')">Alleen weekend</button>' +
+          '<button type="button" class="bp-seg' + (regime === 'vijf' ? ' actief' : '') + '" data-klik="beschRegimeKies(this,\'vijf\')">Hele week</button>' +
+          '<button type="button" class="bp-seg' + (regime === 'weekend' ? ' actief' : '') + '" data-klik="beschRegimeKies(this,\'weekend\')">Alleen weekend</button>' +
           '<input type="hidden" name="b2_blok_regime[]" value="' + regime + '">' +
         '</div>' +
         '<div class="besch-weekenddagen" style="' + (regime === 'weekend' ? '' : 'display:none') + '">' +
@@ -86,7 +90,7 @@
           '<div class="besch-dagpil-rij">' +
           [6, 7].map(function (d) {
             const aan = wkd.includes(String(d));
-            return '<label class="besch-dagpil' + (aan ? ' actief' : '') + '"><input type="checkbox" class="besch-wkdag" value="' + d + '"' + (aan ? ' checked' : '') + ' onchange="beschDagpilToggle(this); beschHerbereken()"> ' + DAGEN_KORT[d] + '</label>';
+            return '<label class="besch-dagpil' + (aan ? ' actief' : '') + '"><input type="checkbox" class="besch-wkdag" value="' + d + '"' + (aan ? ' checked' : '') + ' data-wijzig="beschDagpil(this)"> ' + DAGEN_KORT[d] + '</label>';
           }).join('') +
           '</div>' +
           '<input type="hidden" name="b2_blok_wkdagen[]" value="' + esc(JSON.stringify(wkd.map(Number))) + '">' +
@@ -163,10 +167,10 @@
     div.innerHTML =
       '<div class="bs-item-tekst">' +
         '<div class="bs-item-grid">' +
-          veld('Van', '<input type="date" name="b2_afw_van[]" value="' + esc(data.van || '') + '" onchange="beschHerbereken()">') +
-          veld('Tot en met', '<input type="date" name="b2_afw_tot[]" value="' + esc(data.tot || '') + '" onchange="beschHerbereken()">') +
+          veld('Van', '<input type="date" name="b2_afw_van[]" value="' + esc(data.van || '') + '" data-wijzig="beschHerbereken()">') +
+          veld('Tot en met', '<input type="date" name="b2_afw_tot[]" value="' + esc(data.tot || '') + '" data-wijzig="beschHerbereken()">') +
         '</div>' +
-        '<input type="text" name="b2_afw_label[]" value="' + esc(data.label || '') + '" placeholder="Reden (bijv. vakantie Frankrijk)" class="bs-invoer" maxlength="100" onchange="beschHerbereken()">' +
+        '<input type="text" name="b2_afw_label[]" value="' + esc(data.label || '') + '" placeholder="Reden (bijv. vakantie Frankrijk)" class="bs-invoer" maxlength="100" data-wijzig="beschHerbereken()">' +
       '</div>' + wisBtn();
     return div;
   }
@@ -181,13 +185,13 @@
     div.innerHTML =
       '<div class="bs-item-tekst">' +
         '<div class="bs-item-grid">' +
-          veld('Datum', '<input type="date" name="b2_dag_datum[]" value="' + esc(data.datum || '') + '" onchange="beschHerbereken()">') +
-          veld('Wat geldt', '<select name="b2_dag_soort[]" class="bs-select" onchange="beschHerbereken()">' +
+          veld('Datum', '<input type="date" name="b2_dag_datum[]" value="' + esc(data.datum || '') + '" data-wijzig="beschHerbereken()">') +
+          veld('Wat geldt', '<select name="b2_dag_soort[]" class="bs-select" data-wijzig="beschHerbereken()">' +
             '<option value="niet_beschikbaar"' + (soort === 'niet_beschikbaar' ? ' selected' : '') + '>Kan niet</option>' +
             '<option value="voorkeur_vrij"' + (soort === 'voorkeur_vrij' ? ' selected' : '') + '>Liever vrij</option>' +
           '</select>') +
         '</div>' +
-        '<input type="text" name="b2_dag_reden[]" value="' + esc(data.reden || '') + '" placeholder="Reden (optioneel)" class="bs-invoer" maxlength="100" onchange="beschHerbereken()">' +
+        '<input type="text" name="b2_dag_reden[]" value="' + esc(data.reden || '') + '" placeholder="Reden (optioneel)" class="bs-invoer" maxlength="100" data-wijzig="beschHerbereken()">' +
       '</div>' + wisBtn();
     return div;
   }
@@ -208,14 +212,14 @@
       '<div class="bs-item-tekst">' +
         (status !== 'open' ? '<div>' + statusBadge(status) + '</div>' : '') +
         '<div class="bs-item-grid">' +
-          veld('Van week', '<select name="b2_vz_van[]" class="bs-select" onchange="beschHerbereken()">' + weekOpties(klem(data.van, CFG.eerste)) + '</select>') +
-          veld('Tot en met', '<select name="b2_vz_tot[]" class="bs-select" onchange="beschHerbereken()">' + weekOpties(klem(data.tot, CFG.laatste)) + '</select>') +
+          veld('Van week', '<select name="b2_vz_van[]" class="bs-select" data-wijzig="beschHerbereken()">' + weekOpties(klem(data.van, CFG.eerste)) + '</select>') +
+          veld('Tot en met', '<select name="b2_vz_tot[]" class="bs-select" data-wijzig="beschHerbereken()">' + weekOpties(klem(data.tot, CFG.laatste)) + '</select>') +
         '</div>' +
         '<div class="bs-item-grid">' +
-          veld('Max. dagen per week', '<input type="number" name="b2_vz_dagen[]" min="1" max="4" inputmode="numeric" value="' + esc(data.dagen || '') + '" onchange="beschHerbereken()">') +
+          veld('Max. dagen per week', '<input type="number" name="b2_vz_dagen[]" min="1" max="4" inputmode="numeric" value="' + esc(data.dagen || '') + '" data-wijzig="beschHerbereken()">') +
         '</div>' +
         verzoekDagen(data.pool || []) +
-        '<input type="text" name="b2_vz_toelichting[]" value="' + esc(data.toelichting || '') + '" placeholder="Reden (bijv. tentamenweek)" class="bs-invoer" maxlength="300" onchange="beschHerbereken()">' +
+        '<input type="text" name="b2_vz_toelichting[]" value="' + esc(data.toelichting || '') + '" placeholder="Reden (bijv. tentamenweek)" class="bs-invoer" maxlength="300" data-wijzig="beschHerbereken()">' +
         '<input type="hidden" name="b2_vz_id[]" value="' + esc(data.id || '') + '">' +
         '<input type="hidden" name="b2_vz_status[]" value="' + esc(status) + '">' +
         '<input type="hidden" name="b2_vz_pool[]" value="' + esc(JSON.stringify(data.pool || [])) + '">' +
@@ -233,7 +237,7 @@
       [1, 2, 3, 4, 5, 6, 7].map(function (d) {
         const is = aan.includes(String(d));
         return '<label class="bs-dagpil' + (is ? ' actief' : '') + '"><input type="checkbox" class="besch-vzdag" value="' + d + '"' +
-          (is ? ' checked' : '') + ' aria-label="' + DAGEN[d] + '" onchange="beschVzDagToggle(this)">' + DAGEN_KORT[d] + '</label>';
+          (is ? ' checked' : '') + ' aria-label="' + DAGEN[d] + '" data-wijzig="beschVzDagToggle(this)">' + DAGEN_KORT[d] + '</label>';
       }).join('') +
       '</div>' +
       '<span class="bs-item-hint besch-vz-poolhint" hidden></span>' +
@@ -515,7 +519,7 @@
       html += '<div class="wiz3-rij' + (it.waarschuwing ? ' waarschuwing' : '') + '">' +
         '<div class="wiz3-rij-tekst"><span class="wiz3-rij-titel">' + esc(it.titel) + '</span>' +
         (it.sub ? '<span class="wiz3-rij-sub">' + esc(it.sub) + '</span>' : '') + '</div>' +
-        '<button type="button" class="wiz3-wijzig" onclick="wizNaarFormulier(\'' + it.sectie + '\')">Wijzig</button>' +
+        '<button type="button" class="wiz3-wijzig" data-klik="wizNaarFormulier(\'' + it.sectie + '\')">Wijzig</button>' +
       '</div>';
     });
     html += '</div>';
@@ -531,7 +535,7 @@
         '<p class="wiz-navraag-vraag">' + esc(vraag) + '</p>' +
         '<div class="wiz-aanvullen-rij">' +
           '<input type="text" id="beschAiNavraag" placeholder="Je antwoord…">' +
-          '<button type="button" class="wiz-aanvul-knop" onclick="beschAiNavraagVerstuur()" aria-label="Verstuur">&rarr;</button>' +
+          '<button type="button" class="wiz-aanvul-knop" data-klik="beschAiNavraagVerstuur()" aria-label="Verstuur">&rarr;</button>' +
         '</div>' +
       '</div>';
   }

@@ -312,7 +312,57 @@ function kluis_bronnen(): array {
         'beheerders'      => 'Geheimen van de authenticator-app (tweestaps beheer)',
         'documenten'      => "Documenten (ID, bankpas, verzegelde PDF's)",
         'zegel'           => 'Privésleutel van het documentzegel',
+        // Tekstsleutel als cursor (instellingen.sleutel), zie kluis_instelling_volgende().
+        'instellingen'    => 'Wachtwoorden en sleutels van koppelingen (mail, sms, WhatsApp, AI, Authentik)',
     ];
+}
+
+/** Waarde van een versleutelde instelling zonder het voorvoegsel, of null als hij niet versleuteld is. */
+function kluis_instelling_blob(?string $waarde): ?string {
+    $p = defined('INSTELLING_GEHEIM_PREFIX') ? INSTELLING_GEHEIM_PREFIX : 'kluis:';
+    return ($waarde !== null && str_starts_with($waarde, $p)) ? substr($waarde, strlen($p)) : null;
+}
+
+/** Bron 'instellingen' voor de rotatie: versleutelde geheimen ná sleutelnaam $na, oplopend. */
+function kluis_instelling_volgende(string $na, int $max): array {
+    $uit = [];
+    if (!function_exists('db') || !function_exists('instellingen_geheime_sleutels')) return $uit;
+    $sleutels = instellingen_geheime_sleutels();
+    sort($sleutels, SORT_STRING);
+    try {
+        $q = db()->prepare("SELECT waarde FROM instellingen WHERE sleutel=?");
+        foreach ($sleutels as $s) {
+            if ($na !== '' && strcmp($s, $na) <= 0) continue;
+            $q->execute([$s]);
+            $blob = kluis_instelling_blob((string)($q->fetchColumn() ?: ''));
+            if ($blob === null) continue;                       // leeg of (nog) niet versleuteld
+            $kop = base64_decode(substr($blob, 0, 12), true);
+            $uit[] = [$s, $kop === false ? null : $kop];
+            if (count($uit) >= $max) break;
+        }
+    } catch (\Throwable $e) { error_log('kluis_instelling_volgende: ' . $e->getMessage()); }
+    return $uit;
+}
+
+/** Eén versleutelde instelling herwrappen; schrijft alleen weg als de waarde intussen niet veranderde. */
+function kluis_instelling_herwrap(string $sleutel): array {
+    try {
+        $db = db();
+        $q = $db->prepare("SELECT waarde FROM instellingen WHERE sleutel=?");
+        $q->execute([$sleutel]);
+        $oud = (string)($q->fetchColumn() ?: '');
+        $blob = kluis_instelling_blob($oud);
+        if ($blob === null) return ['status' => 'al_goed', 'reden' => ''];
+        $r = kluis_herwrap($blob);
+        if ($r['status'] !== 'gedaan') return $r;
+        $u = $db->prepare("UPDATE instellingen SET waarde=? WHERE sleutel=? AND waarde=?");
+        $u->execute([substr($oud, 0, strlen($oud) - strlen($blob)) . $r['blob'], $sleutel, $oud]);
+        if ($u->rowCount() !== 1) return ['status' => 'mislukt', 'reden' => 'intussen gewijzigd; draai opnieuw'];
+        global $_instellingen_cache; $_instellingen_cache = null;
+        return ['status' => 'gedaan', 'reden' => ''];
+    } catch (\Throwable $e) {
+        return ['status' => 'mislukt', 'reden' => 'databasefout'];
+    }
 }
 
 /**
@@ -341,6 +391,7 @@ function kluis_bron_map(string $bron): ?string {
 function kluis_bron_volgende(string $bron, string $na, int $max): array {
     $uit = [];
     if ($max < 1) return $uit;
+    if ($bron === 'instellingen') return kluis_instelling_volgende($na, $max);
     if (isset(kluis_db_bronnen()[$bron])) {
         if (!function_exists('db')) return $uit;
         $tk = kluis_db_bronnen()[$bron]; $tab = $tk[0]; $kol = $tk[1];
@@ -370,6 +421,7 @@ function kluis_bron_volgende(string $bron, string $na, int $max): array {
 
 /** Herwrap één blob van een bron. Retour ['status', 'reden']. Schrijft alleen weg als de inhoud intussen niet veranderde. */
 function kluis_bron_herwrap(string $bron, string $cursor): array {
+    if ($bron === 'instellingen') return kluis_instelling_herwrap($cursor);
     if (isset(kluis_db_bronnen()[$bron])) {
         $tk = kluis_db_bronnen()[$bron]; $tab = $tk[0]; $kol = $tk[1];
         try {

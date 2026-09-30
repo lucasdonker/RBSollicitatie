@@ -1,2 +1,8 @@
 DirectoryIndex index.php
 Options -Indexes
+
+# Partials (_*.php) draaien alleen als include vanuit een scherm dat de rechten al controleerde.
+# Rechtstreeks opvragen heeft geen zin en mag dus niet (NIS2: kleinste aanvalsoppervlak).
+<FilesMatch "^_">
+    Require all denied
+</FilesMatch>

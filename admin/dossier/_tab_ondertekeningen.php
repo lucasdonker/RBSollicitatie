@@ -81,7 +81,7 @@ $_mag_bewerken = mag('ondertekeningen', 'bewerken');
                 <?php endif; ?>
               <?php elseif (!$_r['klaar'] && $_r['token'] && $_mag_bewerken): ?>
                 <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm"
-                        onclick="kopieerOndertekenlink('<?= h((string)$_r['token']) ?>', this)">
+                        data-klik="kopieerOndertekenlink('<?= h((string)$_r['token']) ?>', this)">
                   Link kopiëren
                 </button>
               <?php elseif (!$_r['klaar']): ?>

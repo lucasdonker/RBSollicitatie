@@ -185,7 +185,7 @@ RewriteRule ^p/([a-z0-9\-]{1,80})/([A-Za-z0-9._\-]+)$ uploads/paginas/$1/assets/
   <?php endif; ?>
 </div>
 
-<script>
+<script nonce="<?= h(csp_nonce()) ?>">
 (function () {
   document.querySelectorAll('[data-open]').forEach(function (knop) {
     knop.addEventListener('click', function () {

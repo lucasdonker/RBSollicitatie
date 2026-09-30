@@ -3,10 +3,23 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.130.0');
+define('APP_VERSIE', '2.131.0');
 
 function app_changelog(): array {
     return [
+        '2.131.0' => [
+            'datum'  => '2026-09-30',
+            'titel'  => 'Beveiliging aangescherpt (NIS2-zorgplicht)',
+            'punten' => [
+                'Geen inline JavaScript meer: de Content-Security-Policy staat alleen scripts van de eigen server en blokken met een nonce toe. Knoppen werken via één gedeeld script; wie HTML weet in te voegen, kan daarmee geen script meer uitvoeren',
+                'Wachtwoorden en API-sleutels van koppelingen (mail, sms, WhatsApp, AI, Authentik) staan versleuteld in de database; ze gaan mee bij het wisselen van de kluissleutel',
+                'Inloggen met Authentik gebruikt PKCE; het beheer logt uit na twee uur zonder activiteit; mislukte inlogpogingen staan 12 maanden in het logboek; wachtwoordhashes worden bij inloggen bijgewerkt',
+                'TLS-controle bij alle uitgaande verbindingen; de Gemini-sleutel gaat niet meer in de URL mee; HSTS ook op de API en landingspagina\'s',
+                'Onderdelen van beheerschermen zijn niet meer los op te vragen',
+                'Kwetsbaarheden melden kan via /.well-known/security.txt',
+                'Handleiding: "Veilig werken" voor beheerders; runbook: wat buiten de code geregeld moet worden',
+            ],
+        ],
         '2.130.0' => [
             'datum'  => '2026-09-28',
             'titel'  => 'Selectiedag voorbereiden, toegankelijkheid en publieke teksten',

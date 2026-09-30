@@ -2,7 +2,7 @@
   </div><!-- /bh-hoofd -->
 </div><!-- /bh-kader -->
 
-<script>
+<script nonce="<?= h(csp_nonce()) ?>">
 const APP_URL = '<?= APP_URL ?>';
 const CSRF    = '<?= csrf_token() ?>';
 
@@ -252,7 +252,7 @@ function corrPaneelNeerzetten(naam, week) {
 
   var dagknoppen = CORR_DAGEN.map(function (d) {
     return '<button type="button" class="bh-dagknop" data-dag="' + d[0] + '" aria-pressed="false"' +
-           ' onclick="corrDagWissel(this)">' + d[1] + '</button>';
+           ' data-klik="corrDagWissel(this)">' + d[1] + '</button>';
   }).join('');
 
   /* Op een breed scherm schuift het paneel naast het raster in plaats van eroverheen —
@@ -274,7 +274,7 @@ function corrPaneelNeerzetten(naam, week) {
           '<strong id="corrTitel">' + (naam ? bhTekst(naam) : 'Beschikbaarheid') + '</strong>' +
           '<span id="corrPeriode">week ' + week + '</span>' +
         '</div>' +
-        '<button type="button" class="bh-zijpaneel-sluit" aria-label="Sluiten" onclick="corrSluit()">&times;</button>' +
+        '<button type="button" class="bh-zijpaneel-sluit" aria-label="Sluiten" data-klik="corrSluit()">&times;</button>' +
       '</header>' +
       '<div class="bh-zijpaneel-body">' +
 
@@ -282,9 +282,9 @@ function corrPaneelNeerzetten(naam, week) {
           '<h3>Dagen deze week</h3>' +
           '<div class="bh-dagknoppen">' + dagknoppen + '</div>' +
           '<div class="bh-snelkeuzes">' +
-            '<button type="button" class="bh-snelkeuze" onclick="corrSnel(\'week\')">Hele week</button>' +
-            '<button type="button" class="bh-snelkeuze" onclick="corrSnel(\'weekend\')">Alleen weekend</button>' +
-            '<button type="button" class="bh-snelkeuze" onclick="corrSnel(\'geen\')">Deze week niet</button>' +
+            '<button type="button" class="bh-snelkeuze" data-klik="corrSnel(\'week\')">Hele week</button>' +
+            '<button type="button" class="bh-snelkeuze" data-klik="corrSnel(\'weekend\')">Alleen weekend</button>' +
+            '<button type="button" class="bh-snelkeuze" data-klik="corrSnel(\'geen\')">Deze week niet</button>' +
           '</div>' +
           '<p class="bh-zijpaneel-hint" id="corrSamenvatting">Niets geselecteerd — dat betekent: deze week helemaal niet beschikbaar.</p>' +
           '<p class="bh-zijpaneel-hint" id="corrNorm" hidden></p>' +
@@ -301,7 +301,7 @@ function corrPaneelNeerzetten(naam, week) {
 
         '<section class="bh-zijpaneel-blok">' +
           '<h3><label for="corrRedenKeuze">Reden</label></h3>' +
-          '<select id="corrRedenKeuze" class="ds-veld" onchange="corrRedenWissel()"></select>' +
+          '<select id="corrRedenKeuze" class="ds-veld" data-wijzig="corrRedenWissel()"></select>' +
           '<input type="text" id="corrReden" class="ds-veld bh-zijpaneel-redenvrij" maxlength="200"' +
                 ' placeholder="Toelichting (optioneel)">' +
           '<p class="bh-zijpaneel-hint">Deze regel komt in de tijdlijn van de sollicitant te staan,' +
@@ -322,10 +322,10 @@ function corrPaneelNeerzetten(naam, week) {
         // Alleen zichtbaar als er iets terug te draaien ís: dan valt de week terug op
         // wat de sollicitant zelf opgaf.
         '<button type="button" class="ds-btn ds-btn-zacht ds-btn-sm bh-zijpaneel-wis" id="corrWis"' +
-              ' onclick="correctieWis()" hidden>Correctie ongedaan maken</button>' +
-        '<button type="button" class="ds-btn ds-btn-zacht ds-btn-sm" onclick="corrSluit()">Annuleren</button>' +
+              ' data-klik="correctieWis()" hidden>Correctie ongedaan maken</button>' +
+        '<button type="button" class="ds-btn ds-btn-zacht ds-btn-sm" data-klik="corrSluit()">Annuleren</button>' +
         '<button type="button" class="ds-btn ds-btn-primair ds-btn-sm" id="corrOpslaan"' +
-              ' onclick="correctieOpslaan()">Opslaan</button>' +
+              ' data-klik="correctieOpslaan()">Opslaan</button>' +
       '</footer>' +
     '</div>';
 
@@ -567,8 +567,8 @@ function laadNotities(solId) {
         const bewerkbaar = (n.beheerder_id == mijnId);
         const acties = bewerkbaar
           ? `<span class="bh-notitie-acties">
-               <button type="button" onclick="notitieBewerken(${n.id}, ${solId})">Bewerken</button>
-               <button type="button" class="gevaar" onclick="notitieVerwijderen(${n.id}, ${solId})">Verwijderen</button>
+               <button type="button" data-klik="notitieBewerken(${n.id}, ${solId})">Bewerken</button>
+               <button type="button" class="gevaar" data-klik="notitieVerwijderen(${n.id}, ${solId})">Verwijderen</button>
              </span>`
           : '';
         const tekstEscaped = String(n.tekst).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');

@@ -30,7 +30,7 @@ $_nlabel = $_nd ? $_nd . ' dagen per week (afwijkend)' : '5 dagen per week (stan
   <?php endif; ?>
 
   <?php if ($_nmag): ?>
-  <form class="bh-normform" onsubmit="return normOpslaan(<?= $norm_sol ?>, this)">
+  <form class="bh-normform" data-verzend="return normOpslaan(<?= $norm_sol ?>, this)">
     <div class="ds-veld">
       <label for="normDagen-<?= $norm_sol ?>">Norm (dagen per week)</label>
       <select id="normDagen-<?= $norm_sol ?>" class="ds-select">

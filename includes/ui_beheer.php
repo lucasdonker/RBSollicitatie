@@ -178,7 +178,7 @@ function bh_weekcel(string $tekst, string $soort = 'leeg', array $opt = []): str
         return '<span class="' . $cls . '"' . $attr . '>' . $inhoud . '</span>';
     }
     return '<button type="button" class="' . $cls . ' bh-weekcel-klik"' . $attr
-         . (!empty($opt['klik']) ? ' onclick="' . h((string)$opt['klik']) . '"' : '') . '>' . $inhoud . '</button>';
+         . (!empty($opt['klik']) ? ' data-klik="' . h((string)$opt['klik']) . '"' : '') . '>' . $inhoud . '</button>';
 }
 
 /**

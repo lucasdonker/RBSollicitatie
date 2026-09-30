@@ -36,7 +36,7 @@ $_tot = min($pag_pagina * $pag_per, $pag_totaal);
   <?php if ($pag_per_url && $pag_totaal > min($pag_per_opties)): ?>
     <label class="bh-pag-per">
       <span class="bh-vw">Regels per pagina</span>
-      <select class="ds-select" onchange="location.href=this.value">
+      <select class="ds-select" data-wijzig="P13Klik.naar(this)">
         <?php foreach ($pag_per_opties as $_o): ?>
           <option value="<?= h($pag_per_url($_o)) ?>"<?= $_o === $pag_per ? ' selected' : '' ?>>
             <?= (int)$_o ?> per pagina

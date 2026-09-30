@@ -90,9 +90,10 @@ if ($formaat === 'pdf') {
   .besch{background:#f0f6fc;border-left:3px solid #054d8a;padding:10px 14px;border-radius:6px}
   .knop{display:inline-block;background:#054d8a;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-size:14px;margin-bottom:20px;border:none;cursor:pointer;font-family:inherit}
 </style>
+<script src="<?= APP_URL ?>/assets/js/klik.js?v=<?= @filemtime(__DIR__.'/../assets/js/klik.js') ?>"></script>
 </head>
 <body>
-  <button type="button" onclick="window.print()" class="knop geen-print">Afdrukken / opslaan als PDF</button>
+  <button type="button" data-klik="window.print()" class="knop geen-print">Afdrukken / opslaan als PDF</button>
   <h1><?= h($dossier['Naam']) ?></h1>
   <div class="sub"><?= h($dossier['Seizoen']) ?> · <?= h($dossier['Fase']) ?></div>
 

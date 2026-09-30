@@ -12,7 +12,8 @@ sessie_start();
 $fout = '';
 
 // 1. State check
-if (empty($_GET['state']) || $_GET['state'] !== ($_SESSION['portaal_sso_state'] ?? '')) {
+// hash_equals: vergelijken in constante tijd, net als in het beheer.
+if (empty($_GET['state']) || !is_string($_GET['state']) || !hash_equals((string)($_SESSION['portaal_sso_state'] ?? ''), $_GET['state'])) {
     $fout = 'Ongeldige sessie-state.';
 }
 
@@ -35,9 +36,10 @@ if (!$fout) {
             'redirect_uri'  => APP_URL . '/portaal/auth_callback.php',
             'client_id'     => OIDC_CLIENT_ID,
             'client_secret' => OIDC_CLIENT_SECRET,
-        ]),
+        ] + array_filter(['code_verifier' => oidc_pkce_verifier('portaal_sso_pkce')])),
         CURLOPT_TIMEOUT        => 10,
         CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_SSL_VERIFYHOST => 2,
     ]);
     $body = curl_exec($ch);
     $http = curl_getinfo($ch, CURLINFO_HTTP_CODE);

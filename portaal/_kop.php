@@ -49,6 +49,7 @@ $_bel = '<a href="' . APP_URL . '/portaal/berichten.php" class="pt-topbar-actie"
 <?php if ($_fav): ?><link rel="icon" href="<?= h($_fav) ?>"><?php endif; ?>
 <link rel="stylesheet" href="<?= APP_URL ?>/assets/css/stijl.css?v=<?= @filemtime(__DIR__.'/../assets/css/stijl.css') ?>">
 <meta name="robots" content="noindex">
+<script src="<?= APP_URL ?>/assets/js/klik.js?v=<?= @filemtime(__DIR__.'/../assets/js/klik.js') ?>"></script>
 </head>
 <body class="pt-body<?= $_heeft_nav ? ' heeft-nav' : '' ?>">
 

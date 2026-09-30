@@ -424,7 +424,7 @@ require __DIR__ . '/_kop.php';
   </footer>
 </form>
 
-<script>
+<script nonce="<?= h(csp_nonce()) ?>">
   window.BLK_CFG = {
     apiAdres:   <?= json_encode(APP_URL . '/portaal/api_adres.php') ?>,
     apiConcept: <?= json_encode(APP_URL . '/portaal/api_blk_concept.php') ?>,

@@ -268,7 +268,7 @@ require __DIR__ . '/layout_top.php';
                 <button type="button" class="bh-cijfer<?= $_s === $_eigen ? ' gekozen' : '' ?>"
                         <?= $mag_beoordelen ? '' : 'disabled' ?>
                         aria-pressed="<?= $_s === $_eigen ? 'true' : 'false' ?>"
-                        onclick="zetScore(this, <?= $hid ?>, '<?= h($_ts) ?>', '<?= h($_crit['sleutel']) ?>', <?= $_s ?>)"><?= $_s ?></button>
+                        data-klik="zetScore(this, <?= $hid ?>, '<?= h($_ts) ?>', '<?= h($_crit['sleutel']) ?>', <?= $_s ?>)"><?= $_s ?></button>
               <?php endfor; ?>
             </div>
             <span class="bh-criterium-gem" id="gem-<?= h($_key) ?>">
@@ -286,15 +286,15 @@ require __DIR__ . '/layout_top.php';
       <?php if ($mag_beoordelen): ?>
         <div class="bh-soortkeuze" id="soort-<?= $hid ?>" role="group" aria-label="Soort observatie">
           <button type="button" class="bh-soort positief" data-soort="positief" aria-pressed="false"
-                  onclick="kiesSoort(<?= $hid ?>, 'positief', this)">Positief</button>
+                  data-klik="kiesSoort(<?= $hid ?>, 'positief', this)">Positief</button>
           <button type="button" class="bh-soort neutraal gekozen" data-soort="neutraal" aria-pressed="true"
-                  onclick="kiesSoort(<?= $hid ?>, 'neutraal', this)">Neutraal</button>
+                  data-klik="kiesSoort(<?= $hid ?>, 'neutraal', this)">Neutraal</button>
           <button type="button" class="bh-soort aandacht" data-soort="aandacht" aria-pressed="false"
-                  onclick="kiesSoort(<?= $hid ?>, 'aandacht', this)">Aandacht</button>
+                  data-klik="kiesSoort(<?= $hid ?>, 'aandacht', this)">Aandacht</button>
         </div>
         <label class="bh-vw" for="obs-<?= $hid ?>">Observatie over <?= h((string)$huidig['naam']) ?></label>
         <textarea class="ds-textarea" id="obs-<?= $hid ?>" rows="2" placeholder="Wat viel je op…"></textarea>
-        <button type="button" class="ds-btn ds-btn-primair ds-btn-vol" onclick="obsToevoegen(<?= $hid ?>)">
+        <button type="button" class="ds-btn ds-btn-primair ds-btn-vol" data-klik="obsToevoegen(<?= $hid ?>)">
           Observatie opslaan
         </button>
       <?php endif; ?>
@@ -328,7 +328,7 @@ require __DIR__ . '/layout_top.php';
   <?php endif; ?>
 </div>
 
-<script>
+<script nonce="<?= h(csp_nonce()) ?>">
 // window.CSRF, geen const: layout_bottom.php declareert CSRF ook, en een tweede const
 // brak dat hele script af (SyntaxError) — thema, meldingen en fase wijzigen deden niets.
 window.CSRF = window.CSRF || '<?= csrf_token() ?>';

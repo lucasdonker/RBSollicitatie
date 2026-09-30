@@ -503,8 +503,16 @@ Let op:
 ## Geheimen die in de database staan
 
 > **In het kort:** Sleutels van koppelingen staan in de tabel `instellingen` en vul je in het
-> beheer in. Het beheer toont ze nooit terug, maar een database-export bevat ze wel: behandel
-> exports als geheim.
+> beheer in. Het beheer toont ze nooit terug. Wachtwoorden en API-sleutels staan sinds 2.130.0
+> versleuteld in de database (`kluis:…`, met `KLUIS_SLEUTEL`); een export bevat ze dus niet
+> leesbaar. Behandel exports toch als geheim: ze bevatten persoonsgegevens.
+
+Welke sleutels versleuteld worden: `smtp.pass`, `ai.api_key`, `authentik.api_token`,
+`authentik.token`, `sms.http_token`, `sms.easysendsms_key`, `sms.messagebird_key` en
+`wa.api_sleutel` (`instellingen_geheime_sleutels()`). Een oude, nog leesbare waarde wordt bij de eerste
+keer lezen vanzelf versleuteld. Bij het wisselen van de kluissleutel gaan ze mee (bron "Wachtwoorden en
+sleutels van koppelingen" op het kluisscherm). Werkt de kluis niet, dan blijven de koppelingen werken
+met een leesbare waarde en meldt de systeemcontrole het.
 
 In het beheer staat bij een geheim alleen **Ingesteld** of **Nog niet ingesteld**. Een leeg veld
 laat de waarde staan; met **Huidige waarde verwijderen** maak je hem leeg. Opslaan vraagt
@@ -1069,6 +1077,23 @@ organisatie. Valt ze er toch onder, dan komt daar een vroege waarschuwing binnen
 melding binnen 72 uur bij het CSIRT bij. De maatregelen in dit runbook (toegangsbeheer, logging,
 back-up met hersteltest, incidentprocedure) volgen de zorgplicht als goede praktijk.
 
+**Kwetsbaarheid gemeld?** Het systeem publiceert `/.well-known/security.txt` (RFC 9116) met het adres
+voor foutmeldingen (Instellingen › Mail). Een melding van buiten behandel je als incident: bevestig de
+ontvangst, zoek het uit met de ontwikkelaar, los het op, en laat de melder weten dat het klaar is.
+Test nooit met echte persoonsgegevens.
+
+### Wat buiten de code geregeld moet worden (NIS2-zorgplicht als goede praktijk)
+
+| Maatregel | Wie | Wanneer |
+|---|---|---|
+| Plesk › Hosting › **Permanente 301 van http naar https** aan (test én productie) | systeembeheer | eenmalig, bij inrichten |
+| Authentik: **MFA verplicht** in de login-flow voor de groepen die het beheer in mogen | Authentik-beheer | eenmalig; jaarlijks nalopen |
+| Verwerkersovereenkomsten met Cloud86, WhatsReach, sms-dienst en Google (Gemini) afgesloten en bewaard | bestuur | vóór productie; bij elke nieuwe leverancier |
+| TCPDF en FPDI (`includes/lib/`) naast de laatste versie leggen; beveiligingsupdates meenemen | ontwikkelaar | elk seizoen vóór de werving |
+| Toegang nalopen: wie heeft een beheerdersaccount, welke Authentik-groepen, wie heeft Plesk | bestuur + systeembeheer | elk seizoen (zie [Toegangsbeheer](#toegangsbeheer)) |
+| Hersteltest van de back-up | systeembeheer | elk seizoen (zie [Back-up en herstel](#back-up-en-herstel)) |
+| Korte uitleg "veilig werken" aan nieuwe beheerders (zie handleiding beheer) | bestuur | bij elke nieuwe beheerder |
+
 ## Beveiligingsmaatregelen in het kort
 
 > **In het kort:** Een overzicht van wat het systeem technisch doet, voor de verantwoording naar
@@ -1088,7 +1113,19 @@ back-up met hersteltest, incidentprocedure) volgen de zorgplicht als goede prakt
   ID- en bankpasfoto's.
 - **Headers:** Content-Security-Policy (scripts en verbindingen alleen van de eigen host), HSTS,
   X-Frame-Options, nosniff, Referrer-Policy, Permissions-Policy, gezet in PHP
-  (`security_headers()`), niet in `.htaccess`. Stijlen en lettertypen komen alleen van de eigen
+  (`security_headers()`), niet in `.htaccess`. Sinds 2.130.0 staat de CSP **geen inline JavaScript**
+  meer toe: `script-src 'self' 'nonce-…'`, met een nieuwe nonce per verzoek (`csp_nonce()`).
+  Knoppen gebruiken `data-klik="functie(…)"` in plaats van `onclick` (`assets/js/klik.js`); een
+  inline `<script>` heeft `nonce="<?= h(csp_nonce()) ?>"` nodig, anders draait hij niet. Zo kan
+  geïnjecteerde HTML geen script uitvoeren. HSTS staat ook op de API en de landingspagina's.
+- **Sessie beheer:** na twee uur zonder activiteit uitgelogd (`BEHEER_INACTIEF_SECONDEN`), ook al
+  leeft de cookie acht uur.
+- **Direct opvragen:** partials (`admin/_*.php`) en de mappen `admin/dossier`, `admin/tw`, `admin/lp`
+  zijn via `.htaccess` afgeschermd; ze draaien alleen als include.
+- **OIDC:** state met `hash_equals`, PKCE (S256) naar Authentik, TLS-controle bij elke uitgaande
+  verbinding. De Gemini-sleutel gaat als header mee, niet in de URL.
+- **Wachtwoorden:** `password_hash` met automatische rehash bij inloggen; mislukte pogingen staan
+  12 maanden in de audit (de tellers voor de blokkade 24 uur). Stijlen en lettertypen komen alleen van de eigen
   host: `style-src 'self' 'unsafe-inline'` en `font-src 'self' data:`, zonder externe domeinen.
 - **Lettertype:** Instrument Sans staat zelf gehost in `assets/fonts/` (woff2, met de licentie
   `OFL.txt`, SIL Open Font License). Er gaat geen verzoek en dus geen IP-adres meer naar Google

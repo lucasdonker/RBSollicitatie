@@ -122,7 +122,7 @@ function sms_via_http(string $nummer, string $tekst): bool {
         curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query(['nummer' => $nummer, 'telefoon' => $nummer, 'tekst' => $tekst, 'bericht' => $tekst, 'message' => $tekst, 'to' => $nummer]));
     }
     curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_RETURNTRANSFER => true, CURLOPT_SSL_VERIFYPEER => true, CURLOPT_SSL_VERIFYHOST => 2,
         CURLOPT_HTTPHEADER     => $headers,
         CURLOPT_TIMEOUT        => 10,
     ]);
@@ -139,7 +139,7 @@ function sms_via_easysendsms(string $nummer, string $tekst): bool {
     if ($apikey === '') return false;
     $ch = curl_init('https://restapi.easysendsms.app/v1/rest/sms/send');
     curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_RETURNTRANSFER => true, CURLOPT_SSL_VERIFYPEER => true, CURLOPT_SSL_VERIFYHOST => 2,
         CURLOPT_POST           => true,
         CURLOPT_HTTPHEADER     => ['apikey: ' . $apikey, 'Content-Type: application/json'],
         CURLOPT_POSTFIELDS     => json_encode(['from' => $sender, 'to' => ltrim($nummer, '+'), 'text' => $tekst, 'type' => '0']),
@@ -158,7 +158,7 @@ function sms_via_messagebird(string $nummer, string $tekst): bool {
     if ($apikey === '') return false;
     $ch = curl_init('https://rest.messagebird.com/messages');
     curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_RETURNTRANSFER => true, CURLOPT_SSL_VERIFYPEER => true, CURLOPT_SSL_VERIFYHOST => 2,
         CURLOPT_POST           => true,
         CURLOPT_HTTPHEADER     => ['Authorization: AccessKey ' . $apikey, 'Content-Type: application/json'],
         CURLOPT_POSTFIELDS     => json_encode(['originator' => $sender, 'recipients' => [$nummer], 'body' => $tekst]),
@@ -201,7 +201,7 @@ function wa_verstuur_res(string $telefoon, string $tekst): array {
     try {
         $ch = curl_init($endpoint);
         curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_RETURNTRANSFER => true, CURLOPT_SSL_VERIFYPEER => true, CURLOPT_SSL_VERIFYHOST => 2,
             CURLOPT_POST           => true,
             // WhatsReach authenticeert met X-API-Key (niet Bearer)
             CURLOPT_HTTPHEADER     => ['X-API-Key: ' . $sleutel, 'Content-Type: application/json'],
@@ -238,7 +238,7 @@ function wa_devices(): array {
     try {
         $ch = curl_init($base . '/devices');
         curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_RETURNTRANSFER => true, CURLOPT_SSL_VERIFYPEER => true, CURLOPT_SSL_VERIFYHOST => 2,
             CURLOPT_HTTPHEADER     => ['X-API-Key: ' . $sleutel, 'Accept: application/json'],
             CURLOPT_TIMEOUT        => 10,
         ]);

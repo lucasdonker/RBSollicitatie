@@ -63,6 +63,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->execute([$email]);
                 $b = $stmt->fetch();
                 if ($b && $b['wachtwoord'] && password_verify($ww, $b['wachtwoord'])) {
+                    // Sterker hash-algoritme of zwaardere kosten sinds dit wachtwoord werd gezet? Dan
+                    // nu bijwerken — alleen hier kennen we het wachtwoord in leesbare vorm.
+                    if (password_needs_rehash($b['wachtwoord'], PASSWORD_DEFAULT)) {
+                        try { db()->prepare("UPDATE beheerders SET wachtwoord=? WHERE id=?")->execute([password_hash($ww, PASSWORD_DEFAULT), (int)$b['id']]); }
+                        catch (\Throwable $e) { error_log('login rehash: ' . $e->getMessage()); }
+                    }
                     // Nog niet inloggen en de pogingen nog niet wissen: dat gebeurt pas na de
                     // tweede stap. Anders geeft elk juist wachtwoord weer verse codepogingen.
                     tweestaps_wacht_start((int)$b['id']);
@@ -70,6 +76,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     redirect($zelf);
                 } else {
                     login_poging_registreren($email, $ip);
+                    // Ook in de audit (12 maanden): login_pogingen wordt na 24 uur opgeruimd, en voor het
+                    // herleiden van een incident wil je langer terug kunnen kijken (NIS2).
+                    if (function_exists('audit_log')) audit_log('login_mislukt', 'beheerder', $b ? (int)$b['id'] : null, ['email' => $email, 'via' => 'wachtwoord']);
                     sleep(1); // brute force vertraging
                     $fout = 'Onjuist e-mailadres of wachtwoord.';
                 }
@@ -142,13 +151,14 @@ $methode = $wacht_b ? tweestaps_methode($wacht_b) : '';
 .login-stap summary { cursor:pointer;color:var(--navy); }
 .login-stap details form { margin-top:10px; }
 </style>
+<script src="<?= APP_URL ?>/assets/js/klik.js?v=<?= @filemtime(__DIR__.'/../assets/js/klik.js') ?>"></script>
 </head>
 <body>
 <div class="login-wrapper">
   <div class="login-kaart">
     <div class="login-logo">
       <img src="<?= APP_URL ?>/assets/img/logo.png" alt="Paal 13"
-           onerror="this.onerror=null;this.src='<?= APP_URL ?>/assets/img/logo.svg'">
+           data-terugval="<?= APP_URL ?>/assets/img/logo.svg">
       <h1><?= $wacht_b ? 'Tweede stap' : 'Beheerders login' ?></h1>
       <p>Reddingsbrigade Paal 13</p>
     </div>

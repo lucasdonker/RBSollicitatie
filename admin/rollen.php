@@ -222,7 +222,7 @@ require __DIR__ . '/layout_top.php';
         </span>
         <span class="bh-rolkaart-acties">
           <button type="button" class="ds-btn ds-btn-zacht ds-btn-sm"
-                  onclick="rolBewerk('<?= h($rol['sleutel']) ?>')">Bewerken</button>
+                  data-klik="rolBewerk('<?= h($rol['sleutel']) ?>')">Bewerken</button>
           <?php if (!$_sys): ?>
             <a class="ds-btn ds-btn-gevaar ds-btn-sm" href="?bevestig=verwijder&amp;rol=<?= h(urlencode($rol['sleutel'])) ?>">Verwijderen</a>
           <?php endif; ?>
@@ -258,7 +258,7 @@ require __DIR__ . '/layout_top.php';
         </div>
         <div class="bh-rolkaart-formvoet">
           <button type="submit" class="ds-btn ds-btn-primair ds-btn-sm">Opslaan</button>
-          <button type="button" class="ds-btn ds-btn-zacht ds-btn-sm" onclick="rolBewerk('<?= h($rol['sleutel']) ?>')">Annuleren</button>
+          <button type="button" class="ds-btn ds-btn-zacht ds-btn-sm" data-klik="rolBewerk('<?= h($rol['sleutel']) ?>')">Annuleren</button>
         </div>
       </form>
     </li>
@@ -371,7 +371,7 @@ require __DIR__ . '/layout_top.php';
   </div>
 </form>
 
-<script>
+<script nonce="<?= h(csp_nonce()) ?>">
 /* Bewerken staat per rol ingeklapt: de kaart moet leesbaar blijven, en een rol
    bewerken is een uitzondering. */
 function rolBewerk(sleutel) {

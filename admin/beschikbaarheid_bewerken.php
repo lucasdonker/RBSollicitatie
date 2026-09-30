@@ -130,10 +130,10 @@ require __DIR__ . '/layout_top.php';
 
   <!-- Tabs -->
   <div class="bh-bb-tabs" role="group" aria-label="Weergave">
-    <button type="button" class="bb-tab bh-bb-tab bb-tab-actief" data-tab="perdag" aria-pressed="true" onclick="bbTab('perdag')">
+    <button type="button" class="bb-tab bh-bb-tab bb-tab-actief" data-tab="perdag" aria-pressed="true" data-klik="bbTab('perdag')">
       Per dag
     </button>
-    <button type="button" class="bb-tab bh-bb-tab" data-tab="formulier" aria-pressed="false" onclick="bbTab('formulier')">
+    <button type="button" class="bb-tab bh-bb-tab" data-tab="formulier" aria-pressed="false" data-klik="bbTab('formulier')">
       Formulier (portaal-stijl)
     </button>
   </div>
@@ -162,7 +162,7 @@ require __DIR__ . '/layout_top.php';
         <?php endif; ?>
         <div class="bb-dag bh-bb-dag <?= $info['beschikbaar'] ? 'bh-bb-dag-ja' : 'bh-bb-dag-nee' ?><?= $is_bestuur ? ' bh-bb-dag-bestuur' : '' ?>" data-datum="<?= h($datum) ?>" data-beschikbaar="<?= $info['beschikbaar'] ? '1' : '0' ?>"
              data-bestuur="<?= $is_bestuur ? '1' : '0' ?>"
-             onclick="bbDagKlik(this)">
+             data-klik="bbDagKlik(this)">
           <div class="bh-bb-dag-wd"><?= h($dagen_nl[$weekdag]) ?></div>
           <div class="bh-bb-dag-datum"><?= h(date('d-m', $ts)) ?></div>
           <div class="bh-bb-dag-icoon"><?= icoon($info['beschikbaar'] ? 'vink' : 'kruis', 14) ?></div>
@@ -188,12 +188,12 @@ require __DIR__ . '/layout_top.php';
     <div id="bbDagPopover" class="bh-bb-pop" hidden>
       <div id="bbPopDatum" class="bh-bb-pop-datum"></div>
       <div class="bh-bb-pop-acties">
-        <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm bh-bb-pop-knop" onclick="bbZet('beschikbaar')"><?= icoon('vink', 14) ?> Beschikbaar maken</button>
-        <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm bh-bb-pop-knop" onclick="bbZet('niet_beschikbaar')"><?= icoon('kruis', 14) ?> Niet beschikbaar maken</button>
+        <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm bh-bb-pop-knop" data-klik="bbZet('beschikbaar')"><?= icoon('vink', 14) ?> Beschikbaar maken</button>
+        <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm bh-bb-pop-knop" data-klik="bbZet('niet_beschikbaar')"><?= icoon('kruis', 14) ?> Niet beschikbaar maken</button>
         <input type="text" id="bbPopReden" placeholder="reden (optioneel)" class="bh-bb-pop-reden">
-        <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm bh-bb-herstel" id="bbHerstelKnop" onclick="bbHerstel()" hidden><?= icoon('terug', 14) ?> Aanpassing terugdraaien</button>
+        <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm bh-bb-herstel" id="bbHerstelKnop" data-klik="bbHerstel()" hidden><?= icoon('terug', 14) ?> Aanpassing terugdraaien</button>
       </div>
-      <button type="button" onclick="bbSluitPop()" class="bh-bb-pop-sluit"><?= icoon('kruis', 14) ?></button>
+      <button type="button" data-klik="bbSluitPop()" class="bh-bb-pop-sluit"><?= icoon('kruis', 14) ?></button>
     </div>
     <?php endif; ?>
   </div>
@@ -233,7 +233,7 @@ require __DIR__ . '/layout_top.php';
               <option value="vijf" <?= !$is_wknd?'selected':'' ?>>hele weken</option>
               <option value="weekend" <?= $is_wknd?'selected':'' ?>>alleen weekenden</option>
             </select>
-            <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="this.parentElement.remove()" aria-label="Verwijderen"><?= icoon('kruis', 14) ?></button>
+            <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" data-klik="P13Klik.ouderWeg(this)" aria-label="Verwijderen"><?= icoon('kruis', 14) ?></button>
           </div>
           <?php endforeach; else: ?>
           <div class="bb-blok-rij bh-bb-blokrij">
@@ -246,11 +246,11 @@ require __DIR__ . '/layout_top.php';
               <option value="vijf">hele weken</option>
               <option value="weekend">alleen weekenden</option>
             </select>
-            <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="this.parentElement.remove()" aria-label="Verwijderen"><?= icoon('kruis', 14) ?></button>
+            <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" data-klik="P13Klik.ouderWeg(this)" aria-label="Verwijderen"><?= icoon('kruis', 14) ?></button>
           </div>
           <?php endif; ?>
         </div>
-        <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="bbBlokToevoegen()">+ Periode toevoegen</button>
+        <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" data-klik="bbBlokToevoegen()">+ Periode toevoegen</button>
       </div>
       <button type="submit" class="ds-btn ds-btn-primair">Opslaan namens sollicitant</button>
     </form>
@@ -263,7 +263,7 @@ require __DIR__ . '/layout_top.php';
   </div>
 </div>
 
-<script>
+<script nonce="<?= h(csp_nonce()) ?>">
 function bbTab(naam) {
   document.querySelectorAll('.bb-paneel').forEach(p => p.hidden = true);
   document.getElementById('bb-' + naam).hidden = false;
@@ -323,7 +323,7 @@ function bbBlokToevoegen() {
     '<span class="bh-bb-wk">t/m</span>' +
     '<input type="number" name="bb_tot[]" min="1" max="53" class="bh-bb-week" aria-label="Tot week">' +
     '<select name="bb_regime[]" class="bh-bb-regime" aria-label="Regime"><option value="vijf">hele weken</option><option value="weekend">alleen weekenden</option></select>' +
-    '<button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="this.parentElement.remove()" aria-label="Verwijderen"><?= icoon('kruis', 14) ?></button>';
+    '<button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" data-klik="P13Klik.ouderWeg(this)" aria-label="Verwijderen"><?= icoon('kruis', 14) ?></button>';
   document.getElementById('bbBlokLijst').appendChild(div);
 }
 </script>

@@ -105,7 +105,7 @@
   /* ── Portaal: formulier-feedback ──
      Het werk zit in assets/js/actie.js, dat op élke submit reageert — in het portaal
      én in het beheer. Deze functie blijft bestaan omdat schermen hem aanroepen via
-     onsubmit="return portaalSubmit(this)".
+     data-verzend="return portaalSubmit(this)" (vroeger onsubmit; zie assets/js/klik.js).
 
      Hij doet bewust niets meer. Het vastzetten hoort pas te gebeuren als vaststaat dat
      er verzonden wordt; dat weet alleen actie.js, achteraan de submit. Zette deze

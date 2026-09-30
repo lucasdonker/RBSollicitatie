@@ -382,7 +382,7 @@ require __DIR__ . '/layout_top.php';
         <div class="bh-kaartkop">
           <h2>Inhoud</h2>
           <?php if ($sjablonen): ?>
-          <select class="ds-select bh-veld-smal bh-kaartkop-veld" name="sjabloon" id="sjabloonSel" onchange="sjabloonWissel()"
+          <select class="ds-select bh-veld-smal bh-kaartkop-veld" name="sjabloon" id="sjabloonSel" data-wijzig="sjabloonWissel()"
                   aria-label="Sjabloon kiezen">
             <option value="">Zelf schrijven</option>
             <?php foreach ($sjablonen as $t): ?>
@@ -408,7 +408,7 @@ require __DIR__ . '/layout_top.php';
           </div>
           <div class="ds-veld">
             <label class="ds-label" for="tekstKort">Korte tekst (WhatsApp/sms) <span id="kortTeller"></span></label>
-            <textarea class="ds-textarea" name="tekst_kort" id="tekstKort" rows="4" maxlength="400" oninput="kortTeller()"
+            <textarea class="ds-textarea" name="tekst_kort" id="tekstKort" rows="4" maxlength="400" data-invoer="kortTeller()"
                       placeholder="Hoi {{voornaam}}, … Meer info: {{portaal_url}}"><?= h($_POST['tekst_kort'] ?? '') ?></textarea>
             <p class="ds-veld-hint">Alleen nodig bij WhatsApp of sms. Platte tekst, maximaal 400 tekens.</p>
           </div>
@@ -434,15 +434,15 @@ require __DIR__ . '/layout_top.php';
       <section class="ds-kaart bh-verzendbalk">
         <?php if ($mag_bewerken): ?>
         <button type="submit" class="ds-btn ds-btn-primair" id="verzendKnop"
-                onclick="return verzendBevestig(event)">
+                data-klik="return verzendBevestig(event)">
           Versturen naar <span id="verzendTeller">0</span>
         </button>
         <?php endif; ?>
         <button type="submit" class="ds-btn ds-btn-secundair"
-                onclick="document.getElementById('actieVeld').value='voorbeeld'">Voorbeeld bekijken</button>
+                data-klik="P13Klik.zet('#actieVeld', 'voorbeeld')">Voorbeeld bekijken</button>
         <?php if ($mag_bewerken): ?>
         <button type="submit" class="ds-btn ds-btn-zacht"
-                onclick="document.getElementById('actieVeld').value='test'">
+                data-klik="P13Klik.zet('#actieVeld', 'test')">
           Testmail naar mijzelf
         </button>
         <?php else: ?>
@@ -456,8 +456,8 @@ require __DIR__ . '/layout_top.php';
         <div class="bh-kaartkop">
           <h2>Aan</h2>
           <span class="bh-kaartkop-knoppen">
-            <button type="button" class="ds-btn ds-btn-zacht ds-btn-sm" onclick="selAlles(true)">Alles</button>
-            <button type="button" class="ds-btn ds-btn-zacht ds-btn-sm" onclick="selAlles(false)">Geen</button>
+            <button type="button" class="ds-btn ds-btn-zacht ds-btn-sm" data-klik="selAlles(true)">Alles</button>
+            <button type="button" class="ds-btn ds-btn-zacht ds-btn-sm" data-klik="selAlles(false)">Geen</button>
           </span>
         </div>
 
@@ -466,24 +466,24 @@ require __DIR__ . '/layout_top.php';
                  in die lijst blijven in beide gevallen de bron van waarheid — de chips
                  zijn er een weergave van, zodat er maar één stand bestaat. */ ?>
         <div class="bh-aanveld" id="aanVeld" hidden>
-          <div class="bh-aanveld-vak" id="aanVak" onclick="aanFocus(event)">
+          <div class="bh-aanveld-vak" id="aanVak" data-klik="aanFocus(event)">
             <input type="text" id="aanZoek" class="bh-aanveld-zoek" placeholder="naam typen…"
                    autocomplete="off" role="combobox" aria-expanded="false"
                    aria-controls="aanLijst" aria-autocomplete="list"
                    aria-label="Zoek een ontvanger op naam of e-mailadres"
-                   oninput="aanZoeken()" onkeydown="aanToets(event)" onfocus="aanZoeken()">
+                   data-invoer="aanZoeken()" data-toets="aanToets(event)" data-focus="aanZoeken()">
           </div>
           <ul class="bh-aanveld-lijst" id="aanLijst" role="listbox" aria-label="Gevonden mensen" hidden></ul>
           <p class="bh-aanveld-leeg" id="aanLeeg" hidden>Niemand gevonden met die naam.</p>
           <?php if ($alle || $per_vorig): ?>
           <div class="bh-aanveld-snel">
             <?php foreach (array_keys($fases) as $f): if (empty($per_fase[$f])) continue; ?>
-              <button type="button" class="bh-aanchip-snel" onclick="selGroep('<?= h($f) ?>', true)">
+              <button type="button" class="bh-aanchip-snel" data-klik="selGroep('<?= h($f) ?>', true)">
                 + <?= h(fase_label_kort($f)) ?> (<?= count($per_fase[$f]) ?>)
               </button>
             <?php endforeach; ?>
             <?php foreach ($vorige_groepen as $g => $gl): if (empty($per_vorig[$g])) continue; ?>
-              <button type="button" class="bh-aanchip-snel" onclick="selGroep('<?= h($g) ?>', true)">
+              <button type="button" class="bh-aanchip-snel" data-klik="selGroep('<?= h($g) ?>', true)">
                 + <?= h($gl) ?> (<?= count($per_vorig[$g]) ?>)
               </button>
             <?php endforeach; ?>
@@ -500,7 +500,7 @@ require __DIR__ . '/layout_top.php';
           <?php foreach (array_keys($fases) as $f): if (empty($per_fase[$f])) continue; ?>
           <div class="bh-ontvgroep">
             <label class="bh-ontvgroep-kop">
-              <input type="checkbox" class="groep-cb" onclick="selGroep('<?= h($f) ?>',this.checked)">
+              <input type="checkbox" class="groep-cb" data-klik="selGroep('<?= h($f) ?>',this.checked)">
               <?= bh_fase_badge($f, ['lengte' => 'kort']) ?>
               <span class="bh-ontvgroep-aantal"><?= count($per_fase[$f]) ?></span>
             </label>
@@ -515,7 +515,7 @@ require __DIR__ . '/layout_top.php';
           <?php foreach ($vorige_groepen as $g => $gl): if (empty($per_vorig[$g])) continue; ?>
           <div class="bh-ontvgroep">
             <label class="bh-ontvgroep-kop">
-              <input type="checkbox" class="groep-cb" onclick="selGroep('<?= h($g) ?>',this.checked)">
+              <input type="checkbox" class="groep-cb" data-klik="selGroep('<?= h($g) ?>',this.checked)">
               <?= bh_badge($gl, $g === 'oud' ? 'blauw' : 'paars') ?>
               <span class="bh-ontvgroep-aantal"><?= count($per_vorig[$g]) ?></span>
             </label>
@@ -543,7 +543,7 @@ require __DIR__ . '/layout_top.php';
         <div class="bh-kaartkop"><h2>Variabelen</h2></div>
         <div class="bh-varchips">
           <?php foreach (['voornaam', 'achternaam', 'volledige_naam', 'seizoen_naam', 'selectiedag_datum', 'selectiedag_locatie', 'tw_datum_start', 'tw_locatie', 'portaal_url', 'aanmeld_url', 'contact_email', 'bestuur_email'] as $v): ?>
-          <button type="button" class="bh-varchip" onclick="P13Editor.insert('bericht','{{<?= h($v) ?>}}')">{{<?= h($v) ?>}}</button>
+          <button type="button" class="bh-varchip" data-klik="P13Editor.insert('bericht','{{<?= h($v) ?>}}')">{{<?= h($v) ?>}}</button>
           <?php endforeach; ?>
         </div>
         <p class="ds-veld-hint">Werken ook in het onderwerp en de korte tekst — daar typ je ze zelf.</p>
@@ -552,7 +552,7 @@ require __DIR__ . '/layout_top.php';
   </div>
 </form>
 
-<script>
+<script nonce="<?= h(csp_nonce()) ?>">
 function berAantal() { return document.querySelectorAll('.ontv-cb:checked').length; }
 
 function updateTeller() {

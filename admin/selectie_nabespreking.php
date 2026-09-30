@@ -292,13 +292,13 @@ require __DIR__ . '/layout_top.php';
         <?php foreach (selectie_besluit_labels() as $_bk => $_bd): ?>
           <button type="button" class="bh-besluitknop <?= $_bk ?><?= $_b === $_bk ? ' aan' : '' ?>"
                   aria-pressed="<?= $_b === $_bk ? 'true' : 'false' ?>"
-                  onclick="besluitZet(<?= $_id ?>, '<?= $_bk ?>')"><?= h($_bd[0]) ?></button>
+                  data-klik="besluitZet(<?= $_id ?>, '<?= $_bk ?>')"><?= h($_bd[0]) ?></button>
         <?php endforeach; ?>
       </div>
       <input type="text" class="ds-input bh-nb-notitie" id="notitie-<?= $_id ?>"
              aria-label="Reden of aantekening bij <?= h((string)$k['naam']) ?>"
              value="<?= h((string)$_not) ?>" placeholder="Korte reden of aantekening…"
-             onchange="besluitZet(<?= $_id ?>, null)">
+             data-wijzig="besluitZet(<?= $_id ?>, null)">
       <span class="bh-nb-stand" id="stand-<?= $_id ?>" aria-live="polite"></span>
     </footer>
   </section>
@@ -319,7 +319,7 @@ require __DIR__ . '/layout_top.php';
 
 <?php endif; ?>
 
-<script>
+<script nonce="<?= h(csp_nonce()) ?>">
 // window.CSRF, geen const: layout_bottom.php declareert CSRF ook, en een tweede const
 // brak dat hele script af (SyntaxError) — thema, meldingen en fase wijzigen deden niets.
 window.CSRF = window.CSRF || '<?= csrf_token() ?>';

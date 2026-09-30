@@ -262,8 +262,35 @@ function instellingen_laden(): array {
     return $_instellingen_cache;
 }
 
+/**
+ * Geheime instellingen (instellingen_geheime_sleutels(): wachtwoorden en API-sleutels van koppelingen)
+ * staan versleuteld in de database: "kluis:<blob>" via includes/kluis.php, gebonden aan de naam van de
+ * instelling. Een databasedump of -lek alleen geeft ze dus niet prijs; daarvoor is ook KLUIS_SLEUTEL
+ * uit config.php nodig (NIS2: cryptografie, geheimen niet leesbaar opgeslagen).
+ * Een oude, nog leesbare waarde wordt bij de eerste keer lezen versleuteld teruggeschreven.
+ * Werkt de kluis niet (geen sleutel), dan blijft alles leesbaar werken: een koppeling valt nooit stil
+ * door deze laag; de kluisstatus en de health-check melden het.
+ */
+const INSTELLING_GEHEIM_PREFIX = 'kluis:';
+
+function instelling_geheim_aad(string $sleutel): string { return 'instelling:' . $sleutel; }
+
 function instelling(string $sleutel, string $default = ''): string {
-    return instellingen_laden()[$sleutel] ?? $default;
+    $w = instellingen_laden()[$sleutel] ?? null;
+    if ($w === null) return $default;
+    if ($w === '' || !in_array($sleutel, instellingen_geheime_sleutels(), true)) return $w;
+    static $open = [];
+    if (isset($open[$sleutel]) && $open[$sleutel][0] === $w) return $open[$sleutel][1];
+    if (str_starts_with($w, INSTELLING_GEHEIM_PREFIX)) {
+        $plain = function_exists('kluis_ontsleutel')
+            ? kluis_ontsleutel(substr($w, strlen(INSTELLING_GEHEIM_PREFIX)), instelling_geheim_aad($sleutel)) : null;
+        if ($plain === null) { error_log("instelling: geheim '$sleutel' niet te ontsleutelen (kluissleutel?)"); return $default; }
+        $open[$sleutel] = [$w, $plain];
+        return $plain;
+    }
+    // Nog leesbaar opgeslagen (van vóór 2.130.0): nu versleutelen, de waarde zelf blijft gelijk.
+    if (function_exists('kluis_beschikbaar') && kluis_beschikbaar()) instelling_opslaan($sleutel, $w);
+    return $w;
 }
 function instelling_int(string $sleutel, int $default = 0): int {
     $v = instelling($sleutel);
@@ -279,6 +306,13 @@ function instelling_bool(string $sleutel, bool $default = false): bool {
     return in_array($v, ['1','true','ja','aan'], true);
 }
 function instelling_opslaan(string $sleutel, string $waarde): bool {
+    // Geheimen versleuteld wegschrijven (zie instelling()). Lukt dat niet, dan leesbaar — met een log.
+    if ($waarde !== '' && !str_starts_with($waarde, INSTELLING_GEHEIM_PREFIX)
+        && in_array($sleutel, instellingen_geheime_sleutels(), true) && function_exists('kluis_versleutel')) {
+        $blob = kluis_versleutel($waarde, instelling_geheim_aad($sleutel));
+        if ($blob !== null) $waarde = INSTELLING_GEHEIM_PREFIX . $blob;
+        else error_log("instelling_opslaan: geheim '$sleutel' onversleuteld opgeslagen (kluis niet beschikbaar)");
+    }
     try {
         db()->prepare("INSERT INTO instellingen (sleutel,waarde) VALUES (?,?) ON DUPLICATE KEY UPDATE waarde=?,bijgewerkt_op=NOW()")
            ->execute([$sleutel,$waarde,$waarde]);

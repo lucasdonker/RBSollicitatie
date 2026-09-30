@@ -57,7 +57,9 @@ if (function_exists('toegang_bepaal') && !empty($_bhd['email'])) {
 <link rel="stylesheet" href="<?= APP_URL ?>/assets/css/stijl.css?v=<?= @filemtime(__DIR__.'/../assets/css/stijl.css') ?>">
 <link rel="stylesheet" href="<?= APP_URL ?>/assets/css/beheer.css?v=<?= @filemtime(__DIR__.'/../assets/css/beheer.css') ?>">
 <meta name="robots" content="noindex">
-<script>
+<?php // Vroeg: data-klik/data-terugval (vervangt inline onclick; CSP zonder 'unsafe-inline'). ?>
+<script src="<?= APP_URL ?>/assets/js/klik.js?v=<?= @filemtime(__DIR__.'/../assets/js/klik.js') ?>"></script>
+<script nonce="<?= h(csp_nonce()) ?>">
 // Thema vóór de eerste verf, anders flitst de pagina wit op bij donkere modus.
 (function(){try{
   var t = localStorage.getItem('paal13-theme');

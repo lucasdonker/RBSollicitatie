@@ -254,7 +254,7 @@ require __DIR__ . '/layout_top.php';
     <form method="POST" class="bh-mt-kanaal">
       <?= csrf_input() ?><input type="hidden" name="actie" value="kanaal"><input type="hidden" name="slug" value="<?= h($actief_slug) ?>">
       <label for="veld-kanaalmodus" class="bh-mt-kanaal-label">Kanaal</label>
-      <select id="veld-kanaalmodus" name="kanaalmodus" onchange="this.form.submit()" class="bh-mt-kanaal-keuze">
+      <select id="veld-kanaalmodus" name="kanaalmodus" data-wijzig="P13Klik.verstuur(this)" class="bh-mt-kanaal-keuze">
         <?php foreach ($modi as $mk => $ml): if ($mk !== 'email' && $mk !== 'uit' && !$def['kort_toegestaan']) continue; ?>
         <option value="<?= $mk ?>" <?= $modus === $mk ? 'selected' : '' ?>><?= h($ml) ?></option>
         <?php endforeach; ?>
@@ -290,7 +290,7 @@ require __DIR__ . '/layout_top.php';
         <div>
           <label class="veld-label">Hero-kleur</label>
           <div class="bh-mt-kleurrij">
-            <input type="color" value="<?= h($actief['hero_kleur'] ?: '#054d8a') ?>" oninput="this.nextElementSibling.value=this.value" class="bh-mt-kleurkiezer">
+            <input type="color" value="<?= h($actief['hero_kleur'] ?: '#054d8a') ?>" data-invoer="P13Klik.spiegel(this)" class="bh-mt-kleurkiezer">
             <input type="text" name="hero_kleur" value="<?= h($actief['hero_kleur'] ?? '') ?>" placeholder="leeg = huisstijl-navy" class="bh-mt-kleurcode">
           </div>
         </div>
@@ -311,7 +311,7 @@ require __DIR__ . '/layout_top.php';
       <div class="bh-mt-sectie bh-mt-tweekolom">
         <div>
           <label class="veld-label">Korte tekst (WhatsApp/SMS) <span id="kortTeller" class="bh-mt-teller"></span></label>
-          <textarea name="tekst_kort" id="tekstKort" rows="5" maxlength="400" class="bh-mt-tekstvak" oninput="kortTeller()" <?= ($def && !$def['kort_toegestaan']) ? 'placeholder="Dit type gaat alleen per e-mail."' : '' ?>><?= h($actief['tekst_kort'] ?? '') ?></textarea>
+          <textarea name="tekst_kort" id="tekstKort" rows="5" maxlength="400" class="bh-mt-tekstvak" data-invoer="kortTeller()" <?= ($def && !$def['kort_toegestaan']) ? 'placeholder="Dit type gaat alleen per e-mail."' : '' ?>><?= h($actief['tekst_kort'] ?? '') ?></textarea>
           <div class="bh-mt-hulp">Platte tekst, max 400 tekens, geen opmaak. Zelfde variabelen als de e-mail.</div>
         </div>
         <div>
@@ -370,11 +370,11 @@ require __DIR__ . '/layout_top.php';
     <?php if ($vars_type): ?>
     <div class="bh-mt-vargroep">
       <div class="veld-label">Voor dit type</div>
-      <?php foreach ($vars_type as $v): ?><span class="var-chip" onclick="P13Editor.insert('tmpl','{{<?= h($v) ?>}}')">{{<?= h($v) ?>}}</span><?php endforeach; ?>
+      <?php foreach ($vars_type as $v): ?><span class="var-chip" data-klik="P13Editor.insert('tmpl','{{<?= h($v) ?>}}')">{{<?= h($v) ?>}}</span><?php endforeach; ?>
     </div>
     <?php endif; ?>
     <div class="veld-label">Altijd beschikbaar</div>
-    <?php foreach ($vars_basis as $v): ?><span class="var-chip" onclick="P13Editor.insert('tmpl','{{<?= h($v) ?>}}')">{{<?= h($v) ?>}}</span><?php endforeach; ?>
+    <?php foreach ($vars_basis as $v): ?><span class="var-chip" data-klik="P13Editor.insert('tmpl','{{<?= h($v) ?>}}')">{{<?= h($v) ?>}}</span><?php endforeach; ?>
     <div class="bh-mt-opmaak">
       Opmaakblokken via de knoppen in de editor: Knop, Info-blok, Let op. Als tekst: <code>[knop href="URL"]Tekst[/knop]</code>, <code>[info]...[/info]</code>, <code>[let op]...[/let op]</code>, <code>[code]123456[/code]</code>.
     </div>
@@ -384,7 +384,7 @@ require __DIR__ . '/layout_top.php';
 <?php endif; ?>
 </div>
 
-<script>
+<script nonce="<?= h(csp_nonce()) ?>">
 function kortTeller(){var t=document.getElementById('tekstKort');var e=document.getElementById('kortTeller');if(t&&e)e.textContent='('+t.value.length+'/400)';}
 kortTeller();
 </script>

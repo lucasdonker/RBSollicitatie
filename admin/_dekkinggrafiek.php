@@ -65,7 +65,7 @@ $_zin   = bh_dekking_zin($_knel);
     ?>
       <?php if ($_klik): ?>
         <button type="button" class="<?= $_cls ?>" title="<?= h($_tip) ?>" aria-label="<?= h($_tip) ?>"
-                onclick="<?= h(sprintf($_klik, (int)$_wn)) ?>"><?= $_cel ?></button>
+                data-klik="<?= h(sprintf($_klik, (int)$_wn)) ?>"><?= $_cel ?></button>
       <?php else: ?>
         <span class="<?= $_cls ?>" title="<?= h($_tip) ?>" aria-label="<?= h($_tip) ?>"><?= $_cel ?></span>
       <?php endif; ?>

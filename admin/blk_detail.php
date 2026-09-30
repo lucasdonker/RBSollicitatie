@@ -101,7 +101,7 @@ require __DIR__ . '/layout_top.php';
     <a class="ds-btn ds-btn-secundair ds-btn-sm" href="<?= APP_URL ?>/admin/sollicitant.php?id=<?= $sol_id ?>">
       Naar het dossier
     </a>
-    <button type="button" class="ds-btn ds-btn-zacht ds-btn-sm" onclick="window.print()">
+    <button type="button" class="ds-btn ds-btn-zacht ds-btn-sm" data-klik="window.print()">
       <?= icoon('printer', 14) ?> Afdrukken
     </button>
     <a class="ds-btn ds-btn-zacht ds-btn-sm" target="_blank" rel="noopener"
@@ -287,10 +287,10 @@ $ai_mag      = !function_exists('mag') || mag('sollicitanten', 'bewerken');
     <?php if ($blk && !$ai_bezwaar && $ai_mag): ?>
     <span class="bh-knoprij">
       <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm"
-              onclick="genereerAnalyse(<?= $sol_id ?>)">
+              data-klik="genereerAnalyse(<?= $sol_id ?>)">
         <?= $ai_tekst ? 'Opnieuw analyseren' : 'Analyseer nu' ?>
       </button>
-      <button type="button" class="ds-btn ds-btn-zacht ds-btn-sm" onclick="aiBezwaar(<?= $sol_id ?>)">
+      <button type="button" class="ds-btn ds-btn-zacht ds-btn-sm" data-klik="aiBezwaar(<?= $sol_id ?>)">
         Bezwaar vastleggen…
       </button>
     </span>
@@ -354,7 +354,7 @@ $ai_mag      = !function_exists('mag') || mag('sollicitanten', 'bewerken');
 <?php endif; ?>
 
 </div>
-<script>
+<script nonce="<?= h(csp_nonce()) ?>">
 // Op blk_detail.php herlaad na analyse de pagina zelf (geen paneel)
 function genereerAnalyse(solId) {
   const btn = event?.target;

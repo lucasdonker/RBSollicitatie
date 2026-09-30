@@ -67,9 +67,9 @@ require __DIR__ . '/layout_top.php';
         <?php if ($mag_bewerken): ?>
         <span class="bh-verzoek-knoppen">
           <button type="button" class="ds-btn ds-btn-primair ds-btn-sm"
-                  onclick="verzoekBeslis(<?= (int)$vz['id'] ?>,'goedkeuren',<?= (int)$vz['sol_id'] ?>)">Goedkeuren</button>
+                  data-klik="verzoekBeslis(<?= (int)$vz['id'] ?>,'goedkeuren',<?= (int)$vz['sol_id'] ?>)">Goedkeuren</button>
           <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm"
-                  onclick="verzoekBeslis(<?= (int)$vz['id'] ?>,'afwijzen',<?= (int)$vz['sol_id'] ?>)">Afwijzen</button>
+                  data-klik="verzoekBeslis(<?= (int)$vz['id'] ?>,'afwijzen',<?= (int)$vz['sol_id'] ?>)">Afwijzen</button>
         </span>
         <?php endif; ?>
       </div>

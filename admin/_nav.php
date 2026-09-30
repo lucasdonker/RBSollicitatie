@@ -43,7 +43,7 @@ $_rollen = ['begeleider' => 'Begeleider', 'bestuur' => 'Bestuur',
       <?php $_logo = function_exists('site_logo_url') ? site_logo_url() : null; ?>
       <?php if ($_logo): ?>
         <img src="<?= h($_logo) ?>" alt="Paal 13"
-             onerror="this.onerror=null;this.src='<?= APP_URL ?>/assets/img/logo.svg'">
+             data-terugval="<?= APP_URL ?>/assets/img/logo.svg">
       <?php else: ?>
         <span class="bh-merk-tegel"><?= icoon('golf', 15) ?></span>
         <span class="bh-merk-naam">Paal 13 Beheer</span>

@@ -98,7 +98,7 @@ if (!$fout) {
         'redirect_uri'  => OIDC_REDIRECT_URI,
         'client_id'     => OIDC_CLIENT_ID,
         'client_secret' => OIDC_CLIENT_SECRET,
-    ]);
+    ] + array_filter(['code_verifier' => oidc_pkce_verifier('sso_pkce')]));
 
     $debug[] = "Token response HTTP {$result['code']}: " . substr($result['body'], 0, 300);
 
@@ -226,13 +226,14 @@ if ($fout && !$debug_tonen) {
 <link rel="stylesheet" href="<?= APP_URL ?>/assets/css/stijl.css">
 <link rel="stylesheet" href="<?= APP_URL ?>/assets/css/beheer.css">
 <meta name="robots" content="noindex">
+<script src="<?= APP_URL ?>/assets/js/klik.js?v=<?= @filemtime(__DIR__.'/../assets/js/klik.js') ?>"></script>
 </head>
 <body>
 <div class="login-wrapper">
   <div class="login-kaart bh-ssofout">
     <div class="login-logo">
       <img src="<?= APP_URL ?>/assets/img/logo.png" alt="Paal 13"
-           onerror="this.onerror=null;this.src='<?= APP_URL ?>/assets/img/logo.svg'">
+           data-terugval="<?= APP_URL ?>/assets/img/logo.svg">
       <h1>Inloggen via SSO mislukt</h1>
     </div>
     <div class="ds-melding ds-melding-error" role="alert"><?= h($fout) ?></div>

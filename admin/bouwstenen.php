@@ -178,7 +178,7 @@ require __DIR__ . '/_tabel.php';
   </p>
   <p class="bh-bs-knopregel">
     <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm"
-            onclick="correctieOpen(1, 28, 'Jacob Donker')">Bewerkpaneel openen</button>
+            data-klik="correctieOpen(1, 28, 'Jacob Donker')">Bewerkpaneel openen</button>
   </p>
 </div>
 

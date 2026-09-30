@@ -418,7 +418,7 @@ require __DIR__ . '/_kop.php';
   </div>
 
 <?php else: ?>
-  <form method="POST" class="ond<?= $is_ouder ? ' ouder' : '' ?>" id="ondForm" onsubmit="return ondValideer(this)" novalidate>
+  <form method="POST" class="ond<?= $is_ouder ? ' ouder' : '' ?>" id="ondForm" data-verzend="return ondValideer(this)" novalidate>
     <?= csrf_input() ?>
     <input type="hidden" name="terug" value="<?= h(portaal_terug_param()) ?>">
 

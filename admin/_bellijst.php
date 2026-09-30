@@ -223,16 +223,16 @@ foreach ($bel_lijst as $_k) if ((int)$_k['sol_id'] === $_open) $_huidig = $_k;
           <span>Gebeld op <?= h(datum_nl(substr((string)$_b['gebeld_op'], 0, 10))) ?>. Nog niet doorgevoerd.</span>
         </div>
         <button type="button" class="ds-btn ds-btn-primair" data-doorvoer-tekst="<?= h($_doorvoer_tekst($_door)) ?>"
-                onclick="doorvoerenEen(<?= $_id ?>, <?= $_door ? 'true' : 'false' ?>, this.dataset.doorvoerTekst)">
+                data-klik="doorvoerenEen(<?= $_id ?>, <?= $_door ? 'true' : 'false' ?>, this.dataset.doorvoerTekst)">
           <?= $_door ? 'Doorzetten naar trainingsweekend' : 'Afwijzen doorvoeren' ?>
         </button>
-        <button type="button" class="ds-btn ds-btn-zacht" onclick="gebeldWissen(<?= $_id ?>)">
+        <button type="button" class="ds-btn ds-btn-zacht" data-klik="gebeldWissen(<?= $_id ?>)">
           Toch niet gebeld
         </button>
       <?php elseif ($_besl === 'twijfel'): ?>
-        <button type="button" class="ds-btn ds-btn-primair" onclick="gebeldZet(<?= $_id ?>, false, 'door')">Gebeld — toch door</button>
-        <button type="button" class="ds-btn ds-btn-secundair" onclick="gebeldZet(<?= $_id ?>, false, 'niet')">Gebeld — niet door</button>
-        <button type="button" class="ds-btn ds-btn-zacht" onclick="volgendeBellen(<?= $_id ?>)">Overslaan</button>
+        <button type="button" class="ds-btn ds-btn-primair" data-klik="gebeldZet(<?= $_id ?>, false, 'door')">Gebeld — toch door</button>
+        <button type="button" class="ds-btn ds-btn-secundair" data-klik="gebeldZet(<?= $_id ?>, false, 'niet')">Gebeld — niet door</button>
+        <button type="button" class="ds-btn ds-btn-zacht" data-klik="volgendeBellen(<?= $_id ?>)">Overslaan</button>
       <?php else: ?>
         <?php // Eén knop; het vinkje bepaalt of het meteen doorgaat. Standaard uit (besluit Lucas, 2.128.3):
               // doorvoeren is een bewuste tweede stap, per persoon of "alle gebelde doorvoeren". ?>
@@ -241,15 +241,15 @@ foreach ($bel_lijst as $_k) if ((int)$_k['sol_id'] === $_open) $_huidig = $_k;
           <span>Meteen doorvoeren. <?= h($_doorvoer_tekst($_door)) ?></span>
         </label>
         <button type="button" class="ds-btn ds-btn-primair" data-doorvoer-tekst="<?= h($_doorvoer_tekst($_door)) ?>"
-                onclick="gebeldZet(<?= $_id ?>, document.getElementById('meteen-<?= $_id ?>').checked, '', this.dataset.doorvoerTekst)">Gebeld</button>
-        <button type="button" class="ds-btn ds-btn-zacht" onclick="volgendeBellen(<?= $_id ?>)">Overslaan</button>
+                data-klik="gebeldZet(<?= $_id ?>, @meteen-<?= $_id ?>.checked, '', this.dataset.doorvoerTekst)">Gebeld</button>
+        <button type="button" class="ds-btn ds-btn-zacht" data-klik="volgendeBellen(<?= $_id ?>)">Overslaan</button>
       <?php endif; ?>
     </footer>
   </section>
   <?php endif; ?>
 </div>
 
-<script>
+<script nonce="<?= h(csp_nonce()) ?>">
 // window.CSRF, geen const: layout_bottom.php declareert CSRF ook, en een tweede const
 // brak dat hele script af (SyntaxError) — thema, meldingen en fase wijzigen deden niets.
 window.CSRF = window.CSRF || '<?= csrf_token() ?>';

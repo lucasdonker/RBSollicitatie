@@ -19,7 +19,7 @@ $_kv   = (string)($ontv['kanaal_voorkeur'] ?? 'whatsapp');
 ?>
 <label class="bh-ontvrij">
   <input type="checkbox" name="ontvangers[]" value="<?= (int)$ontv_id ?>"
-         class="ontv-cb fase-<?= h($ontv_groep) ?>" onchange="updateTeller()"
+         class="ontv-cb fase-<?= h($ontv_groep) ?>" data-wijzig="updateTeller()"
          data-naam="<?= h($_naam) ?>"
          data-zoek="<?= h(mb_strtolower($_naam . ' ' . (string)($ontv['email'] ?? ''))) ?>"
          data-fase="<?= h($ontv_label) ?>"

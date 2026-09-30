@@ -200,7 +200,7 @@ require __DIR__ . '/_tabs.php';
             </a>
           <?php elseif (!empty($o['token']) && $mag_bewerken): ?>
             <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm"
-                    onclick="kopieerOndertekenlink('<?= h((string)$o['token']) ?>', this)">
+                    data-klik="kopieerOndertekenlink('<?= h((string)$o['token']) ?>', this)">
               Link kopiëren
             </button>
           <?php else: ?>

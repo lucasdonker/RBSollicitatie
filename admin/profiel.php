@@ -225,7 +225,7 @@ require __DIR__ . '/layout_top.php';
         <span>Een donker kleurenpalet. Dit wordt per apparaat onthouden, niet op je account.</span>
       </span>
       <button type="button" class="bh-schakelaar" id="themeSwitch" role="switch" aria-checked="false"
-              aria-label="Donker thema" onclick="toggleTheme()">
+              aria-label="Donker thema" data-klik="toggleTheme()">
         <span class="bh-schakelaar-bol" id="themeDot"></span>
       </button>
     </div>

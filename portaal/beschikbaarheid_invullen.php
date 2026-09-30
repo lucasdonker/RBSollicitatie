@@ -155,15 +155,15 @@ require __DIR__ . '/_kop.php';
     <div class="wiz1-voorbeelden">
       <span class="wiz1-vb-lbl">Voorbeelden om te beginnen</span>
       <div class="wiz1-chips">
-        <button type="button" class="wiz1-chip" onclick="beschAiChip(this)">Alleen weekenden</button>
-        <button type="button" class="wiz1-chip" onclick="beschAiChip(this)">Hele juli en augustus</button>
-        <button type="button" class="wiz1-chip" onclick="beschAiChip(this)">Niet in de bouwvak</button>
+        <button type="button" class="wiz1-chip" data-klik="beschAiChip(this)">Alleen weekenden</button>
+        <button type="button" class="wiz1-chip" data-klik="beschAiChip(this)">Hele juli en augustus</button>
+        <button type="button" class="wiz1-chip" data-klik="beschAiChip(this)">Niet in de bouwvak</button>
       </div>
     </div>
-    <button type="button" class="wiz1-zelf" onclick="wizNaarFormulier()">Liever zelf invullen met vinkjes</button>
+    <button type="button" class="wiz1-zelf" data-klik="wizNaarFormulier()">Liever zelf invullen met vinkjes</button>
   </div>
   <div class="wiz1-voet">
-    <button type="button" id="beschAiKnop" class="wiz1-knop" onclick="beschAiVerwerk()">Maak er een planning van <?= icoon('pijl-rechts', 18) ?></button>
+    <button type="button" id="beschAiKnop" class="wiz1-knop" data-klik="beschAiVerwerk()">Maak er een planning van <?= icoon('pijl-rechts', 18) ?></button>
   </div>
   <div id="beschAiStatus" class="besch-hint" style="margin-top:8px;text-align:center"></div>
 </div>
@@ -189,11 +189,11 @@ require __DIR__ . '/_kop.php';
     <label class="wiz3-aanvullen-lbl">Nog iets aanvullen?</label>
     <div class="wiz3-aanvullen-rij">
       <input type="text" id="beschAiAanvul" placeholder='Bijv. "week 33 kan ik ook niet"'>
-      <button type="button" class="wiz3-aanvul-knop" onclick="beschAiAanvullen()" aria-label="Verstuur"><?= icoon('pijl-rechts', 18) ?></button>
+      <button type="button" class="wiz3-aanvul-knop" data-klik="beschAiAanvullen()" aria-label="Verstuur"><?= icoon('pijl-rechts', 18) ?></button>
     </div>
   </div>
-  <button type="button" class="wiz1-knop" style="margin-top:14px" onclick="wizOvernemen()">Klopt, dit overnemen</button>
-  <button type="button" class="wiz3-zelf-knop" style="margin-top:10px" onclick="wizNaarFormulier()">Zelf aanpassen in het formulier</button>
+  <button type="button" class="wiz1-knop" style="margin-top:14px" data-klik="wizOvernemen()">Klopt, dit overnemen</button>
+  <button type="button" class="wiz3-zelf-knop" style="margin-top:10px" data-klik="wizNaarFormulier()">Zelf aanpassen in het formulier</button>
 </div>
 <?php endif; ?>
 
@@ -203,11 +203,11 @@ require __DIR__ . '/_kop.php';
   <input type="hidden" name="terug" value="<?= h(portaal_terug_param()) ?>">
   <?php require __DIR__ . '/_beschikbaarheid_velden.php'; ?>
   <div style="margin-top:20px">
-    <button type="submit" class="ds-btn ds-btn-primair ds-btn-vol" onclick="return beschValideer()"><?= icoon('vink', 16) ?> Beschikbaarheid opslaan</button>
+    <button type="submit" class="ds-btn ds-btn-primair ds-btn-vol" data-klik="return beschValideer()"><?= icoon('vink', 16) ?> Beschikbaarheid opslaan</button>
   </div>
 </form>
 <?php if ($ai_aan): ?>
-  <button type="button" id="beschOpnieuwSlim" class="wiz1-zelf" style="<?= $besch_start === 'formulier' ? '' : 'display:none;' ?>width:100%;margin-top:12px" onclick="wizNaarStart()"><?= icoon('bliksem', 14) ?> Opnieuw slim invullen met tekst</button>
+  <button type="button" id="beschOpnieuwSlim" class="wiz1-zelf" style="<?= $besch_start === 'formulier' ? '' : 'display:none;' ?>width:100%;margin-top:12px" data-klik="wizNaarStart()"><?= icoon('bliksem', 14) ?> Opnieuw slim invullen met tekst</button>
 <?php endif; ?>
 
 <?php
@@ -226,7 +226,7 @@ require __DIR__ . '/_kop.php';
       ];
   }
 ?>
-<script>
+<script nonce="<?= h(csp_nonce()) ?>">
   window.BESCH_CFG = {
     weken:   <?= json_encode($week_labels, JSON_UNESCAPED_UNICODE) ?>,
     datums:  <?= json_encode($week_datums, JSON_UNESCAPED_UNICODE) ?>,

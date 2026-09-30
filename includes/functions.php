@@ -155,6 +155,18 @@ function site_toegestane_origins(): array {
 }
 
 /**
+ * Eén willekeurige nonce per verzoek voor inline scriptblokken (CSP: script-src 'nonce-…').
+ * Schrijf een inline script als: script-tag met nonce="<?= h(csp_nonce()) ?>". Zonder nonce draait
+ * het niet — met opzet. Inline gebeurtenissen (onclick en dergelijke) bestaan niet meer: die lopen
+ * via data-klik / data-wijzig / … (assets/js/klik.js).
+ */
+function csp_nonce(): string {
+    static $nonce = null;
+    if ($nonce === null) $nonce = rtrim(strtr(base64_encode(random_bytes(18)), '+/', '-_'), '=');
+    return $nonce;
+}
+
+/**
  * Beveiligingsheaders voor het beheer en het portaal. Eén keer per verzoek, vóór de eerste uitvoer;
  * de eerste aanroep wint (sessie_start roept dit ook aan). Landingspagina's zetten hun eigen,
  * strengere CSP (includes/paginas/render.php) en hebben geen sessie, dus die komen hier niet.
@@ -177,10 +189,13 @@ function security_headers(?array $frame_ancestors = null): void {
         $ancestors = "'self'";
         header('X-Frame-Options: SAMEORIGIN');
     }
-    // Inline scripts en stijlen komen in het beheer en portaal nog veel voor (onclick, style=""),
-    // dus 'unsafe-inline' blijft; het echte slot is dat scripts en verbindingen alleen van de eigen
-    // host mogen komen. Camera-upload (blob:) en het handtekening-canvas (data:) hebben img-src nodig.
-    header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; "
+    // Scripts: alleen van de eigen host of een inline blok met de nonce van dit verzoek. Geen
+    // 'unsafe-inline' meer — onclick="…" en dergelijke werken dus niet (NIS2: geïnjecteerde HTML kan geen
+    // script uitvoeren); gebeurtenissen lopen via data-klik (assets/js/klik.js).
+    // Stijlen houden 'unsafe-inline': style="--w: 42%" voor data-waarden (zie CLAUDE.md). CSS kan geen
+    // code uitvoeren; het risico daarvan is klein en bewust geaccepteerd.
+    // Camera-upload (blob:) en het handtekening-canvas (data:) hebben img-src nodig.
+    header("Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-" . csp_nonce() . "'; "
          // Lettertypen komen van de eigen host (assets/fonts): geen Google Fonts, dus geen IP naar Google.
          . "style-src 'self' 'unsafe-inline'; font-src 'self' data:; "
          . "img-src 'self' data: blob: https:; connect-src 'self'; frame-ancestors $ancestors; "
@@ -210,7 +225,28 @@ function sessie_start(): void {
 }
 
 // ── Beheerder auth ────────────────────────────────────────────
-function is_ingelogd(): bool { sessie_start(); return !empty($_SESSION['bhd_id']); }
+/**
+ * Na zoveel seconden zonder verzoek is een beheersessie verlopen, ook al leeft de cookie acht
+ * uur (NIS2: een onbeheerde laptop met het beheer open). Twee uur: een selectiedag of gesprekkenronde
+ * met pauzes past erin; wie langer weg is, logt opnieuw in (met SSO is dat één klik).
+ * Het portaal valt hier bewust buiten: dat gaat over de eigen gegevens van één sollicitant.
+ */
+const BEHEER_INACTIEF_SECONDEN = 7200;
+
+function is_ingelogd(): bool {
+    sessie_start();
+    if (empty($_SESSION['bhd_id'])) return false;
+    $laatst = (int)($_SESSION['bhd_actief'] ?? 0);
+    if ($laatst > 0 && time() - $laatst > BEHEER_INACTIEF_SECONDEN) {
+        if (function_exists('audit_log')) audit_log('uitgelogd', 'beheerder', (int)$_SESSION['bhd_id'], ['reden' => 'inactief']);
+        unset($_SESSION['bhd_id'], $_SESSION['bhd_naam'], $_SESSION['bhd_email'], $_SESSION['bhd_rol'], $_SESSION['bhd_via'], $_SESSION['bhd_actief']);
+        session_regenerate_id(true);
+        flash('info', 'Je was twee uur niet actief in het beheer en bent daarom uitgelogd. Log opnieuw in om verder te gaan.');
+        return false;
+    }
+    $_SESSION['bhd_actief'] = time();
+    return true;
+}
 
 function vereist_login(): void {
     if (!is_ingelogd()) { header('Location: ' . APP_URL . '/admin/login.php?terug=' . urlencode($_SERVER['REQUEST_URI'] ?? '')); exit; }
@@ -314,7 +350,7 @@ function login_beheerder(array $b, string $via = 'wachtwoord'): void {
     session_regenerate_id(true);
     $_SESSION['bhd_id'] = $b['id']; $_SESSION['bhd_naam'] = $b['naam'];
     $_SESSION['bhd_email'] = $b['email']; $_SESSION['bhd_rol'] = $b['rol'];
-    $_SESSION['bhd_via'] = $via; $_SESSION['_t'] = time();
+    $_SESSION['bhd_via'] = $via; $_SESSION['_t'] = time(); $_SESSION['bhd_actief'] = time();
     try { db()->prepare("UPDATE beheerders SET laatste_login = NOW() WHERE id = ?")->execute([$b['id']]); } catch (Exception $e) {}
     if (function_exists('audit_log')) audit_log('ingelogd', 'beheerder', (int)$b['id'], ['via' => $via]);
 }
@@ -653,6 +689,27 @@ function authentik_actief(): bool {
 
 // Alias voor backwards compat
 function authentik_geconfigureerd(): bool { return authentik_actief(); }
+
+/**
+ * PKCE (RFC 7636) voor de OIDC-login bij Authentik, beheer en portaal. Een onderschepte
+ * autorisatiecode is zonder de verifier in deze sessie waardeloos. Authentik ondersteunt S256;
+ * voor een client met secret is het extra, maar het kost niets (NIS2: defense in depth).
+ * @param string $sleutel  sessiesleutel, per ingang eigen ('sso_pkce' / 'portaal_sso_pkce')
+ * @return array  extra parameters voor de authorize-URL
+ */
+function oidc_pkce_start(string $sleutel): array {
+    $verifier = rtrim(strtr(base64_encode(random_bytes(48)), '+/', '-_'), '=');
+    $_SESSION[$sleutel] = $verifier;
+    $challenge = rtrim(strtr(base64_encode(hash('sha256', $verifier, true)), '+/', '-_'), '=');
+    return ['code_challenge' => $challenge, 'code_challenge_method' => 'S256'];
+}
+
+/** De verifier voor de tokenaanvraag (één keer bruikbaar). Leeg = geen PKCE gestart. */
+function oidc_pkce_verifier(string $sleutel): string {
+    $v = (string)($_SESSION[$sleutel] ?? '');
+    unset($_SESSION[$sleutel]);
+    return $v;
+}
 
 /**
  * Check via de Authentik API of een email bestaat. Vereist instelling 'authentik.api_token'.

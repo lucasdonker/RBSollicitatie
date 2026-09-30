@@ -25,7 +25,7 @@ het technisch beheer zijn er aparte handleidingen.
 ## Inhoud
 1. [Aan de slag](#aan-de-slag)
 2. [Het seizoen in stappen](#het-seizoen-in-stappen)
-3. [Inloggen en rollen](#inloggen-en-rollen)
+3. [Inloggen en rollen](#inloggen-en-rollen) (met [Veilig werken](#veilig-werken))
 4. [Vandaag](#vandaag)
 5. [Seizoen opzetten](#seizoen-opzetten)
 6. [Landingspagina's](#landingspaginas)
@@ -408,6 +408,22 @@ Klik op je naam voor **Mijn profiel**:
   beheerder.
 - **Voorkeuren**: de schakelaar **Donker thema**. Dit wordt per apparaat onthouden, niet op je
   account. Zonder keuze volgt het beheer de instelling van je apparaat.
+
+### Veilig werken
+
+In het beheer staan gegevens van jongeren, soms met gezondheidsinformatie. Vijf afspraken:
+
+1. **Codes en wachtwoorden deel je nooit.** Het systeem, het bestuur of de technisch beheerder vraagt
+   nooit om je code, per mail, telefoon of WhatsApp. Vraagt iemand erom, meld het dan.
+2. **Klik niet op een inloglink die je niet verwacht.** Twijfel je, ga dan zelf naar het adres van
+   het beheer.
+3. **Laat het beheer niet open op een gedeelde computer.** Log uit met **Uitloggen** onderin. Na twee
+   uur zonder activiteit log je vanzelf uit; je moet dan opnieuw inloggen.
+4. **Exports en downloads** (Excel, pdf's) horen niet op een privé-USB-stick of in je mail. Wis ze
+   als je klaar bent.
+5. **Iets vreemds gezien?** Een sollicitant die je niet kent, een wijziging die je niet deed, of een
+   bericht dat je niet verstuurde: meld het meteen bij het bestuur. Het kan een datalek zijn, en
+   daarvoor geldt een meldtermijn van 72 uur.
 
 ---
 

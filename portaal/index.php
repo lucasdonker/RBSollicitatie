@@ -334,7 +334,7 @@ require __DIR__ . '/_kop.php';
       <br><a href="<?= APP_URL ?>/portaal/"><?= icoon('terug', 14) ?> Ander e-mailadres</a>
     </form>
   </div>
-  <script>
+  <script nonce="<?= h(csp_nonce()) ?>">
   (function () {
     var inp = document.querySelectorAll('.code-cijfer'), verborgen = document.getElementById('codeHidden');
     var form = document.getElementById('codeForm'), knop = document.getElementById('submitBtn'), foutPlek = document.getElementById('codeFout');

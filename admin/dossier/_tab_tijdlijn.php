@@ -36,7 +36,7 @@ $_s = $tab_dossier['sol'];
         <textarea id="nieuwe-notitie-<?= (int)$_s['id'] ?>" class="ds-textarea" rows="2" aria-label="Nieuwe notitie"
                   placeholder="Notitie plaatsen…"></textarea>
         <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm"
-                onclick="notitieToevoegen(<?= (int)$_s['id'] ?>)">Plaatsen</button>
+                data-klik="notitieToevoegen(<?= (int)$_s['id'] ?>)">Plaatsen</button>
       </div>
       <?php endif; ?>
     </section>
@@ -61,7 +61,7 @@ $_s = $tab_dossier['sol'];
   </aside>
 </div>
 
-<script>
+<script nonce="<?= h(csp_nonce()) ?>">
   document.addEventListener('DOMContentLoaded', function () {
     if (window.laadTimeline) laadTimeline(<?= (int)$_s['id'] ?>);
     if (window.laadNotities) laadNotities(<?= (int)$_s['id'] ?>);

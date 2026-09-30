@@ -500,7 +500,7 @@ require __DIR__ . '/layout_top.php';
     <?php endif; ?>
   </nav>
 
-  <script>
+  <script nonce="<?= h(csp_nonce()) ?>">
   /* Filtert de tabbladenlijst terwijl je typt. Een groepskop verdwijnt zodra er
      geen zichtbaar tabblad meer onder staat — anders blijven er koppen zweven
      boven niets. Zonder JavaScript staat de volledige lijst er gewoon. */
@@ -1368,9 +1368,9 @@ require __DIR__ . '/layout_top.php';
       </p>
 
       <div id="postenLijst"></div>
-      <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="postToevoegen()">+ Post toevoegen</button>
+      <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" data-klik="postToevoegen()">+ Post toevoegen</button>
 
-      <form method="POST" class="bh-post-opslaan" onsubmit="return bezettingSerialiseer()">
+      <form method="POST" class="bh-post-opslaan" data-verzend="return bezettingSerialiseer()">
         <?= csrf_input() ?>
         <input type="hidden" name="actie" value="bezetting_opslaan">
         <input type="hidden" name="sjablonen_json" id="sjablonenJson">
@@ -1384,7 +1384,7 @@ require __DIR__ . '/layout_top.php';
     </div>
   </div>
 
-  <script>
+  <script nonce="<?= h(csp_nonce()) ?>">
   const COMP_CATS = <?= json_encode(array_map(fn($c) => ['label'=>$c['label'], 'groepen'=>$c['groepen'] ?? []], $comp_map)) ?>;
   let SJABLONEN = <?= json_encode($sjab) ?>;
 
@@ -1410,28 +1410,48 @@ require __DIR__ . '/layout_top.php';
       const div = document.createElement('div');
       div.className = 'bh-post';
       let rollenHtml = '';
+      // Geen inline handlers (CSP): de velden dragen data-post/data-rol/data-veld; één luisteraar
+      // op #postenLijst (hieronder) schrijft de waarde terug in SJABLONEN.
+      const pa = ' data-post="'+esc(ps)+'"';
       (post.rollen || []).forEach((r, i) => {
+        const ra = pa + ' data-rol="'+i+'"';
         rollenHtml +=
           '<div class="bh-post-rol">' +
-            '<input type="text" value="'+(r.label||'').replace(/"/g,'&quot;')+'" placeholder="Rol" oninput="SJABLONEN[\''+ps+'\'].rollen['+i+'].label=this.value" class="bh-post-rolnaam">' +
-            '<select onchange="SJABLONEN[\''+ps+'\'].rollen['+i+'].categorie=this.value;SJABLONEN[\''+ps+'\'].rollen['+i+'].min_rang=1;render()" class="bh-post-categorie">'+catOpties(r.categorie)+'</select>' +
-            '<select onchange="SJABLONEN[\''+ps+'\'].rollen['+i+'].min_rang=parseInt(this.value)" class="bh-post-rang">'+rangOpties(r.categorie, r.min_rang)+'</select>' +
-            '<input type="number" min="1" max="20" value="'+(r.aantal||1)+'" oninput="SJABLONEN[\''+ps+'\'].rollen['+i+'].aantal=parseInt(this.value)||1" title="Aantal personen" class="bh-post-aantal">' +
-            '<button type="button" class="ds-btn ds-btn-secundair ds-btn-sm bh-post-weg" onclick="rolWeg(\''+ps+'\','+i+')">Verwijderen</button>' +
+            '<input type="text" value="'+esc(r.label||'')+'" placeholder="Rol" aria-label="Naam van de rol"'+ra+' data-veld="label" class="bh-post-rolnaam">' +
+            '<select'+ra+' data-veld="categorie" aria-label="Competentie" class="bh-post-categorie">'+catOpties(r.categorie)+'</select>' +
+            '<select'+ra+' data-veld="min_rang" aria-label="Minimaal niveau" class="bh-post-rang">'+rangOpties(r.categorie, r.min_rang)+'</select>' +
+            '<input type="number" min="1" max="20" value="'+(parseInt(r.aantal)||1)+'"'+ra+' data-veld="aantal" title="Aantal personen" aria-label="Aantal personen" class="bh-post-aantal">' +
+            '<button type="button" class="ds-btn ds-btn-secundair ds-btn-sm bh-post-weg" data-klik="rolWeg(this.dataset.post, '+i+')"'+pa+'>Verwijderen</button>' +
           '</div>';
       });
       div.innerHTML =
         '<div class="bh-post-kop">' +
-          '<input type="text" value="'+(post.icoon||'').replace(/"/g,'&quot;')+'" oninput="SJABLONEN[\''+ps+'\'].icoon=this.value" class="bh-post-icoon">' +
-          '<input type="text" value="'+(post.naam||'').replace(/"/g,'&quot;')+'" oninput="SJABLONEN[\''+ps+'\'].naam=this.value" placeholder="Postnaam" class="bh-post-naam">' +
-          '<label class="bh-post-regel"><input type="checkbox" '+(post.regel_geen_twee_aspiranten?'checked':'')+' onchange="SJABLONEN[\''+ps+'\'].regel_geen_twee_aspiranten=this.checked"> nooit 2 aspiranten samen</label>' +
-          '<button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="postWeg(\''+ps+'\')">Post verwijderen</button>' +
+          '<input type="text" value="'+esc(post.icoon||'')+'"'+pa+' data-veld="icoon" aria-label="Icoon" class="bh-post-icoon">' +
+          '<input type="text" value="'+esc(post.naam||'')+'"'+pa+' data-veld="naam" placeholder="Postnaam" aria-label="Postnaam" class="bh-post-naam">' +
+          '<label class="bh-post-regel"><input type="checkbox" '+(post.regel_geen_twee_aspiranten?'checked':'')+pa+' data-veld="regel_geen_twee_aspiranten"> nooit 2 aspiranten samen</label>' +
+          '<button type="button" class="ds-btn ds-btn-secundair ds-btn-sm"'+pa+' data-klik="postWeg(this.dataset.post)">Post verwijderen</button>' +
         '</div>' +
         rollenHtml +
-        '<button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="rolToevoegen(\''+ps+'\')">+ Rol</button>';
+        '<button type="button" class="ds-btn ds-btn-secundair ds-btn-sm"'+pa+' data-klik="rolToevoegen(this.dataset.post)">+ Rol</button>';
       box.appendChild(div);
     }
   }
+  // Waarde van een veld terug in SJABLONEN (vervangt de oninput/onchange-regels).
+  function bezettingVeld(el) {
+    const post = SJABLONEN[el.dataset.post];
+    if (!post || !el.dataset.veld) return;
+    const doel = el.dataset.rol !== undefined ? post.rollen[parseInt(el.dataset.rol)] : post;
+    if (!doel) return;
+    const v = el.dataset.veld;
+    if (el.type === 'checkbox')       doel[v] = el.checked;
+    else if (v === 'aantal')          doel[v] = parseInt(el.value) || 1;
+    else if (v === 'min_rang')        doel[v] = parseInt(el.value);
+    else                              doel[v] = el.value;
+    // Andere competentie = andere niveaus: opnieuw tekenen met niveau 1.
+    if (v === 'categorie') { doel.min_rang = 1; render(); }
+  }
+  document.getElementById('postenLijst').addEventListener('input', e => { if (e.target.dataset.veld && e.target.type !== 'checkbox' && e.target.tagName !== 'SELECT') bezettingVeld(e.target); });
+  document.getElementById('postenLijst').addEventListener('change', e => { if (e.target.dataset.veld) bezettingVeld(e.target); });
   function rolToevoegen(ps) {
     const eersteCat = Object.keys(COMP_CATS)[0] || 'lifeguard';
     SJABLONEN[ps].rollen = SJABLONEN[ps].rollen || [];
@@ -1897,7 +1917,7 @@ require __DIR__ . '/layout_top.php';
         <div class="bh-inst-sleutelrij">
           <input type="text" readonly value="<?= h($api_sleutel) ?>" id="apiSleutel"
                  class="bh-inst-sleutel">
-          <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('apiSleutel').value);this.textContent='Gekopieerd!'">Kopieer</button>
+          <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" data-klik="P13Klik.kopieer('#apiSleutel', this)">Kopieer</button>
         </div>
         <p class="bh-inst-uitleg bh-inst-uitleg-10">
           Zet deze sleutel in de WordPress-plugin. Houd 'm geheim — wie de sleutel heeft, kan aanmeldingen versturen.
@@ -1967,7 +1987,7 @@ require __DIR__ . '/layout_top.php';
         </label>
 
         <label for="smsGateway" class="ds-label">Gateway (verzendmethode)</label>
-        <select name="sms_gateway" id="smsGateway" onchange="smsGatewayToon()" class="bh-sms-gateway">
+        <select name="sms_gateway" id="smsGateway" data-wijzig="smsGatewayToon()" class="bh-sms-gateway">
           <option value="">— kies —</option>
           <option value="eigen_telefoon" <?= $sms_gw==='eigen_telefoon'?'selected':'' ?>>Eigen telefoon / VoIP (goedkoopst)</option>
           <option value="http_gateway" <?= $sms_gw==='http_gateway'?'selected':'' ?>>Generieke HTTP-gateway</option>
@@ -2096,7 +2116,7 @@ require __DIR__ . '/layout_top.php';
     </div>
   </div>
 
-  <script>
+  <script nonce="<?= h(csp_nonce()) ?>">
     function smsGatewayToon() {
       var gw = document.getElementById('smsGateway').value;
       document.querySelectorAll('.sms-veld').forEach(function(el){
@@ -2111,7 +2131,7 @@ require __DIR__ . '/layout_top.php';
 </div>
 </div>
 
-<script>
+<script nonce="<?= h(csp_nonce()) ?>">
 // Loon-voorbeeld live bijwerken: uurloon × uren × factor lifeguard × (1 + VT), met de getallen van
 // het gekozen jaar (data-* op de tabel), dus hetzelfde als loon_dagloon() op de server.
 document.addEventListener('input', function (e) {

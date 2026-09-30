@@ -42,7 +42,7 @@ if ($_iv) {
         <?php if ($_mag_bewerken): ?>
           <label class="bh-veldlabel" for="kanaal-<?= (int)$_s['pid'] ?>">Berichten via</label>
           <select id="kanaal-<?= (int)$_s['pid'] ?>" class="ds-select bh-veld-smal"
-                  onchange="kanaalVoorkeurZet(<?= (int)$_s['pid'] ?>, this.value, this)">
+                  data-wijzig="kanaalVoorkeurZet(<?= (int)$_s['pid'] ?>, this.value, this)">
             <?php foreach (['whatsapp' => 'WhatsApp', 'sms' => 'Sms', 'email' => 'Alleen e-mail'] as $_k => $_l): ?>
               <option value="<?= h($_k) ?>"<?= ($_s['kanaal_voorkeur'] ?? '') === $_k ? ' selected' : '' ?>><?= h($_l) ?></option>
             <?php endforeach; ?>
@@ -134,7 +134,7 @@ if ($_iv) {
         <h2>Competenties</h2>
         <?php if ($_mag_bewerken): ?>
           <button type="button" class="bh-kaartkop-link bh-kaartkop-linkknop"
-                  onclick="competentieVerversen(<?= (int)$_s['id'] ?>)">Synchroniseren</button>
+                  data-klik="competentieVerversen(<?= (int)$_s['id'] ?>)">Synchroniseren</button>
         <?php endif; ?>
       </div>
       <div id="compChips-<?= (int)$_s['id'] ?>">
@@ -162,7 +162,7 @@ if ($_iv) {
           <div class="bh-notitie-nieuw bh-comp-koppelrij">
             <input type="text" class="ds-input" id="compUsername-<?= (int)$_s['id'] ?>" placeholder="gebruikersnaam">
             <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm"
-                    onclick="competentieKoppelen(<?= (int)$_s['id'] ?>)">Koppelen</button>
+                    data-klik="competentieKoppelen(<?= (int)$_s['id'] ?>)">Koppelen</button>
           </div>
         </div>
       <?php endif; ?>
@@ -271,7 +271,7 @@ if ($_iv) {
                   // (optionele) reden; die komt als notitie in de tijdlijn. ?>
             <button type="button" class="bh-fasechip ds-fase-<?= h(fase_kleur($_f)) ?>"
                     data-bevestig="<?= h(bh_fase_bevestig_tekst($_f, (string)($_s['voornaam'] ?? ''))) ?>"
-                    onclick="fasWijzigen(<?= (int)$_s['id'] ?>, '<?= h($_f) ?>', '<?= h(fase_label($_f)) ?>', <?= bh_fase_afwijkend((string)$_s['fase'], $_f) ? 'true' : 'false' ?>, this.dataset.bevestig, <?= $_f === 'afgewezen' ? 'true' : 'false' ?>)">
+                    data-klik="fasWijzigen(<?= (int)$_s['id'] ?>, '<?= h($_f) ?>', '<?= h(fase_label($_f)) ?>', <?= bh_fase_afwijkend((string)$_s['fase'], $_f) ? 'true' : 'false' ?>, this.dataset.bevestig, <?= $_f === 'afgewezen' ? 'true' : 'false' ?>)">
               <?= h(fase_label_kort($_f, 'mini')) ?>
             </button>
           <?php else: ?>
@@ -304,7 +304,7 @@ if ($_iv) {
             <span class="bh-doc-datum"><?= $_r['done'] ? 'Afgerond' : ($_r['wacht'] ? 'Wacht op ouder' : 'Open') ?></span>
             <?php if (!$_r['done'] && $_r['token'] && $_mag_bewerken): ?>
               <button type="button" class="bh-doc-actie"
-                      onclick="kopieerOndertekenlink('<?= h($_r['token']) ?>', this)">Link kopiëren</button>
+                      data-klik="kopieerOndertekenlink('<?= h($_r['token']) ?>', this)">Link kopiëren</button>
             <?php endif; ?>
           </li>
         <?php endforeach; ?>
@@ -332,7 +332,7 @@ if ($_iv) {
         <textarea id="nieuwe-notitie-<?= (int)$_s['id'] ?>" class="ds-textarea" rows="2"
                   aria-label="Nieuwe notitie" placeholder="Notitie plaatsen…"></textarea>
         <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm"
-                onclick="notitieToevoegen(<?= (int)$_s['id'] ?>)">Plaatsen</button>
+                data-klik="notitieToevoegen(<?= (int)$_s['id'] ?>)">Plaatsen</button>
       </div>
       <?php endif; ?>
     </section>
@@ -340,7 +340,7 @@ if ($_iv) {
     <?php // De tijdlijn staat op zijn eigen tabblad (Tijdlijn); hier stond hij dubbel. ?>
     <a class="bh-kaartkop-link" href="<?= h(dossier_url((int)$_s['id'], 'tijdlijn')) ?>">Tijdlijn bekijken <?= icoon('chevron', 14) ?></a>
 
-    <script>
+    <script nonce="<?= h(csp_nonce()) ?>">
       // Haalt de inhoud op na het laden; stond eerder alleen in het paneel, dat hem zelf
       // aanriep nadat innerHTML de scripts had ingeslikt.
       document.addEventListener('DOMContentLoaded', function () {
