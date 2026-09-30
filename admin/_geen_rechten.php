@@ -18,9 +18,7 @@ $geen_uitleg = $geen_uitleg ?? null;
 
 $_labels = function_exists('rechten_modules') ? rechten_modules() : [];
 $_titel  = $_labels[$geen_module]['label'] ?? $geen_module;
-$_rollen = ['begeleider' => 'begeleider', 'bestuur' => 'bestuur',
-            'penningmeester' => 'penningmeester', 'admin' => 'beheerder'];
-$_rol    = $_rollen[$geen_rol] ?? $geen_rol;
+$_rol    = $geen_rol !== '' && function_exists('rol_naam') ? mb_strtolower(rol_naam($geen_rol)) : $geen_rol;
 // Staat de hele module uit, dan ligt het niet aan de rol: zeg dat, en waar hij aan kan.
 $_module_uit = function_exists('module_recht_actief') && $geen_module !== '' && !module_recht_actief($geen_module);
 if ($_module_uit) {

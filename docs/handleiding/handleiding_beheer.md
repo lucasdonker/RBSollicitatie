@@ -88,6 +88,7 @@ beheerder kan ze per rol aanpassen (zie [Beheerders en rechten](#beheerders-en-r
 | Rol (zo staat hij onderin de zijbalk) | Authentik-groep | Wat je doet | Wat je in het menu ziet |
 |---|---|---|---|
 | **Begeleider** | app-sol-begeleider | Op de selectiedag inchecken en beoordelen (cijfers en observaties), in het trainingsweekend aanwezigheid afvinken en observaties noteren. Geen toegang tot persoonsgegevens of dossiers. | Vandaag, Selectiedag, Trainingsweekend, Dekking |
+| **Planner** | app-sol-planner | Het rooster maken: beschikbaarheid en dekking bekijken. Alleen lezen, geen lonen en geen dossiers. | Vandaag, Beschikbaarheid, Dekking |
 | **Bestuur** | app-sol-bestuur | De hele werving: uitnodigen, selectiedag indelen en beoordelen, nabespreken en bellen, aannemen, berichten, seizoen en instellingen. | Alles behalve Loondossiers, Beheerders & rechten en Logboek |
 | **Penningmeester** | app-sol-penningmeester | Het loondossier: loonheffing, kopie ID en bankpas inzien, downloaden, als verwerkt markeren en na de bewaarplicht vernietigen. De loonplanning bekijken en bewerken (kosten, scenario's, Excel-export). Sollicitanten alleen bekijken. | Vandaag, Sollicitanten, Loonplanning, Loondossiers |
 | **Beheerder** (technisch: admin) | app-sol-admin | Alles, ook beheerders, rechten, logboek en systeem. Kan zichzelf nooit buitensluiten. | Alles |

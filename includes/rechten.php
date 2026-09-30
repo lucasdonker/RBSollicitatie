@@ -123,6 +123,17 @@ function rechten_standaard_rollen(): array {
                 'sollicitanten'   => 'r',
             ],
         ],
+        'planner' => [
+            'naam' => 'Planner',
+            'authentik_groep' => 'app-sol-planner',
+            'rang' => 1,
+            'rechten' => [
+                // Maakt het rooster: wie kan wanneer, en waar het krap wordt. Alleen lezen, en bewust
+                // geen loonplanning (lonen zijn persoonsgegevens die de planner niet nodig heeft).
+                'beschikbaarheid' => 'r',
+                'dekking'         => 'r',
+            ],
+        ],
         'admin' => [
             'naam' => 'Admin',
             'authentik_groep' => 'app-sol-admin',
@@ -266,6 +277,20 @@ function rechten_nieuwe_standaarden(): void {
         }
         error_log("rechten_nieuwe_standaarden: {$item[0]} kreeg {$item[1]} ({$item[2]})");
     }
+}
+
+/**
+ * De naam van een rol zoals het beheer hem toont ("Bestuur", "Planner"). Admin heet in de UI
+ * "Beheerder". Eén bron voor zijbalk, profiel en "geen rechten".
+ */
+function rol_naam(string $sleutel): string {
+    if ($sleutel === 'admin') return 'Beheerder';
+    static $namen = null;
+    if ($namen === null) {
+        $namen = [];
+        foreach (rollen_alle() as $r) $namen[$r['sleutel']] = (string)$r['naam'];
+    }
+    return $namen[$sleutel] ?? ucfirst($sleutel);
 }
 
 /** Alle rollen ophalen (voor de matrix-UI en Authentik-mapping). */

@@ -171,7 +171,7 @@ function rl_schermen_bij_hoofdstuk(string $handleiding, array $ankers): array {
 
 /** Welke route past bij deze rol? Voor het welkomstblok op Vandaag. */
 function rl_aanbevolen(string $rol): ?string {
-    $keuze = ['begeleider' => 'begeleider', 'penningmeester' => 'penningmeester',
+    $keuze = ['begeleider' => 'begeleider', 'penningmeester' => 'penningmeester', 'planner' => 'planner',
               'bestuur' => 'bestuur', 'admin' => 'bestuur'][$rol] ?? 'welkom';
     if (rl_route($keuze)) return $keuze;
     return rl_route('welkom') ? 'welkom' : null;

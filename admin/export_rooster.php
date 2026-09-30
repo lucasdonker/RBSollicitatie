@@ -7,18 +7,23 @@
  *   ?formaat=json|xlsx   (standaard xlsx)
  *   ?bron=auto|afspraak|scenario[&scenario=N]   auto = de afspraak als die definitief is, anders
  *                                               het actieve scenario (concept)
- * Recht: loonplanning lezen. Elke export in het auditlog.
+ * Recht: loonplanning lezen, of beschikbaarheid lezen (de planner). Er staan geen bedragen in, alleen
+ * dagen en betaald ja/nee. Zonder loonplanning-recht alleen bron=auto: geen scenario's kiezen.
+ * Elke export in het auditlog.
  */
 require_once __DIR__ . '/../includes/functions.php';
-vereis_recht('loonplanning', 'lezen');
+vereist_login();
+$mag_loonplanning = mag('loonplanning', 'lezen');
+if (!$mag_loonplanning) vereis_recht('beschikbaarheid', 'lezen');
+module_vereist('loonplanning');
 
 $seizoen = actief_seizoen();
 $sid = $seizoen ? (int)$seizoen['id'] : 0;
-if (!$sid) { flash('fout', 'Geen actief seizoen.'); redirect(APP_URL . '/admin/loonplanning.php'); }
+if (!$sid) { flash('fout', 'Geen actief seizoen.'); redirect(APP_URL . '/admin/' . ($mag_loonplanning ? 'loonplanning.php' : 'beschikbaarheid.php')); }
 
 $bron = (string)($_GET['bron'] ?? 'auto');
-if (!in_array($bron, ['auto', 'afspraak', 'scenario'], true)) $bron = 'auto';
-$sc = (int)($_GET['scenario'] ?? 0);
+if (!in_array($bron, ['auto', 'afspraak', 'scenario'], true) || !$mag_loonplanning) $bron = 'auto';
+$sc = $mag_loonplanning ? (int)($_GET['scenario'] ?? 0) : 0;
 if ($sc && !in_array($sc, array_map('intval', array_column(loonplan_scenarios($sid), 'id')), true)) $sc = 0;
 
 $r = inzet_rooster($sid, $bron, $sc);

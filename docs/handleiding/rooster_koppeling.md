@@ -3,7 +3,8 @@
 > **In het kort:** per persoon per week hoeveel dagen iemand werkt (de afspraak uit de
 > loonplanning), betaald of niet, de functie, en per dag of iemand kan. Het rooster kiest zelf
 > welke van de beschikbare dagen. Bron in de code: `includes/inzet_rooster.php`
-> (`inzet_rooster()`); export: Loonplanning › **Export voor het rooster** (Excel of JSON).
+> (`inzet_rooster()`); export: Loonplanning › **Export voor het rooster** (Excel of JSON), of
+> Beschikbaarheid › **Export voor het rooster** (Excel; ook voor de planner, zonder scenariokeuze).
 
 ## Wat erin staat
 

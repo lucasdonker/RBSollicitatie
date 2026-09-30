@@ -146,9 +146,9 @@ require __DIR__ . '/layout_top.php';
       </div>
       <div>
         <span class="bh-veldlabel">Rol</span>
-        <?php /* Zelfde woord als in de zijbalk (_nav.php): de rol admin heet daar "Beheerder". */
-              $_rol = (string)($rec['rol'] ?? ''); ?>
-        <span class="bh-veldwaarde"><?= h($_rol === 'admin' ? 'Beheerder' : ucfirst($_rol)) ?></span>
+        <?php /* Zelfde woorden als in de zijbalk (_nav.php), via rol_naam(); extra rollen uit Authentik erbij. */
+              $_rollen = array_filter(array_merge([(string)($rec['rol'] ?? '')], explode(',', (string)($rec['extra_rollen'] ?? '')))); ?>
+        <span class="bh-veldwaarde"><?= h(implode(' + ', array_map('rol_naam', array_unique($_rollen)))) ?></span>
       </div>
       <div>
         <span class="bh-veldlabel">Hoe je inlogt</span>

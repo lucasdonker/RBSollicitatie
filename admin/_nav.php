@@ -32,9 +32,6 @@ $_item = function (array $i) use ($nav_actief) {
     }
     echo '</a>';
 };
-
-$_rollen = ['begeleider' => 'Begeleider', 'bestuur' => 'Bestuur',
-            'penningmeester' => 'Penningmeester', 'admin' => 'Beheerder'];
 ?>
 <nav class="bh-zijbalk" id="zijbalk" aria-label="Hoofdmenu">
 
@@ -71,7 +68,7 @@ $_rollen = ['begeleider' => 'Begeleider', 'bestuur' => 'Bestuur',
       <span class="bh-gebruiker-tekst">
         <span class="bh-gebruiker-naam"><?= h($nav_bhd['naam']) ?></span>
         <span class="bh-gebruiker-rol">
-          <?= h($_rollen[$nav_bhd['rol']] ?? ucfirst((string)$nav_bhd['rol'])) ?>
+          <?= h(implode(' + ', array_map('rol_naam', huidige_rollen()))) ?>
           · <?= $nav_bhd['via'] === 'authentik' ? 'SSO' : 'wachtwoord' ?>
         </span>
       </span>

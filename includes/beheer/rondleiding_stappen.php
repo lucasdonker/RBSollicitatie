@@ -444,6 +444,13 @@ function rl_routes(): array {
             'schermen' => ['algemeen', 'documenten', 'loonplanning'],
             'afsluiting' => 'De volledige werkwijze, inclusief bewaartermijnen, staat in de Handleiding penningmeester.',
         ],
+        'planner' => [
+            'titel' => 'Planner: beschikbaarheid en dekking',
+            'voor'  => 'Voor wie het rooster maakt: wie wanneer kan, en in welke weken het krap wordt.',
+            'module' => 'beschikbaarheid',
+            'schermen' => ['algemeen', 'beschikbaarheid', 'dekking'],
+            'afsluiting' => 'Je kunt hier alleen kijken. Klopt iemands beschikbaarheid niet, geef het dan door aan het bestuur.',
+        ],
         'admin' => [
             'titel' => 'Beheerder: instellingen, toegang en systeem',
             'voor'  => 'Voor de admin: instellingen, beheerders en rollen, het logboek en de systeemcontrole.',

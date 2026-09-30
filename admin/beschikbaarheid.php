@@ -36,6 +36,11 @@ $dek_norm = bh_dekking_norm();
 $dekking  = bh_dekking_weken($weken, $tot_per_week, $dek_norm);
 
 $mag_bewerken = mag('beschikbaarheid', 'bewerken');
+// De planner ziet wie wanneer kan, maar geen dossier en geen e-mailadres (dataminimalisatie).
+$mag_dossier  = mag('sollicitanten', 'lezen');
+$naam_html    = fn(int $sol_id, string $naam): string => $mag_dossier
+    ? '<a href="' . APP_URL . '/admin/sollicitant.php?id=' . $sol_id . '&amp;tab=beschikbaarheid">' . h($naam) . '</a>'
+    : h($naam);
 $geen_grens   = !$seizoen || (empty($seizoen['hoofdseizoen_start_week']) && empty($seizoen['hoofdseizoen_eind_week']));
 
 require __DIR__ . '/layout_top.php';
@@ -48,7 +53,8 @@ require __DIR__ . '/layout_top.php';
     <h2>Openstaande verzoeken: <?= count($open_verzoeken) ?></h2>
   </header>
   <p class="bh-actiekaart-uitleg">
-    Verzoeken om minder dagen per week te werken. Je beoordeelt ze hier; de naam opent het dossier van de sollicitant.
+    Verzoeken om minder dagen per week te werken.<?= $mag_bewerken ? ' Je beoordeelt ze hier.' : ' Het bestuur beoordeelt ze.' ?>
+    <?= $mag_dossier ? 'De naam opent het dossier van de sollicitant.' : '' ?>
   </p>
   <ul class="bh-verzoeklijst">
     <?php foreach ($open_verzoeken as $vz):
@@ -59,7 +65,7 @@ require __DIR__ . '/layout_top.php';
         <?php /* Naar het tabblad dat bij dít scherm hoort: je komt van de beschikbaarheid,
                  dus daar wil je ook landen. sollicitant.php valt terug op 'dossier' als
                  de persoon dat tabblad niet heeft. */ ?>
-        <a class="bh-verzoek-naam" href="<?= APP_URL ?>/admin/sollicitant.php?id=<?= (int)$vz['sol_id'] ?>&amp;tab=beschikbaarheid"><?= h($naam) ?></a>
+        <span class="bh-verzoek-naam"><?= $naam_html((int)$vz['sol_id'], $naam) ?></span>
         <span class="bh-verzoek-wat">
           <?= h($vz_lbl($vz['van_week'])) ?> t/m <?= h($vz_lbl($vz['tot_week'])) ?>:
           <strong><?= (int)$vz['dagen_aantal'] ?> dagen per week</strong>
@@ -112,7 +118,7 @@ require __DIR__ . '/layout_top.php';
     ?>
     <li class="bh-persoonchip">
       <?= h($naam) ?>
-      <?php if (!empty($v['email'])): ?>
+      <?php if (!empty($v['email']) && $mag_dossier): ?>
         <a href="mailto:<?= h($v['email']) ?>" title="Mail <?= h($naam) ?>" aria-label="Mail <?= h($naam) ?>"><?= icoon('mail', 14) ?></a>
       <?php endif; ?>
     </li>
@@ -140,6 +146,11 @@ require __DIR__ . '/layout_top.php';
     ['label' => 'Export per dag', 'url' => APP_URL . '/admin/export_beschikbaarheid.php?soort=dag' . ($_exp ? '&' . $_exp : ''), 'icoon' => 'download',
      'titel' => 'Excel: per persoon per datum beschikbaar ja/nee'],
   ];
+  // Wat het rooster nodig heeft (afgesproken dagen + beschikbaarheid); hier voor de planner, die geen loonplanning ziet.
+  if (module_aan('loonplanning')) {
+      $filter_acties[] = ['label' => 'Export voor het rooster', 'url' => APP_URL . '/admin/export_rooster.php', 'icoon' => 'download',
+                          'titel' => 'Excel: per persoon per week de afgesproken dagen en wanneer iemand kan'];
+  }
   if ($raster['totaal_zonder_filter'] > 0) require __DIR__ . '/_filterbalk.php';
 ?>
 
@@ -221,7 +232,7 @@ require __DIR__ . '/_dekkinggrafiek.php';
         ?>
         <tr>
           <th scope="row" class="bh-raster-naam">
-            <a href="<?= APP_URL ?>/admin/sollicitant.php?id=<?= $sol_id ?>&amp;tab=beschikbaarheid"><?= h($naam) ?></a>
+            <?= $naam_html($sol_id, $naam) ?>
             <?php if (!empty($p['terugkerend'])): ?><?= bh_chip('terug', 'blauw') ?><?php endif; ?>
             <?php if (!empty($p['norm_dagen'])): ?>
               <span title="Afwijkende norm: <?= (int)$p['norm_dagen'] ?> dagen per week"><?= bh_chip((int)$p['norm_dagen'] . 'd', 'oranje') ?></span>
