@@ -631,14 +631,26 @@ correctie), dan staat onder de tabs "... in een fase die nu niet aan de beurt is
 ### Filterbalk
 
 - **Zoek naam of e-mail**: filtert terwijl je typt.
-- **Alle sollicitanten** of **Alleen terugkerend**.
-- **Formulier: alle**, **Formulier ingediend** of **Formulier open** (het kennismakingsformulier;
-  een concept telt als open).
-- **Competentie** (alleen als de koppeling met Authentik is ingericht).
-- **Wis filters** verschijnt zodra er een filter aanstaat.
-- Rechts: **Toevoegen** (handmatig een sollicitant invoeren) en **Exporteren** (het hele seizoen
-  als Excel-bestand). Zonder het recht op de kennismakingsformulieren heet de knop **Exporteren
-  (basis)**: dan staan adres en formuliervelden er niet in.
+- **Toon**: iedereen, alleen wie nog in de procedure zit, of wie zich de laatste 30 dagen aanmeldde.
+- **Sorteren**: nieuwste of oudste aanmelding, achternaam, leeftijd of wanneer het formulier binnenkwam.
+  Klikken op een kolomkop kan ook.
+- **Meer filters** (een paneel, het getal zegt hoeveel er aanstaan):
+  - **Wacht op**: een handtekening, gegevens van de ouder, of beschikbaarheid (nog niets, of voorlopig);
+  - **Formulier**: ingediend of open (het kennismakingsformulier; een concept telt als open);
+  - **Leeftijd**: jonger dan 16, 16 of 17, onder de 18 (ouder tekent), 18 of ouder;
+  - **Terugkerend**: alle terugkerenden, terugkerende strandwachten, of eerder gesolliciteerd;
+  - **Selectiedag**: het besluit van de nabespreking (door, twijfel, niet door, nog geen besluit);
+  - **Bron**: waar de aanmelding vandaan kwam (landingspagina, website, campagne);
+  - **Bereikbaar**: geen telefoonnummer, of een bericht dat mislukte;
+  - **Intrekverzoek** en **Competentie** (die laatste alleen als de koppeling met Authentik is ingericht);
+  - **Aangemeld vanaf / tot en met**.
+- Elk actief filter staat als knopje onder de balk; een klik op het kruisje haalt hem weg. **Wis alle
+  filters** zet de lijst terug.
+
+Onder de balk staat hoeveel sollicitanten er gevonden zijn, met rechts **Kolommen**, **Meer**
+(**Exporteren naar Excel** voor het hele seizoen, en voor de beheerder **Importeren uit CSV**) en
+**Toevoegen** (handmatig een sollicitant invoeren). Zonder het recht op de kennismakingsformulieren
+heet de export **Exporteren (basis)**: dan staan adres en formuliervelden er niet in.
 
 ### Kolommen kiezen en sorteren
 
@@ -682,11 +694,17 @@ Een knop in de kolom Actie opent eerst het tussenscherm (zie hieronder).
 
 1. Vink de rijen aan, of gebruik het vinkje in de kop voor alle rijen op deze pagina.
 2. Onderaan verschijnt een donkere balk met "... geselecteerd" en de knoppen **Uitnodigen
-   selectiedag**, **Uitnodigen trainingsweekend**, **Aannemen**, **Afwijzen**, **Bericht** en
-   **Exporteren**. Een uitnodigknop verschijnt alleen als iedereen in je selectie in de juiste fase
-   staat (Aangemeld voor de selectiedag, Selectiedag geweest voor het trainingsweekend).
+   selectiedag**, **Uitnodigen trainingsweekend**, **Aannemen**, **Afwijzen**, **Herinnering**,
+   **Bericht** en **Exporteren**. Een uitnodigknop verschijnt alleen als iedereen in je selectie in
+   de juiste fase staat (Aangemeld voor de selectiedag, Selectiedag geweest voor het trainingsweekend).
 3. Klik op een knop. Bij een fasestap zie je eerst het tussenscherm; **Bericht** opent Berichten
    met deze mensen als ontvangers; **Exporteren** downloadt alleen de gekozen mensen.
+
+**Herinnering** laat eerst zien wat er gebeurt en stuurt dan dezelfde berichten als de automatische
+herinneringen: wie taken open heeft in het portaal krijgt "Openstaande taken", en staat er een
+document open dat een ouder moet tekenen, dan krijgt de ouder de herinnering om te ondertekenen. Wie
+niets open heeft, krijgt niets; wie het afgelopen uur al herinnerd is, slaan we over. Handig
+bijvoorbeeld met het filter **Wacht op** ervoor.
 
 ### Het tussenscherm
 

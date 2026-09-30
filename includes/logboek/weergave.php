@@ -108,6 +108,7 @@ function log_actie_register(): array {
         'tw_evaluatie'               => ['Eerste indruk trainingsweekend vastgelegd', 'vink'],
         'lg_feedback_vastgelegd'     => ['Feedback van een strandwacht vastgelegd', 'chat'],
         'ondertekening_herinnerd'    => ['Herinnering om te ondertekenen verstuurd', 'bel'],
+        'taken_herinnerd'            => ['Herinnering openstaande taken verstuurd', 'bel'],
         'lg_feedback_gewist'         => ['Feedback van een strandwacht verwijderd', 'prullenbak'],
         'loonplan_opgave_overgenomen'=> ['Opgave overgenomen in de loonplanning', 'kalender'],
         'herinneringen_gedraaid' => ['Herinneringen gedraaid', 'klok'],

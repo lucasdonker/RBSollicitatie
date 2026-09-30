@@ -3,10 +3,22 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.135.0');
+define('APP_VERSIE', '2.136.0');
 
 function app_changelog(): array {
     return [
+        '2.136.0' => [
+            'datum'  => '2026-09-30',
+            'titel'  => 'Sollicitanten: rustiger bovenbalk, meer filters, herinnering in bulk',
+            'punten' => [
+                'Eén filterregel: zoeken, wie je ziet, sorteren (ook op een telefoon) en "Meer filters". Actieve filters staan als knopjes onder de balk',
+                'Nieuwe filters: waar iemand op wacht (handtekening, gegevens ouder, beschikbaarheid), leeftijd (met de 16- en 18-grens), besluit van de selectiedag, bron van de aanmelding, geen telefoonnummer of mislukt bericht, en aangemeld tussen twee datums',
+                'Kolommen, Meer (exporteren, importeren) en Toevoegen staan boven de lijst, naast het aantal gevonden sollicitanten',
+                'Bulkknop Herinnering: wie taken open heeft krijgt "Openstaande taken", een ouder die nog moet tekenen de ondertekenherinnering. Eerst zie je wat er gebeurt; wie het afgelopen uur al herinnerd is, slaan we over',
+                'Op een telefoon schuiven de fase-tabs in één rij',
+                'Een datumfilter wordt meteen toegepast (werkte eerder alleen zonder JavaScript)',
+            ],
+        ],
         '2.135.0' => [
             'datum'  => '2026-09-30',
             'titel'  => 'Ondertekeningen: zoeken, filteren en zelf een herinnering sturen',

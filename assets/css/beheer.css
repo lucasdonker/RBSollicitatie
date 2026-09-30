@@ -1175,6 +1175,13 @@ a.bh-naamcel:hover .bh-naamcel-naam { color: var(--navy); text-decoration: under
    die de ruimte. */
 .bh-tabs { display: flex; gap: 6px; flex-wrap: wrap; padding: 2px 0; margin-bottom: 14px; }
 .bh-tabs:has(+ .bh-tabs-voet) { margin-bottom: 0; }
+/* Op een telefoon één rij die horizontaal schuift, in plaats van drie rijen chips boven de lijst. */
+@media (max-width: 600px) {
+  .bh-tabs { flex-wrap: nowrap; overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none;
+             margin-left: -16px; margin-right: -16px; padding: 2px 16px; }
+  .bh-tabs::-webkit-scrollbar { display: none; }
+  .bh-tab { scroll-snap-align: start; flex: none; }
+}
 .bh-tabs + .bh-filterbalk { padding-top: 0; }
 .bh-tab {
   display: inline-flex; align-items: center; gap: 7px;
@@ -1242,6 +1249,8 @@ a.bh-naamcel:hover .bh-naamcel-naam { color: var(--navy); text-decoration: under
 .bh-lijstkop { display: flex; justify-content: space-between; align-items: center; gap: 8px 10px; flex-wrap: wrap; margin: 0 0 10px; }
 .bh-lijstkop-acties { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .bh-lijstkop-acties form { margin: 0; }
+/* Op een telefoon worden tabelrijen kaarten; kolommen kiezen heeft daar geen zin. */
+@media (max-width: 760px) { .bh-lijstkop .bh-kolomkiezer { display: none; } }
 
 /* ── Filterbalk ── */
 .bh-filterbalk {
@@ -1294,6 +1303,21 @@ a.bh-naamcel:hover .bh-naamcel-naam { color: var(--navy); text-decoration: under
   .bh-filter-meer > summary { width: 100%; justify-content: center; }
   .bh-filter-meer-velden { position: static; margin-top: 8px; box-shadow: none; }
 }
+/* Actiemenu in de balk ("Meer": importeren, exporteren). */
+.bh-filter-menu { position: relative; }
+.bh-filter-menu > summary { list-style: none; cursor: pointer; }
+.bh-filter-menu > summary::-webkit-details-marker { display: none; }
+.bh-filter-menu-lijst {
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; min-width: 220px; margin: 0; padding: 6px;
+  list-style: none; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md);
+  box-shadow: var(--shadow-float);
+}
+.bh-filter-menu-lijst a {
+  display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 10px; border-radius: var(--radius-sm);
+  color: var(--ink); text-decoration: none; font-size: 14px;
+}
+.bh-filter-menu-lijst a:hover, .bh-filter-menu-lijst a:focus-visible { background: var(--bg-subtle); color: var(--navy); }
+
 /* Actieve filters als chips: in één oogopslag wat je nu ziet, en met één tik weer weg. */
 .bh-filterchips { display: flex; align-items: center; gap: 6px 8px; flex-wrap: wrap; margin: -4px 0 14px; }
 .bh-filterchips-telling { font: var(--text-meta); color: var(--ink-soft); margin-right: 4px; }

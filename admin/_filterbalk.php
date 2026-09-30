@@ -20,7 +20,9 @@
  *   $filter_verborgen array optioneel: [naam => waarde] die in de URL moet blijven
  *                           (bijv. de actieve fase-tab)
  *   $filter_acties  array   optioneel: knoppen rechts, elk ['label','url'|'submit','toon','icoon','titel']
- *                           ('titel' = tooltip op een link-knop)
+ *                           ('titel' = tooltip op een link-knop), of een menu:
+ *                           ['label','icoon','menu' => [['label','url','icoon','titel'], …]] — voor wat je
+ *                           zelden doet (importeren, exporteren), zodat de balk rustig blijft
  *   $filter_wissen  ?string optioneel: URL van "wis alle filters"
  *   $filter_telling ?string optioneel: resultaat in woorden, bijv. "12 van 30"
  */
@@ -113,7 +115,9 @@ $_fb_meer   = array_filter($filter_velden, fn($f) => !empty($f['meer']));
       <?php foreach ($filter_acties as $_a):
         $_cls = 'ds-btn ds-btn-' . ($_a['toon'] ?? 'secundair') . ' ds-btn-sm';
       ?>
-        <?php if (!empty($_a['url'])): ?>
+        <?php if (!empty($_a['menu'])): ?>
+          <?php $am_label = $_a['label']; $am_icoon = $_a['icoon'] ?? null; $am_items = $_a['menu']; require __DIR__ . '/_actiemenu.php'; ?>
+        <?php elseif (!empty($_a['url'])): ?>
           <a class="<?= $_cls ?>" href="<?= h($_a['url']) ?>"<?= !empty($_a['titel']) ? ' title="' . h($_a['titel']) . '"' : '' ?>>
             <?php if (!empty($_a['icoon'])) echo icoon($_a['icoon'], 15); ?><?= h($_a['label']) ?>
           </a>

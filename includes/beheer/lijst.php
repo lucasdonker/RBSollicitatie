@@ -77,6 +77,57 @@ function bh_soll_filter(array $q, int $sid): array {
         $where .= " AND EXISTS (SELECT 1 FROM intrek_verzoek iv WHERE iv.sollicitatie_id=s.id AND {$_iv_sql[0]})";
         $delen[] = $_iv_sql[1];
     }
+    // Leeftijd vandaag. Twee grenzen die bewust apart blijven: 16 (aanmelden/AVG) en 18 (zelf tekenen).
+    $_lft = "TIMESTAMPDIFF(YEAR, p.geboortedatum, CURDATE())";
+    $leeftijd = [
+        'onder16' => ["$_lft < 16", 'jonger dan 16'],
+        '16-17'   => ["$_lft BETWEEN 16 AND 17", '16 of 17 jaar'],
+        'onder18' => ["$_lft < 18", 'onder de 18'],
+        '18plus'  => ["$_lft >= 18", '18 of ouder'],
+    ][(string)($q['leeftijd'] ?? '')] ?? null;
+    if ($leeftijd) { $where .= " AND p.geboortedatum IS NOT NULL AND {$leeftijd[0]}"; $delen[] = $leeftijd[1]; }
+
+    // Waar wacht het op? Alles dat zonder PHP-rekenwerk in SQL te vangen is.
+    $wacht = [
+        'ondertekening' => ["EXISTS (SELECT 1 FROM ondertekeningen o WHERE o.sollicitatie_id=s.id AND o.ondertekend_op IS NULL)", 'ondertekening open'],
+        'ouder'         => ["(p.ouder_email IS NULL OR p.ouder_email='') AND p.geboortedatum IS NOT NULL AND $_lft < 18", 'ouder nog niet ingevuld'],
+        'besch_geen'    => ["NOT EXISTS (SELECT 1 FROM beschikbaarheid_profiel bp WHERE bp.sollicitatie_id=s.id)", 'geen beschikbaarheid'],
+        'besch_voorlopig' => ["EXISTS (SELECT 1 FROM beschikbaarheid_profiel bp WHERE bp.sollicitatie_id=s.id AND bp.voorlopig=1)", 'beschikbaarheid voorlopig'],
+    ][(string)($q['wacht'] ?? '')] ?? null;
+    if ($wacht) { $where .= " AND {$wacht[0]}"; $delen[] = $wacht[1]; }
+
+    // Besluit van de nabespreking van de selectiedag.
+    $sd = (string)($q['sd'] ?? '');
+    if (in_array($sd, ['door', 'twijfel', 'niet'], true)) {
+        $where .= " AND EXISTS (SELECT 1 FROM selectie_besluit sb WHERE sb.sollicitatie_id=s.id AND sb.seizoen_id=s.seizoen_id AND sb.besluit=?)";
+        $params[] = $sd;
+        $delen[] = 'selectiedag: ' . ($sd === 'niet' ? 'niet door' : $sd);
+    } elseif ($sd === 'geen') {
+        $where .= " AND NOT EXISTS (SELECT 1 FROM selectie_besluit sb WHERE sb.sollicitatie_id=s.id AND sb.seizoen_id=s.seizoen_id AND sb.besluit<>'')";
+        $delen[] = 'selectiedag: nog geen besluit';
+    }
+
+    // Waar kwam de aanmelding vandaan (landingspagina, website, campagne).
+    $bron = (string)($q['bron'] ?? '');
+    if ($bron === '-') { $where .= " AND (s.bron_code IS NULL OR s.bron_code='')"; $delen[] = 'zonder bron'; }
+    elseif ($bron !== '') { $where .= " AND s.bron_code = ?"; $params[] = $bron; $delen[] = 'bron ' . $bron; }
+
+    // Bereikbaarheid.
+    $contact = [
+        'geen_tel'     => ["(p.telefoon IS NULL OR p.telefoon='')", 'geen telefoonnummer'],
+        'mail_mislukt' => ["EXISTS (SELECT 1 FROM mail_log ml WHERE ml.sollicitatie_id=s.id AND ml.status='mislukt')", 'bericht mislukt'],
+    ][(string)($q['contact'] ?? '')] ?? null;
+    if ($contact) { $where .= " AND {$contact[0]}"; $delen[] = $contact[1]; }
+
+    // Aangemeld tussen twee datums (JJJJ-MM-DD uit een datumveld; iets anders wordt genegeerd).
+    foreach (['van' => '>=', 'tot' => '<'] as $_k => $_op) {
+        $_d = (string)($q[$_k] ?? '');
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $_d)) continue;
+        $where .= " AND s.aangemeld_op $_op ?";
+        $params[] = $_k === 'tot' ? date('Y-m-d', strtotime($_d . ' +1 day')) : $_d;
+        $delen[] = ($_k === 'van' ? 'aangemeld vanaf ' : 'aangemeld tot en met ') . $_d;
+    }
+
     $zoek = trim((string)($q['q'] ?? ''));
     if ($zoek !== '') {
         $where .= " AND (p.voornaam LIKE ? OR p.achternaam LIKE ? OR p.email LIKE ?)";
@@ -155,15 +206,68 @@ function bh_soll_buren(int $sol_id, array $q, int $sid): array {
     ];
 }
 
+/** Alle filter- en sorteerparameters van de lijst — de enige plek waar die namen staan. */
+function bh_soll_filter_namen(): array {
+    return ['fase', 'q', 'terug', 'blk', 'comp', 'sort', 'richting', 'intrek', 'toon',
+            'leeftijd', 'wacht', 'sd', 'bron', 'contact', 'van', 'tot'];
+}
+
 /** De filterparameters uit een URL, zonder de rest — om ze mee te geven aan het dossier. */
 function bh_soll_filter_params(array $q): array {
-    return array_filter([
-        'fase'  => $q['fase']  ?? null, 'q'    => $q['q']    ?? null,
-        'terug' => $q['terug'] ?? null, 'blk'  => $q['blk']  ?? null,
-        'comp'  => $q['comp']  ?? null, 'sort' => $q['sort'] ?? null,
-        'richting' => $q['richting'] ?? null, 'intrek' => $q['intrek'] ?? null,
-        'toon'     => $q['toon']     ?? null,
-    ], fn($v) => $v !== null && $v !== '');
+    $uit = [];
+    foreach (bh_soll_filter_namen() as $n) if (isset($q[$n]) && $q[$n] !== '') $uit[$n] = (string)$q[$n];
+    return $uit;
+}
+
+/**
+ * Sorteren vanuit één keuzelijst (op een telefoon tik je niet op een kolomkop):
+ * sleutel "kolom|richting" => label. De kolom verwijst naar bh_soll_sorteringen().
+ */
+function bh_soll_volgordes(): array {
+    return [
+        ''                   => 'Nieuwste aanmelding eerst',
+        'aangemeld|asc'      => 'Oudste aanmelding eerst',
+        'naam|asc'           => 'Achternaam A–Z',
+        'naam|desc'          => 'Achternaam Z–A',
+        'leeftijd|desc'      => 'Jongste eerst',
+        'leeftijd|asc'       => 'Oudste eerst',
+        'blk_ingevuld|desc'  => 'Formulier laatst ingediend',
+    ];
+}
+
+/**
+ * Zet een gekozen "volgorde" om in sort + richting in de query, zodat kolomkoppen en de
+ * keuzelijst hetzelfde doen. Geeft de huidige sleutel terug voor de keuzelijst.
+ */
+function bh_soll_volgorde_toepassen(array &$q): string {
+    $sorteer = bh_soll_sorteringen();
+    if (array_key_exists('volgorde', $q)) {
+        $v = (string)$q['volgorde'];
+        unset($q['volgorde']);
+        if ($v === '' || !isset(bh_soll_volgordes()[$v])) { unset($q['sort'], $q['richting']); }
+        else {
+            $d = explode('|', $v);
+            $q['sort'] = $sorteer[$d[0]] ?? '';
+            $q['richting'] = $d[1] ?? 'asc';
+        }
+    }
+    $kolom = array_search((string)($q['sort'] ?? ''), $sorteer, true);
+    $sleutel = $kolom !== false ? $kolom . '|' . (strtolower((string)($q['richting'] ?? '')) === 'asc' ? 'asc' : 'desc') : '';
+    return isset(bh_soll_volgordes()[$sleutel]) ? $sleutel : '';
+}
+
+/** De bronnen van dit seizoen voor het filter: bron_code => label (met aantal). */
+function bh_soll_bronnen(int $sid): array {
+    $uit = [];
+    try {
+        $q = db()->prepare("SELECT COALESCE(NULLIF(bron_code,''),'-') AS b, MAX(bron_label) AS l, COUNT(*) AS n
+                            FROM sollicitaties WHERE seizoen_id=? GROUP BY b ORDER BY n DESC");
+        $q->execute([$sid]);
+        foreach ($q->fetchAll() as $r) {
+            $uit[(string)$r['b']] = ($r['b'] === '-' ? 'Zonder bron' : ((string)($r['l'] ?: $r['b']))) . ' (' . (int)$r['n'] . ')';
+        }
+    } catch (\Throwable $e) {}
+    return $uit;
 }
 
 } // function_exists

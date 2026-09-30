@@ -63,6 +63,19 @@ function bh_gevolgen(string $actie, array $ids): array {
         'afgewezen'           => 'afgewezen',
     ][$actie] ?? null;
 
+    if ($actie === 'herinneren') {
+        // Geen faseovergang, wel berichten: zeggen naar wie wat gaat (sollicitant_herinneren()).
+        return [
+            'titel'  => 'Herinnering sturen aan ' . $mensen . '?',
+            'regels' => [
+                'Wie nog taken open heeft in het portaal, krijgt de herinnering "Openstaande taken" met de lijst van wat er nog moet.',
+                'Staat er een document open dat een ouder moet tekenen, dan krijgt de ouder de herinnering om te ondertekenen.',
+                'Wie niets open heeft, krijgt niets. Wie het afgelopen uur al is herinnerd, slaan we over.',
+            ],
+            'bericht' => 'Het zijn dezelfde berichten als de automatische herinneringen.',
+            'onomkeerbaar' => false, 'knop' => 'Herinnering sturen', 'toon' => 'primair',
+        ];
+    }
     if ($naar === null) {
         // Geen faseovergang: bericht sturen, exporteren. Die zijn niet onomkeerbaar.
         $titels = ['bericht_sturen' => 'Bericht opstellen voor ' . $mensen,

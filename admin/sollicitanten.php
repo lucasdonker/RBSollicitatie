@@ -32,6 +32,10 @@ $bulk = [
     'afgewezen'           => ['afgewezen',            null,                    'bericht(en)'],
 ];
 
+// Sorteren via de keuzelijst ("volgorde") wordt hier sort + richting, zodat kolomkoppen, de lijst en
+// de ← → in het dossier dezelfde volgorde kennen.
+$volgorde = bh_soll_volgorde_toepassen($_GET);
+
 /* ── POST: bulkacties en losse fase-stappen ──────────────────────
    Alles gaat via de centrale fase-functies, zodat een overgang vanaf de lijst
    precies hetzelfde doet als vanuit het dossier (documenten, pakket, melding). */
@@ -67,6 +71,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    // Herinnering: geen faseovergang, wel berichten — dus eerst het tussenscherm, dan versturen.
+    if ($ids && $actie === 'herinneren') {
+        vereis_recht('sollicitanten', 'bewerken');
+        if (empty($_POST['bevestigd'])) {
+            $toon_bevestiging = ['actie' => $actie, 'ids' => $ids, 'overgeslagen' => 0];
+        } else {
+            $r = sollicitant_herinneren($ids);
+            $delen = array_filter([
+                $r['sollicitanten'] ? $r['sollicitanten'] . ' ' . ($r['sollicitanten'] === 1 ? 'sollicitant' : 'sollicitanten') . ' herinnerd aan openstaande taken' : '',
+                $r['ouders'] ? $r['ouders'] . ' ' . ($r['ouders'] === 1 ? 'ouder' : 'ouders') . ' herinnerd om te ondertekenen' : '',
+                $r['dubbel'] ? $r['dubbel'] . ' overgeslagen (het afgelopen uur al herinnerd)' : '',
+                $r['niets'] ? $r['niets'] . ' zonder iets open' : '',
+            ]);
+            flash($r['sollicitanten'] + $r['ouders'] > 0 ? 'succes' : 'info', $delen ? ucfirst(implode('; ', $delen)) . '.' : 'Er is niets verstuurd.');
+            redirect(APP_URL . '/admin/sollicitanten.php' . (empty($_GET) ? '' : '?' . http_build_query($_GET)));
+        }
+    }
+
     if (empty($toon_bevestiging) && $ids && $actie === 'bericht_sturen') {
         redirect(APP_URL . '/admin/berichten.php?ids=' . implode(',', $ids));
     }
@@ -96,24 +118,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 /* ── Filters ─────────────────────────────────────────────────── */
-$fase_filter  = (string)($_GET['fase']  ?? 'alle');
-$filter_terug = (string)($_GET['terug'] ?? '');
-$filter_blk   = (string)($_GET['blk']   ?? '');
-$filter_comp  = (string)($_GET['comp']  ?? '');
-$filter_intrek = (string)($_GET['intrek'] ?? '');
-$filter_toon  = (string)($_GET['toon']  ?? '');
-$zoek         = trim((string)($_GET['q'] ?? ''));
+$fase_filter = (string)($_GET['fase'] ?? 'alle');
+$fv          = fn(string $n): string => trim((string)($_GET[$n] ?? ''));   // huidige waarde van een filter
 
-/** Bouwt een URL met de huidige filters, met één ding vervangen. */
+/** Bouwt een URL met de huidige filters, met één ding vervangen. De namen staan in bh_soll_filter_namen(). */
 function soll_url(array $vervang = []): string {
-    $p = array_filter(array_merge([
-        'fase'  => $_GET['fase']  ?? null, 'q'    => $_GET['q']    ?? null,
-        'terug' => $_GET['terug'] ?? null, 'blk'  => $_GET['blk']  ?? null,
-        'comp'  => $_GET['comp']  ?? null, 'sort' => $_GET['sort'] ?? null,
-        'richting' => $_GET['richting'] ?? null, 'per' => $_GET['per'] ?? null,
-        'pagina'   => $_GET['pagina']   ?? null, 'intrek' => $_GET['intrek'] ?? null,
-        'toon'     => $_GET['toon']     ?? null,
-    ], $vervang), fn($v) => $v !== null && $v !== '');
+    $p = array_filter(array_merge(bh_soll_filter_params($_GET),
+        ['per' => $_GET['per'] ?? null, 'pagina' => $_GET['pagina'] ?? null], $vervang), fn($v) => $v !== null && $v !== '');
     return '?' . http_build_query($p);
 }
 
@@ -247,7 +258,8 @@ require __DIR__ . '/layout_top.php';
     $bev_namen = $_bnamen;
     // Hetzelfde vinkje als bij de hoofdactie in het dossier. Juist bij een bulkactie
     // telt het: dat is het moment waarop je twintig mensen tegelijk raakt.
-    $bev_vink  = bh_bevestig_stil_vink();
+    // Niet bij een herinnering: daar ís het bericht de actie.
+    $bev_vink  = isset($bulk[$toon_bevestiging['actie']]) ? bh_bevestig_stil_vink() : null;
     require __DIR__ . '/_bevestig.php';
     require __DIR__ . '/layout_bottom.php';
     return;
@@ -262,54 +274,80 @@ endif; ?>
 ?>
 
 <?php
+  // Zichtbaar: zoeken, "toon" en sorteren. De rest zit in "Meer filters"; een actief filter
+  // staat als chip onder de balk (admin/_filterbalk.php), dus er valt niets stil weg.
   $filter_velden = [
-      ['soort' => 'zoek', 'naam' => 'q', 'label' => 'Zoek naam of e-mail', 'waarde' => $zoek, 'breed' => true],
-      ['soort' => 'keuze', 'naam' => 'terug', 'label' => 'Terugkerend', 'waarde' => $filter_terug,
-       'opties' => ['' => 'Alle sollicitanten', '1' => 'Alle terugkerenden', 'lg' => 'Terugkerende strandwachten',
-                    'sol' => 'Eerder gesolliciteerd (geen strandwacht)']],
-      ['soort' => 'keuze', 'naam' => 'toon', 'label' => 'Toon', 'waarde' => $filter_toon,
-       'opties' => ['' => 'Iedereen', 'lopend' => 'In de procedure', '30d' => 'Aangemeld in de laatste 30 dagen']],
-      ['soort' => 'keuze', 'naam' => 'blk', 'label' => 'Kennismakingsformulier', 'waarde' => $filter_blk,
+      ['soort' => 'zoek', 'naam' => 'q', 'label' => 'Zoek naam of e-mail', 'waarde' => $fv('q')],
+      ['soort' => 'keuze', 'naam' => 'toon', 'label' => 'Toon', 'waarde' => $fv('toon'),
+       'opties' => ['' => 'Toon: iedereen', 'lopend' => 'Toon: in de procedure', '30d' => 'Toon: laatste 30 dagen aangemeld']],
+      ['soort' => 'sorteer', 'naam' => 'volgorde', 'label' => 'Sorteren', 'waarde' => $volgorde, 'opties' => bh_soll_volgordes()],
+      ['soort' => 'keuze', 'naam' => 'wacht', 'label' => 'Wacht op', 'waarde' => $fv('wacht'), 'meer' => true,
+       'opties' => ['' => 'Wacht op: niets bijzonders', 'ondertekening' => 'Wacht op een handtekening',
+                    'ouder' => 'Wacht op gegevens van de ouder', 'besch_geen' => 'Nog geen beschikbaarheid',
+                    'besch_voorlopig' => 'Beschikbaarheid nog voorlopig']],
+      ['soort' => 'keuze', 'naam' => 'blk', 'label' => 'Kennismakingsformulier', 'waarde' => $fv('blk'), 'meer' => true,
        'opties' => ['' => 'Formulier: alle', 'ja' => 'Formulier ingediend', 'nee' => 'Formulier open']],
-      // Intrekverzoeken (ook afgehandelde): wie is doorgevoerd staat op Afgehaakt en valt buiten de fasetabs.
-      ['soort' => 'keuze', 'naam' => 'intrek', 'label' => 'Intrekverzoek', 'waarde' => $filter_intrek,
-       'opties' => ['' => 'Intrekverzoek: alle', 'open' => 'Wil intrekken (open)', 'afgehandeld' => 'Intrekverzoek afgehandeld', 'ja' => 'Met intrekverzoek']],
+      ['soort' => 'keuze', 'naam' => 'leeftijd', 'label' => 'Leeftijd', 'waarde' => $fv('leeftijd'), 'meer' => true,
+       'opties' => ['' => 'Leeftijd: alle', 'onder16' => 'Jonger dan 16', '16-17' => '16 of 17 jaar',
+                    'onder18' => 'Onder de 18 (ouder tekent)', '18plus' => '18 of ouder']],
+      ['soort' => 'keuze', 'naam' => 'terug', 'label' => 'Terugkerend', 'waarde' => $fv('terug'), 'meer' => true,
+       'opties' => ['' => 'Nieuw en terugkerend', '1' => 'Alle terugkerenden', 'lg' => 'Terugkerende strandwachten',
+                    'sol' => 'Eerder gesolliciteerd (geen strandwacht)']],
   ];
+  if (module_aan('selectiedag')) {
+      $filter_velden[] = ['soort' => 'keuze', 'naam' => 'sd', 'label' => 'Selectiedag', 'waarde' => $fv('sd'), 'meer' => true,
+          'opties' => ['' => 'Selectiedag: alle', 'door' => 'Selectiedag: door', 'twijfel' => 'Selectiedag: twijfel',
+                       'niet' => 'Selectiedag: niet door', 'geen' => 'Selectiedag: nog geen besluit']];
+  }
+  $_bronnen = $sid ? bh_soll_bronnen($sid) : [];
+  if (count($_bronnen) > 1) {
+      $filter_velden[] = ['soort' => 'keuze', 'naam' => 'bron', 'label' => 'Bron', 'waarde' => $fv('bron'), 'meer' => true,
+          'opties' => ['' => 'Bron: alle'] + array_map(fn($l) => 'Bron: ' . $l, $_bronnen)];
+  }
+  $filter_velden[] = ['soort' => 'keuze', 'naam' => 'contact', 'label' => 'Bereikbaar', 'waarde' => $fv('contact'), 'meer' => true,
+      'opties' => ['' => 'Bereikbaar: alle', 'geen_tel' => 'Geen telefoonnummer', 'mail_mislukt' => 'Een bericht mislukte']];
+  // Intrekverzoeken (ook afgehandelde): wie is doorgevoerd staat op Afgehaakt en valt buiten de fasetabs.
+  $filter_velden[] = ['soort' => 'keuze', 'naam' => 'intrek', 'label' => 'Intrekverzoek', 'waarde' => $fv('intrek'), 'meer' => true,
+      'opties' => ['' => 'Intrekverzoek: alle', 'open' => 'Wil intrekken (open)', 'afgehandeld' => 'Intrekverzoek afgehandeld', 'ja' => 'Met intrekverzoek']];
   if (function_exists('competentie_sync_klaar') && competentie_sync_klaar()) {
       $_opties = ['' => 'Competentie: alle'];
       foreach (competentie_mapping() as $_cat => $_def) if (empty($_def['verborgen'])) $_opties[$_cat] = $_def['label'];
-      $filter_velden[] = ['soort' => 'keuze', 'naam' => 'comp', 'label' => 'Competentie',
-                          'waarde' => $filter_comp, 'opties' => $_opties];
+      $filter_velden[] = ['soort' => 'keuze', 'naam' => 'comp', 'label' => 'Competentie', 'waarde' => $fv('comp'), 'meer' => true,
+                          'opties' => $_opties];
   }
+  $filter_velden[] = ['soort' => 'datum', 'naam' => 'van', 'label' => 'Aangemeld vanaf', 'waarde' => $fv('van'), 'meer' => true];
+  $filter_velden[] = ['soort' => 'datum', 'naam' => 'tot', 'label' => 'tot en met', 'waarde' => $fv('tot'), 'meer' => true];
+
   $filter_verborgen = array_filter(['fase' => $fase_filter === 'alle' ? null : $fase_filter,
-                                    'sort' => $tabel['sort'], 'richting' => $tabel['richting'] ?? null,
                                     'per' => $per !== 25 ? $per : null]);
-  $filter_acties = [];
-  if (mag('sollicitanten', 'bewerken')) {
-      $filter_acties[] = ['label' => 'Toevoegen', 'icoon' => 'plus', 'toon' => 'primair',
-                          'url' => APP_URL . '/admin/sollicitant_nieuw.php'];
-  }
-  // Importeren (CSV) is admin-werk (import.php: vereist_rol('admin')); was alleen via de zoeker te vinden.
-  if ((huidige_beheerder()['rol'] ?? '') === 'admin') {
-      $filter_acties[] = ['label' => 'Importeren', 'icoon' => 'download', 'toon' => 'secundair',
-                          'url' => APP_URL . '/admin/import.php'];
-  }
+  // De lijstacties staan in de lijstkop hieronder (niet in de filterbalk, die dan op één regel past).
+  // Wat je zelden doet, in één menu: importeren (alleen admin, import.php: vereist_rol('admin')) en exporteren.
+  $_menu = [];
   if ($sid) {
       // Zonder recht op het kennismakingsformulier bevat de export alleen de basisgegevens
-      // (export_dossier_van); de knop zegt dat, zodat niemand een half bestand verwacht.
+      // (export_dossier_van); het label zegt dat, zodat niemand een half bestand verwacht.
       $_blk_export = mag('blk', 'lezen');
-      $filter_acties[] = ['label' => $_blk_export ? 'Exporteren' : 'Exporteren (basis)', 'icoon' => 'export',
-                          'toon' => 'secundair',
-                          'titel' => $_blk_export ? 'Alle sollicitanten van dit seizoen, met formulier en adres'
-                                                  : 'Alle sollicitanten van dit seizoen, zonder adres en formuliervelden',
-                          'url' => APP_URL . '/admin/export_blk.php?formaat=excel&seizoen=' . $sid];
+      $_menu[] = ['label' => $_blk_export ? 'Exporteren naar Excel' : 'Exporteren (basis)', 'icoon' => 'export',
+                  'titel' => $_blk_export ? 'Alle sollicitanten van dit seizoen, met formulier en adres'
+                                          : 'Alle sollicitanten van dit seizoen, zonder adres en formuliervelden',
+                  'url' => APP_URL . '/admin/export_blk.php?formaat=excel&seizoen=' . $sid];
   }
-  $filter_wissen = $heeft_filter ? APP_URL . '/admin/sollicitanten.php' : null;
+  if ((huidige_beheerder()['rol'] ?? '') === 'admin') {
+      $_menu[] = ['label' => 'Importeren uit CSV', 'icoon' => 'download', 'url' => APP_URL . '/admin/import.php'];
+  }
+  $filter_wissen = $heeft_filter || $volgorde !== '' ? soll_url(array_fill_keys(array_diff(bh_soll_filter_namen(), ['fase']), null) + ['pagina' => null]) : null;
   require __DIR__ . '/_filterbalk.php';
 ?>
 
-<div class="bh-tabelbalk">
-  <?php $kk_tabel = $tabel; require __DIR__ . '/_kolomkiezer.php'; ?>
+<div class="bh-lijstkop">
+  <span class="bh-meta"><?= $totaal ?> <?= $totaal === 1 ? 'sollicitant' : 'sollicitanten' ?><?= $heeft_filter ? ' gevonden' : '' ?></span>
+  <span class="bh-lijstkop-acties">
+    <?php $kk_tabel = $tabel; require __DIR__ . '/_kolomkiezer.php'; ?>
+    <?php $am_label = 'Meer'; $am_icoon = 'meer'; $am_items = $_menu; require __DIR__ . '/_actiemenu.php'; ?>
+    <?php if (mag('sollicitanten', 'bewerken')): ?>
+      <a class="ds-btn ds-btn-primair ds-btn-sm" href="<?= APP_URL ?>/admin/sollicitant_nieuw.php"><?= icoon('plus', 15) ?>Toevoegen</a>
+    <?php endif; ?>
+  </span>
 </div>
 
 <form method="post" id="sollForm">
@@ -339,6 +377,7 @@ endif; ?>
        'recht' => ['sollicitanten', 'bewerken']],
       ['actie' => 'afgewezen', 'label' => 'Afwijzen', 'toon' => 'gevaar', 'mail' => false,
        'recht' => ['sollicitanten', 'bewerken']],
+      ['actie' => 'herinneren', 'label' => 'Herinnering', 'mail' => true, 'recht' => ['sollicitanten', 'bewerken']],
       ['actie' => 'bericht_sturen', 'label' => 'Bericht', 'mail' => false, 'recht' => ['mailing', 'bewerken']],
       ['actie' => 'exporteren', 'label' => 'Exporteren', 'mail' => false],
   ];
