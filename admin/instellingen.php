@@ -38,7 +38,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $actie = $_POST['actie'] ?? '';
     // Technische acties vragen Systeem › bewerken, los van het tabblad in de URL: de check
     // hierboven kijkt alleen naar ?tab=, en een POST kan elke actie meesturen.
-    $technische_acties = ['authentik_test', 'authentik_bulk_sync', 'cron_token_vernieuw', 'modules_opslaan',
+    $technische_acties = ['authentik_test', 'authentik_bulk_sync', 'competenties_opslaan', 'competenties_standaard',
+                          'cron_token_vernieuw', 'modules_opslaan',
                           'cron_nu', 'api_sleutel_genereer', 'api_opslaan', 'smtp_opslaan', 'smtp_test'];
     if (in_array($actie, $technische_acties, true)) vereis_recht('systeem', 'bewerken');
 
@@ -298,6 +299,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         instelling_opslaan('authentik.laatste_bulk_sync', ''); // reset gate → forceer
         $res = competenties_cron_sync();
         flash('succes', 'Sync uitgevoerd: ' . ($res['aantal'] ?? 0) . ' sollicitanten ververst.');
+        redirect(APP_URL . '/admin/instellingen.php?tab=authentik');
+    }
+
+    // Groep-indeling competenties (tabblad Authentik).
+    if ($actie === 'competenties_opslaan') {
+        $res = competentie_mapping_uit_formulier((array)($_POST['comp'] ?? []));
+        if ($res[1]) {
+            flash('fout', 'Niet opgeslagen. ' . implode(' ', array_unique($res[1])));
+        } else {
+            competentie_mapping_opslaan($res[0]);
+            if (function_exists('audit_log')) audit_log('gewijzigd', 'instelling', null, ['veld' => 'authentik.mapping']);
+            flash('succes', 'Groep-indeling opgeslagen. Klik op "Nu alle sollicitanten verversen" om hem meteen toe te passen.');
+        }
+        redirect(APP_URL . '/admin/instellingen.php?tab=authentik');
+    }
+    if ($actie === 'competenties_standaard') {
+        instelling_opslaan('authentik.mapping', '');
+        if (function_exists('audit_log')) audit_log('gewijzigd', 'instelling', null, ['veld' => 'authentik.mapping', 'actie' => 'standaard teruggezet']);
+        flash('succes', 'De standaard groep-indeling staat weer terug.');
         redirect(APP_URL . '/admin/instellingen.php?tab=authentik');
     }
 
@@ -1325,42 +1345,75 @@ require __DIR__ . '/layout_top.php';
   <div class="bh-instsectie">
     <h3>Groep-indeling (competenties)</h3>
     <p class="ds-veld-hint bh-mb">
-      Welke Authentik-groepen tellen als competentie, en hun rangorde. Per categorie tonen we alleen de <strong>hoogste</strong> rang die iemand heeft
+      Welke Authentik-groepen tellen als competentie, en hun rangorde. De weergavenaam zie je in het dossier en bij Posten &amp; bezetting. Per categorie tonen we alleen de <strong>hoogste</strong> rang die iemand heeft
       (bijv. wie Chauffeur is, hoeft niet ook als Opstapper Auto te verschijnen). Groepen die hier niet staan, worden genegeerd.
       Terugkerend is alleen wie in <code>lid-strandploeg</code> of <code>lid-oud-strandploeg</code> zit; een diploma alleen is niet genoeg.
     </p>
-    <div class="bh-tabel-wrap">
-      <table class="bh-inst-comptabel">
-        <thead>
-          <tr>
-            <th class="bh-cel">Categorie</th>
-            <th class="bh-cel">Rangorde (laag → hoog)</th>
-          </tr>
-        </thead>
-        <tbody>
-          <?php foreach ($mapping as $cat => $def):
-            $groepen = $def['groepen'] ?? [];
-            asort($groepen);
-          ?>
-          <tr>
-            <td class="bh-compcel"><?= icoon(bh_icoonnaam((string)($def['icoon'] ?? '')), 15) ?><?= h($def['label'] ?? $cat) ?>
-              <div class="bh-inst-compsub"><?= !empty($def['verborgen']) ? 'bepaalt "terugkerend", geen competentie'
-                                               : (($def['ranking'] ?? true) ? 'met rangorde' : 'los (geen rangorde)') ?></div>
-            </td>
-            <td class="bh-cel">
-              <?php foreach ($groepen as $groep => $rang): ?>
-                <span class="bh-inst-groepchip">
-                  <?php if ($def['ranking'] ?? true): ?><span class="bh-tekst-grijs"><?= (int)$rang ?>.</span> <?php endif; ?><code><?= h($groep) ?></code>
-                </span>
+    <?php /* Groepen per rang, gescheiden door komma's. De categorieën en rangen liggen vast
+             (posten en "terugkerend" verwijzen ernaar); de groepen en de rangnamen niet. */
+          $_groepen_van = fn(array $def, int $rang): string => implode(', ', array_keys(array_filter($def['groepen'] ?? [], fn($r) => (int)$r === $rang))); ?>
+    <form method="POST">
+      <?= csrf_input() ?>
+      <div class="bh-tabel-wrap">
+        <table class="bh-inst-comptabel">
+          <thead>
+            <tr>
+              <th class="bh-cel" scope="col">Categorie</th>
+              <th class="bh-cel bh-comp-rang" scope="col">Rang</th>
+              <th class="bh-cel bh-comp-naam" scope="col">Weergavenaam</th>
+              <th class="bh-cel bh-comp-groepen" scope="col">Authentik-groepen (komma ertussen)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php foreach ($mapping as $cat => $def):
+              $_rangen = !empty($def['ranking']) ? array_keys($def['namen'] ?? []) : [null]; ?>
+              <?php foreach ($_rangen as $_i => $_rang): ?>
+              <tr>
+                <?php if ($_i === 0): ?>
+                <th class="bh-compcel" scope="rowgroup" rowspan="<?= count($_rangen) ?>">
+                  <?= icoon(bh_icoonnaam((string)($def['icoon'] ?? '')), 15) ?><?= h($def['label'] ?? $cat) ?>
+                  <div class="bh-inst-compsub"><?= !empty($def['verborgen']) ? 'bepaalt "terugkerend", geen competentie'
+                                                   : (!empty($def['ranking']) ? 'met rangorde (1 = laagst)' : 'los (geen rangorde)') ?></div>
+                </th>
+                <?php endif; ?>
+                <?php if ($_rang !== null): ?>
+                  <td class="bh-cel"><?= (int)$_rang ?></td>
+                  <td class="bh-cel">
+                    <input class="ds-input" type="text" maxlength="60" name="comp[<?= h($cat) ?>][namen][<?= (int)$_rang ?>]"
+                           value="<?= h((string)$def['namen'][$_rang]) ?>" aria-label="<?= h($def['label']) ?>, rang <?= (int)$_rang ?>: weergavenaam">
+                  </td>
+                  <td class="bh-cel">
+                    <input class="ds-input" type="text" name="comp[<?= h($cat) ?>][groepen][<?= (int)$_rang ?>]"
+                           value="<?= h($_groepen_van($def, (int)$_rang)) ?>" aria-label="<?= h($def['label']) ?>, rang <?= (int)$_rang ?>: Authentik-groepen">
+                  </td>
+                <?php else: ?>
+                  <td class="bh-cel">–</td>
+                  <td class="bh-cel"><span class="bh-tekst-grijs">naam van de groep</span></td>
+                  <td class="bh-cel">
+                    <input class="ds-input" type="text" name="comp[<?= h($cat) ?>][groepen]"
+                           value="<?= h(implode(', ', array_keys($def['groepen'] ?? []))) ?>" aria-label="<?= h($def['label']) ?>: Authentik-groepen">
+                  </td>
+                <?php endif; ?>
+              </tr>
               <?php endforeach; ?>
-            </td>
-          </tr>
-          <?php endforeach; ?>
-        </tbody>
-      </table>
-    </div>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+      <div class="bh-inst-knoppen">
+        <button type="submit" name="actie" value="competenties_opslaan" class="ds-btn ds-btn-primair">Indeling opslaan</button>
+      </div>
+    </form>
+    <?php if (instelling('authentik.mapping', '') !== ''): ?>
+      <form method="POST" data-bevestig="De standaard groep-indeling terugzetten? Je eigen aanpassingen gaan verloren.">
+        <?= csrf_input() ?>
+        <button type="submit" name="actie" value="competenties_standaard" class="ds-btn ds-btn-secundair ds-btn-sm">Standaard terugzetten</button>
+      </form>
+    <?php endif; ?>
     <div class="bh-inst-voetnoot">
-      De indeling is voorgeconfigureerd op basis van jullie Authentik-groepen. Aanpassen kan later via een uitgebreider scherm; neem contact op als een groep verkeerd staat.
+      Standaard staan de oude Authentik-namen (zoals "Senior Lifeguard") nog naast de nieuwe (<code>kw-lifeguard-senior</code>).
+      Zijn de groepen in Authentik hernoemd, haal de oude namen dan hier weg en klik daarna op
+      "Nu alle sollicitanten verversen". Een groep mag maar op één plek staan.
     </div>
   </div>
 

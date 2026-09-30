@@ -11,7 +11,8 @@ function app_changelog(): array {
             'datum'  => '2026-09-30',
             'titel'  => 'Competenties en terugkerende strandwachten volgens het nieuwe groepenmodel',
             'punten' => [
-                'Competenties komen uit de kw-groepen (kw-lifeguard-*, kw-boot-*, kw-auto-*, kw-postcommandant, kw-bevelvoerder) en lid-alarmploeg. De oude groepsnamen tellen tijdens de overgang nog mee',
+                'Competenties komen uit de kw-groepen (kw-lifeguard-*, kw-boot-*, kw-auto-*, kw-postcommandant, kw-bevelvoerder) en lid-alarmploeg. De oude groepsnamen staan er standaard nog naast',
+                'De groep-indeling is nu zelf in te stellen bij Instellingen › Authentik: per rang de weergavenaam en welke Authentik-groepen erbij horen. Zo haal je de oude namen weg zodra Authentik is omgezet',
                 'Terugkerende strandwacht = in lid-strandploeg of lid-oud-strandploeg (afgelopen 3 seizoenen). Een Authentik-account of een diploma alleen is niet meer genoeg. Dit bepaalt de lijst "terugkerend", de groepsindeling, feedback en de selectiedag',
                 'Iconen van competenties zonder emoji',
                 'Na de update: klik bij Instellingen › Authentik op "Nu alle sollicitanten verversen", anders gaat de nieuwe indeling pas na de dagelijkse sync in',

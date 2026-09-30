@@ -11,111 +11,123 @@
  * Match: op e-mail, met handmatige koppeling (authentik_username) als fallback.
  */
 
-// ── Defaults op basis van het groepenmodel (docs/handleiding/authentik_groepen.md) ──
-// categorie => [ 'label'=>..., 'icoon'=> naam uit includes/iconen.php, 'groepen' => [ 'groep' => rang, ... ] ]
+// ── Standaardindeling volgens het groepenmodel (docs/handleiding/authentik_groepen.md) ──
+// categorie => [ 'label', 'icoon' (naam uit includes/iconen.php), 'ranking', 'verborgen'?,
+//                'namen' => [rang => weergavenaam] (alleen met rangorde), 'groepen' => [groep => rang] ]
 // 'verborgen' => true: wordt gesynct maar niet als competentie getoond (alleen voor "terugkerend").
+//
+// De categorieën en rangen liggen vast (posten en "terugkerend" verwijzen ernaar). Welke groepen erbij
+// horen en hoe een rang heet, is instelbaar bij Instellingen › Authentik (authentik.mapping). Standaard
+// staan de oude Authentik-namen er nog naast de nieuwe, voor de overgang; die haal je daar zelf weg.
 function competentie_default_mapping(): array {
     return [
         'lifeguard' => [
-            'label'   => 'Lifeguard',
-            'icoon'   => 'reddingsboei',
-            'ranking' => true,
-            'groepen' => [
-                'kw-lifeguard-aspirant' => 1,
-                'kw-lifeguard-junior'   => 2,
-                'kw-lifeguard'          => 3,
-                'kw-lifeguard-senior'   => 4,
-            ],
+            'label' => 'Lifeguard', 'icoon' => 'reddingsboei', 'ranking' => true,
+            'namen' => [1 => 'Aspirant Lifeguard', 2 => 'Junior Lifeguard', 3 => 'Lifeguard', 4 => 'Senior Lifeguard'],
+            'groepen' => ['kw-lifeguard-aspirant' => 1, 'Aspirant Lifeguard' => 1,
+                          'kw-lifeguard-junior'   => 2, 'Junior Lifeguard'   => 2,
+                          'kw-lifeguard'          => 3, 'Lifeguard'          => 3,
+                          'kw-lifeguard-senior'   => 4, 'Senior Lifeguard'   => 4],
         ],
         'varen' => [
-            'label'   => 'Varen',
-            'icoon'   => 'golf',
-            'ranking' => true,
-            'groepen' => [
-                'kw-boot-opstapper' => 1,
-                'kw-boot-schipper'  => 2,
-            ],
+            'label' => 'Varen', 'icoon' => 'golf', 'ranking' => true,
+            'namen' => [1 => 'Opstapper boot', 2 => 'Schipper'],
+            'groepen' => ['kw-boot-opstapper' => 1, 'Opstapper Boot' => 1,
+                          'kw-boot-schipper'  => 2, 'Schipper'       => 2],
         ],
         'rijden' => [
-            'label'   => 'Rijden',
-            'icoon'   => 'wissel',
-            'ranking' => true,
-            'groepen' => [
-                'kw-auto-opstapper' => 1,
-                'kw-auto-chauffeur' => 2,
-            ],
+            'label' => 'Rijden', 'icoon' => 'wissel', 'ranking' => true,
+            'namen' => [1 => 'Opstapper auto', 2 => 'Chauffeur'],
+            'groepen' => ['kw-auto-opstapper' => 1, 'Opstapper Auto' => 1,
+                          'kw-auto-chauffeur' => 2, 'Chauffeur'      => 2],
         ],
         'overig' => [
-            'label'   => 'Overig',
-            'icoon'   => 'schild',
-            'ranking' => false,
-            'groepen' => [
-                'kw-postcommandant' => 1,
-                'kw-bevelvoerder'   => 1,
-                'lid-alarmploeg'    => 1,
-            ],
+            'label' => 'Overig', 'icoon' => 'schild', 'ranking' => false,
+            'groepen' => ['kw-postcommandant' => 1, 'kw-bevelvoerder' => 1, 'lid-alarmploeg' => 1, 'Alarmploeg' => 1],
         ],
         // Terugkerende strandwacht (authentik_lifeguard_sql). Bewust niet kw-lifeguard-*: er zijn mensen
         // met een diploma die nooit of lang geleden werkten. Besluit Lucas, 30 sep 2026.
         'strandploeg' => [
-            'label'     => 'Strandploeg',
-            'icoon'     => 'strand',
-            'ranking'   => false,
-            'verborgen' => true,
-            'groepen'   => [
-                'lid-strandploeg'     => 2,
-                'lid-oud-strandploeg' => 1,
-            ],
+            'label' => 'Strandploeg', 'icoon' => 'strand', 'ranking' => false, 'verborgen' => true,
+            'groepen' => ['lid-strandploeg' => 1, 'lid-oud-strandploeg' => 1, 'Strandploeg' => 1],
         ],
     ];
 }
 
 /**
- * De groepsnamen van vóór 2.132.2, en hun opvolger. Alleen voor een eerder opgeslagen mapping
- * (instelling authentik.mapping): de standaard hierboven heeft de nieuwe namen al.
+ * De actieve indeling: de vaste categorieën uit de standaard, met de groepen en rangnamen uit de
+ * instelling als die er is. Een categorie die in de opgeslagen versie ontbreekt (zoals strandploeg in
+ * een versie van vóór 2.132.2), komt uit de standaard.
  */
-function competentie_oude_groepnamen(): array {
-    return ['Aspirant Lifeguard' => 'kw-lifeguard-aspirant', 'Junior Lifeguard' => 'kw-lifeguard-junior',
-            'Lifeguard' => 'kw-lifeguard', 'Senior Lifeguard' => 'kw-lifeguard-senior',
-            'Opstapper Boot' => 'kw-boot-opstapper', 'Schipper' => 'kw-boot-schipper',
-            'Opstapper Auto' => 'kw-auto-opstapper', 'Chauffeur' => 'kw-auto-chauffeur',
-            'Alarmploeg' => 'lid-alarmploeg', 'Strandploeg' => 'lid-strandploeg'];
-}
-
-/**
- * Leesbare naam van een groep voor op het scherm: "kw-lifeguard-senior" → "Senior Lifeguard".
- * De oude Authentik-namen wáren de leesbare namen; wat daar niet in staat: voorvoegsel eraf.
- */
-function competentie_groep_label(string $groep): string {
-    static $label = null;
-    if ($label === null) $label = array_flip(competentie_oude_groepnamen());
-    if (isset($label[$groep])) return $label[$groep];
-    $kaal = preg_replace('/^(kw|lid|fn)-/', '', $groep);
-    return ucfirst(str_replace('-', ' ', (string)$kaal));
-}
-
-/** Actieve mapping: uit instelling (JSON) of default. */
 function competentie_mapping(): array {
-    $json = instelling('authentik.mapping', '');
-    if ($json) {
-        $m = json_decode($json, true);
-        if (is_array($m) && $m) {
-            // Eerder opgeslagen met de oude groepsnamen: omzetten, anders matcht niets meer. De
-            // categorie strandploeg ontbreekt daar; die komt uit de standaard (nodig voor "terugkerend").
-            $oud = competentie_oude_groepnamen();
-            foreach ($m as $cat => $def) {
-                $nieuw = [];
-                foreach ((array)($def['groepen'] ?? []) as $g => $rang) $nieuw[$oud[$g] ?? $g] = $rang;
-                $m[$cat]['groepen'] = $nieuw;
-            }
-            return $m + ['strandploeg' => competentie_default_mapping()['strandploeg']];
+    $m = competentie_default_mapping();
+    $opgeslagen = json_decode((string)instelling('authentik.mapping', ''), true);
+    if (!is_array($opgeslagen)) return $m;
+    foreach ($m as $cat => $def) {
+        $o = $opgeslagen[$cat] ?? null;
+        if (!is_array($o)) continue;
+        if (isset($o['groepen']) && is_array($o['groepen'])) $m[$cat]['groepen'] = array_map('intval', $o['groepen']);
+        if (!empty($def['ranking']) && isset($o['namen']) && is_array($o['namen'])) {
+            foreach ($o['namen'] as $rang => $naam) if (isset($def['namen'][$rang]) && trim((string)$naam) !== '') $m[$cat]['namen'][$rang] = (string)$naam;
         }
     }
-    return competentie_default_mapping();
+    return $m;
 }
 
 function competentie_mapping_opslaan(array $mapping): void {
     instelling_opslaan('authentik.mapping', json_encode($mapping, JSON_UNESCAPED_UNICODE));
+}
+
+/**
+ * De indeling uit het formulier op Instellingen › Authentik. Invoer per categorie:
+ *   met rangorde:    ['namen' => [rang => naam], 'groepen' => [rang => "groep, groep"]]
+ *   zonder rangorde: ['groepen' => "groep, groep"]
+ * Groepen scheid je met een komma of een nieuwe regel. Een groep mag maar op één plek staan.
+ * @return array{0: array, 1: string[]}  [indeling om op te slaan, foutmeldingen]
+ */
+function competentie_mapping_uit_formulier(array $invoer): array {
+    $uit = []; $fouten = []; $gezien = [];
+    $splits = fn($tekst): array => array_values(array_filter(array_map('trim', preg_split('/[,\n]+/', (string)$tekst))));
+    foreach (competentie_default_mapping() as $cat => $def) {
+        $in = (array)($invoer[$cat] ?? []);
+        $groepen = [];
+        $per_rang = !empty($def['ranking']) ? (array)($in['groepen'] ?? []) : [1 => $in['groepen'] ?? ''];
+        foreach ($per_rang as $rang => $tekst) {
+            $rang = (int)$rang;
+            if (!empty($def['ranking']) && !isset($def['namen'][$rang])) continue;
+            foreach ($splits($tekst) as $g) {
+                if (mb_strlen($g) > 100) { $fouten[] = 'Groepsnaam te lang: ' . mb_substr($g, 0, 40) . '…'; continue; }
+                $sleutel = mb_strtolower($g);
+                if (isset($gezien[$sleutel])) { $fouten[] = 'De groep "' . $g . '" staat op twee plekken.'; continue; }
+                $gezien[$sleutel] = true;
+                $groepen[$g] = $rang;
+            }
+        }
+        $uit[$cat] = ['groepen' => $groepen];
+        if (!empty($def['ranking'])) {
+            foreach ($def['namen'] as $rang => $standaard) {
+                $naam = trim((string)($in['namen'][$rang] ?? ''));
+                $uit[$cat]['namen'][$rang] = mb_substr($naam !== '' ? $naam : $standaard, 0, 60);
+            }
+        }
+    }
+    return [$uit, $fouten];
+}
+
+/**
+ * Leesbare naam van een groep voor op het scherm: "kw-lifeguard-senior" → "Senior Lifeguard" (de
+ * rangnaam uit de indeling). Zonder rangorde of onbekend: voorvoegsel eraf ("kw-postcommandant" →
+ * "Postcommandant").
+ */
+function competentie_groep_label(string $groep): string {
+    $m = competentie_mapping();
+    foreach ($m as $def) {
+        if (!empty($def['ranking']) && isset($def['groepen'][$groep])) {
+            return (string)($def['namen'][$def['groepen'][$groep]] ?? $groep);
+        }
+    }
+    $kaal = preg_replace('/^(kw|lid|fn)-/', '', $groep);
+    return ucfirst(str_replace('-', ' ', (string)$kaal));
 }
 
 /** Platte lijst: group-naam => ['categorie'=>..., 'rang'=>...] voor snelle lookup. */
@@ -125,11 +137,6 @@ function competentie_group_index(): array {
         foreach ($def['groepen'] ?? [] as $groep => $rang) {
             $idx[$groep] = ['categorie' => $cat, 'rang' => (int)$rang];
         }
-    }
-    // Overgang: zolang Authentik nog de oude groepsnamen heeft, tellen die als hun opvolger.
-    // Zo breekt de dekking niet als deze versie eerder live staat dan de hernoeming in Authentik.
-    foreach (competentie_oude_groepnamen() as $oud => $nieuw) {
-        if (isset($idx[$nieuw]) && !isset($idx[$oud])) $idx[$oud] = $idx[$nieuw];
     }
     return $idx;
 }

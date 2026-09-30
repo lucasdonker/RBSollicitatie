@@ -2704,6 +2704,11 @@ input.bh-inst-herinnering-info { margin-top: 6px; }
 .bh-inst-comptabel thead tr { border-bottom: 2px solid var(--rand); text-align: left; }
 .bh-inst-comptabel tbody tr { border-bottom: 1px solid var(--rand-licht); }
 .bh-inst-compsub { font-size: 11px; color: var(--grijs); font-weight: 400; }
+/* Bewerkbare groep-indeling: categorie bovenaan, rang smal, de groepen krijgen de ruimte. */
+.bh-inst-comptabel th.bh-compcel { text-align: left; vertical-align: top; white-space: normal; width: 20%; }
+.bh-inst-comptabel .bh-comp-rang { width: 1%; white-space: nowrap; }
+.bh-inst-comptabel .bh-comp-naam { width: 27%; }
+.bh-inst-comptabel .bh-comp-groepen { width: 50%; }
 .bh-inst-groepchip {
   display: inline-block; background: var(--grijs-bg); border: 1px solid var(--rand);
   border-radius: 5px; padding: 3px 9px; margin: 2px; font-size: 12px;
