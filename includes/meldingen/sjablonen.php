@@ -298,7 +298,8 @@ function melding_render(string $type, array $vars, array $override = []): ?array
         ? mail_html_wrapper($body, $onderwerp, $hero_t, $hero_s, $img ?: null, $kleur)
         : $body;
 
-    $kort = tekst_kort_maak((string)($t['tekst_kort'] ?? ''), $vars);
+    // Een zelf geschreven bericht mag langer (tot 1000 tekens); een vast sjabloon blijft kort.
+    $kort = tekst_kort_maak((string)($t['tekst_kort'] ?? ''), $vars, (int)((function_exists('melding_definitie') ? melding_definitie($type) : null)['kort_max'] ?? 400));
     $sam  = tekst_kort_maak((string)($t['samenvatting'] ?? ''), $vars, 300);
     if ($sam === '') $sam = tekst_kort_maak($body, $vars, 140);
 
@@ -311,5 +312,7 @@ function melding_render(string $type, array $vars, array $override = []): ?array
         'bijlagen' => $bijlagen,
     ];
 }
+
+// Opmaak van de korte tekst (WhatsApp/sms) en de lijst met variabelen: includes/berichten_opmaak.php.
 
 }

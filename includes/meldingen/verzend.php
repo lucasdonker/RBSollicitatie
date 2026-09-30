@@ -493,12 +493,13 @@ function melding_verzend_item(array $m): array {
         $r = ['ok' => false, 'fout' => 'onbekend kanaal'];
         try {
             if (($kanaal === 'whatsapp' || $kanaal === 'sms') && function_exists('mail_omleiden') && mail_omleiden() !== '') {
-                $r = melding_testmodus_kort($kanaal, (string)$m['telefoon'], (string)$m['onderwerp'], $tekst_kort);
+                $r = melding_testmodus_kort($kanaal, (string)$m['telefoon'], (string)$m['onderwerp'], $kanaal === 'sms' ? kort_opmaak_strip($tekst_kort) : $tekst_kort);
             } elseif ($kanaal === 'whatsapp') {
                 $r = melding_kanaal_whatsapp((string)$m['telefoon'], $tekst_kort);
             } elseif ($kanaal === 'sms') {
                 $r = (function_exists('sms_actief') && sms_actief() && $m['telefoon'])
-                    ? melding_resultaat(function_exists('sms_verstuur_res') ? sms_verstuur_res((string)$m['telefoon'], $tekst_kort) : sms_verstuur((string)$m['telefoon'], $tekst_kort))
+                    // Sms kent geen opmaak: *vet* en _cursief_ zouden als tekens aankomen.
+                    ? melding_resultaat(function_exists('sms_verstuur_res') ? sms_verstuur_res((string)$m['telefoon'], kort_opmaak_strip($tekst_kort)) : sms_verstuur((string)$m['telefoon'], kort_opmaak_strip($tekst_kort)))
                     : ['ok' => false, 'fout' => 'sms niet beschikbaar'];
             } elseif ($kanaal === 'email') {
                 if ($m['naar_email'] === '' || $m['naar_email'] === null) { $r = ['ok' => false, 'fout' => 'geen e-mailadres']; }

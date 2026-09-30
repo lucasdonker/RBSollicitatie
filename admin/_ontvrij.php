@@ -23,6 +23,8 @@ $_kv   = (string)($ontv['kanaal_voorkeur'] ?? 'whatsapp');
          data-naam="<?= h($_naam) ?>"
          data-zoek="<?= h(mb_strtolower($_naam . ' ' . (string)($ontv['email'] ?? ''))) ?>"
          data-fase="<?= h($ontv_label) ?>"
+         <?php // Krijgt deze persoon WhatsApp/sms? Anders de e-mail-terugval (teller in berichten.js). ?>
+         data-kort="<?= !empty($ontv['telefoon']) && $_kv !== 'email' && ($ontv_id > 0) ? '1' : '0' ?>"
          <?= !empty($ontv_aan) ? 'checked' : '' ?>>
   <span class="bh-ontvrij-tekst">
     <span class="bh-ontvrij-naam">

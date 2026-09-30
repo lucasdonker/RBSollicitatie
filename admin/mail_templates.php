@@ -178,11 +178,7 @@ $def    = $register[$actief_slug] ?? null;
 $in_db  = isset($rijen[$actief_slug]);
 $modus  = $def && function_exists('melding_kanaalmodus') ? melding_kanaalmodus($actief_slug) : null;
 
-$vars_basis = ['voornaam', 'achternaam', 'volledige_naam', 'sollicitant_email', 'sollicitant_telefoon', 'seizoen_naam',
-               'selectiedag_datum', 'selectiedag_tijd', 'selectiedag_locatie', 'selectiedag_adres', 'selectiedag_eindtijd', 'selectiedag_meenemen',
-               'tw_periode', 'tw_datum_start', 'tw_datum_eind', 'tw_locatie', 'tw_adres', 'tw_verzameltijd', 'tw_eindtijd', 'tw_meenemen',
-               'portaal_url', 'contact_email', 'bestuur_email', 'afmeld_url'];
-$vars_type  = $def['vars'] ?? [];
+$vars_type  = $def['vars'] ?? [];   // extra voor dit type; de vaste lijst staat in melding_variabelen_lijst()
 
 require __DIR__ . '/layout_top.php';
 ?>
@@ -277,15 +273,15 @@ require __DIR__ . '/layout_top.php';
         <?php endif; ?>
         <div>
           <label for="veld-onderwerp" class="veld-label">Onderwerpregel (e-mail)</label>
-          <input id="veld-onderwerp" type="text" name="onderwerp" value="<?= h($actief['onderwerp'] ?? '') ?>" required>
+          <input id="veld-onderwerp" type="text" name="onderwerp" data-var-veld value="<?= h($actief['onderwerp'] ?? '') ?>" required>
         </div>
         <div>
           <label for="veld-hero-titel" class="veld-label">Hero-titel</label>
-          <input id="veld-hero-titel" type="text" name="hero_titel" value="<?= h($actief['hero_titel'] ?? '') ?>" placeholder="Leeg = onderwerp">
+          <input id="veld-hero-titel" type="text" name="hero_titel" data-var-veld value="<?= h($actief['hero_titel'] ?? '') ?>" placeholder="Leeg = onderwerp">
         </div>
         <div>
           <label for="veld-hero-subtitel" class="veld-label">Hero-subtitel</label>
-          <input id="veld-hero-subtitel" type="text" name="hero_subtitel" value="<?= h($actief['hero_subtitel'] ?? '') ?>">
+          <input id="veld-hero-subtitel" type="text" name="hero_subtitel" data-var-veld value="<?= h($actief['hero_subtitel'] ?? '') ?>">
         </div>
         <div>
           <label class="veld-label">Hero-kleur</label>
@@ -311,12 +307,12 @@ require __DIR__ . '/layout_top.php';
       <div class="bh-mt-sectie bh-mt-tweekolom">
         <div>
           <label class="veld-label">Korte tekst (WhatsApp/SMS) <span id="kortTeller" class="bh-mt-teller"></span></label>
-          <textarea name="tekst_kort" id="tekstKort" rows="5" maxlength="400" class="bh-mt-tekstvak" data-invoer="kortTeller()" <?= ($def && !$def['kort_toegestaan']) ? 'placeholder="Dit type gaat alleen per e-mail."' : '' ?>><?= h($actief['tekst_kort'] ?? '') ?></textarea>
-          <div class="bh-mt-hulp">Platte tekst, max 400 tekens, geen opmaak. Zelfde variabelen als de e-mail.</div>
+          <textarea name="tekst_kort" id="tekstKort" data-var-veld rows="5" maxlength="400" class="bh-mt-tekstvak" data-invoer="kortTeller()" <?= ($def && !$def['kort_toegestaan']) ? 'placeholder="Dit type gaat alleen per e-mail."' : '' ?>><?= h($actief['tekst_kort'] ?? '') ?></textarea>
+          <div class="bh-mt-hulp">Max 400 tekens. Opmaak zoals in WhatsApp: *vet*, _cursief_, ~doorgehaald~ (sms toont die tekens niet). Zelfde variabelen als de e-mail.</div>
         </div>
         <div>
           <label for="veld-samenvatting" class="veld-label">Samenvatting (portaal)</label>
-          <textarea id="veld-samenvatting" name="samenvatting" rows="5" maxlength="200" class="bh-mt-tekstvak"><?= h($actief['samenvatting'] ?? '') ?></textarea>
+          <textarea id="veld-samenvatting" name="samenvatting" data-var-veld rows="5" maxlength="200" class="bh-mt-tekstvak"><?= h($actief['samenvatting'] ?? '') ?></textarea>
           <div class="bh-mt-hulp">Eén regel onder de titel in het berichtenoverzicht van de sollicitant.</div>
         </div>
       </div>
@@ -366,15 +362,12 @@ require __DIR__ . '/layout_top.php';
 <div class="ds-kaart">
   <div class="bh-kaartkop"><h2>Variabelen</h2></div>
   <div class="bh-kaartbody bh-mt-varbody">
-    <p class="bh-mt-varuitleg">Klik om in te voegen in de e-mailtekst (of typ ze in de korte tekst).</p>
-    <?php if ($vars_type): ?>
-    <div class="bh-mt-vargroep">
-      <div class="veld-label">Voor dit type</div>
-      <?php foreach ($vars_type as $v): ?><span class="var-chip" data-klik="P13Editor.insert('tmpl','{{<?= h($v) ?>}}')">{{<?= h($v) ?>}}</span><?php endforeach; ?>
-    </div>
-    <?php endif; ?>
-    <div class="veld-label">Altijd beschikbaar</div>
-    <?php foreach ($vars_basis as $v): ?><span class="var-chip" data-klik="P13Editor.insert('tmpl','{{<?= h($v) ?>}}')">{{<?= h($v) ?>}}</span><?php endforeach; ?>
+    <p class="bh-mt-varuitleg">Klik om in te voegen in het veld waar je het laatst typte: de e-mailtekst, het onderwerp of de korte tekst.</p>
+    <?php
+      // Eén lijst met variabelen voor Berichten en Sjablonen (melding_variabelen_lijst()).
+      $var_extra = array_combine($vars_type, array_map(fn($v) => ucfirst(str_replace('_', ' ', $v)), $vars_type)) ?: [];
+      require __DIR__ . '/_variabelen.php';
+    ?>
     <div class="bh-mt-opmaak">
       Opmaakblokken via de knoppen in de editor: Knop, Info-blok, Let op. Als tekst: <code>[knop href="URL"]Tekst[/knop]</code>, <code>[info]...[/info]</code>, <code>[let op]...[/let op]</code>, <code>[code]123456[/code]</code>.
     </div>
@@ -388,5 +381,6 @@ require __DIR__ . '/layout_top.php';
 function kortTeller(){var t=document.getElementById('tekstKort');var e=document.getElementById('kortTeller');if(t&&e)e.textContent='('+t.value.length+'/400)';}
 kortTeller();
 </script>
+<script src="<?= APP_URL ?>/assets/js/variabelen.js?v=<?= @filemtime(__DIR__ . '/../assets/js/variabelen.js') ?>" defer></script>
 
 <?php require __DIR__ . '/layout_bottom.php'; ?>

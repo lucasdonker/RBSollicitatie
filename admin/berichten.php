@@ -49,11 +49,20 @@ $sjablonen = [];
 try { $sjablonen = $db->query("SELECT slug, naam, onderwerp FROM mail_templates WHERE slug LIKE 'eigen\\_%' OR categorie='handmatig' ORDER BY naam")->fetchAll(); } catch (Exception $e) {}
 $sjablonen = array_values(array_filter($sjablonen, fn($t) => $t['slug'] !== 'handmatig'));
 
-/** Inhoud + override uit het formulier (of uit een eigen sjabloon). */
-function berichten_inhoud(array $post, $db): array {
+/**
+ * Inhoud + override uit het formulier (of uit een eigen sjabloon).
+ * Alleen WhatsApp/sms ($modus 'kort'): er is geen e-mailtekst, want wie geen telefoon heeft (of liever
+ * e-mail wil) krijgt dezelfde korte tekst als eenvoudige e-mail (besluit Lucas). Die e-mail maken we
+ * hier uit de korte tekst (kort_naar_html), met een vast onderwerp.
+ */
+function berichten_inhoud(array $post, $db, string $modus): array {
     $slug = preg_replace('/[^a-z0-9_-]/i', '', (string)($post['sjabloon'] ?? ''));
     $inhoud = ['onderwerp' => trim($post['onderwerp'] ?? ''), 'body_html' => (string)($post['body_html'] ?? ''), 'tekst_kort' => trim((string)($post['tekst_kort'] ?? ''))];
-    $override = ['hero_titel' => trim($post['hero_titel'] ?? '')];
+    if ($slug === '' && $modus === 'kort') {
+        $inhoud['onderwerp'] = 'Bericht van ' . (function_exists('instelling') ? instelling('site.naam', 'Reddingsbrigade Paal 13') : 'Reddingsbrigade Paal 13');
+        $inhoud['body_html'] = kort_naar_html($inhoud['tekst_kort']);
+    }
+    $override = ['hero_titel' => $modus === 'kort' ? '' : trim($post['hero_titel'] ?? '')];
     if ($slug !== '' && function_exists('sjabloon_laden')) {
         $t = sjabloon_laden($slug);
         if ($t) {
@@ -72,9 +81,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tab === 'nieuw') {
     $actie  = $_POST['actie'] ?? '';
     // Een voorbeeld verstuurt niets: dat mag met leesrecht, versturen en testen niet.
     if (!$mag_bewerken && $actie !== 'voorbeeld') { http_response_code(403); die('Geen recht om berichten te versturen.'); }
-    $modus  = isset($modi[$_POST['kanaalmodus'] ?? '']) ? $_POST['kanaalmodus'] : 'email';
+    // Standaard WhatsApp/sms (besluit Lucas); e-mail is de terugval voor wie geen telefoon heeft.
+    $modus  = isset($modi[$_POST['kanaalmodus'] ?? '']) ? $_POST['kanaalmodus'] : 'kort';
     $ids    = array_values(array_unique(array_filter(array_map('intval', $_POST['ontvangers'] ?? []))));
-    $bi     = berichten_inhoud($_POST, $db);
+    $bi     = berichten_inhoud($_POST, $db, $modus);
     $inhoud = $bi['inhoud']; $override = $bi['override'];
     $voorsel = $ids;
     // Bijlagen: geüploade bestanden naar de bibliotheek (alleen bij echt verzenden/testen)
@@ -90,10 +100,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tab === 'nieuw') {
 
     if ($fout) {
         // bijlage-fout: niets versturen
-    } elseif ($inhoud['onderwerp'] === '' || trim(strip_tags($inhoud['body_html'])) === '') {
-        $fout = 'Vul een onderwerp en een berichttekst in (of kies een sjabloon).';
     } elseif ($modus !== 'email' && $inhoud['tekst_kort'] === '') {
-        $fout = 'Voor WhatsApp/SMS is een korte tekst nodig.';
+        $fout = 'Schrijf het bericht voor WhatsApp/sms.';
+    } elseif ($modus !== 'kort' && ($inhoud['onderwerp'] === '' || trim(strip_tags($inhoud['body_html'])) === '')) {
+        $fout = 'Vul een onderwerp en de e-mailtekst in (of kies een sjabloon).';
     } elseif ($actie === 'voorbeeld') {
         $vars = function_exists('melding_vars') ? melding_vars($ids[0] ?? 0, $inhoud) : $inhoud;
         if (!$ids) { $vars['voornaam'] = 'Lieke'; $vars['achternaam'] = 'de Vries'; $vars['volledige_naam'] = 'Lieke de Vries'; }
@@ -351,397 +361,224 @@ require __DIR__ . '/layout_top.php';
 </section>
 <?php endif; ?>
 
-<form method="POST" id="berichtForm" enctype="multipart/form-data" class="bh-berichtform">
+<?php
+  // Kanaal: standaard WhatsApp/sms. Welke velden je ziet, volgt de keuze (data-kanaal, berichten.js);
+  // zonder JavaScript staan ze er allemaal.
+  $gekozen = (string)($_POST['kanaalmodus'] ?? 'kort');
+  $_uitleg = ['kort' => 'Via WhatsApp of sms, zoals de ontvanger zelf koos. Zonder telefoon: dezelfde tekst per e-mail.',
+              'email' => 'Een e-mail met volledige opmaak, knoppen en bijlagen.',
+              'beide' => 'Een e-mail én een korte tekst via WhatsApp of sms.'];
+  $_volgorde = array_intersect_key(['kort' => 1, 'email' => 1, 'beide' => 1], $modi);
+  if (!isset($_volgorde[$gekozen])) $gekozen = (string)array_key_first($_volgorde);
+?>
+<form method="POST" id="berichtForm" enctype="multipart/form-data" class="bh-berichtform" data-kanaal-form="<?= h($gekozen) ?>">
   <?= csrf_input() ?>
   <input type="hidden" name="actie" id="actieVeld" value="verzend">
 
-  <div class="bh-bericht-kolommen">
-    <div class="bh-bericht-hoofd">
-
-      <section class="ds-kaart ds-kaart-p">
-        <div class="bh-kaartkop"><h2>Kanaal</h2></div>
-        <div class="bh-kanaalkiezer">
-          <?php $gekozen = $_POST['kanaalmodus'] ?? 'email'; foreach ($modi as $mk => $ml): ?>
-          <div class="bh-kanaalkeuze">
-            <input type="radio" name="kanaalmodus" id="km_<?= h($mk) ?>" value="<?= h($mk) ?>" <?= $gekozen === $mk ? 'checked' : '' ?>>
-            <label for="km_<?= h($mk) ?>">
-              <strong><?= h($ml) ?></strong>
-              <span><?= $mk === 'email' ? 'Volledige opmaak' : ($mk === 'kort' ? 'Korte tekst, e-mail als terugval' : 'E-mail én korte tekst') ?></span>
-            </label>
-          </div>
-          <?php endforeach; ?>
-        </div>
-        <p class="ds-veld-hint">
-          WhatsApp of sms volgt de voorkeur die de sollicitant zelf heeft ingesteld. Zonder
-          telefoonnummer, of als het niet lukt, gaat het bericht per e-mail. Wie zich heeft
-          afgemeld wordt overgeslagen; elk bericht krijgt een afmeldvoet.
-        </p>
-      </section>
-
-      <section class="ds-kaart ds-kaart-p">
-        <div class="bh-kaartkop">
-          <h2>Inhoud</h2>
-          <?php if ($sjablonen): ?>
-          <select class="ds-select bh-veld-smal bh-kaartkop-veld" name="sjabloon" id="sjabloonSel" data-wijzig="sjabloonWissel()"
-                  aria-label="Sjabloon kiezen">
-            <option value="">Zelf schrijven</option>
-            <?php foreach ($sjablonen as $t): ?>
-              <option value="<?= h($t['slug']) ?>" <?= ($_POST['sjabloon'] ?? '') === $t['slug'] ? 'selected' : '' ?>><?= h($t['naam']) ?></option>
-            <?php endforeach; ?>
-          </select>
-          <?php endif; ?>
-        </div>
-
-        <div id="eigenInhoud">
-          <div class="ds-veld">
-            <label class="ds-label" for="ber_onderwerp">Onderwerp (e-mail)</label>
-            <input class="ds-input" type="text" id="ber_onderwerp" name="onderwerp"
-                   value="<?= h($_POST['onderwerp'] ?? '') ?>" placeholder="Bijv. Informatie over het aankomende seizoen">
-          </div>
-          <div class="ds-veld">
-            <label class="ds-label" for="ber_hero">Hero-titel <span>optioneel, de grote tekst bovenin</span></label>
-            <input class="ds-input" type="text" id="ber_hero" name="hero_titel" value="<?= h($_POST['hero_titel'] ?? '') ?>">
-          </div>
-          <div class="ds-veld">
-            <label class="ds-label">Bericht (e-mail)</label>
-            <?= editor_html('bericht', 'body_html', (string)($_POST['body_html'] ?? "<p>Hoi {{voornaam}},</p>\n<p></p>"), ['hoogte' => 280]) ?>
-          </div>
-          <div class="ds-veld">
-            <label class="ds-label" for="tekstKort">Korte tekst (WhatsApp/sms) <span id="kortTeller"></span></label>
-            <textarea class="ds-textarea" name="tekst_kort" id="tekstKort" rows="4" maxlength="400" data-invoer="kortTeller()"
-                      placeholder="Hoi {{voornaam}}, … Meer info: {{portaal_url}}"><?= h($_POST['tekst_kort'] ?? '') ?></textarea>
-            <p class="ds-veld-hint">Alleen nodig bij WhatsApp of sms. Platte tekst, maximaal 400 tekens.</p>
-          </div>
-          <div class="ds-veld">
-            <label class="ds-label" for="ber_bijlagen">Bijlagen <span>optioneel</span></label>
-            <input class="ds-input bh-veld-bestand" type="file" id="ber_bijlagen" name="bijlagen[]" multiple
-                   accept=".pdf,.jpg,.jpeg,.png,.webp,.docx,.xlsx">
-            <p class="ds-veld-hint">
-              Gaan mee in de e-mail; boven <?= function_exists('bijlagen_mail_max_bytes') ? round(bijlagen_mail_max_bytes() / 1048576) : 15 ?> MB
-              wordt het een downloadknop. WhatsApp en sms krijgen een downloadlink die veertien dagen
-              geldig is, en dan gaat er ook een e-mail uit. Maximaal
-              <?= function_exists('bijlagen_max_bytes') ? round(bijlagen_max_bytes() / 1048576) : 25 ?> MB per bestand<?= function_exists('bijlagen_max_bytes') && bijlagen_max_bytes() < 25 * 1048576 ? ' — de server staat op dit moment niet meer toe' : '' ?>.
-            </p>
-          </div>
-        </div>
-
-        <p id="sjabloonInfo" class="ds-veld-hint" hidden>
-          De inhoud komt uit het gekozen sjabloon.
-          <?php if ($mag_bewerken): ?><a href="<?= APP_URL ?>/admin/mail_templates.php">Sjabloon bewerken</a><?php endif; ?>
-        </p>
-      </section>
-
-      <section class="ds-kaart bh-verzendbalk">
-        <?php if ($mag_bewerken): ?>
-        <button type="submit" class="ds-btn ds-btn-primair" id="verzendKnop"
-                data-klik="return verzendBevestig(event)">
-          Versturen naar <span id="verzendTeller">0</span>
-        </button>
-        <?php endif; ?>
-        <button type="submit" class="ds-btn ds-btn-secundair"
-                data-klik="P13Klik.zet('#actieVeld', 'voorbeeld')">Voorbeeld bekijken</button>
-        <?php if ($mag_bewerken): ?>
-        <button type="submit" class="ds-btn ds-btn-zacht"
-                data-klik="P13Klik.zet('#actieVeld', 'test')">
-          Testmail naar mijzelf
-        </button>
-        <?php else: ?>
-          <span class="bh-meta">Je mag berichten lezen, niet versturen.</span>
-        <?php endif; ?>
-      </section>
+  <section class="ds-kaart ds-kaart-p bh-berichtstap">
+    <div class="bh-kaartkop">
+      <h2><span class="bh-stapnr">1</span> Aan</h2>
+      <span class="bh-kaartkop-knoppen">
+        <button type="button" class="ds-btn ds-btn-zacht ds-btn-sm" data-klik="selAlles(true)">Iedereen</button>
+        <button type="button" class="ds-btn ds-btn-zacht ds-btn-sm" data-klik="selAlles(false)">Niemand</button>
+      </span>
     </div>
 
-    <aside class="bh-bericht-zij">
-      <section class="ds-kaart ds-kaart-p">
-        <div class="bh-kaartkop">
-          <h2>Aan</h2>
-          <span class="bh-kaartkop-knoppen">
-            <button type="button" class="ds-btn ds-btn-zacht ds-btn-sm" data-klik="selAlles(true)">Alles</button>
-            <button type="button" class="ds-btn ds-btn-zacht ds-btn-sm" data-klik="selAlles(false)">Geen</button>
-          </span>
-        </div>
+    <?php /* Het zoekveld met chips. Staat verborgen tot de JS het aanzet: zonder
+             JavaScript blijft de lijst eronder het werkende formulier. De vinkjes
+             in die lijst blijven in beide gevallen de bron van waarheid — de chips
+             zijn er een weergave van, zodat er maar één stand bestaat. */ ?>
+    <div class="bh-aanveld" id="aanVeld" hidden>
+      <div class="bh-aanveld-vak" id="aanVak" data-klik="aanFocus(event)">
+        <input type="text" id="aanZoek" class="bh-aanveld-zoek" placeholder="naam typen…"
+               autocomplete="off" role="combobox" aria-expanded="false"
+               aria-controls="aanLijst" aria-autocomplete="list"
+               aria-label="Zoek een ontvanger op naam of e-mailadres"
+               data-invoer="aanZoeken()" data-toets="aanToets(event)" data-focus="aanZoeken()">
+      </div>
+      <ul class="bh-aanveld-lijst" id="aanLijst" role="listbox" aria-label="Gevonden mensen" hidden></ul>
+      <p class="bh-aanveld-leeg" id="aanLeeg" hidden>Niemand gevonden met die naam.</p>
+      <?php if ($alle || $per_vorig): ?>
+      <div class="bh-aanveld-snel">
+        <?php foreach (array_keys($fases) as $f): if (empty($per_fase[$f])) continue; ?>
+          <button type="button" class="bh-aanchip-snel" data-klik="selGroep('<?= h($f) ?>', true)">
+            + <?= h(fase_label_kort($f)) ?> (<?= count($per_fase[$f]) ?>)
+          </button>
+        <?php endforeach; ?>
+        <?php foreach ($vorige_groepen as $g => $gl): if (empty($per_vorig[$g])) continue; ?>
+          <button type="button" class="bh-aanchip-snel" data-klik="selGroep('<?= h($g) ?>', true)">
+            + <?= h($gl) ?> (<?= count($per_vorig[$g]) ?>)
+          </button>
+        <?php endforeach; ?>
+      </div>
+      <?php endif; ?>
+    </div>
 
-        <?php /* Het zoekveld met chips. Staat verborgen tot de JS het aanzet: zonder
-                 JavaScript blijft de lijst eronder het werkende formulier. De vinkjes
-                 in die lijst blijven in beide gevallen de bron van waarheid — de chips
-                 zijn er een weergave van, zodat er maar één stand bestaat. */ ?>
-        <div class="bh-aanveld" id="aanVeld" hidden>
-          <div class="bh-aanveld-vak" id="aanVak" data-klik="aanFocus(event)">
-            <input type="text" id="aanZoek" class="bh-aanveld-zoek" placeholder="naam typen…"
-                   autocomplete="off" role="combobox" aria-expanded="false"
-                   aria-controls="aanLijst" aria-autocomplete="list"
-                   aria-label="Zoek een ontvanger op naam of e-mailadres"
-                   data-invoer="aanZoeken()" data-toets="aanToets(event)" data-focus="aanZoeken()">
-          </div>
-          <ul class="bh-aanveld-lijst" id="aanLijst" role="listbox" aria-label="Gevonden mensen" hidden></ul>
-          <p class="bh-aanveld-leeg" id="aanLeeg" hidden>Niemand gevonden met die naam.</p>
-          <?php if ($alle || $per_vorig): ?>
-          <div class="bh-aanveld-snel">
-            <?php foreach (array_keys($fases) as $f): if (empty($per_fase[$f])) continue; ?>
-              <button type="button" class="bh-aanchip-snel" data-klik="selGroep('<?= h($f) ?>', true)">
-                + <?= h(fase_label_kort($f)) ?> (<?= count($per_fase[$f]) ?>)
-              </button>
-            <?php endforeach; ?>
-            <?php foreach ($vorige_groepen as $g => $gl): if (empty($per_vorig[$g])) continue; ?>
-              <button type="button" class="bh-aanchip-snel" data-klik="selGroep('<?= h($g) ?>', true)">
-                + <?= h($gl) ?> (<?= count($per_vorig[$g]) ?>)
-              </button>
-            <?php endforeach; ?>
-          </div>
-          <?php endif; ?>
-        </div>
+    <details class="bh-klap bh-ontvlijst" id="aanAlles" open>
+      <summary><span class="bh-klap-titel">Of kies uit de volledige lijst</span></summary>
+    <div class="bh-ontvangers">
+      <?php if (!$alle && !$per_vorig): ?>
+        <p class="bh-meta">Geen sollicitanten in dit seizoen.</p>
+      <?php endif; ?>
+      <?php foreach (array_keys($fases) as $f): if (empty($per_fase[$f])) continue; ?>
+      <div class="bh-ontvgroep">
+        <label class="bh-ontvgroep-kop">
+          <input type="checkbox" class="groep-cb" data-klik="selGroep('<?= h($f) ?>',this.checked)">
+          <?= bh_fase_badge($f, ['lengte' => 'kort']) ?>
+          <span class="bh-ontvgroep-aantal"><?= count($per_fase[$f]) ?></span>
+        </label>
+        <?php foreach ($per_fase[$f] as $s) {
+          $ontv = $s; $ontv_id = (int)$s['id']; $ontv_groep = $f; $ontv_label = fase_label_kort($f);
+          $ontv_aan = in_array((int)$s['id'], $voorsel, true);
+          require __DIR__ . '/_ontvrij.php';
+        } ?>
+      </div>
+      <?php endforeach; ?>
 
-        <details class="bh-ontvlijst" id="aanAlles" open>
-          <summary class="bh-ontvlijst-kop">Of kies uit de volledige lijst</summary>
-        <div class="bh-ontvangers">
-          <?php if (!$alle && !$per_vorig): ?>
-            <p class="bh-meta">Geen sollicitanten in dit seizoen.</p>
-          <?php endif; ?>
-          <?php foreach (array_keys($fases) as $f): if (empty($per_fase[$f])) continue; ?>
-          <div class="bh-ontvgroep">
-            <label class="bh-ontvgroep-kop">
-              <input type="checkbox" class="groep-cb" data-klik="selGroep('<?= h($f) ?>',this.checked)">
-              <?= bh_fase_badge($f, ['lengte' => 'kort']) ?>
-              <span class="bh-ontvgroep-aantal"><?= count($per_fase[$f]) ?></span>
-            </label>
-            <?php foreach ($per_fase[$f] as $s) {
-              $ontv = $s; $ontv_id = (int)$s['id']; $ontv_groep = $f; $ontv_label = fase_label_kort($f);
-              $ontv_aan = in_array((int)$s['id'], $voorsel, true);
-              require __DIR__ . '/_ontvrij.php';
-            } ?>
-          </div>
-          <?php endforeach; ?>
+      <?php foreach ($vorige_groepen as $g => $gl): if (empty($per_vorig[$g])) continue; ?>
+      <div class="bh-ontvgroep">
+        <label class="bh-ontvgroep-kop">
+          <input type="checkbox" class="groep-cb" data-klik="selGroep('<?= h($g) ?>',this.checked)">
+          <?= bh_badge($gl, $g === 'oud' ? 'blauw' : 'paars') ?>
+          <span class="bh-ontvgroep-aantal"><?= count($per_vorig[$g]) ?></span>
+        </label>
+        <?php foreach ($per_vorig[$g] as $v) {
+          $ontv = $v; $ontv_id = (int)$v['sol_id']; $ontv_groep = $g; $ontv_label = $gl;
+          $ontv_sub = $v['laatste_seizoen'] ? 'laatst ' . $v['laatste_seizoen']
+                    : (!empty($v['werving_seintje_id']) ? 'via de website, nog niet gesolliciteerd' : '');
+          $ontv_aan = in_array((int)$v['sol_id'], $voorsel, true);
+          require __DIR__ . '/_ontvrij.php';
+        } ?>
+      </div>
+      <?php endforeach; ?>
+      <?php if ($per_vorig): ?>
+        <p class="ds-veld-hint">
+          Vorige seizoenen: alleen oud-strandwachten en wie zelf om een seintje vroeg (ook via
+          de website toen de aanmelding dicht was; die krijgen het bericht één keer, per e-mail).
+          Afgewezen zonder seintje staan hier bewust niet: daarvoor ontbreekt de toestemming.
+        </p>
+      <?php endif; ?>
+    </div>
+    </details>
+  </section>
 
-          <?php foreach ($vorige_groepen as $g => $gl): if (empty($per_vorig[$g])) continue; ?>
-          <div class="bh-ontvgroep">
-            <label class="bh-ontvgroep-kop">
-              <input type="checkbox" class="groep-cb" data-klik="selGroep('<?= h($g) ?>',this.checked)">
-              <?= bh_badge($gl, $g === 'oud' ? 'blauw' : 'paars') ?>
-              <span class="bh-ontvgroep-aantal"><?= count($per_vorig[$g]) ?></span>
-            </label>
-            <?php foreach ($per_vorig[$g] as $v) {
-              $ontv = $v; $ontv_id = (int)$v['sol_id']; $ontv_groep = $g; $ontv_label = $gl;
-              $ontv_sub = $v['laatste_seizoen'] ? 'laatst ' . $v['laatste_seizoen']
-                        : (!empty($v['werving_seintje_id']) ? 'via de website, nog niet gesolliciteerd' : '');
-              $ontv_aan = in_array((int)$v['sol_id'], $voorsel, true);
-              require __DIR__ . '/_ontvrij.php';
-            } ?>
-          </div>
-          <?php endforeach; ?>
-          <?php if ($per_vorig): ?>
-            <p class="ds-veld-hint">
-              Vorige seizoenen: alleen oud-strandwachten en wie zelf om een seintje vroeg (ook via
-              de website toen de aanmelding dicht was; die krijgen het bericht één keer, per e-mail).
-              Afgewezen zonder seintje staan hier bewust niet: daarvoor ontbreekt de toestemming.
-            </p>
-          <?php endif; ?>
-        </div>
-        </details>
-      </section>
+  <section class="ds-kaart ds-kaart-p bh-berichtstap">
+    <div class="bh-kaartkop"><h2><span class="bh-stapnr">2</span> Hoe</h2></div>
+    <div class="bh-kanaalkiezer">
+      <?php foreach (array_keys($_volgorde) as $mk): ?>
+      <div class="bh-kanaalkeuze">
+        <input type="radio" name="kanaalmodus" id="km_<?= h($mk) ?>" value="<?= h($mk) ?>" <?= $gekozen === $mk ? 'checked' : '' ?>
+               data-wijzig="kanaalWissel()">
+        <label for="km_<?= h($mk) ?>">
+          <strong><?= h($modi[$mk]) ?></strong>
+          <span><?= h($_uitleg[$mk]) ?></span>
+        </label>
+      </div>
+      <?php endforeach; ?>
+    </div>
+    <p class="ds-veld-hint" id="terugvalTelling" aria-live="polite"></p>
+    <p class="ds-veld-hint">
+      Wie zich heeft afgemeld wordt overgeslagen; elk bericht krijgt een afmeldregel.
+    </p>
+  </section>
 
-      <section class="ds-kaart ds-kaart-p">
-        <div class="bh-kaartkop"><h2>Variabelen</h2></div>
-        <div class="bh-varchips">
-          <?php foreach (['voornaam', 'achternaam', 'volledige_naam', 'seizoen_naam', 'selectiedag_datum', 'selectiedag_locatie', 'tw_datum_start', 'tw_locatie', 'portaal_url', 'aanmeld_url', 'contact_email', 'bestuur_email'] as $v): ?>
-          <button type="button" class="bh-varchip" data-klik="P13Editor.insert('bericht','{{<?= h($v) ?>}}')">{{<?= h($v) ?>}}</button>
-          <?php endforeach; ?>
+  <section class="ds-kaart ds-kaart-p bh-berichtstap">
+    <div class="bh-kaartkop">
+      <h2><span class="bh-stapnr">3</span> Bericht</h2>
+      <?php if ($sjablonen): ?>
+      <select class="ds-select bh-veld-smal bh-kaartkop-veld" name="sjabloon" id="sjabloonSel" data-wijzig="sjabloonWissel()"
+              aria-label="Sjabloon kiezen">
+        <option value="">Zelf schrijven</option>
+        <?php foreach ($sjablonen as $t): ?>
+          <option value="<?= h($t['slug']) ?>" <?= ($_POST['sjabloon'] ?? '') === $t['slug'] ? 'selected' : '' ?>><?= h($t['naam']) ?></option>
+        <?php endforeach; ?>
+      </select>
+      <?php endif; ?>
+    </div>
+
+    <div id="eigenInhoud" class="bh-berichtvelden">
+      <div class="ds-veld" data-kanaal="kort beide">
+        <label class="ds-label" for="tekstKort">Tekst voor WhatsApp en sms</label>
+        <div class="bh-kortopmaak" role="toolbar" aria-label="Opmaak" aria-controls="tekstKort">
+          <button type="button" class="p13-ek" data-opmaak="*" title="Vet: *tekst*"><strong>B</strong><span class="bh-vw">Vet</span></button>
+          <button type="button" class="p13-ek" data-opmaak="_" title="Cursief: _tekst_"><em>I</em><span class="bh-vw">Cursief</span></button>
+          <button type="button" class="p13-ek" data-opmaak="~" title="Doorhalen: ~tekst~"><s>S</s><span class="bh-vw">Doorhalen</span></button>
+          <button type="button" class="p13-ek" data-opmaak="lijst" title="Opsomming: regels met - ervoor">Lijst</button>
+          <button type="button" class="p13-ek" data-opmaak="link" title="Link naar het portaal">Link portaal</button>
         </div>
-        <p class="ds-veld-hint">Werken ook in het onderwerp en de korte tekst — daar typ je ze zelf.</p>
-      </section>
-    </aside>
-  </div>
+        <textarea class="ds-textarea" name="tekst_kort" id="tekstKort" rows="6" maxlength="1000" data-var-veld
+                  placeholder="Hoi {{voornaam}}, … Meer info: {{portaal_url}}"><?= h($_POST['tekst_kort'] ?? '') ?></textarea>
+        <div class="bh-kortvoet">
+          <span class="bh-meta" id="kortTeller" aria-live="polite"></span>
+          <span class="bh-meta">*vet* _cursief_ ~doorgehaald~ · sms toont geen opmaak</span>
+        </div>
+        <div class="bh-kortvoorbeeld" aria-label="Zo ziet het eruit in WhatsApp">
+          <div class="bh-voorbeeld-bubbel" id="kortBubbel"></div>
+        </div>
+      </div>
+
+      <div class="ds-veld" data-kanaal="email beide">
+        <label class="ds-label" for="ber_onderwerp">Onderwerp van de e-mail</label>
+        <input class="ds-input" type="text" id="ber_onderwerp" name="onderwerp" data-var-veld
+               value="<?= h($_POST['onderwerp'] ?? '') ?>" placeholder="Bijv. Informatie over het aankomende seizoen">
+      </div>
+      <div class="ds-veld" data-kanaal="email beide">
+        <span class="ds-label">E-mailtekst</span>
+        <?= editor_html('bericht', 'body_html', (string)($_POST['body_html'] ?? "<p>Hoi {{voornaam}},</p>\n<p></p>"), ['hoogte' => 280]) ?>
+      </div>
+      <details class="bh-klap" data-kanaal="email beide">
+        <summary><span class="bh-klap-titel">Meer opties voor de e-mail</span><span class="bh-klap-sam">grote titel bovenin</span></summary>
+        <div class="ds-veld">
+          <label class="ds-label" for="ber_hero">Grote titel bovenin <span>optioneel; anders het onderwerp</span></label>
+          <input class="ds-input" type="text" id="ber_hero" name="hero_titel" data-var-veld value="<?= h($_POST['hero_titel'] ?? '') ?>">
+        </div>
+      </details>
+
+      <?php require __DIR__ . '/_variabelen.php'; ?>
+
+      <details class="bh-klap">
+        <summary><span class="bh-klap-titel">Bijlagen</span><span class="bh-klap-sam">optioneel</span></summary>
+        <div class="ds-veld">
+          <label class="ds-label" for="ber_bijlagen">Bestanden</label>
+          <input class="ds-input bh-veld-bestand" type="file" id="ber_bijlagen" name="bijlagen[]" multiple
+                 accept=".pdf,.jpg,.jpeg,.png,.webp,.docx,.xlsx">
+          <p class="ds-veld-hint">
+            Gaan mee in de e-mail; boven <?= function_exists('bijlagen_mail_max_bytes') ? round(bijlagen_mail_max_bytes() / 1048576) : 15 ?> MB
+            wordt het een downloadknop. WhatsApp en sms krijgen een downloadlink die veertien dagen
+            geldig is, en dan gaat er ook een e-mail uit. Maximaal
+            <?= function_exists('bijlagen_max_bytes') ? round(bijlagen_max_bytes() / 1048576) : 25 ?> MB per bestand<?= function_exists('bijlagen_max_bytes') && bijlagen_max_bytes() < 25 * 1048576 ? ' — de server staat op dit moment niet meer toe' : '' ?>.
+          </p>
+        </div>
+      </details>
+    </div>
+
+    <p id="sjabloonInfo" class="ds-veld-hint" hidden>
+      De inhoud komt uit het gekozen sjabloon.
+      <?php if ($mag_bewerken): ?><a href="<?= APP_URL ?>/admin/mail_templates.php">Sjabloon bewerken</a><?php endif; ?>
+    </p>
+  </section>
+
+  <section class="ds-kaart bh-verzendbalk">
+    <?php if ($mag_bewerken): ?>
+    <button type="submit" class="ds-btn ds-btn-primair" id="verzendKnop"
+            data-klik="return verzendBevestig(event)">
+      Versturen naar <span id="verzendTeller">niemand</span>
+    </button>
+    <?php endif; ?>
+    <button type="submit" class="ds-btn ds-btn-secundair"
+            data-klik="P13Klik.zet('#actieVeld', 'voorbeeld')">Voorbeeld</button>
+    <?php if ($mag_bewerken): ?>
+    <button type="submit" class="ds-btn ds-btn-zacht"
+            data-klik="P13Klik.zet('#actieVeld', 'test')">
+      Testmail naar mij
+    </button>
+    <?php else: ?>
+      <span class="bh-meta">Je mag berichten lezen, niet versturen.</span>
+    <?php endif; ?>
+  </section>
 </form>
-
-<script nonce="<?= h(csp_nonce()) ?>">
-function berAantal() { return document.querySelectorAll('.ontv-cb:checked').length; }
-
-function updateTeller() {
-  var n = berAantal();
-  var el = document.getElementById('verzendTeller');
-  if (el) el.textContent = n === 0 ? 'niemand' : (n + ' ' + (n === 1 ? 'persoon' : 'personen'));
-  aanTeken();
-}
-function selGroep(f, aan) {
-  document.querySelectorAll('.fase-' + f).forEach(function (c) { c.checked = aan; });
-  updateTeller();
-}
-function selAlles(aan) {
-  document.querySelectorAll('.ontv-cb,.groep-cb').forEach(function (c) { c.checked = aan; });
-  updateTeller();
-}
-
-/* ── Het "Aan"-veld ───────────────────────────────────────────────────────────
-   De vinkjes in de lijst zijn de stand; dit tekent die stand als chips en laat
-   je erin zoeken. Er is dus niets dat uit de pas kan lopen: elke handeling hier
-   zet een checkbox om en vraagt daarna opnieuw te tekenen. Zonder JavaScript
-   draait dit blok niet en blijft de lijst gewoon een lijst. */
-var aanMarkeer = -1;                        // welke suggestie met de pijltjes is aangewezen
-
-function aanAan() {
-  var veld = document.getElementById('aanVeld');
-  if (!veld || !document.querySelector('.ontv-cb')) return;
-  veld.hidden = false;
-  document.getElementById('aanAlles').open = false;
-  aanTeken();
-}
-
-function aanTeken() {
-  var vak = document.getElementById('aanVak');
-  if (!vak || document.getElementById('aanVeld').hidden) return;
-  vak.querySelectorAll('.bh-aanchip').forEach(function (c) { c.remove(); });
-  var zoek = document.getElementById('aanZoek');
-  document.querySelectorAll('.ontv-cb:checked').forEach(function (cb) {
-    var chip = document.createElement('span');
-    chip.className = 'bh-aanchip';
-    chip.textContent = cb.dataset.naam || '';
-    var weg = document.createElement('button');
-    weg.type = 'button';
-    weg.className = 'bh-aanchip-weg';
-    weg.setAttribute('aria-label', 'Haal ' + (cb.dataset.naam || 'deze persoon') + ' weg');
-    weg.textContent = '×';
-    weg.onclick = function (e) { e.stopPropagation(); cb.checked = false; updateTeller(); };
-    chip.appendChild(weg);
-    vak.insertBefore(chip, zoek);
-  });
-  zoek.placeholder = vak.querySelector('.bh-aanchip') ? '' : 'naam typen…';
-}
-
-function aanFocus(e) {
-  if (e.target.closest('.bh-aanchip')) return;
-  document.getElementById('aanZoek').focus();
-}
-
-function aanZoeken() {
-  var zoek = document.getElementById('aanZoek');
-  var lijst = document.getElementById('aanLijst');
-  var leeg = document.getElementById('aanLeeg');
-  var term = zoek.value.trim().toLowerCase();
-  lijst.innerHTML = '';
-  aanMarkeer = -1;
-
-  if (!term) { aanSluit(); return; }
-
-  var treffers = [];
-  document.querySelectorAll('.ontv-cb').forEach(function (cb) {
-    if (cb.checked || treffers.length >= 8) return;
-    if ((cb.dataset.zoek || '').indexOf(term) !== -1) treffers.push(cb);
-  });
-
-  treffers.forEach(function (cb, i) {
-    var li = document.createElement('li');
-    li.className = 'bh-aansug';
-    li.id = 'aansug-' + i;
-    li.setAttribute('role', 'option');
-    li.setAttribute('aria-selected', 'false');
-    li.tabIndex = -1;
-    var naam = document.createElement('span');
-    naam.className = 'bh-aansug-naam';
-    naam.textContent = cb.dataset.naam || '';
-    var fase = document.createElement('span');
-    fase.className = 'bh-aansug-fase';
-    fase.textContent = cb.dataset.fase || '';
-    li.appendChild(naam); li.appendChild(fase);
-    li.onclick = function () { aanKies(cb); };
-    lijst.appendChild(li);
-  });
-
-  lijst.hidden = treffers.length === 0;
-  leeg.hidden = treffers.length !== 0;
-  zoek.setAttribute('aria-expanded', treffers.length ? 'true' : 'false');
-}
-
-function aanKies(cb) {
-  cb.checked = true;
-  var zoek = document.getElementById('aanZoek');
-  zoek.value = '';
-  aanSluit();
-  updateTeller();
-  zoek.focus();
-}
-
-function aanSluit() {
-  var lijst = document.getElementById('aanLijst');
-  lijst.hidden = true; lijst.innerHTML = '';
-  document.getElementById('aanLeeg').hidden = true;
-  document.getElementById('aanZoek').setAttribute('aria-expanded', 'false');
-  aanMarkeer = -1;
-}
-
-function aanToets(e) {
-  var opties = document.querySelectorAll('#aanLijst .bh-aansug');
-  var zoek = e.target;
-
-  /* Backspace in een leeg zoekveld haalt de laatste chip weg — hetzelfde gebaar
-     als in elke mailapp, en sneller dan het kruisje zoeken. */
-  if (e.key === 'Backspace' && !zoek.value) {
-    var gekozen = document.querySelectorAll('.ontv-cb:checked');
-    if (gekozen.length) { gekozen[gekozen.length - 1].checked = false; updateTeller(); }
-    return;
-  }
-  if (e.key === 'Escape') { zoek.value = ''; aanSluit(); return; }
-  if (!opties.length) return;
-
-  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-    e.preventDefault();
-    aanMarkeer += (e.key === 'ArrowDown' ? 1 : -1);
-    if (aanMarkeer < 0) aanMarkeer = opties.length - 1;
-    if (aanMarkeer >= opties.length) aanMarkeer = 0;
-    opties.forEach(function (o, i) {
-      var aan = i === aanMarkeer;
-      o.classList.toggle('aangewezen', aan);
-      o.setAttribute('aria-selected', aan ? 'true' : 'false');
-    });
-    zoek.setAttribute('aria-activedescendant', opties[aanMarkeer].id);
-    return;
-  }
-  if (e.key === 'Enter') {
-    e.preventDefault();                     // anders verstuurt Enter het formulier
-    opties[aanMarkeer < 0 ? 0 : aanMarkeer].click();
-  }
-}
-
-document.addEventListener('click', function (e) {
-  if (!e.target.closest('.bh-aanveld')) aanSluit();
-});
-function kortTeller() {
-  var t = document.getElementById('tekstKort'), e = document.getElementById('kortTeller');
-  if (t && e) e.textContent = '(' + t.value.length + '/400)';
-}
-function sjabloonWissel() {
-  var s = document.getElementById('sjabloonSel');
-  var eigen = !s || !s.value;
-  document.getElementById('eigenInhoud').hidden = !eigen;
-  document.getElementById('sjabloonInfo').hidden = eigen;
-}
-
-/* Versturen is onomkeerbaar, dus er komt een bevestiging die zegt wát er gebeurt:
-   hoeveel mensen en via welk kanaal. bhBevestig() is asynchroon, dus we houden de
-   submit tegen en verzenden hem zelf zodra er ja is gezegd. */
-function verzendBevestig(ev) {
-  document.getElementById('actieVeld').value = 'verzend';
-  var n = berAantal();
-  if (!n) { bhToast('Kies eerst minstens één ontvanger.', 'fout'); return false; }
-  if (ev && ev.target && ev.target.dataset.bevestigd === 'ja') return true;
-
-  var keuze = document.querySelector('input[name=kanaalmodus]:checked');
-  var label = keuze ? keuze.parentNode.querySelector('strong').textContent : 'e-mail';
-  var knop  = ev && ev.target ? ev.target : document.getElementById('verzendKnop');
-
-  bhBevestig({
-    titel: 'Versturen naar ' + n + ' ' + (n === 1 ? 'persoon' : 'personen') + '?',
-    tekst: 'Het bericht gaat via ' + label + ' de deur uit en is daarna niet meer terug te halen. '
-         + 'Wie zich heeft afgemeld wordt overgeslagen.',
-    knop: 'Ja, versturen'
-  }).then(function (ja) {
-    if (!ja) return;
-    knop.dataset.bevestigd = 'ja';
-    knop.click();
-  });
-  return false;
-}
-
-aanAan(); updateTeller(); kortTeller(); sjabloonWissel();
-</script>
+<script src="<?= APP_URL ?>/assets/js/variabelen.js?v=<?= @filemtime(__DIR__ . '/../assets/js/variabelen.js') ?>" defer></script>
+<script src="<?= APP_URL ?>/assets/js/berichten.js?v=<?= @filemtime(__DIR__ . '/../assets/js/berichten.js') ?>" defer></script>
 <?php endif; ?>
 
 <?php require __DIR__ . '/layout_bottom.php'; ?>

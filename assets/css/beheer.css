@@ -1918,13 +1918,45 @@ body.bh-paneel-open .bh-inhoud { transition: padding-right .15s ease; }
 .bh-ontvrij-naam { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: var(--ink); }
 .bh-ontvrij-sub { font: var(--text-meta); color: var(--ink-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.bh-varchips { display: flex; flex-wrap: wrap; gap: 5px; margin: 10px 0; }
+.bh-varchips { display: flex; flex-wrap: wrap; gap: 5px; margin: 6px 0 10px; }
 .bh-varchip {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; font-weight: 600;
-  color: var(--navy); background: var(--bg); border: 1px solid var(--border);
-  border-radius: 6px; padding: 5px 8px; cursor: pointer;
+  font-size: 13px; font-weight: 500; font-family: inherit;
+  color: var(--ink); background: var(--bg); border: 1px solid var(--border);
+  border-radius: 6px; padding: 5px 8px; cursor: pointer; min-height: 32px;
+  display: inline-flex; align-items: center; gap: 6px; text-align: left;
 }
+.bh-varchip code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; color: var(--navy); }
 .bh-varchip:hover { border-color: var(--navy); }
+.bh-varchip[hidden], .bh-vargroep[hidden] { display: none; }
+.bh-varkiezer .bh-zoek { max-width: 360px; margin-bottom: 8px; }
+.bh-vargroep .bh-veldlabel { display: block; margin-top: 6px; }
+
+/* ── Nieuw bericht: één kolom in de volgorde Aan → Hoe → Bericht → Versturen ── */
+.bh-berichtform { display: flex; flex-direction: column; gap: 14px; max-width: 920px; }
+.bh-stapnr {
+  display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; margin-right: 6px;
+  border-radius: 50%; background: var(--navy); color: var(--op-vol); font-size: 13px; font-weight: 700;
+}
+.bh-berichtvelden { display: flex; flex-direction: column; gap: 14px; }
+.bh-berichtvelden > [hidden] { display: none; }
+.bh-kortopmaak { display: flex; gap: 4px; flex-wrap: wrap; }
+.bh-kortopmaak .p13-ek {
+  min-width: 36px; min-height: 36px; padding: 0 10px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--surface); color: var(--ink); font: inherit; font-size: 13px; cursor: pointer;
+}
+.bh-kortopmaak .p13-ek:hover { border-color: var(--navy); color: var(--navy); }
+.bh-kortvoet { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.bh-kortvoorbeeld { background: var(--bg-subtle); border-radius: var(--radius-md); padding: 12px; }
+.bh-kortvoorbeeld .bh-voorbeeld-bubbel { max-width: 420px; white-space: normal; overflow-wrap: anywhere; }
+.bh-varmerk { background: var(--fase-blauw-vlak); color: var(--navy); border-radius: 4px; padding: 0 3px; }
+@media (max-width: 760px) {
+  /* Versturen blijft onder je duim terwijl je scrolt. */
+  .bh-berichtform .bh-verzendbalk { position: sticky; bottom: 8px; z-index: 20; box-shadow: var(--shadow-float); }
+  .bh-berichtform .bh-verzendbalk .ds-btn { flex: 1 1 auto; justify-content: center; }
+  .bh-voorbeeld-mail { min-width: 0; flex: 1 1 100%; height: 440px; }
+  .bh-voorbeeld-kort { min-width: 0; flex: 1 1 100%; }
+  .bh-berichtform .bh-kanaalkiezer { grid-template-columns: 1fr; }
+}
 
 /* Uitslag van een verzendronde: wat misging staat vooraan, niet het geslaagde getal. */
 .bh-uitslag { padding: 16px 20px; margin-bottom: 14px; }

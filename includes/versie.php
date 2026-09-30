@@ -3,10 +3,21 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.137.0');
+define('APP_VERSIE', '2.138.0');
 
 function app_changelog(): array {
     return [
+        '2.138.0' => [
+            'datum'  => '2026-09-30',
+            'titel'  => 'Berichten: standaard WhatsApp/sms, opmaak, alle variabelen, goed op de telefoon',
+            'punten' => [
+                'Nieuw bericht in drie stappen onder elkaar: Aan, Hoe, Bericht. Op een telefoon valt niets meer buiten het scherm en de verzendknop blijft onderin staan',
+                'WhatsApp/sms is de standaard. Je ziet alleen de velden die bij het kanaal horen: bij WhatsApp/sms geen onderwerp of e-maileditor',
+                'Wie geen telefoon heeft of liever e-mail wil, krijgt dezelfde tekst als eenvoudige e-mail; je ziet vooraf hoeveel mensen dat zijn',
+                'Opmaak voor WhatsApp: vet, cursief, doorhalen, opsomming en een link naar het portaal, met een voorbeeld zoals het in WhatsApp aankomt. Sms krijgt de tekst zonder opmaaktekens. Een zelf geschreven bericht mag tot 1000 tekens; de teller toont ook het aantal sms-delen',
+                'Alle variabelen per groep en doorzoekbaar, in Berichten én Sjablonen; ze komen in het veld waar je het laatst typte',
+            ],
+        ],
         '2.137.0' => [
             'datum'  => '2026-09-30',
             'titel'  => 'Dossier: eerst wat nu speelt',

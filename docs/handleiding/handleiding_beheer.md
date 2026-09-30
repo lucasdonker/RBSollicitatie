@@ -1676,35 +1676,40 @@ aanstaat).
 
 ### Een bericht versturen
 
-1. **Kanaal**: kies **E-mail** (volledige opmaak), **WhatsApp/SMS** (korte tekst, e-mail als
-   terugval) of **E-mail + WhatsApp/SMS**. WhatsApp of SMS volgt de voorkeur die de sollicitant
-   zelf instelde. Zonder telefoonnummer, of als het niet lukt, gaat het bericht per e-mail. Wie
-   zich heeft afgemeld wordt overgeslagen, en elk bericht krijgt een afmeldvoet.
-2. **Inhoud**: kies in de keuzelijst een eigen sjabloon, of laat **Zelf schrijven** staan en vul in:
-   - **Onderwerp (e-mail)**;
-   - **Hero-titel** (optioneel, de grote tekst bovenin);
-   - **Bericht (e-mail)** in de editor;
-   - **Korte tekst (WhatsApp/sms)**: platte tekst, maximaal 400 tekens, verplicht als je een kort
-     kanaal kiest;
-   - **Bijlagen** (optioneel): pdf, jpg, png, webp, docx of xlsx. Boven de ingestelde grens
-     (standaard 15 MB) wordt een bijlage een downloadknop. Bij WhatsApp en SMS krijgt de
-     ontvanger een downloadlink die veertien dagen geldig is, en dan gaat er ook een e-mail uit.
-   Kies je een sjabloon, dan komt de inhoud daaruit; met **Sjabloon bewerken** pas je het aan.
-3. **Aan**: typ een naam in het zoekveld, of klik op een snelknop zoals **+ Aangemeld (12)** of
-   **+ Seintje gevraagd (4)**. **Alles** en **Geen** zetten de hele lijst aan of uit. Onder **Of
+Het formulier staat in drie stappen onder elkaar, ook op een telefoon.
+
+1. **Aan**: typ een naam in het zoekveld, of klik op een snelknop zoals **+ Aangemeld (12)** of
+   **+ Seintje gevraagd (4)**. **Iedereen** en **Niemand** zetten de hele lijst aan of uit. Onder **Of
    kies uit de volledige lijst** staan alle sollicitanten van het seizoen per fase, met een vinkje
    voor de hele fase. Bij elke naam staan het e-mailadres en het kanaal ("WhatsApp", "sms",
    "alleen e-mail" of "geen telefoon"), en eventueel het label "afgemeld". Kom je via **Bericht**
    in een dossier of via een bulkactie, dan staan die mensen al aangevinkt.
-4. **Variabelen**: klik op een chip om hem in de e-mailtekst te zetten: voornaam, achternaam,
-   volledige_naam, seizoen_naam, selectiedag_datum, selectiedag_locatie, tw_datum_start,
-   tw_locatie, portaal_url, aanmeld_url en bestuur_email. In het onderwerp en de korte tekst typ
-   je ze zelf, bijvoorbeeld {{voornaam}}. {{aanmeld_url}} is de link naar het aanmeldformulier.
-5. Klik op **Voorbeeld bekijken**. Je ziet de e-mail en de korte tekst zoals de eerste aangevinkte
-   ontvanger ze krijgt (zonder ontvanger met voorbeeldnaam Lieke de Vries).
-6. Klik eventueel op **Testmail naar mijzelf**. Die gaat altijd per e-mail naar je eigen adres.
-7. Klik op **Versturen naar N personen** en bevestig met **Ja, versturen**.
-
+2. **Hoe**: standaard **WhatsApp/SMS**. WhatsApp of sms volgt de voorkeur die de sollicitant zelf
+   instelde. Wie geen telefoonnummer heeft of liever alleen e-mail wil, krijgt dezelfde tekst als
+   eenvoudige e-mail (onderwerp "Bericht van …"); onder de keuze staat hoeveel van je ontvangers dat
+   zijn. Kies **E-mail** voor een mail met volledige opmaak, knoppen en bijlagen, of **E-mail +
+   WhatsApp/SMS** voor allebei. Wie zich heeft afgemeld wordt overgeslagen; elk bericht krijgt een
+   afmeldregel.
+3. **Bericht**: kies in de keuzelijst een eigen sjabloon, of laat **Zelf schrijven** staan. Je ziet
+   alleen de velden die bij je keuze horen:
+   - **Tekst voor WhatsApp en sms** (tot 1000 tekens). De knoppen zetten opmaak zoals WhatsApp die
+     kent: **B** voor \*vet\*, **I** voor \_cursief\_, **S** voor \~doorgehaald\~, **Lijst** voor regels met
+     een streepje, en **Link portaal**. Sms toont geen opmaak; die tekens halen we daar weg. Onder het
+     veld staan het aantal tekens en sms-delen, en een voorbeeld zoals het in WhatsApp aankomt.
+   - Bij e-mail: **Onderwerp van de e-mail**, de **E-mailtekst** in de editor en onder **Meer opties**
+     een grote titel bovenin.
+   - **Variabele invoegen**: alle variabelen, per groep (sollicitant, seizoen, selectiedag,
+     trainingsweekend, links en contact) en doorzoekbaar. Een klik zet de variabele in het veld waar
+     je het laatst typte. Is een waarde onbekend, dan blijft die plek leeg.
+   - **Bijlagen** (optioneel): pdf, jpg, png, webp, docx of xlsx. Boven de ingestelde grens
+     (standaard 15 MB) wordt een bijlage een downloadknop. Bij WhatsApp en sms krijgt de
+     ontvanger een downloadlink die veertien dagen geldig is, en dan gaat er ook een e-mail uit.
+   Kies je een sjabloon, dan komt de inhoud daaruit; met **Sjabloon bewerken** pas je het aan.
+4. **Voorbeeld** toont de e-mail en de korte tekst zoals de eerste aangevinkte ontvanger ze krijgt
+   (zonder ontvanger met voorbeeldnaam Lieke de Vries). **Testmail naar mij** gaat altijd per e-mail
+   naar je eigen adres.
+5. Klik op **Versturen naar N personen** (op een telefoon blijft die knop onderin staan) en bevestig
+   met **Ja, versturen**. De bevestiging noemt ook hoeveel mensen het per e-mail krijgen.
 Daarna zie je de uitslag. Wat misging staat vooraan, bijvoorbeeld "1 mislukt, 11 berichten
 verstuurd". Per persoon zie je de stand met de reden in woorden. Bij meer dan tien ontvangers gaat
 het via de wachtrij en wordt het de komende minuten verstuurd; je hoeft niets te doen. Met **Naar

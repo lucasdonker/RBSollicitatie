@@ -627,6 +627,7 @@ function meldingen_register(): array {
         ]),
         'handmatig' => array_merge($std, [
             'naam' => 'Handmatig bericht', 'categorie' => 'handmatig', 'kanaal_standaard' => 'email', 'dedup_min' => 0,
+            'kort_max' => 1000,   // zelf geschreven: langer dan een vast sjabloon (tekst_kort_maak kapt anders af op 400)
             'beschrijving' => 'Een bericht dat het bestuur zelf schrijft en verstuurt (onderwerp en inhoud per verzending).',
             'vars' => ['onderwerp', 'body_html', 'tekst_kort'],
             'seed' => [
