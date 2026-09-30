@@ -103,7 +103,7 @@ function bh_vandaag_roltaak(int $sid, array $algemeen): array {
 function bh_vandaag_herinnering_tekst(): string {
     $slug = 'herinnering_selectie_aanmelden';
     if (!function_exists('herinnering_aan') || !function_exists('herinnering_int')) return '';
-    if (!herinnering_aan($slug)) return 'De automatische herinnering staat uit (Instellingen › Uitnodigen & automatisch).';
+    if (!herinnering_aan($slug)) return 'De automatische herinnering staat uit (Instellingen › Uitnodigen & herinneren).';
     $na      = herinnering_int($slug, 'na');
     $herhaal = herinnering_int($slug, 'herhaal');
     $max     = herinnering_int($slug, 'max');

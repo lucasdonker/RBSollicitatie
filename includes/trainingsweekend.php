@@ -391,7 +391,7 @@ function tw_twijfel_ids(array $kandidaten): array {
 
 /**
  * De standaardtekst als het bestuur in het gesprek geen eigen bericht invult. Aanpasbaar in
- * Instellingen › Uitnodigen & automatisch (tw.bericht_aangenomen / tw.bericht_afgewezen).
+ * Instellingen › Seizoensfase & advies (tw.bericht_aangenomen / tw.bericht_afgewezen).
  *
  * Wie niet op het weekend kwam, krijgt bij afwijzen een eigen tekst: "we hebben je inzet
  * gezien" klopt dan niet. Die tekst heeft (nog) geen veld in Instellingen; de sleutel

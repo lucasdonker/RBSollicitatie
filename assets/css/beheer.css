@@ -2090,7 +2090,6 @@ body.bh-paneel-open .bh-inhoud { transition: padding-right .15s ease; }
 .bh-veldgroep .ds-veld-hint + .bh-veldrij,
 .bh-veldgroep .bh-veldrij + .bh-veldrij { margin-top: 12px; }
 /* Naast elkaar in een rij: geen marge boven, anders staat het rechterveld lager. */
-.bh-veldgroep .bh-veldrij > .ds-veld { margin-top: 0; }
 .bh-veldgroep legend + .ds-veld-hint { margin-top: 8px; }
 .bh-veldgroep .bh-fasekeuze { margin-top: 10px; }
 .bh-veldrij { display: flex; gap: 12px; flex-wrap: wrap; }
@@ -2791,7 +2790,6 @@ mark.bh-hb-treffer { background: var(--geel-bg, #fff3b0); color: inherit; border
 .bh-gegevenskaart .bh-veldrij + .ds-veld,
 .bh-gegevenskaart .ds-veld + .bh-veldrij,
 .bh-gegevenskaart .bh-veldrij + .bh-veldrij { margin-top: 12px; }
-.bh-gegevenskaart .bh-veldrij > .ds-veld { margin-top: 0; }
 .bh-gevaarblok-knoppen { display: flex; gap: 8px; flex-wrap: wrap; }
 
 .bh-knop-onder { margin-top: 10px; }
@@ -3491,3 +3489,18 @@ hr.bh-blk-scheiding { border: none; border-top: 1px solid var(--rand); margin: 1
 /* De trede waar relatief de meesten afhaken: een rand én de tekst "hier haken de meesten af". */
 .pg-tr-grootste { border-left: 3px solid var(--oranje); padding-left: 10px; }
 .pg-tr-grootste .pg-tr-verloop strong { color: var(--ink); }
+
+/* Velden naast elkaar in een .bh-veldrij beginnen op dezelfde hoogte. De "veld na veld"-marge die
+   elke container hierboven zet, hoort bij velden ónder elkaar, niet naast elkaar. Eén regel voor
+   alle containers; hij staat bewust onderaan: zelfde specificiteit als die regels, dus de volgorde beslist. */
+:is(.bh-veldgroep, .bh-instsectie, .bh-gegevenskaart, .bh-testveld, .bh-profiel, .bh-bericht-hoofd) .bh-veldrij > .ds-veld { margin-top: 0; }
+
+/* Instellingen uit de lijst (admin/_inst_formulier.php): velden in een raster, zodat labels, invoer en
+   hints van velden naast elkaar op één lijn staan. Een tekstvak en 'breed' pakken de hele regel. */
+.bh-instvelden { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px 20px; align-items: start; }
+.bh-instsectie .bh-instvelden > .ds-veld { margin-top: 0; }
+.bh-instveld.breed { grid-column: 1 / -1; }
+.bh-instveld[hidden] { display: none; }
+.bh-inst-vink { display: flex; gap: 10px; align-items: flex-start; font-weight: 600; cursor: pointer; }
+.bh-inst-vink input[type=checkbox] { width: 18px; height: 18px; margin: 2px 0 0; flex: none; accent-color: var(--navy); }
+.bh-instveld .bh-inst-vink + .ds-veld-hint { margin-left: 28px; }

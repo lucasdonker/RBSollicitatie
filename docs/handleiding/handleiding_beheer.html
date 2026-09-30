@@ -1862,7 +1862,7 @@ bericht gebeurde: &quot;Bericht verstuurd via ...&quot;, &quot;Bericht gaat nu d
 uit via ...&quot;, &quot;Bericht staat in de wachtrij.&quot;, &quot;Bericht mislukt — zie
 het berichtenlog.&quot; of &quot;Geen e-mailadres of telefoonnummer bekend.&quot;</li>
 <li><strong>Automatiseringen uitzetten</strong>: bij Instellingen ›
-Uitnodigen &amp; automatisch kun je het klaarzetten van ondertekeningen
+Uitnodigen &amp; herinneren kun je het klaarzetten van ondertekeningen
 bij de uitnodiging voor de selectiedag en het kennismakingspakket bij
 aannemen uitzetten.</li>
 <li><strong>Kanalen</strong>: een melding kan per type op E-mail,
@@ -2195,7 +2195,7 @@ of <strong>Afwijzen</strong>. Bij <strong>Bericht aan de
 sollicitant</strong> schrijf je in je eigen woorden wat jullie besproken
 hebben. Dat komt in de mail als <code>{{gesprek_bericht}}</code>. Laat
 je het leeg, dan komt de standaardtekst erin (instelbaar bij
-Instellingen › Uitnodigen &amp; automatisch). De <strong>Interne
+Instellingen › Uitnodigen &amp; herinneren). De <strong>Interne
 notitie</strong> is alleen voor het bestuur.</li>
 <li>Klik op <strong>Besluit vastleggen</strong> en bevestig. Aannemen en
 afwijzen gaan <strong>meteen door</strong>: de fase verandert en het
@@ -2991,7 +2991,7 @@ niet per ongeluk uit halen.</p>
 <h1 id="geplande-berichten-en-herinneringen">Geplande berichten en
 herinneringen</h1>
 <p><strong>Waar:</strong> Berichten › tabblad <strong>Gepland</strong>
-(eigen regels); Instellingen › Uitnodigen &amp; automatisch, sectie
+(eigen regels); Instellingen › Uitnodigen &amp; herinneren, sectie
 Herinneringen (ingebouwde herinneringen); Instellingen › Systeem &amp;
 updates › Herinneringen (proefdraaien)<br />
 <strong>Wie:</strong> Gepland: bewerkrecht op Berichten &amp; sjablonen.
@@ -3006,7 +3006,7 @@ dagen na het inleveren van het formulier: stuur het magazine&quot;. Alles
 draait mee met de automatische taken, elk kwartier.</p>
 </blockquote>
 <h2 id="de-ingebouwde-herinneringen">De ingebouwde herinneringen</h2>
-<p>Onder Instellingen › Uitnodigen &amp; automatisch staat bij
+<p>Onder Instellingen › Uitnodigen &amp; herinneren staat bij
 <strong>Herinneringen</strong> een regel per soort. Per regel zet je hem
 aan of uit en stel je in na hoeveel dagen (of hoeveel dagen vooraf), hoe
 vaak hij herhaalt en het maximum. Klik daarna op
@@ -3261,10 +3261,14 @@ links, in groepen)<br />
 <strong>Wie:</strong> bestuur en admin. Opslaan vraagt bewerkrecht op
 Instellingen.</p>
 <blockquote>
-<p><strong>In het kort:</strong> Links staan de tabbladen in zes
-groepen, met een filterveld &quot;Filter instellingen…&quot;. Elk tabblad heeft
-een eigen knop <strong>Opslaan</strong>; die bewaart alleen de velden
-van dat tabblad. Wachtwoorden en sleutels worden nooit getoond. Onder de
+<p><strong>In het kort:</strong> Links staan de tabbladen in groepen
+naar wat je komt doen (Organisatie, Seizoen en selectie, Berichten,
+Inzet en loon, Privacy en bewaren, en Technisch voor wie Systeem mag
+bewerken), met een filterveld &quot;Filter instellingen…&quot;. Velden naast
+elkaar staan op één lijn; bij Automatisch uitnodigen verschijnt de
+vertraging pas als je Automatisch kiest. Elk tabblad heeft een eigen
+knop <strong>Opslaan</strong>; die bewaart alleen de velden van dat
+tabblad. Wachtwoorden en sleutels worden nooit getoond. Onder de
 tabbladen staat de link <strong>Sjablonen voor mails</strong>, en in de
 kaart <strong>Versie</strong> de link <strong>Systeem &amp;
 updates</strong> (voor wie Systeem mag bewerken). Zoeken door het hele
@@ -3301,25 +3305,19 @@ vaste tekst &quot;De minimumleeftijd is 15 jaar&quot;; die is niet in te
 stellen.</td>
 </tr>
 <tr>
-<td>Selectie &amp; seizoen</td>
-<td><strong>Uitnodigen &amp; automatisch</strong></td>
-<td><strong>Seizoen en selectie</strong>: de
-<strong>Seizoensfase</strong> (standaard &quot;Automatisch (uit de datums van
-het seizoen)&quot;; kies alleen een vaste fase als de datums niet kloppen, en
-zet hem daarna terug) en de <strong>Advies-drempel selectiedag</strong>
-(1 tot 5, standaard 3,5), vanaf waar het dossier &quot;Door&quot; adviseert.
-Auto-invite: modus Uit, Suggestie (markeert in de lijst met
-<strong>Uitnodigen?</strong>) of Automatisch (nodigt uit na de
-vertraging in uren), met de leeftijdsgrenzen (standaard 16 tot 30). De
-automatisering bij een fasewijziging: <strong>Ondertekeningen bij
-uitnodiging selectiedag</strong> en <strong>Kennismakingspakket bij
-aangenomen</strong>. De ingebouwde herinneringen, de rustperiode, het
-anti-loop-plafond, de grens voor e-mailbijlagen en het maximum aantal
-WhatsApp-berichten per uur (zie <a href="#geplande-berichten-en-herinneringen">Geplande berichten en
-herinneringen</a>).</td>
+<td>Seizoen en selectie</td>
+<td><strong>Seizoensfase &amp; advies</strong></td>
+<td>De <strong>Seizoensfase</strong> (standaard &quot;Automatisch (uit de
+datums van het seizoen)&quot;; kies alleen een vaste fase als de datums niet
+kloppen, en zet hem daarna terug) en de <strong>Advies-drempel
+selectiedag</strong> (1 tot 5, standaard 3,5), vanaf waar het dossier
+&quot;Door&quot; adviseert. Met de module Trainingsweekend aan: de
+standaardteksten na het gesprek (aangenomen, afgewezen, en afgewezen
+omdat iemand niet kwam); leeg is de ingebouwde tekst, die grijs in het
+veld staat.</td>
 </tr>
 <tr>
-<td>Selectie &amp; seizoen</td>
+<td>Seizoen en selectie</td>
 <td><strong>Beoordelingscriteria</strong></td>
 <td>Per test (Sporttest en Zwemtest) het icoon, de naam en de criteria,
 één per regel. Beoordelaars scoren elk criterium van 1 tot 5.
@@ -3327,7 +3325,7 @@ herinneringen</a>).</td>
 ingebouwde lijst terug.</td>
 </tr>
 <tr>
-<td>Selectie &amp; seizoen</td>
+<td>Seizoen en selectie</td>
 <td><strong>Posten &amp; bezetting</strong></td>
 <td>De posten en per post de rollen: naam, competentie, minimale rang
 uit Authentik en aantal personen. Per post het vinkje &quot;nooit 2
@@ -3337,27 +3335,19 @@ herstellen</strong>. Dekking en de norm in het beschikbaarheidsraster
 rekenen hiermee. De postcommandant valt erbuiten.</td>
 </tr>
 <tr>
-<td>Inzet &amp; loon</td>
-<td><strong>Functies</strong></td>
-<td>Per functie de naam, de factor voor het dagloon, de minimum- en
-maximumleeftijd en de volgorde, met <strong>Sla op</strong> en een
-voorbeeldberekening.</td>
-</tr>
-<tr>
-<td>Inzet &amp; loon</td>
-<td><strong>Lonen &amp; budget</strong></td>
-<td>Alles per kalenderjaar (kies het jaar bovenaan; een seizoen rekent
-met het jaar van de eerste werkdag): het budget voor loonkosten (voor de
-balk in de loonplanning; leeg is zonder budget), het
-vakantietoeslagpercentage (standaard 8), de werkuren per dag (standaard
-8), de vaste weekbedragen van de postcommandant voor juni en
-juli–september, en de minimumuurlonen per leeftijd (15 tot en met 32)
-voor juni en voor juli/augustus/september, elk met een eigen
-<strong>Opslaan</strong>. Met <strong>Nieuw jaar op basis van …</strong>
-kopieer je de tarieven naar het volgende jaar (het budget niet). Zijn de
-tarieven van een jaar nog niet ingevuld, dan rekent de loonplanning met
-het vorige jaar en zegt dat erbij. Oude seizoenen veranderen dus niet
-meer als je nieuwe minimumlonen invoert.</td>
+<td>Berichten</td>
+<td><strong>Uitnodigen &amp; herinneren</strong></td>
+<td><strong>Automatisch uitnodigen</strong>: modus Uit, Suggestie
+(markeert in de lijst met <strong>Uitnodigen?</strong>) of Automatisch
+(nodigt uit na de vertraging in uren; dat veld verschijnt alleen bij
+Automatisch), met de leeftijdsgrenzen (standaard 16 tot 30). De
+automatisering bij een fasewijziging: <strong>Ondertekeningen bij
+uitnodiging selectiedag</strong> en <strong>Kennismakingspakket bij
+aangenomen</strong>. De ingebouwde <strong>Herinneringen</strong>, en
+onder <strong>Grenzen</strong> de rustperiode, het anti-loop-plafond, de
+grens voor e-mailbijlagen en het maximum aantal WhatsApp-berichten per
+uur (zie <a href="#geplande-berichten-en-herinneringen">Geplande
+berichten en herinneringen</a>).</td>
 </tr>
 <tr>
 <td>Berichten</td>
@@ -3373,14 +3363,59 @@ een telefoonnummer, een e-mailadres als terugval en het kanaal, en
 <tr>
 <td>Berichten</td>
 <td><strong>Afzender &amp; adressen</strong></td>
-<td>De adressen voor foutmeldingen, het bestuur (ontvangt de
-bestuursmeldingen), de penningmeester (&quot;loondossier compleet&quot;; leeg is
-het bestuursadres) en de ledenservice (de ondertekende inschrijving als
-lid; leeg is het bestuursadres). Het vinkje voor loondossier-stukken als
-bijlage: laat dat uit.</td>
+<td>Waar berichten heen gaan: het bestuur (ontvangt de
+bestuursmeldingen), het contactadres voor sollicitanten, de
+penningmeester (&quot;loondossier compleet&quot;; leeg is het bestuursadres), de
+ledenservice (de ondertekende inschrijving als lid; leeg is het
+bestuursadres) en het adres voor foutmeldingen. Het vinkje voor
+loondossier-stukken als bijlage: laat dat uit.</td>
 </tr>
 <tr>
-<td>Berichten</td>
+<td>Inzet en loon</td>
+<td><strong>Functies</strong></td>
+<td>Per functie de naam, de factor voor het dagloon, de minimum- en
+maximumleeftijd en de volgorde, met <strong>Sla op</strong> en een
+voorbeeldberekening.</td>
+</tr>
+<tr>
+<td>Inzet en loon</td>
+<td><strong>Lonen &amp; budget</strong></td>
+<td>Alles per kalenderjaar (kies het jaar bovenaan; een seizoen rekent
+met het jaar van de eerste werkdag): het budget voor loonkosten (voor de
+balk in de loonplanning; leeg is zonder budget), het
+vakantietoeslagpercentage (standaard 8), de werkuren per dag (standaard
+8), de vaste weekbedragen van de postcommandant voor juni en
+juli–september, en de minimumuurlonen per leeftijd (15 tot en met 32)
+voor juni en voor juli/augustus/september, elk met een eigen
+<strong>Opslaan</strong>. Met <strong>Nieuw jaar op basis van …</strong>
+kopieer je de tarieven naar het volgende jaar (het budget niet). Zijn de
+tarieven van een jaar nog niet ingevuld, dan rekent de loonplanning met
+het vorige jaar en zegt dat erbij. Oude seizoenen veranderen dus niet
+meer als je nieuwe minimumlonen invoert.</td>
+</tr>
+<tr>
+<td>Privacy en bewaren</td>
+<td><strong>Bewaren &amp; opschonen</strong></td>
+<td>Een rode waarschuwing zolang automatisch opschonen uit staat.
+<strong>Automatisch opschonen inschakelen</strong>, de termijnen per
+soort gegeven (ook het logboek, het foutenlog en de kopie bankpas), de
+schakelaars voor de downloadmail aan het bestuur en de
+bezoekersstatistiek, en het <strong>Opschoon-logboek</strong>. Daaronder
+de cronjob-regel voor Plesk met <strong>Handmatig uitvoeren</strong> en
+<strong>Nieuw token maken</strong> (alleen voor wie Systeem mag
+bewerken) en de stand van de AI- en mailwachtrij. Zie <a href="#bewaartermijnen">Bewaartermijnen</a>.</td>
+</tr>
+<tr>
+<td>Technisch</td>
+<td><strong>Modules</strong></td>
+<td>Welke modules aanstaan (selectiedag, trainingsweekend, loonplanning,
+dekking, landingspagina&#39;s), met <strong>Opslaan</strong>. Een module die
+uitstaat verdwijnt uit het menu en uit de rechten, ook voor de
+beheerder; er wordt niets gewist. Daaronder voor welke ondertekeningen
+een verificatiecode nodig is (het loonheffingsformulier altijd).</td>
+</tr>
+<tr>
+<td>Technisch</td>
 <td><strong>E-mailserver</strong></td>
 <td>Host, poort, beveiliging (STARTTLS, SSL/TLS of Geen),
 gebruikersnaam, wachtwoord, afzenderadres en afzendernaam. Daaronder
@@ -3388,7 +3423,7 @@ gebruikersnaam, wachtwoord, afzenderadres en afzendernaam. Daaronder
 klik op <strong>Verstuur testmail</strong>.</td>
 </tr>
 <tr>
-<td>Koppelingen</td>
+<td>Technisch</td>
 <td><strong>Authentik</strong></td>
 <td>De status van de SSO-koppeling, het <strong>Authentik
 API-token</strong> voor het inloggen van terugkerende sollicitanten via
@@ -3401,7 +3436,7 @@ en de groep-indeling van de competenties (alleen te bekijken). De tokens
 zijn geheime velden.</td>
 </tr>
 <tr>
-<td>Koppelingen</td>
+<td>Technisch</td>
 <td><strong>Website &amp; API</strong></td>
 <td>De geheime sleutel voor de WordPress-plugin
 (<strong>Kopieer</strong>; <strong>Nieuwe sleutel genereren</strong>
@@ -3411,7 +3446,7 @@ kopiëren en vernieuwen kan alleen wie Systeem mag bewerken (standaard
 admin); anderen zien <strong>Ingesteld</strong>.</td>
 </tr>
 <tr>
-<td>Koppelingen</td>
+<td>Technisch</td>
 <td><strong>AI-analyse</strong></td>
 <td>De <strong>Gemini API-sleutel</strong> (geheim veld) en het
 <strong>Model</strong>: Gemini 2.5 Flash (standaard), Gemini 2.5
@@ -3427,18 +3462,6 @@ bijzonderheden. <strong>Automatisch analyseren na ontvangst
 kennismakingsformulier</strong> (standaard aan): uit betekent alleen
 handmatig, met <strong>Analyseer nu</strong> bij het volledige
 formulier.</td>
-</tr>
-<tr>
-<td>Privacy &amp; onderhoud</td>
-<td><strong>Bewaren &amp; opschonen</strong></td>
-<td>Een rode waarschuwing zolang automatisch opschonen uit staat.
-<strong>Automatisch opschonen inschakelen</strong>, de termijnen per
-soort gegeven (ook het logboek, het foutenlog en de kopie bankpas), de
-schakelaars voor de downloadmail aan het bestuur en de
-bezoekersstatistiek, en het <strong>Opschoon-logboek</strong>. Daaronder
-de cronjob-regel voor Plesk met <strong>Handmatig uitvoeren</strong> en
-<strong>Nieuw token maken</strong> (alleen voor wie Systeem mag
-bewerken) en de stand van de AI- en mailwachtrij. Zie <a href="#bewaartermijnen">Bewaartermijnen</a>.</td>
 </tr>
 </tbody>
 </table>

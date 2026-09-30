@@ -24,6 +24,7 @@ if (file_exists(__DIR__ . '/versie.php'))        require_once __DIR__ . '/versie
 if (file_exists(__DIR__ . '/mail_render.php'))   require_once __DIR__ . '/mail_render.php';
 if (file_exists(__DIR__ . '/error_handler.php')) require_once __DIR__ . '/error_handler.php';
 if (file_exists(__DIR__ . '/instellingen.php'))  require_once __DIR__ . '/instellingen.php';
+if (file_exists(__DIR__ . '/instellingen_velden.php')) require_once __DIR__ . '/instellingen_velden.php';   // instellingen als lijst (2.144.0)
 if (file_exists(__DIR__ . '/validatie.php'))      require_once __DIR__ . '/validatie.php';
 if (file_exists(__DIR__ . '/ratelimit.php'))      require_once __DIR__ . '/ratelimit.php';
 if (file_exists(__DIR__ . '/kluis.php'))          require_once __DIR__ . '/kluis.php';

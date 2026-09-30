@@ -185,6 +185,7 @@ function anon_regels(): array {
         'seizoenen'      => ['*' => 'bewaar'],
         'rollen'         => ['*' => 'bewaar'],
         'rol_rechten'    => ['*' => 'bewaar'],
+        'rol_taak'       => ['*' => 'bewaar'],   // taakrechten (2.141.0): geen persoonsgegevens
         'functies'       => ['*' => 'bewaar'],
         'loon_tarieven'  => ['*' => 'bewaar'],
         'loon_jaar'      => ['*' => 'bewaar'],

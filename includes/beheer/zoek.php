@@ -44,32 +44,34 @@ function bh_inst_tabs(): array {
 
 /** Alle tabbladen, ongeacht rechten (bh_inst_tabs() filtert). */
 function bh_inst_tabs_alle(): array {
+    // Ingedeeld naar wat je komt doen (2.144.0). Technisch staat onderaan en alleen voor Systeem › bewerken.
     return [
       'Organisatie' => [
-        ['algemeen',    'Algemeen',                  'instellingen', 'brigade naam logo contact adres portaal url tijdzone leeftijd minimumleeftijd'],
-        ['modules',     'Modules',                   'systeem',      'module aan uit selectiedag trainingsweekend loonplanning dekking landingspagina wervingspagina onderdeel'],
+        ['algemeen',    'Algemeen',                  'instellingen', 'brigade naam logo favicon contact adres portaal welkomst huisregels leeftijd minimumleeftijd'],
       ],
-      'Selectie & seizoen' => [
-        ['uitnodiging', 'Uitnodigen & automatisch',  'bliksem',      'automatisch uitnodigen herinnering deadline drempel'],
+      'Seizoen en selectie' => [
+        ['fase_advies', 'Seizoensfase & advies',     'kalender',     'seizoensfase fase handmatig advies drempel score trainingsweekend gesprek standaardtekst aangenomen afgewezen'],
         ['selectie',    'Beoordelingscriteria',      'vink',         'criteria competenties beoordelen cijfer weging selectiedag'],
-        ['bezetting',   'Posten & bezetting',        'schild',       'post strandpost bezetting diensten minimale dekking'],
+        ['bezetting',   'Posten & bezetting',        'schild',       'post strandpost bezetting diensten minimale dekking norm'],
       ],
-      'Inzet & loon' => [
+      'Berichten' => [
+        ['uitnodiging', 'Uitnodigen & herinneren',   'bliksem',      'automatisch uitnodigen leeftijd vertraging herinnering rustperiode plafond bijlage whatsapp limiet fase-wijziging kennismakingspakket'],
+        ['berichten',   'Kanalen & meldingen',       'chat',         'whatsapp sms kanaal melding opt-in plafond whatsreach'],
+        ['mail',        'Afzender & adressen',       'mail',         'afzender antwoordadres reply-to bestuur penningmeester ledenservice contact foutmeldingen e-mailadres'],
+      ],
+      'Inzet en loon' => [
         ['functies',    'Functies',                  'mensen',       'functie rol strandwacht niveau diploma'],
         ['loon',        'Lonen & budget',            'grafiek',      'uurloon salaris budget vakantietoeslag werkuren leeftijdsschaal loonheffing'],
       ],
-      'Berichten' => [
-        ['berichten',   'Kanalen & meldingen',       'chat',         'whatsapp sms kanaal melding opt-in plafond whatsreach'],
-        ['mail',        'Afzender & adressen',       'mail',         'afzender antwoordadres reply-to bestuur bcc e-mailadres'],
-        ['smtp',        'E-mailserver',              'systeem',      'smtp mailserver poort wachtwoord tls verbinding'],
+      'Privacy en bewaren' => [
+        ['bewaren',     'Bewaren & opschonen',       'klok',         'bewaartermijn avg opschonen verwijderen cron privacy gdpr privacyverklaring'],
       ],
-      'Koppelingen' => [
+      'Technisch' => [
+        ['modules',     'Modules',                   'systeem',      'module aan uit selectiedag trainingsweekend loonplanning dekking landingspagina wervingspagina onderdeel verificatiecode'],
+        ['smtp',        'E-mailserver',              'systeem',      'smtp mailserver poort wachtwoord tls verbinding'],
         ['authentik',   'Authentik',                 'schild',       'sso oidc single sign-on inloggen client secret'],
         ['api',         'Website & API',             'koppeling',    'api sleutel key wordpress webhook aanmeldformulier plugin'],
         ['ai',          'AI-analyse',                'ster',         'ai analyse model api key beschikbaarheid wizard'],
-      ],
-      'Privacy & onderhoud' => [
-        ['bewaren',     'Bewaren & opschonen',       'klok',         'bewaartermijn avg opschonen verwijderen cron privacy gdpr'],
       ],
     ];
 }

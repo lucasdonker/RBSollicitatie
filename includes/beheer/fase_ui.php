@@ -104,7 +104,7 @@ function bh_fase_afwijkend(string $van, string $naar): bool {
  * Suggestie "Uitnodigen?" in de lijst, als de uitnodig-modus op Suggestie staat.
  *
  * Alleen bij aangemeld, en alleen als de leeftijd bij de start van het werkseizoen binnen
- * de grenzen van Instellingen › Uitnodigen & automatisch valt — dezelfde regel als de
+ * de grenzen van Instellingen › Uitnodigen & herinneren valt — dezelfde regel als de
  * automatische uitnodiging (invite_aanbeveling), zodat Suggestie en Automatisch nooit
  * verschillend oordelen. Een suggestie, geen besluit: de knop blijft een mensenklik.
  */

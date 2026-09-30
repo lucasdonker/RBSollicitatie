@@ -3,10 +3,21 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.143.0');
+define('APP_VERSIE', '2.144.0');
 
 function app_changelog(): array {
     return [
+        '2.144.0' => [
+            'datum'  => '2026-09-30',
+            'titel'  => 'Instellingen: op één lijn en ingedeeld naar wat je komt doen',
+            'punten' => [
+                'Velden naast elkaar staan nu op dezelfde hoogte (logo en favicon, leeftijden, herinneringen)',
+                'De tabbladen zijn ingedeeld naar taak: Organisatie, Seizoen en selectie, Berichten, Inzet en loon, Privacy en bewaren en Technisch',
+                'Nieuw tabblad Seizoensfase & advies: de seizoensfase, de advies-drempel en de standaardteksten na het TW-gesprek. Uitnodigen & automatisch heet nu Uitnodigen & herinneren',
+                'De vertraging bij automatisch uitnodigen verschijnt alleen als je Automatisch kiest',
+                'Achter de schermen: deze tabbladen komen uit één lijst, waaruit ook volgt wat er mag worden opgeslagen',
+            ],
+        ],
         '2.143.0' => [
             'datum'  => '2026-09-30',
             'titel'  => 'Seizoen: rustiger instellen en eerdere seizoenen terugkijken',

@@ -128,7 +128,7 @@ function meldingen_register(): array {
         // daarom wél aan (anders dan 'afgewezen' na de selectiedag, waar het bestuur zelf belt).
         'tw_afgewezen' => array_merge($std, [
             'naam' => 'Niet aangenomen na het trainingsweekend', 'categorie' => 'fase', 'kanaal_standaard' => 'email', 'kort_toegestaan' => false,
-            'beschrijving' => 'Na het gesprek op het trainingsweekend, als bevestiging van wat er is besproken. {{gesprek_bericht}} is het bericht uit het gesprek (of de standaardtekst uit Instellingen › Uitnodigen & automatisch). Onder de tekst staat de knop "Stuur me een seintje".',
+            'beschrijving' => 'Na het gesprek op het trainingsweekend, als bevestiging van wat er is besproken. {{gesprek_bericht}} is het bericht uit het gesprek (of de standaardtekst uit Instellingen › Seizoensfase & advies). Onder de tekst staat de knop "Stuur me een seintje".',
             'seintje' => true, 'vars' => ['gesprek_bericht', 'seintje_url'],
             'seed' => [
                 'onderwerp' => 'Terugkoppeling trainingsweekend {{seizoen_naam}}',

@@ -72,7 +72,7 @@ foreach ($tabel_kolommen as $_kol):
           <?php elseif (($rij['intrek_status'] ?? '') === 'doorgevoerd'): ?><?= bh_chip('ingetrokken', 'grijs') ?><?php endif; ?>
           <?php // Uitnodig-modus "Suggestie": een voorstel, de knop blijft een mensenklik. ?>
           <?php if (bh_uitnodig_suggestie($rij)): ?>
-            <?= bh_badge('Uitnodigen?', 'groen', ['titel' => 'Valt binnen de leeftijdsgrenzen voor uitnodigen (Instellingen › Uitnodigen & automatisch)']) ?>
+            <?= bh_badge('Uitnodigen?', 'groen', ['titel' => 'Valt binnen de leeftijdsgrenzen voor uitnodigen (Instellingen › Uitnodigen & herinneren)']) ?>
           <?php endif; ?>
           <?php if ($_att): ?>
             <?php // Kort in de cel, de volle reden als tooltip — anders duwt deze regel de

@@ -385,6 +385,16 @@
     var p = e.target.closest && e.target.closest('details.bh-filter-meer[open], details.bh-filter-menu[open]');
     if (p) { p.open = false; p.querySelector('summary').focus(); }
   });
+  // data-toon-als="inst[invite.modus]=auto": dit blok staat alleen open bij die keuze (admin/_inst_veld.php).
+  // De server zet hidden al goed bij het laden; dit volgt een wijziging zonder herladen.
+  document.addEventListener('change', function (e) {
+    var naam = e.target && e.target.name;
+    if (!naam) return;
+    document.querySelectorAll('[data-toon-als]').forEach(function (blok) {
+      var d = blok.getAttribute('data-toon-als'), i = d.lastIndexOf('=');
+      if (d.slice(0, i) === naam) blok.hidden = e.target.value !== d.slice(i + 1);
+    });
+  });
   // Een zwevend paneel opent aan de kant waar het past: staat de knop rechts in de balk, dan
   // hangt het paneel naar links (anders valt het half buiten beeld). 'toggle' borrelt niet op: capture.
   document.addEventListener('toggle', function (e) {

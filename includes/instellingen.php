@@ -18,13 +18,8 @@ $_instellingen_cache = null;
  * @return string[]
  */
 function instellingen_formulier_sleutels(string $tab): array {
-    $herinneringen = [];
-    if (function_exists('herinnering_regels')) {
-        foreach (array_keys(herinnering_regels()) as $slug) {
-            foreach (['aan', 'na', 'herhaal', 'max'] as $veld) $herinneringen[] = 'herinnering.' . $slug . '.' . $veld;
-        }
-        $herinneringen[] = 'herinnering.selectiedag_morgen.info';
-    }
+    // Tabbladen uit de lijst (includes/instellingen_velden.php): de whitelist is precies wat daar staat.
+    if (function_exists('instellingen_velden_sleutels') && ($uit = instellingen_velden_sleutels($tab))) return $uit;
     $per_tab = [
         'algemeen'    => ['site.naam', 'site.logo_url', 'site.favicon_url', 'portaal.welkomst_tekst'],
         // Lonen & budget slaat op per kalenderjaar (includes/loon_tarieven.php) via eigen acties, niet via
@@ -32,14 +27,7 @@ function instellingen_formulier_sleutels(string $tab): array {
         'loon'        => [],
         // Technisch tabblad (alleen Systeem › bewerken): welke ondertekeningen een verificatiecode vragen.
         'modules'     => ['ondertekenen.2fa_typen'],
-        'uitnodiging' => array_merge([
-            'invite.modus', 'invite.min_leeftijd', 'invite.max_leeftijd', 'invite.delay_uur',
-            'seizoen.fase', 'selectie.drempel', 'tw.bericht_aangenomen', 'tw.bericht_afgewezen', 'tw.bericht_afgewezen_niet_gekomen',
-            'auto.ondertekening_sd', 'auto.kennismakingspakket',
-            'herinnering.rust_dagen', 'melding.plafond_dag', 'bijlage.mail_max_mb', 'wa.max_per_uur',
-        ], $herinneringen),
-        'mail'        => ['mail.fout_email', 'mail.bestuur_email', 'mail.contact_email', 'mail.penningmeester_email', 'mail.ledenservice_email',
-                          'documenten.penningmeester_bijlagen'],
+        // 'fase_advies', 'uitnodiging' en 'mail' staan in includes/instellingen_velden.php.
         'ai'          => ['ai.api_key', 'ai.model', 'ai.beschikbaarheid_hulp', 'ai.auto_analyse'],
         'authentik'   => ['authentik.api_token', 'authentik.url', 'authentik.token'],
         'bewaren'     => ['bewaar.actief', 'bewaar.afgewezen_weken', 'bewaar.seintje_mnd', 'bewaar.aangenomen_jaar',
