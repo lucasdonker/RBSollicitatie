@@ -12,6 +12,8 @@ function app_changelog(): array {
             'titel'  => 'Rollen uit Authentik opnieuw ingedeeld',
             'punten' => [
                 'Iemand kan meerdere rollen hebben (bijvoorbeeld bestuur én penningmeester); de rechten tellen op. Eerder won één rol en verloor een penningmeester die ook bestuurslid is een deel van zijn rechten',
+                'Wie het beheer in mag, bepaalt alleen nog de koppeling rol → Authentik-groep onder Rollen & rechten. De aparte lijst "toegestane groepen" bij Instellingen › Authentik is weg; de systeemcontrole meldt groepen uit die lijst die bij geen rol horen',
+                'De standaardgroepen heten app-sol-admin, app-sol-bestuur, app-sol-penningmeester en app-sol-begeleider. Rollen die nog op de oude standaardnaam stonden, gaan vanzelf mee; een zelf gekozen groep blijft staan',
             ],
         ],
         '2.131.0' => [

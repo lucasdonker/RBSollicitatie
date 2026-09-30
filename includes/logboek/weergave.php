@@ -30,7 +30,7 @@ function log_actie_register(): array {
         'ingelogd'        => ['Ingelogd', 'sleutel'],
         'uitgelogd'       => ['Uitgelogd', 'uitloggen'],
         'login_mislukt'   => ['Inloggen mislukt', 'waarschuwing'],
-        'sso_geweigerd'   => ['Inloggen via Authentik geweigerd (geen toegestane groep)', 'slot'],
+        'sso_geweigerd'   => ['Inloggen via Authentik geweigerd (geen groep met een rol)', 'slot'],
         'geweigerd'       => ['Geweigerd', 'waarschuwing'],
         'gewisseld'       => ['Gewisseld van omgeving', 'wissel'],
         'rol_gewijzigd'   => ['Rechten van een rol gewijzigd', 'slot'],

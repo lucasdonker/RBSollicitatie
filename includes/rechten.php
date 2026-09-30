@@ -72,7 +72,7 @@ function rechten_standaard_rollen(): array {
     return [
         'begeleider' => [
             'naam' => 'Begeleider',
-            'authentik_groep' => 'Sol-Begeleider',
+            'authentik_groep' => 'app-sol-begeleider',
             'rang' => 1,
             'rechten' => [
                 // Begeleider: alleen wat nodig is op de selectiedag. GEEN persoonsgegevens.
@@ -93,7 +93,7 @@ function rechten_standaard_rollen(): array {
         ],
         'bestuur' => [
             'naam' => 'Bestuur',
-            'authentik_groep' => 'Bestuur',
+            'authentik_groep' => 'app-sol-bestuur',
             'rang' => 2,
             'rechten' => [
                 'sollicitanten'   => 'rwd',
@@ -113,7 +113,7 @@ function rechten_standaard_rollen(): array {
         ],
         'penningmeester' => [
             'naam' => 'Penningmeester',
-            'authentik_groep' => 'Sol-Penningmeester',
+            'authentik_groep' => 'app-sol-penningmeester',
             'rang' => 2,
             'rechten' => [
                 // De loonadministratie: loondossiers inzien, downloaden, verwerkt markeren, bankpas vernietigen,
@@ -125,7 +125,7 @@ function rechten_standaard_rollen(): array {
         ],
         'admin' => [
             'naam' => 'Admin',
-            'authentik_groep' => 'Sol-Admin',
+            'authentik_groep' => 'app-sol-admin',
             'rang' => 3,
             'rechten' => 'ALLES', // admin krijgt altijd alles
         ],
@@ -184,7 +184,44 @@ function rechten_auto_setup(): void {
             error_log("rechten_auto_setup: rol '$sleutel' aangemaakt");
         }
         rechten_nieuwe_standaarden();
+        rechten_groepnamen_bijwerken();
     } catch (\Exception $e) { error_log('rechten_auto_setup: ' . $e->getMessage()); }
+}
+
+/**
+ * 2.132.0: de standaardgroepen heten app-sol-* (docs/handleiding/authentik_groepen.md). Een rol die
+ * nog op de oude standaardnaam staat, gaat mee; een zelf gekozen groep blijft staan.
+ */
+function rechten_groepnamen_bijwerken(): void {
+    $standaard = rechten_standaard_rollen();
+    $q = db()->prepare("UPDATE rollen SET authentik_groep = ? WHERE sleutel = ? AND authentik_groep = ?");
+    foreach (rechten_oude_standaardgroepen() as $sleutel => $groep) {
+        $q->execute([$standaard[$sleutel]['authentik_groep'], $sleutel, $groep]);
+        if ($q->rowCount() > 0) error_log("rechten_groepnamen_bijwerken: $sleutel -> {$standaard[$sleutel]['authentik_groep']}");
+    }
+}
+
+/** De standaardgroepen van vóór 2.132.0, per rol. */
+function rechten_oude_standaardgroepen(): array {
+    return ['begeleider' => 'Sol-Begeleider', 'bestuur' => 'Bestuur', 'penningmeester' => 'Sol-Penningmeester', 'admin' => 'Sol-Admin'];
+}
+
+/**
+ * Groepen die volgens de oude instelling authentik.admin_groepen (tot 2.132.0) het beheer in mochten,
+ * maar aan geen rol gekoppeld zijn. Sinds 2.132.0 bepaalt alleen de koppeling rol → groep de toegang,
+ * dus wie alleen in zo'n groep zit, komt er niet meer in. Voor de systeemcontrole.
+ */
+function rechten_ontkoppelde_oude_groepen(): array {
+    $oud = function_exists('instelling') ? (string)instelling('authentik.admin_groepen', '') : '';
+    if ($oud === '') return [];
+    // De oude standaardnamen zijn al omgezet (rechten_groepnamen_bijwerken); die melden we niet.
+    $gekoppeld = array_map('strtolower', array_merge(array_filter(array_column(rollen_alle(), 'authentik_groep')),
+                                                     array_values(rechten_oude_standaardgroepen())));
+    $uit = [];
+    foreach (array_filter(array_map('trim', explode(',', $oud))) as $g) {
+        if (!in_array(strtolower($g), $gekoppeld, true)) $uit[] = $g;
+    }
+    return $uit;
 }
 
 /**

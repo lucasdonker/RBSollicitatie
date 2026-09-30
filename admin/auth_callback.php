@@ -146,20 +146,9 @@ if (!$fout) {
     $sub   = $userinfo['sub'] ?? null;
     $groups = (array)($userinfo['groups'] ?? []);
 
-    // Toegang: alleen wie in Authentik in een van de toegestane groepen zit (exacte naam).
-    $admin_groepen_str = instelling('authentik.admin_groepen',
-        defined('AUTHENTIK_STANDAARD_GROEPEN') ? AUTHENTIK_STANDAARD_GROEPEN : 'Bestuur,Sol-Admin,Sol-Begeleider,Sol-Penningmeester');
-    $admin_groepen    = array_filter(array_map('trim', explode(',', $admin_groepen_str)));
-    $matched_group    = null;
-    foreach ($admin_groepen as $ag) {
-        foreach ($groups as $ug) {
-            if (strcasecmp($ag, $ug) === 0) { $matched_group = $ag; break 2; }
-        }
-    }
-
-    // Alle app-rollen bij deze groepen (hoogste rang eerst); de rechten tellen op.
-    $rollen_uit_groups = authentik_groups_naar_rollen($groups);
-    $rol_uit_groups    = $rollen_uit_groups[0] ?? null;
+    // Toegang en rollen komen uit één bron: de koppeling rol → Authentik-groep in Rollen & rechten.
+    // Alle rollen waarvan iemand de groep heeft tellen op; de hoogste rang is de hoofdrol.
+    $rollen_uit_groups = rollen_uit_authentik_groepen($groups);
     $extra_rollen      = implode(',', array_slice($rollen_uit_groups, 1)) ?: null;
 
     $db = db();
@@ -167,12 +156,11 @@ if (!$fout) {
     $stmt->execute([$sub, $email]);
     $b = $stmt->fetch();
 
-    // Niet (meer) in een toegestane groep → geen toegang via SSO, ook niet voor een bestaand account.
-    // Zo trekt "uit de groep halen" in Authentik de toegang echt in (offboarding). Het account zelf
-    // blijft ongemoeid: een ontbrekende groups-claim of hernoemde groep mag niet iedereen buitensluiten,
-    // en een wachtwoord-noodingang die een admin heeft ingericht blijft werken via login.php.
-    if (!$matched_group) {
-        $fout = "Je Authentik-account heeft geen admin-toegang. Voor sollicitatieportaal: ga naar " . APP_URL . "/portaal/";
+    // Geen gekoppelde groep (meer) → geen toegang via SSO, ook niet voor een bestaand account. Zo trekt
+    // "uit de groep halen" in Authentik de toegang echt in (offboarding). Het account zelf blijft
+    // ongemoeid, en een wachtwoord-noodingang die een admin heeft ingericht blijft werken via login.php.
+    if (!$rollen_uit_groups) {
+        $fout = 'Je account heeft geen toegang tot het beheer. Ben je sollicitant? Ga dan naar ' . APP_URL . '/portaal/';
         if (function_exists('audit_log')) {
             audit_log('sso_geweigerd', 'beheerder', $b ? (int)$b['id'] : null, [
                 'email'   => $email,
@@ -180,29 +168,21 @@ if (!$fout) {
                 'groepen' => array_slice(array_map('strval', $groups), 0, 20),
             ]);
         }
+    } elseif ($b) {
+        // De rollen volgen Authentik, bij elke login.
+        $db->prepare("UPDATE beheerders SET authentik_uid = ?, naam = ?, rol = ?, extra_rollen = ?, laatste_login = NOW() WHERE id = ?")
+           ->execute([$sub, $naam, $rollen_uit_groups[0], $extra_rollen, $b['id']]);
+        $b['naam'] = $naam;
+        $b['rol']  = $rollen_uit_groups[0];
+        $b['extra_rollen'] = $extra_rollen;
     } else {
-        // De rol volgt de gekoppelde Authentik-groep, bij elke login. Zit iemand in een toegestane
-        // groep die aan geen rol gekoppeld is, dan blijft de rol die een admin heeft gekozen: anders
-        // verliest een beheerder in een eigen groep bij de volgende login zijn rechten. (Uit álle
-        // toegestane groepen = hierboven al geweigerd.) Nieuwe accounts krijgen de laagste rol.
-        if ($b) {
-            $nieuwe_rol = $rol_uit_groups ?: ($b['rol'] !== '' ? $b['rol'] : 'begeleider');
-            $db->prepare("UPDATE beheerders SET authentik_uid = ?, naam = ?, rol = ?, extra_rollen = ?, laatste_login = NOW() WHERE id = ?")
-               ->execute([$sub, $naam, $nieuwe_rol, $extra_rollen, $b['id']]);
-            $b['naam'] = $naam;
-            $b['rol']  = $nieuwe_rol;
-            $b['extra_rollen'] = $extra_rollen;
-        } else {
-            // Nieuw account
-            $rol = $rol_uit_groups ?: 'begeleider';
-            $db->prepare("INSERT INTO beheerders (naam, email, wachtwoord, rol, extra_rollen, authentik_uid) VALUES (?, ?, NULL, ?, ?, ?)")
-               ->execute([$naam, $email, $rol, $extra_rollen, $sub]);
-            $new_id = (int)$db->lastInsertId();
-            $stmt_b = $db->prepare("SELECT * FROM beheerders WHERE id = ?");
-            $stmt_b->execute([$new_id]);
-            $b = $stmt_b->fetch();
-        }
-    } // einde else van matched_group check
+        // Nieuw account
+        $db->prepare("INSERT INTO beheerders (naam, email, wachtwoord, rol, extra_rollen, authentik_uid) VALUES (?, ?, NULL, ?, ?, ?)")
+           ->execute([$naam, $email, $rollen_uit_groups[0], $extra_rollen, $sub]);
+        $stmt_b = $db->prepare("SELECT * FROM beheerders WHERE id = ?");
+        $stmt_b->execute([(int)$db->lastInsertId()]);
+        $b = $stmt_b->fetch();
+    }
 
     if (!$fout && (!$b || !$b['actief'])) {
         $fout = 'Account is niet actief of kon niet worden aangemaakt. Vraag een admin om toegang.';

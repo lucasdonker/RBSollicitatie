@@ -747,47 +747,6 @@ function authentik_email_bestaat(string $email): array|false {
     return false;
 }
 
-/**
- * Alle app-rollen bij deze Authentik-groepen, hoogste rang eerst (leeg = geen match). De rechten van
- * al die rollen tellen op; de eerste is de hoofdrol.
- */
-function authentik_groups_naar_rollen(array $groups): array {
-    // De rollen-tabel (beheerd via Rollen & rechten).
-    if (function_exists('rollen_uit_authentik_groepen')) {
-        $r = rollen_uit_authentik_groepen($groups);
-        if ($r) return $r;
-    }
-    $r = authentik_groups_naar_rol($groups);
-    return $r !== null ? [$r] : [];
-}
-
-/**
- * Map Authentik groups naar één app-rol (de hoofdrol). Voor alle rollen: authentik_groups_naar_rollen().
- * Returns: rolsleutel (bv. 'admin' | 'bestuur' | 'penningmeester' | 'begeleider') | null (geen match)
- */
-function authentik_groups_naar_rol(array $groups): ?string {
-    // Nieuw: gebruik de rollen-tabel (door de gebruiker beheerd via de rechtenmatrix).
-    if (function_exists('rol_uit_authentik_groepen')) {
-        $r = rol_uit_authentik_groepen($groups);
-        if ($r !== null) return $r;
-    }
-    // Terugval op de oorspronkelijke hardcoded mapping (voor als de tabel nog leeg is).
-    $map = [
-        'admin'           => 'admin',
-        'bestuur'         => 'bestuur',
-        'sol-admin'       => 'admin',
-        'sol-penningmeester' => 'penningmeester',
-        'sol-begeleider'  => 'begeleider',
-        'sol_begeleider'  => 'begeleider',
-    ];
-    // Alleen exacte groepsnaam (getrimd, hoofdletterongevoelig): "oud-bestuur" is geen "bestuur".
-    foreach ($groups as $g) {
-        $g_low = strtolower(trim((string)$g));
-        if (isset($map[$g_low])) return $map[$g_low];
-    }
-    return null;
-}
-
 // Foto URL builder. Een foto van een sollicitant gaat altijd via foto.php (includes/foto.php);
 // de rest (logo, favicon, afbeeldingen in mails) blijft een gewone URL.
 function foto_url(?string $opgeslagen): ?string {

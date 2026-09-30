@@ -50,7 +50,7 @@ je die mee.
 
 - [ ] Toegang tot **Plesk** (Cloud86) voor het domein `sollicitatie.paal13.com`, inclusief de
   subdomeinen voor test.
-- [ ] Een **Authentik-account** in de groep `Sol-Admin`. Log één keer in op
+- [ ] Een **Authentik-account** in de groep `app-sol-admin`. Log één keer in op
   `https://test.sollicitatie.paal13.com/admin/` en op productie.
 - [ ] Toegang tot de **Git-repository** (branches `Development` en `main`).
 - [ ] Toegang tot de **wachtwoordkluis van het bestuur**. Daar horen per omgeving te staan: de
@@ -265,13 +265,11 @@ Plesk. Bewust anders op test: het oranje label TESTOMGEVING en dat Google test n
    sinds 2.94.0 zet het systeem het automatisch uit.
 10. Controleer de cron in Plesk (zie [Cron](#cron)) en kijk na een kwartier of de systeemcontrole
     bij Cron alle groepen op tijd meldt.
-11. (eenmalig) Authentik: controleer de redirect-URI's en de groep `Sol-Penningmeester`, en
-    controleer dat die groep bij **Instellingen › Authentik** in de lijst met toegestane groepen
-    staat (standaard sinds 2.101; een eerder zelf aangepaste lijst blijft ongewijzigd). Kijk bij
-    **Beheerders** of de penningmeester als Begeleider staat: vóór 2.101 werd die rol stil leeg
-    opgeslagen (de kolom was een ENUM), en `db_failsafe` zet een lege rol nu op `begeleider`. Zet
-    de rol eenmalig goed. Zie
-    [Authentik](#authentik-sso).
+11. (eenmalig) Authentik: controleer de redirect-URI's en onder **Rollen & rechten** welke groep bij
+    elke rol hoort (sinds 2.132.0 standaard `app-sol-*`, en de enige bron voor toegang). Meldt de
+    systeemcontrole groepen die "bij geen rol horen", koppel die dan eerst: wie alleen daarin zit,
+    komt anders niet meer binnen. Zie [Authentik](#authentik-sso) en
+    [authentik_groepen.md](authentik_groepen.md).
 12. (eenmalig) **Instellingen › Afzender & adressen**: vul het penningmeester-adres en het
     ledenservice-adres in en laat "loondossier-stukken als bijlage meesturen" uit. Plaats onder
     **Instellingen › Algemeen** de huisregels-pdf.
@@ -415,7 +413,7 @@ geanonimiseerd, maar aanmelddata, fases en aantallen zijn nog echt.
    in de nginx-instellingen van het domein, of zet het statisch serveren door nginx uit.
 
 7. Open een pagina; de zelfherstelronde maakt de rest van de tabellen aan.
-8. Log in via Authentik met een account in de groep `Sol-Admin`; dat account wordt automatisch
+8. Log in via Authentik met een account in de groep `app-sol-admin`; dat account wordt automatisch
    beheerder met rol admin. Er is geen standaardaccount met wachtwoord meer.
 9. Stel de cron in en doorloop de rest van de checklist vanaf stap 8.
 10. Werk op Vandaag de lijst **Nog in te stellen** af (SMTP, adressen, huisregels, opschonen)
@@ -526,7 +524,7 @@ te vernieuwen voor wie Systeem mag bewerken.
 | `api.sleutel`, `api.origins` | Instellingen › Website & API | Sleutel en toegestane websites voor de WordPress-plugin. `api.origins` bepaalt ook wie het aanmeldformulier in een iframe mag tonen |
 | `smtp.*` | Instellingen › E-mailserver | Mailserver en wachtwoord; gaat voor op `SMTP_*` in config |
 | `ai.api_key` | Instellingen › AI-analyse | Sleutel voor de AI-hulp (Gemini) |
-| `authentik.url`, `authentik.api_token`, `authentik.token`, `authentik.admin_groepen` | Instellingen › Authentik | Portaal-SSO, competentie-sync en de groepen die het beheer in mogen |
+| `authentik.url`, `authentik.api_token`, `authentik.token` | Instellingen › Authentik | Portaal-SSO en competentie-sync (wie het beheer in mag: Rollen & rechten) |
 | `sms.*`, `wa.*` | Instellingen › Kanalen & meldingen | Sleutels van de sms-gateway en WhatsReach |
 | `kluis.zout` | (automatisch, niet wijzigen) | Zout van de kluis; samen met `KLUIS_SLEUTEL` nodig om documenten te lezen |
 
@@ -610,19 +608,20 @@ In Authentik hoort per omgeving één OAuth2/OpenID-provider met:
   `https://sollicitatie.paal13.com/portaal/auth_callback.php` (op test met het testadres).
   Ontbreekt de tweede, dan krijgen sollicitanten die via Authentik inloggen "Redirect URI Error".
 - Scopes `openid profile email`, en de groepen in het token (claim `groups`).
-- Groepen en rollen: `Sol-Admin` (rol admin, alles), `Bestuur` (rol bestuur),
-  `Sol-Penningmeester` (rol penningmeester: loondossiers, loonplanning en sollicitanten lezen),
-  `Sol-Begeleider` (rol begeleider: selectiedag en dekking lezen). Welke groep bij welke rol hoort
-  en wat een rol mag, pas je aan in Beheer › Rollen & rechten.
-- **Toegestane groepen:** Instellingen › Authentik, veld met groepen die het beheer in mogen
-  (`authentik.admin_groepen`, standaard `Bestuur,Sol-Admin,Sol-Begeleider,Sol-Penningmeester`).
-  Stond daar nog de oude standaardwaarde zonder `Sol-Penningmeester`, dan werkt het systeem die
-  vanzelf bij; een eigen waarde blijft staan zoals die was. De groepsnamen moeten exact kloppen
-  (hoofdletters maken niet uit): `oud-bestuur` telt niet als `Bestuur`.
-- **Geen toegestane groep = geen toegang via SSO**, ook voor een bestaand account. De poging komt
-  in het logboek als "Inloggen via Authentik geweigerd (geen toegestane groep)". Zit iemand wel in
-  een toegestane groep die aan geen rol gekoppeld is, dan blijft de rol die een admin koos; een
-  nieuw account krijgt dan de rol `begeleider`.
+- Groepen en rollen: `app-sol-admin` (rol admin, alles), `app-sol-bestuur` (rol bestuur),
+  `app-sol-penningmeester` (rol penningmeester: loondossiers, loonplanning en sollicitanten lezen),
+  `app-sol-begeleider` (rol begeleider: selectiedag en dekking lezen). Welke groep bij welke rol
+  hoort en wat een rol mag, pas je aan in Beheer › Rollen & rechten. Het groepenmodel van de
+  vereniging, de testgroepen (`app-soltest-*`) en de afvinklijst voor Authentik staan in
+  [authentik_groepen.md](authentik_groepen.md).
+- **Die koppeling is de enige bron voor toegang** (sinds 2.132.0; de oude lijst
+  `authentik.admin_groepen` wordt niet meer gebruikt). Geen gekoppelde groep = geen toegang via
+  SSO, ook voor een bestaand account. De poging komt in het logboek als "Inloggen via Authentik
+  geweigerd". Met meerdere gekoppelde groepen tellen de rechten op. Groepsnamen moeten exact kloppen
+  (hoofdletters maken niet uit). Stonden rollen nog op de oude standaardnamen (`Sol-Admin`,
+  `Bestuur`, `Sol-Penningmeester`, `Sol-Begeleider`), dan zet de update die om naar `app-sol-*`;
+  een zelf gekozen groep blijft staan. Groepen die in de oude lijst stonden maar bij geen rol horen,
+  meldt de systeemcontrole.
 - **Terug na het inloggen** gaat alleen naar een pad binnen `/admin/`; een extern adres in `terug=`
   wordt genegeerd.
 - Zet in Authentik **tweestapsverificatie verplicht** voor iedereen in deze groepen. Het
@@ -635,7 +634,7 @@ tweede stap (zie [Toegangsbeheer](#toegangsbeheer)).
 
 ## Toegangsbeheer
 
-> **In het kort:** Toegang loopt via Authentik-groepen: uit alle toegestane groepen halen trekt de
+> **In het kort:** Toegang loopt via Authentik-groepen: uit alle aan een rol gekoppelde groepen halen trekt de
 > SSO-toegang in. Heeft het account ook een wachtwoord, zet het dan daarnaast op non-actief in
 > Beheerders. Controleer de toegang elk seizoen en houd de noodingang met wachtwoord tot één
 > account. De noodingang vraagt altijd een tweede stap (NIS2): een code uit een authenticator-app
@@ -1137,7 +1136,7 @@ Test nooit met echte persoonsgegevens.
 - **API:** sleutel alleen in de header `X-Paal13-Key`, vergeleken in constante tijd; CORS alleen
   voor paal13.com en de ingestelde websites.
 - **Toegang na inloggen:** terugsturen alleen naar een pad binnen `/admin/` (geen open redirect);
-  SSO weigert wie in geen toegestane groep meer zit.
+  SSO weigert wie in geen aan een rol gekoppelde groep meer zit.
 - **Instellingen:** opslaan vraagt bewerkrecht en neemt alleen de velden van het open tabblad
   aan; geheimen gaan nooit terug naar het scherm.
 - **Uploads:** typecontrole op inhoud, geen SVG als logo of favicon, geen PHP-uitvoering in `uploads/`, gevoelige bestanden

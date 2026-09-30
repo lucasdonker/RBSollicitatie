@@ -87,10 +87,13 @@ beheerder kan ze per rol aanpassen (zie [Beheerders en rechten](#beheerders-en-r
 
 | Rol (zo staat hij onderin de zijbalk) | Authentik-groep | Wat je doet | Wat je in het menu ziet |
 |---|---|---|---|
-| **Begeleider** | Sol-Begeleider | Op de selectiedag inchecken en beoordelen (cijfers en observaties), in het trainingsweekend aanwezigheid afvinken en observaties noteren. Geen toegang tot persoonsgegevens of dossiers. | Vandaag, Selectiedag, Trainingsweekend, Dekking |
-| **Bestuur** | Bestuur | De hele werving: uitnodigen, selectiedag indelen en beoordelen, nabespreken en bellen, aannemen, berichten, seizoen en instellingen. | Alles behalve Loondossiers, Beheerders & rechten en Logboek |
-| **Penningmeester** | Sol-Penningmeester | Het loondossier: loonheffing, kopie ID en bankpas inzien, downloaden, als verwerkt markeren en na de bewaarplicht vernietigen. De loonplanning bekijken en bewerken (kosten, scenario's, Excel-export). Sollicitanten alleen bekijken. | Vandaag, Sollicitanten, Loonplanning, Loondossiers |
-| **Beheerder** (technisch: admin) | Sol-Admin | Alles, ook beheerders, rechten, logboek en systeem. Kan zichzelf nooit buitensluiten. | Alles |
+| **Begeleider** | app-sol-begeleider | Op de selectiedag inchecken en beoordelen (cijfers en observaties), in het trainingsweekend aanwezigheid afvinken en observaties noteren. Geen toegang tot persoonsgegevens of dossiers. | Vandaag, Selectiedag, Trainingsweekend, Dekking |
+| **Bestuur** | app-sol-bestuur | De hele werving: uitnodigen, selectiedag indelen en beoordelen, nabespreken en bellen, aannemen, berichten, seizoen en instellingen. | Alles behalve Loondossiers, Beheerders & rechten en Logboek |
+| **Penningmeester** | app-sol-penningmeester | Het loondossier: loonheffing, kopie ID en bankpas inzien, downloaden, als verwerkt markeren en na de bewaarplicht vernietigen. De loonplanning bekijken en bewerken (kosten, scenario's, Excel-export). Sollicitanten alleen bekijken. | Vandaag, Sollicitanten, Loonplanning, Loondossiers |
+| **Beheerder** (technisch: admin) | app-sol-admin | Alles, ook beheerders, rechten, logboek en systeem. Kan zichzelf nooit buitensluiten. | Alles |
+
+Zit je in meerdere van deze groepen, bijvoorbeeld bestuur én penningmeester, dan tellen de rechten
+op. Het hele groepenmodel van de vereniging staat in `docs/handleiding/authentik_groepen.md`.
 
 Goed om te weten over de begeleider: met de standaardrechten (Selectiedag: alleen lezen) kan een
 begeleider op de selectiedag de groepen bekijken, sollicitanten inchecken (**Aanwezig** en
@@ -161,13 +164,9 @@ groep die toegang geeft. Zie [Inloggen en rollen](#inloggen-en-rollen).
 
 Alles van het bestuurslid, plus:
 
-- [ ] Controleer onder [Instellingen](#instellingen) › Authentik welke groepen toegang geven.
-   Standaard staat daar "Bestuur,Sol-Admin,Sol-Begeleider,Sol-Penningmeester". Controleer dat
-   **Sol-Penningmeester** in de toegestane groepen staat; heeft iemand de lijst eerder zelf
-   aangepast, dan kan die groep ontbreken.
 - [ ] Loop bij [Beheerders en rechten](#beheerders-en-rechten) na wie er toegang heeft en welke rol
-   bij welke Authentik-groep hoort. Staat de penningmeester (of iemand met een eigen rol) als
-   Begeleider in de lijst, zet de rol dan eenmalig goed.
+   bij welke Authentik-groep hoort. Alleen een groep die aan een rol gekoppeld is, geeft toegang.
+   Meldt de systeemcontrole groepen die "bij geen rol horen", koppel die dan onder Rollen & rechten.
 - [ ] Heb je een wachtwoord als noodingang? Stel dan in **Mijn profiel** › **Tweestapsverificatie**
    een authenticator-app in en bewaar de herstelcodes offline, bijvoorbeeld op papier in de kluis
    van het bestuur, niet in je mail of op dezelfde telefoon. Zie
@@ -307,19 +306,16 @@ Klik op **Inloggen via Authentik (SSO)**, log in bij Authentik en je komt terug 
 binnen het beheer waar je heen wilde, of op Vandaag. Een adres buiten het beheer volgt het systeem
 na het inloggen nooit.
 
-Twee instellingen bepalen of en hoe je binnenkomt:
+Eén instelling bepaalt of en hoe je binnenkomt: **welke Authentik-groep bij welke rol hoort**, onder
+Beheerders & rechten › Rollen (standaard app-sol-admin = Beheerder, app-sol-bestuur = Bestuur,
+app-sol-penningmeester = Penningmeester, app-sol-begeleider = Begeleider).
 
-- **Welke groepen toegang geven** staat onder Instellingen › Authentik (standaard
-  "Bestuur,Sol-Admin,Sol-Begeleider,Sol-Penningmeester"). Zit je in geen van die groepen, dan zie
-  je "Je Authentik-account heeft geen admin-toegang". Dat geldt ook als je eerder al een account
-  had: wie in Authentik uit alle toegestane groepen wordt gehaald, komt niet meer binnen via SSO.
-  Zo'n geweigerde poging staat in het logboek als "Inloggen via Authentik geweigerd".
-- **Welke groep welke rol krijgt** staat bij Beheerders & rechten (standaard Sol-Admin =
-  Beheerder, Bestuur = Bestuur, Sol-Penningmeester = Penningmeester, Sol-Begeleider = Begeleider).
-  Zit je in meerdere groepen, dan wint de hoogste rol. Bij elke login wordt je rol opnieuw uit
-  Authentik overgenomen. Zit je wel in een toegestane groep, maar is die aan geen rol gekoppeld,
-  dan blijft de rol staan die een beheerder voor je koos; een nieuw account krijgt dan de rol
-  Begeleider.
+- Zit je in geen van die groepen, dan zie je "Je account heeft geen toegang tot het beheer". Dat
+  geldt ook als je eerder al een account had: wie in Authentik uit de groep wordt gehaald, komt niet
+  meer binnen via SSO. Zo'n geweigerde poging staat in het logboek als "Inloggen via Authentik
+  geweigerd".
+- Zit je in meerdere groepen, dan krijg je al die rollen en tellen de rechten op. Bij elke login
+  worden je rollen opnieuw uit Authentik overgenomen.
 
 ### Wachtwoord als noodingang
 
@@ -1946,7 +1942,7 @@ alleen welk veld is gewijzigd, nooit de waarde.
 | Berichten | **Kanalen & meldingen** | SMS inschakelen met de gateway en de gegevens daarvan; WhatsApp inschakelen via WhatsReach (staat standaard uit; lees de waarschuwing over blokkering van het nummer); per meldingstype het kanaal (E-mail, WhatsApp/SMS, E-mail + WhatsApp/SMS of Uit). Ouders en het bestuur krijgen altijd e-mail. Onderaan **Testbericht sturen** met een telefoonnummer, een e-mailadres als terugval en het kanaal, en **Test versturen**. |
 | Berichten | **Afzender & adressen** | De adressen voor foutmeldingen, het bestuur (ontvangt de bestuursmeldingen), de penningmeester ("loondossier compleet"; leeg is het bestuursadres) en de ledenservice (de ondertekende inschrijving als lid; leeg is het bestuursadres). Het vinkje voor loondossier-stukken als bijlage: laat dat uit. |
 | Berichten | **E-mailserver** | Host, poort, beveiliging (STARTTLS, SSL/TLS of Geen), gebruikersnaam, wachtwoord, afzenderadres en afzendernaam. Daaronder **Testmail versturen**: sla eerst op, vul het adres in en klik op **Verstuur testmail**. |
-| Koppelingen | **Authentik** | De status van de SSO-koppeling, het **Authentik API-token** voor het inloggen van terugkerende sollicitanten via Authentik (verwijderd is alleen inloggen per mail), de **Toegestane admin-groepen** (standaard "Bestuur,Sol-Admin,Sol-Begeleider,Sol-Penningmeester"), de koppeling voor competenties (basis-URL en **API-token (service-account)**, **Test verbinding**, **Nu alle sollicitanten verversen**) en de groep-indeling van de competenties (alleen te bekijken). De tokens zijn geheime velden. |
+| Koppelingen | **Authentik** | De status van de SSO-koppeling, het **Authentik API-token** voor het inloggen van terugkerende sollicitanten via Authentik (verwijderd is alleen inloggen per mail), een overzicht **Wie het beheer in mag** (welke groep bij welke rol hoort; aanpassen onder Rollen & rechten), de koppeling voor competenties (basis-URL en **API-token (service-account)**, **Test verbinding**, **Nu alle sollicitanten verversen**) en de groep-indeling van de competenties (alleen te bekijken). De tokens zijn geheime velden. |
 | Koppelingen | **Website & API** | De geheime sleutel voor de WordPress-plugin (**Kopieer**; **Nieuwe sleutel genereren** maakt de oude meteen ongeldig), de toegestane websites (CORS, één per regel) en de adressen die de plugin nodig heeft. De sleutel zelf zien, kopiëren en vernieuwen kan alleen wie Systeem mag bewerken (standaard admin); anderen zien **Ingesteld**. |
 | Koppelingen | **AI-analyse** | De **Gemini API-sleutel** (geheim veld) en het **Model**: Gemini 2.5 Flash (standaard), Gemini 2.5 Flash-Lite (sneller, goedkoper) of Gemini 2.5 Pro (grondiger, trager); een oud model dat Google heeft uitgezet valt vanzelf terug op de standaard. Het vinkje **AI-hulp bij beschikbaarheid** (experimenteel). Het blok **Wat er naar Google gaat**: de instructie voor de analyse staat vast in de code en is niet te bewerken; per sollicitant gaan alleen leeftijdscategorie, opleiding, diploma's en certificaten, werkervaring, de twee motivaties en het aantal beschikbare weken mee, niet de naam, contactgegevens, het adres, de foto of de bijzonderheden. **Automatisch analyseren na ontvangst kennismakingsformulier** (standaard aan): uit betekent alleen handmatig, met **Analyseer nu** bij het volledige formulier. |
 | Privacy & onderhoud | **Bewaren & opschonen** | Een rode waarschuwing zolang automatisch opschonen uit staat. **Automatisch opschonen inschakelen**, de termijnen per soort gegeven (ook het logboek, het foutenlog en de kopie bankpas), de schakelaars voor de downloadmail aan het bestuur en de bezoekersstatistiek, en het **Opschoon-logboek**. Daaronder de cronjob-regel voor Plesk met **Handmatig uitvoeren** en **Nieuw token maken** (alleen voor wie Systeem mag bewerken) en de stand van de AI- en mailwachtrij. Zie [Bewaartermijnen](#bewaartermijnen). |
@@ -2002,31 +1998,26 @@ Een nieuwe installatie werkt pas goed als je deze tabbladen hebt nagelopen:
 
 ### Iemand toegang geven
 
-1. Zet de persoon in Authentik in de groep die bij de rol hoort. Standaard is dat **Sol-Admin**
-   voor Admin, **Bestuur** voor Bestuur, **Sol-Penningmeester** voor Penningmeester en
-   **Sol-Begeleider** voor Begeleider (te controleren onder Rollen & rechten).
-2. Controleer onder Instellingen › Authentik het veld **Toegestane admin-groepen**. Standaard staat
-   daar "Bestuur,Sol-Admin,Sol-Begeleider,Sol-Penningmeester". Heeft iemand die lijst eerder zelf
-   aangepast, dan blijft die eigen lijst staan; controleer dan of de groep van de nieuwe persoon
-   erin staat.
-3. Laat de persoon één keer inloggen met **Inloggen via Authentik (SSO)**. Het account verschijnt
+1. Zet de persoon in Authentik in de groep die bij de rol hoort. Standaard is dat
+   **app-sol-admin** voor Admin, **app-sol-bestuur** voor Bestuur, **app-sol-penningmeester** voor
+   Penningmeester en **app-sol-begeleider** voor Begeleider (te controleren onder Rollen & rechten).
+   Normaal doet het Verenigingsportaal dit vanuit de functie van de persoon.
+2. Laat de persoon één keer inloggen met **Inloggen via Authentik (SSO)**. Het account verschijnt
    dan vanzelf in de lijst.
 
 Goed om te weten:
 
-- Bij elke inlog via Authentik zet het systeem de rol opnieuw op basis van de groepen. Zit iemand
-  in een groep die aan een rol gekoppeld is, dan overschrijft de volgende inlog een rol die je met
-  de hand hebt gekozen. Zit iemand in meer groepen, dan wint de hoogste rang. Wil je de rol
-  blijvend wijzigen, doe dat dan in Authentik.
-- Zit iemand wel in een toegestane groep, maar is die groep aan geen rol gekoppeld, dan blijft de
-  rol staan die je met de hand koos. Een nieuw account krijgt dan de rol Begeleider.
-- In eerdere versies werd de rol Penningmeester (en elke eigen rol) stil leeg opgeslagen. Zo'n
-  account staat nu op Begeleider. Zie je dat bij de penningmeester, zet de rol dan eenmalig op
-  Penningmeester.
+- Bij elke inlog via Authentik zet het systeem de rollen opnieuw op basis van de groepen; een rol
+  die je met de hand hebt gekozen, wordt dan overschreven. Wil je de rol blijvend wijzigen, doe
+  dat dan in Authentik.
+- Zit iemand in meer groepen, dan krijgt die al die rollen en tellen de rechten op. In de lijst
+  staat dan bijvoorbeeld "ook Penningmeester".
+- Alleen een groep die aan een rol gekoppeld is, geeft toegang. Tot versie 2.132.0 stond er onder
+  Instellingen › Authentik een aparte lijst met toegestane groepen; die bestaat niet meer.
 
 ### Iemand de toegang afnemen
 
-Haal de persoon in Authentik uit de groep (of uit alle toegestane groepen). Daarna kan die niet
+Haal de persoon in Authentik uit alle groepen die aan een rol gekoppeld zijn. Daarna kan die niet
 meer via Authentik inloggen, ook niet met een bestaand account. Heeft het account ook een
 wachtwoord als noodingang, zet het account dan hier ook uit met **Uitzetten**.
 
@@ -2586,9 +2577,8 @@ Controleer of Authentik gekoppeld is, of de sollicitant in het dossier de juiste
 tekort" staat welke rol niet te vullen is en wie wel gekwalificeerd is maar niet beschikbaar.
 
 **Een nieuwe penningmeester komt niet binnen via Authentik.**  
-Controleer onder Instellingen › Authentik of **Toegestane admin-groepen** de groep Sol-Penningmeester
-bevat. Die staat er standaard in, maar een eerder zelf aangepaste lijst blijft staan zoals die was.
-Controleer ook in Authentik of de persoon echt in die groep zit. Komt de penningmeester wel binnen
+Controleer onder Rollen & rechten welke groep bij de rol Penningmeester hoort (standaard
+app-sol-penningmeester), en in Authentik of de persoon echt in die groep zit. Komt de penningmeester wel binnen
 maar als Begeleider, zet de rol dan onder Beheerders op Penningmeester.
 
 **Ik heb iemands rol gewijzigd, maar na het inloggen staat de oude rol er weer.**  

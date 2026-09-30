@@ -1219,21 +1219,30 @@ require __DIR__ . '/layout_top.php';
       <div>Issuer: <code><?= defined('OIDC_ISSUER') ? h(OIDC_ISSUER) : '—' ?></code></div>
     </div>
 
+    <?php /* Toegang tot het beheer = een groep die aan een rol gekoppeld is (sinds 2.132.0 de enige bron). */ ?>
+    <div class="info-blok bh-inst-status">
+      <div class="bh-inst-status-kop">Wie het beheer in mag</div>
+      <?php foreach (rollen_alle() as $_r): ?>
+        <div><?= h((string)$_r['naam']) ?>:
+          <?= !empty($_r['authentik_groep']) ? '<code>' . h((string)$_r['authentik_groep']) . '</code>' : '<span class="bh-tekst-grijs">geen groep</span>' ?></div>
+      <?php endforeach; ?>
+      <div class="ds-veld-hint">
+        Wie in een van deze groepen zit, komt in het beheer; met meerdere groepen tellen de rechten op.
+        Aanpassen in <a href="<?= APP_URL ?>/admin/rollen.php">Rollen &amp; rechten</a>.
+      </div>
+      <?php if ($_los = rechten_ontkoppelde_oude_groepen()): ?>
+        <div class="bh-tekst-fout"><?= icoon('waarschuwing', 14) ?>
+          Deze groepen hadden eerder toegang, maar horen bij geen rol: <?= h(implode(', ', $_los)) ?>.
+          Wie alleen daarin zit, komt niet meer in het beheer.</div>
+      <?php endif; ?>
+    </div>
+
     <form method="POST">
       <?= csrf_input() ?>
       <input type="hidden" name="inst_tab" value="sso">
 
       <?= bh_geheim_veld('inst[authentik.api_token]', 'authentik.api_token', 'Authentik API-token', instelling('authentik.api_token', '') !== '',
             'Maak in Authentik onder Directory › Tokens een long-lived token aan, met scope <code>core/users</code> (view). Verwijder het token om SSO voor het portaal uit te zetten; inloggen met een code blijft werken.') ?>
-
-      <div class="ds-veld">
-        <label for="veld-inst-authentik-admin-groepen">Groepen met toegang tot het beheer <?= bh_tip('Namen van groepen in Authentik die in het beheer mogen. Andere gebruikers kunnen alleen in het portaal inloggen.') ?></label>
-        <input id="veld-inst-authentik-admin-groepen" type="text" name="inst[authentik.admin_groepen]" value="<?= h(instelling('authentik.admin_groepen', AUTHENTIK_STANDAARD_GROEPEN)) ?>"
-               placeholder="<?= h(AUTHENTIK_STANDAARD_GROEPEN) ?>">
-        <div class="ds-veld-hint">
-          Scheid meerdere groepen met een komma. Wie in een van deze groepen zit, komt in het beheer.
-        </div>
-      </div>
 
       <button type="submit" name="actie" value="instellingen" class="ds-btn ds-btn-primair">Opslaan</button>
     </form>

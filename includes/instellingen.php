@@ -8,9 +8,6 @@ require_once __DIR__ . '/loon_tarieven.php';
 
 $_instellingen_cache = null;
 
-/** De Authentik-groepen die standaard het beheer in mogen (zelfde lijst als de terugval in admin/auth_callback.php). */
-if (!defined('AUTHENTIK_STANDAARD_GROEPEN')) define('AUTHENTIK_STANDAARD_GROEPEN', 'Bestuur,Sol-Admin,Sol-Begeleider,Sol-Penningmeester');
-
 /**
  * Welke sleutels het algemene formulier van Instellingen (actie "instellingen") per
  * tabblad mag opslaan. Dit is de whitelist: wat hier niet staat — kluis.*, db.*,
@@ -44,7 +41,7 @@ function instellingen_formulier_sleutels(string $tab): array {
         'mail'        => ['mail.fout_email', 'mail.bestuur_email', 'mail.contact_email', 'mail.penningmeester_email', 'mail.ledenservice_email',
                           'documenten.penningmeester_bijlagen'],
         'ai'          => ['ai.api_key', 'ai.model', 'ai.beschikbaarheid_hulp', 'ai.auto_analyse'],
-        'authentik'   => ['authentik.api_token', 'authentik.admin_groepen', 'authentik.url', 'authentik.token'],
+        'authentik'   => ['authentik.api_token', 'authentik.url', 'authentik.token'],
         'bewaren'     => ['bewaar.actief', 'bewaar.afgewezen_weken', 'bewaar.seintje_mnd', 'bewaar.aangenomen_jaar',
                           'bewaar.gezondheid_mnd', 'bewaar.ai_invoer_mnd', 'bewaar.onvoltooid_mnd', 'bewaar.maillog_mnd',
                           'bewaar.maillog_body_mnd', 'bewaar.bijlagen_mnd', 'bewaar.pagina_events_mnd', 'bewaar.pagina_hash_dagen',
@@ -206,7 +203,6 @@ function instellingen_auto_setup(bool $forceer = false): void {
         ['bewaar.audit_maanden',   '12',                        'Auditlog (wie deed wat) verwijderen na (maanden)', 'getal'],
         ['bewaar.foutenlog_dagen', '90',                        'Foutenlog verwijderen na (dagen)',     'getal'],
         ['paginas.tracking',       '1',                         'Bezoekersstatistiek landingspagina\'s aan/uit', 'checkbox'],
-        ['authentik.admin_groepen', AUTHENTIK_STANDAARD_GROEPEN, 'Authentik-groepen met toegang tot het beheer', 'tekst'],
         ['seizoen.fase',           '',                          'Seizoensfase handmatig (leeg = automatisch uit de datums)', 'keuze'],
         ['selectie.drempel',       '3.5',                       'Advies-drempel selectiedag (gemiddelde score voor "Door")', 'getal'],
     ];
@@ -219,8 +215,7 @@ function instellingen_auto_setup(bool $forceer = false): void {
     $correcties = [
         // 2.91.0: de inschrijving als lid vraagt geen verificatiecode meer (alleen wettelijke documenten)
         ['ondertekenen.2fa_typen', 'loonheffing,lidmaatschap', 'loonheffing'],
-        // 2.100.0: de penningmeester hoort bij de standaard toegangsgroepen
-        ['authentik.admin_groepen', 'Bestuur,Sol-Admin,Sol-Begeleider', AUTHENTIK_STANDAARD_GROEPEN],
+        // (authentik.admin_groepen vervalt sinds 2.132.0: toegang = koppeling rol → groep in Rollen & rechten.)
     ];
     $corr = $db->prepare("UPDATE `instellingen` SET waarde=? WHERE sleutel=? AND waarde=?");
     foreach ($correcties as $c) { try { $corr->execute([$c[2], $c[0], $c[1]]); } catch (\Exception $e) {} }

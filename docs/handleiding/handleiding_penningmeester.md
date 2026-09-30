@@ -39,7 +39,7 @@ aanvinken; dat wordt op je eigen apparaat onthouden.
 ## Aan de slag
 
 **Waar:** het beheer, `https://sollicitatie.paal13.com/admin/`  
-**Wie:** de penningmeester (Authentik-groep `Sol-Penningmeester`).
+**Wie:** de penningmeester (Authentik-groep `app-sol-penningmeester`).
 
 > **In het kort:** jij bewaakt de loonkosten en zet de gegevens van aangenomen strandwachten in de
 > loonadministratie. In de Loonplanning zie je wie er wordt ingezet, wat dat kost en of het binnen
@@ -188,7 +188,7 @@ maand. Hoe precies staat in [Hoe het dagloon wordt berekend](#hoe-het-dagloon-wo
 > Sollicitanten, Loonplanning en Loondossiers.
 
 **Waar:** `https://sollicitatie.paal13.com/admin/`  
-**Wie:** je Authentik-account zit in de groep `Sol-Penningmeester`.
+**Wie:** je Authentik-account zit in de groep `app-sol-penningmeester`.
 
 Kies **Inloggen via Authentik**. In het menu zie je:
 

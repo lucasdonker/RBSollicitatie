@@ -253,7 +253,7 @@ require __DIR__ . '/layout_top.php';
           <div class="ds-veld">
             <label class="ds-label" for="rg-<?= h($rol['sleutel']) ?>">Authentik-groep</label>
             <input class="ds-input" type="text" id="rg-<?= h($rol['sleutel']) ?>" name="authentik_groep"
-                   value="<?= h((string)($rol['authentik_groep'] ?? '')) ?>" placeholder="bijv. Sol-Begeleider">
+                   value="<?= h((string)($rol['authentik_groep'] ?? '')) ?>" placeholder="bijv. app-sol-begeleider">
           </div>
         </div>
         <div class="bh-rolkaart-formvoet">
@@ -277,7 +277,7 @@ require __DIR__ . '/layout_top.php';
         </div>
         <div class="ds-veld">
           <label class="ds-label" for="nr_groep">Authentik-groep</label>
-          <input class="ds-input" type="text" id="nr_groep" name="authentik_groep" placeholder="bijv. Sol-Coordinator">
+          <input class="ds-input" type="text" id="nr_groep" name="authentik_groep" placeholder="bijv. app-sol-planner">
         </div>
         <div class="ds-veld">
           <label class="ds-label" for="nr_rang">Rang</label>

@@ -323,6 +323,10 @@ function health_check_inloggen(): array {
     $punten = [];
     if (function_exists('authentik_actief') && !authentik_actief()) {
         $punten[] = health_punt('oidc', 'waarschuwing', 'Inloggen via Authentik is niet ingesteld (OIDC_CLIENT_ID en OIDC_ISSUER in config.php): het beheer werkt dan alleen met de wachtwoord-noodingang.', 'authentik', 'Authentik bekijken');
+    } elseif (function_exists('rechten_ontkoppelde_oude_groepen') && ($los = rechten_ontkoppelde_oude_groepen())) {
+        // Tot 2.132.0 gaf een losse lijst groepen toegang; nu alleen een groep die aan een rol hangt.
+        $punten[] = health_punt('oidc_groepen', 'waarschuwing', 'Deze Authentik-groepen hadden toegang tot het beheer, maar horen bij geen rol: '
+            . implode(', ', $los) . '. Wie alleen daarin zit, komt niet meer binnen.', '/admin/rollen.php', 'Rollen koppelen');
     }
     return health_uit_punten($punten, 'Inloggen via Authentik is ingesteld.');
 }
