@@ -4,7 +4,7 @@ Tags: aanmelden, formulier, reddingsbrigade
 Requires at least: 6.0
 Tested up to: 6.7
 Requires PHP: 8.0
-Stable tag: 2.98.0
+Stable tag: 2.142.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -61,6 +61,13 @@ seintje-formulier zien: bezoekers laten voornaam en e-mailadres achter en krijge
 als de aanmelding opengaat. Dat formulier post rechtstreeks naar het sollicitatiesysteem
 (/seintje.php), niet via WordPress; de plugin hoeft er niets voor te doen.
 
+= Zie ik in het sollicitatiesysteem hoeveel mensen het formulier bekeken? =
+
+Ja. Het formulier meldt een bezoek, het begin en elke stap anoniem aan het sollicitatiesysteem
+(zonder cookie en zonder iets wat iemand invult). Opent iemand de pagina via een campagnelink,
+bijvoorbeeld `/aanmelden/?bron=instagram` of met `utm_campaign`, dan staat de aanmelding
+onder "website/instagram". In het beheer staat dit onder Landingspagina's › Overzicht.
+
 = Kan ik het formulier zelf opmaken? =
 
 Ja. Vink bij de instellingen "Onze opmaak niet laden" aan en style de klassen die met `af-`
@@ -68,6 +75,11 @@ beginnen zelf. Let dan wel op de zichtbare toetsenbordrand en op invoervelden va
 44 bij 44 pixels.
 
 == Changelog ==
+
+= 2.142.0 =
+* Het bezoek aan de pagina met het formulier wordt geteld (anoniem, geen cookie), zodat het
+  bestuur de hele trechter ziet: bekeken, begonnen, per stap, verstuurd.
+* Campagnelinks (?bron=… of utm_campaign) komen mee met de aanmelding als "<bron>/<campagne>".
 
 = 2.98.0 =
 * Eerste versie van de herbouwde plugin.

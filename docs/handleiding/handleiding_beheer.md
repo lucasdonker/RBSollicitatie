@@ -583,10 +583,34 @@ het seizoen leeg is).
 
 > **In het kort:** een landingspagina is een eigen pagina voor één doelgroep met het
 > aanmeldformulier erin, op `/p/<adres>`. Je uploadt een HTML-ontwerp, controleert het rapport en
-> zet de pagina op Gepubliceerd. Per pagina zie je bezoekers, aanmeldingen en waar mensen afhaken.
-> De volledige uitleg staat in de aparte handleiding voor landingspagina's.
+> zet de pagina op Gepubliceerd. Het tabblad **Overzicht** laat voor alle bronnen samen zien
+> waar aanmeldingen vandaan komen: elke landingspagina, het formulier op de website en elke
+> campagne. De volledige uitleg staat in de aparte handleiding voor landingspagina's.
 
-### Het overzicht van de pagina's
+### Het tabblad Overzicht
+
+Kies bovenaan de **periode**: Dit seizoen (standaard), Laatste 30 dagen, Laatste 90 dagen of Alles
+wat bewaard is.
+
+- **De cijfers**: bezoeken, begonnen aan het formulier, aanmeldingen, aangenomen en aanmeldingen
+  per 100 bezoeken, voor alle bronnen samen.
+- **Alle bronnen samen: waar haken mensen af?**: van bekeken tot verstuurd, per stap. Bij de stap
+  waar binnen het formulier relatief de meesten afhaken staat "hier haken de meesten af".
+- **Per bron**: elke landingspagina, het formulier op de website ("formulier op de website", met de
+  naam van de site) en **Zonder bron** (direct in het portaal, handmatig of van vóór de meting).
+  Per bron: bezoeken, begonnen, aanmeldingen, aangenomen, per 100 bezoeken en de **grootste
+  afhaak** ("Bij stap 2 (Jij)"). Een campagne staat eronder, ingesprongen.
+
+Een **campagne** maak je door een link te delen met `?bron=` erachter, bijvoorbeeld
+`https://paal13.com/aanmelden/?bron=instagram-mei` of een landingspagina met
+`?bron=flyer-strand`. `utm_campaign` en `utm_source` werken ook. Er is geen cookie nodig: de
+campagne gaat mee met die ene aanmelding. Het bezoek aan het formulier op de website telt pas vanaf
+plugin 2.142; installeer die versie op paal13.com (`wordpress-plugin\bouw-zip.ps1` maakt de ZIP).
+
+Bezoeken tellen één keer per half uur per bezoeker. Unieke bezoekers over een heel seizoen zijn niet
+te tellen: het dagpseudoniem wordt na 30 dagen gewist (zie het verwerkingsregister).
+
+### Het tabblad Pagina's
 
 - **Nieuwe pagina**: vul **Titel** en **Adres** in (kleine letters, cijfers en koppeltekens) en
   klik op **Aanmaken**. Je gaat door naar het beheerscherm van de pagina.
@@ -594,8 +618,6 @@ het seizoen leeg is).
   **Geen ontwerp** zolang er nog niets is geüpload, het adres, en de cijfers **Bezoekers**,
   **Bezoeken**, **Aanmeldingen** en **Omzetting**. Met **Beheren** open je de pagina, met
   **Bekijken** de publieke versie.
-- **Waar komen aanmeldingen vandaan?**: per bron het aantal aanmeldingen, hoeveel daarvan zijn
-  aangenomen, en het aandeel.
 
 In het beheerscherm van een pagina staat onder meer "Waar haken mensen af?": per stap van het
 aanmeldformulier hoeveel mensen verder gingen, en los daarvan "Halverwege weggegaan". Elke pagina

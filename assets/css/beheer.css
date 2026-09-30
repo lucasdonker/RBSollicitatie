@@ -3465,3 +3465,14 @@ hr.bh-blk-scheiding { border: none; border-top: 1px solid var(--rand); margin: 1
 .pg-tabel th.pg-bronrij { font: inherit; font-size: 14px; font-weight: 600; color: var(--ink); }
 .pg-tabel .pg-campagnerij td { font-size: 13px; color: var(--ink-soft); }
 .pg-tabel .pg-campagnerij td:first-child { padding-left: 28px; }
+/* Landingspagina's › Overzicht (admin/_paginas_overzicht.php) */
+.pg-overzicht-cijfers { margin: 0 0 14px; }
+.pg-bronnen { margin-top: 14px; }
+.pg-bronsoort { display: block; font: var(--text-meta); color: var(--ink-muted); font-weight: 400; }
+.pg-brontabel td:last-child { font-size: 13px; color: var(--ink-soft); white-space: nowrap; }
+.pg-brontabel thead th { white-space: nowrap; }
+.pg-brontabel .pg-bronrij { min-width: 200px; }
+.pg-bronnen-voet { margin: 12px 0 0; }
+/* De trede waar relatief de meesten afhaken: een rand én de tekst "hier haken de meesten af". */
+.pg-tr-grootste { border-left: 3px solid var(--oranje); padding-left: 10px; }
+.pg-tr-grootste .pg-tr-verloop strong { color: var(--ink); }

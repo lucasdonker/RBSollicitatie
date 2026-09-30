@@ -1199,8 +1199,10 @@ Telecommunicatiewet.</td>
 </tr>
 <tr>
 <td>Betrokkenen</td>
-<td>Bezoekers van landingspagina&#39;s (<code>/p/&lt;slug&gt;</code>) en het
-aanmeldformulier; sollicitanten (bron van hun aanmelding).</td>
+<td>Bezoekers van landingspagina&#39;s (<code>/p/&lt;slug&gt;</code>), het
+aanmeldformulier en (sinds 2.142) de pagina met het formulier op
+paal13.com via de WordPress-plugin; sollicitanten (bron van hun
+aanmelding).</td>
 </tr>
 <tr>
 <td>Persoonsgegevens</td>
@@ -1212,7 +1214,12 @@ geheim zout (<code>paginas.pseudoniem_zout</code>, 32 willekeurige
 bytes, eenmalig aangemaakt). Zonder het zout niet terug te rekenen, en
 elke dag anders, dus niet over dagen te volgen. Geen IP-adres, geen
 browser, niets wat is ingevuld. Bij de sollicitatie:
-<code>bron_code</code> en <code>bron_label</code>.</td>
+<code>bron_code</code> (&quot;<bron>&quot; of &quot;<bron>/<campagne>&quot;, de campagne uit
+<code>?bron=</code>, <code>utm_campaign</code> of
+<code>utm_source</code> van het adres waarmee iemand binnenkwam) en
+<code>bron_label</code>. Het bezoek op paal13.com meldt het
+formulierscript rechtstreeks aan <code>/track.php</code> (anoniem, geen
+cookie, zelfde pseudoniem); WordPress zelf slaat niets op.</td>
 </tr>
 <tr>
 <td>Ontvangers en verwerkers</td>

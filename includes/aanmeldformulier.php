@@ -384,6 +384,8 @@ function aanmeld_succes_html(array $opties = []): string {
  *   csrf         bool    csrf_input() meesturen (alleen waar een sessie is)
  *   anti_bot     bool    het p13_t-token meesturen (landingspagina's)
  *   markeer      bool    hidden p13_form=1 meesturen (landingspagina's)
+ *   bezoek_meten bool    het script meldt het bezoek aan /track.php (de website; een landingspagina
+ *                        telt het bezoek zelf in p.php)
  *   prefix       string  id-voorvoegsel, standaard 'af'
  *   titel        string  eigen kop
  *   knop         string  tekst op de verzendknop
@@ -419,6 +421,7 @@ function aanmeld_formulier_html(array $opties = []): string {
          data-af-kaart
          data-af-bron="<?= h($bron) ?>"
          <?= $track !== '' ? 'data-af-track="' . h($track) . '"' : '' ?>
+         <?= !empty($opties['bezoek_meten']) ? 'data-af-bezoek="1"' : '' ?>
          data-af-startstap="<?= (int)$startstap ?>">
 
       <div class="af-top">

@@ -342,9 +342,28 @@ class P13_Formulier {
             'akkoord'                => !empty($_POST['akkoord']) ? 1 : 0,
             'ouder_akkoord'          => !empty($_POST['ouder_akkoord']) ? 1 : 0,
             'ouder_toestemming_naam' => $tekst('ouder_toestemming_naam'),
-            'bron_code'              => sanitize_key($tekst('p13_bron') ?: (string)P13_Api::instelling('bron', 'website')),
+            'bron_code'              => self::bron_code(sanitize_key($tekst('p13_bron') ?: (string)P13_Api::instelling('bron', 'website'))),
             'bron_label'             => get_bloginfo('name'),
         ];
+    }
+
+    /**
+     * "<bron>/<campagne>" als de pagina via een campagnelink werd geopend (?bron=instagram,
+     * utm_campaign of utm_source): dan ziet het bestuur per campagne hoeveel aanmeldingen er
+     * kwamen. Het script zet de campagne in het verborgen veld p13_campagne; zonder script
+     * staat hij nog in het adres, want het formulier post naar dezelfde URL. Zelfde regel als
+     * pag_campagne_uit() in het sollicitatiesysteem. Geen cookie: alleen deze ene aanmelding.
+     */
+    private static function bron_code(string $bron): string {
+        $kandidaten = [$_POST['p13_campagne'] ?? null, $_GET['bron'] ?? null, $_GET['utm_campaign'] ?? null, $_GET['utm_source'] ?? null];
+        foreach ($kandidaten as $ruw) {
+            if (!is_string($ruw)) continue;
+            $c = trim(substr(trim((string)preg_replace('/[^a-z0-9]+/', '-', strtolower(wp_unslash($ruw))), '-'), 0, 40), '-');
+            if ($c === '' || $c === $bron) continue;
+            $ruimte = 80 - strlen($bron) - 1;
+            return $ruimte >= 3 ? $bron . '/' . rtrim(substr($c, 0, $ruimte), '-') : $bron;
+        }
+        return $bron;
     }
 
     /**

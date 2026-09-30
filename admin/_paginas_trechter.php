@@ -2,8 +2,12 @@
 /**
  * Partial — de trechter van één landingspagina: waar haken mensen af?
  *
- * Verwacht:
- *   $id    int    het id van de pagina
+ * Verwacht (een van beide):
+ *   $id           int    het id van de pagina, of
+ *   $pt_trechter  array  een kant-en-klare trechter (pag_bronnen_overzicht()['trechter']) voor het totaal
+ * Optioneel: $pt_titel, $pt_sub (kop en uitleg), $pt_leeg (tekst zonder metingen).
+ *
+ * De trede met de relatief grootste uitval staat er met tekst bij ("Hier haken de meesten af").
  *
  * Toont per trede hoeveel mensen er kwamen en hoeveel er daarna afvielen. De balkjes zijn
  * geen opsmuk: een cijferrij van zes getallen leest niemand, een aflopende balk wel. De
@@ -14,9 +18,12 @@
  * bewijs — iemand kan ook even iets opzoeken en terugkomen.
  */
 
-if (!isset($id)) return;
+if (!isset($id) && !isset($pt_trechter)) return;
 
-$trechter = pag_trechter((int)$id);
+$trechter = isset($pt_trechter) ? ['treden' => $pt_trechter, 'verlaten_per_stap' => []] : pag_trechter((int)$id);
+$pt_titel = $pt_titel ?? 'Waar haken mensen af?';
+$pt_leeg  = $pt_leeg ?? 'Er is nog niets gemeten. Zodra de pagina gepubliceerd is en er bezoekers komen, staat het hier.';
+$pt_sub   = $pt_sub ?? 'Van de bezoekers tot de verstuurde aanmelding. De percentages zijn ten opzichte van iedereen die aan het formulier begon.';
 $treden   = $trechter['treden'];
 $top      = 0;
 foreach ($treden as $t) $top = max($top, (int)$t['aantal']);
@@ -24,20 +31,17 @@ $verlaten = $trechter['verlaten_per_stap'];
 $stap_labels = aanmeld_stappen_labels();
 ?>
 <section class="ds-kaart ds-kaart-p pg-trechter">
-  <h2 class="pg-h2">Waar haken mensen af?</h2>
-  <p class="pg-sub">
-    Van de bezoekers tot de verstuurde aanmelding. De percentages zijn ten opzichte van
-    iedereen die aan het formulier begon.
-  </p>
+  <h2 class="pg-h2"><?= h($pt_titel) ?></h2>
+  <p class="pg-sub"><?= h($pt_sub) ?></p>
 
   <?php if ($top === 0): ?>
-    <p class="ds-leeg">Er is nog niets gemeten. Zodra de pagina gepubliceerd is en er bezoekers komen, staat het hier.</p>
+    <p class="ds-leeg"><?= h($pt_leeg) ?></p>
   <?php else: ?>
   <ol class="pg-tr-lijst">
     <?php foreach ($treden as $i => $t):
         $breedte = $top > 0 ? max(2, (int)round($t['aantal'] / $top * 100)) : 0;
         $laatste = $i === count($treden) - 1; ?>
-    <li class="pg-tr-trede">
+    <li class="pg-tr-trede<?= !empty($t['grootste']) ? ' pg-tr-grootste' : '' ?>">
       <div class="pg-tr-kop">
         <span class="pg-tr-label"><?= h((string)$t['label']) ?></span>
         <span class="pg-tr-cijfer">
@@ -51,7 +55,7 @@ $stap_labels = aanmeld_stappen_labels();
         <span class="pg-tr-vul<?= $laatste ? ' pg-tr-vul-eind' : '' ?>" style="--w: <?= $breedte ?>%"></span>
       </div>
       <?php if (!empty($t['verloop'])): ?>
-      <p class="pg-tr-verloop"><?= (int)$t['verloop'] ?> gingen hier niet verder</p>
+      <p class="pg-tr-verloop"><?= (int)$t['verloop'] ?> gingen hier niet verder<?php if (!empty($t['grootste'])): ?> <strong>· hier haken de meesten af</strong><?php endif; ?></p>
       <?php endif; ?>
     </li>
     <?php endforeach; ?>
@@ -77,3 +81,4 @@ $stap_labels = aanmeld_stappen_labels();
   <?php endif; ?>
   <?php endif; ?>
 </section>
+<?php $pt_trechter = $pt_titel = $pt_sub = $pt_leeg = null;

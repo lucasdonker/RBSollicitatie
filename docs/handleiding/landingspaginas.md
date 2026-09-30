@@ -344,18 +344,23 @@ en er bezoekers komen.
 ## Herkomst bijhouden
 
 > **In het kort:** elke pagina heeft een bron-code die meereist tot in het dossier van de
-> sollicitant. Onderaan het overzicht zie je per bron hoeveel aanmeldingen er kwamen en hoeveel
-> daarvan zijn aangenomen.
+> sollicitant. Op het tabblad **Overzicht** zie je per bron (en per campagne) de bezoeken, hoeveel
+> mensen begonnen, de aanmeldingen, hoeveel daarvan zijn aangenomen en waar ze afhaken.
 
 Elke pagina heeft een **bron-code**. Je stelt hem in bij "Gegevens"; laat je het veld leeg, dan
 wordt het adres van de pagina gebruikt. De code reist mee tot in het dossier van de sollicitant,
 dus je ziet later precies welke pagina welke aanmeldingen heeft opgeleverd, en hoeveel daarvan
 uiteindelijk zijn aangenomen.
 
-Dat overzicht staat onderaan het overzicht van landingspagina's, onder **Waar komen aanmeldingen
-vandaan?**: per bron het aantal aanmeldingen, het aantal aangenomen en het aandeel. Kwamen er
-aanmeldingen binnen via een campagnelink, dan staan de campagnes eronder, elk met hun eigen
-aantallen, plus een regel "zonder campagne" voor de rest.
+Dat staat op het tabblad **Overzicht** van Landingspagina's, met een keuze voor de periode (dit
+seizoen, 30 of 90 dagen, of alles). Bovenaan de cijfers en de trechter van alle bronnen samen;
+daaronder **Per bron**: elke landingspagina, het formulier op de website en "Zonder bron", met
+bezoeken, begonnen, aanmeldingen, aangenomen, aanmeldingen per 100 bezoeken en de grootste afhaak
+in het formulier. Campagnes staan ingesprongen onder hun bron.
+
+Het formulier op paal13.com (de WordPress-plugin) telt vanaf plugin 2.142 ook het bezoek en neemt
+een campagne uit het adres mee: `https://paal13.com/aanmelden/?bron=instagram-mei` komt in het
+overzicht onder de website, campagne `instagram-mei`.
 
 ### Campagnes en QR-codes
 

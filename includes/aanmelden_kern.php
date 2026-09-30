@@ -93,7 +93,10 @@ function sollicitatie_aanmaken(array $in, array $context = []): array {
     $ouder_naam_val = ($leeftijd < 16) ? ($ouder_naam ?: null) : null;
 
     // Bron-attributie: waar kwam deze aanmelding vandaan? (landingspagina/advertentie)
-    $bron_code  = isset($in['bron_code'])  ? substr(trim((string)$in['bron_code']), 0, 80)   : null;
+    // "<bron>" of "<bron>/<campagne>" (includes/paginas/werving.php); alleen a-z, 0-9, - en één /.
+    $bron_code  = isset($in['bron_code'])  ? substr(preg_replace('#[^a-z0-9\-/]#', '', strtolower(trim((string)$in['bron_code']))), 0, 80) : null;
+    if ($bron_code !== null && substr_count($bron_code, '/') > 1) $bron_code = implode('/', array_slice(explode('/', $bron_code), 0, 2));
+    if ($bron_code === '') $bron_code = null;
     $bron_label = isset($in['bron_label']) ? substr(trim((string)$in['bron_label']), 0, 150) : null;
 
     // De privacy- en bronkolommen legt db_failsafe() aan (consent_auto_setup en

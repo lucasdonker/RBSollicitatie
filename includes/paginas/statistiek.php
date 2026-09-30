@@ -229,23 +229,39 @@ function pag_trechter(int $pagina_id, int $stappen = 3): array {
         }
     } catch (\Throwable $e) { error_log('pag_trechter: ' . $e->getMessage()); }
 
+    return ['treden' => pag_trechter_treden($tellingen, $per_stap, $stappen), 'verlaten_per_stap' => $verlaten];
+}
+
+/**
+ * De treden van een trechter uit tellingen (één rekenregel voor een pagina en voor het totaal).
+ * @param array $tellingen ['bezoek','formulier_start','formulier_klaar'] => aantal
+ * @param array $per_stap  [stapnummer >= 2 => aantal]
+ * @return array [['sleutel','label','aantal','pct_van_start','verloop','grootste'], …]
+ *   'grootste' = hier haakt relatief het grootste deel af (alleen als er iemand afhaakt). Alleen
+ *   binnen het formulier: dat de meeste bezoekers niet beginnen is normaal, en daar valt aan het
+ *   formulier niets te verbeteren.
+ */
+function pag_trechter_treden(array $tellingen, array $per_stap, int $stappen = 3): array {
     $labels = aanmeld_stappen_labels($stappen);
-
-    $treden = [['sleutel' => 'bezoek', 'label' => 'Pagina bekeken', 'aantal' => $tellingen['bezoek']]];
-    $treden[] = ['sleutel' => 'stap1', 'label' => 'Stap 1 · ' . $labels[1], 'aantal' => $tellingen['formulier_start']];
+    $treden = [['sleutel' => 'bezoek', 'label' => 'Pagina bekeken', 'aantal' => (int)($tellingen['bezoek'] ?? 0)]];
+    $treden[] = ['sleutel' => 'stap1', 'label' => 'Stap 1 · ' . ($labels[1] ?? ''), 'aantal' => (int)($tellingen['formulier_start'] ?? 0)];
     for ($n = 2; $n <= $stappen; $n++) {
-        $treden[] = ['sleutel' => 'stap' . $n, 'label' => 'Stap ' . $n . ' · ' . ($labels[$n] ?? ''), 'aantal' => $per_stap[$n] ?? 0];
+        $treden[] = ['sleutel' => 'stap' . $n, 'label' => 'Stap ' . $n . ' · ' . ($labels[$n] ?? ''), 'aantal' => (int)($per_stap[$n] ?? 0)];
     }
-    $treden[] = ['sleutel' => 'klaar', 'label' => 'Aanmelding verstuurd', 'aantal' => $tellingen['formulier_klaar']];
+    $treden[] = ['sleutel' => 'klaar', 'label' => 'Aanmelding verstuurd', 'aantal' => (int)($tellingen['formulier_klaar'] ?? 0)];
 
-    $basis = $tellingen['formulier_start'];
+    $basis = (int)($tellingen['formulier_start'] ?? 0);
+    $grootste = null; $grootste_deel = 0.0;
     foreach ($treden as $i => $t) {
         $treden[$i]['pct_van_start'] = $basis > 0 ? (int)round($t['aantal'] / $basis * 100) : 0;
         $volgende = $treden[$i + 1]['aantal'] ?? null;
         $treden[$i]['verloop'] = ($volgende !== null && $t['aantal'] > $volgende) ? $t['aantal'] - $volgende : 0;
+        $treden[$i]['grootste'] = false;
+        $deel = $t['aantal'] > 0 ? $treden[$i]['verloop'] / $t['aantal'] : 0.0;
+        if ($t['sleutel'] !== 'bezoek' && $treden[$i]['verloop'] > 0 && $deel > $grootste_deel) { $grootste = $i; $grootste_deel = $deel; }
     }
-
-    return ['treden' => $treden, 'verlaten_per_stap' => $verlaten];
+    if ($grootste !== null) $treden[$grootste]['grootste'] = true;
+    return $treden;
 }
 
 /** De korte stapnamen, zodat de statistiek dezelfde woorden gebruikt als het formulier zelf. */

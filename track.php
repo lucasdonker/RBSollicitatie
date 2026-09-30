@@ -11,9 +11,9 @@
  *    de bron en een stapnummer
  *  - geen API-sleutel: dit is publiek en anoniem. De sleutel zou op een publieke pagina
  *    tóch meegestuurd moeten worden en daarmee geen sleutel meer zijn
- *  - alleen de drie gebeurtenissen die echt uit een browser kunnen komen. "Aanmelding
- *    verstuurd" en "geweigerd" schrijft de server zelf, anders is de conversie te vervalsen
- *    door dit adres een paar keer aan te roepen
+ *  - alleen de gebeurtenissen die echt uit een browser kunnen komen (gestart, stap, verlaten, en
+ *    het bezoek van het formulier op de website). "Aanmelding verstuurd" en "geweigerd" schrijft
+ *    de server zelf, anders is de conversie te vervalsen door dit adres een paar keer aan te roepen
  *  - antwoord is 204 zonder inhoud, en gaat de deur uit vóórdat we naar de database
  *    schrijven; de bezoeker wacht nergens op
  *
@@ -56,8 +56,8 @@ track_klaar(204);
 
 // ── Vanaf hier praat niemand meer met de browser ─────────────────────────
 
-/** Alleen deze drie kunnen uit een browser komen. De rest schrijft de server zelf. */
-$toegestaan = ['formulier_start', 'formulier_stap', 'formulier_verlaten'];
+/** Alleen deze kunnen uit een browser komen. De rest schrijft de server zelf. */
+$toegestaan = ['formulier_start', 'formulier_stap', 'formulier_verlaten', 'bezoek'];
 if (!in_array($type, $toegestaan, true)) exit;
 
 // Het stapnummer is het enige detail dat we accepteren — nooit vrije tekst.
@@ -71,4 +71,8 @@ if (function_exists('rate_limit') && !rate_limit('track', rate_identiteit(), 120
 if (!function_exists('pag_track')) exit;
 
 $pagina = ($bron !== '' && function_exists('pag_via_bron')) ? pag_via_bron($bron) : null;
+// Een bezoek uit de browser alleen voor het formulier op de website (bron zonder landingspagina):
+// een landingspagina telt zijn bezoek zelf (p.php), anders telt het dubbel. pag_track() filtert
+// bots en telt dezelfde bezoeker binnen een half uur maar één keer.
+if ($type === 'bezoek' && ($bron === '' || $pagina)) exit;
 pag_track($type, isset($pagina['id']) ? (int)$pagina['id'] : null, $bron !== '' ? $bron : null, $detail !== '' ? $detail : null);

@@ -6,10 +6,11 @@
  *     een laag erbovenop, geen voorwaarde; daarom maakt dit script ook de Verder-knoppen)
  *  2. controle per stap, met een melding in gewone taal bij het veld zelf
  *  3. het toestemmingsblok voor ouders bij een leeftijd onder de 16 (AVG-grens)
- *  4. anonieme tracking: gestart, welke stap bereikt, en wanneer iemand halverwege weggaat
+ *  4. anonieme tracking: bezocht (alleen op de website), gestart, welke stap bereikt, en
+ *     wanneer iemand halverwege weggaat — per bron en campagne (?bron=, utm_campaign)
  *
  * Tracking gaat naar /track.php en bevat nooit iets wat iemand heeft ingevuld: alleen het
- * soort gebeurtenis, de bron en het stapnummer. Zie includes/paginas/statistiek.php.
+ * soort gebeurtenis, de bron en het stapnummer. Geen cookies. Zie includes/paginas/statistiek.php.
  *
  * Wat iemand invult wordt bewaard in sessionStorage, zodat een vergissing of een terugknop
  * niet betekent dat alles opnieuw moet. Dat blijft op het apparaat zelf, verdwijnt zodra het
@@ -90,6 +91,11 @@
     var bron = kaart.getAttribute('data-af-bron') || '';
     var trackUrl = kaart.getAttribute('data-af-track') || '';
     var sleutel = 'p13af:' + (bron || location.pathname);
+    // Campagne uit het adres (?bron=, utm_campaign, utm_source), zelfde regel als
+    // pag_campagne_uit() op de server. De statistiek telt dan "<bron>/<campagne>", en het
+    // verborgen veld p13_campagne laat de campagne de verzending overleven (ook via WordPress).
+    var campagne = campagneUitAdres(bron);
+    var trackBron = campagne ? (bron + '/' + campagne).slice(0, 80) : bron;
 
     var nu = parseInt(kaart.getAttribute('data-af-startstap'), 10) || 1;
     var hoogste = nu;
@@ -101,7 +107,7 @@
 
     function track(type, detail) {
       if (!trackUrl) return;
-      var body = 't=' + encodeURIComponent(type) + '&b=' + encodeURIComponent(bron);
+      var body = 't=' + encodeURIComponent(type) + '&b=' + encodeURIComponent(trackBron);
       if (detail !== undefined && detail !== null) body += '&d=' + encodeURIComponent(detail);
       try {
         if (navigator.sendBeacon) {
@@ -124,6 +130,15 @@
       gestart = true;
       track('formulier_start');
     }
+
+    if (campagne && !form.querySelector('input[name="p13_campagne"]')) {
+      var cv = document.createElement('input');
+      cv.type = 'hidden'; cv.name = 'p13_campagne'; cv.value = campagne;
+      form.appendChild(cv);
+    }
+    // Het formulier op de website (WordPress) meet ook het bezoek: daar ziet onze server de
+    // pagina niet. Een landingspagina telt het bezoek zelf (p.php), dus daar staat dit uit.
+    if (kaart.getAttribute('data-af-bezoek') === '1') track('bezoek');
 
     // ── Opslag op het apparaat zelf ────────────────────────────────
 
@@ -455,6 +470,22 @@
       if (document.visibilityState === 'hidden') meldVerlaten();
     });
     window.addEventListener('pagehide', meldVerlaten);
+  }
+
+  /** Campagnewaarde: kleine letters, a-z 0-9 en koppeltekens, max. 40 (= pag_campagne_schoon()). */
+  function campagneSchoon(ruw) {
+    return String(ruw || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40).replace(/-+$/, '');
+  }
+
+  function campagneUitAdres(bron) {
+    var q;
+    try { q = new URLSearchParams(window.location.search); } catch (e) { return ''; }
+    var sleutels = ['bron', 'utm_campaign', 'utm_source'];
+    for (var i = 0; i < sleutels.length; i++) {
+      var c = campagneSchoon(q.get(sleutels[i]));
+      if (c && c !== bron) return c;
+    }
+    return '';
   }
 
   // ── Starten ──────────────────────────────────────────────────────

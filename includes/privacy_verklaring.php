@@ -165,7 +165,7 @@ aangenomen.</p>
         <td>Ons gerechtvaardigd belang, en onze plicht om je gegevens te beveiligen (art. 6 lid 1 sub f en art. 32).</td></tr>
     <tr><td>Oud-strandwachten een bericht sturen als we weer mensen zoeken</td>
         <td>Ons gerechtvaardigd belang: je hebt al bij ons gewerkt, en we willen je graag terug. Wil je dat niet? Meld je af met de link onder het bericht, dan sturen we je geen wervingsberichten meer (bezwaar, art. 21).</td></tr>
-    <tr><td>Tellen hoeveel mensen het formulier starten en afmaken</td>
+    <tr><td>Tellen hoeveel mensen de pagina met het formulier bekijken, het formulier starten en afmaken, en via welke link (bijvoorbeeld een campagne) ze kwamen</td>
         <td>Ons gerechtvaardigd belang: het formulier verbeteren. We gebruiken hier geen cookies en bewaren geen IP-adres. Om dubbele tellingen te voorkomen maken we van je IP-adres en browser een dagelijks wisselende, niet terug te rekenen code. Die wissen we na <?= (int)$int('bewaar.pagina_hash_dagen', 30) ?> dagen.</td></tr>
   </tbody>
 </table>

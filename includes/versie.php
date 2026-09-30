@@ -3,10 +3,21 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.141.0');
+define('APP_VERSIE', '2.142.0');
 
 function app_changelog(): array {
     return [
+        '2.142.0' => [
+            'datum'  => '2026-09-30',
+            'titel'  => 'Landingspagina\'s: overzicht van alle bronnen, ook de website',
+            'punten' => [
+                'Landingspagina\'s opent op het tabblad Overzicht: bezoeken, begonnen, aanmeldingen en aangenomen voor alle bronnen samen, in een periode naar keuze',
+                'Eén trechter voor alles, met de stap waar in het formulier de meesten afhaken',
+                'Per bron een regel: elke landingspagina, het formulier op de website, elke campagne (?bron= of utm_campaign) en wat zonder bron binnenkwam, met de grootste afhaak',
+                'Het formulier op de website (plugin 2.142) telt ook het bezoek en neemt een campagne uit het adres mee. Anoniem en zonder cookie',
+                'Het beheren van de pagina\'s staat op het tabblad Pagina\'s',
+            ],
+        ],
         '2.141.0' => [
             'datum'  => '2026-09-30',
             'titel'  => 'Rechten per taak, en Beheerders heet nu Accounts',

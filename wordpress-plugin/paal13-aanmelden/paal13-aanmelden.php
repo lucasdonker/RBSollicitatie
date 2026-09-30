@@ -3,7 +3,7 @@
  * Plugin Name:       Paal 13 — Aanmelden
  * Plugin URI:        https://sollicitatie.paal13.com/
  * Description:       Het aanmeldformulier en de seizoensgegevens van Reddingsbrigade Paal 13 op de website. Zet [paal13_aanmeldformulier] op een pagina, en gebruik [paal13_seizoen veld="datum_selectiedag"] in je teksten.
- * Version:           2.98.0
+ * Version:           2.142.0
  * Requires at least: 6.0
  * Requires PHP:      8.0
  * Author:            Reddingsbrigade Paal 13
@@ -31,7 +31,7 @@
 
 if (!defined('ABSPATH')) exit;
 
-define('P13_VERSIE', '2.98.0');
+define('P13_VERSIE', '2.142.0');
 define('P13_PAD', plugin_dir_path(__FILE__));
 define('P13_URL', plugin_dir_url(__FILE__));
 

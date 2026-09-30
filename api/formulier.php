@@ -49,7 +49,8 @@ $knop  = substr(trim((string)($_GET['knop'] ?? '')), 0, 40);
 $seizoen = actief_seizoen();
 $open    = $seizoen && ($seizoen['status'] ?? '') === 'open';
 
-$opties = ['prefix' => 'wp', 'bron_code' => $bron, 'markeer' => true];
+// bezoek_meten: op de website ziet onze server de pagina niet; het script meldt het bezoek (anoniem, zonder cookie).
+$opties = ['prefix' => 'wp', 'bron_code' => $bron, 'markeer' => true, 'bezoek_meten' => true];
 if ($titel !== '') $opties['titel'] = $titel;
 if ($knop  !== '') $opties['knop']  = $knop;
 

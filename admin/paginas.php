@@ -37,8 +37,16 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 
 $paginas = pag_alle();
 $stats   = pag_stats_bulk(array_column($paginas, 'id'));
-$werving = pag_werving_overzicht();
 $mag_bewerken = mag('paginas', 'bewerken');
+
+// Twee tabbladen: Overzicht (waar komen aanmeldingen vandaan, alle bronnen) en Pagina's (beheren).
+$tab = ($_GET['tab'] ?? '') === 'paginas' ? 'paginas' : 'overzicht';
+$periode = (string)($_GET['periode'] ?? 'seizoen');
+if (!isset(pag_periodes()[$periode])) $periode = 'seizoen';
+$seizoen = actief_seizoen();
+$overzicht = $tab === 'overzicht'
+    ? pag_bronnen_overzicht(pag_periode_van($periode, $seizoen), $periode === 'seizoen' && $seizoen ? (int)$seizoen['id'] : null)
+    : null;
 
 // Werkt de nette URL? Bij een ZIP-deploy blijft de .htaccess van de server staan en ontbreekt
 // de regel; /p.php?s=... werkt dan nog wel, dus dat is geen storing maar wel goed om te weten.
@@ -109,6 +117,15 @@ RewriteRule ^p/([a-z0-9\-]{1,80})/([A-Za-z0-9._\-]+)$ uploads/paginas/$1/assets/
   </div>
   <?php endif; ?>
 
+  <nav class="bh-tabs" aria-label="Landingspagina's">
+    <a class="bh-tab<?= $tab === 'overzicht' ? ' actief' : '' ?>" href="<?= APP_URL ?>/admin/paginas.php"<?= $tab === 'overzicht' ? ' aria-current="page"' : '' ?>>Overzicht</a>
+    <a class="bh-tab<?= $tab === 'paginas' ? ' actief' : '' ?>" href="<?= APP_URL ?>/admin/paginas.php?tab=paginas"<?= $tab === 'paginas' ? ' aria-current="page"' : '' ?>>Pagina's (<?= count($paginas) ?>)</a>
+  </nav>
+
+  <?php if ($tab === 'overzicht'): ?>
+    <?php require __DIR__ . '/_paginas_overzicht.php'; ?>
+  <?php else: ?>
+
   <?php if (!$paginas): ?>
     <div class="ds-kaart ds-kaart-p ds-leeg">
       <p>Er is nog geen landingspagina. Maak er een aan en upload het ontwerp als HTML-bestand.</p>
@@ -147,42 +164,7 @@ RewriteRule ^p/([a-z0-9\-]{1,80})/([A-Za-z0-9._\-]+)$ uploads/paginas/$1/assets/
     </ul>
   <?php endif; ?>
 
-  <?php if ($werving): ?>
-  <section class="ds-kaart ds-kaart-p pg-werving">
-    <h2 class="pg-h2">Waar komen aanmeldingen vandaan?</h2>
-    <p class="pg-sub">Per bron het aantal aanmeldingen en hoeveel daarvan uiteindelijk zijn aangenomen. Kwamen ze binnen via een campagnelink (<code>?bron=…</code>), dan staat de campagne eronder.</p>
-    <?php $aandeel = fn(int $n, int $a): string => $n > 0 ? round($a / $n * 100) . '%' : '—'; ?>
-    <div class="tabel-scroll">
-      <table class="pg-tabel">
-        <caption class="pg-verborgen">Aanmeldingen en aangenomen sollicitanten per bron en campagne</caption>
-        <thead>
-          <tr><th scope="col">Bron</th><th scope="col" class="pg-rechts">Aanmeldingen</th><th scope="col" class="pg-rechts">Aangenomen</th><th scope="col" class="pg-rechts">Aandeel</th></tr>
-        </thead>
-        <tbody>
-          <?php foreach ($werving as $w): ?>
-          <tr>
-            <th scope="row" class="pg-bronrij"><?= h((string)$w['bron']) ?></th>
-            <td class="pg-rechts"><?= (int)$w['aanmeldingen'] ?></td>
-            <td class="pg-rechts"><?= (int)$w['aangenomen'] ?></td>
-            <td class="pg-rechts"><?= $aandeel((int)$w['aanmeldingen'], (int)$w['aangenomen']) ?></td>
-          </tr>
-          <?php if ($w['campagnes']):
-                $_sub = $w['campagnes'];
-                if ($w['zonder']['aanmeldingen'] > 0) $_sub[] = ['campagne' => '', 'aanmeldingen' => $w['zonder']['aanmeldingen'], 'aangenomen' => $w['zonder']['aangenomen']];
-                foreach ($_sub as $c): ?>
-          <tr class="pg-campagnerij">
-            <td><span class="pg-verborgen"><?= h((string)$w['bron']) ?>, </span><?= $c['campagne'] !== '' ? '<span class="pg-verborgen">campagne </span>' . h($c['campagne']) : 'zonder campagne' ?></td>
-            <td class="pg-rechts"><?= (int)$c['aanmeldingen'] ?></td>
-            <td class="pg-rechts"><?= (int)$c['aangenomen'] ?></td>
-            <td class="pg-rechts"><?= $aandeel((int)$c['aanmeldingen'], (int)$c['aangenomen']) ?></td>
-          </tr>
-          <?php endforeach; endif; ?>
-          <?php endforeach; ?>
-        </tbody>
-      </table>
-    </div>
-  </section>
-  <?php endif; ?>
+  <?php endif; /* tabblad Pagina's */ ?>
 </div>
 
 <script nonce="<?= h(csp_nonce()) ?>">

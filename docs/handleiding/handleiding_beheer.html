@@ -1152,11 +1152,42 @@ is).</p>
 <p><strong>In het kort:</strong> een landingspagina is een eigen pagina
 voor één doelgroep met het aanmeldformulier erin, op
 <code>/p/&lt;adres&gt;</code>. Je uploadt een HTML-ontwerp, controleert
-het rapport en zet de pagina op Gepubliceerd. Per pagina zie je
-bezoekers, aanmeldingen en waar mensen afhaken. De volledige uitleg
-staat in de aparte handleiding voor landingspagina&#39;s.</p>
+het rapport en zet de pagina op Gepubliceerd. Het tabblad
+<strong>Overzicht</strong> laat voor alle bronnen samen zien waar
+aanmeldingen vandaan komen: elke landingspagina, het formulier op de
+website en elke campagne. De volledige uitleg staat in de aparte
+handleiding voor landingspagina&#39;s.</p>
 </blockquote>
-<h2 id="het-overzicht-van-de-paginas">Het overzicht van de pagina&#39;s</h2>
+<h2 id="het-tabblad-overzicht">Het tabblad Overzicht</h2>
+<p>Kies bovenaan de <strong>periode</strong>: Dit seizoen (standaard),
+Laatste 30 dagen, Laatste 90 dagen of Alles wat bewaard is.</p>
+<ul>
+<li><strong>De cijfers</strong>: bezoeken, begonnen aan het formulier,
+aanmeldingen, aangenomen en aanmeldingen per 100 bezoeken, voor alle
+bronnen samen.</li>
+<li><strong>Alle bronnen samen: waar haken mensen af?</strong>: van
+bekeken tot verstuurd, per stap. Bij de stap waar binnen het formulier
+relatief de meesten afhaken staat &quot;hier haken de meesten af&quot;.</li>
+<li><strong>Per bron</strong>: elke landingspagina, het formulier op de
+website (&quot;formulier op de website&quot;, met de naam van de site) en
+<strong>Zonder bron</strong> (direct in het portaal, handmatig of van
+vóór de meting). Per bron: bezoeken, begonnen, aanmeldingen, aangenomen,
+per 100 bezoeken en de <strong>grootste afhaak</strong> (&quot;Bij stap 2
+(Jij)&quot;). Een campagne staat eronder, ingesprongen.</li>
+</ul>
+<p>Een <strong>campagne</strong> maak je door een link te delen met
+<code>?bron=</code> erachter, bijvoorbeeld
+<code>https://paal13.com/aanmelden/?bron=instagram-mei</code> of een
+landingspagina met <code>?bron=flyer-strand</code>.
+<code>utm_campaign</code> en <code>utm_source</code> werken ook. Er is
+geen cookie nodig: de campagne gaat mee met die ene aanmelding. Het
+bezoek aan het formulier op de website telt pas vanaf plugin 2.142;
+installeer die versie op paal13.com
+(<code>wordpress-plugin\bouw-zip.ps1</code> maakt de ZIP).</p>
+<p>Bezoeken tellen één keer per half uur per bezoeker. Unieke bezoekers
+over een heel seizoen zijn niet te tellen: het dagpseudoniem wordt na 30
+dagen gewist (zie het verwerkingsregister).</p>
+<h2 id="het-tabblad-paginas">Het tabblad Pagina&#39;s</h2>
 <ul>
 <li><strong>Nieuwe pagina</strong>: vul <strong>Titel</strong> en
 <strong>Adres</strong> in (kleine letters, cijfers en koppeltekens) en
@@ -1169,9 +1200,6 @@ adres, en de cijfers <strong>Bezoekers</strong>,
 <strong>Bezoeken</strong>, <strong>Aanmeldingen</strong> en
 <strong>Omzetting</strong>. Met <strong>Beheren</strong> open je de
 pagina, met <strong>Bekijken</strong> de publieke versie.</li>
-<li><strong>Waar komen aanmeldingen vandaan?</strong>: per bron het
-aantal aanmeldingen, hoeveel daarvan zijn aangenomen, en het
-aandeel.</li>
 </ul>
 <p>In het beheerscherm van een pagina staat onder meer &quot;Waar haken
 mensen af?&quot;: per stap van het aanmeldformulier hoeveel mensen verder
