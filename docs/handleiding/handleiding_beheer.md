@@ -1014,8 +1014,9 @@ altijd het ingestelde bericht uit.
 
 **Waar:** Selectie › Selectiedag, met bovenaan de stappen Voorbereiden, Groepen, Inchecken, Beoordelen,
 Nabespreking en Bellijst. Vóór de dag opent het scherm op Voorbereiden, op de dag op Beoordelen.  
-**Wie:** bestuur en beheerder alles. Een begeleider bekijkt Voorbereiden en de groepen, checkt in en beoordeelt;
-wie komt wijzigen, de tabletcode, de groepsindeling, Nabespreking en Bellijst blijven bij het bestuur.
+**Wie:** bestuur en beheerder alles. Een begeleider ziet alleen Inchecken en Beoordelen (en komt
+vanuit het menu altijd bij Beoordelen); wie komt wijzigen, de tabletcode, de groepsindeling,
+Nabespreking en Bellijst blijven bij het bestuur.
 
 > **In het kort:** zes stappen voor één dag. Vooraf kijk je wie er komt, deel je groepen in en maak je de
 > toegangscode voor de tablet. Op de dag check je in (of sollicitanten doen dat zelf) en beoordeel je
@@ -1067,6 +1068,8 @@ Gemaakt voor een tablet bij de ingang. Twee manieren, door elkaar te gebruiken:
      organisatieteam om hulp".
   4. **Nieuwe code aanmaken** maakt een nieuwe code; de tablets die openstaan werken daarna niet
      meer en moet je opnieuw openen met de nieuwe link.
+  5. Is de tablet ingericht, dan klap je het blok **Tablet bij de ingang** in; de kop toont de code en
+     of er een pincode is. Zonder code staat het blok open.
 - **Aanwezigheidslijst**: per groep een rij per sollicitant met de knop **Aanwezig** (na aantikken
   wordt het **Ongedaan**). De teller "x/y aanwezig" loopt mee; met **Zoek op naam** vind je iemand
   snel. Tikken is opslaan. Ook begeleiders kunnen hier inchecken; de toegangscode aanmaken kan
@@ -1079,33 +1082,56 @@ is ingecheckt, telt als niet verschenen. Onderaan brengt **Naar beoordelen** je 
 
 Gemaakt voor een telefoon, met één sollicitant tegelijk. Je werkt onder je eigen weergavenaam.
 Bestuur, beheerder en begeleiders kunnen beoordelen; niemand overschrijft de cijfers van een ander.
+Een begeleider ziet bij de selectiedag alleen de stappen Inchecken en Beoordelen, en komt vanuit het
+menu meteen bij Beoordelen.
 
-1. Kies bovenaan eventueel een groep (**Alle** of een groepsnaam). Links (op een telefoon erboven)
-   staat de lijst met per sollicitant "nog niet begonnen", "x van y criteria", "klaar" of "niet
-   verschenen", en het aantal observaties.
+1. Kies bovenaan eventueel een groep (**Alle** of een groepsnaam). Links (op een telefoon erboven,
+   ingeklapt achter **Groep en alle sollicitanten**) staat de lijst met per sollicitant "nog niet
+   begonnen", "x van y criteria", "klaar" of "niet verschenen", en het aantal observaties.
 2. Het systeem opent de eerste sollicitant die jij nog niet af hebt. Een waarschuwing toont
    bijzonderheden uit het kennismakingsformulier; een melding zegt het als de sollicitant niet is
    ingecheckt. Zonder het recht op de kennismakingsformulieren (zoals een begeleider) staat daar
    alleen "Let op: er is een bijzonderheid bekend bij het bestuur" met het verzoek bij een
    bestuurslid na te vragen waar je op moet letten.
-3. Geef per criterium een cijfer van 1 tot en met 5 door op het cijfer te tikken; er verschijnt
-   "opgeslagen". Tik je nog een keer op hetzelfde cijfer, dan wordt het gewist. De criteria staan
-   per test (standaard Sporttest en Zwemtest) en stel je in bij Instellingen ›
-   Beoordelingscriteria. Je ziet je eigen cijfers; bij meer beoordelaars staat eronder het
-   gemiddelde.
-4. Een **observatie** plaats je door **Positief**, **Neutraal** of **Aandacht** te kiezen, te typen
-   wat opviel en op **Observatie opslaan** te tikken. Observaties mogen over iedereen gaan, ook
-   buiten je eigen groep. Je eigen observaties kun je verwijderen; bestuur en beheerder kunnen alle
-   observaties verwijderen.
-5. Ga verder met **Volgende: naam** of terug met **Vorige**. **Dossier** opent het dossier; die
-   knop zie je alleen als je Sollicitanten mag lezen.
+3. De testen (standaard Sporttest en Zwemtest, in te stellen bij Instellingen ›
+   Beoordelingscriteria) staan dicht, met "x van y gescoord". Tik op een test om hem te openen.
+   Wat je openklapt blijft open bij de volgende sollicitant, handig als je bij één teststation
+   staat. Geef per criterium een cijfer van 1 tot en met 5 door op het cijfer te tikken; er
+   verschijnt "opgeslagen". Tik je nog een keer op hetzelfde cijfer, dan wordt het gewist. Je ziet
+   je eigen cijfers; bij meer beoordelaars staat eronder het gemiddelde.
+4. Een **observatie** plaats je door **Positief**, **Neutraal** of **Aandacht** te kiezen (de rand
+   van het tekstvak kleurt mee), te typen wat opviel en op **Observatie opslaan** te tikken (op een
+   computer kan ook Ctrl+Enter). De observatie verschijnt meteen in de lijst, zonder dat de pagina
+   herlaadt. Tik je met tekst in het veld op **Volgende** of een andere naam, dan wordt die tekst
+   eerst opgeslagen; lukt dat niet, dan blijf je staan en is je tekst er nog. Observaties mogen over
+   iedereen gaan, ook buiten je eigen groep. Je eigen observaties kun je verwijderen; bestuur en
+   beheerder kunnen alle observaties verwijderen.
+5. Ga verder met **Volgende: naam** of terug met **Vorige**; je komt meteen bij de sollicitant uit.
+   **Dossier** opent het dossier; die knop zie je alleen als je Sollicitanten mag lezen.
 
 ### Stap 4: nabespreken
 
-Alleen bestuur en beheerder. Per sollicitant staan observaties en scores bij elkaar, met
-bijzonderheden, groep en of de sollicitant aanwezig was. De scores zijn een advies; jullie gesprek
-bepaalt het besluit. Zoek op naam, filter op besluit (**Iedereen**, **Nog open**, **Door**, **Twijfel**
-of **Niet door**) of sorteer op cijfer, net als bij de gesprekken van het trainingsweekend.
+Alleen bestuur en beheerder. De scores zijn een advies; jullie gesprek bepaalt het besluit.
+
+Bovenaan staat hoeveel sollicitanten nog geen besluit hebben, het advies op cijfer (door, twijfel,
+niet) en een snelkoppeling **N randgevallen om eerst te bespreken**. Een randgeval is iemand met
+een signaal. Signalen staan als korte zinnen onder de naam:
+
+| Signaal | Wanneer |
+|---|---|
+| dicht bij de drempel | het gemiddelde ligt binnen 0,5 van de drempel (Instellingen › Beoordelingscriteria) |
+| laag op … | een onderdeel heeft gemiddeld een 2 of lager |
+| N× aandacht | twee of meer observaties "aandacht" |
+| beoordelaars oneens over … | op een onderdeel verschillen beoordelaars 2 punten of meer |
+| cijfers ontbreken / nog niet beoordeeld | aanwezig, maar niet alle onderdelen hebben een cijfer |
+| strandwacht: aandachtspunt | een strandwacht gaf feedback met een aandachtspunt |
+| was niet aanwezig | niet ingecheckt (telt niet als randgeval) |
+
+Filter op **Signalen** (of alleen randgevallen), **Besluit**, en onder **Meer filters** op advies,
+groep en aanwezig. Sorteer op naam, meeste signalen, laagste of hoogste cijfer, meeste aandacht,
+meest oneens of dichtst bij de drempel. Per kaart staan de naam, het advies en het gemiddelde; de
+observaties, de cijfers per onderdeel (ook per beoordelaar) en de feedback van strandwachten klap je
+open, of allemaal tegelijk met **Alles uitklappen**.
 
 1. Klik per sollicitant op **Door**, **Twijfel** of **Niet door**, en typ eventueel een korte reden in het
    veld ernaast. Dit wordt direct opgeslagen ("opgeslagen") en verandert nog niets aan de fase.
@@ -1143,7 +1169,7 @@ gesprek wordt het door of niet. Is iedereen doorgevoerd, dan staat er "De bellij
 
 **Waar:** Selectie › Trainingsweekend, met zes stappen: Voorbereiden, Groepen, Inchecken,
 Beoordelen, Evaluatie en Gesprekken.  
-**Wie:** de eerste vier: bestuur, beheerder en begeleiders. Evaluatie en Gesprekken: alleen bestuur en beheerder.
+**Wie:** bestuur en beheerder alle zes; begeleiders zien alleen Inchecken en Beoordelen.
 
 > **In het kort:** vooraf zie je wie er komt. Op het weekend checken sollicitanten zelf in op een
 > tablet, en schrijven begeleiders op hun telefoon op wat opvalt. Daarna heeft iedereen een gesprek
@@ -1184,9 +1210,12 @@ verschenen". Er sluit niets vanzelf af, en een laatkomer check je daarna gewoon 
 
 ### Stap 3: beoordelen
 
-Op je telefoon. Tik een naam aan (met foto). Kies onder "Wat valt op?" **Positief**, **Neutraal**
-of **Aandacht**, typ wat je zag en tik op **Observatie opslaan**. De sollicitant ziet observaties
-niet. Je eigen observaties kun je verwijderen; die van anderen blijven staan.
+Op je telefoon, precies zoals op de selectiedag (zonder cijfers). Tik een naam aan (met foto; op
+een telefoon staat de lijst ingeklapt achter **Groep en alle deelnemers**). Kies onder "Wat valt
+op?" **Positief**, **Neutraal** of **Aandacht**, typ wat je zag en tik op **Observatie opslaan**; hij
+staat meteen in de lijst. Tik je met tekst in het veld op Volgende, dan wordt die eerst opgeslagen.
+De sollicitant ziet observaties niet. Je eigen observaties kun je verwijderen; die van anderen
+blijven staan.
 
 Onderaan staat ingeklapt **Selectiedag**: het advies en gemiddelde, het besluit en de observaties
 van toen. Het is er als je het nodig hebt, maar het staat bewust niet vooraan.
@@ -1275,14 +1304,30 @@ document wordt verzegeld opgeslagen en is daarna niet meer te wijzigen.
 ### Het overzicht van de handtekeningen
 
 Bovenaan de tabs **Alle**, **Nog open** en **Compleet** met aantallen. Het scherm opent op Nog
-open; is iedereen rond, dan op Alle. Per persoon een kaart met de naam (klik om het tabblad
-Ondertekeningen in het dossier te openen), het label **ouder tekent mee** bij een minderjarige, een
-voortgangsbalk en **Compleet** of "x open". Per document:
+open; is iedereen rond, dan op Alle. Daaronder zoek je op naam, kies je één document of alleen wie
+een ouder laat tekenen, en sorteer je op naam, meeste open, langst open of langst niet herinnerd.
+Actieve filters staan als knopjes onder de balk; klik er een weg om hem op te heffen.
+
+Per persoon een kaart met de naam (klik om het tabblad Ondertekeningen in het dossier te openen),
+het label **ouder tekent mee** bij een minderjarige, een voortgangsbalk en **Compleet** of "x open".
+De documenten staan ingeklapt, met een samenvatting ("2 open · oudste 5 dagen · herinnerd 24 sep");
+**Alles uitklappen** opent ze allemaal. Per document:
 
 - **Ondertekend**: datum, naam van de ondertekenaar en **Bekijken** (opent de PDF in een nieuw
   tabblad). Mag je rol het document niet openen, dan zie je een slotje met **Alleen loondossier**.
-- **Wacht**: **Link kopiëren**. Plak die link in een mail of app als de automatische mail niet is
-  aangekomen.
+- **Wacht**: sinds wanneer het openstaat, of het naar de ouder gaat en wanneer er voor het laatst
+  herinnerd is, met **Link kopiëren**. Plak die link in een mail of app als de automatische mail
+  niet is aangekomen.
+
+### Zelf een herinnering sturen
+
+**Herinnering** op de kaart stuurt voor elk open document van die persoon meteen dezelfde mail als
+de automatische herinnering, naar wie moet tekenen (de ouder of de sollicitant). Met
+**Herinnering aan alle …** boven de lijst doe je dat voor iedereen die de filter nu toont; je
+bevestigt eerst. Een document dat het afgelopen uur al een herinnering kreeg, wordt overgeslagen,
+zodat twee bestuursleden niet dubbel mailen. Een document zonder e-mailadres (ouder nog niet
+ingevuld) krijgt niets; daarvoor loopt de herinnering "Gegevens ouder/verzorger ontbreken". Elke
+handmatige herinnering staat in het logboek en de tijdlijn van het dossier.
 
 Het getal achter Ondertekeningen in het menu en de melding op Vandaag tellen documenten die langer
 dan 3 dagen openstaan (afgewezen sollicitanten tellen niet mee).

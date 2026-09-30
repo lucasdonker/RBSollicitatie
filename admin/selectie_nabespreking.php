@@ -231,9 +231,9 @@ require __DIR__ . '/layout_top.php';
   ?>
 
   <?php if ($zichtbaar): ?>
-  <div class="bh-nb-lijstkop">
+  <div class="bh-lijstkop">
     <span class="bh-meta"><?= count($zichtbaar) ?> van <?= count($kandidaten) ?> getoond</span>
-    <button type="button" class="ds-btn ds-btn-zacht ds-btn-sm" data-nb-alles aria-pressed="false">Alles uitklappen</button>
+    <button type="button" class="ds-btn ds-btn-zacht ds-btn-sm" data-klap-alles="details.bh-nb-meer" aria-pressed="false">Alles uitklappen</button>
   </div>
   <?php endif; ?>
 

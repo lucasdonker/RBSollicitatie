@@ -4,7 +4,7 @@
  * Besluit en aantekening gaan samen de deur uit: de aantekening hoort bij het besluit, en los
  * opslaan zou een aantekening zonder besluit kunnen achterlaten. Nogmaals op het actieve besluit
  * klikken wist het (besluit '' — de server verwijdert dan de rij, aantekening inbegrepen).
- * "Alles uitklappen" opent of sluit de details van alle kaarten tegelijk.
+ * "Alles uitklappen" is de gedeelde knop uit assets/js/inklap.js (data-klap-alles).
  */
 (function () {
   'use strict';
@@ -61,14 +61,4 @@
     }
     zet(kaart, b);
   });
-
-  var alles = document.querySelector('[data-nb-alles]');
-  if (alles) {
-    alles.addEventListener('click', function () {
-      var open = alles.getAttribute('aria-pressed') !== 'true';
-      lijst.querySelectorAll('details.bh-nb-meer').forEach(function (d) { d.open = open; });
-      alles.setAttribute('aria-pressed', open ? 'true' : 'false');
-      alles.textContent = open ? 'Alles inklappen' : 'Alles uitklappen';
-    });
-  }
 })();

@@ -539,7 +539,13 @@ html[data-theme="dark"] .bh-fasechip.nu { color: var(--bg); }
 .bh-ondkaart-naam { font-size: 15px; font-weight: 600; color: var(--navy); text-decoration: none; }
 .bh-ondkaart-naam:hover { text-decoration: underline; }
 .bh-ondkaart-voortgang { margin-left: auto; min-width: 150px; }
-.bh-ondkaart .bh-ondlijst { margin-top: 8px; }
+.bh-ondkaart .bh-ondlijst { margin-top: 0; }
+.bh-ondkaart-herinner { margin: 0; }
+.bh-ond-docs { margin-top: 6px; border-top: 1px solid var(--bg-subtle); }
+@media (max-width: 600px) {
+  .bh-ondkaart-voortgang { margin-left: 0; flex: 1 1 100%; }
+  .bh-ondkaart-herinner { margin-left: auto; }
+}
 
 /* Weekrij in het beschikbaarheid-tabblad — losse tegels, niet het raster.
    De rastercel van bh_weekcel() heet .bh-weekcel; dit is de grotere tegel. */
@@ -884,7 +890,6 @@ span.bh-incheck-code {
 .bh-nb-signalen { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 18px 10px 77px; }
 .bh-nb-meer { margin: 0 18px; border-top: 1px solid var(--bg-subtle); }
 .bh-nb-meer > .bh-nb-kolommen { padding: 4px 0 14px; }
-.bh-nb-lijstkop { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 0 0 10px; }
 .bh-nb-snel { font: var(--text-label); font-size: 14px; color: var(--navy); margin-left: 12px; }
 .bh-scorebalk.laag .bh-scorebalk-getal { color: var(--error); }
 .bh-scorebalk.laag .bh-scorebalk-vul { background: var(--error); }
@@ -1231,6 +1236,12 @@ a.bh-naamcel:hover .bh-naamcel-naam { color: var(--navy); text-decoration: under
 .bh-klap.ds-kaart > summary { padding: 12px 18px; }
 .bh-klap.ds-kaart > .bh-klap-inhoud { padding: 0 18px 16px; }
 @media (prefers-reduced-motion: reduce) { .bh-klap > summary::after { transition: none; } }
+
+/* ── Lijstkop: "12 van 30 getoond" links, knoppen voor de hele lijst rechts (alles uitklappen,
+   herinnering aan iedereen). Staat tussen de filterbalk en de eerste kaart. */
+.bh-lijstkop { display: flex; justify-content: space-between; align-items: center; gap: 8px 10px; flex-wrap: wrap; margin: 0 0 10px; }
+.bh-lijstkop-acties { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.bh-lijstkop-acties form { margin: 0; }
 
 /* ── Filterbalk ── */
 .bh-filterbalk {

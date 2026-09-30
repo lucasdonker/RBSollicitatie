@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.134.0');
+define('APP_VERSIE', '2.135.0');
 
 function app_changelog(): array {
     return [
+        '2.135.0' => [
+            'datum'  => '2026-09-30',
+            'titel'  => 'Ondertekeningen: zoeken, filteren en zelf een herinnering sturen',
+            'punten' => [
+                'Zoeken op naam, filteren op document en op "ouder tekent mee", sorteren op meeste open, langst open of langst niet herinnerd',
+                'Per persoon staan de documenten ingeklapt, met een samenvatting: hoeveel open, sinds wanneer, en wanneer er voor het laatst herinnerd is. "Alles uitklappen" opent ze allemaal',
+                'Herinnering sturen per persoon, of in één keer voor iedereen die de filter toont (na bevestiging). Het is dezelfde mail als de automatische herinnering; wie het afgelopen uur al een herinnering kreeg, wordt overgeslagen. Het staat in het logboek en de tijdlijn',
+                'Per open document zie je of het naar de ouder gaat en of er al een adres is',
+            ],
+        ],
         '2.134.0' => [
             'datum'  => '2026-09-30',
             'titel'  => 'Nabespreking: de randgevallen springen eruit',
