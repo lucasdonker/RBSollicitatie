@@ -303,7 +303,7 @@ require __DIR__ . '/_kop.php';
       </p>
       <?php $bev = [
           'knop_open' => 'Vergeet alle apparaten',
-          'tekst'     => ['Op elk apparaat — ook dit — moet daarna opnieuw worden ingelogd met een link uit je mail.'],
+          'tekst'     => ['Op alle andere apparaten ben je meteen uitgelogd. Hier blijf je ingelogd tot je uitlogt of de browser sluit; daarna log je ook hier opnieuw in met een link uit je mail.'],
           'knop'      => 'Ja, vergeet ze allemaal',
           'velden'    => ['apparaten_vergeten' => '1'],
       ]; require __DIR__ . '/_bevestig.php'; ?>

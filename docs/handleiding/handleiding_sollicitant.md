@@ -27,7 +27,7 @@ is ook voor je ouder of verzorger als je nog geen 18 bent.
 ## Aanmelden
 
 > **In het kort:** je meldt je aan met een kort formulier in drie stappen. Je moet minimaal 15 jaar
-> zijn. Ben je nog geen 16, dan geeft je ouder of verzorger toestemming.
+> zijn. Ben je nog geen 16, dan geeft je ouder of verzorger akkoord.
 
 Het formulier staat op `https://sollicitatie.paal13.com/aanmelden.php`, op paal13.com en op
 landingspagina's van Paal 13. Het is overal hetzelfde formulier.
@@ -41,11 +41,16 @@ landingspagina's van Paal 13. Het is overal hetzelfde formulier.
 Klopt er iets niet, dan zegt het formulier wat er mis is en springt het terug naar die stap.
 Wat je al had ingevuld, blijft staan.
 
-**Ben je 15?** Dan vraagt het formulier in stap 2 de naam van je ouder of verzorger. Je ouder zet
-ook een vinkje dat de brigade je gegevens mag verwerken. Vul dit blok samen in.
+**Ben je 15?** Dan staat in stap 2 het blok **Akkoord van je ouder of verzorger**. Vul dit blok
+samen in: de naam van je ouder of verzorger, en een vinkje bij "Ik ben ouder of verzorger en vind
+het goed dat mijn kind solliciteert. Ik heb de privacyverklaring gelezen." Het blok verschijnt
+alleen als je geboortedatum laat zien dat je 15 bent. (Werkt JavaScript in je browser niet, dan
+staat het blok er altijd; sla het dan over als je 16 of ouder bent.)
 
-Na het aanmelden krijg je een e-mail met een link naar je portaal. Geen mail? Kijk in je
-ongewenste mail. Heb je je dit seizoen al aangemeld, dan zegt het formulier dat.
+Na het aanmelden zie je "Je aanmelding is binnen" en krijg je een e-mail met een link naar je
+portaal. Geen mail? Kijk in je ongewenste mail. Had je je dit seizoen al aangemeld met hetzelfde
+e-mailadres, dan zie je ook "Je aanmelding is binnen" en krijg je de bevestiging met de link nog
+een keer (hooguit één keer per uur). Er komt dan geen tweede aanmelding bij.
 
 Is de aanmelding gesloten, dan zie je dat op het formulier. Houd dan paal13.com en social media in
 de gaten.
@@ -73,8 +78,8 @@ aan, dan hoef je op dat apparaat 60 dagen niet meer in te loggen. Elke keer dat 
 gebruikt, gaan die 60 dagen opnieuw in. Het vakje staat standaard uit. Zet het niet aan op een
 telefoon of computer die je deelt of leent.
 
-**Uitloggen** doe je onderaan de pagina Gegevens (of met het pijltje naast je naam op een
-computer). Dan vergeet dat apparaat je ook.
+**Uitloggen** doe je met de knop **Uitloggen** onderaan de pagina Gegevens (of met het pijltje
+naast je naam op een computer). Dan vergeet dat apparaat je ook.
 
 **Al een Paal 13-account?** Dan sturen we je door naar de gewone Paal 13-inlog. Werkt dat account
 niet meer, klik dan op **Stuur mij toch een code**.
@@ -212,13 +217,13 @@ pdf-programma dat.
 ## Als je nog geen 18 bent
 
 > **In het kort:** zolang je jonger bent dan 18, ondertekent je ouder of verzorger de
-> gezondheidsverklaring en het intakeformulier. Het loonheffingsformulier en de inschrijving als
-> lid onderteken je zelf.
+> gezondheidsverklaring, het intakeformulier en (na het aannemen) de inschrijving als lid. Het
+> loonheffingsformulier onderteken je zelf.
 
 Er zijn twee aparte leeftijdsgrenzen. Die hebben niets met elkaar te maken:
 
 - **15 en 16 jaar, bij het aanmelden.** Je kunt je aanmelden vanaf 15 jaar. Ben je 15, dan moet je
-  ouder of verzorger bij het aanmelden toestemming geven voor het gebruik van je gegevens (zie
+  ouder of verzorger bij het aanmelden laten weten dat die het goed vindt dat je solliciteert (zie
   [Aanmelden](#aanmelden)). Vanaf 16 jaar is dat niet nodig.
 - **18 jaar, bij het ondertekenen.** Ben je jonger dan 18, dan ondertekent je ouder of verzorger
   de gezondheidsverklaring en het intakeformulier. Dat geldt ook als je 16 of 17 bent.
@@ -345,7 +350,9 @@ Op de pagina **Gegevens**:
   meteen. Het portaal laat je vooraf zien wat er blijft.
 - **Ingelogd blijven:** als een of meer apparaten je onthouden, zie je hier hoeveel. Telefoon kwijt
   of ingelogd op een vreemde computer? Klik op **Vergeet alle apparaten** en daarna op **Ja, vergeet
-  ze allemaal**. Op elk apparaat moet je dan opnieuw inloggen.
+  ze allemaal**. Op alle andere apparaten ben je meteen uitgelogd, ook als het portaal daar nog
+  openstond. Op het apparaat waarop je dit doet, blijf je nu nog ingelogd; dat apparaat onthoudt
+  je daarna alleen niet meer, dus de volgende keer log je ook daar opnieuw in.
 
 **Advies van de computer (AI).** Als het bestuur dat gebruikt, geeft een computerprogramma van
 Google een advies over je kennismakingsformulier. Het programma krijgt je leeftijdsgroep en

@@ -193,19 +193,26 @@ Alles van het bestuurslid, plus:
 
 > **In het kort:** een seizoen loopt in vaste momenten, van voorbereiden tot opruimen. Per moment
 > staat hieronder wat jij moet doen, wat het systeem zelf doet en op welk scherm. De seizoensbalk
-> op Vandaag toont zes fases (Werving, Formulieren, Selectiedag, Bellijst, Trainingsweekend,
-> Aanname) en rekent zelf uit waar je bent aan de hand van de datums en of het seizoen open is.
+> op Vandaag toont zeven fases (Werving, Formulieren, Selectiedag, Bellijst, Trainingsweekend,
+> Aanname, Afronden) en rekent zelf uit waar je bent aan de hand van de datums en van wie in
+> welke fase staat. Of de aanmelding open of dicht is, telt daarbij niet mee.
 
 Hoe Vandaag de seizoensfase bepaalt:
 
 | Seizoensfase op Vandaag | Wanneer |
 |---|---|
-| Werving | Het seizoen staat open en de selectiedag is nog niet geweest |
-| Formulieren | Het seizoen is gesloten en de selectiedag moet nog komen |
+| Werving | Vóór de selectiedag, zolang er aanmeldingen op een uitnodiging wachten of nog niemand is uitgenodigd |
+| Formulieren | Vóór de selectiedag, als niemand meer op een uitnodiging wacht en er wel iemand is uitgenodigd |
 | Selectiedag | Op de datum van de selectiedag zelf |
 | Bellijst | Na de selectiedag, tot de eerste dag van het trainingsweekend |
 | Trainingsweekend | Vanaf de eerste dag van het trainingsweekend tot en met de laatste dag |
-| Aanname | Na de laatste dag van het trainingsweekend |
+| Aanname | Na het trainingsweekend, zolang er nog besluiten openstaan (gesprekken, twijfel, niet gekomen) |
+| Afronden | Na het trainingsweekend, als alle besluiten zijn genomen |
+
+Staat de module Selectiedag of Trainingsweekend uit, dan vallen de fases daarvan weg uit de balk.
+Klopt de afgeleide fase niet (de selectiedag is verschoven, de belronde loopt uit), dan kun je hem
+vastzetten onder Instellingen › Seizoensfase & advies › **Seizoensfase**. Zet hem daarna terug op
+**Automatisch**.
 
 ### Moment 1: voorbereiden, vóór de opening
 
@@ -223,7 +230,7 @@ Hoe Vandaag de seizoensfase bepaalt:
 | Wat jij doet | Wat het systeem doet | Scherm |
 |---|---|---|
 | Op **Aanmelding openen** klikken en bevestigen met **Ja, aanmelding openen**. | Het aanmeldformulier (website, landingspagina's, WordPress-plugin) gaat aan. Het formulier heeft drie korte stappen: naam, een paar gegevens, contact. | [Seizoen](#seizoen-opzetten) |
-| Aanmeldingen bekijken en uitnodigen (zie moment 3). | Elke aanmelder krijgt de mail "Bevestiging van aanmelding"; het bestuur krijgt "Nieuwe aanmelding". Vandaag toont "... aanmeldingen uitnodigen". | [Vandaag](#vandaag), [Sollicitanten](#sollicitanten) |
+| Aanmeldingen bekijken en uitnodigen (zie moment 3). | Elke aanmelder krijgt de mail "Bevestiging van aanmelding"; het bestuur krijgt "Nieuwe aanmelding". Vandaag toont "... aanmeldingen uitnodigen". Meldt iemand zich dit seizoen met hetzelfde e-mailadres nog eens aan, dan komt er geen tweede aanmelding: het formulier zegt gewoon "Je aanmelding is binnen" (het verraadt niet dat het adres bekend is) en de bevestiging gaat nog een keer, hooguit één keer per uur. In het logboek: "Opnieuw aangemeld (bevestiging nog eens gestuurd)". | [Vandaag](#vandaag), [Sollicitanten](#sollicitanten) |
 | | Staat de uitnodig-modus op Automatisch, dan nodigt het systeem zelf uit wie binnen de leeftijdsgrenzen valt (standaard 16 tot en met 30), na de ingestelde vertraging (standaard 24 uur). | [Instellingen](#instellingen) |
 | | Staan er in het portaal taken open, dan gaat 5 dagen na de laatste fasewijziging de herinnering "Openstaande taken", daarna elke 7 dagen, maximaal 3 keer. | |
 
@@ -427,68 +434,134 @@ In het beheer staan gegevens van jongeren, soms met gezondheidsinformatie. Vijf 
 ## Vandaag
 
 **Waar:** Vandaag, bovenaan in de zijbalk (het startscherm na het inloggen).  
-**Wie:** iedereen. Het blok "Waar staat iedereen" alleen met leesrecht op Sollicitanten.
+**Wie:** iedereen. Je ziet alleen wat bij jouw rol past: blokken met namen vragen leesrecht op
+Sollicitanten, en elke regel en knop alleen als je dat scherm ook mag openen.
 
 > **In het kort:** Vandaag opent op een vraag: wat moet er nu gebeuren? Bovenaan zie je waar het
-> seizoen staat, daaronder de ene taak die telt met een knop ernaartoe, en pas dan de cijfers en
-> de systeemstatus. Kom hier elke keer dat je inlogt eerst.
+> seizoen staat en de kengetallen. Links staat wat je moet doen: de ene taak die telt, daaronder
+> **Wacht ook op jou**. Rechts staat wat je moet weten: **Sinds je vorige bezoek**, de **Agenda**
+> en de systeemstatus. Kom hier elke keer dat je inlogt eerst.
 
 ### De seizoensbalk
 
-Zes fases naast elkaar: Werving, Formulieren, Selectiedag, Bellijst, Trainingsweekend, Aanname.
-Wat geweest is, is groen; waar het seizoen nu staat, is oranje; wat nog komt, is grijs. Hoe de
-fase wordt bepaald, staat in [Het seizoen in stappen](#het-seizoen-in-stappen). Is er nog geen
-seizoen, dan staat hier "Er is nog geen seizoen" met de knop **Seizoen aanmaken**.
+Zeven fases naast elkaar: Werving, Formulieren, Selectiedag, Bellijst, Trainingsweekend, Aanname,
+Afronden. Staat de module Selectiedag of Trainingsweekend uit, dan vallen die fases weg. Wat
+geweest is, is groen; waar het seizoen nu staat, is oranje; wat nog komt, is grijs. Hoe de fase
+wordt bepaald, staat in [Het seizoen in stappen](#het-seizoen-in-stappen). Is er nog geen seizoen,
+dan staat hier "Er is nog geen seizoen" met de knop **Seizoen aanmaken** (alleen als je een seizoen
+mag aanmaken).
+
+### Kengetallen
+
+Zes tegels met tellingen van dit seizoen, voor iedereen zichtbaar: **Aanmeldingen** (met het aantal
+van vorig seizoen), **Laatste 30 dagen** (met de 30 dagen daarvoor), **In de procedure**,
+**Aangenomen**, **Terugkerende strandwachten** (met een Authentik-account) en **Terugkerende
+sollicitanten** (eerder gesolliciteerd). Met leesrecht op Sollicitanten is elke tegel een link naar
+de lijst met dat filter.
 
 ### De taak van nu
 
-Een groot blok met "Te doen" of "Niets te doen". Welke taak er staat, hangt af van de
-seizoensfase:
+Een groot blok met "Te doen", "Volgende stap" of "Niets te doen". Welke taak er staat, hangt af van
+de seizoensfase:
 
 | Seizoensfase | De taak | Knop |
 |---|---|---|
 | Werving | "... aanmeldingen uitnodigen" (fase Aangemeld) | **Naar de aanmeldingen** |
-| Formulieren | "... wachten nog op hun formulier" (fase Uitgenodigd selectiedag), met hoe de automatische herinnering nu is ingesteld | **Bekijk wie** |
+| Formulieren | "... wachten nog op hun formulier" (fase Uitgenodigd selectiedag), met hoe de automatische herinnering nu is ingesteld. Is alles binnen: "Alle formulieren zijn binnen" | **Bekijk wie**, daarna **Naar de groepsindeling** |
 | Selectiedag | "Vandaag is de selectiedag" | **Naar inchecken** |
-| Bellijst | "... sollicitanten zonder besluit" zolang er nog niemand op de bellijst staat, daarna "De bellijst afwerken" met hoeveel er nog niet gebeld, gebeld maar niet doorgevoerd of op twijfel staan | **Naar de nabespreking** of **Bellijst openen** |
+| Bellijst | "... sollicitanten zonder besluit" zolang er nog niemand op de bellijst staat, daarna "De bellijst afwerken" met hoeveel er nog niet gebeld, gebeld maar niet doorgevoerd, zonder besluit of op twijfel staan. Is de lijst leeg: "De bellijst is leeg" of "Alleen twijfelgevallen over" | **Naar de nabespreking**, **Bellijst openen**, daarna **Naar Trainingsweekend › Voorbereiden** |
 | Trainingsweekend | "Het trainingsweekend", met hoeveel sollicitanten nog niet zijn afgevinkt | **Naar het trainingsweekend** |
-| Aanname | "... wachten op een besluit", daarna "... besluiten nog doorvoeren" en "... op twijfel" (uit het trainingsweekend) | **Naar het besluit** |
+| Aanname | "... wachten op een gesprek", daarna "... besluiten niet doorgevoerd" (als doorvoeren mislukte), "... op twijfel" en "... niet gekomen, besluit nodig" | **Naar de gesprekken** |
+| Afronden | "Het seizoen afronden" met een lijst stappen met vinkjes: iedereen die is aangenomen heeft een vastgestelde afspraak (loonplanning), aanmelding sluiten, automatisch opschonen aanzetten, volgend seizoen aanmaken of de aanmelding daarvan openen. Is alles af: "Het seizoen is afgerond" | De knop van de eerste open stap die je mag doen |
 
 Naast de taak staan blokjes en "x gedaan · y open". Is er niets te doen, dan zegt het blok dat
-ook, bijvoorbeeld "De bellijst is leeg" of "De lichting is rond". "De lichting is rond" verschijnt
-pas als op het trainingsweekend iedereen een besluit heeft en alles is doorgevoerd. Het getal bij
-Vandaag in het menu is het aantal open stappen van deze taak. Een knop staat er alleen als je dat
-scherm ook mag openen.
+ook. Is een stap klaar maar is er een vervolgstap, dan staat er **Volgende stap** met een knop
+ernaartoe. Het getal bij Vandaag in het menu is het aantal open stappen van deze taak. Een knop
+staat er alleen als je dat scherm ook mag openen; een stap in de lijst van Afronden waarvoor je
+het recht mist, staat er wel, maar zonder link.
+
+**Taak per rol.** Kan jouw rol de taak van het seizoen niet doen (er zou geen knop bij staan), dan
+krijg je een taak die bij jou past. De penningmeester ziet dan "... loondossiers te verwerken" met
+**Naar de loondossiers**, of "Geen loondossiers te verwerken". Voor andere rollen staat er "Er ligt
+nu niets voor jou" met waar het bestuur mee bezig is.
+
+### Wacht ook op jou
+
+De werkbak: al het andere werk dat op een mens wacht, uit alle onderdelen, met per regel een
+aantal, een zin en een knop naar de plek waar je het afhandelt. Je ziet alleen regels waarvoor je
+het recht hebt, en niets wat al de taak van nu is. Bijvoorbeeld:
+
+- "... aanmeldingen wachten op een uitnodiging" (**Uitnodigen**);
+- "... verzoeken om minder dagen te beoordelen" (**Beoordelen**);
+- "... gebeld, maar nog niet doorgevoerd" (**Doorvoeren**), "... sollicitanten van de selectiedag
+  zonder besluit" (**Nabespreken**) en, tot en met de selectiedag, "... nog niet ingedeeld in een
+  groep" (**Indelen**);
+- "... aangenomen zonder vastgestelde afspraak" (**Naar de loonplanning**);
+- twijfelgevallen en "niet gekomen" na het trainingsweekend (**Naar de gesprekken**);
+- "... ondertekeningen staan langer dan 3 dagen open" en "... beschikbaarheden zijn nog
+  voorlopig" (**Bekijken**);
+- "... loondossiers te verwerken" (**Verwerken**);
+- "... mensen wachten op een seintje dat de aanmelding open is" (**Seintje sturen**, alleen als de
+  aanmelding open staat);
+- "... berichten kwamen deze week niet aan" (**Bekijken**, naar Berichten › Verzonden).
+
+Ligt er niets, dan staat er "Verder ligt er niets op je te wachten".
+
+Daaronder, alleen als ze er zijn, twee blokken met namen:
+
+- **Kan niet komen — wacht op jouw besluit**: wie doorgaf niet te kunnen komen op de selectiedag
+  of het trainingsweekend, met **Afmelden** (fase Afgehaakt, zonder bericht) of **Uitzondering,
+  blijft in proces**. Zonder het recht om dat evenement voor te bereiden heet het blok "Kan niet
+  komen — het bestuur beslist" en staan er geen knoppen.
+- **Wil intrekken — neem eerst contact op**: wie in het portaal vroeg de sollicitatie in te
+  trekken, met **Doorvoeren** (fase Afgehaakt, zonder bericht) of **Niet doorvoeren, loopt door**.
+  Zonder bewerkrecht op Sollicitanten is het informatie: "het bestuur neemt contact op".
 
 ### Waar staat iedereen
 
-Een staaf per fase met het aantal sollicitanten in dit seizoen. Klik op een staaf om de
-sollicitantenlijst met die fase te openen. Zolang er niemand is, staat er "Nog niemand
-aangemeld".
+Een staaf per fase met het aantal sollicitanten in dit seizoen (alleen met leesrecht op
+Sollicitanten). Klik op een staaf om de sollicitantenlijst met die fase te openen. Zolang er
+niemand is, staat er "Nog niemand aangemeld".
 
-### Loopt ondertussen
+### Sinds je vorige bezoek
 
-Dingen die je moet weten maar nu niet hoeft te doen, elk met een link:
+Rechts bovenaan: wat er nieuw is sinds je hier het laatst keek, met dat tijdstip in de kop
+("gisteren 21:14"). Bijvoorbeeld nieuwe aanmeldingen, ingeleverde kennismakingsformulieren,
+beschikbaarheden die definitief zijn gemaakt, verzoeken om minder dagen, binnengekomen
+ondertekeningen, vragen uit het portaal (die staan in de mailbox), afmeldingen ("kan niet komen")
+en verzoeken om in te trekken. Je ziet alleen wat je mag lezen; is er niets, dan staat er "Niets
+nieuws".
 
-- "... ondertekeningen staan langer dan 3 dagen open" (naar [Ondertekeningen](#ondertekeningen)).
-- "... beschikbaarheden zijn nog voorlopig" (naar Beschikbaarheid).
+Het ijkpunt schuift pas door als je een uur weg bent geweest: wie binnen het uur terugkomt of
+ververst, ziet nog hetzelfde. Ben je hier nog nooit geweest, dan telt de afgelopen week.
 
-Het blok verschijnt alleen als er iets loopt.
+### Agenda
+
+De datums van de komende 60 dagen met "vandaag", "morgen" of "over ... dagen": de selectiedag, het
+trainingsweekend (met "nu bezig" zolang het loopt), begin en einde van de werkperiode, en (met
+leesrecht op Berichten) de eigen geplande berichten die aan de selectiedag of het weekend hangen.
+Staat er niets, dan staat er "Geen datums in de komende weken", met een link naar de datums van
+het seizoen als je die mag bewerken.
 
 ### De systeemstatus
 
-Een balk met twee standen:
+Alleen voor wie Systeem of het logboek mag lezen of Instellingen mag bewerken. Een balk met twee
+standen:
 
-- **Systeem in orde** (groen): het aantal berichten in de wachtrij, mailfouten in 24 uur,
-  ondertekeningen die langer dan 3 dagen openstaan en het tijdstip van de laatste taakronde.
+- **Systeem in orde** (groen): het aantal berichten in de wachtrij, mailfouten in 24 uur en het
+  tijdstip van de laatste taakronde.
 - **Aandacht nodig** (rood, met een waarschuwingsteken): er zijn mailfouten in de laatste 24 uur,
-  er staan meer dan 20 berichten in de wachtrij, de taakronde heeft meer dan twee uur niet
-  gedraaid ("taakronde vastgelopen" of "taakronde nooit gedraaid"), of automatisch opschonen staat
+  er staan meer dan 20 berichten in de wachtrij, een groep van de taakronde loopt achter
+  ("taakronde vastgelopen" of "taakronde nooit gedraaid"), of automatisch opschonen staat
   uit ("Automatisch opschonen staat uit — er wordt niets verwijderd"). Met **Bekijk het logboek**
   ga je naar de fouten; die knop zie je alleen als je het logboek mag lezen (standaard alleen een
   beheerder). Staat opschonen uit en mag je Instellingen bewerken, dan staat er ook de knop
   **Opschonen aanzetten**. Zie [Systeem en foutenlog](#systeem-en-foutenlog) en
   [Bewaartermijnen](#bewaartermijnen).
+
+Staat de testmodus aan, dan staat dat ook in de balk. Wie Systeem mag bewerken, ziet eronder de
+lijst **Nog in te stellen**: wat bij de eerste keer instellen nog openstaat, elk met een knop naar
+het juiste tabblad.
 
 ---
 
@@ -621,15 +694,26 @@ wat bewaard is.
 - **Alle bronnen samen: waar haken mensen af?**: van bekeken tot verstuurd, per stap. Bij de stap
   waar binnen het formulier relatief de meesten afhaken staat "hier haken de meesten af".
 - **Per bron**: elke landingspagina, het formulier op de website ("formulier op de website", met de
-  naam van de site) en **Zonder bron** (direct in het portaal, handmatig of van vóór de meting).
+  naam van de site), **Aanmeldpagina** (het eigen formulier `/aanmelden.php` zonder `?bron=`) en
+  **Zonder bron** (direct in het portaal, handmatig of van vóór de meting).
   Per bron: bezoeken, begonnen, aanmeldingen, aangenomen, per 100 bezoeken en de **grootste
-  afhaak** ("Bij stap 2 (Jij)"). Een campagne staat eronder, ingesprongen.
+  afhaak** ("Bij stap 2 (Jij)"). Een campagne staat eronder, ingesprongen: één regel per campagne en
+  per combinatie van UTM-velden, met klein eronder bijvoorbeeld "bron instagram · medium story ·
+  variant video-1".
 
 Een **campagne** maak je door een link te delen met `?bron=` erachter, bijvoorbeeld
 `https://paal13.com/aanmelden/?bron=instagram-mei` of een landingspagina met
 `?bron=flyer-strand`. `utm_campaign` en `utm_source` werken ook. Er is geen cookie nodig: de
-campagne gaat mee met die ene aanmelding. Het bezoek aan het formulier op de website telt pas vanaf
-plugin 2.142; installeer die versie op paal13.com (`wordpress-plugin\bouw-zip.ps1` maakt de ZIP).
+campagne gaat mee met die ene aanmelding en blijft in de bron-code staan als `<bron>/<campagne>`.
+Het bezoek aan het formulier op de website telt pas vanaf plugin 2.142; installeer die versie op
+paal13.com (`wordpress-plugin\bouw-zip.ps1` maakt de ZIP).
+
+Sinds versie 2.145 worden ook de **UTM-velden** van een advertentielink los bewaard: `utm_source`
+(bron), `utm_medium` (medium), `utm_campaign` (campagne) en `utm_content` (variant), bij elk bezoek en
+elke stap in het formulier en bij de aanmelding zelf. Dat werkt op landingspagina's, het formulier op
+de website (vanaf plugin 2.145) en `/aanmelden.php`. Er wordt geen cookie en geen IP-adres bij
+bewaard; de sollicitant ziet de herkomst terug in de download van de eigen gegevens. Meer in de
+Handleiding landingspagina's, onder "UTM-velden".
 
 Bezoeken tellen één keer per half uur per bezoeker. Unieke bezoekers over een heel seizoen zijn niet
 te tellen: het dagpseudoniem wordt na 30 dagen gewist (zie het verwerkingsregister).
@@ -838,8 +922,9 @@ Een tabblad dat niets te tonen heeft, verschijnt niet.
 |---|---|
 | Dossier | Het complete beeld (zie hieronder). Altijd aanwezig. |
 | Kennismakingsformulier | Het kennismakingsformulier voluit. Alleen met het recht op de kennismakingsformulieren en als er een formulier is. |
-| Beschikbaarheid | De weken die de sollicitant kan werken. |
-| Selectiedag | Cijfers en observaties van de selectiedag, met het aantal observaties. |
+| Beschikbaarheid & inzet | Per week wat de sollicitant opgaf en, met leesrecht op de loonplanning, de vastgestelde afspraak en de planning. Een oude link met `?tab=inzet` komt hier ook uit. |
+| Selectiedag | Cijfers en observaties van de selectiedag, met het aantal observaties. Alleen met leesrecht op Selectiedag. |
+| Trainingsweekend | Bevestiging, inchecken, observaties en het gesprek. Alleen met leesrecht op Trainingsweekend. |
 | Ondertekeningen | De documenten, met "x/y" getekend. |
 | Tijdlijn | Alles wat er met dit dossier is gebeurd. Altijd aanwezig. |
 
@@ -909,17 +994,29 @@ bijzonderheden (die kunnen medisch zijn). Het advies is een hulpmiddel; het best
 Heeft de sollicitant bezwaar gemaakt, dan staat daar dat er geen analyse is en er ook geen komt;
 zie [Bezwaar tegen de AI-analyse](#bezwaar-tegen-de-ai-analyse).
 
-### Tabblad Beschikbaarheid
+### Tabblad Beschikbaarheid & inzet
 
-Een tegel per week (W23, W24 ...) met het aantal dagen, en het label **Voorlopig** of
-**Definitief**. Groen is de hele week, oranje deels, blauw een correctie van het bestuur, grijs niet
-beschikbaar. Klik op een week om die te corrigeren; **Volledig bewerken** opent alle weken. Rechts
-staat wat de sollicitant bij de aanmelding als voorkeur opgaf.
+De kaart **Per week** zet per week (W23, W24 ...) drie rijen onder elkaar:
 
-In de kaart **Norm** staat hoeveel dagen per week deze persoon werkt: "5 dagen per week
+- **Opgave**: wat de sollicitant opgaf, met het label **Opgave voorlopig** of **Opgave definitief**.
+  Groen is de hele week, oranje deels, blauw een correctie van het bestuur. Met bewerkrecht op
+  Beschikbaarheid klik je een week aan om die te corrigeren.
+- **Afspraak**: de vastgestelde afspraak, zodra de loonplanning definitief is.
+- **Planning**: hoe de persoon in het actieve scenario staat. Een week waarin meer is gepland dan
+  opgegeven, kleurt rood. De andere scenario's staan ingeklapt onder **Andere scenario's**.
+
+Afspraak en planning zie je alleen met leesrecht op de loonplanning; daar staan loonkosten achter.
+In de kop staat of de afspraak is vastgesteld (met datum en functie), welk scenario de planning is
+en of de persoon vaststaat na het gesprek op het trainingsweekend. Via **Naar de loonplanning**
+open je de loonplanning op deze persoon. Onder het raster pas je met **Inzet afspreken of
+aanpassen** de inzet in het actieve scenario aan (alleen in het lopende seizoen).
+
+Daaronder staat wat de sollicitant bij de aanmelding als voorkeur opgaf (**Uit het formulier**).
+Rechts staat de kaart **Norm**: hoeveel dagen per week deze persoon werkt, "5 dagen per week
 (standaard)" of een afwijkende norm. Met bewerkrecht op Beschikbaarheid kies je bij **Norm (dagen
 per week)** een ander aantal (1 tot en met 6), vul je een **Reden** in en klik je op **Norm
-opslaan**. Zonder dat recht zijn de weektegels en de norm alleen te bekijken. Zie
+opslaan**. In de kaart **Opgave aanpassen** opent **Per dag of per periode bewerken** alle weken.
+Zonder dat recht is alles alleen te bekijken. Zie
 [Beschikbaarheid, dekking en loonplanning](#beschikbaarheid-dekking-en-loonplanning).
 
 ### Tabblad Selectiedag
@@ -927,13 +1024,6 @@ opslaan**. Zonder dat recht zijn de weektegels en de norm alleen te bekijken. Zi
 Per test de cijfers per criterium met het gemiddelde; bij meerdere beoordelaars staat eronder wie
 wat gaf. Daaronder de observaties met beoordelaar, datum en soort. Rechts het totaalgemiddelde en
 het besluit van de nabespreking, met wie het nam en wanneer er is gebeld.
-
-### Tabblad Inzet
-
-Alleen met leesrecht op de loonplanning. Per week: wat de sollicitant opgaf, de vastgestelde
-**afspraak** (groen, zodra de loonplanning definitief is) en hoe de persoon in elk scenario staat
-(de ster is het actieve). Bovenaan of de persoon vaststaat na het gesprek op het trainingsweekend. Via **Naar de
-loonplanning** pas je het aan.
 
 ### Tabblad Trainingsweekend
 
@@ -1186,7 +1276,7 @@ menu meteen bij Beoordelen.
 
 ### Stap 4: nabespreken
 
-Alleen bestuur en beheerder. De scores zijn een advies; jullie gesprek bepaalt het besluit.
+Vraagt de taak **Nabespreken en besluiten** (standaard bestuur en beheerder). De scores zijn een advies; jullie gesprek bepaalt het besluit.
 
 Bovenaan staat hoeveel sollicitanten nog geen besluit hebben, het advies op cijfer (door, twijfel,
 niet) en een snelkoppeling **N randgevallen om eerst te bespreken**. Een randgeval is iemand met
@@ -1212,9 +1302,13 @@ open, of allemaal tegelijk met **Alles uitklappen**.
    veld ernaast. Dit wordt direct opgeslagen ("opgeslagen") en verandert nog niets aan de fase.
 2. Een ander besluit kies je door op een andere knop te klikken. Klik je nog een keer op het
    besluit dat al gekozen is, dan wordt het gewist, samen met de reden ("besluit gewist").
-3. Heeft iemand een besluit Door of Niet, dan staat onderaan **Naar de bellijst**.
+3. Heeft iemand een besluit Door of Niet, dan staat onderaan **Naar de bellijst** (alleen als je ook mag bellen, zie hieronder).
 
 ### Stap 5: de bellijst
+
+Vraagt de eigen taak **Bellen en doorvoeren** (standaard bestuur en beheerder, nooit een
+begeleider): de bellijst toont telefoonnummers en zet de fase om. Wie alleen **Nabespreken en
+besluiten** heeft, ziet de stap Bellijst niet.
 
 Links wie er gebeld moet worden (iedereen met Door, Twijfel of Niet die nog niet is doorgevoerd), met
 telefoonnummer, score, besluit en of er al gebeld is. Bovenaan "x van y gebeld". Rechts de
@@ -1340,8 +1434,8 @@ Liever per persoon, of met de keuze zonder bericht? Dat kan ook bij
 ## Ondertekeningen
 
 **Waar:** Selectie › Ondertekeningen, en per persoon het tabblad Ondertekeningen in het dossier.  
-**Wie:** bestuur en beheerder. Het loonheffingsformulier en de inschrijving als lid openen alleen
-penningmeester en beheerder.
+**Wie:** bestuur en beheerder. Het loonheffingsformulier en de inschrijving als lid opent alleen
+de penningmeester; de beheerder ook niet.
 
 > **In het kort:** hier zie je wie er nog moet tekenen en wat al binnen is. Het scherm opent op
 > Nog open. Bij 18+ tekent de sollicitant zelf in het portaal, onder de 18 tekent een ouder via
@@ -1483,7 +1577,7 @@ Achter een naam kunnen labels staan: **terug** (terugkerende sollicitant) en een
 zoals **3d** (afwijkende norm van dat aantal dagen per week). De onderste rij toont per week
 "aantal beschikbaar / aantal dat het weekend dekt". Een rood getal zit onder de norm. Onderaan
 staat wanneer de gegevens voor het laatst veranderden.
-Met een klik op een naam open je het dossier op het tabblad Beschikbaarheid.
+Met een klik op een naam open je het dossier op het tabblad Beschikbaarheid & inzet.
 
 ### Een verzoek om minder dagen beoordelen
 
@@ -1507,7 +1601,7 @@ Belt iemand dat een week niet gaat, of alleen een paar dagen? Leg dat vast als c
 bestuur. Die overschrijft wat de sollicitant opgaf, en in de tijdlijn staat waarom.
 
 1. Klik in het raster op de cel van die persoon en die week. In het dossier (tabblad
-   Beschikbaarheid) werkt een klik op een weektegel hetzelfde.
+   Beschikbaarheid & inzet) werkt een klik op een week in de rij Opgave hetzelfde.
 2. Rechts opent een paneel. Onder **Dagen deze week** zet je de dagen aan of uit (ma t/m zo), of
    je kiest **Hele week**, **Alleen weekend** of **Deze week niet**. Staat er geen enkele dag aan,
    dan is die persoon die week niet beschikbaar.
@@ -1523,8 +1617,8 @@ terug met **Correctie ongedaan maken**: dan geldt weer wat de sollicitant zelf o
 
 ### Beschikbaarheid volledig bewerken
 
-In het dossier, tabblad Beschikbaarheid, staat in de kaart **Aanpassen** de knop **Volledig
-bewerken**. Die opent het scherm "Beschikbaarheid aanpassen" met twee tabbladen:
+In het dossier, tabblad Beschikbaarheid & inzet, staat in de kaart **Opgave aanpassen** de knop **Per dag
+of per periode bewerken**. Die opent het scherm "Beschikbaarheid aanpassen" met twee tabbladen:
 
 - **Per dag**: een kalender van de hele werkperiode. Groen is beschikbaar, rood niet. Klik op een
   dag en kies **Beschikbaar maken** of **Niet beschikbaar maken**, eventueel met een reden. Een
@@ -1539,7 +1633,7 @@ bewerken**. Die opent het scherm "Beschikbaarheid aanpassen" met twee tabbladen:
 Onderaan staat **Bekijk de dag-export (API-check)**: per dag of iemand beschikbaar is, precies zoals
 het naar het rooster gaat. Een afwijkende norm (bijvoorbeeld drie dagen per week na een
 bestuursbesluit) zie je als oranje label in het raster. Je stelt die in het dossier in, tabblad
-Beschikbaarheid, kaart **Norm**, met een reden (bewerkrecht op Beschikbaarheid).
+Beschikbaarheid & inzet, kaart **Norm**, met een reden (bewerkrecht op Beschikbaarheid).
 
 ### Het dekkingsscherm
 
@@ -1689,7 +1783,9 @@ lonen staan onder Instellingen › Lonen & budget; dat blijft bij het bestuur.
   **Ontbreekt nog: …**. Een compleet, nog niet verwerkt dossier staat al open. Wie Sollicitanten
   mag lezen, ziet de link **Naar het dossier van …**.
 - Per stuk de stand en de knoppen **PDF** of **Download**, en bij de bankpas **Vernietigen**
-  (alleen met verwijderrecht).
+  (alleen met verwijderrecht). **PDF** en **Download** ziet alleen de penningmeester; als admin
+  zie je daar "Alleen de penningmeester" met een slotje, en bovenaan de regel dat je in een
+  noodgeval jezelf in Authentik in de penningmeestersgroep zet (dat wordt vastgelegd).
 - Onderaan de kaart **Verwerkt in de loonadministratie** (met een tussenscherm en **Ja,
   verwerkt**), **Melding opnieuw naar de penningmeester** en **Tijdlijn van de ondertekening**.
 - Onderaan het scherm, zodra er iemand voor in aanmerking komt, de kaart **Te beoordelen voor
@@ -1740,8 +1836,8 @@ aanstaat).
 
 ## Berichten sturen
 
-**Waar:** zijbalk › Communicatie › Berichten, met de tabbladen **Nieuw bericht**, **Verzonden** en **Gepland**  
-**Wie:** met leesrecht op Berichten & sjablonen zie je het scherm. Versturen en het tabblad Gepland vragen bewerkrecht. Standaard hebben bestuur en admin allebei.
+**Waar:** zijbalk › Communicatie › Berichten, met de tabbladen **Nieuw bericht**, **Verzonden**, **Gepland** en **Sjablonen**  
+**Wie:** met leesrecht op Berichten & sjablonen zie je het scherm. Versturen vraagt de taak **Versturen**; de tabbladen Gepland en Sjablonen de taak **Sjablonen en gepland** (zonder die taak staan ze er niet). Standaard hebben bestuur en admin alle drie.
 
 > **In het kort:** Stuur een bericht aan één persoon, een selectie, een hele fase of een groep uit
 > vorige seizoenen, per e-mail, WhatsApp/SMS of allebei. Bekijk eerst het voorbeeld of stuur een
@@ -1829,12 +1925,16 @@ Hier staan de laatste 200 berichten van alle kanalen, ook de automatische.
 Hier staan de regels voor berichten die automatisch op een vast moment uitgaan. Zie
 [Geplande berichten en herinneringen](#geplande-berichten-en-herinneringen).
 
+### Het tabblad Sjablonen
+
+De teksten van alle berichten. Zie [Sjablonen](#sjablonen).
+
 ---
 
 ## Sjablonen
 
-**Waar:** Instellingen › **Sjablonen voor mails** (onderaan het tabbladmenu), of via **Sjabloon bewerken** bij Berichten  
-**Wie:** bewerkrecht op Berichten & sjablonen (standaard bestuur en admin).
+**Waar:** Communicatie › Berichten › tabblad **Sjablonen**, of via **Sjabloon bewerken** bij een bericht. Onderaan het tabbladmenu van Instellingen staat er ook een link naar (**Sjablonen voor mails**).  
+**Wie:** de taak **Sjablonen en gepland** bij Berichten & sjablonen (standaard bestuur en admin).
 
 > **In het kort:** Elk automatisch bericht heeft een sjabloon: de e-mail, de korte tekst voor
 > WhatsApp/SMS en de samenvatting in het portaal. Hier pas je de tekst aan, stel je per soort het
@@ -2099,7 +2199,7 @@ alleen welk veld is gewijzigd, nooit de waarde.
 | Berichten | **Afzender & adressen** | Waar berichten heen gaan: het bestuur (ontvangt de bestuursmeldingen), het contactadres voor sollicitanten, de penningmeester ("loondossier compleet"; leeg is het bestuursadres), de ledenservice (de ondertekende inschrijving als lid; leeg is het bestuursadres) en het adres voor foutmeldingen. Het vinkje voor loondossier-stukken als bijlage: laat dat uit. |
 | Inzet en loon | **Functies** | Per functie de naam, de factor voor het dagloon, de minimum- en maximumleeftijd en de volgorde, met **Sla op** en een voorbeeldberekening. |
 | Inzet en loon | **Lonen & budget** | Alles per kalenderjaar (kies het jaar bovenaan; een seizoen rekent met het jaar van de eerste werkdag): het budget voor loonkosten (voor de balk in de loonplanning; leeg is zonder budget), het vakantietoeslagpercentage (standaard 8), de werkuren per dag (standaard 8), de vaste weekbedragen van de postcommandant voor juni en juli–september, en de minimumuurlonen per leeftijd (15 tot en met 32) voor juni en voor juli/augustus/september, elk met een eigen **Opslaan**. Met **Nieuw jaar op basis van …** kopieer je de tarieven naar het volgende jaar (het budget niet). Zijn de tarieven van een jaar nog niet ingevuld, dan rekent de loonplanning met het vorige jaar en zegt dat erbij. Oude seizoenen veranderen dus niet meer als je nieuwe minimumlonen invoert. |
-| Privacy en bewaren | **Bewaren & opschonen** | Een rode waarschuwing zolang automatisch opschonen uit staat. **Automatisch opschonen inschakelen**, de termijnen per soort gegeven (ook het logboek, het foutenlog en de kopie bankpas), de schakelaars voor de downloadmail aan het bestuur en de bezoekersstatistiek, en het **Opschoon-logboek**. Daaronder de cronjob-regel voor Plesk met **Handmatig uitvoeren** en **Nieuw token maken** (alleen voor wie Systeem mag bewerken) en de stand van de AI- en mailwachtrij. Zie [Bewaartermijnen](#bewaartermijnen). |
+| Privacy en bewaren | **Bewaren & opschonen** | Een rode waarschuwing zolang automatisch opschonen uit staat. **Automatisch opschonen inschakelen**, de termijnen per soort gegeven (ook het logboek, het foutenlog en de kopie bankpas), de schakelaars voor de downloadmail aan het bestuur en de bezoekersstatistiek, en het **Opschoon-logboek**. Daaronder het blok **Automatische taken**: de stand per groep, de regel voor de geplande taak in Plesk met **Nu uitvoeren** (draait alle automatische taken meteen, na bevestiging) en **Nieuw token maken** (alleen voor wie Systeem mag bewerken) en de stand van de AI- en mailwachtrij. Zie [Bewaartermijnen](#bewaartermijnen). |
 | Technisch | **Modules** | Welke modules aanstaan (selectiedag, trainingsweekend, loonplanning, dekking, landingspagina's), met **Opslaan**. Een module die uitstaat verdwijnt uit het menu en uit de rechten, ook voor de beheerder; er wordt niets gewist. Daaronder voor welke ondertekeningen een verificatiecode nodig is (het loonheffingsformulier altijd). |
 | Technisch | **E-mailserver** | Host, poort, beveiliging (STARTTLS, SSL/TLS of Geen), gebruikersnaam, wachtwoord, afzenderadres en afzendernaam. Daaronder **Testmail versturen**: sla eerst op, vul het adres in en klik op **Verstuur testmail**. |
 | Technisch | **Authentik** | De status van de SSO-koppeling, het **Authentik API-token** voor het inloggen van terugkerende sollicitanten via Authentik (verwijderd is alleen inloggen per mail), een overzicht **Wie het beheer in mag** (welke groep bij welke rol hoort; aanpassen onder Rollen & rechten), de koppeling voor competenties (basis-URL en **API-token (service-account)**, **Test verbinding**, **Nu alle sollicitanten verversen**) en de groep-indeling van de competenties (alleen te bekijken). De tokens zijn geheime velden. |
@@ -2241,7 +2341,7 @@ of **2 — uitgebreid**), met **Rol toevoegen**. Een nieuwe rol begint met alle 
 bepaalt alleen welke rol wint bij iemand in meer groepen.
 
 De matrix **Wat mag welke rol?** staat per onderdeel ingeklapt; de kop zegt per rol hoeveel taken
-aanstaan ("Begeleider 3/5 · Bestuur 5/5"). Uitgeklapt zie je per **taak** een regel met uitleg en
+aanstaan ("Begeleider 3/6 · Bestuur 6/6"). Uitgeklapt zie je per **taak** een regel met uitleg en
 per rol een vinkje. Met **Alles bij …** zet je in één keer alle taken van dat onderdeel aan of uit
 voor een rol (half gevuld = een deel staat aan). Elke taak houdt in dat de rol het onderdeel mag
 bekijken. Admin staat vast op alles. **Rechten opslaan** bewaart de hele matrix in één keer; elke
@@ -2252,14 +2352,17 @@ Onderdelen met eigen taken (de rest heeft **Bekijken**, **Wijzigen** en waar het
 
 | Onderdeel | Taken |
 |---|---|
-| Selectiedag | Bekijken · Inchecken · Beoordelen · Voorbereiden (wie komt er, groepen, afmeldingen, tablet en pincode, afsluiten) · Nabespreken en besluiten (nabespreking, bellijst, observaties van anderen weghalen) |
+| Selectiedag | Bekijken · Inchecken · Beoordelen · Voorbereiden (wie komt er, groepen, afmeldingen, tablet en pincode, afsluiten) · Nabespreken en besluiten (nabespreking, het besluit per sollicitant, observaties van anderen weghalen) · Bellen en doorvoeren (de bellijst met telefoonnummers, het gesprek vastleggen en het besluit doorvoeren: fase en bericht) |
 | Trainingsweekend | Bekijken · Inchecken · Beoordelen · Voorbereiden · Gesprekken en besluiten (evaluatie, gesprekken, aannemen of afwijzen) |
 | Sollicitanten | Bekijken · Exporteren · Wijzigen (gegevens, fase, uitnodigen, afwijzen, herinneren) · Verwijderen |
 | Berichten & sjablonen | Bekijken · Versturen · Sjablonen en gepland |
 | Loonplanning | Bekijken · Plannen (weken, scenario's, extra personen, afspraak in het TW-gesprek) · Definitief maken (afspraken vastleggen, vastzetten en ontgrendelen) |
 
 Voorbeeld: een ervaren begeleider die mag meepraten bij de nabespreking maar niet mag indelen,
-krijgt bij Selectiedag **Nabespreken en besluiten** erbij en houdt **Voorbereiden** uit.
+krijgt bij Selectiedag **Nabespreken en besluiten** erbij en houdt **Voorbereiden** en **Bellen en
+doorvoeren** uit. Bellen en doorvoeren is sinds versie 2.145 een eigen taak: Nabespreken en besluiten
+geeft de bellijst niet meer. Standaard hebben bestuur en admin hem; geef hem een begeleider niet,
+want de bellijst toont telefoonnummers en zet de fase om.
 
 Zo staat het op een nieuwe installatie (l = lezen, b = bewerken, v = verwijderen; een taak volgt
 het recht waar hij bij hoort, dus "l" = alle taken die bij bekijken horen, zoals Inchecken en
@@ -2273,7 +2376,7 @@ Beoordelen):
 | Selectiedag | l | l b | – | – | alles |
 | Trainingsweekend | l | l b | – | – | alles |
 | Ondertekeningen | – | l b | – | – | alles |
-| Loondossiers (ID, bankpas, loonheffing) | – | – | l b v | – | alles |
+| Loondossiers (ID, bankpas, loonheffing) | – | – | l b v | – | alles, behalve de inhoud openen |
 | Beschikbaarheid | – | l b | – | l | alles |
 | Dekking | l | l | – | l | alles |
 | Loonplanning | – | l b | l b | – | alles |
@@ -2585,7 +2688,7 @@ termijn aan, lees de verklaring dan even na.
 **Waar:** Instellingen › kaart Versie › **Systeem & updates**; fouten staan in Logboek › **Fouten**  
 **Wie:** Systeem & Updates: bewerkrecht op Systeem, updates & logs (standaard alleen admin). Fouten: leesrecht op Logboek (standaard alleen admin).
 
-> **In het kort:** Systeem & Updates toont de versie, een systeemcontrole met acht onderdelen, de
+> **In het kort:** Systeem & Updates toont de versie, een systeemcontrole met twaalf onderdelen, de
 > herinneringen (proefdraaien) en de changelog. Wordt iets rood of oranje, dan lees je hier wat er
 > mis is. Via de controle Kluis wissel je de kluissleutel. Een technische fout heeft een referentienummer; dat zoek je op in het Logboek onder Fouten.
 > Een los foutenlog met een knop om het te legen bestaat niet meer.
@@ -2604,12 +2707,19 @@ en per onderdeel een vinkje, een waarschuwing of een kruis met uitleg:
 |---|---|
 | Database | Zijn alle tabellen en kolommen aanwezig? |
 | Cron (automatische taken) | Draaien de drie groepen automatische taken op tijd? Berichten elke minuut, herinneringen en uitnodigen elk kwartier, Authentik en opschonen dagelijks. Ligt een groep stil, dan volgt een waarschuwing en daarna een fout: controleer de geplande taak in Plesk (staat onder Instellingen › Bewaren & opschonen). Er is geen vangnet meer bij een paginabezoek. |
-| Mailwachtrij | Wachten er mails langer dan een uur? Dan draait de cron niet of klopt de mailserver niet. |
+| Mailwachtrij | Wachten er mails langer dan een uur? Dan draait de cron niet of klopt de mailserver niet. Zijn er in de laatste 24 uur berichten definitief mislukt? De reden staat in het logboek. |
 | AVG-opschoning | Is de opschoning de laatste drie dagen gedraaid? Staat automatisch opschonen uit, dan is dit een fout. |
 | Mappen & rechten | Kan het systeem uploads wegschrijven? |
-| Configuratie | Zijn het cron-token en het bestuursadres (Instellingen › Afzender & adressen, of de terugval in de configuratie) ingesteld? |
+| Back-up vóór updates | Is er een veilige map voor de automatische back-up die het systeem vóór een database-update maakt, en lukte de laatste? Toont de laatste back-up. Een mislukte back-up houdt een update nooit tegen; het wordt dan oranje. |
+| E-mail en testmodus | Gaat e-mail via een ingestelde SMTP-server? Staat de testmodus aan (alle mail naar één adres, geen WhatsApp of sms), dan is dit oranje. |
+| Inloggen (Authentik) | Is inloggen via Authentik ingesteld? Zonder werkt alleen de wachtwoord-noodingang. Ook een waarschuwing als er Authentik-groepen zijn die vroeger toegang gaven maar bij geen rol horen. |
+| Configuratie | Zijn het cron-token, het bestuursadres (Instellingen › Afzender & adressen, of de terugval in de configuratie), de adressen van penningmeester en ledenservice en de huisregels-PDF ingesteld? Is er geen open seizoen, dan staat dat er ter informatie bij. |
 | Kluis (versleutelde documenten) | Kan het systeem gevoelige documenten versleuteld opslaan? Zonder kluis zijn uploads van ID en bankpas en het loonheffingsformulier geblokkeerd, en kan niemand een authenticator-app instellen. Na het wisselen van de kluissleutel komen er twee waarschuwingen bij: "... versleutelde gegevens staan nog op de oude sleutel" (rond het wisselen af) en "Niets staat meer op de oude sleutel: verwijder KLUIS_SLEUTEL_OUD ..." (laat de technisch beheerder de oude sleutel weghalen). Rood wordt het als gegevens op een sleutel staan die niet meer in de configuratie staat: die zijn onleesbaar tot de sleutel terug is. Bij de controle staat de knop **Kluissleutel wisselen**. |
 | Documentzegel (PDF) | Kan het systeem PDF's verzegelen, en hoe lang is het certificaat nog geldig? Onder 60 dagen komt er een waarschuwing. |
+| Snel antwoorden (PHP-FPM) | Kan de server antwoorden voordat mails en WhatsApp-berichten verstuurd zijn? Zo niet, dan wacht elke bezoeker na een formulier op de verzending. Werk voor de technisch beheerder. |
+
+Heeft een controle losse punten (bijvoorbeeld een ontbrekend adres), dan staat elk punt er apart
+onder met een knop naar het juiste tabblad.
 
 **Controleren & repareren** draait de controle opnieuw en herstelt wat automatisch te herstellen is.
 
@@ -2788,7 +2898,7 @@ Onderin het menu onder **Hulp en handleidingen**. Ook via het vraagteken rechtsb
 
 **Cron** — de automatische taken, via één geplande taak in Plesk die elke minuut draait: berichten en AI elke minuut, herinneringen, geplande berichten en automatisch uitnodigen elk kwartier, en één keer per dag de Authentik-synchronisatie en het opschonen. Draait de geplande taak niet, dan gebeurt er niets van dit alles: een bezoek aan het beheer of portaal vangt het niet meer op.
 
-**Dossier** — de pagina van één sollicitant, met de tabbladen Dossier, Kennismakingsformulier, Beschikbaarheid, Selectiedag, Ondertekeningen en Tijdlijn.
+**Dossier** — de pagina van één sollicitant, met de tabbladen Dossier, Kennismakingsformulier, Beschikbaarheid & inzet, Selectiedag, Trainingsweekend, Ondertekeningen en Tijdlijn.
 
 **Fase** — de stap waarin een sollicitant staat: Aangemeld, Uitgenodigd selectiedag, Aangemeld selectiedag, Selectiedag geweest, Uitgenodigd trainingsweekend, Trainingsweekend geweest, Aangenomen of Afgewezen. Een fasewijziging kan automatisch een bericht en taken in gang zetten.
 
@@ -2800,7 +2910,7 @@ Onderin het menu onder **Hulp en handleidingen**. Ook via het vraagteken rechtsb
 
 **Noodingang** — inloggen met een wachtwoord in dit systeem in plaats van via Authentik, voor als Authentik niet bereikbaar is. Alleen accounts met een wachtwoord kunnen dat.
 
-**Norm** — het aantal mensen dat per dienst nodig is, de optelsom van alle rollen onder Posten & bezetting. Daarnaast bestaat de norm per persoon: standaard vijf dagen per week, aan te passen in het dossier (tabblad Beschikbaarheid).
+**Norm** — het aantal mensen dat per dienst nodig is, de optelsom van alle rollen onder Posten & bezetting. Daarnaast bestaat de norm per persoon: standaard vijf dagen per week, aan te passen in het dossier (tabblad Beschikbaarheid & inzet).
 
 **Oud-strandwacht** — iemand die in een eerder seizoen is aangenomen. Die mag je bij een nieuwe werving benaderen, met een afmeldlink.
 

@@ -171,7 +171,8 @@ namelijk geblokkeerd (zie [Externe bronnen toestaan](#externe-bronnen-toestaan))
 
 Het formulier heeft drie stappen: **Naam**, **Jij** (geboortedatum en, als iemand dat wil,
 geslacht) en **Contact** (e-mailadres, telefoonnummer en het vinkje voor de privacyverklaring).
-Wie 15 is, krijgt in stap 2 een blok voor de toestemming van een ouder of verzorger. Het formulier
+Wie 15 is, krijgt in stap 2 het blok **Akkoord van je ouder of verzorger** (naam van de ouder en
+een vinkje dat die het goed vindt dat het kind solliciteert). Het formulier
 is overal hetzelfde; je kunt het niet per pagina aanpassen.
 
 Na het versturen ziet de bezoeker op dezelfde pagina de bevestiging "Je aanmelding is binnen".
@@ -354,13 +355,22 @@ uiteindelijk zijn aangenomen.
 
 Dat staat op het tabblad **Overzicht** van Landingspagina's, met een keuze voor de periode (dit
 seizoen, 30 of 90 dagen, of alles). Bovenaan de cijfers en de trechter van alle bronnen samen;
-daaronder **Per bron**: elke landingspagina, het formulier op de website en "Zonder bron", met
-bezoeken, begonnen, aanmeldingen, aangenomen, aanmeldingen per 100 bezoeken en de grootste afhaak
-in het formulier. Campagnes staan ingesprongen onder hun bron.
+daaronder **Per bron**: elke landingspagina, het formulier op de website, het eigen formulier
+(**Aanmeldpagina**) en "Zonder bron", met bezoeken, begonnen, aanmeldingen, aangenomen,
+aanmeldingen per 100 bezoeken en de grootste afhaak in het formulier. Campagnes staan ingesprongen
+onder hun bron: één regel per campagne en per combinatie van UTM-velden, met daaronder klein
+bijvoorbeeld "bron instagram · medium story · variant video-1" (zie
+[UTM-velden](#utm-velden)). Een campagne zonder naam, maar wel met UTM-velden, heet "zonder
+campagnenaam".
 
 Het formulier op paal13.com (de WordPress-plugin) telt vanaf plugin 2.142 ook het bezoek en neemt
 een campagne uit het adres mee: `https://paal13.com/aanmelden/?bron=instagram-mei` komt in het
-overzicht onder de website, campagne `instagram-mei`.
+overzicht onder de website, campagne `instagram-mei`. De losse UTM-velden neemt de plugin mee vanaf
+versie 2.145.
+
+Het eigen formulier `https://sollicitatie.paal13.com/aanmelden.php` heet in het overzicht
+**Aanmeldpagina** als er geen `?bron=` in het adres staat; een campagne of UTM-velden komen dan
+daaronder.
 
 ### Campagnes en QR-codes
 
@@ -390,6 +400,33 @@ het adres meegeven: `https://sollicitatie.paal13.com/aanmelden.php?bron=instagra
 Het veld **Doelgroep** bij "Gegevens" is alleen voor jezelf; het staat in het overzicht achter het
 adres.
 
+### UTM-velden
+
+Advertentieplatforms (Meta, Google, TikTok) zetten vaak UTM-velden achter een link, bijvoorbeeld
+`?utm_source=instagram&utm_medium=story&utm_campaign=zomer-2027&utm_content=video-1`. Vier daarvan
+bewaren we los, sinds versie 2.145:
+
+| Veld | In het overzicht |
+|---|---|
+| `utm_source` | bron |
+| `utm_medium` | medium |
+| `utm_campaign` | campagne |
+| `utm_content` | variant |
+
+`utm_term` (het zoekwoord van een zoekadvertentie) bewaren we niet. De waarden worden geschoond
+zoals een campagnenaam: kleine letters, cijfers en koppeltekens, maximaal 40 tekens. Ze worden
+opgeslagen bij elk bezoek en elke stap in het formulier (in de anonieme statistiek) en bij de
+aanmelding zelf, en reizen mee als het formulier wordt verstuurd. Dat werkt op landingspagina's, het
+formulier op de website (plugin 2.145 of nieuwer) en `/aanmelden.php`. Er is geen cookie voor nodig
+en er wordt geen IP-adres bij bewaard.
+
+De campagne blijft daarnaast ook in de bron-code van de aanmelding staan, als `<bron>/<campagne>`
+(bijvoorbeeld `zomer-2027/poster-csg-2027`). Staat er geen `?bron=` in het adres, dan geldt
+`utm_campaign` als campagne, en anders `utm_source`.
+
+De sollicitant ziet de herkomst van de eigen aanmelding terug in de download "je gegevens" (onder
+herkomst). Ze volgen dezelfde bewaartermijn als de rest van de sollicitatie.
+
 ---
 
 ## Wat we van bezoekers bijhouden
@@ -413,7 +450,8 @@ niet mee.
 
 Naast het bezoek houden we bij hoever iemand in het formulier kwam: begonnen met invullen,
 stap 2 bereikt, stap 3 bereikt, verstuurd. Daarvan staat alleen het stapnummer geregistreerd,
-nooit iets wat iemand heeft ingetypt.
+nooit iets wat iemand heeft ingetypt. Kwam de bezoeker via een campagnelink, dan staan de campagne
+en de UTM-velden uit het adres erbij (zie [UTM-velden](#utm-velden)).
 
 Wil je helemaal niets meten, zet dan onder **Instellingen › Bewaren & opschonen** het vinkje
 **Bezoekersstatistiek op de landingspagina's en het aanmeldformulier** uit (standaard staat het

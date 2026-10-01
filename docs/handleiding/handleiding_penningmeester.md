@@ -434,12 +434,15 @@ sollicitant besproken is niet meer doordat iemand met een ander scenario speelt.
 je gewoon verder puzzelen. Bij **Afwijzen** wordt niets vastgezet.
 
 In de Loonplanning zie je dat aan het slotje en "vast na het gesprek". Klik je een week aan, dan staat
-er "Vast na het gesprek op het trainingsweekend: dit is met de sollicitant besproken." Aanpassen kan dan niet.
+er "Vast na het gesprek op het trainingsweekend: dit is met de sollicitant besproken. Aanpassen kan
+via de persoon (naam aanklikken) → Ontgrendelen." Zolang het slot erop zit, kun je de weken niet
+wijzigen. Klik je op de naam, dan staat onder **Vast in alle scenario's** "Vastgezet op ..., in alle
+scenario's."
 
 Moet het toch anders, in een bijzondere situatie:
 
-1. Klik op de naam. Vul bij **Waarom pas je het aan? (komt in het logboek)** een reden in en klik
-   op **Ontgrendelen**.
+1. Klik op de naam. Vul onder **Vast in alle scenario's** bij **Waarom pas je het aan? (komt in het
+   logboek)** een reden in en klik op **Ontgrendelen**.
 2. Pas de planning aan.
 3. Klik op **Vastzetten vanuit dit scenario**. Dat kopieert de planning opnieuw naar alle scenario's.
 
@@ -650,7 +653,8 @@ In het portaal staan na het aannemen deze taken:
 | Huisregels lezen, Paal 13-account activeren | Geen loonstukken. | Tellen niet mee voor het loondossier. |
 
 De strandwacht kan een foto vervangen of verwijderen tot jij het dossier als verwerkt hebt
-gemarkeerd. Alles staat versleuteld in de kluis; alleen jij en de beheerder kunnen het openen.
+gemarkeerd. Alles staat versleuteld in de kluis; alleen jij kunt het openen. De beheerder ziet wel
+of de stukken er zijn en kan ze vernietigen, maar opent de inhoud niet.
 
 ### Wanneer is een loondossier compleet?
 
@@ -684,7 +688,9 @@ Die knop staat er zodra het dossier compleet is.
 ## Het scherm Loondossiers
 
 **Waar:** menu › Inzet & loon › **Loondossiers**  
-**Wie:** penningmeester en beheerder. Het bestuur ziet dit scherm niet.
+**Wie:** penningmeester en beheerder. Het bestuur ziet dit scherm niet. De beheerder ziet de stand
+en kan vernietigen, maar krijgt geen knoppen **PDF** en **Download**: de inhoud opent alleen de
+penningmeester.
 
 > **In het kort:** bovenaan de regels voor deze stukken en de stand, daaronder per strandwacht een
 > kaart die je openklapt. Oranje is nog niet compleet, groen wacht op jou, grijs is verwerkt.

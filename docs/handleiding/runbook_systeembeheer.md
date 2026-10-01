@@ -373,7 +373,7 @@ ontwerpen van landingspagina's (in `uploads/`) komen niet mee.
    geen kopie in e-mail, chat of een gedeelde map.
 7. **Zet de cron van test weer aan.** Het script maakt een nieuw `cron.token`. Draait de taak als
    PHP-script (`cron/run.php`), dan hoef je niets te doen; gebruikt hij de HTTP-regel met het token,
-   neem dan de nieuwe regel over uit Instellingen › Bewaren & opschonen › Cronjob.
+   neem dan de nieuwe regel over uit Instellingen › Bewaren & opschonen › Automatische taken.
 8. **Zet de nieuwe versie op test:** push naar `Development` (of Plesk › Git › Deploy als hij er al
    staat) en open één pagina. De zelfherstelronde van de nieuwe versie draait nu op de kopie. Kijk
    in Systeem & Updates of de migraties en de systeemcontrole goed zijn. Verwacht: "E-mail en
@@ -442,7 +442,7 @@ Alle andere mappen alleen-lezen is prima.
 | `KLUIS_SLEUTEL_VERSIE` | Nummer van de sleutel | Begint op `1`; gaat alleen omhoog bij het wisselen van de sleutel, samen met `KLUIS_SLEUTEL_OUD` |
 | `KLUIS_SLEUTEL_OUD`, `KLUIS_SLEUTEL_OUD_VERSIE` | Vorige sleutel + versie, alleen tijdens het wisselen | Normaal afwezig. Weghalen zodra Systeem › Kluissleutel wisselen 0 over toont; de systeemcontrole herinnert eraan |
 | `DOCUMENTEN_MAP` | Map voor versleutelde documenten, foto's en het zegel | Buiten de webroot. Leeg = `uploads/documenten` (afgeschermd, maar de systeemcontrole waarschuwt) |
-| `BACKUP_MAP` | Map voor de automatische back-up vóór elke update | Optioneel; standaard `<DOCUMENTEN_MAP>/db-backups`. Moet buiten de webroot staan en schrijfbaar zijn: op productie gaat een update anders niet door (zie [Back-up en herstel](#back-up-en-herstel)) |
+| `BACKUP_MAP` | Map voor de automatische back-up vóór elke update | Optioneel; standaard `<DOCUMENTEN_MAP>/db-backups` (zijn beide leeg, dan is er geen back-upmap). Moet buiten de webroot staan en schrijfbaar zijn; anders slaat het systeem deze extra back-up over. De update gaat altijd door, op test en productie; de check "Back-up vóór updates" wordt dan oranje (zie [Back-up en herstel](#back-up-en-herstel)) |
 | `ZEGEL_MAP`, `ZEGEL_NAAM`, `ZEGEL_ORGANISATIE` | Documentzegel (optioneel) | Standaard `<DOCUMENTEN_MAP>/zegel`, automatisch aangemaakt |
 | `ZEGEL_OPENSSL_CNF` | Pad naar `openssl.cnf` (optioneel) | Alleen nodig als openssl zijn configuratie niet zelf vindt; op Cloud86 niet |
 | `SESSION_NAME` | Naam van de sessiecookie | Laten staan (`p13sess`). De sessie leeft vast acht uur (`sessie_start()`); daar is geen constante voor. Staat er in een oude `config.php` nog `SESSION_LIFETIME`, dan mag die regel weg |
@@ -531,7 +531,7 @@ te vernieuwen voor wie Systeem mag bewerken.
 Een sleutel vervangen: API-sleutel met de knop in Website & API (en meteen in de plugin
 invullen); AI-, sms- en WhatsApp-sleutels bij de leverancier vernieuwen en in het beheer
 plakken. Het cron-token vernieuw je met **Nieuw token maken** onder Instellingen › Bewaren &
-opschonen › Cronjob; de oude regel werkt daarna niet meer, dus zet meteen de nieuwe regel in de
+opschonen › Automatische taken; de oude regel werkt daarna niet meer, dus zet meteen de nieuwe regel in de
 Plesk-taak. Doe dat ook als iemand met toegang tot Plesk vertrekt.
 
 ## Cron
@@ -542,7 +542,7 @@ Plesk-taak. Doe dat ook als iemand met toegang tot Plesk vertrekt.
 
 Plesk › Geplande taken › **PHP-script uitvoeren**, elke minuut (`* * * * *`), met als script het
 volledige pad naar `cron/run.php` (staat in het beheer bij Instellingen › Bewaren & opschonen ›
-Cronjob). Vanaf de opdrachtregel is geen token nodig.
+Automatische taken). Vanaf de opdrachtregel is geen token nodig.
 
 Kan de server geen PHP-script plannen, gebruik dan een opdracht (ook elke minuut):
 
@@ -551,7 +551,7 @@ curl -s -H "X-Cron-Token: <cron.token>" "https://sollicitatie.paal13.com/cron/ru
 ```
 
 Het token gaat dan als header mee, zodat het niet in de access-log belandt (`?token=` werkt nog
-voor oude regels). "Nieuw token maken" staat bij de cronjob in Instellingen, net als **Nu
+voor oude regels). "Nieuw token maken" staat in Instellingen bij **Automatische taken**, net als **Nu
 uitvoeren** (draait alle groepen meteen, met bevestiging).
 
 De taken staan in drie groepen (`includes/cron_taken.php`), elk met een eigen interval, lock
@@ -863,7 +863,7 @@ bewerken).
 | Mappen | `uploads/` schrijfbaar | Niet schrijfbaar | Maprechten in Plesk |
 | Back-up vóór updates | Veilige back-upmap buiten de webroot; laatste automatische back-up zichtbaar | Waarschuwing: geen back-upmap, of de laatste back-up vóór een update mislukte (de update zelf ging wel door) | `DOCUMENTEN_MAP` of `BACKUP_MAP` in config (buiten `httpdocs`, schrijfbaar) |
 | E-mail en testmodus | SMTP ingesteld, testmodus uit | Geen SMTP (mail gaat via PHP `mail()`, komt vaak niet aan); of `MAIL_OMLEIDEN` staat aan | Instellingen › E-mailserver; op productie `MAIL_OMLEIDEN` leegmaken |
-| Inloggen (Authentik) | `OIDC_CLIENT_ID` en `OIDC_ISSUER` ingevuld | Leeg of nog een `{{…}}`-plaatshouder: alleen de wachtwoord-noodingang werkt | `config.php`, zie [Authentik (SSO)](#authentik-sso) |
+| Inloggen (Authentik) | `OIDC_CLIENT_ID` en `OIDC_ISSUER` ingevuld | Leeg of nog een `{{…}}`-plaatshouder: alleen de wachtwoord-noodingang werkt. Ook een waarschuwing als Authentik-groepen die vóór 2.132 toegang gaven bij geen rol horen (knop **Rollen koppelen**) | `config.php`, zie [Authentik (SSO)](#authentik-sso) |
 | Configuratie | Cron-token, bestuursadres, adres penningmeester en ledenservice, huisregels-PDF | Iets ontbreekt. Zonder adres voor penningmeester of ledenservice gaan loondocumenten en lidmaatschapsinschrijvingen (met IBAN) naar het bestuursadres. Geen open seizoen staat er alleen ter informatie bij | Knop bij het punt; adressen in Instellingen › Afzender & adressen, huisregels in Instellingen › Algemeen |
 | Kluis | Werkt, documentenmap buiten webroot | Sleutel ontbreekt/ongeldig, map niet schrijfbaar of in webroot; gegevens nog op een oude sleutel, of `KLUIS_SLEUTEL_OUD` staat er nog terwijl niets hem meer nodig heeft | `KLUIS_SLEUTEL`, `DOCUMENTEN_MAP` in config; rechten van de map; [Kluissleutel wisselen](#kluissleutel-wisselen) |
 | Zegel | Certificaat geldig > 60 dagen | Ontbreekt, verloopt of verlopen | Wordt automatisch aangemaakt (10 jaar geldig); bij verlopen: `cert.pem` en `key.enc` in de zegelmap weghalen en een pagina openen |
@@ -942,8 +942,10 @@ bewust: een gelekte back-up zonder sleutel is waardeloos voor een aanvaller.
    terug op PHP `mail()` — dan gaan wachtende berichten gewoon naar echte sollicitanten. Met
    `MAIL_OMLEIDEN` gaat alle e-mail naar jou en worden WhatsApp en sms niet verstuurd. Controleer
    bij het openen dat bovenaan het beheer de balk "Testmodus" staat voordat je iets anders doet.
-4. Log in, draai de systeemcontrole (kluis moet groen zijn) en open als admin één document in
-   een loondossier. Lukt dat, dan kloppen sleutel, zout en bestanden samen.
+4. Log in, draai de systeemcontrole (kluis moet groen zijn) en open één document in een
+   loondossier. Dat kan alleen met de rol penningmeester (een admin opent de inhoud niet); zet
+   jezelf op de testkopie dus ook de rol Penningmeester. Lukt het openen, dan kloppen
+   sleutel, zout en bestanden samen.
 5. Verwijder daarna database, subdomein en kopieën. Noteer datum en uitkomst voor het bestuur.
 
 ## Terugdraaien (rollback)
