@@ -25,6 +25,7 @@ function log_actie_register(): array {
         'geexporteerd'    => ['Geëxporteerd', 'download'],
         'bekeken'         => ['Bekeken', 'oog'],
         'gemigreerd'      => ['Gemigreerd', 'wissel'],
+        'aanmelding_dubbel' => ['Opnieuw aangemeld (bevestiging nog eens gestuurd)', 'mail'],
 
         // Toegang
         'ingelogd'        => ['Ingelogd', 'sleutel'],

@@ -155,15 +155,19 @@ function aanmeld_veld_html(array $veld, array $waarden, string $foutveld, string
     return $uit;
 }
 
-/** Het toestemmingsblok voor ouders (onder de 16 — de AVG-grens, niet de tekengrens van 18). */
+/**
+ * Het toestemmingsblok voor ouders (onder de 16 — de AVG-grens, niet de tekengrens van 18).
+ * Staat standaard zichtbaar: zonder JavaScript moet een 15-jarige het kunnen invullen (de server
+ * eist het, code ouder_nodig). Het script verbergt het meteen voor wie 16 of ouder is.
+ */
 function aanmeld_ouderblok_html(array $waarden, string $foutveld, string $p): string {
     $privacy = aanmeld_privacy_url();
     $inv_naam = $foutveld === 'ouder_toestemming_naam' ? ' aria-invalid="true"' : '';
 
-    return '<div class="af-ouder" id="' . h($p) . '-ouderblok" hidden data-ouder-blok>'
+    return '<div class="af-ouder" id="' . h($p) . '-ouderblok" data-ouder-blok>'
          . '<h3 class="af-subkop">Akkoord van je ouder of verzorger</h3>'
-         . '<p class="af-hulp">Je bent nog geen 16. Daarom moet een ouder of verzorger het goed vinden dat je '
-         . 'solliciteert. Vul samen even dit blok in.</p>'
+         . '<p class="af-hulp">Ben je nog geen 16? Dan moet een ouder of verzorger het goed vinden dat je '
+         . 'solliciteert. Vul dit blok dan samen in.</p>'
          . '<div class="af-groep af-vol" data-af-veld="ouder_toestemming_naam">'
          . '<label for="' . h($p) . '-oudernaam">Naam ouder of verzorger</label>'
          . '<input type="text" id="' . h($p) . '-oudernaam" name="ouder_toestemming_naam"'

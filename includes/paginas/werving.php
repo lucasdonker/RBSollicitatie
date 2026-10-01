@@ -337,6 +337,39 @@ function pag_campagne_uit(array $in, string $paginabron = ''): string {
     return '';
 }
 
+/**
+ * De UTM-velden die we los bewaren (2.145.0), met hun naam in het beheer. utm_term laten we weg:
+ * dat is het zoekwoord van een betaalde zoekadvertentie, en dat gebruiken we niet.
+ * Dezelfde namen als kolom in pagina_events en sollicitaties.
+ */
+function pag_utm_velden(): array {
+    return ['utm_source' => 'bron', 'utm_medium' => 'medium', 'utm_campaign' => 'campagne', 'utm_content' => 'variant'];
+}
+
+/**
+ * De UTM-waarden van dit verzoek, geschoond (pag_campagne_schoon), altijd met alle vier de sleutels
+ * ('' = niet meegegeven). Eerst het verborgen formulierveld (p13_utm_source …), dan het adres.
+ */
+function pag_utm_uit(array $in): array {
+    $uit = [];
+    foreach (pag_utm_velden() as $k => $_l) {
+        $ruw = $in['p13_' . $k] ?? $in[$k] ?? '';
+        $uit[$k] = is_string($ruw) ? pag_campagne_schoon($ruw) : '';
+    }
+    return $uit;
+}
+
+/** "bron instagram · medium story · variant video-1" (de campagne alleen als die afwijkt van $campagne). */
+function pag_utm_tekst(array $utm, string $campagne = ''): string {
+    $delen = [];
+    foreach (pag_utm_velden() as $k => $label) {
+        $v = (string)($utm[$k] ?? '');
+        if ($v === '' || ($k === 'utm_campaign' && $v === $campagne)) continue;
+        $delen[] = $label . ' ' . $v;
+    }
+    return implode(' · ', $delen);
+}
+
 /** "<paginabron>/<campagne>", ingekort zodat het in bron_code (80 tekens) past. */
 function pag_bron_met_campagne(string $bron, string $campagne): string {
     $campagne = pag_campagne_schoon($campagne);

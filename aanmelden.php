@@ -27,6 +27,11 @@ $ingebed = !empty($_GET['ingebed']);
 // Bron-attributie: waar komt deze bezoeker vandaan? (landingspagina/advertentie)
 // Komt binnen via ?bron=... of in de POST, zodat hij door de hele flow meereist.
 $bron_code = substr(trim((string)($_POST['bron_code'] ?? $_GET['bron'] ?? '')), 0, 80);
+// Zonder ?bron= heet deze pagina zelf de bron (in Landingspagina's › Overzicht: "Aanmeldpagina"),
+// zodat een campagne (utm_campaign, p13_campagne) en het bezoek ergens bij horen.
+if ($bron_code === '') $bron_code = 'aanmelden';
+$campagne = function_exists('pag_campagne_uit') ? pag_campagne_uit($_POST + $_GET, $bron_code) : '';
+$utm = function_exists('pag_utm_uit') ? pag_utm_uit($_POST + $_GET) : [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $open) {
     // csrf, maar bij een verlopen sessie het formulier opnieuw mét de invoer (zoals het seintje hieronder),
@@ -44,19 +49,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $open) {
 
     if ($fout === '') {
         // Bron meegeven aan de gedeelde bron van waarheid.
-        $invoer = $_POST;
-        if ($bron_code !== '') {
-            $invoer['bron_code'] = $bron_code;
-            if (function_exists('pag_via_bron')) {
-                $lp = pag_via_bron($bron_code);
-                if ($lp) $invoer['bron_label'] = $lp['titel'] ?? $bron_code;
-            }
+        $invoer = $utm + $_POST;
+        $invoer['bron_code'] = function_exists('pag_bron_met_campagne') ? pag_bron_met_campagne($bron_code, $campagne) : $bron_code;
+        if (function_exists('pag_via_bron')) {
+            $lp = pag_via_bron($bron_code);
+            if ($lp) $invoer['bron_label'] = ($lp['titel'] ?? $bron_code) . ($campagne !== '' ? ' · ' . $campagne : '');
         }
         $resultaat = sollicitatie_aanmaken($invoer, ['ip' => $_SERVER['REMOTE_ADDR'] ?? '', 'via' => 'website_formulier']);
         if ($resultaat['ok']) {
             // Doorsturen na succes, anders levert vernieuwen een tweede aanmelding op.
             $q = ['ok' => 1];
-            if ($bron_code !== '') $q['bron'] = $bron_code;
+            if ($bron_code !== 'aanmelden') $q['bron'] = $bron_code;
             if ($ingebed) $q['ingebed'] = 1;
             header('Location: ' . APP_URL . '/aanmelden.php?' . http_build_query($q), true, 303);
             exit;
@@ -100,6 +103,8 @@ if (!$open) {
         'fout'      => $fout,
         'code'      => $code,
         'csrf'      => true,
+        // Het bezoek telt via /track.php, zoals op de website; een landingspagina-bron telt p.php al.
+        'bezoek_meten' => !(function_exists('pag_via_bron') && pag_via_bron($bron_code)),
         'prefix'    => 'af',
     ]);
 }

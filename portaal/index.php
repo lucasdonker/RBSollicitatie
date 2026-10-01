@@ -156,13 +156,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['code_submit'])) {
     }
 }
 
-if (isset($_GET['uitloggen'])) {
-    // Uitloggen moet ook het apparaat-token intrekken; anders ben je bij de volgende
-    // pagina gewoon weer ingelogd en lijkt uitloggen stuk.
-    if (function_exists('portaal_onthoud_intrekken_dit')) portaal_onthoud_intrekken_dit();
-    unset($_SESSION['portaal_sol_id'], $_SESSION['portaal_email'], $_SESSION['portaal_via_apparaat']);
+// Uitloggen alleen via POST met csrf (portaal_uitlog_knop()); een link kon een andere site je laten
+// uitloggen. Ook het apparaat-token gaat weg, anders ben je bij de volgende pagina weer ingelogd.
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uitloggen'])) {
+    if (portaal_ingelogd()) csrf_check();   // verlopen sessie: niets te beschermen, geen foutpagina
+    portaal_uitloggen();
     redirect(APP_URL . '/portaal/');
 }
+if (isset($_GET['uitloggen'])) redirect(APP_URL . '/portaal/');   // oude link: niets doen
 
 // Oude links naar het Taken-tabblad (?tab=taken) → eigen pagina
 if ($stap === 'dossier' && ($_GET['tab'] ?? '') === 'taken') redirect(APP_URL . '/portaal/taken.php');

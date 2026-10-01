@@ -56,9 +56,11 @@ $is_post = ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST';
 // adres. De paginabron blijft de bron; de campagne komt erachter (zie includes/paginas/werving.php).
 $paginabron = (string)($pagina['bron_code'] ?: $pagina['slug']);
 $campagne = pag_campagne_uit(($is_post ? $_POST : []) + $_GET, $paginabron);
+// De losse UTM-velden (bron, medium, campagne, variant) reizen op dezelfde manier mee.
+$utm = pag_utm_uit(($is_post ? $_POST : []) + $_GET);
 
 if ($is_post && isset($_POST['p13_form'])) {
-    $res = pag_formulier_verwerk($pagina, $_POST, $campagne);
+    $res = pag_formulier_verwerk($pagina, $_POST, $campagne, $utm);
     if ($res['ok']) {
         // Na succes doorsturen, zodat vernieuwen geen tweede aanmelding oplevert.
         header('Location: ' . pag_publieke_url($pagina) . '?ok=1#aanmelden', true, 303);
@@ -68,13 +70,13 @@ if ($is_post && isset($_POST['p13_form'])) {
     $staat = ['fout' => $res['fout'], 'code' => $res['code'], 'waarden' => $_POST];
 }
 
-$formulier = $gelukt ? pag_succes_html() : pag_formulier_html($pagina, $staat, $campagne);
+$formulier = $gelukt ? pag_succes_html() : pag_formulier_html($pagina, $staat, $campagne, $utm);
 
 // ── Statistiek ───────────────────────────────────────────────────────────
 // Alleen echte bezoeken van een gepubliceerde pagina; een voorbeeld van een beheerder niet.
 // Het bezoek telt bij de pagina (pagina_id); de bron-code draagt de campagne mee.
 if ($status === 'gepubliceerd' && !$is_voorbeeld && ($_SERVER['REQUEST_METHOD'] ?? '') === 'GET' && !$gelukt) {
-    pag_track('bezoek', (int)$pagina['id'], pag_bron_met_campagne($paginabron, $campagne));
+    pag_track('bezoek', (int)$pagina['id'], pag_bron_met_campagne($paginabron, $campagne), null, $utm);
 }
 
 // ── Uitsturen ────────────────────────────────────────────────────────────

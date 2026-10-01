@@ -8,7 +8,7 @@
  *
  * Bewust klein gehouden:
  *  - geen sessie, geen cookie, geen invoer van de bezoeker — alleen het soort gebeurtenis,
- *    de bron en een stapnummer
+ *    de bron, een stapnummer en de UTM-velden uit het adres (geschoond)
  *  - geen API-sleutel: dit is publiek en anoniem. De sleutel zou op een publieke pagina
  *    tóch meegestuurd moeten worden en daarmee geen sleutel meer zijn
  *  - alleen de gebeurtenissen die echt uit een browser kunnen komen (gestart, stap, verlaten, en
@@ -51,6 +51,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST')     { track_klaar(405); exit;
 $type   = substr(trim((string)($_POST['t'] ?? '')), 0, 30);
 $bron   = substr(trim((string)($_POST['b'] ?? '')), 0, 80);
 $detail = substr(trim((string)($_POST['d'] ?? '')), 0, 40);
+// UTM uit het adres van de pagina (utm_source …), geschoond tot a-z0-9- en 40 tekens; nooit vrije tekst.
+$utm    = function_exists('pag_utm_uit') ? pag_utm_uit(array_intersect_key($_POST, pag_utm_velden())) : [];
 
 track_klaar(204);
 
@@ -75,4 +77,4 @@ $pagina = ($bron !== '' && function_exists('pag_via_bron')) ? pag_via_bron($bron
 // een landingspagina telt zijn bezoek zelf (p.php), anders telt het dubbel. pag_track() filtert
 // bots en telt dezelfde bezoeker binnen een half uur maar één keer.
 if ($type === 'bezoek' && ($bron === '' || $pagina)) exit;
-pag_track($type, isset($pagina['id']) ? (int)$pagina['id'] : null, $bron !== '' ? $bron : null, $detail !== '' ? $detail : null);
+pag_track($type, isset($pagina['id']) ? (int)$pagina['id'] : null, $bron !== '' ? $bron : null, $detail !== '' ? $detail : null, $utm);

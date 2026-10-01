@@ -344,7 +344,21 @@ class P13_Formulier {
             'ouder_toestemming_naam' => $tekst('ouder_toestemming_naam'),
             'bron_code'              => self::bron_code(sanitize_key($tekst('p13_bron') ?: (string)P13_Api::instelling('bron', 'website'))),
             'bron_label'             => get_bloginfo('name'),
-        ];
+        ] + self::utm();
+    }
+
+    /**
+     * De losse UTM-velden (utm_source, utm_medium, utm_campaign, utm_content), sinds 2.145.0. Het
+     * script zet ze in verborgen velden p13_utm_*; zonder script staan ze nog in het adres. Het
+     * sollicitatiesysteem schoont ze zelf (pag_utm_uit()); hier alleen de lengte begrenzen.
+     */
+    private static function utm(): array {
+        $uit = [];
+        foreach (['utm_source', 'utm_medium', 'utm_campaign', 'utm_content'] as $k) {
+            $ruw = $_POST['p13_' . $k] ?? $_GET[$k] ?? '';
+            if (is_string($ruw) && $ruw !== '') $uit[$k] = substr(sanitize_text_field(wp_unslash($ruw)), 0, 80);
+        }
+        return $uit;
     }
 
     /**

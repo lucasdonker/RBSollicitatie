@@ -116,7 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Huisregels-PDF: in de bijlagenbibliotheek zetten en als taak-document koppelen (of losmaken)
         if (!empty($_FILES['huisregels_upload']['tmp_name']) && function_exists('bijlage_opslaan')) {
-            $hu = bijlage_opslaan($_FILES['huisregels_upload'], (int)($_bhd['id'] ?? 0), 'Huisregels (taak aangenomen)');
+            $hu = bijlage_opslaan($_FILES['huisregels_upload'], (int)huidige_beheerder()['id'], 'Huisregels (taak aangenomen)');
             if ($hu['ok']) {
                 $velden['taken.huisregels_bijlage_id'] = (string)$hu['id'];
                 if (function_exists('audit_log')) audit_log('gewijzigd', 'instelling', null, ['veld' => 'taken.huisregels_bijlage_id', 'bijlage' => $hu['id']]);

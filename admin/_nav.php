@@ -79,7 +79,10 @@ $_item = function (array $i) use ($nav_actief) {
       <?php if ($nav_portaal): ?>
         <a href="<?= APP_URL ?>/wissel.php?naar=portaal"><?= icoon('wissel', 14) ?>Mijn sollicitatie</a>
       <?php endif; ?>
-      <a href="<?= APP_URL ?>/admin/uitloggen.php"><?= icoon('uitloggen', 14) ?>Uitloggen</a>
+      <form method="post" action="<?= APP_URL ?>/admin/uitloggen.php" class="bh-uitlog">
+        <?= csrf_input() ?>
+        <button type="submit"><?= icoon('uitloggen', 14) ?>Uitloggen</button>
+      </form>
     </div>
   </div>
 </nav>

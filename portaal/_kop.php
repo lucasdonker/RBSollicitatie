@@ -67,7 +67,7 @@ $_bel = '<a href="' . APP_URL . '/portaal/berichten.php" class="pt-topbar-actie"
     <?php elseif ($_heeft_nav): ?>
       <?= $_bel ?>
     <?php elseif (function_exists('portaal_ingelogd') && portaal_ingelogd()): ?>
-      <a href="<?= APP_URL ?>/portaal/?uitloggen=1" class="pt-topbar-actie" aria-label="Uitloggen"><?= icoon('uitloggen', 20) ?></a>
+      <?= portaal_uitlog_knop('pt-topbar-actie', 20) ?>
     <?php endif; ?>
   </header>
 <?php endif; ?>

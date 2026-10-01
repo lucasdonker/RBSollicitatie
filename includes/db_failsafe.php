@@ -122,6 +122,13 @@ function db_verwachte_kolommen(): array {
         'sollicitaties' => [
             'bron_code'  => 'VARCHAR(80) DEFAULT NULL',
             'bron_label' => 'VARCHAR(150) DEFAULT NULL',
+            // 2.145.0: UTM van de aanmelding (pag_utm_velden()), geschoond tot a-z0-9-.
+            'utm_source'   => 'VARCHAR(40) DEFAULT NULL',
+            'utm_medium'   => 'VARCHAR(40) DEFAULT NULL',
+            'utm_campaign' => 'VARCHAR(40) DEFAULT NULL',
+            'utm_content'  => 'VARCHAR(40) DEFAULT NULL',
+            // 2.145.0: sessiegeneratie, "overal uitloggen" (includes/portaal_login.php).
+            'portaal_sessie_gen' => 'INT NOT NULL DEFAULT 0',
         ],
     ];
 }

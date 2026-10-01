@@ -2,7 +2,7 @@
 /**
  * Feedback van lifeguards vastleggen of wissen (admin/_lg_feedback.php). Gewone formulieren,
  * werkt zonder JavaScript: na opslaan terug naar de pagina waar je was (SD-nabespreking of
- * TW-gesprek). Recht: bewerken op de module van het moment (lg_feedback_module()).
+ * TW-gesprek). Recht: dezelfde taak als dat scherm (lg_feedback_module() + lg_feedback_taak()).
  * Logica in includes/lg_feedback.php.
  */
 require_once __DIR__ . '/../includes/functions.php';
@@ -21,7 +21,7 @@ if (!str_starts_with($terug, rtrim(APP_URL, '/') . '/admin/')) $terug = APP_URL 
 if ($actie === 'lg_feedback') {
     $sol    = (int)($_POST['sol_id'] ?? 0);
     $moment = (string)($_POST['moment'] ?? '');
-    vereis_recht(lg_feedback_module($moment), 'bewerken');
+    vereis_recht(lg_feedback_module($moment), lg_feedback_taak($moment));
     $sz = false;
     try {
         $q = db()->prepare("SELECT seizoen_id FROM sollicitaties WHERE id=?");
@@ -36,7 +36,7 @@ if ($actie === 'lg_feedback') {
 if ($actie === 'lg_feedback_wis') {
     $rij = lg_feedback_rij((int)($_POST['id'] ?? 0));
     if (!$rij) { flash('fout', 'Die feedback bestaat niet (meer).'); redirect($terug); }
-    vereis_recht(lg_feedback_module((string)$rij['moment']), 'bewerken');
+    vereis_recht(lg_feedback_module((string)$rij['moment']), lg_feedback_taak((string)$rij['moment']));
     $gewist = lg_feedback_wissen((int)$rij['id'], (int)$ik['id'], ($ik['rol'] ?? '') === 'admin');
     flash($gewist ? 'succes' : 'fout', $gewist ? 'Feedback verwijderd.' : 'Niet verwijderd: alleen wie het vastlegde (of een admin) kan dat.');
     redirect($terug . '#lg-feedback-' . (int)$rij['sollicitatie_id']);

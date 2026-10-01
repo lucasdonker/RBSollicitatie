@@ -75,6 +75,10 @@ function pag_auto_setup(): void {
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
         if (function_exists('db_kolom_verzeker')) db_kolom_verzeker($db, 'pagina_events', 'detail', 'VARCHAR(40) DEFAULT NULL');
+        // 2.145.0: UTM los per gebeurtenis (pag_utm_velden()); de campagne blijft ook in bron_code.
+        if (function_exists('db_kolom_verzeker') && function_exists('pag_utm_velden')) {
+            foreach (pag_utm_velden() as $k => $_l) db_kolom_verzeker($db, 'pagina_events', $k, 'VARCHAR(40) DEFAULT NULL');
+        }
         pag_events_enum_bij($db);
 
         pag_rechten_seed();

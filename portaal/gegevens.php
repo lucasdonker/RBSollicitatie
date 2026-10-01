@@ -46,8 +46,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['kanaal_opslaan'])) {
 }
 
 /* "Blijf ingelogd" moet je ook kunnen terugdraaien — bijvoorbeeld als je je telefoon
-   kwijt bent. Dit trekt álle apparaten in, ook het huidige; daarna moet overal opnieuw
-   worden ingelogd. Dat is de bedoeling. */
+   kwijt bent. Dit trekt álle onthouden apparaten in en beëindigt de open sessies elders
+   (portaal_sessies_beeindigen()); alleen deze sessie blijft. */
 $apparaten_flash = $_gf['apparaten'] ?? null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['apparaten_vergeten'])) {
     csrf_check();
@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['apparaten_vergeten'])
         portaal_onthoud_intrekken_alle($sol_id);
         portaal_onthoud_cookie('');
         if (function_exists('audit_log')) audit_log('apparaten_vergeten', 'sollicitatie', $sol_id, ['via' => 'portaal']);
-        $gegevens_klaar('apparaten', 'Klaar — op elk apparaat moet nu opnieuw worden ingelogd.');
+        $gegevens_klaar('apparaten', 'Klaar. Op alle andere apparaten ben je nu uitgelogd en moet je opnieuw inloggen.');
     }
 }
 $apparaten_aantal = function_exists('portaal_onthoud_aantal') ? portaal_onthoud_aantal($sol_id) : 0;
@@ -363,7 +363,7 @@ require __DIR__ . '/_kop.php';
     <?php if ($_kan_beheer): ?>
       <a href="<?= APP_URL ?>/wissel.php?naar=beheer"><?= icoon('wissel', 15) ?> Naar beheer</a>
     <?php endif; ?>
-    <a href="<?= APP_URL ?>/portaal/?uitloggen=1"><?= icoon('uitloggen', 15) ?> Uitloggen</a>
+    <?= portaal_uitlog_knop('pt-voetlink-knop', 15, 'Uitloggen') ?>
     <a href="https://paal13.com">paal13.com</a>
   </div>
 

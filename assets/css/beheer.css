@@ -88,6 +88,14 @@ html[data-theme="dark"] .bh-nav-link.actief { background: var(--surface); color:
   border-radius: 8px; font-size: 12px; color: var(--zijbalk-zacht); text-decoration: none;
 }
 .bh-zijbalk-acties a:hover { background: var(--zijbalk-vlak); color: #fff; }
+/* Uitloggen = formulier met knop (POST + csrf), zelfde uiterlijk als de links erboven. */
+.bh-uitlog { display: contents; }
+.bh-uitlog > button {
+  display: flex; align-items: center; gap: 8px; min-height: 36px; padding: 6px 10px; width: 100%;
+  border: 0; border-radius: 8px; background: none; font: inherit; font-size: 12px; text-align: left;
+  color: var(--zijbalk-zacht); cursor: pointer;
+}
+.bh-uitlog > button:hover { background: var(--zijbalk-vlak); color: #fff; }
 
 .bh-hoofd { flex: 1; min-width: 0; margin-left: 232px; display: flex; flex-direction: column; }
 

@@ -24,7 +24,7 @@ $_stappen = [
     'inchecken'    => ['Inchecken',    'selectie_inchecken.php',     'selectiedag', 'inchecken'],
     'beoordelen'   => ['Beoordelen',   'selectiedag.php',            'selectiedag', 'lezen'],
     'nabespreking' => ['Nabespreking', 'selectie_nabespreking.php',  'selectiedag', 'nabespreken'],
-    'bellijst'     => ['Bellijst',     'selectie_nabespreking.php?tab=bellijst', 'selectiedag', 'nabespreken'],
+    'bellijst'     => ['Bellijst',     'selectie_nabespreking.php?tab=bellijst', 'selectiedag', 'bellen'],
 ];
 $sb_stappen = [];
 foreach ($_stappen as $_k => $_s) {

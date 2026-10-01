@@ -497,7 +497,19 @@ function huidige_beheerder(): array {
 }
 
 // ── Portaal auth (sollicitant) ────────────────────────────────
-function portaal_ingelogd(): bool { sessie_start(); return !empty($_SESSION['portaal_sol_id']); }
+/**
+ * Ingelogd in het portaal? Eén keer per verzoek ook: hoort de sessie nog bij de huidige
+ * sessiegeneratie (portaal_sessie_geldig() in portaal_login.php)? "Vergeet alle apparaten" en een
+ * gestolen apparaat-token hogen die op; dan zijn open sessies op andere apparaten meteen uitgelogd.
+ */
+function portaal_ingelogd(): bool {
+    sessie_start();
+    if (empty($_SESSION['portaal_sol_id'])) return false;
+    if (!isset($GLOBALS['_p13_portaal_sessie_ok'])) {
+        $GLOBALS['_p13_portaal_sessie_ok'] = !function_exists('portaal_sessie_geldig') || portaal_sessie_geldig();
+    }
+    return $GLOBALS['_p13_portaal_sessie_ok'];
+}
 
 /** Elke portaal-pagina (behalve login/token-pagina's) begint hiermee: niet ingelogd → inlogscherm. */
 function portaal_vereis_login(): int {
@@ -526,6 +538,8 @@ function pagina_404(): never {
 function login_portaal(int $sol_id, string $email): void {
     sessie_start(); session_regenerate_id(true);
     $_SESSION['portaal_sol_id'] = $sol_id; $_SESSION['portaal_email'] = $email; $_SESSION['_t'] = time();
+    $_SESSION['portaal_gen'] = function_exists('portaal_sessie_gen') ? portaal_sessie_gen($sol_id) : 0;
+    $GLOBALS['_p13_portaal_sessie_ok'] = true;
 }
 
 // ── OTP ───────────────────────────────────────────────────────

@@ -3,10 +3,25 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.144.0');
+define('APP_VERSIE', '2.145.0');
 
 function app_changelog(): array {
     return [
+        '2.145.0' => [
+            'datum'  => '2026-10-01',
+            'titel'  => 'UTM per campagne, bellijst als eigen taak en veiliger uitloggen',
+            'punten' => [
+                'Landingspagina\'s › Overzicht: per campagne zie je nu ook de UTM-bron, het medium en de variant (utm_source, utm_medium, utm_content), van landingspagina\'s, het formulier op de website en /aanmelden.php',
+                '/aanmelden.php verwerkt nu ook de campagne uit de link en telt het bezoek; zonder ?bron= heet hij Aanmeldpagina',
+                'De bellijst is een eigen taak, Bellen en doorvoeren. Een begeleider ziet hem nooit standaard; Nabespreken geeft hem niet meer',
+                'Feedback van strandwachten vastleggen vraagt dezelfde taak als het scherm (Nabespreken bij de selectiedag, Gesprekken bij het weekend)',
+                'Aanmelden zonder JavaScript: het blok voor de ouder staat er nu gewoon, zodat een 15-jarige zich kan aanmelden',
+                'Een geboortedatum in de toekomst of ouder dan 100 jaar wordt geweigerd',
+                'Opnieuw aanmelden met een bekend e-mailadres zegt niet meer dat het adres bekend is; de eigenaar krijgt de bevestiging nog eens',
+                'Uitloggen is een knop in plaats van een link, in portaal en beheer. Vergeet alle apparaten logt ook open sessies elders uit',
+                'De uploader van de huisregels wordt weer goed vastgelegd',
+            ],
+        ],
         '2.144.0' => [
             'datum'  => '2026-09-30',
             'titel'  => 'Instellingen: op één lijn en ingedeeld naar wat je komt doen',

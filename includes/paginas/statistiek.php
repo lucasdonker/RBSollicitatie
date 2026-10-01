@@ -133,7 +133,7 @@ function pag_bezoek_recent(?int $pagina_id, string $hash): bool {
  * Leg een gebeurtenis vast. Alleen het type, de pagina/bron, een stapnummer en het
  * dag-pseudoniem — nooit iets wat iemand heeft ingevuld.
  */
-function pag_track(string $type, ?int $pagina_id, ?string $bron_code = null, ?string $detail = null): void {
+function pag_track(string $type, ?int $pagina_id, ?string $bron_code = null, ?string $detail = null, array $utm = []): void {
     if (!in_array($type, pag_event_typen(), true)) return;
     if (function_exists('instelling_bool') && !instelling_bool('paginas.tracking', true)) return;
     // Alleen de serverkant-gebeurtenissen (een echte aanmelding, een weigering) tellen bij bots
@@ -146,8 +146,12 @@ function pag_track(string $type, ?int $pagina_id, ?string $bron_code = null, ?st
     try {
         pag_auto_setup();
         if ($type !== 'formulier_klaar' && pag_event_recent($type, $pagina_id, pag_bezoeker_hash(), $detail)) return;
-        db()->prepare("INSERT INTO pagina_events (pagina_id, bron_code, type, detail, bezoeker_hash) VALUES (?,?,?,?,?)")
-            ->execute([$pagina_id, $bron_code, $type, $detail, pag_bezoeker_hash()]);
+        // UTM alleen meeschrijven als er iets is (en via pag_utm_uit geschoond): dan blijft een oude
+        // aanroep zonder UTM werken, ook als de kolommen er nog niet zijn.
+        $utm = ($utm && function_exists('pag_utm_uit')) ? array_filter(array_intersect_key(pag_utm_uit($utm), $utm)) : [];
+        $kol = array_merge(['pagina_id', 'bron_code', 'type', 'detail', 'bezoeker_hash'], array_keys($utm));
+        db()->prepare("INSERT INTO pagina_events (" . implode(', ', $kol) . ") VALUES (" . implode(',', array_fill(0, count($kol), '?')) . ")")
+            ->execute(array_merge([$pagina_id, $bron_code, $type, $detail, pag_bezoeker_hash()], array_values($utm)));
     } catch (\Throwable $e) { error_log('pag_track: ' . $e->getMessage()); }
 }
 

@@ -108,6 +108,7 @@ function export_dossier_van(int $sol_id, bool $met_formulier = false): array {
         'Fase'            => function_exists('fase_label') ? fase_label($s['fase'] ?? '') : ($s['fase'] ?? ''),
         'Aangemeld op'    => !empty($s['aangemeld_op']) ? date('d-m-Y', strtotime($s['aangemeld_op'])) : '',
         'Herkomst (bron)' => $s['bron_label'] ?? ($s['bron_code'] ?? ''),
+        'Herkomst (UTM)'  => function_exists('pag_utm_tekst') ? pag_utm_tekst($s) : '',
     ];
     $formulier = $met_formulier ? [
         'Adres'           => export_adres_tekst($blk),

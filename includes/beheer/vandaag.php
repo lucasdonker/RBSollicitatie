@@ -299,7 +299,7 @@ function bh_vandaag_hoofdtaak_bepalen(int $sid, string $seizoen_fase, ?array $se
                 return $taak(['titel' => 'De bellijst afwerken', 'tekst' => $tekst . '.',
                         'knop'   => 'Bellijst openen', 'url' => APP_URL . '/admin/selectie_nabespreking.php?tab=bellijst',
                         'gedaan' => $doorgevoerd, 'totaal' => $doorgevoerd + $open, 'klaar' => false],
-                    'selectiedag', 'bewerken');
+                    'selectiedag', 'bellen');
             }
             // Terugval zonder selectiedag-module: de oude telling op fase.
             $n = (int)($t['selectiedag_geweest'] ?? 0);
@@ -311,7 +311,7 @@ function bh_vandaag_hoofdtaak_bepalen(int $sid, string $seizoen_fase, ?array $se
             return $taak(['titel' => 'De bellijst afwerken',
                     'tekst'  => $n . ' sollicitanten van de selectiedag zijn nog niet doorgevoerd.',
                     'knop'   => 'Bellijst openen', 'url' => APP_URL . '/admin/selectie_nabespreking.php?tab=bellijst',
-                    'gedaan' => $door, 'totaal' => $n + $door, 'klaar' => false], 'selectiedag', 'bewerken');
+                    'gedaan' => $door, 'totaal' => $n + $door, 'klaar' => false], 'selectiedag', 'bellen');
 
         case 'trainingsweekend':
             $n = (int)($t['uitgenodigd_tw'] ?? 0);
@@ -464,9 +464,11 @@ function bh_vandaag_werkbak(?array $seizoen, array $hoofdtaak): array {
         $zet($n, 'verzoek om minder dagen te beoordelen', 'verzoeken om minder dagen te beoordelen', $a . 'beschikbaarheid.php?toon=verzoek', 'Beoordelen', 'oranje', 'klok');
     }
     if ($mag('selectiedag', 'bewerken') && (!function_exists('module_aan') || module_aan('selectiedag'))) {
-        $n = $tel("SELECT COUNT(*) FROM selectie_besluit b JOIN sollicitaties s ON s.id=b.sollicitatie_id
-                   WHERE b.seizoen_id=? AND b.gebeld_op IS NOT NULL AND b.doorgevoerd_op IS NULL AND s.fase IN ('uitgenodigd_selectie','aangemeld_selectie','selectiedag_geweest')", [$sid]);
-        $zet($n, 'gebeld, maar nog niet doorgevoerd', 'gebeld, maar nog niet doorgevoerd', $a . 'selectie_nabespreking.php?tab=bellijst', 'Doorvoeren', 'oranje', 'telefoon');
+        if ($mag('selectiedag', 'bellen')) {
+            $n = $tel("SELECT COUNT(*) FROM selectie_besluit b JOIN sollicitaties s ON s.id=b.sollicitatie_id
+                       WHERE b.seizoen_id=? AND b.gebeld_op IS NOT NULL AND b.doorgevoerd_op IS NULL AND s.fase IN ('uitgenodigd_selectie','aangemeld_selectie','selectiedag_geweest')", [$sid]);
+            $zet($n, 'gebeld, maar nog niet doorgevoerd', 'gebeld, maar nog niet doorgevoerd', $a . 'selectie_nabespreking.php?tab=bellijst', 'Doorvoeren', 'oranje', 'telefoon');
+        }
         if (!empty($seizoen['datum_selectiedag']) && $vandaag > $seizoen['datum_selectiedag']) {
             $n = $tel("SELECT COUNT(*) FROM sollicitaties s LEFT JOIN selectie_besluit b ON b.sollicitatie_id=s.id
                        WHERE s.seizoen_id=? AND s.fase='selectiedag_geweest' AND (b.besluit IS NULL OR b.besluit='')", [$sid]);

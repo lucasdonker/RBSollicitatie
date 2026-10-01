@@ -38,7 +38,8 @@ function pag_overzicht_leeg(): array {
  * @param ?int    $seizoen_id alleen aanmeldingen van dit seizoen (periode "Dit seizoen"); null = op datum
  * @return array [
  *   'bronnen'  => [bron => pag_overzicht_leeg() + ['bron','label','soort' ('pagina'|'extern'|'zonder'),
- *                  'pagina_id','conversie','campagnes' => [campagne => pag_overzicht_leeg() + ['conversie']]]],
+ *                  'pagina_id','conversie','campagnes' => [sleutel => pag_overzicht_leeg() + ['campagne','utm','conversie']]]],
+ *                  één regel per campagne én UTM-combinatie (bron, medium, variant; pag_utm_velden())
  *                  gesorteerd op aanmeldingen, dan bezoeken
  *   'totaal'   => pag_overzicht_leeg() + ['conversie'],
  *   'trechter' => pag_trechter_treden() over alles ]
@@ -67,11 +68,18 @@ function pag_bronnen_overzicht(?string $van, ?int $seizoen_id = null): array {
         }
         return [$b, $d[1] ?? ''];
     };
-    $bij = function (string $b, string $c, string $veld, int $n, ?int $stap = null) use (&$bronnen, &$totaal) {
+    // Een campagneregel = de campagne uit bron_code plus de losse UTM-velden van die rij.
+    $utm_van = function (array $r): array {
+        $u = [];
+        foreach (pag_utm_velden() as $k => $_l) $u[$k] = (string)($r[$k] ?? '');
+        return $u;
+    };
+    $bij = function (string $b, string $c, string $veld, int $n, ?int $stap = null, array $utm = []) use (&$bronnen, &$totaal) {
         $doelen = [&$bronnen[$b]];
-        if ($c !== '') {
-            if (!isset($bronnen[$b]['campagnes'][$c])) $bronnen[$b]['campagnes'][$c] = pag_overzicht_leeg();
-            $doelen[] = &$bronnen[$b]['campagnes'][$c];
+        $sleutel = ($c !== '' || array_filter($utm)) ? $c . '|' . implode('|', $utm) : '';
+        if ($sleutel !== '') {
+            if (!isset($bronnen[$b]['campagnes'][$sleutel])) $bronnen[$b]['campagnes'][$sleutel] = pag_overzicht_leeg() + ['campagne' => $c, 'utm' => $utm];
+            $doelen[] = &$bronnen[$b]['campagnes'][$sleutel];
         }
         $doelen[] = &$totaal;
         foreach ($doelen as &$d) {
@@ -83,9 +91,10 @@ function pag_bronnen_overzicht(?string $van, ?int $seizoen_id = null): array {
 
     try {
         pag_auto_setup();
-        $q = db()->prepare("SELECT bron_code, pagina_id, type, detail, COUNT(*) AS aantal FROM pagina_events
+        $uk = implode(', ', array_keys(pag_utm_velden()));
+        $q = db()->prepare("SELECT bron_code, pagina_id, type, detail, $uk, COUNT(*) AS aantal FROM pagina_events
                             WHERE type IN ('bezoek','formulier_start','formulier_stap','formulier_klaar')"
-                            . ($van ? " AND moment >= ?" : "") . " GROUP BY bron_code, pagina_id, type, detail");
+                            . ($van ? " AND moment >= ?" : "") . " GROUP BY bron_code, pagina_id, type, detail, $uk");
         $q->execute($van ? [$van] : []);
         foreach ($q->fetchAll() as $r) {
             $code = (string)($r['bron_code'] ?? '');
@@ -95,14 +104,15 @@ function pag_bronnen_overzicht(?string $van, ?int $seizoen_id = null): array {
                 $code = (string)($p['bron_code'] ?: $p['slug']);
             }
             $bc = $rij($code);
+            $u = $utm_van($r);
             $n = (int)$r['aantal'];
             switch ($r['type']) {
-                case 'bezoek':          $bij($bc[0], $bc[1], 'bezoeken', $n);  $tel['bezoek'] += $n; break;
-                case 'formulier_start': $bij($bc[0], $bc[1], 'gestart', $n);   $tel['formulier_start'] += $n; break;
-                case 'formulier_klaar': $bij($bc[0], $bc[1], 'verstuurd', $n); $tel['formulier_klaar'] += $n; break;
+                case 'bezoek':          $bij($bc[0], $bc[1], 'bezoeken', $n, null, $u);  $tel['bezoek'] += $n; break;
+                case 'formulier_start': $bij($bc[0], $bc[1], 'gestart', $n, null, $u);   $tel['formulier_start'] += $n; break;
+                case 'formulier_klaar': $bij($bc[0], $bc[1], 'verstuurd', $n, null, $u); $tel['formulier_klaar'] += $n; break;
                 case 'formulier_stap':
                     $s = (int)$r['detail'];
-                    if ($s >= 2) { $bij($bc[0], $bc[1], '', $n, $s); $per_stap[$s] = ($per_stap[$s] ?? 0) + $n; }
+                    if ($s >= 2) { $bij($bc[0], $bc[1], '', $n, $s, $u); $per_stap[$s] = ($per_stap[$s] ?? 0) + $n; }
                     break;
             }
         }
@@ -110,14 +120,15 @@ function pag_bronnen_overzicht(?string $van, ?int $seizoen_id = null): array {
         $w = []; $args = [];
         if ($seizoen_id) { $w[] = "seizoen_id = ?"; $args[] = $seizoen_id; }
         elseif ($van)    { $w[] = "aangemeld_op >= ?"; $args[] = $van; }
-        $q = db()->prepare("SELECT COALESCE(bron_code, '') AS bron_code, MAX(bron_label) AS bron_label, COUNT(*) AS aantal,
+        $q = db()->prepare("SELECT COALESCE(bron_code, '') AS bron_code, $uk, MAX(bron_label) AS bron_label, COUNT(*) AS aantal,
                                    SUM(CASE WHEN fase = 'aangenomen' THEN 1 ELSE 0 END) AS aangenomen
-                            FROM sollicitaties" . ($w ? " WHERE " . implode(' AND ', $w) : "") . " GROUP BY COALESCE(bron_code, '')");
+                            FROM sollicitaties" . ($w ? " WHERE " . implode(' AND ', $w) : "") . " GROUP BY COALESCE(bron_code, ''), $uk");
         $q->execute($args);
         foreach ($q->fetchAll() as $r) {
             $bc = $rij((string)$r['bron_code']);
-            $bij($bc[0], $bc[1], 'aanmeldingen', (int)$r['aantal']);
-            $bij($bc[0], $bc[1], 'aangenomen', (int)$r['aangenomen']);
+            $u = $utm_van($r);
+            $bij($bc[0], $bc[1], 'aanmeldingen', (int)$r['aantal'], null, $u);
+            $bij($bc[0], $bc[1], 'aangenomen', (int)$r['aangenomen'], null, $u);
             // Label voor een externe bron: wat de plugin meestuurde (de naam van de website), zonder campagne.
             if ($bronnen[$bc[0]]['label'] === '' && !empty($r['bron_label'])) {
                 $l = (string)$r['bron_label'];
@@ -129,7 +140,7 @@ function pag_bronnen_overzicht(?string $van, ?int $seizoen_id = null): array {
 
     $conv = fn(array $x) => $x['bezoeken'] > 0 ? (int)round($x['aanmeldingen'] / $x['bezoeken'] * 100) : null;
     foreach ($bronnen as $b => $x) {
-        if ($x['label'] === '') $bronnen[$b]['label'] = $b === '-' ? 'Zonder bron' : ($b === 'website' ? 'Website' : $b);
+        if ($x['label'] === '') $bronnen[$b]['label'] = ['-' => 'Zonder bron', 'website' => 'Website', 'aanmelden' => 'Aanmeldpagina'][$b] ?? $b;
         $bronnen[$b]['conversie'] = $conv($x);
         foreach ($x['campagnes'] as $c => $cx) $bronnen[$b]['campagnes'][$c]['conversie'] = $conv($cx);
         uasort($bronnen[$b]['campagnes'], fn($p, $q) => [$q['aanmeldingen'], $q['bezoeken']] <=> [$p['aanmeldingen'], $p['bezoeken']]);

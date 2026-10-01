@@ -17,8 +17,9 @@ if (!function_exists('pag_formulier_html')) {
  * De verwerking van een ingestuurd formulier.
  * Retour: ['ok'=>bool, 'fout'=>string, 'code'=>string] — bij ok volgt een redirect (PRG).
  * $campagne: al geschoond (pag_campagne_uit); leeg = geen campagne. Zie werving.php.
+ * $utm: pag_utm_uit() van dit verzoek; gaat los mee naar de sollicitatie.
  */
-function pag_formulier_verwerk(array $pagina, array $post, string $campagne = ''): array {
+function pag_formulier_verwerk(array $pagina, array $post, string $campagne = '', array $utm = []): array {
     $bron = (string)($pagina['bron_code'] ?: $pagina['slug']);
     $pid  = (int)$pagina['id'];
 
@@ -73,6 +74,7 @@ function pag_formulier_verwerk(array $pagina, array $post, string $campagne = ''
     $campagne = pag_campagne_schoon($campagne);
     $invoer = $post;
     unset($invoer['p13_campagne']);
+    foreach (pag_utm_velden() as $k => $_l) { unset($invoer['p13_' . $k]); $invoer[$k] = (string)($utm[$k] ?? ''); }
     $invoer['bron_code']  = pag_bron_met_campagne($bron, $campagne);
     $invoer['bron_label'] = (string)$pagina['titel'] . ($campagne !== '' ? ' · ' . $campagne : '');
     $res = sollicitatie_aanmaken($invoer, ['ip' => $_SERVER['REMOTE_ADDR'] ?? '', 'via' => 'landingspagina']);
@@ -105,9 +107,9 @@ function pag_succes_html(): string {
  * $staat: ['fout'=>string, 'code'=>string, 'waarden'=>array] — bij een fout blijven de
  * ingevulde gegevens staan en krijgt de bezoeker een melding bovenaan.
  * $campagne: uit het adres van dít verzoek (pag_campagne_uit), nooit uit een cache. Gaat mee
- * als verborgen veld p13_campagne, zodat hij de POST overleeft.
+ * als verborgen veld p13_campagne, zodat hij de POST overleeft. Zo ook de UTM-velden (p13_utm_*).
  */
-function pag_formulier_html(array $pagina, array $staat = [], string $campagne = ''): string {
+function pag_formulier_html(array $pagina, array $staat = [], string $campagne = '', array $utm = []): string {
     $html = aanmeld_formulier_html([
         'bron_code' => (string)($pagina['bron_code'] ?: $pagina['slug']),
         'waarden'   => (array)($staat['waarden'] ?? []),
@@ -124,8 +126,12 @@ function pag_formulier_html(array $pagina, array $staat = [], string $campagne =
     $campagne = pag_campagne_schoon($campagne);
     $haak = '<input type="hidden" name="p13_form" value="1">';
     $pos = strpos($html, $haak);
-    if ($campagne !== '' && $pos !== false) {
-        $html = substr_replace($html, $haak . "\n        " . '<input type="hidden" name="p13_campagne" value="' . h($campagne) . '">', $pos, strlen($haak));
+    $extra = $campagne !== '' ? ['p13_campagne' => $campagne] : [];
+    foreach (pag_utm_uit($utm) as $k => $v) if ($v !== '') $extra['p13_' . $k] = $v;
+    if ($extra && $pos !== false) {
+        $velden = '';
+        foreach ($extra as $n => $v) $velden .= "\n        " . '<input type="hidden" name="' . h($n) . '" value="' . h($v) . '">';
+        $html = substr_replace($html, $haak . $velden, $pos, strlen($haak));
     }
     return $html;
 }

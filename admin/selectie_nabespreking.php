@@ -5,12 +5,16 @@
  * Twee tabbladen omdat het twee momenten zijn: aan tafel het besluit nemen, en daarna
  * de mensen bellen. De scores zijn een advies, het gesprek bepaalt (ontwerpfilosofie §3).
  *
- * Dit is bestuurswerk: taak Nabespreken (includes/modules/selectiedag.php).
+ * Dit is bestuurswerk: taak Nabespreken, en voor de bellijst taak Bellen (telefoonnummers, fase
+ * doorvoeren; includes/modules/selectiedag.php).
  */
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/beheer/laden.php';
 
-vereis_recht('selectiedag', 'nabespreken');
+$_bel_acties = ['gebeld', 'bel_los', 'gebeld_wissen', 'doorvoeren_een', 'gebelde_doorvoeren'];
+$_is_bel = ($_GET['tab'] ?? '') === 'bellijst'
+        || ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array((string)($_POST['actie'] ?? ''), $_bel_acties, true));
+vereis_recht('selectiedag', $_is_bel ? 'bellen' : 'nabespreken');
 
 $seizoen = actief_seizoen();
 $sid = $seizoen ? (int)$seizoen['id'] : 0;
@@ -200,7 +204,7 @@ require __DIR__ . '/layout_top.php';
     <p class="bh-dekkop-uitleg">
       Advies op cijfer: <?= $nb_tel['advies']['door'] ?> door · <?= $nb_tel['advies']['twijfel'] ?> twijfel ·
       <?= $nb_tel['advies']['niet'] ?> niet<?= $nb_tel['advies']['geen'] ? ' · ' . $nb_tel['advies']['geen'] . ' zonder cijfer' : '' ?>.
-      Het cijfer is een advies; jullie gesprek bepaalt. Daarna bel je iedereen via de <a href="?tab=bellijst">bellijst</a>.
+      Het cijfer is een advies; jullie gesprek bepaalt.<?php if (mag('selectiedag', 'bellen')): ?> Daarna bel je iedereen via de <a href="?tab=bellijst">bellijst</a>.<?php endif; ?>
     </p>
   </section>
 
@@ -364,7 +368,7 @@ require __DIR__ . '/layout_top.php';
         Je voert per persoon door, zodat er pas bericht uitgaat nadat je hebt gebeld.
       </span>
     </div>
-    <a class="ds-btn ds-btn-primair" href="?tab=bellijst">Naar de bellijst</a>
+    <?php if (mag('selectiedag', 'bellen')): ?><a class="ds-btn ds-btn-primair" href="?tab=bellijst">Naar de bellijst</a><?php endif; ?>
   </div>
   <?php endif; ?>
 

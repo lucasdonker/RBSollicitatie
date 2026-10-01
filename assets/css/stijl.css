@@ -1404,6 +1404,14 @@ a.pt-taakrij:hover { background: var(--bg); }
 }
 .pt-voetlinks a:hover { color: var(--navy); }
 
+/* Uitloggen is een formulier met een knop (portaal_uitlog_knop()): het formulier telt niet mee in de
+   opmaak, de knop ziet eruit als de link die er eerst stond. */
+.pt-uitlog { display: contents; }
+.pt-uitlog > button { font: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; }
+.pt-uitlog > .pt-nav-uitloggen { padding: 4px; }
+.pt-voetlink-knop { display: inline-flex; align-items: center; gap: 5px; color: var(--ink-muted); }
+.pt-voetlink-knop:hover { color: var(--navy); }
+
 /* ═══════════════════════════════════════════════════════════════════
    UI-BOUWSTENEN — kleine onderdelen die op meerdere schermen terugkomen
    (includes/ui.php; gedrag in assets/js/app.js)

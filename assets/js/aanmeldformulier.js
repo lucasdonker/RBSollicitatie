@@ -96,6 +96,8 @@
     // verborgen veld p13_campagne laat de campagne de verzending overleven (ook via WordPress).
     var campagne = campagneUitAdres(bron);
     var trackBron = campagne ? (bron + '/' + campagne).slice(0, 80) : bron;
+    // De losse UTM-velden (pag_utm_velden() op de server): mee met de meting en de verzending.
+    var utm = utmUitAdres();
 
     var nu = parseInt(kaart.getAttribute('data-af-startstap'), 10) || 1;
     var hoogste = nu;
@@ -109,6 +111,7 @@
       if (!trackUrl) return;
       var body = 't=' + encodeURIComponent(type) + '&b=' + encodeURIComponent(trackBron);
       if (detail !== undefined && detail !== null) body += '&d=' + encodeURIComponent(detail);
+      Object.keys(utm).forEach(function (k) { body += '&' + k + '=' + encodeURIComponent(utm[k]); });
       try {
         if (navigator.sendBeacon) {
           navigator.sendBeacon(trackUrl, new Blob([body], { type: 'application/x-www-form-urlencoded' }));
@@ -136,6 +139,12 @@
       cv.type = 'hidden'; cv.name = 'p13_campagne'; cv.value = campagne;
       form.appendChild(cv);
     }
+    Object.keys(utm).forEach(function (k) {
+      if (form.querySelector('input[name="p13_' + k + '"]')) return;
+      var uv = document.createElement('input');
+      uv.type = 'hidden'; uv.name = 'p13_' + k; uv.value = utm[k];
+      form.appendChild(uv);
+    });
     // Het formulier op de website (WordPress) meet ook het bezoek: daar ziet onze server de
     // pagina niet. Een landingspagina telt het bezoek zelf (p.php), dus daar staat dit uit.
     if (kaart.getAttribute('data-af-bezoek') === '1') track('bezoek');
@@ -486,6 +495,18 @@
       if (c && c !== bron) return c;
     }
     return '';
+  }
+
+  /** De UTM-velden uit het adres, geschoond zoals campagneSchoon; alleen die er zijn. */
+  function utmUitAdres() {
+    var uit = {};
+    var q;
+    try { q = new URLSearchParams(window.location.search); } catch (e) { return uit; }
+    ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content'].forEach(function (k) {
+      var v = campagneSchoon(q.get(k));
+      if (v) uit[k] = v;
+    });
+    return uit;
   }
 
   // ── Starten ──────────────────────────────────────────────────────

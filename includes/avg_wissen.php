@@ -281,6 +281,8 @@ function avg_inzage($db, int $sol_id): array {
 
     return [
         'sollicitatie' => $rij("SELECT s.fase, s.aangemeld_op, sz.naam AS seizoen FROM sollicitaties s LEFT JOIN seizoenen sz ON sz.id = s.seizoen_id WHERE s.id = ?"),
+        // Apart: de UTM-kolommen (2.145.0) kunnen op een oude database ontbreken, en dan blijft de rest staan.
+        'herkomst' => $rij("SELECT bron_label AS via, utm_source AS utm_bron, utm_medium, utm_campaign AS utm_campagne, utm_content AS utm_variant FROM sollicitaties WHERE id = ?"),
         'kennismakingsformulier' => $blk,
         'kennismakingsformulier_wijzigingen' => $rijen("SELECT gewijzigd_op, reden, wijzigingen_json AS wijzigingen FROM blk_wijzigingen WHERE sollicitatie_id = ? ORDER BY id"),
         'ai_analyse' => $ai,

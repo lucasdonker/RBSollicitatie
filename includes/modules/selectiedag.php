@@ -13,7 +13,10 @@ return [
                 'inchecken'    => ['label' => 'Inchecken',    'basis' => 'lezen',    'uitleg' => 'Aanwezig of afgemeld tikken bij binnenkomst.'],
                 'beoordelen'   => ['label' => 'Beoordelen',   'basis' => 'lezen',    'uitleg' => 'Cijfers geven en observaties plaatsen (en de eigen observaties weer weghalen).'],
                 'voorbereiden' => ['label' => 'Voorbereiden', 'basis' => 'bewerken', 'uitleg' => 'Wie komt er, groepen indelen, afmeldingen, de tabletcode en pincode, en het inchecken afsluiten.'],
-                'nabespreken'  => ['label' => 'Nabespreken en besluiten', 'basis' => 'bewerken', 'uitleg' => 'De nabespreking, het besluit per kandidaat, de bellijst en observaties van anderen weghalen.'],
+                'nabespreken'  => ['label' => 'Nabespreken en besluiten', 'basis' => 'bewerken', 'uitleg' => 'De nabespreking, het besluit per kandidaat en observaties van anderen weghalen.'],
+                // Apart sinds 2.145.0: de bellijst toont telefoonnummers en zet de fase om (besluit Lucas:
+                // nooit voor een begeleider, wel voor bestuur en admin).
+                'bellen'       => ['label' => 'Bellen en doorvoeren', 'basis' => 'bewerken', 'uitleg' => 'De bellijst met telefoonnummers, het gesprek vastleggen en het besluit doorvoeren (fase en bericht).'],
             ]],
     ],
     'nav'          => [

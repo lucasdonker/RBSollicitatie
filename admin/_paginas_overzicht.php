@@ -33,7 +33,7 @@ require __DIR__ . '/_filterbalk.php';
 <section class="ds-kaart ds-kaart-p pg-bronnen">
   <h2 class="pg-h2">Per bron</h2>
   <p class="pg-sub">Elke landingspagina, het formulier op de website en wat er zonder bron binnenkwam. Kwam iemand via een
-    campagnelink (<code>?bron=…</code> of <code>utm_campaign</code>), dan staat de campagne eronder.
+    campagnelink (<code>?bron=…</code> of UTM-velden), dan staat de campagne eronder, met de UTM-bron, het medium en de variant.
     Aangenomen telt wie uit die aanmeldingen nu aangenomen is.</p>
   <?php if (!$overzicht['bronnen']): ?>
     <p class="ds-leeg">In deze periode is er nog niets gemeten en nog niemand aangemeld.</p>
@@ -55,7 +55,7 @@ require __DIR__ . '/_filterbalk.php';
       <tbody>
         <?php foreach ($overzicht['bronnen'] as $_b):
           $_soort = ['pagina' => 'landingspagina', 'zonder' => 'direct in het portaal, handmatig of van vóór de meting',
-                     'extern' => $_b['bron'] === 'website' ? 'formulier op de website' : 'eigen bron (website of oude link)'][$_b['soort']];
+                     'extern' => ['website' => 'formulier op de website', 'aanmelden' => 'het eigen formulier (/aanmelden.php)'][$_b['bron']] ?? 'eigen bron (website of oude link)'][$_b['soort']];
         ?>
         <tr>
           <th scope="row" class="pg-bronrij">
@@ -71,9 +71,11 @@ require __DIR__ . '/_filterbalk.php';
           <td class="pg-rechts"><?= $_b['soort'] === 'zonder' ? '—' : $_pct($_b['conversie']) ?></td>
           <td><?= $_b['soort'] === 'zonder' ? '' : h(pag_bron_afhaak($_b)) ?></td>
         </tr>
-          <?php foreach ($_b['campagnes'] as $_c => $_x): ?>
+          <?php foreach ($_b['campagnes'] as $_x):
+            $_utm = pag_utm_tekst($_x['utm'], (string)$_x['campagne']); ?>
           <tr class="pg-campagnerij">
-            <td><span class="pg-verborgen"><?= h($_b['label']) ?>, campagne </span><?= h((string)$_c) ?></td>
+            <td><span class="pg-verborgen"><?= h($_b['label']) ?>, campagne </span><?= h($_x['campagne'] !== '' ? (string)$_x['campagne'] : 'zonder campagnenaam') ?>
+              <?php if ($_utm !== ''): ?><span class="pg-bronsoort"><?= h($_utm) ?></span><?php endif; ?></td>
             <td class="pg-rechts"><?= (int)$_x['bezoeken'] ?></td>
             <td class="pg-rechts"><?= (int)$_x['gestart'] ?></td>
             <td class="pg-rechts"><?= (int)$_x['aanmeldingen'] ?></td>

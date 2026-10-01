@@ -75,7 +75,7 @@ $_contact_tel  = function_exists('instelling') ? trim((string)instelling('org.te
         <span class="pt-nav-gebruiker-naam"><?= h(portaal_naam($_gs)) ?></span>
         <span class="pt-nav-gebruiker-sub"><?= $_gv ? 'Stap ' . (int)$_gv['stap'] . ' van ' . (int)$_gv['totaal'] : h(portaal_fase_label((string)($_gs['fase'] ?? ''))) ?></span>
       </div>
-      <a href="<?= APP_URL ?>/portaal/?uitloggen=1" class="pt-nav-uitloggen" aria-label="Uitloggen"><?= icoon('uitloggen', 17) ?></a>
+      <?= portaal_uitlog_knop('pt-nav-uitloggen', 17) ?>
     </div>
     <?php endif; ?>
   </nav>

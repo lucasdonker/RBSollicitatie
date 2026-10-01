@@ -221,11 +221,64 @@ function portaal_onthoud_verwijder(int $id): void {
     catch (\Throwable $e) {}
 }
 
-/** Alle apparaten van één sollicitant vergeten (uitloggen-overal, diefstal, AVG). */
+/**
+ * Alle apparaten van één sollicitant vergeten (uitloggen-overal, diefstal, AVG): de onthouden
+ * tokens én de open sessies elders (portaal_sessies_beeindigen()).
+ */
 function portaal_onthoud_intrekken_alle(int $sol_id): void {
     portaal_login_setup();
     try { db()->prepare("DELETE FROM portaal_apparaten WHERE sollicitatie_id = ?")->execute([$sol_id]); }
     catch (\Throwable $e) {}
+    portaal_sessies_beeindigen($sol_id);
+}
+
+// ── Sessiegeneratie (2.145.0) ───────────────────────────────────────────
+// sollicitaties.portaal_sessie_gen telt op bij "overal uitloggen". Elke sessie onthoudt de
+// generatie van het moment van inloggen (login_portaal()); wijkt die af, dan is hij ongeldig.
+// Kost één opzoeking op de primaire sleutel per verzoek (portaal_ingelogd()).
+
+/** De huidige generatie; -1 = sollicitatie bestaat niet (meer); 0 als de kolom (nog) ontbreekt. */
+function portaal_sessie_gen(int $sol_id): int {
+    try {
+        $q = db()->prepare("SELECT portaal_sessie_gen FROM sollicitaties WHERE id = ?");
+        $q->execute([$sol_id]);
+        $g = $q->fetchColumn();
+        return $g === false ? -1 : (int)$g;
+    } catch (\Throwable $e) { return 0; }
+}
+
+/** Hoort deze sessie nog bij de huidige generatie? Zo niet: de portaalsessie leeg maken. */
+function portaal_sessie_geldig(): bool {
+    $sol_id = (int)($_SESSION['portaal_sol_id'] ?? 0);
+    if ($sol_id > 0 && portaal_sessie_gen($sol_id) === (int)($_SESSION['portaal_gen'] ?? 0)) return true;
+    unset($_SESSION['portaal_sol_id'], $_SESSION['portaal_email'], $_SESSION['portaal_via_apparaat'], $_SESSION['portaal_gen']);
+    return false;
+}
+
+/** Alle open sessies van deze sollicitant beëindigen. De eigen sessie blijft (die doet het verzoek). */
+function portaal_sessies_beeindigen(int $sol_id): void {
+    try { db()->prepare("UPDATE sollicitaties SET portaal_sessie_gen = portaal_sessie_gen + 1 WHERE id = ?")->execute([$sol_id]); }
+    catch (\Throwable $e) { error_log('portaal_sessies_beeindigen: ' . $e->getMessage()); return; }
+    if ((int)($_SESSION['portaal_sol_id'] ?? 0) === $sol_id) $_SESSION['portaal_gen'] = portaal_sessie_gen($sol_id);
+}
+
+/** Uitloggen op dit apparaat: het onthouden token en de portaalsessie. Alleen via POST (portaal/index.php). */
+function portaal_uitloggen(): void {
+    portaal_onthoud_intrekken_dit();
+    unset($_SESSION['portaal_sol_id'], $_SESSION['portaal_email'], $_SESSION['portaal_via_apparaat'], $_SESSION['portaal_gen']);
+    if (function_exists('session_regenerate_id') && session_status() === PHP_SESSION_ACTIVE) session_regenerate_id(true);
+}
+
+/**
+ * De uitlogknop: een formulier dat post (met csrf), geen link. Een link kan een andere site of een
+ * voorvertoning ongemerkt laten volgen. $tekst leeg = alleen het icoon (met aria-label).
+ * De klasse staat op de knop; .pt-uitlog maakt het formulier onzichtbaar in de opmaak.
+ */
+function portaal_uitlog_knop(string $klasse, int $icoon = 18, string $tekst = ''): string {
+    return '<form method="post" action="' . h(APP_URL . '/portaal/') . '" class="pt-uitlog">'
+         . csrf_input() . '<input type="hidden" name="uitloggen" value="1">'
+         . '<button type="submit" class="' . h($klasse) . '"' . ($tekst === '' ? ' aria-label="Uitloggen"' : '') . '>'
+         . icoon('uitloggen', $icoon) . ($tekst !== '' ? ' ' . h($tekst) : '') . '</button></form>';
 }
 
 /** Dit ene apparaat vergeten. Hoort bij uitloggen. */

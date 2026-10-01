@@ -51,6 +51,11 @@ function lg_feedback_module(string $moment): string {
     return ['selectiedag' => 'selectiedag', 'tw' => 'trainingsweekend'][$moment] ?? 'sollicitanten';
 }
 
+/** De taak binnen lg_feedback_module() die het scherm ook vraagt: nabespreken, gesprekken of wijzigen. */
+function lg_feedback_taak(string $moment): string {
+    return ['selectiedag' => 'nabespreken', 'tw' => 'gesprekken'][$moment] ?? 'wijzigen';
+}
+
 /** Feedback over één sollicitatie, nieuwste eerst. $momenten leeg = alles. */
 function lg_feedback_van(int $sol_id, array $momenten = []): array {
     lg_feedback_auto_setup();

@@ -40,6 +40,11 @@ function sollicitatie_aanmaken(array $in, array $context = []): array {
     if (function_exists('telefoon_geldig') && !telefoon_geldig($tel)) {
         return ['ok'=>false,'fout'=>'Vul een geldig telefoonnummer in, bijvoorbeeld 06 12 34 56 78.','code'=>'telefoon_ongeldig'];
     }
+    // Streng: alleen een echte kalenderdatum (JJJJ-MM-DD, zoals een datumveld stuurt), niet in de
+    // toekomst en niet ouder dan 100. DateTime alleen accepteert ook "morgen" of 2099-01-01, en
+    // diff()->y geeft dan een positieve leeftijd.
+    $dob_dt = DateTime::createFromFormat('!Y-m-d', $dob);
+    if (!$dob_dt || $dob_dt->format('Y-m-d') !== $dob || $dob_dt > new DateTime('today') || ($leeftijd ?? 0) > 100) $leeftijd = null;
     if ($leeftijd === null) return ['ok'=>false,'fout'=>'Vul een geldige geboortedatum in.','code'=>'dob_ongeldig'];
     if ($leeftijd < 15) return ['ok'=>false,'fout'=>'Je moet minimaal 15 jaar zijn om je aan te melden.','code'=>'te_jong'];
     if (!$akkoord) return ['ok'=>false,'fout'=>'Zet een vinkje om te laten weten dat je de privacyverklaring hebt gelezen.','code'=>'geen_akkoord'];
@@ -58,7 +63,18 @@ function sollicitatie_aanmaken(array $in, array $context = []): array {
         $pid = $p['id'];
         $al = $db->prepare("SELECT id FROM sollicitaties WHERE persoon_id=? AND seizoen_id=?");
         $al->execute([$pid, $seizoen['id']]);
-        if ($al->fetch()) return ['ok'=>false,'fout'=>'Je hebt je al aangemeld voor dit seizoen. Check je e-mail.','code'=>'al_aangemeld'];
+        // Al aangemeld: zelfde antwoord als een nieuwe aanmelding, anders verraadt dit formulier welke
+        // e-mailadressen bij ons bekend zijn. De echte eigenaar krijgt de bevestiging (met portaallink)
+        // nog eens; melding_verstuur stuurt hem hooguit één keer per uur (dedup), dus geen spamkanaal.
+        $al_rij = $al->fetch();
+        if ($al_rij) {
+            if (function_exists('melding_verstuur')) {
+                try { melding_verstuur('aanmelding_bevestiging', (int)$al_rij['id'], ['portaal_url' => APP_URL . '/portaal/'], ['prioriteit' => 'na_antwoord']); }
+                catch (\Throwable $e) { error_log('melding aanmelding_bevestiging (dubbel): ' . $e->getMessage()); }
+            }
+            if (function_exists('audit_log')) audit_log('aanmelding_dubbel', 'sollicitatie', (int)$al_rij['id'], ['via' => $context['via'] ?? 'formulier']);
+            return ['ok'=>true, 'dubbel'=>true, 'sollicitatie_id'=>(int)$al_rij['id'], 'portaal_token'=>'', 'terugkerend'=>true, 'portaal_url'=>APP_URL . '/portaal/'];
+        }
 
         $nieuw = ['voornaam' => $voornaam, 'tussenvoegsel' => $tv, 'achternaam' => $achternaam,
                   'telefoon' => $tel, 'geboortedatum' => $dob, 'geslacht' => $geslacht];
@@ -98,19 +114,24 @@ function sollicitatie_aanmaken(array $in, array $context = []): array {
     if ($bron_code !== null && substr_count($bron_code, '/') > 1) $bron_code = implode('/', array_slice(explode('/', $bron_code), 0, 2));
     if ($bron_code === '') $bron_code = null;
     $bron_label = isset($in['bron_label']) ? substr(trim((string)$in['bron_label']), 0, 150) : null;
+    // UTM los (utm_source, utm_medium, utm_campaign, utm_content), geschoond; leeg = NULL.
+    $utm = function_exists('pag_utm_uit') ? array_map(fn($v) => $v !== '' ? $v : null, pag_utm_uit($in)) : [];
 
     // De privacy- en bronkolommen legt db_failsafe() aan (consent_auto_setup en
     // db_verwachte_kolommen). Hier niet nog eens per aanmelding: dat waren drie
     // INFORMATION_SCHEMA-vragen bij elke verzending.
-    $db->prepare("INSERT INTO sollicitaties (persoon_id,seizoen_id,terugkerend,portaal_token,privacy_akkoord_op,privacy_versie,privacy_ip,ouder_toestemming_op,ouder_toestemming_naam,bron_code,bron_label)
-                  VALUES(?,?,?,?,?,?,?,?,?,?,?)")
-       ->execute([$pid, $seizoen['id'], $ter, $token, date('Y-m-d H:i:s'), PRIVACY_VERSIE, $ip, $ouder_op, $ouder_naam_val, $bron_code, $bron_label]);
+    // De UTM-kolommen alleen als er UTM is: kolomnamen uit pag_utm_velden() (vaste lijst, geen invoer).
+    $utm = array_filter($utm);
+    $kol = 'persoon_id,seizoen_id,terugkerend,portaal_token,privacy_akkoord_op,privacy_versie,privacy_ip,ouder_toestemming_op,ouder_toestemming_naam,bron_code,bron_label'
+         . ($utm ? ',' . implode(',', array_keys($utm)) : '');
+    $db->prepare("INSERT INTO sollicitaties ($kol) VALUES(" . implode(',', array_fill(0, 11 + count($utm), '?')) . ")")
+       ->execute(array_merge([$pid, $seizoen['id'], $ter, $token, date('Y-m-d H:i:s'), PRIVACY_VERSIE, $ip, $ouder_op, $ouder_naam_val, $bron_code, $bron_label], array_values($utm)));
     $sid = (int)$db->lastInsertId();
 
     // Tel de afronding mee voor de landingspagina-statistiek (anoniem).
     if (function_exists('pag_track') && $bron_code) {
         $lp = function_exists('pag_via_bron') ? pag_via_bron($bron_code) : null;
-        pag_track('formulier_klaar', isset($lp['id']) ? (int)$lp['id'] : null, $bron_code);
+        pag_track('formulier_klaar', isset($lp['id']) ? (int)$lp['id'] : null, $bron_code, null, $utm);
     }
 
     // Bevestiging aan de sollicitant + melding aan het bestuur, via de centrale meldingen-kern
