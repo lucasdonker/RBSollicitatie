@@ -190,14 +190,32 @@ function evenement_secties_plat(array $secties): array {
     return $uit;
 }
 
-/** Welke fase had iemand vóór het inchecken? Selectiedag: met ingeleverd BLK "aangemeld", anders "uitgenodigd". */
+/** Welke fase had iemand vóór het inchecken? Selectiedag: wie "ik kom" zei is "aangemeld", anders "uitgenodigd". */
 function evenement_terugfase(string $ev, int $sol_id): string {
     if ($ev === 'tw') return 'uitgenodigd_tw';
     try {
-        $q = db()->prepare("SELECT definitief_op FROM blk_formulieren WHERE sollicitatie_id=?");
+        $q = db()->prepare("SELECT 1 FROM selectie_indeling WHERE sollicitatie_id=? AND bevestiging='komt'");
         $q->execute([$sol_id]);
         return $q->fetchColumn() ? 'aangemeld_selectie' : 'uitgenodigd_selectie';
     } catch (\Exception $e) { return 'uitgenodigd_selectie'; }
+}
+
+/**
+ * Selectiedag: de fase volgt "ik kom" (besluit Lucas, 2.146.0). "Komt" = aangemeld voor de
+ * selectiedag; "kan niet" of "nog niet bekend" = terug naar uitgenodigd. Het kennismakingsformulier
+ * is een losse taak en zet de fase niet meer. Wie al is ingecheckt (selectiedag_geweest) of verder
+ * is, blijft staan: alleen_van bewaakt dat. Het trainingsweekend heeft geen aparte aangemeld-fase.
+ *
+ * @param bool $stil  geen bevestigingsbericht (bijv. bij een uitzondering, die een eigen bericht heeft)
+ */
+function evenement_fase_na_bevestiging(string $ev, int $seizoen_id, int $sol_id, string $stand, bool $stil = false): void {
+    if ($ev !== 'selectiedag' || !function_exists('fase_zetten')) return;
+    if ($stand === 'komt') {
+        fase_zetten($sol_id, 'aangemeld_selectie', 'bevestiging', ['seizoen_id' => $seizoen_id, 'alleen_van' => ['uitgenodigd_selectie'], 'stil' => $stil]);
+    } else {
+        // Terug is een correctie: geen bericht (de sollicitant gaf het zelf door of het bestuur zette het om).
+        fase_zetten($sol_id, 'uitgenodigd_selectie', 'bevestiging', ['seizoen_id' => $seizoen_id, 'alleen_van' => ['aangemeld_selectie'], 'stil' => true]);
+    }
 }
 
 /** Niet gekomen (met reden). Aanwezig vervalt; de fase blijft staan. */
@@ -315,8 +333,9 @@ function evenement_lijst_filter(array $lijst, string $q = '', string $stand = ''
 /**
  * Bevestiging vastleggen, met een opmerking (kolom bevestiging_reden). Bij "kan niet" is die
  * verplicht; bij "ik kom" mag hij er ook staan ("ik ben er pas om 14 uur") en wordt hij bewaard —
- * tot 2.117.0 viel hij dan stil weg. De fase verandert niet: het bestuur beslist op Vandaag
- * (afmelden of uitzondering). Komt de afmelding uit het portaal, dan krijgt het bestuur bericht.
+ * tot 2.117.0 viel hij dan stil weg. Selectiedag: de fase volgt de stand (evenement_fase_na_bevestiging);
+ * over een afmelding beslist het bestuur op Vandaag (afmelden of uitzondering). Komt de afmelding uit
+ * het portaal, dan krijgt het bestuur bericht.
  *
  * @param string $bron  portaal | bellijst | beheer
  * @return bool  false bij een ongeldige stand of een ontbrekende reden
@@ -331,6 +350,7 @@ function evenement_bevestigen(string $ev, int $seizoen_id, int $sol_id, string $
                    WHERE seizoen_id=? AND sollicitatie_id=?")
        ->execute([$stand, $reden !== '' ? $reden : null, $bron, $seizoen_id, $sol_id]);
     if (function_exists('audit_log')) audit_log('deelname_bevestigd', 'sollicitatie', $sol_id, ['evenement' => $ev, 'stand' => $stand, 'bron' => $bron]);
+    evenement_fase_na_bevestiging($ev, $seizoen_id, $sol_id, $stand);
     if ($stand === 'komt_niet' && $bron === 'portaal' && function_exists('melding_verstuur')) {
         melding_verstuur('bestuur_deelname_afgemeld', $sol_id, [
             'evenement' => $d['label'], 'reden' => $reden,
@@ -402,6 +422,7 @@ function evenement_afmelding_besluiten(string $ev, int $seizoen_id, int $sol_id,
         db()->prepare("UPDATE `{$d['tabel']}` SET bevestiging='komt', bevestiging_bron='uitzondering', bevestigd_op=NOW() WHERE seizoen_id=? AND sollicitatie_id=?")
            ->execute([$seizoen_id, $sol_id]);
         if (function_exists('audit_log')) audit_log('afmelding_uitzondering', 'sollicitatie', $sol_id, ['evenement' => $ev]);
+        evenement_fase_na_bevestiging($ev, $seizoen_id, $sol_id, 'komt', true);
         $meld('deelname_uitzondering');
         return true;
     }

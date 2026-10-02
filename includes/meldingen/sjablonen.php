@@ -134,6 +134,25 @@ function sjablonen_migreer_slugs($db): void {
             $db->exec("UPDATE mail_templates SET `$_kol`=REPLACE(`$_kol`,'{{tw_datum_start}} t/m {{tw_datum_eind}}','{{tw_periode}}')
                        WHERE `$_kol` LIKE '%{{tw_datum_start}} t/m {{tw_datum_eind}}%'");
         }
+        // 2.146.0: "ik kom" meldt je aan voor de selectiedag, niet meer het kennismakingsformulier.
+        // Alleen de ongewijzigde standaardzinnen; een eigen tekst blijft staan.
+        $_vervang = [
+            ['uitnodiging_selectie', 'body_html',
+             'Log in op je portaal en vul het kennismakingsformulier in. Daarmee bevestig je meteen je deelname aan de selectiedag.',
+             'Log in op je portaal en laat weten of je komt. Vul daar ook het kennismakingsformulier in.'],
+            ['selectie_aangemeld_bevestiging', 'body_html', 'Bedankt voor het invullen van je formulier.', 'Bedankt dat je het hebt laten weten.'],
+            ['bestuur_blk_ingediend', 'body_html', 'heeft het kennismakingsformulier ingeleverd en is daarmee aangemeld voor de selectiedag.',
+             'heeft het kennismakingsformulier ingeleverd.'],
+            ['herinnering_selectie_aanmelden', 'body_html',
+             'maar je hebt je deelname nog niet bevestigd. Dat doe je door het kennismakingsformulier in je portaal in te vullen.</p>' . "\n" . '[knop href="{{portaal_url}}"]Formulier invullen[/knop]',
+             'maar je hebt nog niet laten weten of je komt. Dat doe je in je portaal; daar kun je ook doorgeven dat je niet kunt.</p>' . "\n" . '[knop href="{{portaal_url}}"]Naar mijn portaal[/knop]'],
+            ['herinnering_selectie_aanmelden', 'tekst_kort', 'Bevestig je deelname via het formulier in je portaal:', 'Laat in je portaal weten of je komt:'],
+        ];
+        $_st = $db->prepare("UPDATE mail_templates SET body_html=REPLACE(body_html,?,?) WHERE slug=? AND body_html LIKE ?");
+        $_sk = $db->prepare("UPDATE mail_templates SET tekst_kort=REPLACE(tekst_kort,?,?) WHERE slug=? AND tekst_kort LIKE ?");
+        foreach ($_vervang as $_v) {
+            ($_v[1] === 'tekst_kort' ? $_sk : $_st)->execute([$_v[2], $_v[3], $_v[0], '%' . $_v[2] . '%']);
+        }
     } catch (\Throwable $e) {}
 }
 

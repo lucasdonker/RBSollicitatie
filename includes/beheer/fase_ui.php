@@ -250,7 +250,7 @@ function bh_seizoen_besluiten_open(array $s, array $tellingen, bool $tw_aan): bo
 function bh_seizoen_fases(): array {
     return [
         'werving'          => 'Werving — aanmeldingen komen binnen',
-        'formulieren'      => 'Formulieren — wachten op de kennismakingsformulieren',
+        'formulieren'      => 'Aanmelden — wachten tot iedereen laat weten of ze komen',
         'selectiedag'      => 'Selectiedag',
         'bellijst'         => 'Bellijst — besluiten en bellen',
         'trainingsweekend' => 'Trainingsweekend',

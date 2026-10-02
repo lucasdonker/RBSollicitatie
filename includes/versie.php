@@ -3,10 +3,22 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.145.0');
+define('APP_VERSIE', '2.146.0');
 
 function app_changelog(): array {
     return [
+        '2.146.0' => [
+            'datum'  => '2026-10-02',
+            'titel'  => '"Ik kom" meldt je aan voor de selectiedag',
+            'punten' => [
+                'Wie in het portaal "Ik kom" kiest, staat op Aangemeld selectiedag en krijgt de bevestiging. "Ik kan niet" zet de fase stil terug naar Uitgenodigd; het bestuur beslist daarna op Vandaag',
+                'Het kennismakingsformulier zet de fase niet meer. Het is een gewone taak die openstaat tot hij is ingeleverd; het dossier zegt het als iemand komt maar het formulier nog mist',
+                'Een uitzondering na een afmelding zet de fase ook op Aangemeld selectiedag',
+                'De herinnering "Kom je ook?" gaat niet meer naar wie al liet weten niet te kunnen',
+                'Uitnodiging, bevestiging en herinnering zeggen nu "laat weten of je komt" in plaats van "vul het formulier in". Een eigen tekst blijft staan',
+                'Vandaag in deze fase: "… hebben nog niet laten weten of ze komen"',
+            ],
+        ],
         '2.145.0' => [
             'datum'  => '2026-10-01',
             'titel'  => 'UTM per campagne, bellijst als eigen taak en veiliger uitloggen',

@@ -46,7 +46,7 @@ function fasen(): array {
 function fase_meldingstypen(string $naar): array {
     return [
         'uitgenodigd_selectie' => ['uitnodiging_selectie'],
-        'aangemeld_selectie'   => ['selectie_aangemeld_bevestiging', 'bestuur_blk_ingediend'],
+        'aangemeld_selectie'   => ['selectie_aangemeld_bevestiging'],   // "ik kom"; het formulier-seintje gaat los (blk_invullen.php)
         'uitgenodigd_tw'       => ['uitnodiging_tw'],
         'aangenomen'           => ['aangenomen'],
         'afgewezen'            => ['afgewezen'],

@@ -72,18 +72,18 @@ function meldingen_register(): array {
             'seed' => [
                 'onderwerp' => 'Je bent uitgenodigd voor de selectiedag — Paal 13',
                 'hero_titel' => 'Je bent uitgenodigd!', 'hero_subtitel' => 'We zien je graag op de selectiedag',
-                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Goed nieuws: we nodigen je van harte uit voor de <strong>selectiedag</strong> van Reddingsbrigade Paal 13! Dit is jouw kans om te ontdekken hoe het is om strandwacht te zijn, en onze kans om jou te leren kennen.</p>\n[info]<strong>De selectiedag op een rij</strong><br>\nWanneer: {{selectiedag_datum}}{{selectiedag_tijd}}<br>\nWaar: {{selectiedag_locatie}}[/info]\n<p><strong>Bevestig je deelname</strong><br>\nLog in op je portaal en vul het kennismakingsformulier in. Daarmee bevestig je meteen je deelname aan de selectiedag. Er staan nog een of meer taken voor je klaar; je ziet ze zodra je inlogt.</p>\n[knop href=\"$portaal\"]Naar mijn portaal[/knop]\n<p><strong>Wat kun je verwachten?</strong><br>\nTijdens de selectiedag doe je een conditietest en een zwemtest, en hebben we een persoonlijk gesprek. Geen zorgen als je nog niet alles vloeiend kunt: we kijken vooral naar je inzet en enthousiasme.</p>\n<p>Tot op de selectiedag!<br><strong>Team Sollicitaties</strong></p>",
+                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Goed nieuws: we nodigen je van harte uit voor de <strong>selectiedag</strong> van Reddingsbrigade Paal 13! Dit is jouw kans om te ontdekken hoe het is om strandwacht te zijn, en onze kans om jou te leren kennen.</p>\n[info]<strong>De selectiedag op een rij</strong><br>\nWanneer: {{selectiedag_datum}}{{selectiedag_tijd}}<br>\nWaar: {{selectiedag_locatie}}[/info]\n<p><strong>Bevestig je deelname</strong><br>\nLog in op je portaal en laat weten of je komt. Vul daar ook het kennismakingsformulier in. Er staan nog een of meer taken voor je klaar; je ziet ze zodra je inlogt.</p>\n[knop href=\"$portaal\"]Naar mijn portaal[/knop]\n<p><strong>Wat kun je verwachten?</strong><br>\nTijdens de selectiedag doe je een conditietest en een zwemtest, en hebben we een persoonlijk gesprek. Geen zorgen als je nog niet alles vloeiend kunt: we kijken vooral naar je inzet en enthousiasme.</p>\n<p>Tot op de selectiedag!<br><strong>Team Sollicitaties</strong></p>",
                 'tekst_kort' => "Hoi {{voornaam}}, je bent uitgenodigd voor de selectiedag bij Paal 13 op {{selectiedag_datum}}. Bevestig je deelname in je portaal: $portaal",
                 'samenvatting' => 'Je bent welkom op {{selectiedag_datum}}. Bevestig je deelname in het portaal.',
             ],
         ]),
         'selectie_aangemeld_bevestiging' => array_merge($std, [
             'naam' => 'Bevestiging aanmelding selectiedag', 'categorie' => 'fase', 'kanaal_standaard' => 'email',
-            'beschrijving' => 'Zodra de sollicitant het kennismakingsformulier heeft ingeleverd (= aangemeld voor de selectiedag).',
+            'beschrijving' => 'Zodra de sollicitant laat weten dat hij of zij komt (= aangemeld voor de selectiedag).',
             'seed' => [
                 'onderwerp' => 'Je deelname aan de selectiedag is bevestigd — Paal 13',
                 'hero_titel' => 'Tot op de selectiedag!', 'hero_subtitel' => '{{selectiedag_datum}}',
-                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Bedankt voor het invullen van je formulier. Je deelname aan de selectiedag op <strong>{{selectiedag_datum}}</strong> staat genoteerd.</p>\n[info]Wanneer: {{selectiedag_datum}}{{selectiedag_tijd}}<br>Waar: {{selectiedag_locatie}}[/info]\n<p>Staan er nog taken voor je open? Dan zie je die in je portaal.</p>\n[knop href=\"$portaal\"]Naar mijn portaal[/knop]",
+                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Bedankt dat je het hebt laten weten. Je deelname aan de selectiedag op <strong>{{selectiedag_datum}}</strong> staat genoteerd.</p>\n[info]Wanneer: {{selectiedag_datum}}{{selectiedag_tijd}}<br>Waar: {{selectiedag_locatie}}[/info]\n<p>Staan er nog taken voor je open? Dan zie je die in je portaal.</p>\n[knop href=\"$portaal\"]Naar mijn portaal[/knop]",
                 'tekst_kort' => "Hoi {{voornaam}}, je deelname aan de selectiedag op {{selectiedag_datum}} is bevestigd. Details in je portaal: $portaal",
                 'samenvatting' => 'Je deelname op {{selectiedag_datum}} staat genoteerd.',
             ],
@@ -358,12 +358,12 @@ function meldingen_register(): array {
         ]),
         'herinnering_selectie_aanmelden' => array_merge($std, [
             'naam' => 'Herinnering: nog niet aangemeld voor de selectiedag', 'categorie' => 'herinnering', 'kanaal_standaard' => 'beide', 'dedup_min' => 0,
-            'beschrijving' => 'Uitgenodigd, maar het kennismakingsformulier is nog niet ingeleverd terwijl de selectiedag nadert.',
+            'beschrijving' => 'Uitgenodigd, maar nog niet laten weten of hij of zij komt, terwijl de selectiedag nadert.',
             'seed' => [
                 'onderwerp' => 'Bevestig je deelname aan de selectiedag — Paal 13',
                 'hero_titel' => 'Kom je ook?', 'hero_subtitel' => 'Selectiedag {{selectiedag_datum}}', 'hero_kleur' => '#D43D00',
-                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>De selectiedag op <strong>{{selectiedag_datum}}</strong> komt eraan, maar je hebt je deelname nog niet bevestigd. Dat doe je door het kennismakingsformulier in je portaal in te vullen.</p>\n[knop href=\"$portaal\"]Formulier invullen[/knop]\n<p>Kun je niet? Laat het ons even weten via <a href=\"mailto:{{contact_email}}\">{{contact_email}}</a>.</p>",
-                'tekst_kort' => "Hoi {{voornaam}}, de selectiedag op {{selectiedag_datum}} komt eraan. Bevestig je deelname via het formulier in je portaal: $portaal",
+                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>De selectiedag op <strong>{{selectiedag_datum}}</strong> komt eraan, maar je hebt nog niet laten weten of je komt. Dat doe je in je portaal; daar kun je ook doorgeven dat je niet kunt.</p>\n[knop href=\"$portaal\"]Naar mijn portaal[/knop]",
+                'tekst_kort' => "Hoi {{voornaam}}, de selectiedag op {{selectiedag_datum}} komt eraan. Laat in je portaal weten of je komt: $portaal",
                 'samenvatting' => 'Je hebt je deelname aan de selectiedag nog niet bevestigd.',
             ],
         ]),
@@ -454,12 +454,12 @@ function meldingen_register(): array {
         'bestuur_blk_ingediend' => array_merge($std, [
             'naam' => 'Kennismakingsformulier ingeleverd', 'categorie' => 'bestuur', 'ontvanger' => 'bestuur',
             'kanaal_standaard' => 'uit', 'kort_toegestaan' => false, 'dedup_min' => 0, 'body_loggen' => false,
-            'beschrijving' => 'Naar het bestuur als een sollicitant het formulier inlevert (= aangemeld voor de selectiedag).',
+            'beschrijving' => 'Naar het bestuur als een sollicitant het kennismakingsformulier inlevert.',
             'vars' => ['beheer_url'],
             'seed' => [
                 'onderwerp' => 'Formulier ingeleverd: {{volledige_naam}}',
                 'hero_titel' => 'Formulier ingeleverd', 'hero_subtitel' => '{{seizoen_naam}}',
-                'body_html' => "<p><strong>{{volledige_naam}}</strong> heeft het kennismakingsformulier ingeleverd en is daarmee aangemeld voor de selectiedag.</p>\n[knop href=\"{{beheer_url}}\"]Bekijk in het beheer[/knop]",
+                'body_html' => "<p><strong>{{volledige_naam}}</strong> heeft het kennismakingsformulier ingeleverd.</p>\n[knop href=\"{{beheer_url}}\"]Bekijk in het beheer[/knop]",
                 'tekst_kort' => '', 'samenvatting' => '',
             ],
         ]),

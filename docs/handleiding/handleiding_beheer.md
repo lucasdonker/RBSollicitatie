@@ -239,9 +239,9 @@ vastzetten onder Instellingen › Seizoensfase & advies › **Seizoensfase**. Ze
 | Wat jij doet | Wat het systeem doet | Scherm |
 |---|---|---|
 | Sollicitanten uitnodigen: **Uitnodigen selectiedag** per rij, in het dossier of voor meerdere tegelijk via de bulkbalk. | Zet de ondertekeningen klaar (18+: gezondheidsverklaring en intake als taak; jonger dan 18: wacht op de oudergegevens en mailt dan de ouder). Stuurt "Uitnodiging selectiedag" per e-mail en WhatsApp/sms. | [Sollicitanten](#sollicitanten) |
-| De aanmelding sluiten zodra je genoeg sollicitanten hebt: **Aanmelding sluiten**. | Het aanmeldformulier gaat uit. Zodra niemand meer op een uitnodiging wacht, springt Vandaag naar "Formulieren" en telt wie het kennismakingsformulier nog niet inleverde; daarna wijst het naar de groepsindeling. | [Seizoen](#seizoen-opzetten) |
-| | Wie het kennismakingsformulier inlevert, gaat vanzelf naar Aangemeld selectiedag en krijgt een bevestiging. | |
-| | Herinnering "Nog niet aangemeld voor de selectiedag": alleen als de selectiedag binnen 14 dagen is, 3 dagen na de uitnodiging, daarna elke 4 dagen, maximaal 3 keer. | |
+| De aanmelding sluiten zodra je genoeg sollicitanten hebt: **Aanmelding sluiten**. | Het aanmeldformulier gaat uit. Zodra niemand meer op een uitnodiging wacht, springt Vandaag naar "Aanmelden" en telt wie nog niet liet weten of ze komen; daarna wijst het naar de groepsindeling. | [Seizoen](#seizoen-opzetten) |
+| | Wie in het portaal "Ik kom" kiest (of voor wie jij dat invult bij Voorbereiden), gaat vanzelf naar Aangemeld selectiedag en krijgt een bevestiging. Kiest iemand later "Ik kan niet", dan gaat de fase stil terug naar Uitgenodigd en beslis jij op Vandaag. Het kennismakingsformulier is een losse taak: het staat open tot het is ingeleverd, maar verandert de fase niet. | |
+| | Herinnering "Nog niet aangemeld voor de selectiedag": alleen als de selectiedag binnen 14 dagen is, 3 dagen na de uitnodiging, daarna elke 4 dagen, maximaal 3 keer. Niet aan wie al "Ik kan niet" doorgaf. | |
 | | Herinnering aan minderjarigen die de oudergegevens nog niet invulden: na 2 dagen, elke 4 dagen, maximaal 3 keer. | |
 | | Herinnering aan wie een document nog niet tekende: na 3 dagen, elke 5 dagen, maximaal 2 keer. | [Ondertekeningen](#ondertekeningen) |
 | | Een sollicitant krijgt nooit meer dan één van deze herinneringen per 3 dagen. | |
@@ -1114,7 +1114,7 @@ trainingsweekend.
 |---|---|---|
 | **Aangemeld** | Niets; de aanmelding komt binnen via de website, een landingspagina of handmatig. | Stuurt "Bevestiging van aanmelding" (e-mail) en aan het bestuur "Nieuwe aanmelding". Bij uitnodig-modus Automatisch nodigt het zelf uit wie binnen de leeftijdsgrenzen valt, na de ingestelde vertraging. |
 | **Uitgenodigd selectiedag** | **Uitnodigen selectiedag** (lijst, dossier of bulk). | Zet de ondertekeningen klaar: 18+ gezondheidsverklaring en intake als taak in het portaal; onder de 18 wacht het tot de sollicitant de oudergegevens invult en mailt dan de ouder. Stuurt "Uitnodiging selectiedag" (standaard e-mail én WhatsApp/sms). |
-| **Aangemeld selectiedag** | Niets; de sollicitant levert het kennismakingsformulier in. | Stuurt "Bevestiging aanmelding selectiedag" (e-mail) en aan het bestuur "Formulier ingeleverd" (standaard uit). |
+| **Aangemeld selectiedag** | Niets; de sollicitant kiest "Ik kom" in het portaal. Jij kunt het ook zetten bij Voorbereiden, of met een uitzondering na een afmelding. | Stuurt "Bevestiging aanmelding selectiedag" (e-mail). "Ik kan niet" zet de fase stil terug naar Uitgenodigd. Het inleveren van het kennismakingsformulier zet geen fase; daarvoor gaat aan het bestuur "Formulier ingeleverd" (standaard uit). |
 | **Selectiedag geweest** | Inchecken op de selectiedag, of de sollicitant checkt zelf in op de tablet. | Zet de fase bij het inchecken. Geen bericht. |
 | **Uitgenodigd trainingsweekend** | Doorvoeren van Door op de bellijst, of **Uitnodigen weekend** (lijst) / **Uitnodigen trainingsweekend** (dossier of bulk). | Stuurt "Uitnodiging trainingsweekend" (standaard e-mail én WhatsApp/sms) met het verzoek de beschikbaarheid door te geven. |
 | **Trainingsweekend geweest** | Met de hand zetten in de fasekaart van het dossier. | Zet de fase. Geen bericht. Het afvinken in het trainingsweekend zet deze fase niet. |

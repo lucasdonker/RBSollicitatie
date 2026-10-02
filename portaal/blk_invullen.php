@@ -143,16 +143,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['blk_submit'])) {
             } catch (\Exception $e) { error_log('blk telefoon bijwerken: ' . $e->getMessage()); }
         }
 
-        if (!$is_edit) {
-            // Inleveren = aanmelden voor de selectiedag: fase-wissel (met bevestiging + bestuursmelding)
-            // via de centrale fase-functie; was de fase al verder, dan alleen een "taak afgerond"-bericht.
-            $fase_res = ['ok' => false, 'ongewijzigd' => true];
-            if ($sol['fase'] === 'uitgenodigd_selectie' && function_exists('fase_zetten')) {
-                try { $fase_res = fase_zetten($sol_id, 'aangemeld_selectie', 'blk', ['alleen_van' => ['uitgenodigd_selectie'], 'prioriteit' => 'na_antwoord']); } catch (\Throwable $e) {}
-            }
-            if (!empty($fase_res['ongewijzigd']) && function_exists('melding_verstuur')) {
-                try { melding_verstuur('taak_afgerond', $sol_id, ['taak_naam' => 'Kennismakingsformulier'], ['prioriteit' => 'na_antwoord']); } catch (\Throwable $e) {}
-            }
+        if (!$is_edit && function_exists('melding_verstuur')) {
+            // Sinds 2.146.0 zet inleveren de fase niet meer: "ik kom" doet dat (evenement_bevestigen).
+            // Het formulier is een gewone taak: "taak afgerond" aan de sollicitant, en het (standaard
+            // uitgezette) seintje aan het bestuur.
+            try {
+                melding_verstuur('taak_afgerond', $sol_id, ['taak_naam' => 'Kennismakingsformulier'], ['prioriteit' => 'na_antwoord']);
+                melding_verstuur('bestuur_blk_ingediend', $sol_id, ['beheer_url' => rtrim(APP_URL, '/') . '/admin/sollicitant.php?id=' . $sol_id], ['prioriteit' => 'na_antwoord']);
+            } catch (\Throwable $e) {}
         }
         // Definitief ingediend markeren (de betrouwbare "taak afgerond"-indicator, los van de fase)
         try { db()->prepare("UPDATE blk_formulieren SET definitief_op=NOW() WHERE sollicitatie_id=? AND definitief_op IS NULL")->execute([$sol_id]); } catch (\Exception $e) {}

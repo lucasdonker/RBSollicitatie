@@ -13,29 +13,30 @@ function blk_fases_zichtbaar(): array {
     return ['uitgenodigd_selectie', 'aangemeld_selectie'];
 }
 
-/** Fases waarin het BLK eerder definitief is ingediend (een nieuwe indiening is dan een wijziging). */
+/**
+ * Fases waarin het BLK vóór 2.146.0 altijd al was ingediend: toen zette inleveren de fase op
+ * "aangemeld selectiedag". Alleen nog voor de eenmalige aanvulling van definitief_op in
+ * blk_kolommen_verzeker(); sinds "ik kom" de fase zet, zegt de fase niets meer over het formulier.
+ */
 function blk_fases_ingediend(): array {
     return ['aangemeld_selectie', 'selectiedag_geweest', 'uitgenodigd_tw', 'tw_geweest', 'aangenomen', 'afgewezen'];
 }
 
 /**
  * Is het BLK definitief ingeleverd? Niet af te leiden uit het bestaan van een rij (de autosave
- * maakt al een concept-rij aan), wel uit definitief_op of uit de fase.
+ * maakt al een concept-rij aan) en ook niet uit de fase: alleen uit definitief_op.
  */
 function blk_is_ingediend(array $sol, ?array $blk): bool {
-    if (empty($blk)) return false;
-    if (!empty($blk['definitief_op'])) return true;
-    return in_array($sol['fase'] ?? '', blk_fases_ingediend(), true);
+    return !empty($blk) && !empty($blk['definitief_op']);
 }
 
 /**
  * blk_is_ingediend() als SQL, voor lijsten en filters. $b is de alias van
- * blk_formulieren (via LEFT JOIN), $s die van sollicitaties. Het bestaan van de rij
- * zegt niets: de autosave maakt hem al bij het eerste woord.
+ * blk_formulieren (via LEFT JOIN). Het bestaan van de rij zegt niets: de autosave
+ * maakt hem al bij het eerste woord. ($s blijft voor bestaande aanroepen.)
  */
 function blk_ingediend_sql(string $b = 'b', string $s = 's'): string {
-    $fases = "'" . implode("','", blk_fases_ingediend()) . "'";
-    return "($b.sollicitatie_id IS NOT NULL AND ($b.definitief_op IS NOT NULL OR $s.fase IN ($fases)))";
+    return "($b.sollicitatie_id IS NOT NULL AND $b.definitief_op IS NOT NULL)";
 }
 
 /** Datum van indienen als SQL (NULL zolang het een concept is). */
@@ -83,6 +84,17 @@ function blk_kolommen_verzeker(): void {
         db_kolom_verzeker($db, 'blk_formulieren', 'straat',        'VARCHAR(150) DEFAULT NULL');
         db_kolom_verzeker($db, 'blk_formulieren', 'woonplaats',    'VARCHAR(100) DEFAULT NULL');
         db_kolom_verzeker($db, 'blk_formulieren', 'definitief_op', 'DATETIME DEFAULT NULL');
+        // 2.146.0: "ingeleverd" leunt alleen nog op definitief_op. Oude rijen die het alleen via de
+        // fase waren, krijgen hun datum alsnog. Precies één keer (vlag): sindsdien kan iemand via
+        // "ik kom" in die fases staan met alleen een concept, en dat mag nooit "ingeleverd" worden.
+        $vlag = $db->query("SELECT 1 FROM instellingen WHERE sleutel = 'blk.definitief_aangevuld'")->fetchColumn();
+        if (!$vlag) {
+            $fases = "'" . implode("','", blk_fases_ingediend()) . "'";
+            $db->exec("UPDATE blk_formulieren b JOIN sollicitaties s ON s.id = b.sollicitatie_id
+                       SET b.definitief_op = COALESCE(b.ingevuld_op, b.bijgewerkt_op, NOW()), b.bijgewerkt_op = b.bijgewerkt_op
+                       WHERE b.definitief_op IS NULL AND s.fase IN ($fases)");
+            $db->exec("INSERT INTO instellingen (sleutel, waarde) VALUES ('blk.definitief_aangevuld', '" . date('Y-m-d H:i:s') . "')");
+        }
     } catch (\Exception $e) { /* failsafe mag stil falen */ }
 }
 

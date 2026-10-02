@@ -268,8 +268,9 @@ function bh_dossier_nu(array $d, array $taken): array {
         'aangemeld'            => empty($d['blk_ingediend_op'])
                                     ? 'Nieuwe aanmelding; het kennismakingsformulier is nog niet ingestuurd.'
                                     : 'Nieuwe aanmelding met ingestuurd formulier. Beoordeel en nodig uit voor de selectiedag.',
-        'uitgenodigd_selectie' => 'Uitgenodigd voor de selectiedag' . $sd . '. Wacht tot de sollicitant zich aanmeldt.',
-        'aangemeld_selectie'   => 'Aangemeld voor de selectiedag' . $sd . '.' . $komt('selectiedag'),
+        'uitgenodigd_selectie' => 'Uitgenodigd voor de selectiedag' . $sd . '.' . $komt('selectiedag'),
+        'aangemeld_selectie'   => 'Aangemeld voor de selectiedag' . $sd . ': komt.'
+                                  . (empty($d['blk_ingediend_op']) ? ' Het kennismakingsformulier is nog niet ingeleverd.' : ''),
         'selectiedag_geweest'  => 'Selectiedag geweest. ' . match ($sd_besluit) {
                                     'door'    => 'Besluit: door. Bellen en uitnodigen voor het trainingsweekend gaat via de bellijst.',
                                     'twijfel' => 'Besluit: twijfel. Bellen via de bellijst; daar wordt het door of niet.',

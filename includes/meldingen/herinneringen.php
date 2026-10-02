@@ -18,7 +18,7 @@ if (!function_exists('herinnering_regels')) {
 function herinnering_regels(): array {
     return [
         'herinnering_selectie_aanmelden' => [
-            'naam' => 'Nog niet aangemeld voor de selectiedag', 'uitleg' => 'Uitgenodigd, maar het formulier is nog niet ingeleverd terwijl de selectiedag binnen 14 dagen is.',
+            'naam' => 'Nog niet aangemeld voor de selectiedag', 'uitleg' => 'Uitgenodigd, maar nog niet laten weten of hij of zij komt, terwijl de selectiedag binnen 14 dagen is.',
             'aan' => '1', 'na' => 3, 'herhaal' => 4, 'max' => 3, 'rust' => true,
             'oud' => [], 'kandidaten' => 'herinnering_kand_selectie_aanmelden',
         ],
@@ -179,7 +179,9 @@ function herinnering_kand_selectie_aanmelden(array $seizoen, int $na): array {
     $d = herinnering_dagen_tot($seizoen['datum_selectiedag'] ?? null);
     if ($d === null || $d < 0 || $d > 14) return [];
     $uit = [];
-    foreach (herinnering_sollicitaties((int)$seizoen['id'], "AND s.fase='uitgenodigd_selectie' AND COALESCE(s.gewijzigd_op, s.aangemeld_op) <= DATE_SUB(NOW(), INTERVAL ? DAY)", [$na]) as $r) {
+    // Uitgenodigd = nog niet "ik kom" gezegd (2.146.0). Wie "kan niet" doorgaf, wacht op het bestuur: geen herinnering.
+    foreach (herinnering_sollicitaties((int)$seizoen['id'], "AND s.fase='uitgenodigd_selectie' AND COALESCE(s.gewijzigd_op, s.aangemeld_op) <= DATE_SUB(NOW(), INTERVAL ? DAY)
+                 AND NOT EXISTS (SELECT 1 FROM selectie_indeling si WHERE si.sollicitatie_id = s.id AND si.bevestiging = 'komt_niet')", [$na]) as $r) {
         $uit[] = ['sol_id' => (int)$r['sol_id'], 'naam' => trim($r['voornaam'] . ' ' . $r['achternaam'])];
     }
     return $uit;

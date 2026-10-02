@@ -238,13 +238,13 @@ function bh_vandaag_hoofdtaak_bepalen(int $sid, string $seizoen_fase, ?array $se
             $klaar = (int)($t['aangemeld_selectie'] ?? 0);
             if ($n === 0) {
                 $open = bh_sd_niet_ingedeeld($sid);
-                return $vervolg('Alle formulieren zijn binnen',
+                return $vervolg('Iedereen heeft laten weten dat ze komen',
                                 'Iedereen die is uitgenodigd heeft zich aangemeld voor de selectiedag. Volgende stap: de groepen indelen'
                                 . ($open > 0 ? ' (' . $open . ' nog niet ingedeeld).' : '.'),
                                 'Naar de groepsindeling', APP_URL . '/admin/selectie_indeling.php', 'selectiedag');
             }
-            return $taak(['titel' => $n . ' wachten nog op hun formulier',
-                    'tekst'  => trim('Zij zijn uitgenodigd maar hebben zich nog niet aangemeld voor de selectiedag. '
+            return $taak(['titel' => $n === 1 ? 'Eén heeft nog niet laten weten of hij of zij komt' : $n . ' hebben nog niet laten weten of ze komen',
+                    'tekst'  => trim('Zij zijn uitgenodigd maar hebben nog geen "ik kom" doorgegeven (of gaven door dat ze niet kunnen). '
                               . bh_vandaag_herinnering_tekst()),
                     'knop'   => 'Bekijk wie', 'url' => $s . 'uitgenodigd_selectie',
                     'gedaan' => $klaar, 'totaal' => $klaar + $n, 'klaar' => false], 'sollicitanten');
