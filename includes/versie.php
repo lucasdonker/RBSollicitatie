@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.148.0');
+define('APP_VERSIE', '2.149.0');
 
 function app_changelog(): array {
     return [
+        '2.149.0' => [
+            'datum'  => '2026-10-02',
+            'titel'  => 'Trainingsweekend beoordelen: de cijfers van de selectiedag erbij',
+            'punten' => [
+                'Onder Selectiedag staat al in de kop het gemiddelde per test; uitgeklapt de cijfers per onderdeel en de observaties',
+                'Het blok verdween voor beoordelaars als er wel cijfers maar geen observaties waren; dat is opgelost',
+                'In het gesprek staan de cijfers van de selectiedag niet meer dubbel',
+            ],
+        ],
         '2.148.0' => [
             'datum'  => '2026-10-02',
             'titel'  => 'Nabespreking: filteren op wat er is opgeschreven',

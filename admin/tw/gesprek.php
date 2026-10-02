@@ -124,10 +124,7 @@ $_niet     = tw_niet_gekomen($_k);   // was er niet: geen gesprek, wel een beslu
     <?php if (module_aan('selectiedag') && ($gd_dossier['scores'] || $gd_dossier['observaties'] || $gd_dossier['besluit'])): ?>
     <section class="ds-kaart ds-kaart-p bh-twgesprek-sd">
       <h3>Op de selectiedag</h3>
-      <?php
-        $scs_dossier = $gd_dossier; require __DIR__ . '/../_sd_scores.php';
-        $sds_dossier = $gd_dossier; $sds_open = true; require __DIR__ . '/../_sd_samenvatting.php';
-      ?>
+      <?php $sds_dossier = $gd_dossier; $sds_open = true; $sds_cijfers_open = true; require __DIR__ . '/../_sd_samenvatting.php'; ?>
     </section>
     <?php endif; ?>
 
