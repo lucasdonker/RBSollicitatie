@@ -23,14 +23,22 @@
  *   $bel_scores      array  selectie_scores_alle()
  *   $bel_obs         array  selectie_observaties_alle()
  *   $bel_lgf         array  lg_feedback_alle() — feedback van lifeguards, alleen lezen
+ *   $bel_nb          array  [sol_id => bh_nb_analyse()] — advies en signalen uit de nabespreking
+ *   $bel_groepen     array  [groep_id => naam]
  *   $bel_gebeld      int
  *   $bel_ongebeld    int
+ *
+ * De kaart rechts is het spiekbriefje voor het gesprek: alles wat je nodig hebt staat erop
+ * (besluit en reden, advies en signalen, cijfers, alle observaties, feedback, bijzonderheid),
+ * met het nummer groot, want je belt meestal vanaf je telefoon met de pc ernaast.
  */
 $bel_sid        = (int)($bel_sid ?? 0);
 $bel_lijst      = $bel_lijst ?? [];
 $bel_besluiten  = $bel_besluiten ?? [];
 $bel_scores     = $bel_scores ?? [];
 $bel_obs        = $bel_obs ?? [];
+$bel_nb         = $bel_nb ?? [];
+$bel_groepen    = $bel_groepen ?? [];
 $bel_gebeld     = (int)($bel_gebeld ?? 0);
 $bel_ongebeld   = (int)($bel_ongebeld ?? 0);
 $_ik            = (int)($_SESSION['bhd_id'] ?? 0);
@@ -108,7 +116,7 @@ foreach ($bel_lijst as $_k) if ((int)$_k['sol_id'] === $_open) $_huidig = $_k;
               <a class="bh-naamcel" href="?tab=bellijst&bel=<?= $_id ?>">
                 <span class="bh-naamcel-tekst">
                   <span class="bh-naamcel-naam"><?= h((string)$_k['naam']) ?></span>
-                  <span class="bh-naamcel-sub"><?= h((string)($_k['telefoon'] ?: 'geen nummer')) ?></span>
+                  <span class="bh-naamcel-sub"><?= h($_k['telefoon'] ? telefoon_opmaak((string)$_k['telefoon']) : 'geen nummer') ?></span>
                 </span>
               </a>
             </td>
@@ -147,43 +155,95 @@ foreach ($bel_lijst as $_k) if ((int)$_k['sol_id'] === $_open) $_huidig = $_k;
     evenement_claim_los_overige('selectie_besluit', 'bel', $bel_sid, $_ik, $_id);
     $_claim = $_gebeld ? ['ok' => true] : evenement_claim('selectie_besluit', 'bel', $bel_sid, $_id, $_ik);
     $_tw = evenement_bevestiging_van('tw', $bel_sid, $_id);
+    $_nb = $bel_nb[$_id] ?? null;
+    $_tel = trim((string)($_huidig['telefoon'] ?? ''));
+    $_obs_tel = array_count_values(array_map(fn($o) => (string)($o['soort'] ?? 'neutraal'), $_obs));
+    $_obs_sam = implode(' · ', array_filter([
+        !empty($_obs_tel['positief']) ? $_obs_tel['positief'] . ' positief' : '',
+        !empty($_obs_tel['neutraal']) ? $_obs_tel['neutraal'] . ' neutraal' : '',
+        !empty($_obs_tel['aandacht']) ? $_obs_tel['aandacht'] . ' aandacht' : '',
+    ]));
   ?>
-  <section class="bh-bel-gesprek ds-kaart">
+  <section class="bh-bel-gesprek ds-kaart" aria-labelledby="bel-naam-<?= $_id ?>">
     <header class="bh-bel-gesprek-kop">
       <?= bh_avatar($_huidig, 44, ['vergroot' => true]) ?>
       <span class="bh-beoordeel-wie">
-        <span class="bh-beoordeel-naam"><?= h((string)$_huidig['naam']) ?></span>
-        <span class="bh-meta">
-          <?= $_huidig['leeftijd'] ? $_huidig['leeftijd'] . ' jaar · ' : '' ?>
-          besluit: <?= h(mb_strtolower(selectie_besluit_labels()[$_b['besluit'] ?? ''][0] ?? 'nog geen')) ?>
-        </span>
+        <a class="bh-beoordeel-naam" id="bel-naam-<?= $_id ?>" href="<?= APP_URL ?>/admin/sollicitant.php?id=<?= $_id ?>&amp;tab=selectiedag"><?= h((string)$_huidig['naam']) ?></a>
+        <?= bh_meta([
+            $_huidig['leeftijd'] ? $_huidig['leeftijd'] . ' jaar' : '',
+            !empty($_huidig['groep_id']) ? ($bel_groepen[(int)$_huidig['groep_id']] ?? '') : '',
+            empty($_huidig['aanwezig']) ? 'niet aanwezig geweest' : '',
+        ]) ?>
       </span>
-      <?php if (!empty($_huidig['telefoon'])): ?>
-        <a class="ds-btn ds-btn-primair" href="tel:<?= h(preg_replace('/\s+/', '', (string)$_huidig['telefoon'])) ?>">
-          Bellen
-        </a>
-      <?php else: ?>
-        <span class="bh-meta">geen nummer bekend</span>
-      <?php endif; ?>
+      <span class="bh-bel-besluit">
+        <?= bh_badge('Besluit: ' . mb_strtolower(selectie_besluit_labels()[$_besl][0] ?? 'nog geen'), $_besluit_kleur[$_besl] ?? 'grijs') ?>
+        <?php if (!empty($_nb['advies'])): ?>
+          <?= bh_badge('Advies: ' . mb_strtolower($_nb['advies']['label']), $_nb['advies']['kleur'], ['titel' => $_nb['advies']['reden']]) ?>
+        <?php endif; ?>
+      </span>
     </header>
 
+    <div class="bh-bel-telefoon">
+      <?= icoon('telefoon', 20) ?>
+      <?php if ($_tel !== ''): ?>
+        <span class="bh-bel-nummer" id="tel-<?= $_id ?>"><?= h(telefoon_opmaak($_tel)) ?></span>
+        <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" data-klik="belKopieer(<?= $_id ?>, this)">Kopieer</button>
+        <a class="ds-btn ds-btn-primair ds-btn-sm" href="tel:<?= h(preg_replace('/[^\d+]/', '', $_tel)) ?>">Bellen</a>
+      <?php else: ?>
+        <span class="bh-meta">Geen telefoonnummer bekend. Kijk in het dossier of er een ander adres is.</span>
+      <?php endif; ?>
+    </div>
+
     <div class="bh-bel-inhoud"<?= $_claim['ok'] ? '' : ' inert' ?>>
-      <?php if (!empty($_b['notitie'])): ?>
-        <div>
-          <span class="bh-veldlabel">Reden bij het besluit</span>
-          <p class="bh-dossier-tekst"><?= nl2br(h((string)$_b['notitie'])) ?></p>
+      <div class="bh-bel-blok">
+        <span class="bh-veldlabel">Waarom dit besluit</span>
+        <p class="bh-dossier-tekst"><?= !empty($_b['notitie']) ? nl2br(h((string)$_b['notitie'])) : '<span class="zacht">Geen reden genoteerd in de nabespreking.</span>' ?></p>
+        <?php if (!empty($_nb['signalen'])): ?>
+          <div class="bh-nb-signalen" aria-label="Signalen">
+            <?php foreach ($_nb['signalen'] as $_s) echo bh_chip($_s['tekst'], bh_nb_signaal_kleur($_s['soort'])); ?>
+          </div>
+        <?php endif; ?>
+        <?php if ($_tw['stand'] !== 'onbekend'): ?>
+          <p class="bh-meta">Trainingsweekend: <?= h(mb_strtolower(evenement_bevestig_standen()[$_tw['stand']])) ?><?= !empty($_tw['reden']) ? ' — ' . h((string)$_tw['reden']) : '' ?></p>
+        <?php endif; ?>
+      </div>
+
+      <?php if (!empty($_huidig['bijzonderheden'])): ?>
+        <div class="ds-melding ds-melding-warn">
+          <?= icoon('waarschuwing', 16) ?>
+          <?php if (mag('blk', 'lezen')): ?>
+            <span><strong>Bijzonderheid:</strong> <?= nl2br(h((string)$_huidig['bijzonderheden'])) ?></span>
+          <?php else: ?>
+            <span><strong>Let op:</strong> er is een bijzonderheid bekend; die staat in het formulier.</span>
+          <?php endif; ?>
         </div>
       <?php endif; ?>
 
+      <div class="bh-bel-blok">
+        <span class="bh-veldlabel">Cijfers op de selectiedag</span>
+        <?php if (!empty($bel_scores[$_id])): $sck_scores = $bel_scores[$_id]; require __DIR__ . '/_sd_cijfers_kort.php'; ?>
+        <?php else: ?><p class="bh-dossier-tekst zacht">Niet beoordeeld.</p><?php endif; ?>
+      </div>
+
       <?php if ($_obs): ?>
-        <div>
-          <span class="bh-veldlabel">Observaties van die dag</span>
-          <?php $obs_lijst = array_slice($_obs, 0, 4); $obs_eigen = null; require __DIR__ . '/_observaties.php'; ?>
+      <details class="bh-klap bh-bel-blok" open data-klap-id="bel-obs">
+        <summary>
+          <span class="bh-klap-titel">Observaties</span>
+          <span class="bh-klap-sam"><?= h($_obs_sam) ?></span>
+        </summary>
+        <div class="bh-klap-inhoud">
+          <?php $obs_lijst = $_obs; $obs_plat = true; $obs_eigen = null; require __DIR__ . '/_observaties.php'; ?>
         </div>
+      </details>
+      <?php else: ?>
+      <div class="bh-bel-blok">
+        <span class="bh-veldlabel">Observaties</span>
+        <p class="bh-dossier-tekst zacht">Niemand heeft iets genoteerd.</p>
+      </div>
       <?php endif; ?>
 
       <?php if (!empty($bel_lgf[$_id])): ?>
-        <div>
+        <div class="bh-bel-blok">
           <span class="bh-veldlabel">Feedback van strandwachten</span>
           <?php $obs_lijst = lg_feedback_als_observaties($bel_lgf[$_id]); $obs_plat = true; $obs_eigen = null; require __DIR__ . '/_observaties.php'; ?>
         </div>
@@ -311,6 +371,25 @@ function doorvoerenEen(solId, isDoor, doorvoerTekst) {
       })
       .catch(function () { bhToast('Geen verbinding — probeer opnieuw.', 'fout'); });
   });
+}
+
+// Bellen gaat meestal vanaf je eigen telefoon met de pc ernaast: het nummer staat groot, en
+// kopiëren is één klik (bijv. naar WhatsApp Web). Zonder klembord: het nummer selecteren.
+function belKopieer(solId, knop) {
+  const el = document.getElementById('tel-' + solId);
+  if (!el) return;
+  const nummer = el.textContent.trim();
+  const klaar = function () { knop.textContent = 'Gekopieerd'; setTimeout(function () { knop.textContent = 'Kopieer'; }, 2000); };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(nummer).then(klaar, function () { belSelecteer(el); });
+  } else {
+    belSelecteer(el);
+  }
+}
+function belSelecteer(el) {
+  const r = document.createRange(); r.selectNodeContents(el);
+  const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+  bhToast('Het nummer is geselecteerd; kopieer het met Ctrl+C.', '');
 }
 
 function volgendeBellen(solId) {

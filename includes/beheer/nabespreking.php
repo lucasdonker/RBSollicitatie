@@ -25,6 +25,12 @@ function bh_nb_signaal_soorten(): array {
     ];
 }
 
+/** Signaal → kleur van de chip. De tekst zegt wat er is; de kleur alleen hoe zwaar. */
+function bh_nb_signaal_kleur(string $soort): string {
+    return ['laag' => 'rood', 'aandacht' => 'rood', 'drempel' => 'oranje', 'oneens' => 'oranje',
+            'lgf' => 'oranje', 'mist' => 'grijs', 'afwezig' => 'grijs'][$soort] ?? 'grijs';
+}
+
 /** De sorteringen van de nabespreking: sleutel => label (de filterbalk zet er een sorteer-icoon voor). */
 function bh_nb_sorteringen(): array {
     return [

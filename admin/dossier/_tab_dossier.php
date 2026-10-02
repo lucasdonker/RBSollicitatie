@@ -110,7 +110,7 @@ $_corrigeer = !empty($_GET['corrigeer']);
       </div>
     </details>
 
-    <?php if ($_adv): $_per_test = bh_dossier_score_per_test($tab_dossier); ?>
+    <?php if ($_adv): ?>
     <details class="bh-klap ds-kaart" data-klap-id="dossier-advies"<?= $_fase === 'selectiedag_geweest' ? ' open' : '' ?>>
       <summary>
         <span class="bh-klap-titel">Advies</span>
@@ -124,19 +124,7 @@ $_corrigeer = !empty($_GET['corrigeer']);
       </summary>
       <div class="bh-klap-inhoud">
         <p class="bh-dossier-tekst"><?= h($_adv['reden']) ?> Dit is een advies, geen besluit.</p>
-        <?php if ($_per_test): ?>
-          <div class="bh-scorebalken">
-            <?php $_crit = selectie_criteria(); foreach ($_per_test as $_test => $_sc): ?>
-              <div class="bh-scorebalk">
-                <span class="bh-scorebalk-naam"><?= h((string)($_crit[$_test]['naam'] ?? ucfirst((string)$_test))) ?></span>
-                <span class="bh-scorebalk-spoor">
-                  <span class="bh-scorebalk-vul" style="--w: <?= (int)round($_sc / 5 * 100) ?>%"></span>
-                </span>
-                <span class="bh-scorebalk-getal bh-num"><?= h(cijfer_nl((float)$_sc)) ?></span>
-              </div>
-            <?php endforeach; ?>
-          </div>
-        <?php endif; ?>
+        <?php $sck_scores = $tab_dossier['scores'] ?? []; require __DIR__ . '/../_sd_cijfers_kort.php'; ?>
         <?php if (!empty($tab_dossier['besluit']['besluit'])): ?>
           <p class="bh-meta bh-dossier-besluitregel">
             Besluit van de nabespreking:

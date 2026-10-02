@@ -3,10 +3,21 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.146.0');
+define('APP_VERSIE', '2.147.0');
 
 function app_changelog(): array {
     return [
+        '2.147.0' => [
+            'datum'  => '2026-10-02',
+            'titel'  => 'Bellijst: alles voor het gesprek op één kaart',
+            'punten' => [
+                'Het telefoonnummer staat groot bovenaan de kaart, met Kopieer en Bellen: handig als je vanaf je eigen telefoon belt met de pc ernaast',
+                'De kaart toont het besluit en het advies als label, de reden, de signalen uit de nabespreking, de cijfers per test (per onderdeel uitklapbaar), álle observaties, de feedback van strandwachten en een bijzonderheid uit het formulier',
+                'Wat je op de bellijst invult staat nu in het dossier, tabblad Selectiedag: wanneer en door wie er is gebeld, wat er is verteld en of iemand op het trainingsweekend komt',
+                'Het tabblad Selectiedag staat er ook als er alleen een besluit is',
+                'De cijfers in het advies op het dossier gebruiken dezelfde weergave',
+            ],
+        ],
         '2.146.0' => [
             'datum'  => '2026-10-02',
             'titel'  => '"Ik kom" meldt je aan voor de selectiedag',

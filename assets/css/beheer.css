@@ -953,7 +953,29 @@ span.bh-incheck-code {
   display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
   padding: 15px 18px; border-bottom: 1px solid var(--border);
 }
+.bh-bel-besluit { display: inline-flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+/* Het nummer groot en selecteerbaar: je belt vanaf je eigen telefoon met de pc ernaast. */
+.bh-bel-telefoon {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 12px 18px; border-bottom: 1px solid var(--border); background: var(--bg-subtle); color: var(--navy);
+}
+.bh-bel-nummer {
+  font-size: 24px; font-weight: 700; letter-spacing: .02em; color: var(--ink);
+  font-variant-numeric: tabular-nums; user-select: all; margin-right: auto;
+}
 .bh-bel-inhoud { padding: 16px 18px; display: flex; flex-direction: column; gap: 16px; }
+.bh-bel-blok { display: flex; flex-direction: column; gap: 8px; }
+.bh-bel-blok > p { margin: 0; }
+.bh-bel-blok.bh-klap > summary { padding: 0; min-height: 36px; }
+.bh-bel-blok .bh-nb-signalen { padding: 0; }
+
+/* Selectiedag-cijfers kort (admin/_sd_cijfers_kort.php) */
+.bh-sdkort { display: flex; flex-direction: column; gap: 4px; }
+.bh-sdkort-rij { display: flex; align-items: center; gap: 6px 8px; flex-wrap: wrap; margin: 0; }
+.bh-sdkort-totaal { font-size: 14px; color: var(--ink-soft); margin-right: 4px; }
+.bh-sdkort-totaal strong { font-size: 18px; color: var(--ink); }
+.bh-sdkort-meer > summary { min-height: 36px; padding: 4px 0; }
+.bh-sdkort-meer .bh-klap-titel { font-size: 13px; color: var(--ink-soft); }
 .bh-bel-acties {
   display: flex; gap: 8px; flex-wrap: wrap;
   padding: 14px 18px; border-top: 1px solid var(--border); background: var(--bg-subtle);

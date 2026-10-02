@@ -186,6 +186,8 @@ require __DIR__ . '/layout_top.php';
     $bel_scores    = $scores_alle;
     $bel_obs       = $obs_alle;
     $bel_lgf       = $lgf_alle;
+    $bel_nb        = array_column($nb_alle, 'nb', 'sol_id');
+    $bel_groepen   = $groep_naam;
     require __DIR__ . '/_bellijst.php';
   ?>
 
@@ -253,9 +255,6 @@ require __DIR__ . '/layout_top.php';
   <?php endif; ?>
 
   <?php
-    // Signaal → kleur van de chip. De tekst zegt wat er is; de kleur alleen hoe zwaar.
-    $_sig_kleur = ['laag' => 'rood', 'aandacht' => 'rood', 'drempel' => 'oranje', 'oneens' => 'oranje',
-                   'lgf' => 'oranje', 'mist' => 'grijs', 'afwezig' => 'grijs'];
     // Na feedback vastleggen terug naar dezelfde lijst (filters in de URL-namen van de filterbalk).
     $_url_f = ['q' => $nb_f['q'], 'filter' => $nb_f['besluit'], 'signaal' => $nb_f['signaal'], 'advies' => $nb_f['advies'],
                'groep' => $nb_f['groep'], 'aanwezig' => $nb_f['aanwezig'], 'sort' => $nb_f['sort'] !== 'naam' ? $nb_f['sort'] : ''];
@@ -298,7 +297,7 @@ require __DIR__ . '/layout_top.php';
 
     <?php if ($_nb['signalen']): ?>
       <div class="bh-nb-signalen" aria-label="Signalen">
-        <?php foreach ($_nb['signalen'] as $_s) echo bh_chip($_s['tekst'], $_sig_kleur[$_s['soort']] ?? 'grijs'); ?>
+        <?php foreach ($_nb['signalen'] as $_s) echo bh_chip($_s['tekst'], bh_nb_signaal_kleur($_s['soort'])); ?>
       </div>
     <?php endif; ?>
 

@@ -447,7 +447,8 @@ function bh_dossier_tabs(array $dossier, string $actief = 'dossier'): array {
     // leest dossiers, maar heeft niets te maken met hoe iemand op de selectiedag of het weekend deed).
     // mag() geeft ook false als de module uit staat. De tabbladenlijst is ook het slot op ?tab=.
     $_mag_mod = fn(string $m) => function_exists('mag') ? mag($m, 'lezen') : (!function_exists('module_aan') || module_aan($m));
-    if (($dossier['scores'] || $dossier['observaties']) && $_mag_mod('selectiedag')) {
+    // Ook met alleen een besluit (en wat er op de bellijst is verteld) hoort de tab er te staan.
+    if (($dossier['scores'] || $dossier['observaties'] || !empty($dossier['besluit']['besluit'])) && $_mag_mod('selectiedag')) {
         $tabs[] = ['sleutel' => 'selectiedag', 'label' => 'Selectiedag',
                    'aantal' => $dossier['observaties'] ? count($dossier['observaties']) : null];
     }
