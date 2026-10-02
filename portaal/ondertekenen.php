@@ -130,6 +130,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_ondertekend) {
         $handtekening = '';
     }
     if (strlen($handtekening) > 600000) $handtekening = ''; // te groot → negeren
+    // Gekozen voor de getypte naam? Dan geldt die, ook als er eerder een krabbel stond (de keuze wint).
+    if (!empty($_POST['hdt_getypt'])) $handtekening = '';
 
     // 2FA: code die vlak hiervoor naar het eigen nummer is gestuurd. Zowel het kanaal als het gebruikte
     // nummer/adres komen in het bewijs, zodat later herleidbaar is welk nummer is geverifieerd.
@@ -488,11 +490,16 @@ require __DIR__ . '/_kop.php';
           </div>
           <?= ondertekening_veldfout_html('handtekening', $fout_veld, $fout) ?>
           <input type="hidden" name="handtekening_beeld" id="hdtData" value="<?= $v('handtekening_beeld') ?>">
-          <?php // Wie niet kan tekenen (toetsenbord, schermlezer, motoriek) tekent met de getypte naam. ?>
-          <label class="ond-check">
+          <?php /* Wie niet kan tekenen (toetsenbord, schermlezer, motoriek) tekent met de getypte naam.
+                   Dat is toegankelijkheid (WCAG 2.5.1/2.5.7: een alternatief voor een sleepgebaar), geen
+                   verplichting: daarom een kleine regel onder het vak en geen vinkje zoals de verplichte. */ ?>
+          <div class="ond-getypt" id="hdtGetyptVoorbeeld" hidden>
+            <span class="ond-getypt-naam" id="hdtGetyptNaam" data-leeg="<?= $u ? 'Vul hierboven uw naam in' : 'Vul hierboven je naam in' ?>"></span>
+            <span class="ond-getypt-sub">Getypte naam als handtekening</span>
+          </div>
+          <label class="ond-alt">
             <input type="checkbox" name="hdt_getypt" id="hdtGetypt" value="1"<?= $aan('hdt_getypt') ?>>
-            <span class="ond-check-box"><?= icoon('vink', 14) ?></span>
-            <span class="ond-check-tekst">Ik kan hier niet tekenen. Gebruik mijn getypte naam als handtekening.</span>
+            <span><?= $u ? 'Lukt tekenen niet? Gebruik dan uw getypte naam als handtekening.' : 'Lukt tekenen niet? Gebruik dan je getypte naam als handtekening.' ?></span>
           </label>
           <?php if ($twee_fa): $tel_masker = ondertekening_tel_masker($is_ouder ? ($sol['ouder_telefoon'] ?? '') : ($sol['telefoon'] ?? '')); require __DIR__ . '/_ondertekenen_2fa.php'; endif; ?>
           <label class="ond-check<?= $fout_veld === 'akkoord' ? ' fout' : '' ?>">

@@ -1543,6 +1543,17 @@ body.heeft-nav .ui-info-paneel { bottom: calc(90px + env(safe-area-inset-bottom,
 .ond-canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
 .ond-vak-hint { position: absolute; top: 10px; left: 14px; font-size: 12px; color: var(--ink-muted); pointer-events: none; }
 .ond-vak.fout { border-color: var(--error); box-shadow: 0 0 0 3px rgba(179,38,30,.12); }
+/* Getypte naam als handtekening: een kleine regel onder het vak, bewust niet zoals de verplichte vinkjes. */
+.ond-alt { display: flex; align-items: center; gap: 8px; margin-top: -4px; font-size: 13px; line-height: 1.4; color: var(--ink-soft); cursor: pointer; }
+.ond-alt input { width: 16px; height: 16px; margin: 0; flex: none; accent-color: var(--navy); }
+.ond-alt input:focus-visible { outline: 2px solid var(--navy); outline-offset: 2px; }
+.ond-getypt {
+  height: 130px; border: 1.5px solid var(--border-strong); border-radius: 10px; background: var(--bg-subtle);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 0 14px;
+}
+.ond-getypt[hidden] { display: none; }
+.ond-getypt-naam { font-size: 26px; font-style: italic; color: var(--ink); text-align: center; overflow-wrap: anywhere; }
+.ond-getypt-sub { font-size: 12px; color: var(--ink-muted); }
 
 /* Diploma-vinkjes (lidmaatschap) in twee kolommen; voorwaardelijke blokken */
 .ond-dip { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; }

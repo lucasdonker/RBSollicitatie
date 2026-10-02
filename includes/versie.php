@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.150.0');
+define('APP_VERSIE', '2.151.0');
 
 function app_changelog(): array {
     return [
+        '2.151.0' => [
+            'datum'  => '2026-10-02',
+            'titel'  => 'Ondertekenen: getypte naam als rustige keuze onder het tekenvak',
+            'punten' => [
+                '"Ik kan hier niet tekenen" is nu een kleine regel onder het tekenvak ("Lukt tekenen niet? Gebruik dan je getypte naam als handtekening") en lijkt niet meer op de verplichte vinkjes',
+                'Kies je de getypte naam, dan maakt het tekenvak plaats voor je naam als voorbeeld; een eerder gezette krabbel vervalt, ook op de server. Uitvinken brengt het tekenvak terug',
+                'Deze keuze blijft er: zo kan ook ondertekenen wie niet met vinger of muis kan tekenen (toegankelijkheid)',
+            ],
+        ],
         '2.150.0' => [
             'datum'  => '2026-10-02',
             'titel'  => 'Kopie ID zonder watermerk',
