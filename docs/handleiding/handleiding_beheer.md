@@ -2087,6 +2087,16 @@ de selectiedag en het trainingsweekend, en per formulier, document en taak de st
 klaarstond; bij een formulier vanaf de laatste fasewissel. Ook een variabele mag in een voorwaarde
 staan: `{{als gesprek_bericht is niet leeg}}`.
 
+**In WhatsApp en sms.** De logica in de korte tekst wordt per ontvanger uitgerekend vóórdat het
+bericht de deur uitgaat: WhatsApp en sms krijgen alleen de eindtekst, nooit `{{als …}}`. Het
+maximum (400 tekens bij een sjabloon, 1000 bij een zelf geschreven bericht) geldt voor de **langste
+variant**, niet voor de tekst met logica erin; links tellen daarbij als 60 tekens. Is de langste
+variant te lang, dan wordt niet opgeslagen of verstuurd (anders zou WhatsApp hem afkappen met
+"..."). In het WhatsApp-voorbeeld onder het tekstveld staat de logica grijs gestippeld met alle
+takken; wat één persoon krijgt zie je met **Voorbeeld**. Blijft er toch iets als `{{` in de
+eindtekst staan, dan gaat het bericht niet via WhatsApp of sms (wel per e-mail als die als
+terugval gepland is) en staat de reden in het log.
+
 Bij **Opslaan** controleert het systeem de logica. Een tikfout ("Onbekend veld "leefijd". Bedoel
 je leeftijd?"), een fase die niet bestaat of een blok zonder `{{/als}}` wordt niet opgeslagen; je
 invoer blijft staan. **Voorbeeld e-mail** gebruikt voorbeeldwaarden (17 jaar, uitgenodigd voor de

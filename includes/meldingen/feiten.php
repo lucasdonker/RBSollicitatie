@@ -180,6 +180,24 @@ function voorwaarde_taak_standen(array $sol, int $sol_id): array {
     return $uit;
 }
 
+/** Geschatte lengte van een ingevulde variabele, voor de lengtecontrole van de korte tekst. */
+function voorwaarde_var_lengte(string $naam): int {
+    if (str_ends_with($naam, '_url') || str_ends_with($naam, '.url')) return 60;   // links: APP_URL + pad + token
+    return strlen($naam) + 4;                                                      // verder: zo lang als {{naam}}
+}
+
+/**
+ * De korte tekst (WhatsApp/sms) mag in zijn langste variant niet over $max tekens: daarboven kapt
+ * tekst_kort_maak() hem af met "...". De logica-tags zelf tellen niet mee. Leeg = in orde.
+ */
+function sjabloon_kort_controle(string $tekst, int $max, string $label = 'Korte tekst'): array {
+    try { $n = sjabloon_langste_lengte($tekst, 'voorwaarde_var_lengte'); }
+    catch (SjabloonFout $e) { return []; }   // de schrijffout meldt sjabloon_controleer() al
+    if ($n <= $max) return [];
+    return [$label . ': de langste variant is ongeveer ' . $n . ' tekens (links tellen als 60). WhatsApp en sms krijgen er maximaal '
+            . $max . '; daarboven wordt de tekst afgekapt met "...". Maak hem korter.'];
+}
+
 /**
  * Controleer de teksten van een bericht vóór het opslaan of versturen.
  * $velden: label => [tekst, is_html]. Retourneert foutzinnen met het label ervoor; leeg = in orde.

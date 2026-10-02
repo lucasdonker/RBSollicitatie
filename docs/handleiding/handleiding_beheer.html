@@ -3297,6 +3297,20 @@ Dagen open telt vanaf het moment dat een document of taak klaarstond;
 bij een formulier vanaf de laatste fasewissel. Ook een variabele mag in
 een voorwaarde staan:
 <code>{{als gesprek_bericht is niet leeg}}</code>.</p>
+<p><strong>In WhatsApp en sms.</strong> De logica in de korte tekst
+wordt per ontvanger uitgerekend vóórdat het bericht de deur uitgaat:
+WhatsApp en sms krijgen alleen de eindtekst, nooit
+<code>{{als …}}</code>. Het maximum (400 tekens bij een sjabloon, 1000
+bij een zelf geschreven bericht) geldt voor de <strong>langste
+variant</strong>, niet voor de tekst met logica erin; links tellen
+daarbij als 60 tekens. Is de langste variant te lang, dan wordt niet
+opgeslagen of verstuurd (anders zou WhatsApp hem afkappen met &quot;...&quot;). In
+het WhatsApp-voorbeeld onder het tekstveld staat de logica grijs
+gestippeld met alle takken; wat één persoon krijgt zie je met
+<strong>Voorbeeld</strong>. Blijft er toch iets als <code>{{</code> in
+de eindtekst staan, dan gaat het bericht niet via WhatsApp of sms (wel
+per e-mail als die als terugval gepland is) en staat de reden in het
+log.</p>
 <p>Bij <strong>Opslaan</strong> controleert het systeem de logica. Een
 tikfout (&quot;Onbekend veld &quot;leefijd&quot;. Bedoel je leeftijd?&quot;), een fase die
 niet bestaat of een blok zonder <code>{{/als}}</code> wordt niet

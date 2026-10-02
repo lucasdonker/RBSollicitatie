@@ -299,7 +299,9 @@ function melding_logica(array $t, array $vars, ?int $sol_id, ?string &$fout): ar
         if (!sjabloon_heeft_logica($tekst)) continue;
         $waarde = $waarde ?? voorwaarde_resolver($sol_id, $vars);
         try { $t[$veld] = sjabloon_logica($tekst, $waarde, $html); }
-        catch (SjabloonFout $e) { $fout = $fout ?? $e->getMessage(); $t[$veld] = ''; }
+        catch (SjabloonFout $e) { $fout = $fout ?? $e->getMessage(); $t[$veld] = ''; continue; }
+        // Vangnet: een tag die niet dicht is ({{als x) zou letterlijk naar WhatsApp, sms of mail gaan.
+        if (sjabloon_losse_accolade($t[$veld])) { $fout = $fout ?? 'Er staat een {{ zonder }} in ' . $veld . '.'; $t[$veld] = ''; }
     }
     return $t;
 }

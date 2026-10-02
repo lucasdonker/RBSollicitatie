@@ -20,6 +20,8 @@ $modi    = function_exists('meldingen_kanaalmodi') ? meldingen_kanaalmodi() : ['
 unset($modi['uit']);
 $fases   = function_exists('fasen') ? fasen() : [];
 $mag_bewerken = function_exists('mag') ? mag('mailing', 'versturen') : true;   // taak (includes/rechten.php)
+// Grens van de WhatsApp/sms-tekst zoals de ontvanger hem krijgt (register, type handmatig).
+$kort_max = (int)((function_exists('melding_definitie') ? melding_definitie('handmatig') : null)['kort_max'] ?? 1000);
 
 // ── Sollicitanten (voor de ontvangerskiezer) ──────────────────
 $alle = [];
@@ -91,6 +93,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tab === 'nieuw') {
     if ($actie !== 'selecteer' && function_exists('sjabloon_controleer')) {
         $logica_fouten = sjabloon_controleer(['Onderwerp' => [$inhoud['onderwerp'], false], 'E-mailtekst' => [$inhoud['body_html'], true],
                                               'Tekst voor WhatsApp en sms' => [$inhoud['tekst_kort'], false]]);
+        // Grens voor wat de ontvanger krijgt: de langste variant, zonder de logica eromheen.
+        if ($modus !== 'email') {
+            $logica_fouten = array_merge($logica_fouten, sjabloon_kort_controle($inhoud['tekst_kort'], $kort_max, 'Tekst voor WhatsApp en sms'));
+        }
     }
     // Bijlagen: geüploade bestanden naar de bibliotheek (alleen bij echt verzenden/testen)
     $bijlagen_opties = [];
@@ -546,7 +552,7 @@ require __DIR__ . '/layout_top.php';
           <button type="button" class="p13-ek" data-opmaak="lijst" title="Opsomming: regels met - ervoor">Lijst</button>
           <button type="button" class="p13-ek" data-opmaak="link" title="Link naar het portaal">Link portaal</button>
         </div>
-        <textarea class="ds-textarea" name="tekst_kort" id="tekstKort" rows="6" maxlength="1000" data-var-veld
+        <textarea class="ds-textarea" name="tekst_kort" id="tekstKort" rows="6" maxlength="<?= $kort_max * 5 ?>" data-kort-max="<?= $kort_max ?>" data-var-veld
                   placeholder="Hoi {{voornaam}}, … Meer info: {{portaal_url}}"><?= h($_POST['tekst_kort'] ?? '') ?></textarea>
         <div class="bh-kortvoet">
           <span class="bh-meta" id="kortTeller" aria-live="polite"></span>

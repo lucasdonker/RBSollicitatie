@@ -2061,6 +2061,8 @@ body.bh-paneel-open .bh-inhoud { transition: padding-right .15s ease; }
 .bh-kortvoorbeeld { background: var(--bg-subtle); border-radius: var(--radius-md); padding: 12px; }
 .bh-kortvoorbeeld .bh-voorbeeld-bubbel { max-width: 420px; white-space: normal; overflow-wrap: anywhere; }
 .bh-varmerk { background: var(--fase-blauw-vlak); color: var(--navy); border-radius: 4px; padding: 0 3px; }
+/* Logica in het WhatsApp-voorbeeld: zichtbaar als code, niet als tekst die de ontvanger krijgt. */
+.bh-logicamerk { background: var(--bg-subtle); color: var(--ink-muted); border: 1px dashed var(--border); border-radius: 4px; padding: 0 3px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
 @media (max-width: 760px) {
   /* Versturen blijft onder je duim terwijl je scrolt. */
   .bh-berichtform .bh-verzendbalk { position: sticky; bottom: 8px; z-index: 20; box-shadow: var(--shadow-float); }

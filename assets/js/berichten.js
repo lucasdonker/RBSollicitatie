@@ -215,13 +215,22 @@ function kortOpmaak(soort) {
   kortBijwerken();
 }
 
-/** Tekens en sms-delen (160 tekens, of 153 per deel als het er meer zijn). */
+/** Is dit een logica-tag ({{als \u2026}}, {{/kies}} \u2026) en geen variabele? */
+var LOGICA_TAG = /^\{\{\s*\/?\s*(als|if|anders|else|elseif|elif|standaard|default|kies|switch|geval|case|einde|end|endif|endswitch)(?![\w.])/i;
+
+/** Tekens en sms-delen (160 tekens, of 153 per deel als het er meer zijn). Met logica telt de
+    langste variant; die rekent de server uit bij Voorbeeld en Versturen. */
 function kortBijwerken() {
   var t = kortTekst(), teller = document.getElementById('kortTeller');
   if (!t) return;
-  var n = t.value.length;
-  var delen = n === 0 ? 0 : (n <= 160 ? 1 : Math.ceil(n / 153));
-  if (teller) teller.textContent = n + ' van ' + t.maxLength + ' tekens \u00b7 ' + delen + ' ' + (delen === 1 ? 'sms' : 'sms-delen');
+  var n = t.value.length, max = t.dataset.kortMax || t.maxLength;
+  var logica = (t.value.match(/\{\{[^{}\n]+\}\}/g) || []).some(function (s) { return LOGICA_TAG.test(s); });
+  if (logica) {
+    if (teller) teller.textContent = n + ' tekens met logica \u00b7 max ' + max + ' per variant, gecontroleerd bij Voorbeeld en Versturen';
+  } else {
+    var delen = n === 0 ? 0 : (n <= 160 ? 1 : Math.ceil(n / 153));
+    if (teller) teller.textContent = n + ' van ' + max + ' tekens \u00b7 ' + delen + ' ' + (delen === 1 ? 'sms' : 'sms-delen');
+  }
   kortVoorbeeld();
 }
 
@@ -231,7 +240,8 @@ function kortVoorbeeld() {
   if (!t || !bubbel) return;
   bubbel.textContent = '';
   var tekst = t.value.trim() || 'Hier zie je hoe je bericht eruitziet.';
-  var patroon = /(\*[^*\n]+\*|_[^_\n]+_|~[^~\n]+~|\{\{[a-z0-9_.]+\}\})/gi;
+  // Variabelen en logica eerst, zodat een _ in {{als formulier.dagen_open > 7}} geen cursief wordt.
+  var patroon = /(\{\{[^{}\n]+\}\}|\*[^*\n]+\*|_[^_\n]+_|~[^~\n]+~)/gi;
   tekst.split('\n').forEach(function (regel, i) {
     if (i) bubbel.appendChild(document.createElement('br'));
     var laatst = 0, m;
@@ -239,7 +249,12 @@ function kortVoorbeeld() {
     while ((m = patroon.exec(regel))) {
       if (m.index > laatst) bubbel.appendChild(document.createTextNode(regel.slice(laatst, m.index)));
       var s = m[0], el;
-      if (s[0] === '{') { el = document.createElement('mark'); el.className = 'bh-varmerk'; el.textContent = s; }
+      if (s[0] === '{') {
+        el = document.createElement('mark');
+        // Logica toont alle takken; wat één ontvanger krijgt zie je met de knop Voorbeeld.
+        el.className = LOGICA_TAG.test(s) ? 'bh-logicamerk' : 'bh-varmerk';
+        el.textContent = s;
+      }
       else { el = document.createElement({ '*': 'strong', '_': 'em', '~': 's' }[s[0]]); el.textContent = s.slice(1, -1); }
       bubbel.appendChild(el);
       laatst = m.index + s.length;

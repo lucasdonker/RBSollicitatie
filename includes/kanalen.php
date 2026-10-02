@@ -197,6 +197,10 @@ function wa_verstuur_res(string $telefoon, string $tekst): array {
 
     $body = ['to' => $nummer, 'message' => $tekst, 'type' => 'text'];
     if ($afzender !== '') $body['from'] = $afzender;
+    // Geen lege body bij een ongeldig teken (json_encode gaf dan false) en geen leeg bericht.
+    // Overgebleven sjablooncode houdt de verzendkern al tegen (melding_verzend_item, voor sms ook).
+    $json = json_encode($body, JSON_INVALID_UTF8_SUBSTITUTE);
+    if ($json === false || trim($tekst) === '') return ['ok' => false, 'fout' => 'leeg of onleesbaar bericht'];
 
     try {
         $ch = curl_init($endpoint);
@@ -205,7 +209,7 @@ function wa_verstuur_res(string $telefoon, string $tekst): array {
             CURLOPT_POST           => true,
             // WhatsReach authenticeert met X-API-Key (niet Bearer)
             CURLOPT_HTTPHEADER     => ['X-API-Key: ' . $sleutel, 'Content-Type: application/json'],
-            CURLOPT_POSTFIELDS     => json_encode($body),
+            CURLOPT_POSTFIELDS     => $json,
             CURLOPT_TIMEOUT        => 12,
         ]);
         $resp = curl_exec($ch);

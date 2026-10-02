@@ -70,6 +70,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'Hero-subtitel' => [(string)($_POST['hero_subtitel'] ?? ''), false], 'E-mailtekst' => [(string)($_POST['body_html'] ?? ''), true],
             'Korte tekst' => [(string)($_POST['tekst_kort'] ?? ''), false], 'Samenvatting' => [(string)($_POST['samenvatting'] ?? ''), false],
         ], $register[$slug]['vars'] ?? []);
+        // De grens van de korte tekst geldt voor de langste variant, niet voor de logica eromheen.
+        $logica_fouten = array_merge($logica_fouten, sjabloon_kort_controle((string)($_POST['tekst_kort'] ?? ''), (int)($register[$slug]['kort_max'] ?? 400)));
     }
 
     if ($actie === 'opslaan' && $slug !== '' && !$logica_fouten) {
@@ -326,8 +328,9 @@ require __DIR__ . '/layout_top.php';
       <div class="bh-mt-sectie bh-mt-tweekolom">
         <div>
           <label class="veld-label">Korte tekst (WhatsApp/SMS) <span id="kortTeller" class="bh-mt-teller"></span></label>
-          <textarea name="tekst_kort" id="tekstKort" data-var-veld rows="5" maxlength="400" class="bh-mt-tekstvak" data-invoer="kortTeller()" <?= ($def && !$def['kort_toegestaan']) ? 'placeholder="Dit type gaat alleen per e-mail."' : '' ?>><?= h($actief['tekst_kort'] ?? '') ?></textarea>
-          <div class="bh-mt-hulp">Max 400 tekens. Opmaak zoals in WhatsApp: *vet*, _cursief_, ~doorgehaald~ (sms toont die tekens niet). Zelfde variabelen als de e-mail.</div>
+          <?php $kort_max = (int)($def['kort_max'] ?? 400); ?>
+          <textarea name="tekst_kort" id="tekstKort" data-var-veld rows="5" maxlength="<?= $kort_max * 5 ?>" data-kort-max="<?= $kort_max ?>" class="bh-mt-tekstvak" data-invoer="kortTeller()" <?= ($def && !$def['kort_toegestaan']) ? 'placeholder="Dit type gaat alleen per e-mail."' : '' ?>><?= h($actief['tekst_kort'] ?? '') ?></textarea>
+          <div class="bh-mt-hulp">Max <?= $kort_max ?> tekens voor wat de ontvanger krijgt; met logica geldt dat voor de langste variant (gecontroleerd bij opslaan). Opmaak zoals in WhatsApp: *vet*, _cursief_, ~doorgehaald~ (sms toont die tekens niet). Zelfde variabelen en logica als de e-mail.</div>
         </div>
         <div>
           <label for="veld-samenvatting" class="veld-label">Samenvatting (portaal)</label>
@@ -398,7 +401,9 @@ require __DIR__ . '/layout_top.php';
 </div>
 
 <script nonce="<?= h(csp_nonce()) ?>">
-function kortTeller(){var t=document.getElementById('tekstKort');var e=document.getElementById('kortTeller');if(t&&e)e.textContent='('+t.value.length+'/400)';}
+function kortTeller(){var t=document.getElementById('tekstKort');var e=document.getElementById('kortTeller');if(!t||!e)return;
+  var logica=/\{\{\s*\/?\s*(als|if|kies|switch)\b/i.test(t.value);
+  e.textContent=logica?'('+t.value.length+' tekens met logica; max '+t.dataset.kortMax+' per variant)':'('+t.value.length+'/'+t.dataset.kortMax+')';}
 kortTeller();
 </script>
 <script src="<?= APP_URL ?>/assets/js/variabelen.js?v=<?= @filemtime(__DIR__ . '/../assets/js/variabelen.js') ?>" defer></script>

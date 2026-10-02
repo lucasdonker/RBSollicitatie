@@ -225,11 +225,43 @@ function sjabloon_logica(string $tekst, callable $waarde, bool $html = false): s
     return sjabloon_logica_uit(sjabloon_logica_ontleed($tekst, $html), $waarde);
 }
 
+/** Staat er een losse {{ of }} (een tag die niet dicht is)? Die zou letterlijk bij de ontvanger komen. */
+function sjabloon_losse_accolade(string $tekst): bool {
+    $rest = (string)preg_replace('~\{\{(?:(?!\}\}|\{\{).)*\}\}~s', '', $tekst);
+    return strpos($rest, '{{') !== false || strpos($rest, '}}') !== false;
+}
+
+/**
+ * Lengte van de langste uitkomst van een platte tekst: per blok telt de langste tak. Een variabele
+ * telt als $var_lengte(naam) tekens (standaard de lengte van {{naam}} zelf). Voor de grens van de
+ * korte tekst: die geldt voor wat er verstuurd wordt, niet voor de logica eromheen.
+ * @throws SjabloonFout
+ */
+function sjabloon_langste_lengte(string $tekst, ?callable $var_lengte = null): int {
+    $knopen = sjabloon_heeft_logica($tekst) ? sjabloon_logica_ontleed($tekst, false) : [['t', $tekst]];
+    return sjabloon_knopen_lengte($knopen, $var_lengte ?? fn(string $n) => strlen($n) + 4);
+}
+
+function sjabloon_knopen_lengte(array $knopen, callable $var_lengte): int {
+    $n = 0;
+    foreach ($knopen as $k) {
+        if ($k[0] === 't') {
+            $t = (string)preg_replace_callback('~\{\{\s*([a-z0-9_.]+)\s*\}\}~i', fn($m) => str_repeat('x', max(0, (int)$var_lengte(strtolower($m[1])))), $k[1]);
+            $n += function_exists('mb_strlen') ? mb_strlen($t, 'UTF-8') : strlen($t);
+            continue;
+        }
+        $takken = $k[0] === 'als' ? array_column($k[1], 1) : array_merge(array_column($k[2], 1), [$k[3] ?: []]);
+        $n += max(array_map(fn($tak) => sjabloon_knopen_lengte($tak, $var_lengte), $takken) ?: [0]);
+    }
+    return $n;
+}
+
 /**
  * Fouten in een sjabloontekst, in woorden. Leeg = in orde.
  * $bekend: naam => lijst met toegestane waarden (keuzeveld) of null (vrij veld).
  */
 function sjabloon_logica_fouten(string $tekst, bool $html, array $bekend): array {
+    if (sjabloon_losse_accolade($tekst)) return ['Er staat een {{ zonder }} (of andersom). Zo\'n stuk zou letterlijk bij de ontvanger aankomen.'];
     if (!sjabloon_heeft_logica($tekst)) return [];
     try { $knopen = sjabloon_logica_ontleed($tekst, $html); }
     catch (SjabloonFout $e) { return [$e->getMessage()]; }

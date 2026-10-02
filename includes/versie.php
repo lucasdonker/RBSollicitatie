@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.161.0');
+define('APP_VERSIE', '2.161.1');
 
 function app_changelog(): array {
     return [
+        '2.161.1' => [
+            'datum'  => '2026-10-02',
+            'titel'  => 'Logica in WhatsApp- en sms-berichten',
+            'punten' => [
+                'De tekengrens van de korte tekst geldt nu voor de langste variant, niet voor de tekst met logica erin. Te lang wordt bij opslaan of versturen tegengehouden, in plaats van afgekapt met "..."',
+                'Een {{ zonder }} wordt bij opslaan geweigerd, en gaat bij verzenden nooit naar WhatsApp of sms',
+                'Het WhatsApp-voorbeeld toont logica als code; een _ in een veldnaam maakt de tekst niet meer cursief',
+                'WhatsApp: een ongeldig teken gaf een lege aanvraag aan WhatsReach; nu wordt het vervangen',
+            ],
+        ],
         '2.161.0' => [
             'datum'  => '2026-10-02',
             'titel'  => 'Berichten met logica: als, anders, kies en voorwaarden',

@@ -494,9 +494,13 @@ function melding_verzend_item(array $m): array {
     $tmp_wissen = function () use (&$bijlagen) { foreach ($bijlagen as $b) if (!empty($b['tmp'])) @unlink($b['tmp']); };
     // Korte kanalen: nette downloadlinks achter de tekst
     $tekst_kort = rtrim((string)$m['tekst_kort']) . melding_bijlagen_kort_tekst($kort_links);
+    // Wat naar WhatsApp of sms gaat, is platte eindtekst. Staat er nog {{ of }} in (een tag die niet
+    // werd ingevuld of niet dicht was), dan gaat het niet naar die API; e-mail blijft als terugval.
+    $kort_fout = (strpos($tekst_kort, '{{') !== false || strpos($tekst_kort, '}}') !== false) ? 'sjablooncode in de korte tekst' : null;
 
     foreach ($plan as $kanaal) {
         if ($kanaal !== 'email' && $poging > 1) { $fouten[] = "$kanaal: overgeslagen bij herhaling"; continue; }
+        if ($kort_fout && ($kanaal === 'whatsapp' || $kanaal === 'sms')) { $fouten[] = "$kanaal: $kort_fout"; error_log("melding_verzend_item: $kort_fout (log " . ($m['log_id'] ?? '?') . ')'); continue; }
         $r = ['ok' => false, 'fout' => 'onbekend kanaal'];
         try {
             if (($kanaal === 'whatsapp' || $kanaal === 'sms') && function_exists('mail_omleiden') && mail_omleiden() !== '') {
