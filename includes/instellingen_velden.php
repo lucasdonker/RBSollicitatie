@@ -69,6 +69,8 @@ function instellingen_velden(): array {
                 ]],
                 ['titel' => 'Herinneringen', 'partial' => 'herinneringen', 'sleutels' => instellingen_herinnering_sleutels()],
                 ['titel' => 'Grenzen', 'uitleg' => 'Zodat niemand te veel berichten krijgt en de mailserver niets weigert.', 'velden' => [
+                    ['sleutel' => 'melding.auto_vanaf_uur', 'label' => 'Automatische berichten vanaf (uur)', 'type' => 'number', 'standaard' => '7', 'min' => 0, 'max' => 23,
+                     'hint' => 'Herinneringen, geplande berichten en automatisch uitnodigen gaan niet eerder de deur uit dan dit uur; wat daarvóór klaarstaat gaat dan. 7 = vanaf 07:00. 0 = de hele dag. Wat je zelf in gang zet, en een inlogcode of bevestiging na iets wat de sollicitant zelf doet, gaat altijd direct.'],
                     ['sleutel' => 'herinnering.rust_dagen', 'label' => 'Rustperiode (dagen)', 'type' => 'number', 'standaard' => '3', 'min' => 0, 'max' => 30,
                      'hint' => 'Maximaal één "zachte" herinnering per sollicitant per zoveel dagen.'],
                     ['sleutel' => 'melding.plafond_dag', 'label' => 'Hoe vaak hetzelfde bericht per dag', 'type' => 'number', 'standaard' => '8', 'min' => 1, 'max' => 50,

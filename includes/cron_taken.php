@@ -17,6 +17,10 @@ if (!function_exists('cron_taken_uitvoeren')) {
  * Een taak is een naam => callable die een array (resultaat) teruggeeft.
  */
 function cron_groepen(): array {
+    // Taken die uit zichzelf berichten maken, wachten 's ochtends tot het ingestelde uur (melding_automatisch_nu()).
+    $overdag = fn(callable $taak) => function_exists('melding_automatisch_nu') && !melding_automatisch_nu()
+        ? ['wacht_tot' => sprintf('%02d:00', melding_automatisch_vanaf())]
+        : $taak();
     return [
         'snel' => [
             'label'    => 'Berichten en AI (elke minuut)',
@@ -30,10 +34,10 @@ function cron_groepen(): array {
             'label'    => 'Herinneringen, uitnodigen en opruimen (elk kwartier)',
             'interval' => 900,
             'taken'    => [
-                'herinneringen' => fn() => function_exists('herinnering_run')
+                'herinneringen' => fn() => $overdag(fn() => function_exists('herinnering_run')
                     ? array_map(fn($r) => ['kandidaten' => $r['kandidaten'], 'verstuurd' => $r['verstuurd'], 'overgeslagen' => $r['overgeslagen']], herinnering_run())
-                    : null,
-                'auto_invite'   => fn() => function_exists('auto_invite_run') ? auto_invite_run() : null,
+                    : null),
+                'auto_invite'   => fn() => $overdag(fn() => function_exists('auto_invite_run') ? auto_invite_run() : null),
                 // Gebruikte/verlopen inlogcodes en tellers van de snelheidsbegrenzing; los van bewaar.actief.
                 'vervallen'     => fn() => function_exists('opschoon_vervallen') ? opschoon_vervallen() : null,
                 // Verlopen "blijf ingelogd"-tokens: werken toch niet meer, hoeven er niet te staan.

@@ -2132,8 +2132,14 @@ herhaalt en het maximum. Klik daarna op **Opslaan** onderaan.
 | Selectiedag morgen | aan; de dag ervoor, één keer, met een vrij in te vullen "laatste info" |
 | Trainingsweekend nadert | aan; 3 dagen vooraf, één keer |
 
-Onder de regels staan nog vier instellingen:
+Onder de regels staan nog vijf instellingen:
 
+- **Automatische berichten vanaf (uur)**, standaard 7: herinneringen, geplande berichten en
+  automatisch uitnodigen gaan niet eerder de deur uit dan 07:00. Een herinnering die op een dag aan
+  de beurt is, komt dus 's ochtends aan en niet net na middernacht. 0 = de hele dag. Er is bewust
+  geen eindtijd: wat na 07:00 aan de beurt raakt, gaat meteen. Wat je zelf in gang zet (fase
+  omzetten, handmatig bericht, **Nu draaien**) en een inlogcode of bevestiging na iets wat de
+  sollicitant zelf doet, gaat altijd direct.
 - **Rustperiode (dagen)**, standaard 3: per sollicitant hooguit één "zachte" herinnering per zoveel dagen.
 - **Anti-loop: zelfde bericht per dag**, standaard 8: vaker hetzelfde automatische bericht naar
   dezelfde ontvanger binnen 24 uur wordt overgeslagen. Wat je zelf in gang zet (fase omzetten,

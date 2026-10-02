@@ -3,10 +3,18 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.161.1');
+define('APP_VERSIE', '2.161.2');
 
 function app_changelog(): array {
     return [
+        '2.161.2' => [
+            'datum'  => '2026-10-02',
+            'titel'  => 'Automatische berichten niet meer om middernacht',
+            'punten' => [
+                'Herinneringen, geplande berichten en automatisch uitnodigen gaan pas vanaf 07:00 de deur uit, in plaats van net na middernacht. Instelbaar onder Instellingen › Uitnodigen & herinneren › Grenzen',
+                'Wat je zelf in gang zet en een inlogcode of bevestiging na iets wat de sollicitant doet, gaat nog steeds direct',
+            ],
+        ],
         '2.161.1' => [
             'datum'  => '2026-10-02',
             'titel'  => 'Logica in WhatsApp- en sms-berichten',
