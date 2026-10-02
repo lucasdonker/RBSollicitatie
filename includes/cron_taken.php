@@ -38,6 +38,8 @@ function cron_groepen(): array {
                 'vervallen'     => fn() => function_exists('opschoon_vervallen') ? opschoon_vervallen() : null,
                 // Verlopen "blijf ingelogd"-tokens: werken toch niet meer, hoeven er niet te staan.
                 'apparaten'     => fn() => function_exists('portaal_onthoud_opschonen') ? ['verwijderd' => portaal_onthoud_opschonen()] : null,
+                // Tellers van live bijwerken die een week stillagen (bevatten de naam van wie iets wijzigde).
+                'live'          => fn() => function_exists('live_opruimen') ? ['verwijderd' => live_opruimen()] : null,
             ],
         ],
         'dag' => [

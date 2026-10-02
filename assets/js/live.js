@@ -9,8 +9,11 @@
  *   - zonder zulke blokken verschijnt onderin "X heeft iets gewijzigd" met Vernieuwen.
  * Er wordt nooit iets overschreven waar je mee bezig bent.
  *
- * Na het vervangen gaat er een 'p13:live'-event over document, zodat een script zijn tellers of
- * filters opnieuw kan toepassen (bijv. assets/js/incheck.js).
+ * Twee events over document:
+ *   'p13:live-wijziging'  zodra een ander iets veranderde (vóór vervangen of melden): een onderdeel
+ *                         dat zichzelf kan bijwerken doet dat dan (assets/js/afspraak.js);
+ *   'p13:live'            na het vervangen van blokken, zodat een script zijn tellers of filters
+ *                         opnieuw kan toepassen (assets/js/incheck.js, volgorde.js).
  */
 (function () {
   'use strict';
@@ -94,10 +97,14 @@
         var anderen = [];
         Object.keys(d.v || {}).forEach(function (s) {
           var n = d.v[s];
-          if (stand[s] !== undefined && n.v !== stand[s] && !(n.door_id && n.door_id === ik)) anderen.push(n.door || 'Iemand');
+          // Een teller van 0 is opgeruimd (live_opruimen), geen wijziging.
+          if (stand[s] !== undefined && n.v !== 0 && n.v !== stand[s] && !(n.door_id && n.door_id === ik)) anderen.push(n.door || 'Iemand');
           stand[s] = n.v;
         });
         if (!anderen.length) return;
+        // Eerst laten weten dát er iets veranderde, zodat een onderdeel dat zichzelf kan bijwerken
+        // (bijv. de afspraak-editor, assets/js/afspraak.js) dat meteen doet.
+        document.dispatchEvent(new CustomEvent('p13:live-wijziging', { detail: { namen: anderen } }));
         if (document.querySelector('[data-live-blok][id]')) vervang(anderen); else melding(anderen);
       })
       .catch(function () { /* geen verbinding: de volgende ronde opnieuw */ })

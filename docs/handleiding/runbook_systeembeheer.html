@@ -377,7 +377,10 @@ primaire sleutel van <code>live_versie</code>. Met tien mensen tegelijk
 is dat één licht verzoek per seconde. SSE of WebSockets zijn bewust niet
 gebruikt: die houden een FPM-worker en de sessielock vast. Deze
 verzoeken en de stille herlaadactie (kop <code>X-P13-Live</code>) tellen
-niet als activiteit voor het uitloggen na twee uur.</li>
+niet als activiteit voor het uitloggen na twee uur. De afspraak-editor
+in het TW-gesprek vraagt zijn stand alleen nog op na zo&#39;n signaal (geen
+eigen 15-secondenvraag meer). Tellers die een week stillagen, ruimt de
+kwartiertaak op (<code>live_opruimen()</code>).</li>
 <li><strong>Twee kanten:</strong> het portaal voor sollicitanten
 (<code>/portaal/</code>) en het beheer (<code>/admin/</code>). Daarnaast
 de openbare adressen <code>/aanmelden.php</code> (aanmeldformulier),

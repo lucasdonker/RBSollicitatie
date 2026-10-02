@@ -169,6 +169,7 @@ function anon_regels(): array {
         'portaal_apparaten' => ['*' => 'wis'],
         'login_pogingen'    => ['*' => 'wis'],
         'api_rate'          => ['*' => 'wis'],
+        'live_versie'       => ['*' => 'wis'],   // tellers voor live bijwerken, met de naam van wie iets wijzigde
 
         // ── Logboek ──
         'audit_log' => ['wie_naam' => 'naammap', 'details' => 'json_tekst', 'ip' => 'ip', 'browser' => 'null'],

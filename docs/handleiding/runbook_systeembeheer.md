@@ -175,7 +175,9 @@ e-mailadres.
   meteen vrijgeven, één query op de primaire sleutel van `live_versie`. Met tien mensen tegelijk is
   dat één licht verzoek per seconde. SSE of WebSockets zijn bewust niet gebruikt: die houden een
   FPM-worker en de sessielock vast. Deze verzoeken en de stille herlaadactie (kop `X-P13-Live`)
-  tellen niet als activiteit voor het uitloggen na twee uur.
+  tellen niet als activiteit voor het uitloggen na twee uur. De afspraak-editor in het TW-gesprek
+  vraagt zijn stand alleen nog op na zo'n signaal (geen eigen 15-secondenvraag meer). Tellers die
+  een week stillagen, ruimt de kwartiertaak op (`live_opruimen()`).
 - **Twee kanten:** het portaal voor sollicitanten (`/portaal/`) en het beheer (`/admin/`).
   Daarnaast de openbare adressen `/aanmelden.php` (aanmeldformulier), `/privacy.php`
   (privacyverklaring), `/p/<naam>` (landingspagina's), `/foto.php` (foto van een sollicitant,

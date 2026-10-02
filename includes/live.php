@@ -128,6 +128,21 @@ function live_versies(array $scopes): array {
 }
 
 /**
+ * Opruimen (kwartiertaak, includes/cron_taken.php): een teller die een week niet veranderde, is
+ * nergens meer voor nodig, en bevat de naam van wie het laatst iets wijzigde. Een open tabblad
+ * merkt het weghalen niet als wijziging (assets/js/live.js negeert een teller die terugvalt naar 0).
+ * @return int aantal verwijderd
+ */
+function live_opruimen(int $dagen = 7): int {
+    try {
+        live_auto_setup();
+        $q = db()->prepare("DELETE FROM live_versie WHERE op < DATE_SUB(NOW(), INTERVAL ? DAY)");
+        $q->execute([max(1, $dagen)]);
+        return $q->rowCount();
+    } catch (\Throwable $e) { return 0; }
+}
+
+/**
  * De attributen voor het element dat live meekijkt (layout_top.php zet ze op <main>): de scopes,
  * de stand van nu (zodat een wijziging tussen laden en de eerste vraag niet wegvalt) en wie je bent.
  */

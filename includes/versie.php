@@ -3,10 +3,18 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.159.0');
+define('APP_VERSIE', '2.160.0');
 
 function app_changelog(): array {
     return [
+        '2.160.0' => [
+            'datum'  => '2026-10-02',
+            'titel'  => 'Live bijwerken: één mechanisme en netjes opgeruimd',
+            'punten' => [
+                'De inzet in het TW-gesprek vraagt niet meer elke 15 seconden zelf de stand op: hij ververst als iemand anders iets wijzigt, en als je net iets invult zodra je klaar bent',
+                'De tellers voor live bijwerken worden na een week zonder wijziging opgeruimd, en bij het verwijderen van een dossier meteen. Ze bevatten de naam van wie iets wijzigde',
+            ],
+        ],
         '2.159.0' => [
             'datum'  => '2026-10-02',
             'titel'  => 'Na de selectiedag: altijd via de bellijst',

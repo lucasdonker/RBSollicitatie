@@ -2,8 +2,10 @@
  * Paal 13 — de afspraak-editor in het TW-gesprek (admin/_afspraak_editor.php).
  *
  * Elke wijziging slaat meteen op in het actieve scenario (concept); aanvinken = 5 dagen.
- * Elke 15 seconden haalt hij de stand opnieuw op, zodat een wijziging in de loonplanning hier
- * zichtbaar is — behalve terwijl je zelf iets invult of er een opslag onderweg is.
+ * Verandert iemand anders iets (de loonplanning, een collega in hetzelfde gesprek), dan meldt de
+ * live-laag dat (assets/js/live.js, event 'p13:live-wijziging') en haalt hij de stand opnieuw op —
+ * behalve terwijl je zelf iets invult of er een opslag onderweg is; dan zodra je klaar bent.
+ * Alleen op een pagina zonder live-laag vraagt hij zelf elke 15 seconden de stand.
  * Op slot (na het gesprek): alles alleen-lezen; "Toch aanpassen" vraagt een reden.
  */
 (function () {
@@ -52,14 +54,23 @@
         .then(function () { bezig--; });
     }
 
+    var achterstand = false;   // er kwam een wijziging binnen terwijl je bezig was
     function verversen(altijd) {
-      if (!altijd && (bezig || document.hidden || blok.contains(document.activeElement))) return;
-      fetch(url + '?sol_id=' + encodeURIComponent(sol), { headers: { 'Accept': 'application/json' } })
+      if (!altijd && (bezig || document.hidden || blok.contains(document.activeElement))) { achterstand = true; return; }
+      achterstand = false;
+      fetch(url + '?sol_id=' + encodeURIComponent(sol), { headers: { 'Accept': 'application/json', 'X-P13-Live': '1' } })
         .then(function (r) { return r.json(); })
         .then(function (d) { if (d.ok && !bezig) toon(d); })
         .catch(function () {});
     }
-    setInterval(verversen, 15000);
+    if (document.querySelector('[data-live]')) {
+      document.addEventListener('p13:live-wijziging', function () { verversen(); });
+      // Klaar met invullen of terug op het tabblad: wat intussen binnenkwam alsnog tonen.
+      blok.addEventListener('focusout', function () { setTimeout(function () { if (achterstand) verversen(); }, 300); });
+      document.addEventListener('visibilitychange', function () { if (!document.hidden && achterstand) verversen(); });
+    } else {
+      setInterval(verversen, 15000);
+    }
 
     blok.addEventListener('change', function (e) {
       if (slot) return;

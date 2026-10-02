@@ -128,6 +128,8 @@ function avg_sollicitatie_leegmaken($db, int $sol_id, bool $ook_loondocs = true)
     ] as $sql) avg_stap($db, $sql, [$sol_id]);
     // "Houd uit elkaar" werkt in twee richtingen.
     avg_stap($db, "DELETE FROM selectie_relatie WHERE sollicitatie_id = ? OR ander_id = ?", [$sol_id, $sol_id]);
+    // De live-teller van dit dossier (includes/live.php): wie er het laatst iets wijzigde.
+    avg_stap($db, "DELETE FROM live_versie WHERE scope = ?", ['sol:' . $sol_id]);
 
     // Bewijsspoor van de ondertekeningen die niet bewaard hoeven te worden: alleen type en moment blijven.
     avg_stap($db, "UPDATE ondertekeningen SET ondertekenaar_naam=NULL, ondertekenaar_email=NULL, ondertekenaar_geboortedatum=NULL,
