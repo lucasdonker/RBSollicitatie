@@ -1,6 +1,6 @@
 <?php
 /**
- * Beheer — Trainingsweekend. Zes stappen, zelfde opbouw als de selectiedag. Welke je ziet, hangt af
+ * Beheer — Trainingsweekend. Zeven stappen, zelfde opbouw als de selectiedag. Welke je ziet, hangt af
  * van je taken (includes/modules/trainingsweekend.php); een begeleider heeft standaard inchecken en
  * beoordelen.
  *
@@ -9,6 +9,7 @@
  *   inchecken    — gedeelde incheck-lijst; de tablet doet hetzelfde                       (inchecken)
  *   beoordelen   — vrijwilligers op hun telefoon: observaties per persoon, met foto;
  *                  twijfelgevallen van het bestuur bovenaan ("extra aandacht")             (beoordelen; zonder: alleen lezen)
+ *   feedback     — wat strandwachten vertellen vastleggen, zonder gesprek te openen         (gesprekken)
  *   evaluatie    — het bestuur zegt alvast sowieso aannemen / twijfel / sowieso afwijzen   (gesprekken)
  *   gesprekken   — het bestuur spreekt iedereen, in vrije volgorde, en beslist ter plekke (gesprekken)
  *
@@ -150,7 +151,7 @@ $stappen = [];
 if ($mag_voorbereiden) $stappen += ['voorbereiden' => 'Voorbereiden', 'groepen' => 'Groepen'];
 if ($mag_inchecken)    $stappen['inchecken'] = 'Inchecken';
 $stappen['beoordelen'] = 'Beoordelen';
-if ($mag_beslissen)    $stappen += ['evaluatie' => 'Evaluatie', 'gesprekken' => 'Gesprekken'];
+if ($mag_beslissen)    $stappen += ['feedback' => 'Feedback', 'evaluatie' => 'Evaluatie', 'gesprekken' => 'Gesprekken'];
 $stap = (string)($_GET['stap'] ?? '');
 $stap = ['weekend' => 'beoordelen', 'besluit' => 'gesprekken'][$stap] ?? $stap;   // oude links
 if (!isset($stappen[$stap])) {

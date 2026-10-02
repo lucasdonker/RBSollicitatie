@@ -1339,9 +1339,9 @@ gesprek wordt het door of niet. Is iedereen doorgevoerd, dan staat er "De bellij
 
 ## Trainingsweekend
 
-**Waar:** Selectie › Trainingsweekend, met zes stappen: Voorbereiden, Groepen, Inchecken,
-Beoordelen, Evaluatie en Gesprekken.  
-**Wie:** bestuur en beheerder alle zes; begeleiders zien alleen Inchecken en Beoordelen.
+**Waar:** Selectie › Trainingsweekend, met zeven stappen: Voorbereiden, Groepen, Inchecken,
+Beoordelen, Feedback, Evaluatie en Gesprekken.  
+**Wie:** bestuur en beheerder alle zeven; begeleiders zien alleen Inchecken en Beoordelen.
 
 > **In het kort:** vooraf zie je wie er komt. Op het weekend checken sollicitanten zelf in op een
 > tablet, en schrijven begeleiders op hun telefoon op wat opvalt. Daarna heeft iedereen een gesprek
@@ -1389,8 +1389,19 @@ staat meteen in de lijst. Tik je met tekst in het veld op Volgende, dan wordt di
 De sollicitant ziet observaties niet. Je eigen observaties kun je verwijderen; die van anderen
 blijven staan.
 
-Onderaan staat ingeklapt **Selectiedag**: het advies en gemiddelde, het besluit en de observaties
-van toen. Het is er als je het nodig hebt, maar het staat bewust niet vooraan.
+Onderaan staat ingeklapt **Selectiedag**, met in de kop al het gemiddelde per test (bijvoorbeeld
+"Sporttest 3,5 · Zwemtest 3,4"). Uitgeklapt: de cijfers per onderdeel (nog een keer uit te klappen)
+en de observaties van toen. Een begeleider ziet geen advies en geen besluit. Het is er als je het
+nodig hebt, maar het staat bewust niet vooraan.
+
+### Feedback van strandwachten
+
+Vertelt een strandwacht je iets over een sollicitant, dan leg je dat vast in de stap **Feedback**
+(alleen bestuur): per sollicitant een kaart met wat er al is gezegd en **Feedback vastleggen** (van
+wie, positief/neutraal/aandachtspunt, wat er gezegd is). Je hoeft er geen gesprek voor te openen.
+Terugkerende strandwachten staan ingeklapt onderaan. Hetzelfde kan in het dossier, op de tabbladen
+Selectiedag en Trainingsweekend, en in de nabespreking van de selectiedag. Beoordelaars zien deze
+feedback niet.
 
 Wie de kennismakingsformulieren niet mag lezen, ziet geen bijzonderheden, alleen dat er iets is om
 na te vragen; de knop **Dossier** en het telefoonnummer ziet alleen wie Sollicitanten mag lezen.

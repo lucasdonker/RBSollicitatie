@@ -15,10 +15,13 @@ $_scores = $tab_dossier['scores'] ?? [];
 $_obs    = $tab_dossier['observaties'] ?? [];
 $_besl   = $tab_dossier['besluit'] ?? null;
 $_gem    = bh_dossier_score($tab_dossier);
-// Feedback van lifeguards over de selectiedag: vastgelegd in de nabespreking, hier alleen lezen.
-$_lgf    = lg_feedback_van((int)$tab_dossier['sol']['id'], ['selectiedag']);
+// Feedback van strandwachten over de selectiedag: lezen, en vastleggen met de taak Nabespreken
+// (sinds 2.152.0 ook hier, zodat het niet hoeft te wachten tot de nabespreking).
+$_sol_id = (int)$tab_dossier['sol']['id'];
+$_lgf    = lg_feedback_van($_sol_id, ['selectiedag']);
+$_lgf_mag = mag(lg_feedback_module('selectiedag'), lg_feedback_taak('selectiedag'));
 
-if (!$_scores && !$_obs && !$_lgf && empty($_besl['besluit'])) {
+if (!$_scores && !$_obs && !$_lgf && empty($_besl['besluit']) && !$_lgf_mag) {
     echo '<div class="ds-kaart ds-kaart-p">';
     $leeg_titel = 'Nog niet beoordeeld';
     $leeg_tekst = 'Zodra er op de selectiedag scores of observaties zijn vastgelegd, staan ze hier.';
@@ -43,9 +46,10 @@ if (!$_scores && !$_obs && !$_lgf && empty($_besl['besluit'])) {
     </section>
     <?php endif; ?>
 
-    <?php if ($_lgf) {
-        $lgf_sol_id = (int)$tab_dossier['sol']['id']; $lgf_seizoen_id = 0; $lgf_moment = 'selectiedag';
-        $lgf_mag_bewerken = false; $lgf_terug = ''; $lgf_rijen = $_lgf;
+    <?php if ($_lgf || $_lgf_mag) {
+        $lgf_sol_id = $_sol_id; $lgf_seizoen_id = (int)$tab_dossier['sol']['seizoen_id']; $lgf_moment = 'selectiedag';
+        $lgf_mag_bewerken = $_lgf_mag; $lgf_rijen = $_lgf;
+        $lgf_terug = APP_URL . '/admin/sollicitant.php?id=' . $_sol_id . '&tab=selectiedag';
         require __DIR__ . '/../_lg_feedback.php';
     } ?>
   </div>

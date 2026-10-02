@@ -447,12 +447,16 @@ function bh_dossier_tabs(array $dossier, string $actief = 'dossier'): array {
     // leest dossiers, maar heeft niets te maken met hoe iemand op de selectiedag of het weekend deed).
     // mag() geeft ook false als de module uit staat. De tabbladenlijst is ook het slot op ?tab=.
     $_mag_mod = fn(string $m) => function_exists('mag') ? mag($m, 'lezen') : (!function_exists('module_aan') || module_aan($m));
-    // Ook met alleen een besluit (en wat er op de bellijst is verteld) hoort de tab er te staan.
-    if (($dossier['scores'] || $dossier['observaties'] || !empty($dossier['besluit']['besluit'])) && $_mag_mod('selectiedag')) {
+    // Ook met alleen een besluit (en wat er op de bellijst is verteld), of zolang iemand in de kring van
+    // het evenement zit: dan kun je er feedback van een strandwacht kwijt (2.152.0).
+    $_fase = (string)($dossier['sol']['fase'] ?? '');
+    $_in_kring = fn(string $ev) => function_exists('evenement_def') && in_array($_fase, evenement_def($ev)['kandidaat_fases'], true);
+    if (($dossier['scores'] || $dossier['observaties'] || !empty($dossier['besluit']['besluit']) || $_in_kring('selectiedag'))
+        && $_mag_mod('selectiedag')) {
         $tabs[] = ['sleutel' => 'selectiedag', 'label' => 'Selectiedag',
                    'aantal' => $dossier['observaties'] ? count($dossier['observaties']) : null];
     }
-    if ((!empty($dossier['tw']) || !empty($dossier['tw_observaties'])) && $_mag_mod('trainingsweekend')) {
+    if ((!empty($dossier['tw']) || !empty($dossier['tw_observaties']) || $_in_kring('tw')) && $_mag_mod('trainingsweekend')) {
         $tabs[] = ['sleutel' => 'trainingsweekend', 'label' => 'Trainingsweekend',
                    'aantal' => $dossier['tw_observaties'] ? count($dossier['tw_observaties']) : null];
     }

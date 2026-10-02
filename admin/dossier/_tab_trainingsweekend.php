@@ -26,11 +26,15 @@ $_bev = evenement_bevestig_standen();
             else echo '<p class="bh-meta">Niemand heeft iets opgeschreven.</p>'; ?>
     </section>
 
-    <?php // Feedback van lifeguards over het weekend: vastgelegd in het TW-gesprek, hier alleen lezen.
-      $_lgf = lg_feedback_van((int)$tab_dossier['sol']['id'], ['tw', 'anders']);
-      if ($_lgf) {
-          $lgf_sol_id = (int)$tab_dossier['sol']['id']; $lgf_seizoen_id = 0; $lgf_moment = 'tw';
-          $lgf_mag_bewerken = false; $lgf_terug = ''; $lgf_rijen = $_lgf;
+    <?php // Feedback van strandwachten over het weekend: lezen, en vastleggen met de taak Gesprekken
+      // (sinds 2.152.0 ook hier en in de TW-stap Feedback, niet alleen in het gesprek).
+      $_sol_id  = (int)$tab_dossier['sol']['id'];
+      $_lgf     = lg_feedback_van($_sol_id, ['tw', 'anders']);
+      $_lgf_mag = mag(lg_feedback_module('tw'), lg_feedback_taak('tw'));
+      if ($_lgf || $_lgf_mag) {
+          $lgf_sol_id = $_sol_id; $lgf_seizoen_id = (int)$tab_dossier['sol']['seizoen_id']; $lgf_moment = 'tw';
+          $lgf_mag_bewerken = $_lgf_mag; $lgf_rijen = $_lgf;
+          $lgf_terug = APP_URL . '/admin/sollicitant.php?id=' . $_sol_id . '&tab=trainingsweekend';
           require __DIR__ . '/../_lg_feedback.php';
       } ?>
   </div>

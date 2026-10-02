@@ -2,8 +2,8 @@
 /**
  * Partial: feedback van lifeguards over een sollicitant — het bestuur legt vast wat een
  * (terugkerende) lifeguard zei. Lifeguards zelf beoordelen niet. Hoort bij de modules:
- * SD-nabespreking (invoer), SD-bellijst (lezen), TW-gesprek (invoer), en alleen-lezen in de
- * dossiertabs Selectiedag/Trainingsweekend. Logica: includes/lg_feedback.php;
+ * SD-nabespreking (invoer), SD-bellijst (lezen), TW-stap Feedback en TW-gesprek (invoer), en de
+ * dossiertabs Selectiedag/Trainingsweekend (invoer met dezelfde taak, anders lezen). Logica: includes/lg_feedback.php;
  * opslaan: admin/api_lg_feedback.php. Werkt zonder JavaScript.
  *
  * Verwacht:

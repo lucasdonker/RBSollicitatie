@@ -2366,6 +2366,12 @@ body.bh-paneel-open .bh-inhoud { transition: padding-right .15s ease; }
 .bh-lgf-blok.klein > .bh-lgf { margin-top: 0; border-top: 0; padding-top: 0; }
 .bh-lgf-blok.klein > .bh-lgf > summary { min-height: 36px; font-size: 13px; font-weight: 500; }
 .bh-lgf { margin-top: 12px; border-top: 1px solid var(--bg-subtle); padding-top: 4px; }
+/* TW-stap Feedback (admin/tw/feedback.php): kaartjes per kandidaat in een raster */
+.bh-fb-lijst { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; margin: 10px 0 16px; align-items: start; }
+.bh-fb-kop { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.bh-fb-kaart .bh-lgf-blok.klein > .bh-lgf { margin-top: 0; }
+.bh-fb-kaart .bh-lgf-blok h3 { font-size: 13px; font-weight: 600; color: var(--ink-soft); }
+.bh-klap.ds-kaart > .bh-klap-inhoud.bh-fb-lijst { margin: 0; }
 .bh-lgf > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-size: 14px; font-weight: 600; color: var(--navy); }
 .bh-lgf > summary:focus-visible { outline: 2px solid var(--navy); outline-offset: 3px; border-radius: var(--radius-sm); }
 .bh-lgf-form { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }

@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.151.0');
+define('APP_VERSIE', '2.152.0');
 
 function app_changelog(): array {
     return [
+        '2.152.0' => [
+            'datum'  => '2026-10-02',
+            'titel'  => 'Feedback van strandwachten vastleggen zonder gesprek',
+            'punten' => [
+                'Nieuwe stap Feedback bij het trainingsweekend (bestuur): per sollicitant zie en leg je vast wat strandwachten vertellen, zonder eerst een gesprek te openen',
+                'Ook in het dossier, op de tabbladen Selectiedag en Trainingsweekend, kun je feedback vastleggen (met dezelfde taak als in de nabespreking en de gesprekken)',
+                'Die tabbladen staan er nu ook voor wie is uitgenodigd maar nog niets heeft gedaan, zodat je feedback meteen kwijt kunt',
+            ],
+        ],
         '2.151.0' => [
             'datum'  => '2026-10-02',
             'titel'  => 'Ondertekenen: getypte naam als rustige keuze onder het tekenvak',
