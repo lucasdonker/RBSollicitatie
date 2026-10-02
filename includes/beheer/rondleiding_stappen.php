@@ -253,7 +253,7 @@ function rl_schermen(): array {
                 ['doel' => '#zijbalk .bh-nav-link.actief', 'titel' => 'Jouw menu',
                  'tekst' => 'Je ziet vier onderdelen: Vandaag, Sollicitanten (alleen lezen), Loonplanning en Loondossiers. Die laatste twee staan in de groep Inzet & loon.'],
                 ['doel' => '.bh-avgkader', 'titel' => 'De vaste regels',
-                 'tekst' => 'Dit kader staat er altijd. Elke download wordt vastgelegd, foto\'s van ID en bankpas krijgen een watermerk met jouw naam, en hier staan de bewaartermijnen. Download alleen op een apparaat dat je vertrouwt.'],
+                 'tekst' => 'Dit kader staat er altijd. Elke download wordt vastgelegd, een foto van de bankpas krijgt een watermerk met jouw naam (het ID niet: dat moet volledig leesbaar zijn), en hier staan de bewaartermijnen. Download alleen op een apparaat dat je vertrouwt.'],
                 ['doel' => '.bh-dosstand', 'titel' => 'Hoeveel wacht er op jou',
                  'tekst' => 'Deze regel zegt hoeveel dossiers compleet zijn en nog op verwerking wachten, met de tellers aangenomen, compleet en verwerkt.'],
                 ['doel' => '.bh-doskaart', 'titel' => 'Eén kaart per strandwacht',

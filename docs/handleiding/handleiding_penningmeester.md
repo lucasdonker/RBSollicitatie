@@ -750,12 +750,14 @@ de bewaarplicht mogelijk voorbij is. Zie
 ## Stukken downloaden
 
 > **In het kort:** download via de knoppen in de kaart, alleen op een vertrouwd apparaat. Elke
-> download wordt vastgelegd en foto's krijgen een watermerk met jouw naam.
+> download wordt vastgelegd en een foto van de bankpas krijgt een watermerk met jouw naam.
 
 1. Klik op **Download** of **PDF** achter het stuk.
-2. Op foto's (JPG of PNG) van het identiteitsbewijs en de bankpas staat een watermerk: "Kopie voor
-   loonadministratie Reddingsbrigade Paal 13", de datum en jouw naam. Het origineel in de kluis
-   blijft ongewijzigd. Een kopie die als PDF is geüpload krijgt geen watermerk.
+2. Op een foto (JPG of PNG) van de bankpas staat een watermerk: "Kopie voor loonadministratie
+   Reddingsbrigade Paal 13", de datum en jouw naam. De kopie van het identiteitsbewijs krijgt
+   **geen** watermerk: die bewaar je wettelijk verplicht in de loonadministratie, en de foto en alle
+   gegevens moeten dan volledig leesbaar zijn. Het origineel in de kluis blijft altijd ongewijzigd.
+   Een kopie die als PDF is geüpload krijgt geen watermerk.
 3. Elke download wordt vastgelegd (wie, wanneer, welk stuk). Bij het identiteitsbewijs, de bankpas
    en het loonheffingsformulier krijgt het bestuur standaard een mail dat jij iets hebt gedownload,
    met de naam van het document. Dat is normaal en hoort zo.
@@ -970,9 +972,11 @@ De code gaat per sms naar het telefoonnummer uit het dossier; lukt dat niet, dan
 anders per e-mail. Klopt het nummer niet, laat het bestuur het dan aanpassen in het dossier. Blijft
 het misgaan, dan is het iets voor de beheerder.
 
-**Ik zie een watermerk op de ID-kopie. Kan dat weg?**  
-Nee. Het watermerk is bewust en beschermt tegen misbruik van de kopie. Voor de loonadministratie
-is een kopie mét watermerk gewoon geldig.
+**Waarom heeft de ID-kopie geen watermerk en de bankpas wel?**  
+De kopie van het identiteitsbewijs is een verplicht stuk in de loonadministratie. Bij een controle
+moeten de foto en alle gegevens volledig leesbaar zijn; anders kan de Belastingdienst het
+anoniementarief toepassen. Daarom staat er sinds versie 2.150 geen watermerk meer op. De bankpas is
+niet wettelijk verplicht en houdt het watermerk als bescherming tegen misbruik.
 
 **Ik zoek het loondossier van vorig jaar.**  
 Kies bovenaan Loondossiers het **Seizoen** van vorig jaar. Die keuze staat er zodra er meer dan één

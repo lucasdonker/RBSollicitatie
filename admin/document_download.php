@@ -5,7 +5,8 @@
  *   ?ond=<ondertekening>  de verzegelde PDF van een ondertekening (via pdf_document_id; oudere records on-the-fly)
  *   &t=<csrf-token>   verplicht (de link staat alleen in het beheer)
  * Recht per soort (document_soorten()[soort]['recht'], actie bewerken). Alles gelogd (audit + rij), no-store,
- * limiet 30 downloads per uur per sessie, watermerk op ID-/bankpasfoto's, optioneel melding aan het bestuur.
+ * limiet 30 downloads per uur per sessie, watermerk op de bankpasfoto (niet op het ID: die kopie moet
+ * volledig leesbaar zijn in de loonadministratie), optioneel melding aan het bestuur.
  */
 require_once __DIR__ . '/../includes/functions.php';
 vereist_login();
@@ -53,28 +54,8 @@ if ($rij) {
 }
 if ($inhoud === null) { http_response_code(500); exit('Het document kon niet ontsleuteld of gemaakt worden. Controleer de kluis (Systeem › Health).'); }
 
-// Watermerk op foto's van ID/bankpas (alleen op de uitgaande kopie; het origineel blijft ongewijzigd in de kluis)
-$watermerk = in_array($soort, ['id_voor', 'id_achter', 'bankpas'], true) && in_array($mime, ['image/jpeg', 'image/png'], true) && function_exists('imagecreatefromstring');
-if ($watermerk) {
-    try {
-        $im = @imagecreatefromstring($inhoud);
-        if ($im) {
-            $w = imagesx($im); $h = imagesy($im);
-            if ($w > 2000) { $nw = 2000; $nh = (int)round($h * 2000 / $w); $im2 = imagescale($im, $nw, $nh); if ($im2) { imagedestroy($im); $im = $im2; $w = $nw; $h = $nh; } }
-            $tekst = 'Kopie voor loonadministratie Reddingsbrigade Paal 13 - ' . date('d-m-Y H:i') . ' - ' . ($bhd['naam'] ?: 'beheer');
-            $kleur = imagecolorallocatealpha($im, 200, 30, 30, 60);
-            $font = 5; $stap = (int)max(120, $h / 6);
-            for ($y = 20; $y < $h; $y += $stap) {
-                imagestring($im, $font, 12, $y, $tekst, $kleur);
-                imagestring($im, $font, (int)($w / 2), $y + (int)($stap / 2), $tekst, $kleur);
-            }
-            ob_start();
-            if ($mime === 'image/png') imagepng($im, null, 6); else imagejpeg($im, null, 90);
-            $uit = ob_get_clean(); imagedestroy($im);
-            if ($uit !== false && $uit !== '') $inhoud = $uit;
-        }
-    } catch (\Throwable $e) { error_log('watermerk: ' . $e->getMessage()); }
-}
+// Watermerk alleen op de bankpas; de kopie van het ID moet volledig leesbaar blijven (document_watermerk_soorten()).
+$inhoud = document_watermerk($inhoud, $soort, $mime, (string)($bhd['naam'] ?? ''));
 
 // Loggen
 $_SESSION['doc_dl'][$uur] = ($_SESSION['doc_dl'][$uur] ?? 0) + 1;

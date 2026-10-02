@@ -268,8 +268,8 @@ iets niet klopt.
 
 **Hoe veilig is dat?** Je kopie ID, je bankpas, je BSN en je rekeningnummer worden meteen
 versleuteld opgeslagen. Alleen de penningmeester en de beheerder van het systeem kunnen ze
-openen. Elke keer dat iemand ze bekijkt, wordt vastgelegd, en op een gedownloade foto komt een
-watermerk. De wet zegt hoe lang we ze moeten bewaren. Daarna vernietigt de penningmeester ze.
+openen. Elke keer dat iemand ze bekijkt, wordt vastgelegd, en op een gedownloade foto van je
+bankpas komt een watermerk. De wet zegt hoe lang we ze moeten bewaren. Daarna vernietigt de penningmeester ze.
 
 ## Berichten en een vraag stellen
 

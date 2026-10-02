@@ -243,6 +243,44 @@ function document_inhoud(array $rij): ?string {
     return kluis_bestand_lezen($pad, document_aad((int)$rij['sollicitatie_id'], (string)$rij['soort'], (string)$rij['opslagnaam']));
 }
 
+/**
+ * Soorten die een watermerk krijgen op de uitgaande kopie. Bewust NIET de kopie van het
+ * identiteitsbewijs (id_voor/id_achter): die is een wettelijk verplicht stuk in de loonadministratie
+ * (identificatieplicht werkgever, Wet op de loonbelasting) en moet volledig leesbaar zijn, foto en
+ * gegevens inbegrepen — anders dreigt bij een controle het anoniementarief. De bankpas is niet
+ * wettelijk verplicht en houdt het merk (besluit Lucas, 2.150.0).
+ */
+function document_watermerk_soorten(): array {
+    return ['bankpas'];
+}
+
+/**
+ * Het watermerk op een foto (alleen op de uitgaande kopie; het origineel blijft ongewijzigd in de
+ * kluis). Eén plek voor de download in het beheer en de mailbijlage aan de penningmeester.
+ * Geeft de inhoud ongewijzigd terug voor andere soorten, een PDF, of zonder GD.
+ */
+function document_watermerk(string $inhoud, string $soort, string $mime, string $door = 'beheer'): string {
+    if (!in_array($soort, document_watermerk_soorten(), true) || !in_array($mime, ['image/jpeg', 'image/png'], true)
+        || !function_exists('imagecreatefromstring')) return $inhoud;
+    try {
+        $im = @imagecreatefromstring($inhoud);
+        if (!$im) return $inhoud;
+        $w = imagesx($im); $h = imagesy($im);
+        if ($w > 2000) { $nw = 2000; $nh = (int)round($h * 2000 / $w); $im2 = imagescale($im, $nw, $nh); if ($im2) { imagedestroy($im); $im = $im2; $w = $nw; $h = $nh; } }
+        $tekst = 'Kopie voor loonadministratie Reddingsbrigade Paal 13 - ' . date('d-m-Y H:i') . ' - ' . ($door ?: 'beheer');
+        $kleur = imagecolorallocatealpha($im, 200, 30, 30, 60);
+        $stap = (int)max(120, $h / 6);
+        for ($y = 20; $y < $h; $y += $stap) {
+            imagestring($im, 5, 12, $y, $tekst, $kleur);
+            imagestring($im, 5, (int)($w / 2), $y + (int)($stap / 2), $tekst, $kleur);
+        }
+        ob_start();
+        if ($mime === 'image/png') imagepng($im, null, 6); else imagejpeg($im, null, 90);
+        $uit = ob_get_clean(); imagedestroy($im);
+        return ($uit !== false && $uit !== '') ? $uit : $inhoud;
+    } catch (\Throwable $e) { error_log('watermerk: ' . $e->getMessage()); return $inhoud; }
+}
+
 /** Door de sollicitant verwijderd (alleen zolang nog niet verwerkt): bestand weg, rij als 'vervangen'. */
 function document_verwijderen_door_sollicitant(int $id, int $sol_id): bool {
     $r = document_rij($id);

@@ -222,8 +222,9 @@ require __DIR__ . '/layout_top.php';
   <?= icoon('slot', 18) ?>
   <div>
     <strong>Hier staan een BSN en kopieën van identiteitsbewijzen.</strong>
-    Elke download wordt vastgelegd — wie, wat en wanneer. Op een foto (JPG of PNG) van het
-    identiteitsbewijs of de bankpas komt automatisch een watermerk; op een PDF niet. Download
+    Elke download wordt vastgelegd — wie, wat en wanneer. Op een foto (JPG of PNG) van de bankpas
+    komt automatisch een watermerk. De kopie van het identiteitsbewijs blijft zonder merk: die moet
+    volledig leesbaar in de loonadministratie. Download
     alleen op een apparaat dat je vertrouwt en verwijder het bestand zodra het in de
     loonadministratie staat.
     <?php if (!$mag_openen): ?>

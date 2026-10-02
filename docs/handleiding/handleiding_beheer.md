@@ -1824,8 +1824,9 @@ aanstaat).
   (penningmeester)" uit. Dat gebeurt ook als het laatste stuk een upload is, niet alleen na het
   ondertekenen.
 - Elke download komt in het logboek als "Document gedownload", met wie en wanneer. Bij het stuk
-  staat "Laatst ingezien". Op een foto (JPG of PNG) van de ID-kopie of de bankpas komt een
-  watermerk; op een PDF niet.
+  staat "Laatst ingezien". Op een foto (JPG of PNG) van de bankpas komt een watermerk; op een PDF
+  niet. De ID-kopie blijft zonder watermerk, omdat die volledig leesbaar in de loonadministratie
+  hoort (ook als mailbijlage aan de penningmeester).
 - Bij elke download van een ID-kopie, bankpas of loonheffingsformulier krijgt het bestuursadres
   een mail "Loondocument gedownload: …" met de naam van het document. Verwacht je die niet, kijk
   dan in het [Logboek](#logboek). Die mail staat standaard aan en zet je uit onder Instellingen ›

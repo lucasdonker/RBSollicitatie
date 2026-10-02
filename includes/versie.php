@@ -3,10 +3,18 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.149.0');
+define('APP_VERSIE', '2.150.0');
 
 function app_changelog(): array {
     return [
+        '2.150.0' => [
+            'datum'  => '2026-10-02',
+            'titel'  => 'Kopie ID zonder watermerk',
+            'punten' => [
+                'De kopie van het identiteitsbewijs krijgt geen watermerk meer, bij de download en als mailbijlage aan de penningmeester. In de loonadministratie moet die kopie volledig leesbaar zijn',
+                'De bankpas houdt het watermerk. Downloaden blijft gelogd en beperkt tot de penningmeester',
+            ],
+        ],
         '2.149.0' => [
             'datum'  => '2026-10-02',
             'titel'  => 'Trainingsweekend beoordelen: de cijfers van de selectiedag erbij',

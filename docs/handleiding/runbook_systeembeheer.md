@@ -1114,7 +1114,7 @@ Test nooit met echte persoonsgegevens.
   per IP; verificatiecode bij ondertekenen 5 per uur per document; aanmeldformulier 5 per uur per
   IP met honeypot, via de API 10 per uur per bezoeker; vragen via het portaal 3 per uur; uploads
   20 per uur per dossier; downloads van loondocumenten 30 per uur per sessie, met watermerk op
-  ID- en bankpasfoto's.
+  bankpasfoto's (niet op het ID: die kopie moet volledig leesbaar zijn; `document_watermerk_soorten()`).
 - **Headers:** Content-Security-Policy (scripts en verbindingen alleen van de eigen host), HSTS,
   X-Frame-Options, nosniff, Referrer-Policy, Permissions-Policy, gezet in PHP
   (`security_headers()`), niet in `.htaccess`. Sinds 2.130.0 staat de CSP **geen inline JavaScript**

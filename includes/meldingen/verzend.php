@@ -592,6 +592,8 @@ function melding_bijlagen_resolve(array $lijst, bool $materialiseer = false): ar
             if ($materialiseer) {
                 $inhoud = document_inhoud($d);
                 if ($inhoud === null) continue;
+                // Zelfde regel als de download in het beheer: merk op de bankpas, niet op het ID.
+                if (function_exists('document_watermerk')) $inhoud = document_watermerk($inhoud, (string)$d['soort'], (string)$d['mime'], 'mail aan de penningmeester');
                 $tmp = sys_get_temp_dir() . '/doc_' . (int)$d['id'] . '_' . bin2hex(random_bytes(4)) . '.bin';
                 if (@file_put_contents($tmp, $inhoud) === false) continue;
                 if (function_exists('kluis_wis')) kluis_wis($inhoud);
