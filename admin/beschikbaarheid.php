@@ -146,7 +146,8 @@ require __DIR__ . '/layout_top.php';
     ['soort' => 'keuze', 'naam' => 'type', 'label' => 'Nieuw of terug', 'waarde' => $filter['type'], 'meer' => true,
      'opties' => ['' => 'Nieuw en terugkerend', 'nieuw' => 'Alleen nieuw', 'terug' => 'Alleen terugkerend']],
     ['soort' => 'keuze', 'naam' => 'toon', 'label' => 'Toon', 'waarde' => $filter['toon'], 'meer' => true,
-     'opties' => ['' => 'Alle opgaven', 'verzoek' => 'Met open verzoek', 'voorlopig' => 'Nog voorlopig']],
+     'opties' => ['' => 'Alle opgaven', 'verzoek' => 'Met open verzoek', 'voorlopig' => 'Nog voorlopig',
+                  'zonder' => 'Nog geen opgave (' . (int)$raster['zonder_opgave'] . ')']],
     ['soort' => 'keuze', 'naam' => 'lv', 'label' => 'Liever vrij', 'waarde' => $filter['lv'], 'meer' => true,
      'opties' => ['' => 'Liever vrij: iedereen', 'ja' => 'Alleen wie ergens liever vrij is']],
   ]);
@@ -164,18 +165,30 @@ require __DIR__ . '/layout_top.php';
                       'titel' => 'Per persoon per week de afgesproken dagen en wanneer iemand kan'];
   }
   $filter_acties = [['label' => 'Exporteren', 'icoon' => 'export', 'toon' => 'secundair', 'menu' => $_exporten]];
-  if ($raster['totaal_zonder_filter'] > 0) require __DIR__ . '/_filterbalk.php';
+  if ($raster['totaal_zonder_filter'] > 0 || $raster['zonder_opgave'] > 0 || bh_besch_gefilterd($filter)) require __DIR__ . '/_filterbalk.php';
 ?>
+
+<?php // Hier staat alleen wie een opgave heeft, net als in de loonplanning; wie nog niets doorgaf, staat apart. ?>
+<?php if ($raster['zonder_opgave'] > 0 && $filter['toon'] !== 'zonder'): ?>
+  <p class="bh-meta bh-besch-zonder">
+    <?= (int)$raster['zonder_opgave'] ?> <?= (int)$raster['zonder_opgave'] === 1 ? 'persoon heeft' : 'personen hebben' ?> nog geen beschikbaarheid doorgegeven.
+    <a href="<?= h(APP_URL . '/admin/beschikbaarheid.php?toon=zonder') ?>">Bekijk wie</a>
+  </p>
+<?php endif; ?>
 
 <?php if (empty($lijst)): ?>
   <?php
-  if (bh_besch_gefilterd($filter) && $raster['totaal_zonder_filter'] > 0) {
+  if ($filter['toon'] === 'zonder') {
+      $leeg_titel = 'Iedereen heeft een opgave';
+      $leeg_tekst = 'Wie gevraagd is om beschikbaarheid door te geven, heeft dat gedaan.';
+      $leeg_icoon = 'vink';
+  } elseif (bh_besch_gefilterd($filter) && $raster['totaal_zonder_filter'] > 0) {
       $leeg_titel = 'Niemand gevonden';
       $leeg_tekst = 'Met deze filters blijft er niemand over. Pas ze aan of wis ze.';
       $leeg_icoon = 'zoek';
   } else {
-      $leeg_titel = 'Nog niemand met een ingevuld formulier';
-      $leeg_tekst = 'Zodra een sollicitant het kennismakingsformulier invult, verschijnt de beschikbaarheid hier.';
+      $leeg_titel = 'Nog niemand met een opgave';
+      $leeg_tekst = 'Zodra een sollicitant in het portaal beschikbaarheid doorgeeft, verschijnt die hier en in de loonplanning.';
       $leeg_icoon = 'kalender';
   }
   require __DIR__ . '/_leeg.php';

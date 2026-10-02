@@ -1580,9 +1580,12 @@ Heeft de sollicitant een fout adres van de ouder ingevuld, dan komt de mail niet
 
 ### Het beschikbaarheidsraster
 
-In het raster staat iedereen uit het huidige seizoen die een formulier heeft ingevuld of een
-beschikbaarheid heeft doorgegeven. Afgewezen sollicitanten staan er niet in. Van boven naar
-beneden zie je:
+In het raster staat iedereen uit het huidige seizoen die een beschikbaarheid heeft doorgegeven,
+precies wie er ook in de loonplanning staat. Afgewezen en gestopte sollicitanten staan er niet in.
+Een kennismakingsformulier alleen is geen opgave. Wie al gevraagd is om beschikbaarheid door te
+geven (uitgenodigd voor de selectiedag of verder) en dat nog niet deed, zie je via de regel
+"N personen hebben nog geen beschikbaarheid doorgegeven" of het filter **Toon › Nog geen opgave**.
+Van boven naar beneden zie je:
 
 - **Openstaande verzoeken: N** (alleen als die er zijn): verzoeken om in bepaalde weken minder
   dagen te werken. Zie [Een verzoek om minder dagen beoordelen](#een-verzoek-om-minder-dagen-beoordelen).

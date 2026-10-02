@@ -2448,6 +2448,7 @@ body.bh-paneel-open .bh-inhoud { transition: padding-right .15s ease; }
 .bh-opgave-lijst dd.zacht, .bh-opgave-lijst .zacht { color: var(--ink-muted); }
 .bh-opgave-citaat { margin: 0; padding-left: 10px; border-left: 3px solid var(--border-strong); color: var(--ink-soft); }
 @media (max-width: 560px) { .bh-opgave-lijst > div { grid-template-columns: minmax(0, 1fr); gap: 2px; } }
+.bh-besch-zonder { margin: 0 0 12px; }
 .bh-afspraak-notitie { display: block; font-size: 11px; line-height: 1.3; font-weight: 600; color: var(--fase-oranje); }
 /* TW-stap Evaluatie (admin/tw/evaluatie.php): per persoon een eerste indruk van het bestuur. */
 .bh-twevaluatie { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 10px; }

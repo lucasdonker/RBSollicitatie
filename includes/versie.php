@@ -3,10 +3,18 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.156.0');
+define('APP_VERSIE', '2.157.0');
 
 function app_changelog(): array {
     return [
+        '2.157.0' => [
+            'datum'  => '2026-10-02',
+            'titel'  => 'Beschikbaarheid en loonplanning: dezelfde mensen',
+            'punten' => [
+                'Beschikbaarheid toont wie een opgave heeft, net als de loonplanning. Iemand met alleen een kennismakingsformulier stond er eerder als lege rij in',
+                'Wie al gevraagd is om beschikbaarheid door te geven en dat nog niet deed: een regel boven het raster en het filter Toon › Nog geen opgave',
+            ],
+        ],
         '2.156.0' => [
             'datum'  => '2026-10-02',
             'titel'  => 'Het gesprek op het weekend: rustiger en met alles wat je nodig hebt',

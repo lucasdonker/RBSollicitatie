@@ -147,6 +147,17 @@ function weken_in_periode(string $van, string $tot): array {
     return $uit;
 }
 
+/**
+ * "Heeft een opgave" als SQL: er zijn periodes doorgegeven (beschikbaarheid_blok), of een oude
+ * opgave van vóór beschikbaarheid2 met weken. Eén criterium voor Beschikbaarheid (bh_besch_raster)
+ * en de loonplanning (loonplan_analyse() neemt iemand op zodra beschikbaarheid2_effectief() weken
+ * heeft, en dat zijn precies de blokken). Een kennismakingsformulier alleen telt niet (2.157.0).
+ */
+function beschikbaarheid2_heeft_opgave_sql(string $sol = 's.id'): string {
+    return "(EXISTS (SELECT 1 FROM beschikbaarheid_blok bb WHERE bb.sollicitatie_id = $sol)
+             OR EXISTS (SELECT 1 FROM beschikbaarheid bo WHERE bo.sollicitatie_id = $sol AND bo.weken_json IS NOT NULL AND bo.weken_json NOT IN ('', '[]')))";
+}
+
 function beschikbaarheid2_van(int $sol_id): array {
     beschikbaarheid2_auto_setup();
     $db = db();

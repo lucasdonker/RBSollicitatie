@@ -11,7 +11,7 @@ if (!function_exists('bh_besch_filter')) {
 
 /**
  * De filters uit de URL, genormaliseerd.
- *   q · groep (''|proces|aangenomen) · type (''|nieuw|terug) · toon (''|verzoek|voorlopig)
+ *   q · groep (''|proces|aangenomen) · type (''|nieuw|terug) · toon (''|verzoek|voorlopig|zonder = nog geen opgave)
  *   van, tot  weeknummers (leeg = hele werkperiode) · min  minimaal zoveel weken beschikbaar
  *   lv        'ja' = alleen wie ergens liever vrij is · sort (zie bh_besch_sorteringen)
  *   weergave  'week' | 'dag' (per dag: kan / liever niet / niet)
@@ -23,7 +23,7 @@ function bh_besch_filter(array $get): array {
           'lv' => (string)($get['lv'] ?? ''), 'sort' => (string)($get['sort'] ?? ''), 'weergave' => (string)($get['weergave'] ?? '')];
     if (!in_array($f['groep'], ['', 'proces', 'aangenomen'], true)) $f['groep'] = '';
     if (!in_array($f['type'], ['', 'nieuw', 'terug'], true)) $f['type'] = '';
-    if (!in_array($f['toon'], ['', 'verzoek', 'voorlopig'], true)) $f['toon'] = '';
+    if (!in_array($f['toon'], ['', 'verzoek', 'voorlopig', 'zonder'], true)) $f['toon'] = '';
     foreach (['van', 'tot'] as $k) if ($f[$k] !== '' && !(ctype_digit($f[$k]) && (int)$f[$k] >= 1 && (int)$f[$k] <= 53)) $f[$k] = '';
     if ($f['min'] !== '' && !(ctype_digit($f['min']) && (int)$f['min'] <= 60)) $f['min'] = '';
     if ($f['lv'] !== 'ja') $f['lv'] = '';
@@ -181,14 +181,19 @@ function bh_besch_raster(?array $seizoen, array $f): array {
     $alle_weken = bh_besch_weken($seizoen);
     $weken = bh_besch_weken_bereik($alle_weken, $f);
     $uit = ['weken' => $weken, 'alle_weken' => $alle_weken, 'lijst' => [], 'eff' => [], 'weken_count' => [], 'dagen_totaal' => [],
-            'vaste' => [], 'liever' => [], 'tot_per_week' => [], 'totaal_zonder_filter' => 0];
+            'vaste' => [], 'liever' => [], 'tot_per_week' => [], 'totaal_zonder_filter' => 0, 'zonder_opgave' => 0];
     foreach ($weken as $wn => $_) $uit['tot_per_week'][$wn] = ['aantal' => 0, 'weekend' => 0];
     if (!$sid) return $uit;
 
     if (function_exists('beschikbaarheid2_auto_setup')) beschikbaarheid2_auto_setup(); // beschikbaarheid_blok moet bestaan
-    // Wie een formulier of een beschikbaarheid heeft. Zelfde uitsluiting als het dekkingsscherm.
-    $q = db()->prepare("
-        SELECT s.id sol_id, s.fase, s.terugkerend, s.aangemeld_op,
+    // Wie een opgave heeft — hetzelfde criterium als de loonplanning (beschikbaarheid2_heeft_opgave_sql()).
+    // Met toon=zonder juist andersom: wie al gevraagd is om beschikbaarheid door te geven (dezelfde fases
+    // als de portaaltaak) en het nog niet deed. Zelfde uitsluiting als het dekkingsscherm.
+    $opgave = beschikbaarheid2_heeft_opgave_sql('s.id');
+    $gevraagd = function_exists('portaal_taken_fases_beschikbaarheid') ? portaal_taken_fases_beschikbaarheid()
+              : ['uitgenodigd_selectie', 'aangemeld_selectie', 'selectiedag_geweest', 'uitgenodigd_tw', 'tw_geweest', 'aangenomen'];
+    $zonder_sql = "NOT $opgave AND s.fase IN ('" . implode("','", $gevraagd) . "')";
+    $select = "SELECT s.id sol_id, s.fase, s.terugkerend, s.aangemeld_op,
                p.voornaam, p.tussenvoegsel, p.achternaam,
                bsch.weken_json,
                prof.norm_dagen
@@ -196,15 +201,16 @@ function bh_besch_raster(?array $seizoen, array $f): array {
         JOIN personen p ON p.id = s.persoon_id
         LEFT JOIN beschikbaarheid bsch ON bsch.sollicitatie_id = s.id
         LEFT JOIN beschikbaarheid_profiel prof ON prof.sollicitatie_id = s.id
-        WHERE s.seizoen_id = ? AND s.fase NOT IN ('afgewezen','afgehaakt','verwijderd_door_sollicitant')
-          AND (bsch.sollicitatie_id IS NOT NULL
-               OR EXISTS (SELECT 1 FROM blk_formulieren bl WHERE bl.sollicitatie_id = s.id)
-               OR EXISTS (SELECT 1 FROM beschikbaarheid_blok bb WHERE bb.sollicitatie_id = s.id))
-        ORDER BY p.achternaam, p.voornaam
-    ");
+        WHERE s.seizoen_id = ? AND s.fase NOT IN ('afgewezen','afgehaakt','verwijderd_door_sollicitant')";
+    $q = db()->prepare($select . " AND " . ($f['toon'] === 'zonder' ? $zonder_sql : $opgave) . " ORDER BY p.achternaam, p.voornaam");
     $q->execute([$sid]);
     $alle = $q->fetchAll();
     $uit['totaal_zonder_filter'] = count($alle);
+    try {
+        $t = db()->prepare("SELECT COUNT(*) FROM sollicitaties s WHERE s.seizoen_id = ? AND $zonder_sql");
+        $t->execute([$sid]);
+        $uit['zonder_opgave'] = (int)$t->fetchColumn();
+    } catch (\Throwable $e) { $uit['zonder_opgave'] = 0; }
     $voorlopig = [];
     if ($f['toon'] === 'voorlopig' && function_exists('beschikbaarheid2_voorlopigen')) {
         foreach (beschikbaarheid2_voorlopigen($sid) as $v) $voorlopig[(int)$v['sol_id']] = true;
