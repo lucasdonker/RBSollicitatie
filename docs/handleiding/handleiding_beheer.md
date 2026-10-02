@@ -1441,15 +1441,28 @@ alleen zonder zoekterm of filter, anders klopt "omhoog" niet met wat je ziet.
 1. Klik bij wie er aan tafel zit op **Gesprek starten**. Het gesprek staat dan op jouw naam; een
    ander bestuurslid ziet "bezig door ..." en kan meelezen, maar niet tegelijk een besluit
    vastleggen. Na 30 minuten vervalt dat vanzelf.
-2. Links staat alles bij elkaar: gegevens, de opgegeven beschikbaarheid, **Inzet afspreken** (de
-   loonplanning als concept: functie, en per week plannen, aantal dagen en betaald ja/nee; elke
-   wijziging wordt meteen opgeslagen, en wat iemand in de loonplanning verandert zie je hier binnen
-   15 seconden), wat er dit weekend is opgevallen, de selectiedag (cijfers per onderdeel, advies,
-   besluit en opmerkingen), en wat er nog openstaat in het portaal.
-3. Rechts kies je **Aannemen**, **Twijfel** of **Afwijzen**. Bij **Bericht aan de sollicitant**
-   schrijf je in je eigen woorden wat jullie besproken hebben. Dat komt in de mail als
-   `{{gesprek_bericht}}`. Laat je het leeg, dan komt de standaardtekst erin (instelbaar bij
-   Instellingen › Uitnodigen & herinneren). De **Interne notitie** is alleen voor het bestuur.
+2. Het scherm volgt het gesprek:
+   - **Bovenaan** wie het is, met als labels wat je meteen moet weten: of iemand eerder weg moet, de
+     opmerking bij "ik kom" en een bijzonderheid.
+   - **Gesprekspunten**: wat je moet aankaarten, uit de opgave (vakantie, verzoek om minder dagen,
+     losse vrije dagen, liever vrij), het weekend (aandachtspunten, eerste indruk), de feedback van
+     strandwachten, de selectiedag en het portaal. Klik bij een punt op de naam van het tabblad om
+     er direct naartoe te gaan.
+   - **Opgave en inzet**: links in woorden wat de sollicitant opgaf (periodes, vakanties, losse
+     dagen met reden, verzoeken met hun status, liever vrij, opmerking, formulier), daarnaast of
+     eronder **Inzet afspreken**: de loonplanning als concept (functie, en per week plannen, aantal
+     dagen en betaald ja/nee). Per week staat erbij wat er in die week speelt, zoals "vakantie vanaf
+     vr 24 jul" of "verzoek 3 d (open)". Elke wijziging wordt meteen opgeslagen; wat iemand in de
+     loonplanning verandert, zie je hier binnen 15 seconden.
+   - **Hoe ging het**: wat er dit weekend is opgevallen, de feedback van strandwachten (ook hier toe
+     te voegen) en de selectiedag (cijfers per test en per onderdeel, advies, besluit, observaties).
+   - **Open in het portaal**: wat de sollicitant nog moet doen.
+3. Rechts (op een telefoon onderaan) kies je **Aannemen**, **Twijfel** of **Afwijzen**; eronder staat
+   meteen wat er dan gebeurt. Bij **Bericht aan …** schrijf je in je eigen woorden wat jullie
+   besproken hebben. Dat komt in de mail als `{{gesprek_bericht}}`. Laat je het leeg, dan komt de
+   standaardtekst erin (instelbaar bij Instellingen › Seizoensfase & advies); met **Standaardtekst
+   invoegen om aan te passen** zet je die tekst in het veld om hem persoonlijk te maken. De
+   **Interne notitie** is alleen voor het bestuur.
 4. Klik op **Besluit vastleggen** en bevestig. Aannemen en afwijzen gaan **meteen door**: de fase
    verandert en het bericht gaat uit. Aangenomen heeft direct het kennismakingspakket (de
    formulieren) in het portaal. Twijfel blijft staan: bel de sollicitant na het weekend, open het

@@ -20,7 +20,7 @@ if (!defined('BH_GELADEN')) {
     foreach (['fase_ui.php', 'tabel.php', 'nav.php', 'vandaag.php', 'lijst.php',
               'dossier.php', 'bevestig.php', 'dekking.php', 'berichten.php',
               'seizoen.php', 'zoek.php', 'correctie.php', 'rondleiding.php', 'beschikbaarheid.php', 'loonplanning.php',
-              'groepsindeling.php', 'nabespreking.php', 'ondertekeningen.php'] as $__bh_f) {
+              'groepsindeling.php', 'nabespreking.php', 'ondertekeningen.php', 'gesprek.php'] as $__bh_f) {
         if (is_file(__DIR__ . '/' . $__bh_f)) require_once __DIR__ . '/' . $__bh_f;
     }
 

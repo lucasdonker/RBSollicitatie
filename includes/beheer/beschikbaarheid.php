@@ -330,4 +330,92 @@ function bh_besch_cel_tekst(?array $c): array {
     return [(string)$wat[0], $wat[1], $soort];
 }
 
+/**
+ * Alles wat iemand over de zomer opgaf, in woorden — voor het TW-gesprek en het dossier
+ * (admin/_opgave_overzicht.php). Bronnen: beschikbaarheid2_van() (periodes, vakanties, verzoeken,
+ * profiel), de losse dagen (beschikbaarheid_dag) en het kennismakingsformulier. Plus per week een
+ * korte notitie voor naast de inzet ("vakantie", "za 14 vrij", "verzoek 3 d").
+ *
+ * @return array{leeg:bool,voorlopig:bool,bijgewerkt:?string,periodes:array,afwezig:array,vrij:array,
+ *               verzoeken:array,liever:string,norm:?string,opmerking:?string,formulier:?string,
+ *               uitzonderingen:?string,week:array<int,string[]>}
+ */
+function bh_opgave_overzicht(int $sol_id, ?array $seizoen, ?array $blk = null): array {
+    $d = function_exists('beschikbaarheid2_van') ? beschikbaarheid2_van($sol_id) : ['profiel' => null, 'blokken' => [], 'afwezig' => [], 'verzoeken' => []];
+    $p = $d['profiel'] ?: [];
+    // seizoen_weken_datums() geeft DateTime-objecten; hier als Y-m-d om met datums uit de database te vergelijken.
+    $weken = [];
+    foreach (function_exists('seizoen_weken_datums') ? seizoen_weken_datums($seizoen) : [] as $wn => $w) {
+        $weken[$wn] = ['start' => $w['start']->format('Y-m-d'), 'eind' => $w['eind']->format('Y-m-d')];
+    }
+    $wk_label = fn(int $van, int $tot) => $van === $tot ? 'week ' . $van : 'week ' . $van . '–' . $tot;
+    $dagnaam = fn(string $datum) => dag_kort((int)date('N', strtotime($datum))) . ' ' . datum_kort_nl($datum);
+    $week_van = function (string $datum) use ($weken): ?int {
+        foreach ($weken as $wn => $w) if ($datum >= $w['start'] && $datum <= $w['eind']) return (int)$wn;
+        return null;
+    };
+    $notitie = [];
+    $noteer = function (?int $wn, string $tekst) use (&$notitie) { if ($wn !== null && !in_array($tekst, $notitie[$wn] ?? [], true)) $notitie[$wn][] = $tekst; };
+
+    $periodes = [];
+    foreach ($d['blokken'] as $b) {
+        $soort = ($b['regime'] ?? 'vijf') === 'weekend'
+            ? 'alleen in het weekend (' . implode(' ', array_map('dag_kort', (array)($b['weekend_dagen'] ?: [5, 6, 7]))) . ')'
+            : 'hele week (5 dagen)';
+        $periodes[] = ['tekst' => ucfirst($wk_label((int)$b['van_week'], (int)$b['tot_week'])) . ': ' . $soort];
+    }
+
+    $afwezig = [];
+    foreach ($d['afwezig'] as $a) {
+        $afwezig[] = ['tekst' => $a['van_datum'] === $a['tot_datum'] ? datum_kort_nl($a['van_datum']) : datum_kort_nl($a['van_datum']) . ' – ' . datum_kort_nl($a['tot_datum']),
+                      'label' => (string)($a['label'] ?? '')];
+        foreach ($weken as $wn => $w) {
+            $eind = $w['eind'];
+            if ($a['tot_datum'] < $w['start'] || $a['van_datum'] > $eind) continue;
+            $heel = $a['van_datum'] <= $w['start'] && $a['tot_datum'] >= $eind;
+            $noteer((int)$wn, $heel ? 'vakantie' : ($a['van_datum'] > $w['start'] ? 'vakantie vanaf ' . $dagnaam($a['van_datum']) : 'vakantie t/m ' . $dagnaam($a['tot_datum'])));
+        }
+    }
+
+    $vrij = []; $liever_dag = [];
+    try {
+        $q = db()->prepare("SELECT datum, soort, reden, bron FROM beschikbaarheid_dag WHERE sollicitatie_id=? AND status<>'afgewezen' ORDER BY datum");
+        $q->execute([$sol_id]);
+        foreach ($q->fetchAll() as $r) {
+            $wn = $week_van((string)$r['datum']);
+            if ($r['soort'] === 'voorkeur_vrij') { $liever_dag[$wn ?? 0][] = (string)$r['datum']; $noteer($wn, 'liever vrij ' . $dagnaam((string)$r['datum'])); continue; }
+            if ($r['soort'] !== 'niet_beschikbaar') continue;
+            $vrij[] = ['tekst' => $dagnaam((string)$r['datum']), 'reden' => (string)($r['reden'] ?? ''), 'bestuur' => $r['bron'] === 'bestuur'];
+            $noteer($wn, $dagnaam((string)$r['datum']) . ' vrij');
+        }
+    } catch (\Throwable $e) {}
+
+    $verzoeken = [];
+    foreach ($d['verzoeken'] as $v) {
+        $status = (string)($v['status'] ?? 'open');
+        $verzoeken[] = ['tekst' => ucfirst($wk_label((int)$v['van_week'], (int)$v['tot_week'])) . ': ' . (int)$v['dagen_aantal'] . ' dagen per week',
+                        'status' => $status, 'toelichting' => (string)($v['toelichting'] ?? '')];
+        if ($status === 'afgewezen') continue;
+        for ($wn = (int)$v['van_week']; $wn <= (int)$v['tot_week']; $wn++) {
+            $noteer($wn, 'verzoek ' . (int)$v['dagen_aantal'] . ' d' . ($status === 'open' ? ' (open)' : ''));
+        }
+    }
+
+    $vaste = (array)($p['vaste_dagen_uit'] ?? []);
+    $liever = bh_besch_liever_tekst($vaste, $liever_dag);
+    $norm = !empty($p['norm_dagen']) ? (int)$p['norm_dagen'] . ' dagen per week' . (!empty($p['norm_notitie']) ? ' (' . $p['norm_notitie'] . ')' : '') : null;
+    $formulier = trim((string)($blk['beschikbaarheid_intentie'] ?? ''));
+    $uitz = trim((string)($blk['beschikbaarheid_uitzonderingen'] ?? ''));
+
+    return [
+        'leeg' => !$d['blokken'] && !$p, 'voorlopig' => !empty($p['voorlopig']),
+        'bijgewerkt' => $p['bijgewerkt_op'] ?? ($p['ingevuld_op'] ?? null),
+        'periodes' => $periodes, 'afwezig' => $afwezig, 'vrij' => $vrij, 'verzoeken' => $verzoeken,
+        'liever' => $liever, 'liever_vast' => (bool)$vaste, 'norm' => $norm,
+        'opmerking' => trim((string)($p['opmerking'] ?? '')) ?: null,
+        'formulier' => $formulier !== '' ? $formulier : null, 'uitzonderingen' => $uitz !== '' ? $uitz : null,
+        'week' => $notitie,
+    ];
+}
+
 } // function_exists

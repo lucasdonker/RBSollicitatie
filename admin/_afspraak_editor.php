@@ -12,6 +12,8 @@
  *   $af_sol_id  int
  *   $af_seizoen array  het actieve seizoen
  *   $af_alleen_lezen bool optioneel: alleen tonen (bijv. een collega heeft het gesprek open)
+ *   $af_week_notities array optioneel: [week => [tekst, …]] uit bh_opgave_overzicht()['week'] —
+ *                    wat er in die week speelt ("vakantie vanaf vr 25", "verzoek 3 d (open)")
  * Toont niets als de module Loonplanning uitstaat of je die niet mag lezen; zonder bewerkrecht
  * alleen lezen. Gedrag: assets/js/afspraak.js. Opslaan: admin/api_afspraak.php.
  */
@@ -28,6 +30,8 @@ $af_alleen_lezen = false;
 $_kan  = $_mag && !$_slot;
 $_wd   = seizoen_weken_datums($af_seizoen);
 $_functies = functies_ophalen();
+$_notities = (array)($af_week_notities ?? []);
+$af_week_notities = null;
 ?>
 <section class="bh-afspraak<?= $_slot ? ' vast' : '' ?>" data-afspraak data-sol="<?= (int)$af_sol_id ?>" data-mag="<?= $_mag ? '1' : '0' ?>"
          data-endpoint="<?= APP_URL ?>/admin/api_afspraak.php" data-csrf="<?= h(csrf_token()) ?>">
@@ -63,7 +67,8 @@ $_functies = functies_ophalen();
       <?php foreach ($_wd as $_wk => $_afd): $_w = $_m['weken'][$_wk] ?? ['opgenomen' => 0, 'dagen' => 0, 'betaald' => 1, 'max' => 0]; ?>
       <tr data-week="<?= (int)$_wk ?>" data-max="<?= (int)$_w['max'] ?>" class="<?= $_w['opgenomen'] ? 'ingepland' : '' ?>">
         <th scope="row" title="Week <?= (int)$_wk ?>, vanaf <?= h(datum_kort_nl($_afd['start'])) ?>">W<?= (int)$_wk ?> <span class="bh-meta"><?= h(datum_kort_nl($_afd['start'])) ?></span></th>
-        <td><?= $_w['max'] > 0 ? (int)$_w['max'] . ' d' : '<span class="bh-meta">niet</span>' ?></td>
+        <td><?= $_w['max'] > 0 ? (int)$_w['max'] . ' d' : '<span class="bh-meta">niet</span>' ?>
+          <?php if (!empty($_notities[$_wk])): ?><span class="bh-afspraak-notitie"><?= h(implode(' · ', $_notities[$_wk])) ?></span><?php endif; ?></td>
         <td><input type="checkbox" data-af="opgenomen" <?= $_w['opgenomen'] ? 'checked' : '' ?> <?= $_kan ? '' : 'disabled' ?> aria-label="Week <?= (int)$_wk ?> plannen"></td>
         <td><input type="number" class="ds-input" min="0" max="7" data-af="dagen" value="<?= (int)$_w['dagen'] ?>" <?= ($_kan && $_w['opgenomen']) ? '' : 'disabled' ?> aria-label="Dagen week <?= (int)$_wk ?>"></td>
         <td><input type="checkbox" data-af="betaald" <?= $_w['betaald'] ? 'checked' : '' ?> <?= ($_kan && $_w['opgenomen']) ? '' : 'disabled' ?> aria-label="Week <?= (int)$_wk ?> betaald"></td>

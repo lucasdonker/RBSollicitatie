@@ -151,18 +151,12 @@ $_kop = function () use ($_wkn): string {
 
 <div class="bh-dossier-kolommen">
   <div class="bh-dossier-hoofd">
-    <section class="ds-kaart ds-kaart-p">
-      <div class="bh-kaartkop"><h2>Uit het formulier</h2></div>
-      <?php $_int = trim((string)($tab_dossier['blk']['beschikbaarheid_intentie'] ?? '')); ?>
-      <p class="bh-dossier-tekst<?= $_int === '' ? ' zacht' : '' ?>"><?= $_int === '' ? 'Geen voorkeur opgegeven bij de aanmelding.' : nl2br(h($_int)) ?></p>
-      <?php $_uitz = trim((string)($tab_dossier['blk']['beschikbaarheid_uitzonderingen'] ?? '')) ?: trim((string)($_b['uitzonderingen'] ?? '')); ?>
-      <?php if ($_uitz !== ''): ?>
-        <div class="bh-dossier-motivatie">
-          <span class="bh-veldlabel">Uitzonderingen</span>
-          <p class="bh-dossier-tekst"><?= nl2br(h($_uitz)) ?></p>
-        </div>
-      <?php endif; ?>
-    </section>
+    <?php // Dezelfde opgave in woorden als in het TW-gesprek: vakanties, losse dagen, verzoeken, liever vrij, formulier.
+      $_blk = (array)($tab_dossier['blk'] ?? []);
+      // Oudere aanmeldingen hebben de uitzonderingen alleen in de oude beschikbaarheidsrij.
+      if (trim((string)($_blk['beschikbaarheid_uitzonderingen'] ?? '')) === '' && !empty($_b['uitzonderingen'])) $_blk['beschikbaarheid_uitzonderingen'] = $_b['uitzonderingen'];
+      $opo = bh_opgave_overzicht($_sol, $_sz, $_blk); $opo_naam = $_naam;
+      require __DIR__ . '/../_opgave_overzicht.php'; ?>
   </div>
   <aside class="bh-dossier-zij">
     <?php $norm_sol = $_sol; $norm_profiel = $_prof; require __DIR__ . '/_norm.php'; ?>

@@ -1,14 +1,19 @@
 <?php
 /**
- * Het gesprek met het bestuur (TW-stap Gesprekken, ?k=<sol_id>). Alles over één persoon bij
- * elkaar: gegevens, de inzet (opgave + loonplanning-concept, bewerkbaar), wat er op het
- * weekend en de selectiedag is gezien, open taken — en onderaan het besluit.
+ * Het gesprek met het bestuur (TW-stap Gesprekken, ?k=<sol_id>) — opgebouwd zoals het gesprek loopt
+ * (ontwerp goedgekeurd 2 okt 2026, 2.156.0):
+ *   1. de kop: wie, en wat je meteen moet weten (eerder weg, opmerking bij "ik kom", bijzonderheid);
+ *   2. Gesprekspunten (bh_tw_gesprekspunten()): wat je moet aankaarten, met een sprong naar het tabblad;
+ *   3. tabbladen: Opgave en inzet (de opgave naast de afspraak-editor), Hoe ging het (weekend,
+ *      strandwachten, selectiedag), Open in het portaal;
+ *   4. rechts het besluit, dat blijft staan; op een telefoon onderaan.
  *
  * Openen = claimen ("bezig door jou", 30 min). Aannemen/afwijzen gaat direct door via
  * tw_gesprek_afronden(); het bericht aan de sollicitant gaat als {{gesprek_bericht}} mee.
  * Heeft een ander het open, dan kan wie mag beslissen het overnemen (admin/tw/_overnemen.php).
  * Wie niet kwam (tw_niet_gekomen()) krijgt hier ook een besluit, zonder gesprek en met een
  * eigen standaardtekst bij afwijzen.
+ * Gedrag: assets/js/tabbladen.js (tabs), assets/js/gesprek.js (besluit), assets/js/afspraak.js (inzet).
  * Onderdeel van admin/trainingsweekend.php.
  */
 $_id = (int)($_GET['k'] ?? 0);
@@ -33,10 +38,25 @@ if (!$_klaar) {
 }
 $_mag_form = !$_klaar && $_claim['ok'];
 $_taken    = bh_dossier_taken($gd_dossier);
-$_open     = array_filter($_taken['rijen'], fn($t) => !$t['done']);
+$_open     = array_values(array_filter($_taken['rijen'], fn($t) => !$t['done']));
 $_sol      = $gd_dossier['sol'];
 $_b        = (string)($_k['besluit'] ?? '');
 $_niet     = tw_niet_gekomen($_k);   // was er niet: geen gesprek, wel een besluit
+$_voor     = (string)($_k['voornaam'] ?? '') ?: (string)$_k['naam'];
+
+// Wat er besproken moet worden (includes/beheer/gesprek.php, includes/beheer/beschikbaarheid.php).
+$_opg    = bh_opgave_overzicht($_id, $seizoen, $gd_dossier['blk'] ?? null);
+$_twobs  = tw_observaties_van($sid, $_id);
+$_lgf    = lg_feedback_van($_id);
+$_sd_aan = module_aan('selectiedag') && ($gd_dossier['scores'] || $gd_dossier['observaties'] || $gd_dossier['besluit']);
+$_sd_nb  = $_sd_aan && $gd_dossier['scores']
+    ? bh_nb_analyse(['aanwezig' => 1], $gd_dossier['scores'], $gd_dossier['observaties'] ?? [], [], selectie_criteria(), bh_advies_drempel()) : null;
+$_punten = bh_tw_gesprekspunten($_opg, [
+    'tw_obs' => $_twobs, 'lgf' => $_lgf, 'sd_nb' => $_sd_nb, 'sd_besluit' => (string)($gd_dossier['besluit']['besluit'] ?? ''),
+    'evaluatie' => (string)($_k['evaluatie'] ?? ''), 'evaluatie_bericht' => (string)($_k['evaluatie_bericht'] ?? ''),
+    'open' => array_column($_open, 'titel'), 'niet_gekomen' => $_niet,
+]);
+$_tw_tel = array_count_values(array_map(fn($o) => (string)($o['soort'] ?? 'neutraal'), $_twobs));
 ?>
 <p><a class="bh-terug" href="<?= h(tw_url('gesprekken')) ?>"><?= icoon('terug', 16) ?> Alle gesprekken</a></p>
 
@@ -61,90 +81,119 @@ $_niet     = tw_niet_gekomen($_k);   // was er niet: geen gesprek, wel een beslu
 
 <div class="bh-twgesprek">
   <div class="bh-twgesprek-info">
-    <section class="ds-kaart ds-kaart-p">
-      <header class="bh-beoordeel-kop">
-        <?= bh_avatar($_k, 72, ['vergroot' => true]) ?>
-        <span class="bh-beoordeel-wie">
-          <span class="bh-beoordeel-naam"><?= h((string)$_k['naam']) ?></span>
-          <?= bh_meta([$gd_dossier['leeftijd'] !== null ? $gd_dossier['leeftijd'] . ' jaar' : '',
-                       $gd_dossier['leeftijd_seizoen'] !== null && $gd_dossier['leeftijd_seizoen'] !== $gd_dossier['leeftijd'] ? $gd_dossier['leeftijd_seizoen'] . ' bij de start' : '',
-                       fase_label((string)$_k['fase']),
-                       // Strandwacht = Authentik-koppeling (is_lifeguard), zoals overal; "terugkerend" is alleen eerder gesolliciteerd.
-                       !empty($_k['is_lifeguard']) ? 'terugkerende strandwacht' : (!empty($_sol['terugkerend']) ? 'eerder gesolliciteerd' : 'nieuw')]) ?>
-          <?php if ($mag_dossier): ?><?= bh_meta([(string)($_sol['email'] ?? ''), (string)($_sol['telefoon'] ?? '')]) ?><?php endif; ?>
-        </span>
-        <?php if ($mag_dossier): ?><a class="ds-btn ds-btn-secundair ds-btn-sm" href="<?= APP_URL ?>/admin/sollicitant.php?id=<?= $_id ?>" target="_blank" rel="noopener">Dossier</a><?php endif; ?>
-      </header>
-      <?php if ($gd_dossier['minderjarig']): ?>
-        <p class="bh-meta">Minderjarig: een ouder of verzorger tekent de documenten mee.</p>
-      <?php endif; ?>
-      <?php if (!empty($gd_dossier['leeftijd_melding'])): ?>
-        <div class="ds-melding ds-melding-warn"><?= icoon('waarschuwing', 16) ?><span><?= h((string)$gd_dossier['leeftijd_melding']) ?></span></div>
-      <?php endif; ?>
-      <?php if (!empty($_k['eerder_weg'])): ?>
-        <p class="bh-twgesprek-weg"><?= icoon('klok', 14) ?> Moet weg: <?= h(tw_eerder_weg_tekst((string)$_k['eerder_weg'])) ?></p>
-      <?php endif; ?>
-      <?php if (!empty($_k['bevestiging_reden'])): ?>
-        <p class="bh-dossier-tekst"><strong>Opmerking bij het aanmelden:</strong> <?= h((string)$_k['bevestiging_reden']) ?></p>
-      <?php endif; ?>
-      <?php if ($mag_blk && !empty($_k['bijzonderheden'])): ?>
-        <div class="ds-melding ds-melding-warn"><?= icoon('waarschuwing', 16) ?><span><strong>Bijzonderheid:</strong> <?= nl2br(h((string)$_k['bijzonderheden'])) ?></span></div>
-      <?php endif; ?>
-    </section>
 
-    <section class="ds-kaart ds-kaart-p">
+    <section class="ds-kaart bh-twkop" aria-label="Wie">
+      <?= bh_avatar($_k, 56, ['vergroot' => true]) ?>
+      <div class="bh-twkop-wie">
+        <h2 class="bh-twkop-naam"><?= h((string)$_k['naam']) ?></h2>
+        <?= bh_meta([$gd_dossier['leeftijd'] !== null ? $gd_dossier['leeftijd'] . ' jaar' : '',
+                     $gd_dossier['leeftijd_seizoen'] !== null && $gd_dossier['leeftijd_seizoen'] !== $gd_dossier['leeftijd'] ? $gd_dossier['leeftijd_seizoen'] . ' bij de start' : '',
+                     // Strandwacht = Authentik-koppeling (is_lifeguard), zoals overal; "terugkerend" is alleen eerder gesolliciteerd.
+                     !empty($_k['is_lifeguard']) ? 'terugkerende strandwacht' : (!empty($_sol['terugkerend']) ? 'eerder gesolliciteerd' : 'nieuw'),
+                     $mag_dossier && !empty($_sol['telefoon']) ? telefoon_opmaak((string)$_sol['telefoon']) : '']) ?>
+      </div>
+      <?php if ($mag_dossier): ?><a class="ds-btn ds-btn-secundair ds-btn-sm" href="<?= APP_URL ?>/admin/sollicitant.php?id=<?= $_id ?>" target="_blank" rel="noopener">Dossier</a><?php endif; ?>
       <?php
-        $af_sol_id = $_id; $af_seizoen = $seizoen; $af_alleen_lezen = !$_claim['ok'];
-        if (module_aan('loonplanning') && mag('loonplanning', 'lezen')) {
-            require __DIR__ . '/../_afspraak_editor.php';
-        } else {
-            // Zonder loonplanning: alleen de opgave, per week.
-            $_eff = beschikbaarheid2_effectief($_id, $seizoen);
-            echo '<h3>Opgegeven beschikbaarheid</h3>';
-            if (!$_eff) echo '<p class="bh-meta">Nog niets opgegeven.</p>';
-            else {
-                echo '<ul class="bh-twopgave">';
-                foreach ($_eff as $_wk => $_w) echo '<li><span>W' . (int)$_wk . '</span> <strong>' . (int)$_w['dagen_max'] . ' d</strong></li>';
-                echo '</ul>';
-            }
-        }
+        $_chips = [];
+        if (!empty($_k['eerder_weg']))        $_chips[] = ['Moet weg: ' . tw_eerder_weg_tekst((string)$_k['eerder_weg']), 'oranje'];
+        if (!empty($_k['bevestiging_reden'])) $_chips[] = ['Bij "ik kom": ' . bh_gesprek_fragment((string)$_k['bevestiging_reden'], 80), 'grijs'];
+        if (!empty($_k['bijzonderheden']))    $_chips[] = [$mag_blk ? 'Bijzonderheid: ' . bh_gesprek_fragment((string)$_k['bijzonderheden'], 80) : 'Bijzonderheid bekend (zie formulier)', 'oranje'];
+        if ($gd_dossier['minderjarig'])       $_chips[] = ['Minderjarig: een ouder tekent mee', 'grijs'];
+        if (!empty($gd_dossier['leeftijd_melding'])) $_chips[] = [(string)$gd_dossier['leeftijd_melding'], 'oranje'];
       ?>
+      <?php if ($_chips): ?>
+        <div class="bh-twkop-chips"><?php foreach ($_chips as $_c) echo bh_chip($_c[0], $_c[1]); ?></div>
+      <?php endif; ?>
+      <?php if ($mag_blk && !empty($_k['bijzonderheden']) && mb_strlen((string)$_k['bijzonderheden']) > 80): ?>
+        <p class="bh-twkop-lang"><strong>Bijzonderheid:</strong> <?= nl2br(h((string)$_k['bijzonderheden'])) ?></p>
+      <?php endif; ?>
     </section>
 
-    <section class="ds-kaart ds-kaart-p">
-      <h3>Dit weekend opgevallen</h3>
-      <?php
-        $obs_lijst = tw_observaties_van($sid, $_id);
-        if ($obs_lijst) { $obs_eigen = null; require __DIR__ . '/../_observaties.php'; }
-        else echo '<p class="bh-meta">' . ($_niet ? 'Niet op het weekend geweest, dus niets gezien.' : 'Niemand heeft iets opgeschreven.') . '</p>';
-      ?>
-    </section>
-
-    <?php // Feedback van lifeguards: hier vastleggen (hoort bij het beslismoment); toont ook die van de selectiedag.
-      $lgf_sol_id = $_id; $lgf_seizoen_id = $sid; $lgf_moment = 'tw'; $lgf_mag_bewerken = $mag_beslissen;
-      $lgf_terug = tw_url('gesprekken', $_id); $lgf_kop = 'h3';
-      require __DIR__ . '/../_lg_feedback.php'; ?>
-
-    <?php if (module_aan('selectiedag') && ($gd_dossier['scores'] || $gd_dossier['observaties'] || $gd_dossier['besluit'])): ?>
-    <section class="ds-kaart ds-kaart-p bh-twgesprek-sd">
-      <h3>Op de selectiedag</h3>
-      <?php $sds_dossier = $gd_dossier; $sds_open = true; $sds_cijfers_open = true; require __DIR__ . '/../_sd_samenvatting.php'; ?>
-    </section>
-    <?php endif; ?>
-
-    <?php if ($_open): ?>
-    <section class="ds-kaart ds-kaart-p">
-      <h3>Nog open in het portaal <span class="bh-meta"><?= count($_open) ?></span></h3>
-      <ul class="bh-twtaken">
-        <?php foreach ($_open as $_t): ?><li><?= h($_t['titel']) ?><?php if ($_t['sub'] !== ''): ?> <span class="bh-meta"><?= h($_t['sub']) ?></span><?php endif; ?></li><?php endforeach; ?>
+    <?php if ($_punten): ?>
+    <section class="ds-kaart ds-kaart-p bh-twpunten" aria-labelledby="punten-kop">
+      <div class="bh-kaartkop"><h2 id="punten-kop">Gesprekspunten</h2><span class="bh-meta">uit de opgave, de beoordelingen en het portaal</span></div>
+      <ul>
+        <?php foreach ($_punten as $_p): ?>
+          <li class="bh-twpunt <?= h($_p['soort']) ?>">
+            <span class="bh-twpunt-stip" aria-hidden="true"></span>
+            <span class="bh-twpunt-tekst"><strong><?= h($_p['titel']) ?></strong> <?= h($_p['tekst']) ?>
+              <button type="button" class="bh-twpunt-naar" data-naar-tab="tab-<?= h($_p['tab']) ?>"><?= h(['opgave' => 'Opgave', 'hoe' => 'Hoe ging het', 'open' => 'Open'][$_p['tab']] ?? '') ?></button></span>
+          </li>
+        <?php endforeach; ?>
       </ul>
     </section>
     <?php endif; ?>
+
+    <div class="bh-twtabs" data-tabbladen id="twgesprek-tabs">
+      <div class="bh-tablijst" role="tablist" aria-label="Onderdelen van het gesprek">
+        <button type="button" role="tab" id="tab-opgave" aria-controls="p-opgave" aria-selected="true">Opgave en inzet</button>
+        <button type="button" role="tab" id="tab-hoe" aria-controls="p-hoe" aria-selected="false">Hoe ging het</button>
+        <button type="button" role="tab" id="tab-open" aria-controls="p-open" aria-selected="false">Open in het portaal<?php if ($_open): ?> <span class="bh-tablijst-tel"><?= count($_open) ?></span><?php endif; ?></button>
+      </div>
+
+      <div role="tabpanel" id="p-opgave" aria-labelledby="tab-opgave" class="bh-tabpaneel bh-twopgave-inzet">
+        <?php $opo = $_opg; $opo_naam = $_voor; require __DIR__ . '/../_opgave_overzicht.php'; ?>
+        <section class="ds-kaart ds-kaart-p">
+          <?php
+            $af_sol_id = $_id; $af_seizoen = $seizoen; $af_alleen_lezen = !$_claim['ok']; $af_week_notities = $_opg['week'];
+            if (module_aan('loonplanning') && mag('loonplanning', 'lezen')) {
+                require __DIR__ . '/../_afspraak_editor.php';
+            } else {
+                // Zonder loonplanning: alleen de opgave, per week.
+                $_eff = beschikbaarheid2_effectief($_id, $seizoen);
+                echo '<h3>Per week</h3>';
+                if (!$_eff) echo '<p class="bh-meta">Nog niets opgegeven.</p>';
+                else {
+                    echo '<ul class="bh-twopgave">';
+                    foreach ($_eff as $_wk => $_w) echo '<li><span>W' . (int)$_wk . '</span> <strong>' . (int)$_w['dagen_max'] . ' d</strong></li>';
+                    echo '</ul>';
+                }
+            }
+          ?>
+        </section>
+      </div>
+
+      <div role="tabpanel" id="p-hoe" aria-labelledby="tab-hoe" class="bh-tabpaneel bh-twhoe">
+        <div class="bh-twhoe-kolom">
+          <section class="ds-kaart ds-kaart-p">
+            <div class="bh-kaartkop"><h2>Dit weekend</h2>
+              <span class="bh-meta"><?= h(implode(' · ', array_filter([count($_twobs) . ' ' . (count($_twobs) === 1 ? 'observatie' : 'observaties'),
+                  !empty($_tw_tel['positief']) ? $_tw_tel['positief'] . ' positief' : '', !empty($_tw_tel['aandacht']) ? $_tw_tel['aandacht'] . ' aandacht' : '']))) ?></span></div>
+            <?php
+              if ($_twobs) { $obs_lijst = $_twobs; $obs_eigen = null; require __DIR__ . '/../_observaties.php'; }
+              else echo '<p class="bh-meta">' . ($_niet ? 'Niet op het weekend geweest, dus niets gezien.' : 'Niemand heeft iets opgeschreven.') . '</p>';
+            ?>
+          </section>
+          <?php // Feedback van strandwachten: lezen en (met de taak Gesprekken) toevoegen; ook de stap Feedback en het dossier kunnen dat.
+            $lgf_sol_id = $_id; $lgf_seizoen_id = $sid; $lgf_moment = 'tw'; $lgf_mag_bewerken = $mag_beslissen;
+            $lgf_terug = tw_url('gesprekken', $_id); $lgf_kop = 'h2'; $lgf_rijen = $_lgf;
+            require __DIR__ . '/../_lg_feedback.php'; ?>
+        </div>
+        <?php if ($_sd_aan): ?>
+        <section class="ds-kaart ds-kaart-p bh-twgesprek-sd" aria-label="Selectiedag">
+          <?php $sds_dossier = $gd_dossier; $sds_open = true; require __DIR__ . '/../_sd_samenvatting.php'; ?>
+        </section>
+        <?php endif; ?>
+      </div>
+
+      <div role="tabpanel" id="p-open" aria-labelledby="tab-open" class="bh-tabpaneel">
+        <section class="ds-kaart ds-kaart-p">
+          <div class="bh-kaartkop"><h2>Nog open in het portaal</h2><span class="bh-meta"><?= count($_open) ?></span></div>
+          <?php if ($_open): ?>
+            <ul class="bh-twtaken">
+              <?php foreach ($_open as $_t): ?><li><?= h($_t['titel']) ?><?php if ($_t['sub'] !== ''): ?> <span class="bh-meta"><?= h($_t['sub']) ?></span><?php endif; ?></li><?php endforeach; ?>
+            </ul>
+          <?php else: ?>
+            <p class="bh-meta"><?= h($_voor) ?> heeft alles gedaan wat er nu in het portaal staat.</p>
+          <?php endif; ?>
+        </section>
+      </div>
+    </div>
   </div>
 
   <aside class="bh-twgesprek-besluit">
     <section class="ds-kaart ds-kaart-p">
-      <h3>Besluit</h3>
+      <h2 class="bh-twbesluit-kop">Besluit</h2>
       <?php if ($_klaar): ?>
         <?php $_bd = tw_besluit_labels()[$_b] ?? ['Doorgevoerd', 'grijs']; ?>
         <p><?= bh_badge($_bd[0], $_bd[1]) ?>
@@ -160,7 +209,6 @@ $_niet     = tw_niet_gekomen($_k);   // was er niet: geen gesprek, wel een beslu
       <?php endif; ?>
       <?php
         // Per besluit zeggen wat er echt gebeurt: met naam, of er mail uitgaat (instellingen) en of het vastligt.
-        $_voor  = (string)($_k['voornaam'] ?? '') ?: (string)$_k['naam'];
         $_mail  = fn(array $t) => bh_melding_gaat_uit($t)
             ? $_voor . ' krijgt nu een mail met jullie bericht.' : 'Er gaat geen mail uit (staat uit bij Instellingen).';
         $_afw_t = [$_niet && function_exists('melding_definitie') && melding_definitie('tw_niet_gekomen') ? 'tw_niet_gekomen' : 'tw_afgewezen'];
@@ -174,14 +222,14 @@ $_niet     = tw_niet_gekomen($_k);   // was er niet: geen gesprek, wel een beslu
                           . ' Terugzetten kan in het dossier, maar een verstuurde mail neem je niet terug.', 'Ja, afwijzen', '1'],
         ];
       ?>
-      <?php // data-concept: feedback vastleggen hierboven herlaadt de pagina; het getypte bericht blijft (beheer.js). ?>
-      <form method="post" class="bh-twgesprek-form"<?= $_mag_form ? '' : ' inert' ?>
+      <?php // data-concept: feedback vastleggen herlaadt de pagina; het getypte bericht blijft (beheer.js). ?>
+      <form method="post" class="bh-twgesprek-form" data-twgesprek<?= $_mag_form ? '' : ' inert' ?>
             data-bevestig="Besluit vastleggen?" data-concept="twgesprek-<?= (int)$sid ?>-<?= $_id ?>">
         <?= csrf_input() ?>
         <input type="hidden" name="actie" value="gesprek">
         <input type="hidden" name="sol_id" value="<?= $_id ?>">
         <fieldset class="bh-twkeuze">
-          <legend class="bh-vw">Besluit over <?= h((string)$_k['naam']) ?></legend>
+          <legend class="bh-veldlabel">Wat besluiten jullie?</legend>
           <?php foreach (['aannemen' => 'Aannemen', 'twijfel' => 'Twijfel', 'afwijzen' => 'Afwijzen'] as $_w => $_l): ?>
             <label class="bh-twoptie <?= h($_w) ?>">
               <input type="radio" name="besluit" value="<?= h($_w) ?>" required<?= $_b === $_w ? ' checked' : '' ?>
@@ -191,16 +239,17 @@ $_niet     = tw_niet_gekomen($_k);   // was er niet: geen gesprek, wel een beslu
             </label>
           <?php endforeach; ?>
         </fieldset>
+        <p class="bh-twgevolg" data-gevolg aria-live="polite">Kies een besluit; hier staat dan wat er gebeurt.</p>
 
         <div class="ds-veld">
-          <label for="gb-<?= $_id ?>">Bericht aan de sollicitant</label>
+          <label for="gb-<?= $_id ?>">Bericht aan <?= h($_voor) ?></label>
           <textarea class="ds-textarea" id="gb-<?= $_id ?>" name="bericht" rows="5" maxlength="2000"
-                    aria-describedby="gbh-<?= $_id ?>"><?= h((string)($_k['gesprek_bericht'] ?? '')) ?></textarea>
-          <p class="ds-veld-hint" id="gbh-<?= $_id ?>">
-            <?= $_niet ? 'Wat je de sollicitant wilt laten weten' : 'Wat jullie besproken hebben' ?>, in je eigen woorden — dit komt in de mail. Leeg laten = de standaardtekst:
-            <br><em>Aangenomen:</em> <?= h(tw_standaard_bericht('aannemen')) ?>
-            <br><em>Afgewezen:</em> <?= h(tw_standaard_bericht('afwijzen', $_niet)) ?>
-          </p>
+                    aria-describedby="gbh-<?= $_id ?>"
+                    placeholder="<?= $_niet ? 'Wat je wilt laten weten' : 'Wat jullie besproken hebben' ?>, in je eigen woorden. Leeg = de standaardtekst."><?= h((string)($_k['gesprek_bericht'] ?? '')) ?></textarea>
+          <button type="button" class="bh-doc-actie" data-standaard hidden
+                  data-standaard-aannemen="<?= h(tw_standaard_bericht('aannemen')) ?>"
+                  data-standaard-afwijzen="<?= h(tw_standaard_bericht('afwijzen', $_niet)) ?>">Standaardtekst invoegen om aan te passen</button>
+          <p class="ds-veld-hint" id="gbh-<?= $_id ?>">Dit komt in de mail. Laat je het leeg, dan gaat de standaardtekst mee.</p>
         </div>
 
         <div class="ds-veld">
@@ -222,3 +271,5 @@ $_niet     = tw_niet_gekomen($_k);   // was er niet: geen gesprek, wel een beslu
     </section>
   </aside>
 </div>
+<script src="<?= APP_URL ?>/assets/js/tabbladen.js?v=<?= @filemtime(__DIR__ . '/../../assets/js/tabbladen.js') ?>" defer></script>
+<script src="<?= APP_URL ?>/assets/js/gesprek.js?v=<?= @filemtime(__DIR__ . '/../../assets/js/gesprek.js') ?>" defer></script>

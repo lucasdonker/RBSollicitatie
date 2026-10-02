@@ -3,10 +3,22 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.155.0');
+define('APP_VERSIE', '2.156.0');
 
 function app_changelog(): array {
     return [
+        '2.156.0' => [
+            'datum'  => '2026-10-02',
+            'titel'  => 'Het gesprek op het weekend: rustiger en met alles wat je nodig hebt',
+            'punten' => [
+                'Bovenaan staan de gesprekspunten: vakantie, verzoeken om minder dagen, losse vrije dagen, aandachtspunten van het weekend en van strandwachten, de selectiedag en wat nog open staat. Elk punt springt naar het juiste tabblad',
+                'De opgave staat nu in woorden naast de inzet: periodes, vakanties, losse dagen met reden, verzoeken met hun status, liever vrij, de opmerking en het formulier. In de inzettabel staat per week wat er speelt',
+                'Tabbladen in plaats van één lange pagina: Opgave en inzet, Hoe ging het, Open in het portaal',
+                'Een compacte kop met eerder weg, de opmerking bij "ik kom" en een bijzonderheid als labels',
+                'Bij het besluit staat meteen wat er gebeurt, en je kunt de standaardtekst invoegen om aan te passen',
+                'Dezelfde opgave in woorden staat ook in het dossier, tabblad Beschikbaarheid & inzet',
+            ],
+        ],
         '2.155.0' => [
             'datum'  => '2026-10-02',
             'titel'  => 'Live bijwerken: zie wat collega\'s doen',
