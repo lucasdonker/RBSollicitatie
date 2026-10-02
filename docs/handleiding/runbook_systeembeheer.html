@@ -369,6 +369,15 @@ en het auditlog draaien ná het antwoord aan de bezoeker
 <code>fastcgi_finish_request</code>). Zet de PHP-handler in Plesk dus op
 een FPM-variant. Onder een andere handler werkt alles nog, maar wacht de
 bezoeker tot het werk klaar is.</li>
+<li><strong>Live bijwerken = korte polling, geen open
+verbinding</strong> (2.155.0). Een open beheerscherm vraagt elke 10
+seconden <code>/admin/api_live.php</code> (alleen als het tabblad
+zichtbaar is): inlogcheck, sessie meteen vrijgeven, één query op de
+primaire sleutel van <code>live_versie</code>. Met tien mensen tegelijk
+is dat één licht verzoek per seconde. SSE of WebSockets zijn bewust niet
+gebruikt: die houden een FPM-worker en de sessielock vast. Deze
+verzoeken en de stille herlaadactie (kop <code>X-P13-Live</code>) tellen
+niet als activiteit voor het uitloggen na twee uur.</li>
 <li><strong>Twee kanten:</strong> het portaal voor sollicitanten
 (<code>/portaal/</code>) en het beheer (<code>/admin/</code>). Daarnaast
 de openbare adressen <code>/aanmelden.php</code> (aanmeldformulier),
@@ -669,7 +678,7 @@ kopie in e-mail, chat of een gedeelde map.</p></li>
 een nieuw <code>cron.token</code>. Draait de taak als PHP-script
 (<code>cron/run.php</code>), dan hoef je niets te doen; gebruikt hij de
 HTTP-regel met het token, neem dan de nieuwe regel over uit Instellingen
-› Bewaren &amp; opschonen › Cronjob.</p></li>
+› Bewaren &amp; opschonen › Automatische taken.</p></li>
 <li><p><strong>Zet de nieuwe versie op test:</strong> push naar
 <code>Development</code> (of Plesk › Git › Deploy als hij er al staat)
 en open één pagina. De zelfherstelronde van de nieuwe versie draait nu
@@ -846,10 +855,11 @@ over toont; de systeemcontrole herinnert eraan</td>
 <tr>
 <td><code>BACKUP_MAP</code></td>
 <td>Map voor de automatische back-up vóór elke update</td>
-<td>Optioneel; standaard <code>&lt;DOCUMENTEN_MAP&gt;/db-backups</code>.
-Moet buiten de webroot staan en schrijfbaar zijn: op productie gaat een
-update anders niet door (zie <a href="#back-up-en-herstel">Back-up en
-herstel</a>)</td>
+<td>Optioneel; standaard <code>&lt;DOCUMENTEN_MAP&gt;/db-backups</code>
+(zijn beide leeg, dan is er geen back-upmap). Moet buiten de webroot
+staan en schrijfbaar zijn; anders slaat het systeem deze extra back-up
+over. De update gaat altijd door, op test en productie; de check
+&quot;Back-up vóór updates&quot; wordt dan oranje (zie <a href="#back-up-en-herstel">Back-up en herstel</a>)</td>
 </tr>
 <tr>
 <td><code>ZEGEL_MAP</code>, <code>ZEGEL_NAAM</code>,
@@ -1037,9 +1047,9 @@ documenten te lezen</td>
 (en meteen in de plugin invullen); AI-, sms- en WhatsApp-sleutels bij de
 leverancier vernieuwen en in het beheer plakken. Het cron-token vernieuw
 je met <strong>Nieuw token maken</strong> onder Instellingen › Bewaren
-&amp; opschonen › Cronjob; de oude regel werkt daarna niet meer, dus zet
-meteen de nieuwe regel in de Plesk-taak. Doe dat ook als iemand met
-toegang tot Plesk vertrekt.</p>
+&amp; opschonen › Automatische taken; de oude regel werkt daarna niet
+meer, dus zet meteen de nieuwe regel in de Plesk-taak. Doe dat ook als
+iemand met toegang tot Plesk vertrekt.</p>
 <h1 id="cron">Cron</h1>
 <blockquote>
 <p><strong>In het kort:</strong> Eén geplande taak in Plesk,
@@ -1051,15 +1061,16 @@ meer uit.</p>
 <p>Plesk › Geplande taken › <strong>PHP-script uitvoeren</strong>, elke
 minuut (<code>* * * * *</code>), met als script het volledige pad naar
 <code>cron/run.php</code> (staat in het beheer bij Instellingen ›
-Bewaren &amp; opschonen › Cronjob). Vanaf de opdrachtregel is geen token
-nodig.</p>
+Bewaren &amp; opschonen › Automatische taken). Vanaf de opdrachtregel is
+geen token nodig.</p>
 <p>Kan de server geen PHP-script plannen, gebruik dan een opdracht (ook
 elke minuut):</p>
 <pre><code>curl -s -H &quot;X-Cron-Token: &lt;cron.token&gt;&quot; &quot;https://sollicitatie.paal13.com/cron/run.php&quot; &gt; /dev/null 2&gt;&amp;1</code></pre>
 <p>Het token gaat dan als header mee, zodat het niet in de access-log
 belandt (<code>?token=</code> werkt nog voor oude regels). &quot;Nieuw token
-maken&quot; staat bij de cronjob in Instellingen, net als <strong>Nu
-uitvoeren</strong> (draait alle groepen meteen, met bevestiging).</p>
+maken&quot; staat in Instellingen bij <strong>Automatische taken</strong>,
+net als <strong>Nu uitvoeren</strong> (draait alle groepen meteen, met
+bevestiging).</p>
 <p>De taken staan in drie groepen
 (<code>includes/cron_taken.php</code>), elk met een eigen interval, lock
 (<code>cron.lock_&lt;groep&gt;</code>) en laatste run
@@ -1652,7 +1663,9 @@ leegmaken</td>
 <td><code>OIDC_CLIENT_ID</code> en <code>OIDC_ISSUER</code>
 ingevuld</td>
 <td>Leeg of nog een <code>{{…}}</code>-plaatshouder: alleen de
-wachtwoord-noodingang werkt</td>
+wachtwoord-noodingang werkt. Ook een waarschuwing als Authentik-groepen
+die vóór 2.132 toegang gaven bij geen rol horen (knop <strong>Rollen
+koppelen</strong>)</td>
 <td><code>config.php</code>, zie <a href="#authentik-sso">Authentik
 (SSO)</a></td>
 </tr>
@@ -1784,9 +1797,11 @@ gaan wachtende berichten gewoon naar echte sollicitanten. Met
 <code>MAIL_OMLEIDEN</code> gaat alle e-mail naar jou en worden WhatsApp
 en sms niet verstuurd. Controleer bij het openen dat bovenaan het beheer
 de balk &quot;Testmodus&quot; staat voordat je iets anders doet.</li>
-<li>Log in, draai de systeemcontrole (kluis moet groen zijn) en open als
-admin één document in een loondossier. Lukt dat, dan kloppen sleutel,
-zout en bestanden samen.</li>
+<li>Log in, draai de systeemcontrole (kluis moet groen zijn) en open één
+document in een loondossier. Dat kan alleen met de rol penningmeester
+(een admin opent de inhoud niet); zet jezelf op de testkopie dus ook de
+rol Penningmeester. Lukt het openen, dan kloppen sleutel, zout en
+bestanden samen.</li>
 <li>Verwijder daarna database, subdomein en kopieën. Noteer datum en
 uitkomst voor het bestuur.</li>
 </ol>
@@ -2095,7 +2110,8 @@ aanvragen per uur per IP; verificatiecode bij ondertekenen 5 per uur per
 document; aanmeldformulier 5 per uur per IP met honeypot, via de API 10
 per uur per bezoeker; vragen via het portaal 3 per uur; uploads 20 per
 uur per dossier; downloads van loondocumenten 30 per uur per sessie, met
-watermerk op ID- en bankpasfoto&#39;s.</li>
+watermerk op bankpasfoto&#39;s (niet op het ID: die kopie moet volledig
+leesbaar zijn; <code>document_watermerk_soorten()</code>).</li>
 <li><strong>Headers:</strong> Content-Security-Policy (scripts en
 verbindingen alleen van de eigen host), HSTS, X-Frame-Options, nosniff,
 Referrer-Policy, Permissions-Policy, gezet in PHP

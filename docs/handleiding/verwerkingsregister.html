@@ -366,12 +366,17 @@ sollicitanten jonger dan 18.</td>
 <td>Persoonsgegevens</td>
 <td>Naam, geboortedatum, e-mailadres, telefoonnummer, geslacht
 (optioneel, alleen voor de slaapindeling in het trainingsweekend), bron
-van de aanmelding (<code>bron_code</code>, <code>bron_label</code>),
-moment, versie en IP-adres van het lezen van de privacyverklaring
-(<code>privacy_ip</code>), bij een 15-jarige naam en moment van
-ouderlijke toestemming, bij jonger dan 18 naam, e-mail en telefoon van
-de ouder. Fase en geschiedenis van de sollicitatie, notities van het
-bestuur (<code>sollicitant_notities</code>), taken in het portaal.
+van de aanmelding (<code>bron_code</code>, <code>bron_label</code>) en
+sinds 2.145 de UTM-herkomst van de advertentielink waarmee iemand
+binnenkwam (<code>utm_source</code>, <code>utm_medium</code>,
+<code>utm_campaign</code>, <code>utm_content</code>: bron, medium,
+campagne en variant; geschoond tot a-z, 0-9 en koppeltekens, maximaal 40
+tekens; geen cookie, geen IP-adres), moment, versie en IP-adres van het
+lezen van de privacyverklaring (<code>privacy_ip</code>), bij een
+15-jarige naam en moment van ouderlijke toestemming, bij jonger dan 18
+naam, e-mail en telefoon van de ouder. Fase en geschiedenis van de
+sollicitatie, notities van het bestuur
+(<code>sollicitant_notities</code>), taken in het portaal.
 Portaalgebruik: inlogmomenten, &quot;blijf ingelogd&quot; met browser en IP per
 apparaat (<code>portaal_apparaten</code>).</td>
 </tr>
@@ -411,7 +416,9 @@ plek: <code>avg_sollicitatie_leegmaken()</code> in
 selectiedag, trainingsweekend, notities, AI-gegevens, apparaten,
 bewijsspoor van ondertekeningen). De sollicitatierij zelf blijft zonder
 persoonsgegevens staan voor de statistiek, net als de loonplanning
-(zonder notitie).</td>
+(zonder notitie). De bron en de UTM-herkomst volgen dezelfde termijn: ze
+staan bij de sollicitatie en blijven na anonimiseren alleen bij die
+anonieme rij, voor de statistiek per wervingskanaal.</td>
 </tr>
 <tr>
 <td>Beveiliging</td>
@@ -891,10 +898,12 @@ XChaCha20-Poly1305 (terugval AES-256-GCM), een eigen sleutel per
 bestand, hoofdsleutel afgeleid uit <code>KLUIS_SLEUTEL</code> in
 <code>config.php</code> én een zout in de database, geen onversleutelde
 terugval. Bestanden buiten het webbereik (<code>DOCUMENTEN_MAP</code>).
-Download met watermerk, elke inzage in het logboek, melding aan het
-bestuur bij elke download (<code>documenten.download_melding</code>,
-standaard aan). Verificatiecode verplicht bij de opgaaf loonheffing.
-Uploadlimieten per uur.</td>
+Download van de bankpas met watermerk (de ID-kopie zonder, omdat die
+volledig leesbaar moet zijn in de loonadministratie), elke inzage in het
+logboek, melding aan het bestuur bij elke download
+(<code>documenten.download_melding</code>, standaard aan).
+Verificatiecode verplicht bij de opgaaf loonheffing. Uploadlimieten per
+uur.</td>
 </tr>
 </tbody>
 </table>
@@ -1212,14 +1221,19 @@ stapnummer, tijdstip en een dagpseudoniem: een HMAC-SHA-256 van IP-adres
 en browser met een dagsleutel, die is afgeleid van de datum en een
 geheim zout (<code>paginas.pseudoniem_zout</code>, 32 willekeurige
 bytes, eenmalig aangemaakt). Zonder het zout niet terug te rekenen, en
-elke dag anders, dus niet over dagen te volgen. Geen IP-adres, geen
-browser, niets wat is ingevuld. Bij de sollicitatie:
-<code>bron_code</code> (&quot;<bron>&quot; of &quot;<bron>/<campagne>&quot;, de campagne uit
-<code>?bron=</code>, <code>utm_campaign</code> of
-<code>utm_source</code> van het adres waarmee iemand binnenkwam) en
-<code>bron_label</code>. Het bezoek op paal13.com meldt het
-formulierscript rechtstreeks aan <code>/track.php</code> (anoniem, geen
-cookie, zelfde pseudoniem); WordPress zelf slaat niets op.</td>
+elke dag anders, dus niet over dagen te volgen. Sinds 2.145 ook de
+UTM-velden uit het adres (<code>utm_source</code>,
+<code>utm_medium</code>, <code>utm_campaign</code>,
+<code>utm_content</code>), geschoond tot a-z, 0-9 en koppeltekens,
+maximaal 40 tekens. Geen IP-adres, geen browser, niets wat is ingevuld.
+Bij de sollicitatie: <code>bron_code</code> (&quot;<bron>&quot; of
+&quot;<bron>/<campagne>&quot;, de campagne uit <code>?bron=</code>,
+<code>utm_campaign</code> of <code>utm_source</code> van het adres
+waarmee iemand binnenkwam) en <code>bron_label</code>, plus dezelfde
+vier UTM-velden (zie <a href="#aanmelding-en-sollicitatie">Aanmelding en
+sollicitatie</a>). Het bezoek op paal13.com meldt het formulierscript
+rechtstreeks aan <code>/track.php</code> (anoniem, geen cookie, zelfde
+pseudoniem); WordPress zelf slaat niets op.</td>
 </tr>
 <tr>
 <td>Ontvangers en verwerkers</td>
@@ -1609,11 +1623,13 @@ kennismakingsformulier met wijzigingen, AI-analyse, beschikbaarheid
 (alle huidige tabellen en de AI-invoertekst), selectiedag en
 trainingsweekend (indeling, cijfers, observaties, besluiten), notities
 van het bestuur, ondertekeningen (type, datum), documenten (soort,
-datum, status), berichten (datum, onderwerp, kanaal) en ingelogde
-apparaten. Niet: BSN, IBAN en handtekening (die staan in de verzegelde
-PDF&#39;s onder de taken), de bestanden zelf, en namen van beoordelaars en
-bestuursleden (rechten van anderen, art. 15 lid 4; daar staat
-&quot;beoordelaar&quot;).</td>
+datum, status), berichten (datum, onderwerp, kanaal), ingelogde
+apparaten en de herkomst van de aanmelding (sleutel
+<code>herkomst</code>: via welke pagina of site, en de UTM-bron,
+-medium, -campagne en -variant). Niet: BSN, IBAN en handtekening (die
+staan in de verzegelde PDF&#39;s onder de taken), de bestanden zelf, en
+namen van beoordelaars en bestuursleden (rechten van anderen, art. 15
+lid 4; daar staat &quot;beoordelaar&quot;).</td>
 </tr>
 <tr>
 <td>Verbeteren (art. 16)</td>
@@ -1657,7 +1673,8 @@ bestand.</td>
 <tr>
 <td>Apparaten</td>
 <td>Mijn gegevens › &quot;vergeet alle apparaten&quot; trekt alle &quot;blijf
-ingelogd&quot;-tokens in.</td>
+ingelogd&quot;-tokens in en logt open sessies op andere apparaten meteen uit
+(sinds 2.145; de sessie waarin je het doet blijft).</td>
 </tr>
 </tbody>
 </table>
@@ -1797,6 +1814,27 @@ repetitie vóór elke uitrol), direct geanonimiseerd met
 <code>tools/anonimiseer_testkopie.php</code>; exportbestand direct weg.
 Interne verwerking bij dezelfde hoster, geen wijziging in de
 privacyverklaring nodig.</td>
+</tr>
+<tr>
+<td>2 oktober 2026</td>
+<td>Versie 2.150: de gedownloade kopie van het identiteitsbewijs (en de
+mailbijlage aan de penningmeester) krijgt geen watermerk meer. Reden: de
+werkgever moet een volledig leesbare kopie in de loonadministratie
+bewaren (identificatieplicht, Wet op de loonbelasting); een merk over
+foto of gegevens kan dat ondermijnen. De bankpas houdt het watermerk.
+Verder ongewijzigd: versleuteld in de kluis, alleen de penningmeester,
+elke download gelogd.</td>
+</tr>
+<tr>
+<td>1 oktober 2026</td>
+<td>Versie 2.145: de UTM-herkomst (bron, medium, campagne, variant van
+de advertentielink) wordt los bewaard bij elk bezoek en elke
+formulierstap (<code>pagina_events</code>) en bij de aanmelding
+(<code>sollicitaties</code>). Geen cookie, geen IP-adres; zelfde
+bewaartermijn als de rest (statistiek 13 maanden, bij de sollicitatie:
+volgt het dossier); zichtbaar in de inzage (<code>avg_inzage()</code>,
+sleutel <code>herkomst</code>). &quot;Vergeet alle apparaten&quot; logt nu ook
+open sessies elders uit.</td>
 </tr>
 </tbody>
 </table>

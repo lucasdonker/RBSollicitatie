@@ -334,6 +334,25 @@ als iemand vraagt wat er met een dossier is gebeurd.</label></li>
 verzoek om inzage of verwijdering komt meestal bij jou
 terecht.</label></li>
 </ul>
+<h2 id="werken-met-meerdere-mensen-tegelijk">Werken met meerdere mensen
+tegelijk</h2>
+<p>Op de selectiedag en het trainingsweekend werken meer mensen tegelijk
+in het beheer. Wat een ander doet, zie je zonder te verversen:</p>
+<ul>
+<li><strong>Vanzelf bijgewerkt:</strong> de incheck-lijst (ook wie op de
+tablet incheckt), de bellijst (&quot;bezig door&quot;, gebeld), de gesprekkenlijst
+van het weekend (wie is gesproken, de volgorde) en de observaties bij
+Beoordelen. Je zoekterm en filter blijven staan. Ben je iets aan het
+typen, dan wordt dat stuk niet vervangen.</li>
+<li><strong>Met een melding:</strong> op het dossier, de lijsten,
+Vandaag, de nabespreking, beschikbaarheid, de loonplanning en het
+gesprek zie je onderin &quot;Anna heeft hier iets gewijzigd&quot; met
+<strong>Vernieuwen</strong>. Er wordt dan niets vanzelf vervangen, zodat
+je rustig kunt doorlezen.</li>
+</ul>
+<p>Je eigen wijzigingen geven geen melding. Een open tabblad houdt je
+niet ingelogd: na twee uur zonder zelf iets te doen, log je ook dan
+uit.</p>
 <hr />
 <h1 id="het-seizoen-in-stappen">Het seizoen in stappen</h1>
 <p><strong>Waar:</strong> Vandaag (de seizoensbalk bovenaan), en per
@@ -344,9 +363,10 @@ aannemen.</p>
 <p><strong>In het kort:</strong> een seizoen loopt in vaste momenten,
 van voorbereiden tot opruimen. Per moment staat hieronder wat jij moet
 doen, wat het systeem zelf doet en op welk scherm. De seizoensbalk op
-Vandaag toont zes fases (Werving, Formulieren, Selectiedag, Bellijst,
-Trainingsweekend, Aanname) en rekent zelf uit waar je bent aan de hand
-van de datums en of het seizoen open is.</p>
+Vandaag toont zeven fases (Werving, Formulieren, Selectiedag, Bellijst,
+Trainingsweekend, Aanname, Afronden) en rekent zelf uit waar je bent aan
+de hand van de datums en van wie in welke fase staat. Of de aanmelding
+open of dicht is, telt daarbij niet mee.</p>
 </blockquote>
 <p>Hoe Vandaag de seizoensfase bepaalt:</p>
 <table>
@@ -359,11 +379,13 @@ van de datums en of het seizoen open is.</p>
 <tbody>
 <tr>
 <td>Werving</td>
-<td>Het seizoen staat open en de selectiedag is nog niet geweest</td>
+<td>Vóór de selectiedag, zolang er aanmeldingen op een uitnodiging
+wachten of nog niemand is uitgenodigd</td>
 </tr>
 <tr>
 <td>Formulieren</td>
-<td>Het seizoen is gesloten en de selectiedag moet nog komen</td>
+<td>Vóór de selectiedag, als niemand meer op een uitnodiging wacht en er
+wel iemand is uitgenodigd</td>
 </tr>
 <tr>
 <td>Selectiedag</td>
@@ -380,10 +402,21 @@ dag</td>
 </tr>
 <tr>
 <td>Aanname</td>
-<td>Na de laatste dag van het trainingsweekend</td>
+<td>Na het trainingsweekend, zolang er nog besluiten openstaan
+(gesprekken, twijfel, niet gekomen)</td>
+</tr>
+<tr>
+<td>Afronden</td>
+<td>Na het trainingsweekend, als alle besluiten zijn genomen</td>
 </tr>
 </tbody>
 </table>
+<p>Staat de module Selectiedag of Trainingsweekend uit, dan vallen de
+fases daarvan weg uit de balk. Klopt de afgeleide fase niet (de
+selectiedag is verschoven, de belronde loopt uit), dan kun je hem
+vastzetten onder Instellingen › Seizoensfase &amp; advies ›
+<strong>Seizoensfase</strong>. Zet hem daarna terug op
+<strong>Automatisch</strong>.</p>
 <h2 id="moment-1-voorbereiden-vóór-de-opening">Moment 1: voorbereiden,
 vóór de opening</h2>
 <table>
@@ -457,7 +490,11 @@ gegevens, contact.</td>
 <td>Aanmeldingen bekijken en uitnodigen (zie moment 3).</td>
 <td>Elke aanmelder krijgt de mail &quot;Bevestiging van aanmelding&quot;; het
 bestuur krijgt &quot;Nieuwe aanmelding&quot;. Vandaag toont &quot;... aanmeldingen
-uitnodigen&quot;.</td>
+uitnodigen&quot;. Meldt iemand zich dit seizoen met hetzelfde e-mailadres nog
+eens aan, dan komt er geen tweede aanmelding: het formulier zegt gewoon
+&quot;Je aanmelding is binnen&quot; (het verraadt niet dat het adres bekend is) en
+de bevestiging gaat nog een keer, hooguit één keer per uur. In het
+logboek: &quot;Opnieuw aangemeld (bevestiging nog eens gestuurd)&quot;.</td>
 <td><a href="#vandaag">Vandaag</a>, <a href="#sollicitanten">Sollicitanten</a></td>
 </tr>
 <tr>
@@ -500,22 +537,25 @@ WhatsApp/sms.</td>
 <td>De aanmelding sluiten zodra je genoeg sollicitanten hebt:
 <strong>Aanmelding sluiten</strong>.</td>
 <td>Het aanmeldformulier gaat uit. Zodra niemand meer op een uitnodiging
-wacht, springt Vandaag naar &quot;Formulieren&quot; en telt wie het
-kennismakingsformulier nog niet inleverde; daarna wijst het naar de
-groepsindeling.</td>
+wacht, springt Vandaag naar &quot;Aanmelden&quot; en telt wie nog niet liet weten
+of ze komen; daarna wijst het naar de groepsindeling.</td>
 <td><a href="#seizoen-opzetten">Seizoen</a></td>
 </tr>
 <tr>
 <td></td>
-<td>Wie het kennismakingsformulier inlevert, gaat vanzelf naar Aangemeld
-selectiedag en krijgt een bevestiging.</td>
+<td>Wie in het portaal &quot;Ik kom&quot; kiest (of voor wie jij dat invult bij
+Voorbereiden), gaat vanzelf naar Aangemeld selectiedag en krijgt een
+bevestiging. Kiest iemand later &quot;Ik kan niet&quot;, dan gaat de fase stil
+terug naar Uitgenodigd en beslis jij op Vandaag. Het
+kennismakingsformulier is een losse taak: het staat open tot het is
+ingeleverd, maar verandert de fase niet.</td>
 <td></td>
 </tr>
 <tr>
 <td></td>
 <td>Herinnering &quot;Nog niet aangemeld voor de selectiedag&quot;: alleen als de
 selectiedag binnen 14 dagen is, 3 dagen na de uitnodiging, daarna elke 4
-dagen, maximaal 3 keer.</td>
+dagen, maximaal 3 keer. Niet aan wie al &quot;Ik kan niet&quot; doorgaf.</td>
 <td></td>
 </tr>
 <tr>
@@ -935,24 +975,38 @@ en daarvoor geldt een meldtermijn van 72 uur.</li>
 <h1 id="vandaag">Vandaag</h1>
 <p><strong>Waar:</strong> Vandaag, bovenaan in de zijbalk (het
 startscherm na het inloggen).<br />
-<strong>Wie:</strong> iedereen. Het blok &quot;Waar staat iedereen&quot; alleen
-met leesrecht op Sollicitanten.</p>
+<strong>Wie:</strong> iedereen. Je ziet alleen wat bij jouw rol past:
+blokken met namen vragen leesrecht op Sollicitanten, en elke regel en
+knop alleen als je dat scherm ook mag openen.</p>
 <blockquote>
 <p><strong>In het kort:</strong> Vandaag opent op een vraag: wat moet er
-nu gebeuren? Bovenaan zie je waar het seizoen staat, daaronder de ene
-taak die telt met een knop ernaartoe, en pas dan de cijfers en de
-systeemstatus. Kom hier elke keer dat je inlogt eerst.</p>
+nu gebeuren? Bovenaan zie je waar het seizoen staat en de kengetallen.
+Links staat wat je moet doen: de ene taak die telt, daaronder
+<strong>Wacht ook op jou</strong>. Rechts staat wat je moet weten:
+<strong>Sinds je vorige bezoek</strong>, de <strong>Agenda</strong> en
+de systeemstatus. Kom hier elke keer dat je inlogt eerst.</p>
 </blockquote>
 <h2 id="de-seizoensbalk">De seizoensbalk</h2>
-<p>Zes fases naast elkaar: Werving, Formulieren, Selectiedag, Bellijst,
-Trainingsweekend, Aanname. Wat geweest is, is groen; waar het seizoen nu
-staat, is oranje; wat nog komt, is grijs. Hoe de fase wordt bepaald,
-staat in <a href="#het-seizoen-in-stappen">Het seizoen in stappen</a>.
-Is er nog geen seizoen, dan staat hier &quot;Er is nog geen seizoen&quot; met de
-knop <strong>Seizoen aanmaken</strong>.</p>
+<p>Zeven fases naast elkaar: Werving, Formulieren, Selectiedag,
+Bellijst, Trainingsweekend, Aanname, Afronden. Staat de module
+Selectiedag of Trainingsweekend uit, dan vallen die fases weg. Wat
+geweest is, is groen; waar het seizoen nu staat, is oranje; wat nog
+komt, is grijs. Hoe de fase wordt bepaald, staat in <a href="#het-seizoen-in-stappen">Het seizoen in stappen</a>. Is er nog
+geen seizoen, dan staat hier &quot;Er is nog geen seizoen&quot; met de knop
+<strong>Seizoen aanmaken</strong> (alleen als je een seizoen mag
+aanmaken).</p>
+<h2 id="kengetallen">Kengetallen</h2>
+<p>Zes tegels met tellingen van dit seizoen, voor iedereen zichtbaar:
+<strong>Aanmeldingen</strong> (met het aantal van vorig seizoen),
+<strong>Laatste 30 dagen</strong> (met de 30 dagen daarvoor), <strong>In
+de procedure</strong>, <strong>Aangenomen</strong>, <strong>Terugkerende
+strandwachten</strong> (met een Authentik-account) en
+<strong>Terugkerende sollicitanten</strong> (eerder gesolliciteerd). Met
+leesrecht op Sollicitanten is elke tegel een link naar de lijst met dat
+filter.</p>
 <h2 id="de-taak-van-nu">De taak van nu</h2>
-<p>Een groot blok met &quot;Te doen&quot; of &quot;Niets te doen&quot;. Welke taak er staat,
-hangt af van de seizoensfase:</p>
+<p>Een groot blok met &quot;Te doen&quot;, &quot;Volgende stap&quot; of &quot;Niets te doen&quot;.
+Welke taak er staat, hangt af van de seizoensfase:</p>
 <table>
 <thead>
 <tr>
@@ -970,8 +1024,10 @@ hangt af van de seizoensfase:</p>
 <tr>
 <td>Formulieren</td>
 <td>&quot;... wachten nog op hun formulier&quot; (fase Uitgenodigd selectiedag),
-met hoe de automatische herinnering nu is ingesteld</td>
-<td><strong>Bekijk wie</strong></td>
+met hoe de automatische herinnering nu is ingesteld. Is alles binnen:
+&quot;Alle formulieren zijn binnen&quot;</td>
+<td><strong>Bekijk wie</strong>, daarna <strong>Naar de
+groepsindeling</strong></td>
 </tr>
 <tr>
 <td>Selectiedag</td>
@@ -982,9 +1038,12 @@ met hoe de automatische herinnering nu is ingesteld</td>
 <td>Bellijst</td>
 <td>&quot;... sollicitanten zonder besluit&quot; zolang er nog niemand op de
 bellijst staat, daarna &quot;De bellijst afwerken&quot; met hoeveel er nog niet
-gebeld, gebeld maar niet doorgevoerd of op twijfel staan</td>
-<td><strong>Naar de nabespreking</strong> of <strong>Bellijst
-openen</strong></td>
+gebeld, gebeld maar niet doorgevoerd, zonder besluit of op twijfel
+staan. Is de lijst leeg: &quot;De bellijst is leeg&quot; of &quot;Alleen
+twijfelgevallen over&quot;</td>
+<td><strong>Naar de nabespreking</strong>, <strong>Bellijst
+openen</strong>, daarna <strong>Naar Trainingsweekend ›
+Voorbereiden</strong></td>
 </tr>
 <tr>
 <td>Trainingsweekend</td>
@@ -994,48 +1053,125 @@ afgevinkt</td>
 </tr>
 <tr>
 <td>Aanname</td>
-<td>&quot;... wachten op een besluit&quot;, daarna &quot;... besluiten nog doorvoeren&quot;
-en &quot;... op twijfel&quot; (uit het trainingsweekend)</td>
-<td><strong>Naar het besluit</strong></td>
+<td>&quot;... wachten op een gesprek&quot;, daarna &quot;... besluiten niet
+doorgevoerd&quot; (als doorvoeren mislukte), &quot;... op twijfel&quot; en &quot;... niet
+gekomen, besluit nodig&quot;</td>
+<td><strong>Naar de gesprekken</strong></td>
+</tr>
+<tr>
+<td>Afronden</td>
+<td>&quot;Het seizoen afronden&quot; met een lijst stappen met vinkjes: iedereen
+die is aangenomen heeft een vastgestelde afspraak (loonplanning),
+aanmelding sluiten, automatisch opschonen aanzetten, volgend seizoen
+aanmaken of de aanmelding daarvan openen. Is alles af: &quot;Het seizoen is
+afgerond&quot;</td>
+<td>De knop van de eerste open stap die je mag doen</td>
 </tr>
 </tbody>
 </table>
 <p>Naast de taak staan blokjes en &quot;x gedaan · y open&quot;. Is er niets te
-doen, dan zegt het blok dat ook, bijvoorbeeld &quot;De bellijst is leeg&quot; of
-&quot;De lichting is rond&quot;. &quot;De lichting is rond&quot; verschijnt pas als op het
-trainingsweekend iedereen een besluit heeft en alles is doorgevoerd. Het
-getal bij Vandaag in het menu is het aantal open stappen van deze taak.
-Een knop staat er alleen als je dat scherm ook mag openen.</p>
-<h2 id="waar-staat-iedereen">Waar staat iedereen</h2>
-<p>Een staaf per fase met het aantal sollicitanten in dit seizoen. Klik
-op een staaf om de sollicitantenlijst met die fase te openen. Zolang er
-niemand is, staat er &quot;Nog niemand aangemeld&quot;.</p>
-<h2 id="loopt-ondertussen">Loopt ondertussen</h2>
-<p>Dingen die je moet weten maar nu niet hoeft te doen, elk met een
-link:</p>
+doen, dan zegt het blok dat ook. Is een stap klaar maar is er een
+vervolgstap, dan staat er <strong>Volgende stap</strong> met een knop
+ernaartoe. Het getal bij Vandaag in het menu is het aantal open stappen
+van deze taak. Een knop staat er alleen als je dat scherm ook mag
+openen; een stap in de lijst van Afronden waarvoor je het recht mist,
+staat er wel, maar zonder link.</p>
+<p><strong>Taak per rol.</strong> Kan jouw rol de taak van het seizoen
+niet doen (er zou geen knop bij staan), dan krijg je een taak die bij
+jou past. De penningmeester ziet dan &quot;... loondossiers te verwerken&quot; met
+<strong>Naar de loondossiers</strong>, of &quot;Geen loondossiers te
+verwerken&quot;. Voor andere rollen staat er &quot;Er ligt nu niets voor jou&quot; met
+waar het bestuur mee bezig is.</p>
+<h2 id="wacht-ook-op-jou">Wacht ook op jou</h2>
+<p>De werkbak: al het andere werk dat op een mens wacht, uit alle
+onderdelen, met per regel een aantal, een zin en een knop naar de plek
+waar je het afhandelt. Je ziet alleen regels waarvoor je het recht hebt,
+en niets wat al de taak van nu is. Bijvoorbeeld:</p>
 <ul>
-<li>&quot;... ondertekeningen staan langer dan 3 dagen open&quot; (naar <a href="#ondertekeningen">Ondertekeningen</a>).</li>
-<li>&quot;... beschikbaarheden zijn nog voorlopig&quot; (naar
-Beschikbaarheid).</li>
+<li>&quot;... aanmeldingen wachten op een uitnodiging&quot;
+(<strong>Uitnodigen</strong>);</li>
+<li>&quot;... verzoeken om minder dagen te beoordelen&quot;
+(<strong>Beoordelen</strong>);</li>
+<li>&quot;... gebeld, maar nog niet doorgevoerd&quot;
+(<strong>Doorvoeren</strong>), &quot;... sollicitanten van de selectiedag
+zonder besluit&quot; (<strong>Nabespreken</strong>) en, tot en met de
+selectiedag, &quot;... nog niet ingedeeld in een groep&quot;
+(<strong>Indelen</strong>);</li>
+<li>&quot;... aangenomen zonder vastgestelde afspraak&quot; (<strong>Naar de
+loonplanning</strong>);</li>
+<li>twijfelgevallen en &quot;niet gekomen&quot; na het trainingsweekend
+(<strong>Naar de gesprekken</strong>);</li>
+<li>&quot;... ondertekeningen staan langer dan 3 dagen open&quot; en &quot;...
+beschikbaarheden zijn nog voorlopig&quot; (<strong>Bekijken</strong>);</li>
+<li>&quot;... loondossiers te verwerken&quot; (<strong>Verwerken</strong>);</li>
+<li>&quot;... mensen wachten op een seintje dat de aanmelding open is&quot;
+(<strong>Seintje sturen</strong>, alleen als de aanmelding open
+staat);</li>
+<li>&quot;... berichten kwamen deze week niet aan&quot;
+(<strong>Bekijken</strong>, naar Berichten › Verzonden).</li>
 </ul>
-<p>Het blok verschijnt alleen als er iets loopt.</p>
+<p>Ligt er niets, dan staat er &quot;Verder ligt er niets op je te
+wachten&quot;.</p>
+<p>Daaronder, alleen als ze er zijn, twee blokken met namen:</p>
+<ul>
+<li><strong>Kan niet komen — wacht op jouw besluit</strong>: wie doorgaf
+niet te kunnen komen op de selectiedag of het trainingsweekend, met
+<strong>Afmelden</strong> (fase Afgehaakt, zonder bericht) of
+<strong>Uitzondering, blijft in proces</strong>. Zonder het recht om dat
+evenement voor te bereiden heet het blok &quot;Kan niet komen — het bestuur
+beslist&quot; en staan er geen knoppen.</li>
+<li><strong>Wil intrekken — neem eerst contact op</strong>: wie in het
+portaal vroeg de sollicitatie in te trekken, met
+<strong>Doorvoeren</strong> (fase Afgehaakt, zonder bericht) of
+<strong>Niet doorvoeren, loopt door</strong>. Zonder bewerkrecht op
+Sollicitanten is het informatie: &quot;het bestuur neemt contact op&quot;.</li>
+</ul>
+<h2 id="waar-staat-iedereen">Waar staat iedereen</h2>
+<p>Een staaf per fase met het aantal sollicitanten in dit seizoen
+(alleen met leesrecht op Sollicitanten). Klik op een staaf om de
+sollicitantenlijst met die fase te openen. Zolang er niemand is, staat
+er &quot;Nog niemand aangemeld&quot;.</p>
+<h2 id="sinds-je-vorige-bezoek">Sinds je vorige bezoek</h2>
+<p>Rechts bovenaan: wat er nieuw is sinds je hier het laatst keek, met
+dat tijdstip in de kop (&quot;gisteren 21:14&quot;). Bijvoorbeeld nieuwe
+aanmeldingen, ingeleverde kennismakingsformulieren, beschikbaarheden die
+definitief zijn gemaakt, verzoeken om minder dagen, binnengekomen
+ondertekeningen, vragen uit het portaal (die staan in de mailbox),
+afmeldingen (&quot;kan niet komen&quot;) en verzoeken om in te trekken. Je ziet
+alleen wat je mag lezen; is er niets, dan staat er &quot;Niets nieuws&quot;.</p>
+<p>Het ijkpunt schuift pas door als je een uur weg bent geweest: wie
+binnen het uur terugkomt of ververst, ziet nog hetzelfde. Ben je hier
+nog nooit geweest, dan telt de afgelopen week.</p>
+<h2 id="agenda">Agenda</h2>
+<p>De datums van de komende 60 dagen met &quot;vandaag&quot;, &quot;morgen&quot; of &quot;over
+... dagen&quot;: de selectiedag, het trainingsweekend (met &quot;nu bezig&quot; zolang
+het loopt), begin en einde van de werkperiode, en (met leesrecht op
+Berichten) de eigen geplande berichten die aan de selectiedag of het
+weekend hangen. Staat er niets, dan staat er &quot;Geen datums in de komende
+weken&quot;, met een link naar de datums van het seizoen als je die mag
+bewerken.</p>
 <h2 id="de-systeemstatus">De systeemstatus</h2>
-<p>Een balk met twee standen:</p>
+<p>Alleen voor wie Systeem of het logboek mag lezen of Instellingen mag
+bewerken. Een balk met twee standen:</p>
 <ul>
 <li><strong>Systeem in orde</strong> (groen): het aantal berichten in de
-wachtrij, mailfouten in 24 uur, ondertekeningen die langer dan 3 dagen
-openstaan en het tijdstip van de laatste taakronde.</li>
+wachtrij, mailfouten in 24 uur en het tijdstip van de laatste
+taakronde.</li>
 <li><strong>Aandacht nodig</strong> (rood, met een waarschuwingsteken):
 er zijn mailfouten in de laatste 24 uur, er staan meer dan 20 berichten
-in de wachtrij, de taakronde heeft meer dan twee uur niet gedraaid
-(&quot;taakronde vastgelopen&quot; of &quot;taakronde nooit gedraaid&quot;), of automatisch
-opschonen staat uit (&quot;Automatisch opschonen staat uit — er wordt niets
+in de wachtrij, een groep van de taakronde loopt achter (&quot;taakronde
+vastgelopen&quot; of &quot;taakronde nooit gedraaid&quot;), of automatisch opschonen
+staat uit (&quot;Automatisch opschonen staat uit — er wordt niets
 verwijderd&quot;). Met <strong>Bekijk het logboek</strong> ga je naar de
 fouten; die knop zie je alleen als je het logboek mag lezen (standaard
 alleen een beheerder). Staat opschonen uit en mag je Instellingen
 bewerken, dan staat er ook de knop <strong>Opschonen aanzetten</strong>.
 Zie <a href="#systeem-en-foutenlog">Systeem en foutenlog</a> en <a href="#bewaartermijnen">Bewaartermijnen</a>.</li>
 </ul>
+<p>Staat de testmodus aan, dan staat dat ook in de balk. Wie Systeem mag
+bewerken, ziet eronder de lijst <strong>Nog in te stellen</strong>: wat
+bij de eerste keer instellen nog openstaat, elk met een knop naar het
+juiste tabblad.</p>
 <hr />
 <h1 id="seizoen-opzetten">Seizoen opzetten</h1>
 <p><strong>Waar:</strong> Systeem › Seizoen (titel van het scherm:
@@ -1202,21 +1338,36 @@ bronnen samen.</li>
 bekeken tot verstuurd, per stap. Bij de stap waar binnen het formulier
 relatief de meesten afhaken staat &quot;hier haken de meesten af&quot;.</li>
 <li><strong>Per bron</strong>: elke landingspagina, het formulier op de
-website (&quot;formulier op de website&quot;, met de naam van de site) en
+website (&quot;formulier op de website&quot;, met de naam van de site),
+<strong>Aanmeldpagina</strong> (het eigen formulier
+<code>/aanmelden.php</code> zonder <code>?bron=</code>) en
 <strong>Zonder bron</strong> (direct in het portaal, handmatig of van
 vóór de meting). Per bron: bezoeken, begonnen, aanmeldingen, aangenomen,
 per 100 bezoeken en de <strong>grootste afhaak</strong> (&quot;Bij stap 2
-(Jij)&quot;). Een campagne staat eronder, ingesprongen.</li>
+(Jij)&quot;). Een campagne staat eronder, ingesprongen: één regel per
+campagne en per combinatie van UTM-velden, met klein eronder
+bijvoorbeeld &quot;bron instagram · medium story · variant video-1&quot;.</li>
 </ul>
 <p>Een <strong>campagne</strong> maak je door een link te delen met
 <code>?bron=</code> erachter, bijvoorbeeld
 <code>https://paal13.com/aanmelden/?bron=instagram-mei</code> of een
 landingspagina met <code>?bron=flyer-strand</code>.
 <code>utm_campaign</code> en <code>utm_source</code> werken ook. Er is
-geen cookie nodig: de campagne gaat mee met die ene aanmelding. Het
-bezoek aan het formulier op de website telt pas vanaf plugin 2.142;
+geen cookie nodig: de campagne gaat mee met die ene aanmelding en blijft
+in de bron-code staan als <code>&lt;bron&gt;/&lt;campagne&gt;</code>.
+Het bezoek aan het formulier op de website telt pas vanaf plugin 2.142;
 installeer die versie op paal13.com
 (<code>wordpress-plugin\bouw-zip.ps1</code> maakt de ZIP).</p>
+<p>Sinds versie 2.145 worden ook de <strong>UTM-velden</strong> van een
+advertentielink los bewaard: <code>utm_source</code> (bron),
+<code>utm_medium</code> (medium), <code>utm_campaign</code> (campagne)
+en <code>utm_content</code> (variant), bij elk bezoek en elke stap in
+het formulier en bij de aanmelding zelf. Dat werkt op landingspagina&#39;s,
+het formulier op de website (vanaf plugin 2.145) en
+<code>/aanmelden.php</code>. Er wordt geen cookie en geen IP-adres bij
+bewaard; de sollicitant ziet de herkomst terug in de download van de
+eigen gegevens. Meer in de Handleiding landingspagina&#39;s, onder
+&quot;UTM-velden&quot;.</p>
 <p>Bezoeken tellen één keer per half uur per bezoeker. Unieke bezoekers
 over een heel seizoen zijn niet te tellen: het dagpseudoniem wordt na 30
 dagen gewist (zie het verwerkingsregister).</p>
@@ -1502,13 +1653,20 @@ uitnodigen</strong> of <strong>Ja, aannemen</strong> gebeurt het.</p>
 kennismakingsformulieren en als er een formulier is.</td>
 </tr>
 <tr>
-<td>Beschikbaarheid</td>
-<td>De weken die de sollicitant kan werken.</td>
+<td>Beschikbaarheid &amp; inzet</td>
+<td>Per week wat de sollicitant opgaf en, met leesrecht op de
+loonplanning, de vastgestelde afspraak en de planning. Een oude link met
+<code>?tab=inzet</code> komt hier ook uit.</td>
 </tr>
 <tr>
 <td>Selectiedag</td>
 <td>Cijfers en observaties van de selectiedag, met het aantal
-observaties.</td>
+observaties. Alleen met leesrecht op Selectiedag.</td>
+</tr>
+<tr>
+<td>Trainingsweekend</td>
+<td>Bevestiging, inchecken, observaties en het gesprek. Alleen met
+leesrecht op Trainingsweekend.</td>
 </tr>
 <tr>
 <td>Ondertekeningen</td>
@@ -1614,33 +1772,47 @@ advies is een hulpmiddel; het bestuur beslist. Heeft de sollicitant
 bezwaar gemaakt, dan staat daar dat er geen analyse is en er ook geen
 komt; zie <a href="#bezwaar-tegen-de-ai-analyse">Bezwaar tegen de
 AI-analyse</a>.</p>
-<h2 id="tabblad-beschikbaarheid">Tabblad Beschikbaarheid</h2>
-<p>Een tegel per week (W23, W24 ...) met het aantal dagen, en het label
-<strong>Voorlopig</strong> of <strong>Definitief</strong>. Groen is de
-hele week, oranje deels, blauw een correctie van het bestuur, grijs niet
-beschikbaar. Klik op een week om die te corrigeren; <strong>Volledig
-bewerken</strong> opent alle weken. Rechts staat wat de sollicitant bij
-de aanmelding als voorkeur opgaf.</p>
-<p>In de kaart <strong>Norm</strong> staat hoeveel dagen per week deze
-persoon werkt: &quot;5 dagen per week (standaard)&quot; of een afwijkende norm.
-Met bewerkrecht op Beschikbaarheid kies je bij <strong>Norm (dagen per
-week)</strong> een ander aantal (1 tot en met 6), vul je een
-<strong>Reden</strong> in en klik je op <strong>Norm opslaan</strong>.
-Zonder dat recht zijn de weektegels en de norm alleen te bekijken. Zie
-<a href="#beschikbaarheid-dekking-en-loonplanning">Beschikbaarheid,
-dekking en loonplanning</a>.</p>
+<h2 id="tabblad-beschikbaarheid--inzet">Tabblad Beschikbaarheid &amp;
+inzet</h2>
+<p>De kaart <strong>Per week</strong> zet per week (W23, W24 ...) drie
+rijen onder elkaar:</p>
+<ul>
+<li><strong>Opgave</strong>: wat de sollicitant opgaf, met het label
+<strong>Opgave voorlopig</strong> of <strong>Opgave definitief</strong>.
+Groen is de hele week, oranje deels, blauw een correctie van het
+bestuur. Met bewerkrecht op Beschikbaarheid klik je een week aan om die
+te corrigeren.</li>
+<li><strong>Afspraak</strong>: de vastgestelde afspraak, zodra de
+loonplanning definitief is.</li>
+<li><strong>Planning</strong>: hoe de persoon in het actieve scenario
+staat. Een week waarin meer is gepland dan opgegeven, kleurt rood. De
+andere scenario&#39;s staan ingeklapt onder <strong>Andere
+scenario&#39;s</strong>.</li>
+</ul>
+<p>Afspraak en planning zie je alleen met leesrecht op de loonplanning;
+daar staan loonkosten achter. In de kop staat of de afspraak is
+vastgesteld (met datum en functie), welk scenario de planning is en of
+de persoon vaststaat na het gesprek op het trainingsweekend. Via
+<strong>Naar de loonplanning</strong> open je de loonplanning op deze
+persoon. Onder het raster pas je met <strong>Inzet afspreken of
+aanpassen</strong> de inzet in het actieve scenario aan (alleen in het
+lopende seizoen).</p>
+<p>Daaronder staat wat de sollicitant bij de aanmelding als voorkeur
+opgaf (<strong>Uit het formulier</strong>). Rechts staat de kaart
+<strong>Norm</strong>: hoeveel dagen per week deze persoon werkt, &quot;5
+dagen per week (standaard)&quot; of een afwijkende norm. Met bewerkrecht op
+Beschikbaarheid kies je bij <strong>Norm (dagen per week)</strong> een
+ander aantal (1 tot en met 6), vul je een <strong>Reden</strong> in en
+klik je op <strong>Norm opslaan</strong>. In de kaart <strong>Opgave
+aanpassen</strong> opent <strong>Per dag of per periode
+bewerken</strong> alle weken. Zonder dat recht is alles alleen te
+bekijken. Zie <a href="#beschikbaarheid-dekking-en-loonplanning">Beschikbaarheid, dekking
+en loonplanning</a>.</p>
 <h2 id="tabblad-selectiedag">Tabblad Selectiedag</h2>
 <p>Per test de cijfers per criterium met het gemiddelde; bij meerdere
 beoordelaars staat eronder wie wat gaf. Daaronder de observaties met
 beoordelaar, datum en soort. Rechts het totaalgemiddelde en het besluit
 van de nabespreking, met wie het nam en wanneer er is gebeld.</p>
-<h2 id="tabblad-inzet">Tabblad Inzet</h2>
-<p>Alleen met leesrecht op de loonplanning. Per week: wat de sollicitant
-opgaf, de vastgestelde <strong>afspraak</strong> (groen, zodra de
-loonplanning definitief is) en hoe de persoon in elk scenario staat (de
-ster is het actieve). Bovenaan of de persoon vaststaat na het gesprek op
-het trainingsweekend. Via <strong>Naar de loonplanning</strong> pas je
-het aan.</p>
 <h2 id="tabblad-trainingsweekend">Tabblad Trainingsweekend</h2>
 <p>Bevestiging en inchecken, de observaties van het weekend, en het
 gesprek: besluit, interne notitie en het bericht aan de sollicitant.</p>
@@ -1764,9 +1936,13 @@ selectiedag&quot; (standaard e-mail én WhatsApp/sms).</td>
 </tr>
 <tr>
 <td><strong>Aangemeld selectiedag</strong></td>
-<td>Niets; de sollicitant levert het kennismakingsformulier in.</td>
-<td>Stuurt &quot;Bevestiging aanmelding selectiedag&quot; (e-mail) en aan het
-bestuur &quot;Formulier ingeleverd&quot; (standaard uit).</td>
+<td>Niets; de sollicitant kiest &quot;Ik kom&quot; in het portaal. Jij kunt het
+ook zetten bij Voorbereiden, of met een uitzondering na een
+afmelding.</td>
+<td>Stuurt &quot;Bevestiging aanmelding selectiedag&quot; (e-mail). &quot;Ik kan niet&quot;
+zet de fase stil terug naar Uitgenodigd. Het inleveren van het
+kennismakingsformulier zet geen fase; daarvoor gaat aan het bestuur
+&quot;Formulier ingeleverd&quot; (standaard uit).</td>
 </tr>
 <tr>
 <td><strong>Selectiedag geweest</strong></td>
@@ -2005,8 +2181,9 @@ alle observaties verwijderen.</li>
 je Sollicitanten mag lezen.</li>
 </ol>
 <h2 id="stap-4-nabespreken">Stap 4: nabespreken</h2>
-<p>Alleen bestuur en beheerder. De scores zijn een advies; jullie
-gesprek bepaalt het besluit.</p>
+<p>Vraagt de taak <strong>Nabespreken en besluiten</strong> (standaard
+bestuur en beheerder). De scores zijn een advies; jullie gesprek bepaalt
+het besluit.</p>
 <p>Bovenaan staat hoeveel sollicitanten nog geen besluit hebben, het
 advies op cijfer (door, twijfel, niet) en een snelkoppeling <strong>N
 randgevallen om eerst te bespreken</strong>. Een randgeval is iemand met
@@ -2051,12 +2228,18 @@ Beoordelingscriteria)</td>
 </tbody>
 </table>
 <p>Filter op <strong>Signalen</strong> (of alleen randgevallen),
-<strong>Besluit</strong>, en onder <strong>Meer filters</strong> op
-advies, groep en aanwezig. Sorteer op naam, meeste signalen, laagste of
-hoogste cijfer, meeste aandacht, meest oneens of dichtst bij de drempel.
-Per kaart staan de naam, het advies en het gemiddelde; de observaties,
-de cijfers per onderdeel (ook per beoordelaar) en de feedback van
-strandwachten klap je open, of allemaal tegelijk met <strong>Alles
+<strong>Observaties</strong>, <strong>Besluit</strong>, en onder
+<strong>Meer filters</strong> op advies, groep en aanwezig. Het filter
+Observaties kijkt naar wat er is opgeschreven, los van het cijfer:
+<strong>Veel aandachtspunten</strong> (twee of meer, en meer dan
+positief), <strong>Vooral positief</strong> (twee of meer positief, geen
+aandachtspunten), <strong>Positief én aandacht</strong> en
+<strong>Weinig of geen observaties</strong>. Sorteer op naam, meeste
+signalen, laagste of hoogste cijfer, meeste aandachtspunten, meeste
+positieve observaties, meest oneens of dichtst bij de drempel. Per kaart
+staan de naam, het advies en het gemiddelde; de observaties, de cijfers
+per onderdeel (ook per beoordelaar) en de feedback van strandwachten
+klap je open, of allemaal tegelijk met <strong>Alles
 uitklappen</strong>.</p>
 <ol type="1">
 <li>Klik per sollicitant op <strong>Door</strong>,
@@ -2067,9 +2250,14 @@ een korte reden in het veld ernaast. Dit wordt direct opgeslagen
 je nog een keer op het besluit dat al gekozen is, dan wordt het gewist,
 samen met de reden (&quot;besluit gewist&quot;).</li>
 <li>Heeft iemand een besluit Door of Niet, dan staat onderaan
-<strong>Naar de bellijst</strong>.</li>
+<strong>Naar de bellijst</strong> (alleen als je ook mag bellen, zie
+hieronder).</li>
 </ol>
 <h2 id="stap-5-de-bellijst">Stap 5: de bellijst</h2>
+<p>Vraagt de eigen taak <strong>Bellen en doorvoeren</strong> (standaard
+bestuur en beheerder, nooit een begeleider): de bellijst toont
+telefoonnummers en zet de fase om. Wie alleen <strong>Nabespreken en
+besluiten</strong> heeft, ziet de stap Bellijst niet.</p>
 <p>Links wie er gebeld moet worden (iedereen met Door, Twijfel of Niet
 die nog niet is doorgevoerd), met telefoonnummer, score, besluit en of
 er al gebeld is. Bovenaan &quot;x van y gebeld&quot;. Rechts de sollicitant die
@@ -2107,10 +2295,10 @@ of niet. Is iedereen doorgevoerd, dan staat er &quot;De bellijst is
 leeg&quot;.</p>
 <hr />
 <h1 id="trainingsweekend">Trainingsweekend</h1>
-<p><strong>Waar:</strong> Selectie › Trainingsweekend, met zes stappen:
-Voorbereiden, Groepen, Inchecken, Beoordelen, Evaluatie en
-Gesprekken.<br />
-<strong>Wie:</strong> bestuur en beheerder alle zes; begeleiders zien
+<p><strong>Waar:</strong> Selectie › Trainingsweekend, met zeven
+stappen: Voorbereiden, Groepen, Inchecken, Beoordelen, Feedback,
+Evaluatie en Gesprekken.<br />
+<strong>Wie:</strong> bestuur en beheerder alle zeven; begeleiders zien
 alleen Inchecken en Beoordelen.</p>
 <blockquote>
 <p><strong>In het kort:</strong> vooraf zie je wie er komt. Op het
@@ -2162,41 +2350,87 @@ een naam aan (met foto; op een telefoon staat de lijst ingeklapt achter
 <strong>Groep en alle deelnemers</strong>). Kies onder &quot;Wat valt op?&quot;
 <strong>Positief</strong>, <strong>Neutraal</strong> of
 <strong>Aandacht</strong>, typ wat je zag en tik op <strong>Observatie
-opslaan</strong>; hij staat meteen in de lijst. Tik je met tekst in het
-veld op Volgende, dan wordt die eerst opgeslagen. De sollicitant ziet
+opslaan</strong>; hij staat meteen in de lijst. Op een telefoon werkt
+het als een chat: de invoer staat als balk onderin het scherm (soort
+kiezen, typen, op de ronde verzendknop tikken) en de nieuwste observatie
+staat onderaan de lijst, direct boven de balk. Enter geeft een nieuwe
+regel; versturen gaat met de knop. Tik je met tekst in het veld op
+Volgende, dan wordt die eerst opgeslagen. De sollicitant ziet
 observaties niet. Je eigen observaties kun je verwijderen; die van
 anderen blijven staan.</p>
-<p>Onderaan staat ingeklapt <strong>Selectiedag</strong>: het advies en
-gemiddelde, het besluit en de observaties van toen. Het is er als je het
-nodig hebt, maar het staat bewust niet vooraan.</p>
+<p>Onderaan staat ingeklapt <strong>Selectiedag</strong>, met in de kop
+al het gemiddelde per test (bijvoorbeeld &quot;Sporttest 3,5 · Zwemtest
+3,4&quot;). Uitgeklapt: de cijfers per onderdeel (nog een keer uit te
+klappen) en de observaties van toen. Een begeleider ziet geen advies en
+geen besluit. Het is er als je het nodig hebt, maar het staat bewust
+niet vooraan.</p>
+<h2 id="feedback-van-strandwachten">Feedback van strandwachten</h2>
+<p>Vertelt een strandwacht je iets over een sollicitant, dan leg je dat
+vast in de stap <strong>Feedback</strong> (alleen bestuur): per
+sollicitant een kaart met wat er al is gezegd en <strong>Feedback
+vastleggen</strong> (van wie, positief/neutraal/aandachtspunt, wat er
+gezegd is). Je hoeft er geen gesprek voor te openen. Terugkerende
+strandwachten staan ingeklapt onderaan. Hetzelfde kan in het dossier, op
+de tabbladen Selectiedag en Trainingsweekend, en in de nabespreking van
+de selectiedag. Beoordelaars zien deze feedback niet.</p>
 <p>Wie de kennismakingsformulieren niet mag lezen, ziet geen
 bijzonderheden, alleen dat er iets is om na te vragen; de knop
 <strong>Dossier</strong> en het telefoonnummer ziet alleen wie
 Sollicitanten mag lezen.</p>
 <h2 id="stap-4-gesprekken">Stap 4: gesprekken</h2>
-<p>Iedereen krijgt een gesprek met het bestuur. De lijst heeft drie
-groepen: Nu bezig, Nog te spreken en Gesproken. De volgorde kies je ter
-plekke. Zoek op naam, filter op gesprek of besluit, of sorteer op het
-selectiedag-cijfer.</p>
+<p>Iedereen krijgt een gesprek met het bestuur. De lijst heeft groepen:
+Nu bezig, Nog te spreken, Niet gekomen en Gesproken. Zoek op naam,
+filter op gesprek of besluit, of sorteer op naam of het
+selectiedag-cijfer in plaats van de gespreksvolgorde.</p>
+<p><strong>Gespreksvolgorde.</strong> Bij Nog te spreken staat bovenaan
+wie <strong>eerder weg moet</strong> (vroegste tijd eerst, met &quot;Moet
+weg: zondag 3 mei, 15:30&quot; erbij), daarna de rest op naam. De sollicitant
+geeft dat zelf door bij &quot;Ik kom&quot; in het portaal; je kunt het ook zetten
+of aanpassen met <strong>Moet eerder weg?</strong> onder de naam.
+Terugkerende strandwachten staan ingeklapt in een eigen blok, zodat ze
+de anderen niet voorgaan. De volgorde pas je aan met de pijltjes (of
+door een rij te slepen); met <strong>Naar de lijst</strong> zet je een
+strandwacht tussen de anderen, en <strong>Volgorde herstellen</strong>
+zet alles terug. Aanpassen kan alleen zonder zoekterm of filter, anders
+klopt &quot;omhoog&quot; niet met wat je ziet.</p>
 <ol type="1">
 <li>Klik bij wie er aan tafel zit op <strong>Gesprek starten</strong>.
 Het gesprek staat dan op jouw naam; een ander bestuurslid ziet &quot;bezig
 door ...&quot; en kan meelezen, maar niet tegelijk een besluit vastleggen. Na
 30 minuten vervalt dat vanzelf.</li>
-<li>Links staat alles bij elkaar: gegevens, de opgegeven
-beschikbaarheid, <strong>Inzet afspreken</strong> (de loonplanning als
-concept: functie, en per week plannen, aantal dagen en betaald ja/nee;
-elke wijziging wordt meteen opgeslagen, en wat iemand in de loonplanning
-verandert zie je hier binnen 15 seconden), wat er dit weekend is
-opgevallen, de selectiedag (cijfers per onderdeel, advies, besluit en
-opmerkingen), en wat er nog openstaat in het portaal.</li>
-<li>Rechts kies je <strong>Aannemen</strong>, <strong>Twijfel</strong>
-of <strong>Afwijzen</strong>. Bij <strong>Bericht aan de
-sollicitant</strong> schrijf je in je eigen woorden wat jullie besproken
-hebben. Dat komt in de mail als <code>{{gesprek_bericht}}</code>. Laat
-je het leeg, dan komt de standaardtekst erin (instelbaar bij
-Instellingen › Uitnodigen &amp; herinneren). De <strong>Interne
-notitie</strong> is alleen voor het bestuur.</li>
+<li>Het scherm volgt het gesprek:
+<ul>
+<li><strong>Bovenaan</strong> wie het is, met als labels wat je meteen
+moet weten: of iemand eerder weg moet, de opmerking bij &quot;ik kom&quot; en een
+bijzonderheid.</li>
+<li><strong>Gesprekspunten</strong>: wat je moet aankaarten, uit de
+opgave (vakantie, verzoek om minder dagen, losse vrije dagen, liever
+vrij), het weekend (aandachtspunten, eerste indruk), de feedback van
+strandwachten, de selectiedag en het portaal. Klik bij een punt op de
+naam van het tabblad om er direct naartoe te gaan.</li>
+<li><strong>Opgave en inzet</strong>: links in woorden wat de
+sollicitant opgaf (periodes, vakanties, losse dagen met reden, verzoeken
+met hun status, liever vrij, opmerking, formulier), daarnaast of eronder
+<strong>Inzet afspreken</strong>: de loonplanning als concept (functie,
+en per week plannen, aantal dagen en betaald ja/nee). Per week staat
+erbij wat er in die week speelt, zoals &quot;vakantie vanaf vr 24 jul&quot; of
+&quot;verzoek 3 d (open)&quot;. Elke wijziging wordt meteen opgeslagen; wat iemand
+in de loonplanning verandert, zie je hier binnen 15 seconden.</li>
+<li><strong>Hoe ging het</strong>: wat er dit weekend is opgevallen, de
+feedback van strandwachten (ook hier toe te voegen) en de selectiedag
+(cijfers per test en per onderdeel, advies, besluit, observaties).</li>
+<li><strong>Open in het portaal</strong>: wat de sollicitant nog moet
+doen.</li>
+</ul></li>
+<li>Rechts (op een telefoon onderaan) kies je <strong>Aannemen</strong>,
+<strong>Twijfel</strong> of <strong>Afwijzen</strong>; eronder staat
+meteen wat er dan gebeurt. Bij <strong>Bericht aan …</strong> schrijf je
+in je eigen woorden wat jullie besproken hebben. Dat komt in de mail als
+<code>{{gesprek_bericht}}</code>. Laat je het leeg, dan komt de
+standaardtekst erin (instelbaar bij Instellingen › Seizoensfase &amp;
+advies); met <strong>Standaardtekst invoegen om aan te passen</strong>
+zet je die tekst in het veld om hem persoonlijk te maken. De
+<strong>Interne notitie</strong> is alleen voor het bestuur.</li>
 <li>Klik op <strong>Besluit vastleggen</strong> en bevestig. Aannemen en
 afwijzen gaan <strong>meteen door</strong>: de fase verandert en het
 bericht gaat uit. Aangenomen heeft direct het kennismakingspakket (de
@@ -2225,7 +2459,8 @@ dossier of de bulkbalk.</p>
 <p><strong>Waar:</strong> Selectie › Ondertekeningen, en per persoon het
 tabblad Ondertekeningen in het dossier.<br />
 <strong>Wie:</strong> bestuur en beheerder. Het loonheffingsformulier en
-de inschrijving als lid openen alleen penningmeester en beheerder.</p>
+de inschrijving als lid opent alleen de penningmeester; de beheerder ook
+niet.</p>
 <blockquote>
 <p><strong>In het kort:</strong> hier zie je wie er nog moet tekenen en
 wat al binnen is. Het scherm opent op Nog open. Bij 18+ tekent de
@@ -2372,9 +2607,13 @@ beschikbaarheid nog niet definitief heeft gemaakt.</p>
 </blockquote>
 <h2 id="het-beschikbaarheidsraster">Het beschikbaarheidsraster</h2>
 <p>In het raster staat iedereen uit het huidige seizoen die een
-formulier heeft ingevuld of een beschikbaarheid heeft doorgegeven.
-Afgewezen sollicitanten staan er niet in. Van boven naar beneden zie
-je:</p>
+beschikbaarheid heeft doorgegeven, precies wie er ook in de loonplanning
+staat. Afgewezen en gestopte sollicitanten staan er niet in. Een
+kennismakingsformulier alleen is geen opgave. Wie al gevraagd is om
+beschikbaarheid door te geven (uitgenodigd voor de selectiedag of
+verder) en dat nog niet deed, zie je via de regel &quot;N personen hebben nog
+geen beschikbaarheid doorgegeven&quot; of het filter <strong>Toon › Nog geen
+opgave</strong>. Van boven naar beneden zie je:</p>
 <ul>
 <li><strong>Openstaande verzoeken: N</strong> (alleen als die er zijn):
 verzoeken om in bepaalde weken minder dagen te werken. Zie <a href="#een-verzoek-om-minder-dagen-beoordelen">Een verzoek om minder
@@ -2463,7 +2702,7 @@ beslist)</td>
 per week &quot;aantal beschikbaar / aantal dat het weekend dekt&quot;. Een rood
 getal zit onder de norm. Onderaan staat wanneer de gegevens voor het
 laatst veranderden. Met een klik op een naam open je het dossier op het
-tabblad Beschikbaarheid.</p>
+tabblad Beschikbaarheid &amp; inzet.</p>
 <h2 id="een-verzoek-om-minder-dagen-beoordelen">Een verzoek om minder
 dagen beoordelen</h2>
 <p>Een sollicitant kan in het portaal vragen om in bepaalde weken minder
@@ -2489,8 +2728,8 @@ vast als correctie van het bestuur. Die overschrijft wat de sollicitant
 opgaf, en in de tijdlijn staat waarom.</p>
 <ol type="1">
 <li>Klik in het raster op de cel van die persoon en die week. In het
-dossier (tabblad Beschikbaarheid) werkt een klik op een weektegel
-hetzelfde.</li>
+dossier (tabblad Beschikbaarheid &amp; inzet) werkt een klik op een week
+in de rij Opgave hetzelfde.</li>
 <li>Rechts opent een paneel. Onder <strong>Dagen deze week</strong> zet
 je de dagen aan of uit (ma t/m zo), of je kiest <strong>Hele
 week</strong>, <strong>Alleen weekend</strong> of <strong>Deze week
@@ -2512,9 +2751,10 @@ bestaande correctie draai je terug met <strong>Correctie ongedaan
 maken</strong>: dan geldt weer wat de sollicitant zelf opgaf.</p>
 <h2 id="beschikbaarheid-volledig-bewerken">Beschikbaarheid volledig
 bewerken</h2>
-<p>In het dossier, tabblad Beschikbaarheid, staat in de kaart
-<strong>Aanpassen</strong> de knop <strong>Volledig bewerken</strong>.
-Die opent het scherm &quot;Beschikbaarheid aanpassen&quot; met twee tabbladen:</p>
+<p>In het dossier, tabblad Beschikbaarheid &amp; inzet, staat in de
+kaart <strong>Opgave aanpassen</strong> de knop <strong>Per dag of per
+periode bewerken</strong>. Die opent het scherm &quot;Beschikbaarheid
+aanpassen&quot; met twee tabbladen:</p>
 <ul>
 <li><strong>Per dag</strong>: een kalender van de hele werkperiode.
 Groen is beschikbaar, rood niet. Klik op een dag en kies
@@ -2534,8 +2774,9 @@ Vakanties, verzoeken en de voorkeur voor vrije dagen blijven staan.</li>
 dag of iemand beschikbaar is, precies zoals het naar het rooster gaat.
 Een afwijkende norm (bijvoorbeeld drie dagen per week na een
 bestuursbesluit) zie je als oranje label in het raster. Je stelt die in
-het dossier in, tabblad Beschikbaarheid, kaart <strong>Norm</strong>,
-met een reden (bewerkrecht op Beschikbaarheid).</p>
+het dossier in, tabblad Beschikbaarheid &amp; inzet, kaart
+<strong>Norm</strong>, met een reden (bewerkrecht op
+Beschikbaarheid).</p>
 <h2 id="het-dekkingsscherm">Het dekkingsscherm</h2>
 <p>Dekking beantwoordt een andere vraag dan het raster: niet &quot;zijn er
 genoeg mensen?&quot;, maar &quot;passen de mensen die er zijn op de rollen?&quot;. Tien
@@ -2730,7 +2971,11 @@ Wie Sollicitanten mag lezen, ziet de link <strong>Naar het dossier van
 …</strong>.</li>
 <li>Per stuk de stand en de knoppen <strong>PDF</strong> of
 <strong>Download</strong>, en bij de bankpas
-<strong>Vernietigen</strong> (alleen met verwijderrecht).</li>
+<strong>Vernietigen</strong> (alleen met verwijderrecht).
+<strong>PDF</strong> en <strong>Download</strong> ziet alleen de
+penningmeester; als admin zie je daar &quot;Alleen de penningmeester&quot; met een
+slotje, en bovenaan de regel dat je in een noodgeval jezelf in Authentik
+in de penningmeestersgroep zet (dat wordt vastgelegd).</li>
 <li>Onderaan de kaart <strong>Verwerkt in de loonadministratie</strong>
 (met een tussenscherm en <strong>Ja, verwerkt</strong>), <strong>Melding
 opnieuw naar de penningmeester</strong> en <strong>Tijdlijn van de
@@ -2774,8 +3019,10 @@ ook de persoon (als automatisch opschonen aanstaat).</p>
 laatste stuk een upload is, niet alleen na het ondertekenen.</li>
 <li>Elke download komt in het logboek als &quot;Document gedownload&quot;, met wie
 en wanneer. Bij het stuk staat &quot;Laatst ingezien&quot;. Op een foto (JPG of
-PNG) van de ID-kopie of de bankpas komt een watermerk; op een PDF
-niet.</li>
+PNG) van de bankpas komt een watermerk; op een PDF niet. De ID-kopie
+blijft zonder watermerk, omdat die volledig leesbaar in de
+loonadministratie hoort (ook als mailbijlage aan de
+penningmeester).</li>
 <li>Bij elke download van een ID-kopie, bankpas of loonheffingsformulier
 krijgt het bestuursadres een mail &quot;Loondocument gedownload: …&quot; met de
 naam van het document. Verwacht je die niet, kijk dan in het <a href="#logboek">Logboek</a>. Die mail staat standaard aan en zet je uit
@@ -2791,11 +3038,13 @@ hierboven.</li>
 <hr />
 <h1 id="berichten-sturen">Berichten sturen</h1>
 <p><strong>Waar:</strong> zijbalk › Communicatie › Berichten, met de
-tabbladen <strong>Nieuw bericht</strong>, <strong>Verzonden</strong> en
-<strong>Gepland</strong><br />
+tabbladen <strong>Nieuw bericht</strong>, <strong>Verzonden</strong>,
+<strong>Gepland</strong> en <strong>Sjablonen</strong><br />
 <strong>Wie:</strong> met leesrecht op Berichten &amp; sjablonen zie je
-het scherm. Versturen en het tabblad Gepland vragen bewerkrecht.
-Standaard hebben bestuur en admin allebei.</p>
+het scherm. Versturen vraagt de taak <strong>Versturen</strong>; de
+tabbladen Gepland en Sjablonen de taak <strong>Sjablonen en
+gepland</strong> (zonder die taak staan ze er niet). Standaard hebben
+bestuur en admin alle drie.</p>
 <blockquote>
 <p><strong>In het kort:</strong> Stuur een bericht aan één persoon, een
 selectie, een hele fase of een groep uit vorige seizoenen, per e-mail,
@@ -2909,13 +3158,16 @@ brengt je terug naar de lijst.</li>
 <p>Hier staan de regels voor berichten die automatisch op een vast
 moment uitgaan. Zie <a href="#geplande-berichten-en-herinneringen">Geplande berichten en
 herinneringen</a>.</p>
+<h2 id="het-tabblad-sjablonen">Het tabblad Sjablonen</h2>
+<p>De teksten van alle berichten. Zie <a href="#sjablonen">Sjablonen</a>.</p>
 <hr />
 <h1 id="sjablonen">Sjablonen</h1>
-<p><strong>Waar:</strong> Instellingen › <strong>Sjablonen voor
-mails</strong> (onderaan het tabbladmenu), of via <strong>Sjabloon
-bewerken</strong> bij Berichten<br />
-<strong>Wie:</strong> bewerkrecht op Berichten &amp; sjablonen
-(standaard bestuur en admin).</p>
+<p><strong>Waar:</strong> Communicatie › Berichten › tabblad
+<strong>Sjablonen</strong>, of via <strong>Sjabloon bewerken</strong>
+bij een bericht. Onderaan het tabbladmenu van Instellingen staat er ook
+een link naar (<strong>Sjablonen voor mails</strong>).<br />
+<strong>Wie:</strong> de taak <strong>Sjablonen en gepland</strong> bij
+Berichten &amp; sjablonen (standaard bestuur en admin).</p>
 <blockquote>
 <p><strong>In het kort:</strong> Elk automatisch bericht heeft een
 sjabloon: de e-mail, de korte tekst voor WhatsApp/SMS en de samenvatting
@@ -3401,9 +3653,11 @@ meer als je nieuwe minimumlonen invoert.</td>
 soort gegeven (ook het logboek, het foutenlog en de kopie bankpas), de
 schakelaars voor de downloadmail aan het bestuur en de
 bezoekersstatistiek, en het <strong>Opschoon-logboek</strong>. Daaronder
-de cronjob-regel voor Plesk met <strong>Handmatig uitvoeren</strong> en
-<strong>Nieuw token maken</strong> (alleen voor wie Systeem mag
-bewerken) en de stand van de AI- en mailwachtrij. Zie <a href="#bewaartermijnen">Bewaartermijnen</a>.</td>
+het blok <strong>Automatische taken</strong>: de stand per groep, de
+regel voor de geplande taak in Plesk met <strong>Nu uitvoeren</strong>
+(draait alle automatische taken meteen, na bevestiging) en <strong>Nieuw
+token maken</strong> (alleen voor wie Systeem mag bewerken) en de stand
+van de AI- en mailwachtrij. Zie <a href="#bewaartermijnen">Bewaartermijnen</a>.</td>
 </tr>
 <tr>
 <td>Technisch</td>
@@ -3637,8 +3891,8 @@ uitgebreid</strong>), met <strong>Rol toevoegen</strong>. Een nieuwe rol
 begint met alle rechten uit. De rang bepaalt alleen welke rol wint bij
 iemand in meer groepen.</p>
 <p>De matrix <strong>Wat mag welke rol?</strong> staat per onderdeel
-ingeklapt; de kop zegt per rol hoeveel taken aanstaan (&quot;Begeleider 3/5 ·
-Bestuur 5/5&quot;). Uitgeklapt zie je per <strong>taak</strong> een regel met
+ingeklapt; de kop zegt per rol hoeveel taken aanstaan (&quot;Begeleider 3/6 ·
+Bestuur 6/6&quot;). Uitgeklapt zie je per <strong>taak</strong> een regel met
 uitleg en per rol een vinkje. Met <strong>Alles bij …</strong> zet je in
 één keer alle taken van dat onderdeel aan of uit voor een rol (half
 gevuld = een deel staat aan). Elke taak houdt in dat de rol het
@@ -3660,8 +3914,10 @@ in het logboek als rolwijziging met de taken van voor en na.</p>
 <td>Selectiedag</td>
 <td>Bekijken · Inchecken · Beoordelen · Voorbereiden (wie komt er,
 groepen, afmeldingen, tablet en pincode, afsluiten) · Nabespreken en
-besluiten (nabespreking, bellijst, observaties van anderen
-weghalen)</td>
+besluiten (nabespreking, het besluit per sollicitant, observaties van
+anderen weghalen) · Bellen en doorvoeren (de bellijst met
+telefoonnummers, het gesprek vastleggen en het besluit doorvoeren: fase
+en bericht)</td>
 </tr>
 <tr>
 <td>Trainingsweekend</td>
@@ -3688,7 +3944,11 @@ ontgrendelen)</td>
 <p>Voorbeeld: een ervaren begeleider die mag meepraten bij de
 nabespreking maar niet mag indelen, krijgt bij Selectiedag
 <strong>Nabespreken en besluiten</strong> erbij en houdt
-<strong>Voorbereiden</strong> uit.</p>
+<strong>Voorbereiden</strong> en <strong>Bellen en doorvoeren</strong>
+uit. Bellen en doorvoeren is sinds versie 2.145 een eigen taak:
+Nabespreken en besluiten geeft de bellijst niet meer. Standaard hebben
+bestuur en admin hem; geef hem een begeleider niet, want de bellijst
+toont telefoonnummers en zet de fase om.</p>
 <p>Zo staat het op een nieuwe installatie (l = lezen, b = bewerken, v =
 verwijderen; een taak volgt het recht waar hij bij hoort, dus &quot;l&quot; = alle
 taken die bij bekijken horen, zoals Inchecken en Beoordelen):</p>
@@ -3758,7 +4018,7 @@ taken die bij bekijken horen, zoals Inchecken en Beoordelen):</p>
 <td>–</td>
 <td>l b v</td>
 <td>–</td>
-<td>alles</td>
+<td>alles, behalve de inhoud openen</td>
 </tr>
 <tr>
 <td>Beschikbaarheid</td>
@@ -4296,11 +4556,12 @@ updates &amp; logs (standaard alleen admin). Fouten: leesrecht op
 Logboek (standaard alleen admin).</p>
 <blockquote>
 <p><strong>In het kort:</strong> Systeem &amp; Updates toont de versie,
-een systeemcontrole met acht onderdelen, de herinneringen (proefdraaien)
-en de changelog. Wordt iets rood of oranje, dan lees je hier wat er mis
-is. Via de controle Kluis wissel je de kluissleutel. Een technische fout
-heeft een referentienummer; dat zoek je op in het Logboek onder Fouten.
-Een los foutenlog met een knop om het te legen bestaat niet meer.</p>
+een systeemcontrole met twaalf onderdelen, de herinneringen
+(proefdraaien) en de changelog. Wordt iets rood of oranje, dan lees je
+hier wat er mis is. Via de controle Kluis wissel je de kluissleutel. Een
+technische fout heeft een referentienummer; dat zoek je op in het
+Logboek onder Fouten. Een los foutenlog met een knop om het te legen
+bestaat niet meer.</p>
 </blockquote>
 <h2 id="systeem--updates">Systeem &amp; Updates</h2>
 <p>Bovenaan staat de <strong>geïnstalleerde versie</strong> met
@@ -4337,7 +4598,8 @@ paginabezoek.</td>
 <tr>
 <td>Mailwachtrij</td>
 <td>Wachten er mails langer dan een uur? Dan draait de cron niet of
-klopt de mailserver niet.</td>
+klopt de mailserver niet. Zijn er in de laatste 24 uur berichten
+definitief mislukt? De reden staat in het logboek.</td>
 </tr>
 <tr>
 <td>AVG-opschoning</td>
@@ -4349,9 +4611,30 @@ opschonen uit, dan is dit een fout.</td>
 <td>Kan het systeem uploads wegschrijven?</td>
 </tr>
 <tr>
+<td>Back-up vóór updates</td>
+<td>Is er een veilige map voor de automatische back-up die het systeem
+vóór een database-update maakt, en lukte de laatste? Toont de laatste
+back-up. Een mislukte back-up houdt een update nooit tegen; het wordt
+dan oranje.</td>
+</tr>
+<tr>
+<td>E-mail en testmodus</td>
+<td>Gaat e-mail via een ingestelde SMTP-server? Staat de testmodus aan
+(alle mail naar één adres, geen WhatsApp of sms), dan is dit
+oranje.</td>
+</tr>
+<tr>
+<td>Inloggen (Authentik)</td>
+<td>Is inloggen via Authentik ingesteld? Zonder werkt alleen de
+wachtwoord-noodingang. Ook een waarschuwing als er Authentik-groepen
+zijn die vroeger toegang gaven maar bij geen rol horen.</td>
+</tr>
+<tr>
 <td>Configuratie</td>
-<td>Zijn het cron-token en het bestuursadres (Instellingen › Afzender
-&amp; adressen, of de terugval in de configuratie) ingesteld?</td>
+<td>Zijn het cron-token, het bestuursadres (Instellingen › Afzender
+&amp; adressen, of de terugval in de configuratie), de adressen van
+penningmeester en ledenservice en de huisregels-PDF ingesteld? Is er
+geen open seizoen, dan staat dat er ter informatie bij.</td>
 </tr>
 <tr>
 <td>Kluis (versleutelde documenten)</td>
@@ -4371,8 +4654,17 @@ staat de knop <strong>Kluissleutel wisselen</strong>.</td>
 <td>Kan het systeem PDF&#39;s verzegelen, en hoe lang is het certificaat nog
 geldig? Onder 60 dagen komt er een waarschuwing.</td>
 </tr>
+<tr>
+<td>Snel antwoorden (PHP-FPM)</td>
+<td>Kan de server antwoorden voordat mails en WhatsApp-berichten
+verstuurd zijn? Zo niet, dan wacht elke bezoeker na een formulier op de
+verzending. Werk voor de technisch beheerder.</td>
+</tr>
 </tbody>
 </table>
+<p>Heeft een controle losse punten (bijvoorbeeld een ontbrekend adres),
+dan staat elk punt er apart onder met een knop naar het juiste
+tabblad.</p>
 <p><strong>Controleren &amp; repareren</strong> draait de controle
 opnieuw en herstelt wat automatisch te herstellen is.</p>
 <p>Daaronder staan:</p>
@@ -4594,8 +4886,8 @@ kwartier, en één keer per dag de Authentik-synchronisatie en het
 opschonen. Draait de geplande taak niet, dan gebeurt er niets van dit
 alles: een bezoek aan het beheer of portaal vangt het niet meer op.</p>
 <p><strong>Dossier</strong> — de pagina van één sollicitant, met de
-tabbladen Dossier, Kennismakingsformulier, Beschikbaarheid, Selectiedag,
-Ondertekeningen en Tijdlijn.</p>
+tabbladen Dossier, Kennismakingsformulier, Beschikbaarheid &amp; inzet,
+Selectiedag, Trainingsweekend, Ondertekeningen en Tijdlijn.</p>
 <p><strong>Fase</strong> — de stap waarin een sollicitant staat:
 Aangemeld, Uitgenodigd selectiedag, Aangemeld selectiedag, Selectiedag
 geweest, Uitgenodigd trainingsweekend, Trainingsweekend geweest,
@@ -4618,7 +4910,7 @@ is. Alleen accounts met een wachtwoord kunnen dat.</p>
 <p><strong>Norm</strong> — het aantal mensen dat per dienst nodig is, de
 optelsom van alle rollen onder Posten &amp; bezetting. Daarnaast bestaat
 de norm per persoon: standaard vijf dagen per week, aan te passen in het
-dossier (tabblad Beschikbaarheid).</p>
+dossier (tabblad Beschikbaarheid &amp; inzet).</p>
 <p><strong>Oud-strandwacht</strong> — iemand die in een eerder seizoen
 is aangenomen. Die mag je bij een nieuwe werving benaderen, met een
 afmeldlink.</p>
