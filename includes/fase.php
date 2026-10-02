@@ -101,6 +101,7 @@ function fase_zetten(int $sol_id, string $naar, string $bron, array $opties = []
         }
         // De gecachte dossier-rij is nu verouderd; meldingen laden hem opnieuw.
         if (function_exists('portaal_sollicitant_cache_wissen')) portaal_sollicitant_cache_wissen($sol_id);
+        if (function_exists('live_bump')) live_bump(['sol:' . $sol_id]);   // open dossiers en lijsten zien de nieuwe fase
 
         $stil  = !empty($opties['stil']);
         /* Standaard ná het antwoord versturen, niet tijdens. Een fasewijziging liet de

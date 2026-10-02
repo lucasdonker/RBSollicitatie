@@ -1482,6 +1482,19 @@ a.bh-naamcel:hover .bh-naamcel-naam { color: var(--navy); text-decoration: under
   #bh-toasts { left: 14px; right: 14px; bottom: 14px; max-width: none; }
 }
 
+/* Live bijwerken (assets/js/live.js): een ander veranderde iets op dit scherm. Blijft staan tot je
+   vernieuwt of sluit — nooit vanzelf de pagina vervangen terwijl je leest. */
+.bh-live-melding {
+  position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 8900;
+  display: flex; align-items: center; gap: 10px; max-width: min(560px, calc(100vw - 28px));
+  background: var(--surface); color: var(--ink); border: 1.5px solid var(--navy); border-radius: 12px;
+  padding: 10px 8px 10px 14px; font-size: 14px; box-shadow: var(--shadow-modal);
+}
+.bh-live-tekst { flex: 1; min-width: 0; }
+.bh-live-sluit { flex: none; width: 32px; height: 32px; border: 0; border-radius: 8px; background: none; color: var(--ink-soft); font-size: 20px; cursor: pointer; }
+.bh-live-sluit:focus-visible { outline: 2px solid var(--navy); }
+@media print { .bh-live-melding { display: none !important; } }
+
 /* ── Kolommenkiezer boven een tabel ── */
 .bh-tabelbalk { display: flex; justify-content: flex-end; margin-bottom: 8px; }
 .bh-kolomkiezer { position: relative; }

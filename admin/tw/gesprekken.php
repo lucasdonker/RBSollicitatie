@@ -142,6 +142,8 @@ $_rij = function (array $k, string $groep, string $plek = '', int $nr = 0, int $
   require __DIR__ . '/../_filterbalk.php';
 ?>
 
+<?php // data-live-blok: "bezig door X", gesproken en de volgorde verversen vanzelf (assets/js/live.js). ?>
+<div data-live-blok id="tw-gesprekken">
 <?php if (!$_lijst): ?>
   <div class="ds-kaart ds-kaart-p">
     <?php $leeg_titel = 'Niemand gevonden'; $leeg_tekst = 'Pas de zoekterm of de filters aan.'; $leeg_icoon = 'zoek'; require __DIR__ . '/../_leeg.php'; ?>
@@ -196,6 +198,7 @@ $_rij = function (array $k, string $groep, string $plek = '', int $nr = 0, int $
   <?php endif; ?>
 </section>
 <?php endforeach; ?>
+</div>
 <?php if ($_kan_schuiven): ?>
 <script src="<?= APP_URL ?>/assets/js/volgorde.js?v=<?= @filemtime(__DIR__ . '/../../assets/js/volgorde.js') ?>" defer></script>
 <?php endif; ?>

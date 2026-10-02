@@ -110,6 +110,7 @@ function evenement_inchecken(string $ev, int $seizoen_id, int $sol_id, bool $aan
         }
     }
     if (function_exists('audit_log')) audit_log($aanwezig ? 'ingecheckt' : 'inchecken_ongedaan', 'sollicitatie', $sol_id, ['evenement' => $ev, 'via' => $bron]);
+    evenement_live($ev, $seizoen_id, $sol_id);   // de incheck-lijst in het beheer ziet de tablet
 
     // "Je zit in groep 2" — beide evenementen hebben groepen (includes/evenement_groepen.php).
     try {
@@ -225,6 +226,13 @@ function evenement_afmelden(string $ev, int $seizoen_id, int $sol_id, string $re
     evenement_rij_verzeker($ev, $seizoen_id, $sol_id);
     db()->prepare("UPDATE `{$d['tabel']}` SET aanwezig=0, ingecheckt_op=NULL, afgemeld_reden=? WHERE seizoen_id=? AND sollicitatie_id=?")
        ->execute([mb_substr(trim($reden), 0, 200) ?: 'Geen reden opgegeven', $seizoen_id, $sol_id]);
+    evenement_live($ev, $seizoen_id, $sol_id);
+}
+
+/** Meld een wijziging aan open schermen: het evenement, en zo nodig de persoon (live.php). */
+function evenement_live(string $ev, int $seizoen_id, int $sol_id = 0): void {
+    if (!function_exists('live_bump')) return;
+    live_bump(array_filter([live_ev($ev, $seizoen_id), $sol_id > 0 ? 'sol:' . $sol_id : null]));
 }
 
 /**
@@ -249,6 +257,7 @@ function evenement_afsluiten(string $ev, int $seizoen_id, int $door): int {
     $n = $u->rowCount();
     if (function_exists('instelling_opslaan')) instelling_opslaan($ev . '.afgesloten.' . $seizoen_id, date('Y-m-d H:i:s'));
     if (function_exists('audit_log')) audit_log('inchecken_afgesloten', 'seizoen', $seizoen_id, ['evenement' => $ev, 'niet_verschenen' => $n, 'door' => $door]);
+    evenement_live($ev, $seizoen_id);
     return $n;
 }
 
@@ -351,6 +360,7 @@ function evenement_bevestigen(string $ev, int $seizoen_id, int $sol_id, string $
        ->execute([$stand, $reden !== '' ? $reden : null, $bron, $seizoen_id, $sol_id]);
     if (function_exists('audit_log')) audit_log('deelname_bevestigd', 'sollicitatie', $sol_id, ['evenement' => $ev, 'stand' => $stand, 'bron' => $bron]);
     evenement_fase_na_bevestiging($ev, $seizoen_id, $sol_id, $stand);
+    evenement_live($ev, $seizoen_id, $sol_id);
     if ($stand === 'komt_niet' && $bron === 'portaal' && function_exists('melding_verstuur')) {
         melding_verstuur('bestuur_deelname_afgemeld', $sol_id, [
             'evenement' => $d['label'], 'reden' => $reden,
@@ -427,6 +437,7 @@ function evenement_afmelding_besluiten(string $ev, int $seizoen_id, int $sol_id,
            ->execute([$seizoen_id, $sol_id]);
         if (function_exists('audit_log')) audit_log('afmelding_uitzondering', 'sollicitatie', $sol_id, ['evenement' => $ev]);
         evenement_fase_na_bevestiging($ev, $seizoen_id, $sol_id, 'komt', true);
+        evenement_live($ev, $seizoen_id, $sol_id);
         $meld('deelname_uitzondering');
         return true;
     }
@@ -449,14 +460,18 @@ function evenement_claim(string $tabel, string $soort, int $seizoen_id, int $sol
     if (!in_array($tabel, ['selectie_besluit', 'tw_deelname'], true) || !in_array($soort, ['bel', 'gesprek'], true)) return ['ok' => false, 'door' => null, 'sinds' => null];
     $door = $soort . '_door'; $sinds = $soort . '_sinds';
     $db = db();
+    $q = $db->prepare("SELECT `$door` AS door, `$sinds` AS sinds FROM `$tabel` WHERE seizoen_id=? AND sollicitatie_id=?");
+    $q->execute([$seizoen_id, $sol_id]);
+    $voor = $q->fetch() ?: [];
     $u = $db->prepare("UPDATE `$tabel` SET `$door`=?, `$sinds`=NOW()
                        WHERE seizoen_id=? AND sollicitatie_id=?
                          AND (`$door` IS NULL OR `$door`=? OR `$sinds` < NOW() - INTERVAL 30 MINUTE)");
     $u->execute([$beheerder_id, $seizoen_id, $sol_id, $beheerder_id]);
-    $q = $db->prepare("SELECT `$door` AS door, `$sinds` AS sinds FROM `$tabel` WHERE seizoen_id=? AND sollicitatie_id=?");
     $q->execute([$seizoen_id, $sol_id]);
     $r = $q->fetch() ?: [];
     $wie = isset($r['door']) ? (int)$r['door'] : null;
+    // Alleen een echte wissel ("bezig door X" verschijnt) is nieuws; je eigen claim verversen niet.
+    if ($wie === $beheerder_id && (int)($voor['door'] ?? 0) !== $beheerder_id) evenement_claim_live($tabel, $seizoen_id);
     // Niemand houdt hem vast (bijv. geen rij) = vrij; alleen een ánder die hem heeft blokkeert.
     return ['ok' => $wie === null || $wie === $beheerder_id, 'door' => $wie, 'sinds' => $r['sinds'] ?? null];
 }
@@ -464,8 +479,14 @@ function evenement_claim(string $tabel, string $soort, int $seizoen_id, int $sol
 /** Vergrendeling loslaten (klaar, of per ongeluk geclaimd). Alleen je eigen claim. */
 function evenement_claim_los(string $tabel, string $soort, int $seizoen_id, int $sol_id, int $beheerder_id): void {
     if (!in_array($tabel, ['selectie_besluit', 'tw_deelname'], true) || !in_array($soort, ['bel', 'gesprek'], true)) return;
-    db()->prepare("UPDATE `$tabel` SET `{$soort}_door`=NULL, `{$soort}_sinds`=NULL WHERE seizoen_id=? AND sollicitatie_id=? AND `{$soort}_door`=?")
-       ->execute([$seizoen_id, $sol_id, $beheerder_id]);
+    $u = db()->prepare("UPDATE `$tabel` SET `{$soort}_door`=NULL, `{$soort}_sinds`=NULL WHERE seizoen_id=? AND sollicitatie_id=? AND `{$soort}_door`=?");
+    $u->execute([$seizoen_id, $sol_id, $beheerder_id]);
+    if ($u->rowCount() > 0) evenement_claim_live($tabel, $seizoen_id);
+}
+
+/** Een vergrendeling wisselde: de lijsten van dat evenement ("bezig door X") verversen. */
+function evenement_claim_live(string $tabel, int $seizoen_id): void {
+    if (function_exists('live_bump')) live_bump([live_ev($tabel === 'tw_deelname' ? 'tw' : 'selectiedag', $seizoen_id)]);
 }
 
 /**
@@ -475,8 +496,9 @@ function evenement_claim_los(string $tabel, string $soort, int $seizoen_id, int 
  */
 function evenement_claim_los_overige(string $tabel, string $soort, int $seizoen_id, int $beheerder_id, int $behalve = 0): void {
     if (!in_array($tabel, ['selectie_besluit', 'tw_deelname'], true) || !in_array($soort, ['bel', 'gesprek'], true)) return;
-    db()->prepare("UPDATE `$tabel` SET `{$soort}_door`=NULL, `{$soort}_sinds`=NULL WHERE seizoen_id=? AND `{$soort}_door`=? AND sollicitatie_id<>?")
-       ->execute([$seizoen_id, $beheerder_id, $behalve]);
+    $u = db()->prepare("UPDATE `$tabel` SET `{$soort}_door`=NULL, `{$soort}_sinds`=NULL WHERE seizoen_id=? AND `{$soort}_door`=? AND sollicitatie_id<>?");
+    $u->execute([$seizoen_id, $beheerder_id, $behalve]);
+    if ($u->rowCount() > 0) evenement_claim_live($tabel, $seizoen_id);
 }
 
 /**
@@ -495,6 +517,7 @@ function evenement_claim_overnemen(string $tabel, string $soort, int $seizoen_id
     $u = $db->prepare("UPDATE `$tabel` SET `$door`=?, `$sinds`=NOW() WHERE seizoen_id=? AND sollicitatie_id=? AND `$door`=?");
     $u->execute([$beheerder_id, $seizoen_id, $sol_id, $van]);
     $gelukt = $u->rowCount() > 0;
+    if ($gelukt) evenement_claim_live($tabel, $seizoen_id);
     $q = $db->prepare("SELECT `$door` AS door, `$sinds` AS sinds FROM `$tabel` WHERE seizoen_id=? AND sollicitatie_id=?");
     $q->execute([$seizoen_id, $sol_id]);
     $r = $q->fetch() ?: [];

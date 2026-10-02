@@ -226,6 +226,7 @@ $actieve_nav  = 'sollicitanten';
    je er formuliervelden bij aanzette ging de tabel binnen die 1400px schuiven terwijl
    er een half scherm leeg was. */
 $pagina_breed = true;
+$live_scopes = $sid ? ['sz:' . $sid] : [];
 require __DIR__ . '/layout_top.php';
 ?>
 

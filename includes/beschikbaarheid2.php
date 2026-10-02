@@ -275,6 +275,9 @@ function beschikbaarheid2_effectief(int $sol_id, ?array $seizoen = null): array 
 }
 
 function beschikbaarheid2_sync_compat(int $sol_id): void {
+    // Draait na elke wijziging van de opgave (opslaan, correctie, verzoek beslist, norm): het moment
+    // om open schermen (gesprek, loonplanning, beschikbaarheid, dossier) te laten weten dat er iets is.
+    if (function_exists('live_loon')) live_loon(0, 0, $sol_id);
     try {
         beschikbaarheid2_auto_setup();
         $eff = beschikbaarheid2_effectief($sol_id);
@@ -580,6 +583,7 @@ function beschikbaarheid2_definitief_maken(int $sol_id, string $door = 'sollicit
         $u = db()->prepare("UPDATE beschikbaarheid_profiel SET voorlopig=0, definitief_op=IFNULL(definitief_op, NOW()), bijgewerkt_op=NOW() WHERE sollicitatie_id=? AND voorlopig=1");
         $u->execute([$sol_id]);
         if ($u->rowCount() > 0 && $door === 'sollicitant') beschikbaarheid2_definitief_melden($sol_id);
+        if ($u->rowCount() > 0 && function_exists('live_loon')) live_loon(0, 0, $sol_id);
         return true;
     } catch (\Exception $e) { return false; }
 }

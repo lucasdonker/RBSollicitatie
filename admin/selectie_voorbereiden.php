@@ -35,6 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $sid) {
 
 $pagina_titel = 'Selectiedag voorbereiden';
 $actieve_nav  = 'selectiedag';
+$live_scopes = $sid ? ['sd:' . $sid] : [];
 require __DIR__ . '/layout_top.php';
 
 $subnav_actief = 'voorbereiden';

@@ -154,6 +154,7 @@ function inzet_vaststellen(int $seizoen_id, int $scenario_id, array $sol_ids, in
             }
             $db->commit();
             $n++;
+            if (function_exists('live_loon')) live_loon(0, $seizoen_id, $sol_id);
             if (function_exists('audit_log')) {
                 audit_log('afspraak_vastgesteld', 'sollicitatie', $sol_id, ['functie' => $m['functie'], 'weken' => $weken,
                     'dagen_betaald' => $m['dagen_betaald'], 'dagen_onbetaald' => $m['dagen_onbetaald'], 'scenario' => $scenario_id]);

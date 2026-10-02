@@ -51,7 +51,8 @@ $_oi_soorten  = ['positief' => ['Positief', 'vink-cirkel'], 'neutraal' => ['Neut
     </div>
   <?php endif; ?>
 
-  <div data-obs-lijst><?php require __DIR__ . '/_observatie_lijst.php'; ?></div>
+  <?php // data-live-blok: assets/js/live.js ververst de lijst als een collega iets toevoegt (id per persoon). ?>
+  <div data-obs-lijst data-live-blok id="obs-lijst-<?= (int)$oi_sol ?>"><?php require __DIR__ . '/_observatie_lijst.php'; ?></div>
 </div>
 <?php
 $oi_sol = $oi_naam = $oi_mag = $oi_titel = $oi_melding = $oi_voorbeeld = null;

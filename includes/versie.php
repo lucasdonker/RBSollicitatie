@@ -3,10 +3,21 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.154.0');
+define('APP_VERSIE', '2.155.0');
 
 function app_changelog(): array {
     return [
+        '2.155.0' => [
+            'datum'  => '2026-10-02',
+            'titel'  => 'Live bijwerken: zie wat collega\'s doen',
+            'punten' => [
+                'De incheck-lijst van selectiedag en weekend werkt zichzelf bij, ook als iemand op de tablet incheckt. Je zoekterm en filter blijven staan',
+                'De bellijst (gebeld, "bezig door"), de gesprekkenlijst van het weekend en de observaties bij Beoordelen werken zichzelf bij',
+                'Op het dossier, de lijsten, Vandaag, de nabespreking, beschikbaarheid, de loonplanning en het gesprek verschijnt "… heeft hier iets gewijzigd" met Vernieuwen. Wijzigingen uit het gesprek komen zo in de loonplanning en omgekeerd',
+                'Je eigen wijzigingen geven geen melding; wat je aan het typen bent wordt nooit overschreven',
+                'Een open tabblad houdt je niet meer ingelogd: automatisch verversen (ook de afspraak-editor) telt niet als activiteit, dus uitloggen na twee uur inactiviteit werkt weer',
+            ],
+        ],
         '2.154.0' => [
             'datum'  => '2026-10-02',
             'titel'  => 'Observaties op je telefoon: zoals een chat',

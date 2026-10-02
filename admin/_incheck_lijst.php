@@ -45,6 +45,8 @@ $_open_f = function_exists('evenement_open_formulieren_seizoen') ? evenement_ope
     <button type="button" class="bh-ick-filter" data-ick-filter aria-pressed="false">Alleen verwacht</button>
   </div>
 
+  <?php // data-live-blok: wie op de tablet incheckt, verschijnt hier vanzelf (assets/js/live.js); zoeken en filter blijven staan. ?>
+  <div data-live-blok id="ick-rijen-<?= h($ick_ev) ?>">
   <?php if (!$ick_lijst): ?>
     <div class="bh-incheck-leeg">
       <?php
@@ -92,6 +94,7 @@ $_open_f = function_exists('evenement_open_formulieren_seizoen') ? evenement_ope
     <?php endforeach; ?>
   </ul>
   <?php endif; ?>
+  </div>
 
   <div class="bh-ick-voet">
     <span class="bh-meta">

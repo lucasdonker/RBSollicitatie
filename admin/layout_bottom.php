@@ -808,6 +808,9 @@ document.addEventListener('DOMContentLoaded', () => {
 <script src="<?= APP_URL ?>/assets/js/editor.js?v=<?= @filemtime(__DIR__.'/../assets/js/editor.js') ?>"></script>
 <script src="<?= APP_URL ?>/assets/js/beheer.js?v=<?= @filemtime(__DIR__.'/../assets/js/beheer.js') ?>"></script>
 <script src="<?= APP_URL ?>/assets/js/inklap.js?v=<?= @filemtime(__DIR__.'/../assets/js/inklap.js') ?>"></script>
+<?php if (!empty($live_scopes)): ?>
+<script src="<?= APP_URL ?>/assets/js/live.js?v=<?= @filemtime(__DIR__.'/../assets/js/live.js') ?>"></script>
+<?php endif; ?>
 <?php require __DIR__ . '/_rondleiding.php'; ?>
 </body>
 </html>

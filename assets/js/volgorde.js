@@ -8,7 +8,14 @@
  */
 (function () {
   'use strict';
-  document.querySelectorAll('ul[data-volgorde]').forEach(function (lijst) {
+  function koppelAlles() { document.querySelectorAll('ul[data-volgorde]').forEach(koppel); }
+  // Live bijwerken (assets/js/live.js) zet een nieuwe lijst neer: die ook koppelen.
+  document.addEventListener('p13:live', koppelAlles);
+  koppelAlles();
+
+  function koppel(lijst) {
+    if (lijst.dataset.volgordeGekoppeld) return;
+    lijst.dataset.volgordeGekoppeld = '1';
     var sleept = null;
 
     lijst.addEventListener('dragstart', function (e) {
@@ -48,5 +55,5 @@
           if (window.bhToast) window.bhToast(err.message || 'Geen verbinding — probeer opnieuw.', 'fout');
         });
     });
-  });
+  }
 })();

@@ -196,6 +196,7 @@ function tw_observatie_toevoegen(int $seizoen_id, int $sol_id, string $tekst, st
         db()->prepare("INSERT INTO tw_observatie (seizoen_id, sollicitatie_id, tekst, soort, beoordelaar, beoordelaar_id)
                        VALUES (?,?,?,?,?,?)")
             ->execute([$seizoen_id, $sol_id, mb_substr($tekst, 0, 2000), $soort, mb_substr($door, 0, 100), $beoordelaar_id ?: null]);
+        if (function_exists('evenement_live')) evenement_live('tw', $seizoen_id, $sol_id);
         return true;
     } catch (\Exception $e) { return false; }
 }
@@ -208,6 +209,9 @@ function tw_observatie_toevoegen(int $seizoen_id, int $sol_id, string $tekst, st
 function tw_observatie_wissen(int $obs_id, string $door, int $beoordelaar_id = 0, bool $mag_alles = false): bool {
     tw_auto_setup();
     try {
+        $w = db()->prepare("SELECT seizoen_id, sollicitatie_id FROM tw_observatie WHERE id=?");
+        $w->execute([$obs_id]);
+        $wat = $w->fetch() ?: null;
         if ($mag_alles) {
             $q = db()->prepare("DELETE FROM tw_observatie WHERE id=?");
             $q->execute([$obs_id]);
@@ -216,7 +220,9 @@ function tw_observatie_wissen(int $obs_id, string $door, int $beoordelaar_id = 0
                                 AND (beoordelaar_id=? OR (beoordelaar_id IS NULL AND beoordelaar=?))");
             $q->execute([$obs_id, $beoordelaar_id, $door]);
         }
-        return $q->rowCount() > 0;
+        $ok = $q->rowCount() > 0;
+        if ($ok && $wat && function_exists('evenement_live')) evenement_live('tw', (int)$wat['seizoen_id'], (int)$wat['sollicitatie_id']);
+        return $ok;
     } catch (\Exception $e) { return false; }
 }
 
@@ -252,6 +258,7 @@ function tw_besluit_zetten(int $seizoen_id, int $sol_id, ?string $besluit, ?stri
             $besluit === null ? null : date('Y-m-d H:i:s'),
             $seizoen_id, $sol_id,
         ]);
+    if (function_exists('evenement_live')) evenement_live('tw', $seizoen_id, $sol_id);
 }
 
 /** Markeer dat het besluit is doorgevoerd (de fase is gezet en het bericht is eruit). */
@@ -380,6 +387,7 @@ function tw_evaluatie_zetten(int $seizoen_id, int $sol_id, string $stand, string
                   $stand !== '' ? mb_substr($door, 0, 100) : null, $stand !== '' ? date('Y-m-d H:i:s') : null,
                   $seizoen_id, $sol_id]);
     if (function_exists('audit_log')) audit_log('tw_evaluatie', 'sollicitatie', $sol_id, ['stand' => $stand !== '' ? $stand : 'gewist']);
+    if (function_exists('evenement_live')) evenement_live('tw', $seizoen_id, $sol_id);
     return true;
 }
 
@@ -432,6 +440,8 @@ function tw_gesprek_afronden(int $seizoen_id, int $sol_id, string $besluit, stri
                    WHERE seizoen_id=? AND sollicitatie_id=?")
        ->execute([$bericht !== '' ? $bericht : null, $seizoen_id, $sol_id]);
     if (function_exists('audit_log')) audit_log('tw_gesprek', 'sollicitatie', $sol_id, ['besluit' => $besluit, 'door' => $beheerder_id]);
+    // Ook de loonplanning: aannemen zet de inzet vast, afwijzen haalt iemand eruit.
+    if (function_exists('live_bump')) live_bump(['loon:' . $seizoen_id]);
 
     // Wat in het gesprek over de inzet is besproken, staat na AANNEMEN vast in alle scenario's
     // (includes/loonplan_slot.php). Twijfel is nog geen afspraak (besluit Lucas, 2.128.2); bij
@@ -519,6 +529,7 @@ function tw_eerder_weg_zetten(int $seizoen_id, int $sol_id, string $dag, string 
     tw_rij_verzeker($seizoen_id, $sol_id);
     db()->prepare("UPDATE tw_deelname SET eerder_weg=? WHERE seizoen_id=? AND sollicitatie_id=?")->execute([$waarde, $seizoen_id, $sol_id]);
     if (function_exists('audit_log')) audit_log('tw_eerder_weg', 'sollicitatie', $sol_id, ['eerder_weg' => $waarde]);
+    if (function_exists('evenement_live')) evenement_live('tw', $seizoen_id, $sol_id);
     return true;
 }
 
@@ -578,6 +589,7 @@ function tw_gesprek_volgorde_opslaan(int $seizoen_id, array $ids): bool {
         tw_rij_verzeker($seizoen_id, $id);
         $u->execute([$n + 1, $seizoen_id, $id]);
     }
+    if (function_exists('evenement_live')) evenement_live('tw', $seizoen_id);
     return true;
 }
 
@@ -585,6 +597,7 @@ function tw_gesprek_volgorde_opslaan(int $seizoen_id, array $ids): bool {
 function tw_gesprek_volgorde_herstellen(int $seizoen_id): void {
     tw_auto_setup();
     db()->prepare("UPDATE tw_deelname SET gesprek_positie=NULL WHERE seizoen_id=?")->execute([$seizoen_id]);
+    if (function_exists('evenement_live')) evenement_live('tw', $seizoen_id);
 }
 
 /**

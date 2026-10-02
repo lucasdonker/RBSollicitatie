@@ -47,6 +47,7 @@ function evenement_groepen_zetten(string $ev, int $seizoen_id, int $aantal): voi
             $db->prepare("DELETE FROM `{$d['groep_tabel']}` WHERE id=?")->execute([$g['id']]);
         }
     }
+    if (function_exists('evenement_live')) evenement_live($ev, $seizoen_id);
 }
 
 /** Is dit een groep van dit evenement en seizoen? (Server-side, niet vertrouwen op de keuzelijst.) */
@@ -69,6 +70,7 @@ function evenement_indeling_opslaan(string $ev, int $seizoen_id, array $map): vo
     foreach ($map as $sol_id => $groep_id) {
         $ins->execute([$seizoen_id, (int)$sol_id, $groep_id !== null ? (int)$groep_id : null]);
     }
+    if (function_exists('evenement_live')) evenement_live($ev, $seizoen_id);
 }
 
 /**

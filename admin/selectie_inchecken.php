@@ -26,6 +26,7 @@ $mag_bewerken   = mag('selectiedag', 'voorbereiden');
 
 $pagina_titel = 'Inchecken';
 $actieve_nav  = 'selectiedag';
+$live_scopes = $sid ? ['sd:' . $sid] : [];   // de tablet bij de ingang checkt in: de lijst ververst vanzelf
 require __DIR__ . '/layout_top.php';
 ?>
 

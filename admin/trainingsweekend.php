@@ -186,6 +186,11 @@ if (!isset($stappen[$stap])) {
 
 $kandidaten = $sid ? tw_kandidaten($sid) : [];
 
+// Live bijwerken (includes/live.php): het gesprek en beoordelen volgen de persoon, de rest het weekend.
+// Inchecken, beoordelen en de gesprekkenlijst verversen hun lijst vanzelf (data-live-blok); elders een melding.
+$_k_live = (int)($_GET['k'] ?? 0);
+$live_scopes = !$sid ? [] : (in_array($stap, ['beoordelen', 'gesprekken'], true) && $_k_live > 0 ? ['sol:' . $_k_live] : ['tw:' . $sid]);
+
 // "3 – 5 mei 2026" als het in dezelfde maand valt, anders "29 apr – 2 mei 2026".
 $tw_periode = '';
 if ($seizoen && !empty($seizoen['datum_tw_start'])) {

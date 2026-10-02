@@ -90,6 +90,7 @@ if (function_exists('toegang_bepaal') && !empty($_bhd['email'])) {
       require __DIR__ . '/_topbar.php';
     ?>
 
-    <main class="bh-inhoud<?= !empty($pagina_breed) ? ' breed' : '' ?>" id="inhoud">
+    <?php // Live bijwerken (includes/live.php): een pagina zet $live_scopes, bijv. ['sd:' . $sid]. ?>
+    <main class="bh-inhoud<?= !empty($pagina_breed) ? ' breed' : '' ?>" id="inhoud"<?= !empty($live_scopes) && function_exists('live_attr') ? live_attr((array)$live_scopes) : '' ?>>
       <?php toon_flash(); ?>
       <?php if (!empty($_rl['welkom'])) { $rlw = $_rl['welkom']; require __DIR__ . '/_rl_welkom.php'; } ?>

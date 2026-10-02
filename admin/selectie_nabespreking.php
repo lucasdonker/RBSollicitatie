@@ -159,6 +159,8 @@ foreach ($bel_kandidaten as $k) {
 
 $pagina_titel = $tab === 'bellijst' ? 'Bellijst' : 'Nabespreking';
 $actieve_nav  = 'selectiedag';
+// Bellijst: lijst en kaart verversen vanzelf (admin/_bellijst.php, data-live-blok); nabespreking: melding.
+$live_scopes  = $sid ? ['sd:' . $sid] : [];
 require __DIR__ . '/layout_top.php';
 ?>
 

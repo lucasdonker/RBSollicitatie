@@ -199,6 +199,7 @@ $dekking_alle = bh_dekking_weken($weken_alle, bh_lp_tot_per_week($analyse['mense
 $dekking  = array_intersect_key($dekking_alle, $weken);
 $geld     = bh_lp_geld($analyse, $dekking_alle);         // het budget gaat over het hele seizoen
 
+$live_scopes = $sid ? ['loon:' . $sid] : [];   // een gesprek of de sollicitant wijzigt iets: melding met Vernieuwen
 require __DIR__ . '/layout_top.php';
 ?>
 

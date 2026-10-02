@@ -83,6 +83,7 @@ function loonplan_extra_opslaan(int $seizoen_id, ?int $id, string $naam, string 
             $id = (int)db()->lastInsertId();
         }
         if (function_exists('audit_log')) audit_log('loonplan_extra_opgeslagen', 'loon_extra', $id, ['naam' => $waarden[0], 'functie' => $waarden[1]]);
+        if (function_exists('live_loon')) live_loon(0, $seizoen_id);
         return $id;
     } catch (\Exception $e) { error_log('loonplan_extra_opslaan: ' . $e->getMessage()); return null; }
 }
@@ -98,6 +99,7 @@ function loonplan_extra_verwijderen(int $seizoen_id, int $id): bool {
         db()->prepare("DELETE FROM loon_extra_planning WHERE extra_id=?")->execute([$id]);
         db()->prepare("DELETE FROM loon_extra_persoon WHERE id=?")->execute([$id]);
         if (function_exists('audit_log')) audit_log('loonplan_extra_verwijderd', 'loon_extra', $id, ['naam' => (string)$naam]);
+        if (function_exists('live_loon')) live_loon(0, $seizoen_id);
         return true;
     } catch (\Exception $e) { error_log('loonplan_extra_verwijderen: ' . $e->getMessage()); return false; }
 }
@@ -121,6 +123,7 @@ function loonplan_extra_cel_opslaan(int $scenario_id, int $extra_id, int $week, 
                        VALUES (?,?,?,?,?,?,?,NOW())
                        ON DUPLICATE KEY UPDATE dagen=VALUES(dagen), opgenomen=VALUES(opgenomen), betaald=VALUES(betaald), bijgewerkt_op=NOW()")
             ->execute([$extra_id, $scenario_id, $week, $jaar, max(0, min(7, $dagen)), $opgenomen ? 1 : 0, $betaald ? 1 : 0]);
+        if (function_exists('live_loon')) live_loon($scenario_id);
         return true;
     } catch (\Exception $e) { error_log('loonplan_extra_cel_opslaan: ' . $e->getMessage()); return false; }
 }

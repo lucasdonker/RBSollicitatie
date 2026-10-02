@@ -128,6 +128,8 @@ function bd_url(?int $k = null, ?string $groep = null): string {
 
 $pagina_titel = 'Beoordelen';
 $actieve_nav  = 'selectiedag';
+// Observaties van collega's over deze persoon verschijnen vanzelf (de lijst is een data-live-blok).
+$live_scopes  = $huidig_id ? ['sol:' . $huidig_id] : [];
 require __DIR__ . '/layout_top.php';
 ?>
 

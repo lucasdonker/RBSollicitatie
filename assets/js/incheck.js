@@ -61,4 +61,9 @@
     });
     blok.querySelector('[data-ick-zoek]').addEventListener('input', function () { filter(blok); });
   });
+
+  // Live bijwerken (assets/js/live.js) zette nieuwe rijen neer: tellers en je zoekfilter opnieuw toepassen.
+  document.addEventListener('p13:live', function () {
+    document.querySelectorAll('[data-incheck]').forEach(function (blok) { tel(blok); filter(blok); });
+  });
 })();

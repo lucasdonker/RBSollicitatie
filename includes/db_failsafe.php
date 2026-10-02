@@ -233,6 +233,7 @@ function db_failsafe(bool $forceer = false): void {
         'blk_kolommen_verzeker',
         'seizoen_kolommen_verzeker',
         'loon_tarieven_auto_setup',      // na de seizoenkolommen: het jaar komt uit datum_werk_start
+        'live_auto_setup',               // live bijwerken (2.155.0)
     ];
     foreach ($setups as $fn) {
         if (function_exists($fn)) {

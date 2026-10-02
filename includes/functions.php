@@ -57,6 +57,8 @@ if (file_exists(__DIR__ . '/loonplan_extra.php')) require_once __DIR__ . '/loonp
 if (file_exists(__DIR__ . '/inzet_rooster.php')) require_once __DIR__ . '/inzet_rooster.php';
 if (file_exists(__DIR__ . '/loonplan_export.php')) require_once __DIR__ . '/loonplan_export.php';
 if (file_exists(__DIR__ . '/xlsx.php')) require_once __DIR__ . '/xlsx.php';
+// Live bijwerken (2.155.0): de schrijffuncties hieronder melden wijzigingen met live_bump().
+if (file_exists(__DIR__ . '/live.php')) require_once __DIR__ . '/live.php';
 if (file_exists(__DIR__ . '/selectiedag.php')) require_once __DIR__ . '/selectiedag.php';
 if (file_exists(__DIR__ . '/trainingsweekend.php')) require_once __DIR__ . '/trainingsweekend.php';
 // Wat selectiedag en trainingsweekend delen: inchecken, afsluiten, ik kom/kan niet, vergrendeling.
@@ -238,7 +240,14 @@ function sessie_start(): void {
  */
 const BEHEER_INACTIEF_SECONDEN = 7200;
 
-function is_ingelogd(): bool {
+/**
+ * @param bool $activiteit  false = dit verzoek telt niet als activiteit (automatisch verversen:
+ *        admin/api_live.php, de 15-secondenvraag van de afspraak-editor, een stil herladen blok met
+ *        de kop X-P13-Live). Anders houdt een open tabblad de sessie eindeloos in leven en werkt het
+ *        uitloggen na inactiviteit niet meer. De kop kan alleen minder activiteit veroorzaken, nooit meer.
+ */
+function is_ingelogd(bool $activiteit = true): bool {
+    if (!empty($_SERVER['HTTP_X_P13_LIVE'])) $activiteit = false;
     sessie_start();
     if (empty($_SESSION['bhd_id'])) return false;
     $laatst = (int)($_SESSION['bhd_actief'] ?? 0);
@@ -249,7 +258,7 @@ function is_ingelogd(): bool {
         flash('info', 'Je was twee uur niet actief in het beheer en bent daarom uitgelogd. Log opnieuw in om verder te gaan.');
         return false;
     }
-    $_SESSION['bhd_actief'] = time();
+    if ($activiteit) $_SESSION['bhd_actief'] = time();
     return true;
 }
 

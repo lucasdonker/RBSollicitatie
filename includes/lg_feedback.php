@@ -105,6 +105,7 @@ function lg_feedback_toevoegen(int $sol_id, int $seizoen_id, string $van, string
            ->execute([$sol_id, $seizoen_id ?: null, mb_substr($van, 0, 100), $moment, $soort, mb_substr($tekst, 0, 2000),
                       $door_id ?: null, mb_substr($door_naam, 0, 100)]);
         if (function_exists('audit_log')) audit_log('lg_feedback_vastgelegd', 'sollicitatie', $sol_id, ['moment' => $moment, 'soort' => $soort]);
+        if (function_exists('live_bump')) live_bump(['sol:' . $sol_id, live_ev($moment === 'tw' ? 'tw' : 'selectiedag', $seizoen_id)]);
         return true;
     } catch (\Exception $e) { error_log('lg_feedback_toevoegen: ' . $e->getMessage()); return false; }
 }
@@ -119,6 +120,7 @@ function lg_feedback_wissen(int $id, int $door_id, bool $is_admin): int {
         if (!$r || (!$is_admin && (int)$r['vastgelegd_door'] !== $door_id)) return 0;
         db()->prepare("DELETE FROM lifeguard_feedback WHERE id=?")->execute([$id]);
         if (function_exists('audit_log')) audit_log('lg_feedback_gewist', 'sollicitatie', (int)$r['sollicitatie_id'], []);
+        if (function_exists('live_bump')) live_bump(['sol:' . (int)$r['sollicitatie_id']]);
         return (int)$r['sollicitatie_id'];
     } catch (\Exception $e) { return 0; }
 }

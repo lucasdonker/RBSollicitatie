@@ -184,6 +184,22 @@ Alles van het bestuurslid, plus:
 - [ ] Lees [Privacy en AVG-verzoeken](#privacy-en-avg-verzoeken): een verzoek om inzage of
    verwijdering komt meestal bij jou terecht.
 
+### Werken met meerdere mensen tegelijk
+
+Op de selectiedag en het trainingsweekend werken meer mensen tegelijk in het beheer. Wat een ander
+doet, zie je zonder te verversen:
+
+- **Vanzelf bijgewerkt:** de incheck-lijst (ook wie op de tablet incheckt), de bellijst ("bezig door",
+  gebeld), de gesprekkenlijst van het weekend (wie is gesproken, de volgorde) en de observaties bij
+  Beoordelen. Je zoekterm en filter blijven staan. Ben je iets aan het typen, dan wordt dat stuk niet
+  vervangen.
+- **Met een melding:** op het dossier, de lijsten, Vandaag, de nabespreking, beschikbaarheid, de
+  loonplanning en het gesprek zie je onderin "Anna heeft hier iets gewijzigd" met **Vernieuwen**. Er
+  wordt dan niets vanzelf vervangen, zodat je rustig kunt doorlezen.
+
+Je eigen wijzigingen geven geen melding. Een open tabblad houdt je niet ingelogd: na twee uur zonder
+zelf iets te doen, log je ook dan uit.
+
 ---
 
 ## Het seizoen in stappen

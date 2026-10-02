@@ -85,6 +85,7 @@ function loonplan_vastzetten(int $seizoen_id, int $sol_id, int $bron_scenario_id
         return false;
     }
     if (function_exists('audit_log')) audit_log('loonplanning_vastgezet', 'sollicitatie', $sol_id, ['scenario' => $bron_scenario_id]);
+    if (function_exists('live_loon')) live_loon(0, $seizoen_id, $sol_id);
     return true;
 }
 
@@ -97,6 +98,7 @@ function loonplan_ontgrendelen(int $seizoen_id, int $sol_id, string $reden, int 
         db()->prepare("DELETE FROM loon_vergrendeling WHERE seizoen_id=? AND sollicitatie_id=?")->execute([$seizoen_id, $sol_id]);
     } catch (\Exception $e) { return false; }
     if (function_exists('audit_log')) audit_log('loonplanning_ontgrendeld', 'sollicitatie', $sol_id, ['reden' => $reden, 'door' => $door]);
+    if (function_exists('live_loon')) live_loon(0, $seizoen_id, $sol_id);
     return true;
 }
 

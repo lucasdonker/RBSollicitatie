@@ -28,6 +28,7 @@ $mag_soll = mag('sollicitanten', 'lezen');
 
 $pagina_titel = 'Vandaag';
 $actieve_nav  = 'dashboard';
+$live_scopes = $sid ? ['sz:' . $sid] : [];   // alleen een melding: Vandaag zelf herladen verschuift "sinds je vorige bezoek"
 require __DIR__ . '/layout_top.php';
 ?>
 

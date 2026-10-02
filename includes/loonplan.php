@@ -105,6 +105,7 @@ function loonplan_scenario_activeer(int $seizoen_id, int $scenario_id): void {
     try {
         db()->prepare("UPDATE loon_scenario SET actief=0 WHERE seizoen_id=?")->execute([$seizoen_id]);
         db()->prepare("UPDATE loon_scenario SET actief=1 WHERE id=? AND seizoen_id=?")->execute([$scenario_id, $seizoen_id]);
+        if (function_exists('live_loon')) live_loon(0, $seizoen_id);
     } catch (\Exception $e) {}
 }
 
@@ -427,6 +428,7 @@ function loonplan_cel_opslaan(int $scenario_id, int $sol_id, int $week, int $jaa
             ON DUPLICATE KEY UPDATE dagen=VALUES(dagen), opgenomen=VALUES(opgenomen), betaald=VALUES(betaald),
                                     weekdagen=VALUES(weekdagen), bijgewerkt_op=NOW()
         ")->execute([$sol_id, $week, $jaar, $dagen, $opgenomen ? 1 : 0, $betaald ? 1 : 0, $wd ? json_encode($wd) : null, $scenario_id]);
+        if (function_exists('live_loon')) live_loon($scenario_id, 0, $sol_id);
         return true;
     } catch (\Exception $e) { error_log('loonplan_cel_opslaan: ' . $e->getMessage()); return false; }
 }
@@ -475,6 +477,7 @@ function loonplan_functie_zetten(int $scenario_id, int $sol_id, string $functie)
         db()->prepare("INSERT INTO loon_scenario_persoon (scenario_id, sollicitatie_id, functie_sleutel) VALUES (?,?,?)
                        ON DUPLICATE KEY UPDATE functie_sleutel=VALUES(functie_sleutel)")
            ->execute([$scenario_id, $sol_id, mb_substr($functie, 0, 50)]);
+        if (function_exists('live_loon')) live_loon($scenario_id, 0, $sol_id);
         return true;
     } catch (\Exception $e) { error_log('loonplan_functie_zetten: ' . $e->getMessage()); return false; }
 }

@@ -43,6 +43,7 @@ $naam_html    = fn(int $sol_id, string $naam): string => $mag_dossier
     : h($naam);
 $geen_grens   = !$seizoen || (empty($seizoen['hoofdseizoen_start_week']) && empty($seizoen['hoofdseizoen_eind_week']));
 
+$live_scopes = $sid ? ['loon:' . $sid] : [];
 require __DIR__ . '/layout_top.php';
 ?>
 

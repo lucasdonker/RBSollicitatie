@@ -379,6 +379,7 @@ function selectie_score_opslaan(int $seizoen_id, int $sol_id, string $test, stri
     selectiedag_auto_setup();
     $score = max(0, min(5, $score));
     $db = db();
+    if (function_exists('evenement_live')) evenement_live('selectiedag', $seizoen_id, $sol_id);
     if ($score === 0) {
         $db->prepare("DELETE FROM selectie_score WHERE seizoen_id=? AND sollicitatie_id=? AND test=? AND criterium=? AND beoordelaar=?")
            ->execute([$seizoen_id, $sol_id, $test, $criterium, $beoordelaar]);
@@ -452,7 +453,9 @@ function selectie_observatie_toevoegen(int $seizoen_id, int $sol_id, string $tek
     try {
         db()->prepare("INSERT INTO selectie_observatie (seizoen_id, sollicitatie_id, tekst, soort, beoordelaar, beoordelaar_id) VALUES (?,?,?,?,?,?)")
            ->execute([$seizoen_id, $sol_id, mb_substr($tekst, 0, 2000), $soort, $beoordelaar, $beoordelaar_id]);
-        return (int)db()->lastInsertId();
+        $id = (int)db()->lastInsertId();
+        if (function_exists('evenement_live')) evenement_live('selectiedag', $seizoen_id, $sol_id);
+        return $id;
     } catch (\Exception $e) { return null; }
 }
 
@@ -460,6 +463,11 @@ function selectie_observatie_toevoegen(int $seizoen_id, int $sol_id, string $tek
 function selectie_observatie_verwijderen(int $id, string $beoordelaar, bool $mag_alles): bool {
     selectiedag_auto_setup();
     try {
+        if (function_exists('evenement_live')) {
+            $q = db()->prepare("SELECT seizoen_id, sollicitatie_id FROM selectie_observatie WHERE id=?");
+            $q->execute([$id]);
+            if ($r = $q->fetch()) evenement_live('selectiedag', (int)$r['seizoen_id'], (int)$r['sollicitatie_id']);
+        }
         if ($mag_alles) {
             db()->prepare("DELETE FROM selectie_observatie WHERE id=?")->execute([$id]);
         } else {
@@ -558,6 +566,7 @@ function selectie_besluiten(int $seizoen_id): array {
  */
 function selectie_besluit_zetten(int $seizoen_id, int $sol_id, string $besluit, string $notitie, string $door): void {
     selectiedag_auto_setup();
+    if (function_exists('evenement_live')) evenement_live('selectiedag', $seizoen_id, $sol_id);
     if ($besluit === '') {
         db()->prepare("DELETE FROM selectie_besluit WHERE sollicitatie_id=? AND seizoen_id=?")->execute([$sol_id, $seizoen_id]);
         return;
@@ -582,6 +591,7 @@ function selectie_gebeld_zetten(int $seizoen_id, int $sol_id, string $notitie, s
     $db->prepare("UPDATE selectie_besluit SET gebeld_op=NOW(), gebeld_door=?, gebeld_notitie=?, bel_door=NULL, bel_sinds=NULL $zet_besluit
                   WHERE sollicitatie_id=? AND seizoen_id=?")
        ->execute([$door, mb_substr(trim($notitie), 0, 300), $sol_id, $seizoen_id]);
+    if (function_exists('evenement_live')) evenement_live('selectiedag', $seizoen_id, $sol_id);
     $doorgevoerd = false; $fase_res = null;
     if ($meteen_doorvoeren) {
         $doorgevoerd = selectie_besluit_doorvoeren_een($seizoen_id, $sol_id, $fase_res);
@@ -594,6 +604,7 @@ function selectie_gebeld_wissen(int $seizoen_id, int $sol_id): void {
     selectiedag_auto_setup();
     db()->prepare("UPDATE selectie_besluit SET gebeld_op=NULL, gebeld_door=NULL, gebeld_notitie=NULL WHERE sollicitatie_id=? AND seizoen_id=?")
        ->execute([$sol_id, $seizoen_id]);
+    if (function_exists('evenement_live')) evenement_live('selectiedag', $seizoen_id, $sol_id);
 }
 
 /**
@@ -622,6 +633,7 @@ function selectie_besluit_doorvoeren_een(int $seizoen_id, int $sol_id, ?array &$
     if ($res['ok'] && !$res['ongewijzigd']) {
         $db->prepare("UPDATE selectie_besluit SET doorgevoerd_op=NOW() WHERE sollicitatie_id=? AND seizoen_id=?")
            ->execute([$sol_id, $seizoen_id]);
+        if (function_exists('evenement_live')) evenement_live('selectiedag', $seizoen_id, $sol_id);
         return true;
     }
     return false;

@@ -79,7 +79,8 @@ foreach ($bel_lijst as $_k) if ((int)$_k['sol_id'] === $_open) $_huidig = $_k;
 ?>
 <div class="bh-bellijst">
 
-  <div class="bh-bel-lijst ds-kaart">
+  <?php // data-live-blok: gebeld of bezig door een collega verschijnt vanzelf (assets/js/live.js). ?>
+  <div class="bh-bel-lijst ds-kaart" data-live-blok id="bel-lijst">
     <div class="bh-bel-kop">
       <span><strong class="bh-num"><?= $bel_gebeld ?></strong> van <strong class="bh-num"><?= $bel_gebeld + $bel_ongebeld ?></strong> gebeld</span>
       <?php if ($bel_gebeld > 0): ?>
@@ -164,7 +165,8 @@ foreach ($bel_lijst as $_k) if ((int)$_k['sol_id'] === $_open) $_huidig = $_k;
         !empty($_obs_tel['aandacht']) ? $_obs_tel['aandacht'] . ' aandacht' : '',
     ]));
   ?>
-  <section class="bh-bel-gesprek ds-kaart" aria-labelledby="bel-naam-<?= $_id ?>">
+  <?php // Ook de kaart ververst (id per persoon), maar niet zolang je een aantekening typt. ?>
+  <section class="bh-bel-gesprek ds-kaart" aria-labelledby="bel-naam-<?= $_id ?>" data-live-blok id="bel-kaart-<?= $_id ?>">
     <header class="bh-bel-gesprek-kop">
       <?= bh_avatar($_huidig, 44, ['vergroot' => true]) ?>
       <span class="bh-beoordeel-wie">

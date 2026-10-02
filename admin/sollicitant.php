@@ -125,6 +125,8 @@ function dossier_url(int $sol_id, string $tab = 'dossier'): string {
 $pagina_titel = $naam;
 $actieve_nav  = 'sollicitant';   // eigen hulptekst; bh_nav_actief() laat Sollicitanten oplichten
 $pagina_breed = true;
+// Iemand anders (bellijst, gesprek, loonplanning, de sollicitant zelf) verandert iets: melding met Vernieuwen.
+$live_scopes  = ['sol:' . $id];
 require __DIR__ . '/layout_top.php';
 
 /* Tussenscherm in plaats van het dossier: eerst zien wat er gebeurt. */

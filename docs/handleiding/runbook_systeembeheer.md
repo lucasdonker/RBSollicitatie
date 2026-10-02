@@ -170,6 +170,12 @@ e-mailadres.
   ná het antwoord aan de bezoeker (`includes/na_antwoord.php`, via `fastcgi_finish_request`).
   Zet de PHP-handler in Plesk dus op een FPM-variant. Onder een andere handler werkt alles nog,
   maar wacht de bezoeker tot het werk klaar is.
+- **Live bijwerken = korte polling, geen open verbinding** (2.155.0). Een open beheerscherm vraagt
+  elke 10 seconden `/admin/api_live.php` (alleen als het tabblad zichtbaar is): inlogcheck, sessie
+  meteen vrijgeven, één query op de primaire sleutel van `live_versie`. Met tien mensen tegelijk is
+  dat één licht verzoek per seconde. SSE of WebSockets zijn bewust niet gebruikt: die houden een
+  FPM-worker en de sessielock vast. Deze verzoeken en de stille herlaadactie (kop `X-P13-Live`)
+  tellen niet als activiteit voor het uitloggen na twee uur.
 - **Twee kanten:** het portaal voor sollicitanten (`/portaal/`) en het beheer (`/admin/`).
   Daarnaast de openbare adressen `/aanmelden.php` (aanmeldformulier), `/privacy.php`
   (privacyverklaring), `/p/<naam>` (landingspagina's), `/foto.php` (foto van een sollicitant,

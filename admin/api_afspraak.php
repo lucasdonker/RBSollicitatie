@@ -12,7 +12,8 @@
  * Staat iemand op slot, dan weigeren cel en functie (includes/loonplan_slot.php).
  */
 require_once __DIR__ . '/../includes/functions.php';
-vereist_login();
+// De GET komt elke 15 seconden vanzelf (assets/js/afspraak.js): dat is geen activiteit van de gebruiker.
+if (!is_ingelogd($_SERVER['REQUEST_METHOD'] === 'POST')) { header('Content-Type: application/json; charset=utf-8'); http_response_code(401); echo json_encode(['ok' => false, 'uitgelogd' => true]); exit; }
 header('Content-Type: application/json; charset=utf-8');
 vereis_recht('loonplanning', 'lezen');
 

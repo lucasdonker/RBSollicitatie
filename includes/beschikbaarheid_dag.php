@@ -71,6 +71,7 @@ function beschikbaarheid_dagen_opslaan(int $sol_id, array $dagen, string $bron =
             $status = in_array($d['status'] ?? '', ['open','goedgekeurd','afgewezen'], true) ? $d['status'] : 'goedgekeurd';
             $ins->execute([$sol_id, $datum, $soort, $reden, $bron, $status]);
         }
+        if (function_exists('live_loon')) live_loon(0, 0, $sol_id);
     } catch (\Exception $e) { error_log('beschikbaarheid_dagen_opslaan: ' . $e->getMessage()); }
 }
 
@@ -79,6 +80,7 @@ function beschikbaarheid_dag_verwijderen(int $sol_id, int $dag_id): void {
     beschikbaarheid_dag_auto_setup();
     try {
         db()->prepare("DELETE FROM beschikbaarheid_dag WHERE id=? AND sollicitatie_id=?")->execute([$dag_id, $sol_id]);
+        if (function_exists('live_loon')) live_loon(0, 0, $sol_id);
     } catch (\Exception $e) {}
 }
 
@@ -105,6 +107,7 @@ function beschikbaarheid_dag_bestuur_zet(int $sol_id, string $datum, string $soo
         if (function_exists('audit_log')) {
             audit_log('gewijzigd', 'beschikbaarheid', $sol_id, ['datum' => $datum, 'soort' => $soort, 'reden' => $reden, 'via' => 'bestuur_per_dag']);
         }
+        if (function_exists('live_loon')) live_loon(0, 0, $sol_id);
     } catch (\Exception $e) { error_log('beschikbaarheid_dag_bestuur_zet: ' . $e->getMessage()); }
 }
 
@@ -117,6 +120,7 @@ function beschikbaarheid_dag_bestuur_verwijder(int $sol_id, string $datum): void
         if (function_exists('audit_log')) {
             audit_log('gewijzigd', 'beschikbaarheid', $sol_id, ['datum' => $datum, 'via' => 'bestuur_teruggedraaid']);
         }
+        if (function_exists('live_loon')) live_loon(0, 0, $sol_id);
     } catch (\Exception $e) {}
 }
 
