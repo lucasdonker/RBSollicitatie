@@ -188,7 +188,9 @@ function portaal_taken(array $sol, ?array $blk = null, bool $vangnet = true): ar
                 'urgent'      => !$_klaar,
                 'volgorde'    => 35,
                 'inline_form' => 'deelname',
-                'inline_data' => ['ev' => $_ev, 'stand' => $_b['stand'], 'reden' => $_b['reden']],
+                'inline_data' => ['ev' => $_ev, 'stand' => $_b['stand'], 'reden' => $_b['reden'], 'eerder_weg' => $_b['eerder_weg'] ?? null,
+                                  // Trainingsweekend: de dagen voor "ik moet eerder weg" (tw_dagen()).
+                                  'dagen' => $_ev === 'tw' && function_exists('tw_dagen') ? tw_dagen($sol) : []],
             ]);
         }
     }
@@ -532,7 +534,15 @@ function portaal_taken_post_afhandelen(int $sol_id): void {
         } elseif (!evenement_bevestigen($ev, (int)$s['seizoen_id'], $sol_id, $stand, (string)($_POST['reden'] ?? ''), 'portaal')) {
             flash('fout', 'Vertel kort waarom je niet kunt; dan kan het bestuur met je meedenken.');
         } else {
-            flash('succes', $stand === 'komt' ? 'Genoteerd: je komt. Tot dan!' : 'Genoteerd. Het bestuur bekijkt je afmelding en laat je weten wat het besluit is.');
+            // Trainingsweekend: "ik moet eerder weg" (dag + tijd). Kan niet = wissen. Ongeldig = melden, de bevestiging staat wel.
+            $weg_fout = false;
+            if ($ev === 'tw' && function_exists('tw_eerder_weg_zetten')) {
+                $weg = $stand === 'komt' && !empty($_POST['eerder_weg_aan']);
+                $weg_fout = !tw_eerder_weg_zetten((int)$s['seizoen_id'], $sol_id, $weg ? (string)($_POST['eerder_weg_dag'] ?? '') : '',
+                                                  $weg ? (string)($_POST['eerder_weg_tijd'] ?? '') : '', portaal_sollicitant_laden($sol_id) ?: null);
+            }
+            if ($weg_fout) flash('fout', 'Genoteerd dat je komt, maar de tijd om eerder weg te gaan klopt niet. Kies een dag van het weekend en een tijd.');
+            else flash('succes', $stand === 'komt' ? 'Genoteerd: je komt. Tot dan!' : 'Genoteerd. Het bestuur bekijkt je afmelding en laat je weten wat het besluit is.');
         }
         redirect($terug);
     }

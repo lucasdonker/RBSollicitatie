@@ -3,10 +3,22 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.152.0');
+define('APP_VERSIE', '2.153.0');
 
 function app_changelog(): array {
     return [
+        '2.153.0' => [
+            'datum'  => '2026-10-02',
+            'titel'  => 'Gesprekken op het weekend: wie eerder weg moet eerst, strandwachten apart',
+            'punten' => [
+                'In het portaal geeft de sollicitant bij "Ik kom" voor het weekend door of hij of zij eerder weg moet (dag en tijd)',
+                'Nog te spreken staat in gespreksvolgorde: wie eerder weg moet bovenaan, met de tijd erbij; daarna op naam',
+                'Terugkerende strandwachten staan ingeklapt in een eigen blok; met Naar de lijst zet je er één tussen de anderen',
+                'De volgorde pas je aan met de pijltjes of door te slepen; Volgorde herstellen zet alles terug. Het bestuur kan "eerder weg" ook zelf zetten',
+                'In het gesprek, bij Voorbereiden en in het dossier staat "Moet weg: …" erbij',
+                'In de kop van het gesprek betekent "terugkerende strandwacht" nu hetzelfde als overal (gekoppeld account); wie alleen eerder solliciteerde heet "eerder gesolliciteerd"',
+            ],
+        ],
         '2.152.0' => [
             'datum'  => '2026-10-02',
             'titel'  => 'Feedback van strandwachten vastleggen zonder gesprek',

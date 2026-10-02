@@ -48,6 +48,7 @@ $_bev = evenement_bevestig_standen();
         <?= bh_badge($_bev[$_st] ?? $_bev['onbekend'], ['komt' => 'groen', 'komt_niet' => 'rood'][$_st] ?? 'grijs') ?>
         <?php if (!empty($_tw['bevestiging_reden'])): ?><span class="bh-meta"><?= h((string)$_tw['bevestiging_reden']) ?></span><?php endif; ?>
       </p>
+      <?php if (!empty($_tw['eerder_weg'])): ?><p class="bh-dossier-tekst">Moet eerder weg: <?= h(tw_eerder_weg_tekst((string)$_tw['eerder_weg'])) ?>.</p><?php endif; ?>
       <p class="bh-dossier-tekst">
         <?php if (!empty($_tw['aanwezig'])): ?>
           Ingecheckt<?= !empty($_tw['ingecheckt_op']) ? ' om ' . h(date('H:i', strtotime((string)$_tw['ingecheckt_op']))) . ' op ' . h(datum_nl(substr((string)$_tw['ingecheckt_op'], 0, 10))) : '' ?>.

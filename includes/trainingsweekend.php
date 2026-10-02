@@ -88,6 +88,9 @@ function tw_auto_setup(): void {
                   'evaluatie_door' => 'VARCHAR(100) DEFAULT NULL', 'evaluatie_op' => 'DATETIME DEFAULT NULL'] as $kol => $def) {
             db_kolom_verzeker($db, 'tw_deelname', $kol, $def);
         }
+        // 2.153.0: wie eerder weg moet (portaal of bestuur) en de handmatige volgorde van de gesprekken.
+        db_kolom_verzeker($db, 'tw_deelname', 'eerder_weg', 'DATETIME DEFAULT NULL');
+        db_kolom_verzeker($db, 'tw_deelname', 'gesprek_positie', 'INT DEFAULT NULL');
     } catch (\Exception $e) {
         error_log('tw_auto_setup: ' . $e->getMessage());
     }
@@ -110,6 +113,7 @@ function tw_kandidaten(int $seizoen_id): array {
                    d.besluit, d.besluit_notitie, d.besluit_door, d.besluit_op, d.doorgevoerd_op,
                    d.bevestiging, d.bevestiging_reden, d.gesprek_status, d.gesprek_door, d.gesprek_sinds, d.gesprek_bericht,
                    d.evaluatie, d.evaluatie_bericht, d.evaluatie_door, d.evaluatie_op,
+                   d.eerder_weg, d.gesprek_positie,
                    blk.foto_url, blk.bijzonderheden
             FROM sollicitaties s
             JOIN personen p ON p.id = s.persoon_id
@@ -481,6 +485,106 @@ function tw_gesprekken_filter(array $kandidaten, array $f, int $ik, array $sd_sc
         usort($uit, fn($a, $b) => ($b['_sd'] ?? -1) <=> ($a['_sd'] ?? -1) ?: strcmp((string)$a['naam'], (string)$b['naam']));
     }
     return $uit;
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Eerder weg en de volgorde van de gesprekken (2.153.0)
+// ─────────────────────────────────────────────────────────────
+
+/** De dagen van het weekend (Y-m-d), van start t/m eind; leeg zonder datum. */
+function tw_dagen(?array $seizoen): array {
+    $start = (string)($seizoen['datum_tw_start'] ?? '');
+    if ($start === '') return [];
+    $eind = (string)($seizoen['datum_tw_eind'] ?? '') ?: $start;
+    $uit = [];
+    try {
+        for ($d = new DateTime($start), $e = new DateTime($eind), $n = 0; $d <= $e && $n < 7; $d->modify('+1 day'), $n++) $uit[] = $d->format('Y-m-d');
+    } catch (\Exception $e) {}
+    return $uit;
+}
+
+/**
+ * Wie eerder weg moet: een dag van het weekend plus een tijd, of leeg = wissen. De sollicitant
+ * geeft het door bij "ik kom" (portaal), het bestuur kan het in de gesprekkenlijst zetten.
+ * Wie eerder weg moet, komt bovenaan "Nog te spreken" (tw_gesprek_volgorde()).
+ * @return bool false bij een dag buiten het weekend of een ongeldige tijd
+ */
+function tw_eerder_weg_zetten(int $seizoen_id, int $sol_id, string $dag, string $tijd, ?array $seizoen): bool {
+    tw_auto_setup();
+    $waarde = null;
+    if ($dag !== '' || $tijd !== '') {
+        if (!in_array($dag, tw_dagen($seizoen), true) || !preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $tijd)) return false;
+        $waarde = $dag . ' ' . $tijd . ':00';
+    }
+    tw_rij_verzeker($seizoen_id, $sol_id);
+    db()->prepare("UPDATE tw_deelname SET eerder_weg=? WHERE seizoen_id=? AND sollicitatie_id=?")->execute([$waarde, $seizoen_id, $sol_id]);
+    if (function_exists('audit_log')) audit_log('tw_eerder_weg', 'sollicitatie', $sol_id, ['eerder_weg' => $waarde]);
+    return true;
+}
+
+/** "zondag 4 mei, 15:30" — leeg zonder waarde. */
+function tw_eerder_weg_tekst(?string $dt): string {
+    if (!$dt) return '';
+    return trim(datum_dag_nl(substr($dt, 0, 10)) . ', ' . substr($dt, 11, 5));
+}
+
+/**
+ * De volgorde van "Nog te spreken" (alleen wie in die stand zit):
+ *  - hoofd: eerst wie een handmatige plek heeft (gesprek_positie), dan wie eerder weg moet
+ *    (vroegste eerst), dan de rest op naam;
+ *  - apart: terugkerende strandwachten zonder handmatige plek. Die gaan de anderen niet voor,
+ *    maar je kunt er één met "Naar de lijst" tussen zetten.
+ * @return array{hoofd:array,apart:array}
+ */
+function tw_gesprek_volgorde(array $nog): array {
+    $hoofd = $apart = [];
+    foreach ($nog as $k) {
+        if (!empty($k['is_lifeguard']) && ($k['gesprek_positie'] ?? null) === null) $apart[] = $k; else $hoofd[] = $k;
+    }
+    $sleutel = fn(array $k): array => [($k['gesprek_positie'] ?? null) === null ? 1 : 0, (int)($k['gesprek_positie'] ?? 0),
+                                       (string)($k['eerder_weg'] ?? '') ?: '9999', mb_strtolower((string)$k['naam'])];
+    usort($hoofd, fn($a, $b) => $sleutel($a) <=> $sleutel($b));
+    usort($apart, fn($a, $b) => $sleutel($a) <=> $sleutel($b));
+    return ['hoofd' => $hoofd, 'apart' => $apart];
+}
+
+/**
+ * Een plek in de gesprekkenlijst veranderen. $hoofd_ids = de huidige volgorde van de hoofdlijst
+ * (uit tw_gesprek_volgorde()). Schrijft daarna de hele hoofdlijst als handmatige volgorde weg,
+ * zodat wat je ziet ook vastligt.
+ * @param string $richting op | neer | lijst (van apart naar onderaan de hoofdlijst) | apart (eigen plek wissen)
+ */
+function tw_gesprek_verplaats(int $seizoen_id, array $hoofd_ids, int $sol_id, string $richting): bool {
+    tw_auto_setup();
+    $ids = array_values(array_map('intval', $hoofd_ids));
+    $i = array_search($sol_id, $ids, true);
+    if ($richting === 'apart') {
+        db()->prepare("UPDATE tw_deelname SET gesprek_positie=NULL WHERE seizoen_id=? AND sollicitatie_id=?")->execute([$seizoen_id, $sol_id]);
+        return true;
+    }
+    if ($richting === 'lijst') { if ($i === false) $ids[] = $sol_id; return tw_gesprek_volgorde_opslaan($seizoen_id, $ids); }
+    if ($i === false) return false;
+    $j = $richting === 'op' ? $i - 1 : ($richting === 'neer' ? $i + 1 : -1);
+    if ($j < 0 || $j >= count($ids)) return false;
+    $tmp = $ids[$j]; $ids[$j] = $ids[$i]; $ids[$i] = $tmp;
+    return tw_gesprek_volgorde_opslaan($seizoen_id, $ids);
+}
+
+/** De hoofdlijst in deze volgorde vastleggen (ook na slepen). Onbekende ids worden genegeerd door de WHERE. */
+function tw_gesprek_volgorde_opslaan(int $seizoen_id, array $ids): bool {
+    tw_auto_setup();
+    $u = db()->prepare("UPDATE tw_deelname SET gesprek_positie=? WHERE seizoen_id=? AND sollicitatie_id=?");
+    foreach (array_values(array_unique(array_map('intval', $ids))) as $n => $id) {
+        tw_rij_verzeker($seizoen_id, $id);
+        $u->execute([$n + 1, $seizoen_id, $id]);
+    }
+    return true;
+}
+
+/** Terug naar de vanzelf-volgorde (eerder weg, naam; strandwachten apart). */
+function tw_gesprek_volgorde_herstellen(int $seizoen_id): void {
+    tw_auto_setup();
+    db()->prepare("UPDATE tw_deelname SET gesprek_positie=NULL WHERE seizoen_id=?")->execute([$seizoen_id]);
 }
 
 /**

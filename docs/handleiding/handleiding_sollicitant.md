@@ -123,6 +123,9 @@ privacyverklaring.
 Vóór de selectiedag en het trainingsweekend staat bij je taken "Kom je?". Kies **Ik kom** of **Ik
 kan niet** en klik op **Doorgeven**. Kun je niet, schrijf dan kort waarom; het bestuur neemt
 contact met je op. Heb je het al aan de telefoon gezegd, dan staat het er vaak al ingevuld.
+Met **Ik kom** ben je aangemeld voor de selectiedag; het kennismakingsformulier vul je daarnaast in.
+Moet je op het trainingsweekend eerder weg? Vink **Ja, ik moet eerder weg** aan en kies de dag en
+de tijd; dan plant het bestuur je gesprek op tijd.
 
 Op de selectiedag en het trainingsweekend meld je jezelf bij aankomst aan op een tablet: je typt
 de eerste letters van je naam en tikt op jezelf (met je foto). Op de selectiedag zie je daarna in

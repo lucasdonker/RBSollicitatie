@@ -69,7 +69,8 @@ $_niet     = tw_niet_gekomen($_k);   // was er niet: geen gesprek, wel een beslu
           <?= bh_meta([$gd_dossier['leeftijd'] !== null ? $gd_dossier['leeftijd'] . ' jaar' : '',
                        $gd_dossier['leeftijd_seizoen'] !== null && $gd_dossier['leeftijd_seizoen'] !== $gd_dossier['leeftijd'] ? $gd_dossier['leeftijd_seizoen'] . ' bij de start' : '',
                        fase_label((string)$_k['fase']),
-                       !empty($_sol['terugkerend']) ? 'terugkerend' : 'nieuw']) ?>
+                       // Strandwacht = Authentik-koppeling (is_lifeguard), zoals overal; "terugkerend" is alleen eerder gesolliciteerd.
+                       !empty($_k['is_lifeguard']) ? 'terugkerende strandwacht' : (!empty($_sol['terugkerend']) ? 'eerder gesolliciteerd' : 'nieuw')]) ?>
           <?php if ($mag_dossier): ?><?= bh_meta([(string)($_sol['email'] ?? ''), (string)($_sol['telefoon'] ?? '')]) ?><?php endif; ?>
         </span>
         <?php if ($mag_dossier): ?><a class="ds-btn ds-btn-secundair ds-btn-sm" href="<?= APP_URL ?>/admin/sollicitant.php?id=<?= $_id ?>" target="_blank" rel="noopener">Dossier</a><?php endif; ?>
@@ -79,6 +80,9 @@ $_niet     = tw_niet_gekomen($_k);   // was er niet: geen gesprek, wel een beslu
       <?php endif; ?>
       <?php if (!empty($gd_dossier['leeftijd_melding'])): ?>
         <div class="ds-melding ds-melding-warn"><?= icoon('waarschuwing', 16) ?><span><?= h((string)$gd_dossier['leeftijd_melding']) ?></span></div>
+      <?php endif; ?>
+      <?php if (!empty($_k['eerder_weg'])): ?>
+        <p class="bh-twgesprek-weg"><?= icoon('klok', 14) ?> Moet weg: <?= h(tw_eerder_weg_tekst((string)$_k['eerder_weg'])) ?></p>
       <?php endif; ?>
       <?php if (!empty($_k['bevestiging_reden'])): ?>
         <p class="bh-dossier-tekst"><strong>Opmerking bij het aanmelden:</strong> <?= h((string)$_k['bevestiging_reden']) ?></p>

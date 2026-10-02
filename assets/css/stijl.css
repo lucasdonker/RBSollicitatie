@@ -1220,6 +1220,10 @@ a.pt-taakrij:hover { background: var(--bg); }
   border: 1px solid var(--border); border-radius: var(--radius-md, 10px); font-size: 15px; cursor: pointer;
 }
 .pt-deelname-optie:has(input:checked) { border-color: var(--navy); background: var(--navy-soft, #eaf1f8); font-weight: 600; }
+/* Eerder weg (trainingsweekend): dag + tijd verschijnen pas als het vinkje aan staat (zonder :has() altijd zichtbaar) */
+.pt-deelname-weg { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.pt-deelname-wegtijd { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 8px 10px; max-width: 360px; }
+.pt-deelname-weg:not(:has(input[name="eerder_weg_aan"]:checked)) .pt-deelname-wegtijd { display: none; }
 
 /* Infokaart (navy): SELECTIEDAG / TRAININGSWEEKEND */
 .pt-infokaart {

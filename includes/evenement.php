@@ -360,18 +360,22 @@ function evenement_bevestigen(string $ev, int $seizoen_id, int $sol_id, string $
     return true;
 }
 
-/** De bevestiging van één persoon: ['stand','reden','bron','op'] (stand 'onbekend' als er niets is). */
+/**
+ * De bevestiging van één persoon: ['stand','reden','bron','op','uitzondering','eerder_weg'] (stand 'onbekend'
+ * als er niets is). 'eerder_weg' bestaat alleen bij het trainingsweekend (tw_eerder_weg_zetten()).
+ */
 function evenement_bevestiging_van(string $ev, int $seizoen_id, int $sol_id): array {
     $d = evenement_def($ev);
-    $leeg = ['stand' => 'onbekend', 'reden' => null, 'bron' => null, 'op' => null, 'uitzondering' => false];
+    $leeg = ['stand' => 'onbekend', 'reden' => null, 'bron' => null, 'op' => null, 'uitzondering' => false, 'eerder_weg' => null];
     if (!$d) return $leeg;
     try {
-        $q = db()->prepare("SELECT bevestiging, bevestiging_reden, bevestiging_bron, bevestigd_op FROM `{$d['tabel']}` WHERE seizoen_id=? AND sollicitatie_id=?");
+        $q = db()->prepare("SELECT * FROM `{$d['tabel']}` WHERE seizoen_id=? AND sollicitatie_id=?");
         $q->execute([$seizoen_id, $sol_id]);
         $r = $q->fetch();
         if (!$r) return $leeg;
         return ['stand' => (string)($r['bevestiging'] ?: 'onbekend'), 'reden' => $r['bevestiging_reden'],
-                'bron' => $r['bevestiging_bron'], 'op' => $r['bevestigd_op'], 'uitzondering' => $r['bevestiging_bron'] === 'uitzondering'];
+                'bron' => $r['bevestiging_bron'], 'op' => $r['bevestigd_op'], 'uitzondering' => $r['bevestiging_bron'] === 'uitzondering',
+                'eerder_weg' => $r['eerder_weg'] ?? null];
     } catch (\Exception $e) { return $leeg; }
 }
 

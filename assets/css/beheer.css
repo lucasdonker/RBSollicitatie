@@ -2321,6 +2321,29 @@ body.bh-paneel-open .bh-inhoud { transition: padding-right .15s ease; }
 .bh-twgesprek-rij:first-child { border-top: 0; }
 .bh-twgesprek-wie { flex: 1; min-width: 160px; display: flex; flex-direction: column; gap: 1px; }
 .bh-twgesprek-naam { font-size: 15px; font-weight: 600; color: var(--ink); }
+.bh-twgesprekken > .bh-kaartkop { padding: 0; margin-bottom: 6px; align-items: center; }
+.bh-twgesprekken .bh-kaartkop h3 { margin: 0; }
+.bh-twgesprekken .bh-kaartkop form { margin-left: auto; }
+.bh-twgesprek-weg { display: inline-flex; align-items: center; gap: 5px; margin-top: 3px; font-size: 13px; font-weight: 600; color: var(--fase-oranje); }
+.bh-twgesprek-acties { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.bh-twgesprek-wegform { flex: 1 1 100%; margin-left: 56px; font-size: 13px; }
+.bh-twgesprek-wegform > summary { cursor: pointer; color: var(--navy); font-weight: 600; min-height: 32px; display: inline-flex; align-items: center; }
+.bh-twgesprek-wegform .ds-select, .bh-twgesprek-wegform .ds-input { width: auto; min-width: 140px; height: 40px; }
+.bh-twgesprek-apart { margin-top: 10px; border-top: 1px solid var(--border); }
+/* Volgorde: nummer, pijltjes (zonder JS) en slepen (assets/js/volgorde.js) */
+.bh-volgorde-nr { width: 22px; text-align: right; font-size: 13px; font-weight: 700; color: var(--ink-muted); }
+.bh-volgorde-knoppen { display: inline-flex; align-items: center; gap: 4px; }
+.bh-icoonknop {
+  display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px;
+  border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); color: var(--navy); cursor: pointer;
+}
+.bh-icoonknop:hover:not(:disabled) { border-color: var(--navy); }
+.bh-icoonknop:disabled { opacity: .35; cursor: default; }
+.bh-icoonknop:focus-visible { outline: 2px solid var(--navy); outline-offset: 2px; }
+.bh-twgesprek-lijst[data-volgorde] > li { cursor: grab; }
+.bh-twgesprek-lijst > li.sleept { opacity: .4; }
+.bh-twgesprek-lijst > li.doel { box-shadow: inset 0 3px 0 var(--navy); }
+@media (max-width: 600px) { .bh-twgesprek-wegform { margin-left: 0; } }
 
 /* Het gesprek: links alles over de persoon, rechts het besluit (blijft in beeld). */
 .bh-terug { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; font-size: 13px; font-weight: 600; color: var(--navy); text-decoration: none; }

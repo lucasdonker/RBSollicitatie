@@ -99,7 +99,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $sid) {
            && evenement_bevestigen('tw', $sid, $sol, (string)($_POST['stand'] ?? ''), (string)($_POST['reden'] ?? ''), 'beheer');
         $_klaar($ok, 'Opgeslagen.', 'Niet opgeslagen: bij "kan niet" hoort een opmerking.', tw_url('voorbereiden'));
     }
-    if (in_array($actie, ['evaluatie', 'gesprek_los', 'gesprek_overnemen', 'gesprek'], true)) $_eis($mag_beslissen);
+    if (in_array($actie, ['evaluatie', 'gesprek_los', 'gesprek_overnemen', 'gesprek', 'gesprek_volgorde', 'gesprek_volgorde_lijst',
+                          'gesprek_volgorde_herstel', 'eerder_weg'], true)) $_eis($mag_beslissen);
+
+    // De volgorde van "Nog te spreken" (tw_gesprek_volgorde()): omhoog/omlaag/naar de lijst, slepen, of herstellen.
+    if (in_array($actie, ['gesprek_volgorde', 'gesprek_volgorde_lijst'], true)) {
+        $_nog = array_filter(tw_gesprekken_filter(tw_kandidaten($sid), [], $ik_id, []), fn($k) => $k['_stand'] === 'nog');
+        $_ids = array_map(fn($k) => (int)$k['sol_id'], tw_gesprek_volgorde($_nog)['hoofd']);
+        if ($actie === 'gesprek_volgorde') {
+            $ok = evenement_is_kandidaat('tw', $sid, $sol) && tw_gesprek_verplaats($sid, $_ids, $sol, (string)($_POST['richting'] ?? ''));
+        } else {
+            // Alleen wie nu in "Nog te spreken" staat; de rest van wat de browser stuurt valt weg.
+            $_toegestaan = array_flip(array_map(fn($k) => (int)$k['sol_id'], $_nog));
+            $_nieuw = array_values(array_filter(array_map('intval', explode(',', (string)($_POST['volgorde'] ?? ''))), fn($i) => isset($_toegestaan[$i])));
+            $ok = $_nieuw && tw_gesprek_volgorde_opslaan($sid, $_nieuw);
+        }
+        $_klaar((bool)$ok, 'Volgorde opgeslagen.', 'Volgorde niet opgeslagen. Ververs de pagina.', tw_url('gesprekken') . '#gs-' . $sol);
+    }
+    if ($actie === 'gesprek_volgorde_herstel') {
+        tw_gesprek_volgorde_herstellen($sid);
+        $_klaar(true, 'De volgorde gaat weer vanzelf: eerst wie eerder weg moet, dan op naam.', '', tw_url('gesprekken'));
+    }
+    if ($actie === 'eerder_weg') {
+        $ok = evenement_is_kandidaat('tw', $sid, $sol)
+           && tw_eerder_weg_zetten($sid, $sol, (string)($_POST['dag'] ?? ''), (string)($_POST['tijd'] ?? ''), $seizoen);
+        $_klaar($ok, 'Opgeslagen.', 'Niet opgeslagen: kies een dag van het weekend en een tijd.', tw_url('gesprekken') . '#gs-' . $sol);
+    }
     if ($actie === 'evaluatie') {
         $ok = evenement_is_kandidaat('tw', $sid, $sol)
            && tw_evaluatie_zetten($sid, $sol, (string)($_POST['evaluatie'] ?? ''), (string)($_POST['evaluatie_bericht'] ?? ''), $ik);

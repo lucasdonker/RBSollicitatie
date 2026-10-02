@@ -91,6 +91,7 @@ $_gefilterd = $_q !== '' || $_fstand !== '';
             <td data-label="Komt?">
               <?= bh_badge($_standen[$_st], $_kl) ?>
               <?php if (!empty($_k['bevestiging_reden'])): ?><span class="bh-meta"><?= h((string)$_k['bevestiging_reden']) ?></span><?php endif; ?>
+              <?php if (!empty($_k['eerder_weg']) && function_exists('tw_eerder_weg_tekst')): ?><span class="bh-meta">Moet weg: <?= h(tw_eerder_weg_tekst((string)$_k['eerder_weg'])) ?></span><?php endif; ?>
             </td>
             <td data-label="<?= h($vb_klaar_kop) ?>"><?= bh_badge($_klaar[0], $_klaar[1]) ?>
               <?php if (($_klaar[2] ?? '') !== ''): ?><span class="bh-meta bh-voor-detail"><?= h((string)$_klaar[2]) ?></span><?php endif; ?></td>

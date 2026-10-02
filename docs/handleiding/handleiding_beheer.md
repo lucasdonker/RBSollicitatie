@@ -1408,9 +1408,17 @@ na te vragen; de knop **Dossier** en het telefoonnummer ziet alleen wie Sollicit
 
 ### Stap 4: gesprekken
 
-Iedereen krijgt een gesprek met het bestuur. De lijst heeft drie groepen: Nu bezig, Nog te spreken
-en Gesproken. De volgorde kies je ter plekke. Zoek op naam, filter op gesprek of besluit, of sorteer
-op het selectiedag-cijfer.
+Iedereen krijgt een gesprek met het bestuur. De lijst heeft groepen: Nu bezig, Nog te spreken,
+Niet gekomen en Gesproken. Zoek op naam, filter op gesprek of besluit, of sorteer op naam of het
+selectiedag-cijfer in plaats van de gespreksvolgorde.
+
+**Gespreksvolgorde.** Bij Nog te spreken staat bovenaan wie **eerder weg moet** (vroegste tijd
+eerst, met "Moet weg: zondag 3 mei, 15:30" erbij), daarna de rest op naam. De sollicitant geeft dat
+zelf door bij "Ik kom" in het portaal; je kunt het ook zetten of aanpassen met **Moet eerder weg?**
+onder de naam. Terugkerende strandwachten staan ingeklapt in een eigen blok, zodat ze de anderen niet
+voorgaan. De volgorde pas je aan met de pijltjes (of door een rij te slepen); met **Naar de lijst**
+zet je een strandwacht tussen de anderen, en **Volgorde herstellen** zet alles terug. Aanpassen kan
+alleen zonder zoekterm of filter, anders klopt "omhoog" niet met wat je ziet.
 
 1. Klik bij wie er aan tafel zit op **Gesprek starten**. Het gesprek staat dan op jouw naam; een
    ander bestuurslid ziet "bezig door ..." en kan meelezen, maar niet tegelijk een besluit
