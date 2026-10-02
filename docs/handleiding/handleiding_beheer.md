@@ -825,9 +825,12 @@ Per fase is er hooguit één knop, voor iedereen dezelfde:
 | Fase | Knop |
 |---|---|
 | Aangemeld | **Uitnodigen selectiedag** |
-| Selectiedag geweest | **Uitnodigen weekend** |
+| Selectiedag geweest | **Bellijst** (opent de bellijst bij deze persoon) |
 | Weekend geweest | **Aannemen** |
 
+Na de selectiedag nodig je niet uit vanaf de lijst: eerst bel je, en op de bellijst voer je het
+besluit door (door naar het weekend of afwijzen). Zo gaat er geen uitnodiging uit vóór het telefoontje.
+Staat de module Selectiedag uit (dan is er geen bellijst), dan is de knop weer **Uitnodigen weekend**.
 In de andere fases wacht het systeem op de sollicitant of op de selectiedag, en is er dus niets
 te doen. Staat er een probleem bij de sollicitant, dan staat ervoor **Adres corrigeren** of **Adres
 invullen** (houd je muis erop voor de reden). Die knop opent het dossier met de kaart
@@ -840,9 +843,9 @@ Een knop in de kolom Actie opent eerst het tussenscherm (zie hieronder).
 
 1. Vink de rijen aan, of gebruik het vinkje in de kop voor alle rijen op deze pagina.
 2. Onderaan verschijnt een donkere balk met "... geselecteerd" en de knoppen **Uitnodigen
-   selectiedag**, **Uitnodigen trainingsweekend**, **Aannemen**, **Afwijzen**, **Herinnering**,
-   **Bericht** en **Exporteren**. Een uitnodigknop verschijnt alleen als iedereen in je selectie in
-   de juiste fase staat (Aangemeld voor de selectiedag, Selectiedag geweest voor het trainingsweekend).
+   selectiedag**, **Aannemen**, **Afwijzen**, **Herinnering**, **Bericht** en **Exporteren**.
+   **Uitnodigen selectiedag** verschijnt alleen als iedereen in je selectie op Aangemeld staat.
+   Uitnodigen voor het trainingsweekend gaat via de bellijst, niet via de bulkbalk.
 3. Klik op een knop. Bij een fasestap zie je eerst het tussenscherm; **Bericht** opent Berichten
    met deze mensen als ontvangers; **Exporteren** downloadt alleen de gekozen mensen.
 
@@ -923,8 +926,9 @@ personen zijn aangemaakt, bijgewerkt en overgeslagen, plus eventuele fouten per 
   waarschuwt rond de leeftijdsgrens van 16: "Wordt pas 16 op ..." of "Was 15 bij de start van het
   seizoen, inmiddels 16".
 - De **knoppen** in de kop (alleen met bewerkrecht): de volgende stap (**Uitnodigen
-  selectiedag**, **Uitnodigen trainingsweekend** of **Aannemen**, afhankelijk van de fase),
-  **Bericht** (opent Berichten met deze persoon) en **Bellen** (als er een telefoonnummer is).
+  selectiedag** of **Aannemen**, afhankelijk van de fase; na de selectiedag **Naar de bellijst**,
+  want daar bel je en voer je het besluit door), **Bericht** (opent Berichten met deze persoon) en
+  **Bellen** (als er een telefoonnummer is).
 
 De knop voor de volgende stap opent eerst hetzelfde tussenscherm als in de lijst: je ziet wat er
 gebeurt en of er bericht uitgaat, en je kunt **Zonder bericht doorvoeren** aanvinken. Pas na
@@ -1137,7 +1141,7 @@ trainingsweekend.
 | **Uitgenodigd selectiedag** | **Uitnodigen selectiedag** (lijst, dossier of bulk). | Zet de ondertekeningen klaar: 18+ gezondheidsverklaring en intake als taak in het portaal; onder de 18 wacht het tot de sollicitant de oudergegevens invult en mailt dan de ouder. Stuurt "Uitnodiging selectiedag" (standaard e-mail én WhatsApp/sms). |
 | **Aangemeld selectiedag** | Niets; de sollicitant kiest "Ik kom" in het portaal. Jij kunt het ook zetten bij Voorbereiden, of met een uitzondering na een afmelding. | Stuurt "Bevestiging aanmelding selectiedag" (e-mail). "Ik kan niet" zet de fase stil terug naar Uitgenodigd. Het inleveren van het kennismakingsformulier zet geen fase; daarvoor gaat aan het bestuur "Formulier ingeleverd" (standaard uit). |
 | **Selectiedag geweest** | Inchecken op de selectiedag, of de sollicitant checkt zelf in op de tablet. | Zet de fase bij het inchecken. Geen bericht. |
-| **Uitgenodigd trainingsweekend** | Doorvoeren van Door op de bellijst, of **Uitnodigen weekend** (lijst) / **Uitnodigen trainingsweekend** (dossier of bulk). | Stuurt "Uitnodiging trainingsweekend" (standaard e-mail én WhatsApp/sms) met het verzoek de beschikbaarheid door te geven. |
+| **Uitgenodigd trainingsweekend** | Doorvoeren van Door op de bellijst (nadat je gebeld hebt). Alleen zonder de module Selectiedag: **Uitnodigen weekend** in de lijst of het dossier. | Stuurt "Uitnodiging trainingsweekend" (standaard e-mail én WhatsApp/sms) met het verzoek de beschikbaarheid door te geven. |
 | **Trainingsweekend geweest** | Met de hand zetten in de fasekaart van het dossier. | Zet de fase. Geen bericht. Het afvinken in het trainingsweekend zet deze fase niet. |
 | **Aangenomen** | Doorvoeren bij Trainingsweekend, **Aannemen** in de lijst (vanaf Trainingsweekend geweest), in het dossier of in de bulkbalk. | Zet het kennismakingspakket klaar in het portaal en stuurt "Welkom: aangenomen" (e-mail). Zodra loonheffing, kopie ID en kopie bankpas binnen zijn, krijgt de penningmeester "Loondossier compleet". |
 | **Afgewezen** | Doorvoeren van Niet op de bellijst of van Afwijzen bij Trainingsweekend, of **Afwijzen** in de bulkbalk. | Stuurt "Niet geselecteerd", maar die staat standaard **uit**: het bestuur belt of mailt persoonlijk. Onder die mail staat, als hij aan staat, altijd de knop **Stuur me een seintje**. |

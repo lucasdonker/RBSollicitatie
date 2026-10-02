@@ -21,12 +21,23 @@ if (!function_exists('bh_fase_actie')) {
 /**
  * De hoofdactie voor een kandidaat in deze fase.
  *
+ * Na de selectiedag is de stap vooruit de bellijst, geen uitnodiging (besluit Lucas, 2.159.0): wie
+ * door gaat, wordt eerst gebeld en daar doorgevoerd. Een knop die direct uitnodigt, stuurde het
+ * bericht vóór het telefoontje. Dan is de actie een link ('url'), geen fasewissel. Alleen zonder
+ * de module Selectiedag (dus zonder bellijst) blijft "Uitnodigen trainingsweekend" de stap.
+ *
  * @param string $fase  huidige fase van de sollicitatie
- * @param array  $ctx   'mag_bewerken' => bool (standaard: het recht wordt zelf bepaald)
+ * @param array  $ctx   'mag_bewerken' => bool (standaard: het recht wordt zelf bepaald), 'id' => sollicitatie-id (voor een link)
  * @return array  leeg als er geen stap is, anders:
  *                ['actie','label','naar','toon','mail'=>bool,'bevestig'=>bool]
+ *                of een link: ['actie','label','url','toon'] (geen 'naar': er verandert hier niets)
  */
 function bh_fase_actie(string $fase, array $ctx = []): array {
+    if ($fase === 'selectiedag_geweest' && bh_bellijst_route()) {
+        if (function_exists('mag') && !mag('selectiedag', 'bellen')) return [];
+        return ['actie' => 'naar_bellijst', 'label' => 'Naar de bellijst', 'toon' => 'primair',
+                'url' => APP_URL . '/admin/selectie_nabespreking.php?tab=bellijst' . (!empty($ctx['id']) ? '&bel=' . (int)$ctx['id'] : '')];
+    }
     $mag = $ctx['mag_bewerken'] ?? (function_exists('mag') ? mag('sollicitanten', 'bewerken') : false);
     if (!$mag) return [];
 
@@ -56,7 +67,17 @@ function bh_fase_actie_kort(array $actie): string {
         'uitnodigen_selectie' => 'Uitnodigen selectiedag',
         'uitnodigen_tw'       => 'Uitnodigen weekend',
         'aannemen'            => 'Aannemen',
+        'naar_bellijst'       => 'Bellijst',
     ][$actie['actie'] ?? ''] ?? ($actie['label'] ?? '');
+}
+
+/**
+ * Loopt de weg na de selectiedag via de bellijst? Ja zolang de module Selectiedag aan staat.
+ * Dan bestaat er geen knop of bulkactie "Uitnodigen trainingsweekend": dat gaat via bellen en
+ * doorvoeren (selectie_besluit_doorvoeren_een). Handmatig de fase zetten in het dossier kan nog.
+ */
+function bh_bellijst_route(): bool {
+    return !function_exists('module_aan') || module_aan('selectiedag');
 }
 
 /**

@@ -51,7 +51,9 @@ try {
     // Bepaal de volgende snelle actie voor in de tabel-rij
     $snelle_actie = match($naar) {
         'aangemeld'          => ['label' => 'Uitnodigen selectiedag', 'bulk' => 'uitnodigen_selectie', 'kleur' => 'groen'],
-        'selectiedag_geweest'=> ['label' => 'Uitnodigen weekend', 'bulk' => 'uitnodigen_tw',       'kleur' => 'primary'],
+        // Na de selectiedag gaat uitnodigen via de bellijst (zie bh_bellijst_route()); alleen zonder module een snelle knop.
+        'selectiedag_geweest'=> (!function_exists('module_aan') || module_aan('selectiedag')) ? null
+                                : ['label' => 'Uitnodigen weekend', 'bulk' => 'uitnodigen_tw', 'kleur' => 'primary'],
         default              => null,
     };
 

@@ -15,8 +15,9 @@ if (!$kop_dossier) return;
 
 $_s    = $kop_dossier['sol'];
 $_naam = volledige_naam($_s);
-$_act  = bh_fase_actie((string)$_s['fase']);
+$_act  = bh_fase_actie((string)$_s['fase'], ['id' => (int)$_s['id']]);
 $_mag  = mag('sollicitanten', 'bewerken');
+$_link = !empty($_act['url']);   // na de selectiedag: naar de bellijst, geen fasewissel
 ?>
 <header class="bh-dossierkop">
   <?= bh_avatar($_s, 58, ['vergroot' => true]) ?>
@@ -42,18 +43,20 @@ $_mag  = mag('sollicitanten', 'bewerken');
     <?php endif; ?>
   </div>
 
-  <?php if ($_mag): ?>
+  <?php if ($_mag || $_link): ?>
   <form method="post" class="bh-dossierkop-acties">
     <?= csrf_input() ?>
     <input type="hidden" name="id" value="<?= (int)$_s['id'] ?>">
-    <?php if ($_act): ?>
+    <?php if ($_link): ?>
+      <a class="ds-btn ds-btn-primair" href="<?= h($_act['url']) ?>"><?= h($_act['label']) ?></a>
+    <?php elseif ($_act && $_mag): ?>
       <button type="submit" name="fase_actie" value="<?= h($_act['actie']) ?>"
               class="ds-btn ds-btn-primair"><?= h($_act['label']) ?></button>
     <?php endif; ?>
-    <?php if (mag('mailing', 'versturen')): ?>
+    <?php if ($_mag && mag('mailing', 'versturen')): ?>
       <a class="ds-btn ds-btn-secundair" href="<?= APP_URL ?>/admin/berichten.php?ids=<?= (int)$_s['id'] ?>">Bericht</a>
     <?php endif; ?>
-    <?php if (!empty($_s['telefoon'])): ?>
+    <?php if ($_mag && !empty($_s['telefoon'])): ?>
       <a class="ds-btn ds-btn-secundair" href="tel:<?= h(preg_replace('/\s+/', '', $_s['telefoon'])) ?>">Bellen</a>
     <?php endif; ?>
   </form>

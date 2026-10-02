@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.158.0');
+define('APP_VERSIE', '2.159.0');
 
 function app_changelog(): array {
     return [
+        '2.159.0' => [
+            'datum'  => '2026-10-02',
+            'titel'  => 'Na de selectiedag: altijd via de bellijst',
+            'punten' => [
+                'In het dossier en in de sollicitantenlijst is de knop na de selectiedag nu "Naar de bellijst" in plaats van "Uitnodigen trainingsweekend". Zo gaat er geen uitnodiging uit vóórdat er gebeld is',
+                'De bulkbalk heeft geen "Uitnodigen trainingsweekend" meer; ook een verzoek daarvoor wordt geweigerd',
+                'Staat de module Selectiedag uit (geen bellijst), dan blijft de oude knop. Handmatig de fase zetten in het dossier kan nog, met een reden',
+            ],
+        ],
         '2.158.0' => [
             'datum'  => '2026-10-02',
             'titel'  => 'Dossier: de kaart Nu zegt wie aan zet is en wat de volgende stap is',

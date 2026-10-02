@@ -24,7 +24,7 @@ $_url   = APP_URL . '/admin/sollicitant.php?id=' . (int)($rij['id'] ?? 0)
         . ($_f_par ? '&' . http_build_query($_f_par) : '');
 $_dim  = ($rij['fase'] ?? '') === 'afgewezen';
 $_att  = bh_rij_attentie($rij);
-$_act  = bh_fase_actie((string)($rij['fase'] ?? ''));
+$_act  = bh_fase_actie((string)($rij['fase'] ?? ''), ['id' => (int)($rij['id'] ?? 0)]);
 
 foreach ($tabel_kolommen as $_kol):
     switch ($_kol):
@@ -100,7 +100,10 @@ foreach ($tabel_kolommen as $_kol):
             <a class="ds-btn ds-btn-secundair ds-btn-sm" href="<?= h($_att['url']) ?>"
                title="<?= h($_att['uitleg']) ?>"><?= h($_att['label']) ?></a>
           <?php endif; ?>
-          <?php if ($_act): ?>
+          <?php if ($_act && !empty($_act['url'])): ?>
+            <?php // Na de selectiedag: naar de bellijst (bellen, dan doorvoeren), geen uitnodiging vanaf de lijst. ?>
+            <a class="ds-btn ds-btn-secundair ds-btn-sm" href="<?= h($_act['url']) ?>"><?= h(bh_fase_actie_kort($_act)) ?></a>
+          <?php elseif ($_act): ?>
             <button type="submit" name="rij_actie" value="<?= h($_act['actie'] . ':' . (int)$rij['id']) ?>"
                     class="ds-btn ds-btn-primair ds-btn-sm"><?= h(bh_fase_actie_kort($_act)) ?></button>
           <?php endif; ?>

@@ -31,6 +31,9 @@ $bulk = [
     'aangenomen'          => ['aangenomen',           $aannemen_van,           'welkomstbericht(en)'],
     'afgewezen'           => ['afgewezen',            null,                    'bericht(en)'],
 ];
+// Na de selectiedag gaat uitnodigen via de bellijst (eerst bellen, dan doorvoeren; besluit Lucas 2.159.0).
+// Dus ook geen bulk- of rijactie die dat overslaat. Zonder module Selectiedag is er geen bellijst.
+if (bh_bellijst_route()) unset($bulk['uitnodigen_tw']);
 
 // Sorteren via de keuzelijst ("volgorde") wordt hier sort + richting, zodat kolomkoppen, de lijst en
 // de ← → in het dossier dezelfde volgorde kennen.
@@ -366,8 +369,8 @@ endif; ?>
   $bulk_acties = [
       ['actie' => 'uitnodigen_selectie', 'label' => 'Uitnodigen selectiedag', 'toon' => 'primair',
        'mail' => true, 'alleen_fases' => ['aangemeld'], 'recht' => ['sollicitanten', 'bewerken']],
-      ['actie' => 'uitnodigen_tw', 'label' => 'Uitnodigen trainingsweekend', 'toon' => 'primair',
-       'mail' => true, 'alleen_fases' => ['selectiedag_geweest'], 'recht' => ['sollicitanten', 'bewerken']],
+      ...(isset($bulk['uitnodigen_tw']) ? [['actie' => 'uitnodigen_tw', 'label' => 'Uitnodigen trainingsweekend', 'toon' => 'primair',
+       'mail' => true, 'alleen_fases' => ['selectiedag_geweest'], 'recht' => ['sollicitanten', 'bewerken']]] : []),
       ['actie' => 'aannemen', 'label' => 'Aannemen', 'mail' => true, 'alleen_fases' => $aannemen_van,
        'recht' => ['sollicitanten', 'bewerken']],
       ['actie' => 'afgewezen', 'label' => 'Afwijzen', 'toon' => 'gevaar', 'mail' => false,
