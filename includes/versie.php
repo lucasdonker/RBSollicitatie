@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.147.0');
+define('APP_VERSIE', '2.148.0');
 
 function app_changelog(): array {
     return [
+        '2.148.0' => [
+            'datum'  => '2026-10-02',
+            'titel'  => 'Nabespreking: filteren op wat er is opgeschreven',
+            'punten' => [
+                'Nieuw filter Observaties: veel aandachtspunten, vooral positief, positief én aandacht, of weinig of geen observaties. Met het aantal per keuze',
+                'Sorteren op meeste positieve observaties; meeste aandachtspunten weegt bij gelijkstand het aantal positieve mee',
+                'Op de kaart staat naast positief en aandacht nu ook het aantal neutrale observaties',
+            ],
+        ],
         '2.147.0' => [
             'datum'  => '2026-10-02',
             'titel'  => 'Bellijst: alles voor het gesprek op één kaart',

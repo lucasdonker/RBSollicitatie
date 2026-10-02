@@ -38,10 +38,42 @@ function bh_nb_sorteringen(): array {
         'rand'      => 'Meeste signalen eerst',
         'laag'      => 'Laagste cijfer eerst',
         'score'     => 'Hoogste cijfer eerst',
-        'aandacht'  => 'Meeste aandacht eerst',
+        'aandacht'  => 'Meeste aandachtspunten eerst',
+        'positief'  => 'Meeste positieve observaties eerst',
         'oneens'    => 'Meest oneens eerst',
         'drempel'   => 'Dichtst bij de drempel',
     ];
+}
+
+/**
+ * Filter op de observaties zelf, los van het cijfer: wie springt eruit in wat er is opgeschreven?
+ * Sleutel => label. De regels staan in bh_nb_obs_past().
+ */
+function bh_nb_obs_filters(): array {
+    return [
+        'veel_aandacht'  => 'Veel aandachtspunten',
+        'vooral_positief' => 'Vooral positief',
+        'gemengd'        => 'Positief én aandacht',
+        'weinig'         => 'Weinig of geen observaties',
+    ];
+}
+
+/**
+ * Past deze analyse bij het observatiefilter?
+ *  - veel_aandacht:   2 of meer aandachtspunten, en meer aandacht dan positief
+ *  - vooral_positief: 2 of meer positief en geen aandachtspunten
+ *  - gemengd:         allebei minstens één keer
+ *  - weinig:          hooguit één observatie (dan heeft bijna niemand iets gezien)
+ */
+function bh_nb_obs_past(array $nb, string $filter): bool {
+    $pos = (int)$nb['pos']; $aan = (int)$nb['aandacht']; $tot = $pos + $aan + (int)($nb['neutraal'] ?? 0);
+    return match ($filter) {
+        'veel_aandacht'   => $aan >= 2 && $aan > $pos,
+        'vooral_positief' => $pos >= 2 && $aan === 0,
+        'gemengd'         => $pos >= 1 && $aan >= 1,
+        'weinig'          => $tot <= 1,
+        default           => true,
+    };
 }
 
 /**
@@ -72,10 +104,12 @@ function bh_nb_analyse(array $k, array $sc, array $obs, array $lgf, array $crite
         }
     }
 
-    $pos = $aandacht = 0;
+    $pos = $aandacht = $neutraal = 0;
     foreach ($obs as $o) {
-        if (($o['soort'] ?? '') === 'positief') $pos++;
-        if (($o['soort'] ?? '') === 'aandacht') $aandacht++;
+        $s = (string)($o['soort'] ?? 'neutraal');
+        if ($s === 'positief') $pos++;
+        elseif ($s === 'aandacht') $aandacht++;
+        else $neutraal++;
     }
     $lgf_aandacht = count(array_filter($lgf, fn($r) => ($r['soort'] ?? '') === 'aandacht'));
     $aanwezig = !empty($k['aanwezig']);
@@ -101,7 +135,7 @@ function bh_nb_analyse(array $k, array $sc, array $obs, array $lgf, array $crite
     $rand = (bool)array_filter($sig, fn($s) => $s['soort'] !== 'afwezig');
 
     return [
-        'gem' => $gem, 'advies' => bh_advies_bij_score($gem), 'pos' => $pos, 'aandacht' => $aandacht,
+        'gem' => $gem, 'advies' => bh_advies_bij_score($gem), 'pos' => $pos, 'aandacht' => $aandacht, 'neutraal' => $neutraal,
         'spreiding' => $spreiding, 'laagste' => $laagste, 'ontbreekt' => $ontbreekt,
         'signalen' => $sig, 'rand' => $rand,
     ];
@@ -111,7 +145,8 @@ function bh_nb_analyse(array $k, array $sc, array $obs, array $lgf, array $crite
  * De lijst van de nabespreking, gefilterd en gesorteerd. Elke rij krijgt 'nb' = bh_nb_analyse().
  *
  * @param array $f  q (naamdeel) · besluit (''|open|door|twijfel|niet) · advies (''|door|twijfel|niet|geen)
- *                  · groep (''|geen|id) · aanwezig (''|ja|nee) · signaal (''|rand|<soort>) · sort (zie bh_nb_sorteringen)
+ *                  · groep (''|geen|id) · aanwezig (''|ja|nee) · signaal (''|rand|<soort>)
+ *                  · obs (''|sleutel uit bh_nb_obs_filters) · sort (zie bh_nb_sorteringen)
  */
 function bh_nb_lijst(array $kandidaten, array $besluiten, array $scores, array $obs, array $lgf, array $criteria, array $f): array {
     $drempel = bh_advies_drempel();
@@ -138,6 +173,8 @@ function bh_nb_lijst(array $kandidaten, array $besluiten, array $scores, array $
         $fs = (string)($f['signaal'] ?? '');
         if ($fs === 'rand' && !$k['nb']['rand']) continue;
         if ($fs !== '' && $fs !== 'rand' && !in_array($fs, array_column($k['nb']['signalen'], 'soort'), true)) continue;
+        $fo = (string)($f['obs'] ?? '');
+        if ($fo !== '' && isset(bh_nb_obs_filters()[$fo]) && !bh_nb_obs_past($k['nb'], $fo)) continue;
 
         $uit[] = $k;
     }
@@ -147,7 +184,8 @@ function bh_nb_lijst(array $kandidaten, array $besluiten, array $scores, array $
     $cmp = [
         'score'    => fn($a, $b) => ($b['nb']['gem'] ?? -1) <=> ($a['nb']['gem'] ?? -1),
         'laag'     => fn($a, $b) => ($a['nb']['gem'] ?? 99) <=> ($b['nb']['gem'] ?? 99),
-        'aandacht' => fn($a, $b) => $b['nb']['aandacht'] <=> $a['nb']['aandacht'],
+        'aandacht' => fn($a, $b) => [$b['nb']['aandacht'], $a['nb']['pos']] <=> [$a['nb']['aandacht'], $b['nb']['pos']],
+        'positief' => fn($a, $b) => [$b['nb']['pos'], $a['nb']['aandacht']] <=> [$a['nb']['pos'], $b['nb']['aandacht']],
         'oneens'   => fn($a, $b) => $b['nb']['spreiding'] <=> $a['nb']['spreiding'],
         'rand'     => fn($a, $b) => count(array_filter($b['nb']['signalen'], fn($s) => $s['soort'] !== 'afwezig'))
                                 <=> count(array_filter($a['nb']['signalen'], fn($s) => $s['soort'] !== 'afwezig')),

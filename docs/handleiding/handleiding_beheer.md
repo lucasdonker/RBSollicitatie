@@ -1292,8 +1292,11 @@ een signaal. Signalen staan als korte zinnen onder de naam:
 | strandwacht: aandachtspunt | een strandwacht gaf feedback met een aandachtspunt |
 | was niet aanwezig | niet ingecheckt (telt niet als randgeval) |
 
-Filter op **Signalen** (of alleen randgevallen), **Besluit**, en onder **Meer filters** op advies,
-groep en aanwezig. Sorteer op naam, meeste signalen, laagste of hoogste cijfer, meeste aandacht,
+Filter op **Signalen** (of alleen randgevallen), **Observaties**, **Besluit**, en onder **Meer filters**
+op advies, groep en aanwezig. Het filter Observaties kijkt naar wat er is opgeschreven, los van het
+cijfer: **Veel aandachtspunten** (twee of meer, en meer dan positief), **Vooral positief** (twee of meer
+positief, geen aandachtspunten), **Positief én aandacht** en **Weinig of geen observaties**. Sorteer op
+naam, meeste signalen, laagste of hoogste cijfer, meeste aandachtspunten, meeste positieve observaties,
 meest oneens of dichtst bij de drempel. Per kaart staan de naam, het advies en het gemiddelde; de
 observaties, de cijfers per onderdeel (ook per beoordelaar) en de feedback van strandwachten klap je
 open, of allemaal tegelijk met **Alles uitklappen**.

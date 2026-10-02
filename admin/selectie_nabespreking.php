@@ -125,8 +125,10 @@ $nb_f = [
     'advies'   => (string)($_GET['advies'] ?? ''),
     'groep'    => (string)($_GET['groep'] ?? ''),
     'aanwezig' => (string)($_GET['aanwezig'] ?? ''),
+    'obs'      => (string)($_GET['obs'] ?? ''),
     'sort'     => (string)($_GET['sort'] ?? 'naam'),
 ];
+if (!isset(bh_nb_obs_filters()[$nb_f['obs']])) $nb_f['obs'] = '';
 if ($nb_f['besluit'] === 'alle') $nb_f['besluit'] = '';
 if (!isset(bh_nb_sorteringen()[$nb_f['sort']])) $nb_f['sort'] = 'naam';
 
@@ -221,9 +223,15 @@ require __DIR__ . '/layout_top.php';
     $_grp = ['' => 'Groep: alle'];
     foreach ($groep_naam as $_gid => $_gn) $_grp[(string)$_gid] = 'Groep: ' . $_gn;
     $_grp['geen'] = 'Groep: zonder groep';
+    $_obsf = ['' => 'Observaties: alle'];
+    foreach (bh_nb_obs_filters() as $_ok => $_ol) {
+        $_on = count(array_filter($nb_alle, fn($k) => bh_nb_obs_past($k['nb'], $_ok)));
+        $_obsf[$_ok] = $_ol . ' (' . $_on . ')';
+    }
     $filter_velden = [
         ['soort' => 'zoek',    'naam' => 'q',        'label' => 'Zoek op naam', 'waarde' => $nb_f['q']],
         ['soort' => 'keuze',   'naam' => 'signaal',  'label' => 'Signalen', 'waarde' => $nb_f['signaal'], 'opties' => $_sig],
+        ['soort' => 'keuze',   'naam' => 'obs',      'label' => 'Observaties', 'waarde' => $nb_f['obs'], 'opties' => $_obsf],
         ['soort' => 'keuze',   'naam' => 'filter',   'label' => 'Besluit', 'waarde' => $nb_f['besluit'], 'opties' => $_besl],
         ['soort' => 'sorteer', 'naam' => 'sort',     'label' => 'Sorteren', 'waarde' => $nb_f['sort'], 'opties' => bh_nb_sorteringen()],
         ['soort' => 'keuze',   'naam' => 'advies',   'label' => 'Advies', 'waarde' => $nb_f['advies'], 'opties' => $_adv, 'meer' => true],
@@ -257,7 +265,7 @@ require __DIR__ . '/layout_top.php';
   <?php
     // Na feedback vastleggen terug naar dezelfde lijst (filters in de URL-namen van de filterbalk).
     $_url_f = ['q' => $nb_f['q'], 'filter' => $nb_f['besluit'], 'signaal' => $nb_f['signaal'], 'advies' => $nb_f['advies'],
-               'groep' => $nb_f['groep'], 'aanwezig' => $nb_f['aanwezig'], 'sort' => $nb_f['sort'] !== 'naam' ? $nb_f['sort'] : ''];
+               'groep' => $nb_f['groep'], 'aanwezig' => $nb_f['aanwezig'], 'obs' => $nb_f['obs'], 'sort' => $nb_f['sort'] !== 'naam' ? $nb_f['sort'] : ''];
     $_lgf_terug = $_hier . (array_filter($_url_f) ? '?' . http_build_query(array_filter($_url_f)) : '');
   ?>
   <div class="bh-nb-lijst" data-nb data-endpoint="<?= h($_hier) ?>" data-csrf="<?= h(csrf_token()) ?>">
@@ -272,6 +280,7 @@ require __DIR__ . '/layout_top.php';
     $_sam = array_filter([
         count($_obs) ? count($_obs) . ' ' . (count($_obs) === 1 ? 'observatie' : 'observaties') : 'geen observaties',
         $_nb['pos'] ? $_nb['pos'] . ' positief' : '',
+        $_nb['neutraal'] ? $_nb['neutraal'] . ' neutraal' : '',
         $_nb['aandacht'] ? $_nb['aandacht'] . ' aandacht' : '',
         $_lgf ? count($_lgf) . ' feedback van strandwachten' : '',
     ]);
