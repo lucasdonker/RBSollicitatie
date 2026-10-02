@@ -2132,14 +2132,23 @@ herhaalt en het maximum. Klik daarna op **Opslaan** onderaan.
 | Selectiedag morgen | aan; de dag ervoor, één keer, met een vrij in te vullen "laatste info" |
 | Trainingsweekend nadert | aan; 3 dagen vooraf, één keer |
 
-Onder de regels staan nog vijf instellingen:
+Onder de regels staat de **Nachtrust**: **Nachtrust aan** (standaard aan), **Vanaf** (23:00) en
+**Tot** (07:00). Berichten gaan meteen de deur uit, behalve binnen dat venster. Wat dan ontstaat,
+wacht in de wachtrij en gaat om 07:00. Dat geldt voor alle kanalen en ook voor wat je zelf
+verstuurt of in gang zet (fase omzetten, handmatig bericht). Wat altijd direct gaat:
 
-- **Automatische berichten vanaf (uur)**, standaard 7: herinneringen, geplande berichten en
-  automatisch uitnodigen gaan niet eerder de deur uit dan 07:00. Een herinnering die op een dag aan
-  de beurt is, komt dus 's ochtends aan en niet net na middernacht. 0 = de hele dag. Er is bewust
-  geen eindtijd: wat na 07:00 aan de beurt raakt, gaat meteen. Wat je zelf in gang zet (fase
-  omzetten, handmatig bericht, **Nu draaien**) en een inlogcode of bevestiging na iets wat de
-  sollicitant zelf doet, gaat altijd direct.
+- inlogcodes en andere systeemberichten;
+- berichten aan het bestuur of de penningmeester, en een testbericht aan jezelf;
+- een bevestiging van iets wat de ontvanger zelf net deed: aanmelden, "ik kom", een taak
+  afronden, oudergegevens invullen, zelf ondertekenen (en de kopie voor de ouder die net tekende).
+
+Een bericht dat wacht, staat in **Verzonden** als "In de wachtrij" met de reden "Nachtrust: gaat om
+07:00 de deur uit". Vanaf en Tot gelijk zetten heeft hetzelfde effect als de nachtrust uitzetten.
+Let op: wacht er 's ochtends veel tegelijk, dan geldt nog steeds **WhatsApp per uur (max)**;
+daarboven valt het bericht terug op sms of e-mail.
+
+Daaronder staan nog vier instellingen:
+
 - **Rustperiode (dagen)**, standaard 3: per sollicitant hooguit één "zachte" herinnering per zoveel dagen.
 - **Anti-loop: zelfde bericht per dag**, standaard 8: vaker hetzelfde automatische bericht naar
   dezelfde ontvanger binnen 24 uur wordt overgeslagen. Wat je zelf in gang zet (fase omzetten,

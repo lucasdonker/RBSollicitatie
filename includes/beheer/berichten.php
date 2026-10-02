@@ -80,6 +80,8 @@ function bh_bericht_stand(array $rij): array {
                 'reden' => $reden !== '' ? $reden : 'Bewust niet verstuurd'];
     }
     if ($status === 'wacht' || $status === 'bezig') {
+        if ($reden === '' && $status === 'wacht' && function_exists('melding_in_nachtrust') && melding_in_nachtrust()
+            && melding_nachtrust_geldt((string)($rij['meldingstype'] ?? ''), $rij['ontvanger_rol'] ?? null)) $reden = melding_nachtrust_zin();
         return ['woord' => 'In de wachtrij', 'stand' => 'neutraal', 'kleur' => 'blauw', 'icoon' => 'klok',
                 'reden' => $reden !== '' ? $reden : 'Wordt de komende minuten verstuurd'];
     }

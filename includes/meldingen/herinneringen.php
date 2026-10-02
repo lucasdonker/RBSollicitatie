@@ -60,23 +60,6 @@ function herinnering_regels(): array {
     ];
 }
 
-/**
- * Vanaf welk uur automatische rondes berichten mogen maken (instelling melding.auto_vanaf_uur,
- * standaard 7). Geldt voor de cron: herinneringen, geplande berichten en automatisch uitnodigen.
- * Een ronde die op een dag "aan de beurt" is (selectiedag morgen, 10 dagen na …) gaat dan om
- * 07:00 uit in plaats van net na middernacht. Wat een mens in gang zet (fase omzetten, handmatig
- * bericht, "Nu draaien") en reacties op wat de sollicitant zelf doet (inlogcode, bevestiging)
- * gaan altijd direct. Bewust geen eindtijd (besluit Lucas, 2 okt 2026): geen stille uren.
- */
-function melding_automatisch_vanaf(): int {
-    return max(0, min(23, function_exists('instelling_int') ? instelling_int('melding.auto_vanaf_uur', 7) : 7));
-}
-
-/** Mag een automatische ronde nu berichten maken? $uur alleen voor tests. */
-function melding_automatisch_nu(?int $uur = null): bool {
-    return ($uur ?? (int)date('G')) >= melding_automatisch_vanaf();
-}
-
 /** Instelling van een regel, met terugval op de oude reminder.*-sleutels en de standaard uit de regel. */
 function herinnering_instelling(string $slug, string $veld): string {
     $regel = herinnering_regels()[$slug] ?? null;

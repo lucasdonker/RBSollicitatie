@@ -68,9 +68,15 @@ function instellingen_velden(): array {
                      'hint' => 'Welkomstmail + portaal-taken (lidmaatschap, loonheffing, huisregels).'],
                 ]],
                 ['titel' => 'Herinneringen', 'partial' => 'herinneringen', 'sleutels' => instellingen_herinnering_sleutels()],
+                ['titel' => 'Nachtrust',
+                 'uitleg' => 'Berichten gaan meteen de deur uit, behalve in dit venster: wat dan ontstaat, wacht in de wachtrij en gaat aan het eind ervan. Dat geldt ook voor wat je zelf verstuurt. Inlogcodes, berichten aan het bestuur en een bevestiging van iets wat de sollicitant zelf net deed, gaan altijd direct.',
+                 'velden' => [
+                    ['sleutel' => 'melding.nachtrust_aan', 'label' => 'Nachtrust aan', 'type' => 'checkbox', 'standaard' => '1', 'breed' => true],
+                    ['sleutel' => 'melding.nachtrust_van', 'label' => 'Vanaf', 'type' => 'select', 'standaard' => '23', 'opties' => fn() => instellingen_uren()],
+                    ['sleutel' => 'melding.nachtrust_tot', 'label' => 'Tot', 'type' => 'select', 'standaard' => '7', 'opties' => fn() => instellingen_uren(),
+                     'hint' => 'Gelijk aan "Vanaf" = geen nachtrust.'],
+                ]],
                 ['titel' => 'Grenzen', 'uitleg' => 'Zodat niemand te veel berichten krijgt en de mailserver niets weigert.', 'velden' => [
-                    ['sleutel' => 'melding.auto_vanaf_uur', 'label' => 'Automatische berichten vanaf (uur)', 'type' => 'number', 'standaard' => '7', 'min' => 0, 'max' => 23,
-                     'hint' => 'Herinneringen, geplande berichten en automatisch uitnodigen gaan niet eerder de deur uit dan dit uur; wat daarvóór klaarstaat gaat dan. 7 = vanaf 07:00. 0 = de hele dag. Wat je zelf in gang zet, en een inlogcode of bevestiging na iets wat de sollicitant zelf doet, gaat altijd direct.'],
                     ['sleutel' => 'herinnering.rust_dagen', 'label' => 'Rustperiode (dagen)', 'type' => 'number', 'standaard' => '3', 'min' => 0, 'max' => 30,
                      'hint' => 'Maximaal één "zachte" herinnering per sollicitant per zoveel dagen.'],
                     ['sleutel' => 'melding.plafond_dag', 'label' => 'Hoe vaak hetzelfde bericht per dag', 'type' => 'number', 'standaard' => '8', 'min' => 1, 'max' => 50,
@@ -106,6 +112,13 @@ function instellingen_velden(): array {
             ],
         ],
     ];
+}
+
+/** Keuzelijst met hele uren voor een select-veld: '0' => '00:00' … '23' => '23:00'. */
+function instellingen_uren(): array {
+    $uit = [];
+    for ($u = 0; $u < 24; $u++) $uit[(string)$u] = sprintf('%02d:00', $u);
+    return $uit;
 }
 
 /** De sleutels van de ingebouwde herinneringen (per soort aan, na, herhaal, max, en de info bij "morgen"). */

@@ -9,10 +9,11 @@ function app_changelog(): array {
     return [
         '2.161.2' => [
             'datum'  => '2026-10-02',
-            'titel'  => 'Automatische berichten niet meer om middernacht',
+            'titel'  => 'Nachtrust: geen berichten midden in de nacht',
             'punten' => [
-                'Herinneringen, geplande berichten en automatisch uitnodigen gaan pas vanaf 07:00 de deur uit, in plaats van net na middernacht. Instelbaar onder Instellingen › Uitnodigen & herinneren › Grenzen',
-                'Wat je zelf in gang zet en een inlogcode of bevestiging na iets wat de sollicitant doet, gaat nog steeds direct',
+                'Berichten gaan meteen de deur uit, behalve tussen 23:00 en 07:00: wat dan ontstaat, wacht en gaat om 07:00. Aan/uit en beide tijden instelbaar onder Instellingen › Uitnodigen & herinneren › Nachtrust',
+                'Inlogcodes, berichten aan het bestuur en een bevestiging van iets wat de sollicitant zelf net deed, gaan altijd direct',
+                'In Verzonden staat bij een wachtend bericht "Nachtrust: gaat om 07:00 de deur uit"',
             ],
         ],
         '2.161.1' => [

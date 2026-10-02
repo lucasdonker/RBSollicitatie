@@ -119,6 +119,52 @@ function penningmeester_email(): string {
 }
 
 // ─────────────────────────────────────────────────────────────
+//  Nachtrust
+// ─────────────────────────────────────────────────────────────
+//  Berichten gaan meteen, behalve binnen het venster (standaard 23:00–07:00): dan gaan ze de
+//  wachtrij in en verstuurt melding_queue_verwerk() ze zodra het venster voorbij is. Instellingen
+//  melding.nachtrust_aan/_van/_tot (Uitnodigen & herinneren). Geldt voor alle kanalen.
+
+/** ['van' => uur, 'tot' => uur], of null als de nachtrust uit staat (ook bij van = tot). */
+function melding_nachtrust(): ?array {
+    if (!function_exists('instelling') || instelling('melding.nachtrust_aan', '1') !== '1') return null;
+    $van = max(0, min(23, (int)instelling('melding.nachtrust_van', '23')));
+    $tot = max(0, min(23, (int)instelling('melding.nachtrust_tot', '7')));
+    return $van === $tot ? null : ['van' => $van, 'tot' => $tot];
+}
+
+/** Valt dit uur (standaard nu) in de nachtrust? Een venster over middernacht (23–7) mag. */
+function melding_in_nachtrust(?int $uur = null): bool {
+    $n = melding_nachtrust();
+    if (!$n) return false;
+    $u = $uur ?? (int)date('G');
+    return $n['van'] < $n['tot'] ? ($u >= $n['van'] && $u < $n['tot']) : ($u >= $n['van'] || $u < $n['tot']);
+}
+
+/**
+ * Wacht dit bericht tijdens de nachtrust? Niet: inlogcodes en andere systeemberichten, berichten aan
+ * het bestuur (categorie of ontvanger), een testbericht aan jezelf (rol direct), en een bevestiging
+ * van iets wat de ontvanger zelf net deed (register: 'nachtrust' => false). De rest wel, ook als een
+ * bestuurslid het zelf verstuurt.
+ */
+function melding_nachtrust_geldt(string $type, ?string $rol): bool {
+    $def = function_exists('melding_definitie') ? melding_definitie($type) : null;
+    if (!$def || in_array($def['categorie'], ['systeem', 'bestuur'], true) || ($def['nachtrust'] ?? true) === false) return false;
+    return !in_array((string)$rol, ['bestuur', 'penningmeester', 'direct'], true);
+}
+
+/** De meldingstypen die tijdens de nachtrust wachten (voor de wachtrij-query). */
+function melding_nachtrust_typen(): array {
+    return array_values(array_filter(array_keys(meldingen_register()), fn($t) => melding_nachtrust_geldt($t, 'sollicitant')));
+}
+
+/** "Nachtrust: gaat om 07:00 de deur uit" — voor het log en de uitslag van Berichten. */
+function melding_nachtrust_zin(): string {
+    $n = melding_nachtrust();
+    return 'Nachtrust: gaat om ' . sprintf('%02d:00', $n['tot'] ?? 7) . ' de deur uit';
+}
+
+// ─────────────────────────────────────────────────────────────
 //  Dispatch
 // ─────────────────────────────────────────────────────────────
 
@@ -224,6 +270,9 @@ function melding_verstuur(string $type, int $sol_id, array $extra = [], array $o
         $plannen = melding_kanaalplan($modus, $ontv, $def, $r['tekst_kort'] !== '');
         $prio = $opties['prioriteit'] ?? 'direct';
         if ($prio === 'na_antwoord' && !na_antwoord_mogelijk()) $prio = 'direct';
+        // Nachtrust: niet nu versturen maar in de wachtrij; de wachtrij houdt hem vast tot het venster voorbij is.
+        $nachtrust = melding_in_nachtrust() && melding_nachtrust_geldt($type, $basis['ontvanger_rol']);
+        if ($nachtrust) $prio = 'queue';
         $ids = [];
         foreach ($plannen as $plan) {
             $item = array_merge($basis, [
@@ -241,6 +290,7 @@ function melding_verstuur(string $type, int $sol_id, array $extra = [], array $o
         // in plaats van het vage "staat in de wachtrij".
         $uit['prioriteit'] = $prio;
         $uit['kanaal'] = $plannen[0][0] ?? null;
+        if ($nachtrust) $uit['reden'] = melding_nachtrust_zin();
 
         if ($prio === 'direct') {
             $res = melding_queue_verwerk(count($ids), $ids);
@@ -441,6 +491,22 @@ function melding_queue_toevoegen(array $item, string $prioriteit): int {
 }
 
 /**
+ * De volgende wachtende items voor de cron. Tijdens de nachtrust blijft wat moet wachten staan; dat
+ * gebeurt in SQL, zodat vastgehouden berichten de plek van andere (bestuur, inlogcode) niet innemen.
+ */
+function melding_queue_kiezen(int $max): array {
+    $rust = melding_in_nachtrust() ? melding_nachtrust_typen() : [];
+    $rust_sql = $rust ? " AND NOT (meldingstype IN (" . implode(',', array_fill(0, count($rust), '?')) . ")
+                         AND COALESCE(ontvanger_rol, '') NOT IN ('bestuur', 'penningmeester', 'direct'))" : '';
+    $q = db()->prepare("SELECT * FROM mail_queue WHERE status='wacht' AND pogingen < 3$rust_sql ORDER BY (prioriteit='queue') ASC, id ASC LIMIT ?");
+    $i = 1;
+    foreach ($rust as $t) $q->bindValue($i++, $t);
+    $q->bindValue($i, $max, PDO::PARAM_INT);
+    $q->execute();
+    return $q->fetchAll();
+}
+
+/**
  * Verwerk wachtende items. $alleen_log_ids beperkt tot specifieke items (directe verzending).
  * Retourneert tellers + per item de uitkomst.
  */
@@ -452,10 +518,7 @@ function melding_queue_verwerk(int $max = 8, ?array $alleen_log_ids = null): arr
             $in = implode(',', array_map('intval', $alleen_log_ids));
             $rows = db()->query("SELECT * FROM mail_queue WHERE status='wacht' AND log_id IN ($in) ORDER BY id ASC")->fetchAll();
         } else {
-            $q = db()->prepare("SELECT * FROM mail_queue WHERE status='wacht' AND pogingen < 3 ORDER BY (prioriteit='queue') ASC, id ASC LIMIT ?");
-            $q->bindValue(1, $max, PDO::PARAM_INT);
-            $q->execute();
-            $rows = $q->fetchAll();
+            $rows = melding_queue_kiezen($max);
         }
     } catch (\Throwable $e) { error_log('melding_queue_verwerk: ' . $e->getMessage()); return $res; }
 

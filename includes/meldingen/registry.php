@@ -41,7 +41,9 @@ function meldingen_kanaalmodi(): array {
  *   naam, beschrijving, categorie, ontvanger (sollicitant|ouder|ondertekenaar|bestuur|direct),
  *   kanaal_standaard, kort_toegestaan, dedup_min (0 = geen dubbelcheck), body_loggen,
  *   vars (extra variabelen naast de standaard mail_variabelen), seed (onderwerp, hero_titel,
- *   hero_subtitel, hero_kleur, body_html, tekst_kort, samenvatting).
+ *   hero_subtitel, hero_kleur, body_html, tekst_kort, samenvatting),
+ *   nachtrust (standaard true; false = bevestiging van iets wat de ontvanger zelf net deed, gaat ook
+ *   in de nachtrust direct — zie melding_nachtrust_geldt()).
  */
 function meldingen_register(): array {
     static $reg = null;
@@ -56,6 +58,7 @@ function meldingen_register(): array {
     $reg = [
         // ── Fase-overgangen ───────────────────────────────────────────
         'aanmelding_bevestiging' => array_merge($std, [
+            'nachtrust' => false,
             'naam' => 'Bevestiging van aanmelding', 'categorie' => 'fase', 'kanaal_standaard' => 'email',
             'beschrijving' => 'Direct na het aanmelden (via de site of handmatig door het beheer).',
             'seed' => [
@@ -78,6 +81,7 @@ function meldingen_register(): array {
             ],
         ]),
         'selectie_aangemeld_bevestiging' => array_merge($std, [
+            'nachtrust' => false,
             'naam' => 'Bevestiging aanmelding selectiedag', 'categorie' => 'fase', 'kanaal_standaard' => 'email',
             'beschrijving' => 'Zodra de sollicitant laat weten dat hij of zij komt (= aangemeld voor de selectiedag).',
             'seed' => [
@@ -155,6 +159,7 @@ function meldingen_register(): array {
 
         // ── Taken en documenten ───────────────────────────────────────
         'taak_afgerond' => array_merge($std, [
+            'nachtrust' => false,
             'naam' => 'Bevestiging taak afgerond', 'categorie' => 'taak', 'kanaal_standaard' => 'email', 'dedup_min' => 5,
             'beschrijving' => 'Nadat de sollicitant een taak afrondt (formulier ingeleverd, beschikbaarheid definitief, document getekend).',
             'vars' => ['taak_naam'],
@@ -167,6 +172,7 @@ function meldingen_register(): array {
             ],
         ]),
         'ouder_gegevens_ontvangen' => array_merge($std, [
+            'nachtrust' => false,
             'naam' => 'Taken klaargezet na oudergegevens', 'categorie' => 'taak', 'kanaal_standaard' => 'email', 'dedup_min' => 720,
             'beschrijving' => 'Nadat een minderjarige sollicitant de gegevens van de ouder/verzorger heeft ingevuld en de formulieren zijn klaargezet.',
             'seed' => [
@@ -217,6 +223,7 @@ function meldingen_register(): array {
             ],
         ]),
         'ondertekening_bevestiging' => array_merge($std, [
+            'nachtrust' => false,
             'naam' => 'Bevestiging: je hebt zelf ondertekend', 'categorie' => 'taak', 'kanaal_standaard' => 'email', 'dedup_min' => 0,
             'beschrijving' => 'Naar de sollicitant zodra hij/zij zélf een document heeft ondertekend (18+, loonheffing, lidmaatschap). De ondertekende PDF gaat als bijlage mee.',
             'vars' => ['document_naam'],
@@ -241,6 +248,7 @@ function meldingen_register(): array {
             ],
         ]),
         'ondertekening_kopie' => array_merge($std, [
+            'nachtrust' => false,
             'naam' => 'Kopie ondertekend document (met PDF)', 'categorie' => 'taak', 'ontvanger' => 'ouder',
             'kanaal_standaard' => 'email', 'kort_toegestaan' => false, 'dedup_min' => 0, 'body_loggen' => false,
             'beschrijving' => 'Naar de ondertekenaar (ouder/verzorger) met het ondertekende document als PDF-bijlage.',
