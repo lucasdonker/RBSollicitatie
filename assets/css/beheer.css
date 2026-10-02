@@ -832,15 +832,49 @@ span.bh-incheck-code {
 .bh-obsinvoer textarea { min-height: 84px; border-left-width: 4px; }
 .bh-obsinvoer[data-soort="positief"] textarea { border-left-color: var(--ok); }
 .bh-obsinvoer[data-soort="aandacht"] textarea { border-left-color: var(--error); }
-.bh-obsinvoer-voet { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.bh-obsinvoer-voet .ds-btn { margin-left: auto; min-width: 160px; justify-content: center; }
+.bh-obsinvoer-rij { display: flex; flex-direction: column; gap: 8px; }
+.bh-obsinvoer-knop { align-self: flex-end; min-width: 180px; justify-content: center; gap: 8px; }
+.bh-obsinvoer-voet { display: flex; align-items: center; gap: 4px 12px; flex-wrap: wrap; }
+.bh-obsinvoer-voet .ds-veld-hint { margin: 0; }
 .bh-obsinvoer-stand { font: var(--text-meta); color: var(--ink-soft); }
 .bh-obsinvoer-stand.ok { color: var(--ok); font-weight: 600; }
+@media (pointer: coarse) { .bh-obsinvoer-toets { display: none; } }
+
+/* Telefoon: zoals een chat. De lijst staat boven (oudste bovenaan, nieuwste onderaan, vlak boven
+   de invoer), de invoer is een balk die onderin het scherm blijft staan: soorten als kleine chips,
+   een veld dat meegroeit en een ronde verzendknop. Enter = nieuwe regel, de knop = versturen. */
 @media (max-width: 560px) {
-  .bh-obsinvoer-voet .ds-btn { width: 100%; margin-left: 0; }
+  .bh-beoordeel-kaart { overflow: clip; }   /* hidden zou de plakkende balk breken */
+  .bh-observatieblok { padding-bottom: 0; }
+  .bh-observatieblok > [data-obs-lijst] { order: 1; }
+  .bh-observatieblok > .bh-obsinvoer { order: 2; }
+  .bh-observatieblok .bh-obsdagen, .bh-observatieblok .bh-observaties { display: flex; flex-direction: column-reverse; }
+  .bh-observatieblok .bh-observaties li {
+    background: var(--bg-subtle); border-radius: 14px 14px 14px 4px; padding: 9px 12px; margin-bottom: 6px;
+    border-left: 3px solid var(--f-tekst, var(--border-strong));
+  }
+  .bh-observatieblok .bh-observaties li .bh-obs-stip { display: none; }
+  .bh-obsinvoer {
+    position: sticky; bottom: 0; z-index: 5; gap: 6px;
+    margin: 0 -18px; padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+    background: var(--surface); border-top: 1px solid var(--border); box-shadow: 0 -6px 16px rgba(0, 0, 0, .06);
+  }
+  .bh-soortkeuze { gap: 6px; }
+  .bh-soort { flex: 0 0 auto; min-height: 34px; padding: 0 12px; border-radius: var(--radius-full); font-size: 13px; }
+  .bh-obsinvoer-rij { flex-direction: row; align-items: flex-end; gap: 8px; }
+  .bh-obsinvoer textarea {
+    flex: 1; min-height: 44px; max-height: 160px; resize: none; overflow-y: auto;
+    border-radius: 22px; padding: 11px 16px; font-size: 16px; line-height: 1.35;
+  }
+  .bh-obsinvoer-knop {
+    align-self: flex-end; flex: none; min-width: 0; width: 46px; height: 46px; padding: 0;
+    border-radius: 50%;
+  }
+  .bh-obsinvoer-knoptekst { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .bh-obsinvoer-voet { gap: 2px 10px; }
+  .bh-obsinvoer-voet .ds-veld-hint { font-size: 12px; }
   .bh-obsinvoer-toets { display: none; }
 }
-@media (pointer: coarse) { .bh-obsinvoer-toets { display: none; } }
 .bh-soort.positief.gekozen { background: var(--ok); border-color: var(--ok); color: var(--op-vol); }
 .bh-soort.neutraal.gekozen { background: var(--navy); border-color: var(--navy); color: var(--op-vol); }
 .bh-soort.aandacht.gekozen { background: var(--error); border-color: var(--error); color: var(--op-vol); }

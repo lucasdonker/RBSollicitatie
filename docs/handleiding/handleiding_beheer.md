@@ -1385,7 +1385,9 @@ verschenen". Er sluit niets vanzelf af, en een laatkomer check je daarna gewoon 
 Op je telefoon, precies zoals op de selectiedag (zonder cijfers). Tik een naam aan (met foto; op
 een telefoon staat de lijst ingeklapt achter **Groep en alle deelnemers**). Kies onder "Wat valt
 op?" **Positief**, **Neutraal** of **Aandacht**, typ wat je zag en tik op **Observatie opslaan**; hij
-staat meteen in de lijst. Tik je met tekst in het veld op Volgende, dan wordt die eerst opgeslagen.
+staat meteen in de lijst. Op een telefoon werkt het als een chat: de invoer staat als balk onderin
+het scherm (soort kiezen, typen, op de ronde verzendknop tikken) en de nieuwste observatie staat
+onderaan de lijst, direct boven de balk. Enter geeft een nieuwe regel; versturen gaat met de knop. Tik je met tekst in het veld op Volgende, dan wordt die eerst opgeslagen.
 De sollicitant ziet observaties niet. Je eigen observaties kun je verwijderen; die van anderen
 blijven staan.
 

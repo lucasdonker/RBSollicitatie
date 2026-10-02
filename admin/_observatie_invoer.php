@@ -34,15 +34,20 @@ $_oi_soorten  = ['positief' => ['Positief', 'vink-cirkel'], 'neutraal' => ['Neut
         <?php endforeach; ?>
       </div>
       <label class="bh-vw" for="obs-<?= (int)$oi_sol ?>">Observatie over <?= h($oi_naam) ?></label>
-      <textarea class="ds-textarea" id="obs-<?= (int)$oi_sol ?>" data-obs-tekst rows="3" maxlength="2000"
-                placeholder="<?= h($oi_voorbeeld) ?>"></textarea>
+      <?php // Op een telefoon een chatbalk onderin (veld + ronde verzendknop), op de desktop de knop eronder. ?>
+      <div class="bh-obsinvoer-rij">
+        <textarea class="ds-textarea" id="obs-<?= (int)$oi_sol ?>" data-obs-tekst rows="3" maxlength="2000"
+                  placeholder="<?= h($oi_voorbeeld) ?>"></textarea>
+        <button type="button" class="ds-btn ds-btn-primair bh-obsinvoer-knop" data-obs-opslaan aria-label="Observatie opslaan">
+          <?= icoon('verstuur', 18) ?><span class="bh-obsinvoer-knoptekst">Observatie opslaan</span>
+        </button>
+      </div>
       <div class="bh-obsinvoer-voet">
         <span class="bh-obsinvoer-stand" data-obs-stand role="status" aria-live="polite">
           <span class="bh-obsinvoer-toets">Ctrl + Enter slaat op.</span>
         </span>
-        <button type="button" class="ds-btn ds-btn-primair" data-obs-opslaan>Observatie opslaan</button>
+        <span class="ds-veld-hint">Voor het bestuur. De sollicitant ziet dit niet.</span>
       </div>
-      <p class="ds-veld-hint">Voor het bestuur. De sollicitant ziet dit niet.</p>
     </div>
   <?php endif; ?>
 

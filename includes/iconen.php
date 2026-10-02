@@ -34,6 +34,7 @@ function icoon_paden(): array {
         'terug'       => '<line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>',
         'uitloggen'   => '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>',
         'pijl-rechts' => '<line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>',
+        'verstuur'    => '<line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>',
         'chevron'     => '<polyline points="9 18 15 12 9 6"/>',
         'chevron-op'  => '<polyline points="6 15 12 9 18 15"/>',
         'chevron-neer'=> '<polyline points="6 9 12 15 18 9"/>',

@@ -81,9 +81,24 @@
       if (tekst) sessionStorage.setItem(conceptSleutel, tekst); else sessionStorage.removeItem(conceptSleutel);
     } catch (e) { /* geen opslag: dan geen concept */ }
   }
+  // Telefoon = chatweergave (CSS ≤560px): het veld groeit mee met de tekst, en na versturen staat
+  // de nieuwste observatie in beeld, net boven de invoerbalk.
+  var chat = window.matchMedia ? window.matchMedia('(max-width: 560px)') : { matches: false };
+  function groei() {
+    if (!veld || !chat.matches) { if (veld) veld.style.height = ''; return; }
+    veld.style.height = 'auto';
+    veld.style.height = Math.min(veld.scrollHeight + 2, 160) + 'px';
+  }
+  function naarNieuwste() {
+    if (!chat.matches || !obs) return;
+    var lijst = obs.querySelector('[data-obs-lijst]');
+    if (lijst) lijst.scrollIntoView({ block: 'end', behavior: 'smooth' });
+  }
   if (veld) {
     try { var c = sessionStorage.getItem(conceptSleutel); if (c && !veld.value) veld.value = c; } catch (e) {}
-    veld.addEventListener('input', function () { concept(veld.value.trim() ? veld.value : ''); });
+    if (chat.matches) veld.rows = 1;
+    groei();
+    veld.addEventListener('input', function () { concept(veld.value.trim() ? veld.value : ''); groei(); });
     veld.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); obsOpslaan(); }
     });
@@ -114,11 +129,13 @@
         if (!d.ok) throw new Error();
         veld.value = '';
         concept('');
+        groei();
         if (typeof d.html === 'string') {
           var lijst = obs.querySelector('[data-obs-lijst]');
           lijst.innerHTML = d.html;
           if (window.P13Klap) window.P13Klap.koppel(lijst);
         }
+        naarNieuwste();
         var neutraal = invoer.querySelector('[data-soort="neutraal"]');
         if (neutraal) kiesSoort(neutraal);
         if (stand) { stand.textContent = 'Opgeslagen om ' + tijd() + '.'; stand.classList.add('ok'); }

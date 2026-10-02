@@ -3,10 +3,19 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.153.0');
+define('APP_VERSIE', '2.154.0');
 
 function app_changelog(): array {
     return [
+        '2.154.0' => [
+            'datum'  => '2026-10-02',
+            'titel'  => 'Observaties op je telefoon: zoals een chat',
+            'punten' => [
+                'Op een telefoon staat de invoer als balk onderin het scherm: de soort als kleine knoppen, een veld dat meegroeit en een ronde verzendknop',
+                'De lijst loopt zoals in een chat: de nieuwste observatie onderaan, direct boven de balk, en na versturen staat hij meteen in beeld',
+                'Geldt voor beoordelen op de selectiedag en op het trainingsweekend. Op de computer blijft het zoals het was (Ctrl + Enter slaat op)',
+            ],
+        ],
         '2.153.0' => [
             'datum'  => '2026-10-02',
             'titel'  => 'Gesprekken op het weekend: wie eerder weg moet eerst, strandwachten apart',
