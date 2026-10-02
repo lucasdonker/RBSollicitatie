@@ -946,9 +946,14 @@ Een tabblad dat niets te tonen heeft, verschijnt niet.
 
 ### Tabblad Dossier, links: lezen
 
-Bovenaan staat altijd de kaart **Nu**: in één zin waar de sollicitant staat (bijvoorbeeld "Selectiedag
-geweest. Besluit: door. Bellen en uitnodigen voor het trainingsweekend gaat via de bellijst"), en
-onder **Wacht op** de taken die nog openstaan, met "(wacht op ouder)" als een ouder aan zet is. Staat
+Bovenaan staat altijd de kaart **Nu**, steeds in dezelfde vorm:
+- een korte kop met wat er speelt, bijvoorbeeld "Wacht op antwoord", "Bellen" of "Inzet vaststellen";
+- **Aan zet**: de sollicitant (bij naam), de ouder of verzorger, het bestuur, of niemand;
+- één zin met datums, bijvoorbeeld "Lieke is 9 dagen geleden uitgenodigd voor de selectiedag van
+  4 okt (over 2 dagen) en heeft nog niet laten weten of het lukt";
+- **Volgende stap**, met een knop naar het scherm waar je die zet (de bellijst, het gesprek, de
+  groepsindeling, de loonplanning, Vandaag). De knop staat er alleen als je die taak mag doen;
+- onder **Nog open** de taken die nog openstaan, met "(wacht op ouder)" als een ouder aan zet is. Staat
 er iets open, dan stuurt **Herinnering sturen** (na een korte vraag) dezelfde herinnering als de
 bulkknop op de lijst. De stap vooruit zelf staat in de kop, niet in deze kaart.
 

@@ -3,10 +3,20 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.157.0');
+define('APP_VERSIE', '2.158.0');
 
 function app_changelog(): array {
     return [
+        '2.158.0' => [
+            'datum'  => '2026-10-02',
+            'titel'  => 'Dossier: de kaart Nu zegt wie aan zet is en wat de volgende stap is',
+            'punten' => [
+                'Een korte kop met wat er speelt ("Wacht op antwoord", "Bellen", "Inzet vaststellen") en wie aan zet is: de sollicitant bij naam, de ouder, het bestuur of niemand',
+                'De zin noemt datums: sinds wanneer iemand is uitgenodigd, wanneer de selectiedag of het weekend is, wanneer er is gebeld, en bij afwijzen of er om een seintje is gevraagd',
+                'Volgende stap met een knop naar het scherm waar je hem zet: de bellijst (op die persoon), de nabespreking, het gesprek, de groepsindeling, de loonplanning of Vandaag',
+                'Geen "hij of zij" meer: de voornaam',
+            ],
+        ],
         '2.157.0' => [
             'datum'  => '2026-10-02',
             'titel'  => 'Beschikbaarheid en loonplanning: dezelfde mensen',

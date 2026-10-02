@@ -238,55 +238,230 @@ function bh_dossier_taken(array $dossier): array {
     return ['gedaan' => $gedaan, 'totaal' => count($rijen), 'rijen' => $rijen];
 }
 
+/** "vandaag", "morgen", "over 3 dagen", "gisteren", "9 dagen geleden" — t.o.v. vandaag. Leeg zonder datum. */
+function bh_dagen_tekst(?string $datum): string {
+    if (!$datum) return '';
+    $n = (int)round((strtotime(substr($datum, 0, 10)) - strtotime(date('Y-m-d'))) / 86400);
+    return match (true) {
+        $n === 0  => 'vandaag', $n === 1 => 'morgen', $n === -1 => 'gisteren',
+        $n > 1    => 'over ' . $n . ' dagen',
+        default   => abs($n) . ' dagen geleden',
+    };
+}
+
+/** Wanneer kreeg deze sollicitatie haar huidige fase? (laatste fase_gewijzigd in het auditlog) */
+function bh_dossier_fase_sinds(int $sol_id): ?string {
+    try {
+        $q = db()->prepare("SELECT moment FROM audit_log WHERE objecttype='sollicitatie' AND object_id=? AND actie='fase_gewijzigd' ORDER BY id DESC LIMIT 1");
+        $q->execute([$sol_id]);
+        $v = $q->fetchColumn();
+        return $v ? (string)$v : null;
+    } catch (\Throwable $e) { return null; }
+}
+
 /**
- * Wat er nu speelt bij deze sollicitant — bovenaan het dossier, voor het dagelijks gebruik: één zin
- * over waar iemand staat, en waar het op wacht. De rest van het dossier staat ingeklapt.
- * De hoofdactie (de stap vooruit) staat in de kop (bh_fase_actie); die herhalen we hier niet.
+ * Wat er nu speelt bij deze sollicitant — bovenaan het dossier, voor het dagelijks gebruik.
+ * Vier dingen, altijd in dezelfde vorm:
+ *   titel     wat er aan de hand is, in twee à vier woorden ("Wacht op antwoord", "Bellen")
+ *   aan_zet   wie iets moet doen: de sollicitant (bij naam), een ouder, het bestuur, of niemand
+ *   zin       de stand met datums ("9 dagen geleden uitgenodigd voor de selectiedag van 12 apr, over 3 dagen")
+ *   volgende  de volgende stap in gewone woorden, met een knop naar het scherm waar je die zet (als je dat mag)
+ * Plus de open taken ("Wacht op"). De fase-knop in de kop van het dossier blijft de stap vooruit.
  *
  * @param array $taken  uitkomst van bh_dossier_taken()
- * @return array{zin:string, wacht:array<int,array{tekst:string,kleur:string}>, meer:int, herinner:bool}
+ * @return array{titel:string, aan_zet:array{tekst:string,kleur:string}, zin:string, volgende:?array{tekst:string,url:?string,knop:?string},
+ *               wacht:array<int,array{tekst:string,kleur:string}>, meer:int, herinner:bool}
  */
 function bh_dossier_nu(array $d, array $taken): array {
     $s    = $d['sol'];
     $id   = (int)$s['id'];
     $szid = (int)$s['seizoen_id'];
     $fase = (string)$s['fase'];
-    $sz   = function_exists('actief_seizoen') ? actief_seizoen() : null;
-    $sz   = ($sz && (int)$sz['id'] === $szid) ? $sz : [];
-    $sd   = !empty($sz['datum_selectiedag']) ? ' van ' . datum_nl($sz['datum_selectiedag']) : '';
-    $komt = function (string $ev) use ($szid, $id): string {
-        if (!function_exists('evenement_bevestiging_van')) return '';
-        $b = evenement_bevestiging_van($ev, $szid, $id);
-        return ['komt' => ' Komt.', 'komt_niet' => ' Kan niet' . (!empty($b['reden']) ? ': ' . $b['reden'] : '') . '.'][$b['stand']]
-            ?? ' Nog niet laten weten of hij of zij komt.';
-    };
+    $naam = trim((string)($s['voornaam'] ?? '')) ?: 'De sollicitant';
+    $sz   = function_exists('seizoen_op_id') ? (seizoen_op_id($szid) ?: []) : [];
+    $a    = APP_URL . '/admin/';
+    $mag  = fn(string $m, string $t) => !function_exists('mag') || mag($m, $t);
     $open = array_values(array_filter($taken['rijen'], fn($r) => !$r['done']));
-    $sd_besluit = (string)($d['besluit']['besluit'] ?? '');
-    $tw_besluit = (string)($d['tw']['besluit'] ?? '');
-
-    $zin = match ($fase) {
-        'aangemeld'            => empty($d['blk_ingediend_op'])
-                                    ? 'Nieuwe aanmelding; het kennismakingsformulier is nog niet ingestuurd.'
-                                    : 'Nieuwe aanmelding met ingestuurd formulier. Beoordeel en nodig uit voor de selectiedag.',
-        'uitgenodigd_selectie' => 'Uitgenodigd voor de selectiedag' . $sd . '.' . $komt('selectiedag'),
-        'aangemeld_selectie'   => 'Aangemeld voor de selectiedag' . $sd . ': komt.'
-                                  . (empty($d['blk_ingediend_op']) ? ' Het kennismakingsformulier is nog niet ingeleverd.' : ''),
-        'selectiedag_geweest'  => 'Selectiedag geweest. ' . match ($sd_besluit) {
-                                    'door'    => 'Besluit: door. Bellen en uitnodigen voor het trainingsweekend gaat via de bellijst.',
-                                    'twijfel' => 'Besluit: twijfel. Bellen via de bellijst; daar wordt het door of niet.',
-                                    'niet'    => 'Besluit: niet door. Bellen en doorvoeren via de bellijst.',
-                                    default   => 'Nog geen besluit in de nabespreking.',
-                                  },
-        'uitgenodigd_tw'       => 'Uitgenodigd voor het trainingsweekend.' . $komt('tw'),
-        'tw_geweest'           => 'Trainingsweekend geweest. ' . ($tw_besluit === 'twijfel'
-                                    ? 'Twijfel na het gesprek: nabellen en dan besluiten.'
-                                    : 'Het gesprek en het besluit volgen bij Trainingsweekend › Gesprekken.'),
-        'aangenomen'           => $open ? 'Aangenomen. Nog ' . count($open) . ' ' . (count($open) === 1 ? 'taak' : 'taken') . ' open.'
-                                        : 'Aangenomen, en alles is rond.',
-        'afgewezen'            => 'Afgewezen.',
-        'afgehaakt'            => 'Afgehaakt.',
-        default                => fase_label($fase) . '.',
+    $sinds = bh_dossier_fase_sinds($id);
+    $datum = fn(?string $dt) => $dt ? datum_kort_nl(substr($dt, 0, 10)) : '';
+    $wanneer = fn(?string $dt) => $dt ? bh_dagen_tekst($dt) : '';   // "9 dagen geleden"
+    $ev_dag = function (string $kol) use ($sz): string {
+        return !empty($sz[$kol]) ? datum_kort_nl($sz[$kol]) . ' (' . bh_dagen_tekst($sz[$kol]) . ')' : 'een datum die nog volgt';
     };
+    $bev = fn(string $ev) => function_exists('evenement_bevestiging_van') ? evenement_bevestiging_van($ev, $szid, $id)
+                                                                             : ['stand' => 'onbekend', 'reden' => null, 'op' => null];
+    $zet = ['sollicitant' => ['tekst' => 'Aan zet: ' . $naam, 'kleur' => 'oranje'],
+            'ouder'       => ['tekst' => 'Aan zet: de ouder of verzorger', 'kleur' => 'paars'],
+            'bestuur'     => ['tekst' => 'Aan zet: het bestuur', 'kleur' => 'blauw'],
+            'niemand'     => ['tekst' => 'Niemand aan zet', 'kleur' => 'grijs']];
+    $stap = fn(string $tekst, ?string $url = null, ?string $knop = null, bool $recht = true)
+        => ['tekst' => $tekst, 'url' => $recht ? $url : null, 'knop' => $recht ? $knop : null];
+    $alleen_ouder = $open && !array_filter($open, fn($r) => !$r['wacht']);
+    $taken_tekst = fn() => count($open) === 1 ? 'één taak' : count($open) . ' taken';
+
+    $titel = fase_label($fase); $aan = $zet['niemand']; $zin = ''; $volgende = null;
+    switch ($fase) {
+        case 'aangemeld':
+            $titel = 'Nieuwe aanmelding';
+            $aan = $zet['bestuur'];
+            $zin = !empty($s['aangemeld_op'])
+                ? $naam . ' meldde zich ' . $wanneer($s['aangemeld_op']) . ' aan (' . $datum($s['aangemeld_op']) . ').'
+                : $naam . ' heeft zich aangemeld.';
+            $volgende = $stap('Klopt de aanmelding? Nodig ' . $naam . ' dan uit voor de selectiedag (knop bovenaan).');
+            break;
+
+        case 'uitgenodigd_selectie':
+            $b = $bev('selectiedag');
+            if ($b['stand'] === 'komt_niet') {
+                $titel = 'Kan niet komen';
+                $aan = $zet['bestuur'];
+                $zin = $naam . ' gaf ' . $wanneer($b['op']) . ' door niet naar de selectiedag van ' . $ev_dag('datum_selectiedag') . ' te kunnen'
+                     . (!empty($b['reden']) ? ': "' . $b['reden'] . '".' : '.');
+                $volgende = $stap('Beslis of ' . $naam . ' afhaakt of een uitzondering krijgt.', $a . 'index.php', 'Naar Vandaag');
+            } else {
+                $titel = 'Wacht op antwoord';
+                $aan = $zet['sollicitant'];
+                $zin = $naam . ' is ' . ($sinds ? $wanneer($sinds) . ' ' : '') . 'uitgenodigd voor de selectiedag van ' . $ev_dag('datum_selectiedag')
+                     . ' en heeft nog niet laten weten of het lukt.';
+                $dagen = !empty($sz['datum_selectiedag']) ? (int)round((strtotime($sz['datum_selectiedag']) - strtotime('today')) / 86400) : null;
+                $volgende = $dagen !== null && $dagen <= 3
+                    ? $stap('De selectiedag is dichtbij: bel ' . $naam . ' even na.')
+                    : $stap('Niets te doen: ' . $naam . ' krijgt vanzelf een herinnering als de selectiedag nadert.');
+            }
+            break;
+
+        case 'aangemeld_selectie':
+            $b = $bev('selectiedag');
+            $titel = 'Komt naar de selectiedag';
+            $groep = null;
+            try {
+                $q = db()->prepare("SELECT g.nummer, g.naam FROM selectie_indeling t JOIN selectie_groep g ON g.id = t.groep_id WHERE t.seizoen_id=? AND t.sollicitatie_id=?");
+                $q->execute([$szid, $id]);
+                if ($g = $q->fetch()) $groep = ($g['naam'] ?: 'groep ' . $g['nummer']);
+            } catch (\Throwable $e) {}
+            $zin = $naam . ' bevestigde ' . ($b['op'] ? $wanneer($b['op']) . ' ' : '') . 'te komen op ' . $ev_dag('datum_selectiedag') . '. '
+                 . ($groep ? 'Ingedeeld in ' . $groep . '.' : 'Nog niet in een groep ingedeeld.')
+                 . (empty($d['blk_ingediend_op']) ? ' Het kennismakingsformulier is nog niet ingeleverd.' : '');
+            if (!empty($sz['datum_selectiedag']) && $sz['datum_selectiedag'] === date('Y-m-d')) {
+                $aan = $zet['bestuur'];
+                $volgende = $stap('Vandaag is de selectiedag: inchecken bij de ingang of hier.', $a . 'selectie_inchecken.php', 'Naar inchecken', $mag('selectiedag', 'inchecken'));
+            } elseif (!$groep) {
+                $aan = $zet['bestuur'];
+                $volgende = $stap('Deel ' . $naam . ' in een groep in.', $a . 'selectie_indeling.php', 'Naar de groepsindeling', $mag('selectiedag', 'voorbereiden'));
+            } elseif ($open) {
+                $aan = $alleen_ouder ? $zet['ouder'] : $zet['sollicitant'];
+                $volgende = $stap('Er staat nog ' . $taken_tekst() . ' open; ' . $naam . ' krijgt daar vanzelf herinneringen voor.');
+            } else {
+                $volgende = $stap('Alles is klaar voor de selectiedag.');
+            }
+            break;
+
+        case 'selectiedag_geweest':
+            $besl = (array)($d['besluit'] ?? []);
+            $gem  = bh_dossier_score($d);
+            $adv  = bh_dossier_advies($d);
+            $aan  = $zet['bestuur'];
+            $cijfer = $gem !== null ? 'Gemiddeld ' . cijfer_nl((float)$gem) . ($adv ? ' (advies: ' . mb_strtolower($adv['label']) . ')' : '') . '.' : 'Er zijn geen cijfers ingevuld.';
+            $wat = ['door' => 'door', 'twijfel' => 'twijfel', 'niet' => 'niet door'][$besl['besluit'] ?? ''] ?? null;
+            if (!$wat) {
+                $titel = 'Wacht op de nabespreking';
+                $zin = $naam . ' was ' . ($sinds ? $wanneer($sinds) . ' ' : '') . 'op de selectiedag. ' . $cijfer;
+                $volgende = $stap('Bespreek ' . $naam . ' na en kies door, twijfel of niet door.', $a . 'selectie_nabespreking.php#nb-' . $id, 'Naar de nabespreking', $mag('selectiedag', 'nabespreken'));
+            } elseif (empty($besl['gebeld_op'])) {
+                $titel = 'Bellen';
+                $zin = 'Besluit na de nabespreking: ' . $wat . (!empty($besl['notitie']) ? ' ("' . $besl['notitie'] . '")' : '') . '. ' . $naam . ' weet het nog niet. ' . $cijfer;
+                $volgende = $stap('Bel ' . $naam . ' via de bellijst' . ($wat === 'twijfel' ? '; daar wordt het door of niet.' : '.'),
+                                  $a . 'selectie_nabespreking.php?tab=bellijst&bel=' . $id, 'Naar de bellijst', $mag('selectiedag', 'bellen'));
+            } else {
+                $titel = 'Gebeld, nog doorvoeren';
+                $zin = 'Besluit: ' . $wat . '. Gebeld ' . $wanneer($besl['gebeld_op']) . (!empty($besl['gebeld_door']) ? ' door ' . $besl['gebeld_door'] : '')
+                     . (!empty($besl['gebeld_notitie']) ? ': "' . $besl['gebeld_notitie'] . '".' : '.');
+                $volgende = $stap($wat === 'niet door' ? 'Voer de afwijzing door op de bellijst.' : 'Zet ' . $naam . ' door naar het trainingsweekend op de bellijst.',
+                                  $a . 'selectie_nabespreking.php?tab=bellijst&bel=' . $id, 'Naar de bellijst', $mag('selectiedag', 'bellen'));
+            }
+            break;
+
+        case 'uitgenodigd_tw':
+            $b = $bev('tw');
+            $besch = function_exists('beschikbaarheid2_van') ? beschikbaarheid2_van($id) : ['blokken' => [], 'profiel' => null];
+            $besch_tekst = !$besch['blokken'] ? 'Beschikbaarheid nog niet doorgegeven.'
+                         : (!empty($besch['profiel']['voorlopig']) ? 'Beschikbaarheid nog voorlopig.' : 'Beschikbaarheid doorgegeven.');
+            if ($b['stand'] === 'komt_niet') {
+                $titel = 'Kan niet komen';
+                $aan = $zet['bestuur'];
+                $zin = $naam . ' gaf ' . $wanneer($b['op']) . ' door niet naar het trainingsweekend te kunnen' . (!empty($b['reden']) ? ': "' . $b['reden'] . '".' : '.');
+                $volgende = $stap('Beslis of ' . $naam . ' afhaakt of een uitzondering krijgt.', $a . 'index.php', 'Naar Vandaag');
+            } elseif ($b['stand'] === 'komt') {
+                $titel = 'Komt naar het trainingsweekend';
+                $weg = !empty($d['tw']['eerder_weg']) && function_exists('tw_eerder_weg_tekst') ? ' Moet eerder weg: ' . tw_eerder_weg_tekst((string)$d['tw']['eerder_weg']) . '.' : '';
+                $zin = $naam . ' komt op ' . $ev_dag('datum_tw_start') . '.' . $weg . ' ' . $besch_tekst;
+                $aan = !$besch['blokken'] || !empty($besch['profiel']['voorlopig']) ? $zet['sollicitant'] : ($open ? ($alleen_ouder ? $zet['ouder'] : $zet['sollicitant']) : $zet['niemand']);
+                $volgende = !$besch['blokken']
+                    ? $stap('Wacht op de beschikbaarheid; die is nodig voor het gesprek op het weekend.')
+                    : ($open ? $stap('Er staat nog ' . $taken_tekst() . ' open; ' . $naam . ' krijgt daar vanzelf herinneringen voor.') : $stap('Alles is klaar voor het weekend.'));
+            } else {
+                $titel = 'Wacht op antwoord';
+                $aan = $zet['sollicitant'];
+                $zin = $naam . ' is ' . ($sinds ? $wanneer($sinds) . ' ' : '') . 'uitgenodigd voor het trainingsweekend van ' . $ev_dag('datum_tw_start')
+                     . ' en heeft nog niet laten weten of het lukt. ' . $besch_tekst;
+                $volgende = $stap('Niets te doen: ' . $naam . ' ziet de vraag in het portaal en krijgt herinneringen.');
+            }
+            break;
+
+        case 'tw_geweest':
+            $tw = (array)($d['tw'] ?? []);
+            $aan = $zet['bestuur'];
+            $gesprek = $a . 'trainingsweekend.php?stap=gesprekken&k=' . $id;
+            if (($tw['besluit'] ?? '') === 'twijfel') {
+                $titel = 'Twijfel na het gesprek';
+                $zin = 'Na het gesprek' . (!empty($tw['besluit_op']) ? ' (' . $wanneer($tw['besluit_op']) . ')' : '') . ' staat ' . $naam . ' op twijfel'
+                     . (!empty($tw['besluit_notitie']) ? ': "' . $tw['besluit_notitie'] . '".' : '.');
+                $volgende = $stap('Bel ' . $naam . ' en leg daarna in het gesprek het besluit vast.', $gesprek, 'Naar het gesprek', $mag('trainingsweekend', 'gesprekken'));
+            } else {
+                $titel = 'Wacht op het gesprek';
+                $zin = $naam . ' was op het trainingsweekend; het gesprek met het bestuur is er nog niet geweest.';
+                $volgende = $stap('Voer het gesprek en leg het besluit vast.', $gesprek, 'Naar het gesprek', $mag('trainingsweekend', 'gesprekken'));
+            }
+            break;
+
+        case 'aangenomen':
+            $af  = function_exists('inzet_afspraak_van') ? inzet_afspraak_van($id) : null;
+            $ld  = function_exists('documenten_loondossier') ? documenten_loondossier($id) : null;
+            $zin = $naam . ' is ' . ($sinds ? $wanneer($sinds) . ' ' : '') . 'aangenomen. '
+                 . ($af ? 'De inzet is vastgesteld.' : 'De inzet is nog niet vastgesteld.') . ' '
+                 . ($ld ? ($ld['compleet'] ? 'Het loondossier is compleet.' : 'Het loondossier mist nog: ' . mb_strtolower(implode(', ', $ld['ontbreekt'])) . '.') : '');
+            if ($open) {
+                $titel = 'Nog ' . $taken_tekst() . ' open';
+                $aan = $alleen_ouder ? $zet['ouder'] : $zet['sollicitant'];
+                $volgende = $stap($naam . ' rondt de taken af in het portaal en krijgt daar vanzelf herinneringen voor.');
+            } elseif (!$af) {
+                $titel = 'Inzet vaststellen';
+                $aan = $zet['bestuur'];
+                $volgende = $stap('Maak de loonplanning definitief; dan ziet ' . $naam . ' de afspraak in het portaal.', $a . 'loonplanning.php', 'Naar de loonplanning', $mag('loonplanning', 'definitief'));
+            } else {
+                $titel = 'Rond';
+                $volgende = null;
+            }
+            break;
+
+        case 'afgewezen':
+            $titel = 'Afgewezen';
+            $stadium = function_exists('portaal_afwijs_stadium') ? portaal_afwijs_stadium($id) : 'aanmelding';
+            $seintje = function_exists('seintje_heeft') && !empty($s['pid']) && seintje_heeft((int)$s['pid']);
+            $zin = $naam . ' is ' . ($sinds ? $wanneer($sinds) . ' ' : '') . 'afgewezen'
+                 . ['tw' => ' na het trainingsweekend', 'selectiedag' => ' na de selectiedag', 'aanmelding' => ' op de aanmelding'][$stadium] . '. '
+                 . ($seintje ? 'Wil een seintje als de werving weer opent.'
+                             : 'Geen seintje gevraagd: de gegevens worden ' . (function_exists('seintje_afwijs_termijn_tekst') ? 'binnen ' . seintje_afwijs_termijn_tekst() . ' ' : '') . 'verwijderd.');
+            break;
+
+        case 'afgehaakt':
+            $titel = 'Gestopt';
+            $zin = $naam . ' is ' . ($sinds ? $wanneer($sinds) . ' ' : '') . 'gestopt met de sollicitatie.';
+            break;
+
+        default:
+            $zin = fase_label($fase) . '.';
+    }
 
     $wacht = [];
     foreach ($open as $r) {
@@ -297,7 +472,10 @@ function bh_dossier_nu(array $d, array $taken): array {
     }
     $max = 6;
     return [
-        'zin'      => $zin,
+        'titel'    => $titel,
+        'aan_zet'  => $aan,
+        'zin'      => trim(preg_replace('/\s+/', ' ', $zin)),
+        'volgende' => $volgende,
         'wacht'    => array_slice($wacht, 0, $max),
         'meer'     => max(0, count($wacht) - $max),
         // Afgewezen of afgehaakt: niemand herinneren.
