@@ -74,22 +74,27 @@ function berichten_inhoud(array $post, $db, string $modus): array {
     return ['inhoud' => $inhoud, 'override' => array_filter($override, fn($v) => $v !== '')];
 }
 
-// ── POST: voorbeeld / test / verzenden ────────────────────────
-$voorbeeld = null; $resultaat = null; $fout = null;
+// ── POST: selecteren / voorbeeld / test / verzenden ───────────
+$voorbeeld = null; $resultaat = null; $fout = null; $logica_fouten = []; $selectie_uitslag = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tab === 'nieuw') {
     csrf_check();
     $actie  = $_POST['actie'] ?? '';
-    // Een voorbeeld verstuurt niets: dat mag met leesrecht, versturen en testen niet.
-    if (!$mag_bewerken && $actie !== 'voorbeeld') { http_response_code(403); die('Geen recht om berichten te versturen.'); }
+    // Een voorbeeld of selectie verstuurt niets: dat mag met leesrecht, versturen en testen niet.
+    if (!$mag_bewerken && !in_array($actie, ['voorbeeld', 'selecteer'], true)) { http_response_code(403); die('Geen recht om berichten te versturen.'); }
     // Standaard WhatsApp/sms (besluit Lucas); e-mail is de terugval voor wie geen telefoon heeft.
     $modus  = isset($modi[$_POST['kanaalmodus'] ?? '']) ? $_POST['kanaalmodus'] : 'kort';
     $ids    = array_values(array_unique(array_filter(array_map('intval', $_POST['ontvangers'] ?? []))));
     $bi     = berichten_inhoud($_POST, $db, $modus);
     $inhoud = $bi['inhoud']; $override = $bi['override'];
     $voorsel = $ids;
+    // Logica in de tekst ({{als …}}): eerst controleren, dan pas bijlagen, een voorbeeld of verzending.
+    if ($actie !== 'selecteer' && function_exists('sjabloon_controleer')) {
+        $logica_fouten = sjabloon_controleer(['Onderwerp' => [$inhoud['onderwerp'], false], 'E-mailtekst' => [$inhoud['body_html'], true],
+                                              'Tekst voor WhatsApp en sms' => [$inhoud['tekst_kort'], false]]);
+    }
     // Bijlagen: geüploade bestanden naar de bibliotheek (alleen bij echt verzenden/testen)
     $bijlagen_opties = [];
-    if (in_array($actie, ['verzend', 'test'], true) && !empty($_FILES['bijlagen']['name']) && function_exists('bijlage_opslaan')) {
+    if (!$logica_fouten && in_array($actie, ['verzend', 'test'], true) && !empty($_FILES['bijlagen']['name']) && function_exists('bijlage_opslaan')) {
         foreach ((array)$_FILES['bijlagen']['name'] as $i => $bn) {
             if ($bn === '' || ($_FILES['bijlagen']['error'][$i] ?? 4) !== UPLOAD_ERR_OK) continue;
             $een = ['name' => $bn, 'tmp_name' => $_FILES['bijlagen']['tmp_name'][$i], 'size' => $_FILES['bijlagen']['size'][$i], 'error' => $_FILES['bijlagen']['error'][$i]];
@@ -98,8 +103,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tab === 'nieuw') {
         }
     }
 
-    if ($fout) {
-        // bijlage-fout: niets versturen
+    if ($actie === 'selecteer') {
+        // Selecteren met een voorwaarde: alleen de sollicitanten van dit seizoen; de selectie wordt vervangen.
+        $vw = trim((string)($_POST['voorwaarde'] ?? ''));
+        $logica_fouten = $vw === '' ? ['Schrijf eerst een voorwaarde.'] : array_map(fn($f) => 'Voorwaarde: ' . $f, voorwaarde_fouten($vw, voorwaarde_bekend()));
+        if (!$logica_fouten) {
+            $voorsel = array_values(array_map(fn($s) => (int)$s['id'], array_filter($alle, fn($s) => voorwaarde_klopt($vw, (int)$s['id']))));
+            $selectie_uitslag = [count($voorsel), count($alle)];
+        }
+    } elseif ($fout || $logica_fouten) {
+        // bijlage- of logicafout: niets versturen
     } elseif ($modus !== 'email' && $inhoud['tekst_kort'] === '') {
         $fout = 'Schrijf het bericht voor WhatsApp/sms.';
     } elseif ($modus !== 'kort' && ($inhoud['onderwerp'] === '' || trim(strip_tags($inhoud['body_html'])) === '')) {
@@ -107,11 +120,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $tab === 'nieuw') {
     } elseif ($actie === 'voorbeeld') {
         $vars = function_exists('melding_vars') ? melding_vars($ids[0] ?? 0, $inhoud) : $inhoud;
         if (!$ids) { $vars['voornaam'] = 'Lieke'; $vars['achternaam'] = 'de Vries'; $vars['volledige_naam'] = 'Lieke de Vries'; }
-        $voorbeeld = melding_render('handmatig', $vars, $override);
+        // Logica: met de gegevens van de eerste ontvanger, zonder ontvanger met voorbeeldwaarden.
+        $voorbeeld = melding_render('handmatig', $vars, $override, $ids[0] ?? null);
     } elseif ($actie === 'test') {
         $bhd = huidige_beheerder();
         $r = melding_verstuur('handmatig', 0, $inhoud, [
-            'override' => $override, 'kanaalmodus' => 'email', 'prioriteit' => 'direct', 'negeer_plafond' => true, 'bijlagen' => $bijlagen_opties,
+            'override' => $override, 'kanaalmodus' => 'email', 'prioriteit' => 'direct', 'negeer_plafond' => true, 'bijlagen' => $bijlagen_opties, 'voorbeeld' => true,
             'ontvanger' => ['email' => (string)($bhd['email'] ?? ''), 'naam' => (string)($bhd['naam'] ?? 'Test'), 'telefoon' => '', 'rol' => 'direct'],
         ]);
         $fout = $r['status'] === 'verstuurd' ? null : 'Testmail mislukt: ' . ($r['reden'] ?? 'onbekend');
@@ -312,6 +326,8 @@ require __DIR__ . '/layout_top.php';
 <?php if ($fout): ?>
   <div class="ds-melding ds-melding-error bh-blokkade"><?= icoon('waarschuwing', 18) ?><span><?= h($fout) ?></span></div>
 <?php endif; ?>
+<?php $fouten = $logica_fouten; $fouten_titel = ($_POST['actie'] ?? '') === 'selecteer' ? 'Niets geselecteerd' : 'Niets verstuurd: de logica klopt nog niet';
+      require __DIR__ . '/_foutlijst.php'; ?>
 
 <?php if ($resultaat): $_uitslag = bh_verzend_zin($resultaat); ?>
 <section class="ds-kaart bh-uitslag">
@@ -460,6 +476,30 @@ require __DIR__ . '/layout_top.php';
       <?php endif; ?>
     </div>
     </details>
+
+    <?php if ($alle): $_vw_open = isset($_POST['voorwaarde']) && trim((string)$_POST['voorwaarde']) !== ''; ?>
+    <details class="bh-klap" <?= $_vw_open ? 'open' : '' ?>>
+      <summary><span class="bh-klap-titel">Selecteren met een voorwaarde</span><span class="bh-klap-sam">voor gevorderden</span></summary>
+      <div class="bh-klap-inhoud">
+        <?php if ($selectie_uitslag): ?>
+          <p class="ds-melding ds-melding-info" role="status">
+            <?= (int)$selectie_uitslag[0] ?> van de <?= (int)$selectie_uitslag[1] ?> sollicitanten van dit seizoen voldoen; die staan nu aangevinkt.
+          </p>
+        <?php endif; ?>
+        <div class="ds-veld">
+          <label class="ds-label" for="ber_voorwaarde">Voorwaarde</label>
+          <textarea class="ds-textarea" id="ber_voorwaarde" name="voorwaarde" rows="2" data-var-veld aria-describedby="ber_voorwaarde_hint"
+                    placeholder='kennismakingsformulier = "open" en leeftijd &lt; 18'><?= h($_POST['voorwaarde'] ?? '') ?></textarea>
+          <p class="ds-veld-hint" id="ber_voorwaarde_hint">
+            Vinkt iedereen van dit seizoen aan die voldoet; de rest gaat uit. Er wordt niets verstuurd.
+          </p>
+        </div>
+        <?php $vw_soort = 'voorwaarde'; $vw_doel = 'ber_voorwaarde'; require __DIR__ . '/_voorwaarden.php'; ?>
+        <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm"
+                data-klik="P13Klik.zet('#actieVeld', 'selecteer')">Selecteren</button>
+      </div>
+    </details>
+    <?php endif; ?>
   </section>
 
   <section class="ds-kaart ds-kaart-p bh-berichtstap">
@@ -535,6 +575,7 @@ require __DIR__ . '/layout_top.php';
       </details>
 
       <?php require __DIR__ . '/_variabelen.php'; ?>
+      <?php $vw_soort = 'sjabloon'; require __DIR__ . '/_voorwaarden.php'; ?>
 
       <details class="bh-klap">
         <summary><span class="bh-klap-titel">Bijlagen</span><span class="bh-klap-sam">optioneel</span></summary>

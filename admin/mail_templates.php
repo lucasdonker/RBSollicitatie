@@ -35,6 +35,7 @@ if (isset($_GET['preview'])) {
     $r = function_exists('melding_render') ? melding_render($slug, sjabloon_voorbeeld_vars()) : null;
     if (!$r) { http_response_code(404); die('Sjabloon niet gevonden'); }
     header('Content-Type: text/html; charset=utf-8');
+    if (!empty($r['fout'])) { echo '<!DOCTYPE html><html lang="nl"><meta charset="UTF-8"><title>Fout in het sjabloon</title><p>Fout in de logica van dit sjabloon: ' . h($r['fout']) . '</p></html>'; exit; }
     if ($kanaal === 'email') { echo $r['html']; exit; }
     ?><!DOCTYPE html><html lang="nl"><head><meta charset="UTF-8"><title>Voorbeeld kort bericht</title>
     <style>body{margin:0;background:#e5ddd5;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;display:flex;justify-content:center;padding:40px 16px}
@@ -60,7 +61,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $actie = $_POST['actie'] ?? '';
     $slug  = preg_replace('/[^a-z0-9_-]/i', '', (string)($_POST['slug'] ?? ''));
 
-    if ($actie === 'opslaan' && $slug !== '') {
+    // Logica in de teksten eerst controleren. Klopt die niet, dan slaan we niets op en blijft je
+    // invoer op het scherm staan (geen redirect): een fout sjabloon zou anders bij verzenden mislukken.
+    $logica_fouten = [];
+    if ($actie === 'opslaan' && $slug !== '' && function_exists('sjabloon_controleer')) {
+        $logica_fouten = sjabloon_controleer([
+            'Onderwerp' => [(string)($_POST['onderwerp'] ?? ''), false], 'Hero-titel' => [(string)($_POST['hero_titel'] ?? ''), false],
+            'Hero-subtitel' => [(string)($_POST['hero_subtitel'] ?? ''), false], 'E-mailtekst' => [(string)($_POST['body_html'] ?? ''), true],
+            'Korte tekst' => [(string)($_POST['tekst_kort'] ?? ''), false], 'Samenvatting' => [(string)($_POST['samenvatting'] ?? ''), false],
+        ], $register[$slug]['vars'] ?? []);
+    }
+
+    if ($actie === 'opslaan' && $slug !== '' && !$logica_fouten) {
         $onderwerp     = trim($_POST['onderwerp'] ?? '');
         $hero_titel    = trim($_POST['hero_titel'] ?? '');
         $hero_subtitel = trim($_POST['hero_subtitel'] ?? '');
@@ -153,7 +165,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } catch (Exception $e) { flash('fout', 'Opslaan mislukt.'); }
         redirect(APP_URL . '/admin/mail_templates.php');
     }
-    redirect(APP_URL . '/admin/mail_templates.php');
+    if (!$logica_fouten) redirect(APP_URL . '/admin/mail_templates.php');
+    $_GET['slug'] = $slug;   // fout in de logica: hetzelfde sjabloon opnieuw tonen, met je invoer
 }
 
 // ── Data voor het scherm ───────────────────────────────────────
@@ -174,6 +187,11 @@ foreach ($rijen as $slug => $r) {
 $actief_slug = preg_replace('/[^a-z0-9_-]/i', '', (string)($_GET['slug'] ?? ''));
 if ($actief_slug === '' || $actief_slug === '_hero_image') $actief_slug = array_key_first($register) ?: '';
 $actief = function_exists('sjabloon_laden') ? sjabloon_laden($actief_slug) : ($rijen[$actief_slug] ?? null);
+if (!empty($logica_fouten) && $actief) {
+    foreach (['onderwerp', 'hero_titel', 'hero_subtitel', 'hero_kleur', 'hero_image_url', 'body_html', 'tekst_kort', 'samenvatting', 'naam'] as $_k) {
+        if (isset($_POST[$_k])) $actief[$_k] = (string)$_POST[$_k];
+    }
+}
 $def    = $register[$actief_slug] ?? null;
 $in_db  = isset($rijen[$actief_slug]);
 $modus  = $def && function_exists('melding_kanaalmodus') ? melding_kanaalmodus($actief_slug) : null;
@@ -259,6 +277,7 @@ require __DIR__ . '/layout_top.php';
     <?php endif; ?>
   </div>
   <div class="bh-kaartbody bh-mt-body">
+    <?php $fouten = $logica_fouten ?? []; $fouten_titel = 'Niet opgeslagen: de logica klopt nog niet'; require __DIR__ . '/_foutlijst.php'; ?>
     <form method="POST" enctype="multipart/form-data" id="tmplForm">
       <?= csrf_input() ?>
       <input type="hidden" name="actie" value="opslaan">
@@ -367,6 +386,7 @@ require __DIR__ . '/layout_top.php';
       // Eén lijst met variabelen voor Berichten en Sjablonen (melding_variabelen_lijst()).
       $var_extra = array_combine($vars_type, array_map(fn($v) => ucfirst(str_replace('_', ' ', $v)), $vars_type)) ?: [];
       require __DIR__ . '/_variabelen.php';
+      $vw_soort = 'sjabloon'; require __DIR__ . '/_voorwaarden.php';
     ?>
     <div class="bh-mt-opmaak">
       Opmaakblokken via de knoppen in de editor: Knop, Info-blok, Let op. Als tekst: <code>[knop href="URL"]Tekst[/knop]</code>, <code>[info]...[/info]</code>, <code>[let op]...[/let op]</code>, <code>[code]123456[/code]</code>.

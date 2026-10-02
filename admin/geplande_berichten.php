@@ -20,13 +20,17 @@ $sjablonen = [];
 try { $sjablonen = $db->query("SELECT slug, naam FROM mail_templates WHERE slug LIKE 'eigen\\_%' OR categorie='handmatig' ORDER BY naam")->fetchAll(); } catch (Exception $e) {}
 $sjablonen = array_values(array_filter($sjablonen, fn($t) => $t['slug'] !== 'handmatig'));
 
-$proef = null;
+$proef = null; $regel_fouten = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
     $actie = $_POST['actie'] ?? '';
     $id = (int)($_POST['id'] ?? 0);
     if ($actie === 'opslaan') {
         if (empty($_POST['sjabloon_slug'])) { flash('fout', 'Kies een sjabloon (maak er eerst een aan onder Sjablonen).'); redirect(APP_URL . '/admin/geplande_berichten.php' . ($id ? '?id=' . $id : '')); }
+        // Voorwaarde klopt niet: niets opslaan, het formulier blijft met je invoer staan (hieronder).
+        $regel_fouten = gepland_controleer($_POST);
+    }
+    if ($actie === 'opslaan' && !$regel_fouten) {
         $nieuw_id = gepland_opslaan($_POST, $id ?: null, (int)(huidige_beheerder()['id'] ?? 0));
         if ($nieuw_id) { if (function_exists('audit_log')) audit_log($id ? 'gewijzigd' : 'aangemaakt', 'gepland_bericht', $nieuw_id, ['naam' => $_POST['naam'] ?? '']); flash('succes', 'Regel opgeslagen.'); }
         else flash('fout', 'Opslaan mislukt.');
@@ -46,7 +50,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $regels = function_exists('gepland_regels') ? gepland_regels(false) : [];
 $bewerk = !empty($_GET['id']) ? gepland_regel((int)$_GET['id']) : null;
 $nieuw  = isset($_GET['nieuw']);
-$form   = $bewerk ?: ['id' => 0, 'naam' => '', 'aan' => 1, 'gebeurtenis' => 'aangemeld', 'offset_dagen' => 10, 'sjabloon_slug' => '', 'kanaalmodus' => 'email', 'fases' => '', 'max_per_sollicitatie' => 1, 'venster_dagen' => 7];
+$form   = $bewerk ?: ['id' => 0, 'naam' => '', 'aan' => 1, 'gebeurtenis' => 'aangemeld', 'offset_dagen' => 10, 'sjabloon_slug' => '', 'kanaalmodus' => 'email', 'fases' => '', 'max_per_sollicitatie' => 1, 'venster_dagen' => 7, 'voorwaarde' => '', 'herhaal_dagen' => 7];
+if ($regel_fouten) {
+    // Terug naar het formulier met wat er net is ingevuld.
+    $id = (int)($_POST['id'] ?? 0);
+    $bewerk = $id ? (gepland_regel($id) ?: null) : null;
+    $nieuw  = !$bewerk;
+    $form = array_merge($form, array_intersect_key($_POST, $form), ['id' => $id, 'aan' => !empty($_POST['aan']) ? 1 : 0, 'fases' => implode(',', (array)($_POST['fases'] ?? []))]);
+}
 $form_fases = array_filter(array_map('trim', explode(',', (string)($form['fases'] ?? ''))));
 $modi = ['email' => 'E-mail', 'kort' => 'WhatsApp/SMS', 'beide' => 'E-mail + WhatsApp/SMS'];
 $sjabloon_naam = []; foreach ($sjablonen as $t) $sjabloon_naam[$t['slug']] = $t['naam'];
@@ -55,6 +66,7 @@ require __DIR__ . '/layout_top.php';
 
 /** "10 dagen na aangemeld" — het moment van een regel in één zin. */
 $moment = function (array $r) use ($gebeurtenissen): string {
+    if ($r['gebeurtenis'] === 'altijd') return 'Zodra de voorwaarde klopt';
     $d = (int)$r['offset_dagen'];
     $wanneer = $d === 0 ? 'Op de dag van' : abs($d) . ' ' . (abs($d) === 1 ? 'dag' : 'dagen') . ' ' . ($d < 0 ? 'vóór' : 'na');
     return $wanneer . ' ' . lcfirst($gebeurtenissen[$r['gebeurtenis']] ?? $r['gebeurtenis']);
@@ -75,6 +87,7 @@ $moment = function (array $r) use ($gebeurtenissen): string {
       <?= bh_meta([(int)$pr['kandidaten'] . ' ' . ((int)$pr['kandidaten'] === 1 ? 'sollicitant' : 'sollicitanten'),
                    (int)$pr['verstuurd'] . ' zou versturen',
                    (int)$pr['overgeslagen'] . ' overgeslagen',
+                   !empty($pr['niet_voldaan']) ? (int)$pr['niet_voldaan'] . ' voldoen niet aan de voorwaarde' : '',
                    (string)($pr['fout'] ?? '')]) ?>
     </p>
     <?php if (!empty($pr['lijst'])): ?>
@@ -93,6 +106,7 @@ $moment = function (array $r) use ($gebeurtenissen): string {
   <input type="hidden" name="id" value="<?= (int)$form['id'] ?>">
 
   <div class="bh-kaartkop"><h2><?= $bewerk ? 'Regel bewerken' : 'Nieuwe regel' ?></h2></div>
+  <?php $fouten = $regel_fouten; require __DIR__ . '/_foutlijst.php'; ?>
 
   <?php if (!$sjablonen): ?>
     <div class="ds-melding ds-melding-warn">
@@ -131,6 +145,10 @@ $moment = function (array $r) use ($gebeurtenissen): string {
              min="1" max="60" aria-describedby="gb_venster_hint">
       <p class="ds-veld-hint" id="gb_venster_hint">Alleen als het moment hooguit zoveel dagen geleden was. Zo krijgen oude gevallen het bericht niet alsnog.</p>
     </div>
+    <p class="ds-veld-hint">
+      Bij "Zodra de voorwaarde klopt" tellen dagen en venster niet: elk kwartier kijken we wie aan de
+      voorwaarde voldoet, ook wie dat al langer doet. Draai de regel eerst proef.
+    </p>
   </fieldset>
 
   <fieldset class="bh-veldgroep">
@@ -154,9 +172,17 @@ $moment = function (array $r) use ($gebeurtenissen): string {
         </select>
       </div>
     </div>
-    <div class="ds-veld">
-      <label class="ds-label" for="gb_max">Hoe vaak per persoon (max)</label>
-      <input class="ds-input" type="number" id="gb_max" name="max_per_sollicitatie" value="<?= (int)$form['max_per_sollicitatie'] ?>" min="1" max="10">
+    <div class="bh-veldrij">
+      <div class="ds-veld">
+        <label class="ds-label" for="gb_max">Hoe vaak per persoon (max)</label>
+        <input class="ds-input" type="number" id="gb_max" name="max_per_sollicitatie" value="<?= (int)$form['max_per_sollicitatie'] ?>" min="1" max="10">
+      </div>
+      <div class="ds-veld">
+        <label class="ds-label" for="gb_herhaal">Minstens dagen ertussen</label>
+        <input class="ds-input" type="number" id="gb_herhaal" name="herhaal_dagen" value="<?= (int)($form['herhaal_dagen'] ?? 7) ?>"
+               min="1" max="365" aria-describedby="gb_herhaal_hint">
+        <p class="ds-veld-hint" id="gb_herhaal_hint">Telt alleen als iemand het bericht vaker dan één keer mag krijgen.</p>
+      </div>
     </div>
   </fieldset>
 
@@ -171,6 +197,13 @@ $moment = function (array $r) use ($gebeurtenissen): string {
         </label>
       <?php endforeach; ?>
     </div>
+    <div class="ds-veld">
+      <label class="ds-label" for="gb_voorwaarde">Alleen als <span>optioneel, voor gevorderden</span></label>
+      <textarea class="ds-textarea" id="gb_voorwaarde" name="voorwaarde" rows="2" data-var-veld aria-describedby="gb_voorwaarde_hint"
+                placeholder='kennismakingsformulier = "open" en kennismakingsformulier.dagen_open &gt; 7'><?= h((string)($form['voorwaarde'] ?? '')) ?></textarea>
+      <p class="ds-veld-hint" id="gb_voorwaarde_hint">Leeg = iedereen in de gekozen fases. Wordt gecontroleerd bij opslaan.</p>
+    </div>
+    <?php $vw_soort = 'voorwaarde'; $vw_doel = 'gb_voorwaarde'; require __DIR__ . '/_voorwaarden.php'; ?>
     <label class="bh-dialoog-vink">
       <input type="checkbox" name="aan" value="1" <?= (int)$form['aan'] ? 'checked' : '' ?>>
       <span>Regel staat aan</span>
@@ -219,6 +252,7 @@ $moment = function (array $r) use ($gebeurtenissen): string {
                 'sjabloon "' . ($sjabloon_naam[$r['sjabloon_slug']] ?? $r['sjabloon_slug']) . '"',
                 $modi[$r['kanaalmodus']] ?? $r['kanaalmodus'],
                 $_fasen !== '' ? 'alleen ' . $_fasen : '',
+                !empty($r['voorwaarde']) ? 'als ' . $r['voorwaarde'] : '',
                 'max ' . (int)$r['max_per_sollicitatie'] . '× per persoon',
             ]) ?></span>
           </span>
@@ -250,4 +284,5 @@ $moment = function (array $r) use ($gebeurtenissen): string {
   <?php endif; ?>
 </section>
 
+<script src="<?= APP_URL ?>/assets/js/variabelen.js?v=<?= @filemtime(__DIR__ . '/../assets/js/variabelen.js') ?>" defer></script>
 <?php require __DIR__ . '/layout_bottom.php'; ?>

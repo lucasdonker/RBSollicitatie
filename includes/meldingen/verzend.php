@@ -130,7 +130,7 @@ function penningmeester_email(): string {
  * @param array  $extra   extra sjabloonvariabelen (bij 'handmatig': onderwerp, body_html, tekst_kort)
  * @param array  $opties  ontvanger (['email','naam','telefoon','rol']), kanaalmodus, prioriteit
  *                        ('direct'|'na_antwoord'|'queue'), bijlagen, dedup_min, referentie,
- *                        negeer_plafond, voetnoot_html
+ *                        negeer_plafond, voetnoot_html, voorbeeld (testbericht: logica met voorbeeldwaarden)
  * @return array ['status'=>'wacht|verstuurd|mislukt|overgeslagen','reden'=>?string,'log_id'=>?int,'kanaal'=>?string,'items'=>[]]
  */
 function melding_verstuur(string $type, int $sol_id, array $extra = [], array $opties = []): array {
@@ -170,8 +170,15 @@ function melding_verstuur(string $type, int $sol_id, array $extra = [], array $o
         $bijl = melding_bijlagen_verdeel(melding_bijlagen_resolve(melding_bijlagen_normaliseer(array_merge($sj_bijl, $opties['bijlagen'] ?? []))));
         if ($bijl['links']) $override['bijlagen_blok_html'] = melding_bijlagen_blok_html($bijl['links']);
 
-        $r = melding_render($type, $vars, $override);
+        $r = melding_render($type, $vars, $override, !empty($opties['voorbeeld']) ? null : $sol_id);
         if (!$r) { $uit['status'] = 'mislukt'; $uit['reden'] = 'geen_sjabloon'; return $uit; }
+        // Logica in het sjabloon klopt niet (bij opslaan gecontroleerd, dus alleen bij oude teksten): niet half versturen.
+        if (!empty($r['fout'])) {
+            $uit['status'] = 'mislukt'; $uit['reden'] = 'Fout in het sjabloon: ' . $r['fout'];
+            error_log("melding_verstuur $type: sjabloonfout: " . $r['fout']);
+            melding_audit($type, $sol_id, null, 'mislukt', 'sjabloonfout');
+            return $uit;
+        }
         // Eén keer, bij het allereerste WhatsApp/SMS-bericht aan deze persoon: uitleg + hoe je afmeldt.
         if ($r['tekst_kort'] !== '' && !empty($ontv['persoon_id']) && $modus !== 'email' && !melding_eerder_kort((int)$ontv['persoon_id'])) {
             $r['tekst_kort'] = rtrim($r['tekst_kort']) . "\n\nZo houden we je via WhatsApp of sms op de hoogte van je sollicitatie bij Paal 13. Liever alleen e-mail? Pas dat aan onder Mijn gegevens in je portaal: " . ($vars['portaal_url'] ?? '') . 'gegevens.php';

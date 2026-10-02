@@ -3,10 +3,21 @@
  * Paal 13 — Versiebeheer
  * Verhoog APP_VERSIE bij elke release.
  */
-define('APP_VERSIE', '2.160.0');
+define('APP_VERSIE', '2.161.0');
 
 function app_changelog(): array {
     return [
+        '2.161.0' => [
+            'datum'  => '2026-10-02',
+            'titel'  => 'Berichten met logica: als, anders, kies en voorwaarden',
+            'punten' => [
+                'In sjablonen en berichten kun je een stuk tekst alleen laten zien als iets klopt: {{als leeftijd < 18}} … {{anders}} … {{/als}}, of per fase met {{kies fase}} {{geval "aangenomen"}} … {{/kies}}. Gewone variabelen werken zoals altijd',
+                'Voorwaarden kunnen kijken naar fase, leeftijd, dagen in de fase, en per formulier, document of taak of die open staat en hoe lang al (bijvoorbeeld kennismakingsformulier.dagen_open > 7). Combineren met en, of, niet',
+                'Een gepland bericht kan een voorwaarde krijgen ("alleen als"), en kan nu ook zonder datum: "zodra de voorwaarde klopt". Tussen twee berichten van dezelfde regel zitten minstens een instelbaar aantal dagen (standaard 7)',
+                'Bij Berichten kun je ontvangers selecteren met een voorwaarde',
+                'Een tikfout in de logica wordt bij opslaan of versturen tegengehouden met uitleg; je invoer blijft staan',
+            ],
+        ],
         '2.160.0' => [
             'datum'  => '2026-10-02',
             'titel'  => 'Live bijwerken: één mechanisme en netjes opgeruimd',

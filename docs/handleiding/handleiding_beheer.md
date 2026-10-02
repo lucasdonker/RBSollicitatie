@@ -2055,6 +2055,43 @@ bestuur persoonlijk belt of mailt. Zet je hem aan, dan komt onder je eigen tekst
 "Volgend jaar weer?" met de knop **Stuur me een seintje**. Dat blok staat niet in het sjabloon en
 kun je er dus niet per ongeluk uit halen.
 
+### Logica: tekst alleen tonen als iets klopt (voor gevorderden)
+
+Gewone variabelen zoals `{{voornaam}}` werken altijd. Wil je een stuk tekst alleen voor sommige
+mensen, dan zet je er een blok omheen. Dat kan in elk tekstveld: onderwerp, e-mailtekst, korte
+tekst en samenvatting, en ook in een zelf geschreven bericht bij Berichten.
+
+```
+{{als leeftijd < 18}} Vraag je ouder of verzorger mee te tekenen. {{/als}}
+
+{{als fase = "aangenomen"}} Welkom! {{anders als fase = "afgewezen"}} Jammer. {{anders}} We houden je op de hoogte. {{/als}}
+
+{{kies fase}}
+{{geval "aangenomen"}} Welkom aan boord.
+{{geval "afgewezen", "afgehaakt"}} Bedankt voor je interesse.
+{{anders}} We houden je op de hoogte.
+{{/kies}}
+```
+
+- Vergelijken: `=` `!=` `<` `>` `<=` `>=`, `in ("a", "b")`, `niet in (…)`, `is leeg`, `is niet leeg`, `bevat`.
+- Combineren: `en`, `of`, `niet` en haakjes. `en` gaat vóór `of`; zet bij twijfel haakjes.
+- Tekst staat tussen aanhalingstekens (`"aangenomen"`), getallen niet (`18`), ja/nee kaal.
+- `{{einde}}` sluit het binnenste blok; de Engelse woorden (if, else, elseif, switch, case, end) werken ook.
+- Staat een blok op een eigen regel of in een eigen alinea, dan blijft er geen lege regel over als het wegvalt.
+
+De velden staan in de kaart **Logica: als, anders, kies** naast de variabelen; een klik zet een
+werkend voorbeeld in je tekst. Er zijn velden voor de fase, leeftijd, dagen in de fase, dagen tot
+de selectiedag en het trainingsweekend, en per formulier, document en taak de stand (`open`, `af`,
+`nvt`, bij documenten ook `wacht_ouder`) plus hoe lang hij al openstaat, bijvoorbeeld
+`kennismakingsformulier.dagen_open`. Dagen open telt vanaf het moment dat een document of taak
+klaarstond; bij een formulier vanaf de laatste fasewissel. Ook een variabele mag in een voorwaarde
+staan: `{{als gesprek_bericht is niet leeg}}`.
+
+Bij **Opslaan** controleert het systeem de logica. Een tikfout ("Onbekend veld "leefijd". Bedoel
+je leeftijd?"), een fase die niet bestaat of een blok zonder `{{/als}}` wordt niet opgeslagen; je
+invoer blijft staan. **Voorbeeld e-mail** gebruikt voorbeeldwaarden (17 jaar, uitgenodigd voor de
+selectiedag); bij Berichten gebruikt het voorbeeld de eerste aangevinkte ontvanger.
+
 ---
 
 ## Geplande berichten en herinneringen
@@ -2119,14 +2156,27 @@ Op die kaart staat ook wanneer de automatische taken voor het laatst draaiden.
    - bij **Wanneer**: de **Gebeurtenis**, **Dagen erna** (10 is tien dagen erna, -3 is drie
      dagen ervóór) en het **Venster (dagen)**, standaard 7. Een regel verstuurt alleen als het
      moment hooguit zoveel dagen geleden was, zodat oude gevallen het bericht niet alsnog krijgen;
-   - bij **Wat**: het **Sjabloon (inhoud)**, het **Kanaal** en **Hoe vaak per persoon (max)**;
-   - bij **Voor wie**: de fases. Niets aangevinkt betekent alle fases. Het vinkje **Regel staat
-     aan** zet de regel aan.
-4. Klik op **Opslaan**.
+   - bij **Wat**: het **Sjabloon (inhoud)**, het **Kanaal**, **Hoe vaak per persoon (max)** en
+     **Minstens dagen ertussen** (standaard 7; telt alleen als het maximum hoger is dan 1);
+   - bij **Voor wie**: de fases. Niets aangevinkt betekent alle fases. Optioneel **Alleen als**:
+     een voorwaarde in dezelfde schrijfwijze als bij [Logica](#logica-tekst-alleen-tonen-als-iets-klopt-voor-gevorderden),
+     zonder `{{ }}`, bijvoorbeeld `kennismakingsformulier = "open" en kennismakingsformulier.dagen_open > 7`.
+     Het vinkje **Regel staat aan** zet de regel aan.
+4. Klik op **Opslaan**. Een fout in de voorwaarde wordt niet opgeslagen.
 
-Je kunt kiezen uit deze gebeurtenissen: Aanmelding (datum van aanmelden), Kennismakingsformulier
-ingeleverd, Beschikbaarheid definitief gemaakt, Selectiedag (datum uit het seizoen),
-Trainingsweekend (startdatum uit het seizoen), en per fase "Fase gewijzigd naar …".
+Je kunt kiezen uit deze gebeurtenissen: **Zodra de voorwaarde klopt (geen datum)**, Aanmelding
+(datum van aanmelden), Kennismakingsformulier ingeleverd, Beschikbaarheid definitief gemaakt,
+Selectiedag (datum uit het seizoen), Trainingsweekend (startdatum uit het seizoen), en per fase
+"Fase gewijzigd naar …".
+
+Bij **Zodra de voorwaarde klopt** is een voorwaarde verplicht. Dagen erna en venster tellen dan
+niet: elk kwartier kijkt het systeem wie aan de voorwaarde voldoet, óók wie dat al langer doet. Een
+nieuwe regel van deze soort kan dus meteen veel mensen bereiken. Draai hem daarom altijd eerst
+proef; de proefrun toont ook hoeveel mensen niet aan de voorwaarde voldoen.
+
+Bij Berichten › Nieuw bericht staat onder de ontvangers **Selecteren met een voorwaarde**: dat
+vinkt iedereen van dit seizoen aan die aan de voorwaarde voldoet (en haalt de rest weg). Er wordt
+dan nog niets verstuurd.
 
 In de lijst **Regels** staat per regel **Aan** of **Uit**, met een samenvatting zoals "10 dagen
 na aanmelding · sjabloon "Magazine" · E-mail · max 1× per persoon". Per regel heb je:

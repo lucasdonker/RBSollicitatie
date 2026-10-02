@@ -283,14 +283,39 @@ function tekst_kort_maak(string $sjabloon, array $vars, int $max = 400): string 
 }
 
 /**
+ * Logica ({{als …}}, {{kies …}}) in alle tekstvelden van een sjabloon toepassen, vóór de variabelen.
+ * Eerst gaat de inhoud van een zelf geschreven bericht ({{body_html}}, {{onderwerp}}, {{tekst_kort}})
+ * erin, zodat ook die logica mag bevatten; ingevulde gegevens van de sollicitant komen pas daarna en
+ * worden dus nooit als logica gelezen. De eerste fout komt in $fout.
+ */
+function melding_logica(array $t, array $vars, ?int $sol_id, ?string &$fout): array {
+    $inhoud = fn(string $tekst, array $namen) => strtr($tekst, array_combine(
+        array_map(fn($n) => '{{' . $n . '}}', $namen), array_map(fn($n) => (string)($vars[$n] ?? '{{' . $n . '}}'), $namen)));
+    $waarde = null;
+    foreach (['onderwerp' => false, 'hero_titel' => false, 'hero_subtitel' => false, 'body_html' => true, 'tekst_kort' => false, 'samenvatting' => false] as $veld => $html) {
+        $tekst = (string)($t[$veld] ?? '');
+        if ($tekst === '' || strpos($tekst, '{{') === false) continue;
+        $tekst = $inhoud($tekst, $html ? ['body_html'] : ['onderwerp', 'tekst_kort']);
+        if (!sjabloon_heeft_logica($tekst)) continue;
+        $waarde = $waarde ?? voorwaarde_resolver($sol_id, $vars);
+        try { $t[$veld] = sjabloon_logica($tekst, $waarde, $html); }
+        catch (SjabloonFout $e) { $fout = $fout ?? $e->getMessage(); $t[$veld] = ''; }
+    }
+    return $t;
+}
+
+/**
  * Render een meldingstype met variabelen.
  * $override kan onderwerp/body_html/tekst_kort/hero_* overschrijven (handmatige berichten).
- * Retourneert null als het type onbekend is.
+ * $sol_id voor de logica in het sjabloon: null = voorbeeldwaarden, 0 = geen sollicitant, > 0 = echt.
+ * Retourneert null als het type onbekend is; 'fout' is gevuld als de logica niet klopt (dan niet versturen).
  */
-function melding_render(string $type, array $vars, array $override = []): ?array {
+function melding_render(string $type, array $vars, array $override = [], ?int $sol_id = null): ?array {
     $t = sjabloon_laden($type);
     if (!$t) return null;
     foreach ($override as $k => $v) if ($v !== null && $v !== '') $t[$k] = $v;
+    $fout = null;
+    if (function_exists('sjabloon_logica')) $t = melding_logica($t, $vars, $sol_id, $fout);
 
     // Twee keer vervangen: een variabele (bijv. body_html van een handmatig bericht) kan zelf weer
     // variabelen bevatten ({{voornaam}}).
@@ -328,7 +353,7 @@ function melding_render(string $type, array $vars, array $override = []): ?array
     return [
         'onderwerp' => $onderwerp, 'hero_titel' => $hero_t, 'hero_subtitel' => $hero_s, 'hero_kleur' => $kleur,
         'hero_image' => $img, 'body_html' => $body, 'html' => $html, 'tekst_kort' => $kort, 'samenvatting' => $sam,
-        'bijlagen' => $bijlagen,
+        'bijlagen' => $bijlagen, 'fout' => $fout,
     ];
 }
 

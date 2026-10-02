@@ -23,6 +23,9 @@
  *   extern      bool     url opent in een nieuw tabblad (bijlage, website)
  *   knop_label  ?string  desktop-knoptekst voor open rijen (standaard "Invullen"/"Openen")
  *   db_id       ?int     rij in sollicitant_taken (voor taak_toggle)
+ *   open_sinds  ?string  'Y-m-d H:i:s' sinds wanneer de taak klaarstaat (ondertekening, pakkettaak);
+ *                        null = sinds de laatste fasewissel (voorwaarden in berichten, includes/meldingen/feiten.php)
+ *   doc_type    ?string  type van de ondertekening (ond_/oud_), slug ?string taak_slug (db_), stand ?string bij besch
  *
  * Geen HTML hier; de partials portaal/_taakrij.php en _takenlijst.php renderen.
  */
@@ -96,7 +99,7 @@ function portaal_taken(array $sol, ?array $blk = null, bool $vangnet = true): ar
     // Wie tekent de inschrijving als lid (<18: ouder/verzorger)? Houdt een nog ongetekende rij goed; één query.
     if ($vangnet && $fase === 'aangenomen' && function_exists('lidmaatschap_ondertekenaar_verzekeren')) lidmaatschap_ondertekenaar_verzekeren($sol_id);
     try {
-        $q = db()->prepare("SELECT id, type, token, ondertekend_op FROM ondertekeningen WHERE sollicitatie_id=? AND ondertekenaar_rol='sollicitant' ORDER BY aangemaakt_op");
+        $q = db()->prepare("SELECT id, type, token, ondertekend_op, aangemaakt_op FROM ondertekeningen WHERE sollicitatie_id=? AND ondertekenaar_rol='sollicitant' ORDER BY aangemaakt_op");
         $q->execute([$sol_id]);
         foreach ($q->fetchAll() as $o) {
             $klaar = !empty($o['ondertekend_op']);
@@ -114,6 +117,8 @@ function portaal_taken(array $sol, ?array $blk = null, bool $vangnet = true): ar
                 'urgent'      => !$klaar,
                 'volgorde'    => 20,
                 'loon'        => (string)$o['type'] === 'loonheffing',
+                'doc_type'    => (string)$o['type'],
+                'open_sinds'  => $o['aangemaakt_op'] ?? null,
             ]);
         }
     } catch (\Throwable $e) {}
@@ -135,6 +140,8 @@ function portaal_taken(array $sol, ?array $blk = null, bool $vangnet = true): ar
             'volgorde' => 25,
             'wacht'    => !$d['klaar'],   // niet de sollicitant maar de ouder is aan zet
             'wacht_op' => 'ouder',
+            'doc_type' => $d['type'],
+            'open_sinds' => $d['aangemaakt_op'],
             // Mail kwijt? Dan hoef je daarvoor niet bij het bestuur aan te kloppen.
             'herinner_ond' => !$d['klaar'] && !empty($d['email']) && !$eindfase ? (int)$d['id'] : null,
         ]);
@@ -207,7 +214,7 @@ function portaal_taken(array $sol, ?array $blk = null, bool $vangnet = true): ar
         if (!$ingevuld) {
             $taken[] = array_merge($std, [
                 'id' => 'besch', 'titel' => 'Beschikbaarheid doorgeven', 'sub' => 'Welke weken kun je werken?',
-                'url' => $invul_url, 'icoon' => 'kalender', 'kleur' => 'accent', 'urgent' => true, 'volgorde' => 40,
+                'url' => $invul_url, 'icoon' => 'kalender', 'kleur' => 'accent', 'urgent' => true, 'volgorde' => 40, 'stand' => 'open',
             ]);
         } elseif ($voorlopig) {
             $deadline = function_exists('beschikbaarheid2_deadline') ? beschikbaarheid2_deadline() : null;
@@ -221,7 +228,7 @@ function portaal_taken(array $sol, ?array $blk = null, bool $vangnet = true): ar
             }
             $taken[] = array_merge($std, [
                 'id' => 'besch', 'titel' => 'Beschikbaarheid definitief maken', 'sub' => $sub,
-                'url' => $kijk_url, 'icoon' => 'kalender', 'kleur' => 'accent', 'urgent' => true, 'volgorde' => 40,
+                'url' => $kijk_url, 'icoon' => 'kalender', 'kleur' => 'accent', 'urgent' => true, 'volgorde' => 40, 'stand' => 'voorlopig',
             ]);
         } else {
             $taken[] = array_merge($std, [
@@ -229,7 +236,7 @@ function portaal_taken(array $sol, ?array $blk = null, bool $vangnet = true): ar
                 'sub' => 'Bijgewerkt' . ($bijgewerkt ? ' ' . datum_nl(substr($bijgewerkt, 0, 10)) : ''),
                 'done' => true, 'done_op' => $bijgewerkt,
                 'url' => in_array($fase, blk_fases_zichtbaar(), true) ? $invul_url : $kijk_url,
-                'icoon' => 'kalender', 'kleur' => 'ok', 'actie_label' => 'Wijzigen', 'volgorde' => 40,
+                'icoon' => 'kalender', 'kleur' => 'ok', 'actie_label' => 'Wijzigen', 'volgorde' => 40, 'stand' => 'af',
             ]);
         }
     }
@@ -237,7 +244,7 @@ function portaal_taken(array $sol, ?array $blk = null, bool $vangnet = true): ar
     // 6) Taken uit de database (takenpakket bij aangenomen; definities in includes/kennismakingspakket.php).
     //    soort upload → eigen uploadpagina; link → externe link/bijlage + zelf afvinken; afvinken → alleen afvinken.
     try {
-        $q = db()->prepare("SELECT id, taak_slug, titel, omschrijving, link_url, status, verplicht, voltooid_op, soort, document_soort, volgorde FROM sollicitant_taken WHERE sollicitatie_id=? ORDER BY volgorde, id");
+        $q = db()->prepare("SELECT id, taak_slug, titel, omschrijving, link_url, status, verplicht, voltooid_op, soort, document_soort, volgorde, aangemaakt_op FROM sollicitant_taken WHERE sollicitatie_id=? ORDER BY volgorde, id");
         $q->execute([$sol_id]);
         $doc_taken = function_exists('document_taken') ? document_taken() : [];
         foreach ($q->fetchAll() as $t) {
@@ -257,6 +264,8 @@ function portaal_taken(array $sol, ?array $blk = null, bool $vangnet = true): ar
                 'kleur'    => $klaar ? 'ok' : 'accent',
                 'urgent'   => !$klaar && !empty($t['verplicht']),
                 'volgorde' => (int)($t['volgorde'] ?? 50),
+                'slug'     => (string)$t['taak_slug'],
+                'open_sinds' => $t['aangemaakt_op'] ?? null,
             ];
             if ($soort === 'upload') {
                 $slug = (string)($t['document_soort'] ?: $t['taak_slug']);
@@ -375,6 +384,7 @@ function portaal_ouder_docs(int $sol_id): array {
                 'email'    => $o['ondertekenaar_email'] ?? '',
                 'klaar'    => !empty($o['ondertekend_op']),
                 'klaar_op' => $o['ondertekend_op'] ?: null,
+                'aangemaakt_op' => $o['aangemaakt_op'] ?? null,
             ];
         }
     } catch (\Throwable $e) {}

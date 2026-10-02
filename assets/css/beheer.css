@@ -2036,6 +2036,12 @@ body.bh-paneel-open .bh-inhoud { transition: padding-right .15s ease; }
 .bh-varchip[hidden], .bh-vargroep[hidden] { display: none; }
 .bh-varkiezer .bh-zoek { max-width: 360px; margin-bottom: 8px; }
 .bh-vargroep .bh-veldlabel { display: block; margin-top: 6px; }
+/* Velden voor logica/voorwaarden (admin/_voorwaarden.php): naam + mogelijke waarden eronder. */
+.bh-vwchip { flex-direction: column; align-items: flex-start; gap: 2px; max-width: 100%; }
+.bh-vwchip-waarden { font: var(--text-meta); color: var(--ink-muted); overflow-wrap: anywhere; }
+.bh-fasekeuze + .ds-veld { margin-top: 14px; }
+/* admin/_foutlijst.php */
+.bh-foutlijst { margin: 4px 0 0; padding-left: 18px; }
 
 /* ── Nieuw bericht: één kolom in de volgorde Aan → Hoe → Bericht → Versturen ── */
 .bh-berichtform { display: flex; flex-direction: column; gap: 14px; max-width: 920px; }

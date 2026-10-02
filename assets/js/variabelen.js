@@ -2,6 +2,7 @@
  * Paal 13 — variabele invoegen (admin/_variabelen.php). Onthoudt het laatste veld waarin je typte
  * (een veld met data-var-veld, of de e-maileditor .p13-editor) en zet daar {{naam}} op de cursor.
  * Zoeken filtert de knoppen. Geen veld gekozen? Dan het eerste zichtbare veld met data-var-veld.
+ * Een knop met data-var-doel="id" zet zijn tekst altijd in dat veld (admin/_voorwaarden.php).
  */
 (function () {
   'use strict';
@@ -16,8 +17,8 @@
 
   function zichtbaar(el) { return !!(el && el.offsetParent !== null); }
 
-  function invoegen(tekst) {
-    var doel = laatst;
+  function invoegen(tekst, vastDoel) {
+    var doel = vastDoel ? { el: vastDoel } : laatst;
     if (doel && doel.el && !zichtbaar(doel.el)) doel = null;
     if (doel && doel.editor && !zichtbaar(document.getElementById(doel.editor))) doel = null;
     if (!doel) {
@@ -36,7 +37,8 @@
 
   document.addEventListener('click', function (e) {
     var knop = e.target.closest('[data-var]');
-    if (knop) invoegen(knop.dataset.var);
+    // data-var-doel="id": altijd in dat veld (een voorwaardeveld), niet waar je het laatst typte.
+    if (knop) invoegen(knop.dataset.var, knop.dataset.varDoel ? document.getElementById(knop.dataset.varDoel) : null);
   });
 
   document.addEventListener('input', function (e) {

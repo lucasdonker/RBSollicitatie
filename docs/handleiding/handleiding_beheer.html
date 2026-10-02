@@ -3255,6 +3255,55 @@ belt of mailt. Zet je hem aan, dan komt onder je eigen tekst altijd het
 blok &quot;Volgend jaar weer?&quot; met de knop <strong>Stuur me een
 seintje</strong>. Dat blok staat niet in het sjabloon en kun je er dus
 niet per ongeluk uit halen.</p>
+<h2 id="logica-tekst-alleen-tonen-als-iets-klopt-voor-gevorderden">Logica:
+tekst alleen tonen als iets klopt (voor gevorderden)</h2>
+<p>Gewone variabelen zoals <code>{{voornaam}}</code> werken altijd. Wil
+je een stuk tekst alleen voor sommige mensen, dan zet je er een blok
+omheen. Dat kan in elk tekstveld: onderwerp, e-mailtekst, korte tekst en
+samenvatting, en ook in een zelf geschreven bericht bij Berichten.</p>
+<pre><code>{{als leeftijd &lt; 18}} Vraag je ouder of verzorger mee te tekenen. {{/als}}
+
+{{als fase = &quot;aangenomen&quot;}} Welkom! {{anders als fase = &quot;afgewezen&quot;}} Jammer. {{anders}} We houden je op de hoogte. {{/als}}
+
+{{kies fase}}
+{{geval &quot;aangenomen&quot;}} Welkom aan boord.
+{{geval &quot;afgewezen&quot;, &quot;afgehaakt&quot;}} Bedankt voor je interesse.
+{{anders}} We houden je op de hoogte.
+{{/kies}}</code></pre>
+<ul>
+<li>Vergelijken: <code>=</code> <code>!=</code> <code>&lt;</code>
+<code>&gt;</code> <code>&lt;=</code> <code>&gt;=</code>,
+<code>in (&quot;a&quot;, &quot;b&quot;)</code>, <code>niet in (…)</code>,
+<code>is leeg</code>, <code>is niet leeg</code>,
+<code>bevat</code>.</li>
+<li>Combineren: <code>en</code>, <code>of</code>, <code>niet</code> en
+haakjes. <code>en</code> gaat vóór <code>of</code>; zet bij twijfel
+haakjes.</li>
+<li>Tekst staat tussen aanhalingstekens (<code>&quot;aangenomen&quot;</code>),
+getallen niet (<code>18</code>), ja/nee kaal.</li>
+<li><code>{{einde}}</code> sluit het binnenste blok; de Engelse woorden
+(if, else, elseif, switch, case, end) werken ook.</li>
+<li>Staat een blok op een eigen regel of in een eigen alinea, dan blijft
+er geen lege regel over als het wegvalt.</li>
+</ul>
+<p>De velden staan in de kaart <strong>Logica: als, anders,
+kies</strong> naast de variabelen; een klik zet een werkend voorbeeld in
+je tekst. Er zijn velden voor de fase, leeftijd, dagen in de fase, dagen
+tot de selectiedag en het trainingsweekend, en per formulier, document
+en taak de stand (<code>open</code>, <code>af</code>, <code>nvt</code>,
+bij documenten ook <code>wacht_ouder</code>) plus hoe lang hij al
+openstaat, bijvoorbeeld <code>kennismakingsformulier.dagen_open</code>.
+Dagen open telt vanaf het moment dat een document of taak klaarstond;
+bij een formulier vanaf de laatste fasewissel. Ook een variabele mag in
+een voorwaarde staan:
+<code>{{als gesprek_bericht is niet leeg}}</code>.</p>
+<p>Bij <strong>Opslaan</strong> controleert het systeem de logica. Een
+tikfout (&quot;Onbekend veld &quot;leefijd&quot;. Bedoel je leeftijd?&quot;), een fase die
+niet bestaat of een blok zonder <code>{{/als}}</code> wordt niet
+opgeslagen; je invoer blijft staan. <strong>Voorbeeld e-mail</strong>
+gebruikt voorbeeldwaarden (17 jaar, uitgenodigd voor de selectiedag);
+bij Berichten gebruikt het voorbeeld de eerste aangevinkte
+ontvanger.</p>
 <hr />
 <h1 id="geplande-berichten-en-herinneringen">Geplande berichten en
 herinneringen</h1>
@@ -3373,19 +3422,34 @@ ervóór) en het <strong>Venster (dagen)</strong>, standaard 7. Een regel
 verstuurt alleen als het moment hooguit zoveel dagen geleden was, zodat
 oude gevallen het bericht niet alsnog krijgen;</li>
 <li>bij <strong>Wat</strong>: het <strong>Sjabloon (inhoud)</strong>,
-het <strong>Kanaal</strong> en <strong>Hoe vaak per persoon
-(max)</strong>;</li>
+het <strong>Kanaal</strong>, <strong>Hoe vaak per persoon (max)</strong>
+en <strong>Minstens dagen ertussen</strong> (standaard 7; telt alleen
+als het maximum hoger is dan 1);</li>
 <li>bij <strong>Voor wie</strong>: de fases. Niets aangevinkt betekent
-alle fases. Het vinkje <strong>Regel staat aan</strong> zet de regel
-aan.</li>
+alle fases. Optioneel <strong>Alleen als</strong>: een voorwaarde in
+dezelfde schrijfwijze als bij <a href="#logica-tekst-alleen-tonen-als-iets-klopt-voor-gevorderden">Logica</a>,
+zonder <code>{{ }}</code>, bijvoorbeeld
+<code>kennismakingsformulier = &quot;open&quot; en kennismakingsformulier.dagen_open &gt; 7</code>.
+Het vinkje <strong>Regel staat aan</strong> zet de regel aan.</li>
 </ul></li>
-<li>Klik op <strong>Opslaan</strong>.</li>
+<li>Klik op <strong>Opslaan</strong>. Een fout in de voorwaarde wordt
+niet opgeslagen.</li>
 </ol>
-<p>Je kunt kiezen uit deze gebeurtenissen: Aanmelding (datum van
-aanmelden), Kennismakingsformulier ingeleverd, Beschikbaarheid
-definitief gemaakt, Selectiedag (datum uit het seizoen),
-Trainingsweekend (startdatum uit het seizoen), en per fase &quot;Fase
-gewijzigd naar …&quot;.</p>
+<p>Je kunt kiezen uit deze gebeurtenissen: <strong>Zodra de voorwaarde
+klopt (geen datum)</strong>, Aanmelding (datum van aanmelden),
+Kennismakingsformulier ingeleverd, Beschikbaarheid definitief gemaakt,
+Selectiedag (datum uit het seizoen), Trainingsweekend (startdatum uit
+het seizoen), en per fase &quot;Fase gewijzigd naar …&quot;.</p>
+<p>Bij <strong>Zodra de voorwaarde klopt</strong> is een voorwaarde
+verplicht. Dagen erna en venster tellen dan niet: elk kwartier kijkt het
+systeem wie aan de voorwaarde voldoet, óók wie dat al langer doet. Een
+nieuwe regel van deze soort kan dus meteen veel mensen bereiken. Draai
+hem daarom altijd eerst proef; de proefrun toont ook hoeveel mensen niet
+aan de voorwaarde voldoen.</p>
+<p>Bij Berichten › Nieuw bericht staat onder de ontvangers
+<strong>Selecteren met een voorwaarde</strong>: dat vinkt iedereen van
+dit seizoen aan die aan de voorwaarde voldoet (en haalt de rest weg). Er
+wordt dan nog niets verstuurd.</p>
 <p>In de lijst <strong>Regels</strong> staat per regel
 <strong>Aan</strong> of <strong>Uit</strong>, met een samenvatting zoals
 &quot;10 dagen na aanmelding · sjabloon &quot;Magazine&quot; · E-mail · max 1× per

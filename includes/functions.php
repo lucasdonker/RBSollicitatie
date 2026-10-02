@@ -90,8 +90,8 @@ if (file_exists(__DIR__ . '/seintje.php')) require_once __DIR__ . '/seintje.php'
 if (file_exists(__DIR__ . '/avg_wissen.php')) require_once __DIR__ . '/avg_wissen.php';
 // Opmaak van de korte tekst (WhatsApp/sms) en de variabelenlijst; de verzendkern gebruikt kort_opmaak_strip().
 if (file_exists(__DIR__ . '/berichten_opmaak.php')) require_once __DIR__ . '/berichten_opmaak.php';
-// Centrale meldingen (register, sjablonen, verzendkern) — ná kanalen/optout/mail_render.
-foreach (['registry', 'sjablonen', 'verzend', 'bijlagen', 'herinneringen', 'gepland'] as $__m) {
+// Centrale meldingen (register, logica + velden, sjablonen, verzendkern) — ná kanalen/optout/mail_render.
+foreach (['registry', 'logica', 'feiten', 'sjablonen', 'verzend', 'bijlagen', 'herinneringen', 'gepland'] as $__m) {
     if (file_exists(__DIR__ . '/meldingen/' . $__m . '.php')) require_once __DIR__ . '/meldingen/' . $__m . '.php';
 }
 if (file_exists(__DIR__ . '/fase.php')) require_once __DIR__ . '/fase.php';
