@@ -1,56 +1,56 @@
 <?php
 /**
- * Afmeldpagina voor mailings: /afmelden.php?t=<token>
- * Toont een bevestiging, met de mogelijkheid je toch weer aan te melden.
+ * Afmelden voor wervingsberichten: /afmelden.php?t=<token>
+ *
+ *   GET  ?t=<token>      toont de stand en één knop. Alleen bekijken verandert niets:
+ *                        mailscanners (bijv. Outlook Safe Links) openen links vooraf.
+ *   POST actie + t       afmelden of weer aanmelden, daarna terug naar de GET (303).
+ *
+ * Geen sessie en geen cookie: het token uit de mail is het bewijs, net als bij seintje.php.
  */
 require_once __DIR__ . '/includes/functions.php';
+security_headers();
+header('Cache-Control: no-store');
 
-$token = $_GET['t'] ?? '';
-$actie = $_GET['actie'] ?? '';
-$naam = null; $heraangemeld = false;
+$token = (string)($_POST['t'] ?? $_GET['t'] ?? '');
 
-if ($actie === 'heraanmelden' && function_exists('optout_heraanmelden')) {
-    $naam = optout_heraanmelden($token);
-    $heraangemeld = ($naam !== null);
-} elseif (function_exists('optout_afmelden')) {
-    $naam = optout_afmelden($token);
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
+    $actie = (string)($_POST['actie'] ?? '');
+    if ($actie === 'afmelden')     optout_afmelden($token);
+    if ($actie === 'heraanmelden') optout_heraanmelden($token);
+    header('Location: ' . APP_URL . '/afmelden.php?' . http_build_query(['t' => $token, 'klaar' => $actie]), true, 303);
+    exit;
 }
-$gelukt = ($naam !== null);
-?>
-<!DOCTYPE html>
-<html lang="nl">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Afmelden — Paal 13</title>
-<link rel="stylesheet" href="<?= APP_URL ?>/assets/css/stijl.css">
-<style>
-  body{background:#f1f5f9;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
-  .kaart{max-width:440px;width:100%;background:#fff;border-radius:14px;padding:32px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.06)}
-  .kaart h1{font-size:20px;color:#054d8a;margin:0 0 10px}
-  .kaart p{color:#64748b;font-size:14px;line-height:1.6}
-  .icoon{font-size:44px;margin-bottom:12px}
-  a.knop{display:inline-block;margin-top:16px;font-size:13px;color:#64748b;text-decoration:underline}
-</style>
-</head>
-<body>
-  <div class="kaart">
-    <?php if ($heraangemeld): ?>
-      <div class="icoon">✓</div>
-      <h1>Je bent weer aangemeld</h1>
-      <p>Je ontvangt weer mailings van Reddingsbrigade Paal 13.</p>
-    <?php elseif ($gelukt): ?>
-      <div class="icoon">👋</div>
-      <h1>Je bent afgemeld</h1>
-      <p>Je ontvangt geen mailings meer van Reddingsbrigade Paal 13. Belangrijke berichten over
-         je sollicitatie (zoals uitnodigingen) blijf je wel ontvangen.</p>
-      <a class="knop" href="<?= APP_URL ?>/afmelden.php?actie=heraanmelden&t=<?= htmlspecialchars($token) ?>">Toch weer aanmelden</a>
-    <?php else: ?>
-      <div class="icoon">🤔</div>
-      <h1>Link niet herkend</h1>
-      <p>Deze afmeldlink is ongeldig of verlopen. Neem gerust contact met ons op als je geen
-         mailings meer wilt ontvangen.</p>
-    <?php endif; ?>
-  </div>
-</body>
-</html>
+
+$p     = optout_persoon($token);
+$klaar = (string)($_GET['klaar'] ?? '');
+$contact = '<a href="mailto:' . h(portaal_contact_email()) . '">' . h(portaal_contact_email()) . '</a>';
+
+$kaart = static fn(string $titel, string $tekst, string $klasse = '', ?array $knop = null, string $klein = ''): string =>
+    aanmeld_kaart_html($titel, $tekst, ['klasse' => $klasse, 'knop' => $knop, 'klein' => $klein,
+                                        'post_naar' => APP_URL . '/afmelden.php', 'token' => $token]);
+
+$blijft = 'Berichten over een lopende sollicitatie, zoals een uitnodiging, krijg je wel gewoon.';
+
+if (!$p) {
+    http_response_code(404);
+    $inhoud = $kaart('Deze link werkt niet',
+        'We herkennen deze afmeldlink niet. Wil je geen wervingsberichten meer? Mail ons op ' . $contact . '.', 'af-gesloten');
+} elseif ($p['afgemeld']) {
+    $inhoud = $kaart($klaar === 'afmelden' ? 'Je bent afgemeld' : 'Je bent al afgemeld',
+        'Je krijgt geen wervingsberichten meer van Reddingsbrigade Paal 13. ' . $blijft,
+        'af-succes', ['actie' => 'heraanmelden', 'tekst' => 'Toch weer berichten ontvangen', 'klasse' => 'af-terug']);
+} else {
+    $inhoud = $klaar === 'heraanmelden'
+        ? $kaart('Je krijgt weer berichten', 'Je ontvangt weer wervingsberichten van Reddingsbrigade Paal 13.', 'af-succes',
+                 ['actie' => 'afmelden', 'tekst' => 'Toch afmelden', 'klasse' => 'af-terug'])
+        : $kaart('Afmelden voor wervingsberichten',
+                 'Hoi ' . h($p['voornaam']) . ', wil je geen berichten meer over werving en nieuwe seizoenen van Reddingsbrigade Paal 13? ' . $blijft,
+                 '', ['actie' => 'afmelden', 'tekst' => 'Ja, meld me af'],
+                 'Heb je per ongeluk op de link geklikt? Sluit deze pagina dan gewoon; er verandert niets.');
+}
+
+echo aanmeld_pagina_html($inhoud, [
+    'titel' => 'Afmelden — Reddingsbrigade Paal 13',
+    'h1'    => 'Afmelden voor wervingsberichten',
+]);

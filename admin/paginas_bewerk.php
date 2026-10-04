@@ -90,6 +90,13 @@ $actief  = (int)($pagina['actieve_versie_id'] ?? 0);
 $assets  = pag_asset_lijst((string)$pagina['slug']);
 $stat    = pag_stats($id);
 
+// Delen en meten: deellink met ?bron=<campagne> en de QR-code ervan (includes/paginas/qr.php).
+require_once __DIR__ . '/../includes/paginas/qr.php';
+$campagne  = pag_campagne_schoon((string)($_GET['campagne'] ?? ''));
+$deel_url  = pag_deel_url($pagina, $campagne);
+$qr_svg    = pag_qr_svg($deel_url, 'QR-code naar ' . $deel_url);
+$qr_basis  = APP_URL . '/admin/paginas_qr.php?id=' . $id . ($campagne !== '' ? '&campagne=' . rawurlencode($campagne) : '');
+
 // Welk scanrapport tonen we? Dat van de net geüploade versie, of van de nieuwste onbevestigde.
 $rapport_versie = null;
 if ($toon_versie > 0) {
@@ -107,7 +114,7 @@ require __DIR__ . '/layout_top.php';
 
   <div class="pg-titelrij">
     <div>
-      <h1 class="pg-h1"><?= h((string)$pagina['titel']) ?></h1>
+      <h2 class="pg-h1"><?= h((string)$pagina['titel']) ?></h2>
       <p class="pg-sub">
         <a href="<?= APP_URL ?>/p/<?= h((string)$pagina['slug']) ?>" target="_blank" rel="noopener"><?= h(APP_URL) ?>/p/<?= h((string)$pagina['slug']) ?></a>
       </p>
@@ -116,7 +123,6 @@ require __DIR__ . '/layout_top.php';
     <span class="ds-badge <?= $badge ?>"><?= h(pag_statussen()[$pagina['status']] ?? '') ?></span>
   </div>
 
-  <?php toon_flash(); ?>
 
   <dl class="pg-cijfers pg-cijfers-groot">
     <div><dt>Unieke bezoekers</dt><dd><?= (int)$stat['uniek'] ?></dd></div>
@@ -129,6 +135,8 @@ require __DIR__ . '/layout_top.php';
   <?php if ($rapport_versie && $mag_bewerken): ?>
     <?php require __DIR__ . '/_paginas_scan.php'; ?>
   <?php endif; ?>
+
+  <?php require __DIR__ . '/_paginas_trechter.php'; ?>
 
   <div class="pg-kolommen">
     <div class="pg-kolom">
@@ -176,7 +184,10 @@ require __DIR__ . '/layout_top.php';
             <div class="pg-knoprij">
               <a class="ds-btn ds-btn-zacht ds-btn-sm" href="<?= APP_URL ?>/p/<?= h((string)$pagina['slug']) ?>?preview=<?= (int)$v['id'] ?>" target="_blank" rel="noopener">Bekijken</a>
               <?php if ($mag_bewerken && (int)$v['id'] !== $actief && $v['scan_bevestigd_op'] !== null): ?>
-              <form method="post" onsubmit="return confirm('Versie <?= (int)$v['versie'] ?> weer live zetten?')">
+              <form method="post"
+                    data-bevestig-titel="Versie <?= (int)$v['versie'] ?> weer live zetten?"
+                    data-bevestig="Bezoekers zien vanaf dat moment deze versie. De huidige versie blijft bewaard en kun je later terugzetten."
+                    data-bevestig-knop="Ja, terugzetten">
                 <?= csrf_input() ?><input type="hidden" name="actie" value="terugrollen"><input type="hidden" name="versie_id" value="<?= (int)$v['id'] ?>">
                 <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm">Terugzetten</button>
               </form>
@@ -214,7 +225,10 @@ require __DIR__ . '/layout_top.php';
             <code><?= h($a['naam']) ?></code>
             <span class="pg-rij-meta"><?= (int)round($a['grootte'] / 1024) ?> KB</span>
             <?php if ($mag_bewerken): ?>
-            <form method="post" onsubmit="return confirm('<?= h($a['naam']) ?> verwijderen?')">
+            <form method="post"
+                  data-bevestig-titel="Bestand verwijderen?"
+                  data-bevestig="<?= h($a['naam']) ?> wordt gewist. Verwijst de pagina ernaar, dan is dat vanaf nu een kapotte link."
+                  data-bevestig-knop="Ja, verwijderen" data-bevestig-gevaar="1">
               <?= csrf_input() ?><input type="hidden" name="actie" value="asset_weg"><input type="hidden" name="naam" value="<?= h($a['naam']) ?>">
               <button type="submit" class="ds-btn ds-btn-zacht ds-btn-sm">Verwijderen</button>
             </form>
@@ -272,6 +286,13 @@ require __DIR__ . '/layout_top.php';
             <label for="f-index">Mag gevonden worden via Google</label>
           </div>
 
+          <div class="pg-vink">
+            <input type="hidden" name="startpagina_veld" value="1">
+            <input type="checkbox" id="f-start" name="startpagina" value="1" aria-describedby="f-start-hint"<?= pag_startpagina_slug() === $pagina['slug'] ? ' checked' : '' ?> <?= $mag_bewerken ? '' : 'disabled' ?>>
+            <label for="f-start">Startpagina van <?= h((string)parse_url(APP_URL, PHP_URL_HOST)) ?></label>
+          </div>
+          <p class="ds-veld-hint" id="f-start-hint">Bezoekers die niet zijn ingelogd en naar het domein zelf gaan, komen op deze pagina uit (alleen als hij gepubliceerd is). Ingelogde sollicitanten en beheerders gaan gewoon naar hun eigen omgeving. Zet op de pagina een duidelijke link "Al gesolliciteerd? Log in" naar <code>/portaal/</code>. Er kan maar één startpagina zijn.</p>
+
           <div class="ds-veld">
             <label class="ds-label" for="f-csp">Toegestane externe bronnen</label>
             <textarea class="ds-textarea" id="f-csp" name="csp_extra" rows="3" aria-describedby="f-csp-hint" <?= $mag_bewerken ? '' : 'disabled' ?>><?= h((string)($pagina['csp_extra'] ?? '')) ?></textarea>
@@ -282,6 +303,45 @@ require __DIR__ . '/layout_top.php';
           <button type="submit" class="ds-btn ds-btn-primair">Opslaan</button>
           <?php endif; ?>
         </form>
+      </section>
+
+      <!-- Delen en meten -->
+      <section class="ds-kaart ds-kaart-p" id="delen">
+        <h2 class="pg-h2">Delen en meten</h2>
+        <p class="pg-sub">Maak per poster, flyer of advertentie een eigen link. Aanmeldingen via die link tellen gewoon mee voor deze pagina, en onder "Waar komen aanmeldingen vandaan?" zie je ze per campagne terug.</p>
+
+        <form method="get" action="#delen" class="pg-deelform">
+          <input type="hidden" name="id" value="<?= $id ?>">
+          <div class="ds-veld">
+            <label class="ds-label" for="pg-campagne">Campagne</label>
+            <input class="ds-input" type="text" id="pg-campagne" name="campagne" value="<?= h($campagne) ?>" maxlength="60" placeholder="poster-csg-2027" aria-describedby="pg-campagne-hint">
+            <p class="ds-veld-hint" id="pg-campagne-hint">Kleine letters, cijfers en koppeltekens, maximaal 40 tekens; andere tekens worden een koppelteken. Leeg = de gewone link.</p>
+          </div>
+          <button type="submit" class="ds-btn ds-btn-secundair">Link maken</button>
+        </form>
+
+        <div class="pg-deellink">
+          <label class="ds-label" for="pg-deel-url">Link<?= $campagne !== '' ? ' voor ' . h($campagne) : '' ?></label>
+          <div class="pg-deellink-rij">
+            <input class="ds-input" type="text" id="pg-deel-url" value="<?= h($deel_url) ?>" readonly>
+            <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" data-kopieer="#pg-deel-url">Kopiëren</button>
+          </div>
+        </div>
+
+        <?php if ($qr_svg !== ''): ?>
+        <div class="pg-qr">
+          <div class="pg-qr-beeld"><?= $qr_svg ?></div>
+          <div class="pg-knoprij">
+            <a class="ds-btn ds-btn-secundair ds-btn-sm" href="<?= h($qr_basis . '&formaat=svg') ?>" download><?= icoon('download', 16) ?> QR-code (SVG, voor drukwerk)</a>
+            <?php if (function_exists('imagepng')): ?>
+            <a class="ds-btn ds-btn-zacht ds-btn-sm" href="<?= h($qr_basis . '&formaat=png') ?>" download>PNG</a>
+            <?php endif; ?>
+          </div>
+          <p class="ds-veld-hint">Test de code altijd even met je telefoon voordat je iets laat drukken. Wijzig daarna het adres van de pagina niet meer: dan werkt de gedrukte code niet meer.</p>
+        </div>
+        <?php else: ?>
+        <p class="pg-rij-meta">Deze link is te lang voor een QR-code. Kies een kortere campagnenaam.</p>
+        <?php endif; ?>
       </section>
 
       <!-- Voorbeeld -->
@@ -298,7 +358,10 @@ require __DIR__ . '/layout_top.php';
       <section class="ds-kaart ds-kaart-p">
         <h2 class="pg-h2">Verwijderen</h2>
         <p class="pg-sub">De pagina, alle versies en de afbeeldingen worden verwijderd. De statistiek blijft anoniem bewaard.</p>
-        <form method="post" action="<?= APP_URL ?>/admin/paginas.php" onsubmit="return confirm('<?= h((string)$pagina['titel']) ?> definitief verwijderen?')">
+        <form method="post" action="<?= APP_URL ?>/admin/paginas.php"
+              data-bevestig-titel="<?= h((string)$pagina['titel']) ?> verwijderen?"
+              data-bevestig="De pagina verdwijnt van het web, samen met alle versies en geüploade bestanden. Aanmeldingen die er ooit via binnenkwamen blijven staan. Dit is niet terug te draaien."
+              data-bevestig-knop="Ja, verwijderen" data-bevestig-gevaar="1">
           <?= csrf_input() ?><input type="hidden" name="actie" value="verwijder"><input type="hidden" name="id" value="<?= $id ?>">
           <button type="submit" class="ds-btn ds-btn-gevaar"><?= icoon('prullenbak', 18) ?> Pagina verwijderen</button>
         </form>

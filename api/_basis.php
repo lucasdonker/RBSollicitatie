@@ -15,6 +15,9 @@ require_once __DIR__ . '/../includes/functions.php';
 function api_json($data, int $status = 200): never {
     http_response_code($status);
     header('Content-Type: application/json; charset=utf-8');
+    header('X-Content-Type-Options: nosniff');
+    header('Cache-Control: no-store');
+    if (function_exists('is_https') && is_https()) header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
     // CORS: alleen de eigen hoofdsite mag deze API vanuit de browser aanroepen.
     $toegestaan = api_toegestane_origins();
     $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
@@ -23,7 +26,7 @@ function api_json($data, int $status = 200): never {
         header('Vary: Origin');
     }
     header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-    header('Access-Control-Allow-Headers: Content-Type, X-Paal13-Key');
+    header('Access-Control-Allow-Headers: Content-Type, X-Paal13-Key, X-Paal13-Bezoeker');
     echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
     exit;
 }

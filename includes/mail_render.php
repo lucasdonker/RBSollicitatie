@@ -6,10 +6,45 @@
 // Centrale mail-opmaak (het "jasje" om elke mail). Alle wrappers gebruiken dit.
 if (file_exists(__DIR__ . '/mail_thema.php')) require_once __DIR__ . '/mail_thema.php';
 
+/**
+ * Een datum zoals je hem zou zeggen: "zaterdag 11 april" in plaats van "11 apr 2026".
+ *
+ * In een uitnodiging is de dág van de week het eerste wat iemand wil weten — dan pas
+ * de datum. datum_nl() blijft wat het is (tabellen, logboek, beheer); dit is de vorm
+ * voor berichten aan sollicitanten. portaal_datum_lang() doet hetzelfde in het portaal;
+ * die wordt hier gebruikt als hij beschikbaar is, zodat beide dezelfde zin opleveren.
+ */
+function mail_datum_lang(?string $d): string {
+    if (!$d) return '';
+    if (function_exists('portaal_datum_lang')) {
+        $lang = portaal_datum_lang($d);
+        if ($lang !== '') return lcfirst($lang);
+    }
+    return datum_nl($d);
+}
+
+/**
+ * Een gegeven van het seizoen voor in een mailzin. Ontbreekt het (null óf leeg), dan een tekst die
+ * midden in een zin past ("Waar: nog niet bekend", "op een datum die nog volgt") — eerder stond daar
+ * "Nader te bepalen" met hoofdletter midden in de zin, of niets ("Wanneer:  t/m ").
+ */
+function mail_of_onbekend($waarde, string $onbekend = 'nog niet bekend'): string {
+    $w = trim((string)($waarde ?? ''));
+    return $w !== '' ? $w : $onbekend;
+}
+
+/** "vrijdag 3 juli t/m zondag 5 juli", één dag, of "een datum die nog volgt". Voor {{tw_periode}}. */
+function mail_tw_periode(array $seizoen): string {
+    $van = mail_datum_lang($seizoen['datum_tw_start'] ?? null);
+    $tot = mail_datum_lang($seizoen['datum_tw_eind'] ?? null);
+    if ($van === '') return 'een datum die nog volgt';
+    return ($tot === '' || $tot === $van) ? $van : $van . ' t/m ' . $tot;
+}
+
 function mail_variabelen(array $sol, array $seizoen = []): array {
-    $sd_datum = !empty($seizoen['datum_selectiedag']) ? datum_nl($seizoen['datum_selectiedag']) : 'Nader te bepalen';
+    $sd_datum = !empty($seizoen['datum_selectiedag']) ? mail_datum_lang($seizoen['datum_selectiedag']) : 'een datum die nog volgt';
     $sd_tijd  = !empty($seizoen['selectiedag_verzameltijd']) ? ' om ' . substr($seizoen['selectiedag_verzameltijd'], 0, 5) : '';
-    $sd_loc   = $seizoen['locatie_selectiedag'] ?? 'Nader te bepalen';
+    $sd_loc   = mail_of_onbekend($seizoen['locatie_selectiedag'] ?? null);
 
     return [
         // Lange namen (bestaand)
@@ -21,15 +56,15 @@ function mail_variabelen(array $sol, array $seizoen = []): array {
         'seizoen.naam'                => $seizoen['naam'] ?? '',
         'selectiedag.datum'           => datum_nl($seizoen['datum_selectiedag'] ?? null),
         'selectiedag.locatie'         => $sd_loc,
-        'selectiedag.starttijd'       => $seizoen['selectiedag_starttijd'] ?? 'Nader te bepalen',
-        'selectiedag.verzameltijd'    => $seizoen['selectiedag_verzameltijd'] ?? 'Nader te bepalen',
+        'selectiedag.starttijd'       => mail_of_onbekend($seizoen['selectiedag_starttijd'] ?? null),
+        'selectiedag.verzameltijd'    => mail_of_onbekend($seizoen['selectiedag_verzameltijd'] ?? null),
         'selectiedag.eindtijd'        => !empty($seizoen['selectiedag_eindtijd']) ? substr($seizoen['selectiedag_eindtijd'], 0, 5) : '',
         'selectiedag.adres'           => $seizoen['adres_selectiedag'] ?? '',
         'selectiedag.meenemen'        => $seizoen['selectiedag_meenemen'] ?? '',
         'tw.datum_start'              => datum_nl($seizoen['datum_tw_start'] ?? null),
         'tw.datum_eind'               => datum_nl($seizoen['datum_tw_eind'] ?? null),
-        'tw.locatie'                  => $seizoen['locatie_tw'] ?? 'Nader te bepalen',
-        'tw.verzameltijd'             => $seizoen['tw_verzameltijd'] ?? 'Nader te bepalen',
+        'tw.locatie'                  => mail_of_onbekend($seizoen['locatie_tw'] ?? null),
+        'tw.verzameltijd'             => mail_of_onbekend($seizoen['tw_verzameltijd'] ?? null),
         'tw.eindtijd'                 => !empty($seizoen['tw_eindtijd']) ? substr($seizoen['tw_eindtijd'], 0, 5) : '',
         'tw.adres'                    => $seizoen['adres_tw'] ?? '',
         'tw.meenemen'                 => $seizoen['tw_meenemen'] ?? '',
@@ -46,10 +81,11 @@ function mail_variabelen(array $sol, array $seizoen = []): array {
         'selectiedag_datum'           => $sd_datum,
         'selectiedag_tijd'            => $sd_tijd,
         'selectiedag_locatie'         => $sd_loc,
-        'tw_datum_start'              => datum_nl($seizoen['datum_tw_start'] ?? null),
-        'tw_datum_eind'               => datum_nl($seizoen['datum_tw_eind'] ?? null),
-        'tw_locatie'                  => $seizoen['locatie_tw'] ?? 'Nader te bepalen',
-        'tw_verzameltijd'             => $seizoen['tw_verzameltijd'] ?? 'Nader te bepalen',
+        'tw_datum_start'              => mail_datum_lang($seizoen['datum_tw_start'] ?? null) ?: 'een datum die nog volgt',
+        'tw_datum_eind'               => mail_datum_lang($seizoen['datum_tw_eind'] ?? null) ?: datum_nl($seizoen['datum_tw_eind'] ?? null),
+        'tw_locatie'                  => mail_of_onbekend($seizoen['locatie_tw'] ?? null),
+        'tw_verzameltijd'             => mail_of_onbekend($seizoen['tw_verzameltijd'] ?? null),
+        'tw_periode'                  => mail_tw_periode($seizoen),
         'bestuur_email'               => defined('MAIL_BESTUUR') ? MAIL_BESTUUR : '',
     ];
 }
@@ -86,17 +122,6 @@ function mail_template_render(string $slug, array $vars): ?array {
 function mail_templates_auto_setup(): void {
     // Sinds 2.87: kolommen, slug-migratie en seeds zitten in includes/meldingen/sjablonen.php.
     if (function_exists('sjablonen_auto_setup')) sjablonen_auto_setup();
-}
-
-// Haal hero image URL op (configureerbaar via admin)
-function mail_hero_image(): string {
-    try {
-        $s = db()->prepare("SELECT body_html FROM mail_templates WHERE slug='_hero_image'");
-        $s->execute(); $r = $s->fetch();
-        if ($r && !empty(trim($r['body_html']))) return trim($r['body_html']);
-    } catch (Exception $e) {}
-    // Default: mooie strandlifeguard foto (Unsplash, vrij te gebruiken)
-    return 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1120&q=80&fm=jpg&fit=crop';
 }
 
 function mail_vervang(string $tekst, array $vars): string {
@@ -140,7 +165,7 @@ function mail_shortcodes(string $html): string {
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:4px 0 20px">
   <tr><td style="background:#fffbeb;border-left:4px solid #f59e0b;border-radius:0 6px 6px 0;
       padding:14px 18px;font-family:Arial,sans-serif;font-size:14px;color:#374151;line-height:1.65">
-    ⚠️ ' . $m[1] . '
+    <strong>Let op:</strong> ' . $m[1] . '
   </td></tr>
 </table>', $html);
     // [code]...[/code]

@@ -23,57 +23,64 @@ if (!$mij) redirect(APP_URL . '/portaal/');
 $kanaal_opties = ['whatsapp' => 'WhatsApp', 'sms' => 'Sms', 'email' => 'Alleen e-mail'];
 if (!function_exists('wa_actief') || !wa_actief()) unset($kanaal_opties['whatsapp']);
 if (!function_exists('sms_actief') || !sms_actief()) unset($kanaal_opties['sms']);
-$kanaal_flash = null;
+/* Na een geslaagde actie sturen we door naar deze pagina (Post/Redirect/Get: verversen doet
+   hem niet nog eens); de bevestiging reist mee in de sessie. */
+$_gf = $_SESSION['gegevens_flash'] ?? [];
+unset($_SESSION['gegevens_flash']);
+$gegevens_klaar = function (string $soort, string $tekst): void {
+    $_SESSION['gegevens_flash'] = [$soort => $tekst];
+    redirect(APP_URL . '/portaal/gegevens.php');
+};
+$kanaal_flash = $_gf['kanaal'] ?? null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['kanaal_opslaan'])) {
     csrf_check();
     $keuze = (string)($_POST['kanaal_voorkeur'] ?? 'email');
     if (!in_array($keuze, ['email', 'whatsapp', 'sms'], true)) $keuze = 'email';
+    $kanaal_ok = false;
     try {
         $db->prepare("UPDATE personen SET kanaal_voorkeur=?, kanaal_gewijzigd_op=NOW(), kanaal_bron='portaal' WHERE id=?")->execute([$keuze, (int)$mij['persoon_id']]);
         if (function_exists('audit_log')) audit_log('kanaal_voorkeur', 'persoon', (int)$mij['persoon_id'], ['naar' => $keuze, 'via' => 'portaal']);
-        $mij['kanaal_voorkeur'] = $keuze;
-        $kanaal_flash = 'Je voorkeur is opgeslagen.';
+        $kanaal_ok = true;
     } catch (Exception $e) { $kanaal_flash = null; }
+    if ($kanaal_ok) $gegevens_klaar('kanaal', 'Je voorkeur is opgeslagen.');
+}
+
+/* "Blijf ingelogd" moet je ook kunnen terugdraaien — bijvoorbeeld als je je telefoon
+   kwijt bent. Dit trekt álle onthouden apparaten in en beëindigt de open sessies elders
+   (portaal_sessies_beeindigen()); alleen deze sessie blijft. */
+$apparaten_flash = $_gf['apparaten'] ?? null;
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['apparaten_vergeten'])) {
+    csrf_check();
+    if (function_exists('portaal_onthoud_intrekken_alle')) {
+        portaal_onthoud_intrekken_alle($sol_id);
+        portaal_onthoud_cookie('');
+        if (function_exists('audit_log')) audit_log('apparaten_vergeten', 'sollicitatie', $sol_id, ['via' => 'portaal']);
+        $gegevens_klaar('apparaten', 'Klaar. Op alle andere apparaten ben je nu uitgelogd en moet je opnieuw inloggen.');
+    }
+}
+$apparaten_aantal = function_exists('portaal_onthoud_aantal') ? portaal_onthoud_aantal($sol_id) : 0;
+
+// ── Verzoek om in te trekken (portaal/_intrekken.php, includes/intrekken.php) ──
+$intrek_flash = $_gf['intrek'] ?? null; $intrek_fout = null;
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['intrek_actie']) && function_exists('intrek_aanvragen')) {
+    csrf_check();
+    if ($_POST['intrek_actie'] === 'annuleren') {
+        if (intrek_annuleren($sol_id)) $gegevens_klaar('intrek', 'Je verzoek is geannuleerd. Je sollicitatie loopt gewoon door.');
+    } else {
+        $intrek_fout = intrek_aanvragen($sol_id, (string)($_POST['reden'] ?? ''), !empty($_POST['seintje'])) ?: null;
+        if (!$intrek_fout) $gegevens_klaar('intrek', 'Je verzoek is verstuurd. We nemen contact met je op.');
+    }
 }
 
 // ── Download data (JSON) ────────────────────────────────────
+// Alles wat over deze sollicitatie is vastgelegd (AVG art. 15); de lijst staat in avg_inzage().
 if (isset($_GET['download'])) {
-    $data = ['persoon' => array_diff_key($mij, ['persoon_id' => 1])];
-    try {
-        // BLK zonder AI analyse (intern bestuurs-oordeel, geen persoonsdata van sollicitant)
-        $b = $db->prepare("SELECT * FROM blk_formulieren WHERE sollicitatie_id = ?");
-        $b->execute([$sol_id]);
-        $blk = $b->fetch();
-        if ($blk) {
-            unset($blk['ai_analyse'], $blk['ai_analyse_op']);
-            $data['blk_formulier'] = $blk;
-        } else $data['blk_formulier'] = null;
-    } catch (Exception $e) { $data['blk_formulier'] = null; }
-    try {
-        $b = $db->prepare("SELECT * FROM beschikbaarheid WHERE sollicitatie_id = ?");
-        $b->execute([$sol_id]);
-        $data['beschikbaarheid'] = $b->fetch() ?: null;
-    } catch (Exception $e) { $data['beschikbaarheid'] = null; }
-    try {
-        $b = $db->prepare("SELECT onderwerp, verstuurd_op, status, kanaal FROM mail_log WHERE sollicitatie_id = ? AND COALESCE(ontvanger_rol,'sollicitant')='sollicitant' ORDER BY verstuurd_op DESC");
-        $b->execute([$sol_id]);
-        $data['mail_geschiedenis'] = $b->fetchAll();
-    } catch (Exception $e) { $data['mail_geschiedenis'] = []; }
-
-    // Ondertekeningen en documenten: alleen metadata (geen BSN/IBAN/handtekening); de PDF's zelf staan onder je taken
-    try {
-        $b = $db->prepare("SELECT type, ondertekenaar_rol, ondertekend_op, plaats, zekerheid, zekerheid_naar, pdf_sha256 FROM ondertekeningen WHERE sollicitatie_id = ? ORDER BY aangemaakt_op");
-        $b->execute([$sol_id]);
-        $data['ondertekeningen'] = $b->fetchAll();
-    } catch (Exception $e) { $data['ondertekeningen'] = []; }
-    try {
-        $b = $db->prepare("SELECT soort, bestandsnaam, mime, grootte, status, geupload_op, verwerkt_op, vernietigd_op FROM sollicitant_documenten WHERE sollicitatie_id = ? ORDER BY id");
-        $b->execute([$sol_id]);
-        $data['documenten'] = $b->fetchAll();
-    } catch (Exception $e) { $data['documenten'] = []; }
-
-    $data['gegenereerd_op'] = date('c');
-    $data['toelichting'] = 'Dit is een export van al jouw persoonlijke gegevens bij Reddingsbrigade Paal 13, conform artikel 15 AVG (recht op inzage). Interne beoordelingen van het bestuur zijn niet opgenomen — die vallen onder gerechtvaardigd belang van de organisatie.';
+    $data = ['toelichting' => 'Dit zijn alle gegevens die Reddingsbrigade Paal 13 over jou heeft vastgelegd voor je sollicitatie (AVG artikel 15, recht op inzage). '
+                            . 'Je BSN, IBAN en handtekening staan hier niet in; die staan in de ondertekende documenten onder je taken. '
+                            . 'Waar "beoordelaar" staat, laten we de naam van die persoon weg.',
+             'gegenereerd_op' => date('c'),
+             'persoon' => array_diff_key($mij, ['persoon_id' => 1])]
+          + avg_inzage($db, $sol_id);
 
     header('Content-Type: application/json; charset=utf-8');
     header('Content-Disposition: attachment; filename="paal13-mijn-gegevens-' . date('Y-m-d') . '.json"');
@@ -84,34 +91,20 @@ if (isset($_GET['download'])) {
 // ── Verwijder account ───────────────────────────────────────
 $verwijderd = false;
 $fout = '';
+/* AVG art. 17 lid 3 sub b: is het loondossier al verwerkt, dan bewaren we alleen wat de wet
+   eist (loonheffing met BSN, kopie ID, naam en geboortedatum). De rest gaat gewoon weg. */
+$loon_bewaard = function_exists('documenten_loondossier') && !empty(documenten_loondossier($sol_id)['verwerkt']);
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verwijder'])) {
     csrf_check();
-    $loondossier = function_exists('documenten_loondossier') ? documenten_loondossier($sol_id) : ['verwerkt' => false];
     if (($_POST['bevestig'] ?? '') !== 'VERWIJDER') {
         $fout = 'Typ "VERWIJDER" (hoofdletters) om te bevestigen.';
-    } elseif (!empty($loondossier['verwerkt'])) {
-        // AVG art. 17 lid 3 sub b: wettelijke bewaarplicht (loonadministratie) gaat vóór het recht op wissen
-        $fout = 'Je loongegevens (loonheffingsformulier en kopie identiteitsbewijs) zijn al verwerkt in de loonadministratie. De wet verplicht Paal 13 die 5 jaar te bewaren; daarom kun je je account nu niet zelf verwijderen. Mail ' . portaal_contact_email() . ' als je hierover vragen hebt.';
     } else {
         try {
             $db->beginTransaction();
-            // Documenten in de kluis (ID, bankpas, pasfoto, verzegelde PDF's) vernietigen; taken en vertrouwelijke ondertekengegevens weg
-            if (function_exists('documenten_bij_dossier_verwijderen')) documenten_bij_dossier_verwijderen($sol_id, true);
-            // Elke stap moet echt slagen: een fout hier rolt de hele verwijdering terug en de
-            // sollicitant krijgt een eerlijke melding. Alleen een tabel die (nog) niet bestaat
-            // (SQLSTATE 42S02, oudere installaties) mag stil worden overgeslagen.
-            $avg_stappen = [
-                "DELETE FROM sollicitant_taken WHERE sollicitatie_id = ?",
-                "UPDATE ondertekeningen SET vertrouwelijk=NULL, handtekening_beeld=NULL, pdf_document_id=NULL, formulier_data=NULL WHERE sollicitatie_id = ?",
-                "DELETE FROM blk_formulieren WHERE sollicitatie_id = ?",
-                "DELETE FROM beschikbaarheid WHERE sollicitatie_id = ?",
-                "DELETE FROM sollicitant_notities WHERE sollicitatie_id = ?",
-                "DELETE FROM beoordelingen WHERE sollicitatie_id = ?",
-            ];
-            foreach ($avg_stappen as $sql) {
-                try { $db->prepare($sql)->execute([$sol_id]); }
-                catch (\PDOException $e) { if (($e->getCode() ?: '') !== '42S02') throw $e; }
-            }
+            // Kluis, taken, ondertekengegevens, BLK, beschikbaarheid, beoordelingen, selectiedag,
+            // trainingsweekend, apparaten (includes/avg_wissen.php). Een echte fout rolt alles
+            // terug; de sollicitant krijgt dan een eerlijke melding.
+            avg_sollicitatie_leegmaken($db, $sol_id, !$loon_bewaard);
 
             // Bestuur informeren vóór de anonimisering (de naam is daarna weg); verzending ná het antwoord.
             if (function_exists('melding_verstuur')) {
@@ -121,51 +114,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verwijder'])) {
             // Anonimiseer sollicitatie (statistiek blijft)
             $db->prepare("UPDATE sollicitaties SET fase='verwijderd_door_sollicitant' WHERE id = ?")->execute([$sol_id]);
 
-            // Dynamische kolom-anonimisering: check welke bestaan in personen
-            $dbn = $db->query("SELECT DATABASE()")->fetchColumn();
-            $cols_stmt = $db->prepare("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=? AND TABLE_NAME='personen'");
-            $cols_stmt->execute([$dbn]);
-            $bestaande = array_column($cols_stmt->fetchAll(), 'COLUMN_NAME');
             $anon_email = 'verwijderd_' . $sol_id . '@anoniem.local';
-
-            $anon_map = [
-                'voornaam'      => 'Verwijderd',
-                'tussenvoegsel' => null,
-                'achternaam'    => '(verzoek AVG)',
-                'email'         => $anon_email,
-                'telefoon'      => null,
-                'geboortedatum' => null,
-                'adres'         => null,
-                'straat'        => null,
-                'huisnummer'    => null,
-                'postcode'      => null,
-                'woonplaats'    => null,
-                'geslacht'      => null,
-            ];
-            $set_delen = [];
-            $params = [];
-            foreach ($anon_map as $kol => $waarde) {
-                if (in_array($kol, $bestaande, true)) {
-                    $set_delen[] = "`$kol`=?";
-                    $params[] = $waarde;
-                }
-            }
-            if ($set_delen) {
-                $sql = "UPDATE personen SET " . implode(', ', $set_delen)
-                     . " WHERE id=(SELECT persoon_id FROM sollicitaties WHERE id=?)";
-                $params[] = $sol_id;
-                $db->prepare($sql)->execute($params);
-            }
-
-            // Mail-log ontvanger anonimiseren
-            try { $db->prepare("UPDATE mail_log SET ontvanger=?, body=NULL, samenvatting=NULL WHERE sollicitatie_id = ?")->execute([$anon_email, $sol_id]); }
-            catch (\Exception $e) { try { $db->prepare("UPDATE mail_log SET ontvanger=? WHERE sollicitatie_id = ?")->execute([$anon_email, $sol_id]); } catch (\Exception $e2) {} }
+            $pq = $db->prepare("SELECT persoon_id FROM sollicitaties WHERE id=?");
+            $pq->execute([$sol_id]);
+            avg_persoon_anonimiseren($db, (int)$pq->fetchColumn(), 'Verwijderd', '(verzoek AVG)', $anon_email,
+                                     $loon_bewaard ? avg_behoud_loondossier() : []);
+            avg_maillog_anonimiseren($db, $sol_id, $anon_email);
 
             $db->commit();
+            if (function_exists('avg_na_commit')) avg_na_commit();
+            if (function_exists('portaal_onthoud_cookie')) portaal_onthoud_cookie('');
+            // session_destroy() leegt $_SESSION niet in dit verzoek: zonder dit toonde de kop
+            // hieronder nog de navigatie en de naam van wie net is verwijderd.
+            $_SESSION = [];
             session_destroy();
             $verwijderd = true;
+            $portaal_geen_nav = true;
         } catch (Exception $e) {
             if ($db->inTransaction()) $db->rollBack();
+            if (function_exists('avg_na_rollback')) avg_na_rollback();
             p13_fout('P13-P004', 'AVG-verwijdering sollicitatie ' . $sol_id . ' mislukt', $e);
             $fout = 'Het verwijderen is niet gelukt; er is niets gewist. Het beheer is automatisch op de hoogte gebracht. '
                   . 'Probeer het later opnieuw of mail ' . portaal_contact_email() . '.';
@@ -173,130 +140,215 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verwijder'])) {
     }
 }
 
+// ── Weergave: wat we bewaren (AVG art. 15) ──────────────────
+// Adres staat in het Beter Leren Kennen-formulier, de ouder/verzorger op de persoon.
+$adres = '';
+if (!$verwijderd) {
+    require_once __DIR__ . '/../includes/blk.php';
+    $_blk = function_exists('blk_van') ? blk_van($sol_id) : null;
+    if ($_blk) {
+        $_a = (!empty($_blk['straat']) || !empty($_blk['postcode'])) ? $_blk : array_merge($_blk, array_filter(blk_adres_splitsen($_blk['adres'] ?? '')));
+        $_regel1 = trim(($_a['straat'] ?? '') . ' ' . ($_a['huisnummer'] ?? ''));
+        $_regel2 = trim(($_a['postcode'] ?? '') . ' ' . ($_a['woonplaats'] ?? ''));
+        $adres = trim($_regel1 . ($_regel1 !== '' && $_regel2 !== '' ? ', ' : '') . $_regel2);
+    }
+}
+$ouder = (!$verwijderd && function_exists('portaal_ouder_gegevens')) ? portaal_ouder_gegevens($sol_id) : [];
+$ouder_tekst = implode(' · ', array_filter([$ouder['ouder_naam'] ?? '', $ouder['ouder_email'] ?? '', $ouder['ouder_telefoon'] ?? '']));
+
+$naam = trim($mij['voornaam'] . ' ' . ($mij['tussenvoegsel'] ? $mij['tussenvoegsel'] . ' ' : '') . $mij['achternaam']);
+$jaar = '';
+if (!empty($mij['geboortedatum'])) {
+    try { $jaar = (new DateTime($mij['geboortedatum']))->diff(new DateTime())->y . ' jaar'; } catch (\Exception $e) { $jaar = ''; }
+}
+$profiel_sub = implode(' · ', array_filter([$jaar, 'aangemeld ' . datum_nl(substr((string)$mij['aangemeld_op'], 0, 10))]));
+// Statuschip: de status zoals de sollicitant hem ziet (includes/portaal_dossier.php), niet de beheernaam.
+$fase_tekst = portaal_fase_label((string)$mij['fase']);
+$fase_kleur = match ((string)$mij['fase']) { 'aangenomen' => 'ok', 'afgewezen' => 'error', 'aangemeld', 'afgehaakt' => 'navy', default => 'accent' };
+$wijzig_url = APP_URL . '/portaal/contact.php#vraagTekst';
+
 $portaal_titel = 'Mijn gegevens';
 $portaal_nav = 'gegevens';
-$logo  = function_exists('site_logo_url') ? site_logo_url() : '';
 require __DIR__ . '/_kop.php';
 ?>
-<style>
-.avg-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:16px;box-shadow:var(--shadow-card)}
-.avg-card h2{margin-top:0;font:var(--text-subhead)}
-.avg-rij{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--rand-2);font-size:14px;gap:12px;flex-wrap:wrap}
-.avg-rij:last-child{border-bottom:none}
-.avg-label{color:var(--ink-soft);flex-shrink:0}
-.avg-waarde{color:var(--ink);font-weight:500;text-align:right;word-break:break-word}
-.gevaar{border:1px solid #f0c9be;background:var(--error-soft);padding:18px;border-radius:var(--radius-md);margin-top:14px}
-.gevaar h3{color:var(--error);margin-top:0;font-size:15px}
-.gevaar-input{width:100%;margin-top:8px;padding:10px;border:1px solid var(--error);border-radius:var(--radius-sm);font-family:monospace;background:var(--surface);color:var(--ink)}
-</style>
-
-<h1 style="font-size:22px;margin-bottom:6px">Mijn gegevens</h1>
-<p style="color:var(--tekst-zacht);font-size:13px;margin-bottom:24px">
-  Hier zie je welke gegevens Paal 13 over je bewaart, en heb je controle over inzage en verwijdering conform de AVG.
-</p>
 
 <?php if ($verwijderd): ?>
-  <div class="flash flash-succes" style="text-align:center;padding:24px">
-    <h2 style="margin-top:0"><?= icoon("vink-cirkel", 20) ?> Account verwijderd</h2>
-    <p style="margin-bottom:0">Je persoonlijke gegevens zijn geanonimiseerd. Bedankt voor je interesse in Paal 13.</p>
-    <p style="font-size:12px;color:var(--tekst-zacht);margin-top:14px">
-      <a href="https://paal13.com">Terug naar paal13.com</a>
-    </p>
+  <div class="pt-leeg groot" role="status">
+    <span class="pt-leeg-icoon"><?= icoon('vink-cirkel', 26) ?></span>
+    <h1 class="pt-leeg-titel">Account verwijderd</h1>
+    <p class="pt-leeg-tekst">Je persoonlijke gegevens zijn geanonimiseerd. Bedankt voor je interesse in Paal 13.</p>
+    <?php if ($loon_bewaard): ?>
+      <p class="pt-leeg-tekst">Alleen je loondossier bewaren we nog, omdat de wet dat eist. Daarna vernietigt de penningmeester het.</p>
+    <?php endif; ?>
+    <a href="https://paal13.com" class="ds-btn ds-btn-secundair">Terug naar paal13.com</a>
   </div>
 <?php else: ?>
+<div class="pt-stapel pt-gegevens">
 
-  <?php if ($fout): ?>
-    <div class="flash flash-fout"><?= h($fout) ?></div>
-  <?php endif; ?>
+  <div class="pt-paginatitel"><h1>Mijn gegevens</h1><span>Inzien, downloaden en laten verwijderen</span></div>
 
-  <!-- Wat is er van jou bekend -->
-  <div class="avg-card">
-    <h2><?= icoon("persoon", 18) ?> Wat we van je weten</h2>
-    <div class="avg-rij">
-      <span class="avg-label">Naam</span>
-      <span class="avg-waarde"><?= h(trim($mij['voornaam'] . ' ' . ($mij['tussenvoegsel'] ? $mij['tussenvoegsel'] . ' ' : '') . $mij['achternaam'])) ?></span>
+  <!-- Wie je bent (ontwerp 06: initialen, naam, leeftijd · aangemeld) -->
+  <section class="pt-profiel" aria-label="Jouw sollicitatie">
+    <span class="pt-profiel-initialen" aria-hidden="true"><?= h(portaal_initialen($mij)) ?></span>
+    <div class="pt-profiel-tekst">
+      <span class="pt-profiel-naam"><?= h($naam) ?></span>
+      <span class="pt-profiel-sub"><?= h($profiel_sub) ?> · seizoen <?= h($mij['seizoen_naam']) ?></span>
     </div>
-    <div class="avg-rij">
-      <span class="avg-label">E-mail</span>
-      <span class="avg-waarde"><?= h($mij['email']) ?></span>
-    </div>
-    <?php if ($mij['telefoon']): ?>
-      <div class="avg-rij"><span class="avg-label">Telefoon</span><span class="avg-waarde"><?= h($mij['telefoon']) ?></span></div>
-    <?php endif; ?>
-    <?php if ($mij['geboortedatum']): ?>
-      <div class="avg-rij"><span class="avg-label">Geboortedatum</span><span class="avg-waarde"><?= h(datum_nl($mij['geboortedatum'])) ?></span></div>
-    <?php endif; ?>
-    <div class="avg-rij">
-      <span class="avg-label">Aangemeld</span>
-      <span class="avg-waarde"><?= h(datum_nl(substr($mij['aangemeld_op'],0,10))) ?> — seizoen <?= h($mij['seizoen_naam']) ?></span>
-    </div>
-    <div class="avg-rij">
-      <span class="avg-label">Huidige status</span>
-      <span class="avg-waarde"><?= h(fase_label($mij['fase'])) ?></span>
-    </div>
+    <span class="pt-profiel-chip <?= $fase_kleur ?>"><span class="pt-profiel-stip" aria-hidden="true"></span><span class="sr-only">Status: </span><?= h($fase_tekst) ?></span>
+  </section>
+
+  <div class="pt-gegevens-grid">
+    <!-- Persoonsgegevens (AVG art. 15: alles wat we van je weten, ook adres en ouder/verzorger) -->
+    <section class="pt-gegevens-lijst" aria-labelledby="ggPersoon">
+      <h2 class="pt-gegevens-kop" id="ggPersoon">Persoonsgegevens</h2>
+      <?php
+        /* Eén rij = label, waarde en (bij wat je kunt laten aanpassen) "Wijzig". De link staat
+           in de <dd>, want een <dl> mag alleen dt/dd bevatten. */
+        $rijen = [
+            ['Naam', $naam, 'je naam'],
+            ['E-mailadres', (string)$mij['email'], 'je e-mailadres'],
+            ['Telefoonnummer', (string)($mij['telefoon'] ?: 'Nog niet bekend'), 'je telefoonnummer'],
+            ['Geboortedatum', $mij['geboortedatum'] ? datum_nl($mij['geboortedatum']) : '', ''],
+            ['Adres', $adres, 'je adres'],
+            ['Ouder / verzorger', $ouder_tekst, ''],
+            ['Status', $fase_tekst, ''],
+        ];
+      ?>
+      <dl class="pt-gegevens-rijen">
+        <?php foreach ($rijen as $r): if ($r[1] === '') continue; ?>
+        <div class="pt-gegevens-rij">
+          <dt><?= h($r[0]) ?></dt>
+          <dd><span class="pt-gegevens-waarde"><?= h($r[1]) ?></span><?php if ($r[2] !== ''): ?>
+            <a href="<?= h($wijzig_url) ?>" class="pt-gegevens-wijzig">Wijzig<span class="sr-only"> <?= h($r[2]) ?></span></a><?php endif; ?></dd>
+        </div>
+        <?php endforeach; ?>
+      </dl>
+      <?php /* AVG art. 16 (rectificatie): zelf wijzigen kan niet, het bestuur past het aan. */ ?>
+      <p class="pt-gegevens-voet">Klopt er iets niet? Via "Wijzig" laat je het ons weten op Contact; het bestuur past het dan aan.</p>
+    </section>
+
+    <!-- Jouw gegevens (AVG): downloaden (art. 15) en verwijderen (art. 17) -->
+    <section class="pt-stapel" id="download" aria-labelledby="ggAvg">
+      <div class="pt-kaart">
+        <h2 class="pt-kaart-titel" id="ggAvg">Jouw gegevens (AVG)</h2>
+        <p class="pt-kaart-tekst">Download alles wat we over je hebben vastgelegd (AVG artikel 15), of laat je account verwijderen.
+          In het bestand staan je gegevens, formulieren, beschikbaarheid, beoordelingen en besluiten, notities, documenten en
+          ondertekeningen (zonder de bestanden zelf) en de berichten die we je stuurden.</p>
+      </div>
+      <div class="pt-takenlijst">
+        <a href="?download=1" class="pt-taakrij" download>
+          <span class="pt-taakrij-icoon navy"><?= icoon('download', 20) ?></span>
+          <span class="pt-taakrij-tekst">
+            <span class="pt-taakrij-titel">Mijn gegevens downloaden</span>
+            <span class="pt-taakrij-sub">Alles wat we van je bewaren, als bestand (JSON)</span>
+          </span>
+          <span class="pt-taakrij-chevron"><?= icoon('chevron', 18) ?></span>
+        </a>
+        <div class="pt-taakrij-scheiding"></div>
+        <a href="#verwijderen" class="pt-taakrij">
+          <span class="pt-taakrij-icoon error"><?= icoon('prullenbak', 20) ?></span>
+          <span class="pt-taakrij-tekst">
+            <span class="pt-taakrij-titel">Mijn account verwijderen</span>
+            <span class="pt-taakrij-sub">Je sollicitatie stopt dan en je portaal wordt gesloten</span>
+          </span>
+          <span class="pt-taakrij-chevron"><?= icoon('chevron', 18) ?></span>
+        </a>
+      </div>
+    </section>
   </div>
 
   <!-- Berichten: kanaalvoorkeur -->
-  <div class="avg-card">
-    <h2><?= icoon("bel", 18) ?> Hoe wil je berichten ontvangen?</h2>
-    <p style="font-size:13px;color:var(--tekst-zacht)">
+  <section class="pt-kaart" aria-labelledby="ggKanaal">
+    <h2 class="pt-kaart-titel" id="ggKanaal"><?= icoon('bel', 18) ?> Hoe wil je berichten ontvangen?</h2>
+    <p class="pt-kaart-tekst">
       Belangrijke berichten (uitnodiging, herinnering, bevestiging) sturen we per e-mail. Korte berichten sturen we
       <?php $kort_kanalen = array_values(array_diff_key($kanaal_opties, ['email' => 1])); ?>
       daarnaast via <?= h($kort_kanalen ? implode(' of ', $kort_kanalen) : 'WhatsApp of sms') ?>
       naar <?= $mij['telefoon'] ? h($mij['telefoon']) : 'je telefoonnummer (nog niet bekend)' ?>. Lukt dat niet, dan krijg je het bericht per e-mail.
-      Kies hier wat jij wilt; je kunt dit altijd aanpassen.
     </p>
-    <?php if ($kanaal_flash): ?><div class="flash flash-succes" style="margin-bottom:10px"><?= h($kanaal_flash) ?></div><?php endif; ?>
-    <form method="POST">
+    <?php if ($kanaal_flash): ?><div class="ds-melding ds-melding-ok" role="status"><?= icoon('vink-cirkel', 18) ?> <div><?= h($kanaal_flash) ?></div></div><?php endif; ?>
+    <form method="POST" class="pt-gegevens-form">
       <?= csrf_input() ?>
       <input type="hidden" name="kanaal_opslaan" value="1">
-      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
+      <fieldset class="pt-deelname-keuze pt-kanaal-keuze">
+        <legend class="pt-inline-legend">Kies wat jij wilt; je kunt dit altijd aanpassen.</legend>
         <?php $huidig = isset($kanaal_opties[$mij['kanaal_voorkeur'] ?? '']) ? $mij['kanaal_voorkeur'] : 'email'; foreach ($kanaal_opties as $kk => $kl): ?>
-        <label style="display:flex;align-items:center;gap:10px;font-size:14px;padding:10px 12px;border:1px solid var(--rand-2);border-radius:var(--radius-md);cursor:pointer">
-          <input type="radio" name="kanaal_voorkeur" value="<?= $kk ?>" <?= $huidig === $kk ? 'checked' : '' ?>>
-          <?= h($kl) ?><?= $kk === 'email' ? ' <span style="color:var(--tekst-zacht);font-size:12px">(geen WhatsApp/sms)</span>' : '' ?>
+        <label class="pt-deelname-optie">
+          <input type="radio" name="kanaal_voorkeur" value="<?= h($kk) ?>" <?= $huidig === $kk ? 'checked' : '' ?>>
+          <span><?= h($kl) ?><?= $kk === 'email' ? ' <span class="pt-kanaal-uitleg">(geen WhatsApp of sms)</span>' : '' ?></span>
         </label>
         <?php endforeach; ?>
-      </div>
+      </fieldset>
       <button type="submit" class="ds-btn ds-btn-primair">Voorkeur opslaan</button>
     </form>
-  </div>
+  </section>
 
-  <!-- Downloaden -->
-  <div class="avg-card">
-    <h2><?= icoon("download", 18) ?> Al mijn gegevens downloaden</h2>
-    <p style="font-size:13px;color:var(--tekst-zacht)">
-      Volgens de AVG (artikel 15) heb je recht op inzage. Je krijgt hieronder een JSON-bestand met alles wat we van je hebben: persoon, BLK-formulier, beschikbaarheid en mail-geschiedenis.
-    </p>
-    <a href="?download=1" class="ds-btn ds-btn-primair"><?= icoon("download", 18) ?> Download als JSON</a>
-  </div>
+  <?php
+    $ik_sol_id = $sol_id; $ik_persoon = (int)$mij['persoon_id']; $ik_fase = (string)$mij['fase'];
+    $ik_flash = $intrek_flash; $ik_fout = $intrek_fout;
+    require __DIR__ . '/_intrekken.php';
+  ?>
 
-  <!-- Verwijderen -->
-  <div class="avg-card">
-    <h2><?= icoon("prullenbak", 18) ?> Mijn account verwijderen</h2>
-    <p style="font-size:13px;color:var(--tekst-zacht)">
-      Volgens de AVG (artikel 17) heb je recht op vergetelheid. Bij verwijdering:
-    </p>
-    <ul style="font-size:13px;line-height:1.7;color:var(--tekst-zacht);margin:8px 0 12px 22px">
-      <li>Je naam, e-mail, telefoon en adres worden geanonimiseerd.</li>
-      <li>Je BLK-formulier en beschikbaarheid worden verwijderd.</li>
-      <li>Je sollicitatie-record blijft anoniem bestaan voor onze statistieken.</li>
-      <li>Deze actie is <strong>onomkeerbaar</strong>.</li>
-    </ul>
-
-    <div class="gevaar">
-      <h3><?= icoon('waarschuwing', 16) ?> Definitief verwijderen</h3>
-      <p style="font-size:12.5px;color:var(--rood);margin-bottom:10px">
-        Typ <strong>VERWIJDER</strong> in het veld en klik op de knop.
+  <?php if ($apparaten_aantal > 0 || $apparaten_flash): ?>
+  <section class="pt-kaart" aria-labelledby="ggApparaten">
+    <h2 class="pt-kaart-titel" id="ggApparaten"><?= icoon('slot', 18) ?> Ingelogd blijven</h2>
+    <?php if ($apparaten_flash): ?>
+      <div class="ds-melding ds-melding-ok" role="status"><?= icoon('vink-cirkel', 18) ?> <div><?= h($apparaten_flash) ?></div></div>
+    <?php else: ?>
+      <p class="pt-kaart-tekst">
+        <?= $apparaten_aantal === 1
+            ? 'Eén apparaat onthoudt je, zodat je daar niet steeds opnieuw hoeft in te loggen.'
+            : h((string)$apparaten_aantal) . ' apparaten onthouden je, zodat je daar niet steeds opnieuw hoeft in te loggen.' ?>
+        Telefoon kwijt of op een vreemde computer ingelogd? Vergeet ze dan allemaal.
       </p>
-      <form method="POST" onsubmit="return confirm('Weet je het echt zeker? Dit is definitief.');">
-        <?= csrf_input() ?>
-        <input type="hidden" name="verwijder" value="1">
-        <input type="text" name="bevestig" placeholder="VERWIJDER" autocomplete="off" class="gevaar-input" required>
-        <button type="submit" class="ds-btn ds-btn-gevaar ds-btn-vol" style="margin-top:10px">Definitief verwijderen</button>
-      </form>
-    </div>
-  </div>
+      <?php $bev = [
+          'knop_open' => 'Vergeet alle apparaten',
+          'tekst'     => ['Op alle andere apparaten ben je meteen uitgelogd. Hier blijf je ingelogd tot je uitlogt of de browser sluit; daarna log je ook hier opnieuw in met een link uit je mail.'],
+          'knop'      => 'Ja, vergeet ze allemaal',
+          'velden'    => ['apparaten_vergeten' => '1'],
+      ]; require __DIR__ . '/_bevestig.php'; ?>
+    <?php endif; ?>
+  </section>
+  <?php endif; ?>
+
+  <!-- Verwijderen (AVG art. 17) -->
+  <section class="pt-kaart pt-gegevens-gevaar" id="verwijderen" aria-labelledby="ggVerwijder">
+    <h2 class="pt-kaart-titel" id="ggVerwijder"><?= icoon('prullenbak', 18) ?> Mijn account verwijderen</h2>
+    <p class="pt-kaart-tekst">Volgens de AVG (artikel 17) mag je ons vragen je gegevens te wissen. Bij verwijderen:</p>
+    <ul class="pt-gegevens-gevolgen">
+      <li>Je <?= $loon_bewaard ? 'e-mail, telefoon' : 'naam, e-mail, telefoon' ?> en adres worden geanonimiseerd.</li>
+      <li>Je formulieren, foto, beschikbaarheid en beoordelingen worden verwijderd.</li>
+      <li>Je sollicitatie blijft anoniem bestaan voor onze statistieken.</li>
+      <li>Je sollicitatie stopt en je kunt niet meer inloggen. Dit is <strong>onomkeerbaar</strong>.</li>
+    </ul>
+    <?php if ($loon_bewaard): ?>
+      <?php /* AVG art. 17 lid 3 sub b: alleen wat de wet eist blijft; B1-taal. */ ?>
+      <div class="ds-melding"><?= icoon('info', 18) ?> <div>
+        <strong>Wat blijft er bewaard?</strong>
+        <p>Je loongegevens zijn al verwerkt. De wet (voor de belasting) verplicht ons die te bewaren.
+          Daarom blijft dit staan: je naam, je geboortedatum, je ondertekende opgaaf voor de loonheffing (met je BSN) en de kopie van je identiteitsbewijs.
+          Alleen de penningmeester kan daarbij.</p>
+        <p>We bewaren het tot 5 jaar na het einde van het jaar waarin je voor het laatst bij ons werkte.
+          Daarna vernietigt de penningmeester het. Al het andere verwijderen we meteen.</p>
+      </div></div>
+    <?php endif; ?>
+    <?php $bev = [
+        'knop_open' => 'Definitief verwijderen',
+        'icoon'     => 'waarschuwing',
+        'gevaar'    => true,
+        'titel'     => 'Gegevens laten verwijderen?',
+        'tekst'     => [($loon_bewaard ? 'Je e-mail, telefoon en adres worden onherkenbaar gemaakt; alleen je loondossier blijft.' : 'Je naam, e-mail, telefoon en adres worden onherkenbaar gemaakt.')
+                        . ' Je formulieren en beschikbaarheid verdwijnen. Je kunt daarna niet meer inloggen. Dit kun je niet terugdraaien.'],
+        'typ'       => 'VERWIJDER',
+        'knop'      => 'Ja, verwijder mijn account',
+        'velden'    => ['verwijder' => '1'],
+        'fout'      => isset($_POST['verwijder']) ? $fout : '',
+    ]; require __DIR__ . '/_bevestig.php'; ?>
+  </section>
+
+  <?php if (function_exists('privacy_url')): ?>
+    <p class="pt-hulp">Hoe lang we je gegevens bewaren, lees je in de <a href="<?= h(privacy_url()) ?>">privacyverklaring</a>.</p>
+  <?php endif; ?>
 
   <?php
     // Uitloggen / naar beheer (alleen als deze sollicitant ook beheertoegang heeft).
@@ -311,10 +363,11 @@ require __DIR__ . '/_kop.php';
     <?php if ($_kan_beheer): ?>
       <a href="<?= APP_URL ?>/wissel.php?naar=beheer"><?= icoon('wissel', 15) ?> Naar beheer</a>
     <?php endif; ?>
-    <a href="<?= APP_URL ?>/portaal/?uitloggen=1"><?= icoon('uitloggen', 15) ?> Uitloggen</a>
+    <?= portaal_uitlog_knop('pt-voetlink-knop', 15, 'Uitloggen') ?>
     <a href="https://paal13.com">paal13.com</a>
   </div>
 
+</div>
 <?php endif; ?>
 
 <?php require __DIR__ . '/_voet.php'; ?>

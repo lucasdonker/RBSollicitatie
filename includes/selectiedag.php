@@ -17,7 +17,7 @@
 
 function selectiedag_auto_setup(): void {
     static $done = false;
-    if ($done) return;
+    if ($done || schema_actueel()) return;
     $done = true;
     try {
         $db = db();
@@ -115,16 +115,30 @@ function selectiedag_auto_setup(): void {
                 }
             }
         } catch (\Exception $e) {}
+
+        // 2.108.0 (includes/evenement.php): bevestiging "ik kom / ik kan niet", afmelden bij het
+        // afsluiten van het inchecken, vergrendeling van de bellijst en de beoordelaar als id.
+        // VARCHAR, geen ENUM: een onbekende waarde wordt dan geen stille lege string.
+        foreach (['bevestiging' => "VARCHAR(12) NOT NULL DEFAULT 'onbekend'", 'bevestiging_reden' => 'VARCHAR(300) DEFAULT NULL',
+                  'bevestiging_bron' => 'VARCHAR(12) DEFAULT NULL', 'bevestigd_op' => 'DATETIME DEFAULT NULL',
+                  'afgemeld_reden' => 'VARCHAR(200) DEFAULT NULL'] as $kol => $def) {
+            db_kolom_verzeker($db, 'selectie_indeling', $kol, $def);
+        }
+        db_kolom_verzeker($db, 'selectie_besluit', 'bel_door', 'INT DEFAULT NULL');
+        db_kolom_verzeker($db, 'selectie_besluit', 'bel_sinds', 'DATETIME DEFAULT NULL');
+        db_kolom_verzeker($db, 'selectie_score', 'beoordelaar_id', 'INT DEFAULT NULL');
+        db_kolom_verzeker($db, 'selectie_observatie', 'beoordelaar_id', 'INT DEFAULT NULL');
     } catch (\Exception $e) { error_log('selectiedag_auto_setup: ' . $e->getMessage()); }
 }
 
-/** De sollicitanten die voor de selectiedag in aanmerking komen. */
+/** De sollicitanten die voor de selectiedag in aanmerking komen (is_lifeguard: zie authentik_lifeguard_sql()). */
 function selectie_kandidaten(int $seizoen_id): array {
     selectiedag_auto_setup();
+    $lg = function_exists('authentik_lifeguard_sql') ? authentik_lifeguard_sql('s.id') : '0';
     try {
         $q = db()->prepare("
             SELECT s.id AS sol_id, p.voornaam, p.tussenvoegsel, p.achternaam, p.geboortedatum, p.geslacht, p.telefoon,
-                   si.groep_id, si.aanwezig,
+                   si.groep_id, si.aanwezig, $lg AS is_lifeguard,
                    blk.foto_url, blk.bijzonderheden
             FROM sollicitaties s
             JOIN personen p ON p.id = s.persoon_id
@@ -142,46 +156,42 @@ function selectie_kandidaten(int $seizoen_id): array {
     } catch (\Exception $e) { return []; }
 }
 
-/** Groepen van een seizoen. */
-function selectie_groepen(int $seizoen_id): array {
-    selectiedag_auto_setup();
+/**
+ * Hoort deze sollicitatie bij de selectiedag van dit seizoen?
+ *
+ * Begeleiders (alleen 'lezen') mogen inchecken en beoordelen. Dan hoort de server ook
+ * te controleren dat het om een kandidaat van déze selectiedag gaat, en niet om een
+ * willekeurig id uit een ander seizoen of een andere fase.
+ */
+function selectie_is_kandidaat(int $seizoen_id, int $sol_id): bool {
+    if ($seizoen_id <= 0 || $sol_id <= 0) return false;
     try {
-        $q = db()->prepare("SELECT * FROM selectie_groep WHERE seizoen_id=? ORDER BY nummer");
-        $q->execute([$seizoen_id]);
-        return $q->fetchAll();
-    } catch (\Exception $e) { return []; }
+        $q = db()->prepare("SELECT 1 FROM sollicitaties WHERE id=? AND seizoen_id=?
+                            AND fase IN ('uitgenodigd_selectie','aangemeld_selectie','selectiedag_geweest')");
+        $q->execute([$sol_id, $seizoen_id]);
+        return (bool)$q->fetchColumn();
+    } catch (\Exception $e) { return false; }
 }
 
-/** Zet het aantal groepen (maakt bij / verwijdert overtollige lege groepen). */
-function selectie_groepen_zetten(int $seizoen_id, int $aantal): void {
-    selectiedag_auto_setup();
-    $aantal = max(1, min(20, $aantal));
-    $db = db();
-    $bestaand = selectie_groepen($seizoen_id);
-    $huidige = count($bestaand);
-
-    if ($aantal > $huidige) {
-        $ins = $db->prepare("INSERT IGNORE INTO selectie_groep (seizoen_id, nummer) VALUES (?,?)");
-        for ($n = $huidige + 1; $n <= $aantal; $n++) $ins->execute([$seizoen_id, $n]);
-    } elseif ($aantal < $huidige) {
-        // Verwijder de hoogste groepen; koppel hun sollicitanten los
-        for ($n = $huidige; $n > $aantal; $n--) {
-            $g = $bestaand[$n - 1];
-            $db->prepare("UPDATE selectie_indeling SET groep_id=NULL WHERE groep_id=?")->execute([$g['id']]);
-            $db->prepare("DELETE FROM selectie_groep WHERE id=?")->execute([$g['id']]);
-        }
+/** Bestaat dit criterium in de actieve criteria? (Zie selectie_criteria().) */
+function selectie_criterium_bestaat(string $test, string $criterium): bool {
+    foreach (selectie_criteria()[$test]['criteria'] ?? [] as $c) {
+        if (($c['sleutel'] ?? null) === $criterium) return true;
     }
+    return false;
 }
+
+// Groepen: de logica staat in includes/evenement_groepen.php (selectiedag én trainingsweekend).
+// Deze namen blijven bestaan omdat andere schermen ze gebruiken.
+
+/** Groepen van de selectiedag van een seizoen. */
+function selectie_groepen(int $seizoen_id): array { return evenement_groepen('selectiedag', $seizoen_id); }
+
+/** Zet het aantal groepen (maakt bij / verwijdert de hoogste; hun leden worden "nog niet ingedeeld"). */
+function selectie_groepen_zetten(int $seizoen_id, int $aantal): void { evenement_groepen_zetten('selectiedag', $seizoen_id, $aantal); }
 
 /** Eén sollicitant in een groep zetten (of eruit met groep_id=null). */
-function selectie_indeel(int $seizoen_id, int $sol_id, ?int $groep_id): void {
-    selectiedag_auto_setup();
-    db()->prepare("
-        INSERT INTO selectie_indeling (seizoen_id, sollicitatie_id, groep_id)
-        VALUES (?,?,?)
-        ON DUPLICATE KEY UPDATE groep_id=VALUES(groep_id)
-    ")->execute([$seizoen_id, $sol_id, $groep_id]);
-}
+function selectie_indeel(int $seizoen_id, int $sol_id, ?int $groep_id): void { evenement_indeel('selectiedag', $seizoen_id, $sol_id, $groep_id); }
 
 /** "Houd uit elkaar"-relaties van een seizoen als [sol_id => [ander_id, ...]]. */
 function selectie_relaties(int $seizoen_id): array {
@@ -218,7 +228,8 @@ function selectie_relatie_zet(int $seizoen_id, int $a, int $b, bool $toevoegen):
  * Doelen, in volgorde van belangrijkheid:
  *  1. "Houd uit elkaar"-paren niet in dezelfde groep (hard geprobeerd, zacht gegarandeerd)
  *  2. Groepen even groot
- *  3. Gemengd op geslacht en leeftijd (groepen onderling vergelijkbaar)
+ *  3. Terugkerende lifeguards (is_lifeguard) zo gelijk mogelijk verspreid
+ *  4. Gemengd op geslacht en leeftijd (groepen onderling vergelijkbaar)
  *
  * Retourneert [sol_id => groep_index (0-based)]. Schrijft NIET naar de database —
  * de UI toont het voorstel en de gebruiker bevestigt.
@@ -227,8 +238,11 @@ function selectie_verdeel_voorstel(array $kandidaten, int $aantal_groepen, array
     $aantal_groepen = max(1, $aantal_groepen);
     if (!$kandidaten) return [];
 
-    // Sorteer op geslacht dan leeftijd, zodat "slangsgewijs" verdelen automatisch mengt
+    // Sorteer op lifeguard, dan geslacht, dan leeftijd, zodat "slangsgewijs" verdelen
+    // automatisch spreidt: de lifeguards komen als eerste rond, dus elke groep krijgt er evenveel (±1).
     usort($kandidaten, function($a, $b) {
+        $la = (int)!empty($a['is_lifeguard']); $lb = (int)!empty($b['is_lifeguard']);
+        if ($la !== $lb) return $lb <=> $la;
         $ga = $a['geslacht'] ?? ''; $gb = $b['geslacht'] ?? '';
         if ($ga !== $gb) return strcmp($ga, $gb);
         return ($a['leeftijd'] ?? 99) <=> ($b['leeftijd'] ?? 99);
@@ -294,85 +308,16 @@ function selectie_los_conflicten(array $indeling, array $relaties, int $aantal_g
 }
 
 /** Sla een voorgestelde/aangepaste indeling op. $map = [sol_id => groep_id|null]. */
-function selectie_indeling_opslaan(int $seizoen_id, array $map): void {
-    selectiedag_auto_setup();
-    $db = db();
-    $ins = $db->prepare("
-        INSERT INTO selectie_indeling (seizoen_id, sollicitatie_id, groep_id)
-        VALUES (?,?,?)
-        ON DUPLICATE KEY UPDATE groep_id=VALUES(groep_id)
-    ");
-    foreach ($map as $sol_id => $groep_id) {
-        $ins->execute([$seizoen_id, (int)$sol_id, $groep_id !== null ? (int)$groep_id : null]);
-    }
-}
+function selectie_indeling_opslaan(int $seizoen_id, array $map): void { evenement_indeling_opslaan('selectiedag', $seizoen_id, $map); }
 
 /**
  * Zet aanwezigheid van één sollicitant. Retourneert de nieuwe status + groepsinfo,
  * zodat het inchecken meteen kan tonen "je zit in groep 2".
  */
-function selectie_aanwezig_zetten(int $seizoen_id, int $sol_id, bool $aanwezig): array {
-    selectiedag_auto_setup();
-    $db = db();
-    // Regel moet bestaan (indeling kan nog leeg zijn)
-    $db->prepare("
-        INSERT INTO selectie_indeling (seizoen_id, sollicitatie_id, aanwezig, ingecheckt_op)
-        VALUES (?,?,?, " . ($aanwezig ? "NOW()" : "NULL") . ")
-        ON DUPLICATE KEY UPDATE aanwezig=VALUES(aanwezig),
-            ingecheckt_op=" . ($aanwezig ? "IFNULL(ingecheckt_op, NOW())" : "NULL")
-    )->execute([$seizoen_id, $sol_id, $aanwezig ? 1 : 0]);
-
-    // Fase bijwerken bij aanmelden (zoals de oude flow deed)
-    if ($aanwezig) {
-        $db->prepare("UPDATE sollicitaties SET fase='selectiedag_geweest'
-                      WHERE id=? AND fase IN ('uitgenodigd_selectie','aangemeld_selectie')")
-           ->execute([$sol_id]);
-    }
-
-    // Groepsinfo teruggeven
-    $q = $db->prepare("
-        SELECT g.nummer, g.naam
-        FROM selectie_indeling si
-        LEFT JOIN selectie_groep g ON g.id = si.groep_id
-        WHERE si.seizoen_id=? AND si.sollicitatie_id=?
-    ");
-    $q->execute([$seizoen_id, $sol_id]);
-    $r = $q->fetch() ?: [];
-    return [
-        'aanwezig'     => $aanwezig,
-        'groep_nummer' => $r['nummer'] ?? null,
-        'groep_naam'   => $r['naam'] ?? null,
-    ];
-}
-
-/**
- * Zoek kandidaten op (deel van de) naam — voor de tablet-zelfservice.
- * Alleen mensen die voor de selectiedag zijn uitgenodigd.
- */
-function selectie_zoek_kandidaat(int $seizoen_id, string $term): array {
-    selectiedag_auto_setup();
-    $term = trim($term);
-    if (mb_strlen($term) < 2) return [];
-    try {
-        $q = db()->prepare("
-            SELECT s.id AS sol_id, p.voornaam, p.tussenvoegsel, p.achternaam,
-                   si.aanwezig, g.nummer AS groep_nummer, g.naam AS groep_naam
-            FROM sollicitaties s
-            JOIN personen p ON p.id = s.persoon_id
-            LEFT JOIN selectie_indeling si ON si.sollicitatie_id = s.id AND si.seizoen_id = s.seizoen_id
-            LEFT JOIN selectie_groep g ON g.id = si.groep_id
-            WHERE s.seizoen_id = ?
-              AND s.fase IN ('uitgenodigd_selectie','aangemeld_selectie','selectiedag_geweest')
-              AND CONCAT_WS(' ', p.voornaam, p.tussenvoegsel, p.achternaam) LIKE ?
-            ORDER BY p.voornaam, p.achternaam
-            LIMIT 12
-        ");
-        $q->execute([$seizoen_id, '%' . $term . '%']);
-        return array_map(function($r) {
-            $r['naam'] = trim($r['voornaam'] . ' ' . ($r['tussenvoegsel'] ? $r['tussenvoegsel'] . ' ' : '') . $r['achternaam']);
-            return $r;
-        }, $q->fetchAll());
-    } catch (\Exception $e) { return []; }
+function selectie_aanwezig_zetten(int $seizoen_id, int $sol_id, bool $aanwezig, string $bron = 'beheer'): array {
+    // Eén laag voor selectiedag en trainingsweekend (includes/evenement.php): zet de fase via
+    // fase_zetten() met audit, en ongedaan maken zet hem stil terug.
+    return evenement_inchecken('selectiedag', $seizoen_id, $sol_id, $aanwezig, $bron);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -382,9 +327,12 @@ function selectie_zoek_kandidaat(int $seizoen_id, string $term): array {
 /** Standaard beoordelingscriteria uit het draaiboek. Per test een lijst. */
 function selectie_default_criteria(): array {
     return [
+        // 'icoon' is een naam uit includes/iconen.php, geen emoji. Bestaande
+        // installaties hebben hier nog een emoji in de instelling staan; het scherm
+        // vangt dat op met bh_test_icoon().
         'sport' => [
             'naam' => 'Sporttest',
-            'icoon' => '🏃',
+            'icoon' => 'bliksem',
             'criteria' => [
                 ['sleutel'=>'warmup',     'label'=>'Warming-up'],
                 ['sleutel'=>'hardlopen',  'label'=>'Hardlopen'],
@@ -396,7 +344,7 @@ function selectie_default_criteria(): array {
         ],
         'zwem' => [
             'naam' => 'Zwemtest',
-            'icoon' => '🏊',
+            'icoon' => 'golf',
             'criteria' => [
                 ['sleutel'=>'schoolslag',  'label'=>'Schoolslag'],
                 ['sleutel'=>'polocrawl',   'label'=>'Polocrawl'],
@@ -427,20 +375,21 @@ function selectie_criteria_opslaan(array $criteria): void {
 }
 
 /** Eén score opslaan (of wissen bij score 0). Beoordelaar-gebonden, dus geen overschrijven van anderen. */
-function selectie_score_opslaan(int $seizoen_id, int $sol_id, string $test, string $criterium, int $score, string $beoordelaar): void {
+function selectie_score_opslaan(int $seizoen_id, int $sol_id, string $test, string $criterium, int $score, string $beoordelaar, ?int $beoordelaar_id = null): void {
     selectiedag_auto_setup();
     $score = max(0, min(5, $score));
     $db = db();
+    if (function_exists('evenement_live')) evenement_live('selectiedag', $seizoen_id, $sol_id);
     if ($score === 0) {
         $db->prepare("DELETE FROM selectie_score WHERE seizoen_id=? AND sollicitatie_id=? AND test=? AND criterium=? AND beoordelaar=?")
            ->execute([$seizoen_id, $sol_id, $test, $criterium, $beoordelaar]);
         return;
     }
     $db->prepare("
-        INSERT INTO selectie_score (seizoen_id, sollicitatie_id, test, criterium, score, beoordelaar)
-        VALUES (?,?,?,?,?,?)
-        ON DUPLICATE KEY UPDATE score=VALUES(score), bijgewerkt_op=NOW()
-    ")->execute([$seizoen_id, $sol_id, $test, $criterium, $score, $beoordelaar]);
+        INSERT INTO selectie_score (seizoen_id, sollicitatie_id, test, criterium, score, beoordelaar, beoordelaar_id)
+        VALUES (?,?,?,?,?,?,?)
+        ON DUPLICATE KEY UPDATE score=VALUES(score), beoordelaar_id=VALUES(beoordelaar_id), bijgewerkt_op=NOW()
+    ")->execute([$seizoen_id, $sol_id, $test, $criterium, $score, $beoordelaar, $beoordelaar_id]);
 }
 
 /**
@@ -467,16 +416,46 @@ function selectie_scores_van(int $seizoen_id, int $sol_id, string $beoordelaar =
     return $uit;
 }
 
+/**
+ * Alle scores van het seizoen in één query, per kandidaat in dezelfde vorm als
+ * selectie_scores_van(): [sol_id][test][criterium] => ['allen' => [..], 'gem' => x].
+ * De nabespreking en bellijst deden eerder één query per kaart.
+ */
+function selectie_scores_alle(int $seizoen_id): array {
+    selectiedag_auto_setup();
+    $uit = [];
+    try {
+        $q = db()->prepare("SELECT sollicitatie_id, test, criterium, score, beoordelaar FROM selectie_score WHERE seizoen_id=?");
+        $q->execute([$seizoen_id]);
+        foreach ($q->fetchAll() as $r) {
+            $uit[(int)$r['sollicitatie_id']][$r['test']][$r['criterium']]['allen'][$r['beoordelaar']] = (int)$r['score'];
+        }
+        foreach ($uit as $sol => $tests) foreach ($tests as $t => $crits) foreach ($crits as $c => $d) {
+            $uit[$sol][$t][$c]['gem'] = round(array_sum($d['allen']) / count($d['allen']), 1);
+        }
+    } catch (\Exception $e) {}
+    return $uit;
+}
+
+/** Gemiddelde over alle criteria van één kandidaat (null zonder scores). */
+function selectie_gemiddelde(array $scores): ?float {
+    $w = [];
+    foreach ($scores as $crits) foreach ($crits as $d) if (!empty($d['gem'])) $w[] = (float)$d['gem'];
+    return $w ? round(array_sum($w) / count($w), 1) : null;
+}
+
 /** Observatie toevoegen. */
-function selectie_observatie_toevoegen(int $seizoen_id, int $sol_id, string $tekst, string $soort, string $beoordelaar): ?int {
+function selectie_observatie_toevoegen(int $seizoen_id, int $sol_id, string $tekst, string $soort, string $beoordelaar, ?int $beoordelaar_id = null): ?int {
     selectiedag_auto_setup();
     $tekst = trim($tekst);
     if ($tekst === '') return null;
     $soort = in_array($soort, ['neutraal','positief','aandacht'], true) ? $soort : 'neutraal';
     try {
-        db()->prepare("INSERT INTO selectie_observatie (seizoen_id, sollicitatie_id, tekst, soort, beoordelaar) VALUES (?,?,?,?,?)")
-           ->execute([$seizoen_id, $sol_id, mb_substr($tekst, 0, 2000), $soort, $beoordelaar]);
-        return (int)db()->lastInsertId();
+        db()->prepare("INSERT INTO selectie_observatie (seizoen_id, sollicitatie_id, tekst, soort, beoordelaar, beoordelaar_id) VALUES (?,?,?,?,?,?)")
+           ->execute([$seizoen_id, $sol_id, mb_substr($tekst, 0, 2000), $soort, $beoordelaar, $beoordelaar_id]);
+        $id = (int)db()->lastInsertId();
+        if (function_exists('evenement_live')) evenement_live('selectiedag', $seizoen_id, $sol_id);
+        return $id;
     } catch (\Exception $e) { return null; }
 }
 
@@ -484,6 +463,11 @@ function selectie_observatie_toevoegen(int $seizoen_id, int $sol_id, string $tek
 function selectie_observatie_verwijderen(int $id, string $beoordelaar, bool $mag_alles): bool {
     selectiedag_auto_setup();
     try {
+        if (function_exists('evenement_live')) {
+            $q = db()->prepare("SELECT seizoen_id, sollicitatie_id FROM selectie_observatie WHERE id=?");
+            $q->execute([$id]);
+            if ($r = $q->fetch()) evenement_live('selectiedag', (int)$r['seizoen_id'], (int)$r['sollicitatie_id']);
+        }
         if ($mag_alles) {
             db()->prepare("DELETE FROM selectie_observatie WHERE id=?")->execute([$id]);
         } else {
@@ -503,6 +487,28 @@ function selectie_observaties_van(int $seizoen_id, int $sol_id): array {
     } catch (\Exception $e) { return []; }
 }
 
+/**
+ * Alle observaties van het seizoen, gegroepeerd per kandidaat.
+ *
+ * Nodig op de nabespreking van het trainingsweekend: daar wil je zien wat er op de
+ * selectiedag over dezelfde persoon is gezegd, en dat is precies het moment waarop het
+ * telt. Eén query in plaats van één per kandidaat.
+ *
+ * De twee tabellen blijven bewust gescheiden (zie includes/trainingsweekend.php) —
+ * dit leest alleen mee, het schrijft niets over.
+ */
+function selectie_observaties_alle(int $seizoen_id): array {
+    selectiedag_auto_setup();
+    $uit = [];
+    try {
+        $q = db()->prepare("SELECT * FROM selectie_observatie WHERE seizoen_id=?
+                            ORDER BY aangemaakt_op DESC, id DESC");
+        $q->execute([$seizoen_id]);
+        foreach ($q->fetchAll() as $o) $uit[(int)$o['sollicitatie_id']][] = $o;
+    } catch (\Exception $e) {}
+    return $uit;
+}
+
 /** Aantal observaties per kandidaat (voor telling in lijsten). */
 function selectie_observatie_tellingen(int $seizoen_id): array {
     selectiedag_auto_setup();
@@ -518,6 +524,16 @@ function selectie_observatie_tellingen(int $seizoen_id): array {
 // ─────────────────────────────────────────────────────────────
 //  Nabespreking (fase 4): eindbesluit per kandidaat
 // ─────────────────────────────────────────────────────────────
+
+/**
+ * De besluiten van de nabespreking met hun tekst en kleur — de enige plek voor die woorden.
+ * @return array<string,array{0:string,1:string}>  besluit => [label, kleur]
+ */
+function selectie_besluit_labels(): array {
+    return ['door' => ['Door', 'groen'], 'twijfel' => ['Twijfel', 'oranje'], 'niet' => ['Niet door', 'rood']];
+}
+
+// De lijst van de nabespreking (filteren, sorteren, signalen): includes/beheer/nabespreking.php.
 
 /** Het besluit van één kandidaat ophalen (of null). */
 function selectie_besluit_van(int $seizoen_id, int $sol_id): ?array {
@@ -544,10 +560,13 @@ function selectie_besluiten(int $seizoen_id): array {
 /**
  * Eindbesluit opslaan. 'door' | 'twijfel' | 'niet' | '' (wissen).
  * Het besluit is indicatief; de fase wordt NIET automatisch aangepast —
- * dat doet het bestuur bewust met selectie_besluit_doorvoeren().
+ * dat doet het bestuur bewust op de bellijst, met selectie_besluit_doorvoeren_een() of
+ * selectie_gebelde_doorvoeren(). Alles-in-één-keer doorvoeren bestaat bewust niet meer:
+ * dan ging er bericht uit vóórdat er gebeld was.
  */
 function selectie_besluit_zetten(int $seizoen_id, int $sol_id, string $besluit, string $notitie, string $door): void {
     selectiedag_auto_setup();
+    if (function_exists('evenement_live')) evenement_live('selectiedag', $seizoen_id, $sol_id);
     if ($besluit === '') {
         db()->prepare("DELETE FROM selectie_besluit WHERE sollicitatie_id=? AND seizoen_id=?")->execute([$sol_id, $seizoen_id]);
         return;
@@ -561,39 +580,23 @@ function selectie_besluit_zetten(int $seizoen_id, int $sol_id, string $besluit, 
 }
 
 /**
- * De besluiten doorvoeren in de fase van de sollicitanten.
- *  - 'door'    → uitgenodigd_tw
- *  - 'niet'    → afgewezen
- *  - 'twijfel' → blijft staan (geen fasewijziging)
- * Retourneert het aantal gewijzigde sollicitanten.
- */
-function selectie_besluit_doorvoeren(int $seizoen_id): int {
-    selectiedag_auto_setup();
-    $besluiten = selectie_besluiten($seizoen_id);
-    $n = 0;
-    foreach ($besluiten as $sol_id => $b) {
-        if (!in_array($b['besluit'] ?? '', ['door','niet'], true)) continue;
-        // Hergebruik de per-persoon functie zodat de uitnodigingsmail (bij 'door')
-        // ook hier meegaat — anders liepen de twee routes uit elkaar.
-        if (selectie_besluit_doorvoeren_een($seizoen_id, (int)$sol_id)) $n++;
-    }
-    return $n;
-}
-
-/**
  * Markeer één kandidaat als gebeld (met optionele notitie).
  * Als $meteen_doorvoeren true is, wordt de fase meteen doorgezet.
  */
-function selectie_gebeld_zetten(int $seizoen_id, int $sol_id, string $notitie, string $door, bool $meteen_doorvoeren = false): array {
+function selectie_gebeld_zetten(int $seizoen_id, int $sol_id, string $notitie, string $door, bool $meteen_doorvoeren = false, ?string $nieuw_besluit = null): array {
     selectiedag_auto_setup();
     $db = db();
-    $db->prepare("UPDATE selectie_besluit SET gebeld_op=NOW(), gebeld_door=?, gebeld_notitie=? WHERE sollicitatie_id=? AND seizoen_id=?")
+    // Twijfel wordt na het bellen door of niet; dat wordt dan het besluit.
+    $zet_besluit = in_array($nieuw_besluit, ['door', 'niet'], true) ? ", besluit=" . $db->quote($nieuw_besluit) : '';
+    $db->prepare("UPDATE selectie_besluit SET gebeld_op=NOW(), gebeld_door=?, gebeld_notitie=?, bel_door=NULL, bel_sinds=NULL $zet_besluit
+                  WHERE sollicitatie_id=? AND seizoen_id=?")
        ->execute([$door, mb_substr(trim($notitie), 0, 300), $sol_id, $seizoen_id]);
-    $doorgevoerd = false;
+    if (function_exists('evenement_live')) evenement_live('selectiedag', $seizoen_id, $sol_id);
+    $doorgevoerd = false; $fase_res = null;
     if ($meteen_doorvoeren) {
-        $doorgevoerd = selectie_besluit_doorvoeren_een($seizoen_id, $sol_id);
+        $doorgevoerd = selectie_besluit_doorvoeren_een($seizoen_id, $sol_id, $fase_res);
     }
-    return ['gebeld' => true, 'doorgevoerd' => $doorgevoerd];
+    return ['gebeld' => true, 'doorgevoerd' => $doorgevoerd, 'fase_res' => $fase_res];
 }
 
 /** Verwijder de gebeld-markering (per ongeluk aangevinkt). */
@@ -601,10 +604,14 @@ function selectie_gebeld_wissen(int $seizoen_id, int $sol_id): void {
     selectiedag_auto_setup();
     db()->prepare("UPDATE selectie_besluit SET gebeld_op=NULL, gebeld_door=NULL, gebeld_notitie=NULL WHERE sollicitatie_id=? AND seizoen_id=?")
        ->execute([$sol_id, $seizoen_id]);
+    if (function_exists('evenement_live')) evenement_live('selectiedag', $seizoen_id, $sol_id);
 }
 
-/** Voer één kandidaat door (door → uitgenodigd_tw, niet → afgewezen). Retourneert of het lukte. */
-function selectie_besluit_doorvoeren_een(int $seizoen_id, int $sol_id): bool {
+/**
+ * Voer één kandidaat door (door → uitgenodigd_tw, niet → afgewezen). Retourneert of het lukte;
+ * $uit krijgt het resultaat van fase_zetten() (voor fase_melding_tekst(): wat er is verstuurd).
+ */
+function selectie_besluit_doorvoeren_een(int $seizoen_id, int $sol_id, ?array &$uit = null): bool {
     selectiedag_auto_setup();
     $db = db();
     $q = $db->prepare("SELECT besluit FROM selectie_besluit WHERE sollicitatie_id=? AND seizoen_id=?");
@@ -622,9 +629,11 @@ function selectie_besluit_doorvoeren_een(int $seizoen_id, int $sol_id): bool {
         'seizoen_id' => $seizoen_id,
         'alleen_van' => ['uitgenodigd_selectie', 'aangemeld_selectie', 'selectiedag_geweest'],
     ]);
+    $uit = $res;
     if ($res['ok'] && !$res['ongewijzigd']) {
         $db->prepare("UPDATE selectie_besluit SET doorgevoerd_op=NOW() WHERE sollicitatie_id=? AND seizoen_id=?")
            ->execute([$sol_id, $seizoen_id]);
+        if (function_exists('evenement_live')) evenement_live('selectiedag', $seizoen_id, $sol_id);
         return true;
     }
     return false;

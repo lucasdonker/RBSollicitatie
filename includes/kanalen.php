@@ -50,12 +50,27 @@ function telefoon_normaliseer(string $tel): ?string {
  * Verstuur een SMS. Retourneert true bij (ogenschijnlijk) succes.
  * $tekst wordt kort gehouden; de aanroeper zorgt voor een zinnige, korte boodschap.
  */
+/**
+ * Testmodus (config MAIL_OMLEIDEN): SMS/WhatsApp gaan nooit echt de deur uit, ook niet buiten de
+ * meldingen-kern om (bijv. de verificatiecode bij ondertekenen). De tekst gaat als mail naar het
+ * testadres, zodat een tester een code toch kan lezen. Buiten testmodus: null.
+ */
+function kanaal_testmodus(string $kanaal, string $telefoon, string $tekst): ?array {
+    $naar = function_exists('mail_omleiden') ? mail_omleiden() : '';
+    if ($naar === '') return null;
+    try {
+        Mailer::verzend($naar, '', $kanaal . ' naar ' . $telefoon, '<p>' . nl2br(h($tekst)) . '</p>');
+    } catch (\Throwable $e) { error_log('kanaal_testmodus: ' . $e->getMessage()); }
+    return ['ok' => true, 'fout' => null];
+}
+
 function sms_verstuur(string $telefoon, string $tekst): bool {
     return sms_verstuur_res($telefoon, $tekst)['ok'];
 }
 
 /** Zelfde als sms_verstuur(), maar met de reden bij falen: ['ok'=>bool, 'fout'=>?string]. */
 function sms_verstuur_res(string $telefoon, string $tekst): array {
+    if ($t = kanaal_testmodus('SMS', $telefoon, $tekst)) return $t;
     if (!sms_actief()) return ['ok' => false, 'fout' => 'sms niet actief'];
     $nummer = telefoon_normaliseer($telefoon);
     if (!$nummer) return ['ok' => false, 'fout' => 'onherkenbaar nummer'];
@@ -107,7 +122,7 @@ function sms_via_http(string $nummer, string $tekst): bool {
         curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query(['nummer' => $nummer, 'telefoon' => $nummer, 'tekst' => $tekst, 'bericht' => $tekst, 'message' => $tekst, 'to' => $nummer]));
     }
     curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_RETURNTRANSFER => true, CURLOPT_SSL_VERIFYPEER => true, CURLOPT_SSL_VERIFYHOST => 2,
         CURLOPT_HTTPHEADER     => $headers,
         CURLOPT_TIMEOUT        => 10,
     ]);
@@ -124,7 +139,7 @@ function sms_via_easysendsms(string $nummer, string $tekst): bool {
     if ($apikey === '') return false;
     $ch = curl_init('https://restapi.easysendsms.app/v1/rest/sms/send');
     curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_RETURNTRANSFER => true, CURLOPT_SSL_VERIFYPEER => true, CURLOPT_SSL_VERIFYHOST => 2,
         CURLOPT_POST           => true,
         CURLOPT_HTTPHEADER     => ['apikey: ' . $apikey, 'Content-Type: application/json'],
         CURLOPT_POSTFIELDS     => json_encode(['from' => $sender, 'to' => ltrim($nummer, '+'), 'text' => $tekst, 'type' => '0']),
@@ -143,7 +158,7 @@ function sms_via_messagebird(string $nummer, string $tekst): bool {
     if ($apikey === '') return false;
     $ch = curl_init('https://rest.messagebird.com/messages');
     curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_RETURNTRANSFER => true, CURLOPT_SSL_VERIFYPEER => true, CURLOPT_SSL_VERIFYHOST => 2,
         CURLOPT_POST           => true,
         CURLOPT_HTTPHEADER     => ['Authorization: AccessKey ' . $apikey, 'Content-Type: application/json'],
         CURLOPT_POSTFIELDS     => json_encode(['originator' => $sender, 'recipients' => [$nummer], 'body' => $tekst]),
@@ -169,6 +184,7 @@ function wa_verstuur(string $telefoon, string $tekst): bool {
 
 /** Zelfde als wa_verstuur(), maar met de reden bij falen: ['ok'=>bool, 'fout'=>?string]. */
 function wa_verstuur_res(string $telefoon, string $tekst): array {
+    if ($t = kanaal_testmodus('WhatsApp', $telefoon, $tekst)) return $t;
     if (!wa_actief()) return ['ok' => false, 'fout' => 'whatsapp niet actief'];
     $nummer = telefoon_normaliseer($telefoon); // E.164 met '+', precies wat WhatsReach wil
     if (!$nummer) return ['ok' => false, 'fout' => 'onherkenbaar nummer'];
@@ -181,15 +197,19 @@ function wa_verstuur_res(string $telefoon, string $tekst): array {
 
     $body = ['to' => $nummer, 'message' => $tekst, 'type' => 'text'];
     if ($afzender !== '') $body['from'] = $afzender;
+    // Geen lege body bij een ongeldig teken (json_encode gaf dan false) en geen leeg bericht.
+    // Overgebleven sjablooncode houdt de verzendkern al tegen (melding_verzend_item, voor sms ook).
+    $json = json_encode($body, JSON_INVALID_UTF8_SUBSTITUTE);
+    if ($json === false || trim($tekst) === '') return ['ok' => false, 'fout' => 'leeg of onleesbaar bericht'];
 
     try {
         $ch = curl_init($endpoint);
         curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_RETURNTRANSFER => true, CURLOPT_SSL_VERIFYPEER => true, CURLOPT_SSL_VERIFYHOST => 2,
             CURLOPT_POST           => true,
             // WhatsReach authenticeert met X-API-Key (niet Bearer)
             CURLOPT_HTTPHEADER     => ['X-API-Key: ' . $sleutel, 'Content-Type: application/json'],
-            CURLOPT_POSTFIELDS     => json_encode($body),
+            CURLOPT_POSTFIELDS     => $json,
             CURLOPT_TIMEOUT        => 12,
         ]);
         $resp = curl_exec($ch);
@@ -222,7 +242,7 @@ function wa_devices(): array {
     try {
         $ch = curl_init($base . '/devices');
         curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_RETURNTRANSFER => true, CURLOPT_SSL_VERIFYPEER => true, CURLOPT_SSL_VERIFYHOST => 2,
             CURLOPT_HTTPHEADER     => ['X-API-Key: ' . $sleutel, 'Accept: application/json'],
             CURLOPT_TIMEOUT        => 10,
         ]);

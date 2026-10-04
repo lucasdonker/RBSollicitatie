@@ -25,11 +25,14 @@ function log_actie_register(): array {
         'geexporteerd'    => ['Geëxporteerd', 'download'],
         'bekeken'         => ['Bekeken', 'oog'],
         'gemigreerd'      => ['Gemigreerd', 'wissel'],
+        'aanmelding_dubbel' => ['Opnieuw aangemeld (bevestiging nog eens gestuurd)', 'mail'],
 
         // Toegang
         'ingelogd'        => ['Ingelogd', 'sleutel'],
         'uitgelogd'       => ['Uitgelogd', 'uitloggen'],
         'login_mislukt'   => ['Inloggen mislukt', 'waarschuwing'],
+        'sso_geweigerd'   => ['Inloggen via Authentik geweigerd (geen groep met een rol)', 'slot'],
+        'geweigerd'       => ['Geweigerd', 'waarschuwing'],
         'gewisseld'       => ['Gewisseld van omgeving', 'wissel'],
         'rol_gewijzigd'   => ['Rechten van een rol gewijzigd', 'slot'],
         'rol_aangemaakt'  => ['Rol aangemaakt', 'slot'],
@@ -37,12 +40,18 @@ function log_actie_register(): array {
         'beheerder_gewijzigd'   => ['Beheerder gewijzigd', 'persoon'],
         'beheerder_aangemaakt'  => ['Beheerder toegevoegd', 'persoon'],
         'beheerder_verwijderd'  => ['Beheerder verwijderd', 'persoon'],
+        'tweestaps_aangezet'    => ['Tweestapsverificatie aangezet', 'schild'],
+        'tweestaps_uitgezet'    => ['Tweestapsverificatie uitgezet', 'slot'],
+        'tweestaps_gereset'     => ['Tweestapsverificatie gereset door een beheerder', 'slot'],
+        'tweestaps_mislukt'     => ['Tweestapscode fout', 'waarschuwing'],
+        'tweestaps_herstelcode' => ['Herstelcode gebruikt om in te loggen', 'sleutel'],
+        'tweestaps_mailcode'    => ['Inlogcode beheer per e-mail verstuurd', 'mail'],
 
         // Sollicitatie
         'fase_gewijzigd'          => ['Fase gewijzigd', 'pijl-rechts'],
         'sollicitatie_verwijderd' => ['Sollicitatie verwijderd', 'prullenbak'],
-        'blk_ingediend'           => ['BLK ingeleverd', 'document'],
-        'blk_gewijzigd'           => ['BLK gewijzigd', 'document'],
+        'blk_ingediend'           => ['Kennismakingsformulier ingeleverd', 'document'],
+        'blk_gewijzigd'           => ['Kennismakingsformulier gewijzigd', 'document'],
 
         // Beschikbaarheid
         'beschikbaarheid_ingevuld'   => ['Beschikbaarheid ingevuld', 'kalender'],
@@ -67,9 +76,13 @@ function log_actie_register(): array {
         // Documenten en kluis
         'document_geupload'   => ['Document geüpload', 'document'],
         'document_gedownload' => ['Document gedownload', 'download'],
+        'document_geweigerd'  => ['Loondossier openen geweigerd (niet de penningmeester)', 'slot'],
         'document_verwijderd' => ['Document verwijderd', 'prullenbak'],
         'document_vernietigd' => ['Document vernietigd', 'prullenbak'],
         'loondossier_verwerkt'=> ['Loondossier verwerkt', 'vink'],
+        'gegevens_gecorrigeerd'  => ['Gegevens gecorrigeerd', 'potlood'],
+        'persoon_gewist_avg'     => ['Alle gegevens gewist (AVG-verzoek)', 'prullenbak'],
+        'loondossier_vernietigd' =>['Loondossier vernietigd (na de bewaarplicht)', 'prullenbak'],
         'bijlage_geupload'    => ['Bijlage geüpload', 'document'],
         'bijlage_gedownload'  => ['Bijlage gedownload', 'download'],
 
@@ -79,6 +92,28 @@ function log_actie_register(): array {
         'bericht_verstuurd' => ['Bericht verstuurd', 'mail'],
         'kanaal_voorkeur'   => ['Kanaalvoorkeur gewijzigd', 'telefoon'],
         'afgemeld'          => ['Afgemeld voor berichten', 'kruis-cirkel'],
+        'seintje_gevraagd'    => ['Seintje gevraagd voor de volgende werving', 'bel'],
+        'werving_seintje_bevestigd'  => ['Seintje via de website bevestigd', 'bel'],
+        'werving_seintje_ingetrokken'=> ['Seintje via de website ingetrokken', 'bel'],
+        'seintje_werving_verwijderd' => ['Website-seintjes opgeschoond', 'prullenbak'],
+        'claim_overgenomen'   => ['Gesprek overgenomen van een andere beheerder', 'wissel'],
+        'seintje_ingetrokken' => ['Seintje ingetrokken', 'kruis-cirkel'],
+
+        // Sollicitatie intrekken (includes/intrekken.php)
+        'intrekverzoek'              => ['Vroeg de sollicitatie in te trekken', 'waarschuwing'],
+        'intrekverzoek_geannuleerd'  => ['Verzoek om in te trekken geannuleerd', 'kruis-cirkel'],
+        'intrekverzoek_doorgevoerd'  => ['Intrekken doorgevoerd (afgehaakt)', 'vink'],
+        'intrekverzoek_afgewezen'    => ['Intrekken niet doorgevoerd, loopt door', 'info'],
+
+        // Selectiedag en trainingsweekend (2.117 e.v.)
+        'tw_evaluatie'               => ['Eerste indruk trainingsweekend vastgelegd', 'vink'],
+        'lg_feedback_vastgelegd'     => ['Feedback van een strandwacht vastgelegd', 'chat'],
+        'ondertekening_herinnerd'    => ['Herinnering om te ondertekenen verstuurd', 'bel'],
+        'taken_herinnerd'            => ['Herinnering openstaande taken verstuurd', 'bel'],
+        'lg_feedback_gewist'         => ['Feedback van een strandwacht verwijderd', 'prullenbak'],
+        'loonplan_opgave_overgenomen'=> ['Opgave overgenomen in de loonplanning', 'kalender'],
+        'loonplan_extra_opgeslagen'  => ['Extra persoon in de loonplanning opgeslagen', 'persoon'],
+        'loonplan_extra_verwijderd'  => ['Extra persoon uit de loonplanning verwijderd', 'prullenbak'],
         'herinneringen_gedraaid' => ['Herinneringen gedraaid', 'klok'],
 
         // Landingspagina's
@@ -88,9 +123,13 @@ function log_actie_register(): array {
         'asset_verwijderd'    => ['Bestand verwijderd', 'prullenbak'],
         'scan_bevestigd'      => ['Scanrapport bevestigd', 'schild'],
         'csp_host_toegestaan' => ['Externe host toegestaan', 'schild'],
+        'pagina_startpagina'  => ['Startpagina van het domein gewijzigd', 'koppeling'],
 
         // AVG-opschoning (categorieën uit opschoon_log)
         'afgewezen_geanonimiseerd'  => ['Afgewezen sollicitaties geanonimiseerd', 'slot'],
+        'aangenomen_geanonimiseerd' => ['Oud-strandwachten geanonimiseerd', 'slot'],
+        'wachtrij_opgeschoond'      => ['Berichtenwachtrij opgeschoond', 'slot'],
+        'foutenlog_verwijderd'      => ['Foutenlog opgeschoond', 'slot'],
         'gezondheid_verwijderd'     => ['Gezondheidsgegevens verwijderd', 'slot'],
         'ai_invoer_verwijderd'      => ['AI-invoer verwijderd', 'slot'],
         'onvoltooid_verwijderd'     => ['Onvoltooide aanmeldingen verwijderd', 'slot'],
@@ -100,7 +139,7 @@ function log_actie_register(): array {
         'auditlog_verwijderd'       => ['Auditlog opgeschoond', 'slot'],
         'pagina_hash_gewist'        => ['Bezoekerspseudoniemen gewist', 'slot'],
         'pagina_events_verwijderd'  => ['Paginastatistiek verwijderd', 'slot'],
-        'loondocumenten_vernietigd' => ['Loondocumenten vernietigd', 'slot'],
+        'loondocumenten_vernietigd' => ['Loondocumenten vernietigd', 'slot'],   // oude regels; sinds 2.100 handmatig
         'bankpas_vernietigd'        => ['Kopie bankpas vernietigd', 'slot'],
     ];
 }
@@ -121,13 +160,13 @@ function log_actie_icoon(?string $slug): string {
     return $r[(string)$slug][1] ?? 'punt';
 }
 
-/** De actor, met een badge-kleur per soort. */
+/** De actor, met een badge-kleur (bh_badge()) per soort. */
 function log_wie_soorten(): array {
     return [
-        'beheerder'   => ['Beheerder', 'badge-blauw'],
-        'sollicitant' => ['Sollicitant', 'badge-teal'],
-        'systeem'     => ['Systeem', 'badge-grijs'],
-        'onbekend'    => ['Onbekend', 'badge-oranje'],
+        'beheerder'   => ['Beheerder', 'blauw'],
+        'sollicitant' => ['Sollicitant', 'teal'],
+        'systeem'     => ['Systeem', 'grijs'],
+        'onbekend'    => ['Onbekend', 'oranje'],
     ];
 }
 
@@ -140,17 +179,17 @@ function log_wie_naam(array $r): string {
     return $s[$r['wie_type'] ?? 'systeem'][0] ?? 'Systeem';
 }
 
-/** Badge-klasse voor het actortype. */
-function log_wie_klasse(?string $type): string {
+/** Badge-kleur (bh_badge()) voor het actortype. */
+function log_wie_kleur(?string $type): string {
     $s = log_wie_soorten();
-    return $s[(string)$type][1] ?? 'badge-grijs';
+    return $s[(string)$type][1] ?? 'grijs';
 }
 
-/** Badge-klasse per ernst. */
-function log_ernst_klasse(?string $ernst): string {
-    if ($ernst === 'fout') return 'badge-rood';
-    if ($ernst === 'waarschuwing') return 'badge-oranje';
-    return 'badge-grijs';
+/** Badge-kleur (bh_badge()) per ernst. */
+function log_ernst_kleur(?string $ernst): string {
+    if ($ernst === 'fout') return 'rood';
+    if ($ernst === 'waarschuwing') return 'oranje';
+    return 'grijs';
 }
 
 /**

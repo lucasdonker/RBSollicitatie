@@ -5,7 +5,55 @@ sessie_start();
 
 $stap = $_GET['stap'] ?? 'login';
 $fout = '';
+$fout_kop = '';   // korte kop boven een codefout ("Code onjuist." / "Code niet compleet.")
+
+/* "Blijf ingelogd": is er een geldig apparaat-token, dan hoeft er niets gevraagd te
+   worden. Moet vóór de ingelogd-check, anders staat de sollicitant alsnog op het
+   inlogscherm terwijl zijn telefoon hem kent. */
+if (!portaal_ingelogd() && function_exists('portaal_onthoud_controleren')) {
+    portaal_onthoud_controleren();
+}
 if (portaal_ingelogd()) $stap = 'dossier';
+
+/* ── Inloglink uit de mail of WhatsApp ────────────────────────
+   De GET verbruikt het token bewust NIET: mailscanners bezoeken links vooraf, en dan
+   zou de link op zijn voordat de sollicitant klikt. Hier wordt alleen gekeken of hij
+   geldig is; de knop op dat scherm post en verzilvert hem dan. */
+if (!portaal_ingelogd() && isset($_GET['inlog'])) {
+    $link_email = portaal_inloglink_controleren((string)$_GET['inlog']);
+    if ($link_email) {
+        $stap = 'inloglink';
+        $link_token = (string)$_GET['inlog'];
+        $lv = db()->prepare("SELECT voornaam FROM personen WHERE email=? LIMIT 1");
+        $lv->execute([$link_email]);
+        $link_voornaam = (string)($lv->fetchColumn() ?: '');
+    } else {
+        $stap = 'login';
+        $fout = 'Deze inloglink werkt niet meer. Vraag hieronder een nieuwe aan — dat kost een paar seconden.';
+    }
+}
+
+// De knop op dat scherm: nu pas verzilveren en inloggen.
+if (!portaal_ingelogd() && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['inloglink_submit'])) {
+    csrf_check();
+    $link_email = portaal_inloglink_controleren((string)($_POST['inlog_token'] ?? ''), true);
+    if (!$link_email) {
+        $stap = 'login';
+        $fout = 'Deze inloglink werkt niet meer. Vraag hieronder een nieuwe aan.';
+    } else {
+        $st = db()->prepare("SELECT s.id FROM sollicitaties s JOIN personen p ON p.id=s.persoon_id WHERE p.email=? ORDER BY s.aangemeld_op DESC LIMIT 1");
+        $st->execute([$link_email]);
+        $sol_link = $st->fetch();
+        if ($sol_link) {
+            login_portaal((int)$sol_link['id'], $link_email);
+            if (!empty($_POST['onthoud'])) portaal_onthoud_zetten((int)$sol_link['id'], $link_email);
+            unset($_SESSION['otp_email']);
+            redirect(APP_URL . '/portaal/');
+        }
+        $stap = 'login';
+        $fout = 'Geen sollicitatie gevonden bij dit adres.';
+    }
+}
 
 // ── OTP/SSO stap 1: email-submit ──────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['email_submit'])) {
@@ -29,6 +77,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['email_submit'])) {
         // Per adres: maximaal 10 code-aanvragen per uur, ongeacht het e-mailadres. De throttle
         // hieronder is per e-mailadres en houdt dus niemand tegen die veel adressen afgaat.
         $ip_ok = !function_exists('rate_limit') || rate_limit('otp_aanvraag', rate_identiteit(), 10, 3600);
+        if (!$ip_ok) {
+            // Eerlijk zeggen in plaats van stil "we stuurden een link". Dit verklapt niets over een
+            // account: de limiet telt per netwerkadres, voor bestaande en niet-bestaande adressen gelijk.
+            $fout = 'Er zijn vanaf dit netwerk te veel inloglinks aangevraagd. Probeer het over een uur opnieuw.';
+        }
         if ($persoon && $ip_ok) {
             // Atomische throttle: is er afgelopen 60s al een actieve OTP gegenereerd?
             $rl = db()->prepare("SELECT 1 FROM otp_tokens WHERE email=? AND type='portaal' AND gebruikt=0 AND aangemaakt_op > DATE_SUB(NOW(), INTERVAL 60 SECOND) LIMIT 1");
@@ -38,13 +91,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['email_submit'])) {
             if (!$recent_otp) {
                 try {
                     $code = otp_genereer($email, 'portaal');
-                    portaal_code_versturen($email, $persoon['voornaam'], $code, $persoon['telefoon'] ?? null);
+                    // De link gaat mee in hetzelfde bericht als de code: één tik in
+                    // plaats van zes cijfers overtypen, met de code eronder voor wie
+                    // liever typt of de link niet kan openen.
+                    $link = portaal_inloglink_maken($email);
+                    portaal_code_versturen($email, $persoon['voornaam'], $code, $persoon['telefoon'] ?? null, $link);
                 } catch (\Throwable $e) { error_log('portaal login otp: ' . $e->getMessage()); }
             }
             // Als wel recent: bestaande code blijft geldig, geen nieuwe mail
         }
-        $_SESSION['otp_email'] = $email;
-        redirect(APP_URL . '/portaal/?stap=code');
+        if ($ip_ok) {
+            $_SESSION['otp_email'] = $email;
+            redirect(APP_URL . '/portaal/?stap=code');
+        }
     }
 }
 
@@ -61,7 +120,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toch_code'])) {
             if (!$recent_otp) {
                 try {
                     $code = otp_genereer($email, 'portaal');
-                    portaal_code_versturen($email, $persoon['voornaam'], $code, $persoon['telefoon'] ?? null);
+                    $link = portaal_inloglink_maken($email);
+                    portaal_code_versturen($email, $persoon['voornaam'], $code, $persoon['telefoon'] ?? null, $link);
                 } catch (\Throwable $e) { error_log('portaal login otp: ' . $e->getMessage()); }
             }
         }
@@ -76,19 +136,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['toch_code'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['code_submit'])) {
     csrf_check();
     $email = $_SESSION['otp_email'] ?? '';
-    $code  = preg_replace('/\D/', '', $_POST['code'] ?? '');
+    // 'code' vult JS in; zonder JavaScript komen de zes losse vakjes als code_cijfer[] binnen.
+    $code_ruw = (string)($_POST['code'] ?? '');
+    if ($code_ruw === '') $code_ruw = implode('', array_map('strval', (array)($_POST['code_cijfer'] ?? [])));
+    $code  = preg_replace('/\D/', '', $code_ruw);
     if (!$email) redirect(APP_URL . '/portaal/');
-    if (strlen($code) !== 6) { $fout = 'Voer een 6-cijferige code in.'; $stap = 'code'; }
-    elseif (!otp_verifieer($email, $code, 'portaal')) { $fout = 'Onjuiste of verlopen code.'; $stap = 'code'; }
+    if (strlen($code) !== 6) { $fout_kop = 'Code niet compleet.'; $fout = 'Vul alle zes cijfers van de code in.'; $stap = 'code'; }
+    elseif (!otp_verifieer($email, $code, 'portaal')) { $fout_kop = 'Code onjuist.'; $fout = 'Deze code klopt niet of is verlopen. Controleer de cijfers, of laat hieronder een nieuwe sturen.'; $stap = 'code'; }
     else {
         $st = db()->prepare("SELECT s.id FROM sollicitaties s JOIN personen p ON p.id=s.persoon_id WHERE p.email=? ORDER BY s.aangemeld_op DESC LIMIT 1");
         $st->execute([$email]); $sol = $st->fetch();
-        if ($sol) { login_portaal((int)$sol['id'], $email); unset($_SESSION['otp_email']); redirect(APP_URL . '/portaal/'); }
+        if ($sol) {
+            login_portaal((int)$sol['id'], $email);
+            if (!empty($_POST['onthoud'])) portaal_onthoud_zetten((int)$sol['id'], $email);
+            unset($_SESSION['otp_email']);
+            redirect(APP_URL . '/portaal/');
+        }
         else { $fout = 'Geen sollicitatie gevonden.'; $stap = 'login'; }
     }
 }
 
-if (isset($_GET['uitloggen'])) { unset($_SESSION['portaal_sol_id'], $_SESSION['portaal_email']); redirect(APP_URL . '/portaal/'); }
+// Uitloggen alleen via POST met csrf (portaal_uitlog_knop()); een link kon een andere site je laten
+// uitloggen. Ook het apparaat-token gaat weg, anders ben je bij de volgende pagina weer ingelogd.
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['uitloggen'])) {
+    if (portaal_ingelogd()) csrf_check();   // verlopen sessie: niets te beschermen, geen foutpagina
+    portaal_uitloggen();
+    redirect(APP_URL . '/portaal/');
+}
+if (isset($_GET['uitloggen'])) redirect(APP_URL . '/portaal/');   // oude link: niets doen
 
 // Oude links naar het Taken-tabblad (?tab=taken) → eigen pagina
 if ($stap === 'dossier' && ($_GET['tab'] ?? '') === 'taken') redirect(APP_URL . '/portaal/taken.php');
@@ -140,39 +215,67 @@ else { $portaal_status_fase = $sol['fase']; }
 require __DIR__ . '/_kop.php';
 ?>
 
-  <?php toon_flash(); ?>
-  <?php if ($fout && $stap !== 'code'): // op het code-scherm toont dat scherm de fout zelf ?>
-  <div class="flash flash-fout" style="margin-bottom:12px"><?= h($fout) ?></div><?php endif; ?>
-  <?php if (!empty($_SESSION['portaal_flash'])): ?>
-    <div class="flash flash-info" style="margin-bottom:12px"><?= h($_SESSION['portaal_flash']) ?></div>
-    <?php unset($_SESSION['portaal_flash']); ?>
-  <?php endif; ?>
-  <?php if (!empty($_SESSION['flash_portaal'])): ?>
-    <div class="flash flash-succes" style="margin-bottom:12px"><?= h($_SESSION['flash_portaal']) ?></div>
-    <?php unset($_SESSION['flash_portaal']); ?>
-  <?php endif; ?>
-  <?php if (!empty($_SESSION['flash_portaal_fout'])): ?>
-    <div class="flash flash-fout" style="margin-bottom:12px"><?= h($_SESSION['flash_portaal_fout']) ?></div>
-    <?php unset($_SESSION['flash_portaal_fout']); ?>
-  <?php endif; ?>
+  <?php // De melding van de vorige actie toont _kop.php (toon_flash). ?>
+  <?php if ($fout && !in_array($stap, ['code', 'login'], true)): // inlog- en codescherm tonen de fout zelf, bij het veld ?>
+  <div class="ds-melding ds-melding-error flash" role="alert"><?= icoon('let-op', 18) ?><span><?= h($fout) ?></span></div><?php endif; ?>
 
-<?php if ($stap === 'login'): ?>
+<?php if ($stap === 'inloglink'): ?>
+  <?php /* De link uit de mail of WhatsApp. Eén knop en je bent binnen — maar wel een
+           knop: een mailscanner die de link vooraf opent mag hem niet opmaken, en
+           inloggen hoort een handeling te zijn, geen bijwerking van het bezoeken van
+           een URL. */ ?>
+  <div class="ds-login">
+    <div class="ds-login-kop">
+      <div class="ds-login-logo"><?= icoon('golf', 26) ?></div>
+      <h1><?= $link_voornaam !== '' ? 'Hoi ' . h($link_voornaam) . '!' : 'Welkom terug' ?></h1>
+      <p>Je bent één tik verwijderd van je portaal.</p>
+    </div>
+    <form method="POST" class="ds-login-form">
+      <?= csrf_input() ?>
+      <input type="hidden" name="inloglink_submit" value="1">
+      <input type="hidden" name="inlog_token" value="<?= h($link_token) ?>">
+      <label class="pt-onthoud">
+        <input type="checkbox" name="onthoud" value="1">
+        <span>
+          <strong>Blijf ingelogd op dit apparaat</strong>
+          <span class="pt-onthoud-uitleg">Dan hoef je dit <?= (int)PORTAAL_ONTHOUD_DAGEN ?> dagen niet meer te doen.
+          Doe dit niet op een gedeelde of geleende telefoon.</span>
+        </span>
+      </label>
+      <button type="submit" class="ds-btn ds-btn-primair ds-btn-vol">Open mijn portaal</button>
+    </form>
+    <div class="ds-login-voet">
+      Niet jij? <a href="<?= APP_URL ?>/portaal/">Log in met een ander adres</a>
+    </div>
+  </div>
+
+<?php elseif ($stap === 'login'): ?>
   <div class="ds-login">
     <div class="ds-login-kop">
       <div class="ds-login-logo"><?= icoon('golf', 26) ?></div>
       <h1>Welkom terug</h1>
       <p>Vul je e-mailadres in. <?= authentik_actief()
-        ? 'Heb je al een Paal 13-account, dan sturen we je automatisch door. Anders krijg je een code van zes cijfers.'
-        : 'Je krijgt een code van zes cijfers om in te loggen.' ?></p>
+        ? 'Heb je al een Paal 13-account, dan sturen we je automatisch door. Anders krijg je een inloglink.'
+        : 'Je krijgt een inloglink — één tik en je bent binnen.' ?></p>
     </div>
-    <form method="POST" class="ds-login-form" onsubmit="var b=this.querySelector('button[type=submit]'); b.disabled=true; b.innerHTML='Versturen…'; this.querySelector('input[name=email]').readOnly=true;">
+    <?php
+      // Fout over het ingevulde adres → bij het veld (aria-invalid); andere fouten (verlopen link) alleen als melding.
+      $email_fout = !empty($fout) && isset($_POST['email_submit']);
+      // Terug via "adres opnieuw invoeren": het vorige adres staat er al, zodat je alleen een typfout hoeft te verbeteren.
+      $email_waarde = (string)($_POST['email'] ?? ($_SESSION['otp_email'] ?? ''));
+    ?>
+    <?php if (!empty($fout)): ?>
+    <div class="ds-melding ds-melding-error pt-login-fout" id="loginFout" role="alert"><?= icoon('let-op', 18) ?> <div><?= h($fout) ?></div></div>
+    <?php endif; ?>
+    <form method="POST" class="ds-login-form">
       <?= csrf_input() ?>
       <input type="hidden" name="email_submit" value="1">
       <div class="ds-veld">
-        <label class="ds-label">E-mailadres</label>
-        <input type="email" name="email" required autofocus autocomplete="email" class="ds-input"
-               value="<?= h($_POST['email'] ?? '') ?>" placeholder="jou@voorbeeld.nl">
-        <div class="ds-veld-hint">Waarmee je je hebt aangemeld bij Paal 13</div>
+        <label class="ds-label" for="loginEmail">E-mailadres</label>
+        <input type="email" id="loginEmail" name="email" required autofocus autocomplete="email" class="ds-input"
+               value="<?= h($email_waarde) ?>" placeholder="jou@voorbeeld.nl"
+               aria-describedby="loginEmailHint<?= $email_fout ? ' loginFout' : '' ?>"<?= $email_fout ? ' aria-invalid="true"' : '' ?>>
+        <div class="ds-veld-hint" id="loginEmailHint">Waarmee je je hebt aangemeld bij Paal 13</div>
       </div>
       <button type="submit" class="ds-btn ds-btn-primair ds-btn-vol">Doorgaan</button>
     </form>
@@ -185,56 +288,100 @@ require __DIR__ . '/_kop.php';
   <div class="ds-login">
     <div class="ds-login-kop">
       <div class="ds-login-logo"><?= icoon('mail', 26) ?></div>
-      <h1>Code invoeren</h1>
-      <p>We hebben zes cijfers gestuurd naar <strong><?= h($_SESSION['otp_email'] ?? '') ?></strong>. Check ook je spam-map.</p>
+      <h1>Kijk in je berichten</h1>
+      <p>We stuurden een <strong>inloglink</strong> naar <?= h($_SESSION['otp_email'] ?? '') ?>.
+         Eén tik en je bent binnen.</p>
+      <?php /* Niets verklappen: deze tekst staat er altijd, of het adres nu bekend is of niet. */ ?>
+      <p class="pt-code-hint">Niets ontvangen? Controleer of je het adres goed hebt getypt en kijk in je spam.
+         <a href="<?= APP_URL ?>/portaal/">Adres opnieuw invoeren</a></p>
+      <p class="pt-code-uitleg" id="codeLbl">Liever typen? De code uit datzelfde bericht kan hieronder.</p>
     </div>
-    <?php if (!empty($fout)): ?>
-    <div class="ds-melding ds-melding-error" style="margin-bottom:14px"><?= icoon('let-op', 18) ?> <div><strong>Code onjuist.</strong> <?= h($fout) ?></div></div>
-    <?php endif; ?>
+    <?php /* De foutplek staat er altijd (leeg en verborgen), zodat de groep er met aria-describedby
+             naar kan wijzen en JS er dezelfde plek voor gebruikt. */ ?>
+    <div class="ds-melding ds-melding-error pt-login-fout" id="codeFout" role="alert"<?= empty($fout) ? ' hidden' : '' ?>><?php if (!empty($fout)): ?><?= icoon('let-op', 18) ?> <div><?php if ($fout_kop !== ''): ?><strong><?= h($fout_kop) ?></strong> <?php endif; ?><?= h($fout) ?></div><?php endif; ?></div>
     <form method="POST" id="codeForm" class="ds-login-form">
       <?= csrf_input() ?>
       <input type="hidden" name="code_submit" value="1">
       <input type="hidden" name="code" id="codeHidden">
-      <div class="ds-code-inputs">
+      <?php /* Zes vakjes = één veld: één groep met een naam, elk vakje zegt welk cijfer het is.
+               Zonder JavaScript gaan de vakjes als code_cijfer[] mee; de server plakt ze aan elkaar. */ ?>
+      <div class="ds-code-inputs" role="group" aria-labelledby="codeLbl" aria-describedby="codeFout">
         <?php for ($i = 0; $i < 6; $i++): ?>
-        <input type="text" inputmode="numeric" pattern="[0-9]" maxlength="1" class="code-cijfer ds-code-cijfer"
+        <?php /* Vakje 1 zonder maxlength: de telefoon vult daar de hele code in (one-time-code); het script verdeelt hem. */ ?>
+        <input type="text" inputmode="numeric" pattern="[0-9]*"<?= $i === 0 ? '' : ' maxlength="1"' ?> class="code-cijfer ds-code-cijfer"
+               name="code_cijfer[]" aria-label="Cijfer <?= $i + 1 ?> van 6"<?= !empty($fout) ? ' aria-invalid="true"' : '' ?>
                autocomplete="<?= $i === 0 ? 'one-time-code' : 'off' ?>">
         <?php endfor; ?>
       </div>
-      <button type="submit" class="ds-btn ds-btn-primair ds-btn-vol" id="submitBtn" disabled>Inloggen</button>
+      <label class="pt-onthoud">
+        <input type="checkbox" name="onthoud" value="1">
+        <span>
+          <strong>Blijf ingelogd op dit apparaat</strong>
+          <span class="pt-onthoud-uitleg">Dan hoef je dit <?= (int)PORTAAL_ONTHOUD_DAGEN ?> dagen niet meer te doen.
+          Doe dit niet op een gedeelde of geleende telefoon.</span>
+        </span>
+      </label>
+      <?php /* Nooit disabled (CLAUDE.md, actie.js): de knop werkt altijd; een onvolledige code
+               meldt de controle hieronder in de foutplek. */ ?>
+      <button type="submit" class="ds-btn ds-btn-primair ds-btn-vol" id="submitBtn">Inloggen</button>
     </form>
-    <div class="ds-login-voet">
-      Geen mail ontvangen? <button type="button" class="ds-link-knop" id="opnieuwBtn" disabled>Opnieuw sturen (<span id="teller">0:60</span>)</button>
-      <br><a href="<?= APP_URL ?>/portaal/">← Ander e-mailadres</a>
-    </div>
+    <?php /* Opnieuw sturen: een gewoon formulier, dus ook zonder JavaScript bruikbaar. De server
+             stuurt binnen 60 seconden geen tweede code; de teller maakt dat alleen zichtbaar. */ ?>
+    <form method="POST" class="ds-login-voet" id="opnieuwForm">
+      <?= csrf_input() ?>
+      <input type="hidden" name="email_submit" value="1">
+      <input type="hidden" name="email" value="<?= h($_SESSION['otp_email'] ?? '') ?>">
+      Geen mail ontvangen? <button type="submit" class="ds-link-knop" id="opnieuwBtn">Opnieuw sturen<span id="teller"></span></button>
+      <br><a href="<?= APP_URL ?>/portaal/"><?= icoon('terug', 14) ?> Ander e-mailadres</a>
+    </form>
   </div>
-  <form method="POST" id="opnieuwForm" style="display:none">
-    <?= csrf_input() ?>
-    <input type="hidden" name="email_submit" value="1">
-    <input type="hidden" name="email" value="<?= h($_SESSION['otp_email'] ?? '') ?>">
-  </form>
-  <script>
-  const inp = document.querySelectorAll('.code-cijfer'), h = document.getElementById('codeHidden'), b = document.getElementById('submitBtn');
-  inp.forEach((el,i) => {
-    el.addEventListener('input', () => { el.value=el.value.replace(/\D/g,'').slice(-1); if(el.value&&i<5) inp[i+1].focus(); upd(); });
-    el.addEventListener('keydown', e => { if(e.key==='Backspace'&&!el.value&&i>0) inp[i-1].focus(); });
-    el.addEventListener('paste', e => { e.preventDefault(); const v=(e.clipboardData||window.clipboardData).getData('text').replace(/\D/g,'').slice(0,6); v.split('').forEach((c,j)=>{if(inp[j])inp[j].value=c;}); inp[Math.min(v.length,5)].focus(); upd(); });
-  });
-  function upd() { const c=Array.from(inp).map(i=>i.value).join(''); h.value=c; b.disabled=c.length!==6; if(c.length===6)b.focus(); }
-  inp[0].focus();
-  // Opnieuw-sturen teller: 60s aftellen, daarna knop actief
-  (function(){
-    var t = 60, el = document.getElementById('teller'), knop = document.getElementById('opnieuwBtn');
-    var iv = setInterval(function(){
+  <script nonce="<?= h(csp_nonce()) ?>">
+  (function () {
+    var inp = document.querySelectorAll('.code-cijfer'), verborgen = document.getElementById('codeHidden');
+    var form = document.getElementById('codeForm'), knop = document.getElementById('submitBtn'), foutPlek = document.getElementById('codeFout');
+    function code() { return Array.prototype.map.call(inp, function (i) { return i.value; }).join(''); }
+    function upd() { var c = code(); verborgen.value = c; if (c.length === 6) knop.focus(); }
+    // Meer cijfers tegelijk (plakken, of de telefoon die de code uit de sms invult): over de vakjes verdelen.
+    function verdeel(v, vanaf) {
+      v.split('').slice(0, 6 - vanaf).forEach(function (c, j) { inp[vanaf + j].value = c; });
+      inp[Math.min(vanaf + v.length, 5)].focus(); upd();
+    }
+    inp.forEach(function (el, i) {
+      el.addEventListener('input', function () {
+        var v = el.value.replace(/\D/g, '');
+        if (v.length > 1) { verdeel(v, i); return; }
+        el.value = v; if (v && i < 5) inp[i + 1].focus(); upd();
+      });
+      el.addEventListener('keydown', function (e) { if (e.key === 'Backspace' && !el.value && i > 0) inp[i - 1].focus(); });
+      el.addEventListener('paste', function (e) {
+        e.preventDefault();
+        verdeel((e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6), 0);
+      });
+    });
+    form.addEventListener('submit', function (e) {
+      upd();
+      if (code().length === 6) return;
+      e.preventDefault();
+      var leeg = Array.prototype.filter.call(inp, function (i) { return !i.value; })[0] || inp[0];
+      var tekst = 'Code niet compleet. Vul alle zes cijfers van de code in.';
+      if (window.P13Melding) P13Melding.fout(foutPlek, tekst, leeg);
+      else { foutPlek.textContent = tekst; foutPlek.hidden = false; leeg.focus(); }
+    });
+    inp[0].focus();
+
+    // Opnieuw sturen: 60 seconden aftellen. aria-disabled i.p.v. disabled, zodat de knop
+    // vindbaar blijft voor een schermlezer en het formulier niet stil vastzit.
+    var t = 60, teller = document.getElementById('teller'), opnieuw = document.getElementById('opnieuwBtn');
+    opnieuw.setAttribute('aria-disabled', 'true');
+    var mmss = function (s) { return ' (' + Math.floor(s / 60) + ':' + (s % 60 < 10 ? '0' : '') + (s % 60) + ')'; };
+    teller.textContent = mmss(t);
+    document.getElementById('opnieuwForm').addEventListener('submit', function (e) {
+      if (opnieuw.getAttribute('aria-disabled') === 'true') e.preventDefault();
+    });
+    var iv = setInterval(function () {
       t--;
-      if (t <= 0) {
-        clearInterval(iv);
-        knop.disabled = false;
-        knop.innerHTML = 'Opnieuw sturen';
-        knop.addEventListener('click', function(){ document.getElementById('opnieuwForm').submit(); });
-      } else {
-        el.textContent = '0:' + (t < 10 ? '0' : '') + t;
-      }
+      if (t <= 0) { clearInterval(iv); opnieuw.removeAttribute('aria-disabled'); teller.textContent = ''; }
+      else teller.textContent = mmss(t);
     }, 1000);
   })();
   </script>
@@ -245,23 +392,17 @@ require __DIR__ . '/_kop.php';
     <div class="ds-login-kop">
       <div class="ds-login-logo"><?= icoon('slot', 26) ?></div>
       <h1>Je hebt al een account</h1>
-      <p>We sturen je door naar het Paal 13-account van <strong><?= h($dse) ?></strong>. Daar log je in zoals je gewend bent.</p>
+      <p>Je logt in met het Paal 13-account van <strong><?= h($dse) ?></strong>, zoals je gewend bent.</p>
     </div>
-    <div class="ds-melding ds-melding-info" style="margin-bottom:16px">
-      <?= icoon('klok', 18) ?> <div>Even geduld — je wordt doorgestuurd…</div>
-    </div>
-    <a href="<?= APP_URL ?>/portaal/auth_sso.php" class="ds-btn ds-btn-primair ds-btn-vol" id="dsNu">Nu doorgaan</a>
-    <form method="POST" style="margin-top:14px">
+    <a href="<?= APP_URL ?>/portaal/auth_sso.php" class="ds-btn ds-btn-primair ds-btn-vol" id="dsNu">Inloggen met je Paal 13-account</a>
+    <form method="POST" class="pt-login-los">
       <?= csrf_input() ?>
       <input type="hidden" name="toch_code" value="1">
-      <div class="ds-login-voet" style="margin-top:0">
+      <div class="ds-login-voet">
         Geen account meer? <button type="submit" class="ds-link-knop">Stuur mij toch een code</button>
       </div>
     </form>
   </div>
-  <script>
-    setTimeout(function(){ window.location.href = document.getElementById('dsNu').href; }, 2500);
-  </script>
 
 <?php endif; ?>
 
@@ -274,7 +415,7 @@ require __DIR__ . '/_kop.php';
   $n_open     = count($open_taken);
   $vg         = portaal_voortgang($fase);
   $begroet    = portaal_begroeting($sol, $n_open);
-  $afgewezen  = ($fase === 'afgewezen');
+  $eindfase   = portaal_is_eindfase($fase);   // afgewezen, gestopt, zelf verwijderd: _start_info toont de eindstand
   $aangenomen = ($fase === 'aangenomen');
   $wachtend   = in_array($fase, ['selectiedag_geweest', 'tw_geweest'], true);
   $start_max  = 3;   // meer open taken → "Alle (N) taken tonen" naar het Taken-tabblad
@@ -294,18 +435,22 @@ require __DIR__ . '/_kop.php';
   <div class="pt-melding ok">
     <?= icoon('vink-cirkel', 20) ?>
     <div class="pt-melding-tekst">
-      <span class="pt-melding-titel"><?= h($begroet['titel']) ?></span>
+      <h1 class="pt-melding-titel"><?= h($begroet['titel']) ?></h1>
       <span class="pt-melding-body"><?= h($begroet['tekst']) ?></span>
     </div>
   </div>
   <?php endif; ?>
 
-  <?php if ($vg): $vg_toelichting = portaal_voortgang_toelichting($fase); require __DIR__ . '/_voortgang.php'; endif; ?>
+  <?php if ($vg):
+    $vg_toelichting = portaal_voortgang_toelichting($fase);
+    $vg_open = count($open_taken);   // "Stap 2 van 5 — nu even niets te doen"
+    require __DIR__ . '/_voortgang.php';
+  endif; ?>
 
   <div class="pt-start-grid">
     <?php require __DIR__ . '/_start_info.php'; ?>
 
-    <?php if (!$afgewezen): ?>
+    <?php if (!$eindfase): ?>
     <div class="pt-stapel pt-start-taken">
       <?php if ($aangenomen && $taken): $n_klaar = count($taken) - $n_open; ?>
         <div class="pt-sectiekop"><span>Takenpakket</span><span class="pt-sectiekop-teller"><?= $n_klaar ?> van <?= count($taken) ?> gedaan</span></div>
@@ -327,10 +472,9 @@ require __DIR__ . '/_kop.php';
       <?php else: ?>
         <?php
           $leeg_groot = $wachtend;
-          $leeg_titel = 'Je bent helemaal bij';
-          $leeg_tekst = $wachtend
-            ? 'Niets te doen. Zodra er iets van je nodig is, verschijnt het hier en krijg je een bericht.'
-            : 'Er staat niets open. Zodra er iets van je nodig is, verschijnt het hier.';
+          $_lt        = portaal_leeg_tekst($sol);
+          $leeg_titel = $_lt['titel'];
+          $leeg_tekst = $_lt['tekst'];
           $leeg_knop  = null;
           foreach ($taken as $t) { if ($t['id'] === 'besch' && $t['done']) { $leeg_knop = ['url' => APP_URL . '/portaal/beschikbaarheid.php', 'label' => 'Mijn beschikbaarheid bekijken']; } }
           require __DIR__ . '/_leeg.php';
@@ -341,7 +485,7 @@ require __DIR__ . '/_kop.php';
       <?php endif; ?>
 
       <?php if ($wacht_taken && !$aangenomen): ?>
-        <div class="pt-sectiekop"><span>Wacht op je ouder/verzorger</span></div>
+        <div class="pt-sectiekop"><span><?= h(portaal_taken_wacht_titel($wacht_taken)) ?></span></div>
         <?php $lijst = $wacht_taken; require __DIR__ . '/_takenlijst.php'; ?>
       <?php endif; ?>
     </div>

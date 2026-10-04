@@ -3,7 +3,76 @@
  * Paal 13 — Instellingen helper + auto-setup
  */
 
+// Loontarieven per kalenderjaar (tarieven, VT, werkuren, postcommandant, budget) en het dagloon.
+require_once __DIR__ . '/loon_tarieven.php';
+
 $_instellingen_cache = null;
+
+/**
+ * Welke sleutels het algemene formulier van Instellingen (actie "instellingen") per
+ * tabblad mag opslaan. Dit is de whitelist: wat hier niet staat — kluis.*, db.*,
+ * cron.token, api.sleutel, rechten.*, app.* — kan via dat formulier nooit worden gezet,
+ * ook niet met een zelfgemaakte POST. Een nieuw veld op een tabblad = de sleutel hier
+ * toevoegen, verder niets.
+ *
+ * @return string[]
+ */
+function instellingen_formulier_sleutels(string $tab): array {
+    // Tabbladen uit de lijst (includes/instellingen_velden.php): de whitelist is precies wat daar staat.
+    if (function_exists('instellingen_velden_sleutels') && ($uit = instellingen_velden_sleutels($tab))) return $uit;
+    $per_tab = [
+        'algemeen'    => ['site.naam', 'site.logo_url', 'site.favicon_url', 'portaal.welkomst_tekst'],
+        // Lonen & budget slaat op per kalenderjaar (includes/loon_tarieven.php) via eigen acties, niet via
+        // dit formulier. De oude loon.*-sleutels zijn alleen nog de terugval voor een jaar zonder eigen waarden.
+        'loon'        => [],
+        // Technisch tabblad (alleen Systeem › bewerken): welke ondertekeningen een verificatiecode vragen.
+        'modules'     => ['ondertekenen.2fa_typen'],
+        // 'fase_advies', 'uitnodiging' en 'mail' staan in includes/instellingen_velden.php.
+        'ai'          => ['ai.api_key', 'ai.model', 'ai.beschikbaarheid_hulp', 'ai.auto_analyse'],
+        'authentik'   => ['authentik.api_token', 'authentik.url', 'authentik.token'],
+        'bewaren'     => ['bewaar.actief', 'bewaar.afgewezen_weken', 'bewaar.seintje_mnd', 'bewaar.aangenomen_jaar',
+                          'bewaar.gezondheid_mnd', 'bewaar.ai_invoer_mnd', 'bewaar.onvoltooid_mnd', 'bewaar.maillog_mnd',
+                          'bewaar.maillog_body_mnd', 'bewaar.bijlagen_mnd', 'bewaar.pagina_events_mnd', 'bewaar.pagina_hash_dagen',
+                          'bewaar.audit_maanden', 'bewaar.bankpas_na_verwerking_dagen', 'bewaar.foutenlog_dagen',
+                          'bewaar.loondocumenten_jaar', 'privacy.url',
+                          'documenten.download_melding', 'paginas.tracking'],
+    ];
+    return $per_tab[$tab] ?? [];
+}
+
+/**
+ * Ondertekentypen waarvoor je in Instellingen › Modules een verificatiecode kunt verplichten
+ * (instelling ondertekenen.2fa_typen, gelezen door ondertekening_2fa_typen()). [type => label]
+ */
+function instellingen_2fa_keuzes(): array {
+    $uit = [];
+    foreach (['loonheffing', 'lidmaatschap', 'gezondheid_18plus', 'gezondheid_ouder', 'intake', 'intake_ouder'] as $t) {
+        $uit[$t] = function_exists('ondertekening_label') ? ondertekening_label($t) : $t;
+    }
+    return $uit;
+}
+
+/**
+ * Sleutels waarvan de waarde geheim is. Het scherm toont die nooit terug (alleen
+ * "ingesteld"), en een leeg veld opslaan laat de huidige waarde staan.
+ * api.sleutel en cron.token staan hier niet: die hebben een eigen knop om te vernieuwen.
+ */
+function instellingen_geheime_sleutels(): array {
+    return ['ai.api_key', 'authentik.api_token', 'authentik.token', 'smtp.pass',
+            'sms.http_token', 'sms.easysendsms_key', 'sms.messagebird_key', 'wa.api_sleutel'];
+}
+
+/**
+ * Een geheim bijwerken: een lege nieuwe waarde verandert niets, $wissen maakt hem leeg.
+ * Geeft true terug als er iets veranderde (voor het logboek — de waarde zelf komt daar nooit in).
+ */
+function instelling_geheim_bijwerken(string $sleutel, string $nieuw, bool $wissen = false): bool {
+    if (!in_array($sleutel, instellingen_geheime_sleutels(), true)) return false;
+    $nieuw = trim($nieuw);
+    if ($nieuw !== '') return instelling_opslaan($sleutel, $nieuw);
+    if ($wissen && instelling($sleutel, '') !== '') return instelling_opslaan($sleutel, '');
+    return false;
+}
 
 // Auto-setup: maak alle tabellen aan als ze ontbreken.
 // Draait normaal NIET (alleen als versie wijzigt of $forceer = true).
@@ -44,13 +113,14 @@ function instellingen_auto_setup(bool $forceer = false): void {
         `volgorde`     INT          DEFAULT 0
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
-    // loon_tarieven tabel
+    // loon_tarieven tabel: per kalenderjaar. Vullen, migreren en de jaartabel: loon_tarieven_auto_setup().
     $db->exec("CREATE TABLE IF NOT EXISTS `loon_tarieven` (
         `id`          INT          AUTO_INCREMENT PRIMARY KEY,
+        `jaar`        SMALLINT     NOT NULL DEFAULT 0,
         `leeftijd`    INT          NOT NULL,
         `periode`     VARCHAR(10)  NOT NULL,
         `min_uurloon` DECIMAL(6,4) NOT NULL,
-        UNIQUE KEY `leeftijd_periode` (`leeftijd`,`periode`)
+        UNIQUE KEY `jaar_leeftijd_periode` (`jaar`,`leeftijd`,`periode`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
     // loon_planning tabel
@@ -89,6 +159,7 @@ function instellingen_auto_setup(bool $forceer = false): void {
         ['site.favicon_url',       '',                          'URL van het favicon',                  'url'],
         ['mail.fout_email',        'website@paal13.com',        'E-mail voor foutmeldingen',            'email'],
         ['mail.bestuur_email',     'bestuur@paal13.com',        'E-mail bestuur',                       'email'],
+        ['mail.contact_email',     'sollicitatie@paal13.com',   'Contactadres voor sollicitanten (portaal, vragen; leeg = bestuur)', 'email'],
         ['mail.penningmeester_email', '',                       'E-mail penningmeester (loondossiers; leeg = bestuur)', 'email'],
         ['mail.ledenservice_email',   '',                       'E-mail ledenservice (inschrijvingen lidmaatschap; leeg = bestuur)', 'email'],
         ['documenten.penningmeester_bijlagen', '0',             'Loondossier-stukken (ID, bankpas, loonheffing) als bijlage mailen', 'checkbox'],
@@ -97,8 +168,8 @@ function instellingen_auto_setup(bool $forceer = false): void {
         ['ondertekenen.2fa_typen', 'loonheffing',                'Ondertekentypen met verplichte verificatiecode (wettelijke documenten)', 'tekst'],
         ['bewaar.loondocumenten_jaar', '5',                     'Loonheffingsformulier + kopie ID bewaren (jaren na einde dienstjaar)', 'getal'],
         ['bewaar.bankpas_na_verwerking_dagen', '30',            'Kopie bankpas vernietigen na verwerking (dagen)', 'getal'],
-        ['aanmeld.min_leeftijd',   '15',                        'Minimumleeftijd sollicitant',          'getal'],
-        ['aanmeld.max_leeftijd',   '35',                        'Maximumleeftijd sollicitant',          'getal'],
+        ['privacy.url',            '',                          'Adres van de privacyverklaring (leeg = de pagina in dit systeem)', 'url'],
+        // aanmeld.min_leeftijd/max_leeftijd vervallen (2.100): nergens gebruikt; de minimumleeftijd is vast 15.
         ['invite.modus',           'suggestie',                 'Auto-invite modus',                    'keuze'],
         ['invite.min_leeftijd',    '16',                        'Min leeftijd auto-uitnodiging',        'getal'],
         ['invite.max_leeftijd',    '30',                        'Max leeftijd auto-uitnodiging',        'getal'],
@@ -110,11 +181,18 @@ function instellingen_auto_setup(bool $forceer = false): void {
         ['portaal.welkomst_tekst', 'Welkom op het sollicitantenportaal van Paal 13.', 'Portaal tekst', 'textarea'],
         // Bewaartermijnen (AVG opslagbeperking). 0 = niet automatisch opschonen.
         ['bewaar.actief',          '0',                         'Automatisch opschonen aan/uit',        'checkbox'],
-        ['bewaar.afgewezen_mnd',   '6',                         'Afgewezen sollicitanten anonimiseren na (maanden)', 'getal'],
+        ['bewaar.afgewezen_weken', '4',                         'Afgewezen sollicitanten anonimiseren na (weken)', 'getal'],
+        ['bewaar.seintje_mnd',     '12',                        'Seintje bij volgende werving geldig (maanden)', 'getal'],
+        ['bewaar.aangenomen_jaar', '2',                         'Oud-strandwachten anonimiseren na (jaren na laatste seizoen)', 'getal'],
         ['bewaar.gezondheid_mnd',  '0',                         'Gezondheidsgegevens verwijderen na (maanden, 0=einde seizoen)', 'getal'],
         ['bewaar.ai_invoer_mnd',   '3',                         'AI-invoertekst verwijderen na (maanden)', 'getal'],
         ['bewaar.onvoltooid_mnd',  '3',                         'Niet-voltooide aanmeldingen verwijderen na (maanden)', 'getal'],
         ['bewaar.maillog_mnd',     '12',                        'Mail-/actielogboek verwijderen na (maanden)', 'getal'],
+        ['bewaar.audit_maanden',   '12',                        'Auditlog (wie deed wat) verwijderen na (maanden)', 'getal'],
+        ['bewaar.foutenlog_dagen', '90',                        'Foutenlog verwijderen na (dagen)',     'getal'],
+        ['paginas.tracking',       '1',                         'Bezoekersstatistiek landingspagina\'s aan/uit', 'checkbox'],
+        ['seizoen.fase',           '',                          'Seizoensfase handmatig (leeg = automatisch uit de datums)', 'keuze'],
+        ['selectie.drempel',       '3.5',                       'Advies-drempel selectiedag (gemiddelde score voor "Door")', 'getal'],
     ];
     $stmt = $db->prepare("INSERT IGNORE INTO `instellingen` (sleutel,waarde,beschrijving,type) VALUES (?,?,?,?)");
     foreach ($defaults as $r) $stmt->execute($r);
@@ -125,6 +203,7 @@ function instellingen_auto_setup(bool $forceer = false): void {
     $correcties = [
         // 2.91.0: de inschrijving als lid vraagt geen verificatiecode meer (alleen wettelijke documenten)
         ['ondertekenen.2fa_typen', 'loonheffing,lidmaatschap', 'loonheffing'],
+        // (authentik.admin_groepen vervalt sinds 2.132.0: toegang = koppeling rol → groep in Rollen & rechten.)
     ];
     $corr = $db->prepare("UPDATE `instellingen` SET waarde=? WHERE sleutel=? AND waarde=?");
     foreach ($correcties as $c) { try { $corr->execute([$c[2], $c[0], $c[1]]); } catch (\Exception $e) {} }
@@ -139,17 +218,8 @@ function instellingen_auto_setup(bool $forceer = false): void {
         ['postcommandant','Postcommandant',      0.00, 18, 99, 5],
     ] as $f) $fstmt->execute($f);
 
-    // Minimumlonen (per uur, excl VT)
-    $lstmt = $db->prepare("INSERT IGNORE INTO `loon_tarieven` (leeftijd,periode,min_uurloon) VALUES (?,?,?)");
-    $lonen = [
-        'jun'    => [15=>4.41,16=>5.07,17=>5.81,18=>7.36,19=>8.83,20=>11.77,21=>14.71,22=>14.71,23=>14.71,24=>11.16,25=>11.16,26=>11.16,27=>11.16,28=>11.16,29=>11.16,30=>11.16,31=>11.16,32=>11.16],
-        'jul_sep'=> [15=>4.32,16=>4.97,17=>5.69,18=>7.20,19=>8.64,20=>11.52,21=>14.40,22=>14.40,23=>14.40,24=>11.16,25=>11.16,26=>11.16,27=>11.16,28=>11.16,29=>11.16,30=>11.16,31=>11.16,32=>11.16],
-    ];
-    foreach ($lonen as $periode => $leeftijden) {
-        foreach ($leeftijden as $lft => $loon) {
-            $lstmt->execute([$lft, $periode, $loon]);
-        }
-    }
+    // Minimumlonen: per jaar, gevuld door loon_tarieven_auto_setup() (includes/loon_tarieven.php).
+    // Hier niet meer: zonder jaar zou elke versie-ophoging rijen met jaar 0 toevoegen.
 
     // Markeer DB als bijgewerkt naar huidige versie
     if (defined('APP_VERSIE')) {
@@ -175,8 +245,35 @@ function instellingen_laden(): array {
     return $_instellingen_cache;
 }
 
+/**
+ * Geheime instellingen (instellingen_geheime_sleutels(): wachtwoorden en API-sleutels van koppelingen)
+ * staan versleuteld in de database: "kluis:<blob>" via includes/kluis.php, gebonden aan de naam van de
+ * instelling. Een databasedump of -lek alleen geeft ze dus niet prijs; daarvoor is ook KLUIS_SLEUTEL
+ * uit config.php nodig (NIS2: cryptografie, geheimen niet leesbaar opgeslagen).
+ * Een oude, nog leesbare waarde wordt bij de eerste keer lezen versleuteld teruggeschreven.
+ * Werkt de kluis niet (geen sleutel), dan blijft alles leesbaar werken: een koppeling valt nooit stil
+ * door deze laag; de kluisstatus en de health-check melden het.
+ */
+const INSTELLING_GEHEIM_PREFIX = 'kluis:';
+
+function instelling_geheim_aad(string $sleutel): string { return 'instelling:' . $sleutel; }
+
 function instelling(string $sleutel, string $default = ''): string {
-    return instellingen_laden()[$sleutel] ?? $default;
+    $w = instellingen_laden()[$sleutel] ?? null;
+    if ($w === null) return $default;
+    if ($w === '' || !in_array($sleutel, instellingen_geheime_sleutels(), true)) return $w;
+    static $open = [];
+    if (isset($open[$sleutel]) && $open[$sleutel][0] === $w) return $open[$sleutel][1];
+    if (str_starts_with($w, INSTELLING_GEHEIM_PREFIX)) {
+        $plain = function_exists('kluis_ontsleutel')
+            ? kluis_ontsleutel(substr($w, strlen(INSTELLING_GEHEIM_PREFIX)), instelling_geheim_aad($sleutel)) : null;
+        if ($plain === null) { error_log("instelling: geheim '$sleutel' niet te ontsleutelen (kluissleutel?)"); return $default; }
+        $open[$sleutel] = [$w, $plain];
+        return $plain;
+    }
+    // Nog leesbaar opgeslagen (van vóór 2.130.0): nu versleutelen, de waarde zelf blijft gelijk.
+    if (function_exists('kluis_beschikbaar') && kluis_beschikbaar()) instelling_opslaan($sleutel, $w);
+    return $w;
 }
 function instelling_int(string $sleutel, int $default = 0): int {
     $v = instelling($sleutel);
@@ -192,6 +289,13 @@ function instelling_bool(string $sleutel, bool $default = false): bool {
     return in_array($v, ['1','true','ja','aan'], true);
 }
 function instelling_opslaan(string $sleutel, string $waarde): bool {
+    // Geheimen versleuteld wegschrijven (zie instelling()). Lukt dat niet, dan leesbaar — met een log.
+    if ($waarde !== '' && !str_starts_with($waarde, INSTELLING_GEHEIM_PREFIX)
+        && in_array($sleutel, instellingen_geheime_sleutels(), true) && function_exists('kluis_versleutel')) {
+        $blob = kluis_versleutel($waarde, instelling_geheim_aad($sleutel));
+        if ($blob !== null) $waarde = INSTELLING_GEHEIM_PREFIX . $blob;
+        else error_log("instelling_opslaan: geheim '$sleutel' onversleuteld opgeslagen (kluis niet beschikbaar)");
+    }
     try {
         db()->prepare("INSERT INTO instellingen (sleutel,waarde) VALUES (?,?) ON DUPLICATE KEY UPDATE waarde=?,bijgewerkt_op=NOW()")
            ->execute([$sleutel,$waarde,$waarde]);
@@ -219,39 +323,7 @@ function functies_ophalen(): array {
     }
 }
 
-function bereken_dagloon(int $leeftijd, string $functie_sleutel, string $periode = 'jun', ?float $override = null): float {
-    if ($override !== null) return $override;
-
-    if ($functie_sleutel === 'postcommandant') {
-        $k = $periode === 'jun' ? 'loon.pc_vast_juni' : 'loon.pc_vast_jul_sep';
-        return round(instelling_float($k, 850) / 5, 2);
-    }
-
-    $functies = functies_ophalen();
-    $factor   = 1.20; // standaard lifeguard
-    foreach ($functies as $f) {
-        if ($f['sleutel'] === $functie_sleutel) { $factor = (float)$f['factor']; break; }
-    }
-
-    try {
-        instellingen_auto_setup();
-        $stmt = db()->prepare("SELECT min_uurloon FROM loon_tarieven WHERE leeftijd=? AND periode=? LIMIT 1");
-        $stmt->execute([$leeftijd, $periode]);
-        $row = $stmt->fetch();
-        if (!$row) {
-            // Dichtstbijzijnde leeftijd
-            $stmt2 = db()->prepare("SELECT min_uurloon FROM loon_tarieven WHERE periode=? ORDER BY ABS(leeftijd-?) LIMIT 1");
-            $stmt2->execute([$periode, $leeftijd]);
-            $row = $stmt2->fetch();
-        }
-    } catch (\Exception $e) { $row = false; }
-
-    $uurloon  = $row ? (float)$row['min_uurloon'] : 11.16;
-    $uren_dag = instelling_float('loon.uren_per_dag', 8);
-    $vt       = 1 + (instelling_float('loon.vt_percentage', 8) / 100);
-
-    return round($uurloon * $uren_dag * $factor * $vt, 2);
-}
+// bereken_dagloon() staat in includes/loon_tarieven.php: het tarief hangt af van het kalenderjaar.
 
 function week_naar_periode(int $week_nr): string {
     return ($week_nr <= 26) ? 'jun' : 'jul_sep';

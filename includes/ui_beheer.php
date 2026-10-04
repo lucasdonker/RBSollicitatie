@@ -1,0 +1,270 @@
+<?php
+/**
+ * Paal 13 — kleine UI-bouwstenen voor de beheeromgeving.
+ *
+ * Alles hier geeft een HTML-STRING terug en echoot nooit, zodat het in een tabelcel
+ * of in een grotere string past. Blokken met een eigen indeling (tabel, filterbalk,
+ * lege staat) zijn geen functie maar een partial in admin/_*.php.
+ *
+ * Twee regels die je niet moet versoepelen:
+ *   1. Geen enkele functie neemt een `class`-parameter. Zodra een scherm er zijn eigen
+ *      klasse in kan duwen, kan het afwijken en is de bouwsteen dood. Moet een scherm
+ *      er anders uitzien? Verander de bouwsteen, niet het scherm.
+ *   2. bh_stoplicht() en bh_weekcel() weigeren een lege tekst of een leeg getal. Dat
+ *      dwingt "status nooit alleen met kleur" af in plaats van het af te spreken.
+ *
+ * Stijl: het ds-blok in assets/css/stijl.css en de bh-laag in assets/css/beheer.css.
+ */
+
+if (!function_exists('bh_badge')) {
+
+/** De zeven kleurfamilies waarin de acht fases vallen (sleutel = uitvoer van fase_kleur()). */
+function bh_fase_kleuren(): array {
+    return ['grijs', 'blauw', 'oranje', 'teal', 'paars', 'groen', 'rood'];
+}
+
+/**
+ * Eerste letter van een naam, als hoofdletter. Werkt op UTF-8 zonder mbstring —
+ * de portable PHP van de dev-machine heeft die extensie niet, de server wel.
+ */
+function bh_eerste_letter(string $s): string {
+    if (!preg_match('/\p{L}/u', $s, $m)) return '';
+    return function_exists('mb_strtoupper') ? mb_strtoupper($m[0], 'UTF-8') : strtoupper($m[0]);
+}
+
+/**
+ * Statusbadge in een fasekleur.
+ *
+ * @param string $tekst  wat er staat — verplicht, want kleur alleen is geen status
+ * @param string $kleur  een van bh_fase_kleuren(); onbekend → grijs
+ * @param array  $opt    stip:bool (bolletje vooraan) · titel:?string (tooltip)
+ */
+function bh_badge(string $tekst, string $kleur = 'grijs', array $opt = []): string {
+    if (trim($tekst) === '') return '';                 // liever niets dan een kleurvlek
+    if (!in_array($kleur, bh_fase_kleuren(), true)) $kleur = 'grijs';
+    $titel = !empty($opt['titel']) ? ' title="' . h($opt['titel']) . '"' : '';
+    $stip  = !empty($opt['stip']) ? '<span class="ds-stip"></span>' : '';
+    return '<span class="ds-badge-fase ds-fase-' . $kleur . '"' . $titel . '>' . $stip . h($tekst) . '</span>';
+}
+
+/**
+ * Statusbadge van een sollicitatiefase. Label en kleur komen uit één bron.
+ *
+ * @param array $opt  stip:bool · lengte:'vol'|'kort'|'mini' — 'kort' in een tabel of
+ *                    filterchip ("Uitgenodigd TW"), 'mini' in de fase-knoppenrij
+ *                    ("Uitg. TW"). De volle naam past daar niet en zou de cel breken.
+ */
+function bh_fase_badge(string $fase, array $opt = []): string {
+    $lengte = $opt['lengte'] ?? 'vol';
+    $tekst  = $lengte === 'vol' ? fase_label($fase) : fase_label_kort($fase, $lengte);
+    // De volle naam blijft als tooltip beschikbaar zodra we afkorten.
+    if ($lengte !== 'vol' && !isset($opt['titel']) && $tekst !== fase_label($fase)) {
+        $opt['titel'] = fase_label($fase);
+    }
+    return bh_badge($tekst, fase_kleur($fase), $opt);
+}
+
+/**
+ * Stoplicht: groen/oranje/rood mét een woord ernaast.
+ * $tekst is verplicht — een kleur zonder woord is voor een kleurenblinde gebruiker niets.
+ */
+function bh_stoplicht(string $stand, string $tekst): string {
+    if (trim($tekst) === '') return '';
+    $kleur = ['goed' => 'groen', 'krap' => 'oranje', 'slecht' => 'rood'][$stand] ?? 'grijs';
+    return '<span class="bh-stoplicht ds-fase-' . $kleur . '"><span class="bh-stoplicht-bol"></span>'
+         . h($tekst) . '</span>';
+}
+
+/**
+ * Avatar: foto als die er is, anders de initialen.
+ *
+ * Met `vergroot` wordt een échte foto een knop die de gedeelde foto-vergroter opent
+ * (assets/js/app.js, via data-foto). Dat is bewust een <button> en geen klikbare <img>:
+ * een klikbaar plaatje is niet met het toetsenbord te bereiken en heeft geen naam. Zet
+ * de optie alleen waar de avatar niet al in een link staat — een knop in een link is
+ * ongeldige HTML en de link wint toch van de klik. Bij initialen doet de optie niets;
+ * er valt dan niets te vergroten.
+ *
+ * @param array $persoon  voornaam/achternaam/foto_url (ontbrekende velden zijn geen fout)
+ * @param int   $px       hoogte en breedte
+ * @param array $opt      dim:bool (gedempt, bijv. bij afgewezen), vergroot:bool
+ */
+function bh_avatar(array $persoon, int $px = 30, array $opt = []): string {
+    $vn = trim((string)($persoon['voornaam'] ?? ''));
+    $an = trim((string)($persoon['achternaam'] ?? ''));
+    $init = bh_eerste_letter($vn) . bh_eerste_letter($an);
+    if ($init === '') $init = '?';
+    $stijl = 'width:' . $px . 'px;height:' . $px . 'px;font-size:' . max(10, (int)round($px * .37)) . 'px';
+    $cls   = 'ds-avatar' . (!empty($opt['dim']) ? ' ds-avatar-dim' : '');
+    $naam  = trim($vn . ' ' . $an);
+    $foto  = (string)($persoon['foto_url'] ?? '');
+    $bron  = $foto !== '' ? (string)(function_exists('foto_url') ? foto_url($foto) : $foto) : '';
+
+    if ($bron === '') {
+        return '<span class="' . $cls . '" style="' . $stijl . '" aria-hidden="true" title="' . h($naam) . '">'
+             . h($init) . '</span>';
+    }
+
+    $img = '<img src="' . h($bron) . '" alt="">';
+    if (empty($opt['vergroot'])) {
+        return '<span class="' . $cls . '" style="' . $stijl . '" aria-hidden="true" title="' . h($naam) . '">'
+             . $img . '</span>';
+    }
+
+    $label = $naam !== '' ? 'Foto van ' . $naam . ' vergroten' : 'Foto vergroten';
+    return '<button type="button" class="' . $cls . ' ds-avatar-zoom" style="' . $stijl . '"'
+         . ' data-foto="' . h($bron) . '" data-naam="' . h($naam) . '"'
+         . ' aria-label="' . h($label) . '">' . $img . '</button>';
+}
+
+/**
+ * Uitleg bij een veld: een info-knopje dat de tekst toont bij aanwijzen, tikken of toetsenbordfocus.
+ * Een knop en geen losse span: met Tab bereikbaar, en een schermlezer leest de uitleg voor
+ * (aria-label). Het tonen doet layout_bottom.php ([data-tip]).
+ */
+function bh_tip(string $tekst): string {
+    if (trim($tekst) === '') return '';
+    return '<button type="button" class="bh-tip" data-tip="' . h($tekst) . '" aria-label="Uitleg: ' . h($tekst) . '">'
+         . icoon('info', 14) . '</button>';
+}
+
+/** Chip voor een los kenmerk: diploma, competentie, "terugkerend". */
+function bh_chip(string $tekst, string $kleur = 'grijs'): string {
+    if (trim($tekst) === '') return '';
+    if (!in_array($kleur, bh_fase_kleuren(), true)) $kleur = 'grijs';
+    return '<span class="bh-chip ds-fase-' . $kleur . '">' . h($tekst) . '</span>';
+}
+
+/**
+ * Voortgangsbalk met het getal ernaast ("5 / 6").
+ * Zonder het getal is de balk alleen decoratie; daarom staat het er altijd bij.
+ */
+function bh_voortgang(int $gedaan, int $totaal, array $opt = []): string {
+    $totaal = max(0, $totaal);
+    $gedaan = max(0, min($gedaan, $totaal));
+    $pct    = $totaal > 0 ? round($gedaan / $totaal * 100) : 0;
+    $kleur  = $gedaan >= $totaal && $totaal > 0 ? 'groen' : 'blauw';
+    $label  = $opt['label'] ?? ($gedaan . ' / ' . $totaal);
+    return '<span class="bh-voortgang">'
+         . '<span class="bh-voortgang-balk" role="img" aria-label="' . h($gedaan . ' van ' . $totaal) . '">'
+         . '<span class="bh-voortgang-vul ds-fase-' . $kleur . '" style="width:' . $pct . '%"></span></span>'
+         . '<span class="bh-voortgang-getal">' . h((string)$label) . '</span></span>';
+}
+
+/**
+ * Eén cel in een weekraster (beschikbaarheid, dekking).
+ *
+ * @param string $tekst  wat er in de cel staat: "5", "wk", of "—" voor niets.
+ *                       Verplicht: een gekleurd vlakje zonder inhoud zegt niets tegen
+ *                       iemand die kleuren niet onderscheidt, en niets tegen een schermlezer.
+ * @param string $soort  Beschikbaarheid: vol | weekend | deels | correctie | verzoek | leeg
+ *                       (verzoek = er ligt een minder-dagen-verzoek dat nog beoordeeld moet worden)
+ *                       Loonplanning: gepland | onbetaald | open (opgegeven, niet gepland) | let (afwijking)
+ *                       Onbekend → leeg.
+ * @param array  $opt    titel:?string (tooltip, wordt ook aria-label) ·
+ *                       klik:?string (JS-aanroep; maakt er een <button> van) ·
+ *                       data:?array (data-attributen, voor een gedeelde klikhaak i.p.v. onclick) ·
+ *                       sub:?string (kleine tweede regel, bijv. wat iemand opgaf: "kan 4")
+ */
+function bh_weekcel(string $tekst, string $soort = 'leeg', array $opt = []): string {
+    if (trim($tekst) === '') return '';
+    if (!in_array($soort, ['vol', 'weekend', 'deels', 'correctie', 'verzoek', 'leeg', 'gepland', 'onbetaald', 'open', 'let'], true)) $soort = 'leeg';
+    $cls   = 'bh-weekcel bh-weekcel-' . $soort;
+    $titel = !empty($opt['titel']) ? (string)$opt['titel'] : '';
+    $attr  = $titel !== '' ? ' title="' . h($titel) . '" aria-label="' . h($titel) . '"' : '';
+    foreach (($opt['data'] ?? []) as $k => $v) $attr .= ' data-' . h((string)$k) . '="' . h((string)$v) . '"';
+    $inhoud = h($tekst) . (isset($opt['sub']) && $opt['sub'] !== '' ? '<span class="bh-weekcel-sub">' . h((string)$opt['sub']) . '</span>' : '');
+    if (empty($opt['klik']) && empty($opt['data'])) {
+        return '<span class="' . $cls . '"' . $attr . '>' . $inhoud . '</span>';
+    }
+    return '<button type="button" class="' . $cls . ' bh-weekcel-klik"' . $attr
+         . (!empty($opt['klik']) ? ' data-klik="' . h((string)$opt['klik']) . '"' : '') . '>' . $inhoud . '</button>';
+}
+
+/**
+ * Meta-regel: losse stukjes met een punt ertussen ("19 jaar · Den Haag · 06 …").
+ * Lege delen vallen weg, zodat je geen "· ·" krijgt bij een ontbrekend veld.
+ */
+function bh_meta(array $delen): string {
+    $schoon = array_values(array_filter(array_map(fn($d) => trim((string)$d), $delen), fn($d) => $d !== ''));
+    if (!$schoon) return '';
+    return '<span class="bh-meta">' . implode(' <span class="bh-meta-punt">·</span> ', array_map('h', $schoon)) . '</span>';
+}
+
+/**
+ * Het laatste moment uit een MAX(...)-query, of null als het niet lukt.
+ *
+ * Elk scherm weet zelf uit welke tabel en welke kolom zijn cijfers komen — die
+ * verschillen echt (beschikbaarheid heeft ingevuld_op/definitief_op, loon_planning
+ * heeft bijgewerkt_op). Daarom geeft het scherm de query, en doet deze functie alleen
+ * het foutbestendige deel: een scherm mag nooit stukgaan op zijn eigen voettekst.
+ */
+function bh_laatst(string $sql, array $params = []): ?string {
+    try {
+        $st = db()->prepare($sql);
+        $st->execute($params);
+        $w = $st->fetchColumn();
+        return ($w === false || $w === null || $w === '') ? null : (string)$w;
+    } catch (\Throwable $e) {
+        return null;
+    }
+}
+
+/**
+ * "Bijgewerkt om 14:03" onder een scherm vol cijfers.
+ *
+ * Bij Beschikbaarheid, Dekking en Loonplanning kijk je naar getallen zonder te weten
+ * hoe vers ze zijn — en je weet dus ook niet of de wijziging die je net elders deed er
+ * al in zit. Eén regel lost dat op.
+ *
+ * $moment is het moment waarop de gegevens zelf voor het laatst veranderden (een
+ * MAX(bijgewerkt_op) uit de database), niet het moment van deze paginalading. Is dat
+ * onbekend, geef dan null: dan zegt de regel alleen wanneer het scherm is opgehaald.
+ */
+function bh_versheid(?string $moment = null, string $wat = 'Gegevens'): string {
+    $nu = 'opgehaald om ' . date('H:i');
+    if ($moment === null || $moment === '') {
+        return '<p class="bh-versheid">' . h($wat) . ' ' . h($nu) . '.</p>';
+    }
+    $ts = strtotime($moment);
+    if ($ts === false) return '<p class="bh-versheid">' . h($wat) . ' ' . h($nu) . '.</p>';
+
+    // Vandaag alleen de tijd, anders de datum erbij: "om 14:03" is nietszeggend als
+    // het gisteren was.
+    $zelfde_dag = date('Y-m-d', $ts) === date('Y-m-d');
+    $tekst = $zelfde_dag
+        ? 'bijgewerkt om ' . date('H:i', $ts)
+        : 'bijgewerkt op ' . datum_nl(date('Y-m-d', $ts)) . ' om ' . date('H:i', $ts);
+    return '<p class="bh-versheid">' . h($wat) . ' ' . h($tekst)
+         . ' <span class="bh-meta-punt">·</span> ' . h($nu) . '.</p>';
+}
+
+/**
+ * Invoerveld voor een geheim (API-sleutel, wachtwoord, token). Toont nooit de waarde:
+ * alleen of hij is ingesteld, een leeg veld voor een nieuwe waarde (leeg = ongewijzigd)
+ * en, als er iets staat, een vinkje om hem te verwijderen (geheim_wis[]). De opslag-kant
+ * staat in instelling_geheim_bijwerken() (includes/instellingen.php).
+ *
+ * @param string $naam       name van het invoerveld (bv. inst[ai.api_key] of wa_api_sleutel)
+ * @param string $sleutel    de instellingssleutel, voor het verwijder-vinkje
+ * @param bool   $ingesteld  staat er nu een waarde?
+ * @param string $hint       extra uitleg onder het veld (HTML, al veilig)
+ * @param bool   $wisbaar    false = geen verwijder-vinkje (de waarde komt bv. uit config.php)
+ */
+function bh_geheim_veld(string $naam, string $sleutel, string $label, bool $ingesteld, string $hint = '', bool $wisbaar = true): string {
+    $id = 'geheim-' . preg_replace('/[^a-z0-9]+/', '-', $sleutel);
+    $status = $ingesteld ? bh_badge('Ingesteld', 'groen') : bh_badge('Nog niet ingesteld', 'grijs');
+    $uit  = '<div class="ds-veld">';
+    $uit .= '<label for="' . h($id) . '">' . h($label) . ' ' . $status . '</label>';
+    $uit .= '<input type="password" id="' . h($id) . '" name="' . h($naam) . '" value="" autocomplete="new-password" spellcheck="false"'
+          . ' placeholder="' . ($ingesteld ? 'Nieuwe waarde (leeg = ongewijzigd)' : 'Plak hier de waarde') . '" aria-describedby="' . h($id) . '-hint">';
+    $uit .= '<div class="ds-veld-hint" id="' . h($id) . '-hint">'
+          . ($ingesteld ? 'De huidige waarde wordt niet getoond. Laat het veld leeg om die te houden.' : '')
+          . ($hint !== '' ? ' ' . $hint : '') . '</div>';
+    if ($ingesteld && $wisbaar) {
+        $uit .= '<label class="checkbox-label"><input type="checkbox" name="geheim_wis[]" value="' . h($sleutel) . '"> Huidige waarde verwijderen</label>';
+    }
+    return $uit . '</div>';
+}
+
+} // function_exists

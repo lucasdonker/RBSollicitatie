@@ -13,10 +13,23 @@
  *    beheerders bij een pagina die nog niet gepubliceerd is
  */
 
+// Wervingsmarkeringen, vacature en campagnes (werving.php) horen bij de weergave; hier geladen
+// zodat de moduleloader (includes/paginas.php) niet hoeft te veranderen.
+require_once __DIR__ . '/werving.php';
+
 if (!function_exists('pag_render')) {
 
 function pag_publieke_url(array $pagina): string {
     return (defined('APP_URL') ? APP_URL : '') . '/p/' . $pagina['slug'];
+}
+
+/**
+ * Mag Google deze pagina indexeren? Alleen gepubliceerd, met het vinkje "Mag gevonden worden via
+ * Google", en nooit op de testomgeving (anders concurreert test met productie in de zoekresultaten).
+ */
+function pag_indexeerbaar(array $pagina): bool {
+    return ($pagina['status'] ?? '') === 'gepubliceerd' && !empty($pagina['indexeerbaar'])
+        && !(function_exists('is_test_omgeving') && is_test_omgeving());
 }
 
 /**
@@ -25,10 +38,14 @@ function pag_publieke_url(array $pagina): string {
  * 'unsafe-inline' is onvermijdelijk: een geüpload ontwerp heeft zijn opmaak en scripts in
  * het bestand zelf staan, en we schonen bewust niets op.
  *
- * connect-src 'none' is de belangrijkste regel en géén detail: die voorkomt dat script uit
- * een ontwerp op de achtergrond verzoeken doet naar /admin/ of /portaal/ met de cookie van
- * een beheerder die de pagina toevallig bekijkt. Versoepel hem niet zonder daarover na te
- * denken — hosts die een pagina echt nodig heeft, worden hieronder per pagina toegevoegd.
+ * connect-src is de belangrijkste regel en géén detail: die voorkomt dat script uit een
+ * ontwerp op de achtergrond verzoeken doet naar /admin/ of /portaal/ met de cookie van een
+ * beheerder die de pagina toevallig bekijkt.
+ *
+ * Er staat precies één adres van onszelf in: /track.php, waar het aanmeldformulier zijn
+ * anonieme stap-tellingen naartoe stuurt. Let op het verschil met 'self': dat zou de héle
+ * site openzetten, terwijl dit één pad is dat niets anders doet dan een teller ophogen.
+ * Zet hier dus nooit 'self' neer — dan is het slot weg.
  */
 function pag_csp_regel(array $pagina): string {
     $hosts = [];
@@ -38,13 +55,18 @@ function pag_csp_regel(array $pagina): string {
     }
     $extra = $hosts ? ' ' . implode(' ', array_unique($hosts)) : '';
 
+    // Alleen dit ene pad, en alleen als tracking überhaupt aanstaat.
+    $track = function_exists('aanmeld_track_url') ? aanmeld_track_url() : '';
+    $connect = trim(($track !== '' ? $track : '') . $extra);
+    if ($connect === '') $connect = "'none'";
+
     return implode('; ', [
         "default-src 'none'",
         "img-src 'self' data:" . $extra,
         "style-src 'self' 'unsafe-inline'" . $extra,
         "script-src 'self' 'unsafe-inline'" . $extra,
         "font-src 'self' data:" . $extra,
-        "connect-src " . ($hosts ? trim($extra) : "'none'"),
+        "connect-src " . $connect,
         "frame-src " . ($hosts ? trim($extra) : "'none'"),
         "form-action 'self'",
         "frame-ancestors 'self'",
@@ -63,8 +85,10 @@ function pag_headers_zet(array $pagina, array $opties = []): void {
     header('X-Content-Type-Options: nosniff');
     header('Referrer-Policy: strict-origin-when-cross-origin');
     header('Permissions-Policy: geolocation=(), camera=(), microphone=(), payment=(), interest-cohort=()');
+    // Zelfde HSTS als beheer en portaal: na één bezoek alleen nog https (NIS2: versleuteld transport).
+    if (function_exists('is_https') && is_https()) header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
 
-    if (!$gepubliceerd || empty($pagina['indexeerbaar'])) {
+    if (!pag_indexeerbaar($pagina)) {
         header('X-Robots-Tag: noindex, nofollow');
     }
     header($vers ? 'Cache-Control: no-store, must-revalidate' : 'Cache-Control: public, max-age=300');
@@ -81,16 +105,23 @@ function pag_asset_versie(string $relatief): string {
  * Markeringen in het ontwerp vervangen.
  * Onbekende markeringen laten we staan: dan ziet de beheerder zijn typefout op de pagina,
  * in plaats van dat er stilletjes niets gebeurt.
+ *
+ * Seizoensgegevens komen uit seizoen_voor_werving() (niet actief_seizoen(), zie werving.php);
+ * de datum-, loon- en vacaturemarkeringen staan in pag_werving_markeringen().
+ * $versie: de getoonde versie (voor datePosted in de vacature).
  */
-function pag_placeholders(string $html, array $pagina, string $formulier_html): string {
-    $seizoen = function_exists('actief_seizoen') ? actief_seizoen() : null;
+function pag_placeholders(string $html, array $pagina, string $formulier_html, ?array $versie = null): string {
+    $seizoen = function_exists('seizoen_voor_werving') ? seizoen_voor_werving() : null;
     $bron = (string)($pagina['bron_code'] ?: $pagina['slug']);
 
-    return strtr($html, [
+    return strtr($html, pag_werving_markeringen($html, $pagina, $versie) + [
         '[[formulier]]'   => $formulier_html,
         '[[seizoen]]'     => h((string)($seizoen['naam'] ?? '')),
         '[[aanmeld_url]]' => h(pag_publieke_url($pagina) . '#aanmelden'),
         '[[bron]]'        => h($bron),
+        // Het volledige adres van de pagina, voor og:url, og:image en structured data. Relatieve
+        // adressen werken daar niet (en <base> geldt niet voor crawlers van sociale media).
+        '[[pagina_url]]'  => h(pag_publieke_url($pagina)),
     ]);
 }
 
@@ -99,11 +130,14 @@ function pag_injecteer_head(string $html, array $pagina, bool $met_formulier): s
     $basis = (defined('APP_URL') ? APP_URL : '') . '/p/' . $pagina['slug'] . '/';
     $blok  = "\n<base href=\"" . h($basis) . "\">\n";
 
-    if (($pagina['status'] ?? '') !== 'gepubliceerd' || empty($pagina['indexeerbaar'])) {
+    if (!pag_indexeerbaar($pagina)) {
         $blok .= "<meta name=\"robots\" content=\"noindex,nofollow\">\n";
+    } elseif (!preg_match('/<link\b[^>]*rel=["\']?canonical/i', $html)) {
+        // Eén adres per pagina, ook als er ?bron=… of ?ok=1 achter staat (anders dubbele inhoud).
+        $blok .= '<link rel="canonical" href="' . h(pag_publieke_url($pagina)) . "\">\n";
     }
     if ($met_formulier) {
-        $css = (defined('APP_URL') ? APP_URL : '') . '/assets/css/paginaformulier.css?v=' . pag_asset_versie('assets/css/paginaformulier.css');
+        $css = (defined('APP_URL') ? APP_URL : '') . '/assets/css/aanmeldformulier.css?v=' . pag_asset_versie('assets/css/aanmeldformulier.css');
         $blok .= '<link rel="stylesheet" href="' . h($css) . "\">\n";
     }
 
@@ -143,7 +177,7 @@ function pag_render(array $pagina, string $ontwerp, array $opties = []): string 
     $formulier = (string)($opties['formulier'] ?? '');
     $met_formulier = $formulier !== '' && str_contains($ontwerp, '[[formulier]]');
 
-    $html = pag_placeholders($ontwerp, $pagina, $formulier);
+    $html = pag_placeholders($ontwerp, $pagina, $formulier, $opties['versie'] ?? null);
 
     // Een fragment zonder eigen documentstructuur krijgt een minimale, geldige wrapper.
     if (!preg_match('/<html\b/i', $html)) {

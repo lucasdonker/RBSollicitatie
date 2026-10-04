@@ -27,7 +27,8 @@ $titels = @{
   'handleiding_penningmeester' = 'Handleiding penningmeester'
   'handleiding_sollicitant'    = 'Jouw sollicitatie bij Paal 13'
   'runbook_systeembeheer'      = 'Runbook systeembeheer'
-  'landingspaginas'            = "Handleiding landingspagina's"
+  'landingspaginas'            = "Handleiding wervingspagina's"
+  'verwerkingsregister'        = 'Verwerkingsregister (AVG)'
 }
 if (-not $Naam) { $Naam = $titels.Keys }
 New-Item -ItemType Directory -Force "$H\word" | Out-Null

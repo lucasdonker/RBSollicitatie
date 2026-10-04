@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/functions.php';
-vereis_recht('selectiedag', 'bewerken');
+vereis_recht('sollicitanten', 'bewerken');
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); exit; }

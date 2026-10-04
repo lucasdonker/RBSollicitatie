@@ -1,0 +1,3 @@
+# Alleen includes vanuit admin/sollicitant.php, trainingsweekend.php en loonplanning.php;
+# nooit rechtstreeks via de browser.
+Require all denied

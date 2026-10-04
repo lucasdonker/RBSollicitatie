@@ -17,7 +17,7 @@ function export_beschikbaarheid_tekst(int $sol_id): string {
     $b = beschikbaarheid2_van($sol_id);
     $delen = [];
 
-    $dag_nl = [1=>'ma',2=>'di',3=>'wo',4=>'do',5=>'vr',6=>'za',7=>'zo'];
+    $dag_nl = dagen_kort_nl();
 
     // Werkperiodes
     foreach ($b['blokken'] as $blok) {
@@ -65,10 +65,17 @@ function export_beschikbaarheid_tekst(int $sol_id): string {
 }
 
 /**
- * Verzamel het volledige dossier van een sollicitant als platte sleutel=>waarde-array,
- * geschikt voor een Excel-rij of een PDF.
+ * Verzamel het dossier van een sollicitant als platte sleutel=>waarde-array, geschikt
+ * voor een Excel-rij of een PDF.
+ *
+ * AVG (dataminimalisatie, art. 5 lid 1c): het adres en de velden uit het
+ * kennismakingsformulier alleen met $met_formulier — de aanroeper geeft daar
+ * mag('blk','lezen') voor mee, dezelfde regel als blk_detail.php en de lijstkolommen.
+ * Zonder dat recht komt de woonplaats erin en blijven de formuliervelden weg (niet leeg:
+ * weg, zodat niemand denkt dat ze niet zijn ingevuld). De kolommen liggen per aanroep
+ * vast, dus een CSV-kop klopt voor elke rij.
  */
-function export_dossier_van(int $sol_id): array {
+function export_dossier_van(int $sol_id, bool $met_formulier = false): array {
     $db = db();
     $q = $db->prepare("SELECT s.*, p.voornaam, p.tussenvoegsel, p.achternaam, p.email, p.telefoon,
                               p.geboortedatum, p.geslacht, sz.naam AS seizoen_naam
@@ -84,11 +91,13 @@ function export_dossier_van(int $sol_id): array {
     $bq = $db->prepare("SELECT * FROM blk_formulieren WHERE sollicitatie_id = ?");
     $bq->execute([$sol_id]);
     $blk = $bq->fetch() ?: [];
+    // Ingediend, niet "er staat een rij": de autosave maakt al een concept aan.
+    $blk_op = function_exists('blk_ingediend_op') ? blk_ingediend_op($s, $blk ?: null) : ($blk['ingevuld_op'] ?? null);
 
     $naam = trim($s['voornaam'] . ' ' . ($s['tussenvoegsel'] ? $s['tussenvoegsel'] . ' ' : '') . $s['achternaam']);
     $leeftijd = (function_exists('leeftijd_uit_datum') && $s['geboortedatum']) ? leeftijd_uit_datum($s['geboortedatum']) : '';
 
-    return [
+    $basis = [
         'Naam'            => $naam,
         'E-mail'          => $s['email'] ?? '',
         'Telefoon'        => $s['telefoon'] ?? '',
@@ -99,19 +108,38 @@ function export_dossier_van(int $sol_id): array {
         'Fase'            => function_exists('fase_label') ? fase_label($s['fase'] ?? '') : ($s['fase'] ?? ''),
         'Aangemeld op'    => !empty($s['aangemeld_op']) ? date('d-m-Y', strtotime($s['aangemeld_op'])) : '',
         'Herkomst (bron)' => $s['bron_label'] ?? ($s['bron_code'] ?? ''),
-        'Adres'           => $blk['adres'] ?? '',
+        'Herkomst (UTM)'  => function_exists('pag_utm_tekst') ? pag_utm_tekst($s) : '',
+    ];
+    $formulier = $met_formulier ? [
+        'Adres'           => export_adres_tekst($blk),
         'Social media'    => $blk['social_media'] ?? '',
         'Opleiding'       => $blk['opleiding'] ?? '',
         'Werkervaring'    => $blk['werkervaring'] ?? '',
         'Diploma\'s'      => $blk['diplomas'] ?? '',
-        'Motivatie lifeguard'  => $blk['motivatie_lifeguard'] ?? '',
+        'Motivatie strandwacht' =>$blk['motivatie_lifeguard'] ?? '',
         'Motivatie strand'     => $blk['motivatie_strand'] ?? '',
         'Bijzonderheden'  => $blk['bijzonderheden'] ?? '',
+    ] : [
+        'Woonplaats'      => ($blk && function_exists('blk_woonplaats')) ? blk_woonplaats($blk) : '',
+    ];
+    return $basis + $formulier + [
         'Beschikbaarheid' => export_beschikbaarheid_tekst($sol_id),
-        'BLK ingevuld op' => !empty($blk['ingevuld_op']) ? date('d-m-Y H:i', strtotime($blk['ingevuld_op'])) : '(nog niet ingevuld)',
+        'Kennismakingsformulier ingediend op' =>$blk_op ? date('d-m-Y H:i', strtotime($blk_op))
+                                      : ($blk ? '(concept, nog niet ingediend)' : '(nog niet ingevuld)'),
         'Ondertekeningen' => export_ondertekeningen_tekst($sol_id),
         'Loondossier'     => export_loondossier_tekst($sol_id),
     ];
+}
+
+/**
+ * Het adres als één regel: de gesplitste velden als die er zijn, anders het oude vrije
+ * veld `adres` (formulieren van vóór de splitsing). Dezelfde terugval als blk_detail.php;
+ * eerder exporteerde dit alleen `adres`, dat bij nieuwe formulieren leeg is.
+ */
+function export_adres_tekst(array $blk): string {
+    $regel = trim(trim(($blk['straat'] ?? '') . ' ' . ($blk['huisnummer'] ?? '')) . ', '
+                . trim(($blk['postcode'] ?? '') . ' ' . ($blk['woonplaats'] ?? '')), ' ,');
+    return $regel !== '' ? $regel : trim((string)($blk['adres'] ?? ''));
 }
 
 /** Ondertekende documenten als tekst ("Gezondheidsverklaring 18+: 4 mei 2026 (zelf, sms naar 06 12 34 56 78)"); BSN/IBAN nooit. */
@@ -138,7 +166,7 @@ function export_loondossier_tekst(int $sol_id): string {
     if (!function_exists('documenten_loondossier')) return '';
     $d = documenten_loondossier($sol_id);
     $delen = [];
-    foreach (['id_voor' => 'ID voor', 'id_achter' => 'ID achter', 'bankpas' => 'bankpas', 'pasfoto' => 'pasfoto'] as $s => $l) {
+    foreach (['id_voor' => 'ID voor', 'id_achter' => 'ID achter', 'bankpas' => 'bankpas'] as $s => $l) {
         if (!empty($d['docs'][$s])) $delen[] = $l . ' ' . date('d-m-Y', strtotime($d['docs'][$s]['geupload_op'])) . ($d['docs'][$s]['status'] === 'verwerkt' ? ' (verwerkt)' : '');
     }
     if (!$delen && !$d['loonheffing']) return '';

@@ -6,29 +6,87 @@
 (function () {
   'use strict';
 
-  function initLightbox() {
+  /* ── Foto vergroten ────────────────────────────────────────────
+     Eén vergroter voor het hele systeem. Er stond er ook een tweede in
+     admin/layout_bottom.php (window.fotoVergroten met een eigen #fotoModal);
+     die deed hetzelfde met een ander uiterlijk en een eigen Escape-handler.
+     Die is weg — deze neemt de naam over, zodat bestaande aanroepen blijven werken.
+
+     Twee manieren om hem te openen:
+       1. data-foto="<url>" data-naam="<bijschrift>" op een knop  (de nette weg:
+          bh_avatar(..., ['vergroot' => true]) maakt die)
+       2. automatisch op elke gewone <img> die groot genoeg is
+     De eerste wint: staat er een data-foto op of eromheen, dan slaat de scan
+     de afbeelding erbinnen over. */
+  var lbOpener = null;
+
+  function lbOverlay() {
     var overlay = document.getElementById('p13-lightbox');
-    if (!overlay) {
-      overlay = document.createElement('div');
-      overlay.id = 'p13-lightbox';
-      overlay.setAttribute('role', 'dialog');
-      overlay.setAttribute('aria-label', 'Vergrote afbeelding');
-      overlay.innerHTML =
-        '<button type="button" class="p13-lightbox-sluit" aria-label="Sluiten">&times;</button>' +
-        '<img alt="">';
-      overlay.style.display = 'none';
-      document.body.appendChild(overlay);
+    if (overlay) return overlay;
 
-      var sluit = function () { overlay.style.display = 'none'; document.body.style.overflow = ''; };
-      overlay.addEventListener('click', function (e) {
-        if (e.target === overlay || e.target.classList.contains('p13-lightbox-sluit')) sluit();
-      });
-      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') sluit(); });
-    }
+    overlay = document.createElement('div');
+    overlay.id = 'p13-lightbox';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-label', 'Vergrote afbeelding');
+    overlay.innerHTML =
+      '<button type="button" class="p13-lightbox-sluit" aria-label="Sluiten">&times;</button>' +
+      '<figure class="p13-lightbox-fig"><img alt=""><figcaption></figcaption></figure>';
+    overlay.style.display = 'none';
+    document.body.appendChild(overlay);
 
+    overlay.addEventListener('click', function (e) {
+      if (e.target === overlay || e.target.closest('.p13-lightbox-sluit')) lbSluit();
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && overlay.style.display === 'flex') lbSluit();
+    });
+    return overlay;
+  }
+
+  function lbSluit() {
+    var overlay = document.getElementById('p13-lightbox');
+    if (!overlay) return;
+    overlay.style.display = 'none';
+    document.body.style.overflow = '';
+    /* Terug naar waar je vandaan kwam, anders staat de focus na het sluiten
+       bovenaan de pagina en ben je met het toetsenbord je plek kwijt. */
+    if (lbOpener && document.contains(lbOpener)) lbOpener.focus();
+    lbOpener = null;
+  }
+
+  function lbOpen(url, naam, opener) {
+    if (!url) return;
+    var overlay = lbOverlay();
+    overlay.querySelector('img').src = url;
+    var bij = overlay.querySelector('figcaption');
+    bij.textContent = naam || '';
+    bij.hidden = !naam;
+    lbOpener = opener || null;
+    overlay.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    overlay.querySelector('.p13-lightbox-sluit').focus();
+  }
+
+  /* Publieke ingang; blijft bestaan voor schermen met een onclick erin. */
+  window.fotoVergroten = function (url, naam) { lbOpen(url, naam, null); };
+
+  /* Gedelegeerd: werkt ook voor knoppen die later in de pagina komen. */
+  document.addEventListener('click', function (e) {
+    var knop = e.target.closest ? e.target.closest('[data-foto]') : null;
+    if (!knop) return;
+    e.preventDefault();
+    lbOpen(knop.getAttribute('data-foto'), knop.getAttribute('data-naam'), knop);
+  });
+
+  function initLightbox() {
     document.querySelectorAll('img').forEach(function (img) {
       if (img.dataset.p13Lb) return;
       if (img.closest('#p13-lightbox')) return;
+      /* Zit er al een expliciete vergroot-knop omheen, of is de afbeelding zelf
+         een link, dan niet ook nog eens een eigen klik erop hangen. */
+      if (img.closest('[data-foto]')) return;
+      if (img.closest('a')) return;
       var src = img.getAttribute('src') || '';
       if (!src) return;
       if (/logo|icon|icoon|avatar-default|\.svg($|\?)/i.test(src)) return;
@@ -39,54 +97,91 @@
       img.style.cursor = 'zoom-in';
       img.addEventListener('click', function (e) {
         e.preventDefault();
-        var lb = document.getElementById('p13-lightbox');
-        lb.querySelector('img').src = img.currentSrc || img.src;
-        lb.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
+        lbOpen(img.currentSrc || img.src, img.getAttribute('alt') || '', null);
       });
     });
   }
 
-  /* ── Portaal: formulier-feedback (knop → "Bezig…", geen dubbelklik) ── */
-  function portaalSubmit(form) {
-    var btn = form.querySelector('button[type="submit"]');
-    if (btn) {
-      btn.disabled = true;
-      var t = btn.querySelector('.btn-tekst'), s = btn.querySelector('.btn-spinner');
-      if (t && s) { t.hidden = true; s.hidden = false; }
-      else { btn.dataset.oud = btn.innerHTML; btn.innerHTML = 'Bezig…'; }
-    }
+  /* ── Portaal: formulier-feedback ──
+     Het werk zit in assets/js/actie.js, dat op élke submit reageert — in het portaal
+     én in het beheer. Deze functie blijft bestaan omdat schermen hem aanroepen via
+     data-verzend="return portaalSubmit(this)" (vroeger onsubmit; zie assets/js/klik.js).
+
+     Hij doet bewust niets meer. Het vastzetten hoort pas te gebeuren als vaststaat dat
+     er verzonden wordt; dat weet alleen actie.js, achteraan de submit. Zette deze
+     functie het slot zelf, dan bleef een formulier vergrendeld zodra een latere
+     handler het versturen alsnog tegenhield. */
+  function portaalSubmit() {
     return true;
   }
+
+  /* ── Foutmelding in de pagina (vervangt alert()) ──
+     Eén manier voor het hele portaal om "dit kan zo niet" te zeggen: een melding op de plek
+     waar het speelt, die voorgelezen wordt (role=alert) en die blijft staan. alert() blokkeert
+     de pagina, is niet te stylen en verdwijnt zodra je hem wegklikt — dan weet je niet meer
+     wat er fout was.
+
+       P13Melding.fout(plek, tekst[, veld])  plek = element waarin de melding komt (wordt
+                                            gevuld, niet vervangen); veld = optioneel invoerveld
+                                            dat aria-invalid krijgt, aan de melding wordt
+                                            gekoppeld (aria-describedby) en de focus krijgt.
+       P13Melding.wis(plek[, veld])          melding weg, veld weer geldig. */
+  var meldingTeller = 0;
+  var P13Melding = {
+    fout: function (plek, tekst, veld) {
+      if (!plek) return null;
+      if (!plek.id) plek.id = 'p13-melding-' + (++meldingTeller);
+      // Een plek met een eigen, kleine foutstijl (pt-inline-fout in een taakrij) houdt die.
+      if (!plek.classList.contains('pt-inline-fout')) plek.classList.add('ds-melding', 'ds-melding-error');
+      plek.setAttribute('role', 'alert');
+      plek.textContent = tekst;
+      plek.hidden = false;
+      if (veld) {
+        veld.setAttribute('aria-invalid', 'true');
+        var d = (veld.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean);
+        if (d.indexOf(plek.id) < 0) { d.push(plek.id); veld.setAttribute('aria-describedby', d.join(' ')); }
+        veld.focus();
+      } else if (plek.scrollIntoView) {
+        plek.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return plek;
+    },
+    wis: function (plek, veld) {
+      if (plek) { plek.textContent = ''; plek.hidden = true; }
+      if (veld) veld.removeAttribute('aria-invalid');
+    }
+  };
+  window.P13Melding = P13Melding;
 
   /* ── Portaal: oudergegevens-formulier in een taakrij (velden zonder 'required' zodat een
         verborgen formulier de submit niet blokkeert; validatie hier) ── */
   function ouderValideer(form) {
-    var v = function (n) { var el = form.querySelector('[name="' + n + '"]'); return el ? el.value.trim() : ''; };
+    var veld = function (n) { return form.querySelector('[name="' + n + '"]'); };
+    var v = function (n) { var el = veld(n); return el ? el.value.trim() : ''; };
     var naam = v('ouder_naam'), email = v('ouder_email'), tel = v('ouder_telefoon');
-    var foutBox = form.querySelector('.ouder-fout');
     var cijfers = (tel.match(/\d/g) || []).length;
-    var fout = '';
-    if (!naam) fout = 'Vul de naam van je ouder/verzorger in.';
-    else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) fout = 'Vul een geldig e-mailadres in.';
-    else if (cijfers < 8) fout = 'Vul een geldig telefoonnummer in (minstens 8 cijfers).';
+    var fout = '', foutVeld = null;
+    if (!naam) { fout = 'Vul de naam van je ouder/verzorger in.'; foutVeld = veld('ouder_naam'); }
+    else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { fout = 'Vul een geldig e-mailadres in.'; foutVeld = veld('ouder_email'); }
+    else if (cijfers < 8) { fout = 'Vul een geldig telefoonnummer in (minstens 8 cijfers).'; foutVeld = veld('ouder_telefoon'); }
+    ['ouder_naam', 'ouder_email', 'ouder_telefoon'].forEach(function (n) { var el = veld(n); if (el) el.removeAttribute('aria-invalid'); });
     if (fout) {
-      if (foutBox) { foutBox.textContent = fout; foutBox.hidden = false; foutBox.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-      else { alert(fout); }
+      // Geen .ouder-fout in de markup? Dan maken we hem bovenaan het formulier — nooit alert().
+      var foutBox = form.querySelector('.ouder-fout');
+      if (!foutBox) { foutBox = document.createElement('div'); foutBox.className = 'ouder-fout pt-inline-fout'; form.insertBefore(foutBox, form.firstChild); }
+      P13Melding.fout(foutBox, fout, foutVeld);
       return false;
     }
-    portaalSubmit(form);
     return true;
   }
   window.portaalSubmit = portaalSubmit;
   window.ouderValideer = ouderValideer;
 
   function initPortaalFormulieren() {
-    document.querySelectorAll('form').forEach(function (f) {
-      if (f.dataset.p13Submit || f.hasAttribute('onsubmit')) return;
-      f.dataset.p13Submit = '1';
-      f.addEventListener('submit', function () { portaalSubmit(f); });
-    });
+    /* Hier hing eerder aan élk formulier op de pagina een submit-handler — ook aan de
+       formulieren van het beheer, want app.js draait daar ook. Dat is nu weg: actie.js
+       doet dit één keer, voor beide kanten, zonder per formulier iets op te hangen. */
+
     // "Wijzigen" bij een afgeronde taakrij met inline formulier: formulier tonen/verbergen
     document.querySelectorAll('[data-toggle-inline]').forEach(function (knop) {
       if (knop.dataset.p13Toggle) return;

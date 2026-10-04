@@ -17,6 +17,8 @@
  * én whatsapp → sms zonder e-mail-terugval, want die mail gaat al).
  */
 
+require_once __DIR__ . '/../na_antwoord.php';
+
 if (!function_exists('melding_verstuur')) {
 
 // ─────────────────────────────────────────────────────────────
@@ -25,7 +27,7 @@ if (!function_exists('melding_verstuur')) {
 
 /** Kolommen op mail_log en mail_queue voor de centrale meldingen. */
 function meldingen_log_auto_setup(): void {
-    static $done = false; if ($done) return; $done = true;
+    static $done = false; if ($done || schema_actueel()) return; $done = true;
     if (!function_exists('db_kolom_verzeker')) return;
     try {
         $db = db();
@@ -87,7 +89,7 @@ function meldingen_log_auto_setup(): void {
 
 /** Kanaalvoorkeur per persoon. Standaard WhatsApp (auto opt-in); afmelden kan in het portaal of beheer. */
 function personen_kanaal_auto_setup(): void {
-    static $done = false; if ($done) return; $done = true;
+    static $done = false; if ($done || schema_actueel()) return; $done = true;
     if (!function_exists('db_kolom_verzeker')) return;
     try {
         $db = db();
@@ -97,17 +99,69 @@ function personen_kanaal_auto_setup(): void {
     } catch (\Throwable $e) { error_log('personen_kanaal_auto_setup: ' . $e->getMessage()); }
 }
 
-/** Het bestuursadres: instelling, anders de constante uit config.php. */
+/** Het bestuursadres: instelling, anders de constante uit config.php (een {{PLAATSHOUDER}} telt als leeg). */
 function bestuur_email(): string {
     $v = function_exists('instelling') ? trim(instelling('mail.bestuur_email', '')) : '';
     if ($v !== '') return $v;
-    return defined('MAIL_BESTUUR') ? (string)MAIL_BESTUUR : '';
+    if (function_exists('config_const')) return trim(config_const('MAIL_BESTUUR'));
+    $c = defined('MAIL_BESTUUR') ? trim((string)MAIL_BESTUUR) : '';
+    return str_contains($c, '{{') ? '' : $c;
 }
 
-/** Het adres van de penningmeester (loonadministratie): instelling, anders het bestuursadres. */
+/**
+ * Het adres van de penningmeester (loonadministratie): instelling, anders het bestuursadres.
+ * Die terugval stuurt loondocumenten (IBAN, BSN) naar de bestuursmailbox; de systeemcontrole
+ * waarschuwt daarom zolang dit adres leeg is (health_check_configuratie).
+ */
 function penningmeester_email(): string {
     $v = function_exists('instelling') ? trim(instelling('mail.penningmeester_email', '')) : '';
     return $v !== '' ? $v : bestuur_email();
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Nachtrust
+// ─────────────────────────────────────────────────────────────
+//  Berichten gaan meteen, behalve binnen het venster (standaard 23:00–07:00): dan gaan ze de
+//  wachtrij in en verstuurt melding_queue_verwerk() ze zodra het venster voorbij is. Instellingen
+//  melding.nachtrust_aan/_van/_tot (Uitnodigen & herinneren). Geldt voor alle kanalen.
+
+/** ['van' => uur, 'tot' => uur], of null als de nachtrust uit staat (ook bij van = tot). */
+function melding_nachtrust(): ?array {
+    if (!function_exists('instelling') || instelling('melding.nachtrust_aan', '1') !== '1') return null;
+    $van = max(0, min(23, (int)instelling('melding.nachtrust_van', '23')));
+    $tot = max(0, min(23, (int)instelling('melding.nachtrust_tot', '7')));
+    return $van === $tot ? null : ['van' => $van, 'tot' => $tot];
+}
+
+/** Valt dit uur (standaard nu) in de nachtrust? Een venster over middernacht (23–7) mag. */
+function melding_in_nachtrust(?int $uur = null): bool {
+    $n = melding_nachtrust();
+    if (!$n) return false;
+    $u = $uur ?? (int)date('G');
+    return $n['van'] < $n['tot'] ? ($u >= $n['van'] && $u < $n['tot']) : ($u >= $n['van'] || $u < $n['tot']);
+}
+
+/**
+ * Wacht dit bericht tijdens de nachtrust? Niet: inlogcodes en andere systeemberichten, berichten aan
+ * het bestuur (categorie of ontvanger), een testbericht aan jezelf (rol direct), en een bevestiging
+ * van iets wat de ontvanger zelf net deed (register: 'nachtrust' => false). De rest wel, ook als een
+ * bestuurslid het zelf verstuurt.
+ */
+function melding_nachtrust_geldt(string $type, ?string $rol): bool {
+    $def = function_exists('melding_definitie') ? melding_definitie($type) : null;
+    if (!$def || in_array($def['categorie'], ['systeem', 'bestuur'], true) || ($def['nachtrust'] ?? true) === false) return false;
+    return !in_array((string)$rol, ['bestuur', 'penningmeester', 'direct'], true);
+}
+
+/** De meldingstypen die tijdens de nachtrust wachten (voor de wachtrij-query). */
+function melding_nachtrust_typen(): array {
+    return array_values(array_filter(array_keys(meldingen_register()), fn($t) => melding_nachtrust_geldt($t, 'sollicitant')));
+}
+
+/** "Nachtrust: gaat om 07:00 de deur uit" — voor het log en de uitslag van Berichten. */
+function melding_nachtrust_zin(): string {
+    $n = melding_nachtrust();
+    return 'Nachtrust: gaat om ' . sprintf('%02d:00', $n['tot'] ?? 7) . ' de deur uit';
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -122,7 +176,7 @@ function penningmeester_email(): string {
  * @param array  $extra   extra sjabloonvariabelen (bij 'handmatig': onderwerp, body_html, tekst_kort)
  * @param array  $opties  ontvanger (['email','naam','telefoon','rol']), kanaalmodus, prioriteit
  *                        ('direct'|'na_antwoord'|'queue'), bijlagen, dedup_min, referentie,
- *                        negeer_plafond, voetnoot_html
+ *                        negeer_plafond, voetnoot_html, voorbeeld (testbericht: logica met voorbeeldwaarden)
  * @return array ['status'=>'wacht|verstuurd|mislukt|overgeslagen','reden'=>?string,'log_id'=>?int,'kanaal'=>?string,'items'=>[]]
  */
 function melding_verstuur(string $type, int $sol_id, array $extra = [], array $opties = []): array {
@@ -152,6 +206,9 @@ function melding_verstuur(string $type, int $sol_id, array $extra = [], array $o
             }
             if ($voet !== '') $override['voetnoot_html'] = $voet;
         }
+        if (!empty($def['seintje']) && function_exists('seintje_mailblok')) {
+            $override['blok_html'] = seintje_mailblok((string)($vars['seintje_url'] ?? ''));
+        }
         // Bijlagen: uit het sjabloon (bijlagen_json) + meegegeven. Te groot voor e-mail → downloadknop in de mail.
         $sj_bijl = [];
         $sj_json = $override['bijlagen_json'] ?? (function_exists('sjabloon_laden') ? (sjabloon_laden($type)['bijlagen_json'] ?? null) : null);
@@ -159,8 +216,15 @@ function melding_verstuur(string $type, int $sol_id, array $extra = [], array $o
         $bijl = melding_bijlagen_verdeel(melding_bijlagen_resolve(melding_bijlagen_normaliseer(array_merge($sj_bijl, $opties['bijlagen'] ?? []))));
         if ($bijl['links']) $override['bijlagen_blok_html'] = melding_bijlagen_blok_html($bijl['links']);
 
-        $r = melding_render($type, $vars, $override);
+        $r = melding_render($type, $vars, $override, !empty($opties['voorbeeld']) ? null : $sol_id);
         if (!$r) { $uit['status'] = 'mislukt'; $uit['reden'] = 'geen_sjabloon'; return $uit; }
+        // Logica in het sjabloon klopt niet (bij opslaan gecontroleerd, dus alleen bij oude teksten): niet half versturen.
+        if (!empty($r['fout'])) {
+            $uit['status'] = 'mislukt'; $uit['reden'] = 'Fout in het sjabloon: ' . $r['fout'];
+            error_log("melding_verstuur $type: sjabloonfout: " . $r['fout']);
+            melding_audit($type, $sol_id, null, 'mislukt', 'sjabloonfout');
+            return $uit;
+        }
         // Eén keer, bij het allereerste WhatsApp/SMS-bericht aan deze persoon: uitleg + hoe je afmeldt.
         if ($r['tekst_kort'] !== '' && !empty($ontv['persoon_id']) && $modus !== 'email' && !melding_eerder_kort((int)$ontv['persoon_id'])) {
             $r['tekst_kort'] = rtrim($r['tekst_kort']) . "\n\nZo houden we je via WhatsApp of sms op de hoogte van je sollicitatie bij Paal 13. Liever alleen e-mail? Pas dat aan onder Mijn gegevens in je portaal: " . ($vars['portaal_url'] ?? '') . 'gegevens.php';
@@ -205,7 +269,10 @@ function melding_verstuur(string $type, int $sol_id, array $extra = [], array $o
         if ($bijlagen && $modus === 'kort') $modus = 'beide';
         $plannen = melding_kanaalplan($modus, $ontv, $def, $r['tekst_kort'] !== '');
         $prio = $opties['prioriteit'] ?? 'direct';
-        if ($prio === 'na_antwoord' && (PHP_SAPI === 'cli' || !function_exists('fastcgi_finish_request'))) $prio = 'direct';
+        if ($prio === 'na_antwoord' && !na_antwoord_mogelijk()) $prio = 'direct';
+        // Nachtrust: niet nu versturen maar in de wachtrij; de wachtrij houdt hem vast tot het venster voorbij is.
+        $nachtrust = melding_in_nachtrust() && melding_nachtrust_geldt($type, $basis['ontvanger_rol']);
+        if ($nachtrust) $prio = 'queue';
         $ids = [];
         foreach ($plannen as $plan) {
             $item = array_merge($basis, [
@@ -218,6 +285,12 @@ function melding_verstuur(string $type, int $sol_id, array $extra = [], array $o
         if (!$ids) { $uit['status'] = 'mislukt'; $uit['reden'] = 'queue'; return $uit; }
         $uit['log_id'] = $ids[0];
         $uit['status'] = 'wacht';
+        // Ook zonder te wachten op de verzending weten we via welk kanaal het gaat:
+        // het kanaalplan staat al vast. Zo kan het scherm "gaat via WhatsApp" zeggen
+        // in plaats van het vage "staat in de wachtrij".
+        $uit['prioriteit'] = $prio;
+        $uit['kanaal'] = $plannen[0][0] ?? null;
+        if ($nachtrust) $uit['reden'] = melding_nachtrust_zin();
 
         if ($prio === 'direct') {
             $res = melding_queue_verwerk(count($ids), $ids);
@@ -418,6 +491,22 @@ function melding_queue_toevoegen(array $item, string $prioriteit): int {
 }
 
 /**
+ * De volgende wachtende items voor de cron. Tijdens de nachtrust blijft wat moet wachten staan; dat
+ * gebeurt in SQL, zodat vastgehouden berichten de plek van andere (bestuur, inlogcode) niet innemen.
+ */
+function melding_queue_kiezen(int $max): array {
+    $rust = melding_in_nachtrust() ? melding_nachtrust_typen() : [];
+    $rust_sql = $rust ? " AND NOT (meldingstype IN (" . implode(',', array_fill(0, count($rust), '?')) . ")
+                         AND COALESCE(ontvanger_rol, '') NOT IN ('bestuur', 'penningmeester', 'direct'))" : '';
+    $q = db()->prepare("SELECT * FROM mail_queue WHERE status='wacht' AND pogingen < 3$rust_sql ORDER BY (prioriteit='queue') ASC, id ASC LIMIT ?");
+    $i = 1;
+    foreach ($rust as $t) $q->bindValue($i++, $t);
+    $q->bindValue($i, $max, PDO::PARAM_INT);
+    $q->execute();
+    return $q->fetchAll();
+}
+
+/**
  * Verwerk wachtende items. $alleen_log_ids beperkt tot specifieke items (directe verzending).
  * Retourneert tellers + per item de uitkomst.
  */
@@ -429,10 +518,7 @@ function melding_queue_verwerk(int $max = 8, ?array $alleen_log_ids = null): arr
             $in = implode(',', array_map('intval', $alleen_log_ids));
             $rows = db()->query("SELECT * FROM mail_queue WHERE status='wacht' AND log_id IN ($in) ORDER BY id ASC")->fetchAll();
         } else {
-            $q = db()->prepare("SELECT * FROM mail_queue WHERE status='wacht' AND pogingen < 3 ORDER BY (prioriteit='queue') ASC, id ASC LIMIT ?");
-            $q->bindValue(1, $max, PDO::PARAM_INT);
-            $q->execute();
-            $rows = $q->fetchAll();
+            $rows = melding_queue_kiezen($max);
         }
     } catch (\Throwable $e) { error_log('melding_queue_verwerk: ' . $e->getMessage()); return $res; }
 
@@ -471,16 +557,23 @@ function melding_verzend_item(array $m): array {
     $tmp_wissen = function () use (&$bijlagen) { foreach ($bijlagen as $b) if (!empty($b['tmp'])) @unlink($b['tmp']); };
     // Korte kanalen: nette downloadlinks achter de tekst
     $tekst_kort = rtrim((string)$m['tekst_kort']) . melding_bijlagen_kort_tekst($kort_links);
+    // Wat naar WhatsApp of sms gaat, is platte eindtekst. Staat er nog {{ of }} in (een tag die niet
+    // werd ingevuld of niet dicht was), dan gaat het niet naar die API; e-mail blijft als terugval.
+    $kort_fout = (strpos($tekst_kort, '{{') !== false || strpos($tekst_kort, '}}') !== false) ? 'sjablooncode in de korte tekst' : null;
 
     foreach ($plan as $kanaal) {
         if ($kanaal !== 'email' && $poging > 1) { $fouten[] = "$kanaal: overgeslagen bij herhaling"; continue; }
+        if ($kort_fout && ($kanaal === 'whatsapp' || $kanaal === 'sms')) { $fouten[] = "$kanaal: $kort_fout"; error_log("melding_verzend_item: $kort_fout (log " . ($m['log_id'] ?? '?') . ')'); continue; }
         $r = ['ok' => false, 'fout' => 'onbekend kanaal'];
         try {
-            if ($kanaal === 'whatsapp') {
+            if (($kanaal === 'whatsapp' || $kanaal === 'sms') && function_exists('mail_omleiden') && mail_omleiden() !== '') {
+                $r = melding_testmodus_kort($kanaal, (string)$m['telefoon'], (string)$m['onderwerp'], $kanaal === 'sms' ? kort_opmaak_strip($tekst_kort) : $tekst_kort);
+            } elseif ($kanaal === 'whatsapp') {
                 $r = melding_kanaal_whatsapp((string)$m['telefoon'], $tekst_kort);
             } elseif ($kanaal === 'sms') {
                 $r = (function_exists('sms_actief') && sms_actief() && $m['telefoon'])
-                    ? melding_resultaat(function_exists('sms_verstuur_res') ? sms_verstuur_res((string)$m['telefoon'], $tekst_kort) : sms_verstuur((string)$m['telefoon'], $tekst_kort))
+                    // Sms kent geen opmaak: *vet* en _cursief_ zouden als tekens aankomen.
+                    ? melding_resultaat(function_exists('sms_verstuur_res') ? sms_verstuur_res((string)$m['telefoon'], kort_opmaak_strip($tekst_kort)) : sms_verstuur((string)$m['telefoon'], kort_opmaak_strip($tekst_kort)))
                     : ['ok' => false, 'fout' => 'sms niet beschikbaar'];
             } elseif ($kanaal === 'email') {
                 if ($m['naar_email'] === '' || $m['naar_email'] === null) { $r = ['ok' => false, 'fout' => 'geen e-mailadres']; }
@@ -494,11 +587,13 @@ function melding_verzend_item(array $m): array {
                         $r2 = Mailer::verzend((string)$m['naar_email'], (string)($m['naar_naam'] ?? ''), (string)$m['onderwerp'], $body2, []);
                         if (!empty($r2['ok'])) { $fouten[] = 'email: bijlage geweigerd door mailserver, verstuurd met downloadlink'; $r = $r2; }
                     }
+                    // Testmodus: de omleiding komt in foutmelding (vrij tekstveld; status blijft 'verstuurd').
+                    if (!empty($r['ok']) && !empty($r['omgeleid'])) $r['notitie'] = 'email: testmodus, omgeleid naar ' . $r['omgeleid'];
                 }
                 else $r = ['ok' => false, 'fout' => 'mailer ontbreekt'];
             }
         } catch (\Throwable $e) { $r = ['ok' => false, 'fout' => $e->getMessage()]; }
-        if (!empty($r['ok'])) { $gelukt = $kanaal; break; }
+        if (!empty($r['ok'])) { if (!empty($r['notitie'])) $fouten[] = $r['notitie']; $gelukt = $kanaal; break; }
         $fouten[] = $kanaal . ': ' . substr((string)($r['fout'] ?? 'mislukt'), 0, 160);
         if ($fallback_van === null) $fallback_van = $kanaal;
         if ($kanaal === 'whatsapp') melding_wa_fout_registreer();
@@ -510,6 +605,12 @@ function melding_verzend_item(array $m): array {
         $db = db();
         if ($gelukt) {
             $db->prepare("UPDATE mail_queue SET status='klaar', verwerkt_op=NOW(), fout=? WHERE id=?")->execute([$fouttekst, $m['id']]);
+            // Types waarvan de inhoud nooit gelogd wordt (inlogcodes, IBAN, bestuursmeldingen): ook de
+            // kopie in de wachtrij leeg zodra hij verstuurd is. Anders stond die 30 dagen tot de opschoning.
+            $mdef = function_exists('melding_definitie') ? melding_definitie((string)($m['meldingstype'] ?? '')) : null;
+            if ($mdef && empty($mdef['body_loggen'])) {
+                $db->prepare("UPDATE mail_queue SET body = '', tekst_kort = '' WHERE id = ?")->execute([$m['id']]);
+            }
             if ($log_id) $db->prepare("UPDATE mail_log SET status='verstuurd', kanaal=?, type=?, ontvanger=?, fallback_van=?, foutmelding=?, pogingen=?, verstuurd_op=NOW(), bijgewerkt_op=NOW() WHERE id=?")
                 ->execute([$gelukt, $gelukt === 'email' ? 'mail' : $gelukt, $gelukt === 'email' ? $m['naar_email'] : ($m['telefoon'] ?: $m['naar_email']), $gelukt !== $plan[0] ? $fallback_van : null, $fouttekst, $poging, $log_id]);
             melding_audit((string)($m['meldingstype'] ?? ''), (int)($m['sol_id'] ?? 0), $log_id, 'verstuurd', null, $gelukt);
@@ -565,6 +666,8 @@ function melding_bijlagen_resolve(array $lijst, bool $materialiseer = false): ar
             if ($materialiseer) {
                 $inhoud = document_inhoud($d);
                 if ($inhoud === null) continue;
+                // Zelfde regel als de download in het beheer: merk op de bankpas, niet op het ID.
+                if (function_exists('document_watermerk')) $inhoud = document_watermerk($inhoud, (string)$d['soort'], (string)$d['mime'], 'mail aan de penningmeester');
                 $tmp = sys_get_temp_dir() . '/doc_' . (int)$d['id'] . '_' . bin2hex(random_bytes(4)) . '.bin';
                 if (@file_put_contents($tmp, $inhoud) === false) continue;
                 if (function_exists('kluis_wis')) kluis_wis($inhoud);
@@ -622,6 +725,21 @@ function melding_resultaat($r): array {
     return ['ok' => (bool)$r, 'fout' => $r ? null : 'mislukt'];
 }
 
+/**
+ * Testmodus (MAIL_OMLEIDEN): een WhatsApp- of sms-bericht gaat niet echt de deur uit. Het telt als
+ * afgehandeld (anders volgt een e-mailterugval of een foutmelding per bericht) en de tekst gaat als
+ * e-mail naar het omleidadres, zodat je de inhoud toch ziet. De 'notitie' komt in mail_log.foutmelding.
+ */
+function melding_testmodus_kort(string $kanaal, string $telefoon, string $onderwerp, string $tekst): array {
+    $test  = mail_omleiden();
+    $label = $kanaal === 'sms' ? 'SMS' : 'WhatsApp';
+    $html  = '<p><strong>' . $label . '-bericht, niet verstuurd (testmodus)</strong></p><p>'
+           . nl2br(htmlspecialchars($tekst, ENT_QUOTES, 'UTF-8')) . '</p>';
+    $r = class_exists('Mailer') ? Mailer::verzend($test, '', '[TEST, ' . $label . ' voor ' . $telefoon . '] ' . $onderwerp, $html) : ['ok' => false];
+    return ['ok' => true, 'fout' => null,
+            'notitie' => $kanaal . ': testmodus, niet verstuurd' . (!empty($r['ok']) ? ' (tekst gemaild naar ' . $test . ')' : '')];
+}
+
 /** WhatsApp met uurlimiet en pauze na herhaalde fouten (WhatsReach-blokkeringsrisico). */
 function melding_kanaal_whatsapp(string $telefoon, string $tekst): array {
     if (!function_exists('wa_actief') || !wa_actief()) return ['ok' => false, 'fout' => 'whatsapp niet actief'];
@@ -661,14 +779,21 @@ function melding_wa_fout_registreer(): void {
  * Portaal-inlogcode versturen (type 'portaal_code'): kanaalmodus + persoonsvoorkeur, e-mail als
  * terugval, inhoud wordt nooit gelogd, verzending ná het antwoord zodat het inlogscherm snel is.
  */
-function portaal_code_versturen(string $email, string $voornaam, string $code, ?string $telefoon = null): void {
+function portaal_code_versturen(string $email, string $voornaam, string $code, ?string $telefoon = null, string $inloglink = ''): void {
     $pid = null; $voorkeur = 'email';
     try {
         $q = db()->prepare("SELECT id, kanaal_voorkeur FROM personen WHERE email=? LIMIT 1");
         $q->execute([$email]);
         if ($p = $q->fetch()) { $pid = (int)$p['id']; $voorkeur = (string)($p['kanaal_voorkeur'] ?: 'whatsapp'); }
     } catch (\Throwable $e) {}
-    melding_verstuur('portaal_code', 0, ['otp_code' => $code, 'voornaam' => $voornaam], [
+    melding_verstuur('portaal_code', 0, [
+        'otp_code'  => $code,
+        'voornaam'  => $voornaam,
+        // De sjablonen gebruiken deze twee. Zonder link blijven ze leeg en valt het
+        // bericht terug op alleen de code — dat is precies hoe het eerder werkte.
+        'inloglink' => $inloglink,
+        'inlogknop' => $inloglink !== '' ? '[knop href="' . $inloglink . '"]Open mijn portaal[/knop]' : '',
+    ], [
         'ontvanger'  => ['email' => $email, 'naam' => $voornaam, 'telefoon' => (string)$telefoon, 'persoon_id' => $pid, 'kanaal_voorkeur' => $voorkeur, 'rol' => 'direct'],
         'prioriteit' => 'na_antwoord', 'dedup_min' => 0,
     ]);
@@ -689,7 +814,7 @@ function melding_flush(): void {
     $ids = $GLOBALS['_melding_flush_ids'] ?? [];
     if (!$ids) return;
     $GLOBALS['_melding_flush_ids'] = [];
-    if (function_exists('fastcgi_finish_request')) @fastcgi_finish_request();
+    antwoord_afsluiten();
     try { melding_queue_verwerk(count($ids), $ids); } catch (\Throwable $e) { error_log('melding_flush: ' . $e->getMessage()); }
 }
 

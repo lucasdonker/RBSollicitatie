@@ -6,12 +6,17 @@
  * geplande_berichten). Wordt meegenomen in herinnering_run() (cron + proefdraaien), met dedup
  * per regel per sollicitatie via mail_log (meldingstype 'gepland', referentie 'gepland:<id>').
  * Een venster van 7 dagen voorkomt dat een nieuw aangemaakte regel alsnog oude gevallen mailt.
+ *
+ * Voorwaarde (2.161.0): een regel kan een voorwaarde hebben in de taal van logica.php, op de velden
+ * uit feiten.php ("kennismakingsformulier = "open" en leeftijd < 18"). Gebeurtenis 'altijd' heeft
+ * geen datum: de regel stuurt zodra de voorwaarde klopt (dan is een voorwaarde verplicht). Tussen twee
+ * berichten van dezelfde regel aan dezelfde persoon zitten minstens herhaal_dagen.
  */
 
 if (!function_exists('gepland_auto_setup')) {
 
 function gepland_auto_setup(): void {
-    static $done = false; if ($done) return; $done = true;
+    static $done = false; if ($done || schema_actueel()) return; $done = true;
     try {
         db()->exec("CREATE TABLE IF NOT EXISTS `geplande_berichten` (
             `id`             INT AUTO_INCREMENT PRIMARY KEY,
@@ -24,18 +29,25 @@ function gepland_auto_setup(): void {
             `fases`          VARCHAR(255) DEFAULT NULL,
             `max_per_sollicitatie` TINYINT NOT NULL DEFAULT 1,
             `venster_dagen`  TINYINT NOT NULL DEFAULT 7,
+            `voorwaarde`     TEXT DEFAULT NULL,
+            `herhaal_dagen`  SMALLINT NOT NULL DEFAULT 7,
             `aangemaakt_door` INT DEFAULT NULL,
             `aangemaakt_op`  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             `gewijzigd_op`   DATETIME DEFAULT NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        if (function_exists('db_kolom_verzeker')) {
+            db_kolom_verzeker(db(), 'geplande_berichten', 'voorwaarde', 'TEXT DEFAULT NULL');
+            db_kolom_verzeker(db(), 'geplande_berichten', 'herhaal_dagen', 'SMALLINT NOT NULL DEFAULT 7');
+        }
     } catch (\Throwable $e) { error_log('gepland_auto_setup: ' . $e->getMessage()); }
 }
 
 /** Gebeurtenissen waarop een regel kan aanhaken (sleutel => label). */
 function gepland_gebeurtenissen(): array {
     $uit = [
+        'altijd'                    => 'Zodra de voorwaarde klopt (geen datum)',
         'aangemeld'                 => 'Aanmelding (datum van aanmelden)',
-        'blk_ingediend'             => 'Formulier "Beter leren kennen" ingeleverd',
+        'blk_ingediend'             => 'Kennismakingsformulier ingeleverd',
         'beschikbaarheid_definitief'=> 'Beschikbaarheid definitief gemaakt',
         'selectiedag'               => 'Selectiedag (datum uit het seizoen)',
         'trainingsweekend'          => 'Trainingsweekend (startdatum uit het seizoen)',
@@ -58,24 +70,37 @@ function gepland_regel(int $id): ?array {
     catch (\Throwable $e) { return null; }
 }
 
-/** Opslaan (nieuw of bestaand). Retourneert het id, of 0 bij een fout. */
+/** Wat er mis is aan een regel uit het formulier, in woorden. Leeg = opslaan mag. */
+function gepland_controleer(array $d): array {
+    $fouten = [];
+    $vw = trim((string)($d['voorwaarde'] ?? ''));
+    if (($d['gebeurtenis'] ?? '') === 'altijd' && $vw === '') $fouten[] = 'Bij "Zodra de voorwaarde klopt" hoort een voorwaarde; anders krijgt iedereen het bericht meteen.';
+    if ($vw !== '' && function_exists('voorwaarde_fouten')) {
+        foreach (voorwaarde_fouten($vw, voorwaarde_bekend()) as $f) $fouten[] = 'Voorwaarde: ' . $f;
+    }
+    return $fouten;
+}
+
+/** Opslaan (nieuw of bestaand). Retourneert het id, of 0 bij een fout. Controleer eerst met gepland_controleer(). */
 function gepland_opslaan(array $d, ?int $id = null, ?int $door = null): int {
     gepland_auto_setup();
     $fases = array_values(array_intersect((array)($d['fases'] ?? []), array_keys(function_exists('fasen') ? fasen() : [])));
+    $vw = trim((string)($d['voorwaarde'] ?? ''));
     $p = [
         trim((string)($d['naam'] ?? '')) ?: 'Gepland bericht', !empty($d['aan']) ? 1 : 0,
         isset(gepland_gebeurtenissen()[$d['gebeurtenis'] ?? '']) ? $d['gebeurtenis'] : 'aangemeld',
         max(-60, min(365, (int)($d['offset_dagen'] ?? 0))), preg_replace('/[^a-z0-9_-]/i', '', (string)($d['sjabloon_slug'] ?? '')),
         in_array($d['kanaalmodus'] ?? '', ['email', 'kort', 'beide'], true) ? $d['kanaalmodus'] : 'email',
         $fases ? implode(',', $fases) : null, max(1, min(10, (int)($d['max_per_sollicitatie'] ?? 1))), max(1, min(60, (int)($d['venster_dagen'] ?? 7))),
+        $vw !== '' ? $vw : null, max(1, min(365, (int)($d['herhaal_dagen'] ?? 7))),
     ];
     try {
         if ($id) {
-            db()->prepare("UPDATE geplande_berichten SET naam=?, aan=?, gebeurtenis=?, offset_dagen=?, sjabloon_slug=?, kanaalmodus=?, fases=?, max_per_sollicitatie=?, venster_dagen=?, gewijzigd_op=NOW() WHERE id=?")
+            db()->prepare("UPDATE geplande_berichten SET naam=?, aan=?, gebeurtenis=?, offset_dagen=?, sjabloon_slug=?, kanaalmodus=?, fases=?, max_per_sollicitatie=?, venster_dagen=?, voorwaarde=?, herhaal_dagen=?, gewijzigd_op=NOW() WHERE id=?")
                ->execute(array_merge($p, [$id]));
             return $id;
         }
-        db()->prepare("INSERT INTO geplande_berichten (naam, aan, gebeurtenis, offset_dagen, sjabloon_slug, kanaalmodus, fases, max_per_sollicitatie, venster_dagen, aangemaakt_door) VALUES (?,?,?,?,?,?,?,?,?,?)")
+        db()->prepare("INSERT INTO geplande_berichten (naam, aan, gebeurtenis, offset_dagen, sjabloon_slug, kanaalmodus, fases, max_per_sollicitatie, venster_dagen, voorwaarde, herhaal_dagen, aangemaakt_door) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)")
            ->execute(array_merge($p, [$door]));
         return (int)db()->lastInsertId();
     } catch (\Throwable $e) { error_log('gepland_opslaan: ' . $e->getMessage()); return 0; }
@@ -101,7 +126,7 @@ function gepland_kandidaten(array $regel, array $seizoen): array {
     if ($geb === 'blk_ingediend') { $join = "JOIN blk_formulieren b ON b.sollicitatie_id=s.id"; $datum_expr = 'b.definitief_op'; $extra = "AND b.definitief_op IS NOT NULL"; }
     elseif ($geb === 'beschikbaarheid_definitief') { $join = "JOIN beschikbaarheid_profiel bp ON bp.sollicitatie_id=s.id"; $datum_expr = 'bp.definitief_op'; $extra = "AND bp.definitief_op IS NOT NULL AND bp.voorlopig=0"; }
     elseif (str_starts_with($geb, 'fase:')) { $datum_expr = 's.gewijzigd_op'; $extra = "AND s.fase=?"; $p[] = substr($geb, 5); }
-    elseif ($geb === 'selectiedag' || $geb === 'trainingsweekend') { $datum_expr = 'NULL'; }
+    elseif ($geb === 'selectiedag' || $geb === 'trainingsweekend' || $geb === 'altijd') { $datum_expr = 'NULL'; }
     if ($fases_filter) { $extra .= " AND s.fase IN (" . implode(',', array_fill(0, count($fases_filter), '?')) . ")"; $p = array_merge($p, $fases_filter); }
 
     $vast = null;
@@ -116,6 +141,8 @@ function gepland_kandidaten(array $regel, array $seizoen): array {
         $vandaag = strtotime('today');
         $venster = max(1, (int)($regel['venster_dagen'] ?? 7)) * 86400;
         foreach ($q->fetchAll() as $r) {
+            // Zonder datum: iedereen in het seizoen is kandidaat; de voorwaarde beslist (gepland_run()).
+            if ($geb === 'altijd') { $uit[] = ['sol_id' => (int)$r['sol_id'], 'naam' => trim($r['voornaam'] . ' ' . $r['achternaam']), 'datum' => date('Y-m-d')]; continue; }
             $d = $vast ?: ($r['gebeurtenis_op'] ?? null);
             $ts = $d ? strtotime(substr((string)$d, 0, 10)) : false;
             if (!$ts) continue;
@@ -137,16 +164,24 @@ function gepland_run(?int $alleen_id = null, bool $dry_run = false): array {
     foreach (gepland_regels(false) as $regel) {
         $id = (int)$regel['id'];
         if ($alleen_id !== null && $alleen_id !== $id) continue;
-        $res = ['naam' => 'Gepland: ' . $regel['naam'], 'aan' => (int)$regel['aan'] === 1, 'kandidaten' => 0, 'verstuurd' => 0, 'overgeslagen' => 0, 'lijst' => []];
+        $res = ['naam' => 'Gepland: ' . $regel['naam'], 'aan' => (int)$regel['aan'] === 1, 'kandidaten' => 0, 'verstuurd' => 0, 'overgeslagen' => 0, 'niet_voldaan' => 0, 'lijst' => []];
         if (!$res['aan'] && $alleen_id === null) { $uit['gepland_' . $id] = $res; continue; }
         $t = function_exists('sjabloon_laden') ? sjabloon_laden((string)$regel['sjabloon_slug']) : null;
         if (!$t) { $res['fout'] = 'sjabloon niet gevonden'; $uit['gepland_' . $id] = $res; continue; }
+        $vw = trim((string)($regel['voorwaarde'] ?? ''));
+        if ($regel['gebeurtenis'] === 'altijd' && $vw === '') { $res['fout'] = 'geen voorwaarde'; $uit['gepland_' . $id] = $res; continue; }
         $ref = 'gepland:' . $id;
         $max = max(1, (int)$regel['max_per_sollicitatie']);
+        $herhaal = max(1, (int)($regel['herhaal_dagen'] ?? 7));
         foreach (gepland_kandidaten($regel, $seizoen) as $k) {
+            // Wie niet aan de voorwaarde voldoet, telt alleen mee (bij "altijd" is dat bijna iedereen).
+            if ($vw !== '' && !voorwaarde_klopt($vw, $k['sol_id'])) { $res['niet_voldaan']++; continue; }
             $res['kandidaten']++;
-            $stand = function_exists('herinnering_stand') ? herinnering_stand('gepland', $k['sol_id'], $ref) : ['aantal' => 0];
+            $stand = function_exists('herinnering_stand') ? herinnering_stand('gepland', $k['sol_id'], $ref) : ['aantal' => 0, 'laatste' => null];
             if ($stand['aantal'] >= $max) { $res['overgeslagen']++; $res['lijst'][] = ['sol_id' => $k['sol_id'], 'naam' => $k['naam'], 'referentie' => $ref, 'actie' => 'max']; continue; }
+            if (!empty($stand['laatste']) && strtotime((string)$stand['laatste']) > time() - $herhaal * 86400) {
+                $res['overgeslagen']++; $res['lijst'][] = ['sol_id' => $k['sol_id'], 'naam' => $k['naam'], 'referentie' => $ref, 'actie' => 'herhaal']; continue;
+            }
             $res['lijst'][] = ['sol_id' => $k['sol_id'], 'naam' => $k['naam'] . ' (' . $k['datum'] . ')', 'referentie' => $ref, 'actie' => 'versturen'];
             if ($dry_run) { $res['verstuurd']++; continue; }
             $override = array_filter(['hero_titel' => $t['hero_titel'] ?? '', 'hero_subtitel' => $t['hero_subtitel'] ?? '', 'hero_kleur' => $t['hero_kleur'] ?? '', 'hero_image_url' => $t['hero_image_url'] ?? '', 'bijlagen_json' => $t['bijlagen_json'] ?? ''], fn($v) => $v !== '' && $v !== null);

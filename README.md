@@ -46,6 +46,10 @@ volgens de checklist in het runbook. `includes/config.php` bevat de geheimen en 
 - Nieuwe databasekolommen: via `db_kolom_verzeker()` in `includes/db_failsafe.php` (draait
   automatisch één keer per versie). Grotere schemawijzigingen als `sql/migratie_NNNN_*.sql`,
   uit te voeren via Systeem & Updates › Migraties uitvoeren.
-- Aanmeldformulier op WordPress: gebruik bij voorkeur een landingspagina. Een iframe op
-  `https://sollicitatie.paal13.com/aanmelden.php` blijft werken vanaf paal13.com (en de origins
-  die bij Instellingen › Website & API staan).
+- Het aanmeldformulier bestaat één keer: `includes/aanmeldformulier.php`. `/aanmelden.php` en de
+  landingspagina's roepen die functie aan, de WordPress-plugin haalt de HTML op via
+  `GET /api/formulier.php`. Een veld toevoegen doe je daar én in `includes/aanmelden_kern.php`.
+- Aanmeldformulier op WordPress: installeer de plugin uit `wordpress-plugin/` (zie de README
+  daar) en zet `[paal13_aanmeldformulier]` op een pagina. Een landingspagina (`/p/<naam>`) of
+  een iframe op `https://sollicitatie.paal13.com/aanmelden.php?ingebed=1` blijft ook werken,
+  vanaf paal13.com en de origins bij Instellingen › Website & API.

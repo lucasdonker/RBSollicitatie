@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['actie'] ?? '') === 'defini
     csrf_check();
     if (function_exists('beschikbaarheid2_definitief_maken') && beschikbaarheid2_definitief_maken($sol_id)) {
         if (function_exists('audit_log')) { try { audit_log('beschikbaarheid_definitief', 'sollicitatie', $sol_id, ['via' => 'portaal']); } catch (\Throwable $e) {} }
-        $_SESSION['flash_portaal'] = 'Je beschikbaarheid staat nu definitief. Bedankt!';
+        flash('succes', 'Je beschikbaarheid staat nu definitief. Bedankt!');
         redirect(portaal_terug_url());
     }
     $flash_fout = 'Er staat nog geen beschikbaarheid om definitief te maken. Vul die eerst in.';
@@ -42,67 +42,90 @@ $eff = function_exists('beschikbaarheid2_effectief') ? beschikbaarheid2_effectie
 $wkd = function_exists('seizoen_weken_datums') ? seizoen_weken_datums($seizoen) : [];
 $wk_label = function($wn) use ($wkd) {
     $wn = (int)$wn;
-    return isset($wkd[$wn]) ? 'week ' . $wn . ' (' . $wkd[$wn]['start']->format('j M') . ')' : 'week ' . $wn;
+    return isset($wkd[$wn]) ? 'week ' . $wn . ' (' . datum_kort_nl($wkd[$wn]['start']) . ')' : 'week ' . $wn;
 };
 $heeft_besch = $b2p && $b2['blokken'];
+// De vastgestelde afspraak (loonplanning definitief gemaakt). Vóór dat moment bestaat hij niet
+// en ziet de sollicitant niets van de planning.
+$afspraak = (function_exists('module_aan') && module_aan('loonplanning') && function_exists('inzet_afspraak_van'))
+    ? inzet_afspraak_van($sol_id) : null;
+$functie_namen = function_exists('functies_ophalen') ? array_column(functies_ophalen(), 'naam', 'sleutel') : [];
 $voorlopig = $heeft_besch && !empty($b2p['voorlopig']);
+// Losse dagen die de sollicitant zelf opgaf (zelfde sectie als in het formulier); stonden hier eerder niet.
+$losse = function_exists('beschikbaarheid_dagen')
+    ? array_values(array_filter(beschikbaarheid_dagen($sol_id), fn($d) => ($d['bron'] ?? '') !== 'bestuur'
+                                && in_array($d['soort'] ?? '', ['niet_beschikbaar', 'voorkeur_vrij'], true)))
+    : [];
 
 // Deadline
 $deadline = function_exists('beschikbaarheid2_deadline') ? beschikbaarheid2_deadline($seizoen) : null;
 $dgn_tot = $deadline ? (int)floor(($deadline->getTimestamp() - strtotime('today')) / 86400) : null;
 
 $logo = function_exists('site_logo_url') ? (site_logo_url() ?: '') : '';
-$dagnamen = ['',' maandag','dinsdag','woensdag','donderdag','vrijdag','zaterdag','zondag'];
+$dagnamen = dagen_nl();
 $portaal_titel = 'Mijn beschikbaarheid';
 $portaal_nav = 'start';
 $portaal_terug = portaal_terug_url();
 require __DIR__ . '/_kop.php';
 ?>
-<style>
-.bk-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:16px;box-shadow:var(--shadow-card)}
-.bk-card h2{margin-top:0;font:var(--text-subhead)}
-.bk-rij{padding:8px 0;border-bottom:1px solid var(--rand-2);font-size:14px;line-height:1.6}
-.bk-rij:last-child{border-bottom:none}
-.badge{display:inline-block;font-size:11px;font-weight:700;color:#fff;padding:3px 10px;border-radius:var(--radius-sm)}
-</style>
-
-  <h1 style="font:var(--text-title);margin-bottom:6px">Mijn beschikbaarheid</h1>
-  <p style="color:var(--ink-soft);font-size:14px;margin-bottom:20px">Dit is wat wij van jou begrepen hebben voor seizoen <?= h($mij['seizoen_naam']) ?>. Zo gebruiken we het voor de planning.</p>
+<div class="pt-stapel">
+  <div class="pt-begroet">
+    <h1>Mijn beschikbaarheid</h1>
+    <p>Dit is wat wij van jou begrepen hebben voor seizoen <?= h($mij['seizoen_naam']) ?>. Zo gebruiken we het voor de planning.</p>
+  </div>
 
   <?php if ($flash_fout): ?>
-    <div class="ds-melding ds-melding-error" style="margin-bottom:16px"><?= icoon('let-op', 18) ?> <?= h($flash_fout) ?></div>
+    <div class="ds-melding ds-melding-error" role="alert"><?= icoon('let-op', 18) ?> <div><?= h($flash_fout) ?></div></div>
   <?php endif; ?>
 
   <?php if (!$heeft_besch): ?>
-    <div class="bk-card" style="text-align:center;padding:32px 20px">
-      <div style="margin-bottom:8px;color:var(--navy)"><?= icoon("lijst", 30) ?></div>
-      <p style="font-size:14px;margin-bottom:16px">Je hebt nog geen beschikbaarheid doorgegeven.</p>
+    <div class="pt-leeg">
+      <span class="pt-leeg-icoon navy"><?= icoon('lijst', 26) ?></span>
+      <span class="pt-leeg-tekst">Je hebt nog geen beschikbaarheid doorgegeven.</span>
       <a href="<?= h(portaal_url_met_terug(APP_URL . '/portaal/beschikbaarheid_invullen.php', $terug_param)) ?>" class="ds-btn ds-btn-primair">Beschikbaarheid invullen</a>
     </div>
   <?php else: ?>
 
     <!-- Status -->
-    <div class="bk-card">
+    <div class="pt-kaart">
       <?php if ($voorlopig): ?>
         <span class="ds-badge ds-badge-warn">Voorlopig</span>
-        <p style="font-size:13.5px;margin:10px 0 0;line-height:1.6">
+        <p class="bk-status-tekst">
           Je beschikbaarheid staat nog op voorlopig. Klopt alles? Maak het dan definitief.
           <?php if ($deadline): ?>
-            <br><span style="color:<?= ($dgn_tot!==null && $dgn_tot<=7)?'var(--rood)':'var(--tekst-zacht)' ?>">
+            <br><span class="bk-zacht<?= ($dgn_tot !== null && $dgn_tot <= 7) ? ' bk-dringend' : '' ?>">
               Deadline: <strong><?= h(datum_nl($deadline->format('Y-m-d'))) ?></strong><?php if ($dgn_tot !== null): ?> — <?= $dgn_tot < 0 ? 'verstreken' : 'nog ' . $dgn_tot . ' ' . ($dgn_tot===1?'dag':'dagen') ?><?php endif; ?>.
             </span>
           <?php endif; ?>
-          <br><span style="color:var(--tekst-zacht);font-size:12.5px">Werk je het niet bij, dan gebruiken we je huidige invoer automatisch vanaf 2 weken vóór het trainingsweekend.</span>
+          <br><span class="bk-klein">Werk je het niet bij, dan gebruiken we je huidige invoer automatisch vanaf 2 weken vóór het trainingsweekend.</span>
         </p>
       <?php else: ?>
         <span class="ds-badge ds-badge-ok"><?= icoon("vink", 13) ?> Definitief</span>
-        <p style="font-size:13.5px;margin:10px 0 0;color:var(--tekst-zacht)">Je beschikbaarheid is definitief<?= !empty($b2p['definitief_op']) ? ' sinds ' . h(datum_nl($b2p['definitief_op'])) : '' ?>. Je kunt hem nog steeds aanpassen als er iets wijzigt.</p>
+        <p class="bk-status-tekst bk-zacht">Je beschikbaarheid is definitief<?= !empty($b2p['definitief_op']) ? ' sinds ' . h(datum_nl($b2p['definitief_op'])) : '' ?>. Je kunt hem nog steeds aanpassen als er iets wijzigt.</p>
       <?php endif; ?>
     </div>
 
+    <?php if ($afspraak): ?>
+    <!-- Wat er is afgesproken (na het trainingsweekend vastgesteld) -->
+    <div class="pt-kaart">
+      <h2 class="pt-kaart-titel"><?= icoon("vink-cirkel", 18) ?> Wat we hebben afgesproken</h2>
+      <div class="bk-rij">Je werkt als <strong><?= h($functie_namen[$afspraak['functie_sleutel']] ?? $afspraak['functie_sleutel']) ?></strong>.
+        <span class="bk-klein">Vastgesteld op <?= h(datum_nl(substr((string)$afspraak['vastgesteld_op'], 0, 10))) ?>.</span></div>
+      <?php foreach ($afspraak['weken'] as $wn => $aw): ?>
+        <div class="bk-rij">
+          <strong><?= h($wk_label($wn)) ?></strong>: <?= (int)$aw['dagen'] ?> <?= (int)$aw['dagen'] === 1 ? 'dag' : 'dagen' ?>
+          <?php if ($aw['weekdagen']): ?><span class="bk-zacht"> (<?= h(implode(', ', array_map(fn($d) => trim($dagnamen[$d]), $aw['weekdagen']))) ?>)</span><?php endif; ?>
+          <?php if (!$aw['betaald']): ?><span class="bk-zacht"> · onbetaald</span><?php endif; ?>
+        </div>
+      <?php endforeach; ?>
+      <div class="bk-rij bk-klein">Klopt dit niet met wat je hebt besproken? <a href="<?= APP_URL ?>/portaal/contact.php#vraagTekst">Stel een vraag via Contact</a>.
+        Hieronder staat wat je zelf hebt opgegeven; dat blijft bewaard.</div>
+    </div>
+    <?php endif; ?>
+
     <!-- Samenvatting in mensentaal -->
-    <div class="bk-card">
-      <h2><?= icoon("kalender", 18) ?> Wanneer je kunt werken</h2>
+    <div class="pt-kaart">
+      <h2 class="pt-kaart-titel"><?= icoon("kalender", 18) ?> Wanneer je kunt werken</h2>
       <?php foreach ($b2['blokken'] as $blok): ?>
         <div class="bk-rij">
           <strong><?= h($wk_label($blok['van_week'])) ?> t/m <?= h($wk_label($blok['tot_week'])) ?></strong> —
@@ -114,47 +137,56 @@ require __DIR__ . '/_kop.php';
           <?php endif; ?>
         </div>
       <?php endforeach; ?>
-      <div class="bk-rij" style="color:var(--tekst-zacht)"><?= count($eff) ?> <?= count($eff)===1?'week':'weken' ?> beschikbaar in totaal.</div>
+      <div class="bk-rij bk-zacht"><?= count($eff) ?> <?= count($eff)===1?'week':'weken' ?> beschikbaar in totaal.</div>
     </div>
 
     <!-- Afwezigheid + voorkeuren -->
-    <?php if ($b2['afwezig'] || !empty($b2p['vaste_dagen_uit'])): ?>
-    <div class="bk-card">
-      <h2><?= icoon('info', 18) ?> Verder doorgegeven</h2>
+    <?php // Zelfde namen als de secties in het formulier (_beschikbaarheid_velden.php). ?>
+    <?php if ($b2['afwezig'] || !empty($b2p['vaste_dagen_uit']) || $losse): ?>
+    <div class="pt-kaart">
+      <h2 class="pt-kaart-titel"><?= icoon('info', 18) ?> Verder doorgegeven</h2>
       <?php if ($b2['afwezig']): ?>
         <div class="bk-rij">
-          <strong>Afwezig:</strong>
+          <strong>Vakanties:</strong>
           <?= implode(', ', array_map(fn($a) => h(datum_nl($a['van_datum'])) . ' t/m ' . h(datum_nl($a['tot_datum'])) . ($a['label'] ? ' (' . h($a['label']) . ')' : ''), $b2['afwezig'])) ?>
         </div>
       <?php endif; ?>
       <?php if (!empty($b2p['vaste_dagen_uit'])): ?>
         <div class="bk-rij">
-          <strong>Voorkeur vrij:</strong>
+          <strong>Vaste vrije dag:</strong>
           <?= implode(', ', array_map(fn($d) => trim($dagnamen[$d]), $b2p['vaste_dagen_uit'])) ?>
-          <span style="color:var(--tekst-zacht)">(voorkeur — de planner beslist)</span>
-          <?php if (!empty($b2p['vaste_toelichting'])): ?><br><span style="color:var(--tekst-zacht);font-size:12.5px"><?= h($b2p['vaste_toelichting']) ?></span><?php endif; ?>
+          <span class="bk-zacht">(voorkeur — de planner beslist)</span>
+          <?php if (!empty($b2p['vaste_toelichting'])): ?><br><span class="bk-klein"><?= h($b2p['vaste_toelichting']) ?></span><?php endif; ?>
+        </div>
+      <?php endif; ?>
+      <?php if ($losse): ?>
+        <div class="bk-rij">
+          <strong>Losse dagen niet beschikbaar:</strong>
+          <?= implode(', ', array_map(fn($d) => h(datum_nl((string)$d['datum']))
+              . (($d['soort'] ?? '') === 'voorkeur_vrij' ? ' (liever vrij)' : '')
+              . (!empty($d['reden']) ? ' — ' . h((string)$d['reden']) : ''), $losse)) ?>
         </div>
       <?php endif; ?>
     </div>
     <?php endif; ?>
 
-    <!-- Verzoeken minder dagen + status -->
+    <!-- Verzoeken minder dagen + status (status in woorden én kleur, nooit alleen kleur) -->
     <?php if ($b2['verzoeken']): ?>
-    <div class="bk-card">
-      <h2><?= icoon('lijst', 18) ?> Verzoeken (minder dagen)</h2>
+    <div class="pt-kaart">
+      <h2 class="pt-kaart-titel"><?= icoon('lijst', 18) ?> Minder dagen werken</h2>
       <?php foreach ($b2['verzoeken'] as $vz):
         $st = $vz['status'];
-        $st_kleur = $st === 'goedgekeurd' ? 'var(--groen)' : ($st === 'afgewezen' ? 'var(--rood)' : 'var(--oranje)');
+        $st_klasse = $st === 'goedgekeurd' ? 'ok' : ($st === 'afgewezen' ? 'error' : 'open');
         $st_tekst = $st === 'goedgekeurd' ? 'goedgekeurd' : ($st === 'afgewezen' ? 'afgewezen' : 'in behandeling');
       ?>
         <div class="bk-rij">
           <strong><?= h($wk_label($vz['van_week'])) ?> t/m <?= h($wk_label($vz['tot_week'])) ?></strong>: <?= (int)$vz['dagen_aantal'] ?> dagen/week
-          <span style="color:<?= $st_kleur ?>;font-weight:600"> · <?= $st_tekst ?></span>
+          <span class="bk-status <?= $st_klasse ?>"> · <?= $st_tekst ?></span>
           <?php if (!empty($vz['dagen_pool'])): ?>
-            <br><span style="color:var(--tekst-zacht);font-size:12.5px">Beschikbare dagen die week: <?= implode(', ', array_map(fn($d) => trim($dagnamen[$d]), $vz['dagen_pool'])) ?></span>
+            <br><span class="bk-klein">Beschikbare dagen die week: <?= implode(', ', array_map(fn($d) => trim($dagnamen[$d]), $vz['dagen_pool'])) ?></span>
           <?php endif; ?>
           <?php if (!empty($vz['toelichting'])): ?>
-            <br><span style="color:var(--tekst-zacht);font-size:12.5px"><?= h($vz['toelichting']) ?></span>
+            <br><span class="bk-klein"><?= h($vz['toelichting']) ?></span>
           <?php endif; ?>
         </div>
       <?php endforeach; ?>
@@ -163,23 +195,23 @@ require __DIR__ . '/_kop.php';
 
     <!-- Bestuurs-correcties (als die er zijn, transparant tonen) -->
     <?php if (!empty($b2['correcties'])): ?>
-    <div class="bk-card">
-      <h2><?= icoon("potlood", 18) ?> Aangepast in overleg</h2>
+    <div class="pt-kaart">
+      <h2 class="pt-kaart-titel"><?= icoon("potlood", 18) ?> Aangepast in overleg</h2>
       <?php foreach ($b2['correcties'] as $c): ?>
         <div class="bk-rij">
           <strong><?= h($wk_label($c['week'])) ?></strong>:
           <?= $c['soort'] === 'niet' ? 'deze week niet ingedeeld' : 'aangepaste dagen' ?>
-          <?php if (!empty($c['reden'])): ?><span style="color:var(--tekst-zacht)"> — <?= h($c['reden']) ?></span><?php endif; ?>
+          <?php if (!empty($c['reden'])): ?><span class="bk-zacht"> — <?= h($c['reden']) ?></span><?php endif; ?>
         </div>
       <?php endforeach; ?>
     </div>
     <?php endif; ?>
 
     <!-- Acties -->
-    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px">
-      <a href="<?= h(portaal_url_met_terug(APP_URL . '/portaal/beschikbaarheid_invullen.php', $terug_param)) ?>" class="ds-btn ds-btn-secundair" style="flex:1;min-width:140px"><?= icoon("potlood", 16) ?> Aanpassen</a>
+    <div class="bk-acties">
+      <a href="<?= h(portaal_url_met_terug(APP_URL . '/portaal/beschikbaarheid_invullen.php', $terug_param)) ?>" class="ds-btn ds-btn-secundair"><?= icoon("potlood", 16) ?> Aanpassen</a>
       <?php if ($voorlopig): ?>
-      <form method="POST" style="flex:1;min-width:140px;margin:0">
+      <form method="POST">
         <?= csrf_input() ?>
         <input type="hidden" name="actie" value="definitief">
         <input type="hidden" name="terug" value="<?= h($terug_param) ?>">
@@ -189,5 +221,6 @@ require __DIR__ . '/_kop.php';
     </div>
 
   <?php endif; ?>
+</div>
 
 <?php require __DIR__ . '/_voet.php'; ?>

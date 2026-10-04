@@ -1,0 +1,23 @@
+In deze map horen twee bestanden:
+
+    aanmeldformulier.css
+    aanmeldformulier.js
+
+Ze staan hier niet in Git, en dat is met opzet. Het zijn kopieën van
+
+    assets/css/aanmeldformulier.css
+    assets/js/aanmeldformulier.js
+
+uit het sollicitatiesysteem. Twee kopieën van hetzelfde bestand in één repository lopen
+vroeg of laat uit elkaar: iemand past de ene aan en vergeet de andere, en dan ziet het
+formulier op de website er anders uit dan op sollicitatie.paal13.com.
+
+Het bouwscript zet ze er verse in:
+
+    wordpress-plugin\bouw-zip.ps1
+
+Dat maakt een ZIP die je in WordPress uploadt bij Plugins > Nieuwe plugin > Plugin uploaden.
+
+Ontbreken ze toch (iemand kopieerde de map met de hand), dan werkt de plugin gewoon: hij
+haalt de opmaak en het script dan rechtstreeks van sollicitatie.paal13.com. Dat is alleen
+iets trager, want dat is een tweede server.

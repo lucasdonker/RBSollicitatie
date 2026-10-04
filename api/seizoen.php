@@ -12,7 +12,8 @@ require_once __DIR__ . '/_basis.php';
 api_preflight();
 api_vereis_sleutel();
 
-$seizoen = actief_seizoen();
+// De website kijkt vooruit (zie seizoen_voor_werving() in includes/functions.php).
+$seizoen = seizoen_voor_werving();
 
 if (!$seizoen) {
     api_json([
@@ -26,21 +27,40 @@ if (!$seizoen) {
 
 $open = ($seizoen['status'] ?? '') === 'open';
 
-// Alleen publiek-relevante velden teruggeven (geen interne gegevens).
+/**
+ * Alle seizoensvelden die op de website mogen staan — de WordPress-plugin maakt hier
+ * shortcodes van, dus wat hier ontbreekt kan daar niet getoond worden.
+ *
+ * Dit gaat over een evenement (waar, wanneer, wat meenemen), niet over personen: het is
+ * precies de informatie die de brigade zelf op paal13.com wil zetten. Wat hier níét in
+ * staat, staat er bewust niet in — zet er nooit iets bij dat over een sollicitant gaat.
+ */
 $publiek = [
-    'naam'                  => $seizoen['naam'] ?? null,
-    'status'                => $seizoen['status'] ?? null,
-    'datum_selectiedag'     => $seizoen['datum_selectiedag'] ?? null,
-    'locatie_selectiedag'   => $seizoen['locatie_selectiedag'] ?? null,
+    'naam'                     => $seizoen['naam'] ?? null,
+    'status'                   => $seizoen['status'] ?? null,
+    'aanmelden_tot'            => $seizoen['aanmelden_tot'] ?? null,
+
+    'datum_selectiedag'        => $seizoen['datum_selectiedag'] ?? null,
+    'locatie_selectiedag'      => $seizoen['locatie_selectiedag'] ?? null,
+    'adres_selectiedag'        => $seizoen['adres_selectiedag'] ?? null,
     'selectiedag_verzameltijd' => $seizoen['selectiedag_verzameltijd'] ?? null,
-    'selectiedag_starttijd' => $seizoen['selectiedag_starttijd'] ?? null,
-    'datum_tw_start'        => $seizoen['datum_tw_start'] ?? null,
-    'datum_tw_eind'         => $seizoen['datum_tw_eind'] ?? null,
-    'locatie_tw'            => $seizoen['locatie_tw'] ?? null,
-    'tw_verzameltijd'       => $seizoen['tw_verzameltijd'] ?? null,
-    'tw_begintijd'          => $seizoen['tw_begintijd'] ?? null,
-    'datum_werk_start'      => $seizoen['datum_werk_start'] ?? null,
-    'datum_werk_eind'       => $seizoen['datum_werk_eind'] ?? null,
+    'selectiedag_starttijd'    => $seizoen['selectiedag_starttijd'] ?? null,
+    'selectiedag_eindtijd'     => $seizoen['selectiedag_eindtijd'] ?? null,
+    'selectiedag_meenemen'     => $seizoen['selectiedag_meenemen'] ?? null,
+
+    'datum_tw_start'           => $seizoen['datum_tw_start'] ?? null,
+    'datum_tw_eind'            => $seizoen['datum_tw_eind'] ?? null,
+    'locatie_tw'               => $seizoen['locatie_tw'] ?? null,
+    'adres_tw'                 => $seizoen['adres_tw'] ?? null,
+    'tw_verzameltijd'          => $seizoen['tw_verzameltijd'] ?? null,
+    'tw_begintijd'             => $seizoen['tw_begintijd'] ?? null,
+    'tw_eindtijd'              => $seizoen['tw_eindtijd'] ?? null,
+    'tw_meenemen'              => $seizoen['tw_meenemen'] ?? null,
+
+    'datum_werk_start'         => $seizoen['datum_werk_start'] ?? null,
+    'datum_werk_eind'          => $seizoen['datum_werk_eind'] ?? null,
+    'hoofdseizoen_start_week'  => isset($seizoen['hoofdseizoen_start_week']) ? (int)$seizoen['hoofdseizoen_start_week'] : null,
+    'hoofdseizoen_eind_week'   => isset($seizoen['hoofdseizoen_eind_week']) ? (int)$seizoen['hoofdseizoen_eind_week'] : null,
 ];
 
 api_json([

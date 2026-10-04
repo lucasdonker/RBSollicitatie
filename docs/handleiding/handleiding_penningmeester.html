@@ -50,19 +50,35 @@ hr { border: 0; border-top: 1px solid var(--rand); margin: 24px 0; }
 </head>
 <body>
 <header id="title-block-header">
-<h1 class="title">Handleiding penningmeester — Loondossiers</h1>
+<h1 class="title">Handleiding penningmeester — Van beschikbaarheid tot
+loondossier</h1>
 </header>
-<p>Versie 2.94.0 · september 2026</p>
-<p>Deze handleiding is voor de penningmeester. Je gebruikt één scherm in
-het beheer: <strong>Loondossiers</strong>. Daar staat per aangenomen
-strandwacht alles wat de loonadministratie nodig heeft. De rest van het
-beheer zie je niet, en dat is de bedoeling: alleen jij en de admin
-kunnen deze stukken inzien.</p>
+<p>Versie 2.126 · september 2026</p>
+<p>Deze handleiding is voor de penningmeester van Reddingsbrigade Paal
+13. Je hoeft geen kenner van het systeem te zijn: hier staat hoe de hele
+keten werkt, van de beschikbaarheid die een sollicitant opgeeft tot het
+loon dat je uitbetaalt, en wat jij op welk moment doet.</p>
+<p>Je werkt vooral op twee schermen in het beheer:
+<strong>Loonplanning</strong> (wie wordt ingezet en wat dat kost) en
+<strong>Loondossiers</strong> (de stukken voor de loonadministratie). De
+rest van de procedure doet het bestuur; wat daarvan voor geld en loon
+telt, leggen we hier ook uit.</p>
+<p>Elk hoofdstuk begint met een blok <strong>In het kort</strong>. De
+afvinklijsten kun je in het beheer echt aanvinken; dat wordt op je eigen
+apparaat onthouden.</p>
 <h1 id="inhoud">Inhoud</h1>
 <ol type="1">
-<li><a href="#inloggen">Inloggen</a></li>
-<li><a href="#wat-er-in-een-loondossier-zit">Wat er in een loondossier
-zit</a></li>
+<li><a href="#aan-de-slag">Aan de slag</a></li>
+<li><a href="#het-grote-plaatje">Het grote plaatje</a></li>
+<li><a href="#wat-je-per-seizoen-doet">Wat je per seizoen doet</a></li>
+<li><a href="#inloggen-en-je-menu">Inloggen en je menu</a></li>
+<li><a href="#beschikbaarheid-wat-sollicitanten-opgeven">Beschikbaarheid: wat
+sollicitanten opgeven</a></li>
+<li><a href="#loonplanning">Loonplanning</a></li>
+<li><a href="#trainingsweekend-en-het-gesprek">Trainingsweekend en het
+gesprek</a></li>
+<li><a href="#na-het-aannemen-het-takenpakket">Na het aannemen: het
+takenpakket</a></li>
 <li><a href="#wanneer-je-een-melding-krijgt">Wanneer je een melding
 krijgt</a></li>
 <li><a href="#het-scherm-loondossiers">Het scherm Loondossiers</a></li>
@@ -71,195 +87,1447 @@ krijgt</a></li>
 <li><a href="#bankpas-vernietigen">Bankpas vernietigen</a></li>
 <li><a href="#bewaartermijnen-en-verwijderen">Bewaartermijnen en
 verwijderen</a></li>
+<li><a href="#inzet-en-rooster">Inzet en rooster</a></li>
 <li><a href="#wat-je-nooit-doet">Wat je nooit doet</a></li>
 <li><a href="#veelgestelde-vragen">Veelgestelde vragen</a></li>
+<li><a href="#woordenlijst">Woordenlijst</a></li>
 </ol>
 <hr />
-<h1 id="inloggen">Inloggen</h1>
-<p><strong>Waar:</strong>
+<h1 id="aan-de-slag">Aan de slag</h1>
+<p><strong>Waar:</strong> het beheer,
 <code>https://sollicitatie.paal13.com/admin/</code><br />
-<strong>Wie:</strong> je Authentik-account zit in de groep
-<code>Sol-Penningmeester</code>.</p>
-<p>Kies &quot;Inloggen via Authentik&quot;. Je komt in het beheer met alleen het
-menu-item <strong>Loondossiers</strong> en (alleen lezen)
-<strong>Sollicitanten</strong>. Zie je meer of minder, dan klopt je
-groep in Authentik niet; meld dat bij de admin.</p>
-<h1 id="wat-er-in-een-loondossier-zit">Wat er in een loondossier
-zit</h1>
-<p>Per aangenomen strandwacht verzamelt het portaal:</p>
+<strong>Wie:</strong> de penningmeester (Authentik-groep
+<code>app-sol-penningmeester</code>).</p>
+<blockquote>
+<p><strong>In het kort:</strong> jij bewaakt de loonkosten en zet de
+gegevens van aangenomen strandwachten in de loonadministratie. In de
+Loonplanning zie je wie er wordt ingezet, wat dat kost en of het binnen
+het budget past. In Loondossiers download je de stukken, verwerk je ze
+en markeer je het dossier als verwerkt. Na de wettelijke bewaarplicht
+vernietig je de loondocumenten zelf; het systeem zet ze voor je
+klaar.</p>
+</blockquote>
+<p><strong>Jouw rol.</strong> Het bestuur werft, selecteert en neemt
+aan. Jij beslist niet over aannemen of afwijzen. Wel bepaalt de
+loonplanning wat een strandwacht verdient: hoeveel dagen per week,
+betaald of onbetaald, en in welke functie. Daar werk je samen met het
+bestuur aan. Na het aannemen leveren de nieuwe strandwachten in het
+portaal hun loonheffingsformulier, een kopie van hun identiteitsbewijs
+en een kopie van hun bankpas in. Jij haalt die stukken op en verwerkt
+ze.</p>
+<p><strong>Waar begin je?</strong> Lees eerst <a href="#het-grote-plaatje">Het grote plaatje</a> en <a href="#wat-je-per-seizoen-doet">Wat je per seizoen doet</a>. Daarna
+gebruik je de rest als naslag.</p>
+<p><strong>Rondleiding.</strong> In het beheer staat een interactieve
+rondleiding &quot;Penningmeester: loondossiers en loonplanning&quot;. Die loopt
+met je langs de echte schermen en wijst aan wat waar staat. De eerste
+keer staat hij op Vandaag klaar in het blok <strong>Nieuw in het
+beheer?</strong>; daarna vind je hem onder <strong>Hulp en
+handleidingen</strong> onderin het menu (of via het vraagteken
+rechtsboven › <strong>Alle rondleidingen</strong>). Op Loondossiers en
+Loonplanning kun je in het vraagteken ook <strong>Rondleiding van dit
+scherm</strong> kiezen. Stoppen kan altijd met <strong>Stoppen</strong>
+of Esc.</p>
+<h1 id="het-grote-plaatje">Het grote plaatje</h1>
+<blockquote>
+<p><strong>In het kort:</strong> een sollicitant doorloopt vaste
+stappen: aanmelden, selectiedag, trainingsweekend, gesprek, aangenomen.
+Vanaf de uitnodiging voor de selectiedag geeft die op wanneer die kan
+werken. Daarmee puzzelt het bestuur (en jij) in de loonplanning. In het
+gesprek op het trainingsweekend wordt de inzet afgesproken en vastgezet.
+Na het weekend wordt de planning definitief: dat is de afspraak waarop
+het loon rust. Daarna volgen het loondossier en de uitbetaling.</p>
+</blockquote>
+<h2 id="de-reis-van-een-sollicitant">De reis van een sollicitant</h2>
+<p>Elke stap heet in het systeem een <strong>fase</strong>. Zo loopt
+het, met wat er voor geld en loon gebeurt:</p>
 <table>
 <thead>
 <tr>
-<th>Stuk</th>
-<th>Hoe het binnenkomt</th>
+<th>Fase (zoals in het beheer)</th>
+<th>Wat er gebeurt</th>
+<th>Wat dit voor jou betekent</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Aangemeld</strong></td>
+<td>Iemand meldt zich aan via de website.</td>
+<td>Nog niets.</td>
+</tr>
+<tr>
+<td><strong>Uitgenodigd selectiedag</strong>, <strong>Aangemeld
+selectiedag</strong></td>
+<td>Het bestuur nodigt uit. De sollicitant vult het
+kennismakingsformulier in en kan vanaf nu de beschikbaarheid
+opgeven.</td>
+<td>Wie beschikbaarheid opgeeft, verschijnt in de Loonplanning.</td>
+</tr>
+<tr>
+<td><strong>Selectiedag geweest</strong></td>
+<td>Een dag met testen en beoordelingen. Het bestuur besluit wie door
+mag.</td>
+<td>Wie afvalt, verdwijnt uit de Loonplanning.</td>
+</tr>
+<tr>
+<td><strong>Uitgenodigd trainingsweekend</strong></td>
+<td>De uitnodiging vraagt de beschikbaarheid in te vullen en definitief
+te maken, uiterlijk 14 dagen vóór het weekend.</td>
+<td>Nu vult de Loonplanning zich echt. Tijd om een eerste planning te
+maken.</td>
+</tr>
+<tr>
+<td><strong>Trainingsweekend geweest</strong></td>
+<td>De sollicitant was op het weekend. Daar is een gesprek met het
+bestuur.</td>
+<td>In het gesprek wordt de inzet afgesproken; die staat daarna
+vast.</td>
+</tr>
+<tr>
+<td><strong>Aangenomen</strong></td>
+<td>Het bestuur neemt aan in het gesprek. De sollicitant krijgt het
+takenpakket in het portaal.</td>
+<td>Er verschijnt een loondossier. Na het weekend wordt de loonplanning
+definitief.</td>
+</tr>
+<tr>
+<td><strong>Afgewezen</strong>, <strong>Afgehaakt</strong></td>
+<td>Niet door, of zelf gestopt.</td>
+<td>Verdwijnt uit de Loonplanning; kost niets.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="van-beschikbaarheid-naar-loon">Van beschikbaarheid naar
+loon</h2>
+<p>Het geld volgt drie lagen die elkaar nooit overschrijven:</p>
+<ol type="1">
+<li><strong>De opgave</strong>: wat de sollicitant zelf invulde (welke
+weken, hoeveel dagen). Die blijft altijd bewaard.</li>
+<li><strong>De scenario&#39;s</strong>: de planning in de Loonplanning. Hier
+wordt gepuzzeld: wie zet je welke week hoeveel dagen in, betaald of
+onbetaald, in welke functie. Er kunnen meerdere varianten naast elkaar
+bestaan; één is de <strong>actieve</strong> planning.</li>
+<li><strong>De afspraak</strong>: wat er echt is afgesproken. Die
+ontstaat pas als de loonplanning na het trainingsweekend
+<strong>definitief</strong> wordt gemaakt. Vanaf dan ziet de strandwacht
+de afspraak in het portaal, en is die de basis voor de Excel voor de
+loonadministratie en voor het rooster.</li>
+</ol>
+<p>Het loon zelf rekent het systeem uit met de minimumlonen van dat
+jaar, de leeftijd, de functie en de maand. Hoe precies staat in <a href="#hoe-het-dagloon-wordt-berekend">Hoe het dagloon wordt
+berekend</a>.</p>
+<h2 id="wanneer-jij-iets-ziet-of-doet">Wanneer jij iets ziet of
+doet</h2>
+<ul>
+<li><strong>Vanaf de uitnodigingen:</strong> in de Loonplanning zie je
+wie beschikbaar is en wat een planning zou kosten.</li>
+<li><strong>Vóór het trainingsweekend:</strong> de actieve planning moet
+kloppen, want die ziet het bestuur in het gesprek.</li>
+<li><strong>Na het trainingsweekend:</strong> de loonplanning wordt
+definitief. Op Vandaag zie je &quot;... aangenomen zonder vastgestelde
+afspraak&quot; zolang dat nog niet is gebeurd.</li>
+<li><strong>Na het aannemen:</strong> je krijgt per strandwacht de mail
+&quot;Loondossier compleet&quot; zodra alle stukken binnen zijn. Op Vandaag staat
+dan &quot;... loondossiers te verwerken&quot;.</li>
+<li><strong>Tijdens het seizoen:</strong> je houdt de kosten tegen het
+budget in de gaten en verwerkt wijzigingen.</li>
+<li><strong>Elk jaar in januari:</strong> je loopt de lijst met
+loondossiers langs die over de bewaarplicht zijn.</li>
+</ul>
+<h1 id="wat-je-per-seizoen-doet">Wat je per seizoen doet</h1>
+<blockquote>
+<p><strong>In het kort:</strong> een afvinklijst per moment in het jaar.
+De datums van de selectiedag, het trainingsweekend en de werkperiode
+staan bij het seizoen; vraag ze na bij het bestuur als je ze niet
+weet.</p>
+</blockquote>
+<p><strong>Bij de begroting (vóór het seizoen)</strong></p>
+<ul class="task-list">
+<li><label><input type="checkbox"></input>Log één keer in (zie <a href="#inloggen-en-je-menu">Inloggen en je menu</a>) en controleer dat
+je <strong>Loonplanning</strong> en <strong>Loondossiers</strong> in het
+menu ziet.</label></li>
+<li><label><input type="checkbox"></input>Vraag het bestuur jouw e-mailadres
+in te vullen als penningmeester-adres (Instellingen › Afzender &amp;
+adressen). Anders gaan jouw meldingen naar het
+bestuursadres.</label></li>
+<li><label><input type="checkbox"></input>Geef het bestuur het <strong>budget
+voor loonkosten</strong> van dit kalenderjaar door. Het bestuur vult dat
+in bij Instellingen › Lonen &amp; budget, bij het juiste jaar. Een nieuw
+jaar begint altijd zonder budget.</label></li>
+<li><label><input type="checkbox"></input>Controleer met het bestuur of de
+<strong>minimumlonen</strong> van dit jaar zijn ingevuld (per leeftijd,
+voor juni en voor juli tot en met september), plus de vakantietoeslag en
+de werkuren per dag. Zie <a href="#budget-en-loontarieven-per-jaar">Budget en loontarieven per
+jaar</a>. Staat er in de Loonplanning &quot;Tarieven … nog niet ingevuld, we
+rekenen met …&quot;, dan is dat nog niet gebeurd.</label></li>
+</ul>
+<p><strong>Na de selectiedag, vóór het trainingsweekend</strong></p>
+<ul class="task-list">
+<li><label><input type="checkbox"></input>Open de Loonplanning. Wie
+beschikbaarheid heeft opgegeven, staat erin.</label></li>
+<li><label><input type="checkbox"></input>Maak samen met het bestuur een
+eerste planning in het actieve scenario (de ster), of laat
+<strong>Opgave overnemen (wie nog leeg is)</strong> eerst alles vullen
+met wat mensen opgaven. Kijk of de loonkosten binnen het budget
+blijven.</label></li>
+<li><label><input type="checkbox"></input>Wil je een alternatief doorrekenen?
+Maak een kopie van het scenario (zie <a href="#scenarios-gebruiken">Scenario&#39;s gebruiken</a>). De actieve
+planning blijft dan ongemoeid.</label></li>
+<li><label><input type="checkbox"></input>Controleer vlak vóór het weekend dat
+de <strong>actieve</strong> planning de juiste is: dat is wat het
+bestuur in de gesprekken ziet en aanpast.</label></li>
+</ul>
+<p><strong>Direct na het trainingsweekend</strong></p>
+<ul class="task-list">
+<li><label><input type="checkbox"></input>Het bestuur heeft in de gesprekken
+aangenomen en de inzet vastgezet. Kijk in de Loonplanning of alle
+aangenomen strandwachten een planning hebben (filter
+<strong>Wie</strong> › <strong>Aangenomen</strong>).</label></li>
+<li><label><input type="checkbox"></input>Laat het bestuur de loonplanning
+<strong>definitief maken</strong>, of doe het zelf in overleg (zie <a href="#definitief-maken-de-afspraak">Definitief maken: de afspraak</a>).
+Noemt de melding namen onder &quot;Aangenomen maar nergens ingepland&quot;, los
+dat dan op.</label></li>
+<li><label><input type="checkbox"></input>Download onder
+<strong>Exporteren</strong> › <strong>Loonadministratie (vastgesteld,
+Excel)</strong> het overzicht voor de loonadministratie.</label></li>
+</ul>
+<p><strong>Zodra de loondossiers binnenkomen</strong></p>
+<ul class="task-list">
+<li><label><input type="checkbox"></input>Komt er een mail &quot;Loondossier
+compleet&quot;, klik dan op <strong>Openen in het beheer</strong>. Je komt
+direct bij het juiste dossier. Download de stukken en zet ze in de
+loonadministratie.</label></li>
+<li><label><input type="checkbox"></input>Markeer het dossier daarna als
+verwerkt en verwijder de gedownloade bestanden van je computer. Staat
+automatisch opschonen uit (dat zegt het kader bovenaan Loondossiers),
+vernietig dan ook de bankpasfoto zelf (zie <a href="#bankpas-vernietigen">Bankpas vernietigen</a>).</label></li>
+<li><label><input type="checkbox"></input>Kijk elke week in Loondossiers tot
+alles verwerkt is. Staat een dossier lang op oranje, laat het bestuur de
+strandwacht dan herinneren.</label></li>
+</ul>
+<p><strong>Tijdens het seizoen (bijvoorbeeld elke maand)</strong></p>
+<ul class="task-list">
+<li><label><input type="checkbox"></input>Open de Loonplanning en kijk naar de
+loonkosten en wat er van het budget over is.</label></li>
+<li><label><input type="checkbox"></input>Verandert er iets aan iemands inzet,
+dan past het bestuur (of jij) de planning aan en werk je de afspraak van
+die persoon bij (zie <a href="#een-persoon-functie-afspraak-en-slot">Een
+persoon: functie, afspraak en slot</a>). Een oranje label <strong>wijkt
+af</strong> achter een naam betekent dat planning en afspraak niet meer
+gelijk zijn.</label></li>
+</ul>
+<p><strong>Elk jaar in januari</strong></p>
+<ul class="task-list">
+<li><label><input type="checkbox"></input>Kijk onderaan Loondossiers of de
+kaart <strong>Te beoordelen voor vernietiging</strong> er staat.
+Controleer die namen in de loonadministratie en vernietig wat over de
+bewaarplicht is (zie <a href="#loondossiers-vernietigen-na-de-bewaarplicht">Loondossiers
+vernietigen na de bewaarplicht</a>).</label></li>
+<li><label><input type="checkbox"></input>Zorg dat de loontarieven en het
+budget voor het nieuwe jaar klaarstaan (zie hierboven).</label></li>
+</ul>
+<h1 id="inloggen-en-je-menu">Inloggen en je menu</h1>
+<blockquote>
+<p><strong>In het kort:</strong> log in via Authentik op het beheer. Je
+ziet vier menu-items: Vandaag, Sollicitanten, Loonplanning en
+Loondossiers.</p>
+</blockquote>
+<p><strong>Waar:</strong>
+<code>https://sollicitatie.paal13.com/admin/</code><br />
+<strong>Wie:</strong> je Authentik-account zit in de groep
+<code>app-sol-penningmeester</code>.</p>
+<p>Kies <strong>Inloggen via Authentik</strong>. In het menu zie je:</p>
+<ul>
+<li><strong>Vandaag</strong>: het startscherm. Voor jou staat daar
+bovenaan het werk dat op je wacht, bijvoorbeeld &quot;2 loondossiers te
+verwerken&quot; met de knop <strong>Naar de loondossiers</strong>, of
+&quot;aangenomen zonder vastgestelde afspraak&quot; met <strong>Naar de
+loonplanning</strong>. Ligt er niets, dan zie je wat het bestuur op dat
+moment doet.</li>
+<li><strong>Sollicitanten</strong> (in de groep Sollicitanten): alleen
+lezen. Zo kun je een dossier openen en zien wie iemand is, wat die opgaf
+en wat er is afgesproken.</li>
+<li><strong>Loonplanning</strong> (in de groep Inzet &amp; loon): wie er
+wordt ingezet en wat dat kost. Zie <a href="#loonplanning">Loonplanning</a>.</li>
+<li><strong>Loondossiers</strong> (ook in Inzet &amp; loon): jouw
+werkscherm voor de loonadministratie.</li>
+<li>Onderin: <strong>Hulp en handleidingen</strong>, met deze
+handleiding en de rondleidingen.</li>
+</ul>
+<p>Het scherm <strong>Beschikbaarheid</strong>, het
+<strong>Trainingsweekend</strong> en de <strong>Instellingen</strong>
+zie je bewust niet; dat is werk van het bestuur. Wat je daarvan nodig
+hebt, zie je in de Loonplanning en in het dossier.</p>
+<p>Zie je meer of minder, of krijg je de melding &quot;Je Authentik-account
+heeft geen admin-toegang&quot;, dan staat je account in Authentik in de
+verkeerde groep. Meld dat bij de beheerder.</p>
+<h1 id="beschikbaarheid-wat-sollicitanten-opgeven">Beschikbaarheid: wat
+sollicitanten opgeven</h1>
+<p><strong>Waar:</strong> jij ziet de opgave in de Loonplanning (klein
+in elke cel, en per dag als je een week aanklikt) en in het dossier,
+tabblad <strong>Beschikbaarheid &amp; inzet</strong>.<br />
+<strong>Wie:</strong> de sollicitant vult in; het bestuur beoordeelt en
+corrigeert.</p>
+<blockquote>
+<p><strong>In het kort:</strong> de sollicitant geeft in het portaal op
+welke weken die kan werken en hoeveel dagen, met vakanties en losse
+dagen. Wie minder dagen wil werken, doet een verzoek; het bestuur
+beslist. Het bestuur kan ook zelf corrigeren. Het resultaat per week
+(hooguit zoveel dagen) is wat je in de Loonplanning als &quot;kan 4&quot;
+terugziet. Het is een bovengrens, geen afspraak.</p>
+</blockquote>
+<h2 id="wat-de-sollicitant-invult">Wat de sollicitant invult</h2>
+<p>Vanaf de uitnodiging voor de selectiedag staat in het portaal de taak
+om de beschikbaarheid door te geven. De sollicitant geeft op:</p>
+<ul>
+<li><strong>Periodes</strong>: van week … tot en met week …, met
+<strong>hele weken</strong> (tot vijf dagen per week) of <strong>alleen
+weekenden</strong> (vrijdag, zaterdag en zondag, of een deel
+daarvan).</li>
+<li><strong>Vakanties</strong> en <strong>losse dagen</strong> waarop
+die niet kan. Die dagen vallen er echt af.</li>
+<li><strong>Een vaste dag die die liever vrij heeft.</strong> Dat is een
+voorkeur; de planner beslist. Zo&#39;n dag telt gewoon mee als
+beschikbaar.</li>
+<li><strong>Een verzoek om minder dagen</strong>: bijvoorbeeld drie
+dagen per week in plaats van vijf, eventueel met de dagen waarop die wel
+kan. Het bestuur keurt dat goed of af. Pas na goedkeuring telt het
+mee.</li>
+</ul>
+<p><strong>Voorlopig of definitief.</strong> Zolang de sollicitant niet
+op <strong>Definitief maken</strong> heeft geklikt, staat de opgave op
+voorlopig. De deadline is 14 dagen vóór het trainingsweekend; het
+systeem stuurt vanzelf herinneringen. Ook daarna kan de sollicitant de
+opgave nog aanpassen. In het dossier zie je bovenaan het label
+<strong>Opgave voorlopig</strong> of <strong>Opgave
+definitief</strong>.</p>
+<h2 id="wat-het-bestuur-ermee-doet">Wat het bestuur ermee doet</h2>
+<ul>
+<li><strong>Verzoeken om minder dagen</strong> beoordelen op het scherm
+Beschikbaarheid. De sollicitant krijgt bericht van het besluit.</li>
+<li><strong>Een week corrigeren</strong>, bijvoorbeeld als iemand belt
+dat een week niet gaat. Zo&#39;n correctie gaat boven wat de sollicitant
+opgaf, altijd met een reden.</li>
+<li><strong>Een afwijkende norm</strong> instellen, bijvoorbeeld drie
+dagen per week voor iemand, na een besluit van het bestuur.</li>
+<li>Het raster met iedereen per week bekijken en exporteren (per week of
+per dag).</li>
+</ul>
+<p>Jij hebt standaard geen toegang tot het scherm Beschikbaarheid en de
+exports daarvan, en je kunt de opgave niet corrigeren. Klopt er iets
+niet, geef het dan door aan het bestuur.</p>
+<h2 id="hoe-de-opgave-doorwerkt-in-de-loonplanning">Hoe de opgave
+doorwerkt in de loonplanning</h2>
+<p>Het systeem maakt van al die gegevens per week één getal: het
+<strong>aantal dagen dat iemand hooguit kan</strong>. Dat staat in de
+Loonplanning klein in elke cel (&quot;kan 4&quot;), of &quot;niet opg.&quot; als de week
+niet is opgegeven.</p>
+<ul>
+<li>Plan je minder dagen dan opgegeven, dan is dat gewoon goed.</li>
+<li>Plan je meer dagen dan opgegeven, of in een week die niet is
+opgegeven, dan kan dat, maar wordt de cel rood met een stippelrand. Dat
+is een signaal om het met de sollicitant te bespreken, geen
+blokkade.</li>
+<li>Wie nog niets heeft opgegeven en nergens is ingepland, staat nog
+niet in de Loonplanning.</li>
+</ul>
+<p>In het dossier, tabblad <strong>Beschikbaarheid &amp; inzet</strong>,
+zie je per week drie regels onder elkaar: <strong>Opgave</strong>,
+<strong>Afspraak</strong> (als die er is) en <strong>Planning</strong>
+(het actieve scenario). Onder <strong>Andere scenario&#39;s</strong> staan
+de varianten. Daaronder staat wat de sollicitant bij de aanmelding
+schreef over beschikbaarheid en uitzonderingen.</p>
+<h1 id="loonplanning">Loonplanning</h1>
+<p><strong>Waar:</strong> menu › Inzet &amp; loon ›
+<strong>Loonplanning</strong><br />
+<strong>Wie:</strong> penningmeester, bestuur en beheerder. Jij mag
+standaard bekijken én bewerken.</p>
+<blockquote>
+<p><strong>In het kort:</strong> per persoon per week zet je hoeveel
+dagen iemand werkt, betaald of onbetaald, en in welke functie. Het
+systeem rekent meteen uit wat dat kost en hoeveel er van het budget over
+is. Je werkt in scenario&#39;s; de ster is de actieve planning. Na het
+trainingsweekend wordt de planning definitief: dan is het de afspraak
+met de strandwacht en de basis voor de loonadministratie. Elke wijziging
+wordt direct opgeslagen, en het bestuur ziet hem ook: stem af voordat je
+in de actieve planning iets verandert.</p>
+</blockquote>
+<p>De planning heeft ruimte nodig. Op een telefoon zie je de melding &quot;De
+planning heeft ruimte nodig: open hem op een groter scherm om te
+plannen.&quot;</p>
+<h2 id="het-scherm-van-boven-naar-beneden">Het scherm van boven naar
+beneden</h2>
+<p><strong>1. Scenario en stand</strong></p>
+<ul>
+<li><strong>Scenario</strong>: de knoppen met alle scenario&#39;s. De ster
+met &quot;(actief)&quot; is de actieve planning. Klik op een scenario om het te
+bekijken. Met <strong>Kopie maken</strong> maak je een variant (zie <a href="#scenarios-gebruiken">Scenario&#39;s gebruiken</a>).</li>
+<li><strong>Loonkosten</strong>: de bruto loonkosten van alle betaalde
+dagen in dit scenario.</li>
+<li><strong>Werkdagen</strong>: het totaal aantal ingeplande dagen, met
+&quot;waarvan … onbetaald&quot;.</li>
+<li><strong>Budget</strong>: een balk met het budget van dit jaar en
+&quot;Nog € … over&quot; (groen, of oranje boven 85%) of &quot;Over budget: € …&quot;
+(rood). Is er geen budget, dan staat er &quot;Geen budget ingesteld voor
+…&quot;.</li>
+<li>Staat er een waarschuwing &quot;Tarieven … nog niet ingevuld, we rekenen
+met …&quot;, dan rekent het systeem met de minimumlonen van een eerder jaar.
+Zie <a href="#budget-en-loontarieven-per-jaar">Budget en loontarieven
+per jaar</a>.</li>
+<li><strong>Waar zit het geld?</strong> (klik om te openen; de kop noemt
+al de duurste persoon en week): de vijf duurste mensen met hun aandeel
+in het totaal, de drie duurste weken, weken met meer mensen dan de norm
+(daar kun je schuiven zonder dat de bezetting te krap wordt) en wat er
+nog bij komt als je alle opgegeven maar niet geplande weken inplant.
+<strong>Raster sorteren op kosten</strong> zet de duurste bovenaan. Dit
+blok is de stand bij het openen van de pagina; vernieuw na het
+plannen.</li>
+<li><strong>Concept</strong> of <strong>Definitief sinds …</strong>: of
+de afspraken al zijn vastgesteld. Bij Concept staat erbij hoeveel mensen
+er zijn aangenomen en hoeveel er al vaststaan na het gesprek.</li>
+<li>De knoppen: <strong>Definitief maken</strong> (later:
+<strong>Opnieuw definitief maken</strong>), het menu
+<strong>Scenario</strong> (<strong>Opgave overnemen (wie nog leeg
+is)</strong>, en bij een scenario dat niet actief is <strong>Maak dit
+scenario actief</strong> en <strong>Scenario verwijderen</strong>),
+<strong>Extra persoon</strong> (zie <a href="#extra-personen">Extra
+personen</a>) en <strong>Exporteren</strong>.</li>
+</ul>
+<p><strong>2. Ingepland per week</strong></p>
+<p>Een staafgrafiek met per week hoeveel mensen je hebt ingepland, tegen
+de norm die het bestuur voor de posten heeft ingesteld. Hij staat
+ingeklapt; de kop zegt al of er weken onder de norm zitten. Rood is te
+weinig. Dit gaat over bezetting, niet over geld, maar het helpt om te
+zien waar je niet kunt bezuinigen.</p>
+<p><strong>3. Filters en sorteren</strong></p>
+<p>Zoek op naam, of kies <strong>Wie</strong> (Iedereen, Nog in de
+procedure, Aangenomen, Extra personen), <strong>Toon</strong> (Alles,
+Met een afwijking, Nog niet ingepland, Vast na het gesprek, Nog niet
+vast) en <strong>Sorteren</strong> (op naam, duurste eerst, meeste dagen
+eerst, hoogste dagloon eerst, oudste of jongste eerst). Onder
+<strong>Meer filters</strong>: <strong>Functie</strong>, <strong>Vanaf
+week</strong> en <strong>Tot en met week</strong>, en <strong>Alleen het
+hoofdseizoen</strong>. &quot;Met een afwijking&quot; toont wie ergens meer is
+ingepland dan opgegeven, in een week die niet is opgegeven, meer dan
+vijf dagen in een week, of twee weken achter elkaar samen meer dan tien
+dagen.</p>
+<p><strong>4. De planning</strong></p>
+<p>Een rij per persoon en een kolom per week van de werkperiode (W27,
+W28, …, met de datum). In de naamkolom staan de functie, de leeftijd en
+of iemand is aangenomen. Een slotje betekent <strong>vast na het
+gesprek</strong>; een groen label <strong>afspraak</strong> of een
+oranje label <strong>wijkt af</strong> zegt hoe de planning zich
+verhoudt tot de vastgestelde afspraak. De kolom <strong>Totaal</strong>
+geeft per persoon de dagen en de kosten.</p>
+<p>In elke cel staat groot wat je plant en klein wat iemand opgaf:</p>
+<table>
+<thead>
+<tr>
+<th>In de cel</th>
+<th>Betekenis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>een getal (blauw)</td>
+<td>zoveel dagen gepland, betaald</td>
+</tr>
+<tr>
+<td>een getal met &quot;onb.&quot; (oranje)</td>
+<td>zoveel dagen gepland, onbetaald</td>
+</tr>
+<tr>
+<td>rood met een stippelrand</td>
+<td>meer gepland dan opgegeven, of in een week die niet is
+opgegeven</td>
+</tr>
+<tr>
+<td>een streepje met &quot;kan 4&quot;</td>
+<td>opgegeven, maar niet gepland</td>
+</tr>
+<tr>
+<td>&quot;niet opg.&quot;</td>
+<td>die week niet opgegeven</td>
+</tr>
+</tbody>
+</table>
+<p>Onderaan staan per week het aantal ingeplande mensen (en hoeveel
+daarvan in het weekend kunnen) en de <strong>Kosten</strong> van die
+week in duizenden euro&#39;s (bijvoorbeeld &quot;€ 1,2k&quot;).</p>
+<p><strong>5. Loontabel</strong></p>
+<p>Helemaal onderaan, ingeklapt: <strong>Loontabel …: dagloon per
+leeftijd en functie</strong>. Daar zie je per leeftijd (15 tot en met 22
+jaar) en per functie welk dagloon het systeem gebruikt, voor juni en
+voor juli tot en met september.</p>
+<h2 id="een-week-plannen">Een week plannen</h2>
+<p>Klik op een cel. Rechts opent een paneel.</p>
+<ol type="1">
+<li>Onder <strong>Wat kan … deze week?</strong> zie je per dag of iemand
+<strong>kan</strong>, <strong>liever niet</strong> of <strong>kan
+niet</strong>, met de redenen (vakantie, bijbaan en dergelijke) en
+&quot;Opgegeven: hooguit … dagen deze week.&quot;</li>
+<li>Vink <strong>Deze week inplannen</strong> aan. Het systeem zet dan
+vijf dagen, of minder als iemand minder opgaf.</li>
+<li>Zet het aantal dagen met <strong>−</strong> en
+<strong>+</strong>.</li>
+<li>Zet <strong>Betaald</strong> uit voor een onbetaalde week.
+Onbetaalde dagen zijn échte werkdagen die je met de sollicitant
+afspreekt; alleen het loon valt weg. Ze tellen mee voor de bezetting en
+gaan gewoon naar het rooster.</li>
+<li>Onderaan staan eventuele signalen, bijvoorbeeld &quot;Meer dagen dan
+opgegeven&quot; of &quot;Alleen te vullen met dagen die iemand liever vrij
+heeft&quot;.</li>
+<li><strong>Zelfde voor de volgende weken</strong> plant elke volgende
+opgegeven week met hetzelfde aantal dagen, nooit meer dan iemand die
+week opgaf.</li>
+</ol>
+<p>Elke wijziging slaat meteen op. De kosten bovenaan en onderaan lopen
+direct mee.</p>
+<h2 id="een-persoon-functie-afspraak-en-slot">Een persoon: functie,
+afspraak en slot</h2>
+<p>Klik op een naam. In het paneel staan:</p>
+<ul>
+<li><strong>Functie</strong>: de keuzelijst. Het voorstel is Aspirant
+Lifeguard voor wie nieuw is, en anders de Lifeguard-rang uit Authentik.
+Postcommandant kies je altijd zelf. De functie bepaalt mee het dagloon
+en geldt per scenario.</li>
+<li>de totalen van deze persoon in dit scenario, en <strong>Dossier
+openen</strong>;</li>
+<li><strong>Alle geplande weken</strong>: met <strong>Betaald</strong>
+of <strong>Onbetaald</strong> zet je in dit scenario elke geplande week
+van deze persoon in één keer om;</li>
+<li><strong>Opgave overnemen</strong> met <strong>Neem de opgave
+over</strong>: vervangt de planning van deze persoon in dit scenario
+door wat die zelf opgaf. Daarna kun je per week bijsturen;</li>
+<li><strong>Afspraak</strong> (pas nadat de loonplanning definitief is
+gemaakt): &quot;Vastgesteld; komt overeen met dit scenario&quot;, &quot;Vastgesteld,
+maar dit scenario wijkt ervan af&quot; of &quot;Nog geen afspraak vastgesteld&quot;.
+Met <strong>Afspraak bijwerken uit dit scenario</strong> (of
+<strong>Afspraak vastleggen uit dit scenario</strong> voor wie er nog
+geen had) wordt de planning van nu de afspraak van deze persoon. De
+strandwacht ziet de nieuwe afspraak in het portaal; er gaat geen bericht
+uit, dus laat het bestuur het vertellen;</li>
+<li><strong>Vast in alle scenario&#39;s</strong>: zie <a href="#vastzetten-na-het-gesprek">Vastzetten na het gesprek</a>.</li>
+</ul>
+<h2 id="extra-personen">Extra personen</h2>
+<p>Iemand die geen sollicitant is maar wel loon kost en meetelt voor de
+bezetting, zoals de postcommandant. Die zet je er zelf bij, zodat het
+budget klopt.</p>
+<ol type="1">
+<li>Klik in de kop op <strong>Extra persoon</strong>.</li>
+<li>Vul <strong>Naam</strong> in en kies de <strong>Functie</strong>
+(standaard Postcommandant). <strong>Geboortedatum</strong> is optioneel:
+alleen nodig als het dagloon van de leeftijd afhangt; leeg rekent het
+systeem met 18 jaar. <strong>Notitie</strong> is ook optioneel.</li>
+<li>Klik op <strong>Toevoegen</strong>. De rij staat in de planning met
+het label <strong>extra</strong>; plan hem zoals iedereen.</li>
+</ol>
+<p>Verschillen met een sollicitant: er is geen opgave, dus je plant vrij
+en er komt nooit &quot;meer dan opgegeven&quot;; <strong>Zelfde voor de volgende
+weken</strong> vult alle weken erna. De functie geldt in alle
+scenario&#39;s. Er is geen afspraak of slot, geen dossier, geen portaal en
+geen berichten, en de persoon staat niet bij Sollicitanten. Wijzigen en
+<strong>Verwijderen</strong> doe je in het paneel (naam aanklikken);
+verwijderen haalt ook de planning uit alle scenario&#39;s weg. In de Excel
+voor de loonadministratie staat hij met de status &quot;Extra persoon (actief
+scenario)&quot;: de planning komt altijd uit het actieve scenario.</p>
+<h2 id="scenarios-gebruiken">Scenario&#39;s gebruiken</h2>
+<p>Een scenario is een complete planning. Je kunt er zoveel naast elkaar
+hebben als je wilt, om bijvoorbeeld te zien &quot;wat als we in juni twee
+mensen minder inzetten?&quot;.</p>
+<ul>
+<li><strong>Kopie maken</strong>: typ bij <strong>Naam van de
+kopie</strong> een naam (bijvoorbeeld &quot;Krap budget&quot;) en klik op
+<strong>Maak kopie</strong>. Je werkt dan in de kopie; het origineel
+blijft zoals het was.</li>
+<li><strong>Scenario › Maak dit scenario actief</strong>: dit scenario
+wordt de actieve planning (de ster). Dat is de planning die het bestuur
+in de gesprekken op het trainingsweekend ziet en aanpast. Maak een
+scenario alleen actief als het bestuur dat heeft besloten.</li>
+<li><strong>Scenario › Scenario verwijderen</strong> (met bevestiging):
+de ingeplande dagen van dat scenario verdwijnen; de beschikbaarheid van
+de sollicitanten blijft staan. Het laatste scenario kan niet weg.</li>
+<li><strong>Scenario › Opgave overnemen (wie nog leeg is)</strong>: vult
+voor iedereen die in dit scenario nog niets gepland heeft de eigen
+opgave in. Wie al gepland is of vaststaat, blijft zoals die is.</li>
+</ul>
+<h2 id="vastzetten-na-het-gesprek">Vastzetten na het gesprek</h2>
+<p>In het gesprek op het trainingsweekend spreekt het bestuur de inzet
+af met de sollicitant. Leggen ze <strong>Aannemen</strong> vast, dan zet
+het systeem de weken en de functie van die persoon uit het actieve
+scenario over naar <strong>alle</strong> scenario&#39;s, en zet ze daar op
+slot. Zo verandert wat met de sollicitant besproken is niet meer doordat
+iemand met een ander scenario speelt. Met de anderen kun je gewoon
+verder puzzelen. Bij <strong>Afwijzen</strong> wordt niets
+vastgezet.</p>
+<p>In de Loonplanning zie je dat aan het slotje en &quot;vast na het
+gesprek&quot;. Klik je een week aan, dan staat er &quot;Vast na het gesprek op het
+trainingsweekend: dit is met de sollicitant besproken. Aanpassen kan via
+de persoon (naam aanklikken) → Ontgrendelen.&quot; Zolang het slot erop zit,
+kun je de weken niet wijzigen. Klik je op de naam, dan staat onder
+<strong>Vast in alle scenario&#39;s</strong> &quot;Vastgezet op ..., in alle
+scenario&#39;s.&quot;</p>
+<p>Moet het toch anders, in een bijzondere situatie:</p>
+<ol type="1">
+<li>Klik op de naam. Vul onder <strong>Vast in alle scenario&#39;s</strong>
+bij <strong>Waarom pas je het aan? (komt in het logboek)</strong> een
+reden in en klik op <strong>Ontgrendelen</strong>.</li>
+<li>Pas de planning aan.</li>
+<li>Klik op <strong>Vastzetten vanuit dit scenario</strong>. Dat
+kopieert de planning opnieuw naar alle scenario&#39;s.</li>
+</ol>
+<p>Doe dit alleen in overleg met het bestuur: het gaat om wat met de
+sollicitant is afgesproken. Vastzetten is nog geen afspraak; die
+ontstaat pas bij het definitief maken.</p>
+<h2 id="definitief-maken-de-afspraak">Definitief maken: de afspraak</h2>
+<p>Na het trainingsweekend, als iedereen is aangenomen of afgewezen,
+wordt de loonplanning definitief gemaakt. Meestal doet het bestuur dat;
+met je bewerkrecht kun jij het ook, in overleg.</p>
+<ol type="1">
+<li>Kies het scenario dat moet gelden (normaal het actieve).</li>
+<li>Klik op <strong>Definitief maken</strong> en bevestig.</li>
+</ol>
+<p>Wat er dan gebeurt:</p>
+<ul>
+<li>Het getoonde scenario wordt de actieve planning.</li>
+<li>Voor iedereen die op <strong>Aangenomen</strong> staat, wordt de
+planning van dat moment de <strong>afspraak</strong>: functie, en per
+week het aantal dagen en betaald of onbetaald. Een eerdere afspraak van
+dezelfde persoon wordt vervangen.</li>
+<li>Wie is aangenomen maar in het scenario nergens staat ingepland,
+krijgt géén afspraak. Die namen staan in de melding: &quot;Aangenomen maar
+nergens ingepland (geen afspraak gemaakt): …&quot;.</li>
+<li>De strandwacht ziet in het portaal &quot;Wat we hebben afgesproken&quot;: de
+functie en per week het aantal dagen, met &quot;onbetaald&quot; waar dat geldt.
+Loonbedragen ziet de strandwacht niet.</li>
+<li>Bovenaan staat voortaan <strong>Definitief sinds …</strong>, en
+onder <strong>Exporteren</strong> verschijnt <strong>Loonadministratie
+(vastgesteld, Excel)</strong>.</li>
+</ul>
+<p>Verandert er daarna iets (iemand wordt later aangenomen, of een week
+gaat niet door), pas dan de planning aan en werk de afspraak van die ene
+persoon bij (zie <a href="#een-persoon-functie-afspraak-en-slot">Een
+persoon: functie, afspraak en slot</a>). <strong>Opnieuw definitief
+maken</strong> kan ook, maar dat vervangt de afspraak van iedereen die
+is aangenomen.</p>
+<h2 id="hoe-het-dagloon-wordt-berekend">Hoe het dagloon wordt
+berekend</h2>
+<p>Per persoon en per week:</p>
+<p><strong>dagloon = minimumuurloon × werkuren per dag × factor van de
+functie × (1 + vakantietoeslag)</strong></p>
+<ul>
+<li><strong>Minimumuurloon</strong>: uit de tabel van dat kalenderjaar,
+per leeftijd en per periode. Er zijn twee periodes, omdat het wettelijk
+minimumloon halverwege het jaar kan veranderen: <strong>juni</strong> en
+<strong>juli tot en met september</strong>. Een week die in juni (of
+eerder) begint, rekent met het junitarief; vanaf juli met het tarief van
+juli tot en met september.</li>
+<li><strong>Leeftijd</strong>: op de maandag van die week. Wie
+halverwege het seizoen jarig is, krijgt vanaf die week het hogere
+tarief. Staat een leeftijd niet in de tabel, dan rekent het systeem met
+de dichtstbijzijnde leeftijd; boven de hoogste leeftijd geldt het tarief
+van de hoogste.</li>
+<li><strong>Werkuren per dag</strong> en
+<strong>vakantietoeslag</strong>: per jaar ingesteld, standaard 8 uur en
+8%.</li>
+<li><strong>Factor van de functie</strong>: standaard Aspirant Lifeguard
+1,00, Junior Lifeguard 1,10, Lifeguard 1,20, Senior Lifeguard 1,30. Het
+bestuur kan dat aanpassen bij Instellingen › Functies; de factor geldt
+voor elk jaar.</li>
+<li><strong>Postcommandant</strong>: geen uurloon maar een vast
+weekbedrag (apart voor juni en voor juli tot en met september). Het
+dagloon is dat weekbedrag gedeeld door vijf. Leeftijd en vakantietoeslag
+tellen daar niet mee.</li>
+<li><strong>Onbetaalde dagen</strong> kosten niets.</li>
+</ul>
+<p>Wat de Loonplanning laat zien is <strong>bruto loon inclusief
+vakantietoeslag</strong>. Werkgeverslasten zitten er niet in. Gebruik
+het dus als raming, niet als loonstrook.</p>
+<h2 id="budget-en-loontarieven-per-jaar">Budget en loontarieven per
+jaar</h2>
+<p><strong>Waar:</strong> Instellingen › <strong>Lonen &amp;
+budget</strong> (bestuur)</p>
+<p>Alles wat met geld te maken heeft, hoort bij een
+<strong>kalenderjaar</strong>: de minimumlonen, de vakantietoeslag, de
+werkuren per dag, het vaste weekbedrag van de postcommandant en het
+budget. Een seizoen rekent met het jaar waarin de werkperiode begint. Zo
+verandert een nieuw tarief nooit de cijfers van een vorig seizoen.</p>
+<p>Op dat tabblad kiest het bestuur bovenaan het <strong>Jaar</strong>.
+Daaronder:</p>
+<ul>
+<li><strong>Budget …</strong>: het totaalbudget voor loonkosten van dat
+jaar. Leeg laten mag; de Loonplanning toont dan alleen de kosten. Het
+budget hoort bij één jaar: een volgend jaar begint zonder budget.</li>
+<li><strong>Vakantietoeslag &amp; werkuren …</strong> en het vaste
+weekbedrag van de postcommandant.</li>
+<li><strong>Minimumlonen per leeftijd …</strong>: bedragen per uur,
+zonder vakantietoeslag, voor juni en voor juli tot en met september.
+Ernaast staat als voorbeeld het dagloon van de functie Lifeguard.</li>
+</ul>
+<p><strong>Een nieuw jaar.</strong> Met <strong>Nieuw jaar … op basis
+van …</strong> kopieert het bestuur de tarieven, vakantietoeslag,
+werkuren en postcommandant van het laatste jaar; het budget niet. Daarna
+vult het bestuur de nieuwe minimumlonen in. Kies je een jaar zonder
+tarieven, dan staat er &quot;Tarieven … nog niet ingevuld, we rekenen met …&quot;
+met de knop <strong>Tarieven … maken op basis van …</strong>.</p>
+<p><strong>Als een jaar ontbreekt.</strong> Zijn de tarieven van het
+seizoensjaar nog niet ingevuld, dan rekent de Loonplanning met het
+dichtstbijzijnde eerdere jaar en zegt dat hardop: &quot;Tarieven 2027 nog
+niet ingevuld, we rekenen met 2026.&quot; Die zin staat ook in de Excel. Het
+budget valt nooit terug op een vorig jaar; dan staat er &quot;Geen budget
+ingesteld voor 2027&quot;.</p>
+<p>Jij kunt de Instellingen standaard niet openen. Klopt er iets niet,
+bijvoorbeeld na een verhoging van het wettelijk minimumloon per 1
+januari of 1 juli, geef het dan door aan het bestuur. Een wijziging
+geldt voor alle berekeningen van dat jaar, ook voor vastgestelde
+afspraken en de export.</p>
+<h2 id="exporteren-naar-excel">Exporteren naar Excel</h2>
+<p>Onder <strong>Exporteren</strong> staan vier downloads:</p>
+<table>
+<thead>
+<tr>
+<th>Download</th>
+<th>Wat erin staat</th>
+<th>Wanneer gebruiken</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Loonadministratie (vastgesteld, Excel)</strong></td>
+<td>De vastgestelde afspraken. Alleen na definitief maken.</td>
+<td>Voor de loonadministratie.</td>
+</tr>
+<tr>
+<td><strong>Dit scenario (Excel, CONCEPT)</strong></td>
+<td>Het scenario dat je bekijkt, met op elk tabblad &quot;CONCEPT — scenario,
+nog niet vastgesteld. Niet gebruiken voor de loonadministratie.&quot;</td>
+<td>Voor de begroting of een tussenstand.</td>
+</tr>
+<tr>
+<td><strong>Voor het rooster (Excel)</strong> en
+<strong>(JSON)</strong></td>
+<td>Per persoon per week de dagen, betaald of niet en per dag of iemand
+kan. Zie <a href="#inzet-en-rooster">Inzet en rooster</a>.</td>
+<td>Voor wie het rooster maakt.</td>
+</tr>
+</tbody>
+</table>
+<p>De Excel voor de loonadministratie heeft vier tabbladen:</p>
+<ol type="1">
+<li><strong>Per persoon</strong>: naam, geboortedatum, leeftijd bij de
+start, functie, status, aantal weken, dagen betaald, dagen onbetaald,
+gemiddeld dagloon en bruto totaal, met een totaalregel.</li>
+<li><strong>Weekmatrix</strong>: per persoon per week het aantal
+betaalde dagen. Een onbetaalde week staat er als tekst (&quot;3 onb.&quot;), zodat
+die nooit per ongeluk als loon wordt opgeteld.</li>
+<li><strong>Opgave vs afspraak</strong>: per week wat iemand opgaf en
+wat is afgesproken, met het verschil en een opmerking zoals &quot;meer dan
+opgegeven&quot; of &quot;niet ingezet&quot;.</li>
+<li><strong>Tarieven en budget</strong>: de tarieven van het jaar
+waarmee is gerekend, de factoren van de functies, het budget, de bruto
+loonkosten, het restant en de rekenregel.</li>
+</ol>
+<p>BSN, rekeningnummer en adres staan er bewust niet in; die heb je in
+het loondossier. Er staan wel namen en geboortedatums in: bewaar het
+bestand niet langer dan nodig en stuur het niet rond. Elke download komt
+in het logboek.</p>
+<h2 id="wat-jij-mag-wijzigen">Wat jij mag wijzigen</h2>
+<p>Met de standaardrechten van de penningmeester:</p>
+<table>
+<thead>
+<tr>
+<th>Mag wel</th>
+<th>Mag niet (doet het bestuur)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Planning per week aanpassen, betaald of onbetaald</td>
+<td>De beschikbaarheid van een sollicitant corrigeren</td>
+</tr>
+<tr>
+<td>Functie per persoon kiezen</td>
+<td>Verzoeken om minder dagen beoordelen</td>
+</tr>
+<tr>
+<td>Scenario&#39;s maken, actief maken en verwijderen</td>
+<td>Minimumlonen, vakantietoeslag, werkuren en budget instellen</td>
+</tr>
+<tr>
+<td>Definitief maken en afspraken bijwerken</td>
+<td>Functies en factoren wijzigen</td>
+</tr>
+<tr>
+<td>Ontgrendelen en opnieuw vastzetten</td>
+<td>Aannemen of afwijzen, het gesprek op het trainingsweekend</td>
+</tr>
+<tr>
+<td>Alle exports downloaden</td>
+<td>Sollicitanten wijzigen (jij kunt ze alleen lezen)</td>
+</tr>
+</tbody>
+</table>
+<p>Dat je iets technisch mag, wil niet zeggen dat je het alleen moet
+doen. Wijzigingen in de actieve planning, het definitief maken en het
+ontgrendelen gaan over afspraken met mensen: stem die af met het
+bestuur. Een beheerder kan de rechten per rol aanpassen.</p>
+<h1 id="trainingsweekend-en-het-gesprek">Trainingsweekend en het
+gesprek</h1>
+<p><strong>Waar:</strong> menu › Selectie ›
+<strong>Trainingsweekend</strong> (alleen bestuur, beheerder en
+begeleiders)<br />
+<strong>Wie:</strong> het bestuur voert de gesprekken. Jij hebt
+standaard geen toegang tot dit scherm; het resultaat zie je in de
+Loonplanning, in het dossier en in Loondossiers.</p>
+<blockquote>
+<p><strong>In het kort:</strong> op het trainingsweekend heeft elke
+sollicitant een gesprek met het bestuur. Daar wordt de inzet afgesproken
+(weken, dagen, betaald, functie) in het actieve scenario, en daarna
+meteen vastgezet. Aannemen en afwijzen gaan in het gesprek direct door.
+Na het weekend wordt de loonplanning definitief.</p>
+</blockquote>
+<h2 id="hoe-het-weekend-verloopt">Hoe het weekend verloopt</h2>
+<p>Het scherm Trainingsweekend heeft zes stappen:</p>
+<ol type="1">
+<li><strong>Voorbereiden</strong>: wie komt er (&quot;Kom je?&quot; vult de
+sollicitant zelf in), wie mist nog beschikbaarheid, en de tablet voor
+het inchecken.</li>
+<li><strong>Groepen</strong>: de groepsindeling.</li>
+<li><strong>Inchecken</strong>: sollicitanten checken zelf in op een
+tablet. Wie is ingecheckt, gaat naar fase <strong>Trainingsweekend
+geweest</strong>.</li>
+<li><strong>Beoordelen</strong>: begeleiders en bestuur noteren op hun
+telefoon wat hen opvalt.</li>
+<li><strong>Evaluatie</strong>: het bestuur geeft per persoon een eerste
+indruk (sowieso aannemen, twijfel, sowieso afwijzen). Dat is nog geen
+besluit en er gaat niets de deur uit.</li>
+<li><strong>Gesprekken</strong>: het bestuur spreekt iedereen en
+beslist.</li>
+</ol>
+<h2 id="het-gesprek-en-de-inzet">Het gesprek en de inzet</h2>
+<p>In het gesprek ziet het bestuur alles over één persoon bij elkaar,
+waaronder <strong>Inzet afspreken</strong>: per week wat de sollicitant
+opgaf, en wat ze nu afspreken (plannen ja of nee, aantal dagen,
+betaald), plus de functie en het totaal aan dagen en bruto kosten. Dit
+is dezelfde planning als in de Loonplanning: wijzigingen gaan meteen in
+het <strong>actieve scenario</strong>, en wat iemand in de Loonplanning
+verandert, ziet het bestuur daar binnen 15 seconden. Daarom moet de
+actieve planning vóór het weekend kloppen.</p>
+<p>Daarna legt het bestuur het besluit vast:</p>
+<ul>
+<li><strong>Aannemen</strong>: gaat meteen door. De fase wordt
+Aangenomen, de sollicitant krijgt een mail met het bericht van het
+bestuur, en het takenpakket staat direct in het portaal. De inzet wordt
+vastgezet in alle scenario&#39;s.</li>
+<li><strong>Twijfel</strong>: er gebeurt nog niets met de fase, en de
+inzet staat nog niet vast (twijfel is nog geen afspraak). Het bestuur
+belt na het weekend en legt dan alsnog het besluit vast.</li>
+<li><strong>Afwijzen</strong>: gaat meteen door. De sollicitant
+verdwijnt uit de Loonplanning en kost niets.</li>
+</ul>
+<p><strong>Niet gekomen.</strong> Was iemand er niet (afgemeld, of niet
+verschenen toen het inchecken werd afgesloten), dan is er geen gesprek,
+maar legt het bestuur wel een besluit vast. Meestal is dat afwijzen, met
+een tekst die past bij iemand die er niet was. Tot dat besluit er is,
+staat die persoon nog gewoon in de Loonplanning. Kijk dus niet vreemd op
+van een planning voor iemand die niet kwam; die verdwijnt na het
+afwijzen vanzelf.</p>
+<h2 id="wat-jij-ervan-ziet">Wat jij ervan ziet</h2>
+<ul>
+<li><strong>In de Loonplanning</strong>: het slotje &quot;vast na het
+gesprek&quot; bij wie is aangenomen, en &quot;aangenomen&quot; onder de naam. Met
+<strong>Toon</strong> › <strong>Vast na het gesprek</strong> of
+<strong>Nog niet vast</strong> zie je hoe ver het bestuur is.</li>
+<li><strong>In het dossier</strong> (via Sollicitanten): het tabblad
+<strong>Trainingsweekend</strong> met de deelname (kwam wel of niet) en
+het besluit, en het tabblad <strong>Beschikbaarheid &amp; inzet</strong>
+met de opgave, de planning en later de afspraak.</li>
+<li><strong>In Loondossiers</strong>: een kaart per aangenomen
+strandwacht, direct na het aannemen.</li>
+<li><strong>Op Vandaag</strong>: &quot;... aangenomen zonder vastgestelde
+afspraak&quot; tot de loonplanning definitief is.</li>
+</ul>
+<h1 id="na-het-aannemen-het-takenpakket">Na het aannemen: het
+takenpakket</h1>
+<blockquote>
+<p><strong>In het kort:</strong> wie is aangenomen, krijgt in het
+portaal een takenpakket. Drie onderdelen vormen samen het loondossier:
+het loonheffingsformulier, een kopie van het identiteitsbewijs en een
+kopie van de bankpas. Het dossier is compleet als die drie binnen zijn.
+De inschrijving als lid staat er ter informatie bij.</p>
+</blockquote>
+<h2 id="wat-de-strandwacht-doet">Wat de strandwacht doet</h2>
+<p>In het portaal staan na het aannemen deze taken:</p>
+<table>
+<thead>
+<tr>
+<th>Taak</th>
+<th>Wat en hoe</th>
 <th>Bijzonderheden</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Loonheffingsformulier</td>
-<td>De strandwacht vult het officiële Belastingdienst-formulier in het
-portaal in en ondertekent digitaal met een verificatiecode
-(sms/WhatsApp/e-mail)</td>
-<td>Verzegelde PDF; het BSN staat alleen in de PDF en in de kluis,
-nergens anders</td>
+<td><strong>Loonheffingsformulier</strong></td>
+<td>Het officiële formulier van de Belastingdienst, deels ingevuld. De
+strandwacht kiest of de loonheffingskorting wordt toegepast en
+ondertekent digitaal met een verificatiecode.</td>
+<td>De code gaat per sms, anders via WhatsApp, anders per e-mail. De
+strandwacht tekent altijd zelf, ook onder de 18. Het BSN staat alleen in
+de verzegelde PDF en versleuteld in de kluis.</td>
 </tr>
 <tr>
-<td>Kopie identiteitsbewijs</td>
-<td>Foto of scan; bij een ID-kaart voor- én achterkant, bij een paspoort
-alleen de fotopagina</td>
-<td>Wettelijk verplicht, volledig en onafgeschermd</td>
+<td><strong>Kopie ID uploaden</strong></td>
+<td>Foto of scan (JPG, PNG of PDF, maximaal 10 MB). Bij een
+identiteitskaart voor- én achterkant, bij een paspoort alleen de
+fotopagina. Een rijbewijs telt niet.</td>
+<td>Wettelijk verplicht, volledig en niet afgeschermd.</td>
 </tr>
 <tr>
-<td>Kopie bankpas</td>
-<td>Foto van de voorkant (naam en IBAN)</td>
-<td>Alleen om het rekeningnummer te controleren; wordt na verwerking
-vernietigd</td>
+<td><strong>Kopie bankpas uploaden</strong></td>
+<td>Foto van de voorkant (naam en rekeningnummer).</td>
+<td>Alleen om het rekeningnummer te controleren. Wordt na verwerking
+vernietigd.</td>
 </tr>
 <tr>
-<td>Inschrijving lidmaatschap</td>
-<td>Alleen voor wie nog geen verenigingsaccount heeft; gaat als PDF naar
-de ledenservice</td>
-<td>Staat ter info in het dossier</td>
+<td><strong>Lid worden</strong></td>
+<td>De inschrijving als lid van de vereniging, alleen voor wie nog geen
+Paal 13-account heeft. Gaat na het ondertekenen als PDF naar de
+ledenservice.</td>
+<td>Onder de 18 vult de ouder of verzorger dit in en tekent die, via een
+link in de mail. Kiest die voor automatische incasso, dan geeft die de
+machtiging als rekeninghouder.</td>
+</tr>
+<tr>
+<td>Huisregels lezen, Paal 13-account activeren</td>
+<td>Geen loonstukken.</td>
+<td>Tellen niet mee voor het loondossier.</td>
 </tr>
 </tbody>
 </table>
-<p>Alles staat versleuteld in de kluis. Een dossier is
-<strong>compleet</strong> als loonheffingsformulier, kopie ID en kopie
-bankpas binnen zijn.</p>
+<p>De strandwacht kan een foto vervangen of verwijderen tot jij het
+dossier als verwerkt hebt gemarkeerd. Alles staat versleuteld in de
+kluis; alleen jij kunt het openen. De beheerder ziet wel of de stukken
+er zijn en kan ze vernietigen, maar opent de inhoud niet.</p>
+<h2 id="wanneer-is-een-loondossier-compleet">Wanneer is een loondossier
+compleet?</h2>
+<p>Een dossier is <strong>compleet</strong> als:</p>
+<ul>
+<li>het loonheffingsformulier is ondertekend (met de
+verificatiecode);</li>
+<li>de kopie van het identiteitsbewijs binnen is (bij een
+identiteitskaart ook de achterkant);</li>
+<li>de kopie van de bankpas binnen is.</li>
+</ul>
+<p>De inschrijving als lid telt niet mee voor &quot;compleet&quot;.</p>
 <h1 id="wanneer-je-een-melding-krijgt">Wanneer je een melding
 krijgt</h1>
-<p>Zodra een dossier compleet is, krijg je één e-mail &quot;Loondossier
-compleet&quot; op het adres dat bij Instellingen › Algemeen als
-penningmeester-adres staat. De stukken zitten <strong>niet</strong> in
-die mail; je haalt ze op via het beheer. (Het bestuur kan instellen dat
-ze wél meegaan, maar dat raden we af.)</p>
-<p>Krijg je de melding niet, dan kan een beheerder hem opnieuw sturen
-met de knop &quot;Melding opnieuw naar de penningmeester&quot;.</p>
+<blockquote>
+<p><strong>In het kort:</strong> je krijgt één mail &quot;Loondossier
+compleet&quot; als alle stukken binnen zijn. De stukken zitten niet in die
+mail. Komt er geen mail, kijk dan zelf in Loondossiers.</p>
+</blockquote>
+<p>De mail gaat naar het penningmeester-adres uit Instellingen ›
+Afzender &amp; adressen (is dat leeg, dan naar het bestuursadres). In de
+mail staat welke stukken er zijn, met een knop <strong>Openen in het
+beheer</strong> die direct het juiste dossier openklapt.</p>
+<p>De stukken zitten standaard <strong>niet</strong> in de mail; je
+haalt ze op via het beheer. Het bestuur kan instellen dat ze wél
+meegaan, maar dan gaan een BSN en een kopie identiteitsbewijs
+onversleuteld per e-mail. Dat raden we af.</p>
+<p>De mail komt zodra het laatste stuk binnen is, of dat nu het
+ondertekende loonheffingsformulier is of een upload van de kopie ID of
+de bankpas. Per loonheffingsformulier krijg je hem één keer.</p>
+<p>Mail kwijt of niet gekregen? Klik in het dossier op <strong>Melding
+opnieuw naar de penningmeester</strong>. Die knop staat er zodra het
+dossier compleet is.</p>
 <h1 id="het-scherm-loondossiers">Het scherm Loondossiers</h1>
-<p><strong>Waar:</strong> Beheer › Loondossiers.</p>
-<p>Bovenaan drie tellers: aangenomen, compleet, verwerkt. Daaronder per
-strandwacht een kaart:</p>
+<p><strong>Waar:</strong> menu › Inzet &amp; loon ›
+<strong>Loondossiers</strong><br />
+<strong>Wie:</strong> penningmeester en beheerder. Het bestuur ziet dit
+scherm niet. De beheerder ziet de stand en kan vernietigen, maar krijgt
+geen knoppen <strong>PDF</strong> en <strong>Download</strong>: de
+inhoud opent alleen de penningmeester.</p>
+<blockquote>
+<p><strong>In het kort:</strong> bovenaan de regels voor deze stukken en
+de stand, daaronder per strandwacht een kaart die je openklapt. Oranje
+is nog niet compleet, groen wacht op jou, grijs is verwerkt. Onderaan
+staat, als dat nodig is, wie in aanmerking komt voor vernietiging.</p>
+</blockquote>
+<p><strong>Bovenaan</strong> staat een vast kader met de regels: hier
+staan een BSN en kopieën van identiteitsbewijzen, elke download wordt
+vastgelegd, wat er met de bankpasfoto gebeurt en hoe lang het
+loonheffingsformulier en de kopie ID blijven. Komen er dossiers in
+aanmerking voor vernietiging, dan staat daar ook een link naar
+<strong>Te beoordelen voor vernietiging</strong>. Dat kader staat er
+altijd; het is geen waarschuwing.</p>
+<p>Let op de zin over de bankpasfoto. Staat daar &quot;De bankpasfoto wordt …
+dagen na &quot;verwerkt&quot; automatisch vernietigd&quot;, dan hoef je niets te doen.
+Staat daar &quot;Automatisch opschonen staat uit&quot;, dan vernietig je de
+bankpasfoto zelf na het verwerken.</p>
+<p><strong>Seizoen.</strong> Zijn er meerdere seizoenen, dan kies je
+bovenaan het <strong>Seizoen</strong>. Standaard zie je het actieve
+seizoen; per seizoen staat erbij hoeveel mensen er zijn aangenomen. Zo
+vind je de dossiers van vorig jaar terug, ook als er al een nieuw
+seizoen loopt.</p>
+<p>Daaronder de stand, bijvoorbeeld &quot;2 dossiers wachten op verwerking&quot;,
+met de naam van het seizoen en de tellers aangenomen, compleet en
+verwerkt.</p>
+<p><strong>Per strandwacht</strong> een kaart. Klik op de naam om hem
+open of dicht te klappen. Rechts van de naam staat de status:</p>
 <ul>
-<li><strong>Oranje rand:</strong> dossier nog niet compleet; er
-ontbreken stukken.</li>
-<li><strong>Groene rand:</strong> compleet, wacht op verwerking. Deze
-kaarten staan standaard opengeklapt.</li>
-<li><strong>Grijze rand:</strong> verwerkt.</li>
+<li><strong>Oranje, &quot;Ontbreekt nog: …&quot;:</strong> er ontbreken stukken;
+je ziet welke.</li>
+<li><strong>Groen, &quot;Compleet — klaar om te verwerken&quot;:</strong> wacht op
+jou. Deze kaarten staan standaard open.</li>
+<li><strong>Grijs, &quot;Verwerkt&quot; met datum:</strong> klaar.</li>
 </ul>
-<p>In een kaart zie je per stuk de bestandsnaam, de uploaddatum, de
-grootte en wanneer het voor het laatst is gedownload. Onder &quot;Tijdlijn
-loonheffing&quot; staat het bewijsspoor van de ondertekening: geopend, code
-verstuurd, code geaccepteerd, ondertekend, verzegeld, met tijdstip en
-kanaal.</p>
-<p>Staat er bovenaan een rode melding over de kluis of het zegel, dan
-werkt het systeem niet goed; waarschuw de admin. Zolang die melding
-staat kunnen strandwachten niets uploaden.</p>
+<p>In een opengeklapte kaart zie je:</p>
+<ul>
+<li>een link <strong>Naar het dossier van …</strong>, als je meer over
+de persoon wilt weten;</li>
+<li>het <strong>loonheffingsformulier</strong>: wanneer het is
+ondertekend, hoe (verificatiecode, naar welk nummer) en een vingerafdruk
+van het bestand, met de knop <strong>PDF</strong>;</li>
+<li><strong>identiteitsbewijs voorkant</strong> (met paspoort of
+identiteitskaart), <strong>achterkant</strong> (&quot;Niet nodig bij een
+paspoort&quot;) en <strong>kopie bankpas</strong> (&quot;Vernietigd … dagen na
+verwerking&quot; of &quot;Na verwerking zelf vernietigen&quot;): per stuk de
+bestandsnaam, de uploaddatum, de grootte en wanneer het voor het laatst
+is ingezien, met de knop <strong>Download</strong>;</li>
+<li><strong>lid van de vereniging</strong>: wanneer de inschrijving naar
+de ledenservice is gemaild, met de knop <strong>PDF</strong>, of &quot;Niet
+van toepassing — heeft al een verenigingsaccount&quot;;</li>
+<li>onderaan de knoppen <strong>Verwerkt in de
+loonadministratie</strong> en <strong>Melding opnieuw naar de
+penningmeester</strong>, en de uitklapbare <strong>Tijdlijn van de
+ondertekening</strong>. Daarin staat het bewijsspoor: klaargezet,
+geopend, verificatiecode verstuurd, code geaccepteerd, ondertekend, PDF
+verzegeld, gedownload en verwerkt, met tijdstip en IP-adres.</li>
+</ul>
+<p>Staat er bovenaan een <strong>rode melding</strong> &quot;De kluis is niet
+bereikbaar&quot;, dan kunnen strandwachten niets uploaden en geen
+loonheffingsformulier ondertekenen. Waarschuw de beheerder. Een
+<strong>oranje melding</strong> &quot;Het documentzegel werkt niet&quot; betekent
+dat nieuwe PDF&#39;s geen digitaal zegel krijgen; bestaande documenten
+blijven geldig. Ook dan de beheerder waarschuwen.</p>
+<p>Staat er nog niemand op Aangenomen, dan zie je &quot;Nog geen
+loondossiers&quot;.</p>
+<p><strong>Onderaan</strong> verschijnt de kaart <strong>Te beoordelen
+voor vernietiging</strong> zodra er iemand is van wie de bewaarplicht
+mogelijk voorbij is. Zie <a href="#loondossiers-vernietigen-na-de-bewaarplicht">Loondossiers
+vernietigen na de bewaarplicht</a>.</p>
 <h1 id="stukken-downloaden">Stukken downloaden</h1>
+<blockquote>
+<p><strong>In het kort:</strong> download via de knoppen in de kaart,
+alleen op een vertrouwd apparaat. Elke download wordt vastgelegd en een
+foto van de bankpas krijgt een watermerk met jouw naam.</p>
+</blockquote>
 <ol type="1">
-<li>Klik op <strong>Download</strong> achter het stuk.</li>
-<li>Op ID-kopieën en de bankpas staat een watermerk met je naam en de
-datum. Dat is bedoeld om doorsturen te ontmoedigen; verwijder het
-niet.</li>
-<li>Elke download wordt vastgelegd (wie, wanneer, welk stuk) en het
-bestuur krijgt daar standaard een melding van. Dat is normaal en hoort
-zo.</li>
-<li>Er geldt een grens van 30 downloads per uur.</li>
+<li>Klik op <strong>Download</strong> of <strong>PDF</strong> achter het
+stuk.</li>
+<li>Op een foto (JPG of PNG) van de bankpas staat een watermerk: &quot;Kopie
+voor loonadministratie Reddingsbrigade Paal 13&quot;, de datum en jouw naam.
+De kopie van het identiteitsbewijs krijgt <strong>geen</strong>
+watermerk: die bewaar je wettelijk verplicht in de loonadministratie, en
+de foto en alle gegevens moeten dan volledig leesbaar zijn. Het
+origineel in de kluis blijft altijd ongewijzigd. Een kopie die als PDF
+is geüpload krijgt geen watermerk.</li>
+<li>Elke download wordt vastgelegd (wie, wanneer, welk stuk). Bij het
+identiteitsbewijs, de bankpas en het loonheffingsformulier krijgt het
+bestuur standaard een mail dat jij iets hebt gedownload, met de naam van
+het document. Dat is normaal en hoort zo.</li>
+<li>Je kunt maximaal 30 stukken per uur downloaden.</li>
+<li>Een downloadlink werkt alleen vanuit het beheer. Een link doorsturen
+heeft geen zin.</li>
 </ol>
-<p>Download alleen op een vertrouwd apparaat. Zet de stukken direct in
-de loonadministratie en verwijder de gedownloade bestanden daarna van je
-computer en uit je downloadmap.</p>
+<p>Zet de stukken direct in de loonadministratie. Verwijder daarna de
+gedownloade bestanden van je computer, ook uit je downloadmap en de
+prullenbak.</p>
 <h1 id="een-dossier-verwerken">Een dossier verwerken</h1>
-<p>Zodra de gegevens in de loonadministratie staan:</p>
+<blockquote>
+<p><strong>In het kort:</strong> staan de gegevens in de
+loonadministratie, klik dan op &quot;Verwerkt in de loonadministratie&quot; en
+bevestig. Dat is niet terug te draaien.</p>
+</blockquote>
 <ol type="1">
 <li>Klik in de kaart op <strong>Verwerkt in de
-loonadministratie</strong>.</li>
-<li>Bevestig.</li>
+loonadministratie</strong>. Die knop staat er alleen bij een compleet
+dossier.</li>
+<li>Je krijgt een apart scherm dat uitlegt wat er gebeurt. Klik op
+<strong>Ja, verwerkt</strong>.</li>
 </ol>
 <p>Wat er dan gebeurt:</p>
 <ul>
-<li>De strandwacht kan de stukken niet meer wijzigen of
+<li>De strandwacht kan de stukken niet meer vervangen of
 verwijderen.</li>
-<li>De bankpasfoto wordt na de ingestelde termijn (standaard 30 dagen)
-automatisch vernietigd.</li>
-<li>Het loonheffingsformulier en de ID-kopie blijven bewaard tot de
-wettelijke termijn is verstreken (standaard 5 jaar na het einde van het
-dienstjaar) en worden dan automatisch vernietigd.</li>
-<li>De strandwacht kan zijn account niet meer zelf verwijderen
-(wettelijke bewaarplicht gaat voor); het portaal legt dat uit.</li>
+<li>De kopie van de bankpas wordt na de ingestelde termijn (standaard 30
+dagen) automatisch vernietigd, als automatisch opschonen aanstaat. Het
+tussenscherm zegt welke van de twee geldt. Staat opschonen uit,
+vernietig de bankpasfoto dan zelf (zie <a href="#bankpas-vernietigen">Bankpas vernietigen</a>).</li>
+<li>Het loonheffingsformulier en de kopie van het identiteitsbewijs
+blijven staan tot jij ze na de bewaarplicht vernietigt (zie <a href="#bewaartermijnen-en-verwijderen">Bewaartermijnen en
+verwijderen</a>).</li>
+<li>Verwijdert de strandwacht daarna zelf het account, dan blijft het
+loondossier staan omdat de wettelijke bewaarplicht voorgaat: het
+loonheffingsformulier, de kopie ID, de naam en de geboortedatum. Al het
+andere verdwijnt. Het portaal legt dat vooraf uit. In het overzicht van
+het seizoen staat de persoon dan niet meer, maar na de bewaarplicht
+verschijnt die gewoon in <strong>Te beoordelen voor
+vernietiging</strong>. Vernietig je het loondossier, dan verdwijnen ook
+naam en geboortedatum.</li>
 </ul>
-<p>Markeer een dossier pas als verwerkt als het écht verwerkt is.
-Terugdraaien kan niet zelf; vraag dan de admin.</p>
+<p>Markeer een dossier pas als verwerkt als het echt verwerkt is. Zelf
+terugdraaien kan niet; vraag dan de beheerder.</p>
 <h1 id="bankpas-vernietigen">Bankpas vernietigen</h1>
-<p>Wil je de bankpasfoto eerder weg dan de automatische termijn, klik
-dan op <strong>Vernietigen</strong> achter de bankpas en bevestig. Dit
-kan alleen voor de bankpas; de andere stukken vallen onder de
-bewaarplicht.</p>
+<blockquote>
+<p><strong>In het kort:</strong> de bankpasfoto verdwijnt vanzelf als
+automatisch opschonen aanstaat. Staat dat uit, of moet hij eerder weg,
+klik dan op &quot;Vernietigen&quot; en bevestig.</p>
+</blockquote>
+<p>Klik op <strong>Vernietigen</strong> achter de kopie van de bankpas.
+Op het volgende scherm lees je wat er gebeurt en klik je op <strong>Ja,
+vernietigen</strong>. Het bestand wordt uit de kluis gewist en is niet
+terug te halen. Dat het er was en wie het vernietigde, blijft in het
+logboek staan. De rest van het dossier blijft ongemoeid.</p>
+<p>Dit kan per stuk alleen bij de bankpas. De andere stukken vallen
+onder de bewaarplicht; die vernietig je pas daarna, in één keer per
+persoon (zie <a href="#loondossiers-vernietigen-na-de-bewaarplicht">Loondossiers
+vernietigen na de bewaarplicht</a>).</p>
 <h1 id="bewaartermijnen-en-verwijderen">Bewaartermijnen en
 verwijderen</h1>
+<blockquote>
+<p><strong>In het kort:</strong> loonheffing en kopie ID moeten blijven
+tot 5 jaar na het einde van het jaar waarin het dienstverband eindigde.
+Het systeem wist ze niet zelf: jij vernietigt ze daarna, vanuit een
+lijst die het systeem klaarzet. De bankpasfoto verdwijnt 30 dagen na
+verwerking vanzelf, maar alleen als het bestuur het automatisch
+opschonen heeft aangezet.</p>
+</blockquote>
 <table>
 <thead>
 <tr>
 <th>Stuk</th>
 <th>Termijn</th>
-<th>Wie stelt in</th>
+<th>Wie ruimt op</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Loonheffingsformulier en kopie ID</td>
-<td>5 jaar na einde van het dienstjaar</td>
-<td>Bestuur, Instellingen › Bewaartermijnen</td>
+<td>Loonheffingsformulier en kopie identiteitsbewijs</td>
+<td>5 jaar na het einde van het kalenderjaar waarin het dienstverband
+eindigde (wettelijke bewaarplicht loonadministratie)</td>
+<td>Jij, met de hand (zie hieronder)</td>
 </tr>
 <tr>
 <td>Kopie bankpas</td>
-<td>30 dagen na &quot;verwerkt&quot;</td>
-<td>Bestuur, Instellingen › Bewaartermijnen</td>
+<td>30 dagen nadat jij het dossier als verwerkt hebt gemarkeerd
+(instelbaar)</td>
+<td>Het systeem, als automatisch opschonen aanstaat; anders jij</td>
+</tr>
+<tr>
+<td>Inschrijving als lid</td>
+<td>Volgt het dossier: 2 jaar na het laatste seizoen</td>
+<td>Het systeem, als automatisch opschonen aanstaat</td>
 </tr>
 </tbody>
 </table>
-<p>De opschoning draait automatisch. Wat is vernietigd staat in het
-Logboek onder &quot;opschoning&quot;.</p>
+<p>Het automatische opruimen gebeurt één keer per dag, <strong>maar
+alleen als &quot;Automatisch opschonen inschakelen&quot; aan staat</strong> bij
+Instellingen › Bewaren &amp; opschonen. Dat staat standaard uit. Je ziet
+op Loondossiers in het kader bovenaan welke van de twee geldt. De
+termijn voor de bankpas stelt het bestuur in op hetzelfde tabblad
+(<strong>Kopie bankpas</strong>). Daar staat ook de bewaartermijn van de
+loondocumenten; die kan langer worden gezet, nooit korter dan 5 jaar.
+Wat er is vernietigd, ziet de beheerder in het logboek.</p>
+<h2 id="loondossiers-vernietigen-na-de-bewaarplicht">Loondossiers
+vernietigen na de bewaarplicht</h2>
+<p>Het systeem weet tot welk seizoen iemand hier voorkwam, maar niet
+wanneer het dienstverband eindigde. Iemand kan na een pauze terugkomen.
+Daarom vernietigt het systeem het loonheffingsformulier en de kopie ID
+nooit zelf. Het zet wel klaar wie in aanmerking komt, onderaan
+Loondossiers in de kaart <strong>Te beoordelen voor
+vernietiging</strong>. Die kaart kijkt over alle seizoenen, welk seizoen
+je bovenaan ook kiest.</p>
+<p>Daarin staat iedereen van wie het laatste seizoen als aangenomen (of
+met loonstukken) minstens vijf volle kalenderjaren terug ligt. Wie in
+2020 voor het laatst werkte, verschijnt op 1 januari 2026. Per persoon
+zie je &quot;Laatste seizoen hier&quot; en &quot;Nog aanwezig&quot; met de stukken die er
+nog zijn. Staat er niemand in aanmerking, dan is de kaart er niet.</p>
+<ol type="1">
+<li>Controleer in de loonadministratie of het dienstverband toen echt
+eindigde. Werkte iemand daarna nog, vernietig dan niets.</li>
+<li>Klik op <strong>Vernietigen…</strong> bij de naam.</li>
+<li>Het tussenscherm noemt precies wat onherroepelijk weggaat. Klik op
+<strong>Ja, loondossier vernietigen</strong>.</li>
+</ol>
+<p>Wat er dan gebeurt:</p>
+<ul>
+<li>De stukken worden uit de kluis gewist en zijn niet meer terug te
+halen, ook niet door een beheerder.</li>
+<li>Van het loonheffingsformulier verdwijnen ook het BSN, de
+handtekening en de ingevulde gegevens. Als bewijs blijft staan dát er
+getekend en geüpload is.</li>
+<li>De rest van het dossier blijft staan: gegevens, sollicitaties en
+andere ondertekeningen.</li>
+<li>In het logboek komt &quot;Loondossier vernietigd (na de bewaarplicht)&quot;,
+met wie het deed, zonder de inhoud.</li>
+</ul>
+<p>Doe deze controle één keer per jaar, bijvoorbeeld in januari. Zie de
+afvinklijst in <a href="#wat-je-per-seizoen-doet">Wat je per seizoen
+doet</a>.</p>
+<h2 id="terugtrekken">Terugtrekken</h2>
 <p>Trekt een strandwacht zich terug vóórdat het dossier verwerkt is, dan
-kan hij zijn gegevens zelf verwijderen en verdwijnen de stukken mee.
-Gaat het dienstverband niet door nádat je het dossier verwerkt hebt, dan
-kan alleen een beheerder het dossier verwijderen, met een aparte
-bevestiging.</p>
+kan die de gegevens zelf verwijderen in het portaal; de stukken worden
+dan meteen vernietigd. Na het verwerken kan dat ook, maar dan blijft het
+loondossier staan (zie <a href="#een-dossier-verwerken">Een dossier
+verwerken</a>). Is het dossier al verwerkt en gaat het dienstverband
+toch niet door, dan kan alleen iemand met zowel het recht om
+sollicitanten te verwijderen als het recht om loondossiers te
+verwijderen het dossier verwijderen (standaard alleen de beheerder). Het
+systeem vraagt dan met een apart vinkje om te bevestigen dat het
+dienstverband niet is doorgegaan.</p>
+<p>Stopt een aangenomen strandwacht, controleer dan ook de Loonplanning
+en de vastgestelde afspraak met het bestuur, zodat de export voor de
+loonadministratie klopt.</p>
+<h1 id="inzet-en-rooster">Inzet en rooster</h1>
+<blockquote>
+<p><strong>In het kort:</strong> het rooster (wie welke dag op welke
+post staat) wordt buiten dit systeem gemaakt. Dit systeem levert per
+persoon per week het afgesproken aantal dagen, betaald of niet, de
+functie, en per dag of iemand kan. Het rooster kiest zelf welke
+dagen.</p>
+</blockquote>
+<p>Onder <strong>Exporteren</strong> in de Loonplanning staan
+<strong>Voor het rooster (Excel)</strong> en <strong>Voor het rooster
+(JSON)</strong>. Zolang de loonplanning niet definitief is, komt daar
+het actieve scenario in (als concept); daarna de vastgestelde afspraak.
+Plan het echte rooster alleen op de afspraak.</p>
+<p>Per week staat erin:</p>
+<ul>
+<li>het afgesproken aantal dagen en of die week betaald is;</li>
+<li>de dagen waarop iemand kan, liever niet (een voorkeur; het rooster
+mag ze gebruiken als het niet anders kan) en niet (met de reden);</li>
+<li>wat iemand die week hooguit opgaf;</li>
+<li>signalen als het rooster dat niet kan vullen, bijvoorbeeld &quot;Minder
+beschikbare dagen dan afgesproken&quot;.</li>
+</ul>
+<p>Voor jou telt vooral: er worden <strong>geen vaste weekdagen</strong>
+afgesproken, alleen een aantal per week. Het loon rekent met dat aantal,
+niet met welke dagen het rooster kiest. Onbetaalde weken staan er ook
+in; dat zijn echte werkdagen zonder loon.</p>
 <h1 id="wat-je-nooit-doet">Wat je nooit doet</h1>
+<blockquote>
+<p><strong>In het kort:</strong> stukken blijven in het beheer en in de
+loonadministratie. Niet mailen, niet kopiëren, niet delen.</p>
+</blockquote>
 <ul>
 <li>Stukken per e-mail of WhatsApp doorsturen, ook niet naar jezelf.
 Gebruik het beheer.</li>
-<li>Een BSN of IBAN in een spreadsheet, notitie of chat zetten buiten de
-loonadministratie.</li>
+<li>Een BSN of rekeningnummer in een spreadsheet, notitie of chat zetten
+buiten de loonadministratie.</li>
+<li>Een BSN, rekeningnummer of kopie ID lokaal bewaren nadat het in de
+loonadministratie staat. Verwijder gedownloade bestanden meteen, ook uit
+de downloadmap en de prullenbak.</li>
+<li>Screenshots maken van kopieën van identiteitsbewijzen.</li>
 <li>Je inlog delen. Elke download staat op jouw naam.</li>
-<li>Screenshots maken van ID-kopieën.</li>
+<li>De concept-Excel (&quot;CONCEPT&quot;) gebruiken voor de loonadministratie.
+Gebruik de vastgestelde versie.</li>
+<li>Een Excel met namen en geboortedatums rondsturen of langer bewaren
+dan nodig.</li>
+<li>Iemand ontgrendelen of een afspraak wijzigen zonder overleg met het
+bestuur: dat gaat over wat met de strandwacht is afgesproken.</li>
 </ul>
 <h1 id="veelgestelde-vragen">Veelgestelde vragen</h1>
+<blockquote>
+<p><strong>In het kort:</strong> de meeste vragen gaan over een dossier
+dat oranje blijft, een waarschuwing over tarieven of budget, of iemand
+die niet te wijzigen is in de Loonplanning.</p>
+</blockquote>
+<p><strong>In de Loonplanning staat &quot;Tarieven 2027 nog niet ingevuld, we
+rekenen met 2026.&quot;</strong><br />
+De minimumlonen van het jaar van dit seizoen zijn nog niet ingevuld. De
+kosten zijn dan een schatting met de tarieven van het vorige jaar. Vraag
+het bestuur bij Instellingen › Lonen &amp; budget het nieuwe jaar te
+maken en de nieuwe minimumlonen in te vullen.</p>
+<p><strong>Er staat &quot;Geen budget ingesteld voor …&quot;.</strong><br />
+Het budget hoort bij één kalenderjaar en gaat niet mee naar het volgende
+jaar. Geef het budget door aan het bestuur; die vult het in bij
+Instellingen › Lonen &amp; budget, bij het juiste jaar.</p>
+<p><strong>Waarom zijn de kosten in de Loonplanning anders dan in de
+loonadministratie?</strong><br />
+De Loonplanning rekent bruto loon inclusief vakantietoeslag, zonder
+werkgeverslasten, met de leeftijd op de maandag van elke week en het
+tarief van juni of van juli tot en met september. Onbetaalde dagen
+kosten niets. Kijk in de Excel op het tabblad <strong>Tarieven en
+budget</strong> welke getallen er zijn gebruikt.</p>
+<p><strong>Ik kan iemand in de Loonplanning niet
+aanpassen.</strong><br />
+Die persoon staat vast na het gesprek op het trainingsweekend (slotje).
+Overleg met het bestuur; moet het echt anders, ontgrendel dan met een
+reden en zet daarna weer vast (zie <a href="#vastzetten-na-het-gesprek">Vastzetten na het gesprek</a>). Zie je
+helemaal geen knoppen en staat er &quot;alleen lezen&quot;, dan heb je geen
+bewerkrecht; vraag de beheerder.</p>
+<p><strong>Iemand is aangenomen, maar heeft geen
+afspraak.</strong><br />
+Dat gebeurt als iemand na het definitief maken is aangenomen, of bij het
+definitief maken nergens was ingepland. Plan die persoon in, klik op de
+naam en kies <strong>Afspraak vastleggen uit dit scenario</strong>.</p>
+<p><strong>Achter een naam staat &quot;wijkt af&quot;.</strong><br />
+De planning in dit scenario is anders dan de vastgestelde afspraak.
+Hoort de wijziging erbij, werk dan de afspraak bij met <strong>Afspraak
+bijwerken uit dit scenario</strong>. Hoort hij er niet bij, zet de
+planning dan terug.</p>
+<p><strong>Een cel is rood met een stippelrand.</strong><br />
+Er is meer gepland dan de sollicitant opgaf, of in een week die niet is
+opgegeven. Dat mag, maar bespreek het met de sollicitant (via het
+bestuur).</p>
+<p><strong>Ik zie Beschikbaarheid of Trainingsweekend niet in het
+menu.</strong><br />
+Dat is zo bedoeld: die schermen zijn van het bestuur. De opgave zie je
+in de Loonplanning en in het dossier, het besluit in het dossier op het
+tabblad Trainingsweekend.</p>
 <p><strong>Een dossier blijft oranje terwijl de strandwacht zegt dat
 alles is geüpload.</strong><br />
-Kijk welk stuk ontbreekt. Bij een ID-kaart moet ook de achterkant erbij;
-bij een paspoort niet. Het loonheffingsformulier telt pas mee na de
-ondertekening met verificatiecode.</p>
+Kijk achter &quot;Ontbreekt nog&quot; welk stuk mist. Bij een identiteitskaart
+moet ook de achterkant erbij; bij een paspoort niet. Het
+loonheffingsformulier telt pas mee na het ondertekenen met de
+verificatiecode.</p>
+<p><strong>Het dossier is groen, maar ik heb geen mail
+gekregen.</strong><br />
+De mail gaat uit zodra het laatste stuk binnen is. Kijk eerst in je
+ongewenste mail en of het penningmeester-adres in Instellingen ›
+Afzender &amp; adressen klopt (leeg is: het bestuursadres). Verwerk het
+dossier gewoon, of klik op <strong>Melding opnieuw naar de
+penningmeester</strong> als je de mail toch wilt hebben.</p>
 <p><strong>De strandwacht krijgt geen verificatiecode.</strong><br />
-De code gaat naar het telefoonnummer uit het dossier (sms, anders
-WhatsApp, anders e-mail). Laat het nummer controleren bij &quot;Mijn
-gegevens&quot; in het portaal. Blijft het misgaan, dan is dat iets voor de
-admin (foutenlog).</p>
-<p><strong>Ik zie een watermerk op de ID-kopie. Kan dat
-weg?</strong><br />
-Nee. Het watermerk is bewust en beschermt tegen misbruik van de kopie.
-Voor de loonadministratie is een kopie mét watermerk gewoon geldig.</p>
-<p><strong>Het formulier van vorig jaar staat er niet
-meer.</strong><br />
-Het scherm toont het actieve seizoen. Stukken van eerdere seizoenen
-blijven in de kluis tot de bewaartermijn is verstreken; vraag de admin
-als je ze nodig hebt.</p>
+De code gaat per sms naar het telefoonnummer uit het dossier; lukt dat
+niet, dan via WhatsApp, en anders per e-mail. Klopt het nummer niet,
+laat het bestuur het dan aanpassen in het dossier. Blijft het misgaan,
+dan is het iets voor de beheerder.</p>
+<p><strong>Waarom heeft de ID-kopie geen watermerk en de bankpas
+wel?</strong><br />
+De kopie van het identiteitsbewijs is een verplicht stuk in de
+loonadministratie. Bij een controle moeten de foto en alle gegevens
+volledig leesbaar zijn; anders kan de Belastingdienst het
+anoniementarief toepassen. Daarom staat er sinds versie 2.150 geen
+watermerk meer op. De bankpas is niet wettelijk verplicht en houdt het
+watermerk als bescherming tegen misbruik.</p>
+<p><strong>Ik zoek het loondossier van vorig jaar.</strong><br />
+Kies bovenaan Loondossiers het <strong>Seizoen</strong> van vorig jaar.
+Die keuze staat er zodra er meer dan één seizoen is. Stukken blijven in
+de kluis tot jij ze na de bewaarplicht vernietigt.</p>
 <p><strong>Is de PDF echt door de strandwacht
 ondertekend?</strong><br />
 De laatste pagina van de PDF is het certificaat van ondertekening: wie,
 wanneer, vanaf welk IP-adres, met welke code naar welk nummer, en een
 controlegetal. Acrobat toont bij het zegel dat het document sinds de
-ondertekening niet is gewijzigd (met een melding dat de uitgever niet in
-de lijst van Adobe staat; dat is normaal voor een eigen zegel).</p>
+ondertekening niet is gewijzigd, met een melding dat de uitgever niet in
+de lijst van Adobe staat. Dat is normaal voor een eigen zegel.</p>
+<p><strong>Waarom krijgt het bestuur een mail als ik iets
+download?</strong><br />
+Zo ziet iemand anders mee dat deze stukken worden ingezien. Dat
+beschermt de strandwacht en jou. Het bestuur kan die melding uitzetten
+onder Instellingen › Bewaren &amp; opschonen, maar dat raden we af.</p>
+<p><strong>Ik zie een naam bij &quot;Te beoordelen voor vernietiging&quot; die nog
+bij ons werkt.</strong><br />
+Vernietig dan niets. Het systeem kijkt alleen naar het laatste seizoen
+waarin iemand hier als aangenomen voorkwam. Werkte die persoon later
+nog, bijvoorbeeld zonder nieuwe sollicitatie, dan loopt de bewaarplicht
+langer. De naam blijft in de lijst staan; dat is geen probleem.</p>
+<p><strong>Ik zie Loonplanning niet in het menu.</strong><br />
+De penningmeester heeft het recht Loonplanning standaard. Een beheerder
+kan het bij Rollen &amp; rechten hebben weggehaald, of de module
+Loonplanning staat uit. Vraag de beheerder.</p>
+<h1 id="woordenlijst">Woordenlijst</h1>
+<table>
+<thead>
+<tr>
+<th>Woord</th>
+<th>Betekenis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Actief scenario</strong></td>
+<td>Het scenario met de ster: de planning die geldt en die het bestuur
+in de gesprekken ziet.</td>
+</tr>
+<tr>
+<td><strong>Afspraak</strong></td>
+<td>De vastgestelde inzet van een aangenomen strandwacht: functie, en
+per week dagen en betaald of niet. Ontstaat bij definitief maken. De
+basis voor loon en rooster.</td>
+</tr>
+<tr>
+<td><strong>Dagloon</strong></td>
+<td>Wat één betaalde werkdag bruto kost, inclusief vakantietoeslag.</td>
+</tr>
+<tr>
+<td><strong>Definitief maken</strong></td>
+<td>De planning omzetten in afspraken voor iedereen die is
+aangenomen.</td>
+</tr>
+<tr>
+<td><strong>Factor</strong></td>
+<td>Vermenigvuldiger per functie op het minimumloon (bijvoorbeeld 1,20
+voor de functie Lifeguard).</td>
+</tr>
+<tr>
+<td><strong>Fase</strong></td>
+<td>De stap waarin een sollicitant zit, van Aangemeld tot Aangenomen of
+Afgewezen.</td>
+</tr>
+<tr>
+<td><strong>Loondossier</strong></td>
+<td>Loonheffingsformulier, kopie identiteitsbewijs en kopie bankpas van
+één strandwacht.</td>
+</tr>
+<tr>
+<td><strong>Onbetaald</strong></td>
+<td>Echte, afgesproken werkdagen zonder loon. Tellen mee voor bezetting
+en rooster.</td>
+</tr>
+<tr>
+<td><strong>Opgave</strong></td>
+<td>Wat de sollicitant zelf opgaf over beschikbaarheid; per week hooguit
+zoveel dagen.</td>
+</tr>
+<tr>
+<td><strong>Scenario</strong></td>
+<td>Een complete planning in de Loonplanning. Er kunnen er meerdere
+naast elkaar bestaan.</td>
+</tr>
+<tr>
+<td><strong>SD</strong></td>
+<td>Oude afkorting voor selectiedag; op de schermen staat nu het hele
+woord.</td>
+</tr>
+<tr>
+<td><strong>Tariefjaar</strong></td>
+<td>Het kalenderjaar waarvan de minimumlonen en het budget komen: het
+jaar waarin de werkperiode begint.</td>
+</tr>
+<tr>
+<td><strong>TW</strong></td>
+<td>Oude afkorting voor trainingsweekend; op de schermen staat nu het
+hele woord (of kort &quot;weekend&quot;, zoals in &quot;Weekend geweest&quot;).</td>
+</tr>
+<tr>
+<td><strong>Vastzetten</strong></td>
+<td>Na het gesprek op het trainingsweekend de inzet van één persoon in
+alle scenario&#39;s gelijk maken en op slot zetten.</td>
+</tr>
+<tr>
+<td><strong>Verzoek om minder dagen</strong></td>
+<td>Vraag van een sollicitant om in bepaalde weken minder te werken;
+telt pas mee na goedkeuring door het bestuur.</td>
+</tr>
+<tr>
+<td><strong>Voorlopig / definitief</strong> (beschikbaarheid)</td>
+<td>Of de sollicitant de opgave al als zeker heeft bevestigd. Los van
+het definitief maken van de loonplanning.</td>
+</tr>
+</tbody>
+</table>
 </body>
 </html>

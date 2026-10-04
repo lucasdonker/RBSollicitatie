@@ -1,0 +1,117 @@
+<?php
+/**
+ * TW-stap Evaluatie (bestuur): na een dag beoordelen zegt het bestuur per persoon alvast
+ * sowieso aannemen, twijfel of sowieso afwijzen. Geen besluit — dat valt in het gesprek.
+ * Wie op twijfel staat, komt bij Beoordelen bovenaan onder "extra aandacht gevraagd", met de
+ * vraag die je hier invult. Aannemen of afwijzen zien de beoordelaars nooit.
+ * Onderdeel van admin/trainingsweekend.php; logica in tw_evaluatie_zetten().
+ * Werkt zonder JavaScript: per persoon een eigen formulier.
+ */
+$_st   = tw_evaluatie_standen();
+$_obs  = tw_observaties_alle($sid);
+$_lgf  = lg_feedback_alle($sid);
+$_sd   = (module_aan('selectiedag') && function_exists('selectie_scores_alle')) ? selectie_scores_alle($sid) : [];
+$_toon = (string)($_GET['toon'] ?? '');
+// Wie niet kwam, is niet te evalueren: eigen groep, telt niet mee in "nog niet" (anders blijft het stoplicht oranje).
+$_groep_van = fn($k) => isset($_st[$k['evaluatie'] ?? '']) ? $k['evaluatie'] : (tw_niet_gekomen($k) ? 'niet_gekomen' : 'geen');
+$_tel  = ['aannemen' => 0, 'twijfel' => 0, 'afwijzen' => 0, 'geen' => 0, 'niet_gekomen' => 0];
+foreach ($kandidaten as $_k) $_tel[$_groep_van($_k)]++;
+$_lijst = array_values(array_filter($kandidaten, fn($k) => $_toon === '' || $_toon === $_groep_van($k)));
+$_kleur = ['aannemen' => 'groen', 'twijfel' => 'oranje', 'afwijzen' => 'rood'];
+?>
+<section class="ds-kaart bh-dekkop">
+  <div class="bh-dekkop-zin">
+    <?= bh_stoplicht($_tel['geen'] > 0 ? 'krap' : 'goed',
+                     $_tel['aannemen'] . ' sowieso aannemen · ' . $_tel['twijfel'] . ' twijfel · ' . $_tel['afwijzen'] . ' sowieso afwijzen · ' . $_tel['geen'] . ' nog niet'
+                     . ($_tel['niet_gekomen'] > 0 ? ' · ' . $_tel['niet_gekomen'] . ' niet gekomen' : '')) ?>
+  </div>
+  <p class="bh-dekkop-uitleg">
+    Nog geen besluit, alleen jullie eerste indruk. Wie op <strong>twijfel</strong> staat, komt bij Beoordelen bovenaan
+    met jullie vraag erbij, zodat de beoordelaars daar de rest van het weekend extra op letten. Aannemen of afwijzen
+    zien zij niet.
+  </p>
+</section>
+
+<?php
+  $filter_verborgen = ['stap' => 'evaluatie'];
+  $filter_velden = [
+    ['soort' => 'keuze', 'naam' => 'toon', 'label' => 'Toon', 'waarde' => $_toon,
+     'opties' => ['' => 'Iedereen (' . count($kandidaten) . ')', 'geen' => 'Nog niet geëvalueerd (' . $_tel['geen'] . ')',
+                  'twijfel' => 'Twijfel (' . $_tel['twijfel'] . ')', 'aannemen' => 'Sowieso aannemen (' . $_tel['aannemen'] . ')',
+                  'afwijzen' => 'Sowieso afwijzen (' . $_tel['afwijzen'] . ')', 'niet_gekomen' => 'Niet gekomen (' . $_tel['niet_gekomen'] . ')']],
+  ];
+  $filter_wissen = $_toon !== '' ? tw_url('evaluatie') : null;
+  require __DIR__ . '/../_filterbalk.php';
+?>
+
+<?php if (!$_lijst): ?>
+  <div class="ds-kaart ds-kaart-p">
+    <?php $leeg_titel = 'Niemand in deze selectie'; $leeg_tekst = 'Kies bij Toon een andere groep.'; $leeg_icoon = 'zoek'; require __DIR__ . '/../_leeg.php'; ?>
+  </div>
+<?php else: ?>
+<ul class="bh-twevaluatie">
+  <?php foreach ($_lijst as $_k):
+    $_id  = (int)$_k['sol_id'];
+    $_e   = (string)($_k['evaluatie'] ?? '');
+    $_pos = count(array_filter($_obs[$_id] ?? [], fn($o) => ($o['soort'] ?? '') === 'positief'));
+    $_aan = count(array_filter($_obs[$_id] ?? [], fn($o) => ($o['soort'] ?? '') === 'aandacht'));
+    $_gem = function_exists('selectie_gemiddelde') ? selectie_gemiddelde($_sd[$_id] ?? []) : null;
+  ?>
+  <li class="ds-kaart bh-twevaluatie-rij" id="ev-<?= $_id ?>">
+    <div class="bh-twevaluatie-wie">
+      <?= bh_avatar($_k, 44) ?>
+      <span>
+        <span class="bh-twgesprek-naam"><?= h((string)$_k['naam']) ?></span>
+        <?= bh_meta([tw_aanwezigheid_tekst($_k),
+                     count($_obs[$_id] ?? []) ? $_pos . ' positief · ' . $_aan . ' aandacht' : 'nog geen observaties',
+                     $_gem !== null ? 'selectiedag ' . cijfer_nl((float)$_gem) : '',
+                     !empty($_lgf[$_id]) ? count($_lgf[$_id]) . ' van strandwachten' : '',
+                     !empty($_k['is_lifeguard']) ? 'terugkerende strandwacht' : '']) ?>
+        <?php if ($_e !== '' && !empty($_k['evaluatie_door'])): ?>
+          <span class="bh-meta"><?= h((string)$_k['evaluatie_door']) ?>, <?= h(datum_dag_nl((string)$_k['evaluatie_op'])) ?> <?= h(date('H:i', strtotime((string)$_k['evaluatie_op']))) ?></span>
+        <?php endif; ?>
+      </span>
+    </div>
+
+    <?php if (!empty($_k['doorgevoerd_op'])): ?>
+      <p class="bh-meta"><?= tw_niet_gekomen($_k) ? 'Er is al besloten' : 'Het gesprek is al geweest' ?>; het besluit staat bij Gesprekken.</p>
+    <?php elseif ($_e === '' && tw_niet_gekomen($_k)): ?>
+      <p class="bh-meta">Niet gekomen, dus niets te evalueren. Het besluit leg je vast bij Gesprekken, onder "Niet gekomen".</p>
+    <?php else: ?>
+    <form method="post" class="bh-twevaluatie-form" data-direct-opslaan>
+      <?= csrf_input() ?>
+      <input type="hidden" name="actie" value="evaluatie">
+      <input type="hidden" name="sol_id" value="<?= $_id ?>">
+      <input type="hidden" name="toon" value="<?= h($_toon) ?>">
+      <fieldset class="bh-twkeuze">
+        <legend class="bh-vw">Eerste indruk van <?= h((string)$_k['naam']) ?></legend>
+        <?php foreach ($_st as $_w => $_l): ?>
+          <label class="bh-twoptie <?= h($_w) ?>"><input type="radio" name="evaluatie" value="<?= h($_w) ?>"<?= $_e === $_w ? ' checked' : '' ?>><span><?= h($_l) ?></span></label>
+        <?php endforeach; ?>
+        <label class="bh-twoptie"><input type="radio" name="evaluatie" value=""<?= $_e === '' ? ' checked' : '' ?>><span>Nog niet</span></label>
+      </fieldset>
+      <?php // Alleen bij twijfel zichtbaar (CSS :has): bij de andere keuzes wordt de vraag niet bewaard. ?>
+      <span class="bh-twevaluatie-vraag">
+        <label class="bh-vw" for="evb-<?= $_id ?>">Vraag aan de beoordelaars</label>
+        <input type="text" class="ds-input" id="evb-<?= $_id ?>" name="evaluatie_bericht" maxlength="500"
+               placeholder="Waar moeten de beoordelaars op letten?" value="<?= h((string)($_k['evaluatie_bericht'] ?? '')) ?>">
+      </span>
+      <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm" data-direct-knop>Opslaan</button>
+      <span class="bh-meta bh-direct-status" data-direct-status aria-live="polite"></span>
+    </form>
+    <?php endif; ?>
+
+    <?php // De observaties waarop je evalueert, hier uitklapbaar: niet heen en weer naar Beoordelen. ?>
+    <?php if (!empty($_obs[$_id])): ?>
+    <details class="bh-twevaluatie-obs">
+      <summary>Observaties (<?= count($_obs[$_id]) ?>)</summary>
+      <?php $obs_lijst = $_obs[$_id]; $obs_eigen = null; require __DIR__ . '/../_observaties.php'; ?>
+    </details>
+    <?php endif; ?>
+  </li>
+  <?php endforeach; ?>
+</ul>
+<p class="bh-meta">Een keuze wordt meteen opgeslagen, de vraag zodra je het veld verlaat. Bij twijfel verschijnt een veld voor
+  een vraag aan de beoordelaars; die zien ze bij die persoon.</p>
+<?php endif; ?>
+<script src="<?= APP_URL ?>/assets/js/direct_opslaan.js?v=<?= @filemtime(__DIR__ . '/../../assets/js/direct_opslaan.js') ?>" defer></script>

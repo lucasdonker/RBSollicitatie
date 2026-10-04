@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/functions.php';
-vereis_recht('selectiedag', 'bewerken');
+// De norm (dagen per week) hoort bij de beschikbaarheid, niet bij de selectiedag.
+vereis_recht('beschikbaarheid', 'bewerken');
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { http_response_code(405); exit; }

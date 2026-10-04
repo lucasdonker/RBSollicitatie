@@ -101,6 +101,28 @@
     }
   }
 
+  /* ── Getypte naam als handtekening: het tekenvak maakt plaats voor de naam als voorbeeld ──
+     Zonder JavaScript werkt het vinkje gewoon (de server accepteert dan de getypte naam). */
+  var getyptVink = document.getElementById('hdtGetypt');
+  var voorbeeld  = document.getElementById('hdtGetyptVoorbeeld');
+  var voorbNaam  = document.getElementById('hdtGetyptNaam');
+  var naamVeld   = form.querySelector('input[name="naam_getypt"]');
+  function getyptBijwerken() {
+    if (!getyptVink || !voorbeeld) return;
+    var aan = getyptVink.checked;
+    if (aan && wis) wis.click();      // anders wint een eerder getekende krabbel stil van de keuze
+    if (wrap) { wrap.hidden = aan; if (aan) wrap.classList.remove('fout'); }
+    if (wis) wis.hidden = aan;
+    voorbeeld.hidden = !aan;
+    if (voorbNaam) voorbNaam.textContent = (naamVeld && naamVeld.value.trim()) || voorbNaam.dataset.leeg || '';
+    if (!aan) pasGrootteAan();        // het vak was verborgen en heeft nu weer een maat
+  }
+  if (getyptVink) {
+    getyptVink.addEventListener('change', getyptBijwerken);
+    if (naamVeld) naamVeld.addEventListener('input', function () { if (getyptVink.checked) getyptBijwerken(); });
+    getyptBijwerken();
+  }
+
   /* ── Voorwaardelijke blokken: data-toon-bij="veld=waarde" (bijv. IBAN alleen bij incasso) ── */
   document.querySelectorAll('[data-toon-bij]').forEach(function (blok) {
     var kv = blok.dataset.toonBij.split('='); var naam = kv[0], waarde = kv[1];
@@ -185,8 +207,9 @@
     var ja = f.querySelector('input[name="gezondheid_keuze"][value="ja"]');
     var toel = f.querySelector('[name="gezondheid_toelichting"]');
     if (ja && ja.checked && toel && !toel.value.trim()) { var tw = veldWrap(toel); tw.classList.add('fout'); fouten.push(tw); }
-    // Handtekening verplicht
-    if (data && !data.value) { if (wrap) { wrap.classList.add('fout'); fouten.push(wrap); } }
+    // Handtekening verplicht, tenzij de getypte naam als handtekening geldt
+    var getypt = document.getElementById('hdtGetypt');
+    if (data && !data.value && !(getypt && getypt.checked)) { if (wrap) { wrap.classList.add('fout'); fouten.push(wrap); } }
     // Verificatiecode verplicht (6 cijfers) als de stap er is
     var tfaCode = document.getElementById('ond2faCode');
     if (tfaCode) {

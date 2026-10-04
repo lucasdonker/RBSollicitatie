@@ -34,7 +34,10 @@ function icoon_paden(): array {
         'terug'       => '<line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>',
         'uitloggen'   => '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>',
         'pijl-rechts' => '<line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>',
+        'verstuur'    => '<line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>',
         'chevron'     => '<polyline points="9 18 15 12 9 6"/>',
+        'chevron-op'  => '<polyline points="6 15 12 9 18 15"/>',
+        'chevron-neer'=> '<polyline points="6 9 12 15 18 9"/>',
         'locatie'     => '<path d="M17 8.5a5 5 0 1 0-10 0c0 5 5 12 5 12s5-7 5-12"/><circle cx="12" cy="8.5" r="1.8"/>',
         'camera'      => '<rect x="3" y="6" width="18" height="14" rx="2"/><circle cx="12" cy="13" r="3.4"/><path d="M8.5 6l1.2-2h4.6l1.2 2"/>',
         'wissel'      => '<polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>',
@@ -98,6 +101,9 @@ function icoon_paden(): array {
         'landing'     => '<rect x="3" y="3" width="18" height="4" rx="1"/><rect x="3" y="10" width="8" height="11" rx="1"/><rect x="15" y="10" width="6" height="4" rx="1"/><rect x="15" y="17" width="6" height="4" rx="1"/>',
         'paginas'     => '<rect x="3" y="3" width="18" height="4" rx="1"/><rect x="3" y="10" width="8" height="11" rx="1"/><rect x="15" y="10" width="6" height="4" rx="1"/><rect x="15" y="17" width="6" height="4" rx="1"/>',
         'plus'        => '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+        // Kompas: de rondleidingen (includes/beheer/rondleiding.php)
+        'rondleiding' => '<circle cx="12" cy="12" r="9"/><polygon points="15.5 8.5 13.4 13.4 8.5 15.5 10.6 10.6 15.5 8.5"/>',
+        'boek'        => '<path d="M4 19.5V5a2 2 0 0 1 2-2h14v16H6a2 2 0 0 0-2 2z"/><path d="M4 19.5A2 2 0 0 0 6 21h14"/>',
     ];
 }
 

@@ -147,5 +147,5 @@ SET foreign_key_checks = 1;
 INSERT IGNORE INTO `seizoenen` (`naam`, `status`) VALUES ('Zomer 2026', 'gesloten');
 INSERT IGNORE INTO `migraties` (`versie`, `beschrijving`) VALUES ('0001', 'Basisschema installatie');
 
--- Geen standaard beheerder meer (2.94.0): de eerste beheerder logt in via Authentik (groep Sol-Admin).
+-- Geen standaard beheerder meer (2.94.0): de eerste beheerder logt in via Authentik (groep app-sol-admin).
 -- Zie docs/handleiding/runbook_systeembeheer.md.

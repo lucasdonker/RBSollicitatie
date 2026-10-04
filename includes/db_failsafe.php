@@ -14,6 +14,9 @@
  * faalt stil (met een log-regel), zodat een probleem met één tabel de rest niet raakt.
  */
 
+// Back-up vóór elke schema-update (backup_maak), zie includes/backup.php.
+if (file_exists(__DIR__ . '/backup.php')) require_once __DIR__ . '/backup.php';
+
 if (!function_exists('db_failsafe')) {
 
 /**
@@ -43,6 +46,31 @@ function db_tabel_bestaat(PDO $db, string $tabel): bool {
         $q = $db->prepare("SELECT 1 FROM INFORMATION_SCHEMA.TABLES
                            WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?");
         $q->execute([$tabel]);
+        return (bool)$q->fetchColumn();
+    } catch (\Exception $e) { return false; }
+}
+
+/**
+ * Klopt het schema al voor deze versie? Dan hoeft geen enkele *_auto_setup() iets te doen.
+ *
+ * Elke setup-functie begint met `if ($done || schema_actueel()) return;`. Zonder die regel
+ * draaiden ze bij élk verzoek opnieuw (tientallen INFORMATION_SCHEMA-queries en UPDATEs per
+ * aanmelding) — de hoofdoorzaak van trage formulieren. db() start de failsafe bij de eerste
+ * verbinding, dus na de aanroep hieronder is de vlag gezet. Tijdens de volledige run staat
+ * hij uit, zodat de setups dan wél hun werk doen.
+ * Gevolg: een nieuwe tabel of kolom in een setup = APP_VERSIE ophogen, anders draait hij niet.
+ */
+function schema_actueel(): bool {
+    if (function_exists('db')) db();
+    return !empty($GLOBALS['_p13_schema_actueel']);
+}
+
+/** Bestaat deze index (op naam) op de tabel? Breekt nooit af. */
+function db_index_bestaat(PDO $db, string $tabel, string $index): bool {
+    try {
+        $q = $db->prepare("SELECT 1 FROM INFORMATION_SCHEMA.STATISTICS
+                           WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND INDEX_NAME = ? LIMIT 1");
+        $q->execute([$tabel, $index]);
         return (bool)$q->fetchColumn();
     } catch (\Exception $e) { return false; }
 }
@@ -84,10 +112,23 @@ function db_verwachte_kolommen(): array {
         ],
         'beheerders' => [
             'standaard_ingang' => "VARCHAR(10) DEFAULT NULL",
+            // Tweestaps op de wachtwoord-noodingang (includes/tweestaps.php). TEXT: de kluis-blob
+            // en de lijst met hashes passen niet gegarandeerd in een VARCHAR (stil afkappen).
+            'tweestaps_geheim'  => 'TEXT DEFAULT NULL',
+            'tweestaps_aan_op'  => 'DATETIME DEFAULT NULL',
+            'tweestaps_stap'    => 'BIGINT DEFAULT NULL',
+            'tweestaps_herstel' => 'TEXT DEFAULT NULL',
         ],
         'sollicitaties' => [
             'bron_code'  => 'VARCHAR(80) DEFAULT NULL',
             'bron_label' => 'VARCHAR(150) DEFAULT NULL',
+            // 2.145.0: UTM van de aanmelding (pag_utm_velden()), geschoond tot a-z0-9-.
+            'utm_source'   => 'VARCHAR(40) DEFAULT NULL',
+            'utm_medium'   => 'VARCHAR(40) DEFAULT NULL',
+            'utm_campaign' => 'VARCHAR(40) DEFAULT NULL',
+            'utm_content'  => 'VARCHAR(40) DEFAULT NULL',
+            // 2.145.0: sessiegeneratie, "overal uitloggen" (includes/portaal_login.php).
+            'portaal_sessie_gen' => 'INT NOT NULL DEFAULT 0',
         ],
     ];
 }
@@ -107,12 +148,45 @@ function db_failsafe(bool $forceer = false): void {
     $done = true;
 
     $versie = defined('APP_VERSIE') ? APP_VERSIE : '0';
-    if (!$forceer) {
-        try {
-            $q = db()->prepare("SELECT waarde FROM instellingen WHERE sleutel = 'db.failsafe_versie' LIMIT 1");
-            $q->execute();
-            if ((string)$q->fetchColumn() === $versie) return;
-        } catch (\Throwable $e) { /* tabel bestaat nog niet: gewoon de volledige run doen */ }
+    $GLOBALS['_p13_schema_actueel'] = false;
+    $vorige = '';
+    try {
+        $q = db()->prepare("SELECT waarde FROM instellingen WHERE sleutel = 'db.failsafe_versie' LIMIT 1");
+        $q->execute();
+        $vorige = (string)$q->fetchColumn();
+    } catch (\Throwable $e) { /* tabel bestaat nog niet: gewoon de volledige run doen */ }
+    if (!$forceer && $vorige === $versie) { $GLOBALS['_p13_schema_actueel'] = true; return; }
+
+    // Eén tegelijk: komen er twee eerste verzoeken na een uitrol tegelijk binnen, dan doet de één
+    // de back-up en de update; de ander slaat hem over (en ziet het schema bij het volgende verzoek).
+    $db_lock = null;
+    try { $db_lock = db(); $slot = (int)$db_lock->query("SELECT GET_LOCK('p13_db_failsafe', 0)")->fetchColumn(); }
+    catch (\Throwable $e) { $slot = 1; $db_lock = null; }   // geen GET_LOCK (bijv. SQLite in tests): gewoon door
+    if ($slot !== 1) { $GLOBALS['_p13_schema_actueel'] = true; return; }
+    $los = function () use ($db_lock): void {
+        if ($db_lock) { try { $db_lock->query("SELECT RELEASE_LOCK('p13_db_failsafe')"); } catch (\Throwable $e) {} }
+    };
+
+    // Een echte versiewissel op een bestaande database? Dan eerst een volledige back-up, vóór er
+    // ook maar één tabel of kolom verandert. Lukt die niet, dan gaat de update tóch door (anders
+    // draait nieuwe code op een oud schema): de systeemcontrole wordt oranje en het staat in het log.
+    if ($vorige !== $versie && $vorige !== '' && function_exists('backup_maak')) {
+        $res = backup_maak(db(), 'v' . $vorige . '-naar-v' . $versie);
+        if ($res['ok']) {
+            try {
+                db()->prepare("INSERT INTO instellingen (sleutel, waarde) VALUES ('db.laatste_backup', ?) ON DUPLICATE KEY UPDATE waarde = VALUES(waarde)")
+                    ->execute([json_encode(['bestand' => basename((string)$res['bestand']), 'op' => date('Y-m-d H:i:s'),
+                                            'van' => $vorige, 'naar' => $versie, 'grootte' => $res['grootte']])]);
+                db()->prepare("DELETE FROM instellingen WHERE sleutel = 'db.backup_fout'")->execute();
+            } catch (\Throwable $e) {}
+        } else {
+            $melding = 'Back-up vóór de update van ' . $vorige . ' naar ' . $versie . ' mislukt: ' . $res['fout'];
+            error_log('db_failsafe: ' . $melding);
+            try {
+                db()->prepare("INSERT INTO instellingen (sleutel, waarde) VALUES ('db.backup_fout', ?) ON DUPLICATE KEY UPDATE waarde = VALUES(waarde)")
+                    ->execute([json_encode(['melding' => $melding, 'op' => date('Y-m-d H:i:s')])]);
+            } catch (\Throwable $e) {}
+        }
     }
 
     // 1. Alle bekende auto_setup-functies aanroepen (elk heeft zijn eigen guard + try/catch).
@@ -130,18 +204,36 @@ function db_failsafe(bool $forceer = false): void {
         'consent_auto_setup',
         'opschoon_auto_setup',
         'loonplan_auto_setup',
+        'inzet_afspraak_auto_setup',     // na loonplan: de vastgestelde afspraak
+        'loonplan_slot_auto_setup',      // vastzetten na het TW-gesprek
+        'loonplan_extra_auto_setup',     // extra personen in de loonplanning (2.140.0)
         'rechten_auto_setup',
         'beschikbaarheid_dag_auto_setup',
         'audit_dag_auto_setup',
         'pag_auto_setup',
         'optout_auto_setup',
+        'seintje_auto_setup',
+        'werving_seintje_auto_setup',    // seintje buiten het seizoen (includes/seintje_werving.php)
         'sjablonen_auto_setup',
         'meldingen_log_auto_setup',
         'personen_kanaal_auto_setup',
         'bijlagen_auto_setup',
         'gepland_auto_setup',
         'documenten_auto_setup',
+        'foto_auto_setup',         // na documenten: verhuist foto's naar de afgeschermde map
         'ondertekening_bewijs_auto_setup',
+        'portaal_login_setup',
+        'beschikbaarheid2_auto_setup',
+        'tw_auto_setup',
+        'lg_feedback_auto_setup',
+        'intrek_auto_setup',
+        'beheerder_bezoek_auto_setup',
+        'ratelimit_auto_setup',
+        'portaal_berichten_kolom_verzeker',
+        'blk_kolommen_verzeker',
+        'seizoen_kolommen_verzeker',
+        'loon_tarieven_auto_setup',      // na de seizoenkolommen: het jaar komt uit datum_werk_start
+        'live_auto_setup',               // live bijwerken (2.155.0)
     ];
     foreach ($setups as $fn) {
         if (function_exists($fn)) {
@@ -175,6 +267,21 @@ function db_failsafe(bool $forceer = false): void {
             } catch (\Exception $e) { error_log('db_failsafe otp_tokens.type: ' . $e->getMessage()); }
         }
 
+        // beheerders.rol was ENUM('begeleider','bestuur','admin'): de rol penningmeester (en elke
+        // rol die je bij Rollen & rechten toevoegt) paste er niet in. MariaDB zette er dan stil ''
+        // van, en zo'n account had geen enkel recht. De rollen staan in de tabel `rollen`; de kolom
+        // hoeft ze niet te kennen.
+        if (db_tabel_bestaat($db, 'beheerders')) {
+            try {
+                $col = $db->query("SHOW COLUMNS FROM beheerders LIKE 'rol'")->fetch();
+                if ($col && stripos((string)($col['Type'] ?? ''), 'enum') !== false) {
+                    $db->exec("ALTER TABLE beheerders MODIFY COLUMN `rol` VARCHAR(40) NOT NULL DEFAULT 'begeleider'");
+                    $db->exec("UPDATE beheerders SET `rol` = 'begeleider' WHERE `rol` = ''");
+                    error_log('db_failsafe: beheerders.rol omgezet van ENUM naar VARCHAR(40)');
+                }
+            } catch (\Exception $e) { error_log('db_failsafe beheerders.rol: ' . $e->getMessage()); }
+        }
+
         // Speciaal: soort-enum van beschikbaarheid_dag moet 'beschikbaar' bevatten
         // (voor bestuurs-overrides die een dag expliciet beschikbaar maken).
         if (db_tabel_bestaat($db, 'beschikbaarheid_dag')) {
@@ -187,6 +294,28 @@ function db_failsafe(bool $forceer = false): void {
                     error_log('db_failsafe: soort-enum uitgebreid met beschikbaar');
                 }
             } catch (\Exception $e) { error_log('db_failsafe soort-enum: ' . $e->getMessage()); }
+        }
+
+        // Speciaal: sollicitaties.fase kende 'verwijderd_door_sollicitant' en 'afgehaakt' niet,
+        // terwijl portaal/gegevens.php de eerste zet en de selecties op beide filteren. In
+        // strict mode gooide die UPDATE een fout, de transactie rolde terug, en kon een
+        // sollicitant zijn eigen account nooit verwijderen (AVG art. 17). Alleen achteraan
+        // toevoegen: bestaande waarden en hun volgorde blijven gelijk.
+        if (db_tabel_bestaat($db, 'sollicitaties')) {
+            try {
+                $col = $db->query("SHOW COLUMNS FROM sollicitaties LIKE 'fase'")->fetch();
+                $type = (string)($col['Type'] ?? '');
+                if ($col && stripos($type, 'enum') !== false && stripos($type, "'verwijderd_door_sollicitant'") === false) {
+                    preg_match_all("/'((?:[^'\\\\]|\\\\.)*)'/", $type, $m);
+                    $waarden = $m[1];
+                    foreach (['afgehaakt', 'verwijderd_door_sollicitant'] as $nieuw) {
+                        if (!in_array($nieuw, $waarden, true)) $waarden[] = $nieuw;
+                    }
+                    $lijst = implode(',', array_map(fn($w) => $db->quote($w), $waarden));
+                    $db->exec("ALTER TABLE sollicitaties MODIFY COLUMN `fase` ENUM($lijst) NOT NULL DEFAULT 'aangemeld'");
+                    error_log('db_failsafe: sollicitaties.fase uitgebreid met afgehaakt en verwijderd_door_sollicitant');
+                }
+            } catch (\Exception $e) { error_log('db_failsafe fase-enum: ' . $e->getMessage()); }
         }
 
         // Speciaal: het oude installatie-account uit schema.sql/migratie 0002 had een wachtwoord dat
@@ -208,10 +337,12 @@ function db_failsafe(bool $forceer = false): void {
         try {
             $db->prepare("INSERT INTO instellingen (sleutel, waarde) VALUES ('db.failsafe_versie', ?) ON DUPLICATE KEY UPDATE waarde = ?")
                ->execute([$versie, $versie]);
+            $GLOBALS['_p13_schema_actueel'] = true;
         } catch (\Exception $e) { error_log('db_failsafe versievlag: ' . $e->getMessage()); }
     } catch (\Exception $e) {
         error_log('db_failsafe kolom-check: ' . $e->getMessage());
     }
+    $los();
 }
 
 /**

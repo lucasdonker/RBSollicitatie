@@ -27,6 +27,7 @@ $_extern = !empty($_t['extern']);
       <a href="<?= h($_t['url']) ?>" class="pt-taakrij-link" target="_blank" rel="noopener"><?= icoon('koppeling', 14) ?>Openen</a>
     <?php endif; ?>
     <?php if ($_inline === 'ouder') require __DIR__ . '/_taak_inline_ouder.php'; ?>
+    <?php if ($_inline === 'deelname') require __DIR__ . '/_taak_inline_deelname.php'; ?>
   </span>
   <?php if ($_afvink): ?>
     <form method="POST" class="pt-taakrij-afvink">
@@ -39,6 +40,16 @@ $_extern = !empty($_t['extern']);
       <?php else: ?>
         <button type="submit" class="pt-taakrij-gedaan"><?= icoon('vink', 16) ?>Gedaan</button>
       <?php endif; ?>
+    </form>
+  <?php elseif (!empty($_t['herinner_ond'])): ?>
+    <?php /* De ouder is aan zet en heeft de mail niet (meer). Dit stuurt de link
+             opnieuw, zodat de sollicitant daarvoor niet hoeft te bellen. */ ?>
+    <form method="POST" class="pt-taakrij-afvink">
+      <?= csrf_input() ?>
+      <input type="hidden" name="ouder_herinner" value="1">
+      <input type="hidden" name="ond_id" value="<?= (int)$_t['herinner_ond'] ?>">
+      <input type="hidden" name="terug" value="<?= h($taak_terug ?? 'start') ?>">
+      <button type="submit" class="pt-taakrij-actie"><?= icoon('mail', 15) ?> Link opnieuw sturen</button>
     </form>
   <?php elseif ($_inline && !empty($_t['done'])): ?>
     <button type="button" class="pt-taakrij-actie" data-toggle-inline>Wijzigen</button>

@@ -16,9 +16,6 @@
  */
 require_once __DIR__ . '/../includes/functions.php';
 portaal_alleen_include(__FILE__);
-// Vangnet als de echte cron (Plesk, elke 5 min) niet draait: max 1x per uur, ook bij portaalbezoek,
-// zodat de berichtenwachtrij niet stil blijft staan tot een beheerder inlogt.
-if (function_exists('lazy_cron_tick')) { lazy_cron_tick(); }
 $portaal_titel       = $portaal_titel ?? 'Mijn sollicitatie';
 $portaal_nav         = $portaal_nav ?? '';
 $portaal_terug       = $portaal_terug ?? '';
@@ -34,7 +31,7 @@ if ($_heeft_nav && empty($portaal_status_fase) && function_exists('portaal_solli
     $portaal_status_fase = $_ps['fase'] ?? '';
 }
 $portaal_status_fase = $portaal_status_fase ?? '';
-$_chip_kleur = match ($portaal_status_fase) { 'aangenomen' => 'ok', 'afgewezen' => 'error', 'aangemeld' => 'navy', default => 'accent' };
+$_chip_kleur = match ($portaal_status_fase) { 'aangenomen' => 'ok', 'afgewezen' => 'error', 'aangemeld', 'afgehaakt', 'verwijderd_door_sollicitant' => 'navy', default => 'accent' };
 // Belletje: ongelezen berichten (pagina mag het aantal zelf zetten, bijv. berichten.php → 0)
 $_ongelezen = 0;
 if ($_heeft_nav) {
@@ -52,6 +49,7 @@ $_bel = '<a href="' . APP_URL . '/portaal/berichten.php" class="pt-topbar-actie"
 <?php if ($_fav): ?><link rel="icon" href="<?= h($_fav) ?>"><?php endif; ?>
 <link rel="stylesheet" href="<?= APP_URL ?>/assets/css/stijl.css?v=<?= @filemtime(__DIR__.'/../assets/css/stijl.css') ?>">
 <meta name="robots" content="noindex">
+<script src="<?= APP_URL ?>/assets/js/klik.js?v=<?= @filemtime(__DIR__.'/../assets/js/klik.js') ?>"></script>
 </head>
 <body class="pt-body<?= $_heeft_nav ? ' heeft-nav' : '' ?>">
 
@@ -69,7 +67,7 @@ $_bel = '<a href="' . APP_URL . '/portaal/berichten.php" class="pt-topbar-actie"
     <?php elseif ($_heeft_nav): ?>
       <?= $_bel ?>
     <?php elseif (function_exists('portaal_ingelogd') && portaal_ingelogd()): ?>
-      <a href="<?= APP_URL ?>/portaal/?uitloggen=1" class="pt-topbar-actie" aria-label="Uitloggen"><?= icoon('uitloggen', 20) ?></a>
+      <?= portaal_uitlog_knop('pt-topbar-actie', 20) ?>
     <?php endif; ?>
   </header>
 <?php endif; ?>
@@ -81,7 +79,7 @@ $_bel = '<a href="' . APP_URL . '/portaal/berichten.php" class="pt-topbar-actie"
     <span class="pt-paginakop-titel"><?= h($portaal_titel) ?></span>
     <div class="pt-paginakop-acties">
       <?php if ($portaal_status_fase !== ''): ?>
-        <span class="pt-paginakop-chip <?= $_chip_kleur ?>"><span class="pt-paginakop-stip"></span><?= h(fase_label($portaal_status_fase)) ?></span>
+        <span class="pt-paginakop-chip <?= $_chip_kleur ?>"><span class="pt-paginakop-stip"></span><?= h(portaal_fase_label($portaal_status_fase)) ?></span>
       <?php endif; ?>
       <a href="<?= APP_URL ?>/portaal/berichten.php" class="pt-paginakop-knop" aria-label="Berichten<?= $_ongelezen ? ' (' . $_ongelezen . ' ongelezen)' : '' ?>"><?= icoon('bel', 18) ?><?php if ($_ongelezen): ?><span class="pt-topbar-stip"></span><?php endif; ?></a>
     </div>
@@ -90,3 +88,5 @@ $_bel = '<a href="' . APP_URL . '/portaal/berichten.php" class="pt-topbar-actie"
 
   <!-- Pagina-inhoud -->
   <main class="pt-main">
+  <?php // De melding van de vorige actie (flash()), op elke portaalpagina op dezelfde plek. ?>
+  <?php toon_flash(); ?>

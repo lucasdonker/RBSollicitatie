@@ -8,16 +8,25 @@
  * Veiligheidsprincipes:
  *  - Doet NIETS tenzij 'bewaar.actief' expliciet aan staat.
  *  - Elke categorie heeft een eigen termijn; 0 maanden = die categorie NIET opschonen.
- *  - Aangenomen kandidaten worden nooit automatisch verwijderd/geanonimiseerd.
+ *  - Loondocumenten (loonheffing, kopie ID) worden hier NOOIT vernietigd. De fiscale termijn
+ *    loopt tot 5 jaar na het einde van het jaar waarin het dienstverband eindigde, en dat
+ *    einde kent het systeem niet (een lifeguard kan na een pauze terugkomen). De
+ *    penningmeester vernietigt ze handmatig (admin/documenten.php); besluit Lucas, 23 sep 2026.
+ *  - Oud-lifeguards: het dossier wordt na bewaar.aangenomen_jaar leeggemaakt, de persoon pas
+ *    geanonimiseerd als er geen loondocumenten meer zijn.
  *  - Afgewezen sollicitanten worden geANONIMISEERD (persoonsgegevens weg, geanonimiseerde
- *    statistiek blijft), niet hard verwijderd.
+ *    statistiek blijft), niet hard verwijderd. Wat er dan precies verdwijnt staat op één
+ *    plek, gedeeld met "gegevens laten verwijderen" in het portaal: includes/avg_wissen.php.
+ *    Een seintje (includes/seintje.php) stelt dat uit tot de toestemming verloopt.
+ *  - Een seintje buiten het seizoen (includes/seintje_werving.php, eigen tabel) verdwijnt na
+ *    het openingsbericht of na seintje_termijn_mnd(); onbevestigd na zeven dagen (altijd).
  *  - Alles wordt gelogd in de tabel `opschoon_log`.
  */
 
 if (!function_exists('opschoon_auto_setup')) {
 /** Zorgt dat de logtabel bestaat. */
 function opschoon_auto_setup(): void {
-    static $done = false; if ($done) return; $done = true;
+    static $done = false; if ($done || schema_actueel()) return; $done = true;
     try {
         db()->exec("CREATE TABLE IF NOT EXISTS `opschoon_log` (
             `id`          INT AUTO_INCREMENT PRIMARY KEY,
@@ -38,6 +47,51 @@ function opschoon_log_schrijf(string $categorie, int $aantal, string $bron = 'cr
         db()->prepare("INSERT INTO opschoon_log (categorie, aantal, bron) VALUES (?,?,?)")
             ->execute([$categorie, $aantal, $bron]);
     } catch (\Exception $e) { error_log('opschoon_log_schrijf: ' . $e->getMessage()); }
+}
+}
+
+if (!function_exists('opschoon_rijen')) {
+/**
+ * Tel (proefdraaien) of verwijder de rijen van één tabel die aan $waar voldoen.
+ * $tabel en $waar komen alleen uit deze code, nooit uit invoer.
+ */
+function opschoon_rijen($db, string $tabel, string $waar, array $params, bool $dry_run): int {
+    if ($dry_run) {
+        $c = $db->prepare("SELECT COUNT(*) FROM `$tabel` WHERE $waar");
+        $c->execute($params);
+        return (int)$c->fetchColumn();
+    }
+    $d = $db->prepare("DELETE FROM `$tabel` WHERE $waar");
+    $d->execute($params);
+    return $d->rowCount();
+}
+
+/** De documentsoorten met een fiscale bewaarplicht (bewaren = 'loon' in document_soorten()). */
+function opschoon_loonsoorten(): array {
+    if (!function_exists('document_soorten')) return ['id_voor', 'id_achter', 'ondertekening_loonheffing'];
+    $uit = [];
+    foreach (document_soorten() as $soort => $def) if (($def['bewaren'] ?? '') === 'loon') $uit[] = $soort;
+    return $uit ?: ['id_voor', 'id_achter', 'ondertekening_loonheffing'];
+}
+
+/**
+ * Vervallen codes en tellingen weggooien: gebruikte of verlopen inlog- en verificatiecodes
+ * (otp_tokens) en oude regels van de snelheidsbegrenzing. Geen dossiers en geen
+ * bewaartermijn, dus los van bewaar.actief; de cron roept dit elke run aan. Er komt geen
+ * regel in opschoon_log: dat zou elke vijf minuten een regel in het logboek geven.
+ * Een uur marge: een code die net verliep, kan nog in een formulier op het scherm staan.
+ */
+function opschoon_vervallen(): array {
+    $uit = ['codes' => 0, 'tellingen' => 0, 'seintje_onbevestigd' => 0];
+    try {
+        $uit['codes'] = opschoon_rijen(db(), 'otp_tokens',
+            "vervalt_op < DATE_SUB(NOW(), INTERVAL 1 HOUR) OR (gebruikt = 1 AND aangemaakt_op < DATE_SUB(NOW(), INTERVAL 1 HOUR))", [], false);
+    } catch (\Throwable $e) {}
+    if (function_exists('rate_limit_opruimen')) $uit['tellingen'] = rate_limit_opruimen();
+    // Een seintje-aanvraag die na zeven dagen niet is bevestigd: een verlopen link, geen
+    // bewaartermijn. Zonder bevestiging hebben we geen toestemming, dus ook los van bewaar.actief.
+    if (function_exists('seintje_werving_opschonen')) $uit['seintje_onbevestigd'] = seintje_werving_opschonen(true)['onbevestigd'];
+    return $uit;
 }
 }
 
@@ -63,44 +117,56 @@ function opschoon_run(bool $dry_run = false, string $bron = 'cron'): array {
         return date('Y-m-d H:i:s', strtotime("-{$maanden} months"));
     };
 
-    // ── 1. Afgewezen sollicitanten anonimiseren ──────────────────────
-    $mnd = instelling_int('bewaar.afgewezen_mnd', 0);
-    if ($grensdatum = $grens($mnd)) {
+    // ── 1. Afgewezen en afgehaakte sollicitanten anonimiseren ────────
+    // Termijn in weken, gerekend vanaf de laatste wijziging van de sollicitatie (bij een
+    // afwijzing is dat het moment van afwijzen; zie fase_zetten). De AP gaat uit van vier
+    // weken. Wie om een seintje vroeg (includes/seintje.php) blijft tot die toestemming
+    // verloopt. Alleen personen bij wie élke sollicitatie zo is afgelopen: iemand die ooit
+    // is aangenomen of nog loopt, valt hierbuiten.
+    $weken = instelling_int('bewaar.afgewezen_weken', 4);
+    if ($weken > 0) {
         try {
-            // Zoek afgewezen sollicitaties ouder dan de grens die nog niet geanonimiseerd zijn.
-            // We anonimiseren de gekoppelde persoon, mits die GEEN andere actieve/aangenomen
-            // sollicitatie heeft.
+            if (function_exists('seintje_auto_setup')) seintje_auto_setup();
+            $seintje_mnd = function_exists('seintje_termijn_mnd') ? seintje_termijn_mnd() : 12;
             $q = $db->prepare("
-                SELECT DISTINCT p.id
+                SELECT p.id
                 FROM personen p
-                JOIN sollicitaties s ON s.persoon_id = p.id
-                WHERE s.fase = 'afgewezen'
-                  AND s.aangemeld_op < ?
-                  AND p.email NOT LIKE 'geanonimiseerd+%'
+                WHERE p.email NOT LIKE 'geanonimiseerd+%' AND p.email NOT LIKE '%@anoniem.local'
+                  AND EXISTS (SELECT 1 FROM sollicitaties s WHERE s.persoon_id = p.id)
                   AND NOT EXISTS (
                       SELECT 1 FROM sollicitaties s2
                       WHERE s2.persoon_id = p.id
-                        AND s2.fase NOT IN ('afgewezen')
+                        AND (s2.fase NOT IN ('afgewezen','afgehaakt')
+                             OR COALESCE(s2.gewijzigd_op, s2.aangemeld_op) >= DATE_SUB(NOW(), INTERVAL ? WEEK))
                   )
+                  AND (p.seintje_op IS NULL OR p.seintje_op < DATE_SUB(NOW(), INTERVAL ? MONTH))
             ");
-            $q->execute([$grensdatum]);
+            $q->execute([$weken, $seintje_mnd]);
             $ids = $q->fetchAll(PDO::FETCH_COLUMN);
             $aantal = 0;
             if ($ids && !$dry_run) {
-                $upd = $db->prepare("
-                    UPDATE personen SET
-                        voornaam = 'Geanonimiseerd',
-                        tussenvoegsel = NULL,
-                        achternaam = '',
-                        email = CONCAT('geanonimiseerd+', id, '@paal13.local'),
-                        telefoon = NULL,
-                        geboortedatum = NULL,
-                        ouder_naam = NULL,
-                        ouder_email = NULL,
-                        ouder_telefoon = NULL
-                    WHERE id = ?
-                ");
-                foreach ($ids as $pid) { $upd->execute([$pid]); $aantal++; }
+                $sols = $db->prepare("SELECT id FROM sollicitaties WHERE persoon_id = ?");
+                foreach ($ids as $pid) {
+                    $pid = (int)$pid;
+                    $email = 'geanonimiseerd+' . $pid . '@paal13.local';
+                    // Per persoon een eigen transactie: één fout houdt de rest niet tegen.
+                    $db->beginTransaction();
+                    try {
+                        $sols->execute([$pid]);
+                        foreach ($sols->fetchAll(PDO::FETCH_COLUMN) as $sid) {
+                            avg_sollicitatie_leegmaken($db, (int)$sid);
+                            avg_maillog_anonimiseren($db, (int)$sid, $email);
+                        }
+                        avg_persoon_anonimiseren($db, $pid, 'Geanonimiseerd', '', $email);
+                        $db->commit();
+                        if (function_exists('avg_na_commit')) avg_na_commit();
+                        $aantal++;
+                    } catch (\Throwable $e) {
+                        if ($db->inTransaction()) $db->rollBack();
+                        if (function_exists('avg_na_rollback')) avg_na_rollback();
+                        error_log("opschoon afgewezen persoon $pid: " . $e->getMessage());
+                    }
+                }
             } else {
                 $aantal = count($ids);
             }
@@ -112,40 +178,126 @@ function opschoon_run(bool $dry_run = false, string $bron = 'cron'): array {
         }
     }
 
+    // ── 1a. Seintje buiten het seizoen (includes/seintje_werving.php) ──
+    // Weg na het openingsbericht (een dag marge voor de afmeldlink), of als de toestemming
+    // ouder is dan seintje_termijn_mnd(). Onbevestigde aanvragen gaan al eerder, in
+    // opschoon_vervallen(); die telt hier voor de volledigheid mee.
+    if (function_exists('seintje_werving_opschonen')) {
+        try {
+            $r = seintje_werving_opschonen(false, $dry_run);
+            $uit['categorieen']['seintje_werving_verwijderd'] = $r['onbevestigd'] + $r['afgerond'];
+            if (!$dry_run) opschoon_log_schrijf('seintje_werving_verwijderd', $r['onbevestigd'] + $r['afgerond'], $bron);
+        } catch (\Throwable $e) {
+            $uit['categorieen']['seintje_werving_verwijderd'] = ['fout' => $e->getMessage()];
+        }
+    }
+
+    // ── 1b. Oud-lifeguards: dossier leegmaken, persoon anonimiseren ──
+    // Zolang iemand bij ons werkt blijft alles staan; daarna nog bewaar.aangenomen_jaar
+    // (standaard 2, de lijn van de AP voor een personeelsdossier), gerekend vanaf het einde
+    // van het laatste seizoen. Wie een nieuwe sollicitatie heeft lopen, valt erbuiten.
+    // Loonheffing en kopie ID blijven: die hebben een fiscale termijn en de penningmeester
+    // vernietigt ze met de hand. Pas als ze weg zijn, wordt de persoon zelf geanonimiseerd —
+    // tot die tijd staan naam en geboortedatum er nog bij, anders is het bewaarde stuk niet
+    // terug te vinden. Bij het anonimiseren gaat ook de rest van de loonheffing-ondertekening
+    // mee (BSN en handtekening), want het document waarvoor die bewaard werd is dan weg.
+    $jaar = instelling_int('bewaar.aangenomen_jaar', 2);
+    if ($jaar > 0) {
+        try {
+            $q = $db->prepare("
+                SELECT p.id
+                FROM personen p
+                WHERE p.email NOT LIKE 'geanonimiseerd+%' AND p.email NOT LIKE '%@anoniem.local'
+                  AND EXISTS (SELECT 1 FROM sollicitaties s WHERE s.persoon_id = p.id AND s.fase = 'aangenomen')
+                  AND NOT EXISTS (
+                      SELECT 1 FROM sollicitaties s2
+                      LEFT JOIN seizoenen sz ON sz.id = s2.seizoen_id
+                      WHERE s2.persoon_id = p.id
+                        AND (s2.fase NOT IN ('aangenomen','afgewezen','afgehaakt')
+                             OR COALESCE(sz.datum_werk_eind, DATE(s2.gewijzigd_op), DATE(s2.aangemeld_op))
+                                >= DATE_SUB(CURDATE(), INTERVAL ? YEAR))
+                  )
+            ");
+            $q->execute([$jaar]);
+            $ids = $q->fetchAll(PDO::FETCH_COLUMN);
+            $aantal = 0;
+            if ($ids && !$dry_run) {
+                $sols = $db->prepare("SELECT id FROM sollicitaties WHERE persoon_id = ?");
+                $loonsoorten = opschoon_loonsoorten();
+                $loon = $db->prepare("SELECT COUNT(*) FROM sollicitant_documenten d JOIN sollicitaties s ON s.id = d.sollicitatie_id
+                                      WHERE s.persoon_id = ? AND d.status IN ('ingediend','verwerkt')
+                                        AND d.soort IN (" . implode(',', array_fill(0, count($loonsoorten), '?')) . ")");
+                foreach ($ids as $pid) {
+                    $pid = (int)$pid;
+                    $email = 'geanonimiseerd+' . $pid . '@paal13.local';
+                    $db->beginTransaction();
+                    try {
+                        $sols->execute([$pid]);
+                        $sids = array_map('intval', $sols->fetchAll(PDO::FETCH_COLUMN));
+                        foreach ($sids as $sid) avg_sollicitatie_leegmaken($db, $sid, false);
+                        $loon->execute(array_merge([$pid], $loonsoorten));
+                        if ((int)$loon->fetchColumn() === 0) {
+                            // Geen loondocumenten meer: nu mag ook het restant van de loonheffing weg.
+                            foreach ($sids as $sid) { avg_sollicitatie_leegmaken($db, $sid, true); avg_maillog_anonimiseren($db, $sid, $email); }
+                            avg_persoon_anonimiseren($db, $pid, 'Geanonimiseerd', '', $email);
+                            $aantal++;
+                        }
+                        $db->commit();
+                        if (function_exists('avg_na_commit')) avg_na_commit();
+                    } catch (\Throwable $e) {
+                        if ($db->inTransaction()) $db->rollBack();
+                        if (function_exists('avg_na_rollback')) avg_na_rollback();
+                        error_log("opschoon aangenomen persoon $pid: " . $e->getMessage());
+                    }
+                }
+            } else {
+                $aantal = count($ids);
+            }
+            $uit['categorieen']['aangenomen_geanonimiseerd'] = $aantal;
+            if (!$dry_run) opschoon_log_schrijf('aangenomen_geanonimiseerd', $aantal, $bron);
+        } catch (\Exception $e) {
+            $uit['categorieen']['aangenomen_geanonimiseerd'] = ['fout' => $e->getMessage()];
+            error_log('opschoon aangenomen: ' . $e->getMessage());
+        }
+    }
+
     // ── 2. Gezondheidsgegevens verwijderen ───────────────────────────
-    // 0 maanden = zodra de sollicitatie is afgehandeld (afgewezen of ouder dan het seizoen).
+    // 0 maanden = na afloop van het seizoen, en meteen bij afwijzen of afhaken.
     // >0 maanden = zoveel maanden na ondertekening.
+    // Het gaat om de gezondheidsverklaring én de gezondheidsvragen in de intake, in de
+    // database en in de verzegelde PDF in de kluis. Het feit dát er ondertekend is blijft,
+    // en bij de intake ook de rest (toestemming voor foto's, verklaringen).
     $mnd = instelling_int('bewaar.gezondheid_mnd', 0);
     try {
-        if ($mnd > 0) {
-            $grensdatum = $grens($mnd);
-            $q = $db->prepare("
-                SELECT id FROM ondertekeningen
-                WHERE type IN ('gezondheid_ouder','gezondheid_18plus')
-                  AND ondertekend_op IS NOT NULL
-                  AND ondertekend_op < ?
-                  AND formulier_data IS NOT NULL
-            ");
-            $q->execute([$grensdatum]);
-        } else {
-            // 0 = zodra de bijbehorende sollicitatie is afgewezen
-            $q = $db->prepare("
-                SELECT o.id FROM ondertekeningen o
-                JOIN sollicitaties s ON s.id = o.sollicitatie_id
-                WHERE o.type IN ('gezondheid_ouder','gezondheid_18plus')
-                  AND o.formulier_data IS NOT NULL
-                  AND s.fase = 'afgewezen'
-            ");
-            $q->execute();
-        }
-        $ids = $q->fetchAll(PDO::FETCH_COLUMN);
+        $klaar = $mnd > 0
+            ? "o.ondertekend_op < ?"
+            : "(s.fase IN ('afgewezen','afgehaakt')
+                OR (sz.datum_werk_eind IS NOT NULL AND sz.datum_werk_eind < CURDATE())
+                OR (sz.datum_werk_eind IS NULL AND o.ondertekend_op < DATE_SUB(NOW(), INTERVAL 12 MONTH)))";
+        $q = $db->prepare("
+            SELECT o.id, o.type, o.formulier_data, o.pdf_document_id FROM ondertekeningen o
+            JOIN sollicitaties s ON s.id = o.sollicitatie_id
+            LEFT JOIN seizoenen sz ON sz.id = s.seizoen_id
+            WHERE o.type IN ('gezondheid_ouder','gezondheid_18plus','intake','intake_ouder')
+              AND o.ondertekend_op IS NOT NULL
+              AND (o.formulier_data IS NOT NULL OR o.pdf_document_id IS NOT NULL)
+              AND $klaar
+        ");
+        $q->execute($mnd > 0 ? [$grens($mnd)] : []);
         $aantal = 0;
-        if ($ids && !$dry_run) {
-            // Verwijder de medische inhoud, behoud het feit dat er ondertekend is
-            $upd = $db->prepare("UPDATE ondertekeningen SET formulier_data = NULL WHERE id = ?");
-            foreach ($ids as $oid) { $upd->execute([$oid]); $aantal++; }
-        } else {
-            $aantal = count($ids);
+        $upd = $db->prepare("UPDATE ondertekeningen SET formulier_data = ?, pdf_document_id = NULL WHERE id = ?");
+        foreach ($q->fetchAll() as $o) {
+            $data = null;
+            if (str_starts_with((string)$o['type'], 'intake')) {
+                $form = json_decode((string)$o['formulier_data'], true);
+                $had  = is_array($form) && (array_key_exists('gezondheid_keuze', $form) || array_key_exists('gezondheid_toelichting', $form));
+                if (!$had && !$o['pdf_document_id']) continue;       // al eerder opgeschoond
+                if (is_array($form)) { unset($form['gezondheid_keuze'], $form['gezondheid_toelichting']); $data = json_encode($form, JSON_UNESCAPED_UNICODE); }
+            }
+            $aantal++;
+            if ($dry_run) continue;
+            if ($o['pdf_document_id'] && function_exists('document_vernietigen')) document_vernietigen((int)$o['pdf_document_id'], 'bewaartermijn gezondheidsgegevens');
+            $upd->execute([$data, $o['id']]);
         }
         $uit['categorieen']['gezondheid_verwijderd'] = $aantal;
         if (!$dry_run) opschoon_log_schrijf('gezondheid_verwijderd', $aantal, $bron);
@@ -155,7 +307,7 @@ function opschoon_run(bool $dry_run = false, string $bron = 'cron'): array {
     }
 
     // ── 3. AI-invoertekst verwijderen ────────────────────────────────
-    $mnd = instelling_int('bewaar.ai_invoer_mnd', 0);
+    $mnd = instelling_int('bewaar.ai_invoer_mnd', 3);
     if ($grensdatum = $grens($mnd)) {
         try {
             if ($dry_run) {
@@ -179,7 +331,7 @@ function opschoon_run(bool $dry_run = false, string $bron = 'cron'): array {
     // ── 4. Niet-voltooide aanmeldingen verwijderen ───────────────────
     // Sollicitaties die in 'aangemeld' bleven staan, nooit een BLK/beschikbaarheid kregen,
     // en ouder zijn dan de termijn.
-    $mnd = instelling_int('bewaar.onvoltooid_mnd', 0);
+    $mnd = instelling_int('bewaar.onvoltooid_mnd', 3);
     if ($grensdatum = $grens($mnd)) {
         try {
             $q = $db->prepare("
@@ -241,7 +393,7 @@ function opschoon_run(bool $dry_run = false, string $bron = 'cron'): array {
     }
 
     // ── 5. Mail-/actielogboek verwijderen ────────────────────────────
-    $mnd = instelling_int('bewaar.maillog_mnd', 0);
+    $mnd = instelling_int('bewaar.maillog_mnd', 12);
     if ($grensdatum = $grens($mnd)) {
         try {
             if ($dry_run) {
@@ -298,34 +450,26 @@ function opschoon_run(bool $dry_run = false, string $bron = 'cron'): array {
         }
     }
 
-    // ── 6. Loondocumenten (loonheffingsformulier + kopie ID): wettelijke bewaartermijn, jaren na einde dienstjaar ──
-    // Wet LB art. 28: bewaren tot 5 jaar na het einde van het kalenderjaar waarin het dienstverband eindigde.
-    // Het dienstjaar = het jaar van het seizoen (datum_werk_eind, anders het jaar van aanmelding).
-    $jaar_bewaar = instelling_int('bewaar.loondocumenten_jaar', 5);
-    if ($jaar_bewaar > 0 && function_exists('document_vernietigen')) {
+    // ── 6. Loondocumenten: bewust GEEN automatische stap (zie de kop van dit bestand). ──
+
+    // ── 6a. Berichtenwachtrij: verwerkte en mislukte rijen na 30 dagen weg ──
+    // Een rij bevat adres, telefoon en de volledige tekst; na verzending is hij alleen nog
+    // nodig om een storing na te lopen. Het overzicht van verstuurde berichten staat in mail_log.
+    try {
+        $aantal = opschoon_rijen($db, 'mail_queue',
+            "status IN ('klaar','fout') AND aangemaakt_op < DATE_SUB(NOW(), INTERVAL 30 DAY)", [], $dry_run);
+        $uit['categorieen']['wachtrij_opgeschoond'] = $aantal;
+        if (!$dry_run) opschoon_log_schrijf('wachtrij_opgeschoond', $aantal, $bron);
+    } catch (\Exception $e) { $uit['categorieen']['wachtrij_opgeschoond'] = 0; }
+
+    // ── 6b. Foutenlog: bevat e-mailadressen van gebruikers en URL's ──
+    $dagen_fout = instelling_int('bewaar.foutenlog_dagen', 90);
+    if ($dagen_fout > 0) {
         try {
-            $grensjaar = (int)date('Y') - $jaar_bewaar; // dienstjaren t/m dit jaar mogen weg
-            $q = $db->prepare("
-                SELECT d.id FROM sollicitant_documenten d
-                JOIN sollicitaties s ON s.id = d.sollicitatie_id
-                LEFT JOIN seizoenen sz ON sz.id = s.seizoen_id
-                WHERE d.status IN ('ingediend','verwerkt')
-                  AND d.soort IN ('id_voor','id_achter','ondertekening_loonheffing')
-                  AND YEAR(COALESCE(sz.datum_werk_eind, s.aangemeld_op)) <= ?
-            ");
-            $q->execute([$grensjaar]);
-            $ids = $q->fetchAll(PDO::FETCH_COLUMN);
-            $aantal = 0;
-            foreach ($ids as $id) { if ($dry_run) { $aantal++; continue; } if (document_vernietigen((int)$id, 'bewaartermijn loondocumenten verstreken')) $aantal++; }
-            if (!$dry_run && $ids) {
-                // Het ondertekeningsrecord blijft (bewijs dat er getekend is), maar zonder BSN en handtekening
-                $db->prepare("UPDATE ondertekeningen o JOIN sollicitaties s ON s.id=o.sollicitatie_id LEFT JOIN seizoenen sz ON sz.id=s.seizoen_id
-                              SET o.vertrouwelijk=NULL, o.handtekening_beeld=NULL, o.pdf_document_id=NULL
-                              WHERE o.type='loonheffing' AND YEAR(COALESCE(sz.datum_werk_eind, s.aangemeld_op)) <= ?")->execute([$grensjaar]);
-            }
-            $uit['categorieen']['loondocumenten_vernietigd'] = $aantal;
-            if (!$dry_run && $aantal) opschoon_log_schrijf('loondocumenten_vernietigd', $aantal, $bron);
-        } catch (\Exception $e) { $uit['categorieen']['loondocumenten_vernietigd'] = ['fout' => $e->getMessage()]; error_log('opschoon loondocumenten: ' . $e->getMessage()); }
+            $aantal = opschoon_rijen($db, 'error_log', "aangemaakt_op < DATE_SUB(NOW(), INTERVAL ? DAY)", [$dagen_fout], $dry_run);
+            $uit['categorieen']['foutenlog_verwijderd'] = $aantal;
+            if (!$dry_run) opschoon_log_schrijf('foutenlog_verwijderd', $aantal, $bron);
+        } catch (\Exception $e) { $uit['categorieen']['foutenlog_verwijderd'] = 0; }
     }
 
     // ── 7. Kopie bankpas: vernietigen X dagen nadat de penningmeester het dossier heeft verwerkt ──

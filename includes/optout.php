@@ -13,7 +13,7 @@
 if (!function_exists('optout_auto_setup')) {
 
 function optout_auto_setup(): void {
-    static $done = false; if ($done) return; $done = true;
+    static $done = false; if ($done || schema_actueel()) return; $done = true;
     try {
         $db = db();
         if (function_exists('db_kolom_verzeker')) {
@@ -50,6 +50,21 @@ function optout_is_afgemeld(int $persoon_id): bool {
     } catch (\Exception $e) { return false; }
 }
 
+/**
+ * Wie hoort bij dit token, zonder iets te veranderen: ['voornaam', 'afgemeld' => bool] of null.
+ * Voor de GET van de afmeldpagina: mailscanners openen links vooraf.
+ */
+function optout_persoon(string $token): ?array {
+    optout_auto_setup();
+    if ($token === '') return null;
+    try {
+        $q = db()->prepare("SELECT voornaam, mailing_afgemeld FROM personen WHERE afmeld_token=?");
+        $q->execute([$token]);
+        $p = $q->fetch();
+        return $p ? ['voornaam' => (string)($p['voornaam'] ?? ''), 'afgemeld' => (int)$p['mailing_afgemeld'] === 1] : null;
+    } catch (\Exception $e) { return null; }
+}
+
 /** Meld iemand af op basis van het token. Retourneert de naam bij succes, anders null. */
 function optout_afmelden(string $token): ?string {
     optout_auto_setup();
@@ -62,6 +77,8 @@ function optout_afmelden(string $token): ?string {
         if (!$p) return null;
         $db->prepare("UPDATE personen SET mailing_afgemeld=1, mailing_afgemeld_op=NOW() WHERE id=?")->execute([$p['id']]);
         if (function_exists('audit_log')) audit_log('afgemeld', 'persoon', (int)$p['id'], ['kanaal' => 'mailing']);
+        // Afmelden is ook de toestemming voor een seintje intrekken (AVG art. 7 lid 3).
+        if (function_exists('seintje_intrekken')) seintje_intrekken((int)$p['id'], 'afmelden');
         return $p['voornaam'] ?: 'onbekend';
     } catch (\Exception $e) { return null; }
 }

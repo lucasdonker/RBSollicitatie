@@ -8,6 +8,7 @@ ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 
 require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/toegang_terug.php';
 sessie_start();
 
 $fout  = '';
@@ -97,7 +98,7 @@ if (!$fout) {
         'redirect_uri'  => OIDC_REDIRECT_URI,
         'client_id'     => OIDC_CLIENT_ID,
         'client_secret' => OIDC_CLIENT_SECRET,
-    ]);
+    ] + array_filter(['code_verifier' => oidc_pkce_verifier('sso_pkce')]));
 
     $debug[] = "Token response HTTP {$result['code']}: " . substr($result['body'], 0, 300);
 
@@ -145,52 +146,49 @@ if (!$fout) {
     $sub   = $userinfo['sub'] ?? null;
     $groups = (array)($userinfo['groups'] ?? []);
 
-    // Bepaal rol op basis van Authentik groepen
-    $admin_groepen_str = instelling('authentik.admin_groepen', 'Bestuur,Sol-Admin,Sol-Begeleider');
-    $admin_groepen    = array_filter(array_map('trim', explode(',', $admin_groepen_str)));
-    $matched_group    = null;
-    foreach ($admin_groepen as $ag) {
-        foreach ($groups as $ug) {
-            if (strcasecmp($ag, $ug) === 0) { $matched_group = $ag; break 2; }
-        }
-    }
-
-    // Bepaal app-rol op basis van match
-    $rol_uit_groups = authentik_groups_naar_rol($groups);
+    // Toegang en rollen komen uit één bron: de koppeling rol → Authentik-groep in Rollen & rechten.
+    // Alle rollen waarvan iemand de groep heeft tellen op; de hoogste rang is de hoofdrol.
+    $rollen_uit_groups = rollen_uit_authentik_groepen($groups);
+    $extra_rollen      = implode(',', array_slice($rollen_uit_groups, 1)) ?: null;
 
     $db = db();
     $stmt = $db->prepare("SELECT * FROM beheerders WHERE (authentik_uid = ? AND authentik_uid IS NOT NULL) OR email = ? LIMIT 1");
     $stmt->execute([$sub, $email]);
     $b = $stmt->fetch();
 
-    // Niet in admin-groepen EN nog niet eerder beheerder geweest → weiger admin
-    if (!$matched_group && !$b) {
-        $fout = "Je Authentik-account heeft geen admin-toegang. Voor sollicitatieportaal: ga naar " . APP_URL . "/portaal/";
-    } else {
-        if ($b) {
-            // Bestaande beheerder: rol bijwerken op basis van groepen
-            $nieuwe_rol = $rol_uit_groups ?: $b['rol'];
-            $db->prepare("UPDATE beheerders SET authentik_uid = ?, naam = ?, rol = ?, laatste_login = NOW() WHERE id = ?")
-               ->execute([$sub, $naam, $nieuwe_rol, $b['id']]);
-            $b['naam'] = $naam;
-            $b['rol']  = $nieuwe_rol;
-        } else {
-            // Nieuw account
-            $rol = $rol_uit_groups ?: 'sol-begeleider';
-            $db->prepare("INSERT INTO beheerders (naam, email, wachtwoord, rol, authentik_uid) VALUES (?, ?, NULL, ?, ?)")
-               ->execute([$naam, $email, $rol, $sub]);
-            $new_id = (int)$db->lastInsertId();
-            $stmt_b = $db->prepare("SELECT * FROM beheerders WHERE id = ?");
-            $stmt_b->execute([$new_id]);
-            $b = $stmt_b->fetch();
+    // Geen gekoppelde groep (meer) → geen toegang via SSO, ook niet voor een bestaand account. Zo trekt
+    // "uit de groep halen" in Authentik de toegang echt in (offboarding). Het account zelf blijft
+    // ongemoeid, en een wachtwoord-noodingang die een admin heeft ingericht blijft werken via login.php.
+    if (!$rollen_uit_groups) {
+        $fout = 'Je account heeft geen toegang tot het beheer. Ben je sollicitant? Ga dan naar ' . APP_URL . '/portaal/';
+        if (function_exists('audit_log')) {
+            audit_log('sso_geweigerd', 'beheerder', $b ? (int)$b['id'] : null, [
+                'email'   => $email,
+                'reden'   => $b ? 'niet_meer_in_toegestane_groep' : 'geen_toegestane_groep',
+                'groepen' => array_slice(array_map('strval', $groups), 0, 20),
+            ]);
         }
-    } // einde else van matched_group check
+    } elseif ($b) {
+        // De rollen volgen Authentik, bij elke login.
+        $db->prepare("UPDATE beheerders SET authentik_uid = ?, naam = ?, rol = ?, extra_rollen = ?, laatste_login = NOW() WHERE id = ?")
+           ->execute([$sub, $naam, $rollen_uit_groups[0], $extra_rollen, $b['id']]);
+        $b['naam'] = $naam;
+        $b['rol']  = $rollen_uit_groups[0];
+        $b['extra_rollen'] = $extra_rollen;
+    } else {
+        // Nieuw account
+        $db->prepare("INSERT INTO beheerders (naam, email, wachtwoord, rol, extra_rollen, authentik_uid) VALUES (?, ?, NULL, ?, ?, ?)")
+           ->execute([$naam, $email, $rollen_uit_groups[0], $extra_rollen, $sub]);
+        $stmt_b = $db->prepare("SELECT * FROM beheerders WHERE id = ?");
+        $stmt_b->execute([(int)$db->lastInsertId()]);
+        $b = $stmt_b->fetch();
+    }
 
     if (!$fout && (!$b || !$b['actief'])) {
         $fout = 'Account is niet actief of kon niet worden aangemaakt. Vraag een admin om toegang.';
     } elseif (!$fout) {
-        login_beheerder($b, 'authentik');
-        redirect($terug ?: APP_URL . '/admin/');
+        login_beheerder($b, 'authentik', $groups);
+        redirect(toegang_veilige_terug($terug));
     }
 }
 
@@ -209,27 +207,30 @@ if ($fout && !$debug_tonen) {
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SSO Fout — Paal 13</title>
 <link rel="stylesheet" href="<?= APP_URL ?>/assets/css/stijl.css">
+<link rel="stylesheet" href="<?= APP_URL ?>/assets/css/beheer.css">
+<meta name="robots" content="noindex">
+<script src="<?= APP_URL ?>/assets/js/klik.js?v=<?= @filemtime(__DIR__.'/../assets/js/klik.js') ?>"></script>
 </head>
 <body>
 <div class="login-wrapper">
-  <div class="login-kaart" style="max-width:500px">
+  <div class="login-kaart bh-ssofout">
     <div class="login-logo">
       <img src="<?= APP_URL ?>/assets/img/logo.png" alt="Paal 13"
-           onerror="this.onerror=null;this.src='<?= APP_URL ?>/assets/img/logo.svg'">
-      <h1>SSO Login mislukt</h1>
+           data-terugval="<?= APP_URL ?>/assets/img/logo.svg">
+      <h1>Inloggen via SSO mislukt</h1>
     </div>
-    <div class="flash flash-fout"><?= h($fout) ?></div>
+    <div class="ds-melding ds-melding-error" role="alert"><?= h($fout) ?></div>
 
     <?php if (!empty($debug)): ?>
-    <details style="margin-bottom:14px">
-      <summary style="cursor:pointer;font-size:12px;color:var(--grijs);padding:8px 0">🔍 Technische details (voor diagnose)</summary>
-      <div style="background:#f7f8fa;border-radius:6px;padding:10px;margin-top:6px;font-size:11px;font-family:monospace;white-space:pre-wrap;word-break:break-all;border:1px solid var(--rand)"><?= h(implode("\n\n", $debug)) ?></div>
+    <details class="bh-ssofout-details">
+      <summary><?= icoon('zoek', 14) ?> Technische details (voor diagnose)</summary>
+      <pre class="bh-ssofout-code"><?= h(implode("\n\n", $debug)) ?></pre>
     </details>
     <?php endif; ?>
 
-    <div style="display:flex;flex-direction:column;gap:8px">
-      <a href="<?= APP_URL ?>/admin/auth_sso.php" class="btn btn-primary" style="justify-content:center">↺ Opnieuw proberen via SSO</a>
-      <a href="<?= APP_URL ?>/admin/login.php" class="btn btn-outline" style="justify-content:center">🔑 Inloggen met wachtwoord</a>
+    <div class="bh-ssofout-knoppen">
+      <a href="<?= APP_URL ?>/admin/auth_sso.php" class="ds-btn ds-btn-primair"><?= icoon('ververs', 16) ?> Opnieuw proberen via SSO</a>
+      <a href="<?= APP_URL ?>/admin/login.php" class="ds-btn ds-btn-secundair"><?= icoon('sleutel', 16) ?> Inloggen met wachtwoord</a>
     </div>
   </div>
 </div>

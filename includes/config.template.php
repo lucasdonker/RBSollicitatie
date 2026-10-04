@@ -27,7 +27,18 @@ define('MAIL_FROM',      'no-reply@paal13.com');
 define('MAIL_FROM_NAME', 'Reddingsbrigade Paal 13');
 define('MAIL_BESTUUR',   '{{MAIL_BESTUUR}}');
 
-// ── SMTP (leeg laten = PHP mail() als terugval) ──
+// ── Testmodus: alle berichten omleiden ──
+// Vul op de TESTOMGEVING een eigen e-mailadres in. Dan gaat ALLE e-mail naar dat adres (het onderwerp
+// begint met "[TEST, voor <echte ontvanger>]") en worden WhatsApp en sms NIET verstuurd: de tekst komt
+// als e-mail op dit adres binnen en het logboek zegt "testmodus". In het beheer staat dan bovenaan een balk.
+// Bewust hier en niet in de database: een teruggezette productiedatabase zet hem zo nooit uit.
+// Op PRODUCTIE altijd leeg laten. Op test optioneel: handig als er ooit een kopie van echte gegevens staat.
+define('MAIL_OMLEIDEN', '');
+
+// ── SMTP ──
+// Leeg of {{...}} = niet ingesteld. Let op: smtp.host uit Instellingen › SMTP gaat vóór deze waarden,
+// en zonder SMTP valt het systeem terug op PHP mail() — ook dan gaat er dus gewoon mail de deur uit.
+// Wil je dat niet (testomgeving), gebruik dan MAIL_OMLEIDEN hierboven.
 define('SMTP_HOST',    '{{SMTP_HOST}}');
 define('SMTP_PORT',    587);
 define('SMTP_USER',    '{{SMTP_USER}}');
@@ -47,16 +58,24 @@ define('OIDC_REDIRECT_URI',  '{{APP_URL}}/admin/auth_callback.php');
 // onleesbaar, ook voor ons). Verlies = dataverlies; lekken = alleen samen met de database gevaarlijk.
 define('KLUIS_SLEUTEL',        '{{KLUIS_SLEUTEL}}');
 define('KLUIS_SLEUTEL_VERSIE', 1);
+// Sleutel wisselen (Systeem › Kluissleutel wisselen): zet de huidige sleutel + versie hieronder, de nieuwe
+// sleutel hierboven met versie +1, herversleutel in het beheer tot 0 over, en haal deze twee regels dan weer weg.
+// define('KLUIS_SLEUTEL_OUD',        '');   // de vorige KLUIS_SLEUTEL
+// define('KLUIS_SLEUTEL_OUD_VERSIE', 1);    // de vorige KLUIS_SLEUTEL_VERSIE
 // Map voor de versleutelde documenten, bij voorkeur BUITEN de webroot (Plesk: /var/www/vhosts/<domein>/private/documenten).
 // Leeg laten = uploads/documenten binnen de webroot (afgeschermd met .htaccess; de health-check waarschuwt).
 define('DOCUMENTEN_MAP', '');
+// Automatische back-up vóór elke database-update (includes/backup.php). Standaard <DOCUMENTEN_MAP>/db-backups.
+// Moet BUITEN de webroot staan en schrijfbaar zijn; anders slaat het systeem deze extra back-up over
+// (de update gaat wel door, de systeemcontrole meldt het). Laatste 3 blijven altijd, de rest max. 30 dagen.
+// define('BACKUP_MAP', '/var/www/vhosts/<domein>/private/db-backups');
 // Documentzegel (digitale handtekening op PDF's): certificaat + sleutel worden automatisch aangemaakt in
 // <DOCUMENTEN_MAP>/zegel. Optioneel een eigen map, naam en organisatie voor het certificaat:
 // define('ZEGEL_MAP', '');  define('ZEGEL_NAAM', 'Reddingsbrigade Paal 13 - Documentzegel');  define('ZEGEL_ORGANISATIE', 'Reddingsbrigade Paal 13');
 
 // ── Sessie ──
 define('SESSION_NAME',     'p13sess');
-define('SESSION_LIFETIME', 0);
+// De sessie leeft vast 8 uur (sessie_start() in includes/functions.php); daar is geen constante voor.
 
 date_default_timezone_set('Europe/Amsterdam');
 error_reporting(0);

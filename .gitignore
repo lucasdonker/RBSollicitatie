@@ -7,13 +7,26 @@
 includes/config.php
 
 # Door gebruikers geüploade bestanden (BLK-foto's e.d.) — per server, niet in Git.
-uploads/
+# Uitzondering: de .htaccess-bestanden die PHP-uitvoering en script blokkeren. Die moeten
+# op een nieuwe server of na herstel meteen goed staan. (uploads/* i.p.v. uploads/, anders
+# kan Git niets in de map terughalen.)
+uploads/*
+!uploads/.htaccess
+!uploads/branding/
+uploads/branding/*
+!uploads/branding/.htaccess
 
 # Automatische backups van de oude deploy-tool — per server, groot, niet in Git.
 _backups/
 
 # Losse ZIP-bundels en archieven.
 *.zip
+
+# De opmaak en het script van de WordPress-plugin zijn kopieën van assets/css en assets/js.
+# Twee kopieën van hetzelfde bestand in één repository lopen uit elkaar; wordpress-plugin/
+# bouw-zip.ps1 zet er verse in bij het maken van de ZIP. Zie assets/LEESMIJ.txt daar.
+wordpress-plugin/paal13-aanmelden/assets/aanmeldformulier.css
+wordpress-plugin/paal13-aanmelden/assets/aanmeldformulier.js
 
 # Logbestanden.
 *.log

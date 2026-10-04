@@ -7,13 +7,16 @@
  *  - ?formaat=excel&seizoen=1   → alle sollicitanten van een seizoen.
  *  - ?formaat=pdf&id=1          → één printbaar dossier (PDF) voor die sollicitant.
  *
- * Toegang: alleen wie sollicitantgegevens mag inzien.
+ * Toegang: wie sollicitantgegevens mag inzien. Het adres en de velden uit het
+ * kennismakingsformulier alleen met het recht blk-lezen (AVG, dataminimalisatie);
+ * zonder dat recht bevat de export de basisgegevens en de woonplaats.
  */
 require_once __DIR__ . '/../includes/functions.php';
-vereis_recht('sollicitanten', 'lezen');
+vereis_recht('sollicitanten', 'exporteren');   // taak (includes/rechten.php)
 
 $db = db();
 $formaat = $_GET['formaat'] ?? 'excel';
+$met_formulier = mag('blk', 'lezen');
 
 // Welke sollicitanten?
 $ids = [];
@@ -31,7 +34,8 @@ if (!$ids) { http_response_code(400); exit('Geen sollicitanten geselecteerd.'); 
 
 // Audit: wie exporteert welke dossiers?
 if (function_exists('audit_log')) {
-    audit_log('geexporteerd', 'blk_dossier', null, ['aantal' => count($ids), 'formaat' => $formaat]);
+    audit_log('geexporteerd', 'blk_dossier', null, ['aantal' => count($ids), 'formaat' => $formaat,
+                                                    'met_formulier' => $met_formulier]);
 }
 
 // ══ EXCEL / CSV (bulk) ══
@@ -45,7 +49,7 @@ if ($formaat === 'excel' || $formaat === 'csv') {
 
     $eerste = true;
     foreach ($ids as $sol_id) {
-        $dossier = export_dossier_van($sol_id);
+        $dossier = export_dossier_van($sol_id, $met_formulier);
         if (!$dossier) continue;
         if ($eerste) {
             fputcsv($out, array_keys($dossier), ';');
@@ -62,7 +66,7 @@ if ($formaat === 'excel' || $formaat === 'csv') {
 // ══ PDF (per persoon, printbaar) ══
 if ($formaat === 'pdf') {
     $sol_id = $ids[0];
-    $dossier = export_dossier_van($sol_id);
+    $dossier = export_dossier_van($sol_id, $met_formulier);
     if (!$dossier) { http_response_code(404); exit('Sollicitant niet gevonden.'); }
     $naam = $dossier['Naam'] ?? 'sollicitant';
 
@@ -84,11 +88,12 @@ if ($formaat === 'pdf') {
   .waarde{font-size:14px;white-space:pre-wrap}
   .waarde.leeg{color:#bbb;font-style:italic}
   .besch{background:#f0f6fc;border-left:3px solid #054d8a;padding:10px 14px;border-radius:6px}
-  .knop{display:inline-block;background:#054d8a;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-size:14px;margin-bottom:20px}
+  .knop{display:inline-block;background:#054d8a;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;font-size:14px;margin-bottom:20px;border:none;cursor:pointer;font-family:inherit}
 </style>
+<script src="<?= APP_URL ?>/assets/js/klik.js?v=<?= @filemtime(__DIR__.'/../assets/js/klik.js') ?>"></script>
 </head>
 <body>
-  <a href="javascript:window.print()" class="knop geen-print">🖨 Afdrukken / opslaan als PDF</a>
+  <button type="button" data-klik="window.print()" class="knop geen-print">Afdrukken / opslaan als PDF</button>
   <h1><?= h($dossier['Naam']) ?></h1>
   <div class="sub"><?= h($dossier['Seizoen']) ?> · <?= h($dossier['Fase']) ?></div>
 

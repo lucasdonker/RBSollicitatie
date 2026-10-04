@@ -1,6 +1,6 @@
 <?php
 /**
- * Pagina's — kern: schema, CRUD en de moduledefinitie.
+ * Pagina's — kern: schema en CRUD. De moduledefinitie (recht, menu) staat in includes/modules/paginas.php.
  *
  * Datamodel (3 tabellen):
  *  - paginas         de pagina zelf (slug, titel, status, actieve versie, CSP-uitzonderingen)
@@ -13,23 +13,13 @@
 
 if (!function_exists('pag_auto_setup')) {
 
-/** Wat deze module bij de kern registreert. Registry-klaar: vier haken, meer niet. */
-function pag_module_definitie(): array {
-    return [
-        'sleutel' => 'paginas',
-        'setup'   => 'pag_auto_setup',
-        'recht'   => ['label' => "Landingspagina's", 'groep' => 'Werving', 'acties' => ['lezen','bewerken','verwijderen']],
-        'nav'     => ['id' => 'paginas', 'label' => "Landingspagina's", 'url' => '/admin/paginas.php'],
-    ];
-}
-
 function pag_statussen(): array {
     return ['concept' => 'Concept', 'alleen_admin' => 'Alleen beheerders', 'gepubliceerd' => 'Gepubliceerd'];
 }
 
 /** Tabellen aanmaken + de rechten eenmalig op bestaande rollen zetten. */
 function pag_auto_setup(): void {
-    static $done = false; if ($done) return; $done = true;
+    static $done = false; if ($done || schema_actueel()) return; $done = true;
     try {
         $db = db();
         $db->exec("CREATE TABLE IF NOT EXISTS `paginas` (
@@ -68,17 +58,28 @@ function pag_auto_setup(): void {
             KEY `idx_pagina` (`pagina_id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+        // De waarden van 'type' komen uit pag_event_typen(); pag_events_enum_bij() houdt de
+        // ENUM daarmee gelijk op een database die al bestond.
+        $typen = "'" . implode("','", pag_event_typen()) . "'";
         $db->exec("CREATE TABLE IF NOT EXISTS `pagina_events` (
             `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
             `pagina_id` INT DEFAULT NULL,
             `bron_code` VARCHAR(80) DEFAULT NULL,
-            `type` ENUM('bezoek','formulier_start','formulier_klaar','formulier_geweigerd') NOT NULL,
+            `type` ENUM($typen) NOT NULL,
+            `detail` VARCHAR(40) DEFAULT NULL,
             `bezoeker_hash` CHAR(64) DEFAULT NULL,
             `moment` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             KEY `idx_pagina` (`pagina_id`, `type`),
             KEY `idx_moment` (`moment`),
             KEY `idx_bezoeker` (`bezoeker_hash`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        if (function_exists('db_kolom_verzeker')) db_kolom_verzeker($db, 'pagina_events', 'detail', 'VARCHAR(40) DEFAULT NULL');
+        // 2.145.0: UTM los per gebeurtenis (pag_utm_velden()); de campagne blijft ook in bron_code.
+        if (function_exists('db_kolom_verzeker') && function_exists('pag_utm_velden')) {
+            foreach (pag_utm_velden() as $k => $_l) db_kolom_verzeker($db, 'pagina_events', $k, 'VARCHAR(40) DEFAULT NULL');
+        }
+        pag_events_enum_bij($db);
 
         pag_rechten_seed();
     } catch (\Throwable $e) { error_log('pag_auto_setup: ' . $e->getMessage()); }
@@ -136,8 +137,11 @@ function pag_via_slug(string $slug): ?array {
  * Pagina bij een bron-code, voor herkomst-attributie bij een aanmelding.
  * Eerst op bron_code (de expliciete koppeling), pas daarna op slug — de oude module deed
  * "bron_code = ? OR slug = ?" in één query en gaf bij een botsing een willekeurige rij.
+ * Een campagne erachter ("<bron>/<campagne>", zie werving.php) telt niet mee voor de pagina.
  */
 function pag_via_bron(string $bron_code): ?array {
+    $delen = explode('/', $bron_code, 2);
+    $bron_code = $delen[0];
     if ($bron_code === '') return null;
     try {
         pag_auto_setup();
@@ -153,6 +157,14 @@ function pag_alle(): array {
         pag_auto_setup();
         return db()->query("SELECT * FROM paginas ORDER BY aangemaakt_op DESC")->fetchAll();
     } catch (\Throwable $e) { return []; }
+}
+
+/**
+ * De wervingspagina die bezoekers zien op de voorpagina van het domein (index.php), of ''.
+ * Voor zoekmachines is de voorpagina het sterkste adres; zonder startpagina gaat die naar de login.
+ */
+function pag_startpagina_slug(): string {
+    return function_exists('instelling') ? trim((string)instelling('paginas.startpagina', '')) : '';
 }
 
 /**
@@ -200,6 +212,18 @@ function pag_opslaan(array $in, int $id = 0): array {
                ->execute([$slug, $titel, $doelgroep, $bron, $status, $csp, $index, $bhd ?: null]);
             $id = (int)$db->lastInsertId();
             if (function_exists('audit_log')) audit_log('aangemaakt', 'pagina', $id, ['slug' => $slug]);
+        }
+        // Startpagina van het domein: één instelling (slug). Hernoemd → meeverhuizen; alleen als het
+        // formulier het veld meestuurt (startpagina_veld) mag het vinkje hem aan- of uitzetten.
+        $start = pag_startpagina_slug();
+        if (isset($oud) && $start === $oud['slug'] && $oud['slug'] !== $slug) $start = $slug;
+        if (isset($in['startpagina_veld'])) {
+            if (!empty($in['startpagina'])) $start = $slug;
+            elseif ($start === $slug)       $start = '';
+        }
+        if ($start !== pag_startpagina_slug() && function_exists('instelling_opslaan')) {
+            instelling_opslaan('paginas.startpagina', $start);
+            if (function_exists('audit_log')) audit_log('pagina_startpagina', 'pagina', $id, ['slug' => $start]);
         }
         return ['ok' => true, 'id' => $id, 'fout' => ''];
     } catch (\Throwable $e) {

@@ -1,0 +1,1853 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="nl" xml:lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc 3.11" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Verwerkingsregister (AVG)</title>
+  <style>
+
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+</style>
+  <style type="text/css">
+:root { --navy: #054d8a; --oranje: #D43D00; --tekst: #1a2230; --grijs: #5a6478; --rand: #e6e9ef; --bg: #f4f6f9; }
+html { font-size: 16px; }
+body { margin: 0; padding: 0 16px 48px; font-family: "Instrument Sans", -apple-system, "Segoe UI", Arial, sans-serif; color: var(--tekst); background: #fff; line-height: 1.6; max-width: 820px; margin-inline: auto; }
+header#title-block-header { border-bottom: 3px solid var(--navy); margin: 24px 0 16px; padding-bottom: 8px; }
+h1.title { color: var(--navy); font-size: 1.7rem; margin: 0; }
+
+h1 { color: var(--navy); font-size: 1.3rem; margin-top: 2em; padding-top: 0.6em; border-top: 1px solid var(--rand); }
+h2 { color: var(--tekst); font-size: 1.08rem; margin-top: 1.4em; }
+h3 { color: var(--tekst); font-size: 1rem; margin-top: 1.2em; }
+a { color: var(--oranje); }
+nav#TOC { background: var(--bg); border-radius: 10px; padding: 12px 16px; margin: 16px 0 24px; font-size: 0.95rem; }
+nav#TOC ul { margin: 0; padding-left: 18px; }
+table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 0.92rem; }
+th, td { border: 1px solid var(--rand); padding: 6px 8px; text-align: left; vertical-align: top; }
+th { background: var(--bg); color: var(--navy); }
+code { background: var(--bg); padding: 1px 4px; border-radius: 4px; font-size: 0.9em; }
+pre { background: var(--bg); padding: 10px 12px; border-radius: 8px; overflow-x: auto; }
+pre code { background: none; padding: 0; }
+blockquote { border-left: 3px solid var(--oranje); margin: 12px 0; padding: 4px 12px; color: var(--grijs); }
+hr { border: 0; border-top: 1px solid var(--rand); margin: 24px 0; }
+@media (max-width: 600px) { html { font-size: 15px; } table { display: block; overflow-x: auto; } }
+</style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Verwerkingsregister — Sollicitatiesysteem Paal 13</h1>
+</header>
+<p>Versie 2.125 · september 2026</p>
+<p>Dit is het register van verwerkingsactiviteiten (AVG artikel 30) voor
+het sollicitatiesysteem van Reddingsbrigade Paal 13: het
+aanmeldformulier, het sollicitantenportaal en het beheer. Per verwerking
+staat hier waarom we persoonsgegevens gebruiken, op welke grond, van
+wie, welke, wie ze krijgt, hoe lang we ze bewaren en hoe we ze
+beveiligen. Het register staat in Git naast de code, zodat het bestuur
+en een opvolger altijd de actuele versie hebben.</p>
+<h1 id="inhoud">Inhoud</h1>
+<ol type="1">
+<li><a href="#over-dit-register">Over dit register</a></li>
+<li><a href="#overzicht">Overzicht</a></li>
+<li><a href="#hosting-en-vaste-verwerkers">Hosting en vaste
+verwerkers</a></li>
+<li><a href="#aanmelding-en-sollicitatie">Aanmelding en
+sollicitatie</a></li>
+<li><a href="#kennismakingsformulier-en-foto">Kennismakingsformulier en
+foto</a></li>
+<li><a href="#selectiedag-en-trainingsweekend">Selectiedag en
+trainingsweekend</a></li>
+<li><a href="#gezondheidsverklaring-en-intake">Gezondheidsverklaring en
+intake</a></li>
+<li><a href="#ondertekening-en-bewijslog">Ondertekening en
+bewijslog</a></li>
+<li><a href="#beschikbaarheid-en-loonplanning">Beschikbaarheid en
+loonplanning</a></li>
+<li><a href="#loondossier">Loondossier</a></li>
+<li><a href="#lidmaatschap">Lidmaatschap</a></li>
+<li><a href="#berichten">Berichten</a></li>
+<li><a href="#ai-analyse">AI-analyse</a></li>
+<li><a href="#landingspaginas-en-bezoekersstatistiek">Landingspagina&#39;s
+en bezoekersstatistiek</a></li>
+<li><a href="#beheerders-en-logboek">Beheerders en logboek</a></li>
+<li><a href="#productiekopie-op-de-testomgeving">Productiekopie op de
+testomgeving</a></li>
+<li><a href="#seintje-bij-de-volgende-werving">Seintje bij de volgende
+werving</a></li>
+<li><a href="#bijzonderheden">Bijzonderheden</a></li>
+<li><a href="#rechten-van-betrokkenen">Rechten van betrokkenen</a></li>
+<li><a href="#datalekken">Datalekken</a></li>
+<li><a href="#nog-vast-te-leggen">Nog vast te leggen</a></li>
+<li><a href="#wijzigingen">Wijzigingen</a></li>
+</ol>
+<hr />
+<h1 id="over-dit-register">Over dit register</h1>
+<blockquote>
+<p><strong>In het kort:</strong> de vereniging is
+verwerkingsverantwoordelijke, het bestuur houdt dit register bij en de
+technisch beheerder controleert het tegen de code. Bijwerken bij elke
+nieuwe verwerking, nieuwe dienst of gewijzigde bewaartermijn. Alle
+termijnen hieronder gelden alleen als automatisch opschonen aan staat
+(<code>bewaar.actief</code>).</p>
+</blockquote>
+<p><strong>Verwerkingsverantwoordelijke.</strong> Reddingsbrigade Paal
+13 (vereniging, Callantsoog en Groote Keeten). Aanspreekpunt voor
+privacy is het bestuur, via het adres in de instelling
+<code>mail.bestuur_email</code> (standaard
+<code>bestuur@paal13.com</code>). Er is geen functionaris
+gegevensbescherming aangesteld; dat is voor de vereniging niet verplicht
+(AVG artikel 37).</p>
+<p><strong>Wie het bijhoudt.</strong></p>
+<table>
+<thead>
+<tr>
+<th>Rol</th>
+<th>Taak</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bestuur</td>
+<td>Eigenaar van dit register. Beslist over nieuwe verwerkingen en
+termijnen, sluit verwerkersovereenkomsten.</td>
+</tr>
+<tr>
+<td>Technisch beheerder</td>
+<td>Controleert bij elke release of het register nog klopt met de code
+en de instellingen, en past het aan in dezelfde commit als de
+wijziging.</td>
+</tr>
+<tr>
+<td>Penningmeester</td>
+<td>Leest mee voor het loondossier en vernietigt de loondocumenten na de
+bewaarplicht.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Wanneer bijwerken.</strong> Bij elke nieuwe verwerking (een
+nieuw formulier, een nieuw soort gegeven), bij elke nieuwe of andere
+externe dienst (een andere mail-, sms- of AI-dienst) en bij elke
+gewijzigde bewaartermijn. Pas dan ook de privacyverklaring aan
+(<code>includes/privacy_verklaring.php</code>) en verhoog
+<code>PRIVACY_VERSIE</code> in <code>includes/functions.php</code>.
+Noteer de wijziging onderaan in <a href="#wijzigingen">Wijzigingen</a>.</p>
+<p><strong>Bewaartermijnen en opschonen.</strong> De termijnen staan in
+het beheer onder Instellingen › Bewaren &amp; opschonen. Per termijn
+staat hieronder de instellingssleutel en de standaardwaarde. De
+dagelijkse opschoning (<code>includes/opschonen.php</code>) doet
+<strong>niets</strong> zolang <code>bewaar.actief</code> op 0 staat, en
+dat is de standaard. Op productie moet deze schakelaar aan; anders
+blijven gegevens onbeperkt staan en klopt de privacyverklaring niet.</p>
+<p><strong>Verhouding tot de privacyverklaring.</strong> De openbare
+verklaring (<code>/privacy.php</code>) is de versie voor sollicitanten.
+Dit register is de interne, volledige versie. Ze horen hetzelfde te
+zeggen; de verklaring leest dezelfde instellingen voor de termijnen.</p>
+<h1 id="overzicht">Overzicht</h1>
+<blockquote>
+<p><strong>In het kort:</strong> één regel per verwerking. De details
+staan in de hoofdstukken erna.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Verwerking</th>
+<th>Grondslag (AVG)</th>
+<th>Bewaartermijn (standaard)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Aanmelding en sollicitatie</td>
+<td>art. 6 lid 1 sub b</td>
+<td>afgewezen of afgehaakt: 4 weken; onvoltooid: 3 maanden; aangenomen:
+2 jaar na laatste seizoen</td>
+</tr>
+<tr>
+<td>Kennismakingsformulier en foto</td>
+<td>art. 6 lid 1 sub b</td>
+<td>volgt het dossier</td>
+</tr>
+<tr>
+<td>Selectiedag en trainingsweekend</td>
+<td>art. 6 lid 1 sub f (beoordelen), sub b (organiseren)</td>
+<td>volgt het dossier</td>
+</tr>
+<tr>
+<td>Gezondheidsverklaring en intake</td>
+<td>art. 9 lid 2 sub a; foto&#39;s: art. 6 lid 1 sub a</td>
+<td>einde seizoen; bij afwijzing direct</td>
+</tr>
+<tr>
+<td>Ondertekening en bewijslog</td>
+<td>art. 6 lid 1 sub f en art. 32</td>
+<td>zolang het document bestaat</td>
+</tr>
+<tr>
+<td>Beschikbaarheid en loonplanning</td>
+<td>art. 6 lid 1 sub b</td>
+<td>volgt het dossier; AI-invoer 3 maanden</td>
+</tr>
+<tr>
+<td>Loondossier</td>
+<td>art. 6 lid 1 sub c; bankpas sub b</td>
+<td>5 jaar na einde jaar van uitdienst (handmatig); bankpas 30 dagen na
+verwerking</td>
+</tr>
+<tr>
+<td>Lidmaatschap</td>
+<td>art. 6 lid 1 sub b</td>
+<td>volgt het dossier; ledenadministratie daarbuiten</td>
+</tr>
+<tr>
+<td>Berichten</td>
+<td>art. 6 lid 1 sub b</td>
+<td>overzicht 12 maanden, inhoud 3 maanden</td>
+</tr>
+<tr>
+<td>AI-analyse</td>
+<td>art. 6 lid 1 sub f; beschikbaarheidshulp sub b</td>
+<td>analyse volgt het dossier; invoertekst 3 maanden</td>
+</tr>
+<tr>
+<td>Landingspagina&#39;s en statistiek</td>
+<td>art. 6 lid 1 sub f</td>
+<td>pseudoniem 30 dagen, telling 13 maanden</td>
+</tr>
+<tr>
+<td>Beheerders en logboek</td>
+<td>art. 6 lid 1 sub f en art. 32</td>
+<td>logboek 12 maanden, fouten 90 dagen</td>
+</tr>
+<tr>
+<td>Productiekopie op de testomgeving</td>
+<td>art. 6 lid 1 sub f en art. 32</td>
+<td>echte gegevens alleen de minuten tussen importeren en anonimiseren;
+exportbestand direct weg</td>
+</tr>
+<tr>
+<td>Seintje bij de volgende werving</td>
+<td>art. 6 lid 1 sub a; oud-strandwachten sub f</td>
+<td>maximaal 12 maanden</td>
+</tr>
+<tr>
+<td>Seintje buiten het seizoen (nog niet gesolliciteerd)</td>
+<td>art. 6 lid 1 sub a, met dubbele bevestiging</td>
+<td>onbevestigd 7 dagen; na het bericht weg; maximaal 12 maanden</td>
+</tr>
+</tbody>
+</table>
+<h1 id="hosting-en-vaste-verwerkers">Hosting en vaste verwerkers</h1>
+<blockquote>
+<p><strong>In het kort:</strong> alles draait bij Cloud86 in Nederland.
+Een paar diensten zijn altijd betrokken (hosting, e-mail, inloggen via
+Authentik); andere alleen als ze aan staan. Voor elke externe verwerker
+hoort een verwerkersovereenkomst.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Partij</th>
+<th>Wat</th>
+<th>Wanneer</th>
+<th>Buiten de EER</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cloud86 (Plesk)</td>
+<td>Webserver, database (MariaDB), opslag van documenten en
+back-ups</td>
+<td>altijd</td>
+<td>nee (Nederland)</td>
+</tr>
+<tr>
+<td>Authentik</td>
+<td>Inloggen voor beheerders (SSO, OIDC) met tweestapsverificatie</td>
+<td>altijd</td>
+<td>nee; eigen installatie van de vereniging</td>
+</tr>
+<tr>
+<td>E-mailprovider</td>
+<td>Verzenden van e-mail via de SMTP-server uit
+<code>smtp.host</code></td>
+<td>altijd</td>
+<td>vastleggen welke partij en waar</td>
+</tr>
+<tr>
+<td>WhatsReach en WhatsApp (Meta)</td>
+<td>Berichten via WhatsApp</td>
+<td>alleen als <code>wa.actief</code> = 1</td>
+<td>ja (Meta, VS); vestiging WhatsReach vastleggen</td>
+</tr>
+<tr>
+<td>Sms-dienst</td>
+<td>Berichten en verificatiecodes per sms, via <code>sms.gateway</code>:
+<code>messagebird</code> (Bird, Nederland), <code>easysendsms</code>
+(EasySendSMS), <code>eigen_telefoon</code> of
+<code>http_gateway</code></td>
+<td>alleen als <code>sms.actief</code> = 1</td>
+<td>afhankelijk van de gekozen gateway</td>
+</tr>
+<tr>
+<td>Google (Gemini API)</td>
+<td>AI-analyse van het kennismakingsformulier en de
+beschikbaarheidshulp</td>
+<td>alleen als <code>ai.api_key</code> gevuld is</td>
+<td>ja (VS)</td>
+</tr>
+<tr>
+<td>Kadaster (PDOK)</td>
+<td>Straat en woonplaats aanvullen uit postcode en huisnummer; alleen
+die twee gaan erheen</td>
+<td>bij invullen adres, alleen voor ingelogde sollicitanten</td>
+<td>nee</td>
+</tr>
+<tr>
+<td>Website paal13.com (WordPress-plugin)</td>
+<td>Toont het aanmeldformulier en stuurt de inzending door naar het
+systeem; bewaart zelf alleen een gehashte IP-teller van een uur tegen
+misbruik</td>
+<td>als het formulier daar staat</td>
+<td>nee, mits de WordPress-hosting in de EER staat</td>
+</tr>
+</tbody>
+</table>
+<p>Doorgifte naar de VS (Google, Meta) steunt op het EU-VS Data Privacy
+Framework, voor zover het bedrijf daarbij is aangesloten, of op
+standaardcontractbepalingen.</p>
+<h1 id="aanmelding-en-sollicitatie">Aanmelding en sollicitatie</h1>
+<blockquote>
+<p><strong>In het kort:</strong> iemand meldt zich aan via het formulier
+(op deze site, een landingspagina of paal13.com) en volgt daarna de
+sollicitatie in het portaal. We verwerken dat om een arbeidsovereenkomst
+te kunnen sluiten, niet op basis van toestemming.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Onderdeel</th>
+<th>Inhoud</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Doel</td>
+<td>De sollicitatie behandelen: aanmelden, contact houden, uitnodigen,
+besluiten, en de sollicitant toegang geven tot het portaal.</td>
+</tr>
+<tr>
+<td>Grondslag</td>
+<td>Art. 6 lid 1 sub b AVG: nodig om op verzoek van de sollicitant een
+arbeidsovereenkomst te kunnen sluiten. Het vinkje bij de
+privacyverklaring betekent &quot;gelezen&quot;, geen toestemming. De ouder van een
+15-jarige geeft bij het aanmelden toestemming (zie <a href="#bijzonderheden">Bijzonderheden</a>).</td>
+</tr>
+<tr>
+<td>Betrokkenen</td>
+<td>Sollicitanten (vanaf 15 jaar); ouders of verzorgers van
+sollicitanten jonger dan 18.</td>
+</tr>
+<tr>
+<td>Persoonsgegevens</td>
+<td>Naam, geboortedatum, e-mailadres, telefoonnummer, geslacht
+(optioneel, alleen voor de slaapindeling in het trainingsweekend), bron
+van de aanmelding (<code>bron_code</code>, <code>bron_label</code>) en
+sinds 2.145 de UTM-herkomst van de advertentielink waarmee iemand
+binnenkwam (<code>utm_source</code>, <code>utm_medium</code>,
+<code>utm_campaign</code>, <code>utm_content</code>: bron, medium,
+campagne en variant; geschoond tot a-z, 0-9 en koppeltekens, maximaal 40
+tekens; geen cookie, geen IP-adres), moment, versie en IP-adres van het
+lezen van de privacyverklaring (<code>privacy_ip</code>), bij een
+15-jarige naam en moment van ouderlijke toestemming, bij jonger dan 18
+naam, e-mail en telefoon van de ouder. Fase en geschiedenis van de
+sollicitatie, notities van het bestuur
+(<code>sollicitant_notities</code>), taken in het portaal.
+Portaalgebruik: inlogmomenten, &quot;blijf ingelogd&quot; met browser en IP per
+apparaat (<code>portaal_apparaten</code>).</td>
+</tr>
+<tr>
+<td>Verzoek om in te trekken (2.120)</td>
+<td>Vanuit Mijn gegevens: reden (optioneel), of iemand een seintje wil,
+status en wie besliste (<code>intrek_verzoek</code>). Er verandert niets
+vanzelf; het bestuur belt en beslist. Het seintje-vinkje staat niet
+vooraf aan (toestemming, zie <a href="#seintje-bij-de-volgende-werving">Seintje</a>, bron
+<code>intrekken</code>). Gaat mee in inzage en wissen.</td>
+</tr>
+<tr>
+<td>Ontvangers en verwerkers</td>
+<td>Bestuur (module <code>sollicitanten</code>), penningmeester (alleen
+lezen). Cloud86, e-mailprovider, eventueel WhatsReach of sms-dienst,
+WordPress-site paal13.com als doorgeefluik.</td>
+</tr>
+<tr>
+<td>Doorgifte buiten de EER</td>
+<td>Nee, behalve bij berichten via WhatsApp (zie <a href="#berichten">Berichten</a>).</td>
+</tr>
+<tr>
+<td>Bewaartermijn</td>
+<td>Afgewezen of afgehaakt: anonimiseren 4 weken na het besluit
+(<code>bewaar.afgewezen_weken</code>, standaard 4); met een seintje
+maximaal 12 maanden (zie <a href="#seintje-bij-de-volgende-werving">Seintje bij de volgende
+werving</a>). Aanmelding niet afgemaakt (fase aangemeld, geen formulier,
+geen beschikbaarheid): verwijderen na 3 maanden
+(<code>bewaar.onvoltooid_mnd</code>, standaard 3). Aangenomen: zolang
+iemand bij ons werkt en daarna 2 jaar na het laatste seizoen
+(<code>bewaar.aangenomen_jaar</code>, standaard 2); dan wordt het
+dossier leeggemaakt en de persoon geanonimiseerd zodra er geen
+loondocumenten meer zijn. &quot;Blijf ingelogd&quot;: 60 dagen (vast), en weg bij
+wissen of anonimiseren. Wat er bij anonimiseren verdwijnt, staat op één
+plek: <code>avg_sollicitatie_leegmaken()</code> in
+<code>includes/avg_wissen.php</code> (formulieren, beschikbaarheid,
+selectiedag, trainingsweekend, notities, AI-gegevens, apparaten,
+bewijsspoor van ondertekeningen). De sollicitatierij zelf blijft zonder
+persoonsgegevens staan voor de statistiek, net als de loonplanning
+(zonder notitie). De bron en de UTM-herkomst volgen dezelfde termijn: ze
+staan bij de sollicitatie en blijven na anonimiseren alleen bij die
+anonieme rij, voor de statistiek per wervingskanaal.</td>
+</tr>
+<tr>
+<td>Beveiliging</td>
+<td>Https, CSRF-bescherming en snelheidsbegrenzing op formulieren en
+API, inloggen in het portaal met een eenmalige code of inloglink
+(bevestigingsklik, geen inloggen op een GET), roulerend &quot;blijf
+ingelogd&quot;-token dat bij hergebruik alle apparaten intrekt, rechten per
+module voor beheerders, logboek van handelingen.</td>
+</tr>
+</tbody>
+</table>
+<h1 id="kennismakingsformulier-en-foto">Kennismakingsformulier en
+foto</h1>
+<blockquote>
+<p><strong>In het kort:</strong> het kennismakingsformulier met adres,
+opleiding, ervaring, motivatie en een foto. De foto staat buiten het
+webbereik en is alleen te zien met de juiste rechten.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Onderdeel</th>
+<th>Inhoud</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Doel</td>
+<td>De sollicitant leren kennen om te beslissen over een uitnodiging
+voor de selectiedag, en de foto om sollicitanten op de selectiedag te
+herkennen.</td>
+</tr>
+<tr>
+<td>Grondslag</td>
+<td>Art. 6 lid 1 sub b AVG.</td>
+</tr>
+<tr>
+<td>Betrokkenen</td>
+<td>Sollicitanten.</td>
+</tr>
+<tr>
+<td>Persoonsgegevens</td>
+<td>Adres (straat, huisnummer, postcode, woonplaats), opleiding,
+werkervaring, diploma&#39;s en certificaten, motivatie,
+beschikbaarheidsintentie, bijzonderheden (vrije tekst; kan
+gezondheidsinformatie bevatten), foto, wijzigingen met reden
+(<code>blk_wijzigingen</code>). Tabel <code>blk_formulieren</code>.</td>
+</tr>
+<tr>
+<td>Ontvangers en verwerkers</td>
+<td>Bestuur (module <code>blk</code>). Begeleiders zien de
+bijzonderheden niet, alleen een neutrale &quot;let op&quot;-vlag. Foto: iedereen
+met leesrecht op <code>sollicitanten</code>, <code>blk</code> of
+<code>selectiedag</code>. Kadaster (PDOK) voor het aanvullen van het
+adres. Google (Gemini) voor de AI-analyse, zie <a href="#ai-analyse">AI-analyse</a>; de bijzonderheden gaan daar niet
+heen.</td>
+</tr>
+<tr>
+<td>Doorgifte buiten de EER</td>
+<td>Alleen de antwoorden die naar de AI-dienst gaan (zonder naam, adres,
+contactgegevens, foto en bijzonderheden).</td>
+</tr>
+<tr>
+<td>Bewaartermijn</td>
+<td>Volgt het dossier (zie <a href="#aanmelding-en-sollicitatie">Aanmelding en sollicitatie</a>). Bij
+anonimiseren of een verwijderverzoek gaan het formulier, de wijzigingen
+(<code>blk_wijzigingen</code>) en het fotobestand weg.</td>
+</tr>
+<tr>
+<td>Beveiliging</td>
+<td>Foto in een map buiten het webbereik
+(<code>documenten_map()/fotos</code>), alleen op te vragen via
+<code>foto.php</code> met een rechtencontrole; willekeurige
+bestandsnaam; alleen jpg, png of webp tot 5 MB, gecontroleerd op
+inhoud.</td>
+</tr>
+</tbody>
+</table>
+<h1 id="selectiedag-en-trainingsweekend">Selectiedag en
+trainingsweekend</h1>
+<blockquote>
+<p><strong>In het kort:</strong> groepsindeling, aanwezigheid, cijfers,
+observaties en besluiten. Beoordelen doen we op grond van
+gerechtvaardigd belang: goede strandwachten kiezen voor de veiligheid op
+het strand.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Onderdeel</th>
+<th>Inhoud</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Doel</td>
+<td>De selectiedag en het trainingsweekend organiseren en sollicitanten
+beoordelen om te besluiten over aannemen.</td>
+</tr>
+<tr>
+<td>Grondslag</td>
+<td>Organiseren: art. 6 lid 1 sub b AVG. Beoordelen, observaties en
+besluit: art. 6 lid 1 sub f (gerechtvaardigd belang: veilige bezetting
+van het strand). Een mens beslist altijd.</td>
+</tr>
+<tr>
+<td>Betrokkenen</td>
+<td>Sollicitanten die zijn uitgenodigd; beoordelaars (hun naam staat bij
+hun cijfers en observaties); strandwachten van wie het bestuur feedback
+vastlegt (hun naam staat bij die feedback, niet in de inzage voor de
+sollicitant).</td>
+</tr>
+<tr>
+<td>Persoonsgegevens</td>
+<td>Groepsindeling en &quot;houd uit elkaar&quot;-relaties
+(<code>selectie_indeling</code>, <code>selectie_relatie</code>),
+aanwezigheid en incheckmoment, cijfers per test en criterium per
+beoordelaar (<code>selectie_score</code>), vrije observaties
+(<code>selectie_observatie</code>, <code>tw_observatie</code>), besluit
+met notitie en belnotitie (<code>selectie_besluit</code>), deelname,
+afmeldreden en besluit trainingsweekend (<code>tw_deelname</code>). Per
+evenement de bevestiging &quot;ik kom / ik kan niet&quot; met reden en bron
+(portaal, bellijst of bestuur). Van het gesprek op het trainingsweekend:
+het besluit, een interne notitie en het bericht aan de sollicitant
+(<code>tw_deelname.gesprek_bericht</code>, gaat mee in de mail). Wie een
+bellijst-regel of gesprek open heeft staat maximaal 30 minuten bij de
+rij (<code>bel_door</code>, <code>gesprek_door</code>). Sinds 2.117:
+groepsindeling van het weekend (<code>tw_groep</code>,
+<code>tw_deelname.groep_id</code>); &quot;houd uit elkaar&quot; geldt voor beide
+evenementen. Of iemand een terugkerende strandwacht is, wordt afgeleid
+uit de Authentik-groepen <code>lid-strandploeg</code> en
+<code>lid-oud-strandploeg</code> (afgelopen 3 seizoenen), die de
+competentie-sync al ophaalt (sinds 2.132.2; niets nieuws opgeslagen).
+Sinds 2.118: de eerste indruk van het bestuur tijdens het weekend
+(sowieso aannemen / twijfel / sowieso afwijzen) met bij twijfel een
+vraag aan de beoordelaars (<code>tw_deelname.evaluatie*</code>). Sinds
+2.119: feedback die een strandwacht het bestuur gaf, door het bestuur
+vastgelegd: van wie, wanneer gezien, soort en tekst
+(<code>lifeguard_feedback</code>).</td>
+</tr>
+<tr>
+<td>Ontvangers en verwerkers</td>
+<td>Bestuur (modules <code>selectiedag</code> en
+<code>trainingsweekend</code>, bewerken). Begeleiders (rol
+<code>begeleider</code>): alleen lezen, inchecken, eigen cijfers en
+observaties geven, geen dossier en geen telefoonnummers. Van de
+evaluatie zien begeleiders alleen wie op twijfel staat (&quot;extra aandacht
+gevraagd&quot;) met de vraag van het bestuur; sowieso aannemen of afwijzen
+zien ze niet. Feedback van strandwachten is alleen zichtbaar met
+dossierrecht (bestuur, penningmeester). Op de incheck-tablet ziet iemand
+na minstens 3 getypte letters hooguit 3 namen met foto — nooit een
+volledige lijst. Cloud86.</td>
+</tr>
+<tr>
+<td>Doorgifte buiten de EER</td>
+<td>Nee.</td>
+</tr>
+<tr>
+<td>Bewaartermijn</td>
+<td>Volgt het dossier: bij afwijzen 4 weken, bij aannemen 2 jaar na het
+laatste seizoen. Bij wissen gaan indeling, relaties (in beide
+richtingen), cijfers, observaties, besluiten, deelname (met evaluatie)
+en feedback van strandwachten weg.</td>
+</tr>
+<tr>
+<td>Beveiliging</td>
+<td>Rechten per module; begeleiders kunnen alleen hun eigen observaties
+verwijderen; incheck-tablet met een eigen code per evenement,
+snelheidsbegrenzing en een gehashte pincode om af te sluiten;
+logboek.</td>
+</tr>
+</tbody>
+</table>
+<h1 id="gezondheidsverklaring-en-intake">Gezondheidsverklaring en
+intake</h1>
+<blockquote>
+<p><strong>In het kort:</strong> vóór de selectiedag vragen we een
+gezondheidsverklaring en een intake, omdat sollicitanten het water in
+gaan. Dat zijn bijzondere persoonsgegevens (art. 9). Na het seizoen of
+bij afwijzing gaan de gezondheidsgegevens weg; het feit dát er is
+getekend blijft.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Onderdeel</th>
+<th>Inhoud</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Doel</td>
+<td>Veilig kunnen werken in het water en bij een noodgeval weten wat
+nodig is. De intake vraagt daarnaast toestemming voor het gebruik van
+foto&#39;s.</td>
+</tr>
+<tr>
+<td>Grondslag</td>
+<td>Gezondheidsgegevens: art. 9 lid 2 sub a AVG, uitdrukkelijke
+toestemming, gegeven door de ondertekening. Onder de 16 geeft de ouder
+of verzorger die toestemming (art. 5 UAVG). Foto&#39;s gebruiken: art. 6 lid
+1 sub a, toestemming, altijd in te trekken.</td>
+</tr>
+<tr>
+<td>Betrokkenen</td>
+<td>Sollicitanten die zijn uitgenodigd; ouders of verzorgers die voor
+een minderjarige tekenen.</td>
+</tr>
+<tr>
+<td>Persoonsgegevens</td>
+<td>Ondertekeningstypen <code>gezondheid_18plus</code>,
+<code>gezondheid_ouder</code>, <code>intake</code>,
+<code>intake_ouder</code>: de antwoorden op de gezondheidsvragen
+(<code>gezondheid_keuze</code>, <code>gezondheid_toelichting</code>),
+overige intake-antwoorden, toestemming foto&#39;s, handtekening, verzegelde
+PDF.</td>
+</tr>
+<tr>
+<td>Ontvangers en verwerkers</td>
+<td>Bestuur (module <code>ondertekeningen</code>). Niet de begeleiders.
+Cloud86, e-mailprovider (kopie aan de ondertekenaar).</td>
+</tr>
+<tr>
+<td>Doorgifte buiten de EER</td>
+<td>Nee.</td>
+</tr>
+<tr>
+<td>Bewaartermijn</td>
+<td><code>bewaar.gezondheid_mnd</code>, standaard 0: de
+gezondheidsgegevens (in de database en de verzegelde PDF) gaan weg na
+het einde van het seizoen (<code>datum_werk_eind</code>), en direct bij
+afwijzen of afhaken (bij de eerstvolgende dagelijkse run). Zonder
+einddatum van het seizoen: 12 maanden na ondertekening. Een waarde
+groter dan 0 betekent: zoveel maanden na ondertekening. De rest van de
+intake (verklaringen, toestemming foto&#39;s) en het feit dát er is getekend
+blijven bij het dossier.</td>
+</tr>
+<tr>
+<td>Beveiliging</td>
+<td>Verzegelde PDF versleuteld in de kluis; inzage alleen met module
+<code>ondertekeningen</code>; bewijslog van de ondertekening. De
+antwoorden zelf staan tot de opschoning in
+<code>ondertekeningen.formulier_data</code> in de database (niet in de
+kluis).</td>
+</tr>
+</tbody>
+</table>
+<h1 id="ondertekening-en-bewijslog">Ondertekening en bewijslog</h1>
+<blockquote>
+<p><strong>In het kort:</strong> elke digitale handtekening krijgt een
+bewijsspoor en een verzegelde PDF, zodat we kunnen aantonen wie wanneer
+tekende.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Onderdeel</th>
+<th>Inhoud</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Doel</td>
+<td>Aantonen dat de juiste persoon een document heeft ondertekend
+(bewijs, eIDAS), en de integriteit van het document waarborgen.</td>
+</tr>
+<tr>
+<td>Grondslag</td>
+<td>Art. 6 lid 1 sub f AVG (gerechtvaardigd belang: bewijs) en art. 32
+(beveiliging).</td>
+</tr>
+<tr>
+<td>Betrokkenen</td>
+<td>Sollicitanten, aangenomen strandwachten, ouders of verzorgers.</td>
+</tr>
+<tr>
+<td>Persoonsgegevens</td>
+<td>Gebeurtenissen per ondertekening
+(<code>ondertekening_gebeurtenissen</code>: geopend, code verzonden,
+ondertekend, verzegeld, gedownload, verstuurd) met tijdstip, IP-adres en
+browser; handtekeningafbeelding; kanaal van de verificatiecode; een
+certificaat van ondertekening in de PDF. Verificatiecodes
+(<code>otp_tokens</code>).</td>
+</tr>
+<tr>
+<td>Ontvangers en verwerkers</td>
+<td>Bestuur (module <code>ondertekeningen</code>); voor loonheffing en
+lidmaatschap alleen de penningmeester (een rol met module
+<code>documenten</code>; de admin-rol telt hier niet vanzelf,
+<code>mag_kluis()</code>). Sms-dienst of e-mailprovider voor de
+verificatiecode.</td>
+</tr>
+<tr>
+<td>Doorgifte buiten de EER</td>
+<td>Alleen als de verificatiecode via een sms-gateway buiten de EER
+gaat.</td>
+</tr>
+<tr>
+<td>Bewaartermijn</td>
+<td>Zolang het bijbehorende document bestaat. Bij het wissen van het
+dossier gaan handtekening, vertrouwelijke gegevens, naam, e-mail,
+geboortedatum en -plaats van de ondertekenaar, IP-adres, browser en het
+adres van de verificatiecode weg; type en moment blijven. Bij een
+bewaard loondossier blijft het bewijs van de loonheffing staan, met het
+IP-adres gemaskeerd (laatste blok op 0), zonder e-mailadres en met
+alleen de laatste vier tekens van het adres van de verificatiecode. De
+verzegelde PDF zelf wordt niet aangepast (dan klopt het zegel niet
+meer). Gebruikte of verlopen verificatiecodes: 1 uur na verlopen
+(vast).</td>
+</tr>
+<tr>
+<td>Beveiliging</td>
+<td>PDF digitaal verzegeld (PKCS#7, eigen certificaat) en versleuteld in
+de kluis; verificatiecode verplicht voor de typen in
+<code>ondertekenen.2fa_typen</code> (standaard
+<code>loonheffing</code>); maximum aantal codes per uur.</td>
+</tr>
+</tbody>
+</table>
+<h1 id="beschikbaarheid-en-loonplanning">Beschikbaarheid en
+loonplanning</h1>
+<blockquote>
+<p><strong>In het kort:</strong> wanneer iemand kan werken, verzoeken om
+minder dagen, correcties van het bestuur, de planning met loonkosten en
+(na het trainingsweekend) de vastgestelde inzet-afspraak.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Onderdeel</th>
+<th>Inhoud</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Doel</td>
+<td>Een bezetting van de posten maken, de loonkosten plannen en
+vastleggen wat er per persoon is afgesproken (weken, dagen, betaald of
+onbetaald, functie) als basis voor contract en loonadministratie.</td>
+</tr>
+<tr>
+<td>Grondslag</td>
+<td>Art. 6 lid 1 sub b AVG.</td>
+</tr>
+<tr>
+<td>Betrokkenen</td>
+<td>Sollicitanten en aangenomen strandwachten. Daarnaast extra personen
+in de loonplanning die geen sollicitant zijn, zoals de postcommandant
+(2.140).</td>
+</tr>
+<tr>
+<td>Persoonsgegevens</td>
+<td>Weken en dagen, vaste vrije dagen met reden, afwezigheid met
+omschrijving, verzoeken om minder dagen met toelichting (en welke dagen
+iemand wél kan), correcties door het bestuur met reden, losse dagen
+(tabellen <code>beschikbaarheid*</code>). Optioneel de vrije tekst voor
+de AI-hulp (<code>ai_beschikbaarheid_log</code>). Loonplanning: weken,
+dagen, betaald/onbetaald, functie, loon, notitie
+(<code>loon_planning</code>, <code>loon_scenario</code>,
+<code>loon_scenario_persoon</code>). Vastgestelde afspraak: functie,
+weken, dagen, betaald/onbetaald, wie en wanneer vastgesteld
+(<code>inzet_afspraak</code>, <code>inzet_afspraak_week</code>). De
+functie wordt voorgesteld uit de Lifeguard-rang in Authentik (zie
+Authentik). Extra personen: naam, functie, optioneel geboortedatum
+(alleen voor een dagloon naar leeftijd) en een korte notitie, plus hun
+planning per scenario (<code>loon_extra_persoon</code>,
+<code>loon_extra_planning</code>); ze krijgen geen portaal, berichten of
+afspraak en staan niet bij Sollicitanten.</td>
+</tr>
+<tr>
+<td>Ontvangers en verwerkers</td>
+<td>Bestuur (modules <code>beschikbaarheid</code>,
+<code>loonplanning</code>), penningmeester (<code>loonplanning</code>),
+begeleiders (<code>dekking</code>, alleen lezen), planner
+(<code>beschikbaarheid</code> en <code>dekking</code>, alleen lezen,
+plus de roosterexport zonder bedragen; geen dossier of contactgegevens).
+De sollicitant ziet de eigen afspraak in het portaal zodra die is
+vastgesteld. Google (Gemini) alleen voor de AI-hulp.</td>
+</tr>
+<tr>
+<td>Doorgifte buiten de EER</td>
+<td>Alleen de vrije tekst van de AI-hulp (zie <a href="#ai-analyse">AI-analyse</a>).</td>
+</tr>
+<tr>
+<td>Bewaartermijn</td>
+<td>Volgt het dossier: bij wissen gaan alle tabellen
+<code>beschikbaarheid*</code> en <code>ai_beschikbaarheid_log</code>
+weg. AI-invoertekst: 3 maanden (<code>bewaar.ai_invoer_mnd</code>,
+standaard 3). Loonplanning en vastgestelde afspraak blijven zonder
+notitie staan en zijn na anonimiseren niet meer herleidbaar. Extra
+personen: tot het bestuur ze verwijdert (Loonplanning, paneel van de
+persoon), uiterlijk met het seizoen (Seizoen › verwijderen). Gaan mee in
+de export voor de loonadministratie en het rooster.</td>
+</tr>
+<tr>
+<td>Beveiliging</td>
+<td>Rechten per module; correcties alleen met reden en naam van wie
+corrigeert; de AI-uitvoer wordt op de server gecontroleerd voordat er
+iets wordt ingevuld.</td>
+</tr>
+</tbody>
+</table>
+<h1 id="loondossier">Loondossier</h1>
+<blockquote>
+<p><strong>In het kort:</strong> BSN, kopie identiteitsbewijs, kopie
+bankpas en de opgaaf loonheffing van aangenomen strandwachten. Alles in
+de kluis; openen kan alleen de penningmeester. Loondocumenten bewaren we
+5 jaar na het einde van het jaar waarin het dienstverband eindigde; de
+penningmeester vernietigt ze met de hand.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Onderdeel</th>
+<th>Inhoud</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Doel</td>
+<td>Loon uitbetalen, loonheffing inhouden en afdragen, en de identiteit
+van de werknemer vastleggen.</td>
+</tr>
+<tr>
+<td>Grondslag</td>
+<td>Opgaaf loonheffingen, BSN en kopie identiteitsbewijs: art. 6 lid 1
+sub c AVG, wettelijke plicht (Wet op de loonbelasting 1964, art. 28 en
+29; BSN: art. 46 UAVG). Kopie bankpas: art. 6 lid 1 sub b, uitvoering
+van de arbeidsovereenkomst.</td>
+</tr>
+<tr>
+<td>Betrokkenen</td>
+<td>Aangenomen strandwachten.</td>
+</tr>
+<tr>
+<td>Persoonsgegevens</td>
+<td>Naam, voorletters, BSN, adres, geboortedatum, keuze
+loonheffingskorting, handtekening, IP-adres, browser en tijdstip, kanaal
+van de verificatiecode; kopie identiteitsbewijs voor- en achterkant
+(volledig, niet afgeschermd, zoals de wet eist) met documenttype; kopie
+voorkant bankpas (naam en IBAN).</td>
+</tr>
+<tr>
+<td>Ontvangers en verwerkers</td>
+<td>Penningmeester (module <code>documenten</code>). De admin ziet dat
+de stukken er zijn en kan ze vernietigen, maar opent ze niet (sinds
+2.132.0, <code>mag_kluis()</code>); in een noodgeval zet de admin
+zichzelf in Authentik in <code>app-sol-penningmeester</code>, wat in
+beide logboeken komt. Een geweigerde poging staat in het logboek
+(<code>document_geweigerd</code>). Het bestuur ziet deze stukken niet.
+De Belastingdienst (via de loonaangifte). Cloud86. Mail met bijlagen aan
+de penningmeester alleen als
+<code>documenten.penningmeester_bijlagen</code> aan staat (standaard
+uit).</td>
+</tr>
+<tr>
+<td>Doorgifte buiten de EER</td>
+<td>Nee.</td>
+</tr>
+<tr>
+<td>Bewaartermijn</td>
+<td>Opgaaf loonheffing en kopie identiteitsbewijs: 5 jaar na het einde
+van het kalenderjaar waarin het dienstverband eindigde (fiscale
+bewaarplicht). Het systeem vernietigt ze <strong>niet</strong>
+automatisch, omdat het einde van het dienstverband niet vastligt;
+<code>bewaar.loondocumenten_jaar</code> (standaard 5) bepaalt alleen
+wanneer een dossier op de lijst &quot;Te beoordelen voor vernietiging&quot; komt.
+De penningmeester vernietigt ze op het scherm Loondossiers. Kopie
+bankpas: 30 dagen nadat de penningmeester het dossier als verwerkt heeft
+gemarkeerd (<code>bewaar.bankpas_na_verwerking_dagen</code>, standaard
+30).</td>
+</tr>
+<tr>
+<td>Beveiliging</td>
+<td>Kluis (<code>includes/kluis.php</code>): envelope-encryptie met
+XChaCha20-Poly1305 (terugval AES-256-GCM), een eigen sleutel per
+bestand, hoofdsleutel afgeleid uit <code>KLUIS_SLEUTEL</code> in
+<code>config.php</code> én een zout in de database, geen onversleutelde
+terugval. Bestanden buiten het webbereik (<code>DOCUMENTEN_MAP</code>).
+Download van de bankpas met watermerk (de ID-kopie zonder, omdat die
+volledig leesbaar moet zijn in de loonadministratie), elke inzage in het
+logboek, melding aan het bestuur bij elke download
+(<code>documenten.download_melding</code>, standaard aan).
+Verificatiecode verplicht bij de opgaaf loonheffing. Uploadlimieten per
+uur.</td>
+</tr>
+</tbody>
+</table>
+<p>Het recht op verwijderen wijkt alleen voor wat de wet eist (AVG art.
+17 lid 3 sub b). Verwijdert een sollicitant met een verwerkt loondossier
+zichzelf, dan gaat al het andere weg en blijven alleen de
+loonheffing-ondertekening (met BSN), de kopie van het identiteitsbewijs,
+naam en geboortedatum (<code>avg_behoud_loondossier()</code>). Het
+portaal legt in eenvoudige taal uit wat blijft, waarom en tot wanneer.
+Het dossier blijft op de lijst &quot;Te beoordelen voor vernietiging&quot; komen
+(de naam staat er nog, de loonheffing-ondertekening bestaat nog).
+Vernietigt de penningmeester dat loondossier, dan gaan meteen ook naam
+en geboortedatum weg: <code>documenten_loondossier_vernietigen()</code>
+roept daarvoor <code>avg_na_loondossier_vernietigd()</code> aan
+(<code>includes/documenten.php</code>,
+<code>includes/avg_wissen.php</code>).</p>
+<h1 id="lidmaatschap">Lidmaatschap</h1>
+<blockquote>
+<p><strong>In het kort:</strong> aangenomen strandwachten worden lid van
+de vereniging. De inschrijving wordt in het portaal getekend en gaat per
+e-mail naar de ledenservice. Bij een minderjarige tekent de ouder of
+verzorger, en de SEPA-machtiging tekent de rekeninghouder.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Onderdeel</th>
+<th>Inhoud</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Doel</td>
+<td>Inschrijving als lid of donateur van de vereniging, en de
+contributie innen.</td>
+</tr>
+<tr>
+<td>Grondslag</td>
+<td>Art. 6 lid 1 sub b AVG (lidmaatschapsovereenkomst); bij incasso de
+SEPA-machtiging. Een minderjarige is handelingsonbekwaam (grens 18, zie
+<a href="#bijzonderheden">Bijzonderheden</a>), dus de
+lidmaatschapsovereenkomst van iemand onder de 18 wordt aangegaan en
+getekend door de ouder of verzorger. Een SEPA-machtiging kan alleen de
+rekeninghouder geven; die tekent de machtiging.</td>
+</tr>
+<tr>
+<td>Betrokkenen</td>
+<td>Aangenomen strandwachten; bij een minderjarige de ouder of verzorger
+die tekent; bij incasso de rekeninghouder (dat kan een ander zijn dan
+het lid, bijvoorbeeld de ouder).</td>
+</tr>
+<tr>
+<td>Persoonsgegevens</td>
+<td>Naam, geslacht, geboortedatum en -plaats, adres, telefoon, e-mail,
+gegevens van de ouder, lid of donateur, diploma&#39;s, betaalwijze, bij
+incasso IBAN en tenaamstelling, SEPA-machtiging, handtekening,
+verzegelde PDF. Bij een minderjarige: naam, e-mailadres en
+telefoonnummer van de ouder of verzorger die tekent, diens handtekening
+en het bewijsspoor van die ondertekening (tijdstip, IP-adres, browser;
+zie <a href="#ondertekening-en-bewijslog">Ondertekening en
+bewijslog</a>); bij incasso naam en IBAN van de rekeninghouder en diens
+handtekening onder de machtiging.</td>
+</tr>
+<tr>
+<td>Status (september 2026)</td>
+<td>Het tekenen door de ouder of verzorger en de machtiging door de
+rekeninghouder worden op dit moment gebouwd. Tot dat in gebruik is,
+tekent de sollicitant zelf in het portaal en staan de oudergegevens
+alleen als invulvelden op het formulier. Na oplevering dit hoofdstuk en
+de privacyverklaring nalopen tegen de code (zie <a href="#nog-vast-te-leggen">Nog vast te leggen</a>).</td>
+</tr>
+<tr>
+<td>Ontvangers en verwerkers</td>
+<td>Ledenservice: e-mail met de gegevens en de verzegelde PDF naar
+<code>mail.ledenservice_email</code> (leeg = bestuursadres).
+Penningmeester voor de PDF en het IBAN (module <code>documenten</code>,
+<code>mag_kluis()</code>). E-mailprovider.</td>
+</tr>
+<tr>
+<td>Doorgifte buiten de EER</td>
+<td>Nee.</td>
+</tr>
+<tr>
+<td>Bewaartermijn</td>
+<td>In dit systeem: volgt het dossier. De ledenadministratie bij de
+ledenservice valt buiten dit systeem en heeft een eigen termijn
+(vastleggen bij de ledenadministratie).</td>
+</tr>
+<tr>
+<td>Beveiliging</td>
+<td>IBAN en tenaamstelling versleuteld in de kluis
+(<code>ondertekeningen.vertrouwelijk</code>), niet in
+<code>formulier_data</code>; verzegelde PDF in de kluis. In de mailtekst
+aan de ledenservice staan alleen de laatste vier tekens van het IBAN;
+het volledige IBAN staat in de bijgevoegde verzegelde PDF (lukt de PDF
+niet, dan staat het volledig in de mail). De inhoud van de mail komt
+niet in het berichtenlog (<code>body_loggen</code> uit).</td>
+</tr>
+</tbody>
+</table>
+<h1 id="berichten">Berichten</h1>
+<blockquote>
+<p><strong>In het kort:</strong> e-mail, en naar keuze WhatsApp of sms.
+We houden bij wat we stuurden en of het aankwam; de tekst zelf bewaren
+we korter dan het overzicht.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Onderdeel</th>
+<th>Inhoud</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Doel</td>
+<td>De sollicitant op de hoogte houden, taken en herinneringen sturen,
+inlogcodes versturen, het bestuur en de penningmeester informeren, en
+vragen van de sollicitant aan het bestuur doorgeven (portaal, blok &quot;Een
+vraag?&quot;).</td>
+</tr>
+<tr>
+<td>Grondslag</td>
+<td>Art. 6 lid 1 sub b AVG. Inlogcodes en veiligheidsberichten: ook art.
+32.</td>
+</tr>
+<tr>
+<td>Betrokkenen</td>
+<td>Sollicitanten, ouders of verzorgers, aangenomen strandwachten,
+bestuursleden en penningmeester als ontvanger.</td>
+</tr>
+<tr>
+<td>Persoonsgegevens</td>
+<td>Ontvanger (e-mailadres of telefoonnummer), onderwerp, samenvatting,
+inhoud, kanaal, status, tijdstip (<code>mail_log</code>); wachtrij met
+adres, telefoon en volledige tekst (<code>mail_queue</code>); vragen via
+het portaal; wanneer de sollicitant de berichten voor het laatst bekeek.
+Bij inlogcodes, bestuursmeldingen, de ledenservice en de penningmeester
+wordt de inhoud nooit gelogd.</td>
+</tr>
+<tr>
+<td>Ontvangers en verwerkers</td>
+<td>Bestuur (module <code>mailing</code>). E-mailprovider
+(<code>smtp.host</code>); WhatsReach en Meta als <code>wa.actief</code>
+aan staat; de sms-dienst uit <code>sms.gateway</code> als
+<code>sms.actief</code> aan staat (Bird/MessageBird, EasySendSMS, een
+eigen telefoon of een HTTP-gateway).</td>
+</tr>
+<tr>
+<td>Doorgifte buiten de EER</td>
+<td>WhatsApp: ja (Meta, VS). Sms: bij <code>easysendsms</code> ja
+(EasySendSMS, buiten de EER; de privacyverklaring noemt het dan); andere
+gateways vastleggen. E-mail: afhankelijk van de provider;
+vastleggen.</td>
+</tr>
+<tr>
+<td>Bewaartermijn</td>
+<td>Overzicht van berichten: 12 maanden
+(<code>bewaar.maillog_mnd</code>, standaard 12). Inhoud van berichten: 3
+maanden (<code>bewaar.maillog_body_mnd</code>, standaard 3). Wachtrij:
+30 dagen na verzending of fout (vast); bij berichten waarvan de inhoud
+nooit gelogd wordt (inlogcodes, bestuursmeldingen, ledenservice,
+penningmeester) worden de tekst en de korte tekst in de wachtrij direct
+na een geslaagde verzending leeggemaakt
+(<code>includes/meldingen/verzend.php</code>). Losse bijlagen die aan
+geen sjabloon meer hangen: 12 maanden (<code>bewaar.bijlagen_mnd</code>,
+standaard 12).</td>
+</tr>
+<tr>
+<td>Beveiliging</td>
+<td>Dagplafond en uurlimiet (WhatsApp), pauze na herhaalde fouten,
+afmeldlink, kanaalkeuze in het portaal; geheimen (API-sleutels,
+SMTP-wachtwoord) worden in het beheer nooit teruggetoond.</td>
+</tr>
+</tbody>
+</table>
+<h1 id="ai-analyse">AI-analyse</h1>
+<blockquote>
+<p><strong>In het kort:</strong> twee toepassingen, allebei via de
+Gemini API van Google: een beoordeling van het kennismakingsformulier
+voor het bestuur (model uit <code>ai.model</code>, standaard
+<code>gemini-2.5-flash</code>), en een hulp die vrije tekst over
+beschikbaarheid omzet naar het rooster (<code>gemini-2.5-flash</code>).
+Naam, contactgegevens, adres, foto en bijzonderheden gaan niet mee. Een
+mens beslist altijd.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Onderdeel</th>
+<th>Inhoud</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Doel</td>
+<td>Analyse kennismakingsformulier: het bestuur een korte beoordeling
+met advies geven als hulpmiddel. Beschikbaarheidshulp: de sollicitant
+helpen het rooster in te vullen.</td>
+</tr>
+<tr>
+<td>Grondslag</td>
+<td>Analyse kennismakingsformulier: art. 6 lid 1 sub f AVG
+(gerechtvaardigd belang: zorgvuldig en efficiënt selecteren); de
+sollicitant kan bezwaar maken via een vraag in Berichten of per mail.
+Het bestuur legt dat vast met de knop &quot;Bezwaar vastleggen&quot; bij de
+AI-analyse op het kennismakingsformulier in het beheer
+(<code>admin/blk_detail.php</code>, via
+<code>admin/api_ai_analyse.php</code> naar
+<code>ai_bezwaar_zetten()</code>; recht <code>sollicitanten</code>
+bewerken): de vlag <code>sollicitaties.ai_bezwaar</code> wordt gezet, de
+analyse gewist, en de wachtrij slaat de sollicitant daarna over.
+Beschikbaarheidshulp: art. 6 lid 1 sub b; het gebruik is vrijwillig,
+handmatig invullen kan altijd. Geen geautomatiseerd besluit in de zin
+van art. 22. Geen bijzondere persoonsgegevens: het veld bijzonderheden
+(medicatie, allergieën) gaat niet naar de AI, want daarvoor is geen
+grondslag onder art. 9.</td>
+</tr>
+<tr>
+<td>Betrokkenen</td>
+<td>Sollicitanten die het kennismakingsformulier indienen of de
+beschikbaarheidshulp gebruiken.</td>
+</tr>
+<tr>
+<td>Persoonsgegevens</td>
+<td>Analyse kennismakingsformulier, wat naar Google gaat:
+leeftijdscategorie (geen geboortedatum), opleiding, diploma&#39;s,
+werkervaring, motivatie, aantal weken beschikbaar. Niet: naam, adres,
+e-mail, telefoon, foto, bijzonderheden. De uitkomst staat in
+<code>blk_formulieren.ai_analyse</code>. Beschikbaarheidshulp: de vrije
+tekst (maximaal 1500 tekens) en de weken van het seizoen; de tekst wordt
+bewaard in <code>ai_beschikbaarheid_log</code>. Let op: dit is
+pseudonimisering, geen anonimisering. Vrije tekst kan zelf herleidbare
+of gezondheidsinformatie bevatten.</td>
+</tr>
+<tr>
+<td>Ontvangers en verwerkers</td>
+<td>Google (Gemini API), alleen als <code>ai.api_key</code> gevuld is.
+De analyse is zichtbaar voor het bestuur (module <code>blk</code>) en
+voor de sollicitant in de download (inzage). Automatisch starten na
+indienen alleen als <code>ai.auto_analyse</code> aan staat (standaard
+aan); anders alleen met de knop in het beheer. Beschikbaarheidshulp
+alleen als <code>ai.beschikbaarheid_hulp</code> aan staat (standaard
+uit).</td>
+</tr>
+<tr>
+<td>Doorgifte buiten de EER</td>
+<td>Ja, Google LLC (VS), op grond van het EU-VS Data Privacy Framework
+of standaardcontractbepalingen. Gebruik een betaald API-account met
+verwerkersvoorwaarden: bij het gratis niveau mag Google de invoer
+gebruiken om zijn diensten te verbeteren.</td>
+</tr>
+<tr>
+<td>Bewaartermijn</td>
+<td>Analyse: volgt het kennismakingsformulier (en daarmee het dossier);
+bij bezwaar direct weg. Invoertekst beschikbaarheidshulp: 3 maanden
+(<code>bewaar.ai_invoer_mnd</code>, standaard 3). Wachtrij en invoerlog
+gaan mee met het wissen van het dossier.</td>
+</tr>
+<tr>
+<td>Beveiliging</td>
+<td>Alleen de cron roept de API aan (wachtrij <code>ai_queue</code>),
+met backoff en een maximum aantal pogingen; de cron controleert vlak
+voor het versturen opnieuw op bezwaar; de API-sleutel wordt in het
+beheer nooit teruggetoond; strikte prompt en validatie op de
+server.</td>
+</tr>
+</tbody>
+</table>
+<p>AI die sollicitanten beoordeelt valt onder de AI-verordening in de
+categorie hoog risico (bijlage III, punt 4). Voor de vereniging als
+gebruiker betekent dat onder meer: menselijk toezicht, de sollicitant
+informeren en de werking kunnen verantwoorden. Het bestuur toetst dit
+voordat de analyse van het kennismakingsformulier op productie aan
+gaat.</p>
+<h1 id="landingspaginas-en-bezoekersstatistiek">Landingspagina&#39;s en
+bezoekersstatistiek</h1>
+<blockquote>
+<p><strong>In het kort:</strong> we tellen bezoeken en afhakers op de
+landingspagina&#39;s en het aanmeldformulier, zonder cookies en zonder
+IP-adres op te slaan. Een dagpseudoniem maakt &quot;uniek&quot; tellen mogelijk en
+wordt na 30 dagen gewist.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Onderdeel</th>
+<th>Inhoud</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Doel</td>
+<td>Zien welke wervingskanalen werken en waar mensen in het formulier
+afhaken, om de werving en het formulier te verbeteren.</td>
+</tr>
+<tr>
+<td>Grondslag</td>
+<td>Art. 6 lid 1 sub f AVG (gerechtvaardigd belang). Geen cookies of
+volgtechnieken, dus geen toestemming nodig onder de
+Telecommunicatiewet.</td>
+</tr>
+<tr>
+<td>Betrokkenen</td>
+<td>Bezoekers van landingspagina&#39;s (<code>/p/&lt;slug&gt;</code>), het
+aanmeldformulier en (sinds 2.142) de pagina met het formulier op
+paal13.com via de WordPress-plugin; sollicitanten (bron van hun
+aanmelding).</td>
+</tr>
+<tr>
+<td>Persoonsgegevens</td>
+<td>Per gebeurtenis (<code>pagina_events</code>): type (bezoek,
+formulier gestart, stap, verlaten, klaar, geweigerd), pagina, bron,
+stapnummer, tijdstip en een dagpseudoniem: een HMAC-SHA-256 van IP-adres
+en browser met een dagsleutel, die is afgeleid van de datum en een
+geheim zout (<code>paginas.pseudoniem_zout</code>, 32 willekeurige
+bytes, eenmalig aangemaakt). Zonder het zout niet terug te rekenen, en
+elke dag anders, dus niet over dagen te volgen. Sinds 2.145 ook de
+UTM-velden uit het adres (<code>utm_source</code>,
+<code>utm_medium</code>, <code>utm_campaign</code>,
+<code>utm_content</code>), geschoond tot a-z, 0-9 en koppeltekens,
+maximaal 40 tekens. Geen IP-adres, geen browser, niets wat is ingevuld.
+Bij de sollicitatie: <code>bron_code</code> (&quot;<bron>&quot; of
+&quot;<bron>/<campagne>&quot;, de campagne uit <code>?bron=</code>,
+<code>utm_campaign</code> of <code>utm_source</code> van het adres
+waarmee iemand binnenkwam) en <code>bron_label</code>, plus dezelfde
+vier UTM-velden (zie <a href="#aanmelding-en-sollicitatie">Aanmelding en
+sollicitatie</a>). Het bezoek op paal13.com meldt het formulierscript
+rechtstreeks aan <code>/track.php</code> (anoniem, geen cookie, zelfde
+pseudoniem); WordPress zelf slaat niets op.</td>
+</tr>
+<tr>
+<td>Ontvangers en verwerkers</td>
+<td>Bestuur (module <code>paginas</code>). Cloud86.</td>
+</tr>
+<tr>
+<td>Doorgifte buiten de EER</td>
+<td>Nee.</td>
+</tr>
+<tr>
+<td>Bewaartermijn</td>
+<td>Dagpseudoniem gewist na 30 dagen
+(<code>bewaar.pagina_hash_dagen</code>, standaard 30); gebeurtenis
+verwijderd na 13 maanden (<code>bewaar.pagina_events_mnd</code>,
+standaard 13). Bron bij de sollicitatie: volgt het dossier. Aan- en
+uitzetten: <code>paginas.tracking</code> (standaard aan).</td>
+</tr>
+<tr>
+<td>Beveiliging</td>
+<td>Bots worden niet geteld; herhaalde weergaven binnen 30 minuten
+tellen niet opnieuw; de landingspagina&#39;s draaien onder een strikte
+Content-Security-Policy (<code>connect-src &#39;none&#39;</code>).</td>
+</tr>
+</tbody>
+</table>
+<h1 id="beheerders-en-logboek">Beheerders en logboek</h1>
+<blockquote>
+<p><strong>In het kort:</strong> wie in het beheer werkt, logt in via
+Authentik met tweestapsverificatie. Wat beheerders en sollicitanten
+doen, komt in het logboek, voor de beveiliging en om fouten na te
+lopen.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Onderdeel</th>
+<th>Inhoud</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Doel</td>
+<td>Toegang tot het beheer regelen, handelingen herleidbaar maken (wie
+deed wat), misbruik en inbraakpogingen herkennen en fouten
+oplossen.</td>
+</tr>
+<tr>
+<td>Grondslag</td>
+<td>Art. 6 lid 1 sub f AVG (gerechtvaardigd belang) en art. 32 (plicht
+tot beveiliging).</td>
+</tr>
+<tr>
+<td>Betrokkenen</td>
+<td>Beheerders (bestuur, penningmeester, planner, begeleiders, admin);
+sollicitanten wier handelingen worden gelogd.</td>
+</tr>
+<tr>
+<td>Persoonsgegevens</td>
+<td>Beheerders: naam, e-mailadres, Authentik-koppeling en groepen, rol,
+inlogmomenten. Logboek (<code>audit_log</code>): wie, actie, object,
+details, IP-adres, browser, tijdstip. Foutenlog
+(<code>error_log</code>): foutmelding, URL, e-mailadres van de ingelogde
+gebruiker. Mislukte inlogpogingen (<code>login_pogingen</code>):
+e-mailadres, IP-adres. Opschoonlog (<code>opschoon_log</code>): alleen
+aantallen. Tellingen van de snelheidsbegrenzing
+(<code>api_rate</code>).</td>
+</tr>
+<tr>
+<td>Ontvangers en verwerkers</td>
+<td>Admin; module <code>logboek</code> (standaard alleen admin).
+Authentik (eigen installatie). Cloud86.</td>
+</tr>
+<tr>
+<td>Doorgifte buiten de EER</td>
+<td>Nee.</td>
+</tr>
+<tr>
+<td>Bewaartermijn</td>
+<td>Logboek: 12 maanden (<code>bewaar.audit_maanden</code>, standaard
+12). Foutenlog: 90 dagen (<code>bewaar.foutenlog_dagen</code>, standaard
+90). Mislukte inlogpogingen: 24 uur (vast). Tellingen
+snelheidsbegrenzing: na verlopen (vast). Beheerdersaccount: zolang
+iemand toegang nodig heeft; bij vertrek uit de Authentik-groep
+halen.</td>
+</tr>
+<tr>
+<td>Beveiliging</td>
+<td>Inloggen via Authentik (OIDC) met tweestapsverificatie, rollen met
+rechten per module, de berichtinhoud (<code>mail_log.body</code>) komt
+in geen enkele logboekweergave voor.</td>
+</tr>
+</tbody>
+</table>
+<h1 id="productiekopie-op-de-testomgeving">Productiekopie op de
+testomgeving</h1>
+<blockquote>
+<p><strong>In het kort:</strong> vóór elke productie-uitrol gaat een
+kopie van de productiedatabase naar de testomgeving (zelfde hoster) en
+wordt die meteen geanonimiseerd. De echte gegevens staan daar alleen de
+paar minuten tussen importeren en anonimiseren; het exportbestand wordt
+direct weggegooid.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Onderdeel</th>
+<th>Inhoud</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Doel</td>
+<td>Een nieuwe versie testen tegen de echte opbouw en aantallen van
+productie (&quot;generale repetitie&quot;), zodat fouten niet pas op productie en
+bij echte sollicitanten optreden.</td>
+</tr>
+<tr>
+<td>Grondslag</td>
+<td>Art. 6 lid 1 sub f AVG (gerechtvaardigd belang: een betrouwbaar
+systeem) en art. 32 (testen hoort bij passende beveiliging). Het gebruik
+is verenigbaar met het oorspronkelijke doel (art. 6 lid 4): zelfde
+verantwoordelijke, zelfde hoster, kort, en direct geanonimiseerd.</td>
+</tr>
+<tr>
+<td>Betrokkenen</td>
+<td>Alle betrokkenen van wie gegevens in de productiedatabase
+staan.</td>
+</tr>
+<tr>
+<td>Persoonsgegevens</td>
+<td>Tijdelijk de hele database. Daarna vervangt
+<code>tools/anonimiseer_testkopie.php</code> namen, e-mailadressen,
+telefoonnummers, adressen, vrije teksten, berichtinhoud, IP-adressen en
+browsers door nepwaarden; geboortedatums schuiven hooguit een half jaar;
+handtekeningen, versleutelde BSN/IBAN-velden, formulierantwoorden en
+foto&#39;s gaan weg; inlogcodes, tokens en wachtrijen worden geleegd;
+sleutels van koppelingen worden leeggemaakt of vernieuwd. De bestanden
+in de kluis (<code>DOCUMENTEN_MAP</code>) en de kluissleutel van
+productie gaan niet mee, dus documenten zijn op test onleesbaar. Wat
+blijft: fases, seizoenen, data van aanmelden en ondertekenen, aantallen
+en instellingen. Strikt genomen is dat pseudonimisering, geen volledige
+anonimisering: met kennis van buiten (wie wanneer solliciteerde) is een
+rij soms nog te herleiden.</td>
+</tr>
+<tr>
+<td>Ontvangers en verwerkers</td>
+<td>Alleen de technisch beheerder en wie toegang heeft tot het beheer
+van test. Cloud86 (zelfde hoster als productie). Geen externe diensten:
+WhatsApp en sms gaan uit, de AI-sleutel wordt leeggemaakt en
+<code>MAIL_OMLEIDEN</code> leidt alle e-mail naar de tester (het script
+weigert zonder).</td>
+</tr>
+<tr>
+<td>Doorgifte buiten de EER</td>
+<td>Nee.</td>
+</tr>
+<tr>
+<td>Bewaartermijn</td>
+<td>Echte gegevens op test: alleen tussen importeren en het script
+(minuten). Het exportbestand: direct na het script verwijderen, van de
+server en van de laptop. De geanonimiseerde kopie blijft tot de volgende
+generale repetitie.</td>
+</tr>
+<tr>
+<td>Beveiliging</td>
+<td>De cron van test staat uit tijdens importeren en anonimiseren; het
+script draait alleen vanaf de opdrachtregel, alleen op test, alleen met
+<code>--ja</code>, in één transactie, en controleert na afloop alle
+tekstkolommen op overgebleven e-mailadressen, telefoonnummers en IBAN&#39;s.
+Stappen in het Runbook systeembeheer, hoofdstuk &quot;Generale repetitie op
+test&quot;.</td>
+</tr>
+</tbody>
+</table>
+<h1 id="seintje-bij-de-volgende-werving">Seintje bij de volgende
+werving</h1>
+<blockquote>
+<p><strong>In het kort:</strong> een afgewezen sollicitant kan met één
+knop vragen om bericht als we weer mensen zoeken. Dat is toestemming,
+apart gegeven en net zo makkelijk in te trekken.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Onderdeel</th>
+<th>Inhoud</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Doel</td>
+<td>Afgewezen sollicitanten die dat willen, benaderen bij een volgende
+werving.</td>
+</tr>
+<tr>
+<td>Grondslag</td>
+<td>Art. 6 lid 1 sub a AVG, toestemming, los gegeven (art. 7) en vereist
+voor ongevraagde berichten (Telecommunicatiewet art. 11.7).
+Oud-strandwachten (ooit aangenomen) benaderen we op grond van
+gerechtvaardigd belang (art. 6 lid 1 sub f), met een afmeldlink als
+bezwaarmogelijkheid; dat staat in de privacyverklaring.</td>
+</tr>
+<tr>
+<td>Betrokkenen</td>
+<td>Afgewezen sollicitanten; oud-strandwachten.</td>
+</tr>
+<tr>
+<td>Persoonsgegevens</td>
+<td>Moment en bron van de toestemming (<code>personen.seintje_op</code>,
+<code>seintje_bron</code>), afmeldtoken, en de gegevens van het dossier
+die zolang blijven staan.</td>
+</tr>
+<tr>
+<td>Ontvangers en verwerkers</td>
+<td>Bestuur (module <code>mailing</code>). E-mailprovider, eventueel
+WhatsReach of sms-dienst.</td>
+</tr>
+<tr>
+<td>Doorgifte buiten de EER</td>
+<td>Alleen via WhatsApp (zie <a href="#berichten">Berichten</a>).</td>
+</tr>
+<tr>
+<td>Bewaartermijn</td>
+<td>Maximaal 12 maanden na de toestemming
+(<code>bewaar.seintje_mnd</code>, standaard 12). Na intrekken:
+anonimiseren volgens <code>bewaar.afgewezen_weken</code>.</td>
+</tr>
+<tr>
+<td>Beveiliging</td>
+<td>Toestemming geven nooit op een GET (mailscanners), alleen na een
+klik op een knop; intrekken via de afmeldlink of in het portaal.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Seintje buiten het seizoen.</strong> Staat de aanmelding
+dicht, dan tonen het aanmeldformulier, de landingspagina&#39;s en het
+formulier op paal13.com een klein formulier: &quot;laat je e-mailadres
+achter, dan sturen we je één bericht zodra je je kunt aanmelden&quot;
+(<code>includes/seintje_werving.php</code>).</p>
+<table>
+<thead>
+<tr>
+<th>Onderdeel</th>
+<th>Inhoud</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Doel</td>
+<td>Mensen die nog niet solliciteerden één bericht sturen als de
+aanmelding opengaat.</td>
+</tr>
+<tr>
+<td>Grondslag</td>
+<td>Art. 6 lid 1 sub a AVG, toestemming: een apart, niet vooraf
+aangevinkt vakje &quot;Ja, stuur me één bericht als de werving opent&quot;, met de
+privacyverklaring erbij. Dubbele bevestiging (double opt-in): pas na de
+klik in de bevestigingsmail staat het seintje aan, want iedereen kan elk
+adres invullen (AVG art. 7 lid 1 aantoonbaarheid, Telecommunicatiewet
+art. 11.7).</td>
+</tr>
+<tr>
+<td>Betrokkenen</td>
+<td>Bezoekers van het aanmeldformulier, een landingspagina of paal13.com
+buiten de aanmeldperiode.</td>
+</tr>
+<tr>
+<td>Persoonsgegevens</td>
+<td>Voornaam, e-mailadres, bron (pagina of campagne, voor de
+statistiek), moment van aanvragen, bevestigen en versturen, en een token
+(alleen als sha256-hash). Tabel <code>werving_seintje</code>. Het
+IP-adres komt alleen in het logboek (bevestigen, intrekken) en in de
+snelheidsbegrenzing, niet in de tabel.</td>
+</tr>
+<tr>
+<td>Ontvangers en verwerkers</td>
+<td>Bestuur (module <code>mailing</code>, Berichten › groep Seintje
+gevraagd). E-mailprovider. Alleen e-mail; geen WhatsApp of sms (geen
+telefoonnummer).</td>
+</tr>
+<tr>
+<td>Doorgifte buiten de EER</td>
+<td>Nee.</td>
+</tr>
+<tr>
+<td>Bewaartermijn</td>
+<td>Onbevestigd: 7 dagen, daarna weg (altijd, ook met
+<code>bewaar.actief</code> uit: zonder bevestiging is er geen
+toestemming). Bevestigd: tot het openingsbericht is verstuurd (een dag
+later weg), en uiterlijk <code>bewaar.seintje_mnd</code> maanden
+(standaard en maximaal 12) na de bevestiging. Intrekken: meteen
+weg.</td>
+</tr>
+<tr>
+<td>Intrekken</td>
+<td>De link in de bevestigingsmail en de afmeldlink onder het
+openingsbericht leiden naar <code>/seintje.php</code> met de knop &quot;Toch
+geen seintje&quot;; die verwijdert de rij direct (art. 7 lid 3).</td>
+</tr>
+<tr>
+<td>Beveiliging</td>
+<td>Anti-bot-token (landingspagina, paal13.com) of csrf
+(<code>/aanmelden.php</code>), honeypot, maximaal 10 aanvragen per uur
+per IP-adres en maximaal 3 bevestigingsmails per adres per dag.
+Bevestigen en intrekken alleen met een knop die post, niet op een GET
+(mailscanners). Het scherm verklapt nooit of een adres al bekend is. De
+bevestigingsmail wordt niet gelogd (<code>body_loggen</code> uit).</td>
+</tr>
+</tbody>
+</table>
+<h1 id="bijzonderheden">Bijzonderheden</h1>
+<blockquote>
+<p><strong>In het kort:</strong> twee leeftijdsgrenzen die juridisch los
+van elkaar staan: 15/16 voor aanmelden en toestemming, 18 voor
+ondertekenen. Niet samenvoegen.</p>
+</blockquote>
+<p><strong>Minderjarigen: twee aparte grenzen.</strong></p>
+<table>
+<thead>
+<tr>
+<th>Grens</th>
+<th>Waarvoor</th>
+<th>Hoe in het systeem</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>15/16</td>
+<td>Minimumleeftijd voor aanmelden, en de AVG-grens voor toestemming
+(art. 8 AVG, art. 5 UAVG: onder de 16 geeft de ouder of verzorger
+toestemming)</td>
+<td>Aanmelden kan vanaf 15 (vast; een geboortedatum onder de 15 wordt
+geweigerd). Bij een 15-jarige geeft de ouder bij het aanmelden
+toestemming; naam en moment worden vastgelegd.</td>
+</tr>
+<tr>
+<td>18</td>
+<td>Ondertekeningsgrens: minderjarigen zijn handelingsonbekwaam</td>
+<td>Onder de 18 vragen we naam, e-mail en telefoon van de ouder; de
+ouder tekent de gezondheidsverklaring en de intake via een link in de
+mail, en (in aanbouw, zie <a href="#lidmaatschap">Lidmaatschap</a>) ook
+het lidmaatschap; een SEPA-machtiging tekent altijd de rekeninghouder.
+De opgaaf loonheffing tekent de minderjarige zelf.</td>
+</tr>
+</tbody>
+</table>
+<p>Dit zijn twee juridisch verschillende grenzen. Voeg ze nooit samen
+tot één grens, ook niet bij het opschonen van code. De instelling
+<code>invite.min_leeftijd</code> (standaard 16) is iets anders: die
+bepaalt alleen wie automatisch voor de selectiedag wordt
+uitgenodigd.</p>
+<p><strong>Geautomatiseerde besluiten.</strong> Er zijn er twee: een
+geboortedatum onder de 15 blokkeert het formulier, en het systeem kan
+automatisch uitnodigen voor de selectiedag (<code>invite.modus</code>).
+Dat laatste is nooit een afwijzing: wie niet automatisch wordt
+uitgenodigd, wordt door een mens bekeken. Over afwijzen en aannemen
+beslissen altijd mensen.</p>
+<p><strong>Bijzondere persoonsgegevens.</strong> Alleen de
+gezondheidsgegevens in de gezondheidsverklaring en de intake (zie <a href="#gezondheidsverklaring-en-intake">Gezondheidsverklaring en
+intake</a>). Het vrije veld &quot;bijzonderheden&quot; in het
+kennismakingsformulier (medicatie, allergieën) kan ze ook bevatten;
+begeleiders zien dat veld daarom niet, en het gaat niet naar de
+AI-dienst.</p>
+<p><strong>BSN.</strong> Alleen voor de loonheffing (art. 46 UAVG),
+altijd in de kluis, nooit in <code>formulier_data</code>, logs of
+berichten.</p>
+<h1 id="rechten-van-betrokkenen">Rechten van betrokkenen</h1>
+<blockquote>
+<p><strong>In het kort:</strong> inzage en verwijderen kan de
+sollicitant zelf in het portaal onder Mijn gegevens. Verbeteren gaat via
+een vraag aan het bestuur. Al het andere via het bestuursadres; antwoord
+binnen een maand.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Recht</th>
+<th>Hoe het werkt</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Inzage (art. 15)</td>
+<td>Portaal › Mijn gegevens › Al mijn gegevens downloaden: een
+JSON-bestand (<code>avg_inzage()</code>) met persoon, sollicitatie,
+kennismakingsformulier met wijzigingen, AI-analyse, beschikbaarheid
+(alle huidige tabellen en de AI-invoertekst), selectiedag en
+trainingsweekend (indeling, cijfers, observaties, besluiten), notities
+van het bestuur, ondertekeningen (type, datum), documenten (soort,
+datum, status), berichten (datum, onderwerp, kanaal), ingelogde
+apparaten en de herkomst van de aanmelding (sleutel
+<code>herkomst</code>: via welke pagina of site, en de UTM-bron,
+-medium, -campagne en -variant). Niet: BSN, IBAN en handtekening (die
+staan in de verzegelde PDF&#39;s onder de taken), de bestanden zelf, en
+namen van beoordelaars en bestuursleden (rechten van anderen, art. 15
+lid 4; daar staat &quot;beoordelaar&quot;).</td>
+</tr>
+<tr>
+<td>Verbeteren (art. 16)</td>
+<td>De sollicitant stelt een vraag via het blok &quot;Een vraag?&quot; in het
+portaal (komt bij het bestuur binnen met naam en fase). Het bestuur
+corrigeert in het dossier; een wijziging aan het kennismakingsformulier
+wordt met reden vastgelegd.</td>
+</tr>
+<tr>
+<td>Verwijderen (art. 17)</td>
+<td>Portaal › Mijn gegevens › Mijn account verwijderen (bevestigen met
+VERWIJDER): het dossier wordt leeggemaakt en de persoon geanonimiseerd;
+het bestuur krijgt bericht. Is het loondossier verwerkt, dan blijven
+alleen het loondossier, naam en geboortedatum (art. 17 lid 3 sub b, zie
+<a href="#loondossier">Loondossier</a>); het scherm legt uit wat blijft
+en tot wanneer. Een verzoek per mail handelt het bestuur af in het
+dossier: Verwijderen, voor één sollicitatie of de hele persoon. Een
+verwerkt loondossier gaat daar alleen mee met de verklaring dat het
+dienstverband niet is doorgegaan.</td>
+</tr>
+<tr>
+<td>Bezwaar (art. 21)</td>
+<td>Tegen verwerking op grond van gerechtvaardigd belang. AI-analyse:
+via een vraag in Berichten of per mail; het bestuur zet het bezwaar met
+de knop &quot;Bezwaar vastleggen&quot; op het kennismakingsformulier
+(<code>ai_bezwaar_zetten()</code>), de analyse wordt gewist en niet
+opnieuw gemaakt. Wervingsberichten aan oud-strandwachten: de
+afmeldlink.</td>
+</tr>
+<tr>
+<td>Toestemming intrekken (art. 7 lid 3)</td>
+<td>Seintje: afmeldlink of de knop in het portaal. Seintje buiten het
+seizoen: de knop &quot;Toch geen seintje&quot; achter de link in de mail (gegevens
+meteen weg). Foto&#39;s: per mail. Wat al gebeurde blijft rechtmatig.</td>
+</tr>
+<tr>
+<td>Beperking en overdraagbaarheid (art. 18, 20)</td>
+<td>Per mail aan het bestuur; de JSON-download dient als overdraagbaar
+bestand.</td>
+</tr>
+<tr>
+<td>Apparaten</td>
+<td>Mijn gegevens › &quot;vergeet alle apparaten&quot; trekt alle &quot;blijf
+ingelogd&quot;-tokens in en logt open sessies op andere apparaten meteen uit
+(sinds 2.145; de sessie waarin je het doet blijft).</td>
+</tr>
+</tbody>
+</table>
+<p>Bij een verzoek per mail mag het bestuur vragen de identiteit aan te
+tonen, zodat gegevens niet bij de verkeerde persoon terechtkomen.
+Klachten kunnen bij de Autoriteit Persoonsgegevens.</p>
+<h1 id="datalekken">Datalekken</h1>
+<blockquote>
+<p><strong>In het kort:</strong> de procedure staat in het Runbook
+systeembeheer, hoofdstuk &quot;Datalek of beveiligingsincident&quot;. Melden bij
+de Autoriteit Persoonsgegevens binnen 72 uur; elk lek komt in het
+datalekregister van het bestuur.</p>
+</blockquote>
+<p>De stappen (vaststellen, indammen, beoordelen, melden bij de AP
+binnen 72 uur, betrokkenen informeren bij een hoog risico, registreren)
+en de rolverdeling staan in het Runbook systeembeheer, hoofdstuk
+&quot;Datalek of beveiligingsincident&quot;. Het runbook is in het beheer alleen
+zichtbaar met de module <code>systeem</code>; het bestuur kan het
+opvragen bij de technisch beheerder of de Word-versie gebruiken. Het
+datalekregister zelf houdt het bestuur buiten dit systeem bij.</p>
+<h1 id="nog-vast-te-leggen">Nog vast te leggen</h1>
+<blockquote>
+<p><strong>In het kort:</strong> punten waarvan dit register zegt hoe
+het hoort, maar die in de praktijk of in de code nog niet rond zijn.
+Afvinken en dan uit deze lijst halen.</p>
+</blockquote>
+<ul class="task-list">
+<li><label><input type="checkbox"></input><code>bewaar.actief</code> op
+productie aanzetten; zonder dat gelden geen van de termijnen
+hierboven.</label></li>
+<li><label><input type="checkbox"></input>Verwerkersovereenkomsten vastleggen
+met Cloud86, de e-mailprovider, en (als ze aan staan) WhatsReach, de
+sms-dienst en Google (Gemini API, betaald account).</label></li>
+<li><label><input type="checkbox"></input>Vastleggen welke e-mailprovider en
+welke sms-gateway op productie in gebruik zijn, en waar ze de gegevens
+verwerken.</label></li>
+<li><label><input type="checkbox"></input>De bewaartermijn van de
+ledenadministratie bij de ledenservice vastleggen.</label></li>
+<li><label><input type="checkbox"></input>AI-analyse: de AI-verordening
+toetsen (zie <a href="#ai-analyse">AI-analyse</a>).</label></li>
+<li><label><input type="checkbox"></input>Lidmaatschap van minderjarigen
+(ouder of verzorger tekent, SEPA-machtiging door de rekeninghouder): na
+de bouw controleren of dit register en de privacyverklaring kloppen met
+de code (zie <a href="#lidmaatschap">Lidmaatschap</a>).</label></li>
+<li><label><input type="checkbox"></input>Het bewijs van ondertekening met
+gemaskeerd IP-adres laten toetsen: is een IP-adres met het laatste blok
+op 0 nog nodig als bewijs, of kan het helemaal weg?</label></li>
+<li><label><input type="checkbox"></input>Gezondheidsverklaring vóór de
+selectiedag: laten toetsen aan de Wet op de medische keuringen (een
+aanstellingskeuring mag alleen bij bijzondere functie-eisen en in de
+laatste fase van de selectie).</label></li>
+</ul>
+<h1 id="wijzigingen">Wijzigingen</h1>
+<blockquote>
+<p><strong>In het kort:</strong> elke wijziging van dit register, met
+datum.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Datum</th>
+<th>Wat</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>18 september 2026</td>
+<td>Eerste register voor het aangenomen-takenpakket (loonheffing, kopie
+ID, bankpas, lidmaatschap, bewijs van ondertekening), bijgehouden in de
+lokale projectnotities.</td>
+</tr>
+<tr>
+<td>24 september 2026</td>
+<td>Verhuisd naar <code>docs/handleiding/verwerkingsregister.md</code>
+(in Git en in het beheer) en uitgebreid tot alle verwerkingen van het
+sollicitatiesysteem, gecontroleerd tegen de code van versie 2.101.</td>
+</tr>
+<tr>
+<td>24 september 2026</td>
+<td>AVG-gaten gedicht: wissen neemt selectiedag, trainingsweekend, alle
+beschikbaarheidstabellen, wijzigingen aan het kennismakingsformulier,
+apparaten, AI-wachtrij en het bewijsspoor mee; bijzonderheden niet meer
+naar de AI; <code>ai.model</code> en <code>ai.auto_analyse</code> worden
+gevolgd; bezwaar tegen AI-analyse (<code>ai_bezwaar</code>); volledige
+inzage; zelf verwijderen met een verwerkt loondossier; geheim, dagelijks
+wisselend bezoekerspseudoniem; IBAN gemaskeerd in de mail aan de
+ledenservice; privacyverklaring bijgewerkt (EasySendSMS,
+oud-strandwachten).</td>
+</tr>
+<tr>
+<td>24 september 2026</td>
+<td>Het lettertype (Instrument Sans) staat nu op de eigen server; er
+gaat geen IP-adres meer naar Google Fonts. Google Fonts uit de lijst met
+verwerkers gehaald.</td>
+</tr>
+<tr>
+<td>24 september 2026</td>
+<td>Beschikbaarheid exporteren naar Excel (per week of per dag, met
+redenen van afwezigheid): alleen naam, fase en opgave, geen
+contactgegevens of geboortedatum; elke export in het logboek.
+Loonplanning: vastzetten na het gesprek op het trainingsweekend
+(<code>loon_vergrendeling</code>: wie en wanneer; ontgrendelen met reden
+in het logboek).</td>
+</tr>
+<tr>
+<td>24 september 2026</td>
+<td>Selectiedag en trainingsweekend: bevestiging &quot;ik kom / ik kan niet&quot;
+met reden, het gesprek met het bestuur (besluit, interne notitie,
+bericht aan de sollicitant), vergrendeling &quot;bezig door&quot; en de
+incheck-tablet met foto. Alles zit in de inzage en gaat mee bij
+wissen.</td>
+</tr>
+<tr>
+<td>27 september 2026</td>
+<td>Seintje buiten het seizoen: wie nog niet solliciteerde kan bij een
+gesloten aanmelding om één bericht vragen (voornaam, e-mail, bron;
+dubbele bevestiging; onbevestigd 7 dagen, daarna tot het bericht en
+maximaal 12 maanden). Tabel <code>werving_seintje</code>;
+privacyverklaring bijgewerkt.</td>
+</tr>
+<tr>
+<td>27 september 2026</td>
+<td>Drie punten uit &quot;Nog vast te leggen&quot; zijn gebouwd en naar hun
+hoofdstuk verplaatst: de knop &quot;Bezwaar vastleggen&quot; voor de AI-analyse,
+naam en geboortedatum weg na het vernietigen van een bewaard
+loondossier, en de wachtrijtekst van niet-gelogde berichten leeg na
+verzending. Lidmaatschap van minderjarigen: de ouder of verzorger
+tekent, de SEPA-machtiging tekent de rekeninghouder (in aanbouw).
+Privacyverklaring: de termijn van de gezondheidsgegevens volgt nu
+<code>bewaar.gezondheid_mnd</code>, en het tekenen van het lidmaatschap
+door de ouder staat erin.</td>
+</tr>
+<tr>
+<td>28 september 2026</td>
+<td>Nieuwe verwerking: productiekopie op de testomgeving (generale
+repetitie vóór elke uitrol), direct geanonimiseerd met
+<code>tools/anonimiseer_testkopie.php</code>; exportbestand direct weg.
+Interne verwerking bij dezelfde hoster, geen wijziging in de
+privacyverklaring nodig.</td>
+</tr>
+<tr>
+<td>2 oktober 2026</td>
+<td>Versie 2.155–2.160: live bijwerken. Per dossier en per onderdeel
+(selectiedag, weekend, loonplanning, seizoen) een teller met de naam van
+het bestuurslid dat het laatst iets wijzigde en het tijdstip (tabel
+<code>live_versie</code>), zodat collega&#39;s &quot;Anna heeft hier iets
+gewijzigd&quot; zien. Geen gegevens van de sollicitant zelf. Bewaartermijn:
+een week na de laatste wijziging (kwartiertaak
+<code>live_opruimen()</code>); bij het verwijderen van een dossier gaat
+de teller van die persoon meteen mee.</td>
+</tr>
+<tr>
+<td>2 oktober 2026</td>
+<td>Versie 2.150: de gedownloade kopie van het identiteitsbewijs (en de
+mailbijlage aan de penningmeester) krijgt geen watermerk meer. Reden: de
+werkgever moet een volledig leesbare kopie in de loonadministratie
+bewaren (identificatieplicht, Wet op de loonbelasting); een merk over
+foto of gegevens kan dat ondermijnen. De bankpas houdt het watermerk.
+Verder ongewijzigd: versleuteld in de kluis, alleen de penningmeester,
+elke download gelogd.</td>
+</tr>
+<tr>
+<td>1 oktober 2026</td>
+<td>Versie 2.145: de UTM-herkomst (bron, medium, campagne, variant van
+de advertentielink) wordt los bewaard bij elk bezoek en elke
+formulierstap (<code>pagina_events</code>) en bij de aanmelding
+(<code>sollicitaties</code>). Geen cookie, geen IP-adres; zelfde
+bewaartermijn als de rest (statistiek 13 maanden, bij de sollicitatie:
+volgt het dossier); zichtbaar in de inzage (<code>avg_inzage()</code>,
+sleutel <code>herkomst</code>). &quot;Vergeet alle apparaten&quot; logt nu ook
+open sessies elders uit.</td>
+</tr>
+</tbody>
+</table>
+</body>
+</html>

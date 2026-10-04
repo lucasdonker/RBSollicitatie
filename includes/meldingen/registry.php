@@ -41,7 +41,9 @@ function meldingen_kanaalmodi(): array {
  *   naam, beschrijving, categorie, ontvanger (sollicitant|ouder|ondertekenaar|bestuur|direct),
  *   kanaal_standaard, kort_toegestaan, dedup_min (0 = geen dubbelcheck), body_loggen,
  *   vars (extra variabelen naast de standaard mail_variabelen), seed (onderwerp, hero_titel,
- *   hero_subtitel, hero_kleur, body_html, tekst_kort, samenvatting).
+ *   hero_subtitel, hero_kleur, body_html, tekst_kort, samenvatting),
+ *   nachtrust (standaard true; false = bevestiging van iets wat de ontvanger zelf net deed, gaat ook
+ *   in de nachtrust direct — zie melding_nachtrust_geldt()).
  */
 function meldingen_register(): array {
     static $reg = null;
@@ -56,12 +58,13 @@ function meldingen_register(): array {
     $reg = [
         // ── Fase-overgangen ───────────────────────────────────────────
         'aanmelding_bevestiging' => array_merge($std, [
+            'nachtrust' => false,
             'naam' => 'Bevestiging van aanmelding', 'categorie' => 'fase', 'kanaal_standaard' => 'email',
             'beschrijving' => 'Direct na het aanmelden (via de site of handmatig door het beheer).',
             'seed' => [
                 'onderwerp' => 'Je aanmelding voor {{seizoen_naam}} is ontvangen',
                 'hero_titel' => 'Aanmelding ontvangen', 'hero_subtitel' => 'Welkom, {{voornaam}}',
-                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Bedankt voor je aanmelding bij <strong>Reddingsbrigade Paal 13</strong> voor {{seizoen_naam}}!</p>\n<p>We hebben je aanmelding ontvangen en beoordelen deze. Word je uitgenodigd voor de selectiedag, dan krijg je bericht van ons.</p>\n<p>In de tussentijd kun je je gegevens bekijken in het portaal:</p>\n[knop href=\"$portaal\"]Naar het portaal[/knop]\n<p>Vragen? Mail naar <a href=\"mailto:{{bestuur_email}}\">{{bestuur_email}}</a>.</p>",
+                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Bedankt voor je aanmelding bij <strong>Reddingsbrigade Paal 13</strong> voor {{seizoen_naam}}!</p>\n<p>We hebben je aanmelding ontvangen en beoordelen deze. Word je uitgenodigd voor de selectiedag, dan krijg je bericht van ons.</p>\n<p>In de tussentijd kun je je gegevens bekijken in het portaal:</p>\n[knop href=\"$portaal\"]Naar het portaal[/knop]\n<p>Vragen? Mail naar <a href=\"mailto:{{contact_email}}\">{{contact_email}}</a>.</p>",
                 'tekst_kort' => "Hoi {{voornaam}}, we hebben je aanmelding bij Paal 13 ontvangen. Je hoort van ons over de selectiedag. Volg je status: $portaal",
                 'samenvatting' => 'Welkom. We hebben je aanmelding binnen.',
             ],
@@ -72,18 +75,19 @@ function meldingen_register(): array {
             'seed' => [
                 'onderwerp' => 'Je bent uitgenodigd voor de selectiedag — Paal 13',
                 'hero_titel' => 'Je bent uitgenodigd!', 'hero_subtitel' => 'We zien je graag op de selectiedag',
-                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Goed nieuws: we nodigen je van harte uit voor de <strong>selectiedag</strong> van Reddingsbrigade Paal 13! Dit is jouw kans om te ontdekken hoe het is om strandwacht te zijn, en onze kans om jou te leren kennen.</p>\n[info]<strong>De selectiedag op een rij</strong><br>\nWanneer: {{selectiedag_datum}}{{selectiedag_tijd}}<br>\nWaar: {{selectiedag_locatie}}[/info]\n<p><strong>Bevestig je deelname</strong><br>\nLog in op je portaal en vul het \"Beter leren kennen\"-formulier in. Daarmee bevestig je meteen je deelname aan de selectiedag. Er staan nog een of meer taken voor je klaar; je ziet ze zodra je inlogt.</p>\n[knop href=\"$portaal\"]Naar mijn portaal[/knop]\n<p><strong>Wat kun je verwachten?</strong><br>\nTijdens de selectiedag doe je een conditietest en een zwemtest, en hebben we een persoonlijk gesprek. Geen zorgen als je nog niet alles vloeiend kunt: we kijken vooral naar je inzet en enthousiasme.</p>\n<p>Tot op de selectiedag!<br><strong>Team Sollicitaties</strong></p>",
+                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Goed nieuws: we nodigen je van harte uit voor de <strong>selectiedag</strong> van Reddingsbrigade Paal 13! Dit is jouw kans om te ontdekken hoe het is om strandwacht te zijn, en onze kans om jou te leren kennen.</p>\n[info]<strong>De selectiedag op een rij</strong><br>\nWanneer: {{selectiedag_datum}}{{selectiedag_tijd}}<br>\nWaar: {{selectiedag_locatie}}[/info]\n<p><strong>Bevestig je deelname</strong><br>\nLog in op je portaal en laat weten of je komt. Vul daar ook het kennismakingsformulier in. Er staan nog een of meer taken voor je klaar; je ziet ze zodra je inlogt.</p>\n[knop href=\"$portaal\"]Naar mijn portaal[/knop]\n<p><strong>Wat kun je verwachten?</strong><br>\nTijdens de selectiedag doe je een conditietest en een zwemtest, en hebben we een persoonlijk gesprek. Geen zorgen als je nog niet alles vloeiend kunt: we kijken vooral naar je inzet en enthousiasme.</p>\n<p>Tot op de selectiedag!<br><strong>Team Sollicitaties</strong></p>",
                 'tekst_kort' => "Hoi {{voornaam}}, je bent uitgenodigd voor de selectiedag bij Paal 13 op {{selectiedag_datum}}. Bevestig je deelname in je portaal: $portaal",
                 'samenvatting' => 'Je bent welkom op {{selectiedag_datum}}. Bevestig je deelname in het portaal.',
             ],
         ]),
         'selectie_aangemeld_bevestiging' => array_merge($std, [
+            'nachtrust' => false,
             'naam' => 'Bevestiging aanmelding selectiedag', 'categorie' => 'fase', 'kanaal_standaard' => 'email',
-            'beschrijving' => 'Zodra de sollicitant het "Beter leren kennen"-formulier heeft ingeleverd (= aangemeld voor de selectiedag).',
+            'beschrijving' => 'Zodra de sollicitant laat weten dat hij of zij komt (= aangemeld voor de selectiedag).',
             'seed' => [
                 'onderwerp' => 'Je deelname aan de selectiedag is bevestigd — Paal 13',
                 'hero_titel' => 'Tot op de selectiedag!', 'hero_subtitel' => '{{selectiedag_datum}}',
-                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Bedankt voor het invullen van je formulier. Je deelname aan de selectiedag op <strong>{{selectiedag_datum}}</strong> staat genoteerd.</p>\n[info]Wanneer: {{selectiedag_datum}}{{selectiedag_tijd}}<br>Waar: {{selectiedag_locatie}}[/info]\n<p>Staan er nog taken voor je open? Dan zie je die in je portaal.</p>\n[knop href=\"$portaal\"]Naar mijn portaal[/knop]",
+                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Bedankt dat je het hebt laten weten. Je deelname aan de selectiedag op <strong>{{selectiedag_datum}}</strong> staat genoteerd.</p>\n[info]Wanneer: {{selectiedag_datum}}{{selectiedag_tijd}}<br>Waar: {{selectiedag_locatie}}[/info]\n<p>Staan er nog taken voor je open? Dan zie je die in je portaal.</p>\n[knop href=\"$portaal\"]Naar mijn portaal[/knop]",
                 'tekst_kort' => "Hoi {{voornaam}}, je deelname aan de selectiedag op {{selectiedag_datum}} is bevestigd. Details in je portaal: $portaal",
                 'samenvatting' => 'Je deelname op {{selectiedag_datum}} staat genoteerd.',
             ],
@@ -94,36 +98,68 @@ function meldingen_register(): array {
             'seed' => [
                 'onderwerp' => 'Je bent uitgenodigd voor het trainingsweekend — Paal 13',
                 'hero_titel' => 'Trainingsweekend', 'hero_subtitel' => 'Je bent door de selectie!',
-                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Geweldig nieuws: je bent door de selectiedag en we nodigen je uit voor het <strong>trainingsweekend</strong>.</p>\n[info]Wanneer: {{tw_datum_start}} t/m {{tw_datum_eind}}<br>Waar: {{tw_locatie}}<br>Verzamelen: {{tw_verzameltijd}}[/info]\n<p>Geef in je portaal je beschikbaarheid voor de zomer door; die hebben we nodig voor de planning.</p>\n[knop href=\"$portaal\"]Beschikbaarheid doorgeven[/knop]\n<p>We zien je graag op het trainingsweekend!</p>",
+                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Geweldig nieuws: je bent door de selectiedag en we nodigen je uit voor het <strong>trainingsweekend</strong>.</p>\n[info]Wanneer: {{tw_periode}}<br>Waar: {{tw_locatie}}<br>Verzamelen: {{tw_verzameltijd}}[/info]\n<p>Geef in je portaal je beschikbaarheid voor de zomer door; die hebben we nodig voor de planning.</p>\n[knop href=\"$portaal\"]Beschikbaarheid doorgeven[/knop]\n<p>We zien je graag op het trainingsweekend!</p>",
                 'tekst_kort' => "Hoi {{voornaam}}, je bent uitgenodigd voor het trainingsweekend van Paal 13 ({{tw_datum_start}}). Geef je beschikbaarheid door in je portaal: $portaal",
-                'samenvatting' => 'Je bent door! Trainingsweekend {{tw_datum_start}} t/m {{tw_datum_eind}}.',
+                'samenvatting' => 'Je bent door! Trainingsweekend {{tw_periode}}.',
             ],
         ]),
         'aangenomen' => array_merge($std, [
             'naam' => 'Welkom: aangenomen', 'categorie' => 'fase', 'kanaal_standaard' => 'email',
-            'beschrijving' => 'Als een sollicitant is aangenomen. Het kennismakingspakket (taken) wordt tegelijk klaargezet.',
+            'beschrijving' => 'Als een sollicitant is aangenomen. Het kennismakingspakket (taken) wordt tegelijk klaargezet. {{gesprek_bericht}} is het bericht uit het gesprek op het trainingsweekend (of de standaardtekst uit Instellingen).',
+            'vars' => ['gesprek_bericht'],
             'seed' => [
                 'onderwerp' => 'Welkom bij Paal 13, {{voornaam}}!',
                 'hero_titel' => 'Welkom bij Paal 13!', 'hero_subtitel' => 'Aangenomen voor {{seizoen_naam}}',
-                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p><strong>Van harte welkom bij Reddingsbrigade Paal 13!</strong> We zijn blij dat je aan boord komt voor {{seizoen_naam}}.</p>\n<h3>Wat gebeurt er nu?</h3>\n<p>In het portaal staan een paar taken die je nog afrondt:</p>\n<ul>\n  <li>Bevestig je lidmaatschap</li>\n  <li>Vul het loonheffingsformulier in</li>\n  <li>Neem de huisregels door</li>\n  <li>Wacht op de uitnodiging voor je Paal 13-account</li>\n</ul>\n[knop href=\"$portaal\"]Open het portaal[/knop]\n<p>Vragen? Mail naar <a href=\"mailto:{{bestuur_email}}\">{{bestuur_email}}</a>.</p>\n<p>Tot snel op het strand!<br><strong>Team Sollicitaties</strong></p>",
+                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p><strong>Van harte welkom bij Reddingsbrigade Paal 13!</strong> We zijn blij dat je aan boord komt voor {{seizoen_naam}}.</p>\n<p>{{gesprek_bericht}}</p>\n<h3>Wat gebeurt er nu?</h3>\n<p>In het portaal staan een paar taken die je nog afrondt:</p>\n<ul>\n  <li>Bevestig je lidmaatschap</li>\n  <li>Vul het loonheffingsformulier in</li>\n  <li>Neem de huisregels door</li>\n  <li>Wacht op de uitnodiging voor je Paal 13-account</li>\n</ul>\n[knop href=\"$portaal\"]Open het portaal[/knop]\n<p>Vragen? Mail naar <a href=\"mailto:{{contact_email}}\">{{contact_email}}</a>.</p>\n<p>Tot snel op het strand!<br><strong>Team Sollicitaties</strong></p>",
                 'tekst_kort' => "Hoi {{voornaam}}, welkom bij Paal 13! Je bent aangenomen. In je portaal staan een paar taken klaar: $portaal",
                 'samenvatting' => 'Je bent aangenomen. Welkom bij Paal 13!',
             ],
         ]),
         'afgewezen' => array_merge($std, [
             'naam' => 'Niet geselecteerd', 'categorie' => 'fase', 'kanaal_standaard' => 'uit', 'kort_toegestaan' => false,
-            'beschrijving' => 'Als een sollicitant niet verder gaat. Staat standaard uit: het bestuur belt of mailt persoonlijk.',
+            'beschrijving' => 'Als een sollicitant niet verder gaat. Staat standaard uit: het bestuur belt of mailt persoonlijk. Onder de tekst staat altijd de knop "Stuur me een seintje" (toestemming voor de volgende werving).',
+            // Voegt seintje_mailblok() onder de tekst toe, los van het bewerkbare sjabloon.
+            'seintje' => true, 'vars' => ['seintje_url'],
             'seed' => [
                 'onderwerp' => 'Terugkoppeling selectieprocedure {{seizoen_naam}}',
                 'hero_titel' => 'Terugkoppeling', 'hero_subtitel' => '',
-                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Na zorgvuldige beoordeling hebben we helaas besloten je niet verder mee te nemen in de selectieprocedure voor {{seizoen_naam}}.</p>\n<p>We hebben dit jaar veel aanmeldingen ontvangen en de keuze was moeilijk. Bedankt voor je enthousiasme en de moeite die je hebt gedaan.</p>\n<p>Vragen over onze beslissing? Neem gerust contact op via <a href=\"mailto:{{bestuur_email}}\">{{bestuur_email}}</a>.</p>\n<p>We hopen je misschien in een volgend seizoen weer te zien.</p>",
+                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Na zorgvuldige beoordeling hebben we helaas besloten je niet verder mee te nemen in de selectieprocedure voor {{seizoen_naam}}.</p>\n<p>We hebben dit jaar veel aanmeldingen ontvangen en de keuze was moeilijk. Bedankt voor je enthousiasme en de moeite die je hebt gedaan.</p>\n<p>Vragen over onze beslissing? Neem gerust contact op via <a href=\"mailto:{{contact_email}}\">{{contact_email}}</a>.</p>\n<p>We hopen je misschien in een volgend seizoen weer te zien.</p>",
                 'tekst_kort' => '',
                 'samenvatting' => 'Terugkoppeling over je sollicitatie.',
+            ],
+        ]),
+        // Na het gesprek op het trainingsweekend: een bevestiging van wat er is besproken. Staat
+        // daarom wél aan (anders dan 'afgewezen' na de selectiedag, waar het bestuur zelf belt).
+        'tw_afgewezen' => array_merge($std, [
+            'naam' => 'Niet aangenomen na het trainingsweekend', 'categorie' => 'fase', 'kanaal_standaard' => 'email', 'kort_toegestaan' => false,
+            'beschrijving' => 'Na het gesprek op het trainingsweekend, als bevestiging van wat er is besproken. {{gesprek_bericht}} is het bericht uit het gesprek (of de standaardtekst uit Instellingen › Seizoensfase & advies). Onder de tekst staat de knop "Stuur me een seintje".',
+            'seintje' => true, 'vars' => ['gesprek_bericht', 'seintje_url'],
+            'seed' => [
+                'onderwerp' => 'Terugkoppeling trainingsweekend {{seizoen_naam}}',
+                'hero_titel' => 'Bedankt voor je inzet', 'hero_subtitel' => 'Trainingsweekend {{seizoen_naam}}',
+                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Bedankt voor het gesprek op het trainingsweekend. Zoals we hebben besproken, gaan we dit seizoen niet met je verder.</p>\n<p>{{gesprek_bericht}}</p>\n<p>Met vriendelijke groet,<br>Het bestuur van Paal 13</p>",
+                'tekst_kort' => '',
+                'samenvatting' => 'Terugkoppeling na het trainingsweekend.',
+            ],
+        ]),
+        // Afgewezen zonder op het trainingsweekend te zijn geweest (tw_gesprek_afronden kiest dit type
+        // zelf). Bewust neutraal: geen "bedankt voor het gesprek" of "je inzet", want die waren er niet.
+        'tw_niet_gekomen' => array_merge($std, [
+            'naam' => 'Niet verder: niet op het trainingsweekend geweest', 'categorie' => 'fase', 'kanaal_standaard' => 'email',
+            'beschrijving' => 'Als iemand die niet op het trainingsweekend was, wordt afgewezen. {{gesprek_bericht}} is het bericht van het bestuur (of de standaardtekst voor "niet gekomen"). Onder de tekst staat de knop "Stuur me een seintje".',
+            'seintje' => true, 'vars' => ['gesprek_bericht', 'seintje_url'],
+            'seed' => [
+                'onderwerp' => 'Je sollicitatie voor {{seizoen_naam}} — Paal 13',
+                'hero_titel' => 'Terugkoppeling', 'hero_subtitel' => '{{seizoen_naam}}',
+                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Hierbij laten we je weten hoe het verder gaat met je sollicitatie voor {{seizoen_naam}}.</p>\n<p>{{gesprek_bericht}}</p>\n<p>Vragen? Mail gerust naar <a href=\"mailto:{{contact_email}}\">{{contact_email}}</a>.</p>\n<p>Met vriendelijke groet,<br>Het bestuur van Paal 13</p>",
+                'tekst_kort' => "Hoi {{voornaam}}, je was niet op het trainingsweekend van Paal 13. Daarom gaan we dit seizoen niet met je verder. Meer uitleg staat in je mail en in je portaal: $portaal",
+                'samenvatting' => 'Je sollicitatie loopt dit seizoen niet verder.',
             ],
         ]),
 
         // ── Taken en documenten ───────────────────────────────────────
         'taak_afgerond' => array_merge($std, [
+            'nachtrust' => false,
             'naam' => 'Bevestiging taak afgerond', 'categorie' => 'taak', 'kanaal_standaard' => 'email', 'dedup_min' => 5,
             'beschrijving' => 'Nadat de sollicitant een taak afrondt (formulier ingeleverd, beschikbaarheid definitief, document getekend).',
             'vars' => ['taak_naam'],
@@ -136,12 +172,13 @@ function meldingen_register(): array {
             ],
         ]),
         'ouder_gegevens_ontvangen' => array_merge($std, [
+            'nachtrust' => false,
             'naam' => 'Taken klaargezet na oudergegevens', 'categorie' => 'taak', 'kanaal_standaard' => 'email', 'dedup_min' => 720,
             'beschrijving' => 'Nadat een minderjarige sollicitant de gegevens van de ouder/verzorger heeft ingevuld en de formulieren zijn klaargezet.',
             'seed' => [
                 'onderwerp' => 'Er staan taken voor je klaar — Paal 13',
                 'hero_titel' => 'Taken klaargezet', 'hero_subtitel' => 'Nog een paar stappen',
-                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Bedankt voor de gegevens van je ouder/verzorger. Die krijgt nu een e-mail met de formulieren om te ondertekenen.</p>\n<p>In je portaal zie je welke acties nog voor jou openstaan: het \"Beter leren kennen\"-formulier en je beschikbaarheid.</p>\n[knop href=\"$portaal\"]Naar mijn portaal[/knop]",
+                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Bedankt voor de gegevens van je ouder/verzorger. Die krijgt nu een e-mail met de formulieren om te ondertekenen.</p>\n<p>In je portaal zie je welke acties nog voor jou openstaan: het kennismakingsformulier en je beschikbaarheid.</p>\n[knop href=\"$portaal\"]Naar mijn portaal[/knop]",
                 'tekst_kort' => "Hoi {{voornaam}}, je ouder/verzorger krijgt nu de formulieren per e-mail. Jouw open taken staan in je portaal: $portaal",
                 'samenvatting' => 'Je ouder/verzorger heeft de formulieren ontvangen.',
             ],
@@ -154,10 +191,24 @@ function meldingen_register(): array {
             'seed' => [
                 'onderwerp' => 'Handtekening nodig: formulieren voor {{voornaam}} — Reddingsbrigade Paal 13',
                 'hero_titel' => 'Handtekening gevraagd', 'hero_subtitel' => 'Voor de selectiedag van {{voornaam}}',
-                'body_html' => "<p>Beste {{ouder_naam}},</p>\n<p><strong>{{voornaam}}</strong> heeft gesolliciteerd als strandwacht bij Reddingsbrigade Paal 13 in Callantsoog en is uitgenodigd voor onze selectiedag. Daar maken we kennis en testen we de zwemvaardigheid in het zwembad.</p>\n<p>Omdat {{voornaam}} nog geen 18 jaar is, hebben wij uw toestemming en handtekening nodig op onderstaande documenten. Het ondertekenen gebeurt volledig digitaal en duurt ongeveer 3 minuten per formulier.</p>\n{{formulieren_blok}}\n<p><strong>Goed om te weten:</strong> uw gegevens worden alleen gebruikt voor deze verklaringen en vertrouwelijk behandeld. De ondertekening is 1 jaar geldig. Zonder deze formulieren kan {{voornaam}} helaas niet deelnemen aan de selectiedag.</p>\n<p>Heeft u vragen? Mail ons gerust.</p>\n<p>Met vriendelijke groet,<br><strong>Reddingsbrigade Paal 13</strong><br>Callantsoog</p>",
+                'body_html' => "<p>Beste {{ouder_naam}},</p>\n<p><strong>{{voornaam}}</strong> heeft gesolliciteerd als strandwacht bij Reddingsbrigade Paal 13 in Callantsoog en is uitgenodigd voor onze selectiedag. Daar maken we kennis en testen we de zwemvaardigheid in het zwembad.</p>\n<p>Omdat {{voornaam}} nog geen 18 jaar is, hebben wij uw toestemming en handtekening nodig op onderstaande documenten. Het ondertekenen gebeurt volledig digitaal en duurt ongeveer 3 minuten per formulier.</p>\n{{formulieren_blok}}\n<p><strong>Goed om te weten:</strong> uw gegevens worden alleen gebruikt voor deze verklaringen en vertrouwelijk behandeld. De ondertekening is 1 jaar geldig. Zonder deze formulieren kan {{voornaam}} helaas niet deelnemen aan de selectiedag.</p>\n<p>Heeft u vragen? Mail ons gerust via <a href=\"mailto:{{contact_email}}\">{{contact_email}}</a>.</p>\n<p>Met vriendelijke groet,<br><strong>Reddingsbrigade Paal 13</strong><br>Callantsoog</p>",
                 'tekst_kort' => '',
                 'samenvatting' => 'Ondertekenverzoek verstuurd aan je ouder/verzorger.',
             ],
+        ]),
+        // Inschrijving als lid van een minderjarige strandwacht: de ouder/verzorger tekent (includes/lidmaatschap.php).
+        // Eigen sjabloon, want het algemene ouderverzoek gaat over de selectiedag. De tekst staat op één plek:
+        // lidmaatschap_ouder_verzoek_tekst().
+        'lidmaatschap_verzoek_ouder' => array_merge($std, [
+            'naam' => 'Ondertekenverzoek lidmaatschap aan ouder/verzorger', 'categorie' => 'taak', 'ontvanger' => 'ouder',
+            'kanaal_standaard' => 'email', 'kort_toegestaan' => false, 'dedup_min' => 0,
+            'beschrijving' => 'Naar de ouder/verzorger van een aangenomen strandwacht onder 18 om de inschrijving als lid te ondertekenen (en eventueel de incassomachtiging te geven).',
+            'vars' => ['ouder_naam', 'formulieren_blok', 'document_naam', 'onderteken_url'],
+            'seed' => (function_exists('lidmaatschap_ouder_verzoek_tekst') ? lidmaatschap_ouder_verzoek_tekst() : [
+                'onderwerp' => 'Handtekening nodig: inschrijving van {{voornaam}} als lid — Reddingsbrigade Paal 13',
+                'hero_titel' => 'Handtekening gevraagd', 'hero_subtitel' => 'Lidmaatschap van {{voornaam}}',
+                'body_html' => "<p>Beste {{ouder_naam}},</p>\n<p>Omdat {{voornaam}} nog geen 18 is, vragen we u de inschrijving als lid te ondertekenen.</p>\n{{formulieren_blok}}",
+            ]) + ['tekst_kort' => '', 'samenvatting' => 'Ondertekenverzoek lidmaatschap verstuurd aan je ouder/verzorger.'],
         ]),
         'ondertekening_verzoek_zelf' => array_merge($std, [
             'naam' => 'Ondertekenverzoek aan sollicitant (18+)', 'categorie' => 'taak', 'kanaal_standaard' => 'email', 'dedup_min' => 0,
@@ -166,12 +217,13 @@ function meldingen_register(): array {
             'seed' => [
                 'onderwerp' => 'Onderteken: {{document_naam}} — Paal 13',
                 'hero_titel' => 'Handtekening gevraagd', 'hero_subtitel' => '{{document_naam}}',
-                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Voor je sollicitatie bij Reddingsbrigade Paal 13 vragen we je <strong>{{document_naam}}</strong> digitaal te ondertekenen. Dit duurt ongeveer 3 minuten.</p>\n[knop href=\"{{onderteken_url}}\"]Formulier openen[/knop]\n<p>Vragen? Mail naar <a href=\"mailto:{{bestuur_email}}\">{{bestuur_email}}</a>.</p>",
+                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Voor je sollicitatie bij Reddingsbrigade Paal 13 vragen we je <strong>{{document_naam}}</strong> digitaal te ondertekenen. Dit duurt ongeveer 3 minuten.</p>\n[knop href=\"{{onderteken_url}}\"]Formulier openen[/knop]\n<p>Vragen? Mail naar <a href=\"mailto:{{contact_email}}\">{{contact_email}}</a>.</p>",
                 'tekst_kort' => "Hoi {{voornaam}}, wil je {{document_naam}} digitaal ondertekenen voor Paal 13? Dat kan hier: {{onderteken_url}}",
                 'samenvatting' => 'Onderteken {{document_naam}}.',
             ],
         ]),
         'ondertekening_bevestiging' => array_merge($std, [
+            'nachtrust' => false,
             'naam' => 'Bevestiging: je hebt zelf ondertekend', 'categorie' => 'taak', 'kanaal_standaard' => 'email', 'dedup_min' => 0,
             'beschrijving' => 'Naar de sollicitant zodra hij/zij zélf een document heeft ondertekend (18+, loonheffing, lidmaatschap). De ondertekende PDF gaat als bijlage mee.',
             'vars' => ['document_naam'],
@@ -196,14 +248,15 @@ function meldingen_register(): array {
             ],
         ]),
         'ondertekening_kopie' => array_merge($std, [
+            'nachtrust' => false,
             'naam' => 'Kopie ondertekend document (met PDF)', 'categorie' => 'taak', 'ontvanger' => 'ouder',
             'kanaal_standaard' => 'email', 'kort_toegestaan' => false, 'dedup_min' => 0, 'body_loggen' => false,
             'beschrijving' => 'Naar de ondertekenaar (ouder/verzorger) met het ondertekende document als PDF-bijlage.',
             'vars' => ['document_naam', 'ontvanger_naam'],
             'seed' => [
                 'onderwerp' => 'Kopie ondertekend: {{document_naam}} — Paal 13',
-                'hero_titel' => 'Kopie van je ondertekening', 'hero_subtitel' => 'Voor je administratie',
-                'body_html' => "<p>Beste {{ontvanger_naam}},</p>\n<p>Bedankt voor het ondertekenen van <strong>{{document_naam}}</strong> voor {{volledige_naam}}.</p>\n<p>In de bijlage vind je een kopie van het ondertekende document, zodat je kunt terugzien waar je je handtekening onder hebt gezet.</p>\n<p>Met vriendelijke groet,<br><strong>Team Sollicitaties</strong><br>Reddingsbrigade Paal 13</p>",
+                'hero_titel' => 'Kopie van de ondertekening', 'hero_subtitel' => 'Voor de eigen administratie',
+                'body_html' => "<p>Beste {{ontvanger_naam}},</p>\n<p>Bedankt voor het ondertekenen van <strong>{{document_naam}}</strong> voor {{volledige_naam}}.</p>\n<p>In de bijlage staat een kopie van het ondertekende document, om later terug te kunnen zien wat er is ondertekend.</p>\n<p>Met vriendelijke groet,<br><strong>Team Sollicitaties</strong><br>Reddingsbrigade Paal 13</p>",
                 'tekst_kort' => '', 'samenvatting' => '',
             ],
         ]),
@@ -217,6 +270,84 @@ function meldingen_register(): array {
                 'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Het bestuur heeft je verzoek om in <strong>{{verzoek_weken}}</strong> maximaal <strong>{{verzoek_dagen}} dagen</strong> te werken beoordeeld: het is <strong>{{besluit}}</strong>.</p>\n{{besluit_html}}\n[knop href=\"{{portaal_url}}beschikbaarheid.php\"]Bekijk je beschikbaarheid[/knop]",
                 'tekst_kort' => "Hoi {{voornaam}}, het bestuur heeft je verzoek om minder dagen te werken ({{verzoek_weken}}) beoordeeld: {{besluit}}. Details: {{portaal_url}}beschikbaarheid.php",
                 'samenvatting' => 'Je verzoek voor {{verzoek_weken}} is {{besluit}}.',
+            ],
+        ]),
+
+        /* Besluiten van het bestuur over iets wat de sollicitant zelf vroeg of doorgaf. Zonder
+           deze berichten verdween zo'n besluit stil: het intrekverzoek was ineens weg, en na
+           "ik kan niet" beloofde het portaal contact dat nooit kwam. Categorie 'taak': het gaat
+           over de eigen sollicitatie, niet over werving. Een doorgevoerd intrekverzoek blijft
+           bewust stil (besluit Lucas: het bestuur heeft dan al gebeld); het portaal toont dan
+           zelf dat de sollicitatie is gestopt. */
+        'intrekverzoek_niet_doorgevoerd' => array_merge($std, [
+            'naam' => 'Intrekverzoek: sollicitatie loopt door', 'categorie' => 'taak', 'kanaal_standaard' => 'email', 'dedup_min' => 0,
+            'beschrijving' => 'Als het bestuur na het gesprek besluit een verzoek om de sollicitatie in te trekken niet door te voeren.',
+            'seed' => [
+                'onderwerp' => 'Je sollicitatie loopt door — Paal 13',
+                'hero_titel' => 'Je sollicitatie loopt door', 'hero_subtitel' => '{{seizoen_naam}}',
+                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Je vroeg ons om je sollicitatie in te trekken. We hebben dat met je besproken en zoals afgesproken loopt je sollicitatie gewoon door.</p>\n<p>In je portaal zie je wat er nog voor je openstaat.</p>\n[knop href=\"$portaal\"]Naar mijn portaal[/knop]\n<p>Wil je toch stoppen? Laat het ons weten via <a href=\"mailto:{{contact_email}}\">{{contact_email}}</a>.</p>",
+                'tekst_kort' => "Hoi {{voornaam}}, zoals besproken loopt je sollicitatie bij Paal 13 gewoon door. Kijk in je portaal wat er nog openstaat: $portaal",
+                'samenvatting' => 'Zoals besproken loopt je sollicitatie door.',
+            ],
+        ]),
+        'deelname_afgemeld' => array_merge($std, [
+            'naam' => 'Afgemeld voor selectiedag of trainingsweekend', 'categorie' => 'taak', 'kanaal_standaard' => 'email', 'dedup_min' => 0,
+            'beschrijving' => 'Als het bestuur besluit iemand die "ik kan niet" doorgaf af te melden. De sollicitatie stopt daarmee (fase afgehaakt). {{evenement}} is "selectiedag" of "trainingsweekend".',
+            'vars' => ['evenement'],
+            'seed' => [
+                'onderwerp' => 'Je bent afgemeld voor de {{evenement}} — Paal 13',
+                'hero_titel' => 'Afgemeld', 'hero_subtitel' => '{{evenement}}',
+                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Je gaf door dat je niet kunt komen op de {{evenement}}. We hebben je afmelding besproken en je afgemeld. Je sollicitatie voor {{seizoen_naam}} stopt daarmee.</p>\n<p>Jammer dat het dit keer niet lukt. Volgend seizoen ben je van harte welkom om je opnieuw aan te melden.</p>\n<p>In je portaal lees je wat er met je gegevens gebeurt.</p>\n[knop href=\"$portaal\"]Naar mijn portaal[/knop]\n<p>Klopt dit niet? Laat het ons weten via <a href=\"mailto:{{contact_email}}\">{{contact_email}}</a>.</p>",
+                'tekst_kort' => "Hoi {{voornaam}}, je bent afgemeld voor de {{evenement}} van Paal 13; je sollicitatie stopt daarmee. Klopt dit niet? Laat het ons weten. $portaal",
+                'samenvatting' => 'Je bent afgemeld voor de {{evenement}}; je sollicitatie stopt.',
+            ],
+        ]),
+        'deelname_uitzondering' => array_merge($std, [
+            'naam' => 'Uitzondering na "ik kan niet"', 'categorie' => 'taak', 'kanaal_standaard' => 'email', 'dedup_min' => 0,
+            'beschrijving' => 'Als het bestuur na "ik kan niet" een uitzondering maakt: de sollicitatie loopt door. {{evenement}} is "selectiedag" of "trainingsweekend".',
+            'vars' => ['evenement'],
+            'seed' => [
+                'onderwerp' => 'Je sollicitatie loopt door — Paal 13',
+                'hero_titel' => 'We maken een uitzondering', 'hero_subtitel' => '{{evenement}}',
+                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Je gaf door dat je niet kunt komen op de {{evenement}}. We hebben je afmelding besproken en maken een uitzondering: je sollicitatie loopt gewoon door.</p>\n<p>In je portaal zie je wat er nog voor je openstaat.</p>\n[knop href=\"$portaal\"]Naar mijn portaal[/knop]",
+                'tekst_kort' => "Hoi {{voornaam}}, we maken een uitzondering voor de {{evenement}}: je sollicitatie bij Paal 13 loopt door. Zie je portaal: $portaal",
+                'samenvatting' => 'We maken een uitzondering: je sollicitatie loopt door.',
+            ],
+        ]),
+
+        /* Een vraag vanuit het portaal. Tot nu toe was het portaal een doodlopend eind:
+           je las een bericht en kon niet antwoorden, dus elke vraag kwam via een kanaal
+           waar hij kwijtraakte (privé-WhatsApp, een los mailadres). Nu komt hij bij het
+           bestuur binnen mét naam en fase erbij, zodat meteen duidelijk is wie het
+           vraagt en waar hij in het proces zit. */
+        'sollicitant_vraag' => array_merge($std, [
+            'naam' => 'Vraag vanuit het portaal', 'categorie' => 'systeem', 'ontvanger' => 'bestuur',
+            'kanaal_standaard' => 'email', 'kort_toegestaan' => false, 'dedup_min' => 0,
+            'beschrijving' => 'Als een sollicitant via het portaal een vraag stelt.',
+            'vars' => ['vraag', 'fase_label'],
+            'seed' => [
+                'onderwerp' => 'Vraag van {{volledige_naam}} ({{fase_label}})',
+                'hero_titel' => 'Vraag uit het portaal', 'hero_subtitel' => '{{volledige_naam}} · {{fase_label}}',
+                'body_html' => "<p><strong>{{volledige_naam}}</strong> ({{fase_label}}) stelde deze vraag via het portaal:</p>\n[info]{{vraag}}[/info]\n<p>Antwoorden kan rechtstreeks op <a href=\"mailto:{{sollicitant_email}}\">{{sollicitant_email}}</a>.</p>",
+                'tekst_kort' => '', 'samenvatting' => 'Vraag van {{volledige_naam}}: {{vraag}}',
+            ],
+        ]),
+
+        /* Het bestuur past de beschikbaarheid van iemand aan. Gaat alleen uit als de
+           beheerder dat bij de correctie aanvinkt: een invoerfout rechtzetten is geen
+           nieuws, een vakantieweek schrappen wel. Categorie 'taak', want het gaat over
+           de eigen sollicitatie en niet over werving — dus geen afmeldvoet. */
+        'beschikbaarheid_gecorrigeerd' => array_merge($std, [
+            'naam' => 'Beschikbaarheid aangepast door het bestuur', 'categorie' => 'taak',
+            'kanaal_standaard' => 'beide', 'dedup_min' => 0,
+            'beschrijving' => 'Als het bestuur je beschikbaarheid voor een of meer weken aanpast.',
+            'vars' => ['weken', 'reden'],
+            'seed' => [
+                'onderwerp' => 'Je beschikbaarheid is aangepast ({{weken}}) — Paal 13',
+                'hero_titel' => 'Beschikbaarheid aangepast', 'hero_subtitel' => '{{weken}}',
+                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>We hebben je beschikbaarheid voor <strong>{{weken}}</strong> aangepast.</p>\n<p><strong>Reden:</strong> {{reden}}</p>\n<p>Klopt dit niet? Laat het ons weten, dan zetten we het terug.</p>\n[knop href=\"{{portaal_url}}beschikbaarheid.php\"]Bekijk je beschikbaarheid[/knop]",
+                'tekst_kort' => "Hoi {{voornaam}}, we hebben je beschikbaarheid voor {{weken}} aangepast ({{reden}}). Klopt dat niet? Laat het weten. {{portaal_url}}beschikbaarheid.php",
+                'samenvatting' => 'Je beschikbaarheid voor {{weken}} is aangepast: {{reden}}.',
             ],
         ]),
 
@@ -235,12 +366,12 @@ function meldingen_register(): array {
         ]),
         'herinnering_selectie_aanmelden' => array_merge($std, [
             'naam' => 'Herinnering: nog niet aangemeld voor de selectiedag', 'categorie' => 'herinnering', 'kanaal_standaard' => 'beide', 'dedup_min' => 0,
-            'beschrijving' => 'Uitgenodigd, maar het "Beter leren kennen"-formulier is nog niet ingeleverd terwijl de selectiedag nadert.',
+            'beschrijving' => 'Uitgenodigd, maar nog niet laten weten of hij of zij komt, terwijl de selectiedag nadert.',
             'seed' => [
                 'onderwerp' => 'Bevestig je deelname aan de selectiedag — Paal 13',
                 'hero_titel' => 'Kom je ook?', 'hero_subtitel' => 'Selectiedag {{selectiedag_datum}}', 'hero_kleur' => '#D43D00',
-                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>De selectiedag op <strong>{{selectiedag_datum}}</strong> komt eraan, maar je hebt je deelname nog niet bevestigd. Dat doe je door het \"Beter leren kennen\"-formulier in je portaal in te vullen.</p>\n[knop href=\"$portaal\"]Formulier invullen[/knop]\n<p>Kun je niet? Laat het ons even weten via <a href=\"mailto:{{bestuur_email}}\">{{bestuur_email}}</a>.</p>",
-                'tekst_kort' => "Hoi {{voornaam}}, de selectiedag op {{selectiedag_datum}} komt eraan. Bevestig je deelname via het formulier in je portaal: $portaal",
+                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>De selectiedag op <strong>{{selectiedag_datum}}</strong> komt eraan, maar je hebt nog niet laten weten of je komt. Dat doe je in je portaal; daar kun je ook doorgeven dat je niet kunt.</p>\n[knop href=\"$portaal\"]Naar mijn portaal[/knop]",
+                'tekst_kort' => "Hoi {{voornaam}}, de selectiedag op {{selectiedag_datum}} komt eraan. Laat in je portaal weten of je komt: $portaal",
                 'samenvatting' => 'Je hebt je deelname aan de selectiedag nog niet bevestigd.',
             ],
         ]),
@@ -283,8 +414,8 @@ function meldingen_register(): array {
             'beschrijving' => 'Een paar dagen vóór het trainingsweekend, naar iedereen die is uitgenodigd.',
             'seed' => [
                 'onderwerp' => 'Bijna zover: het trainingsweekend — Paal 13',
-                'hero_titel' => 'Trainingsweekend', 'hero_subtitel' => '{{tw_datum_start}} t/m {{tw_datum_eind}}',
-                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Het trainingsweekend komt eraan!</p>\n[info]Wanneer: {{tw_datum_start}} t/m {{tw_datum_eind}}<br>Waar: {{tw_locatie}}<br>Adres: {{tw_adres}}<br>Verzamelen: {{tw_verzameltijd}}<br>Meenemen: {{tw_meenemen}}[/info]\n[knop href=\"$portaal\"]Naar mijn portaal[/knop]\n<p>Tot dan!<br>Reddingsbrigade Paal 13</p>",
+                'hero_titel' => 'Trainingsweekend', 'hero_subtitel' => '{{tw_periode}}',
+                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Het trainingsweekend komt eraan!</p>\n[info]Wanneer: {{tw_periode}}<br>Waar: {{tw_locatie}}<br>Adres: {{tw_adres}}<br>Verzamelen: {{tw_verzameltijd}}<br>Meenemen: {{tw_meenemen}}[/info]\n[knop href=\"$portaal\"]Naar mijn portaal[/knop]\n<p>Tot dan!<br>Reddingsbrigade Paal 13</p>",
                 'tekst_kort' => "Hoi {{voornaam}}, het trainingsweekend start {{tw_datum_start}}. Verzamelen {{tw_verzameltijd}} bij {{tw_locatie}}. Alle info: $portaal",
                 'samenvatting' => 'Het trainingsweekend start {{tw_datum_start}}.',
             ],
@@ -297,7 +428,7 @@ function meldingen_register(): array {
             'seed' => [
                 'onderwerp' => 'Herinnering: {{document_naam}} — Paal 13',
                 'hero_titel' => 'Herinnering', 'hero_subtitel' => '{{document_naam}}', 'hero_kleur' => '#D43D00',
-                'body_html' => "<p>Beste {{ontvanger_naam}},</p>\n<p>Een vriendelijke herinnering: <strong>{{document_naam}}</strong> staat nog open. Zonder deze handtekening kan {{voornaam}} helaas niet deelnemen aan de selectiedag van Reddingsbrigade Paal 13.</p>\n[knop href=\"{{onderteken_url}}\"]Nu ondertekenen[/knop]\n<p>Met vriendelijke groet,<br><strong>Reddingsbrigade Paal 13</strong></p>",
+                'body_html' => "<p>Beste {{ontvanger_naam}},</p>\n<p>Een vriendelijke herinnering: <strong>{{document_naam}}</strong> staat nog open. We hebben deze handtekening nodig om met de sollicitatie van {{voornaam}} bij Reddingsbrigade Paal 13 verder te kunnen.</p>\n[knop href=\"{{onderteken_url}}\"]Nu ondertekenen[/knop]\n<p>Met vriendelijke groet,<br><strong>Reddingsbrigade Paal 13</strong></p>",
                 'tekst_kort' => "Hoi {{voornaam}}, er staat nog een document klaar om te ondertekenen: {{onderteken_url}}",
                 'samenvatting' => '{{document_naam}} wacht nog op een handtekening.',
             ],
@@ -329,14 +460,38 @@ function meldingen_register(): array {
             ],
         ]),
         'bestuur_blk_ingediend' => array_merge($std, [
-            'naam' => 'Formulier "Beter leren kennen" ingeleverd', 'categorie' => 'bestuur', 'ontvanger' => 'bestuur',
+            'naam' => 'Kennismakingsformulier ingeleverd', 'categorie' => 'bestuur', 'ontvanger' => 'bestuur',
             'kanaal_standaard' => 'uit', 'kort_toegestaan' => false, 'dedup_min' => 0, 'body_loggen' => false,
-            'beschrijving' => 'Naar het bestuur als een sollicitant het formulier inlevert (= aangemeld voor de selectiedag).',
+            'beschrijving' => 'Naar het bestuur als een sollicitant het kennismakingsformulier inlevert.',
             'vars' => ['beheer_url'],
             'seed' => [
                 'onderwerp' => 'Formulier ingeleverd: {{volledige_naam}}',
                 'hero_titel' => 'Formulier ingeleverd', 'hero_subtitel' => '{{seizoen_naam}}',
-                'body_html' => "<p><strong>{{volledige_naam}}</strong> heeft het \"Beter leren kennen\"-formulier ingeleverd en is daarmee aangemeld voor de selectiedag.</p>\n[knop href=\"{{beheer_url}}\"]Bekijk in het beheer[/knop]",
+                'body_html' => "<p><strong>{{volledige_naam}}</strong> heeft het kennismakingsformulier ingeleverd.</p>\n[knop href=\"{{beheer_url}}\"]Bekijk in het beheer[/knop]",
+                'tekst_kort' => '', 'samenvatting' => '',
+            ],
+        ]),
+        'bestuur_deelname_afgemeld' => array_merge($std, [
+            'naam' => 'Kan niet komen (selectiedag of trainingsweekend)', 'categorie' => 'bestuur', 'ontvanger' => 'bestuur',
+            'kanaal_standaard' => 'email', 'kort_toegestaan' => false, 'dedup_min' => 0, 'body_loggen' => false,
+            'beschrijving' => 'Naar het bestuur als een sollicitant in het portaal doorgeeft niet te kunnen komen. De fase verandert niet vanzelf: op Vandaag staat de keuze afmelden of uitzondering.',
+            'vars' => ['evenement', 'reden', 'beheer_url'],
+            'seed' => [
+                'onderwerp' => 'Kan niet komen: {{volledige_naam}} ({{evenement}})',
+                'hero_titel' => 'Kan niet komen', 'hero_subtitel' => '{{evenement}}',
+                'body_html' => "<p><strong>{{volledige_naam}}</strong> geeft door niet te kunnen komen op de {{evenement}}.</p>\n<p>Reden: {{reden}}</p>\n<p>Beslis op Vandaag: afmelden, of een uitzondering maken.</p>\n[knop href=\"{{beheer_url}}\"]Naar het dossier[/knop]",
+                'tekst_kort' => '', 'samenvatting' => '',
+            ],
+        ]),
+        'bestuur_intrekverzoek' => array_merge($std, [
+            'naam' => 'Verzoek sollicitatie intrekken', 'categorie' => 'bestuur', 'ontvanger' => 'bestuur',
+            'kanaal_standaard' => 'email', 'kort_toegestaan' => false, 'dedup_min' => 0, 'body_loggen' => false,
+            'beschrijving' => 'Naar het bestuur als een sollicitant in het portaal vraagt de sollicitatie in te trekken. Er verandert niets vanzelf: op Vandaag kies je na het gesprek doorvoeren of niet.',
+            'vars' => ['reden', 'beheer_url'],
+            'seed' => [
+                'onderwerp' => 'Wil intrekken: {{volledige_naam}}',
+                'hero_titel' => 'Verzoek om in te trekken', 'hero_subtitel' => '{{seizoen_naam}}',
+                'body_html' => "<p><strong>{{volledige_naam}}</strong> vraagt de sollicitatie in te trekken.</p>\n<p>Reden: {{reden}}</p>\n<p>Neem contact op en beslis daarna op Vandaag: doorvoeren of niet.</p>\n[knop href=\"{{beheer_url}}\"]Naar het dossier[/knop]",
                 'tekst_kort' => '', 'samenvatting' => '',
             ],
         ]),
@@ -396,7 +551,7 @@ function meldingen_register(): array {
             'seed' => [
                 'onderwerp' => 'Nieuwe inschrijving als {{lid_soort}}: {{volledige_naam}}',
                 'hero_titel' => 'Nieuwe inschrijving', 'hero_subtitel' => 'Via het sollicitatiesysteem ({{seizoen_naam}})',
-                'body_html' => "<p><strong>{{volledige_naam}}</strong> is aangenomen als strandwacht en heeft zich via het portaal ingeschreven als <strong>{{lid_soort}}</strong> van de vereniging. De ondertekende en digitaal verzegelde inschrijving zit als PDF in de bijlage.</p>\n{{gegevens_html}}\n<p>Vragen over deze inschrijving? Mail <a href=\"mailto:{{bestuur_email}}\">{{bestuur_email}}</a>.</p>",
+                'body_html' => "<p><strong>{{volledige_naam}}</strong> is aangenomen als strandwacht en is via het portaal ingeschreven als <strong>{{lid_soort}}</strong> van de vereniging (bij een minderjarige door de ouder/verzorger). De ondertekende en digitaal verzegelde inschrijving zit als PDF in de bijlage.</p>\n{{gegevens_html}}\n<p>Vragen over deze inschrijving? Mail <a href=\"mailto:{{bestuur_email}}\">{{bestuur_email}}</a>.</p>",
                 'tekst_kort' => '', 'samenvatting' => 'Je inschrijving als lid is naar de ledenservice gestuurd.',
             ],
         ]),
@@ -414,17 +569,57 @@ function meldingen_register(): array {
         ]),
 
         // ── Systeem ───────────────────────────────────────────────────
+        /* De inloglink staat bovenaan en de code eronder. Eén tik scheelt zes cijfers
+           overtypen en het heen-en-weer tussen mailapp en browser; wie liever typt of
+           de link niet kan openen gebruikt de code. Zelfde adres, zelfde kwartier
+           geldig, zelfde eenmaligheid — dus geen zwakker slot, alleen minder werk.
+           'beide' als standaardkanaal: via WhatsApp komt de link sneller aan en staat
+           hij in de app waar de sollicitant toch al is. */
         'portaal_code' => array_merge($std, [
-            'naam' => 'Portaal-inlogcode', 'categorie' => 'systeem', 'ontvanger' => 'direct',
-            'kanaal_standaard' => 'email', 'dedup_min' => 0, 'body_loggen' => false,
-            'beschrijving' => 'De eenmalige inlogcode voor het portaal. De inhoud wordt nooit gelogd.',
-            'vars' => ['otp_code'],
+            'naam' => 'Inloglink portaal (met code)', 'categorie' => 'systeem', 'ontvanger' => 'direct',
+            'kanaal_standaard' => 'beide', 'dedup_min' => 0, 'body_loggen' => false,
+            'beschrijving' => 'De inloglink én de eenmalige code voor het portaal. De inhoud wordt nooit gelogd.',
+            'vars' => ['otp_code', 'inloglink', 'inlogknop'],
             'seed' => [
-                'onderwerp' => 'Jouw inlogcode voor het Paal 13 portaal',
-                'hero_titel' => 'Inlogcode', 'hero_subtitel' => 'Geldig 15 minuten',
-                'body_html' => "<p>Je hebt een inlogcode aangevraagd voor het sollicitantenportaal van Reddingsbrigade Paal 13.</p>\n[code]{{otp_code}}[/code]\n<p>Deze code is <strong>15 minuten</strong> geldig. Vul hem in op de inlogpagina.</p>\n[info]Heb jij deze code niet aangevraagd? Dan kun je dit bericht negeren.[/info]",
-                'tekst_kort' => 'Je inlogcode voor het Paal 13 portaal is: {{otp_code}} (geldig 15 minuten).',
+                'onderwerp' => 'Inloggen bij het Paal 13 portaal',
+                'hero_titel' => 'Inloggen', 'hero_subtitel' => 'Geldig 15 minuten',
+                'body_html' => "<p>Hoi {{voornaam}}, hier kom je binnen bij het sollicitantenportaal van Reddingsbrigade Paal 13.</p>\n{{inlogknop}}\n<p>Werkt de knop niet? Vul dan deze code in op de inlogpagina:</p>\n[code]{{otp_code}}[/code]\n<p>De knop en de code zijn <strong>15 minuten</strong> geldig en werken één keer.</p>\n[info]Heb jij dit niet aangevraagd? Dan kun je dit bericht negeren — er gebeurt niets.[/info]",
+                'tekst_kort' => 'Hoi {{voornaam}}, hier log je in bij Paal 13: {{inloglink}} — liever typen? Je code is {{otp_code}}. Beide 15 minuten geldig.',
                 'samenvatting' => '',
+            ],
+        ]),
+
+        /* Tweede stap van de wachtwoord-noodingang van het beheer (includes/tweestaps.php), voor
+           accounts zonder authenticator-app. Eigen type, zodat het berichtenlog laat zien dat het
+           een beheerinlog was en niet een portaalinlog. Alleen e-mail; de inhoud wordt nooit gelogd. */
+        'beheer_code' => array_merge($std, [
+            'naam' => 'Inlogcode beheer (noodingang)', 'categorie' => 'systeem', 'ontvanger' => 'direct',
+            'kanaal_standaard' => 'email', 'kort_toegestaan' => false, 'dedup_min' => 0, 'body_loggen' => false,
+            'beschrijving' => 'De eenmalige code na een juist wachtwoord bij de noodingang van het beheer, voor wie nog geen authenticator-app heeft ingesteld. De inhoud wordt nooit gelogd.',
+            'vars' => ['otp_code', 'geldig_min'],
+            'seed' => [
+                'onderwerp' => 'Je inlogcode voor het Paal 13 beheer',
+                'hero_titel' => 'Inlogcode beheer', 'hero_subtitel' => 'Geldig {{geldig_min}} minuten',
+                'body_html' => "<p>Hoi {{voornaam}}, je wachtwoord voor het beheer is zojuist goed ingevuld. Vul deze code in om de inlog af te ronden:</p>\n[code]{{otp_code}}[/code]\n<p>De code is <strong>{{geldig_min}} minuten</strong> geldig en werkt één keer.</p>\n[info]Heb jij niet net ingelogd? Dan kent iemand anders je wachtwoord. Wijzig het meteen in Mijn profiel en laat het een beheerder weten.[/info]",
+                'tekst_kort' => '',
+                'samenvatting' => '',
+            ],
+        ]),
+
+        /* Seintje buiten het seizoen (includes/seintje_werving.php): de dubbele bevestiging.
+           Iedereen kan elk adres invullen, dus pas na deze klik staat het seintje aan. De knop
+           opent een pagina met nóg een knop die post: mailscanners bezoeken links vooraf.
+           De inhoud wordt niet gelogd, want de link is het geheim. Alleen e-mail. */
+        'werving_seintje_bevestigen' => array_merge($std, [
+            'naam' => 'Seintje bij de werving: bevestig je e-mailadres', 'categorie' => 'systeem', 'ontvanger' => 'direct',
+            'kanaal_standaard' => 'email', 'kort_toegestaan' => false, 'dedup_min' => 0, 'body_loggen' => false,
+            'beschrijving' => 'Als iemand bij een gesloten aanmelding om een seintje vraagt. Pas na de klik op de knop staat het seintje aan; zonder bevestiging verdwijnt de aanvraag na zeven dagen. De inhoud wordt niet gelogd.',
+            'vars' => ['bevestig_url', 'bevestig_dagen'],
+            'seed' => [
+                'onderwerp' => 'Bevestig je seintje — Paal 13',
+                'hero_titel' => 'Bevestig je seintje', 'hero_subtitel' => 'Dan hoor je het als de aanmelding opengaat',
+                'body_html' => "<p>Hoi {{voornaam}},</p>\n<p>Je vroeg om een seintje als de aanmelding voor het volgende seizoen bij Reddingsbrigade Paal 13 opengaat. Bevestig met de knop hieronder dat dit jouw e-mailadres is.</p>\n[knop href=\"{{bevestig_url}}\"]Bevestig mijn seintje[/knop]\n<p>Daarna sturen we je één bericht zodra je je kunt aanmelden. Na dat bericht verwijderen we je gegevens.</p>\n[info]Heb jij dit niet aangevraagd? Dan hoef je niets te doen. Zonder bevestiging verwijderen we je gegevens binnen {{bevestig_dagen}} dagen.[/info]",
+                'tekst_kort' => '', 'samenvatting' => '',
             ],
         ]),
 
@@ -440,6 +635,7 @@ function meldingen_register(): array {
         ]),
         'handmatig' => array_merge($std, [
             'naam' => 'Handmatig bericht', 'categorie' => 'handmatig', 'kanaal_standaard' => 'email', 'dedup_min' => 0,
+            'kort_max' => 1000,   // zelf geschreven: langer dan een vast sjabloon (tekst_kort_maak kapt anders af op 400)
             'beschrijving' => 'Een bericht dat het bestuur zelf schrijft en verstuurt (onderwerp en inhoud per verzending).',
             'vars' => ['onderwerp', 'body_html', 'tekst_kort'],
             'seed' => [

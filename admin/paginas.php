@@ -37,8 +37,16 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 
 $paginas = pag_alle();
 $stats   = pag_stats_bulk(array_column($paginas, 'id'));
-$werving = pag_werving_overzicht();
 $mag_bewerken = mag('paginas', 'bewerken');
+
+// Twee tabbladen: Overzicht (waar komen aanmeldingen vandaan, alle bronnen) en Pagina's (beheren).
+$tab = ($_GET['tab'] ?? '') === 'paginas' ? 'paginas' : 'overzicht';
+$periode = (string)($_GET['periode'] ?? 'seizoen');
+if (!isset(pag_periodes()[$periode])) $periode = 'seizoen';
+$seizoen = actief_seizoen();
+$overzicht = $tab === 'overzicht'
+    ? pag_bronnen_overzicht(pag_periode_van($periode, $seizoen), $periode === 'seizoen' && $seizoen ? (int)$seizoen['id'] : null)
+    : null;
 
 // Werkt de nette URL? Bij een ZIP-deploy blijft de .htaccess van de server staan en ontbreekt
 // de regel; /p.php?s=... werkt dan nog wel, dus dat is geen storing maar wel goed om te weten.
@@ -50,15 +58,14 @@ require __DIR__ . '/layout_top.php';
 <div class="pg-wrap">
   <div class="pg-titelrij">
     <div>
-      <h1 class="pg-h1">Landingspagina's</h1>
-      <p class="pg-sub">Eigen wervingspagina's per doelgroep, met het aanmeldformulier erin.</p>
+      <h2 class="pg-h1">Landingspagina's</h2>
+      <p class="pg-sub">Eigen landingspagina's per doelgroep, met het aanmeldformulier erin.</p>
     </div>
     <?php if ($mag_bewerken): ?>
     <button type="button" class="ds-btn ds-btn-primair" data-open="pg-nieuw"><?= icoon('plus', 18) ?> Nieuwe pagina</button>
     <?php endif; ?>
   </div>
 
-  <?php toon_flash(); ?>
 
   <?php if (!$rewrite_ok): ?>
   <div class="ds-melding ds-melding-warn" role="status">
@@ -95,7 +102,7 @@ RewriteRule ^p/([a-z0-9\-]{1,80})/([A-Za-z0-9._\-]+)$ uploads/paginas/$1/assets/
       <?= csrf_input() ?><input type="hidden" name="actie" value="nieuw">
       <div class="ds-veld">
         <label class="ds-label" for="pg-titel">Titel</label>
-        <input class="ds-input" type="text" id="pg-titel" name="titel" required placeholder="Word lifeguard — zomer 2027">
+        <input class="ds-input" type="text" id="pg-titel" name="titel" required placeholder="Word strandwacht — zomer 2027">
       </div>
       <div class="ds-veld">
         <label class="ds-label" for="pg-slug">Adres</label>
@@ -109,6 +116,15 @@ RewriteRule ^p/([a-z0-9\-]{1,80})/([A-Za-z0-9._\-]+)$ uploads/paginas/$1/assets/
     </form>
   </div>
   <?php endif; ?>
+
+  <nav class="bh-tabs" aria-label="Landingspagina's">
+    <a class="bh-tab<?= $tab === 'overzicht' ? ' actief' : '' ?>" href="<?= APP_URL ?>/admin/paginas.php"<?= $tab === 'overzicht' ? ' aria-current="page"' : '' ?>>Overzicht</a>
+    <a class="bh-tab<?= $tab === 'paginas' ? ' actief' : '' ?>" href="<?= APP_URL ?>/admin/paginas.php?tab=paginas"<?= $tab === 'paginas' ? ' aria-current="page"' : '' ?>>Pagina's (<?= count($paginas) ?>)</a>
+  </nav>
+
+  <?php if ($tab === 'overzicht'): ?>
+    <?php require __DIR__ . '/_paginas_overzicht.php'; ?>
+  <?php else: ?>
 
   <?php if (!$paginas): ?>
     <div class="ds-kaart ds-kaart-p ds-leeg">
@@ -148,33 +164,10 @@ RewriteRule ^p/([a-z0-9\-]{1,80})/([A-Za-z0-9._\-]+)$ uploads/paginas/$1/assets/
     </ul>
   <?php endif; ?>
 
-  <?php if ($werving): ?>
-  <section class="ds-kaart ds-kaart-p pg-werving">
-    <h2 class="pg-h2">Waar komen aanmeldingen vandaan?</h2>
-    <p class="pg-sub">Per bron het aantal aanmeldingen en hoeveel daarvan uiteindelijk zijn aangenomen.</p>
-    <div class="tabel-scroll">
-      <table class="pg-tabel">
-        <caption class="pg-verborgen">Aanmeldingen en aangenomen sollicitanten per bron</caption>
-        <thead>
-          <tr><th scope="col">Bron</th><th scope="col" class="pg-rechts">Aanmeldingen</th><th scope="col" class="pg-rechts">Aangenomen</th><th scope="col" class="pg-rechts">Aandeel</th></tr>
-        </thead>
-        <tbody>
-          <?php foreach ($werving as $w): ?>
-          <tr>
-            <td><?= h((string)$w['bron']) ?></td>
-            <td class="pg-rechts"><?= (int)$w['aanmeldingen'] ?></td>
-            <td class="pg-rechts"><?= (int)$w['aangenomen'] ?></td>
-            <td class="pg-rechts"><?= $w['aanmeldingen'] > 0 ? round($w['aangenomen'] / $w['aanmeldingen'] * 100) . '%' : '—' ?></td>
-          </tr>
-          <?php endforeach; ?>
-        </tbody>
-      </table>
-    </div>
-  </section>
-  <?php endif; ?>
+  <?php endif; /* tabblad Pagina's */ ?>
 </div>
 
-<script>
+<script nonce="<?= h(csp_nonce()) ?>">
 (function () {
   document.querySelectorAll('[data-open]').forEach(function (knop) {
     knop.addEventListener('click', function () {

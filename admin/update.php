@@ -11,9 +11,10 @@ if (!file_exists($config_path)) {
 }
 require_once $config_path;
 
-// Beveiliging: alleen een ingelogde admin mag database-updates draaien.
+// Beveiliging: zelfde recht als Systeem & Updates, dat hierheen linkt (in de standaardmatrix
+// alleen de beheerder). Via de rechtenmodule, zodat link en toegang niet uit elkaar lopen.
 require_once __DIR__ . '/../includes/functions.php';
-vereist_rol('admin');
+vereis_recht('systeem', 'bewerken');
 
 // Inline DB connectie
 function upd_db(): PDO {
@@ -72,35 +73,43 @@ require __DIR__ . '/layout_top.php';
 .upd-mig-rij:last-child{border:none}
 .upd-nr{font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px}
 </style>
-<div class="page-body">
+<div class="bh-blk">
 
-<?php if(!empty($uitgevoerd)): ?><div class="flash flash-succes">✅ Uitgevoerd: <?=implode(', ', $uitgevoerd)?></div><?php endif; ?>
-<?php foreach($fouten as $f): ?><div class="flash flash-fout">❌ <?=htmlspecialchars($f)?></div><?php endforeach; ?>
+<?php if(!empty($uitgevoerd)): ?><div class="ds-melding ds-melding-ok"><?= icoon('vink', 15) ?> Uitgevoerd: <?=implode(', ', $uitgevoerd)?></div><?php endif; ?>
+<?php foreach($fouten as $f): ?><div class="ds-melding ds-melding-error"><?= icoon('waarschuwing', 15) ?> <?=htmlspecialchars($f)?></div><?php endforeach; ?>
 
-<div class="card" style="margin-bottom:14px">
-  <div class="card-header"><div class="card-title">Systeeminfo</div></div>
-  <div class="card-body">
+<div class="ds-kaart">
+  <div class="bh-kaartkop"><h2>Systeeminfo</h2></div>
+  <div class="bh-kaartbody">
     <div class="upd-stat-rij"><?php foreach($info as $k=>$v): ?><div class="upd-stat-box"><div class="l"><?=$k?></div><div class="n"><?=htmlspecialchars((string)$v)?></div></div><?php endforeach; ?></div>
   </div>
 </div>
 
-<div class="card">
-  <div class="card-header"><div class="card-title">Database migraties</div><span style="font-size:12px;color:var(--tekst-zacht)"><?=count($pending)?> pending</span></div>
-  <div class="card-body">
+<div class="ds-kaart">
+  <div class="bh-kaartkop"><h2>Database migraties</h2><span class="bh-upd-aantal"><?=count($pending)?> pending</span></div>
+  <div class="bh-kaartbody">
 <?php foreach($bestanden as $bf): preg_match('/migratie_(\d+)_(.+)\.sql$/',basename($bf),$mx); $v=$mx[1]??'?'; $ok=in_array($v,$gedaan)||in_array($v.':', array_map(fn($s)=>explode(':',$s)[0].':',$uitgevoerd)); ?>
     <div class="upd-mig-rij">
-      <span class="upd-nr" style="background:<?=$ok?'var(--groen-bg)':'var(--oranje-bg)'?>;color:<?=$ok?'#085041':'#c05a1a'?>"><?=$v?></span>
-      <span style="flex:1"><?=htmlspecialchars(str_replace('_',' ',$mx[2]??''))?></span>
-      <span style="font-size:11px;color:<?=$ok?'#085041':'#c05a1a'?>"><?=$ok?'✓ Klaar':'⏳ Pending'?></span>
+      <span class="upd-nr <?= $ok ? 'bh-upd-klaar' : 'bh-upd-open' ?>"><?=$v?></span>
+      <span class="bh-vulling"><?=htmlspecialchars(str_replace('_',' ',$mx[2]??''))?></span>
+      <span class="bh-upd-stand <?= $ok ? 'bh-upd-stand-klaar' : 'bh-upd-stand-open' ?>"><?= $ok ? 'Klaar' : 'Nog uit te voeren' ?></span>
     </div>
-<?php endforeach; if(empty($bestanden)): ?><p style="font-size:13px;color:var(--tekst-zacht)">Geen migratiebestanden gevonden in sql/</p><?php endif; ?>
+<?php endforeach; if(empty($bestanden)): ?><p class="bh-upd-tekst">Geen migratiebestanden gevonden in sql/</p><?php endif; ?>
   </div>
 </div>
 
 <?php if(!empty($pending)): ?>
-<form method="POST" style="margin-top:14px"><?= csrf_input() ?><button type="submit" name="uitvoer" value="1" class="btn btn-primary" onclick="return confirm('<?=count($pending)?> migratie(s) uitvoeren?')">▶ Voer <?=count($pending)?> migratie(s) uit</button></form>
+<form method="POST" class="bh-upd-voet"
+      data-bevestig-titel="<?= count($pending) ?> <?= count($pending) === 1 ? 'migratie' : 'migraties' ?> uitvoeren?"
+      data-bevestig="Deze wijzigen de structuur van de database. Maak eerst een back-up als die er nog niet is; terugdraaien kan alleen vanaf een back-up."
+      data-bevestig-knop="Ja, uitvoeren">
+  <?= csrf_input() ?>
+  <button type="submit" name="uitvoer" value="1" class="ds-btn ds-btn-primair">
+    Voer <?= count($pending) ?> <?= count($pending) === 1 ? 'migratie' : 'migraties' ?> uit
+  </button>
+</form>
 <?php else: ?>
-<div style="margin-top:14px;color:var(--tekst-zacht);font-size:13px">✓ Alles up-to-date</div>
+<div class="bh-upd-voet bh-upd-tekst">Alles is bijgewerkt.</div>
 <?php endif; ?>
 
 </div>

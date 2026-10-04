@@ -14,7 +14,7 @@
 
 function personen_ouder_auto_setup(): void {
     static $done = false;
-    if ($done) return;
+    if ($done || schema_actueel()) return;
     $done = true;
     try {
         $db = db();
@@ -58,11 +58,21 @@ function ondertekening_verzoek_versturen(int $sol_id, array $ontvanger, array $l
     if (!function_exists('melding_verstuur') || !$links) return ['status' => 'overgeslagen', 'reden' => 'geen_kern'];
     $labels = array_keys($links);
     $extra  = ['formulieren_blok' => ondertekening_formulieren_blok($links), 'document_naam' => implode(' en ', $labels), 'onderteken_url' => reset($links)];
-    $opties = ['referentie' => $referentie, 'prioriteit' => 'direct'];
+    /* Ná het antwoord: dit bericht bevat alleen links, geen bijlage vanaf schijf, dus
+       er is niets dat op de verzending moet wachten. Het scheelde de sollicitant een
+       paar seconden staren naar een pagina die niets deed nadat hij de gegevens van
+       zijn ouder had ingevuld. De aanroepers kijken naar status 'verstuurd' óf 'wacht'. */
+    $opties = ['referentie' => $referentie, 'prioriteit' => 'na_antwoord'];
     if (($ontvanger['rol'] ?? 'ouder') === 'ouder') {
         $opties['ontvanger'] = ['email' => $ontvanger['email'], 'naam' => $ontvanger['naam'] ?: 'ouder/verzorger', 'telefoon' => '', 'rol' => 'ouder'];
         $extra['ouder_naam'] = $ontvanger['naam'] ?: 'ouder/verzorger';
-        return melding_verstuur('ondertekening_verzoek_ouder', $sol_id, $extra, $opties);
+        // Alleen de inschrijving als lid? Dan het lidmaatschapsverzoek: het algemene ouderverzoek gaat over
+        // de selectiedag en klopt niet voor een aangenomen strandwacht (ook bij "opnieuw sturen").
+        $lid_label = function_exists('ondertekening_label') ? ondertekening_label('lidmaatschap') : '';
+        $alleen_lid = $lid_label !== '' && array_diff($labels, [$lid_label]) === [];
+        $type = ($alleen_lid && function_exists('melding_definitie') && melding_definitie('lidmaatschap_verzoek_ouder'))
+            ? 'lidmaatschap_verzoek_ouder' : 'ondertekening_verzoek_ouder';
+        return melding_verstuur($type, $sol_id, $extra, $opties);
     }
     return melding_verstuur('ondertekening_verzoek_zelf', $sol_id, $extra, $opties);
 }
@@ -95,8 +105,16 @@ function loonheffing_verzekeren(int $sol_id): string {
 /**
  * Aangenomen: inschrijving als lid — alleen voor wie nog geen Authentik-verenigingsaccount heeft
  * (wie dat wel heeft, is vrijwel zeker al lid). Retour ook 'overgeslagen'.
+ * 18+ tekent zelf; onder 18 tekent de ouder/verzorger (ondertekenaar_rol 'ouder', zelfde route als de
+ * gezondheidsverklaring). Staat er al een inschrijving, dan alleen de ondertekenaar goed houden
+ * (lidmaatschap_ondertekenaar_verzekeren in includes/lidmaatschap.php) — zonder Authentik-vraag.
  */
 function lidmaatschap_verzekeren(int $sol_id): string {
+    if (function_exists('lidmaatschap_ondertekenaar_verzekeren')) {
+        $stand = lidmaatschap_ondertekenaar_verzekeren($sol_id);
+        if ($stand === 'fout') return 'fout';
+        if ($stand !== 'geen') return 'bestond';
+    }
     try {
         if (function_exists('authentik_actief') && authentik_actief() && function_exists('authentik_email_bestaat')) {
             $q = db()->prepare("SELECT p.email FROM sollicitaties s JOIN personen p ON p.id=s.persoon_id WHERE s.id=?");
@@ -108,6 +126,12 @@ function lidmaatschap_verzekeren(int $sol_id): string {
             }
         }
     } catch (\Throwable $e) { error_log('lidmaatschap_verzekeren authentik: ' . $e->getMessage()); }
+    if (function_exists('lidmaatschap_route_persoon') && function_exists('lidmaatschap_ouder_aanmaken')) {
+        try {
+            $p = lidmaatschap_route_persoon($sol_id);
+            if ($p && lidmaatschap_ouder_nodig($p)) return lidmaatschap_ouder_aanmaken($sol_id, $p);
+        } catch (\Throwable $e) { error_log('lidmaatschap_verzekeren ouder: ' . $e->getMessage()); return 'fout'; }
+    }
     return ondertekening_zelf_verzekeren($sol_id, 'lidmaatschap');
 }
 
@@ -142,7 +166,12 @@ function ondertekeningen_verzekeren_sd(int $sol_id, string $fase): void {
     } catch (\Throwable $e) { error_log('ondertekeningen_verzekeren_sd: ' . $e->getMessage()); }
 }
 
-function ondertekeningen_klaarzetten_sd(int $sol_id): array {
+/**
+ * @param bool $opnieuw  ook nog niet getekende ouder-documenten waarvan het adres niet veranderde
+ *                       opnieuw versturen ("Opnieuw versturen" in het portaal). Zonder deze vlag
+ *                       gaat er alleen een mail uit bij nieuwe documenten of een gewijzigd adres.
+ */
+function ondertekeningen_klaarzetten_sd(int $sol_id, bool $opnieuw = false): array {
     $res = ['aangemaakt' => [], 'ouder_gemaild' => false, 'wacht_op_ouder' => false];
     if (function_exists('instelling') && instelling('auto.ondertekening_sd', '1') !== '1') return $res;
     try {
@@ -175,9 +204,28 @@ function ondertekeningen_klaarzetten_sd(int $sol_id): array {
         // Maak beide documenten aan; verzamel links voor één overzichtelijke mail
         $nieuwe_links = []; $nieuwe_ids = [];
         foreach (['gezondheid_ouder', 'intake_ouder'] as $type) {
-            $check = $db->prepare("SELECT 1 FROM ondertekeningen WHERE sollicitatie_id=? AND type=? LIMIT 1");
+            $check = $db->prepare("SELECT id, ondertekenaar_email, ondertekend_op FROM ondertekeningen
+                                   WHERE sollicitatie_id=? AND type=? ORDER BY id DESC LIMIT 1");
             $check->execute([$sol_id, $type]);
-            if ($check->fetchColumn()) continue;
+            $bestaand = $check->fetch();
+
+            if ($bestaand) {
+                // Staat er al een rij, maar is het adres van de ouder intussen gecorrigeerd?
+                // Dan het adres bijwerken en de link opnieuw meesturen. Eerder werd hier
+                // alleen `continue` gedaan: de herinnering bleef daardoor naar het oude,
+                // verkeerde adres gaan en "opnieuw versturen" deed zichtbaar niets.
+                // Met $opnieuw gaat een ongetekend document ook bij een gelijk adres opnieuw mee.
+                $ander_adres = strcasecmp((string)$bestaand['ondertekenaar_email'], (string)$sol['ouder_email']) !== 0;
+                if (empty($bestaand['ondertekend_op']) && ($ander_adres || $opnieuw)) {
+                    $db->prepare("UPDATE ondertekeningen SET ondertekenaar_email=?, ondertekenaar_naam=? WHERE id=?")
+                       ->execute([$sol['ouder_email'], $sol['ouder_naam'] ?: null, (int)$bestaand['id']]);
+                    $tq = $db->prepare("SELECT token FROM ondertekeningen WHERE id=?");
+                    $tq->execute([(int)$bestaand['id']]);
+                    $nieuwe_ids[] = (int)$bestaand['id'];
+                    $nieuwe_links[ondertekening_label($type)] = ondertekening_url((string)$tq->fetchColumn());
+                }
+                continue;
+            }
 
             $token = bin2hex(random_bytes(24));
             $db->prepare("INSERT INTO ondertekeningen (sollicitatie_id, type, token, ondertekenaar_rol, ondertekenaar_naam, ondertekenaar_email) VALUES (?,?,?,'ouder',?,?)")

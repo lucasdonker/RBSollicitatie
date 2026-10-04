@@ -1,11 +1,12 @@
 <?php
 /**
  * Beveiligde download van een kluis-document (beheer).
- *   ?id=<document>    één bestand uit sollicitant_documenten (ID-kopie, bankpas, pasfoto, verzegelde PDF)
+ *   ?id=<document>    één bestand uit sollicitant_documenten (ID-kopie, bankpas, verzegelde PDF)
  *   ?ond=<ondertekening>  de verzegelde PDF van een ondertekening (via pdf_document_id; oudere records on-the-fly)
  *   &t=<csrf-token>   verplicht (de link staat alleen in het beheer)
  * Recht per soort (document_soorten()[soort]['recht'], actie bewerken). Alles gelogd (audit + rij), no-store,
- * limiet 30 downloads per uur per sessie, watermerk op ID-/bankpasfoto's, optioneel melding aan het bestuur.
+ * limiet 30 downloads per uur per sessie, watermerk op de bankpasfoto (niet op het ID: die kopie moet
+ * volledig leesbaar zijn in de loonadministratie), optioneel melding aan het bestuur.
  */
 require_once __DIR__ . '/../includes/functions.php';
 vereist_login();
@@ -31,50 +32,41 @@ if (!empty($_GET['ond'])) {
     $soort = (string)$rij['soort'];
 }
 vereis_recht(document_recht_module($soort), 'bewerken');
+// Loondossier-inhoud (ID, bankpas, BSN, IBAN): niet vanzelf voor de admin, alleen voor de penningmeester.
+if (document_recht_module($soort) === 'documenten' && !mag_kluis()) {
+    if (function_exists('audit_log')) audit_log('document_geweigerd', 'document', $rij ? (int)$rij['id'] : null,
+        ['soort' => $soort, 'ondertekening_id' => $ond ? (int)$ond['id'] : null]);
+    http_response_code(403);
+    exit('Alleen de penningmeester kan de inhoud van een loondossier openen. Als beheerder zie je wel of de stukken er zijn.');
+}
 
 // Inhoud ophalen (kluis) — of, voor oudere ondertekeningen zonder opgeslagen PDF, on-the-fly genereren
 $inhoud = null; $naam = ''; $mime = 'application/octet-stream';
 if ($rij) {
     $inhoud = document_inhoud($rij);
     $naam = (string)$rij['bestandsnaam']; $mime = (string)$rij['mime'];
+} elseif ($ond && $ond['type'] === 'loonheffing' && empty($ond['vertrouwelijk'])) {
+    // Loondossier vernietigd (bewaarplicht verstreken): niet opnieuw opbouwen uit wat er nog van over is.
+    http_response_code(410); exit('Dit loonheffingsformulier is vernietigd na afloop van de bewaarplicht.');
 } elseif ($ond && function_exists('ondertekening_pdf_bytes')) {
     $inhoud = ondertekening_pdf_bytes($ond, ['voornaam' => $ond['voornaam'], 'tussenvoegsel' => $ond['tussenvoegsel'], 'achternaam' => $ond['achternaam'], 'geboortedatum' => $ond['geboortedatum'], 'email' => $ond['email']]);
     $naam = ondertekening_pdf_bestandsnaam((string)$ond['type']); $mime = 'application/pdf';
 }
 if ($inhoud === null) { http_response_code(500); exit('Het document kon niet ontsleuteld of gemaakt worden. Controleer de kluis (Systeem › Health).'); }
 
-// Watermerk op foto's van ID/bankpas (alleen op de uitgaande kopie; het origineel blijft ongewijzigd in de kluis)
-$watermerk = in_array($soort, ['id_voor', 'id_achter', 'bankpas'], true) && in_array($mime, ['image/jpeg', 'image/png'], true) && function_exists('imagecreatefromstring');
-if ($watermerk) {
-    try {
-        $im = @imagecreatefromstring($inhoud);
-        if ($im) {
-            $w = imagesx($im); $h = imagesy($im);
-            if ($w > 2000) { $nw = 2000; $nh = (int)round($h * 2000 / $w); $im2 = imagescale($im, $nw, $nh); if ($im2) { imagedestroy($im); $im = $im2; $w = $nw; $h = $nh; } }
-            $tekst = 'Kopie voor loonadministratie Reddingsbrigade Paal 13 - ' . date('d-m-Y H:i') . ' - ' . ($bhd['naam'] ?: 'beheer');
-            $kleur = imagecolorallocatealpha($im, 200, 30, 30, 60);
-            $font = 5; $stap = (int)max(120, $h / 6);
-            for ($y = 20; $y < $h; $y += $stap) {
-                imagestring($im, $font, 12, $y, $tekst, $kleur);
-                imagestring($im, $font, (int)($w / 2), $y + (int)($stap / 2), $tekst, $kleur);
-            }
-            ob_start();
-            if ($mime === 'image/png') imagepng($im, null, 6); else imagejpeg($im, null, 90);
-            $uit = ob_get_clean(); imagedestroy($im);
-            if ($uit !== false && $uit !== '') $inhoud = $uit;
-        }
-    } catch (\Throwable $e) { error_log('watermerk: ' . $e->getMessage()); }
-}
+// Watermerk alleen op de bankpas; de kopie van het ID moet volledig leesbaar blijven (document_watermerk_soorten()).
+$inhoud = document_watermerk($inhoud, $soort, $mime, (string)($bhd['naam'] ?? ''));
 
 // Loggen
 $_SESSION['doc_dl'][$uur] = ($_SESSION['doc_dl'][$uur] ?? 0) + 1;
 if (function_exists('audit_log')) audit_log('document_gedownload', 'document', $rij ? (int)$rij['id'] : null, ['soort' => $soort, 'sollicitatie_id' => (int)($rij['sollicitatie_id'] ?? $ond['sollicitatie_id'] ?? 0), 'ondertekening_id' => $ond ? (int)$ond['id'] : null]);
 if ($rij) { try { db()->prepare("UPDATE sollicitant_documenten SET laatst_gedownload_op=NOW(), laatst_gedownload_door=? WHERE id=?")->execute([(int)$bhd['id'], (int)$rij['id']]); } catch (\Throwable $e) {} }
 if ($ond && function_exists('ondertekening_gebeurtenis')) ondertekening_gebeurtenis((int)$ond['id'], 'pdf_gedownload', ['door' => 'beheer:' . ($bhd['naam'] ?: $bhd['id'])]);
+$soort_titel = (string)(document_soorten()[$soort]['titel'] ?? $soort); // leesbaar, niet de interne slug
 if (function_exists('instelling') && instelling('documenten.download_melding', '1') === '1' && function_exists('melding_verstuur') && in_array($soort, ['id_voor', 'id_achter', 'bankpas', 'ondertekening_loonheffing'], true)) {
     try {
         melding_verstuur('handmatig', (int)($rij['sollicitatie_id'] ?? $ond['sollicitatie_id'] ?? 0),
-            ['onderwerp' => 'Loondocument gedownload: ' . $soort, 'body_html' => '<p>' . h($bhd['naam'] ?: 'Beheerder #' . $bhd['id']) . ' heeft op ' . date('d-m-Y H:i') . ' het document <strong>' . h($soort) . '</strong> (' . h($naam) . ') gedownload uit het loondossier.</p><p>Niet verwacht? Controleer het auditlog.</p>', 'tekst_kort' => ''],
+            ['onderwerp' => 'Loondocument gedownload: ' . $soort_titel, 'body_html' => '<p>' . h($bhd['naam'] ?: 'Beheerder #' . $bhd['id']) . ' heeft op ' . date('d-m-Y H:i') . ' het document <strong>' . h($soort_titel) . '</strong> (' . h($naam) . ') gedownload uit het loondossier.</p><p>Niet verwacht? Controleer het auditlog.</p>', 'tekst_kort' => ''],
             ['ontvanger' => ['email' => bestuur_email(), 'naam' => 'Bestuur', 'telefoon' => '', 'rol' => 'direct'], 'prioriteit' => 'na_antwoord', 'dedup_min' => 0]);
     } catch (\Throwable $e) {}
 }

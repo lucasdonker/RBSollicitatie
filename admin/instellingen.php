@@ -4,124 +4,142 @@ if (file_exists(__DIR__ . '/../includes/ai_analyse.php')) {
     require_once __DIR__ . '/../includes/ai_analyse.php';
 }
 
-// Fallback: garandeer dat ai_prompt_default() altijd bestaat (zelfs als ai_analyse.php ontbreekt)
-if (!function_exists('ai_prompt_default')) {
-    function ai_prompt_default(): string {
-        return "Je bent een kritisch selectiecommissielid voor Reddingsbrigade Paal 13, een professionele reddingsbrigade. Je taak is een eerlijk, realistisch assessment te schrijven — niet bemoedigend maar objectief. Wees bereid negatieve conclusies te trekken als de gegevens daartoe aanleiding geven.
-
-SEIZOEN: {{seizoen_naam}} ({{seizoen_weken_totaal}} weken totaal)
-
-ANONIEME SOLLICITANTGEGEVENS:
-- Leeftijdscategorie: {{leeftijdscategorie}}
-- Opleiding: {{opleiding}}
-- Diploma's en certificaten: {{diplomas}}
-- Werkervaring: {{werkervaring}}
-- Motivatie (lifeguard): {{motivatie_lifeguard}}
-- Motivatie (strand): {{motivatie_strand}}
-- Beschikbaarheid: {{beschikbaarheid}} ({{aantal_weken_beschikbaar}} van {{seizoen_weken_totaal}} weken)
-- Bijzonderheden: {{bijzonderheden}}
-
-Schrijf een beknopt assessment in dit exacte format (geen inleiding, direct beginnen):
-
-**Geschiktheid:** [★ t/m ★★★★★] — [één eerlijke zin: waarom wel of niet geschikt, zonder omhaal]
-
-**Bijdrage aan de groep:** [2-3 zinnen: wat voegt deze persoon concreet toe aan het team? Denk aan: leeftijd t.o.v. groep, werkstijl die je verwacht op basis van opleiding/motivatie, ervaring die anderen missen of juist al hebben. Wees realistisch — ook 'weinig toegevoegde waarde' is een geldige conclusie.]
-
-**Toekomstperspectief:** [1-2 zinnen: hoeveel seizoenen verwacht je dat deze persoon inzetbaar is? Onderbouw met opleiding, leeftijd, motivatie.]
-
-**Aandachtspunten:** [1-3 concrete zorgen of vraagtekens op basis van de gegevens. Als er geen zijn: vermeld dat expliciet. Verzin geen zorgen, maar sla ook niets over.]
-
-**Advies:** [Uitnodigen ✓ / Twijfel ⚠️ / Niet uitnodigen ✗] — [één zin waarom, wees direct]";
-    }
-}
-
-// Lokale fallback default prompt — gebruikt als ai_analyse.php niet beschikbaar is
-if (!function_exists('ai_prompt_default')) {
-    function ai_prompt_default(): string {
-        return "Je bent een kritisch selectiecommissielid voor Reddingsbrigade Paal 13, een professionele reddingsbrigade. Je taak is een eerlijk, realistisch assessment te schrijven — niet bemoedigend maar objectief. Wees bereid negatieve conclusies te trekken als de gegevens daartoe aanleiding geven.
-
-SEIZOEN: {{seizoen_naam}} ({{seizoen_weken_totaal}} weken totaal)
-
-ANONIEME SOLLICITANTGEGEVENS:
-- Leeftijdscategorie: {{leeftijdscategorie}}
-- Opleiding: {{opleiding}}
-- Diploma's en certificaten: {{diplomas}}
-- Werkervaring: {{werkervaring}}
-- Motivatie (lifeguard): {{motivatie_lifeguard}}
-- Motivatie (strand): {{motivatie_strand}}
-- Beschikbaarheid: {{beschikbaarheid}} ({{aantal_weken_beschikbaar}} van {{seizoen_weken_totaal}} weken)
-- Bijzonderheden: {{bijzonderheden}}
-
-Schrijf een beknopt assessment in dit exacte format (geen inleiding, direct beginnen):
-
-**Geschiktheid:** [★ t/m ★★★★★] — [één eerlijke zin: waarom wel of niet geschikt, zonder omhaal]
-
-**Bijdrage aan de groep:** [2-3 zinnen: wat voegt deze persoon concreet toe aan het team? Denk aan: leeftijd t.o.v. groep, werkstijl die je verwacht op basis van opleiding/motivatie, ervaring die anderen missen of juist al hebben. Wees realistisch — ook 'weinig toegevoegde waarde' is een geldige conclusie.]
-
-**Toekomstperspectief:** [1-2 zinnen: hoeveel seizoenen verwacht je dat deze persoon inzetbaar is? Onderbouw met opleiding, leeftijd, motivatie.]
-
-**Aandachtspunten:** [1-3 concrete zorgen of vraagtekens op basis van de gegevens. Als er geen zijn: vermeld dat expliciet. Verzin geen zorgen, maar sla ook niets over.]
-
-**Advies:** [Uitnodigen ✓ / Twijfel ⚠️ / Niet uitnodigen ✗] — [één zin waarom, wees direct]";
-    }
-}
 $pagina_titel = 'Instellingen';
 $actieve_nav  = 'instellingen';
 vereis_recht('instellingen', 'lezen');
+// De beheerlaag (bh_seizoen_fases, bh_badge) is nodig vóór layout_top.php, al bij het opslaan.
+require_once __DIR__ . '/../includes/beheer/laden.php';
+
+// Geheimen die je moet kunnen kopiëren (API-sleutel, cron-token) en de links naar
+// Systeem & updates zijn er alleen voor wie Systeem mag bewerken.
+$mag_systeem = mag('systeem', 'bewerken');
+$mag_sjablonen = mag('mailing', 'sjablonen');   // Sjablonen (mail_templates.php) eist die taak
 
 $db = db();
 // Triggers auto-setup van alle tabellen
 instellingen_laden();
 
-$tab = $_GET['tab'] ?? 'algemeen';
+$tab = (string)($_GET['tab'] ?? 'algemeen');
+// Oude tabbladnamen blijven werken: er liggen links naar in mails, in de handleiding
+// en in bladwijzers. 'sso' is opgegaan in 'authentik'.
+$tab = ['sso' => 'authentik'][$tab] ?? $tab;
+// Technische tabbladen (bh_inst_tab_technisch) alleen met Systeem › bewerken: tonen én opslaan.
+if (bh_inst_tab_technisch($tab) && !$mag_systeem) {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') { http_response_code(403); exit('Dit is een technische instelling: alleen voor wie het systeem beheert.'); }
+    $tab = 'algemeen';
+}
 
 // ── Opslaan ───────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
-    vereis_recht('instellingen', 'lezen');
+    // Opslaan is bewerken. Met alleen leesrecht kon eerder alles gewijzigd worden.
+    vereis_recht('instellingen', 'bewerken');
 
     $actie = $_POST['actie'] ?? '';
+    // Technische acties vragen Systeem › bewerken, los van het tabblad in de URL: de check
+    // hierboven kijkt alleen naar ?tab=, en een POST kan elke actie meesturen.
+    $technische_acties = ['authentik_test', 'authentik_bulk_sync', 'competenties_opslaan', 'competenties_standaard',
+                          'cron_token_vernieuw', 'modules_opslaan',
+                          'cron_nu', 'api_sleutel_genereer', 'api_opslaan', 'smtp_opslaan', 'smtp_test'];
+    if (in_array($actie, $technische_acties, true)) vereis_recht('systeem', 'bewerken');
 
     if ($actie === 'instellingen') {
-        $velden = $_POST['inst'] ?? [];
+        // Alleen sleutels die als veld op dít tabblad staan (whitelist in includes/instellingen.php).
+        // Geheimen volgen daarna apart: leeg = ongewijzigd.
+        // flash() bewaart één melding: verzamel waarschuwingen, anders overschrijft "opgeslagen" ze.
+        $inst_waarschuwing   = [];
+        $toegestaan_sleutels = instellingen_formulier_sleutels($tab);
+        $geheim_sleutels     = instellingen_geheime_sleutels();
+        $wis_geheim          = array_map('strval', (array)($_POST['geheim_wis'] ?? []));
+        $velden   = [];
+        $geheimen = [];
+        $geweigerd = [];
+        foreach ((array)($_POST['inst'] ?? []) as $sleutel => $waarde) {
+            $sleutel = (string)$sleutel;
+            if (!in_array($sleutel, $toegestaan_sleutels, true) || !is_string($waarde)) { $geweigerd[] = mb_substr($sleutel, 0, 60); continue; }
+            if (in_array($sleutel, $geheim_sleutels, true)) { $geheimen[$sleutel] = $waarde; continue; }
+            $velden[$sleutel] = $waarde;
+        }
+        if ($geweigerd && function_exists('audit_log')) {
+            audit_log('geweigerd', 'instelling', null, ['tab' => $tab, 'reden' => 'sleutel niet op dit tabblad', 'sleutels' => array_slice($geweigerd, 0, 20)]);
+        }
+        // Handmatige seizoensfase: leeg (automatisch) of een van de bekende fases.
+        if (isset($velden['seizoen.fase']) && $velden['seizoen.fase'] !== '' && !isset(bh_seizoen_fases()[$velden['seizoen.fase']])) {
+            $velden['seizoen.fase'] = '';
+        }
+        // Verificatiecode bij ondertekenen: vinkjes → komma-lijst. Het loonheffingsformulier houdt hem altijd
+        // (wettelijk document met BSN; besluit 2.91.0) — ook als iemand het vinkje uit de POST haalt.
+        if ($tab === 'modules' && isset($_POST['tfa_formulier'])) {
+            $tfa = array_values(array_intersect(array_keys(instellingen_2fa_keuzes()), array_map('strval', (array)($_POST['tfa_typen'] ?? []))));
+            $velden['ondertekenen.2fa_typen'] = implode(',', array_unique(array_merge(['loonheffing'], $tfa)));
+        }
+        // Privacyverklaring: leeg, een pad op dit domein ("/…") of een https-adres. Niets anders
+        // (geen javascript:, geen "//ander-domein"): de link staat op het aanmeldformulier.
+        if (isset($velden['privacy.url'])) {
+            $pu = trim((string)$velden['privacy.url']);
+            $pu_ok = $pu === '' || (str_starts_with($pu, '/') && !str_starts_with($pu, '//'))
+                  || (str_starts_with(strtolower($pu), 'https://') && filter_var($pu, FILTER_VALIDATE_URL));
+            if (!$pu_ok) { unset($velden['privacy.url']); $inst_waarschuwing[] = 'Het adres van de privacyverklaring is niet opgeslagen: gebruik een https-adres of een pad dat met / begint.'; }
+        }
+        // Loondocumenten: nooit korter dan de wettelijke vijf jaar (documenten_loon_bewaarjaren doet hetzelfde).
+        if (isset($velden['bewaar.loondocumenten_jaar'])) {
+            $velden['bewaar.loondocumenten_jaar'] = (string)max(5, min(10, (int)$velden['bewaar.loondocumenten_jaar']));
+        }
 
-        // Logo upload (overschrijft URL als bestand geüpload is)
+        // Logo en favicon uploaden (overschrijft de URL als er een bestand is).
+        // Geen SVG: een SVG kan script bevatten en wordt van dit domein geserveerd (opgeslagen XSS).
+        $upload_types = [
+            'logo'    => ['png' => ['image/png'], 'jpg' => ['image/jpeg'], 'jpeg' => ['image/jpeg'], 'webp' => ['image/webp']],
+            'favicon' => ['png' => ['image/png'], 'ico' => ['image/vnd.microsoft.icon', 'image/x-icon']],
+        ];
         foreach (['logo'=>'site.logo_url', 'favicon'=>'site.favicon_url'] as $veld => $instelling_key) {
-            if (!empty($_FILES[$veld.'_upload']['tmp_name']) && $_FILES[$veld.'_upload']['error'] === 0) {
-                $bron = $_FILES[$veld.'_upload'];
-                if ($bron['size'] < 2*1024*1024) {  // 2MB max
-                    $ext = strtolower(pathinfo($bron['name'], PATHINFO_EXTENSION));
-                    $toegestaan = $veld === 'favicon' ? ['png','ico','svg'] : ['png','jpg','jpeg','webp','svg'];
-                    if (in_array($ext, $toegestaan, true)) {
-                        $dir = __DIR__ . '/../uploads/branding/';
-                        if (!is_dir($dir)) @mkdir($dir, 0755, true);
-                        $fn = $veld . '_' . time() . '.' . $ext;
-                        if (move_uploaded_file($bron['tmp_name'], $dir . $fn)) {
-                            $velden[$instelling_key] = '/uploads/branding/' . $fn;
-                        }
-                    }
-                }
+            $bron = $_FILES[$veld.'_upload'] ?? null;
+            if (!$bron || empty($bron['tmp_name']) || (int)$bron['error'] !== 0) continue;
+            $naam_veld = $veld === 'logo' ? 'Logo' : 'Favicon';
+            $ext = strtolower(pathinfo((string)$bron['name'], PATHINFO_EXTENSION));
+            $mime = function_exists('finfo_open') ? (string)finfo_file(finfo_open(FILEINFO_MIME_TYPE), $bron['tmp_name']) : '';
+            if ($bron['size'] >= 2*1024*1024) {
+                $inst_waarschuwing[] = $naam_veld . ' niet opgeslagen: het bestand is groter dan 2 MB.';
+                continue;
+            }
+            if (!isset($upload_types[$veld][$ext]) || ($mime !== '' && !in_array($mime, $upload_types[$veld][$ext], true))) {
+                $inst_waarschuwing[] = $naam_veld . ' niet opgeslagen: alleen ' . ($veld === 'logo' ? 'PNG, JPG of WebP' : 'PNG of ICO') . ' is toegestaan. SVG kan script bevatten en weigeren we daarom.';
+                continue;
+            }
+            $dir = __DIR__ . '/../uploads/branding/';
+            if (!is_dir($dir)) @mkdir($dir, 0755, true);
+            $fn = $veld . '_' . time() . '.' . $ext;
+            if (move_uploaded_file($bron['tmp_name'], $dir . $fn)) {
+                $velden[$instelling_key] = '/uploads/branding/' . $fn;
             }
         }
 
         // Huisregels-PDF: in de bijlagenbibliotheek zetten en als taak-document koppelen (of losmaken)
         if (!empty($_FILES['huisregels_upload']['tmp_name']) && function_exists('bijlage_opslaan')) {
-            $hu = bijlage_opslaan($_FILES['huisregels_upload'], (int)($_bhd['id'] ?? 0), 'Huisregels (taak aangenomen)');
+            $hu = bijlage_opslaan($_FILES['huisregels_upload'], (int)huidige_beheerder()['id'], 'Huisregels (taak aangenomen)');
             if ($hu['ok']) {
                 $velden['taken.huisregels_bijlage_id'] = (string)$hu['id'];
                 if (function_exists('audit_log')) audit_log('gewijzigd', 'instelling', null, ['veld' => 'taken.huisregels_bijlage_id', 'bijlage' => $hu['id']]);
             } else {
-                flash('waarschuwing', 'Huisregels niet opgeslagen: ' . $hu['fout']);
+                $inst_waarschuwing[] = 'Huisregels niet opgeslagen: ' . $hu['fout'];
             }
         }
-        if (!empty($_POST['huisregels_los'])) $velden['taken.huisregels_bijlage_id'] = '0';
+        if ($tab === 'algemeen' && !empty($_POST['huisregels_los'])) $velden['taken.huisregels_bijlage_id'] = '0';
 
+        $gewijzigd = [];
         foreach ($velden as $sleutel => $waarde) {
-            // Saniteer sleutel (alleen letters, punten, underscores)
-            if (!preg_match('/^[a-z0-9._]+$/', $sleutel)) continue;
-            instelling_opslaan($sleutel, trim($waarde));
+            $waarde = trim((string)$waarde);
+            if (instelling($sleutel, "\0") === $waarde) continue;
+            if (instelling_opslaan($sleutel, $waarde)) $gewijzigd[] = $sleutel;
         }
-        flash('succes', 'Instellingen opgeslagen.');
+        foreach ($geheim_sleutels as $sleutel) {
+            if (!in_array($sleutel, $toegestaan_sleutels, true)) continue;
+            if (instelling_geheim_bijwerken($sleutel, (string)($geheimen[$sleutel] ?? ''), in_array($sleutel, $wis_geheim, true))) $gewijzigd[] = $sleutel;
+        }
+        // Alleen wélke sleutels veranderden, nooit de waarden (daar zitten geheimen tussen).
+        if ($gewijzigd && function_exists('audit_log')) audit_log('gewijzigd', 'instelling', null, ['tab' => $tab, 'velden' => $gewijzigd]);
+        if ($inst_waarschuwing) flash('waarschuwing', 'De rest is opgeslagen. ' . implode(' ', $inst_waarschuwing));
+        else flash('succes', 'Instellingen opgeslagen.');
         redirect(APP_URL . '/admin/instellingen.php?tab=' . $tab);
     }
 
@@ -131,7 +149,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect(APP_URL . '/admin/instellingen.php?tab=authentik');
     }
 
+    if ($actie === 'cron_token_vernieuw') {
+        // Technisch (zie $technische_acties): wie het token niet mag zien, kan het ook niet vervangen.
+        instelling_opslaan('cron.token', bin2hex(random_bytes(24)));
+        if (function_exists('audit_log')) audit_log('gewijzigd', 'instelling', null, ['veld' => 'cron.token', 'actie' => 'nieuw token gemaakt']);
+        flash('succes', 'Nieuw cron-token gemaakt. Zet de nieuwe regel in de geplande taak in Plesk; de oude werkt niet meer.');
+        redirect(APP_URL . '/admin/instellingen.php?tab=bewaren');
+    }
+
+    if ($actie === 'modules_opslaan') {
+        // Een module uitzetten haalt voor iedereen schermen weg: dat is Systeem (zie $technische_acties).
+        $gewijzigd = [];
+        foreach (modules_alle() as $sleutel => $m) {
+            $aan = !empty($_POST['module'][$sleutel]) ? '1' : '0';
+            if (instelling('module.' . $sleutel . '.aan', '1') === $aan) continue;
+            instelling_opslaan('module.' . $sleutel . '.aan', $aan);
+            $gewijzigd[$sleutel] = $aan === '1' ? 'aan' : 'uit';
+        }
+        if ($gewijzigd && function_exists('audit_log')) audit_log('gewijzigd', 'instelling', null, ['modules' => $gewijzigd]);
+        flash('succes', $gewijzigd ? 'Modules bijgewerkt.' : 'Er is niets veranderd.');
+        redirect(APP_URL . '/admin/instellingen.php?tab=modules');
+    }
+
+    if ($actie === 'cron_nu') {
+        @set_time_limit(300);
+        $res = cron_taken_uitvoeren('alles');
+        $fouten = [];
+        foreach ($res['groepen'] ?? [] as $g => $taken) {
+            if (isset($taken['overgeslagen'])) { $fouten[] = "$g: " . $taken['overgeslagen']; continue; }
+            foreach ($taken as $naam => $t) if (is_array($t) && isset($t['fout'])) $fouten[] = "$g/$naam: " . $t['fout'];
+        }
+        if (function_exists('audit_log')) audit_log('cron_handmatig', 'systeem', null, ['fouten' => count($fouten)]);
+        flash($fouten ? 'fout' : 'succes', $fouten ? 'Uitgevoerd, met problemen: ' . implode('; ', $fouten) : 'Alle automatische taken zijn uitgevoerd.');
+        redirect(APP_URL . '/admin/instellingen.php?tab=bewaren');
+    }
+
     if ($actie === 'api_sleutel_genereer') {
+        // Technisch (zie $technische_acties): een sleutel die je niet kunt kopiëren, kun je ook niet in de plugin zetten.
         // Nieuwe geheime sleutel genereren (32 bytes, hex).
         $nieuw = bin2hex(random_bytes(32));
         instelling_opslaan('api.sleutel', $nieuw);
@@ -146,20 +200,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($actie === 'berichten_opslaan') {
+        // De koppelingen (SMS-gateway, WhatsReach, sleutels) zijn technisch; de keuze per melding niet.
+        // Zonder Systeem › bewerken staan die velden niet op het scherm en worden ze hier ook niet gelezen.
+        if ($mag_systeem) {
         // SMS
         instelling_opslaan('sms.actief', !empty($_POST['sms_actief']) ? '1' : '0');
         instelling_opslaan('sms.gateway', $_POST['sms_gateway'] ?? '');
         instelling_opslaan('sms.afzender', trim($_POST['sms_afzender'] ?? 'Paal13'));
         instelling_opslaan('sms.http_url', trim($_POST['sms_http_url'] ?? ''));
         instelling_opslaan('sms.http_method', $_POST['sms_http_method'] ?? 'POST');
-        instelling_opslaan('sms.http_token', trim($_POST['sms_http_token'] ?? ''));
-        instelling_opslaan('sms.easysendsms_key', trim($_POST['sms_easysendsms_key'] ?? ''));
-        instelling_opslaan('sms.messagebird_key', trim($_POST['sms_messagebird_key'] ?? ''));
+        // Geheimen: leeg = ongewijzigd, "verwijderen" aangevinkt = leegmaken.
+        $wis_geheim = array_map('strval', (array)($_POST['geheim_wis'] ?? []));
+        foreach (['sms_http_token' => 'sms.http_token', 'sms_easysendsms_key' => 'sms.easysendsms_key',
+                  'sms_messagebird_key' => 'sms.messagebird_key', 'wa_api_sleutel' => 'wa.api_sleutel'] as $post_naam => $sleutel) {
+            instelling_geheim_bijwerken($sleutel, (string)($_POST[$post_naam] ?? ''), in_array($sleutel, $wis_geheim, true));
+        }
         // WhatsApp (WhatsReach)
         instelling_opslaan('wa.actief', !empty($_POST['wa_actief']) ? '1' : '0');
-        instelling_opslaan('wa.api_sleutel', trim($_POST['wa_api_sleutel'] ?? ''));
         instelling_opslaan('wa.base_url', trim($_POST['wa_base_url'] ?? '') ?: 'https://api.whatsreach.co/api/v1');
         instelling_opslaan('wa.afzender_nummer', trim($_POST['wa_afzender_nummer'] ?? ''));
+        }
         // Per-melding kanaalmodus (email | kort | beide | uit)
         if (function_exists('meldingen_register')) {
             $modi_ok = array_keys(meldingen_kanaalmodi());
@@ -212,10 +272,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         foreach ($velden as $sleutel => $waarde) {
             instelling_opslaan($sleutel, $waarde);
         }
-        // Wachtwoord alleen bijwerken als er een nieuwe is ingevuld (anders behouden)
-        $nieuw_ww = $_POST['smtp_pass'] ?? '';
-        if ($nieuw_ww !== '' && $nieuw_ww !== '••••••••') {
+        // Wachtwoord alleen bijwerken als er een nieuwe is ingevuld (anders behouden).
+        // Niet trimmen: een wachtwoord mag met een spatie beginnen of eindigen.
+        $nieuw_ww = (string)($_POST['smtp_pass'] ?? '');
+        if ($nieuw_ww !== '') {
             instelling_opslaan('smtp.pass', $nieuw_ww);
+        } elseif (in_array('smtp.pass', array_map('strval', (array)($_POST['geheim_wis'] ?? [])), true)) {
+            instelling_geheim_bijwerken('smtp.pass', '', true);
         }
         flash('succes', 'SMTP-instellingen opgeslagen.');
         redirect(APP_URL . '/admin/instellingen.php?tab=smtp');
@@ -239,6 +302,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect(APP_URL . '/admin/instellingen.php?tab=authentik');
     }
 
+    // Groep-indeling competenties (tabblad Authentik).
+    if ($actie === 'competenties_opslaan') {
+        $res = competentie_mapping_uit_formulier((array)($_POST['comp'] ?? []));
+        if ($res[1]) {
+            flash('fout', 'Niet opgeslagen. ' . implode(' ', array_unique($res[1])));
+        } else {
+            competentie_mapping_opslaan($res[0]);
+            if (function_exists('audit_log')) audit_log('gewijzigd', 'instelling', null, ['veld' => 'authentik.mapping']);
+            flash('succes', 'Groep-indeling opgeslagen. Klik op "Nu alle sollicitanten verversen" om hem meteen toe te passen.');
+        }
+        redirect(APP_URL . '/admin/instellingen.php?tab=authentik');
+    }
+    if ($actie === 'competenties_standaard') {
+        instelling_opslaan('authentik.mapping', '');
+        if (function_exists('audit_log')) audit_log('gewijzigd', 'instelling', null, ['veld' => 'authentik.mapping', 'actie' => 'standaard teruggezet']);
+        flash('succes', 'De standaard groep-indeling staat weer terug.');
+        redirect(APP_URL . '/admin/instellingen.php?tab=authentik');
+    }
+
     if ($actie === 'functie_opslaan') {
         $fid    = (int)($_POST['functie_id'] ?? 0);
         $naam   = trim($_POST['naam'] ?? '');
@@ -254,16 +336,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect(APP_URL . '/admin/instellingen.php?tab=functies');
     }
 
-    if ($actie === 'loon_tarief') {
-        $periode    = $_POST['periode'] === 'jun' ? 'jun' : 'jul_sep';
-        $leeftijden = $_POST['loon'] ?? [];
-        $stmt = $db->prepare("INSERT INTO loon_tarieven (leeftijd,periode,min_uurloon) VALUES (?,?,?) ON DUPLICATE KEY UPDATE min_uurloon=VALUES(min_uurloon)");
-        foreach ($leeftijden as $lft => $loon) {
-            $loon_val = (float)str_replace(',', '.', $loon);
-            if ($loon_val > 0) $stmt->execute([(int)$lft, $periode, $loon_val]);
+    // ── Lonen & budget: alles per kalenderjaar (includes/loon_tarieven.php) ──
+    if (in_array($actie, ['loon_tarief', 'loon_jaar', 'loon_budget', 'loon_jaar_nieuw'], true)) {
+        $lj = (int)($_POST['jaar'] ?? 0);
+        if ($lj < 2000 || $lj > 2100) { flash('fout', 'Onbekend jaar.'); redirect(APP_URL . '/admin/instellingen.php?tab=loon'); }
+        $terug_loon = APP_URL . '/admin/instellingen.php?tab=loon&jaar=' . $lj;
+        if ($actie === 'loon_tarief') {
+            $periode = (string)($_POST['periode'] ?? '') === 'jun' ? 'jun' : 'jul_sep';
+            $n = loon_tarieven_opslaan($lj, $periode, (array)($_POST['loon'] ?? []));
+            if (function_exists('audit_log')) audit_log('gewijzigd', 'instelling', null, ['loon_tarieven' => $lj, 'periode' => $periode, 'leeftijden' => $n]);
+            flash($n ? 'succes' : 'fout', $n ? 'Minimumlonen ' . $lj . ' (' . loon_periodes()[$periode] . ') opgeslagen.' : 'Niets opgeslagen: vul bedragen tussen 0 en 100 in.');
+        } elseif ($actie === 'loon_jaar' || $actie === 'loon_budget') {
+            $velden = $actie === 'loon_budget' ? ['budget'] : ['vt_percentage', 'uren_per_dag', 'pc_vast_juni', 'pc_vast_jul_sep'];
+            $post   = (array)($_POST['lj'] ?? []);
+            $in     = [];
+            foreach ($velden as $v) if (isset($post[$v]) && is_string($post[$v])) $in[$v] = $post[$v];
+            $opgeslagen = loon_jaar_opslaan($lj, $in);
+            if ($opgeslagen && function_exists('audit_log')) audit_log('gewijzigd', 'instelling', null, ['loon_jaar' => $lj, 'velden' => $opgeslagen]);
+            $overgeslagen = array_diff(array_keys($in), $opgeslagen);
+            flash($overgeslagen ? 'waarschuwing' : 'succes', $overgeslagen
+                ? 'Niet alles opgeslagen: een waarde viel buiten de grenzen (' . implode(', ', $overgeslagen) . ').'
+                : ($actie === 'loon_budget' ? 'Budget ' . $lj . ' opgeslagen.' : 'Vakantietoeslag, werkuren en postcommandant ' . $lj . ' opgeslagen.'));
+        } else {
+            $van = (int)($_POST['van'] ?? 0);
+            $ok  = loon_jaar_kopieer($van, $lj);
+            if ($ok && function_exists('audit_log')) audit_log('gewijzigd', 'instelling', null, ['loon_jaar_nieuw' => $lj, 'van' => $van]);
+            flash($ok ? 'succes' : 'fout', $ok
+                ? 'Tarieven ' . $lj . ' gemaakt op basis van ' . $van . '. Pas ze aan naar de nieuwe minimumlonen.'
+                : 'Niet gelukt: ' . $lj . ' heeft al tarieven, of ' . $van . ' heeft er geen.');
         }
-        flash('succes', 'Loonuurtarieven opgeslagen.');
-        redirect(APP_URL . '/admin/instellingen.php?tab=loon');
+        redirect($terug_loon);
     }
 
     if ($actie === 'bezetting_opslaan') {
@@ -290,7 +392,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!$rollen) continue;
                 $schoon[preg_replace('/[^a-z0-9_]/', '', strtolower($sleutel))] = [
                     'naam'   => mb_substr(trim($post['naam'] ?? $sleutel), 0, 60),
-                    'icoon'  => mb_substr(trim($post['icoon'] ?? '•'), 0, 4),
+                    'icoon'  => bh_icoonnaam((string)($post['icoon'] ?? ''), 'locatie'),
                     'rollen' => $rollen,
                     'regel_geen_twee_aspiranten' => !empty($post['regel_geen_twee_aspiranten']),
                 ];
@@ -331,7 +433,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'label'   => mb_substr($label, 0, 40),
                 ];
             }
-            if ($lijst) $criteria[$tk] = ['naam' => mb_substr($naam, 0, 40), 'icoon' => mb_substr($icoon, 0, 4), 'criteria' => $lijst];
+            if ($lijst) $criteria[$tk] = ['naam' => mb_substr($naam, 0, 40), 'icoon' => bh_icoonnaam($icoon, $tk === 'zwem' ? 'golf' : 'bliksem'), 'criteria' => $lijst];
         }
         if ($criteria && function_exists('selectie_criteria_opslaan')) {
             selectie_criteria_opslaan($criteria);
@@ -351,302 +453,437 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
+
 // Data
 $functies = functies_ophalen();
-$tarieven_jun    = $db->query("SELECT leeftijd, min_uurloon FROM loon_tarieven WHERE periode='jun'    ORDER BY leeftijd")->fetchAll(\PDO::FETCH_KEY_PAIR);
-$tarieven_jul    = $db->query("SELECT leeftijd, min_uurloon FROM loon_tarieven WHERE periode='jul_sep' ORDER BY leeftijd")->fetchAll(\PDO::FETCH_KEY_PAIR);
+// Lonen per kalenderjaar: standaard het jaar van het actieve seizoen (includes/loon_tarieven.php).
+$loon_jaar_nu = loon_seizoen_jaar(actief_seizoen());
+$loon_nu      = loon_tarieven_voor_jaar($loon_jaar_nu);   // Functies-tab: voorbeeldberekening
+if ($tab === 'loon') {
+    $loon_keuzes = loon_jaar_keuzes();
+    $loon_jaar   = (int)($_GET['jaar'] ?? $loon_jaar_nu);
+    if ($loon_jaar < 2000 || $loon_jaar > 2100) $loon_jaar = $loon_jaar_nu;
+    if (!in_array($loon_jaar, $loon_keuzes, true)) { $loon_keuzes[] = $loon_jaar; rsort($loon_keuzes); }
+    $loon_t       = loon_tarieven_voor_jaar($loon_jaar);
+    $loon_eigen   = $loon_t['bron_jaar'] === $loon_jaar;
+    $loon_jaren   = loon_tarief_jaren();
+    $loon_nieuwst = $loon_jaren ? max($loon_jaren) : null;
+    $loon_sz      = loon_seizoenen_per_jaar()[$loon_jaar] ?? [];
+}
 
 require __DIR__ . '/layout_top.php';
 ?>
-<style>
-.inst-grid { display:grid; grid-template-columns:220px 1fr; gap:18px; align-items:start; }
-.inst-nav a { display:flex; align-items:center; gap:9px; padding:10px 14px; border-radius:8px; text-decoration:none; color:var(--tekst-zacht); font-size:13px; font-weight:500; transition:all .15s; margin-bottom:3px; }
-.inst-nav a:hover { background:var(--grijs-bg); color:var(--tekst); }
-.inst-nav a.actief { background:var(--navy); color:#fff; }
-.inst-nav a svg { width:16px; height:16px; flex-shrink:0; }
-.inst-sectie { border-bottom:1px solid var(--rand); padding-bottom:20px; margin-bottom:20px; }
-.inst-sectie:last-child { border:none; margin:0; padding:0; }
-.inst-sectie h3 { font-size:13px; font-weight:600; color:var(--navy); margin-bottom:12px; }
-[data-theme="dark"] .inst-sectie h3 { color:var(--tekst); }
-.loon-tabel-inst { width:100%; border-collapse:collapse; font-size:13px; }
-.loon-tabel-inst th { background:var(--grijs-bg); padding:8px 12px; text-align:left; font-size:11px; font-weight:600; text-transform:uppercase; color:var(--tekst-zacht); border-bottom:1px solid var(--rand); }
-.loon-tabel-inst td { padding:7px 12px; border-bottom:1px solid var(--rand); }
-.loon-input { width:90px; text-align:right; font-family:monospace; }
-.preview-loon { font-size:11px; color:var(--grijs); }
-</style>
+<div class="bh-instkolommen">
 
-<div class="inst-grid">
+<!-- Navigatie links. De iconen komen uit includes/iconen.php; eerder stond hier per
+     item een losse SVG-string, waardoor dit scherm een eigen icoonset had. -->
+<div class="bh-instzij">
+  <nav class="ds-kaart bh-instnav" aria-label="Instellingen">
+    <?php
+    /* De tabbladen staan in bh_inst_tabs() (includes/beheer/zoek.php) en niet meer
+       hier: de snelzoeker in de topbalk moet dezelfde lijst kennen, inclusief de
+       zoekwoorden per tabblad. Twee kopieën betekent dat de ene "vakantietoeslag"
+       vindt en de andere niet.
 
-<!-- Navigatie links -->
-<div>
-  <div class="card">
-    <div class="card-body" style="padding:10px" class="inst-nav">
-      <div class="inst-nav">
-        <?php $nav_groepen = [
-          'Organisatie' => [
-            ['algemeen', 'Algemeen',            '<circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>'],
-            ['functies', 'Functies & factoren', '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'],
-          ],
-          'Selectie & seizoen' => [
-            ['uitnodiging','Uitnodiging & automatisering', '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.15 12 19.79 19.79 0 0 1 1.08 3.4 2 2 0 0 1 3.06 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.09 8.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21 16"/>'],
-            ['selectie', 'Beoordelingscriteria', '<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>'],
-            ['bezetting','Posten & bezetting',   '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>'],
-          ],
-          'Loon & planning' => [
-            ['loon',     'Vakantietoeslag & lonen', '<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>'],
-          ],
-          'Communicatie' => [
-            ['mail',     'Mail & herinneringen',  '<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>'],
-            ['smtp',     'E-mailserver (SMTP)',   '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 5L2 7"/>'],
-          ],
-          'AI & koppelingen' => [
-            ['ai',       'AI-analyse',            '<circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 10v6m11-11h-6m-10 0H1"/>'],
-            ['authentik', 'Authentik & competenties', '<path d="M12 2l7 4v6c0 5-3.5 8-7 10-3.5-2-7-5-7-10V6z"/>'],
-            ['sso',      'Authentik SSO-login',   '<path d="M12 1l3 6 6 .75-4.12 4.62L18 19l-6-3.25L6 19l1.13-6.63L3 7.75 9 7z"/>'],
-          ],
-          'Koppelingen' => [
-            ['api', 'Website & API', '<path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/>'],
-            ['berichten', 'SMS, WhatsApp & meldingen', '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>'],
-          ],
-          'Privacy' => [
-            ['bewaren', 'Bewaartermijnen (AVG)', '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>'],
-          ],
-        ]; ?>
-        <?php foreach ($nav_groepen as $groep => $items): ?>
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--grijs);padding:10px 14px 4px"><?= h($groep) ?></div>
-        <?php foreach ($items as [$t, $l, $svg]): ?>
-        <a href="?tab=<?= $t ?>" class="<?= $tab===$t?'actief':'' ?>">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><?= $svg ?></svg>
-          <?= $l ?>
+       De indeling zelf gaat over wát je instelt, niet over wélke techniek het
+       gebruikt — dat was het probleem van de vorige: drie tabbladen over Authentik,
+       AI op twee plekken, "Mail" als vergaarbak met de cronjob erin. */
+    $nav_groepen = bh_inst_tabs();
+    ?>
+    <div class="bh-instzoek">
+      <?= icoon('zoek', 15) ?>
+      <input type="text" id="instZoek" class="bh-instzoek-veld" autocomplete="off"
+             placeholder="Filter instellingen&hellip;" aria-label="Filter de instellingen"
+             aria-describedby="instZoekUitslag">
+    </div>
+    <p class="bh-instzoek-leeg" id="instZoekUitslag" role="status" hidden>
+      Geen tabblad met die term. Probeer een ander woord, of zoek met Ctrl&nbsp;K door het hele beheer.
+    </p>
+
+    <?php foreach ($nav_groepen as $groep => $items): ?>
+      <div class="bh-instnav-groep" data-instgroep><?= h($groep) ?></div>
+      <?php foreach ($items as $item): ?>
+        <a class="bh-instnav-link<?= $tab === $item[0] ? ' actief' : '' ?>" href="?tab=<?= h($item[0]) ?>"
+           data-instzoek="<?= h(mb_strtolower($item[1] . ' ' . $groep . ' ' . ($item[3] ?? ''))) ?>"
+           <?= $tab === $item[0] ? 'aria-current="page"' : '' ?>>
+          <?= icoon($item[2], 16) ?><?= h($item[1]) ?>
         </a>
-        <?php endforeach; endforeach; ?>
-        <div style="border-top:1px solid var(--rand);margin-top:8px;padding:10px 14px 2px">
-          <a href="<?= APP_URL ?>/admin/mail_templates.php" style="display:flex;align-items:center;gap:9px;font-size:13px;color:var(--tekst-zacht);text-decoration:none;font-weight:500">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            Mail templates ↗
-          </a>
-        </div>
-      </div>
+      <?php endforeach; ?>
+    <?php endforeach; ?>
+    <?php if ($mag_sjablonen): ?>
+    <div class="bh-instnav-extra" data-instgroep>
+      <a class="bh-instnav-link" href="<?= APP_URL ?>/admin/mail_templates.php"
+         data-instzoek="sjabloon template mail tekst bericht opmaak">
+        <?= icoon('document', 16) ?>Sjablonen voor mails
+      </a>
     </div>
-  </div>
-  <div class="card" style="margin-top:10px">
-    <div class="card-body" style="padding:12px 14px;font-size:12px;color:var(--tekst-zacht);line-height:1.7">
-      <strong style="display:block;margin-bottom:4px;color:var(--navy)">Versie</strong>
-      <?= defined('APP_VERSIE') ? APP_VERSIE : instelling('app.versie', '1.0.0') ?><br>
-      <a href="<?= APP_URL ?>/admin/systeem.php" style="color:var(--oranje)">Systeem &amp; Updates</a>
-    </div>
-  </div>
+    <?php endif; ?>
+  </nav>
+
+  <script nonce="<?= h(csp_nonce()) ?>">
+  /* Filtert de tabbladenlijst terwijl je typt. Een groepskop verdwijnt zodra er
+     geen zichtbaar tabblad meer onder staat — anders blijven er koppen zweven
+     boven niets. Zonder JavaScript staat de volledige lijst er gewoon. */
+  (function () {
+    var veld = document.getElementById('instZoek');
+    if (!veld) return;
+    var melding = document.getElementById('instZoekUitslag');
+    veld.addEventListener('input', function () {
+      var t = veld.value.trim().toLowerCase();
+      var raak = 0;
+      document.querySelectorAll('.bh-instnav-link[data-instzoek]').forEach(function (a) {
+        var aan = !t || a.dataset.instzoek.indexOf(t) !== -1;
+        a.hidden = !aan;
+        if (aan) raak++;
+      });
+      document.querySelectorAll('[data-instgroep]').forEach(function (g) {
+        var zichtbaar = false, n = g.nextElementSibling;
+        if (g.classList.contains('bh-instnav-extra')) {
+          zichtbaar = !!g.querySelector('.bh-instnav-link:not([hidden])');
+        } else {
+          while (n && !n.hasAttribute('data-instgroep')) {
+            if (n.classList.contains('bh-instnav-link') && !n.hidden) { zichtbaar = true; break; }
+            n = n.nextElementSibling;
+          }
+        }
+        g.hidden = !zichtbaar;
+      });
+      melding.hidden = raak !== 0;
+    });
+  })();
+  </script>
+
+  <section class="ds-kaart ds-kaart-p bh-instversie">
+    <span class="bh-veldlabel">Versie</span>
+    <span class="bh-veldwaarde"><?= h(defined('APP_VERSIE') ? APP_VERSIE : instelling('app.versie', '1.0.0')) ?></span>
+    <?php if ($mag_systeem): ?><a href="<?= APP_URL ?>/admin/systeem.php">Systeem &amp; updates</a><?php endif; ?>
+  </section>
 </div>
 
-<!-- Inhoud rechts -->
-<div>
+<!-- Inhoud rechts: één onderwerp tegelijk -->
+<div class="bh-instinhoud">
 
 <?php if ($tab === 'algemeen'): ?>
-<div class="card">
-  <div class="card-header"><div class="card-title">⚙️ Algemene instellingen</div></div>
-  <div class="card-body">
+<div class="ds-kaart">
+  <div class="bh-kaartkop"><h2>Algemene instellingen</h2></div>
+  <div class="bh-kaartbody">
     <form method="POST" enctype="multipart/form-data">
       <?= csrf_input() ?><input type="hidden" name="actie" value="instellingen">
-      <div class="inst-sectie">
+      <div class="bh-instsectie">
         <h3>Organisatie</h3>
-        <div class="form-groep">
-          <label>Naam van de organisatie</label>
-          <input type="text" name="inst[site.naam]" value="<?= h(instelling('site.naam','Reddingsbrigade Paal 13')) ?>">
+        <div class="ds-veld">
+          <label for="veld-inst-site-naam">Naam van de organisatie</label>
+          <input id="veld-inst-site-naam" type="text" name="inst[site.naam]" value="<?= h(instelling('site.naam','Reddingsbrigade Paal 13')) ?>">
         </div>
-        <div class="form-rij">
-          <div class="form-groep">
-            <label>Logo <span class="tip" data-tip="Upload een bestand of vul een URL in. Wordt links bovenin getoond in admin én portaal."></span></label>
-            <input type="file" name="logo_upload" accept="image/png,image/jpeg,image/webp,image/svg+xml" style="font-size:12px">
-            <div class="form-hulp">Of vul een pad/URL in:</div>
-            <input type="text" name="inst[site.logo_url]" value="<?= h(instelling('site.logo_url')) ?>" placeholder="/uploads/branding/logo.png" style="margin-top:4px">
+        <div class="bh-veldrij">
+          <div class="ds-veld">
+            <label for="veld-logo-upload">Logo <?= bh_tip('Upload een bestand of vul een URL in. Wordt links bovenin getoond in admin én portaal. PNG, JPG of WebP; geen SVG, want daar kan script in zitten.') ?></label>
+            <input id="veld-logo-upload" type="file" name="logo_upload" accept="image/png,image/jpeg,image/webp">
+            <div class="ds-veld-hint">Of vul een pad/URL in:</div>
+            <input type="text" name="inst[site.logo_url]" aria-label="Of een pad of URL naar het logo" value="<?= h(instelling('site.logo_url')) ?>" placeholder="/uploads/branding/logo.png" class="bh-inst-urlveld">
           </div>
-          <div class="form-groep">
-            <label>Favicon <span class="tip" data-tip="Pictogram in browsertab. PNG, ICO of SVG."></span></label>
-            <input type="file" name="favicon_upload" accept="image/png,image/x-icon,image/vnd.microsoft.icon,image/svg+xml" style="font-size:12px">
-            <div class="form-hulp">Of vul een pad/URL in:</div>
-            <input type="text" name="inst[site.favicon_url]" value="<?= h(instelling('site.favicon_url')) ?>" placeholder="/uploads/branding/favicon.svg" style="margin-top:4px">
+          <div class="ds-veld">
+            <label for="veld-favicon-upload">Favicon <?= bh_tip('Pictogram in de browsertab. PNG of ICO.') ?></label>
+            <input id="veld-favicon-upload" type="file" name="favicon_upload" accept="image/png,image/x-icon,image/vnd.microsoft.icon">
+            <div class="ds-veld-hint">Of vul een pad/URL in:</div>
+            <input type="text" name="inst[site.favicon_url]" aria-label="Of een pad of URL naar het favicon" value="<?= h(instelling('site.favicon_url')) ?>" placeholder="/uploads/branding/favicon.png" class="bh-inst-urlveld">
           </div>
         </div>
         <?php $logo = instelling('site.logo_url'); if ($logo): ?>
-        <div style="margin-top:8px;display:flex;align-items:center;gap:10px">
-          <img src="<?= h($logo) ?>" alt="Logo preview" style="max-height:60px;border:1px solid var(--rand);border-radius:6px;padding:6px;background:var(--bg-card)">
-          <span style="font-size:11px;color:var(--tekst-zacht)">Huidige logo</span>
+        <div class="bh-inst-logo">
+          <img src="<?= h($logo) ?>" alt="Logo preview" class="bh-inst-logo-img">
+          <span class="ds-veld-hint">Huidige logo</span>
         </div>
         <?php endif; ?>
       </div>
 
-      <div class="inst-sectie">
+      <div class="bh-instsectie">
         <h3>Portaal</h3>
-        <div class="form-groep">
-          <label>Welkomsttekst op portaal login <span class="tip" data-tip="Tekst die sollicitanten zien voordat ze inloggen via OTP-code."></span></label>
-          <textarea name="inst[portaal.welkomst_tekst]" rows="3"><?= h(instelling('portaal.welkomst_tekst','Welkom op het sollicitantenportaal van Paal 13.')) ?></textarea>
+        <div class="ds-veld">
+          <label for="veld-inst-portaal-welkomst-tekst">Welkomsttekst op portaal login <?= bh_tip('Tekst die sollicitanten zien op het inlogscherm van het portaal, voordat ze inloggen.') ?></label>
+          <textarea id="veld-inst-portaal-welkomst-tekst" name="inst[portaal.welkomst_tekst]" rows="3"><?= h(instelling('portaal.welkomst_tekst','Welkom op het sollicitantenportaal van Paal 13.')) ?></textarea>
         </div>
       </div>
 
-      <div class="inst-sectie">
+      <div class="bh-instsectie">
         <h3>Taken na aannemen</h3>
         <?php
           $_hr_id  = instelling_int('taken.huisregels_bijlage_id', 0);
           $_hr_rij = ($_hr_id > 0 && function_exists('bijlage_rij')) ? bijlage_rij($_hr_id) : null;
         ?>
-        <div class="form-groep">
-          <label>Huisregels (pdf) <span class="tip" data-tip="Aangenomen strandwachten krijgen de taak 'Huisregels lezen' met een link naar dit document. Zonder document blijft de taak staan als 'volgt binnenkort'."></span></label>
+        <div class="ds-veld">
+          <label>Huisregels (pdf) <?= bh_tip('Aangenomen strandwachten krijgen de taak \'Huisregels lezen\' met een link naar dit document. Zonder document blijft de taak staan als \'volgt binnenkort\'.') ?></label>
           <?php if ($_hr_rij): ?>
-            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
-              <span class="badge badge-groen">In gebruik</span>
-              <a href="<?= h(bijlage_download_url((int)$_hr_rij['id'], 7)) ?>" target="_blank" rel="noopener" style="font-size:13px;color:var(--navy)"><?= h($_hr_rij['bestandsnaam']) ?></a>
-              <span style="font-size:12px;color:var(--tekst-zacht)"><?= round((int)$_hr_rij['grootte'] / 1024) ?> kB · geplaatst <?= h(datum_nl(substr((string)$_hr_rij['aangemaakt_op'], 0, 10))) ?></span>
-              <label style="font-size:12px;color:var(--tekst-zacht);display:inline-flex;align-items:center;gap:5px"><input type="checkbox" name="huisregels_los" value="1"> Losmaken van de taak</label>
+            <div class="bh-inst-huisregels">
+              <span class="ds-badge-fase ds-fase-groen">In gebruik</span>
+              <a href="<?= h(bijlage_download_url((int)$_hr_rij['id'], 7)) ?>" target="_blank" rel="noopener" class="bh-inst-huisregels-link"><?= h($_hr_rij['bestandsnaam']) ?></a>
+              <span class="ds-veld-hint"><?= round((int)$_hr_rij['grootte'] / 1024) ?> kB · geplaatst <?= h(datum_nl(substr((string)$_hr_rij['aangemaakt_op'], 0, 10))) ?></span>
+              <label class="bh-inst-losmaken"><input type="checkbox" name="huisregels_los" value="1"> Losmaken van de taak</label>
             </div>
           <?php elseif ($_hr_id > 0): ?>
-            <div class="flash flash-fout" style="margin-bottom:8px">Het gekoppelde document (#<?= $_hr_id ?>) bestaat niet meer. Upload een nieuwe pdf.</div>
+            <div class="ds-melding ds-melding-error bh-inst-huisregels-stand">Het gekoppelde document (#<?= $_hr_id ?>) bestaat niet meer. Upload een nieuwe pdf.</div>
           <?php else: ?>
-            <div class="form-hulp" style="margin-bottom:8px">Nog geen document. De taak "Huisregels lezen" staat bij aangenomen sollicitanten al klaar en krijgt automatisch een link zodra je hier een pdf plaatst.</div>
+            <div class="ds-veld-hint bh-inst-huisregels-stand">Nog geen document. De taak "Huisregels lezen" staat bij aangenomen sollicitanten al klaar en krijgt automatisch een link zodra je hier een pdf plaatst.</div>
           <?php endif; ?>
-          <input type="file" name="huisregels_upload" accept="application/pdf" style="font-size:12px">
-          <div class="form-hulp">Een nieuwe pdf vervangt de link in de taak. Het bestand komt in de bijlagenbibliotheek; de sollicitant opent het via een tijdelijke, persoonlijke downloadlink.</div>
+          <input type="file" name="huisregels_upload" accept="application/pdf" aria-label="Huisregels uploaden (pdf)">
+          <div class="ds-veld-hint">Een nieuwe pdf vervangt de link in de taak. Het bestand komt in de bijlagenbibliotheek; de sollicitant opent het via een tijdelijke, persoonlijke downloadlink.</div>
         </div>
       </div>
 
-      <div class="inst-sectie">
+      <div class="bh-instsectie">
         <h3>Aanmeldformulier</h3>
-        <div class="form-rij">
-          <div class="form-groep">
-            <label>Minimumleeftijd sollicitant <span class="tip" data-tip="Wordt gebruikt voor de uitnodiging-suggestie. Sollicitanten jonger dan dit krijgen een waarschuwing."></span></label>
-            <input type="number" name="inst[aanmeld.min_leeftijd]" value="<?= instelling_int('aanmeld.min_leeftijd',15) ?>" min="10" max="30">
-          </div>
-          <div class="form-groep">
-            <label>Maximumleeftijd sollicitant</label>
-            <input type="number" name="inst[aanmeld.max_leeftijd]" value="<?= instelling_int('aanmeld.max_leeftijd',35) ?>" min="18" max="65">
-          </div>
-        </div>
+        <p class="ds-veld-hint">De minimumleeftijd is 15 jaar (vast: onder de 16 is toestemming van een ouder nodig).</p>
       </div>
 
-      <button type="submit" class="btn btn-primary">Opslaan</button>
+      <button type="submit" class="ds-btn ds-btn-primair">Opslaan</button>
+    </form>
+  </div>
+</div>
+
+<?php elseif ($tab === 'modules'): ?>
+<div class="ds-kaart">
+  <div class="bh-kaartkop"><h2>Modules</h2></div>
+  <div class="bh-kaartbody">
+    <p class="bh-inst-intro">
+      De kern (sollicitanten, portaal, berichten, beschikbaarheid, ondertekenen, loondossiers) staat altijd aan.
+      Een module die uitstaat verdwijnt uit het menu en uit de rechten, ook voor beheerders. Er wordt niets gewist:
+      zet je hem weer aan, dan staat alles er nog.
+    </p>
+    <form method="POST">
+      <?= csrf_input() ?>
+      <input type="hidden" name="actie" value="modules_opslaan">
+      <?php foreach (modules_alle() as $sleutel => $m): ?>
+      <div class="ds-veld">
+        <label>
+          <input type="checkbox" name="module[<?= h($sleutel) ?>]" value="1" <?= module_aan($sleutel) ? 'checked' : '' ?> <?= $mag_systeem ? '' : 'disabled' ?>>
+          <?= h($m['label']) ?>
+        </label>
+        <div class="ds-veld-hint"><?= h($m['omschrijving']) ?></div>
+      </div>
+      <?php endforeach; ?>
+      <?php if ($mag_systeem): ?>
+        <button type="submit" class="ds-btn ds-btn-primair">Opslaan</button>
+      <?php else: ?>
+        <p class="ds-veld-hint">Modules aan- of uitzetten kan alleen wie Systeem mag bewerken.</p>
+      <?php endif; ?>
+    </form>
+  </div>
+</div>
+
+<?php /* Technisch (dit tabblad is alleen voor Systeem › bewerken): welke ondertekeningen een
+         verificatiecode per sms/WhatsApp/e-mail vragen. Gelezen door ondertekening_2fa_typen(). */
+      $_tfa_aan = function_exists('ondertekening_2fa_typen') ? ondertekening_2fa_typen() : ['loonheffing']; ?>
+<div class="ds-kaart">
+  <div class="bh-kaartkop"><h2>Ondertekenen: verificatiecode</h2></div>
+  <div class="bh-kaartbody">
+    <p class="bh-inst-intro">
+      Bij de aangevinkte documenten krijgt wie tekent eerst een code (sms, dan WhatsApp, dan e-mail) en moet die
+      invullen. De code en het kanaal komen in het bewijs bij de verzegelde PDF. Dat maakt de handtekening sterker,
+      maar is ook een extra drempel: gebruik het voor documenten die wettelijk vastgelegd moeten worden. Het
+      loonheffingsformulier (met BSN) houdt de code altijd.
+    </p>
+    <form method="POST">
+      <?= csrf_input() ?>
+      <input type="hidden" name="actie" value="instellingen">
+      <input type="hidden" name="tfa_formulier" value="1">
+      <fieldset class="ds-veld">
+        <legend>Verificatiecode verplicht bij</legend>
+        <?php foreach (instellingen_2fa_keuzes() as $_t => $_l): $_vast = $_t === 'loonheffing'; ?>
+          <label class="checkbox-label">
+            <input type="checkbox" name="tfa_typen[]" value="<?= h($_t) ?>" <?= $_vast || in_array($_t, $_tfa_aan, true) ? 'checked' : '' ?> <?= $_vast ? 'disabled' : '' ?>>
+            <?= h($_l) ?><?= $_vast ? ' (altijd, wettelijk document)' : '' ?>
+          </label>
+        <?php endforeach; ?>
+        <div class="ds-veld-hint">De inschrijving als lid vraagt nooit een code: het is een verenigingsformulier, geen wettelijk document.</div>
+      </fieldset>
+      <button type="submit" class="ds-btn ds-btn-primair">Opslaan</button>
     </form>
   </div>
 </div>
 
 <?php elseif ($tab === 'functies'): ?>
-<div class="card">
-  <div class="card-header"><div class="card-title">👥 Functies & factoren</div></div>
-  <div class="card-body">
-    <p style="font-size:13px;color:var(--tekst-zacht);margin-bottom:16px">
-      Het dagloon per persoon = minimumloon/uur × <?= instelling_int('loon.uren_per_dag',8) ?> uur × factor × <?= 1 + instelling_float('loon.vt_percentage',8)/100 ?> (VT).
+<div class="ds-kaart">
+  <div class="bh-kaartkop"><h2>Functies & factoren</h2></div>
+  <div class="bh-kaartbody">
+    <p class="bh-inst-intro">
+      Het dagloon per persoon = minimumloon/uur × <?= h(loon_getal($loon_nu['uren_per_dag'])) ?> uur × factor × <?= h(loon_getal(1 + $loon_nu['vt_percentage'] / 100)) ?> (VT),
+      met de tarieven van <?= (int)($loon_nu['bron_jaar'] ?? $loon_jaar_nu) ?> (<a href="?tab=loon">Lonen &amp; budget</a>). De factor geldt voor elk jaar.
     </p>
     <?php foreach ($functies as $f): ?>
-    <form method="POST" style="border:1px solid var(--rand);border-radius:8px;padding:14px;margin-bottom:10px">
+    <form method="POST" class="bh-functie">
       <?= csrf_input() ?>
       <input type="hidden" name="actie" value="functie_opslaan">
       <input type="hidden" name="functie_id" value="<?= $f['id'] ?>">
-      <div style="display:grid;grid-template-columns:1fr 80px 80px 80px 60px auto;gap:10px;align-items:end">
-        <div class="form-groep" style="margin:0">
-          <label style="font-size:11px">Naam</label>
-          <input type="text" name="naam" value="<?= h($f['naam']) ?>">
+      <div class="bh-functie-rij">
+        <div class="ds-veld">
+          <label for="veld-naam-<?= (int)$f['id'] ?>">Naam</label>
+          <input id="veld-naam-<?= (int)$f['id'] ?>" type="text" name="naam" value="<?= h($f['naam']) ?>">
         </div>
-        <div class="form-groep" style="margin:0">
-          <label style="font-size:11px">Factor</label>
-          <input type="number" name="factor" value="<?= $f['factor'] ?>" step="0.01" min="0" max="5">
+        <div class="ds-veld">
+          <label for="veld-factor-<?= (int)$f['id'] ?>">Factor</label>
+          <input id="veld-factor-<?= (int)$f['id'] ?>" type="number" name="factor" value="<?= $f['factor'] ?>" step="0.01" min="0" max="5">
         </div>
-        <div class="form-groep" style="margin:0">
-          <label style="font-size:11px">Min leeftijd</label>
-          <input type="number" name="min_leeftijd" value="<?= $f['min_leeftijd'] ?>" min="14" max="99">
+        <div class="ds-veld">
+          <label for="veld-min-leeftijd-<?= (int)$f['id'] ?>">Min leeftijd</label>
+          <input id="veld-min-leeftijd-<?= (int)$f['id'] ?>" type="number" name="min_leeftijd" value="<?= $f['min_leeftijd'] ?>" min="14" max="99">
         </div>
-        <div class="form-groep" style="margin:0">
-          <label style="font-size:11px">Max leeftijd</label>
-          <input type="number" name="max_leeftijd" value="<?= $f['max_leeftijd'] ?>" min="14" max="99">
+        <div class="ds-veld">
+          <label for="veld-max-leeftijd-<?= (int)$f['id'] ?>">Max leeftijd</label>
+          <input id="veld-max-leeftijd-<?= (int)$f['id'] ?>" type="number" name="max_leeftijd" value="<?= $f['max_leeftijd'] ?>" min="14" max="99">
         </div>
-        <div class="form-groep" style="margin:0">
-          <label style="font-size:11px">Volgorde</label>
-          <input type="number" name="volgorde" value="<?= $f['volgorde'] ?>" min="0" max="99">
+        <div class="ds-veld">
+          <label for="veld-volgorde-<?= (int)$f['id'] ?>">Volgorde</label>
+          <input id="veld-volgorde-<?= (int)$f['id'] ?>" type="number" name="volgorde" value="<?= $f['volgorde'] ?>" min="0" max="99">
         </div>
-        <div style="padding-bottom:1px">
-          <button type="submit" class="btn btn-primary btn-sm">Sla op</button>
+        <div class="bh-functie-knop">
+          <button type="submit" class="ds-btn ds-btn-primair ds-btn-sm">Sla op</button>
         </div>
       </div>
-      <?php
-      $dl_jun = $f['sleutel'] !== 'postcommandant'
-        ? '€'.number_format(bereken_dagloon(20, $f['sleutel'], 'jun'), 2, ',', '.')
-        : '€'.number_format(instelling_float('loon.pc_vast_juni',850)/5, 2, ',', '.');
-      ?>
-      <div style="font-size:11px;color:var(--grijs);margin-top:6px">
-        Voorbeeldberekening 20jr, juni: <strong><?= $dl_jun ?>/dag</strong>
-        <?= $f['factor'] > 0 ? "(uurloon × 8 × {$f['factor']} × 1.08)" : "(vast weekbedrag ÷ 5)" ?>
+      <div class="bh-functie-voorbeeld">
+        Voorbeeldberekening 20 jaar, juni <?= $loon_jaar_nu ?>:
+        <strong><?= h(euro(bereken_dagloon(20, (string)$f['sleutel'], 'jun', null, $loon_jaar_nu), 2)) ?>/dag</strong>
+        <?= $f['sleutel'] === 'postcommandant' ? '(vast weekbedrag ÷ 5)'
+            : h('(uurloon × ' . loon_getal($loon_nu['uren_per_dag']) . ' × ' . loon_getal((float)$f['factor']) . ' × ' . loon_getal(1 + $loon_nu['vt_percentage'] / 100) . ')') ?>
       </div>
     </form>
     <?php endforeach; ?>
 
-    <div class="inst-sectie" style="margin-top:16px">
-      <h3>Vakantietoeslag & werkuren</h3>
-      <form method="POST">
-        <?= csrf_input() ?><input type="hidden" name="actie" value="instellingen">
-        <div class="form-rij">
-          <div class="form-groep">
-            <label>Vakantietoeslag % <span class="tip" data-tip="Wordt automatisch opgeteld bij de uurlonen in de loonplanning. Standaard 8%."></span></label>
-            <input type="number" name="inst[loon.vt_percentage]" value="<?= instelling_int('loon.vt_percentage',8) ?>" min="0" max="20">
-            <div class="form-hulp">Standaard 8% (wettelijk minimum)</div>
-          </div>
-          <div class="form-groep">
-            <label>Werkuren per dag <span class="tip" data-tip="Gebruikt voor dagloon-berekening: uurloon × dit getal × functie-factor × VT."></span></label>
-            <input type="number" name="inst[loon.uren_per_dag]" value="<?= instelling_int('loon.uren_per_dag',8) ?>" min="1" max="12">
-            <div class="form-hulp">Standaard 8 uur (40u/week ÷ 5)</div>
-          </div>
-        </div>
-        <div class="form-rij">
-          <div class="form-groep">
-            <label>Vast weekbedrag postcommandant (juni) <span class="tip" data-tip="Postcommandant heeft vast bedrag per week, niet gerelateerd aan leeftijd."></span></label>
-            <div style="position:relative"><span style="position:absolute;left:10px;top:9px;color:var(--grijs)">€</span>
-            <input type="number" name="inst[loon.pc_vast_juni]" value="<?= instelling_float('loon.pc_vast_juni',850) ?>" style="padding-left:24px" step="0.01"></div>
-          </div>
-          <div class="form-groep">
-            <label>Vast weekbedrag postcommandant (jul-sep)</label>
-            <div style="position:relative"><span style="position:absolute;left:10px;top:9px;color:var(--grijs)">€</span>
-            <input type="number" name="inst[loon.pc_vast_jul_sep]" value="<?= instelling_float('loon.pc_vast_jul_sep',750) ?>" style="padding-left:24px" step="0.01"></div>
-          </div>
-        </div>
-        <button type="submit" class="btn btn-primary">Opslaan</button>
-      </form>
-    </div>
   </div>
 </div>
 
 <?php elseif ($tab === 'loon'): ?>
-<div class="card" style="margin-bottom:14px">
-  <div class="card-header">
-    <div class="card-title">🎯 Seizoensbudget</div>
-    <div style="font-size:12px;color:var(--tekst-zacht)">Voor de voortgangsbalk op de loonplanning</div>
+<?php /* Alles op dit tabblad geldt per kalenderjaar (includes/loon_tarieven.php). Een seizoen rekent met
+         het jaar van de start van de werkperiode; ontbreken die tarieven, dan met het jaar ervoor. */ ?>
+<div class="ds-kaart">
+  <div class="bh-kaartkop">
+    <h2>Lonen &amp; budget <?= $loon_jaar ?></h2>
+    <div class="ds-veld-hint">Per kalenderjaar. Een seizoen rekent met het jaar waarin de werkperiode begint.</div>
   </div>
-  <div class="card-body">
-    <form method="POST" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
-      <?= csrf_input() ?>
-      <input type="hidden" name="actie" value="instellingen">
-      <div class="form-groep" style="margin:0">
-        <label for="budget_seizoen">Totaalbudget loonkosten dit seizoen (€)</label>
-        <input type="number" step="100" min="0" id="budget_seizoen" name="inst[loon.budget_seizoen]"
-               value="<?= h(instelling('loon.budget_seizoen', '')) ?>" placeholder="bijv. 25000" style="max-width:200px">
+  <div class="bh-kaartbody">
+    <?php
+      $_opties = [];
+      foreach ($loon_keuzes as $_j) $_opties[$_j] = $_j . (in_array($_j, $loon_jaren, true) ? '' : ' (nog geen tarieven)');
+      $filter_velden    = [['soort' => 'keuze', 'naam' => 'jaar', 'label' => 'Jaar', 'waarde' => $loon_jaar, 'opties' => $_opties]];
+      $filter_verborgen = ['tab' => 'loon'];
+      require __DIR__ . '/_filterbalk.php';
+    ?>
+    <p class="ds-veld-hint bh-mb">
+      <?= $loon_sz ? 'Geldt voor seizoen ' . h(implode(', ', $loon_sz)) . '.' : 'Er is nog geen seizoen in ' . $loon_jaar . '.' ?>
+      Een wijziging hier geldt voor alle loonberekeningen van dit jaar (ook vastgestelde afspraken en de export) en verandert andere jaren niet.
+    </p>
+    <?php if (!$loon_eigen): ?>
+      <div class="ds-melding ds-melding-warn bh-mb" role="status">
+        <?= icoon('waarschuwing', 16) ?> <?= h(loon_tarieven_melding($loon_t)) ?>
+        <?php if ($loon_t['bron_jaar'] !== null): ?>
+          Maak de tarieven voor <?= $loon_jaar ?> aan: dat kopieert <?= (int)$loon_t['bron_jaar'] ?> (zonder het budget), daarna vul je de nieuwe minimumlonen in.
+        <?php endif; ?>
       </div>
-      <button type="submit" class="btn btn-primary">Opslaan</button>
-      <div style="font-size:12px;color:var(--tekst-zacht);flex:1;min-width:200px">
-        Laat leeg om zonder budget te werken — de loonplanning toont dan alleen de kosten.
+      <?php if ($loon_t['bron_jaar'] !== null): ?>
+        <form method="POST">
+          <?= csrf_input() ?>
+          <input type="hidden" name="actie" value="loon_jaar_nieuw">
+          <input type="hidden" name="jaar" value="<?= $loon_jaar ?>">
+          <input type="hidden" name="van" value="<?= (int)$loon_t['bron_jaar'] ?>">
+          <button type="submit" class="ds-btn ds-btn-primair"><?= icoon('plus', 15) ?> Tarieven <?= $loon_jaar ?> maken op basis van <?= (int)$loon_t['bron_jaar'] ?></button>
+        </form>
+      <?php endif; ?>
+    <?php elseif ($loon_nieuwst !== null && !in_array($loon_nieuwst + 1, $loon_jaren, true)): ?>
+      <form method="POST" data-bevestig="Nieuw jaar <?= $loon_nieuwst + 1 ?> maken? De tarieven, vakantietoeslag, werkuren en postcommandant van <?= $loon_nieuwst ?> worden gekopieerd; het budget niet. Daarna pas je de bedragen aan.">
+        <?= csrf_input() ?>
+        <input type="hidden" name="actie" value="loon_jaar_nieuw">
+        <input type="hidden" name="jaar" value="<?= $loon_nieuwst + 1 ?>">
+        <input type="hidden" name="van" value="<?= $loon_nieuwst ?>">
+        <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm"><?= icoon('plus', 14) ?> Nieuw jaar <?= $loon_nieuwst + 1 ?> op basis van <?= $loon_nieuwst ?></button>
+      </form>
+    <?php endif; ?>
+  </div>
+</div>
+
+<div class="ds-kaart">
+  <div class="bh-kaartkop">
+    <h2>Budget <?= $loon_jaar ?></h2>
+    <div class="ds-veld-hint">Voor de voortgangsbalk op de loonplanning</div>
+  </div>
+  <div class="bh-kaartbody">
+    <form method="POST" class="bh-inst-regelform">
+      <?= csrf_input() ?>
+      <input type="hidden" name="actie" value="loon_budget">
+      <input type="hidden" name="jaar" value="<?= $loon_jaar ?>">
+      <div class="ds-veld bh-inst-kaalveld">
+        <label for="lj-budget">Totaalbudget loonkosten <?= $loon_jaar ?> (€)</label>
+        <input type="number" step="1" min="0" max="99999999" id="lj-budget" name="lj[budget]"
+               value="<?= $loon_t['budget'] > 0 ? h((string)$loon_t['budget']) : '' ?>" placeholder="bijv. 25000" class="bh-inst-budgetveld"
+               aria-describedby="lj-budget-hint">
+      </div>
+      <button type="submit" class="ds-btn ds-btn-primair">Opslaan</button>
+      <div class="bh-inst-regelform-hint" id="lj-budget-hint">
+        Laat leeg om zonder budget te werken — de loonplanning toont dan alleen de kosten. Het budget hoort bij dit
+        jaar alleen: een volgend jaar begint zonder budget.
       </div>
     </form>
   </div>
 </div>
 
-<div class="card">
-  <div class="card-header">
-    <div class="card-title">💶 Minimumlonen per leeftijd</div>
-    <div style="font-size:12px;color:var(--tekst-zacht)">Bedragen per uur, excl. vakantietoeslag</div>
+<?php if ($loon_eigen): ?>
+
+<!-- Vakantietoeslag stond bij Functies; alles over geld hoort bij elkaar. Per jaar, want ook dit kan wijzigen. -->
+<div class="ds-kaart">
+  <div class="bh-kaartkop"><h2>Vakantietoeslag &amp; werkuren <?= $loon_jaar ?></h2></div>
+  <div class="bh-kaartbody">
+      <form method="POST">
+        <?= csrf_input() ?>
+        <input type="hidden" name="actie" value="loon_jaar">
+        <input type="hidden" name="jaar" value="<?= $loon_jaar ?>">
+        <div class="bh-veldrij">
+          <div class="ds-veld">
+            <label for="lj-vt">Vakantietoeslag % <?= bh_tip('Wordt automatisch opgeteld bij de uurlonen in de loonplanning. Standaard 8%.') ?></label>
+            <input type="number" id="lj-vt" name="lj[vt_percentage]" value="<?= h((string)$loon_t['vt_percentage']) ?>" min="0" max="50" step="0.01">
+            <div class="ds-veld-hint">Standaard 8% (wettelijk minimum)</div>
+          </div>
+          <div class="ds-veld">
+            <label for="lj-uren">Werkuren per dag <?= bh_tip('Gebruikt voor dagloon-berekening: uurloon × dit getal × functie-factor × VT.') ?></label>
+            <input type="number" id="lj-uren" name="lj[uren_per_dag]" value="<?= h((string)$loon_t['uren_per_dag']) ?>" min="1" max="12" step="0.25">
+            <div class="ds-veld-hint">Standaard 8 uur (40u/week ÷ 5)</div>
+          </div>
+        </div>
+        <div class="bh-veldrij">
+          <div class="ds-veld">
+            <label for="lj-pc-jun">Vast weekbedrag postcommandant (juni) <?= bh_tip('Postcommandant heeft vast bedrag per week, niet gerelateerd aan leeftijd.') ?></label>
+            <div class="bh-inst-euro"><span aria-hidden="true">€</span>
+            <input type="number" id="lj-pc-jun" name="lj[pc_vast_juni]" value="<?= h((string)$loon_t['pc_vast_juni']) ?>" min="0" max="99999" step="0.01"></div>
+          </div>
+          <div class="ds-veld">
+            <label for="lj-pc-jul">Vast weekbedrag postcommandant (jul-sep)</label>
+            <div class="bh-inst-euro"><span aria-hidden="true">€</span>
+            <input type="number" id="lj-pc-jul" name="lj[pc_vast_jul_sep]" value="<?= h((string)$loon_t['pc_vast_jul_sep']) ?>" min="0" max="99999" step="0.01"></div>
+          </div>
+        </div>
+        <button type="submit" class="ds-btn ds-btn-primair">Opslaan</button>
+      </form>
   </div>
-  <div class="card-body">
-    <div class="form-rij" style="gap:20px">
+</div>
+
+<?php
+  // Factor van een lifeguard voor de voorbeeldkolom "Dag (LG)"; de JS rekent live met dezelfde getallen.
+  $_lg_factor = 1.20;
+  foreach ($functies as $_f) if ($_f['sleutel'] === 'lifeguard') $_lg_factor = (float)$_f['factor'];
+?>
+<div class="ds-kaart">
+  <div class="bh-kaartkop">
+    <h2>Minimumlonen per leeftijd <?= $loon_jaar ?></h2>
+    <div class="ds-veld-hint">Bedragen per uur, excl. vakantietoeslag</div>
+  </div>
+  <div class="bh-kaartbody">
+    <div class="bh-veldrij bh-inst-loonrij">
       <?php foreach (['jun'=>'Juni','jul_sep'=>'Juli / Aug / Sep'] as $periode=>$label): ?>
       <form method="POST">
         <?= csrf_input() ?>
         <input type="hidden" name="actie" value="loon_tarief">
+        <input type="hidden" name="jaar" value="<?= $loon_jaar ?>">
         <input type="hidden" name="periode" value="<?= $periode ?>">
-        <h3 style="font-size:14px;font-weight:600;color:var(--navy);margin-bottom:10px"><?= $label ?></h3>
-        <table class="loon-tabel-inst">
+        <h3 class="bh-inst-subkop"><?= $label ?></h3>
+        <table class="bh-loontabel" data-loonvoorbeeld data-uren="<?= h((string)$loon_t['uren_per_dag']) ?>"
+               data-factor="<?= h((string)$_lg_factor) ?>" data-vt="<?= h((string)$loon_t['vt_percentage']) ?>">
           <thead>
             <tr>
               <th>Leeftijd</th>
@@ -655,311 +892,39 @@ require __DIR__ . '/layout_top.php';
             </tr>
           </thead>
           <tbody>
-            <?php $tarieven = $periode === 'jun' ? $tarieven_jun : $tarieven_jul;
-            for ($l = 15; $l <= 32; $l++):
-              $loon = $tarieven[$l] ?? '';
-              $dagl = $loon ? bereken_dagloon($l, 'lifeguard', $periode) : null;
+            <?php foreach (loon_leeftijden() as $l):
+              $loon = $loon_t['tarieven'][$periode][$l] ?? '';
+              $dagl = $loon !== '' ? bereken_dagloon($l, 'lifeguard', $periode, null, $loon_jaar) : null;
             ?>
             <tr>
-              <td style="font-weight:600"><?= $l ?> jr</td>
+              <th scope="row"><?= $l ?> jr</th>
               <td>
-                <div style="position:relative">
-                  <span style="position:absolute;left:8px;top:7px;color:var(--grijs);font-size:12px">€</span>
-                  <input type="number" class="loon-input" name="loon[<?= $l ?>]"
-                         value="<?= $loon ?>" step="0.01" min="0" max="99"
-                         style="padding-left:20px"
-                         oninput="updatePreview(this, <?= $l ?>, '<?= $periode ?>')">
-                </div>
+                <span class="bh-euroveld">
+                  <span aria-hidden="true">€</span>
+                  <label class="sr-only" for="loon-<?= h($periode) ?>-<?= $l ?>">Uurloon <?= $l ?> jaar, <?= h($label) ?> <?= $loon_jaar ?></label>
+                  <input type="number" id="loon-<?= h($periode) ?>-<?= $l ?>" name="loon[<?= $l ?>]"
+                         value="<?= $loon === '' ? '' : h((string)$loon) ?>" step="0.01" min="0" max="99"
+                         data-voorbeeld="prev-<?= h($periode) ?>-<?= $l ?>">
+                </span>
               </td>
-              <td class="preview-loon" id="prev-<?= $periode ?>-<?= $l ?>">
-                <?= $dagl ? '€'.number_format($dagl,2,',','.') : '—' ?>
+              <td class="bh-meta" id="prev-<?= $periode ?>-<?= $l ?>">
+                <?= $dagl ? h(euro((float)$dagl, 2)) : '—' ?>
               </td>
             </tr>
-            <?php endfor; ?>
+            <?php endforeach; ?>
           </tbody>
         </table>
-        <button type="submit" class="btn btn-primary" style="margin-top:10px;width:100%;justify-content:center">Opslaan <?= $label ?></button>
+        <button type="submit" class="ds-btn ds-btn-primair bh-inst-breedknop">Opslaan <?= $label ?> <?= $loon_jaar ?></button>
       </form>
       <?php endforeach; ?>
     </div>
   </div>
 </div>
+<?php endif; ?>
 
-<?php elseif ($tab === 'uitnodiging'): ?>
-<div class="card">
-  <div class="card-header"><div class="card-title">📨 Uitnodigingsinstellingen</div></div>
-  <div class="card-body">
-    <form method="POST">
-      <?= csrf_input() ?><input type="hidden" name="actie" value="instellingen">
-      <div class="inst-sectie">
-        <h3>Auto-invite op basis van leeftijd</h3>
-        <p style="font-size:13px;color:var(--tekst-zacht);margin-bottom:12px">
-          Sollicitanten binnen de leeftijdsgrenzen worden automatisch of als suggestie weergegeven voor uitnodiging.
-        </p>
-        <div class="form-groep">
-          <label>Modus</label>
-          <select name="inst[invite.modus]">
-            <?php foreach (['uit'=>'Uit — geen automatisering','suggestie'=>'Suggestie — markeer in de lijst, admin handelt','auto'=>'Automatisch — nodig uit na ingestelde vertraging'] as $v=>$l): ?>
-            <option value="<?= $v ?>" <?= instelling('invite.modus') === $v ? 'selected' : '' ?>><?= $l ?></option>
-            <?php endforeach; ?>
-          </select>
-        </div>
-        <div class="form-rij">
-          <div class="form-groep">
-            <label>Minimumleeftijd</label>
-            <input type="number" name="inst[invite.min_leeftijd]" value="<?= instelling_int('invite.min_leeftijd',16) ?>" min="14" max="40">
-          </div>
-          <div class="form-groep">
-            <label>Maximumleeftijd</label>
-            <input type="number" name="inst[invite.max_leeftijd]" value="<?= instelling_int('invite.max_leeftijd',30) ?>" min="14" max="65">
-          </div>
-        </div>
-        <div class="form-groep" id="delay_veld" style="<?= instelling('invite.modus') !== 'auto' ? 'display:none' : '' ?>">
-          <label>Vertraging in uren (alleen bij automatisch)</label>
-          <input type="number" name="inst[invite.delay_uur]" value="<?= instelling_int('invite.delay_uur',24) ?>" min="0" max="168">
-          <div class="form-hulp">0 = direct uitnodigen. 24 = na 24 uur automatisch uitnodigen.</div>
-        </div>
-      </div>
-
-      <div class="inst-sectie">
-        <h3>⚙️ Automatisering bij fase-wijziging</h3>
-        <p style="font-size:12px;color:var(--tekst-zacht);margin-bottom:10px">
-          Wat gebeurt er automatisch als een sollicitant van fase wisselt.
-        </p>
-        <div class="form-rij">
-          <div class="form-groep">
-            <label>
-              <input type="hidden" name="inst[auto.ondertekening_sd]" value="0">
-              <input type="checkbox" name="inst[auto.ondertekening_sd]" value="1" <?= instelling('auto.ondertekening_sd', '1') === '1' ? 'checked' : '' ?>>
-              Ondertekeningen bij SD-uitnodiging
-            </label>
-            <div class="form-hulp">18+: gezondheid + intake als portaal-taak. Minderjarig: ouder krijgt automatisch mail zodra sollicitant ouder-gegevens invult.</div>
-          </div>
-          <div class="form-groep">
-            <label>
-              <input type="hidden" name="inst[auto.kennismakingspakket]" value="0">
-              <input type="checkbox" name="inst[auto.kennismakingspakket]" value="1" <?= instelling('auto.kennismakingspakket', '1') === '1' ? 'checked' : '' ?>>
-              Kennismakingspakket bij aangenomen
-            </label>
-            <div class="form-hulp">Welkomstmail + portaal-taken (lidmaatschap, loonheffing, huisregels).</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="inst-sectie">
-        <h3>Herinneringen</h3>
-        <p style="font-size:12px;color:var(--tekst-zacht);margin-bottom:10px">
-          Automatische herinneringen, gecontroleerd op wat er echt verstuurd is (niet dubbel). Inhoud en kanaal per type:
-          <a href="<?= APP_URL ?>/admin/mail_templates.php" style="color:var(--oranje)">Mail templates</a> en
-          <a href="<?= APP_URL ?>/admin/instellingen.php?tab=berichten" style="color:var(--oranje)">Berichten</a>.
-          Proefdraaien zonder te versturen: <a href="<?= APP_URL ?>/admin/systeem.php#herinneringen" style="color:var(--oranje)">Systeem › Herinneringen</a>.
-        </p>
-
-        <?php if (function_exists('herinnering_regels')): foreach (herinnering_regels() as $hslug => $hregel):
-          $h_aan = herinnering_instelling($hslug, 'aan') === '1'; ?>
-        <div class="form-rij" style="align-items:flex-start">
-          <div class="form-groep" style="flex:2">
-            <label>
-              <input type="hidden" name="inst[herinnering.<?= $hslug ?>.aan]" value="0">
-              <input type="checkbox" name="inst[herinnering.<?= $hslug ?>.aan]" value="1" <?= $h_aan ? 'checked' : '' ?>>
-              <?= h($hregel['naam']) ?>
-            </label>
-            <div class="form-hulp"><?= h($hregel['uitleg']) ?></div>
-            <?php if ($hslug === 'selectiedag_morgen'): ?>
-            <input type="text" name="inst[herinnering.selectiedag_morgen.info]" value="<?= h(instelling('herinnering.selectiedag_morgen.info', '') ?: instelling('reminder.sd_morgen_info', '')) ?>" placeholder="Laatste info, bv: het wordt warm, neem water mee" style="margin-top:6px">
-            <?php endif; ?>
-          </div>
-          <?php if (empty($hregel['vast_na'])): ?>
-          <div class="form-groep" style="max-width:120px">
-            <label><?= in_array($hslug, ['selectiedag_nadert', 'trainingsweekend_nadert'], true) ? 'Dagen vooraf' : 'Na (dagen)' ?></label>
-            <input type="number" name="inst[herinnering.<?= $hslug ?>.na]" value="<?= (int)herinnering_instelling($hslug, 'na') ?>" min="0" max="60">
-          </div>
-          <?php endif; ?>
-          <?php if ((int)$hregel['herhaal'] > 0): ?>
-          <div class="form-groep" style="max-width:120px">
-            <label>Herhaal elke</label>
-            <input type="number" name="inst[herinnering.<?= $hslug ?>.herhaal]" value="<?= (int)herinnering_instelling($hslug, 'herhaal') ?>" min="1" max="60">
-          </div>
-          <div class="form-groep" style="max-width:100px">
-            <label>Max</label>
-            <input type="number" name="inst[herinnering.<?= $hslug ?>.max]" value="<?= (int)herinnering_instelling($hslug, 'max') ?>" min="1" max="20">
-          </div>
-          <?php endif; ?>
-        </div>
-        <?php endforeach; endif; ?>
-
-        <div class="form-rij">
-          <div class="form-groep">
-            <label>Rustperiode (dagen)</label>
-            <input type="number" name="inst[herinnering.rust_dagen]" value="<?= instelling_int('herinnering.rust_dagen', 3) ?>" min="0" max="30">
-            <div class="form-hulp">Maximaal één "zachte" herinnering per sollicitant per zoveel dagen.</div>
-          </div>
-          <div class="form-groep">
-            <label>Anti-loop: zelfde bericht per dag</label>
-            <input type="number" name="inst[melding.plafond_dag]" value="<?= instelling_int('melding.plafond_dag', 8) ?>" min="1" max="50">
-            <div class="form-hulp">Vaker hetzelfde automatische bericht naar dezelfde ontvanger in 24 uur wordt overgeslagen (zie foutenlog).
-              Andere berichtsoorten, bestuursmeldingen en wat je zelf in gang zet (fase omzetten, bulk, handmatig) tellen niet mee.</div>
-          </div>
-          <div class="form-groep">
-            <label>Bijlage als e-mailbijlage tot (MB)</label>
-            <input type="number" name="inst[bijlage.mail_max_mb]" value="<?= instelling_int('bijlage.mail_max_mb', 15) ?>" min="1" max="25">
-            <div class="form-hulp">Grotere bestanden gaan als downloadknop in de mail (link 14 dagen geldig). Weigert de mailserver een bijlage toch, dan gaat de mail automatisch opnieuw met een downloadknop.</div>
-          </div>
-          <div class="form-groep">
-            <label>WhatsApp per uur (max)</label>
-            <input type="number" name="inst[wa.max_per_uur]" value="<?= instelling_int('wa.max_per_uur', 30) ?>" min="1" max="500">
-            <div class="form-hulp">Boven dit aantal valt de kern terug op SMS/e-mail.</div>
-          </div>
-        </div>
-      </div>
-      <button type="submit" class="btn btn-primary">Opslaan</button>
-    </form>
-  </div>
-</div>
-
-<?php elseif ($tab === 'mail'): ?>
-<div class="card">
-  <div class="card-header"><div class="card-title">📧 Mail & notificaties</div></div>
-  <div class="card-body">
-    <form method="POST">
-      <?= csrf_input() ?><input type="hidden" name="actie" value="instellingen">
-      <div class="inst-sectie">
-        <h3>E-mailadressen</h3>
-        <div class="form-rij">
-          <div class="form-groep">
-            <label>Foutmeldingen sturen naar</label>
-            <input type="email" name="inst[mail.fout_email]" value="<?= h(instelling('mail.fout_email','website@paal13.com')) ?>">
-            <div class="form-hulp">Ontvangt automatisch een mail bij technische fouten (foutcode + details)</div>
-          </div>
-          <div class="form-groep">
-            <label>Bestuur e-mail</label>
-            <input type="email" name="inst[mail.bestuur_email]" value="<?= h(instelling('mail.bestuur_email','bestuur@paal13.com')) ?>">
-            <div class="form-hulp">Ontvangt notificaties bij nieuwe aanmeldingen</div>
-          </div>
-        </div>
-        <div class="form-rij">
-          <div class="form-groep">
-            <label>Penningmeester e-mail</label>
-            <input type="email" name="inst[mail.penningmeester_email]" value="<?= h(instelling('mail.penningmeester_email','')) ?>">
-            <div class="form-hulp">Ontvangt de melding "loondossier compleet" (loonheffing, kopie ID, bankpas). Leeg = bestuursadres</div>
-          </div>
-          <div class="form-groep">
-            <label>Ledenservice e-mail</label>
-            <input type="email" name="inst[mail.ledenservice_email]" value="<?= h(instelling('mail.ledenservice_email','')) ?>">
-            <div class="form-hulp">Ontvangt de ondertekende inschrijving als lid/donateur (met PDF). Leeg = bestuursadres</div>
-          </div>
-        </div>
-        <div class="form-groep">
-          <label class="checkbox-label"><input type="hidden" name="inst[documenten.penningmeester_bijlagen]" value="0"><input type="checkbox" name="inst[documenten.penningmeester_bijlagen]" value="1" <?= instelling('documenten.penningmeester_bijlagen','0') === '1' ? 'checked' : '' ?>> Loondossier-stukken als bijlage meesturen in de mail aan de penningmeester</label>
-          <div class="form-hulp">Standaard uit: de stukken (BSN, kopie identiteitsbewijs, bankpas) gaan dan alleen via de beveiligde inzage in het beheer. Aanzetten stuurt ze onversleuteld per e-mail; doe dat alleen als het mailpad vertrouwd is.</div>
-        </div>
-      </div>
-      <div class="inst-sectie">
-        <h3>AI Analyse (BLK)</h3>
-        <div class="form-hulp" style="padding:12px 16px;background:var(--blauw-bg);border-left:3px solid var(--blauw);border-radius:6px">
-          🤖 AI-instellingen (Gemini API key, model, prompt template) zijn verplaatst naar het aparte tabblad <a href="?tab=ai" style="font-weight:500">AI Analyse</a>.
-        </div>
-      </div>
-      <button type="submit" class="btn btn-primary">Opslaan</button>
-    </form>
-
-    <!-- ── Cronjob ───────────────────────────────────────────── -->
-    <div style="border-top:1px solid var(--rand);padding-top:18px;margin-top:24px">
-      <h3 style="font-size:14px;color:var(--navy);margin-bottom:10px">⏰ Cronjob (automatische taken)</h3>
-      <?php
-      $cron_token = instelling('cron.token');
-      if (empty($cron_token)) {
-          $cron_token = bin2hex(random_bytes(24));
-          instelling_opslaan('cron.token', $cron_token);
-      }
-      $cron_url = APP_URL . '/cron/run.php?token=' . $cron_token;
-      ?>
-      <p style="font-size:13px;color:var(--tekst-zacht);margin-bottom:12px">
-        Voer de cronjob in cPanel in om de wachtrijen (AI, mail, auto-invite) elke 5 minuten te verwerken.
-      </p>
-      <div style="background:var(--grijs-bg);border:1px solid var(--rand);border-radius:6px;padding:12px;font-family:monospace;font-size:12px;word-break:break-all;margin-bottom:10px">
-        */5 * * * * curl -s "<?= h($cron_url) ?>" &gt; /dev/null 2&gt;&amp;1
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
-        <a href="<?= h($cron_url) ?>" target="_blank" class="btn btn-outline btn-sm">▶ Handmatig uitvoeren</a>
-      </div>
-
-      <?php
-      // Wachtrij status
-      $q_stats = ['ai'=>[], 'mail'=>[]];
-      try {
-          if (function_exists('ai_queue_auto_setup'))   { ai_queue_auto_setup();   $q_stats['ai']   = db()->query("SELECT status,COUNT(*) n FROM ai_queue   GROUP BY status")->fetchAll(PDO::FETCH_KEY_PAIR); }
-          if (function_exists('mail_queue_auto_setup')) { mail_queue_auto_setup(); $q_stats['mail'] = db()->query("SELECT status,COUNT(*) n FROM mail_queue GROUP BY status")->fetchAll(PDO::FETCH_KEY_PAIR); }
-      } catch (\Exception $e) {}
-      $kleuren = ['wacht'=>'badge-blauw','bezig'=>'badge-oranje','klaar'=>'badge-groen','fout'=>'badge-rood'];
-      ?>
-      <?php foreach (['ai'=>'AI analyses', 'mail'=>'Mail wachtrij'] as $sleutel => $label): if (!empty($q_stats[$sleutel])): ?>
-      <div style="margin-bottom:8px">
-        <div style="font-size:12px;font-weight:600;color:var(--tekst-zacht);margin-bottom:4px"><?= h($label) ?></div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <?php foreach ($q_stats[$sleutel] as $st => $n): ?>
-          <span class="badge <?= $kleuren[$st] ?? 'badge-grijs' ?>" style="font-size:11px"><?= h($st) ?>: <?= $n ?></span>
-          <?php endforeach; ?>
-        </div>
-      </div>
-      <?php endif; endforeach; ?>
-    </div>
-  </div>
-</div>
-
-<?php elseif ($tab === 'sso'): ?>
-<div class="card">
-  <div class="card-header"><div class="card-title">🔐 Authentik SSO</div></div>
-  <div class="card-body">
-    <p style="font-size:13px;color:var(--tekst-zacht);margin-bottom:14px">
-      Authentik is geconfigureerd via <code>includes/config.php</code> (OIDC_ISSUER, OIDC_CLIENT_ID).
-      Met een extra API-token kunnen <strong>terugkerende sollicitanten</strong> inloggen via Authentik
-      (in plaats van per-e-mail OTP code).
-    </p>
-
-    <div class="info-blok" style="background:var(--grijs-bg);padding:12px;border-radius:6px;margin-bottom:14px;font-size:12px">
-      <div style="font-weight:600;color:var(--tekst);margin-bottom:6px">Status</div>
-      <div>OIDC config: <?= authentik_actief() ? '<span style="color:var(--groen)">✓ aanwezig</span>' : '<span style="color:var(--rood)">✗ ontbreekt</span>' ?></div>
-      <div>API-token: <?= instelling('authentik.api_token') ? '<span style="color:var(--groen)">✓ ingesteld</span>' : '<span style="color:var(--grijs)">— geen (alleen OTP)</span>' ?></div>
-      <div>Issuer: <code><?= defined('OIDC_ISSUER') ? h(OIDC_ISSUER) : '—' ?></code></div>
-    </div>
-
-    <form method="POST">
-      <?= csrf_input() ?>
-      <input type="hidden" name="inst_tab" value="sso">
-
-      <div class="form-groep">
-        <label>Authentik API token <span class="tip" data-tip="Maak in Authentik → Directory → Tokens een long-lived token aan. Dit gebruiken we om te checken of een sollicitant een Authentik-account heeft."></span></label>
-        <input type="text" name="inst[authentik.api_token]" value="<?= h(instelling('authentik.api_token', '')) ?>"
-               placeholder="ak_xxx..." autocomplete="off">
-        <div class="form-hulp">
-          Vereist scope: <code>core/users</code> view. Laat leeg om SSO voor portaal uit te schakelen (OTP blijft werken).
-        </div>
-      </div>
-
-      <div class="form-groep">
-        <label>Toegestane admin-groepen <span class="tip" data-tip="Authentik group namen die admin-toegang krijgen. Andere gebruikers kunnen alleen via portaal inloggen."></span></label>
-        <input type="text" name="inst[authentik.admin_groepen]" value="<?= h(instelling('authentik.admin_groepen', 'Bestuur,Sol-Admin,Sol-Begeleider')) ?>"
-               placeholder="Bestuur,Sol-Admin,Sol-Begeleider">
-        <div class="form-hulp">
-          Comma-separated. Gebruikers met een van deze groepen krijgen toegang tot <code>/admin</code>.
-        </div>
-      </div>
-
-      <button type="submit" name="actie" value="instellingen" class="btn btn-primary">Opslaan</button>
-    </form>
-
-    <div style="border-top:1px solid var(--rand);padding-top:14px;margin-top:18px">
-      <div style="font-weight:600;font-size:13px;margin-bottom:8px">Werking</div>
-      <ul style="font-size:12px;color:var(--tekst-zacht);line-height:1.7;padding-left:18px">
-        <li>Sollicitant vult email in op <code>/portaal/</code></li>
-        <li>Bestaat dit email in Authentik? → SSO-login (geen OTP nodig)</li>
-        <li>Niet in Authentik? → Code per mail (fallback, blijft werken)</li>
-        <li>Admin-login via <code>/admin/</code> werkt onveranderd</li>
-      </ul>
-    </div>
-  </div>
-</div>
+<?php elseif (isset(instellingen_velden()[$tab])): ?>
+<?php /* Tabbladen uit de lijst (includes/instellingen_velden.php): fase_advies, uitnodiging, mail. */
+  $if_tab = $tab; require __DIR__ . '/_inst_formulier.php'; ?>
 
 <?php elseif ($tab === 'ai'): ?>
 
@@ -968,40 +933,38 @@ require __DIR__ . '/layout_top.php';
     <input type="hidden" name="actie" value="instellingen">
     <input type="hidden" name="tab" value="ai">
 
-    <div class="card">
-      <div class="card-header"><h2>🤖 AI Analyse — Gemini</h2></div>
-      <div class="card-body">
+    <div class="ds-kaart">
+      <div class="bh-kaartkop"><h2>AI Analyse — Gemini</h2></div>
+      <div class="bh-kaartbody">
 
-        <div class="inst-sectie">
+        <div class="bh-instsectie">
           <h3>API Configuratie</h3>
-          <div class="form-rij">
-            <div class="form-groep">
-              <label>Gemini API Key <span class="tip" data-tip="Verkrijg een gratis key via Google AI Studio"></span></label>
-              <input type="text" name="inst[ai.api_key]" value="<?= h(instelling('ai.api_key', '')) ?>" placeholder="AIza...">
-              <div class="form-hulp"><a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color:var(--oranje)">Gratis key aanvragen →</a></div>
-            </div>
-            <div class="form-groep">
-              <label>Model</label>
-              <select name="inst[ai.model]">
-                <?php $m = instelling('ai.model', 'gemini-1.5-flash'); ?>
-                <option value="gemini-1.5-flash"     <?= $m==='gemini-1.5-flash'?'selected':'' ?>>Gemini 1.5 Flash (snel)</option>
-                <option value="gemini-1.5-pro"       <?= $m==='gemini-1.5-pro'?'selected':'' ?>>Gemini 1.5 Pro (kwaliteit)</option>
-                <option value="gemini-2.0-flash-exp" <?= $m==='gemini-2.0-flash-exp'?'selected':'' ?>>Gemini 2.0 Flash (experimenteel)</option>
+          <div class="bh-veldrij">
+            <?= bh_geheim_veld('inst[ai.api_key]', 'ai.api_key', 'Gemini API-sleutel', instelling('ai.api_key', '') !== '',
+                  '<a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" class="bh-let-op">Gratis sleutel aanvragen bij Google AI Studio</a>') ?>
+            <div class="ds-veld">
+              <label for="veld-inst-ai-model">Model</label>
+              <select id="veld-inst-ai-model" name="inst[ai.model]">
+                <?php // Zelfde standaard als ai_model() in includes/ai_analyse.php; uitgezette modellen vallen daar terug.
+                      $m = function_exists('ai_model') ? ai_model() : instelling('ai.model', 'gemini-2.5-flash'); ?>
+                <option value="gemini-2.5-flash"      <?= $m==='gemini-2.5-flash'?'selected':'' ?>>Gemini 2.5 Flash (standaard)</option>
+                <option value="gemini-2.5-flash-lite" <?= $m==='gemini-2.5-flash-lite'?'selected':'' ?>>Gemini 2.5 Flash-Lite (sneller, goedkoper)</option>
+                <option value="gemini-2.5-pro"        <?= $m==='gemini-2.5-pro'?'selected':'' ?>>Gemini 2.5 Pro (grondiger, trager)</option>
               </select>
             </div>
           </div>
         </div>
 
-        <div class="inst-sectie">
+        <div class="bh-instsectie">
           <h3>Experimentele functies</h3>
           <?php $besch_aan = instelling('ai.beschikbaarheid_hulp', '0') === '1'; ?>
-          <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;padding:12px 14px;border:1px solid var(--rand);border-radius:8px;background:var(--grijs-bg)">
+          <label class="bh-inst-experiment">
             <input type="hidden" name="inst[ai.beschikbaarheid_hulp]" value="0">
-            <input type="checkbox" name="inst[ai.beschikbaarheid_hulp]" value="1" <?= $besch_aan ? 'checked' : '' ?> style="margin-top:2px">
+            <input type="checkbox" name="inst[ai.beschikbaarheid_hulp]" value="1" <?= $besch_aan ? 'checked' : '' ?>>
             <span>
               <strong>AI-hulp bij beschikbaarheid</strong>
-              <span style="display:inline-block;font-size:10px;font-weight:600;color:var(--oranje);border:1px solid var(--oranje);border-radius:4px;padding:1px 6px;margin-left:6px;vertical-align:middle">EXPERIMENTEEL</span>
-              <span style="display:block;font-size:12px;color:var(--tekst-zacht);margin-top:4px;font-weight:400">
+              <span class="bh-inst-experiment-label">EXPERIMENTEEL</span>
+              <span class="bh-inst-experiment-uitleg">
                 Sollicitanten kunnen hun beschikbaarheid in gewone taal typen; de AI vult het formulier dan alvast in.
                 De sollicitant controleert het resultaat daarna zelf. Vereist een geldige Gemini API-key hierboven.
               </span>
@@ -1009,65 +972,96 @@ require __DIR__ . '/layout_top.php';
           </label>
         </div>
 
-        <div class="inst-sectie">
-          <h3>Prompt template</h3>
-          <p style="font-size:12px;color:var(--tekst-zacht);margin-bottom:10px">
-            De instructie die naar Gemini wordt gestuurd voor elke BLK-analyse. Gebruik variabelen tussen <code style="background:var(--grijs-bg);padding:1px 5px;border-radius:3px">{{ }}</code>.
+        <div class="bh-instsectie">
+          <h3>Wat er naar Google gaat</h3>
+          <p class="ds-veld-hint bh-mb">
+            De instructie voor de analyse staat vast in de code (<code>includes/ai_analyse.php</code>), zodat
+            niemand er per ongeluk persoonsgegevens aan toevoegt. Per sollicitant gaat alleen dit mee:
+            leeftijdscategorie, opleiding, diploma's en certificaten, werkervaring, de twee motivaties en de
+            beschikbaarheid (aantal weken). <strong>Niet</strong>: naam, e-mail, telefoon, adres, foto en de
+            bijzonderheden uit het formulier (die kunnen medisch zijn). Heeft een sollicitant bezwaar gemaakt,
+            dan gaat er niets meer heen.
           </p>
-
-          <div style="background:var(--grijs-bg);border:1px solid var(--rand);border-radius:6px;padding:12px 14px;margin-bottom:12px;font-size:12px">
-            <strong>Beschikbare variabelen:</strong>
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:4px 14px;margin-top:8px;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:11.5px">
-              <span><code>{{leeftijd}}</code></span>
-              <span><code>{{leeftijdscategorie}}</code></span>
-              <span><code>{{opleiding}}</code></span>
-              <span><code>{{diplomas}}</code></span>
-              <span><code>{{werkervaring}}</code></span>
-              <span><code>{{motivatie_lifeguard}}</code></span>
-              <span><code>{{motivatie_strand}}</code></span>
-              <span><code>{{beschikbaarheid}}</code></span>
-              <span><code>{{aantal_weken_beschikbaar}}</code></span>
-              <span><code>{{bijzonderheden}}</code></span>
-              <span><code>{{seizoen_naam}}</code></span>
-              <span><code>{{seizoen_weken_totaal}}</code></span>
-            </div>
-          </div>
-
-          <div class="form-groep">
-            <textarea id="aiPromptTextarea" name="inst[ai.prompt_template]" rows="22"
-                      style="font-family:'SF Mono',Menlo,Consolas,monospace;font-size:12.5px;line-height:1.6;white-space:pre-wrap"><?= h(instelling('ai.prompt_template', '') ?: (function_exists('ai_prompt_default') ? ai_prompt_default() : '')) ?></textarea>
-            <div class="form-hulp">Laat leeg om de ingebouwde standaard te gebruiken.</div>
-          </div>
-
-          <!-- Verborgen template met default prompt -->
-          <textarea id="aiPromptDefault" style="display:none"><?= h(function_exists('ai_prompt_default') ? ai_prompt_default() : '') ?></textarea>
-
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
-            <button type="button" class="btn btn-outline btn-sm"
-                    onclick="if(confirm('Standaard prompt terugzetten?')){document.getElementById('aiPromptTextarea').value=document.getElementById('aiPromptDefault').value;}">
-              ↺ Standaard terugzetten
-            </button>
-          </div>
         </div>
 
-        <div class="inst-sectie">
+        <div class="bh-instsectie">
           <h3>Activering</h3>
-          <label style="display:flex;align-items:center;gap:8px">
+          <label class="bh-inst-vinkregel">
             <input type="hidden" name="inst[ai.auto_analyse]" value="0">
             <input type="checkbox" name="inst[ai.auto_analyse]" value="1" <?= instelling('ai.auto_analyse', '1') === '1' ? 'checked' : '' ?>>
-            <span>Automatisch analyseren na ontvangst BLK</span>
+            <span>Automatisch analyseren na ontvangst kennismakingsformulier</span>
           </label>
-          <div class="form-hulp">Uit = handmatig via 'Analyseer' knop in paneel.</div>
+          <div class="ds-veld-hint">Uit = alleen handmatig, met de knop "Analyseer nu" bij het volledige formulier.</div>
         </div>
 
       </div>
-      <div style="padding:14px 18px;border-top:1px solid var(--rand);background:var(--grijs-bg);text-align:right">
-        <button type="submit" class="btn btn-primary">💾 Opslaan</button>
+      <div class="bh-inst-kaartvoet">
+        <button type="submit" class="ds-btn ds-btn-primair">Opslaan</button>
       </div>
     </div>
   </form>
 
 <?php elseif ($tab === 'authentik'): ?>
+
+  <!-- Inloggen: stond eerder als apart tabblad "Authentik SSO-login". Twee tabbladen
+       over dezelfde koppeling is één te veel. -->
+<div class="ds-kaart">
+  <div class="bh-kaartkop"><h2>Authentik SSO</h2></div>
+  <div class="bh-kaartbody">
+    <p class="bh-inst-intro bh-inst-intro-14">
+      De koppeling met Authentik staat in <code>includes/config.php</code> (OIDC_ISSUER, OIDC_CLIENT_ID).
+      Met een extra API-token kunnen <strong>terugkerende sollicitanten</strong> met hun Paal 13-account
+      inloggen, in plaats van met een inloglink per e-mail.
+    </p>
+
+    <div class="info-blok bh-inst-status">
+      <div class="bh-inst-status-kop">Status</div>
+      <div>Koppeling in config.php: <?= authentik_actief() ? '<span class="bh-tekst-ok">aanwezig</span>' : '<span class="bh-tekst-fout">ontbreekt</span>' ?></div>
+      <div>API-token: <?= instelling('authentik.api_token') ? '<span class="bh-tekst-ok">ingesteld</span>' : '<span class="bh-tekst-grijs">— geen (alleen inloglink per e-mail)</span>' ?></div>
+      <div>Issuer: <code><?= defined('OIDC_ISSUER') ? h(OIDC_ISSUER) : '—' ?></code></div>
+    </div>
+
+    <?php /* Toegang tot het beheer = een groep die aan een rol gekoppeld is (sinds 2.132.0 de enige bron). */ ?>
+    <div class="info-blok bh-inst-status">
+      <div class="bh-inst-status-kop">Wie het beheer in mag</div>
+      <?php foreach (rollen_alle() as $_r): ?>
+        <div><?= h((string)$_r['naam']) ?>:
+          <?= !empty($_r['authentik_groep']) ? '<code>' . h((string)$_r['authentik_groep']) . '</code>' : '<span class="bh-tekst-grijs">geen groep</span>' ?></div>
+      <?php endforeach; ?>
+      <div class="ds-veld-hint">
+        Wie in een van deze groepen zit, komt in het beheer; met meerdere groepen tellen de rechten op.
+        Aanpassen in <a href="<?= APP_URL ?>/admin/rollen.php">Rollen &amp; rechten</a>.
+      </div>
+      <?php if ($_los = rechten_ontkoppelde_oude_groepen()): ?>
+        <div class="bh-tekst-fout"><?= icoon('waarschuwing', 14) ?>
+          Deze groepen hadden eerder toegang, maar horen bij geen rol: <?= h(implode(', ', $_los)) ?>.
+          Wie alleen daarin zit, komt niet meer in het beheer.</div>
+      <?php endif; ?>
+    </div>
+
+    <form method="POST">
+      <?= csrf_input() ?>
+      <input type="hidden" name="inst_tab" value="sso">
+
+      <?= bh_geheim_veld('inst[authentik.api_token]', 'authentik.api_token', 'Authentik API-token', instelling('authentik.api_token', '') !== '',
+            'Maak in Authentik onder Directory › Tokens een long-lived token aan, met scope <code>core/users</code> (view). Verwijder het token om SSO voor het portaal uit te zetten; inloggen met een code blijft werken.') ?>
+
+      <button type="submit" name="actie" value="instellingen" class="ds-btn ds-btn-primair">Opslaan</button>
+    </form>
+
+    <div class="bh-inst-werking">
+      <div class="bh-inst-werking-kop">Werking</div>
+      <ul class="bh-inst-werking-lijst">
+        <li>De sollicitant vult het e-mailadres in op het portaal.</li>
+        <li>Staat dat adres in Authentik? Dan gaat het inloggen met het Paal 13-account.</li>
+        <li>Staat het er niet in? Dan volgt een inloglink per e-mail (dat blijft altijd werken).</li>
+        <li>Inloggen in het beheer verandert hier niet door.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+
 
   <?php
     competenties_auto_setup();
@@ -1081,9 +1075,9 @@ require __DIR__ . '/layout_top.php';
     $laatste_bulk = instelling('authentik.laatste_bulk_sync', '');
   ?>
 
-  <div class="inst-sectie" style="margin-bottom:16px">
-    <h3>🔐 Authentik-koppeling</h3>
-    <div class="form-hulp" style="padding:12px 16px;background:var(--blauw-bg);border-left:3px solid var(--blauw);border-radius:6px;margin-bottom:14px;font-size:13px;line-height:1.7">
+  <div class="bh-instsectie bh-inst-los">
+    <h3>Authentik-koppeling</h3>
+    <div class="ds-veld-hint bh-inst-uitlegblok">
       <strong>Wat is dit?</strong> Het systeem haalt de competenties (vaardigheden) van terugkerende sollicitanten op uit Authentik.
       Authentik blijft de leidende bron — wijzigingen doe je dáár, niet hier.<br><br>
       <strong>Wat heb je nodig?</strong><br>
@@ -1095,81 +1089,113 @@ require __DIR__ . '/layout_top.php';
 
     <form method="POST">
       <?= csrf_input() ?><input type="hidden" name="actie" value="instellingen">
-      <div class="form-rij">
-        <div class="form-groep">
-          <label>Authentik basis-URL</label>
-          <input type="url" name="inst[authentik.url]" value="<?= h($a_url) ?>" placeholder="<?= $a_url_bestaand ? h($a_url_bestaand) . ' (uit SSO-config)' : 'https://auth.paal13.com' ?>">
-          <?php if (!$a_url && $a_url_bestaand): ?><div style="font-size:11px;color:var(--groen)">✓ Gebruikt automatisch de SSO-URL: <?= h($a_url_bestaand) ?></div><?php endif; ?>
+      <div class="bh-veldrij">
+        <div class="ds-veld">
+          <label for="veld-inst-authentik-url">Authentik basis-URL</label>
+          <input id="veld-inst-authentik-url" type="url" name="inst[authentik.url]" value="<?= h($a_url) ?>" placeholder="<?= $a_url_bestaand ? h($a_url_bestaand) . ' (uit SSO-config)' : 'https://auth.paal13.com' ?>">
+          <?php if (!$a_url && $a_url_bestaand): ?><div class="bh-inst-klein bh-tekst-ok">Gebruikt automatisch de SSO-URL: <?= h($a_url_bestaand) ?></div><?php endif; ?>
         </div>
-        <div class="form-groep">
-          <label>API-token <span style="color:var(--grijs);font-weight:400">(service-account)</span></label>
-          <input type="password" name="inst[authentik.token]" value="<?= h($a_token) ?>" placeholder="<?= ($a_token || $a_token_bestaand) ? '••••••••••••' : 'Plak hier de token' ?>" autocomplete="off">
-          <?php if (!$a_token && $a_token_bestaand): ?><div style="font-size:11px;color:var(--groen)">✓ Gebruikt automatisch de bestaande API-token</div><?php endif; ?>
-        </div>
+        <?= bh_geheim_veld('inst[authentik.token]', 'authentik.token', 'API-token (service-account)', $a_token !== '',
+              (!$a_token && $a_token_bestaand) ? 'Leeg: het systeem gebruikt het Authentik API-token hierboven.' : '') ?>
       </div>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <button type="submit" class="btn btn-primary">💾 Opslaan</button>
+      <div class="bh-inst-knoppen">
+        <button type="submit" class="ds-btn ds-btn-primair">Opslaan</button>
         <?php if ($geconf): ?>
-        <button type="submit" name="actie" value="authentik_test" class="btn btn-outline">🔌 Test verbinding</button>
-        <span style="font-size:12px;color:var(--groen)">✓ Geconfigureerd</span>
+        <button type="submit" name="actie" value="authentik_test" class="ds-btn ds-btn-secundair">Test verbinding</button>
+        <span class="bh-inst-stand bh-tekst-ok">Geconfigureerd</span>
         <?php else: ?>
-        <span style="font-size:12px;color:var(--grijs)">Nog niet geconfigureerd</span>
+        <span class="bh-inst-stand bh-tekst-grijs">Nog niet geconfigureerd</span>
         <?php endif; ?>
       </div>
     </form>
   </div>
 
   <?php if ($geconf): ?>
-  <div class="inst-sectie" style="margin-bottom:16px">
-    <h3>🔄 Synchronisatie</h3>
-    <p style="font-size:13px;color:var(--tekst-zacht);margin-bottom:12px">
+  <div class="bh-instsectie bh-inst-los">
+    <h3>Synchronisatie</h3>
+    <p class="ds-veld-hint bh-mb">
       Competenties worden automatisch ververst: bij elke nieuwe aanmelding, dagelijks via de cron, en handmatig per sollicitant (ververs-knop in het dossier).
       <?php if ($laatste_bulk): ?><br>Laatste volledige sync: <strong><?= h(datum_nl(substr($laatste_bulk,0,10))) ?> <?= h(substr($laatste_bulk,11,5)) ?></strong>.<?php endif; ?>
     </p>
-    <form method="POST" onsubmit="return confirm('Nu alle actieve sollicitanten opnieuw synchroniseren met Authentik?')">
+    <form method="POST" data-bevestig="Alle actieve sollicitanten opnieuw synchroniseren met Authentik? Hun competenties worden overschreven met wat er in Authentik staat.">
       <?= csrf_input() ?>
-      <button type="submit" name="actie" value="authentik_bulk_sync" class="btn btn-outline">🔄 Nu alle sollicitanten verversen</button>
+      <button type="submit" name="actie" value="authentik_bulk_sync" class="ds-btn ds-btn-secundair">Nu alle sollicitanten verversen</button>
     </form>
   </div>
   <?php endif; ?>
 
-  <div class="inst-sectie">
-    <h3>🏷️ Groep-indeling (competenties)</h3>
-    <p style="font-size:13px;color:var(--tekst-zacht);margin-bottom:12px">
-      Welke Authentik-groepen tellen als competentie, en hun rangorde. Per categorie tonen we alleen de <strong>hoogste</strong> rang die iemand heeft
+  <div class="bh-instsectie">
+    <h3>Groep-indeling (competenties)</h3>
+    <p class="ds-veld-hint bh-mb">
+      Welke Authentik-groepen tellen als competentie, en hun rangorde. De weergavenaam zie je in het dossier en bij Posten &amp; bezetting. Per categorie tonen we alleen de <strong>hoogste</strong> rang die iemand heeft
       (bijv. wie Chauffeur is, hoeft niet ook als Opstapper Auto te verschijnen). Groepen die hier niet staan, worden genegeerd.
+      Terugkerend is alleen wie in <code>lid-strandploeg</code> of <code>lid-oud-strandploeg</code> zit; een diploma alleen is niet genoeg.
     </p>
-    <div style="overflow-x:auto">
-      <table style="width:100%;border-collapse:collapse;font-size:13px">
-        <thead>
-          <tr style="border-bottom:2px solid var(--rand);text-align:left">
-            <th style="padding:8px 10px">Categorie</th>
-            <th style="padding:8px 10px">Rangorde (laag → hoog)</th>
-          </tr>
-        </thead>
-        <tbody>
-          <?php foreach ($mapping as $cat => $def):
-            $groepen = $def['groepen'] ?? [];
-            asort($groepen);
-          ?>
-          <tr style="border-bottom:1px solid var(--rand-licht)">
-            <td style="padding:8px 10px;font-weight:600;white-space:nowrap"><?= h($def['icoon'] ?? '') ?> <?= h($def['label']) ?>
-              <div style="font-size:11px;color:var(--grijs);font-weight:400"><?= ($def['ranking'] ?? true) ? 'met rangorde' : 'los (geen rangorde)' ?></div>
-            </td>
-            <td style="padding:8px 10px">
-              <?php foreach ($groepen as $groep => $rang): ?>
-                <span style="display:inline-block;background:var(--grijs-bg);border:1px solid var(--rand);border-radius:5px;padding:3px 9px;margin:2px;font-size:12px">
-                  <?php if ($def['ranking'] ?? true): ?><span style="color:var(--grijs)"><?= (int)$rang ?>.</span> <?php endif; ?><?= h($groep) ?>
-                </span>
+    <?php /* Groepen per rang, gescheiden door komma's. De categorieën en rangen liggen vast
+             (posten en "terugkerend" verwijzen ernaar); de groepen en de rangnamen niet. */
+          $_groepen_van = fn(array $def, int $rang): string => implode(', ', array_keys(array_filter($def['groepen'] ?? [], fn($r) => (int)$r === $rang))); ?>
+    <form method="POST">
+      <?= csrf_input() ?>
+      <div class="bh-tabel-wrap">
+        <table class="bh-inst-comptabel">
+          <thead>
+            <tr>
+              <th class="bh-cel" scope="col">Categorie</th>
+              <th class="bh-cel bh-comp-rang" scope="col">Rang</th>
+              <th class="bh-cel bh-comp-naam" scope="col">Weergavenaam</th>
+              <th class="bh-cel bh-comp-groepen" scope="col">Authentik-groepen (komma ertussen)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php foreach ($mapping as $cat => $def):
+              $_rangen = !empty($def['ranking']) ? array_keys($def['namen'] ?? []) : [null]; ?>
+              <?php foreach ($_rangen as $_i => $_rang): ?>
+              <tr>
+                <?php if ($_i === 0): ?>
+                <th class="bh-compcel" scope="rowgroup" rowspan="<?= count($_rangen) ?>">
+                  <?= icoon(bh_icoonnaam((string)($def['icoon'] ?? '')), 15) ?><?= h($def['label'] ?? $cat) ?>
+                  <div class="bh-inst-compsub"><?= !empty($def['verborgen']) ? 'bepaalt "terugkerend", geen competentie'
+                                                   : (!empty($def['ranking']) ? 'met rangorde (1 = laagst)' : 'los (geen rangorde)') ?></div>
+                </th>
+                <?php endif; ?>
+                <?php if ($_rang !== null): ?>
+                  <td class="bh-cel"><?= (int)$_rang ?></td>
+                  <td class="bh-cel">
+                    <input class="ds-input" type="text" maxlength="60" name="comp[<?= h($cat) ?>][namen][<?= (int)$_rang ?>]"
+                           value="<?= h((string)$def['namen'][$_rang]) ?>" aria-label="<?= h($def['label']) ?>, rang <?= (int)$_rang ?>: weergavenaam">
+                  </td>
+                  <td class="bh-cel">
+                    <input class="ds-input" type="text" name="comp[<?= h($cat) ?>][groepen][<?= (int)$_rang ?>]"
+                           value="<?= h($_groepen_van($def, (int)$_rang)) ?>" aria-label="<?= h($def['label']) ?>, rang <?= (int)$_rang ?>: Authentik-groepen">
+                  </td>
+                <?php else: ?>
+                  <td class="bh-cel">–</td>
+                  <td class="bh-cel"><span class="bh-tekst-grijs">naam van de groep</span></td>
+                  <td class="bh-cel">
+                    <input class="ds-input" type="text" name="comp[<?= h($cat) ?>][groepen]"
+                           value="<?= h(implode(', ', array_keys($def['groepen'] ?? []))) ?>" aria-label="<?= h($def['label']) ?>: Authentik-groepen">
+                  </td>
+                <?php endif; ?>
+              </tr>
               <?php endforeach; ?>
-            </td>
-          </tr>
-          <?php endforeach; ?>
-        </tbody>
-      </table>
-    </div>
-    <div style="font-size:12px;color:var(--grijs);margin-top:10px">
-      De indeling is voorgeconfigureerd op basis van jullie Authentik-groepen. Aanpassen kan later via een uitgebreider scherm; neem contact op als een groep verkeerd staat.
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+      <div class="bh-inst-knoppen">
+        <button type="submit" name="actie" value="competenties_opslaan" class="ds-btn ds-btn-primair">Indeling opslaan</button>
+      </div>
+    </form>
+    <?php if (instelling('authentik.mapping', '') !== ''): ?>
+      <form method="POST" data-bevestig="De standaard groep-indeling terugzetten? Je eigen aanpassingen gaan verloren.">
+        <?= csrf_input() ?>
+        <button type="submit" name="actie" value="competenties_standaard" class="ds-btn ds-btn-secundair ds-btn-sm">Standaard terugzetten</button>
+      </form>
+    <?php endif; ?>
+    <div class="bh-inst-voetnoot">
+      Standaard staan de oude Authentik-namen (zoals "Senior Lifeguard") nog naast de nieuwe (<code>kw-lifeguard-senior</code>).
+      Zijn de groepen in Authentik hernoemd, haal de oude namen dan hier weg en klik daarna op
+      "Nu alle sollicitanten verversen". Een groep mag maar op één plek staan.
     </div>
   </div>
 
@@ -1178,45 +1204,55 @@ require __DIR__ . '/layout_top.php';
     $sjab = function_exists('bezetting_sjablonen') ? bezetting_sjablonen() : [];
     $comp_map = function_exists('competentie_mapping') ? competentie_mapping() : [];
   ?>
-  <div class="card">
-    <div class="card-header"><div class="card-title">Posten &amp; bezetting</div></div>
-    <div class="card-body">
-      <p style="font-size:13px;color:var(--tekst-zacht);margin-bottom:16px">
-        Welke rollen moeten er per post bemand zijn? De <a href="<?= APP_URL ?>/admin/dekking.php" style="color:var(--navy)">Dekking-pagina</a>
+  <div class="ds-kaart">
+    <div class="bh-kaartkop"><h2>Posten &amp; bezetting</h2></div>
+    <div class="bh-kaartbody">
+      <p class="bh-inst-intro">
+        Welke rollen moeten er per post bemand zijn? De <a href="<?= APP_URL ?>/admin/dekking.php" class="bh-link-navy">Dekking-pagina</a>
         rekent hiermee uit of elke week te bemannen is. Rollen matchen op competentie + minimum-rang uit Authentik.
         <br><strong>De postcommandant valt hier buiten</strong> — die regelt het bestuur apart.
       </p>
 
       <div id="postenLijst"></div>
-      <button type="button" class="btn btn-outline btn-sm" onclick="postToevoegen()">+ Post toevoegen</button>
+      <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" data-klik="postToevoegen()">+ Post toevoegen</button>
 
-      <form method="POST" style="margin-top:18px;display:flex;gap:8px;flex-wrap:wrap" onsubmit="return bezettingSerialiseer()">
+      <form method="POST" class="bh-post-opslaan" data-verzend="return bezettingSerialiseer()">
         <?= csrf_input() ?>
         <input type="hidden" name="actie" value="bezetting_opslaan">
         <input type="hidden" name="sjablonen_json" id="sjablonenJson">
-        <button type="submit" class="btn btn-primary">Opslaan</button>
+        <button type="submit" class="ds-btn ds-btn-primair">Opslaan</button>
       </form>
-      <form method="POST" style="margin-top:8px" onsubmit="return confirm('Standaardbezetting herstellen? Je huidige indeling gaat verloren.')">
+      <form method="POST" class="bh-herstelform" data-bevestig="De standaardbezetting terugzetten? Je eigen posten en rollen verdwijnen daarmee.">
         <?= csrf_input() ?>
         <input type="hidden" name="actie" value="bezetting_herstel">
-        <button type="submit" class="btn btn-outline btn-sm">↩ Standaard herstellen</button>
+        <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm"> Standaard herstellen</button>
       </form>
     </div>
   </div>
 
-  <script>
-  const COMP_CATS = <?= json_encode(array_map(fn($c) => ['label'=>$c['label'], 'groepen'=>$c['groepen'] ?? []], $comp_map)) ?>;
+  <script nonce="<?= h(csp_nonce()) ?>">
+  <?php // Leesbare groepsnamen in de rangkeuze; een verborgen categorie (strandploeg) is geen eis voor een post.
+        $_cats = [];
+        foreach ($comp_map as $_k => $_c) {
+            if (!empty($_c['verborgen'])) continue;
+            $_g = [];
+            foreach ((array)($_c['groepen'] ?? []) as $_naam => $_rang) $_g[competentie_groep_label((string)$_naam)] = $_rang;
+            $_cats[$_k] = ['label' => $_c['label'], 'groepen' => $_g];
+        } ?>
+  const COMP_CATS = <?= json_encode($_cats) ?>;
   let SJABLONEN = <?= json_encode($sjab) ?>;
 
+  // Eigen escape: render() draait meteen, vóórdat beheer.js (bhTekst) onderaan de pagina laadt.
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   function catOpties(sel) {
     let h = '';
-    for (const c in COMP_CATS) h += '<option value="'+c+'"'+(c===sel?' selected':'')+'>'+COMP_CATS[c].label+'</option>';
+    for (const c in COMP_CATS) h += '<option value="'+esc(c)+'"'+(c===sel?' selected':'')+'>'+esc(COMP_CATS[c].label)+'</option>';
     return h;
   }
   function rangOpties(cat, sel) {
     const groepen = COMP_CATS[cat]?.groepen || {};
     let h = '';
-    for (const g in groepen) h += '<option value="'+groepen[g]+'"'+(parseInt(groepen[g])===parseInt(sel)?' selected':'')+'>'+groepen[g]+' — '+g+' of hoger</option>';
+    for (const g in groepen) h += '<option value="'+esc(groepen[g])+'"'+(parseInt(groepen[g])===parseInt(sel)?' selected':'')+'>'+esc(groepen[g])+' — '+esc(g)+' of hoger</option>';
     return h || '<option value="1">1</option>';
   }
 
@@ -1226,30 +1262,50 @@ require __DIR__ . '/layout_top.php';
     for (const ps in SJABLONEN) {
       const post = SJABLONEN[ps];
       const div = document.createElement('div');
-      div.style.cssText = 'border:1px solid var(--rand);border-radius:10px;padding:14px;margin-bottom:12px;background:var(--bg)';
+      div.className = 'bh-post';
       let rollenHtml = '';
+      // Geen inline handlers (CSP): de velden dragen data-post/data-rol/data-veld; één luisteraar
+      // op #postenLijst (hieronder) schrijft de waarde terug in SJABLONEN.
+      const pa = ' data-post="'+esc(ps)+'"';
       (post.rollen || []).forEach((r, i) => {
+        const ra = pa + ' data-rol="'+i+'"';
         rollenHtml +=
-          '<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap">' +
-            '<input type="text" value="'+(r.label||'').replace(/"/g,'&quot;')+'" placeholder="Rol" oninput="SJABLONEN[\''+ps+'\'].rollen['+i+'].label=this.value" style="flex:2;min-width:130px;padding:6px 8px;border:1px solid var(--rand);border-radius:5px;font-size:13px">' +
-            '<select onchange="SJABLONEN[\''+ps+'\'].rollen['+i+'].categorie=this.value;SJABLONEN[\''+ps+'\'].rollen['+i+'].min_rang=1;render()" style="flex:1;min-width:110px;padding:6px;border:1px solid var(--rand);border-radius:5px;font-size:13px">'+catOpties(r.categorie)+'</select>' +
-            '<select onchange="SJABLONEN[\''+ps+'\'].rollen['+i+'].min_rang=parseInt(this.value)" style="flex:2;min-width:150px;padding:6px;border:1px solid var(--rand);border-radius:5px;font-size:13px">'+rangOpties(r.categorie, r.min_rang)+'</select>' +
-            '<input type="number" min="1" max="20" value="'+(r.aantal||1)+'" oninput="SJABLONEN[\''+ps+'\'].rollen['+i+'].aantal=parseInt(this.value)||1" title="Aantal personen" style="width:60px;padding:6px;border:1px solid var(--rand);border-radius:5px;font-size:13px">' +
-            '<button type="button" class="btn btn-outline btn-sm" onclick="rolWeg(\''+ps+'\','+i+')" style="min-width:36px">✕</button>' +
+          '<div class="bh-post-rol">' +
+            '<input type="text" value="'+esc(r.label||'')+'" placeholder="Rol" aria-label="Naam van de rol"'+ra+' data-veld="label" class="bh-post-rolnaam">' +
+            '<select'+ra+' data-veld="categorie" aria-label="Competentie" class="bh-post-categorie">'+catOpties(r.categorie)+'</select>' +
+            '<select'+ra+' data-veld="min_rang" aria-label="Minimaal niveau" class="bh-post-rang">'+rangOpties(r.categorie, r.min_rang)+'</select>' +
+            '<input type="number" min="1" max="20" value="'+(parseInt(r.aantal)||1)+'"'+ra+' data-veld="aantal" title="Aantal personen" aria-label="Aantal personen" class="bh-post-aantal">' +
+            '<button type="button" class="ds-btn ds-btn-secundair ds-btn-sm bh-post-weg" data-klik="rolWeg(this.dataset.post, '+i+')"'+pa+'>Verwijderen</button>' +
           '</div>';
       });
       div.innerHTML =
-        '<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">' +
-          '<input type="text" value="'+(post.icoon||'').replace(/"/g,'&quot;')+'" oninput="SJABLONEN[\''+ps+'\'].icoon=this.value" style="width:48px;text-align:center;padding:6px;border:1px solid var(--rand);border-radius:5px;font-size:15px">' +
-          '<input type="text" value="'+(post.naam||'').replace(/"/g,'&quot;')+'" oninput="SJABLONEN[\''+ps+'\'].naam=this.value" placeholder="Postnaam" style="flex:1;min-width:150px;padding:7px 10px;border:1px solid var(--rand);border-radius:5px;font-weight:600;font-size:14px">' +
-          '<label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--tekst-zacht)"><input type="checkbox" '+(post.regel_geen_twee_aspiranten?'checked':'')+' onchange="SJABLONEN[\''+ps+'\'].regel_geen_twee_aspiranten=this.checked"> nooit 2 aspiranten samen</label>' +
-          '<button type="button" class="btn btn-outline btn-sm" onclick="postWeg(\''+ps+'\')">Post verwijderen</button>' +
+        '<div class="bh-post-kop">' +
+          '<input type="text" value="'+esc(post.icoon||'')+'"'+pa+' data-veld="icoon" aria-label="Icoon" class="bh-post-icoon">' +
+          '<input type="text" value="'+esc(post.naam||'')+'"'+pa+' data-veld="naam" placeholder="Postnaam" aria-label="Postnaam" class="bh-post-naam">' +
+          '<label class="bh-post-regel"><input type="checkbox" '+(post.regel_geen_twee_aspiranten?'checked':'')+pa+' data-veld="regel_geen_twee_aspiranten"> nooit 2 aspiranten samen</label>' +
+          '<button type="button" class="ds-btn ds-btn-secundair ds-btn-sm"'+pa+' data-klik="postWeg(this.dataset.post)">Post verwijderen</button>' +
         '</div>' +
         rollenHtml +
-        '<button type="button" class="btn btn-outline btn-sm" onclick="rolToevoegen(\''+ps+'\')">+ Rol</button>';
+        '<button type="button" class="ds-btn ds-btn-secundair ds-btn-sm"'+pa+' data-klik="rolToevoegen(this.dataset.post)">+ Rol</button>';
       box.appendChild(div);
     }
   }
+  // Waarde van een veld terug in SJABLONEN (vervangt de oninput/onchange-regels).
+  function bezettingVeld(el) {
+    const post = SJABLONEN[el.dataset.post];
+    if (!post || !el.dataset.veld) return;
+    const doel = el.dataset.rol !== undefined ? post.rollen[parseInt(el.dataset.rol)] : post;
+    if (!doel) return;
+    const v = el.dataset.veld;
+    if (el.type === 'checkbox')       doel[v] = el.checked;
+    else if (v === 'aantal')          doel[v] = parseInt(el.value) || 1;
+    else if (v === 'min_rang')        doel[v] = parseInt(el.value);
+    else                              doel[v] = el.value;
+    // Andere competentie = andere niveaus: opnieuw tekenen met niveau 1.
+    if (v === 'categorie') { doel.min_rang = 1; render(); }
+  }
+  document.getElementById('postenLijst').addEventListener('input', e => { if (e.target.dataset.veld && e.target.type !== 'checkbox' && e.target.tagName !== 'SELECT') bezettingVeld(e.target); });
+  document.getElementById('postenLijst').addEventListener('change', e => { if (e.target.dataset.veld) bezettingVeld(e.target); });
   function rolToevoegen(ps) {
     const eersteCat = Object.keys(COMP_CATS)[0] || 'lifeguard';
     SJABLONEN[ps].rollen = SJABLONEN[ps].rollen || [];
@@ -1257,10 +1313,13 @@ require __DIR__ . '/layout_top.php';
     render();
   }
   function rolWeg(ps, i) { SJABLONEN[ps].rollen.splice(i,1); render(); }
-  function postWeg(ps) { if (confirm('Post verwijderen?')) { delete SJABLONEN[ps]; render(); } }
+  function postWeg(ps) {
+  bhBevestig({ titel: 'Post verwijderen?', tekst: 'De rollen van deze post verdwijnen mee. Opslaan doe je daarna met de knop onderaan.', knop: 'Ja, verwijderen', gevaar: true })
+    .then(function (ja) { if (ja) { delete SJABLONEN[ps]; render(); } });
+}
   function postToevoegen() {
     const sleutel = 'post' + Date.now();
-    SJABLONEN[sleutel] = {naam:'Nieuwe post', icoon:'📍', rollen:[], regel_geen_twee_aspiranten:false};
+    SJABLONEN[sleutel] = {naam:'Nieuwe post', icoon:'locatie', rollen:[], regel_geen_twee_aspiranten:false};
     render();
   }
   function bezettingSerialiseer() {
@@ -1272,41 +1331,66 @@ require __DIR__ . '/layout_top.php';
 
 <?php elseif ($tab === 'selectie'): ?>
 <?php $crit = selectie_criteria(); ?>
-<div class="card">
-  <div class="card-header">
-    <div class="card-title">✅ Beoordelingscriteria selectiedag</div>
-    <div style="font-size:12px;color:var(--tekst-zacht)">De onderdelen waarop beoordelaars scoren, per test. Eén criterium per regel.</div>
+<div class="ds-kaart">
+  <div class="bh-kaartkop">
+    <h2>Beoordelingscriteria selectiedag</h2>
+    <div class="ds-veld-hint">De onderdelen waarop beoordelaars scoren, per test. Eén criterium per regel.</div>
   </div>
-  <div class="card-body">
+  <div class="bh-kaartbody">
     <form method="POST">
       <?= csrf_input() ?>
       <input type="hidden" name="actie" value="selectie_criteria_opslaan">
-      <div class="form-rij" style="gap:20px;align-items:flex-start">
-        <?php foreach (['sport'=>'Sporttest', 'zwem'=>'Zwemtest'] as $tk => $default): ?>
-        <div style="flex:1;min-width:240px">
-          <div style="display:flex;gap:8px;margin-bottom:8px">
-            <input type="text" name="icoon_<?= $tk ?>" value="<?= h($crit[$tk]['icoon'] ?? '') ?>"
-                   style="width:56px;text-align:center;font-size:16px" title="Icoon" maxlength="4">
-            <input type="text" name="naam_<?= $tk ?>" value="<?= h($crit[$tk]['naam'] ?? $default) ?>"
-                   style="flex:1;font-weight:600" placeholder="Naam van de test">
+      <?php
+      // Een korte, vaste lijst iconen. Vrij typen gaf een emoji-veld; die kwam daarna
+      // in het beoordeelscherm terecht en botste met de rest van de interface.
+      $test_iconen = ['bliksem' => 'Bliksem (sport)', 'golf' => 'Golf (zwemmen)',
+                      'reddingsboei' => 'Reddingsboei', 'strand' => 'Strand',
+                      'ster' => 'Ster', 'schild' => 'Schild', 'klok' => 'Klok', 'punt' => 'Stip'];
+      ?>
+      <div class="bh-veldrij bh-inst-loonrij bh-inst-testrij">
+        <?php foreach (['sport'=>'Sporttest', 'zwem'=>'Zwemtest'] as $tk => $default):
+          $_ic = bh_icoonnaam((string)($crit[$tk]['icoon'] ?? ''), $tk === 'zwem' ? 'golf' : 'bliksem');
+        ?>
+        <fieldset class="bh-testveld">
+          <legend><?= h($default) ?></legend>
+          <div class="bh-veldrij">
+            <div class="ds-veld bh-testicoon">
+              <label for="icoon_<?= $tk ?>">Icoon <span class="bh-testicoon-nu"><?= icoon($_ic, 16) ?></span></label>
+              <select id="icoon_<?= $tk ?>" name="icoon_<?= $tk ?>">
+                <?php foreach ($test_iconen as $_n => $_l): ?>
+                  <option value="<?= h($_n) ?>" <?= $_ic === $_n ? 'selected' : '' ?>><?= h($_l) ?></option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+            <div class="ds-veld">
+              <label for="naam_<?= $tk ?>">Naam van de test</label>
+              <input type="text" id="naam_<?= $tk ?>" name="naam_<?= $tk ?>"
+                     value="<?= h($crit[$tk]['naam'] ?? $default) ?>" placeholder="<?= h($default) ?>">
+            </div>
           </div>
-          <textarea name="criteria_<?= $tk ?>" rows="8" style="width:100%;font-size:14px;font-family:inherit;padding:10px 12px;border:1px solid var(--rand);border-radius:8px;box-sizing:border-box"
-                    placeholder="Eén criterium per regel"><?php
-            foreach ($crit[$tk]['criteria'] ?? [] as $c) echo h($c['label']) . "\n";
-          ?></textarea>
-        </div>
+          <div class="ds-veld">
+            <label for="criteria_<?= $tk ?>">Criteria</label>
+            <textarea id="criteria_<?= $tk ?>" name="criteria_<?= $tk ?>" rows="8"
+                      placeholder="Eén criterium per regel"><?php
+              foreach ($crit[$tk]['criteria'] ?? [] as $c) echo h($c['label']) . "\n";
+            ?></textarea>
+            <p class="ds-veld-hint">Eén criterium per regel. Beoordelaars scoren elk criterium van 1 tot 5.</p>
+          </div>
+        </fieldset>
         <?php endforeach; ?>
       </div>
-      <div style="display:flex;gap:8px;margin-top:14px">
-        <button type="submit" class="btn btn-primary">Opslaan</button>
+      <div class="bh-knoprij">
+        <button type="submit" class="ds-btn ds-btn-primair">Opslaan</button>
       </div>
     </form>
-    <form method="POST" style="margin-top:8px" onsubmit="return confirm('Terug naar de standaardcriteria uit het draaiboek?')">
+    <form method="POST" class="bh-herstelform" data-bevestig="Terug naar de standaardcriteria uit het draaiboek? Je eigen criteria verdwijnen.">
       <?= csrf_input() ?>
       <input type="hidden" name="actie" value="selectie_criteria_herstel">
-      <button type="submit" class="btn btn-outline btn-sm">↩ Standaard uit draaiboek herstellen</button>
+      <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm">
+        <?= icoon('terug', 14) ?> Standaard uit het draaiboek herstellen
+      </button>
     </form>
-    <p style="font-size:12px;color:var(--grijs);margin-top:12px">
+    <p class="ds-veld-hint bh-inst-scorenoot">
       Scores zijn indicatief en helpen bij de nabespreking — ze zijn geen harde afrekening. De observaties die beoordelaars
       op de dag noteren zijn het belangrijkst.
     </p>
@@ -1323,92 +1407,170 @@ require __DIR__ . '/layout_top.php';
   } catch (\Exception $e) {}
   $laatste_opschoon = instelling('bewaar.laatste_run', '');
 ?>
-<div class="card">
-  <div class="card-header"><div class="card-title">🕐 Bewaartermijnen</div></div>
-  <div class="card-body">
-    <div class="flash flash-info" style="margin-bottom:16px">
-      <strong>Automatisch opschonen.</strong> Volgens de AVG mag je persoonsgegevens niet langer bewaren dan nodig.
-      Hieronder stel je in na hoeveel tijd welke gegevens worden opgeschoond. Aangenomen kandidaten worden nooit
-      automatisch verwijderd. Zet een termijn op <code>0</code> om die categorie niet automatisch op te schonen.
+<?php if (!instelling_bool('bewaar.actief')): ?>
+<div class="ds-melding ds-melding-error bh-mb" role="status">
+  <strong>Automatisch opschonen staat uit: er wordt niets opgeruimd.</strong>
+  Zolang dit uitstaat, kloppen de privacyverklaring en de afwijzingsmail niet: die beloven dat gegevens na de
+  termijnen hieronder verdwijnen. Zet het aan met het vinkje in de kaart hieronder. Let op: aanzetten wist bij
+  de eerstvolgende dagelijkse run alles wat al over de termijn is, en dat is niet terug te draaien.
+</div>
+<?php endif; ?>
+<div class="ds-kaart">
+  <div class="bh-kaartkop"><h2>Bewaartermijnen</h2></div>
+  <div class="bh-kaartbody">
+    <div class="ds-melding ds-melding-info bh-inst-bewaaruitleg">
+      <?= icoon('info', 16) ?>
+      <span><strong>Automatisch opschonen.</strong> Volgens de AVG mag je persoonsgegevens niet langer bewaren dan nodig.
+      Hieronder stel je in na hoeveel tijd welke gegevens worden opgeschoond. Dat geldt ook voor wie is aangenomen:
+      het dossier van een oud-strandwacht wordt leeggemaakt na de termijn na het laatste seizoen. Loondocumenten zijn
+      de uitzondering; die vernietigt de penningmeester met de hand. Een termijn op <strong>0</strong> betekent: niet
+      automatisch opschonen. Behalve bij <strong>Gezondheidsgegevens</strong>: daar betekent 0 juist direct na het seizoen.</span>
     </div>
 
     <form method="POST">
       <?= csrf_input() ?>
       <input type="hidden" name="actie" value="instellingen">
 
-      <div class="form-groep" style="margin-bottom:18px">
-        <label style="display:flex;align-items:center;gap:9px;font-weight:500;cursor:pointer">
+      <div class="ds-veld bh-inst-hoofdschakel">
+        <label>
           <input type="hidden" name="inst[bewaar.actief]" value="0">
-          <input type="checkbox" name="inst[bewaar.actief]" value="1" style="width:auto" <?= instelling_bool('bewaar.actief') ? 'checked' : '' ?>>
+          <input type="checkbox" name="inst[bewaar.actief]" value="1" <?= instelling_bool('bewaar.actief') ? 'checked' : '' ?>>
           Automatisch opschonen inschakelen
         </label>
-        <div class="form-hulp">Zolang dit uitstaat, wordt er niets automatisch verwijderd of geanonimiseerd.</div>
+        <div class="ds-veld-hint">Zolang dit uitstaat, wordt er niets automatisch verwijderd of geanonimiseerd.</div>
       </div>
 
-      <h3>Termijnen (in maanden)</h3>
-      <div class="form-rij">
-        <div class="form-groep">
-          <label>Afgewezen sollicitanten <span class="tip" data-tip="Na deze termijn worden de persoonsgegevens geanonimiseerd. Geanonimiseerde statistiek blijft behouden. AP-advies is 4 weken (~1 maand); langer mag mits gemotiveerd."></span></label>
-          <input type="number" name="inst[bewaar.afgewezen_mnd]" value="<?= instelling_int('bewaar.afgewezen_mnd',6) ?>" min="0" max="60">
-          <div class="form-hulp">Daarna anonimiseren</div>
+      <h3>Termijnen (in maanden, tenzij anders vermeld)</h3>
+      <div class="bh-veldrij">
+        <div class="ds-veld">
+          <label for="veld-inst-bewaar-afgewezen-weken">Afgewezen sollicitanten, in weken <?= bh_tip('Gerekend vanaf de afwijzing. Daarna worden persoonsgegevens, formulier, beschikbaarheid, notities en documenten gewist; de geanonimiseerde statistiek blijft. De Autoriteit Persoonsgegevens gaat uit van 4 weken.') ?></label>
+          <input id="veld-inst-bewaar-afgewezen-weken" type="number" name="inst[bewaar.afgewezen_weken]" value="<?= instelling_int('bewaar.afgewezen_weken',4) ?>" min="0" max="52">
+          <div class="ds-veld-hint">Daarna anonimiseren. Wie om een seintje vroeg, blijft tot dat verloopt.</div>
         </div>
-        <div class="form-groep">
-          <label>Gezondheidsgegevens <span class="tip" data-tip="0 = verwijderen zodra de sollicitatie is afgewezen. Anders: zoveel maanden na ondertekening."></span></label>
-          <input type="number" name="inst[bewaar.gezondheid_mnd]" value="<?= instelling_int('bewaar.gezondheid_mnd',0) ?>" min="0" max="60">
-          <div class="form-hulp">0 = bij afwijzing verwijderen</div>
-        </div>
-      </div>
-      <div class="form-rij">
-        <div class="form-groep">
-          <label>AI-invoertekst <span class="tip" data-tip="De vrije beschikbaarheidstekst die naar de AI-dienst is gestuurd."></span></label>
-          <input type="number" name="inst[bewaar.ai_invoer_mnd]" value="<?= instelling_int('bewaar.ai_invoer_mnd',3) ?>" min="0" max="60">
-          <div class="form-hulp">Daarna wissen</div>
-        </div>
-        <div class="form-groep">
-          <label>Niet-voltooide aanmeldingen <span class="tip" data-tip="Aanmeldingen die in de fase 'aangemeld' bleven staan en nooit een formulier of beschikbaarheid kregen."></span></label>
-          <input type="number" name="inst[bewaar.onvoltooid_mnd]" value="<?= instelling_int('bewaar.onvoltooid_mnd',3) ?>" min="0" max="60">
-          <div class="form-hulp">Daarna verwijderen</div>
+        <div class="ds-veld">
+          <label for="veld-inst-bewaar-seintje-mnd">Seintje bij de volgende werving <?= bh_tip('Zo lang geldt de toestemming die een afgewezen sollicitant gaf via "Stuur me een seintje". Daarna vervalt die en worden de gegevens geanonimiseerd. De tekst in de mail en het portaal zegt "maximaal een jaar": ga daar niet boven.') ?></label>
+          <input id="veld-inst-bewaar-seintje-mnd" type="number" name="inst[bewaar.seintje_mnd]" value="<?= instelling_int('bewaar.seintje_mnd',12) ?>" min="1" max="12">
+          <div class="ds-veld-hint">Maximaal 12, want dat beloven we</div>
         </div>
       </div>
-      <div class="form-rij">
-        <div class="form-groep">
-          <label>Berichtenlog (alle kanalen)</label>
-          <input type="number" name="inst[bewaar.maillog_mnd]" value="<?= instelling_int('bewaar.maillog_mnd',12) ?>" min="0" max="60">
-          <div class="form-hulp">Daarna de logregels verwijderen</div>
+      <div class="bh-veldrij">
+        <div class="ds-veld">
+          <label for="veld-inst-bewaar-aangenomen-jaar">Oud-strandwachten, in jaren <?= bh_tip('Gerekend vanaf het einde van het laatste seizoen waarin iemand werkte. Daarna worden formulier, beschikbaarheid, notities, foto en documenten gewist. Loonheffing en kopie ID blijven staan tot de penningmeester ze op Loondossiers vernietigt; pas daarna wordt ook de naam geanonimiseerd. De AP gaat voor een personeelsdossier uit van 2 jaar.') ?></label>
+          <input id="veld-inst-bewaar-aangenomen-jaar" type="number" name="inst[bewaar.aangenomen_jaar]" value="<?= instelling_int('bewaar.aangenomen_jaar',2) ?>" min="0" max="10">
+          <div class="ds-veld-hint">Na het laatste seizoen. De privacyverklaring noemt dit getal.</div>
         </div>
-        <div class="form-groep">
-          <label>Inhoud van berichten <span class="tip" data-tip="De volledige tekst van verstuurde berichten (leesbaar in het portaal en het berichtenlog). Daarna blijft alleen onderwerp + samenvatting over."></span></label>
-          <input type="number" name="inst[bewaar.maillog_body_mnd]" value="<?= instelling_int('bewaar.maillog_body_mnd',3) ?>" min="0" max="24">
-          <div class="form-hulp">Daarna de inhoud leegmaken</div>
-        </div>
-        <div class="form-groep">
-          <label>Losse bijlagen <span class="tip" data-tip="Geüploade bestanden die aan geen enkel sjabloon meer hangen."></span></label>
-          <input type="number" name="inst[bewaar.bijlagen_mnd]" value="<?= instelling_int('bewaar.bijlagen_mnd',12) ?>" min="0" max="60">
-          <div class="form-hulp">Daarna verwijderen</div>
+        <div class="ds-veld">
+          <label for="veld-inst-bewaar-gezondheid-mnd">Gezondheidsgegevens <?= bh_tip('0 = na afloop van het seizoen, en meteen bij afwijzen of afhaken. Anders: zoveel maanden na ondertekening. Geldt voor de gezondheidsverklaring en de gezondheidsvragen in de intake, ook in de verzegelde PDF.') ?></label>
+          <input id="veld-inst-bewaar-gezondheid-mnd" type="number" name="inst[bewaar.gezondheid_mnd]" value="<?= instelling_int('bewaar.gezondheid_mnd',0) ?>" min="0" max="60">
+          <div class="ds-veld-hint">0 = na het seizoen, of meteen bij afwijzing</div>
         </div>
       </div>
-      <div class="form-rij">
-        <div class="form-groep">
-          <label>Bezoekersstatistiek landingspagina's <span class="tip" data-tip="Aantallen bezoeken en aanmeldingen per landingspagina. Bevat geen persoonsgegevens."></span></label>
-          <input type="number" name="inst[bewaar.pagina_events_mnd]" value="<?= instelling_int('bewaar.pagina_events_mnd',13) ?>" min="0" max="60">
-          <div class="form-hulp">Daarna verwijderen (0 = bewaren)</div>
+      <div class="bh-veldrij">
+        <div class="ds-veld">
+          <label for="veld-inst-bewaar-ai-invoer-mnd">AI-invoertekst <?= bh_tip('De vrije beschikbaarheidstekst die naar de AI-dienst is gestuurd.') ?></label>
+          <input id="veld-inst-bewaar-ai-invoer-mnd" type="number" name="inst[bewaar.ai_invoer_mnd]" value="<?= instelling_int('bewaar.ai_invoer_mnd',3) ?>" min="0" max="60">
+          <div class="ds-veld-hint">Daarna wissen</div>
         </div>
-        <div class="form-groep">
-          <label>Herkenning unieke bezoekers <span class="tip" data-tip="Een dag-gebonden pseudoniem om unieke bezoekers te tellen. Wordt hierna gewist; de aantallen blijven staan."></span></label>
-          <input type="number" name="inst[bewaar.pagina_hash_dagen]" value="<?= instelling_int('bewaar.pagina_hash_dagen',30) ?>" min="0" max="365">
-          <div class="form-hulp">Dagen, daarna wissen</div>
+        <div class="ds-veld">
+          <label for="veld-inst-bewaar-onvoltooid-mnd">Niet-voltooide aanmeldingen <?= bh_tip('Aanmeldingen die in de fase \'aangemeld\' bleven staan en nooit een formulier of beschikbaarheid kregen.') ?></label>
+          <input id="veld-inst-bewaar-onvoltooid-mnd" type="number" name="inst[bewaar.onvoltooid_mnd]" value="<?= instelling_int('bewaar.onvoltooid_mnd',3) ?>" min="0" max="60">
+          <div class="ds-veld-hint">Daarna verwijderen</div>
         </div>
+      </div>
+      <div class="bh-veldrij">
+        <div class="ds-veld">
+          <label for="veld-inst-bewaar-maillog-mnd">Berichtenlog (alle kanalen)</label>
+          <input id="veld-inst-bewaar-maillog-mnd" type="number" name="inst[bewaar.maillog_mnd]" value="<?= instelling_int('bewaar.maillog_mnd',12) ?>" min="0" max="60">
+          <div class="ds-veld-hint">Daarna de logregels verwijderen</div>
+        </div>
+        <div class="ds-veld">
+          <label for="veld-inst-bewaar-maillog-body-mnd">Inhoud van berichten <?= bh_tip('De volledige tekst van verstuurde berichten (leesbaar in het portaal en het berichtenlog). Daarna blijft alleen onderwerp + samenvatting over.') ?></label>
+          <input id="veld-inst-bewaar-maillog-body-mnd" type="number" name="inst[bewaar.maillog_body_mnd]" value="<?= instelling_int('bewaar.maillog_body_mnd',3) ?>" min="0" max="24">
+          <div class="ds-veld-hint">Daarna de inhoud leegmaken</div>
+        </div>
+        <div class="ds-veld">
+          <label for="veld-inst-bewaar-bijlagen-mnd">Losse bijlagen <?= bh_tip('Geüploade bestanden die aan geen enkel sjabloon meer hangen.') ?></label>
+          <input id="veld-inst-bewaar-bijlagen-mnd" type="number" name="inst[bewaar.bijlagen_mnd]" value="<?= instelling_int('bewaar.bijlagen_mnd',12) ?>" min="0" max="60">
+          <div class="ds-veld-hint">Daarna verwijderen</div>
+        </div>
+      </div>
+      <div class="bh-veldrij">
+        <div class="ds-veld">
+          <label for="veld-inst-bewaar-pagina-events-mnd">Bezoekersstatistiek landingspagina's <?= bh_tip('Aantallen bezoeken en aanmeldingen per landingspagina. Bevat geen persoonsgegevens.') ?></label>
+          <input id="veld-inst-bewaar-pagina-events-mnd" type="number" name="inst[bewaar.pagina_events_mnd]" value="<?= instelling_int('bewaar.pagina_events_mnd',13) ?>" min="0" max="60">
+          <div class="ds-veld-hint">Daarna verwijderen (0 = bewaren)</div>
+        </div>
+        <div class="ds-veld">
+          <label for="veld-inst-bewaar-pagina-hash-dagen">Herkenning unieke bezoekers <?= bh_tip('Een dag-gebonden pseudoniem om unieke bezoekers te tellen. Wordt hierna gewist; de aantallen blijven staan.') ?></label>
+          <input id="veld-inst-bewaar-pagina-hash-dagen" type="number" name="inst[bewaar.pagina_hash_dagen]" value="<?= instelling_int('bewaar.pagina_hash_dagen',30) ?>" min="0" max="365">
+          <div class="ds-veld-hint">Dagen, daarna wissen</div>
+        </div>
+      </div>
+      <div class="bh-veldrij">
+        <div class="ds-veld">
+          <label for="inst-audit-maanden">Auditlog (wie deed wat) <?= bh_tip('Het logboek van handelingen in het beheer, inclusief wie welk dossier inzag. Nodig om een melding of datalek te herleiden.') ?></label>
+          <input type="number" id="inst-audit-maanden" name="inst[bewaar.audit_maanden]" value="<?= instelling_int('bewaar.audit_maanden',12) ?>" min="0" max="60">
+          <div class="ds-veld-hint">Maanden, daarna verwijderen</div>
+        </div>
+        <div class="ds-veld">
+          <label for="inst-foutenlog-dagen">Foutenlog <?= bh_tip('Technische foutmeldingen. Kunnen een e-mailadres of een adres van een pagina bevatten.') ?></label>
+          <input type="number" id="inst-foutenlog-dagen" name="inst[bewaar.foutenlog_dagen]" value="<?= instelling_int('bewaar.foutenlog_dagen',90) ?>" min="0" max="730">
+          <div class="ds-veld-hint">Dagen, daarna verwijderen</div>
+        </div>
+        <div class="ds-veld">
+          <label for="inst-bankpas-dagen">Kopie bankpas <?= bh_tip('Gerekend vanaf het moment dat de penningmeester het loondossier op Verwerkt zet.') ?></label>
+          <input type="number" id="inst-bankpas-dagen" name="inst[bewaar.bankpas_na_verwerking_dagen]" value="<?= instelling_int('bewaar.bankpas_na_verwerking_dagen',30) ?>" min="0" max="365">
+          <div class="ds-veld-hint">Dagen na verwerking, daarna vernietigen</div>
+        </div>
+      </div>
+      <div class="bh-veldrij">
+        <div class="ds-veld">
+          <label for="inst-loondoc-jaar">Loondocumenten, in jaren <?= bh_tip('Loonheffingsformulier en kopie identiteitsbewijs. De fiscale bewaarplicht loopt tot vijf jaar na het einde van het kalenderjaar waarin het dienstverband eindigde. Minder dan 5 kan niet.') ?></label>
+          <input type="number" id="inst-loondoc-jaar" name="inst[bewaar.loondocumenten_jaar]" value="<?= max(5, instelling_int('bewaar.loondocumenten_jaar', 5)) ?>" min="5" max="10" aria-describedby="inst-loondoc-jaar-hint">
+          <div class="ds-veld-hint" id="inst-loondoc-jaar-hint">Na het laatste seizoen. Daarna komt het dossier op de lijst "Te beoordelen voor vernietiging" op Loondossiers; het wordt nooit automatisch gewist.</div>
+        </div>
+      </div>
+      <p class="ds-veld-hint bh-mb">
+        <strong>Loondocumenten</strong> worden niet automatisch gewist: het systeem weet wel tot welk seizoen iemand
+        hier werkte, maar niet wanneer het dienstverband eindigde. De penningmeester controleert dat in de
+        loonadministratie en vernietigt ze met de hand, op het scherm Loondossiers.
+      </p>
+
+      <h3>Privacyverklaring</h3>
+      <div class="ds-veld">
+        <label for="inst-privacy-url">Adres van de privacyverklaring</label>
+        <input type="text" id="inst-privacy-url" name="inst[privacy.url]" value="<?= h(instelling('privacy.url', '')) ?>"
+               placeholder="<?= h(APP_URL . '/privacy.php') ?>" class="bh-inst-urlveld" inputmode="url" aria-describedby="inst-privacy-url-hint">
+        <div class="ds-veld-hint" id="inst-privacy-url-hint">Leeg = de verklaring in dit systeem, die de termijnen hierboven automatisch noemt. Vul alleen een ander adres in (https, of een pad dat met / begint) als de verklaring op de website staat; die moet je dan zelf bijhouden. Het aanmeldformulier, de landingspagina's en de WordPress-plugin linken hiernaar.</div>
       </div>
 
-      <button type="submit" class="btn btn-primary">Opslaan</button>
+      <h3>Meldingen en statistiek</h3>
+      <div class="ds-veld">
+        <label class="checkbox-label">
+          <input type="hidden" name="inst[documenten.download_melding]" value="0">
+          <input type="checkbox" name="inst[documenten.download_melding]" value="1" <?= instelling('documenten.download_melding', '1') === '1' ? 'checked' : '' ?> aria-describedby="inst-downloadmelding-hint">
+          Mail naar het bestuur bij elke download van een loondocument
+        </label>
+        <div class="ds-veld-hint" id="inst-downloadmelding-hint">Standaard aan. Gaat naar het bestuursadres bij het downloaden van een kopie ID, bankpas of loonheffingsformulier, zodat onverwachte inzage opvalt. De mail bevat geen document.</div>
+      </div>
+      <div class="ds-veld">
+        <label class="checkbox-label">
+          <input type="hidden" name="inst[paginas.tracking]" value="0">
+          <input type="checkbox" name="inst[paginas.tracking]" value="1" <?= instelling_bool('paginas.tracking', true) ? 'checked' : '' ?> aria-describedby="inst-tracking-hint">
+          Bezoekersstatistiek op de landingspagina's en het aanmeldformulier
+        </label>
+        <div class="ds-veld-hint" id="inst-tracking-hint">Telt bezoeken en bij welke stap mensen afhaken, zonder cookies en zonder persoonsgegevens. Uit = er wordt niets meer geteld; wat al geteld is blijft volgens de termijn hierboven.</div>
+      </div>
+
+      <button type="submit" class="ds-btn ds-btn-primair">Opslaan</button>
     </form>
   </div>
 </div>
 
-<div class="card" style="margin-top:14px">
-  <div class="card-header"><div class="card-title">📋 Opschoon-logboek</div></div>
-  <div class="card-body">
-    <p style="font-size:13px;color:var(--tekst-zacht);margin-bottom:12px">
+<div class="ds-kaart bh-inst-logkaart">
+  <div class="bh-kaartkop"><h2>Opschoon-logboek</h2></div>
+  <div class="bh-kaartbody">
+    <p class="ds-veld-hint bh-mb">
       De opschoning draait automatisch één keer per dag via de cron.
       <?php if ($laatste_opschoon): ?>
         Laatst uitgevoerd: <strong><?= h($laatste_opschoon) ?></strong>.
@@ -1417,27 +1579,97 @@ require __DIR__ . '/layout_top.php';
       <?php endif; ?>
     </p>
     <?php if ($opschoon_log): ?>
-    <table style="width:100%;font-size:13px;border-collapse:collapse">
+    <table class="bh-opschoontabel">
       <thead>
-        <tr style="text-align:left;border-bottom:1px solid var(--rand)">
-          <th style="padding:6px 0">Datum</th><th>Categorie</th><th style="text-align:right">Aantal</th>
+        <tr>
+          <th class="bh-opschoon-datum">Datum</th><th>Categorie</th><th class="bh-opschoon-aantal">Aantal</th>
         </tr>
       </thead>
       <tbody>
         <?php foreach ($opschoon_log as $r): ?>
-        <tr style="border-bottom:1px solid var(--rand-licht)">
-          <td style="padding:6px 0"><?= h($r['uitgevoerd_op']) ?></td>
+        <tr>
+          <td class="bh-opschoon-datum"><?= h($r['uitgevoerd_op']) ?></td>
           <td><?= h(str_replace('_',' ', $r['categorie'])) ?></td>
-          <td style="text-align:right"><?= (int)$r['aantal'] ?></td>
+          <td class="bh-opschoon-aantal"><?= (int)$r['aantal'] ?></td>
         </tr>
         <?php endforeach; ?>
       </tbody>
     </table>
     <?php else: ?>
-    <p style="font-size:13px;color:var(--grijs)">Nog geen opschoonacties geregistreerd.</p>
+    <p class="bh-leegregel">Nog geen opschoonacties geregistreerd.</p>
     <?php endif; ?>
   </div>
 </div>
+
+
+<!-- Automatische taken. Stond eerder onderaan het mail-tabblad; de cron doet
+     ook de AVG-opschoning hierboven, dus die hoort hier. -->
+    <!-- ── Cronjob ───────────────────────────────────────────── -->
+    <div class="bh-cron">
+      <h3 class="bh-cron-kop">Automatische taken</h3>
+      <?php
+      $cron_token = instelling('cron.token');
+      if (empty($cron_token)) {
+          $cron_token = bin2hex(random_bytes(24));
+          instelling_opslaan('cron.token', $cron_token);
+      }
+      $cron_pad = realpath(__DIR__ . '/../cron/run.php') ?: 'cron/run.php';
+      ?>
+      <p class="ds-veld-hint bh-mb">
+        Alle automatische taken lopen via deze geplande taak: berichten en AI elke minuut, herinneringen en
+        uitnodigen elk kwartier, Authentik en de AVG-opschoning dagelijks. Er is geen vangnet bij een
+        paginabezoek: staat de taak stil, dan gaat er niets de deur uit.
+      </p>
+      <div class="bh-chiprij bh-mb">
+        <?php foreach (cron_stand() as $g): ?>
+          <?= bh_badge($g['label'] . ': ' . ($g['laatste'] ? date('d-m H:i', strtotime($g['laatste'])) : 'nog nooit'),
+                       $g['status'] === 'ok' ? 'groen' : ($g['status'] === 'laat' ? 'oranje' : 'rood')) ?>
+        <?php endforeach; ?>
+      </div>
+      <?php if ($mag_systeem): ?>
+      <p class="ds-veld-hint">Plesk › Geplande taken › <strong>PHP-script uitvoeren</strong>, elke minuut (<code>* * * * *</code>):</p>
+      <div class="bh-cronregel"><?= h($cron_pad) ?></div>
+      <p class="ds-veld-hint">Kan de server geen PHP-script plannen, gebruik dan een opdracht (ook elke minuut):</p>
+      <div class="bh-cronregel">
+        curl -s -H "X-Cron-Token: <?= h($cron_token) ?>" "<?= h(APP_URL . '/cron/run.php') ?>" &gt; /dev/null 2&gt;&amp;1
+      </div>
+      <div class="bh-knoprij bh-mb">
+        <form method="POST" data-bevestig="Alle automatische taken nu uitvoeren? Berichten in de wachtrij en herinneringen die klaarstaan gaan dan echt de deur uit.">
+          <?= csrf_input() ?>
+          <input type="hidden" name="actie" value="cron_nu">
+          <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm"><?= icoon('ververs', 14) ?> Nu uitvoeren</button>
+        </form>
+        <form method="POST" data-bevestig="Een nieuw cron-token maken? Een geplande taak met curl werkt daarna niet meer tot je de nieuwe regel in Plesk zet. De PHP-script-variant heeft geen token nodig.">
+          <?= csrf_input() ?>
+          <input type="hidden" name="actie" value="cron_token_vernieuw">
+          <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm"><?= icoon('slot', 14) ?> Nieuw token maken</button>
+        </form>
+      </div>
+      <p class="ds-veld-hint bh-mb">Het PHP-script heeft geen token nodig (het draait op de server zelf). Bij curl gaat het token als header mee, zodat het niet in de toegangslogs belandt. Denk je dat het token is uitgelekt, of neemt iemand met toegang tot Plesk afscheid? Maak dan een nieuw token.</p>
+      <?php else: ?>
+      <p class="ds-veld-hint bh-mb"><?= bh_badge('Ingesteld', 'groen') ?> Het cron-token en de regel zelf ziet alleen wie Systeem mag bewerken.</p>
+      <?php endif; ?>
+
+      <?php
+      // Wachtrij status
+      $q_stats = ['ai'=>[], 'mail'=>[]];
+      try {
+          if (function_exists('ai_queue_auto_setup'))   { ai_queue_auto_setup();   $q_stats['ai']   = db()->query("SELECT status,COUNT(*) n FROM ai_queue   GROUP BY status")->fetchAll(PDO::FETCH_KEY_PAIR); }
+          if (function_exists('mail_queue_auto_setup')) { mail_queue_auto_setup(); $q_stats['mail'] = db()->query("SELECT status,COUNT(*) n FROM mail_queue GROUP BY status")->fetchAll(PDO::FETCH_KEY_PAIR); }
+      } catch (\Exception $e) {}
+      $q_standen = ['wacht' => ['Wacht', 'blauw'], 'bezig' => ['Bezig', 'oranje'], 'klaar' => ['Klaar', 'groen'], 'fout' => ['Mislukt', 'rood']];
+      ?>
+      <?php foreach (['ai'=>'AI-analyses', 'mail'=>'Mails in de wachtrij'] as $sleutel => $label): if (!empty($q_stats[$sleutel])): ?>
+      <div class="bh-cron-wachtrijblok">
+        <div class="bh-cron-wachtrij"><?= h($label) ?></div>
+        <div class="bh-chiprij">
+          <?php foreach ($q_stats[$sleutel] as $st => $n): $_qs = $q_standen[$st] ?? [ucfirst((string)$st), 'grijs']; ?>
+          <?= bh_badge($_qs[0] . ': ' . (int)$n, $_qs[1]) ?>
+          <?php endforeach; ?>
+        </div>
+      </div>
+      <?php endif; endforeach; ?>
+    </div>
 
 <?php elseif ($tab === 'smtp'): ?>
   <?php
@@ -1449,71 +1681,71 @@ require __DIR__ . '/layout_top.php';
     $s_fromnaam= instelling('smtp.from_naam', defined('MAIL_FROM_NAME') ? MAIL_FROM_NAME : 'Reddingsbrigade Paal 13');
     $s_heeft_ww= instelling('smtp.pass', '') !== '' || (defined('SMTP_PASS') && SMTP_PASS !== '');
   ?>
-  <div class="card" style="margin-bottom:14px">
-    <div class="card-header"><div class="card-title">E-mailinstellingen (SMTP)</div></div>
-    <div class="card-body">
-      <p style="font-size:13px;color:var(--tekst-zacht);margin:0 0 16px">
+  <div class="ds-kaart">
+    <div class="bh-kaartkop"><h2>E-mailinstellingen (SMTP)</h2></div>
+    <div class="bh-kaartbody">
+      <p class="bh-inst-intro bh-inst-intro-vast">
         Hiermee verstuurt het systeem e-mails. Vul de gegevens van je mailserver in. Weet je ze niet? Die vind je bij je hostingprovider (Cloud86) onder de e-mailinstellingen van dit adres.
       </p>
       <form method="POST">
         <?= csrf_input() ?>
         <input type="hidden" name="actie" value="smtp_opslaan">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-          <div style="grid-column:1/-1">
-            <label style="display:block;font-size:12px;font-weight:600;color:var(--tekst-zacht);margin-bottom:4px">SMTP-server (host)</label>
-            <input type="text" name="smtp_host" value="<?= h($s_host) ?>" placeholder="mail.paal13.com" style="width:100%;padding:9px 12px;border:1px solid var(--rand);border-radius:8px;font-size:14px">
+        <div class="bh-smtpraster">
+          <div class="bh-smtpraster-breed">
+            <label for="veld-smtp-host" class="ds-label">SMTP-server (host)</label>
+            <input id="veld-smtp-host" type="text" name="smtp_host" value="<?= h($s_host) ?>" placeholder="mail.paal13.com" class="ds-input">
           </div>
           <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:var(--tekst-zacht);margin-bottom:4px">Poort</label>
-            <input type="text" name="smtp_port" value="<?= h($s_port) ?>" placeholder="587" style="width:100%;padding:9px 12px;border:1px solid var(--rand);border-radius:8px;font-size:14px">
+            <label for="veld-smtp-port" class="ds-label">Poort</label>
+            <input id="veld-smtp-port" type="text" name="smtp_port" value="<?= h($s_port) ?>" placeholder="587" class="ds-input">
           </div>
           <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:var(--tekst-zacht);margin-bottom:4px">Beveiliging</label>
-            <select name="smtp_encrypt" style="width:100%;padding:9px 12px;border:1px solid var(--rand);border-radius:8px;font-size:14px">
+            <label for="veld-smtp-encrypt" class="ds-label">Beveiliging</label>
+            <select id="veld-smtp-encrypt" name="smtp_encrypt" class="ds-input">
               <option value="tls" <?= $s_encrypt==='tls'?'selected':'' ?>>STARTTLS (poort 587) — meest gebruikt</option>
               <option value="ssl" <?= $s_encrypt==='ssl'?'selected':'' ?>>SSL/TLS (poort 465)</option>
               <option value="none" <?= $s_encrypt==='none'?'selected':'' ?>>Geen (afgeraden)</option>
             </select>
           </div>
           <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:var(--tekst-zacht);margin-bottom:4px">Gebruikersnaam</label>
-            <input type="text" name="smtp_user" value="<?= h($s_user) ?>" placeholder="website@paal13.com" style="width:100%;padding:9px 12px;border:1px solid var(--rand);border-radius:8px;font-size:14px">
+            <label for="veld-smtp-user" class="ds-label">Gebruikersnaam</label>
+            <input id="veld-smtp-user" type="text" name="smtp_user" value="<?= h($s_user) ?>" placeholder="website@paal13.com" class="ds-input">
           </div>
           <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:var(--tekst-zacht);margin-bottom:4px">Wachtwoord</label>
-            <input type="password" name="smtp_pass" value="<?= $s_heeft_ww ? '••••••••' : '' ?>" autocomplete="new-password" style="width:100%;padding:9px 12px;border:1px solid var(--rand);border-radius:8px;font-size:14px">
-            <span style="font-size:11px;color:var(--grijs)"><?= $s_heeft_ww ? 'Laat ongewijzigd om het huidige wachtwoord te behouden.' : 'Nog geen wachtwoord ingesteld.' ?></span>
+            <?php $_ww_db = instelling('smtp.pass', '') !== ''; ?>
+            <?= bh_geheim_veld('smtp_pass', 'smtp.pass', 'Wachtwoord', $s_heeft_ww,
+                  (!$_ww_db && $s_heeft_ww) ? 'Nu uit config.php.' : '', $_ww_db) ?>
           </div>
           <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:var(--tekst-zacht);margin-bottom:4px">Afzender-adres</label>
-            <input type="text" name="smtp_from" value="<?= h($s_from) ?>" placeholder="no-reply@paal13.com" style="width:100%;padding:9px 12px;border:1px solid var(--rand);border-radius:8px;font-size:14px">
+            <label for="veld-smtp-from" class="ds-label">Afzender-adres</label>
+            <input id="veld-smtp-from" type="text" name="smtp_from" value="<?= h($s_from) ?>" placeholder="no-reply@paal13.com" class="ds-input">
           </div>
           <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:var(--tekst-zacht);margin-bottom:4px">Afzender-naam</label>
-            <input type="text" name="smtp_from_naam" value="<?= h($s_fromnaam) ?>" placeholder="Reddingsbrigade Paal 13" style="width:100%;padding:9px 12px;border:1px solid var(--rand);border-radius:8px;font-size:14px">
+            <label for="veld-smtp-from-naam" class="ds-label">Afzender-naam</label>
+            <input id="veld-smtp-from-naam" type="text" name="smtp_from_naam" value="<?= h($s_fromnaam) ?>" placeholder="Reddingsbrigade Paal 13" class="ds-input">
           </div>
         </div>
-        <div style="margin-top:16px">
-          <button type="submit" class="btn btn-primary">Opslaan</button>
+        <div class="bh-smtp-voet">
+          <button type="submit" class="ds-btn ds-btn-primair">Opslaan</button>
         </div>
       </form>
     </div>
   </div>
 
-  <div class="card">
-    <div class="card-header"><div class="card-title">Testmail versturen</div></div>
-    <div class="card-body">
-      <p style="font-size:13px;color:var(--tekst-zacht);margin:0 0 14px">
-        Stuur een testmail om te controleren of je instellingen werken. Sla je wijzigingen eerst op. Lukt het niet, dan zie je de reden hier én in <a href="<?= APP_URL ?>/admin/foutenlog.php" style="color:var(--navy)">Foutenlog</a>.
+  <div class="ds-kaart">
+    <div class="bh-kaartkop"><h2>Testmail versturen</h2></div>
+    <div class="bh-kaartbody">
+      <p class="bh-inst-intro bh-inst-intro-vast bh-inst-intro-14">
+        Stuur een testmail om te controleren of je instellingen werken. Sla je wijzigingen eerst op. Lukt het niet, dan zie je de reden hier én in <a href="<?= APP_URL ?>/admin/logboek.php?bron=fout">het logboek</a>.
       </p>
-      <form method="POST" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+      <form method="POST" class="bh-inst-regelform">
         <?= csrf_input() ?>
         <input type="hidden" name="actie" value="smtp_test">
-        <div style="flex:1;min-width:220px">
-          <label style="display:block;font-size:12px;font-weight:600;color:var(--tekst-zacht);margin-bottom:4px">Stuur test naar</label>
-          <input type="email" name="smtp_test_naar" value="<?= h(huidige_beheerder()['email'] ?? '') ?>" placeholder="jouw@email.nl" style="width:100%;padding:9px 12px;border:1px solid var(--rand);border-radius:8px;font-size:14px">
+        <div class="bh-inst-testnaar">
+          <label for="veld-smtp-test-naar" class="ds-label">Stuur test naar</label>
+          <input id="veld-smtp-test-naar" type="email" name="smtp_test_naar" value="<?= h(huidige_beheerder()['email'] ?? '') ?>" placeholder="jouw@email.nl" class="ds-input">
         </div>
-        <button type="submit" class="btn btn-outline">Verstuur testmail</button>
+        <button type="submit" class="ds-btn ds-btn-secundair">Verstuur testmail</button>
       </form>
     </div>
   </div>
@@ -1524,51 +1756,57 @@ require __DIR__ . '/layout_top.php';
     $api_origins = instelling('api.origins', '');
     $api_basis_url = APP_URL . '/api';
   ?>
-  <div class="inst-sectie">
-    <h2 style="font-size:16px;margin:0 0 4px">Website &amp; API</h2>
-    <p style="color:var(--tekst-zacht);font-size:13.5px;margin:0 0 18px">
+  <div class="bh-instsectie">
+    <h2 class="bh-inst-tabkop">Website &amp; API</h2>
+    <p class="bh-inst-tabintro">
       Hiermee koppelt de WordPress-plugin op de website met dit systeem: de plugin haalt de
       seizoensinfo op en stuurt aanmeldingen hierheen. De verbinding is beveiligd met een geheime sleutel.
     </p>
 
-    <div style="background:var(--bg-card,#fff);border:1px solid var(--rand);border-radius:10px;padding:16px;margin-bottom:16px">
-      <div style="font-weight:600;font-size:14px;margin-bottom:8px">API-sleutel</div>
-      <?php if ($api_sleutel): ?>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
+    <div class="bh-subkaart">
+      <div class="bh-inst-blokkop">API-sleutel</div>
+      <?php if ($api_sleutel && !$mag_systeem): ?>
+        <p class="ds-veld-hint bh-mb"><?= bh_badge('Ingesteld', 'groen') ?> De sleutel zelf, en een nieuwe maken, is er alleen voor wie Systeem mag bewerken.</p>
+      <?php elseif ($api_sleutel): ?>
+        <div class="bh-inst-sleutelrij">
           <input type="text" readonly value="<?= h($api_sleutel) ?>" id="apiSleutel"
-                 style="flex:1;min-width:280px;font-family:monospace;font-size:12px;background:var(--bg)">
-          <button type="button" class="btn btn-outline btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('apiSleutel').value);this.textContent='Gekopieerd!'">Kopieer</button>
+                 class="bh-inst-sleutel">
+          <button type="button" class="ds-btn ds-btn-secundair ds-btn-sm" data-klik="P13Klik.kopieer('#apiSleutel', this)">Kopieer</button>
         </div>
-        <p style="font-size:12px;color:var(--tekst-zacht);margin:0 0 10px">
+        <p class="bh-inst-uitleg bh-inst-uitleg-10">
           Zet deze sleutel in de WordPress-plugin. Houd 'm geheim — wie de sleutel heeft, kan aanmeldingen versturen.
         </p>
       <?php else: ?>
-        <p style="font-size:13px;color:var(--oranje);margin:0 0 10px">Er is nog geen sleutel. Genereer er een om de koppeling te activeren.</p>
+        <p class="bh-inst-geensleutel">Er is nog geen sleutel.<?= $mag_systeem ? ' Genereer er een om de koppeling te activeren.' : ' Vraag een beheerder er een te maken.' ?></p>
       <?php endif; ?>
-      <form method="post" onsubmit="return confirm('<?= $api_sleutel ? 'Een nieuwe sleutel maakt de oude ongeldig. De plugin moet dan bijgewerkt worden. Doorgaan?' : 'Nieuwe sleutel genereren?' ?>')">
+      <?php if ($mag_systeem): ?>
+      <form method="post" data-bevestig="<?= $api_sleutel
+          ? 'Een nieuwe sleutel maakt de oude meteen ongeldig. Tot je de nieuwe in de WordPress-plugin zet, komen er geen aanmeldingen meer binnen.'
+          : 'Een sleutel genereren zet de koppeling met de website aan.' ?>">
         <?= csrf_input() ?>
         <input type="hidden" name="actie" value="api_sleutel_genereer">
-        <button type="submit" class="btn btn-primary btn-sm"><?= $api_sleutel ? 'Nieuwe sleutel genereren' : 'Sleutel genereren' ?></button>
+        <button type="submit" class="ds-btn ds-btn-primair ds-btn-sm"><?= $api_sleutel ? 'Nieuwe sleutel genereren' : 'Sleutel genereren' ?></button>
       </form>
+      <?php endif; ?>
     </div>
 
     <form method="post">
       <?= csrf_input() ?>
       <input type="hidden" name="actie" value="api_opslaan">
-      <label style="display:block;font-weight:600;font-size:14px;margin-bottom:4px">Toegestane websites (CORS)</label>
-      <p style="font-size:12px;color:var(--tekst-zacht);margin:0 0 6px">
+      <label class="bh-inst-veldkop">Toegestane websites (CORS)</label>
+      <p class="bh-inst-uitleg bh-inst-uitleg-6">
         Eén per regel. De hoofdsite (paal13.com) is altijd toegestaan. Voeg hier extra domeinen toe als de plugin op een ander adres draait.
       </p>
-      <textarea name="api_origins" rows="3" style="width:100%;font-family:monospace;font-size:12px" placeholder="https://paal13.com"><?= h($api_origins) ?></textarea>
-      <div style="margin-top:10px"><button type="submit" class="btn btn-primary btn-sm">Opslaan</button></div>
+      <textarea name="api_origins" aria-label="Extra toegestane domeinen, één per regel" rows="3" class="bh-inst-origins" placeholder="https://paal13.com"><?= h($api_origins) ?></textarea>
+      <div class="bh-api-voet"><button type="submit" class="ds-btn ds-btn-primair ds-btn-sm">Opslaan</button></div>
     </form>
 
-    <div style="margin-top:20px;padding:14px;background:var(--bg);border:1px solid var(--rand);border-radius:10px">
-      <div style="font-weight:600;font-size:13px;margin-bottom:6px">Voor de plugin-instellingen</div>
-      <table style="font-size:12.5px;width:100%">
-        <tr><td style="padding:3px 8px;color:var(--tekst-zacht)">API-basis-URL</td><td style="padding:3px 8px;font-family:monospace"><?= h($api_basis_url) ?></td></tr>
-        <tr><td style="padding:3px 8px;color:var(--tekst-zacht)">Seizoensinfo</td><td style="padding:3px 8px;font-family:monospace">GET <?= h($api_basis_url) ?>/seizoen.php</td></tr>
-        <tr><td style="padding:3px 8px;color:var(--tekst-zacht)">Aanmelden</td><td style="padding:3px 8px;font-family:monospace">POST <?= h($api_basis_url) ?>/aanmelden.php</td></tr>
+    <div class="bh-inst-pluginblok">
+      <div class="bh-inst-pluginblok-kop">Voor de plugin-instellingen</div>
+      <table class="bh-inst-plugintabel">
+        <tr><td class="bh-cel-zacht">API-basis-URL</td><td class="bh-code"><?= h($api_basis_url) ?></td></tr>
+        <tr><td class="bh-cel-zacht">Seizoensinfo</td><td class="bh-code">GET <?= h($api_basis_url) ?>/seizoen.php</td></tr>
+        <tr><td class="bh-cel-zacht">Aanmelden</td><td class="bh-code">POST <?= h($api_basis_url) ?>/aanmelden.php</td></tr>
       </table>
     </div>
   </div>
@@ -1577,9 +1815,9 @@ require __DIR__ . '/layout_top.php';
   <?php
     $sms_gw = instelling('sms.gateway', '');
   ?>
-  <div class="inst-sectie">
-    <h2 style="font-size:16px;margin:0 0 4px">SMS, WhatsApp &amp; meldingen</h2>
-    <p style="color:var(--tekst-zacht);font-size:13.5px;margin:0 0 18px">
+  <div class="bh-instsectie">
+    <h2 class="bh-inst-tabkop">SMS, WhatsApp &amp; meldingen</h2>
+    <p class="bh-inst-tabintro">
       Stuur meldingen naast e-mail ook via SMS of WhatsApp. Beide kanalen zijn los in- en uit te
       schakelen. Onderaan bepaal je per soort melding via welke kanalen die verstuurd wordt.
     </p>
@@ -1588,104 +1826,109 @@ require __DIR__ . '/layout_top.php';
       <?= csrf_input() ?>
       <input type="hidden" name="actie" value="berichten_opslaan">
 
+      <?php if (!$mag_systeem): ?>
+      <p class="bh-inst-uitleg bh-inst-uitleg-12">
+        SMS staat <strong><?= instelling('sms.actief', '0') === '1' ? 'aan' : 'uit' ?></strong>, WhatsApp staat
+        <strong><?= instelling('wa.actief', '0') === '1' ? 'aan' : 'uit' ?></strong>. De koppeling met die diensten
+        (sleutels en verzendmethode) stelt systeembeheer in.
+      </p>
+      <?php else: ?>
       <!-- SMS -->
-      <div style="background:var(--bg-card,#fff);border:1px solid var(--rand);border-radius:10px;padding:16px;margin-bottom:16px">
-        <label class="inst-toggle" style="display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px;margin-bottom:12px">
+      <div class="bh-subkaart">
+        <label class="inst-toggle bh-inst-kanaalschakel">
           <input type="checkbox" name="sms_actief" value="1" <?= instelling('sms.actief','0')==='1'?'checked':'' ?>>
           SMS inschakelen
         </label>
 
-        <label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px">Gateway (verzendmethode)</label>
-        <select name="sms_gateway" id="smsGateway" onchange="smsGatewayToon()" style="width:100%;max-width:360px;margin-bottom:6px">
+        <label for="smsGateway" class="ds-label">Gateway (verzendmethode)</label>
+        <select name="sms_gateway" id="smsGateway" data-wijzig="smsGatewayToon()" class="bh-sms-gateway">
           <option value="">— kies —</option>
           <option value="eigen_telefoon" <?= $sms_gw==='eigen_telefoon'?'selected':'' ?>>Eigen telefoon / VoIP (goedkoopst)</option>
           <option value="http_gateway" <?= $sms_gw==='http_gateway'?'selected':'' ?>>Generieke HTTP-gateway</option>
           <option value="easysendsms" <?= $sms_gw==='easysendsms'?'selected':'' ?>>EasySendSMS (pay-as-you-go)</option>
           <option value="messagebird" <?= $sms_gw==='messagebird'?'selected':'' ?>>MessageBird / Bird (NL)</option>
         </select>
-        <p style="font-size:12px;color:var(--tekst-zacht);margin:0 0 12px">
+        <p class="bh-inst-uitleg bh-inst-uitleg-12">
           <strong>Goedkoopst:</strong> "Eigen telefoon / VoIP" — je gebruikt je eigen (VoIP- of Android-)nummer met
           een app of dienst die een simpel webadres aanbiedt om een SMS te sturen. Je betaalt dan alleen je eigen
           bundel, geen kosten per bericht. De andere opties rekenen per bericht (ca. 1 cent), maar zijn kant-en-klaar.
         </p>
 
-        <div style="margin-bottom:10px">
-          <label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px">Afzendernaam</label>
-          <input type="text" name="sms_afzender" value="<?= h(instelling('sms.afzender','Paal13')) ?>" style="width:100%;max-width:200px" maxlength="11">
-          <span style="font-size:11px;color:var(--tekst-zacht)">max 11 tekens</span>
+        <div class="bh-sms-afzenderveld">
+          <label for="veld-sms-afzender" class="ds-label">Afzendernaam</label>
+          <input id="veld-sms-afzender" type="text" name="sms_afzender" value="<?= h(instelling('sms.afzender','Paal13')) ?>" class="bh-sms-afzender" maxlength="11">
+          <span class="ds-veld-hint">max 11 tekens</span>
         </div>
 
         <!-- HTTP / eigen telefoon velden -->
-        <div class="sms-veld" data-voor="eigen_telefoon http_gateway" style="display:none">
-          <label style="display:block;font-size:13px;font-weight:600;margin:8px 0 4px">Webadres (URL) van de gateway</label>
-          <input type="text" name="sms_http_url" value="<?= h(instelling('sms.http_url','')) ?>" style="width:100%" placeholder="https://.../send?to={nummer}&text={tekst}">
-          <p style="font-size:11px;color:var(--tekst-zacht);margin:2px 0 8px">Je mag <code>{nummer}</code> en <code>{tekst}</code> als plek-houders gebruiken. Anders worden ze als POST-velden meegestuurd.</p>
-          <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <div class="sms-veld" data-voor="eigen_telefoon http_gateway" hidden>
+          <label for="veld-sms-http-url" class="ds-label bh-mt">Webadres (URL) van de gateway</label>
+          <input id="veld-sms-http-url" type="text" name="sms_http_url" value="<?= h(instelling('sms.http_url','')) ?>" class="bh-inst-volbreed" placeholder="https://.../send?to={nummer}&text={tekst}">
+          <p class="bh-sms-plekhouders">Je mag <code>{nummer}</code> en <code>{tekst}</code> als plek-houders gebruiken. Anders worden ze als POST-velden meegestuurd.</p>
+          <div class="bh-sms-httprij">
             <div>
-              <label style="display:block;font-size:12px;margin-bottom:2px">Methode</label>
-              <select name="sms_http_method" style="width:100px">
+              <label for="veld-sms-http-method" class="ds-label">Methode</label>
+              <select id="veld-sms-http-method" name="sms_http_method" class="bh-sms-methode">
                 <option value="POST" <?= instelling('sms.http_method','POST')==='POST'?'selected':'' ?>>POST</option>
                 <option value="GET" <?= instelling('sms.http_method','POST')==='GET'?'selected':'' ?>>GET</option>
               </select>
             </div>
-            <div style="flex:1;min-width:180px">
-              <label style="display:block;font-size:12px;margin-bottom:2px">Token (optioneel)</label>
-              <input type="text" name="sms_http_token" value="<?= h(instelling('sms.http_token','')) ?>" style="width:100%">
+            <div class="bh-sms-token">
+              <?= bh_geheim_veld('sms_http_token', 'sms.http_token', 'Token (optioneel)', instelling('sms.http_token', '') !== '') ?>
             </div>
           </div>
         </div>
 
         <!-- EasySendSMS -->
-        <div class="sms-veld" data-voor="easysendsms" style="display:none">
-          <label style="display:block;font-size:13px;font-weight:600;margin:8px 0 4px">EasySendSMS API-sleutel</label>
-          <input type="text" name="sms_easysendsms_key" value="<?= h(instelling('sms.easysendsms_key','')) ?>" style="width:100%">
+        <div class="sms-veld" data-voor="easysendsms" hidden>
+          <?= bh_geheim_veld('sms_easysendsms_key', 'sms.easysendsms_key', 'EasySendSMS API-sleutel', instelling('sms.easysendsms_key', '') !== '') ?>
         </div>
 
         <!-- MessageBird -->
-        <div class="sms-veld" data-voor="messagebird" style="display:none">
-          <label style="display:block;font-size:13px;font-weight:600;margin:8px 0 4px">MessageBird API-sleutel</label>
-          <input type="text" name="sms_messagebird_key" value="<?= h(instelling('sms.messagebird_key','')) ?>" style="width:100%">
+        <div class="sms-veld" data-voor="messagebird" hidden>
+          <?= bh_geheim_veld('sms_messagebird_key', 'sms.messagebird_key', 'MessageBird API-sleutel', instelling('sms.messagebird_key', '') !== '') ?>
         </div>
       </div>
 
       <!-- WhatsApp -->
-      <div style="background:var(--bg-card,#fff);border:1px solid var(--rand);border-radius:10px;padding:16px;margin-bottom:16px">
-        <label class="inst-toggle" style="display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px;margin-bottom:10px">
+      <div class="bh-subkaart">
+        <label class="inst-toggle bh-inst-kanaalschakel bh-inst-kanaalschakel-10">
           <input type="checkbox" name="wa_actief" value="1" <?= instelling('wa.actief','0')==='1'?'checked':'' ?>>
           WhatsApp inschakelen (via WhatsReach)
         </label>
-        <div style="padding:10px 14px;background:var(--oranje-bg);border:1px solid var(--oranje);border-radius:8px;font-size:12.5px;color:var(--oranje);margin-bottom:12px">
+        <div class="bh-wa-risico">
           <strong>Let op:</strong> WhatsReach werkt buiten de officiële WhatsApp Business API om. Dit brengt een
           reëel risico met zich mee dat het gebruikte WhatsApp-nummer door WhatsApp geblokkeerd wordt. Gebruik bij
           voorkeur een apart nummer, en stuur alleen naar mensen die contact via WhatsApp verwachten. Dit kanaal
           staat daarom standaard uit.
         </div>
-        <label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px">WhatsReach API-sleutel <span style="font-weight:400;color:var(--ink-muted)">(X-API-Key)</span></label>
-        <input type="text" name="wa_api_sleutel" value="<?= h(instelling('wa.api_sleutel','')) ?>" style="width:100%;margin-bottom:8px" placeholder="je API-sleutel">
-        <label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px">Base URL</label>
-        <input type="text" name="wa_base_url" value="<?= h(instelling('wa.base_url','https://api.whatsreach.co/api/v1')) ?>" style="width:100%;margin-bottom:8px">
-        <label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px">Afzendernummer <span style="font-weight:400;color:var(--ink-muted)">(optioneel — bij meerdere gekoppelde apparaten)</span></label>
-        <input type="text" name="wa_afzender_nummer" value="<?= h(instelling('wa.afzender_nummer','')) ?>" style="width:100%" placeholder="+31612345678">
-        <p style="font-size:12px;color:var(--ink-muted);margin:6px 0 0">Het WhatsApp-nummer waarvandaan berichten verstuurd worden (het "from"-apparaat uit WhatsReach). Laat leeg als je maar één apparaat hebt gekoppeld.</p>
+        <?= bh_geheim_veld('wa_api_sleutel', 'wa.api_sleutel', 'WhatsReach API-sleutel (X-API-Key)', instelling('wa.api_sleutel', '') !== '') ?>
+        <label for="veld-wa-base-url" class="ds-label">Base URL</label>
+        <input id="veld-wa-base-url" type="text" name="wa_base_url" value="<?= h(instelling('wa.base_url','https://api.whatsreach.co/api/v1')) ?>" class="bh-inst-volbreed bh-wa-baseurl">
+        <label for="veld-wa-afzender-nummer" class="ds-label">Afzendernummer <span class="bh-label-optioneel">(optioneel — bij meerdere gekoppelde apparaten)</span></label>
+        <input id="veld-wa-afzender-nummer" type="text" name="wa_afzender_nummer" value="<?= h(instelling('wa.afzender_nummer','')) ?>" class="bh-inst-volbreed" placeholder="+31612345678">
+        <p class="bh-wa-nummeruitleg">Het WhatsApp-nummer waarvandaan berichten verstuurd worden (het "from"-apparaat uit WhatsReach). Laat leeg als je maar één apparaat hebt gekoppeld.</p>
       </div>
+      <?php endif; ?>
 
       <!-- Kanaal per melding -->
-      <div style="background:var(--bg-card,#fff);border:1px solid var(--rand);border-radius:10px;padding:16px;margin-bottom:16px">
-        <div style="font-weight:600;font-size:15px;margin-bottom:6px">Welke melding via welk kanaal?</div>
-        <p style="font-size:12px;color:var(--tekst-zacht);margin:0 0 12px">
+      <div class="bh-subkaart">
+        <div class="bh-meldkanaal-kop">Welke melding via welk kanaal?</div>
+        <p class="bh-inst-uitleg bh-inst-uitleg-12">
           <strong>E-mail</strong> = alleen e-mail. <strong>WhatsApp/SMS</strong> = kort bericht via het kanaal dat de sollicitant koos (standaard WhatsApp; SMS als WhatsApp niet kan);
           lukt dat niet, dan alsnog per e-mail. <strong>Beide</strong> = e-mail én kort bericht. <strong>Uit</strong> = niet versturen.
-          Ouders en het bestuur krijgen altijd e-mail. Teksten bewerken: <a href="<?= APP_URL ?>/admin/mail_templates.php" style="color:var(--oranje)">Sjablonen</a>.
+          Ouders en het bestuur krijgen altijd e-mail.
+          <?php if ($mag_sjablonen): ?>Teksten bewerken: <a href="<?= APP_URL ?>/admin/mail_templates.php" class="bh-let-op">Sjablonen</a>.<?php endif; ?>
         </p>
         <?php if (function_exists('meldingen_per_categorie')): $kmodi = meldingen_kanaalmodi(); foreach (meldingen_per_categorie() as $ck => $typen): if ($ck === 'handmatig') continue; ?>
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--grijs);margin:12px 0 4px"><?= h(meldingen_categorieen()[$ck] ?? $ck) ?></div>
-        <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <div class="bh-meldkanaal-groep"><?= h(meldingen_categorieen()[$ck] ?? $ck) ?></div>
+        <table class="bh-meldkanaaltabel">
           <?php foreach ($typen as $type => $mdef): $mm = melding_kanaalmodus($type); ?>
-          <tr style="border-bottom:1px solid var(--rand)">
-            <td style="padding:7px 8px"><a href="<?= APP_URL ?>/admin/mail_templates.php?slug=<?= h($type) ?>" style="color:inherit;text-decoration:none"><?= h($mdef['naam']) ?></a>
-              <div style="font-size:11px;color:var(--tekst-zacht)"><?= h($mdef['beschrijving'] ?? '') ?></div></td>
-            <td style="padding:7px 8px;width:220px;text-align:right">
-              <select name="notif[<?= h($type) ?>]" style="font-size:12px;padding:5px 8px;width:200px">
+          <tr>
+            <td><?php if ($mag_sjablonen): ?><a href="<?= APP_URL ?>/admin/mail_templates.php?slug=<?= h($type) ?>" class="bh-meldkanaal-naam"><?= h($mdef['naam']) ?></a><?php else: ?><span class="bh-meldkanaal-naam"><?= h($mdef['naam']) ?></span><?php endif; ?>
+              <div class="ds-veld-hint"><?= h($mdef['beschrijving'] ?? '') ?></div></td>
+            <td class="bh-meldkanaal-keuze">
+              <select name="notif[<?= h($type) ?>]">
                 <?php foreach ($kmodi as $mk => $ml): if (!$mdef['kort_toegestaan'] && $mk !== 'email' && $mk !== 'uit') continue; ?>
                 <option value="<?= $mk ?>" <?= $mm === $mk ? 'selected' : '' ?>><?= h($ml) ?></option>
                 <?php endforeach; ?>
@@ -1697,41 +1940,41 @@ require __DIR__ . '/layout_top.php';
         <?php endforeach; endif; ?>
       </div>
 
-      <button type="submit" class="btn btn-primary">Opslaan</button>
+      <button type="submit" class="ds-btn ds-btn-primair">Opslaan</button>
     </form>
 
     <!-- Test -->
-    <div style="background:var(--bg);border:1px solid var(--rand);border-radius:10px;padding:16px;margin-top:16px">
-      <div style="font-weight:600;font-size:14px;margin-bottom:8px">Testbericht sturen</div>
-      <form method="post" style="display:flex;gap:8px;flex-wrap:wrap;align-items:end">
+    <div class="bh-testbericht">
+      <div class="bh-inst-blokkop">Testbericht sturen</div>
+      <form method="post" class="bh-testbericht-form">
         <?= csrf_input() ?>
         <input type="hidden" name="actie" value="bericht_test">
         <div>
-          <label style="display:block;font-size:12px;margin-bottom:2px">Telefoonnummer</label>
-          <input type="text" name="test_nummer" placeholder="06..." style="width:160px">
+          <label for="veld-test-nummer" class="ds-label">Telefoonnummer</label>
+          <input id="veld-test-nummer" type="text" name="test_nummer" placeholder="06..." class="bh-testbericht-nummer">
         </div>
         <div>
-          <label style="display:block;font-size:12px;margin-bottom:2px">E-mail (terugval)</label>
-          <input type="email" name="test_email" value="<?= h($_SESSION['bhd_email'] ?? '') ?>" style="width:220px">
+          <label for="veld-test-email" class="ds-label">E-mail (terugval)</label>
+          <input id="veld-test-email" type="email" name="test_email" value="<?= h($_SESSION['bhd_email'] ?? '') ?>" class="bh-testbericht-email">
         </div>
         <div>
-          <label style="display:block;font-size:12px;margin-bottom:2px">Via</label>
-          <select name="test_kanaal" style="width:120px">
+          <label for="veld-test-kanaal" class="ds-label">Via</label>
+          <select id="veld-test-kanaal" name="test_kanaal" class="bh-testbericht-kanaal">
             <option value="wa">WhatsApp</option>
             <option value="sms">SMS</option>
             <option value="email">E-mail</option>
           </select>
         </div>
-        <button type="submit" class="btn btn-outline btn-sm">Test versturen</button>
+        <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm">Test versturen</button>
       </form>
     </div>
   </div>
 
-  <script>
+  <script nonce="<?= h(csp_nonce()) ?>">
     function smsGatewayToon() {
       var gw = document.getElementById('smsGateway').value;
       document.querySelectorAll('.sms-veld').forEach(function(el){
-        el.style.display = el.dataset.voor.split(' ').includes(gw) ? '' : 'none';
+        el.hidden = !el.dataset.voor.split(' ').includes(gw);
       });
     }
     smsGatewayToon();
@@ -1742,23 +1985,21 @@ require __DIR__ . '/layout_top.php';
 </div>
 </div>
 
-<script>
-// Loon preview live bijwerken
-function updatePreview(input, leeftijd, periode) {
-  const v = parseFloat(input.value);
-  const el = document.getElementById('prev-' + periode + '-' + leeftijd);
-  if (!el) return;
+<script nonce="<?= h(csp_nonce()) ?>">
+// Loon-voorbeeld live bijwerken: uurloon × uren × factor lifeguard × (1 + VT), met de getallen van
+// het gekozen jaar (data-* op de tabel), dus hetzelfde als loon_dagloon() op de server.
+document.addEventListener('input', function (e) {
+  const input = e.target.closest ? e.target.closest('input[data-voorbeeld]') : null;
+  if (!input) return;
+  const tab = input.closest('[data-loonvoorbeeld]');
+  const el  = document.getElementById(input.dataset.voorbeeld);
+  if (!tab || !el) return;
+  const v = parseFloat(String(input.value).replace(',', '.'));
   if (!v || isNaN(v)) { el.textContent = '—'; return; }
-  // Factor lifeguard 1.2, VT 1.08, 8 uur
-  const dl = Math.round(v * 8 * 1.2 * 1.08 * 100) / 100;
+  const dl = Math.round(v * parseFloat(tab.dataset.uren) * parseFloat(tab.dataset.factor) * (1 + parseFloat(tab.dataset.vt) / 100) * 100) / 100;
   el.textContent = '€' + dl.toFixed(2).replace('.', ',');
-}
-
-// Delay veld tonen/verbergen
-document.querySelector('select[name="inst[invite.modus]"]')?.addEventListener('change', function() {
-  const df = document.getElementById('delay_veld');
-  if (df) df.style.display = this.value === 'auto' ? '' : 'none';
 });
+
 </script>
 
 <?php require __DIR__ . '/layout_bottom.php'; ?>

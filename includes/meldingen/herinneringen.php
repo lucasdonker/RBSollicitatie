@@ -18,7 +18,7 @@ if (!function_exists('herinnering_regels')) {
 function herinnering_regels(): array {
     return [
         'herinnering_selectie_aanmelden' => [
-            'naam' => 'Nog niet aangemeld voor de selectiedag', 'uitleg' => 'Uitgenodigd, maar het formulier is nog niet ingeleverd terwijl de selectiedag binnen 14 dagen is.',
+            'naam' => 'Nog niet aangemeld voor de selectiedag', 'uitleg' => 'Uitgenodigd, maar nog niet laten weten of hij of zij komt, terwijl de selectiedag binnen 14 dagen is.',
             'aan' => '1', 'na' => 3, 'herhaal' => 4, 'max' => 3, 'rust' => true,
             'oud' => [], 'kandidaten' => 'herinnering_kand_selectie_aanmelden',
         ],
@@ -179,7 +179,9 @@ function herinnering_kand_selectie_aanmelden(array $seizoen, int $na): array {
     $d = herinnering_dagen_tot($seizoen['datum_selectiedag'] ?? null);
     if ($d === null || $d < 0 || $d > 14) return [];
     $uit = [];
-    foreach (herinnering_sollicitaties((int)$seizoen['id'], "AND s.fase='uitgenodigd_selectie' AND COALESCE(s.gewijzigd_op, s.aangemeld_op) <= DATE_SUB(NOW(), INTERVAL ? DAY)", [$na]) as $r) {
+    // Uitgenodigd = nog niet "ik kom" gezegd (2.146.0). Wie "kan niet" doorgaf, wacht op het bestuur: geen herinnering.
+    foreach (herinnering_sollicitaties((int)$seizoen['id'], "AND s.fase='uitgenodigd_selectie' AND COALESCE(s.gewijzigd_op, s.aangemeld_op) <= DATE_SUB(NOW(), INTERVAL ? DAY)
+                 AND NOT EXISTS (SELECT 1 FROM selectie_indeling si WHERE si.sollicitatie_id = s.id AND si.bevestiging = 'komt_niet')", [$na]) as $r) {
         $uit[] = ['sol_id' => (int)$r['sol_id'], 'naam' => trim($r['voornaam'] . ' ' . $r['achternaam'])];
     }
     return $uit;
@@ -196,27 +198,67 @@ function herinnering_kand_ouder_gegevens(array $seizoen, int $na): array {
     return $uit;
 }
 
-function herinnering_kand_ondertekening(array $seizoen, int $na): array {
-    $uit = [];
+/** Open ondertekeningen met een adres, in een lopende sollicitatie. $waar/$p: extra voorwaarden (o./s.). */
+function herinnering_ondertekeningen_open(string $waar, array $p): array {
     try {
         $q = db()->prepare("SELECT o.id, o.type, o.token, o.ondertekenaar_rol, o.ondertekenaar_naam, o.ondertekenaar_email, o.sollicitatie_id, p.voornaam, p.achternaam
                             FROM ondertekeningen o JOIN sollicitaties s ON s.id=o.sollicitatie_id JOIN personen p ON p.id=s.persoon_id
-                            WHERE s.seizoen_id=? AND o.ondertekend_op IS NULL AND o.ondertekenaar_email IS NOT NULL AND o.ondertekenaar_email<>''
-                              AND o.aangemaakt_op < DATE_SUB(NOW(), INTERVAL ? DAY)
-                              AND s.fase NOT IN ('afgewezen','afgehaakt','verwijderd_door_sollicitant')");
-        $q->execute([(int)$seizoen['id'], $na]);
-        foreach ($q->fetchAll() as $o) {
-            $is_ouder = $o['ondertekenaar_rol'] === 'ouder';
-            $label = function_exists('ondertekening_label') ? ondertekening_label($o['type']) : 'Formulier';
-            $naam  = $o['ondertekenaar_naam'] ?: ($is_ouder ? 'ouder/verzorger' : $o['voornaam']);
-            $uit[] = [
-                'sol_id' => (int)$o['sollicitatie_id'], 'naam' => trim($o['voornaam'] . ' ' . $o['achternaam']) . ' (' . $label . ')',
-                'referentie' => 'ondertekening:' . (int)$o['id'],
-                'extra' => ['ontvanger_naam' => $naam, 'document_naam' => $label, 'onderteken_url' => function_exists('ondertekening_url') ? ondertekening_url($o['token']) : '', 'is_ouder' => $is_ouder ? '1' : '0'],
-                'ontvanger' => ['email' => $o['ondertekenaar_email'], 'naam' => $naam, 'telefoon' => '', 'rol' => $is_ouder ? 'ouder' : 'sollicitant'],
-            ];
-        }
-    } catch (\Throwable $e) { error_log('herinnering ondertekening: ' . $e->getMessage()); }
+                            WHERE o.ondertekend_op IS NULL AND o.ondertekenaar_email IS NOT NULL AND o.ondertekenaar_email<>''
+                              AND s.fase NOT IN ('afgewezen','afgehaakt','verwijderd_door_sollicitant') $waar");
+        $q->execute($p);
+        return $q->fetchAll();
+    } catch (\Throwable $e) { error_log('herinnering ondertekening: ' . $e->getMessage()); return []; }
+}
+
+/**
+ * Eén herinnering voor één open ondertekening, in de vorm van herinnering_run(): wie, welk document,
+ * de link en de ontvanger (ouder of sollicitant). Eén bron voor de cron én de knop in het beheer
+ * (ondertekening_herinneren()), zodat die hetzelfde bericht sturen.
+ */
+function herinnering_ondertekening_kandidaat(array $o): array {
+    $is_ouder = $o['ondertekenaar_rol'] === 'ouder';
+    $label = function_exists('ondertekening_label') ? ondertekening_label($o['type']) : 'Formulier';
+    $naam  = $o['ondertekenaar_naam'] ?: ($is_ouder ? 'ouder/verzorger' : $o['voornaam']);
+    return [
+        'sol_id' => (int)$o['sollicitatie_id'], 'naam' => trim($o['voornaam'] . ' ' . $o['achternaam']) . ' (' . $label . ')',
+        'referentie' => 'ondertekening:' . (int)$o['id'],
+        'extra' => ['ontvanger_naam' => $naam, 'document_naam' => $label, 'onderteken_url' => function_exists('ondertekening_url') ? ondertekening_url($o['token']) : '', 'is_ouder' => $is_ouder ? '1' : '0'],
+        'ontvanger' => ['email' => $o['ondertekenaar_email'], 'naam' => $naam, 'telefoon' => '', 'rol' => $is_ouder ? 'ouder' : 'sollicitant'],
+    ];
+}
+
+function herinnering_kand_ondertekening(array $seizoen, int $na): array {
+    return array_map('herinnering_ondertekening_kandidaat', herinnering_ondertekeningen_open(
+        'AND s.seizoen_id=? AND o.aangemaakt_op < DATE_SUB(NOW(), INTERVAL ? DAY)', [(int)$seizoen['id'], $na]));
+}
+
+/**
+ * Handmatig een herinnering sturen voor deze ondertekeningen (knop op Ondertekeningen). Zelfde bericht
+ * als de automatische herinnering, maar zonder maximum of rustperiode: iemand kiest er bewust voor.
+ * Wel: niet vaker dan eens per uur per document (dubbel klikken, twee bestuursleden tegelijk).
+ * Getekend, zonder adres of niet meer lopend wordt stil overgeslagen.
+ *
+ * @param int[] $ond_ids
+ * @return array{verstuurd:int,dubbel:int,niet:int}
+ */
+function ondertekening_herinneren(array $ond_ids): array {
+    $uit = ['verstuurd' => 0, 'dubbel' => 0, 'niet' => 0];
+    $ids = array_values(array_unique(array_filter(array_map('intval', $ond_ids), fn($i) => $i > 0)));
+    if (!$ids || !function_exists('melding_verstuur')) return $uit;
+    $rijen = herinnering_ondertekeningen_open('AND o.id IN (' . implode(',', array_fill(0, count($ids), '?')) . ')', $ids);
+    $uit['niet'] = count($ids) - count($rijen);
+    $per_sol = [];   // voor het logboek: wie, welke documenten
+    foreach ($rijen as $o) {
+        $k = herinnering_ondertekening_kandidaat($o);
+        $r = melding_verstuur('ondertekening_herinnering', $k['sol_id'], $k['extra'],
+                              ['prioriteit' => 'na_antwoord', 'dedup_min' => 60, 'referentie' => $k['referentie'], 'ontvanger' => $k['ontvanger']]);
+        if (in_array($r['status'] ?? '', ['wacht', 'verstuurd'], true)) { $uit['verstuurd']++; $per_sol[$k['sol_id']][] = $k['extra']['document_naam']; }
+        elseif (($r['reden'] ?? '') === 'dubbel') $uit['dubbel']++;
+        else $uit['niet']++;
+    }
+    if (function_exists('audit_log')) {
+        foreach ($per_sol as $sol => $docs) audit_log('ondertekening_herinnerd', 'sollicitatie', (int)$sol, ['documenten' => $docs]);
+    }
     return $uit;
 }
 
@@ -245,22 +287,71 @@ function herinnering_kand_beschikbaarheid(array $seizoen, int $na): array {
     return $uit;
 }
 
+/**
+ * De variabelen voor de herinnering "Openstaande taken" van één sollicitant, of null als er niets
+ * openstaat. Dezelfde takenbron als het portaal (portaal_taken). Eén bron voor cron en beheer.
+ */
+function herinnering_taken_extra(int $sol_id): ?array {
+    if (!function_exists('portaal_taken') || !function_exists('portaal_sollicitant_laden')) return null;
+    try {
+        $sol = portaal_sollicitant_laden($sol_id);
+        if (!$sol) return null;
+        $blk  = function_exists('blk_van') ? blk_van($sol_id) : null;
+        $open = portaal_taken_open(portaal_taken($sol, $blk));
+    } catch (\Throwable $e) { return null; }
+    if (!$open) return null;
+    $blok = '<ul>' . implode('', array_map(fn($t) => '<li>' . htmlspecialchars((string)$t['titel'], ENT_QUOTES, 'UTF-8') . '</li>', $open)) . '</ul>';
+    return ['taken_aantal' => (string)count($open), 'taken_blok' => $blok];
+}
+
 function herinnering_kand_taken_open(array $seizoen, int $na): array {
-    if (!function_exists('portaal_taken') || !function_exists('portaal_sollicitant_laden')) return [];
     $uit = [];
     $fases = "'aangemeld','uitgenodigd_selectie','aangemeld_selectie','selectiedag_geweest','uitgenodigd_tw','tw_geweest','aangenomen'";
     foreach (herinnering_sollicitaties((int)$seizoen['id'], "AND s.fase IN ($fases) AND COALESCE(s.gewijzigd_op, s.aangemeld_op) <= DATE_SUB(NOW(), INTERVAL ? DAY)", [$na]) as $r) {
-        $sol_id = (int)$r['sol_id'];
-        try {
-            $sol = portaal_sollicitant_laden($sol_id);
-            if (!$sol) continue;
-            $blk  = function_exists('blk_van') ? blk_van($sol_id) : null;
-            $open = portaal_taken_open(portaal_taken($sol, $blk));
-        } catch (\Throwable $e) { continue; }
-        if (!$open) continue;
-        $blok = '<ul>' . implode('', array_map(fn($t) => '<li>' . htmlspecialchars((string)$t['titel'], ENT_QUOTES, 'UTF-8') . '</li>', $open)) . '</ul>';
-        $uit[] = ['sol_id' => $sol_id, 'naam' => trim($r['voornaam'] . ' ' . $r['achternaam']) . ' (' . count($open) . ')',
-                  'extra' => ['taken_aantal' => (string)count($open), 'taken_blok' => $blok]];
+        $extra = herinnering_taken_extra((int)$r['sol_id']);
+        if (!$extra) continue;
+        $uit[] = ['sol_id' => (int)$r['sol_id'], 'naam' => trim($r['voornaam'] . ' ' . $r['achternaam']) . ' (' . $extra['taken_aantal'] . ')',
+                  'extra' => $extra];
+    }
+    return $uit;
+}
+
+/**
+ * Handmatige herinnering vanaf de sollicitantenlijst (bulk). Per sollicitant:
+ *  - staan er taken open in het portaal, dan de herinnering "Openstaande taken" aan de sollicitant;
+ *  - staat er een document open dat een ouder moet tekenen, dan de ondertekenherinnering aan de ouder
+ *    (de sollicitant ziet dat als "wacht op ouder" en kan er zelf niets aan doen).
+ * Niet vaker dan eens per uur per bericht; bij meer dan tien mensen via de wachtrij.
+ *
+ * @return array{sollicitanten:int,ouders:int,dubbel:int,niets:int}
+ */
+function sollicitant_herinneren(array $sol_ids): array {
+    $uit = ['sollicitanten' => 0, 'ouders' => 0, 'dubbel' => 0, 'niets' => 0];
+    $ids = array_values(array_unique(array_filter(array_map('intval', $sol_ids), fn($i) => $i > 0)));
+    if (!$ids || !function_exists('melding_verstuur')) return $uit;
+    $prio = count($ids) > 10 ? 'queue' : 'na_antwoord';
+    $ouder_docs = [];
+    foreach (herinnering_ondertekeningen_open("AND o.ondertekenaar_rol='ouder' AND o.sollicitatie_id IN (" . implode(',', array_fill(0, count($ids), '?')) . ")", $ids) as $o) {
+        $ouder_docs[(int)$o['sollicitatie_id']][] = (int)$o['id'];
+    }
+    foreach ($ids as $sol) {
+        $iets = false;
+        $extra = herinnering_taken_extra($sol);
+        if ($extra) {
+            $r = melding_verstuur('herinnering_taken_open', $sol, $extra, ['prioriteit' => $prio, 'dedup_min' => 60]);
+            if (in_array($r['status'] ?? '', ['wacht', 'verstuurd'], true)) {
+                $uit['sollicitanten']++; $iets = true;
+                if (function_exists('audit_log')) audit_log('taken_herinnerd', 'sollicitatie', $sol, ['taken' => (int)$extra['taken_aantal']]);
+            }
+            elseif (($r['reden'] ?? '') === 'dubbel') { $uit['dubbel']++; $iets = true; }
+        }
+        if (!empty($ouder_docs[$sol])) {
+            $r = ondertekening_herinneren($ouder_docs[$sol]);
+            if ($r['verstuurd']) $uit['ouders']++;
+            if ($r['dubbel']) $uit['dubbel']++;
+            $iets = $iets || $r['verstuurd'] || $r['dubbel'];
+        }
+        if (!$iets) $uit['niets']++;
     }
     return $uit;
 }

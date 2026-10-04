@@ -13,7 +13,7 @@ if (!isset($sol)) { return; }
 $b2  = $b2 ?? (function_exists('beschikbaarheid2_van') ? beschikbaarheid2_van($sol['id']) : ['profiel'=>null,'blokken'=>[],'afwezig'=>[],'verzoeken'=>[]]);
 $b2p = $b2['profiel'] ?? null;
 $losse_dagen = function_exists('beschikbaarheid_dagen') ? beschikbaarheid_dagen($sol['id']) : [];
-$dag_namen = [1=>'ma',2=>'di',3=>'wo',4=>'do',5=>'vr',6=>'za',7=>'zo'];
+$dag_namen = dagen_kort_nl();
 $ico = function($naam, $g=18) { return function_exists('icoon') ? icoon($naam, $g) : ''; };
 
 // Opgeslagen data → gedeeld JS-formaat (zelfde vorm als het concept en het AI-voorstel)
@@ -32,7 +32,7 @@ $besch_heeft_data = !empty($besch_data['periodes']);
 
 // Eén sectie-kop voor de vier "alleen als het van toepassing is"-secties
 $sectie_kop = function(string $titel) use ($ico): string {
-    return '<button type="button" class="bs-uitz-kop" aria-expanded="false" onclick="beschSectieToggle(this)">'
+    return '<button type="button" class="bs-uitz-kop" aria-expanded="false" data-klik="beschSectieToggle(this)">'
          . '<span class="bs-uitz-tekst"><span class="bs-uitz-titel">' . h($titel) . '</span><span class="bs-uitz-sub">Niets ingevuld</span></span>'
          . '<span class="bs-uitz-actie"><span class="bs-uitz-toevoeg-lbl">Toevoegen</span><span class="bs-uitz-chev">' . $ico('chevron', 18) . '</span></span>'
          . '</button>';
@@ -52,7 +52,7 @@ $sectie_kop = function(string $titel) use ($ico): string {
     <span class="bs-kaart-sub">Kies je werkperiodes — dit is het enige dat je echt hoeft in te vullen.</span>
   </div>
   <div id="beschPeriodes"></div>
-  <button type="button" class="bs-toevoeg-knop" onclick="beschPeriodeToevoegen()"><?= $ico('plus', 16) ?> Nog een periode</button>
+  <button type="button" class="bs-toevoeg-knop" data-klik="beschPeriodeToevoegen()"><?= $ico('plus', 16) ?> Nog een periode</button>
 </div>
 
 <span class="bs-sectie-lbl">Alleen als het van toepassing is</span>
@@ -67,13 +67,13 @@ $sectie_kop = function(string $titel) use ($ico): string {
       <div class="bs-dagpillen">
         <?php foreach ($dag_namen as $n => $kort): $weekend = ($n >= 6); ?>
           <label class="bs-dagpil <?= $weekend ? 'weekend' : '' ?>">
-            <input type="checkbox" class="besch-vastedag" value="<?= $n ?>" <?= $weekend ? 'disabled' : '' ?> onchange="beschVasteToggle(this)">
+            <input type="checkbox" class="besch-vastedag" value="<?= $n ?>" <?= $weekend ? 'disabled' : '' ?> data-wijzig="beschVasteToggle(this)">
             <?= $kort ?>
           </label>
         <?php endforeach; ?>
       </div>
       <span class="bs-uitz-uitleg">Bijvoorbeeld vanwege school of een bijbaan. Weekenden kunnen niet vast vrij.</span>
-      <input type="text" name="b2_vaste_toelichting" id="beschVasteToelichting" placeholder="Toelichting (optioneel)" class="bs-invoer" maxlength="300">
+      <input type="text" name="b2_vaste_toelichting" id="beschVasteToelichting" aria-label="Toelichting bij je vaste vrije dag (optioneel)" placeholder="Toelichting (optioneel)" class="bs-invoer" maxlength="300">
     </div>
   </div>
 
@@ -84,7 +84,7 @@ $sectie_kop = function(string $titel) use ($ico): string {
     <?= $sectie_kop('Vakanties') ?>
     <div class="bs-uitz-body" hidden>
       <div id="beschAfwezig"></div>
-      <button type="button" class="bs-uitz-toevoeg" onclick="beschVakantieToevoegen()">+ Nog een vakantie</button>
+      <button type="button" class="bs-uitz-toevoeg" data-klik="beschVakantieToevoegen()">+ Nog een vakantie</button>
     </div>
   </div>
 
@@ -96,7 +96,7 @@ $sectie_kop = function(string $titel) use ($ico): string {
     <div class="bs-uitz-body" hidden>
       <span class="bs-uitz-uitleg">Standaard gaan we uit van 5 dagen per week. Minder in bepaalde weken? Geef het door als verzoek — het bestuur beoordeelt dit.</span>
       <div id="beschVerzoeken"></div>
-      <button type="button" class="bs-uitz-toevoeg" onclick="beschVerzoekToevoegen()">+ Nog een verzoek</button>
+      <button type="button" class="bs-uitz-toevoeg" data-klik="beschVerzoekToevoegen()">+ Nog een verzoek</button>
     </div>
   </div>
 
@@ -107,13 +107,13 @@ $sectie_kop = function(string $titel) use ($ico): string {
     <?= $sectie_kop('Losse dagen niet beschikbaar') ?>
     <div class="bs-uitz-body" hidden>
       <div id="beschLosseDagen"></div>
-      <button type="button" class="bs-uitz-toevoeg" onclick="beschLosseDagToevoegen()">+ Nog een dag</button>
+      <button type="button" class="bs-uitz-toevoeg" data-klik="beschLosseDagToevoegen()">+ Nog een dag</button>
     </div>
   </div>
 
 </div>
 
 <label class="bs-voorlopig">
-  <input type="checkbox" name="b2_voorlopig" value="1" onchange="beschHerbereken()">
+  <input type="checkbox" name="b2_voorlopig" value="1" data-wijzig="beschHerbereken()">
   Mijn beschikbaarheid is nog voorlopig — ik werk het later bij.
 </label>

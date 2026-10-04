@@ -16,7 +16,7 @@ if (!function_exists('sjablonen_auto_setup')) {
 
 /** Kolommen + slug-migratie + seeds. Draait één keer per request, faalt stil. */
 function sjablonen_auto_setup(): void {
-    static $done = false; if ($done) return; $done = true;
+    static $done = false; if ($done || schema_actueel()) return; $done = true;
     try {
         $db = db();
         if (!function_exists('db_tabel_bestaat') || !db_tabel_bestaat($db, 'mail_templates')) {
@@ -83,6 +83,11 @@ function sjablonen_migreer_slugs($db): void {
         $db->exec("UPDATE mail_templates SET body_html=REPLACE(body_html,'{{otp.code}}','{{otp_code}}') WHERE body_html LIKE '%{{otp.code}}%'");
         // De vaste afmeldzin stond t/m 2.87.7 in elke korte tekst; nu alleen bij het eerste korte bericht (code).
         $db->exec("UPDATE mail_templates SET tekst_kort=TRIM(REPLACE(tekst_kort,'Afmelden voor WhatsApp/SMS kan onder Mijn gegevens in het portaal.','')) WHERE tekst_kort LIKE '%Afmelden voor WhatsApp/SMS kan onder Mijn gegevens%'");
+        // De ondertekenherinnering noemde t/m 2.125 altijd de selectiedag, ook bij loonheffing of lidmaatschap.
+        $oud_zin = 'Zonder deze handtekening kan {{voornaam}} helaas niet deelnemen aan de selectiedag van Reddingsbrigade Paal 13.';
+        $nw_zin  = 'We hebben deze handtekening nodig om met de sollicitatie van {{voornaam}} bij Reddingsbrigade Paal 13 verder te kunnen.';
+        $db->prepare("UPDATE mail_templates SET body_html=REPLACE(body_html,?,?) WHERE slug='ondertekening_herinnering' AND body_html LIKE ?")
+           ->execute([$oud_zin, $nw_zin, '%' . $oud_zin . '%']);
         if (function_exists('meldingen_register') && isset(meldingen_register()['portaal_code'])) {
             $s = meldingen_register()['portaal_code']['seed'];
             $db->prepare("UPDATE mail_templates SET hero_titel=?, hero_subtitel=? WHERE slug='portaal_code' AND (hero_titel IS NULL OR hero_titel='' OR hero_titel LIKE '%inlogcode voor%')")
@@ -98,6 +103,55 @@ function sjablonen_migreer_slugs($db): void {
                           WHERE slug='ondertekening_bevestiging'
                             AND (body_html LIKE '%{{door}}%' OR body_html LIKE '%ouder%' OR onderwerp LIKE '%ouder%')")
                ->execute([$s['onderwerp'], $s['hero_titel'], $s['hero_subtitel'], $s['body_html'], $s['tekst_kort'], $s['samenvatting']]);
+        }
+        // T/m 2.128.1: de vraag-mail noemde {{email}} (bestaat niet, werd weggehaald: "rechtstreeks op .").
+        $db->exec("UPDATE mail_templates SET body_html=REPLACE(body_html,'rechtstreeks op {{email}}.','rechtstreeks op <a href=\"mailto:{{sollicitant_email}}\">{{sollicitant_email}}</a>.') WHERE slug='sollicitant_vraag' AND body_html LIKE '%{{email}}%'");
+        $db->exec("UPDATE mail_templates SET body_html=REPLACE(body_html,'{{email}}','{{sollicitant_email}}') WHERE slug='sollicitant_vraag' AND body_html LIKE '%{{email}}%'");
+        // T/m 2.128.1: de aangenomen-mail gebruikte {{gesprek_bericht}} niet, dus het bericht uit het
+        // TW-gesprek kwam nooit aan. Alleen in de ongewijzigde standaardtekst invoegen.
+        $welkom = 'We zijn blij dat je aan boord komt voor {{seizoen_naam}}.</p>';
+        $db->prepare("UPDATE mail_templates SET body_html=REPLACE(body_html,?,?) WHERE slug='aangenomen' AND body_html LIKE ? AND body_html NOT LIKE '%{{gesprek_bericht}}%'")
+           ->execute([$welkom, $welkom . "\n<p>{{gesprek_bericht}}</p>", '%' . $welkom . '%']);
+        // 2.129.0 (besluit Lucas): sollicitanten en ouders bereiken ons via het contactadres
+        // (sollicitatie@paal13.com), niet het bestuursadres. Alleen de mails aan hen.
+        $aan_sollicitant = ['aanmelding_bevestiging', 'aangenomen', 'afgewezen', 'tw_niet_gekomen', 'tw_afgewezen',
+                            'ondertekening_verzoek_zelf', 'intrekverzoek_niet_doorgevoerd', 'deelname_afgemeld',
+                            'herinnering_selectie_aanmelden', 'ondertekening_verzoek_ouder', 'lidmaatschap_verzoek_ouder'];
+        $db->exec("UPDATE mail_templates SET body_html=REPLACE(body_html,'{{bestuur_email}}','{{contact_email}}')
+                   WHERE body_html LIKE '%{{bestuur_email}}%' AND slug IN ('" . implode("','", $aan_sollicitant) . "')");
+        // 2.130.0: "{{tw_datum_start}} t/m {{tw_datum_eind}}" gaf "Wanneer:  t/m " zolang de datum nog niet
+        // bekend was. {{tw_periode}} levert altijd een hele zin (ook één dag, of "een datum die nog volgt").
+        // 2.130.0: "Mail ons gerust." zonder adres in het ouderverzoek; de kopie-mail (naar ouders én
+        // 18-plussers) sprak met "je" terwijl oudermails "u" zeggen — nu zonder aanspreekvorm.
+        $db->exec("UPDATE mail_templates SET body_html=REPLACE(body_html,'<p>Heeft u vragen? Mail ons gerust.</p>',
+                   '<p>Heeft u vragen? Mail ons gerust via <a href=\"mailto:{{contact_email}}\">{{contact_email}}</a>.</p>')
+                   WHERE slug='ondertekening_verzoek_ouder' AND body_html LIKE '%Mail ons gerust.</p>%'");
+        $db->exec("UPDATE mail_templates SET hero_titel='Kopie van de ondertekening', hero_subtitel='Voor de eigen administratie',
+                   body_html=REPLACE(body_html,'<p>In de bijlage vind je een kopie van het ondertekende document, zodat je kunt terugzien waar je je handtekening onder hebt gezet.</p>',
+                   '<p>In de bijlage staat een kopie van het ondertekende document, om later terug te kunnen zien wat er is ondertekend.</p>')
+                   WHERE slug='ondertekening_kopie' AND hero_titel='Kopie van je ondertekening'");
+        foreach (['onderwerp', 'body_html', 'tekst_kort', 'samenvatting'] as $_kol) {
+            $db->exec("UPDATE mail_templates SET `$_kol`=REPLACE(`$_kol`,'{{tw_datum_start}} t/m {{tw_datum_eind}}','{{tw_periode}}')
+                       WHERE `$_kol` LIKE '%{{tw_datum_start}} t/m {{tw_datum_eind}}%'");
+        }
+        // 2.146.0: "ik kom" meldt je aan voor de selectiedag, niet meer het kennismakingsformulier.
+        // Alleen de ongewijzigde standaardzinnen; een eigen tekst blijft staan.
+        $_vervang = [
+            ['uitnodiging_selectie', 'body_html',
+             'Log in op je portaal en vul het kennismakingsformulier in. Daarmee bevestig je meteen je deelname aan de selectiedag.',
+             'Log in op je portaal en laat weten of je komt. Vul daar ook het kennismakingsformulier in.'],
+            ['selectie_aangemeld_bevestiging', 'body_html', 'Bedankt voor het invullen van je formulier.', 'Bedankt dat je het hebt laten weten.'],
+            ['bestuur_blk_ingediend', 'body_html', 'heeft het kennismakingsformulier ingeleverd en is daarmee aangemeld voor de selectiedag.',
+             'heeft het kennismakingsformulier ingeleverd.'],
+            ['herinnering_selectie_aanmelden', 'body_html',
+             'maar je hebt je deelname nog niet bevestigd. Dat doe je door het kennismakingsformulier in je portaal in te vullen.</p>' . "\n" . '[knop href="{{portaal_url}}"]Formulier invullen[/knop]',
+             'maar je hebt nog niet laten weten of je komt. Dat doe je in je portaal; daar kun je ook doorgeven dat je niet kunt.</p>' . "\n" . '[knop href="{{portaal_url}}"]Naar mijn portaal[/knop]'],
+            ['herinnering_selectie_aanmelden', 'tekst_kort', 'Bevestig je deelname via het formulier in je portaal:', 'Laat in je portaal weten of je komt:'],
+        ];
+        $_st = $db->prepare("UPDATE mail_templates SET body_html=REPLACE(body_html,?,?) WHERE slug=? AND body_html LIKE ?");
+        $_sk = $db->prepare("UPDATE mail_templates SET tekst_kort=REPLACE(tekst_kort,?,?) WHERE slug=? AND tekst_kort LIKE ?");
+        foreach ($_vervang as $_v) {
+            ($_v[1] === 'tekst_kort' ? $_sk : $_st)->execute([$_v[2], $_v[3], $_v[0], '%' . $_v[2] . '%']);
         }
     } catch (\Throwable $e) {}
 }
@@ -172,6 +226,7 @@ function melding_vars(int $sol_id, array $extra = []): array {
     $vars = function_exists('mail_variabelen') ? mail_variabelen($sol, $seizoen) : [];
     $app = defined('APP_URL') ? rtrim(APP_URL, '/') : '';
     $vars['portaal_url']          = $app . '/portaal/';
+    $vars['aanmeld_url']          = $app . '/aanmelden.php';
     $vars['beheer_url']           = $app . '/admin/sollicitanten.php' . ($sol_id ? '?panel=' . $sol_id : '');
     $vars['sollicitant_email']    = $sol['email'] ?? '';
     $vars['sollicitant_telefoon'] = $sol['telefoon'] ?? '';
@@ -183,12 +238,15 @@ function melding_vars(int $sol_id, array $extra = []): array {
     $vars['tw_eindtijd']          = !empty($seizoen['tw_eindtijd']) ? substr($seizoen['tw_eindtijd'], 0, 5) : '';
     $vars['bestuur_email']        = function_exists('bestuur_email') ? bestuur_email() : ($vars['bestuur_email'] ?? '');
     $vars['bestuur.email']        = $vars['bestuur_email'];
+    // Het adres waar sollicitanten en ouders ons bereiken (besluit: altijd sollicitatie@paal13.com, instelbaar).
+    $vars['contact_email']        = function_exists('portaal_contact_email') ? portaal_contact_email() : $vars['bestuur_email'];
     $vars['ouder_naam']           = $sol['ouder_naam'] ?? '';
     if (!empty($sol['persoon_id']) && function_exists('optout_link')) {
         try { $vars['afmeld_url'] = optout_link((int)$sol['persoon_id']); } catch (\Throwable $e) { $vars['afmeld_url'] = ''; }
     } else {
         $vars['afmeld_url'] = '';
     }
+    $vars['seintje_url'] = (!empty($sol['persoon_id']) && function_exists('seintje_link')) ? seintje_link((int)$sol['persoon_id']) : '';
     foreach ($extra as $k => $v) $vars[$k] = $v;
     // Oude sjablonen gebruiken de lange namen ({{otp.code}}); nieuwe de korte ({{otp_code}}). Beide vullen.
     foreach (['otp_code' => 'otp.code', 'portaal_url' => 'portaal.url', 'bestuur_email' => 'bestuur.email', 'voornaam' => 'sollicitant.voornaam', 'achternaam' => 'sollicitant.achternaam', 'volledige_naam' => 'sollicitant.volledige_naam', 'seizoen_naam' => 'seizoen.naam'] as $kort => $lang) {
@@ -225,14 +283,41 @@ function tekst_kort_maak(string $sjabloon, array $vars, int $max = 400): string 
 }
 
 /**
+ * Logica ({{als …}}, {{kies …}}) in alle tekstvelden van een sjabloon toepassen, vóór de variabelen.
+ * Eerst gaat de inhoud van een zelf geschreven bericht ({{body_html}}, {{onderwerp}}, {{tekst_kort}})
+ * erin, zodat ook die logica mag bevatten; ingevulde gegevens van de sollicitant komen pas daarna en
+ * worden dus nooit als logica gelezen. De eerste fout komt in $fout.
+ */
+function melding_logica(array $t, array $vars, ?int $sol_id, ?string &$fout): array {
+    $inhoud = fn(string $tekst, array $namen) => strtr($tekst, array_combine(
+        array_map(fn($n) => '{{' . $n . '}}', $namen), array_map(fn($n) => (string)($vars[$n] ?? '{{' . $n . '}}'), $namen)));
+    $waarde = null;
+    foreach (['onderwerp' => false, 'hero_titel' => false, 'hero_subtitel' => false, 'body_html' => true, 'tekst_kort' => false, 'samenvatting' => false] as $veld => $html) {
+        $tekst = (string)($t[$veld] ?? '');
+        if ($tekst === '' || strpos($tekst, '{{') === false) continue;
+        $tekst = $inhoud($tekst, $html ? ['body_html'] : ['onderwerp', 'tekst_kort']);
+        if (!sjabloon_heeft_logica($tekst)) continue;
+        $waarde = $waarde ?? voorwaarde_resolver($sol_id, $vars);
+        try { $t[$veld] = sjabloon_logica($tekst, $waarde, $html); }
+        catch (SjabloonFout $e) { $fout = $fout ?? $e->getMessage(); $t[$veld] = ''; continue; }
+        // Vangnet: een tag die niet dicht is ({{als x) zou letterlijk naar WhatsApp, sms of mail gaan.
+        if (sjabloon_losse_accolade($t[$veld])) { $fout = $fout ?? 'Er staat een {{ zonder }} in ' . $veld . '.'; $t[$veld] = ''; }
+    }
+    return $t;
+}
+
+/**
  * Render een meldingstype met variabelen.
  * $override kan onderwerp/body_html/tekst_kort/hero_* overschrijven (handmatige berichten).
- * Retourneert null als het type onbekend is.
+ * $sol_id voor de logica in het sjabloon: null = voorbeeldwaarden, 0 = geen sollicitant, > 0 = echt.
+ * Retourneert null als het type onbekend is; 'fout' is gevuld als de logica niet klopt (dan niet versturen).
  */
-function melding_render(string $type, array $vars, array $override = []): ?array {
+function melding_render(string $type, array $vars, array $override = [], ?int $sol_id = null): ?array {
     $t = sjabloon_laden($type);
     if (!$t) return null;
     foreach ($override as $k => $v) if ($v !== null && $v !== '') $t[$k] = $v;
+    $fout = null;
+    if (function_exists('sjabloon_logica')) $t = melding_logica($t, $vars, $sol_id, $fout);
 
     // Twee keer vervangen: een variabele (bijv. body_html van een handmatig bericht) kan zelf weer
     // variabelen bevatten ({{voornaam}}).
@@ -247,7 +332,11 @@ function melding_render(string $type, array $vars, array $override = []): ?array
     $body = (string)$t['body_html'];
     $body = function_exists('mail_vervang') ? mail_vervang(mail_vervang($body, $vars), $vars) : tekst_vervang(tekst_vervang($body, $vars), $vars);
     $body = (string)preg_replace('/\{\{[a-z0-9_.]+\}\}/i', '', $body);
+    // Een lege variabele in een eigen alinea (bijv. geen gespreksbericht) laat geen gat achter.
+    $body = (string)preg_replace('#<p>\s*</p>\s*#i', '', $body);
     if (!empty($override['bijlagen_blok_html'])) $body .= $override['bijlagen_blok_html'];
+    // Vast blok onder de tekst (bijv. de seintje-vraag); vóór de shortcodes, want het gebruikt [knop].
+    if (!empty($override['blok_html'])) $body .= $override['blok_html'];
     if (function_exists('mail_shortcodes')) $body = mail_shortcodes($body);
     if (!empty($override['voetnoot_html'])) $body .= $override['voetnoot_html'];
 
@@ -255,7 +344,8 @@ function melding_render(string $type, array $vars, array $override = []): ?array
         ? mail_html_wrapper($body, $onderwerp, $hero_t, $hero_s, $img ?: null, $kleur)
         : $body;
 
-    $kort = tekst_kort_maak((string)($t['tekst_kort'] ?? ''), $vars);
+    // Een zelf geschreven bericht mag langer (tot 1000 tekens); een vast sjabloon blijft kort.
+    $kort = tekst_kort_maak((string)($t['tekst_kort'] ?? ''), $vars, (int)((function_exists('melding_definitie') ? melding_definitie($type) : null)['kort_max'] ?? 400));
     $sam  = tekst_kort_maak((string)($t['samenvatting'] ?? ''), $vars, 300);
     if ($sam === '') $sam = tekst_kort_maak($body, $vars, 140);
 
@@ -265,8 +355,10 @@ function melding_render(string $type, array $vars, array $override = []): ?array
     return [
         'onderwerp' => $onderwerp, 'hero_titel' => $hero_t, 'hero_subtitel' => $hero_s, 'hero_kleur' => $kleur,
         'hero_image' => $img, 'body_html' => $body, 'html' => $html, 'tekst_kort' => $kort, 'samenvatting' => $sam,
-        'bijlagen' => $bijlagen,
+        'bijlagen' => $bijlagen, 'fout' => $fout,
     ];
 }
+
+// Opmaak van de korte tekst (WhatsApp/sms) en de lijst met variabelen: includes/berichten_opmaak.php.
 
 }

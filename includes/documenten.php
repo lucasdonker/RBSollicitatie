@@ -1,7 +1,7 @@
 <?php
 /**
- * Paal 13 — Documenten van sollicitanten (aangenomen-takenpakket): kopie ID (voor/achter), kopie bankpas,
- * pasfoto en de verzegelde PDF's van ondertekeningen (loonheffing, lidmaatschap).
+ * Paal 13 — Documenten van sollicitanten (aangenomen-takenpakket): kopie ID (voor/achter), kopie bankpas
+ * en de verzegelde PDF's van ondertekeningen (loonheffing, lidmaatschap). Een pasfoto vragen we niet meer.
  *
  * Alles staat versleuteld in de kluis (includes/kluis.php), in een map buiten het webbereik
  * (DOCUMENTEN_MAP in config.php; anders uploads/documenten met een deny-.htaccess). De rij in
@@ -17,7 +17,7 @@
 if (!function_exists('documenten_auto_setup')) {
 
 function documenten_auto_setup(): void {
-    static $done = false; if ($done) return; $done = true;
+    static $done = false; if ($done || schema_actueel()) return; $done = true;
     try {
         db()->exec("CREATE TABLE IF NOT EXISTS `sollicitant_documenten` (
             `id`              INT AUTO_INCREMENT PRIMARY KEY,
@@ -243,6 +243,44 @@ function document_inhoud(array $rij): ?string {
     return kluis_bestand_lezen($pad, document_aad((int)$rij['sollicitatie_id'], (string)$rij['soort'], (string)$rij['opslagnaam']));
 }
 
+/**
+ * Soorten die een watermerk krijgen op de uitgaande kopie. Bewust NIET de kopie van het
+ * identiteitsbewijs (id_voor/id_achter): die is een wettelijk verplicht stuk in de loonadministratie
+ * (identificatieplicht werkgever, Wet op de loonbelasting) en moet volledig leesbaar zijn, foto en
+ * gegevens inbegrepen — anders dreigt bij een controle het anoniementarief. De bankpas is niet
+ * wettelijk verplicht en houdt het merk (besluit Lucas, 2.150.0).
+ */
+function document_watermerk_soorten(): array {
+    return ['bankpas'];
+}
+
+/**
+ * Het watermerk op een foto (alleen op de uitgaande kopie; het origineel blijft ongewijzigd in de
+ * kluis). Eén plek voor de download in het beheer en de mailbijlage aan de penningmeester.
+ * Geeft de inhoud ongewijzigd terug voor andere soorten, een PDF, of zonder GD.
+ */
+function document_watermerk(string $inhoud, string $soort, string $mime, string $door = 'beheer'): string {
+    if (!in_array($soort, document_watermerk_soorten(), true) || !in_array($mime, ['image/jpeg', 'image/png'], true)
+        || !function_exists('imagecreatefromstring')) return $inhoud;
+    try {
+        $im = @imagecreatefromstring($inhoud);
+        if (!$im) return $inhoud;
+        $w = imagesx($im); $h = imagesy($im);
+        if ($w > 2000) { $nw = 2000; $nh = (int)round($h * 2000 / $w); $im2 = imagescale($im, $nw, $nh); if ($im2) { imagedestroy($im); $im = $im2; $w = $nw; $h = $nh; } }
+        $tekst = 'Kopie voor loonadministratie Reddingsbrigade Paal 13 - ' . date('d-m-Y H:i') . ' - ' . ($door ?: 'beheer');
+        $kleur = imagecolorallocatealpha($im, 200, 30, 30, 60);
+        $stap = (int)max(120, $h / 6);
+        for ($y = 20; $y < $h; $y += $stap) {
+            imagestring($im, 5, 12, $y, $tekst, $kleur);
+            imagestring($im, 5, (int)($w / 2), $y + (int)($stap / 2), $tekst, $kleur);
+        }
+        ob_start();
+        if ($mime === 'image/png') imagepng($im, null, 6); else imagejpeg($im, null, 90);
+        $uit = ob_get_clean(); imagedestroy($im);
+        return ($uit !== false && $uit !== '') ? $uit : $inhoud;
+    } catch (\Throwable $e) { error_log('watermerk: ' . $e->getMessage()); return $inhoud; }
+}
+
 /** Door de sollicitant verwijderd (alleen zolang nog niet verwerkt): bestand weg, rij als 'vervangen'. */
 function document_verwijderen_door_sollicitant(int $id, int $sol_id): bool {
     $r = document_rij($id);
@@ -364,7 +402,7 @@ function documenten_dossier_compleet_check(int $sol_id, bool $opnieuw = false): 
         'documenten_lijst' => $lijst,
         'beheer_url'       => rtrim(APP_URL, '/') . '/admin/documenten.php?sol=' . $sol_id,
         'bijlagen_tekst'   => $met_bijlagen ? 'De stukken zitten als bijlage bij deze mail.' : 'De stukken staan klaar in het beheer (Loondossiers); download ze daar.',
-    ], ['referentie' => 'loondossier:' . $sol_id, 'prioriteit' => 'direct', 'dedup_min' => 0,
+    ], ['referentie' => 'loondossier:' . $sol_id, 'prioriteit' => 'na_antwoord', 'dedup_min' => 0,
         'bijlagen' => $met_bijlagen ? documenten_penningmeester_bijlagen($d) : []]);
     $ok = in_array($r['status'] ?? '', ['verstuurd', 'wacht'], true);
     if ($ok && $lh_id && function_exists('ondertekening_gebeurtenis')) ondertekening_gebeurtenis($lh_id, 'penningmeester_gemeld', ['bijlagen' => $met_bijlagen ? 'ja' : 'nee', 'opnieuw' => $opnieuw ? 'ja' : 'nee']);
@@ -393,6 +431,151 @@ function documenten_overzicht(int $seizoen_id): array {
         }
     } catch (\Throwable $e) {}
     return $uit;
+}
+
+/**
+ * Seizoenen om uit te kiezen op Loondossiers, nieuwste eerst, met het aantal aangenomen per seizoen.
+ * Oude seizoenen blijven kiesbaar: de loonstukken vallen onder de fiscale bewaarplicht, ook als er al
+ * een nieuw seizoen open staat.
+ * @return array<int, array{id:int, naam:string, status:string, aangenomen:int}>  [seizoen_id => …]
+ */
+function documenten_seizoenen(): array {
+    $uit = [];
+    try {
+        $q = db()->query("SELECT sz.id, sz.naam, sz.status, COUNT(s.id) AS aangenomen
+                          FROM seizoenen sz LEFT JOIN sollicitaties s ON s.seizoen_id = sz.id AND s.fase = 'aangenomen'
+                          GROUP BY sz.id, sz.naam, sz.status ORDER BY sz.id DESC");
+        foreach ($q->fetchAll() as $r) {
+            $uit[(int)$r['id']] = ['id' => (int)$r['id'], 'naam' => (string)$r['naam'], 'status' => (string)$r['status'], 'aangenomen' => (int)$r['aangenomen']];
+        }
+    } catch (\Throwable $e) {}
+    return $uit;
+}
+
+// ── Loondossier vernietigen (handmatig, penningmeester) ───────
+//
+// Fiscale bewaarplicht: vijf jaar na het einde van het kalenderjaar waarin het dienstverband
+// eindigde. Het systeem weet niet wanneer dat was — alleen tot welk seizoen iemand hier voorkwam.
+// Daarom wist het systeem loonstukken niet zelf, maar zet het ze klaar ter beoordeling; de
+// penningmeester controleert in de loonadministratie en vernietigt dan met de hand.
+
+/** Soorten die bij het loondossier horen: de wettelijk te bewaren stukken plus een achtergebleven bankpas. */
+function documenten_loonsoorten(): array {
+    $uit = [];
+    foreach (document_soorten() as $soort => $d) {
+        if (in_array($d['bewaren'] ?? '', ['loon', 'verwerkt_dan_weg'], true)) $uit[] = $soort;
+    }
+    return $uit;
+}
+
+/** Bewaarplicht in volle kalenderjaren na het laatste seizoen. Nooit korter dan de wettelijke vijf. */
+function documenten_loon_bewaarjaren(): int {
+    $j = function_exists('instelling_int') ? instelling_int('bewaar.loondocumenten_jaar', 5) : 5;
+    return max(5, $j);
+}
+
+/**
+ * Loondossiers die in aanmerking komen voor vernietiging, per persoon.
+ *
+ * Laatste seizoen = het hoogste jaar van YEAR(COALESCE(seizoen.datum_werk_eind, aangemeld_op)) over alle
+ * sollicitaties van die persoon die op 'aangenomen' staan of loonstukken dragen (dat laatste kan het jaar
+ * alleen later maken, nooit eerder). In aanmerking als laatste_jaar + bewaarjaren < huidig jaar:
+ * seizoen 2020 komt dus op 1-1-2026 in beeld. Alleen personen met nog iets te vernietigen.
+ *
+ * Retour: lijst van ['persoon_id', 'naam', 'laatste_jaar', 'stukken' => [leesbare titels]], oudste eerst.
+ */
+function documenten_te_vernietigen(?int $alleen_persoon = null): array {
+    documenten_auto_setup();
+    $soorten = documenten_loonsoorten();
+    if (!$soorten) return [];
+    $in    = implode(',', array_fill(0, count($soorten), '?'));
+    $grens = (int)date('Y') - documenten_loon_bewaarjaren(); // laatste_jaar moet hier onder liggen
+    $uit   = [];
+    try {
+        $db = db();
+        $sql = "SELECT s.persoon_id, p.voornaam, p.tussenvoegsel, p.achternaam,
+                       MAX(YEAR(COALESCE(sz.datum_werk_eind, s.aangemeld_op))) AS laatste_jaar
+                FROM sollicitaties s
+                JOIN personen p ON p.id = s.persoon_id
+                LEFT JOIN seizoenen sz ON sz.id = s.seizoen_id
+                WHERE (s.fase = 'aangenomen'
+                   OR EXISTS (SELECT 1 FROM sollicitant_documenten d WHERE d.sollicitatie_id = s.id
+                              AND d.status IN ('ingediend','verwerkt') AND d.soort IN ($in))
+                   OR EXISTS (SELECT 1 FROM ondertekeningen o WHERE o.sollicitatie_id = s.id AND o.type = 'loonheffing'))"
+             . ($alleen_persoon !== null ? " AND s.persoon_id = ?" : '') . "
+                GROUP BY s.persoon_id, p.voornaam, p.tussenvoegsel, p.achternaam
+                HAVING laatste_jaar < ?
+                ORDER BY laatste_jaar, p.achternaam, p.voornaam";
+        $params = $soorten;
+        if ($alleen_persoon !== null) $params[] = $alleen_persoon;
+        $params[] = $grens;
+        $q = $db->prepare($sql);
+        $q->execute($params);
+
+        $docs = $db->prepare("SELECT d.soort FROM sollicitant_documenten d JOIN sollicitaties s ON s.id = d.sollicitatie_id
+                              WHERE s.persoon_id = ? AND d.status IN ('ingediend','verwerkt') AND d.soort IN ($in) ORDER BY d.id");
+        $lh   = $db->prepare("SELECT COUNT(*) FROM ondertekeningen o JOIN sollicitaties s ON s.id = o.sollicitatie_id
+                              WHERE s.persoon_id = ? AND o.type = 'loonheffing'
+                                AND (o.vertrouwelijk IS NOT NULL OR o.handtekening_beeld IS NOT NULL OR o.formulier_data IS NOT NULL)");
+        $titels = document_soorten();
+        foreach ($q->fetchAll() as $r) {
+            $pid = (int)$r['persoon_id'];
+            $stukken = [];
+            $docs->execute(array_merge([$pid], $soorten));
+            foreach ($docs->fetchAll(PDO::FETCH_COLUMN) as $s) $stukken[$s] = (string)($titels[$s]['titel'] ?? $s);
+            $lh->execute([$pid]);
+            if ((int)$lh->fetchColumn() > 0) $stukken['loonheffing_gegevens'] = 'Gegevens van het loonheffingsformulier (BSN, handtekening, adres)';
+            if (!$stukken) continue; // niets meer te vernietigen
+            $uit[] = [
+                'persoon_id'   => $pid,
+                'naam'         => trim($r['voornaam'] . ' ' . trim(($r['tussenvoegsel'] ?? '') . ' ' . $r['achternaam'])),
+                'laatste_jaar' => (int)$r['laatste_jaar'],
+                'stukken'      => array_values($stukken),
+            ];
+        }
+    } catch (\Throwable $e) { error_log('documenten_te_vernietigen: ' . $e->getMessage()); }
+    return $uit;
+}
+
+/**
+ * Vernietig het loondossier van één persoon: de loonstukken uit de kluis (rij blijft als bewijs met status
+ * 'vernietigd') en BSN, handtekening en formuliergegevens van de loonheffing-ondertekening. De rest van het
+ * dossier blijft. Controleert zelf opnieuw of de persoon in aanmerking komt.
+ * Retour: ['ok' => bool, 'aantal' => int, 'fout' => ?string].
+ */
+function documenten_loondossier_vernietigen(int $persoon_id, string $door): array {
+    if ($persoon_id <= 0 || !documenten_te_vernietigen($persoon_id)) {
+        return ['ok' => false, 'aantal' => 0, 'fout' => 'dit dossier komt (nog) niet in aanmerking voor vernietiging'];
+    }
+    $soorten = documenten_loonsoorten();
+    $in = implode(',', array_fill(0, count($soorten), '?'));
+    $aantal = 0; $mislukt = 0;
+    try {
+        $db = db();
+        $q = $db->prepare("SELECT d.id FROM sollicitant_documenten d JOIN sollicitaties s ON s.id = d.sollicitatie_id
+                           WHERE s.persoon_id = ? AND d.status IN ('ingediend','verwerkt') AND d.soort IN ($in)");
+        $q->execute(array_merge([$persoon_id], $soorten));
+        foreach ($q->fetchAll(PDO::FETCH_COLUMN) as $id) {
+            if (document_vernietigen((int)$id, 'bewaarplicht verstreken, handmatig')) $aantal++; else $mislukt++;
+        }
+        // Het ondertekeningsrecord blijft (bewijs dát er getekend is), zonder BSN, handtekening en formulierinhoud.
+        $u = $db->prepare("UPDATE ondertekeningen o JOIN sollicitaties s ON s.id = o.sollicitatie_id
+                           SET o.vertrouwelijk = NULL, o.handtekening_beeld = NULL, o.pdf_document_id = NULL, o.formulier_data = NULL
+                           WHERE s.persoon_id = ? AND o.type = 'loonheffing'");
+        $u->execute([$persoon_id]);
+        $aantal += $u->rowCount();
+        // Had de persoon zich zelf laten verwijderen en stond alleen het loondossier nog (naam en
+        // geboortedatum bleven daarvoor bewaard)? Dan gaat nu ook de rest. De opschoning slaat zo'n
+        // geanonimiseerd adres over, dus anders bleven die gegevens voor altijd staan.
+        if (function_exists('avg_na_loondossier_vernietigd')) avg_na_loondossier_vernietigd($db, $persoon_id);
+    } catch (\Throwable $e) {
+        error_log('documenten_loondossier_vernietigen: ' . $e->getMessage());
+        return ['ok' => false, 'aantal' => $aantal, 'fout' => 'vernietigen is halverwege mislukt; probeer het opnieuw'];
+    }
+    // Alleen aantallen en wie — nooit inhoud of titels van wat er stond.
+    if (function_exists('audit_log')) audit_log('loondossier_vernietigd', 'persoon', $persoon_id, ['aantal' => $aantal, 'door' => $door]);
+    if ($mislukt) return ['ok' => false, 'aantal' => $aantal, 'fout' => $mislukt . ' bestand(en) konden niet worden vernietigd; probeer het opnieuw'];
+    return ['ok' => true, 'aantal' => $aantal, 'fout' => null];
 }
 
 /** Rechtenmodule die nodig is om een document te downloaden. */

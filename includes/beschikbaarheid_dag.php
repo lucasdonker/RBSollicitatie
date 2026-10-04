@@ -16,7 +16,7 @@
 if (!function_exists('beschikbaarheid_dag_auto_setup')) {
 
 function beschikbaarheid_dag_auto_setup(): void {
-    static $done = false; if ($done) return; $done = true;
+    static $done = false; if ($done || schema_actueel()) return; $done = true;
     try {
         db()->exec("CREATE TABLE IF NOT EXISTS `beschikbaarheid_dag` (
             `id` INT AUTO_INCREMENT PRIMARY KEY,
@@ -71,6 +71,7 @@ function beschikbaarheid_dagen_opslaan(int $sol_id, array $dagen, string $bron =
             $status = in_array($d['status'] ?? '', ['open','goedgekeurd','afgewezen'], true) ? $d['status'] : 'goedgekeurd';
             $ins->execute([$sol_id, $datum, $soort, $reden, $bron, $status]);
         }
+        if (function_exists('live_loon')) live_loon(0, 0, $sol_id);
     } catch (\Exception $e) { error_log('beschikbaarheid_dagen_opslaan: ' . $e->getMessage()); }
 }
 
@@ -79,6 +80,7 @@ function beschikbaarheid_dag_verwijderen(int $sol_id, int $dag_id): void {
     beschikbaarheid_dag_auto_setup();
     try {
         db()->prepare("DELETE FROM beschikbaarheid_dag WHERE id=? AND sollicitatie_id=?")->execute([$dag_id, $sol_id]);
+        if (function_exists('live_loon')) live_loon(0, 0, $sol_id);
     } catch (\Exception $e) {}
 }
 
@@ -105,6 +107,7 @@ function beschikbaarheid_dag_bestuur_zet(int $sol_id, string $datum, string $soo
         if (function_exists('audit_log')) {
             audit_log('gewijzigd', 'beschikbaarheid', $sol_id, ['datum' => $datum, 'soort' => $soort, 'reden' => $reden, 'via' => 'bestuur_per_dag']);
         }
+        if (function_exists('live_loon')) live_loon(0, 0, $sol_id);
     } catch (\Exception $e) { error_log('beschikbaarheid_dag_bestuur_zet: ' . $e->getMessage()); }
 }
 
@@ -117,6 +120,7 @@ function beschikbaarheid_dag_bestuur_verwijder(int $sol_id, string $datum): void
         if (function_exists('audit_log')) {
             audit_log('gewijzigd', 'beschikbaarheid', $sol_id, ['datum' => $datum, 'via' => 'bestuur_teruggedraaid']);
         }
+        if (function_exists('live_loon')) live_loon(0, 0, $sol_id);
     } catch (\Exception $e) {}
 }
 
@@ -149,7 +153,7 @@ function beschikbaarheid_per_dag(int $sol_id, string $van, string $tot): array {
     //    en dagen buiten alle werkperiodes ook.
     $cursor = clone $start;
     while ($cursor <= $eind) {
-        $uit[$cursor->format('Y-m-d')] = ['beschikbaar' => false, 'reden' => 'buiten werkperiode', 'hardheid' => 'hard'];
+        $uit[$cursor->format('Y-m-d')] = ['beschikbaar' => false, 'reden' => 'week niet opgegeven', 'hardheid' => 'hard'];
         $cursor->modify('+1 day');
     }
 
@@ -184,6 +188,8 @@ function beschikbaarheid_per_dag(int $sol_id, string $van, string $tot): array {
                 $info['beschikbaar'] = true;
                 $info['reden'] = '';
                 $info['hardheid'] = null;
+            } elseif (isset($regime_per_week[$wk])) {
+                $info['reden'] = 'alleen weekend opgegeven';
             }
         }
         unset($info);
@@ -286,6 +292,28 @@ function beschikbaarheid_per_dag(int $sol_id, string $van, string $tot): array {
                 }
                 unset($info);
             }
+        }
+    } catch (\Exception $e) {}
+
+    // 6. Weekcorrecties van het bestuur (beheer › beschikbaarheid, cel aanklikken). Die stonden
+    //    wél in het weekraster maar niet hier, waardoor het rooster iemand kon inplannen op een
+    //    week die het bestuur had geschrapt. 'niet' = hele week vervalt; 'minder' = alleen deze dagen.
+    try {
+        $c = db()->prepare("SELECT week, soort, dagen, reden FROM beschikbaarheid_correctie WHERE sollicitatie_id=?");
+        $c->execute([$sol_id]);
+        foreach ($c->fetchAll() as $corr) {
+            $wk = (int)$corr['week'];
+            $rest = json_decode($corr['dagen'] ?? 'null', true);
+            $rest = is_array($rest) ? array_map('intval', $rest) : null;
+            $reden = 'bestuur: ' . (trim((string)($corr['reden'] ?? '')) ?: ($corr['soort'] === 'niet' ? 'week vervalt' : 'minder dagen'));
+            foreach ($uit as $datum => &$info) {
+                $dt = new DateTime($datum);
+                if ((int)$dt->format('W') !== $wk || !$info['beschikbaar']) continue;
+                if ($corr['soort'] === 'niet' || ($rest !== null && !in_array((int)$dt->format('N'), $rest, true))) {
+                    $info = ['beschikbaar' => false, 'reden' => $reden, 'hardheid' => 'hard', 'door_bestuur' => true];
+                }
+            }
+            unset($info);
         }
     } catch (\Exception $e) {}
 

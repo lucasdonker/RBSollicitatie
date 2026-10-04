@@ -1,12 +1,16 @@
 <?php
 require_once __DIR__ . '/../includes/functions.php';
  if (function_exists('extra_tabellen_auto_setup')) extra_tabellen_auto_setup();
-vereis_recht('sollicitanten', 'bewerken');
+
+$act = $_POST['actie'] ?? $_GET['actie'] ?? 'lijst';
+// Lezen is lezen: wie het dossier mag zien, ziet ook de notities (de penningmeester
+// kreeg anders "Notities konden niet geladen worden"). Plaatsen, bewerken en
+// verwijderen vragen bewerkrecht.
+vereis_recht('sollicitanten', $act === 'lijst' ? 'lezen' : 'bewerken');
 header('Content-Type: application/json');
 
 $db  = db();
 $bhd = huidige_beheerder();
-$act = $_POST['actie'] ?? $_GET['actie'] ?? 'lijst';
 
 try {
     if ($act === 'lijst') {

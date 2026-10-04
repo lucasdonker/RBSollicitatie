@@ -13,10 +13,10 @@ function sjabloon_voorbeeld_vars(): array {
         'voornaam' => 'Lieke', 'achternaam' => 'de Vries', 'volledige_naam' => 'Lieke de Vries', 'tussenvoegsel' => 'de',
         'sollicitant.voornaam' => 'Lieke', 'sollicitant.achternaam' => 'de Vries', 'sollicitant.volledige_naam' => 'Lieke de Vries', 'sollicitant.email' => 'lieke@voorbeeld.nl',
         'sollicitant_email' => 'lieke@voorbeeld.nl', 'sollicitant_telefoon' => '06 12345678', 'ouder_naam' => 'Marieke de Vries', 'ontvanger_naam' => 'Marieke de Vries',
-        'taak_naam' => 'Beter leren kennen-formulier', 'otp_code' => '483921', 'otp.code' => '483921', 'document_naam' => 'Intakeformulier selectiedag',
+        'taak_naam' => 'Kennismakingsformulier', 'otp_code' => '483921', 'otp.code' => '483921', 'document_naam' => 'Intakeformulier selectiedag',
         'onderteken_url' => APP_URL . '/portaal/ondertekenen.php?token=voorbeeld', 'is_ouder' => '1', 'door' => 'je ouder/verzorger',
         'besluit' => 'goedgekeurd', 'besluit_html' => '<p>We houden daar rekening mee in de planning.</p>', 'verzoek_weken' => 'week 31 (27 jul)', 'verzoek_dagen' => '3', 'verzoek_toelichting' => 'Tentamenweek',
-        'taken_aantal' => '2', 'taken_blok' => '<ul><li>Beter leren kennen-formulier</li><li>Beschikbaarheid doorgeven</li></ul>', 'laatste_info' => 'Neem water mee, het wordt warm.',
+        'taken_aantal' => '2', 'taken_blok' => '<ul><li>Kennismakingsformulier</li><li>Beschikbaarheid doorgeven</li></ul>', 'laatste_info' => 'Neem water mee, het wordt warm.',
         'deadline_datum' => '1 mei 2026', 'dagen_resterend' => '5', 'deadline_voorbij' => '0', 'terugkerend_html' => '',
         'onderwerp' => 'Voorbeeldonderwerp', 'body_html' => '<p>Voorbeeldtekst.</p>', 'tekst_kort' => 'Voorbeeld korte tekst.',
         'formulieren_blok' => function_exists('ondertekening_formulieren_blok') ? ondertekening_formulieren_blok(['Intakeformulier selectiedag' => APP_URL . '/portaal/ondertekenen.php?token=voorbeeld']) : '',
@@ -28,12 +28,14 @@ function sjabloon_voorbeeld_vars(): array {
 
 // ── Preview: vóór alles, geen layout nodig ────────────────────
 if (isset($_GET['preview'])) {
-    vereist_login();
+    // Voorbeeldgegevens, maar wel sjablooninhoud: alleen wie berichten mag zien.
+    vereis_recht('mailing', 'lezen');
     $slug   = preg_replace('/[^a-z0-9_-]/i', '', (string)$_GET['preview']);
     $kanaal = ($_GET['kanaal'] ?? 'email') === 'kort' ? 'kort' : 'email';
     $r = function_exists('melding_render') ? melding_render($slug, sjabloon_voorbeeld_vars()) : null;
     if (!$r) { http_response_code(404); die('Sjabloon niet gevonden'); }
     header('Content-Type: text/html; charset=utf-8');
+    if (!empty($r['fout'])) { echo '<!DOCTYPE html><html lang="nl"><meta charset="UTF-8"><title>Fout in het sjabloon</title><p>Fout in de logica van dit sjabloon: ' . h($r['fout']) . '</p></html>'; exit; }
     if ($kanaal === 'email') { echo $r['html']; exit; }
     ?><!DOCTYPE html><html lang="nl"><head><meta charset="UTF-8"><title>Voorbeeld kort bericht</title>
     <style>body{margin:0;background:#e5ddd5;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;display:flex;justify-content:center;padding:40px 16px}
@@ -45,7 +47,7 @@ if (isset($_GET['preview'])) {
 
 $pagina_titel = 'Sjablonen';
 $actieve_nav  = 'mail_templates';
-vereis_recht('mailing', 'bewerken');
+vereis_recht('mailing', 'sjablonen');
 $db = db();
 if (function_exists('sjablonen_auto_setup')) sjablonen_auto_setup();
 
@@ -59,7 +61,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $actie = $_POST['actie'] ?? '';
     $slug  = preg_replace('/[^a-z0-9_-]/i', '', (string)($_POST['slug'] ?? ''));
 
-    if ($actie === 'opslaan' && $slug !== '') {
+    // Logica in de teksten eerst controleren. Klopt die niet, dan slaan we niets op en blijft je
+    // invoer op het scherm staan (geen redirect): een fout sjabloon zou anders bij verzenden mislukken.
+    $logica_fouten = [];
+    if ($actie === 'opslaan' && $slug !== '' && function_exists('sjabloon_controleer')) {
+        $logica_fouten = sjabloon_controleer([
+            'Onderwerp' => [(string)($_POST['onderwerp'] ?? ''), false], 'Hero-titel' => [(string)($_POST['hero_titel'] ?? ''), false],
+            'Hero-subtitel' => [(string)($_POST['hero_subtitel'] ?? ''), false], 'E-mailtekst' => [(string)($_POST['body_html'] ?? ''), true],
+            'Korte tekst' => [(string)($_POST['tekst_kort'] ?? ''), false], 'Samenvatting' => [(string)($_POST['samenvatting'] ?? ''), false],
+        ], $register[$slug]['vars'] ?? []);
+        // De grens van de korte tekst geldt voor de langste variant, niet voor de logica eromheen.
+        $logica_fouten = array_merge($logica_fouten, sjabloon_kort_controle((string)($_POST['tekst_kort'] ?? ''), (int)($register[$slug]['kort_max'] ?? 400)));
+    }
+
+    if ($actie === 'opslaan' && $slug !== '' && !$logica_fouten) {
         $onderwerp     = trim($_POST['onderwerp'] ?? '');
         $hero_titel    = trim($_POST['hero_titel'] ?? '');
         $hero_subtitel = trim($_POST['hero_subtitel'] ?? '');
@@ -152,7 +167,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } catch (Exception $e) { flash('fout', 'Opslaan mislukt.'); }
         redirect(APP_URL . '/admin/mail_templates.php');
     }
-    redirect(APP_URL . '/admin/mail_templates.php');
+    if (!$logica_fouten) redirect(APP_URL . '/admin/mail_templates.php');
+    $_GET['slug'] = $slug;   // fout in de logica: hetzelfde sjabloon opnieuw tonen, met je invoer
 }
 
 // ── Data voor het scherm ───────────────────────────────────────
@@ -173,33 +189,36 @@ foreach ($rijen as $slug => $r) {
 $actief_slug = preg_replace('/[^a-z0-9_-]/i', '', (string)($_GET['slug'] ?? ''));
 if ($actief_slug === '' || $actief_slug === '_hero_image') $actief_slug = array_key_first($register) ?: '';
 $actief = function_exists('sjabloon_laden') ? sjabloon_laden($actief_slug) : ($rijen[$actief_slug] ?? null);
+if (!empty($logica_fouten) && $actief) {
+    foreach (['onderwerp', 'hero_titel', 'hero_subtitel', 'hero_kleur', 'hero_image_url', 'body_html', 'tekst_kort', 'samenvatting', 'naam'] as $_k) {
+        if (isset($_POST[$_k])) $actief[$_k] = (string)$_POST[$_k];
+    }
+}
 $def    = $register[$actief_slug] ?? null;
 $in_db  = isset($rijen[$actief_slug]);
 $modus  = $def && function_exists('melding_kanaalmodus') ? melding_kanaalmodus($actief_slug) : null;
 
-$vars_basis = ['voornaam', 'achternaam', 'volledige_naam', 'sollicitant_email', 'sollicitant_telefoon', 'seizoen_naam',
-               'selectiedag_datum', 'selectiedag_tijd', 'selectiedag_locatie', 'selectiedag_adres', 'selectiedag_eindtijd', 'selectiedag_meenemen',
-               'tw_datum_start', 'tw_datum_eind', 'tw_locatie', 'tw_adres', 'tw_verzameltijd', 'tw_eindtijd', 'tw_meenemen',
-               'portaal_url', 'bestuur_email', 'afmeld_url'];
-$vars_type  = $def['vars'] ?? [];
+$vars_type  = $def['vars'] ?? [];   // extra voor dit type; de vaste lijst staat in melding_variabelen_lijst()
 
 require __DIR__ . '/layout_top.php';
 ?>
 <style>
 .tmpl-grid{display:grid;grid-template-columns:230px 1fr 300px;gap:14px;align-items:start}
 @media (max-width:1100px){.tmpl-grid{grid-template-columns:1fr}}
-.tmpl-lijst{background:#fff;border-radius:var(--radius);border:1px solid var(--rand);overflow:hidden}
+.tmpl-lijst{background:var(--surface);border-radius:var(--radius);border:1px solid var(--rand);overflow:hidden}
 .tmpl-item{display:block;padding:9px 14px;border-bottom:1px solid var(--rand);text-decoration:none;color:var(--tekst)}
 .tmpl-item:hover{background:var(--grijs-bg)}
-.tmpl-item.actief{background:var(--navy);color:#fff}
+.tmpl-item.actief{background:var(--navy);color:var(--op-vol)}
 .tmpl-item .tn{font-weight:600;font-size:13px}
 .tmpl-kop{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--grijs);padding:10px 12px 4px}
-.var-chip{display:inline-block;background:var(--blauw-bg,#eff8ff);color:#1a56a0;font-size:11px;font-family:monospace;padding:2px 7px;border-radius:4px;margin:2px;cursor:pointer;border:1px solid #bee3f8}
-.var-chip:hover{background:#bee3f8}
+.var-chip{display:inline-block;background:var(--fase-blauw-vlak);color:var(--fase-blauw);font-size:11px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;padding:2px 7px;border-radius:4px;margin:2px;cursor:pointer;border:1px solid var(--fase-blauw-rand)}
+.var-chip:hover{border-color:var(--fase-blauw)}
 .veld-label{font-size:11px;font-weight:600;color:var(--grijs);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;display:block}
 .tmpl-velden{padding:14px 16px;border-bottom:1px solid var(--rand);display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .tmpl-velden input[type=text]{width:100%;font-size:13px;padding:8px 11px}
 </style>
+
+<?php $bt_actief = 'sjablonen'; require __DIR__ . '/_berichten_tabs.php'; ?>
 
 <div class="tmpl-grid">
 
@@ -216,42 +235,42 @@ require __DIR__ . '/layout_top.php';
     <?php endforeach; ?>
   </div>
 
-  <form method="POST" style="margin-top:10px;background:#fff;border-radius:var(--radius);border:1px solid var(--rand);padding:12px">
+  <form method="POST" class="bh-mt-zijform">
     <?= csrf_input() ?><input type="hidden" name="actie" value="nieuw">
-    <div class="veld-label">Nieuw eigen sjabloon</div>
-    <input type="text" name="naam" placeholder="Naam, bv. Magazine seizoen" required style="width:100%;font-size:12px;padding:6px 8px;margin-bottom:6px">
-    <button type="submit" class="btn btn-outline btn-sm" style="width:100%;justify-content:center">Aanmaken</button>
-    <div style="font-size:10px;color:var(--grijs);margin-top:6px">Voor handmatige en geplande berichten.</div>
+    <label for="mtNieuwNaam" class="veld-label">Nieuw eigen sjabloon</label>
+    <input type="text" id="mtNieuwNaam" name="naam" placeholder="Naam, bv. Magazine seizoen" required class="bh-mt-zijveld">
+    <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm bh-mt-zijknop">Aanmaken</button>
+    <div class="bh-mt-zijhint">Voor handmatige en geplande berichten.</div>
   </form>
 
-  <form method="POST" style="margin-top:10px;background:#fff;border-radius:var(--radius);border:1px solid var(--rand);padding:12px">
+  <form method="POST" class="bh-mt-zijform">
     <?= csrf_input() ?><input type="hidden" name="actie" value="hero_image">
-    <div class="veld-label">Standaard hero-afbeelding (URL)</div>
-    <input type="text" name="hero_url" value="<?= h($hero_row['body_html'] ?? '') ?>" placeholder="https://.../foto.jpg" style="width:100%;font-size:11px;padding:6px 8px;margin-bottom:5px">
-    <div style="font-size:10px;color:var(--grijs);margin-bottom:6px">Leeg = standaard strandfoto</div>
-    <button type="submit" class="btn btn-outline btn-sm" style="width:100%;justify-content:center">Opslaan</button>
+    <label for="mtHeroUrl" class="veld-label">Standaard hero-afbeelding (URL)</label>
+    <input type="text" id="mtHeroUrl" name="hero_url" value="<?= h($hero_row['body_html'] ?? '') ?>" placeholder="https://.../foto.jpg" class="bh-mt-zijveld bh-mt-zijveld-url">
+    <div class="bh-mt-zijhint bh-mt-zijhint-boven">Leeg = standaard strandfoto</div>
+    <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm bh-mt-zijknop">Opslaan</button>
   </form>
 </div>
 
 <!-- 2: Editor -->
 <?php if ($actief): ?>
 <div>
-<div class="card">
-  <div class="card-header" style="align-items:flex-start">
+<div class="ds-kaart">
+  <div class="bh-kaartkop bh-mt-kop">
     <div>
-      <div class="card-title"><?= h($actief['naam'] ?? $actief_slug) ?></div>
-      <div style="font-size:12px;color:var(--tekst-zacht);margin-top:2px"><?= h($def['beschrijving'] ?? ($actief['beschrijving'] ?? '')) ?></div>
-      <div style="font-size:11px;color:var(--grijs);margin-top:4px">
+      <h2><?= h($actief['naam'] ?? $actief_slug) ?></h2>
+      <div class="bh-mt-beschrijving"><?= h($def['beschrijving'] ?? ($actief['beschrijving'] ?? '')) ?></div>
+      <div class="bh-mt-typeregel">
         Type: <code><?= h($actief_slug) ?></code>
         <?php if ($def): ?> · Ontvanger: <?= h($def['ontvanger']) ?><?php endif; ?>
-        <?php if (!$in_db): ?> · <span style="color:var(--oranje)">nog niet in de database (standaardtekst); wordt bij opslaan aangemaakt</span><?php endif; ?>
+        <?php if (!$in_db): ?> · <span class="bh-mt-nietindb">nog niet in de database (standaardtekst); wordt bij opslaan aangemaakt</span><?php endif; ?>
       </div>
     </div>
     <?php if ($def): ?>
-    <form method="POST" style="display:flex;gap:6px;align-items:center;margin:0">
+    <form method="POST" class="bh-mt-kanaal">
       <?= csrf_input() ?><input type="hidden" name="actie" value="kanaal"><input type="hidden" name="slug" value="<?= h($actief_slug) ?>">
-      <label style="font-size:12px;color:var(--tekst-zacht)">Kanaal</label>
-      <select name="kanaalmodus" onchange="this.form.submit()" style="font-size:12px;padding:5px 8px">
+      <label for="veld-kanaalmodus" class="bh-mt-kanaal-label">Kanaal</label>
+      <select id="veld-kanaalmodus" name="kanaalmodus" data-wijzig="P13Klik.verstuur(this)" class="bh-mt-kanaal-keuze">
         <?php foreach ($modi as $mk => $ml): if ($mk !== 'email' && $mk !== 'uit' && !$def['kort_toegestaan']) continue; ?>
         <option value="<?= $mk ?>" <?= $modus === $mk ? 'selected' : '' ?>><?= h($ml) ?></option>
         <?php endforeach; ?>
@@ -259,7 +278,8 @@ require __DIR__ . '/layout_top.php';
     </form>
     <?php endif; ?>
   </div>
-  <div class="card-body" style="padding:0">
+  <div class="bh-kaartbody bh-mt-body">
+    <?php $fouten = $logica_fouten ?? []; $fouten_titel = 'Niet opgeslagen: de logica klopt nog niet'; require __DIR__ . '/_foutlijst.php'; ?>
     <form method="POST" enctype="multipart/form-data" id="tmplForm">
       <?= csrf_input() ?>
       <input type="hidden" name="actie" value="opslaan">
@@ -267,83 +287,92 @@ require __DIR__ . '/layout_top.php';
 
       <div class="tmpl-velden">
         <?php if (!$def): ?>
-        <div style="grid-column:1/-1">
-          <label class="veld-label">Naam</label>
-          <input type="text" name="naam" value="<?= h($actief['naam'] ?? '') ?>">
+        <div class="bh-mt-breed">
+          <label for="veld-naam" class="veld-label">Naam</label>
+          <input id="veld-naam" type="text" name="naam" value="<?= h($actief['naam'] ?? '') ?>">
         </div>
         <?php endif; ?>
         <div>
-          <label class="veld-label">Onderwerpregel (e-mail)</label>
-          <input type="text" name="onderwerp" value="<?= h($actief['onderwerp'] ?? '') ?>" required>
+          <label for="veld-onderwerp" class="veld-label">Onderwerpregel (e-mail)</label>
+          <input id="veld-onderwerp" type="text" name="onderwerp" data-var-veld value="<?= h($actief['onderwerp'] ?? '') ?>" required>
         </div>
         <div>
-          <label class="veld-label">Hero-titel</label>
-          <input type="text" name="hero_titel" value="<?= h($actief['hero_titel'] ?? '') ?>" placeholder="Leeg = onderwerp">
+          <label for="veld-hero-titel" class="veld-label">Hero-titel</label>
+          <input id="veld-hero-titel" type="text" name="hero_titel" data-var-veld value="<?= h($actief['hero_titel'] ?? '') ?>" placeholder="Leeg = onderwerp">
         </div>
         <div>
-          <label class="veld-label">Hero-subtitel</label>
-          <input type="text" name="hero_subtitel" value="<?= h($actief['hero_subtitel'] ?? '') ?>">
+          <label for="veld-hero-subtitel" class="veld-label">Hero-subtitel</label>
+          <input id="veld-hero-subtitel" type="text" name="hero_subtitel" data-var-veld value="<?= h($actief['hero_subtitel'] ?? '') ?>">
         </div>
         <div>
           <label class="veld-label">Hero-kleur</label>
-          <div style="display:flex;gap:6px;align-items:center">
-            <input type="color" value="<?= h($actief['hero_kleur'] ?: '#054d8a') ?>" oninput="this.nextElementSibling.value=this.value" style="width:42px;height:36px;border:1px solid var(--rand);border-radius:6px;padding:2px">
-            <input type="text" name="hero_kleur" value="<?= h($actief['hero_kleur'] ?? '') ?>" placeholder="leeg = huisstijl-navy" style="flex:1;font-family:monospace">
+          <div class="bh-mt-kleurrij">
+            <input type="color" value="<?= h($actief['hero_kleur'] ?: '#054d8a') ?>" data-invoer="P13Klik.spiegel(this)" class="bh-mt-kleurkiezer">
+            <input type="text" name="hero_kleur" value="<?= h($actief['hero_kleur'] ?? '') ?>" placeholder="leeg = huisstijl-navy" class="bh-mt-kleurcode">
           </div>
         </div>
-        <div style="grid-column:1/-1">
+        <div class="bh-mt-breed">
           <label class="veld-label">Hero-afbeelding (optioneel)</label>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <input type="file" name="hero_image_upload" accept="image/jpeg,image/png,image/webp" style="font-size:12px;flex:1;min-width:200px">
-            <input type="text" name="hero_image_url" value="<?= h($actief['hero_image_url'] ?? '') ?>" placeholder="of URL" style="flex:2;min-width:200px">
+          <div class="bh-mt-heroregel">
+            <input type="file" name="hero_image_upload" accept="image/jpeg,image/png,image/webp" class="bh-mt-herobestand">
+            <input type="text" name="hero_image_url" value="<?= h($actief['hero_image_url'] ?? '') ?>" placeholder="of URL" class="bh-mt-herourl">
           </div>
         </div>
       </div>
 
-      <div style="padding:14px 16px 0">
+      <div class="bh-mt-sectie">
         <label class="veld-label">E-mailtekst</label>
         <?= editor_html('tmpl', 'body_html', (string)($actief['body_html'] ?? ''), ['hoogte' => 320]) ?>
       </div>
 
-      <div style="padding:14px 16px 0;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="bh-mt-sectie bh-mt-tweekolom">
         <div>
-          <label class="veld-label">Korte tekst (WhatsApp/SMS) <span id="kortTeller" style="font-weight:400;text-transform:none"></span></label>
-          <textarea name="tekst_kort" id="tekstKort" rows="5" maxlength="400" style="width:100%;font-size:13px;padding:8px 11px" oninput="kortTeller()" <?= ($def && !$def['kort_toegestaan']) ? 'placeholder="Dit type gaat alleen per e-mail."' : '' ?>><?= h($actief['tekst_kort'] ?? '') ?></textarea>
-          <div style="font-size:11px;color:var(--tekst-zacht);margin-top:3px">Platte tekst, max 400 tekens, geen opmaak. Zelfde variabelen als de e-mail.</div>
+          <label class="veld-label">Korte tekst (WhatsApp/SMS) <span id="kortTeller" class="bh-mt-teller"></span></label>
+          <?php $kort_max = (int)($def['kort_max'] ?? 400); ?>
+          <textarea name="tekst_kort" id="tekstKort" data-var-veld rows="5" maxlength="<?= $kort_max * 5 ?>" data-kort-max="<?= $kort_max ?>" class="bh-mt-tekstvak" data-invoer="kortTeller()" <?= ($def && !$def['kort_toegestaan']) ? 'placeholder="Dit type gaat alleen per e-mail."' : '' ?>><?= h($actief['tekst_kort'] ?? '') ?></textarea>
+          <div class="bh-mt-hulp">Max <?= $kort_max ?> tekens voor wat de ontvanger krijgt; met logica geldt dat voor de langste variant (gecontroleerd bij opslaan). Opmaak zoals in WhatsApp: *vet*, _cursief_, ~doorgehaald~ (sms toont die tekens niet). Zelfde variabelen en logica als de e-mail.</div>
         </div>
         <div>
-          <label class="veld-label">Samenvatting (portaal)</label>
-          <textarea name="samenvatting" rows="5" maxlength="200" style="width:100%;font-size:13px;padding:8px 11px"><?= h($actief['samenvatting'] ?? '') ?></textarea>
-          <div style="font-size:11px;color:var(--tekst-zacht);margin-top:3px">Eén regel onder de titel in het berichtenoverzicht van de sollicitant.</div>
+          <label for="veld-samenvatting" class="veld-label">Samenvatting (portaal)</label>
+          <textarea id="veld-samenvatting" name="samenvatting" data-var-veld rows="5" maxlength="200" class="bh-mt-tekstvak"><?= h($actief['samenvatting'] ?? '') ?></textarea>
+          <div class="bh-mt-hulp">Eén regel onder de titel in het berichtenoverzicht van de sollicitant.</div>
         </div>
       </div>
 
-      <div style="padding:14px 16px 0">
+      <div class="bh-mt-sectie">
         <label class="veld-label">Bijlagen (mee met elke e-mail, grote bestanden als downloadknop; WhatsApp/SMS krijgt een downloadlink)</label>
         <?php $bijl_huidig = []; if (!empty($actief['bijlagen_json']) && function_exists('bijlagen_van_ids')) { $j = json_decode((string)$actief['bijlagen_json'], true); if (is_array($j)) $bijl_huidig = bijlagen_van_ids($j); } ?>
         <?php foreach ($bijl_huidig as $bh): ?>
-        <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin:4px 0"><input type="checkbox" name="bijlage_ids[]" value="<?= (int)$bh['id'] ?>" checked> <?= h($bh['naam']) ?> <span style="color:var(--grijs);font-size:11px">(uitvinken = loskoppelen)</span></label>
+        <label class="bh-mt-bijlage"><input type="checkbox" name="bijlage_ids[]" value="<?= (int)$bh['id'] ?>" checked> <?= h($bh['naam']) ?> <span class="bh-mt-bijlage-hint">(uitvinken = loskoppelen)</span></label>
         <?php endforeach; ?>
-        <input type="file" name="bijlage_upload" accept=".pdf,.jpg,.jpeg,.png,.webp,.docx,.xlsx" style="font-size:12px">
-        <div style="font-size:11px;color:var(--tekst-zacht);margin-top:3px">pdf, jpg, png, webp, docx, xlsx · max <?= function_exists('bijlagen_max_bytes') ? round(bijlagen_max_bytes() / 1048576) : 25 ?> MB<?= function_exists('bijlagen_max_bytes') && bijlagen_max_bytes() < 25 * 1048576 ? ' (beperkt door de serverinstelling in Plesk)' : '' ?>.</div>
+        <input type="file" name="bijlage_upload" accept=".pdf,.jpg,.jpeg,.png,.webp,.docx,.xlsx">
+        <div class="bh-mt-hulp">pdf, jpg, png, webp, docx, xlsx · max <?= function_exists('bijlagen_max_bytes') ? round(bijlagen_max_bytes() / 1048576) : 25 ?> MB<?= function_exists('bijlagen_max_bytes') && bijlagen_max_bytes() < 25 * 1048576 ? ' (beperkt door de serverinstelling in Plesk)' : '' ?>.</div>
       </div>
 
-      <div style="padding:12px 16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <button type="submit" class="btn btn-primary">Opslaan</button>
-        <a href="?preview=<?= h($actief_slug) ?>" target="_blank" class="btn btn-outline btn-sm">Voorbeeld e-mail</a>
-        <a href="?preview=<?= h($actief_slug) ?>&kanaal=kort" target="_blank" class="btn btn-outline btn-sm">Voorbeeld kort bericht</a>
-        <div style="flex:1"></div>
-        <?php if (!empty($actief['gewijzigd_op'])): ?><span style="font-size:11px;color:var(--grijs)">Bijgewerkt: <?= datum_nl(substr($actief['gewijzigd_op'], 0, 10)) ?></span><?php endif; ?>
+      <div class="bh-mt-voet">
+        <button type="submit" class="ds-btn ds-btn-primair">Opslaan</button>
+        <a href="?preview=<?= h($actief_slug) ?>" target="_blank" class="ds-btn ds-btn-secundair ds-btn-sm">Voorbeeld e-mail</a>
+        <a href="?preview=<?= h($actief_slug) ?>&kanaal=kort" target="_blank" class="ds-btn ds-btn-secundair ds-btn-sm">Voorbeeld kort bericht</a>
+        <div class="bh-vulling"></div>
+        <?php if (!empty($actief['gewijzigd_op'])): ?><span class="bh-mt-bijgewerkt">Bijgewerkt: <?= datum_nl(substr($actief['gewijzigd_op'], 0, 10)) ?></span><?php endif; ?>
       </div>
     </form>
 
-    <div style="padding:0 16px 14px;display:flex;gap:8px">
+    <div class="bh-mt-gevaarrij">
       <?php if ($def): ?>
-      <form method="POST"><?= csrf_input() ?><input type="hidden" name="actie" value="reset"><input type="hidden" name="slug" value="<?= h($actief_slug) ?>">
-        <button type="submit" class="btn btn-outline btn-sm" onclick="return confirm('Terug naar de standaardtekst? Je wijzigingen gaan verloren.')">Terugzetten naar standaard</button></form>
+      <form method="POST"
+            data-bevestig-titel="Terug naar de standaardtekst?"
+            data-bevestig="Je eigen tekst voor dit sjabloon gaat verloren en het bericht gaat er weer uitzien zoals het systeem het bedoeld heeft."
+            data-bevestig-knop="Ja, terugzetten">
+        <?= csrf_input() ?><input type="hidden" name="actie" value="reset"><input type="hidden" name="slug" value="<?= h($actief_slug) ?>">
+        <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm">Terugzetten naar standaard</button></form>
       <?php else: ?>
-      <form method="POST"><?= csrf_input() ?><input type="hidden" name="actie" value="verwijder"><input type="hidden" name="slug" value="<?= h($actief_slug) ?>">
-        <button type="submit" class="btn btn-rood btn-sm" onclick="return confirm('Dit sjabloon verwijderen?')">Verwijderen</button></form>
+      <form method="POST"
+            data-bevestig-titel="Dit sjabloon verwijderen?"
+            data-bevestig="Berichten die je hiermee hebt verstuurd blijven in het log staan; alleen het sjabloon zelf verdwijnt."
+            data-bevestig-knop="Ja, verwijderen" data-bevestig-gevaar="1">
+        <?= csrf_input() ?><input type="hidden" name="actie" value="verwijder"><input type="hidden" name="slug" value="<?= h($actief_slug) ?>">
+        <button type="submit" class="ds-btn ds-btn-gevaar ds-btn-sm">Verwijderen</button></form>
       <?php endif; ?>
     </div>
   </div>
@@ -352,19 +381,17 @@ require __DIR__ . '/layout_top.php';
 
 <!-- 3: Variabelen -->
 <div>
-<div class="card">
-  <div class="card-header"><div class="card-title">Variabelen</div></div>
-  <div class="card-body" style="padding:12px 14px">
-    <p style="font-size:12px;color:var(--tekst-zacht);margin-bottom:8px">Klik om in te voegen in de e-mailtekst (of typ ze in de korte tekst).</p>
-    <?php if ($vars_type): ?>
-    <div style="margin-bottom:10px">
-      <div class="veld-label">Voor dit type</div>
-      <?php foreach ($vars_type as $v): ?><span class="var-chip" onclick="P13Editor.insert('tmpl','{{<?= h($v) ?>}}')">{{<?= h($v) ?>}}</span><?php endforeach; ?>
-    </div>
-    <?php endif; ?>
-    <div class="veld-label">Altijd beschikbaar</div>
-    <?php foreach ($vars_basis as $v): ?><span class="var-chip" onclick="P13Editor.insert('tmpl','{{<?= h($v) ?>}}')">{{<?= h($v) ?>}}</span><?php endforeach; ?>
-    <div style="margin-top:12px;border-top:1px solid var(--rand);padding-top:10px;font-size:11px;color:var(--tekst-zacht)">
+<div class="ds-kaart">
+  <div class="bh-kaartkop"><h2>Variabelen</h2></div>
+  <div class="bh-kaartbody bh-mt-varbody">
+    <p class="bh-mt-varuitleg">Klik om in te voegen in het veld waar je het laatst typte: de e-mailtekst, het onderwerp of de korte tekst.</p>
+    <?php
+      // Eén lijst met variabelen voor Berichten en Sjablonen (melding_variabelen_lijst()).
+      $var_extra = array_combine($vars_type, array_map(fn($v) => ucfirst(str_replace('_', ' ', $v)), $vars_type)) ?: [];
+      require __DIR__ . '/_variabelen.php';
+      $vw_soort = 'sjabloon'; require __DIR__ . '/_voorwaarden.php';
+    ?>
+    <div class="bh-mt-opmaak">
       Opmaakblokken via de knoppen in de editor: Knop, Info-blok, Let op. Als tekst: <code>[knop href="URL"]Tekst[/knop]</code>, <code>[info]...[/info]</code>, <code>[let op]...[/let op]</code>, <code>[code]123456[/code]</code>.
     </div>
   </div>
@@ -373,9 +400,12 @@ require __DIR__ . '/layout_top.php';
 <?php endif; ?>
 </div>
 
-<script>
-function kortTeller(){var t=document.getElementById('tekstKort');var e=document.getElementById('kortTeller');if(t&&e)e.textContent='('+t.value.length+'/400)';}
+<script nonce="<?= h(csp_nonce()) ?>">
+function kortTeller(){var t=document.getElementById('tekstKort');var e=document.getElementById('kortTeller');if(!t||!e)return;
+  var logica=/\{\{\s*\/?\s*(als|if|kies|switch)\b/i.test(t.value);
+  e.textContent=logica?'('+t.value.length+' tekens met logica; max '+t.dataset.kortMax+' per variant)':'('+t.value.length+'/'+t.dataset.kortMax+')';}
 kortTeller();
 </script>
+<script src="<?= APP_URL ?>/assets/js/variabelen.js?v=<?= @filemtime(__DIR__ . '/../assets/js/variabelen.js') ?>" defer></script>
 
 <?php require __DIR__ . '/layout_bottom.php'; ?>

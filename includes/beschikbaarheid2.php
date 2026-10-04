@@ -17,7 +17,7 @@
 
 function beschikbaarheid2_auto_setup(): void {
     static $done = false;
-    if ($done) return;
+    if ($done || schema_actueel()) return;
     $done = true;
     try {
         $db = db();
@@ -147,6 +147,17 @@ function weken_in_periode(string $van, string $tot): array {
     return $uit;
 }
 
+/**
+ * "Heeft een opgave" als SQL: er zijn periodes doorgegeven (beschikbaarheid_blok), of een oude
+ * opgave van vóór beschikbaarheid2 met weken. Eén criterium voor Beschikbaarheid (bh_besch_raster)
+ * en de loonplanning (loonplan_analyse() neemt iemand op zodra beschikbaarheid2_effectief() weken
+ * heeft, en dat zijn precies de blokken). Een kennismakingsformulier alleen telt niet (2.157.0).
+ */
+function beschikbaarheid2_heeft_opgave_sql(string $sol = 's.id'): string {
+    return "(EXISTS (SELECT 1 FROM beschikbaarheid_blok bb WHERE bb.sollicitatie_id = $sol)
+             OR EXISTS (SELECT 1 FROM beschikbaarheid bo WHERE bo.sollicitatie_id = $sol AND bo.weken_json IS NOT NULL AND bo.weken_json NOT IN ('', '[]')))";
+}
+
 function beschikbaarheid2_van(int $sol_id): array {
     beschikbaarheid2_auto_setup();
     $db = db();
@@ -189,6 +200,23 @@ function beschikbaarheid2_effectief(int $sol_id, ?array $seizoen = null): array 
     $correctie_week = [];
     foreach ($data['correcties'] as $c) $correctie_week[(int)$c['week']] = $c;
 
+    // Losse dagen (includes/beschikbaarheid_dag.php): "die dag kan ik niet" (hard) en een
+    // bestuurs-override "wél beschikbaar". Telden tot 2.123.0 alleen in beschikbaarheid_per_dag()
+    // (rooster) mee en niet hier, waardoor raster/dossier/loonplanning een ander getal toonden.
+    // "Liever vrij" blijft een voorkeur (zoals de vaste vrije dagen) en telt dus niet af.
+    $dag_los = [];   // 'Y-m-d' => 'niet' | 'wel'
+    if (function_exists('beschikbaarheid_dagen') && $weken_datums) {
+        $eerste = reset($weken_datums); $laatste = end($weken_datums);
+        $losse = beschikbaarheid_dagen($sol_id, $eerste['start']->format('Y-m-d'), $laatste['eind']->format('Y-m-d'));
+        usort($losse, fn($a, $b) => (($a['bron'] ?? '') === 'bestuur') <=> (($b['bron'] ?? '') === 'bestuur'));   // bestuur wint
+        foreach ($losse as $l) {
+            if (($l['status'] ?? 'goedgekeurd') !== 'goedgekeurd') continue;
+            if (($l['soort'] ?? '') === 'niet_beschikbaar') $dag_los[$l['datum']] = 'niet';
+            elseif (($l['soort'] ?? '') === 'beschikbaar' && ($l['bron'] ?? '') === 'bestuur') $dag_los[$l['datum']] = 'wel';
+            elseif (($l['bron'] ?? '') === 'bestuur') unset($dag_los[$l['datum']]);   // bestuur zegt "liever vrij": geen harde blokkade meer
+        }
+    }
+
     $uit = [];
     foreach ($data['blokken'] as $blok) {
         $regime = $blok['regime'] === 'weekend' ? 'weekend' : 'vijf';
@@ -215,7 +243,9 @@ function beschikbaarheid2_effectief(int $sol_id, ?array $seizoen = null): array 
                 foreach ($data['afwezig'] as $a) {
                     if ($datum >= new DateTime($a['van_datum']) && $datum <= new DateTime($a['tot_datum'])) { $afw=true; break; }
                 }
-                if ($afw) continue;
+                if ($afw && ($dag_los[$datum->format('Y-m-d')] ?? '') !== 'wel') continue;
+                // Losse dag "kan ik niet" (sollicitant of bestuur)
+                if (($dag_los[$datum->format('Y-m-d')] ?? '') === 'niet') continue;
                 // Bestuurs-correctie soort=minder: alleen deze dagen resteren
                 if ($corr && $corr['soort'] === 'minder' && $corr['dagen'] && !in_array($d, $corr['dagen'], true)) continue;
                 $dagen[] = $d;
@@ -228,6 +258,11 @@ function beschikbaarheid2_effectief(int $sol_id, ?array $seizoen = null): array 
             if (isset($verzoek_week[$wk])) {
                 $norm = min($norm, $verzoek_week[$wk]['aantal']);
                 $pool = $verzoek_week[$wk]['pool'];
+                // Gekozen dagen bij een goedgekeurd verzoek: alleen die dagen zijn beschikbaar.
+                if ($pool) {
+                    $binnen = array_values(array_intersect($dagen, array_map('intval', $pool)));
+                    if ($binnen) $dagen = $binnen;
+                }
             }
             if ($corr && $corr['soort'] === 'minder') $norm = min($norm, count($dagen));
 
@@ -241,7 +276,7 @@ function beschikbaarheid2_effectief(int $sol_id, ?array $seizoen = null): array 
                 'pool'         => $pool,            // door sollicitant aangegeven beschikbare dagen bij verzoek
                 'voorkeur_vrij'=> $voorkeur_in_week, // wenst deze dag(en) vrij — planner beslist
                 'correctie'    => $corr ? ['soort'=>$corr['soort'], 'reden'=>$corr['reden']] : null,
-                'periode'      => $range['start']->format('j M').'–'.$range['eind']->format('j M'),
+                'periode'      => datum_kort_nl($range['start']) . '–' . datum_kort_nl($range['eind']),
                 'start'        => $range['start']->format('Y-m-d'),
             ];
         }
@@ -251,6 +286,9 @@ function beschikbaarheid2_effectief(int $sol_id, ?array $seizoen = null): array 
 }
 
 function beschikbaarheid2_sync_compat(int $sol_id): void {
+    // Draait na elke wijziging van de opgave (opslaan, correctie, verzoek beslist, norm): het moment
+    // om open schermen (gesprek, loonplanning, beschikbaarheid, dossier) te laten weten dat er iets is.
+    if (function_exists('live_loon')) live_loon(0, 0, $sol_id);
     try {
         beschikbaarheid2_auto_setup();
         $eff = beschikbaarheid2_effectief($sol_id);
@@ -300,6 +338,40 @@ function beschikbaarheid2_concept_wissen(int $sol_id): void {
     catch (\Exception $e) {}
 }
 
+/**
+ * Zet wat beschikbaarheid2_van() teruggeeft (DB-kolomnamen) om naar de invoer van
+ * beschikbaarheid2_opslaan() (formuliernamen). Wie opslaat met bestaande data moet hierlangs,
+ * anders vallen vakanties en verzoeken stil weg (van_datum ≠ van, dagen_aantal ≠ dagen).
+ */
+function beschikbaarheid2_data_naar_invoer(array $data): array {
+    $p = $data['profiel'] ?: [];
+    $afwezig = [];
+    foreach ($data['afwezig'] ?? [] as $a) {
+        $afwezig[] = ['van' => $a['van_datum'], 'tot' => $a['tot_datum'], 'label' => $a['label'] ?? ''];
+    }
+    $verzoeken = [];
+    foreach ($data['verzoeken'] ?? [] as $v) {
+        $verzoeken[] = [
+            'id' => (int)$v['id'], 'van_week' => (int)$v['van_week'], 'tot_week' => (int)$v['tot_week'],
+            'dagen' => (int)$v['dagen_aantal'], 'pool' => $v['dagen_pool'] ?: [], 'toelichting' => $v['toelichting'] ?? '',
+        ];
+    }
+    $blokken = [];
+    foreach ($data['blokken'] ?? [] as $b) {
+        $blokken[] = ['van_week' => (int)$b['van_week'], 'tot_week' => (int)$b['tot_week'],
+                      'regime' => $b['regime'], 'weekend_dagen' => $b['weekend_dagen'] ?: [5,6,7]];
+    }
+    return [
+        'blokken'           => $blokken,
+        'afwezig'           => $afwezig,
+        'verzoeken'         => $verzoeken,
+        'vaste_dagen_uit'   => $p['vaste_dagen_uit'] ?? [],
+        'vaste_toelichting' => $p['vaste_toelichting'] ?? null,
+        'voorlopig'         => $p['voorlopig'] ?? 0,
+        'opmerking'         => $p['opmerking'] ?? null,
+    ];
+}
+
 function beschikbaarheid2_opslaan(int $sol_id, array $input, string $door = 'sollicitant'): void {
     beschikbaarheid2_auto_setup();
     $db = db();
@@ -343,7 +415,7 @@ function beschikbaarheid2_opslaan(int $sol_id, array $input, string $door = 'sol
     // gewijzigd of weggehaald, dan vervalt het besluit (weg, of opnieuw als open verzoek).
     $besliste = [];
     try {
-        $q = $db->prepare("SELECT id, van_week, tot_week, dagen_aantal FROM beschikbaarheid_verzoek WHERE sollicitatie_id=? AND status<>'open'");
+        $q = $db->prepare("SELECT id, van_week, tot_week, dagen_aantal, dagen_pool FROM beschikbaarheid_verzoek WHERE sollicitatie_id=? AND status<>'open'");
         $q->execute([$sol_id]);
         foreach ($q->fetchAll() as $r) $besliste[(int)$r['id']] = $r;
     } catch (\Exception $e) {}
@@ -354,15 +426,20 @@ function beschikbaarheid2_opslaan(int $sol_id, array $input, string $door = 'sol
         $vw=(int)($v['van_week']??0); $tw=(int)($v['tot_week']??0); $da=(int)($v['dagen']??0);
         if ($vw<1||$tw<1||$da<1||$da>6) continue;
         if ($tw<$vw) { $t=$vw; $vw=$tw; $tw=$t; }
+        $pool = null;
+        if (!empty($v['pool'])) {
+            $pool_arr = array_values(array_intersect(array_map('intval', (array)$v['pool']), [1,2,3,4,5,6,7]));
+            sort($pool_arr);
+            if ($pool_arr) $pool = json_encode($pool_arr);
+        }
         $id = (int)($v['id'] ?? 0);
         if ($id && isset($besliste[$id])) {
             $b = $besliste[$id];
-            if ((int)$b['van_week'] === $vw && (int)$b['tot_week'] === $tw && (int)$b['dagen_aantal'] === $da) { $behouden[] = $id; continue; }
-        }
-        $pool = null;
-        if (!empty($v['pool'])) {
-            $pool_arr = array_values(array_intersect(array_map('intval', $v['pool']), [1,2,3,4,5,6,7]));
-            if ($pool_arr) $pool = json_encode($pool_arr);
+            // Ook de gekozen dagen tellen: andere dagen = opnieuw beoordelen.
+            $oude_pool = json_decode((string)($b['dagen_pool'] ?? ''), true) ?: [];
+            sort($oude_pool);
+            if ((int)$b['van_week'] === $vw && (int)$b['tot_week'] === $tw && (int)$b['dagen_aantal'] === $da
+                && json_encode(array_map('intval', $oude_pool)) === ($pool ?? '[]')) { $behouden[] = $id; continue; }
         }
         $insv->execute([$sol_id, $vw, $tw, $da, $pool, mb_substr(trim($v['toelichting']??''),0,300)?:null]);
         $nieuwe_verzoeken[] = (int)$db->lastInsertId();
@@ -437,7 +514,7 @@ function beschikbaarheid2_verzoek_melding(int $verzoek_id, string $status): void
             : '<p>We gaan voor die weken uit van je gewone beschikbaarheid. Vragen? Neem gerust contact met ons op.</p>';
         $sol_id = (int)$v['sollicitatie_id'];
         unset($v['sollicitatie_id']);
-        melding_verstuur('verzoek_beslist', $sol_id, $v, ['referentie' => 'verzoek:' . $verzoek_id]);
+        melding_verstuur('verzoek_beslist', $sol_id, $v, ['referentie' => 'verzoek:' . $verzoek_id, 'prioriteit' => 'na_antwoord']);
     } catch (\Throwable $e) { error_log('beschikbaarheid2_verzoek_melding: ' . $e->getMessage()); }
 }
 
@@ -451,7 +528,7 @@ function beschikbaarheid2_verzoek_vars(int $verzoek_id): ?array {
     $seizoen = null;
     try { $sq = db()->prepare("SELECT * FROM seizoenen WHERE id=?"); $sq->execute([$v['seizoen_id']]); $seizoen = $sq->fetch() ?: null; } catch (\Exception $e) {}
     $wkd = seizoen_weken_datums($seizoen);
-    $lbl = function ($wn) use ($wkd) { $wn = (int)$wn; return isset($wkd[$wn]) ? 'week ' . $wn . ' (' . $wkd[$wn]['start']->format('j M') . ')' : 'week ' . $wn; };
+    $lbl = function ($wn) use ($wkd) { $wn = (int)$wn; return isset($wkd[$wn]) ? 'week ' . $wn . ' (' . datum_kort_nl($wkd[$wn]['start']) . ')' : 'week ' . $wn; };
     $weken = (int)$v['van_week'] === (int)$v['tot_week'] ? $lbl($v['van_week']) : $lbl($v['van_week']) . ' t/m ' . $lbl($v['tot_week']);
     return [
         'sollicitatie_id'    => (int)$v['sollicitatie_id'],
@@ -517,6 +594,7 @@ function beschikbaarheid2_definitief_maken(int $sol_id, string $door = 'sollicit
         $u = db()->prepare("UPDATE beschikbaarheid_profiel SET voorlopig=0, definitief_op=IFNULL(definitief_op, NOW()), bijgewerkt_op=NOW() WHERE sollicitatie_id=? AND voorlopig=1");
         $u->execute([$sol_id]);
         if ($u->rowCount() > 0 && $door === 'sollicitant') beschikbaarheid2_definitief_melden($sol_id);
+        if ($u->rowCount() > 0 && function_exists('live_loon')) live_loon(0, 0, $sol_id);
         return true;
     } catch (\Exception $e) { return false; }
 }

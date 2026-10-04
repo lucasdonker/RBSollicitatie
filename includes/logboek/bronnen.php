@@ -18,18 +18,6 @@
 if (!function_exists('log_velden')) {
 
 /**
- * Wat deze module bij de kern registreert. Registry-klaar: drie haken, meer niet.
- * (Geen 'setup': het logboek leest alleen, dus db_failsafe hoeft hier niets voor te doen.)
- */
-function log_module_definitie(): array {
-    return [
-        'sleutel' => 'logboek',
-        'recht'   => ['label' => 'Logboek (alle logs)', 'groep' => 'Beheer', 'acties' => ['lezen']],
-        'nav'     => ['id' => 'logboek', 'label' => 'Logboek', 'url' => '/admin/logboek.php'],
-    ];
-}
-
-/**
  * Het gemeenschappelijke formaat. De volgorde is bindend: elke UNION-tak levert precies
  * deze kolommen, in deze volgorde.
  */

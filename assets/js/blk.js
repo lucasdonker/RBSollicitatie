@@ -26,7 +26,8 @@
       const n = parseInt(t.dataset.stap, 10);
       t.classList.toggle('actief', n === nr);
       t.classList.toggle('klaar', n < nr);
-      t.setAttribute('aria-selected', n === nr ? 'true' : 'false');
+      // Stapnavigatie, geen tabpaneel: de huidige stap krijgt aria-current (WCAG 4.1.2).
+      if (n === nr) t.setAttribute('aria-current', 'step'); else t.removeAttribute('aria-current');
     });
     alle('.blk-ov-rij').forEach(function (r) {
       const n = parseInt(r.dataset.stap, 10);
@@ -58,13 +59,30 @@
     }
     melding.innerHTML = '<svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span></span>';
     melding.querySelector('span').textContent = tekst;
-    if (veld) {
-      veld.classList.add('fout');
-      veld.setAttribute('aria-invalid', 'true');
-      setTimeout(function () { veld.focus(); }, 60);
-      setTimeout(function () { veld.classList.remove('fout'); veld.removeAttribute('aria-invalid'); }, 4000);
-    }
+    if (veld) veldFout(veld, tekst);
   }
+
+  /* Melding óók bij het veld zelf (de foutplek #blk-<naam>-fout uit blk_invullen.php, waar
+     het veld met aria-describedby naar wijst). Het veld blijft ongeldig tot er iets in
+     getypt wordt — niet na vier seconden, dan is de melding weg voordat je hem gelezen hebt. */
+  function veldFout(veld, tekst) {
+    const plek = veld.name ? el('blk-' + veld.name + '-fout') : null;
+    veld.classList.add('fout');
+    if (plek && window.P13Melding) P13Melding.fout(plek, tekst, veld);
+    else { veld.setAttribute('aria-invalid', 'true'); veld.focus(); }
+    veld.addEventListener('input', function () { veldFoutWeg(veld); }, { once: true });
+  }
+  function veldFoutWeg(veld) {
+    const plek = veld.name ? el('blk-' + veld.name + '-fout') : null;
+    veld.classList.remove('fout');
+    veld.removeAttribute('aria-invalid');
+    if (plek) { plek.textContent = ''; plek.hidden = true; }
+  }
+  // Na een serverfout: het veld met de fout krijgt dezelfde "weg bij typen" en de focus.
+  alle('[aria-invalid="true"]', form).forEach(function (veld) {
+    veld.addEventListener('input', function () { veldFoutWeg(veld); }, { once: true });
+  });
+
   function wisFout(stapNr) {
     const stap = el('fs' + stapNr);
     const m = stap && stap.querySelector('.blk-fout');
@@ -103,13 +121,13 @@
   const terugKnop = el('blkTerug');
   if (terugKnop) terugKnop.addEventListener('click', function () { if (huidig > 1) toonStap(huidig - 1); });
   const volgKnop = el('blkVolgende');
-  if (volgKnop) volgKnop.addEventListener('click', function () {
-    if (huidig < CFG.totaal) { gaNaar(huidig + 1); return; }
-    if (!valideer()) return;
-    volgKnop.disabled = true;
-    const tekst = volgKnop.querySelector('.tekst'); if (tekst) tekst.textContent = 'Bezig…';
+  /* De knop is een echte submit (werkt zonder JavaScript). Hier: tussenstappen en een mislukte
+     controle tegenhouden; bij de laatste stap gaat het gewone versturen door, zodat actie.js de
+     laadstand geeft. Ook Enter in een veld komt hier langs (de browser klikt dan deze knop). */
+  if (volgKnop) volgKnop.addEventListener('click', function (e) {
+    if (huidig < CFG.totaal) { e.preventDefault(); gaNaar(huidig + 1); return; }
+    if (!valideer()) { e.preventDefault(); return; }
     if (concept) concept.stop(); // het echte opslaan neemt het over; geen concept meer sturen
-    form.submit();
   });
 
   /* ── Validatie vóór inleveren ─────────────────────────────────── */
@@ -216,6 +234,9 @@
     const inp = el('fotoInput'), avatar = el('fotoAvatar'), rij = el('fotoRij');
     const naam = el('fotoNaam'), status = el('fotoStatus'), thumb = el('fotoThumb'), verwijderVlag = el('fotoVerwijderen');
     if (!inp || !avatar || !rij) return;
+    // Pas nu de knoppen tonen en het bestandsveld verbergen; zonder JS blijft het gewone veld staan.
+    inp.closest('.blk-foto-zone')?.classList.add('blk-foto-js');
+    inp.closest('.blk-veld-foto')?.classList.add('blk-foto-js');
     const avatarLeeg = avatar.innerHTML, thumbLeeg = thumb ? thumb.innerHTML : '';
 
     function kies(capture) {
@@ -238,7 +259,15 @@
     inp.addEventListener('change', function () {
       const f = inp.files && inp.files[0];
       if (!f) return;
-      if (f.size > 5 * 1024 * 1024) { alert('De foto is groter dan 5 MB. Kies een kleinere foto.'); inp.value = ''; return; }
+      const fotoFout = el('blk-foto-fout');
+      if (f.size > 5 * 1024 * 1024) {
+        // Bij de foto zelf melden (P13Melding uit app.js), nooit alert().
+        const tekst = 'De foto is groter dan 5 MB. Kies een kleinere foto.';
+        if (fotoFout && window.P13Melding) P13Melding.fout(fotoFout, tekst);
+        else if (fotoFout) { fotoFout.textContent = tekst; fotoFout.hidden = false; }
+        inp.value = ''; return;
+      }
+      if (fotoFout) { fotoFout.textContent = ''; fotoFout.hidden = true; }
       const r = new FileReader();
       r.onload = function (e) {
         const img = '<img src="' + e.target.result + '" alt="">';
@@ -298,7 +327,11 @@
   }
 
   /* ── Start ───────────────────────────────────────────────────── */
+  form.classList.add('blk-js');   // pas nu één stap tegelijk (zie stijl.css)
   toonStap(huidig, huidig !== 1);
+  // Terug van de server met een fout: meteen naar het veld dat het betreft.
+  const serverFout = form.querySelector('[aria-invalid="true"]');
+  if (serverFout) serverFout.focus();
   // Straat/woonplaats pas tonen als het opzoeken mislukt (ontwerp: gevonden adres als kaartje)
   const _st = el('adr-st'), _wp = el('adr-wp'), _hm = el('adrHandmatig');
   if (_st && _wp && _hm && !_st.value && !_wp.value) _hm.hidden = true;

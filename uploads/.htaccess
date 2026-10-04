@@ -1,0 +1,27 @@
+# Blokkeer uitvoering van scripts in de uploads-map (defense-in-depth).
+# Geüploade bestanden mogen alleen als data worden geserveerd, nooit uitgevoerd.
+
+# Schakel PHP-uitvoering uit (meerdere methodes voor verschillende serverconfiguraties)
+<FilesMatch "\.(php|php3|php4|php5|php7|php8|phtml|phar|pht|cgi|pl|py|asp|aspx|sh|shtml)$">
+    Require all denied
+</FilesMatch>
+
+# Zet PHP-handlers uit indien actief
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php7.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php8.c>
+    php_flag engine off
+</IfModule>
+
+# Voorkom dat de server scripts interpreteert op basis van handlers
+RemoveHandler .php .phtml .php3 .php4 .php5 .php7 .php8 .phar
+RemoveType .php .phtml .php3 .php4 .php5 .php7 .php8 .phar
+
+# Forceer downloads i.p.v. inline uitvoering voor onbekende types
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+</IfModule>

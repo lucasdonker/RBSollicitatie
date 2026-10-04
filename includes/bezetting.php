@@ -19,9 +19,12 @@
 /** Standaard bezettingssjablonen (per weektype identiek; instelbaar via Instellingen). */
 function bezetting_default_sjablonen(): array {
     return [
+        // 'icoon' is een naam uit includes/iconen.php. Oudere installaties hebben hier
+        // nog een emoji staan; bh_post_icoon() vertaalt die, zodat de interface
+        // emoji-vrij blijft zonder dat er een migratie nodig is.
         'hoofdpost' => [
             'naam'  => 'Hoofdpost',
-            'icoon' => '🏠',
+            'icoon' => 'huis',
             'rollen' => [
                 // sleutel => [label, categorie, min_rang, aantal]
                 ['sleutel'=>'chauffeur',      'label'=>'Chauffeur',       'categorie'=>'rijden',    'min_rang'=>2, 'aantal'=>1],
@@ -33,7 +36,7 @@ function bezetting_default_sjablonen(): array {
         ],
         'gk' => [
             'naam'  => 'Tweede post (GK)',
-            'icoon' => '🏖️',
+            'icoon' => 'strand',
             'rollen' => [
                 ['sleutel'=>'gk_lifeguard', 'label'=>'Lifeguard GK', 'categorie'=>'lifeguard', 'min_rang'=>2, 'aantal'=>2],
             ],
@@ -78,6 +81,9 @@ function bezetting_pool(int $seizoen_id, ?array $seizoen = null): array {
         $mensen = $q->fetchAll();
     } catch (\Exception $e) { return []; }
 
+    // Is de inzet vastgesteld (loonplanning definitief), dan telt die afspraak, niet de opgave.
+    $afspraken = function_exists('inzet_afspraken_seizoen') ? inzet_afspraken_seizoen($seizoen_id) : [];
+
     foreach ($mensen as $m) {
         $sol_id = (int)$m['sol_id'];
         $naam = trim($m['voornaam'] . ' ' . ($m['tussenvoegsel'] ? $m['tussenvoegsel'] . ' ' : '') . $m['achternaam']);
@@ -91,8 +97,17 @@ function bezetting_pool(int $seizoen_id, ?array $seizoen = null): array {
             }
         }
 
-        // Beschikbaarheid per week
+        // Beschikbaarheid per week: de opgave, of de afspraak als die er is.
         $eff = function_exists('beschikbaarheid2_effectief') ? beschikbaarheid2_effectief($sol_id, $seizoen) : [];
+        if (isset($afspraken[$sol_id])) {
+            $weken = [];
+            foreach ($afspraken[$sol_id]['weken'] as $wk => $a) {
+                if ($a['dagen'] <= 0) continue;
+                // Welke dagen: de afgesproken weekdagen, anders wat iemand die week opgaf, anders de hele week.
+                $weken[$wk] = ['dagen' => $a['weekdagen'] ?: ($eff[$wk]['dagen'] ?? [1,2,3,4,5,6,7])];
+            }
+            $eff = $weken;
+        }
         foreach ($eff as $wk => $w) {
             $pool[$wk][] = [
                 'sol_id'  => $sol_id,
@@ -311,9 +326,13 @@ function bezetting_bellijst(int $seizoen_id, int $week, string $categorie, int $
         }
         if ($rang < $min_rang) continue;
 
-        // Is die week NIET beschikbaar?
-        $eff = function_exists('beschikbaarheid2_effectief') ? beschikbaarheid2_effectief($sol_id, $seizoen) : [];
-        if (isset($eff[$week])) continue; // wel beschikbaar → niet in de bellijst
+        // Is die week NIET ingezet? (De afspraak als die er is, anders de opgave.)
+        $inzet = function_exists('inzet_effectief') ? inzet_effectief($sol_id) : null;
+        if ($inzet !== null) { if (isset($inzet[$week])) continue; }
+        else {
+            $eff = function_exists('beschikbaarheid2_effectief') ? beschikbaarheid2_effectief($sol_id, $seizoen) : [];
+            if (isset($eff[$week])) continue; // wel beschikbaar → niet in de bellijst
+        }
 
         $uit[] = [
             'sol_id'   => $sol_id,

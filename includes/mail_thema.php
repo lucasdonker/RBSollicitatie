@@ -50,7 +50,9 @@ function mail_thema(): array {
         'hero_badge'    => '',          // bijv. 'Selectie 2026' (leeg = geen badge)
 
         // ── Footer ────────────────────────────────────────────
-        'footer_email'  => function_exists('bestuur_email') ? bestuur_email() : (defined('MAIL_BESTUUR') ? MAIL_BESTUUR : ''),
+        // Het contactadres voor sollicitanten en ouders (besluit: sollicitatie@paal13.com).
+        'footer_email'  => function_exists('portaal_contact_email') ? portaal_contact_email()
+                           : (function_exists('bestuur_email') ? bestuur_email() : (defined('MAIL_BESTUUR') ? MAIL_BESTUUR : '')),
         'footer_website'=> 'paal13.com',
         'footer_website_url' => 'https://paal13.com',
     ];
@@ -170,9 +172,9 @@ function mail_thema_wrapper(
     <p style="margin:0 0 8px;font-family:' . $ff . ';font-size:13px;color:' . $t['kleur_tekst_zacht'] . ';line-height:1.6">
       <strong style="color:' . $t['kleur_tekst'] . '">' . $merk . '</strong><br>' . $plaats . '
     </p>
-    <p style="margin:0;font-family:' . $ff . ';font-size:12px;color:#94a3b3;line-height:1.6">
+    <p style="margin:0;font-family:' . $ff . ';font-size:12px;color:' . $t['kleur_tekst_zacht'] . ';line-height:1.6">
       Vragen? Mail naar <a href="mailto:' . $email . '" style="color:' . $t['kleur_navy'] . ';text-decoration:none;font-weight:600">' . $email . '</a><br>
-      &copy; ' . $jaar . ' &bull; <a href="' . $webn_url . '" style="color:#94a3b3;text-decoration:underline">' . $webnaam . '</a>
+      &copy; ' . $jaar . ' &bull; <a href="' . $webn_url . '" style="color:' . $t['kleur_tekst_zacht'] . ';text-decoration:underline">' . $webnaam . '</a>
     </p>
   </td></tr>
 

@@ -14,6 +14,8 @@
  * Faalt NOOIT hard: een probleem met de logging mag een pagina niet breken.
  */
 
+require_once __DIR__ . '/na_antwoord.php';
+
 if (!function_exists('audit_log')) {
 
 /** In-memory buffer van gebeurtenissen voor deze request. */
@@ -21,7 +23,7 @@ $GLOBALS['_audit_buffer'] = [];
 $GLOBALS['_audit_shutdown_geregistreerd'] = false;
 
 function audit_dag_auto_setup(): void {
-    static $done = false; if ($done) return; $done = true;
+    static $done = false; if ($done || schema_actueel()) return; $done = true;
     try {
         db()->exec("CREATE TABLE IF NOT EXISTS `audit_log` (
             `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -105,10 +107,8 @@ function audit_flush(): void {
     if (!$buffer) return;
     $GLOBALS['_audit_buffer'] = [];  // voorkom dubbel wegschrijven
 
-    // Response afsluiten zodat de gebruiker niet wacht (PHP-FPM).
-    if (function_exists('fastcgi_finish_request')) {
-        @fastcgi_finish_request();
-    }
+    // Response afsluiten (en de sessie vrijgeven) zodat de gebruiker niet wacht.
+    antwoord_afsluiten();
 
     try {
         audit_dag_auto_setup();

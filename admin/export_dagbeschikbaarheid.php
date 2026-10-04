@@ -34,7 +34,7 @@ $van = $sol['datum_werk_start'] ?? null;
 $tot = $sol['datum_werk_eind'] ?? null;
 if (!$van || !$tot) {
     http_response_code(422);
-    exit('Voor dit seizoen zijn nog geen werk-start/eind-datums ingesteld (Instellingen → Selectie & seizoen).');
+    exit('Voor dit seizoen is nog geen werkperiode ingesteld. Vul de eerste en laatste werkdag in bij Seizoen (onder Werkperiode).');
 }
 
 $naam = trim($sol['voornaam'] . ' ' . ($sol['tussenvoegsel'] ? $sol['tussenvoegsel'] . ' ' : '') . $sol['achternaam']);
@@ -69,9 +69,8 @@ if ($formaat === 'json') {
 }
 
 // ── Leesbare controle-weergave ───────────────────────────────────────
-$dagen_nl = [1=>'ma',2=>'di',3=>'wo',4=>'do',5=>'vr',6=>'za',7=>'zo'];
-$maanden_nl = [1=>'januari',2=>'februari',3=>'maart',4=>'april',5=>'mei',6=>'juni',
-               7=>'juli',8=>'augustus',9=>'september',10=>'oktober',11=>'november',12=>'december'];
+$dagen_nl = dagen_kort_nl();
+$maanden_nl = maanden_nl();
 $aantal_beschikbaar = 0; $aantal_niet = 0;
 foreach ($per_dag as $info) { $info['beschikbaar'] ? $aantal_beschikbaar++ : $aantal_niet++; }
 ?>
@@ -113,7 +112,7 @@ foreach ($per_dag as $info) { $info['beschikbaar'] ? $aantal_beschikbaar++ : $aa
 
   <div class="knoppen">
     <a class="knop" href="?id=<?= $id ?>&formaat=json" target="_blank">Bekijk als JSON (API-formaat)</a>
-    <a class="knop licht" href="<?= APP_URL ?>/admin/beschikbaarheid.php">← Terug naar beschikbaarheid</a>
+    <a class="knop licht" href="<?= APP_URL ?>/admin/beschikbaarheid.php">Terug naar beschikbaarheid</a>
   </div>
 
   <div class="telling">
@@ -139,9 +138,9 @@ foreach ($per_dag as $info) { $info['beschikbaar'] ? $aantal_beschikbaar++ : $aa
             <td><?= h($dagen_nl[$weekdag]) ?></td>
             <td>
               <?php if ($info['beschikbaar']): ?>
-                <span class="status ja">✓ beschikbaar</span>
+                <span class="status ja">Beschikbaar</span>
               <?php else: ?>
-                <span class="status nee">✗ niet</span>
+                <span class="status nee">Niet beschikbaar</span>
                 <?php if ($info['hardheid'] === 'hard'): ?><span class="hard">hard</span>
                 <?php elseif ($info['hardheid'] === 'zacht'): ?><span class="zacht">zacht</span><?php endif; ?>
               <?php endif; ?>

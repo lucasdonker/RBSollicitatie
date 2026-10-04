@@ -1,7 +1,7 @@
 <?php
 /**
- * Documenten uploaden (aangenomen-takenpakket): kopie ID (voor/achter), kopie bankpas, pasfoto.
- * ?taak=id_kopie|bankpas_kopie|pasfoto — definities in includes/documenten.php (document_taken()).
+ * Documenten uploaden (aangenomen-takenpakket): kopie ID (voor/achter) en kopie bankpas.
+ * ?taak=id_kopie|bankpas_kopie — definities in includes/documenten.php (document_taken()).
  *
  * Per vak één klein formulier (bestand kiezen → uploaden). Bestanden gaan versleuteld de kluis in
  * (nooit onversleuteld op schijf) en zijn daarna alleen voor de bevoegde beheerder (penningmeester)
@@ -43,28 +43,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             if ($fout === '') {
                 $res = document_opslaan($sol_id, $soort, $_FILES['bestand'] ?? [], $extra, $_SERVER['REMOTE_ADDR'] ?? null);
-                if ($res['ok']) $succes = $taak['soorten'][$soort] . ' is veilig ontvangen.';
-                else $fout = 'Uploaden lukte niet: ' . $res['fout'] . '.';
+                if ($res['ok']) {
+                    $succes = $taak['soorten'][$soort] . ' is veilig ontvangen.';
+                    // Ook hier, niet alleen na het tekenen: de volgorde tekenen/uploaden mag niet uitmaken.
+                    // De check mailt één keer per loonheffing (gebeurtenis 'penningmeester_gemeld').
+                    try { documenten_dossier_compleet_check($sol_id); } catch (\Throwable $e) {}
+                } else {
+                    $fout = 'Uploaden lukte niet: ' . $res['fout'] . '.';
+                }
             }
         }
     }
     if ($fout === '') {
-        $_SESSION['flash_portaal'] = $succes;
+        flash('succes', $succes);
         redirect(APP_URL . '/portaal/document_upload.php?taak=' . urlencode($taak_slug) . (portaal_terug_param() === 'taken' ? '&terug=taken' : ''));
     }
 }
-if (!empty($_SESSION['flash_portaal'])) { $succes = (string)$_SESSION['flash_portaal']; unset($_SESSION['flash_portaal']); }
+// Deze pagina toont de melding in de kaart, bij het document (niet bovenaan via _kop.php).
+if ($_f = get_flash()) { if ($_f['type'] === 'succes') $succes = (string)$_f['msg']; else $fout = (string)$_f['msg']; }
 
 // ── Weergave ──────────────────────────────────────────────────
 $docs   = documenten_van($sol_id);
 $klaar  = documenten_taak_klaar($sol_id, $taak_slug, $docs);
 $id_type = (string)($docs['id_voor']['extra'] ?? '');
-$maanden = ['januari', 'februari', 'maart', 'april', 'mei', 'juni', 'juli', 'augustus', 'september', 'oktober', 'november', 'december'];
-$wanneer = function (?string $dt) use ($maanden): string {
-    if (!$dt) return '';
-    $t = strtotime($dt);
-    return date('j', $t) . ' ' . $maanden[(int)date('n', $t) - 1] . ' om ' . date('H:i', $t);
-};
+$wanneer = fn(?string $dt): string => $dt ? datum_lang_nl($dt, false, false) . ' om ' . date('H:i', strtotime($dt)) : '';
 $grootte = fn(int $b): string => $b >= 1048576 ? round($b / 1048576, 1) . ' MB' : max(1, (int)round($b / 1024)) . ' kB';
 $terug_url = portaal_terug_url();
 
@@ -76,7 +78,7 @@ require __DIR__ . '/_kop.php';
 <div class="ond du">
   <header class="ond-kop">
     <div class="ond-kop-titel">
-      <span class="ond-kop-naam"><?= h($taak['titel']) ?></span>
+      <h1 class="ond-kop-naam"><?= h($taak['titel']) ?></h1>
       <span class="ond-kop-sub"><?= $klaar ? 'Ontvangen' : 'Nog te doen' ?> · <?= h($taak['sub']) ?></span>
     </div>
     <span class="ond-chip<?= $klaar ? ' ok' : '' ?>"><span class="ond-chip-stip"></span><?= $klaar ? 'Ontvangen' : 'Nog te doen' ?></span>
@@ -101,11 +103,13 @@ require __DIR__ . '/_kop.php';
       <?php endif; ?>
 
       <?php if ($taak_slug === 'id_kopie'): ?>
+        <?php /* De keuze hoort bij het voorkant-formulier (form="du-form-id_voor"), ook al staat hij
+                 erboven: zo gaat hij zonder JavaScript gewoon mee met het uploaden. */ ?>
         <div class="ond-kaart" id="idType">
-          <span class="ond-kaart-lbl"><?= icoon('id-kaart', 18) ?>Welk document?</span>
-          <div class="ond-lijst">
-            <label class="ond-radio"><input type="radio" name="id_type_keuze" value="paspoort"<?= $id_type === 'paspoort' ? ' checked' : '' ?>><span class="ond-radio-box"></span><span class="ond-radio-tekst">Paspoort — alleen de pagina met je foto</span></label>
-            <label class="ond-radio"><input type="radio" name="id_type_keuze" value="id_kaart"<?= $id_type === 'id_kaart' ? ' checked' : '' ?>><span class="ond-radio-box"></span><span class="ond-radio-tekst">Identiteitskaart — voorkant én achterkant</span></label>
+          <span class="ond-kaart-lbl" id="idTypeLbl"><?= icoon('id-kaart', 18) ?>Welk document?</span>
+          <div class="ond-lijst" role="radiogroup" aria-labelledby="idTypeLbl">
+            <label class="ond-radio"><input type="radio" name="id_type" value="paspoort" form="du-form-id_voor"<?= $id_type === 'paspoort' ? ' checked' : '' ?>><span class="ond-radio-box"></span><span class="ond-radio-tekst">Paspoort — alleen de pagina met je foto</span></label>
+            <label class="ond-radio"><input type="radio" name="id_type" value="id_kaart" form="du-form-id_voor"<?= $id_type === 'id_kaart' ? ' checked' : '' ?>><span class="ond-radio-box"></span><span class="ond-radio-tekst">Identiteitskaart — voorkant én achterkant</span></label>
           </div>
           <span class="ond-kaart-tekst">Een rijbewijs is geen geldig identiteitsbewijs voor de loonadministratie.</span>
         </div>
@@ -114,9 +118,12 @@ require __DIR__ . '/_kop.php';
       <?php foreach ($taak['soorten'] as $soort => $label):
         $doc = $docs[$soort] ?? null;
         $verwerkt = $doc && ($doc['status'] ?? '') === 'verwerkt';
-        $verborgen = ($soort === 'id_achter' && $id_type !== 'id_kaart' && !$doc); ?>
-        <div class="ond-kaart du-vak<?= $verborgen ? ' du-alleen-idkaart' : '' ?>" data-soort="<?= h($soort) ?>"<?= $verborgen ? ' hidden' : '' ?>>
+        /* Het achterkant-vak verbergt pas JavaScript (bij "paspoort"); zonder JS blijft het staan
+           met de hint dat het alleen bij een identiteitskaart hoeft. */
+        $alleen_idkaart = ($soort === 'id_achter' && !$doc); ?>
+        <div class="ond-kaart du-vak<?= $alleen_idkaart ? ' du-alleen-idkaart' : '' ?>" data-soort="<?= h($soort) ?>">
           <span class="ond-kaart-lbl"><?= icoon($doc ? 'vink-cirkel' : 'camera', 18) ?><?= h($label) ?></span>
+          <?php if ($alleen_idkaart): ?><span class="ond-kaart-tekst">Alleen nodig bij een identiteitskaart.</span><?php endif; ?>
           <?php if ($doc): ?>
             <div class="du-status">
               <span class="du-status-icoon"><?= icoon($doc['mime'] === 'application/pdf' ? 'document' : 'camera', 20) ?></span>
@@ -131,13 +138,14 @@ require __DIR__ . '/_kop.php';
           <?php endif; ?>
 
           <?php if (!$verwerkt && $kluis_ok): ?>
-            <form method="POST" enctype="multipart/form-data" class="du-form" data-soort="<?= h($soort) ?>">
+            <?php /* Werkt zonder JavaScript: het bestandsveld is verplicht en de knop staat altijd aan.
+                     document_upload.js voegt alleen het voorbeeld en de vooraf-controle toe. */ ?>
+            <form method="POST" enctype="multipart/form-data" class="du-form" id="du-form-<?= h($soort) ?>" data-soort="<?= h($soort) ?>">
               <?= csrf_input() ?>
               <input type="hidden" name="soort" value="<?= h($soort) ?>">
               <input type="hidden" name="terug" value="<?= h(portaal_terug_param()) ?>">
-              <?php if ($soort === 'id_voor'): ?><input type="hidden" name="id_type" value="<?= h($id_type) ?>" class="du-idtype"><?php endif; ?>
               <label class="du-kies<?= $doc ? ' klein' : '' ?>">
-                <input type="file" name="bestand" accept="image/jpeg,image/png,application/pdf" capture="environment" class="du-input">
+                <input type="file" name="bestand" accept="image/jpeg,image/png,application/pdf" capture="environment" class="du-input" required>
                 <span class="du-kies-icoon"><?= icoon('camera', 22) ?></span>
                 <span class="du-kies-tekst"><?= $doc ? 'Andere foto kiezen (vervangt de huidige)' : 'Foto maken of bestand kiezen' ?></span>
               </label>
@@ -146,13 +154,19 @@ require __DIR__ . '/_kop.php';
                 <span class="du-preview-naam"></span>
               </div>
               <div class="du-acties">
-                <button type="submit" class="ds-btn ds-btn-primair du-upload" disabled><span class="btn-tekst"><?= $doc ? 'Vervangen' : 'Uploaden' ?></span><span class="btn-spinner" hidden>Bezig met versleutelen…</span></button>
-                <?php if ($doc): ?>
-                  <button type="submit" class="ds-btn ds-btn-zacht" name="verwijder" value="1" formnovalidate data-bevestig="Weet je zeker dat je dit document wilt verwijderen?"><?= icoon('prullenbak', 16) ?>Verwijderen</button>
-                  <input type="hidden" name="document_id" value="<?= (int)$doc['id'] ?>">
-                <?php endif; ?>
+                <button type="submit" class="ds-btn ds-btn-primair du-upload"><span class="btn-tekst"><?= $doc ? 'Vervangen' : 'Uploaden' ?></span><span class="btn-spinner" hidden>Bezig met versleutelen…</span></button>
               </div>
             </form>
+            <?php if ($doc):
+              $bev = [
+                  'knop_open' => 'Verwijderen',
+                  'icoon'     => 'prullenbak',
+                  'tekst'     => [$label . ' wordt meteen uit de beveiligde opslag gewist. Daarna kun je een nieuw bestand uploaden.'],
+                  'knop'      => 'Ja, verwijder dit bestand',
+                  'velden'    => ['soort' => $soort, 'verwijder' => '1', 'document_id' => (int)$doc['id'], 'terug' => portaal_terug_param()],
+              ];
+              require __DIR__ . '/_bevestig.php';
+            endif; ?>
           <?php endif; ?>
         </div>
       <?php endforeach; ?>

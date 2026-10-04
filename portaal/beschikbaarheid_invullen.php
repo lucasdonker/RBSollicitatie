@@ -6,36 +6,9 @@
  */
 require_once __DIR__ . '/../includes/functions.php';
 
-portaal_vereis_login();
-
-$email = $_SESSION['portaal_email'] ?? '';
-// Haal seizoen op met graceful fallback als de datum_werk-kolommen ontbreken (net als het BLK).
-try {
-    $stmt = db()->prepare("
-        SELECT s.*, p.voornaam, p.achternaam, p.email, sz.naam AS seizoen_naam,
-               sz.datum_werk_start, sz.datum_werk_eind, sz.id AS seizoen_id
-        FROM sollicitaties s
-        JOIN personen p ON p.id = s.persoon_id
-        LEFT JOIN seizoenen sz ON sz.id = s.seizoen_id
-        WHERE p.email = ?
-        ORDER BY s.id DESC LIMIT 1
-    ");
-    $stmt->execute([$email]);
-    $sol = $stmt->fetch();
-} catch (\PDOException $e) {
-    // Oude database zonder datum_werk-kolommen → zonder die kolommen ophalen
-    $stmt = db()->prepare("
-        SELECT s.*, p.voornaam, p.achternaam, p.email, sz.naam AS seizoen_naam,
-               NULL AS datum_werk_start, NULL AS datum_werk_eind, sz.id AS seizoen_id
-        FROM sollicitaties s
-        JOIN personen p ON p.id = s.persoon_id
-        LEFT JOIN seizoenen sz ON sz.id = s.seizoen_id
-        WHERE p.email = ?
-        ORDER BY s.id DESC LIMIT 1
-    ");
-    $stmt->execute([$email]);
-    $sol = $stmt->fetch();
-}
+// De sollicitatie waarmee iemand is ingelogd, niet "de nieuwste op dit e-mailadres": wie vaker
+// solliciteerde, zou anders de beschikbaarheid van een andere sollicitatie overschrijven.
+$sol = portaal_sollicitant_laden(portaal_vereis_login());
 if (!$sol) { redirect(APP_URL . '/portaal/'); }
 
 $sol_id = (int)$sol['id'];
@@ -53,7 +26,7 @@ if (!$week_start || !$week_eind) {
 $dag  = new DateTime($week_start);
 $eind = new DateTime($week_eind);
 while ($dag->format('N') != 1) $dag->modify('+1 day'); // naar maandag
-$mnd_nl = [1=>'jan',2=>'feb',3=>'mrt',4=>'apr',5=>'mei',6=>'jun',7=>'jul',8=>'aug',9=>'sep',10=>'okt',11=>'nov',12=>'dec'];
+$mnd_nl = maanden_kort_nl();
 while ($dag <= $eind) {
     $wk = (int)$dag->format('W');
     $alle_weken[] = [
@@ -73,7 +46,6 @@ $lw = end($alle_weken)['week'];
 reset($alle_weken);
 
 // ── POST-verwerking: beschikbaarheid opslaan via de gedeelde functie ──
-$flash_ok = '';
 // ── AI-beschikbaarheid: interpreteer ingesproken/getypte tekst → voorstel ──
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ai_besch_submit'])) {
     header('Content-Type: application/json');
@@ -103,9 +75,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['besch_submit'])) {
     csrf_check();
     try {
         $waarschuwingen = beschikbaarheid_opslaan_uit_post($sol_id, $_POST);
-        if ($waarschuwingen) {
-            $_SESSION['b2_vz_waarschuwing'] = implode(' ', $waarschuwingen);
-        }
         // Losse dagen (concrete datums) — zelfde als in het BLK
         if (function_exists('beschikbaarheid_dagen_opslaan')) {
             $dd = $_POST['b2_dag_datum'] ?? []; $ds = $_POST['b2_dag_soort'] ?? []; $dr = $_POST['b2_dag_reden'] ?? [];
@@ -118,23 +87,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['besch_submit'])) {
         }
         if (function_exists('audit_log')) audit_log('beschikbaarheid_ingevuld', 'sollicitatie', $sol_id, ['via' => 'losse taak']);
         if (empty($waarschuwingen)) {
-            // Klaar: terug naar Start of Taken (waar de sollicitant vandaan kwam) met de melding daar.
-            $_SESSION['flash_portaal'] = 'Je beschikbaarheid is opgeslagen. Bedankt!';
+            // Klaar: terug naar Start of Taken (waar de sollicitant vandaan kwam) met de melding
+            // daar — inclusief wat er hierna gebeurt, zodat de taak niet in stilte eindigt.
+            $hierna = '';
+            if (function_exists('portaal_hierna')) {
+                $_sol_na  = portaal_sollicitant_laden($sol_id);
+                $_open_na = ($_sol_na && function_exists('portaal_taken'))
+                    ? count(portaal_taken_open(portaal_taken($_sol_na, blk_van($sol_id)))) : 0;
+                if ($_sol_na) $hierna = ' ' . portaal_hierna($_sol_na, $_open_na);
+            }
+            flash('succes', 'Je beschikbaarheid is opgeslagen. Bedankt!' . $hierna);
             redirect(portaal_terug_url());
         }
-        $_SESSION['flash_besch_ok'] = 'Je beschikbaarheid is opgeslagen. Bedankt!';
+        // Opgeslagen, met iets om naar te kijken: één melding (flash() bewaart er één).
+        flash('waarschuwing', 'Je beschikbaarheid is opgeslagen. Let op: ' . implode(' ', $waarschuwingen));
     } catch (\Exception $e) {
         error_log('beschikbaarheid losse pagina: ' . $e->getMessage());
-        $_SESSION['flash_besch_fout'] = 'Er ging iets mis bij het opslaan. Probeer het later opnieuw.';
+        flash('fout', 'Er ging iets mis bij het opslaan. Probeer het later opnieuw.');
     }
     // Waarschuwing of fout: terug naar het formulier (herkomst bewaren voor de volgende poging)
     redirect(portaal_url_met_terug(APP_URL . '/portaal/beschikbaarheid_invullen.php', portaal_terug_param()));
 }
-
-$flash_ok = $_SESSION['flash_besch_ok'] ?? '';
-$flash_fout = $_SESSION['flash_besch_fout'] ?? '';
-$vz_waarschuwing = $_SESSION['b2_vz_waarschuwing'] ?? '';
-unset($_SESSION['flash_besch_ok'], $_SESSION['flash_besch_fout'], $_SESSION['b2_vz_waarschuwing']);
 
 $portaal_titel = 'Beschikbaarheid doorgeven';
 $portaal_terug = portaal_terug_url();
@@ -168,16 +141,6 @@ require __DIR__ . '/_kop.php';
 <p style="color:var(--ink-soft);font-size:14px;margin-bottom:10px">Welke weken kun je werken dit seizoen? Geef het hieronder aan — je kunt het later altijd aanpassen.</p>
 <span class="pt-autosave <?= $concept_ok ? 'ok' : '' ?>" id="beschAutosave" aria-live="polite"><?= icoon('vink', 13) ?><span id="beschAutosaveTekst"><?= h($concept_tekst) ?></span></span>
 
-<?php if ($flash_ok): ?>
-  <div class="ds-melding ds-melding-ok" style="margin-bottom:16px"><?= icoon('vink', 18) ?> <?= h($flash_ok) ?></div>
-<?php endif; ?>
-<?php if ($flash_fout): ?>
-  <div class="ds-melding ds-melding-error" style="margin-bottom:16px"><?= icoon('let-op', 18) ?> <?= h($flash_fout) ?></div>
-<?php endif; ?>
-<?php if ($vz_waarschuwing): ?>
-  <div class="ds-melding ds-melding-warn" style="margin-bottom:16px"><?= icoon('waarschuwing', 18) ?> <?= h($vz_waarschuwing) ?></div>
-<?php endif; ?>
-
 <?php if ($ai_aan): ?>
 <!-- ══ AI-WIZARD (stap 1 t/m 4) — alleen als AI-hulp aan staat ══ -->
 <div id="wizStap1" class="wiz-stap" <?= $besch_start === 'wizard' ? '' : 'style="display:none"' ?>>
@@ -192,15 +155,15 @@ require __DIR__ . '/_kop.php';
     <div class="wiz1-voorbeelden">
       <span class="wiz1-vb-lbl">Voorbeelden om te beginnen</span>
       <div class="wiz1-chips">
-        <button type="button" class="wiz1-chip" onclick="beschAiChip(this)">Alleen weekenden</button>
-        <button type="button" class="wiz1-chip" onclick="beschAiChip(this)">Hele juli en augustus</button>
-        <button type="button" class="wiz1-chip" onclick="beschAiChip(this)">Niet in de bouwvak</button>
+        <button type="button" class="wiz1-chip" data-klik="beschAiChip(this)">Alleen weekenden</button>
+        <button type="button" class="wiz1-chip" data-klik="beschAiChip(this)">Hele juli en augustus</button>
+        <button type="button" class="wiz1-chip" data-klik="beschAiChip(this)">Niet in de bouwvak</button>
       </div>
     </div>
-    <button type="button" class="wiz1-zelf" onclick="wizNaarFormulier()">Liever zelf invullen met vinkjes</button>
+    <button type="button" class="wiz1-zelf" data-klik="wizNaarFormulier()">Liever zelf invullen met vinkjes</button>
   </div>
   <div class="wiz1-voet">
-    <button type="button" id="beschAiKnop" class="wiz1-knop" onclick="beschAiVerwerk()">Maak er een planning van <?= icoon('pijl-rechts', 18) ?></button>
+    <button type="button" id="beschAiKnop" class="wiz1-knop" data-klik="beschAiVerwerk()">Maak er een planning van <?= icoon('pijl-rechts', 18) ?></button>
   </div>
   <div id="beschAiStatus" class="besch-hint" style="margin-top:8px;text-align:center"></div>
 </div>
@@ -226,11 +189,11 @@ require __DIR__ . '/_kop.php';
     <label class="wiz3-aanvullen-lbl">Nog iets aanvullen?</label>
     <div class="wiz3-aanvullen-rij">
       <input type="text" id="beschAiAanvul" placeholder='Bijv. "week 33 kan ik ook niet"'>
-      <button type="button" class="wiz3-aanvul-knop" onclick="beschAiAanvullen()" aria-label="Verstuur"><?= icoon('pijl-rechts', 18) ?></button>
+      <button type="button" class="wiz3-aanvul-knop" data-klik="beschAiAanvullen()" aria-label="Verstuur"><?= icoon('pijl-rechts', 18) ?></button>
     </div>
   </div>
-  <button type="button" class="wiz1-knop" style="margin-top:14px" onclick="wizOvernemen()">Klopt, dit overnemen</button>
-  <button type="button" class="wiz3-zelf-knop" style="margin-top:10px" onclick="wizNaarFormulier()">Zelf aanpassen in het formulier</button>
+  <button type="button" class="wiz1-knop" style="margin-top:14px" data-klik="wizOvernemen()">Klopt, dit overnemen</button>
+  <button type="button" class="wiz3-zelf-knop" style="margin-top:10px" data-klik="wizNaarFormulier()">Zelf aanpassen in het formulier</button>
 </div>
 <?php endif; ?>
 
@@ -240,18 +203,18 @@ require __DIR__ . '/_kop.php';
   <input type="hidden" name="terug" value="<?= h(portaal_terug_param()) ?>">
   <?php require __DIR__ . '/_beschikbaarheid_velden.php'; ?>
   <div style="margin-top:20px">
-    <button type="submit" class="ds-btn ds-btn-primair ds-btn-vol" onclick="return beschValideer()"><?= icoon('vink', 16) ?> Beschikbaarheid opslaan</button>
+    <button type="submit" class="ds-btn ds-btn-primair ds-btn-vol" data-klik="return beschValideer()"><?= icoon('vink', 16) ?> Beschikbaarheid opslaan</button>
   </div>
 </form>
 <?php if ($ai_aan): ?>
-  <button type="button" id="beschOpnieuwSlim" class="wiz1-zelf" style="<?= $besch_start === 'formulier' ? '' : 'display:none;' ?>width:100%;margin-top:12px" onclick="wizNaarStart()"><?= icoon('bliksem', 14) ?> Opnieuw slim invullen met tekst</button>
+  <button type="button" id="beschOpnieuwSlim" class="wiz1-zelf" style="<?= $besch_start === 'formulier' ? '' : 'display:none;' ?>width:100%;margin-top:12px" data-klik="wizNaarStart()"><?= icoon('bliksem', 14) ?> Opnieuw slim invullen met tekst</button>
 <?php endif; ?>
 
 <?php
   // Weeklabels voor de dropdowns ("W27 · 29 jun") en de datumrange per week voor de subregel
   // van de periode-kaart ("29 juni t/m 9 augustus · 6 weken"), direct uit $alle_weken.
   $week_labels = []; $week_datums = [];
-  $mnd_lang = [1=>'januari',2=>'februari',3=>'maart',4=>'april',5=>'mei',6=>'juni',7=>'juli',8=>'augustus',9=>'september',10=>'oktober',11=>'november',12=>'december'];
+  $mnd_lang = maanden_nl();
   foreach ($alle_weken as $w) {
       $delen = explode('–', (string)($w['periode'] ?? ''));
       $week_labels[$w['week']] = 'W' . $w['week'] . ' · ' . trim($delen[0]);
@@ -263,7 +226,7 @@ require __DIR__ . '/_kop.php';
       ];
   }
 ?>
-<script>
+<script nonce="<?= h(csp_nonce()) ?>">
   window.BESCH_CFG = {
     weken:   <?= json_encode($week_labels, JSON_UNESCAPED_UNICODE) ?>,
     datums:  <?= json_encode($week_datums, JSON_UNESCAPED_UNICODE) ?>,

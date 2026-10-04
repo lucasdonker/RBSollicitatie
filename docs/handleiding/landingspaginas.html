@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="generator" content="pandoc 3.11" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
-  <title>Handleiding landingspagina&#39;s</title>
+  <title>Handleiding wervingspagina&#39;s</title>
   <style>
 
 span.smallcaps{font-variant: small-caps;}
@@ -117,29 +117,82 @@ hr { border: 0; border-top: 1px solid var(--rand); margin: 24px 0; }
 <header id="title-block-header">
 <h1 class="title">Landingspagina&#39;s — handleiding</h1>
 </header>
-<p>Een landingspagina is een eigen wervingspagina voor één doelgroep,
-met het aanmeldformulier erin. Je maakt het ontwerp waar je wilt
-(bijvoorbeeld in Claude Design) en uploadt het hier als
-HTML-bestand.</p>
-<p>Te vinden onder <strong>Beheer › Landingspagina&#39;s</strong>. Je hebt
-het recht <code>paginas</code> nodig.</p>
-<hr />
-<h1 id="in-het-kort">In het kort</h1>
+<p>Versie 2.101 · september 2026</p>
+<p>Een landingspagina is een eigen pagina voor één doelgroep, met het
+aanmeldformulier erin. Je maakt het ontwerp waar je wilt (bijvoorbeeld
+in Claude Design) en uploadt het hier als HTML-bestand.</p>
+<p>Te vinden onder <strong>Beheer › Landingspagina&#39;s</strong> (menugroep
+Communicatie). Je hebt het recht Landingspagina&#39;s (<code>paginas</code>)
+nodig; dat hebben standaard het bestuur en de admin.</p>
+<h1 id="inhoud">Inhoud</h1>
 <ol type="1">
-<li>Maak een pagina aan (titel + adres).</li>
-<li>Maak een ontwerp en zet er <code>[[formulier]]</code> in waar het
-aanmeldformulier moet komen.</li>
-<li>Upload het <code>.html</code>-bestand.</li>
-<li>Lees het rapport en bevestig. Het ontwerp staat dan live.</li>
-<li>Zet de status op <strong>Gepubliceerd</strong>.</li>
+<li><a href="#aan-de-slag">Aan de slag</a></li>
+<li><a href="#het-ontwerp-maken">Het ontwerp maken</a></li>
+<li><a href="#het-aanmeldformulier-op-de-pagina">Het aanmeldformulier op
+de pagina</a></li>
+<li><a href="#het-rapport">Het rapport</a></li>
+<li><a href="#versies">Versies</a></li>
+<li><a href="#status-en-vindbaarheid">Status en vindbaarheid</a></li>
+<li><a href="#cijfers-waar-haken-mensen-af">Cijfers: waar haken mensen
+af?</a></li>
+<li><a href="#herkomst-bijhouden">Herkomst bijhouden</a></li>
+<li><a href="#wat-we-van-bezoekers-bijhouden">Wat we van bezoekers
+bijhouden</a></li>
+<li><a href="#het-adres-wijzigen">Het adres wijzigen</a></li>
+<li><a href="#een-pagina-verwijderen">Een pagina verwijderen</a></li>
+<li><a href="#als-de-pagina-niet-laadt">Als de pagina niet
+laadt</a></li>
 </ol>
-<p>De pagina is dan bereikbaar op
-<code>https://sollicitatie.paal13.com/p/&lt;adres&gt;</code>.</p>
+<hr />
+<h1 id="aan-de-slag">Aan de slag</h1>
+<blockquote>
+<p><strong>In het kort:</strong> pagina aanmaken, ontwerp met
+<code>[[formulier]]</code> uploaden, rapport bevestigen, status op
+Gepubliceerd. Dan staat de pagina op
+<code>https://sollicitatie.paal13.com/p/&lt;adres&gt;</code>. Datums en
+loon komen via markeringen uit het seizoen, dus de pagina veroudert
+niet.</p>
+</blockquote>
+<p><strong>Je eerste landingspagina in 6 stappen:</strong></p>
+<ol type="1">
+<li><strong>Pagina aanmaken.</strong> Ga naar Beheer › Landingspagina&#39;s
+en klik op <strong>Nieuwe pagina</strong>. Vul een titel in
+(bijvoorbeeld &quot;Word strandwacht — zomer 2027&quot;) en een adres
+(bijvoorbeeld <code>zomer-2027</code>; kleine letters, cijfers en
+koppeltekens). Klik op <strong>Aanmaken</strong>. Kies het adres meteen
+goed: links en QR-codes hangen eraan.</li>
+<li><strong>Ontwerp maken.</strong> Maak één <code>.html</code>-bestand
+en zet <code>[[formulier]]</code> op de plek waar het aanmeldformulier
+moet komen (zie <a href="#het-ontwerp-maken">Het ontwerp
+maken</a>).</li>
+<li><strong>Ontwerp uploaden.</strong> Kies bij &quot;Ontwerp&quot; het
+HTML-bestand. Laat het vinkje <strong>Ingesloten afbeeldingen
+losmaken</strong> aan staan en klik op <strong>Inlezen</strong>.</li>
+<li><strong>Afbeeldingen toevoegen.</strong> Zegt het rapport dat er
+afbeeldingen ontbreken, upload ze dan bij &quot;Afbeeldingen&quot; onder de naam
+die het rapport noemt.</li>
+<li><strong>Rapport bevestigen.</strong> Lees het rapport. Klik
+eventueel op <strong>Eerst bekijken</strong>. Vink alleen de externe
+bronnen aan die je vertrouwt, zet het vinkje <strong>Ik heb het rapport
+gelezen en wil dit ontwerp live zetten</strong> en klik op <strong>Live
+zetten</strong>.</li>
+<li><strong>Publiceren.</strong> Zet bij &quot;Gegevens&quot; de status op
+<strong>Gepubliceerd</strong> en klik op <strong>Opslaan</strong>. Vul
+eventueel een bron-code in en vink &quot;Mag gevonden worden via Google&quot; aan
+als dat de bedoeling is. Open de pagina via de link bovenaan en meld je
+voor de test niet echt aan.</li>
+</ol>
 <hr />
 <h1 id="het-ontwerp-maken">Het ontwerp maken</h1>
+<blockquote>
+<p><strong>In het kort:</strong> één HTML-bestand, met
+<code>[[formulier]]</code> op de plek van het formulier. Afbeeldingen
+upload je los en je verwijst ernaar met alleen de bestandsnaam.</p>
+</blockquote>
 <p>Eén <code>.html</code>-bestand, met de opmaak en eventuele scripts
-erin. Dat is precies wat een export uit Claude Design oplevert — die kun
-je rechtstreeks uploaden.</p>
+erin. Dat is precies wat een export uit Claude Design oplevert; die kun
+je rechtstreeks uploaden. Het scherm noemt de maximale grootte
+(standaard 16 MB, of minder als de server lager staat).</p>
 <p><strong>Zet <code>[[formulier]]</code> in het ontwerp</strong> op de
 plek waar het aanmeldformulier moet komen. Zonder die markering staat er
 geen formulier op de pagina; het wordt er niet vanzelf onderaan bij
@@ -159,33 +212,114 @@ geplakt, want dat zou het ontwerp verpesten.</p>
 </tr>
 <tr>
 <td><code>[[seizoen]]</code></td>
-<td>De naam van het huidige seizoen, bijvoorbeeld &quot;zomer 2027&quot;</td>
+<td>De naam van het seizoen, bijvoorbeeld &quot;zomer 2027&quot;</td>
+</tr>
+<tr>
+<td><code>[[selectiedag_datum]]</code></td>
+<td>De selectiedag, bijvoorbeeld &quot;zaterdag 10 april 2027&quot;</td>
+</tr>
+<tr>
+<td><code>[[trainingsweekend_datum]]</code></td>
+<td>Het trainingsweekend, bijvoorbeeld &quot;vrijdag 30 april t/m zondag 2
+mei 2027&quot; (of één dag)</td>
+</tr>
+<tr>
+<td><code>[[werkperiode]]</code></td>
+<td>De werkperiode, bijvoorbeeld &quot;1 juni t/m 31 augustus 2027&quot;</td>
+</tr>
+<tr>
+<td><code>[[aanmelden_tot]]</code></td>
+<td>De sollicitatiedeadline, bijvoorbeeld &quot;15 maart 2027&quot;</td>
+</tr>
+<tr>
+<td><code>[[uurloon_vanaf]]</code></td>
+<td>Het laagste uurloon vanaf 16 jaar, bijvoorbeeld &quot;€ 4,97
+(indicatief)&quot; (zonder vakantietoeslag)</td>
+</tr>
+<tr>
+<td><code>[[salaristabel]]</code></td>
+<td>Een tabel met een rij per leeftijd en een kolom per diploma, met de
+vakantietoeslag en de vermelding &quot;indicatief&quot; eronder</td>
+</tr>
+<tr>
+<td><code>[[vacature_schema]]</code></td>
+<td>Onzichtbaar: de vacature voor Google (zie <a href="#de-vacature-in-google">De vacature in Google</a>). Zet hem in de
+<code>&lt;head&gt;</code></td>
 </tr>
 <tr>
 <td><code>[[aanmeld_url]]</code></td>
-<td>Het adres van het formulier, handig voor een eigen knop</td>
+<td>Het adres van het formulier op deze pagina, handig voor een eigen
+knop (&quot;Meld je aan&quot;)</td>
 </tr>
 <tr>
 <td><code>[[bron]]</code></td>
 <td>De bron-code van deze pagina</td>
+</tr>
+<tr>
+<td><code>[[pagina_url]]</code></td>
+<td>Het volledige adres van deze pagina, bijvoorbeeld
+<code>https://sollicitatie.paal13.com/p/zomer-2027</code>. Nodig voor
+<code>og:url</code>, <code>og:image</code>
+(<code>[[pagina_url]]/deel-foto.jpg</code>) en structured data: daar
+werkt een los bestandsnaam niet</td>
 </tr>
 </tbody>
 </table>
 <p>Een markering die je verkeerd typt, blijft gewoon zichtbaar op de
 pagina staan. Zie je <code>[[formulir]]</code> staan, dan weet je meteen
 wat eraan scheelt.</p>
+<h2 id="datums-en-loon-uit-het-seizoen">Datums en loon uit het
+seizoen</h2>
+<p>Zet datums en bedragen <strong>nooit letterlijk</strong> in het
+ontwerp, maar gebruik de markeringen hierboven. Dan veroudert de pagina
+niet: volgend jaar staan er vanzelf de nieuwe datums en de nieuwe
+lonen.</p>
+<ul>
+<li>De datums komen uit <strong>Seizoen</strong> in het beheer: het
+seizoen waarvan de aanmelding open staat, of anders het nieuwste (het
+komende seizoen, zodra je dat hebt aangemaakt). De deadline vul je daar
+in bij <strong>Aanmelden kan tot</strong>. Dat veld sluit het formulier
+niet: dat blijft &quot;Aanmelding sluiten&quot;.</li>
+<li>Het loon rekent zoals de loonplanning: het minimum(jeugd)uurloon van
+de leeftijd (Instellingen › Lonen &amp; budget, kalenderjaar van het
+seizoen, tarief juli–september) × de factor van het diploma
+(Instellingen › Functies &amp; factoren). Bruto per uur, zonder
+vakantietoeslag.</li>
+<li>Is iets nog niet ingevuld, dan staat er &quot;wordt nog
+bekendgemaakt&quot;.</li>
+</ul>
+<p>De salaristabel heeft een <strong>rij per leeftijd</strong> (vanaf 16
+jaar) en een <strong>kolom per diploma</strong>: alle functies met een
+factor, in hun volgorde (de postcommandant met een vast weekbedrag
+niet). Valt een leeftijd buiten de grenzen van een functie (bijvoorbeeld
+Senior pas vanaf 18), dan staat er &quot;—&quot;. De hoogste leeftijden met overal
+hetzelfde loon worden één regel, bijvoorbeeld &quot;21 jaar en ouder&quot;. Onder
+de tabel staat <strong>altijd</strong> dat de bedragen indicatief zijn
+en kunnen veranderen, afhankelijk van je situatie en gegevens; ook
+<code>[[uurloon_vanaf]]</code> krijgt &quot;(indicatief)&quot; mee. Een functie
+hernoemen of een factor wijzigen bij Functies &amp; factoren past de
+tabel op alle pagina&#39;s meteen aan.</p>
+<p>Voor de opmaak in het ontwerp (bijvoorbeeld in Claude Design): de
+tabel heeft de klasse <code>p13-salaris</code>, met een
+<code>&lt;caption&gt;</code>, kolomkoppen en per rij de leeftijd als
+rijkop; de regels eronder hebben de klasse
+<code>p13-salaris-noot</code>, de disclaimer daarnaast
+<code>p13-salaris-disclaimer</code>.</p>
 <h2 id="afbeeldingen">Afbeeldingen</h2>
-<p>Upload afbeeldingen los bij de pagina (JPG, PNG, GIF of WebP) en
-verwijs ernaar met alleen de bestandsnaam:</p>
+<p>Upload afbeeldingen los bij de pagina (JPG, PNG, GIF of WebP,
+standaard maximaal 5 MB per stuk) en verwijs ernaar met alleen de
+bestandsnaam:</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode html"><code class="sourceCode html"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">img</span><span class="ot"> src</span><span class="op">=</span><span class="st">&quot;strand.jpg&quot;</span><span class="ot"> alt</span><span class="op">=</span><span class="st">&quot;Het strand bij Paal 13&quot;</span><span class="dt">&gt;</span></span></code></pre></div>
 <p>Je kunt er meerdere tegelijk kiezen (maximaal 20 per keer); per
-bestand hoor je of het gelukt is.</p>
+bestand hoor je of het gelukt is. Een afbeelding verwijderen kan met
+<strong>Verwijderen</strong> in de lijst. Verwijst de pagina er nog
+naar, dan is dat daarna een kapotte afbeelding.</p>
 <p><strong>Staat er een map voor de bestandsnaam?</strong> Dat mag. Een
 ontwerp uit een ontwerptool verwijst meestal naar zijn eigen mappen
 (<code>assets/strand.jpg</code>, <code>images/duinen.jpg</code>). Bij
 ons staan alle afbeeldingen van een pagina bij elkaar in één map, dus
 telt alleen de bestandsnaam. Bij het inlezen worden die verwijzingen
-automatisch rechtgezet — ook namen met hoofdletters of spaties, want die
+automatisch rechtgezet, ook namen met hoofdletters of spaties, want die
 worden bij het uploaden omgezet (&quot;Strand Foto.JPG&quot; wordt
 <code>strand-foto.jpg</code>). In het rapport zie je precies wat er is
 aangepast, en in de lijst onder het uploadveld staan de namen zoals ze
@@ -194,7 +328,7 @@ werkelijk zijn opgeslagen.</p>
 het rapport welke namen hij verwacht. Upload ze daarna onder die naam;
 opnieuw inlezen hoeft dan niet.</p>
 <p>De extensie blijft altijd die van het bestand dat je uploadt. Het
-systeem kijkt wél naar wat er écht in zit: een foto die
+systeem kijkt wél naar wat er echt in zit: een foto die
 <code>duinen.jpg</code> heet maar in werkelijkheid een PNG is (dat
 gebeurt makkelijk na bewerken of hernoemen) wordt gewoon opgeslagen als
 <code>duinen.jpg</code>, zodat je ontwerp blijft kloppen. Zit er iets in
@@ -218,14 +352,42 @@ volgend bezoek niet opnieuw op te halen.</p>
 blijft gewoon in het bestand staan. Het ontwerp blijft dus altijd
 werken.</p>
 <p>Wil je het liever zelf regelen, vraag dan in je ontwerptool om een
-export zonder ingesloten afbeeldingen — met
+export zonder ingesloten afbeeldingen, met
 <code>&lt;img src=&quot;strand.jpg&quot;&gt;</code> en
 <code>background-image: url(duinen.jpg)</code>, zonder
 <code>data:</code>-URI&#39;s en zonder verwijzingen naar andere websites.
-Die laatste worden namelijk geblokkeerd (zie &quot;Externe bronnen&quot;).</p>
+Die laatste worden namelijk geblokkeerd (zie <a href="#externe-bronnen-toestaan">Externe bronnen toestaan</a>).</p>
+<hr />
+<h1 id="het-aanmeldformulier-op-de-pagina">Het aanmeldformulier op de
+pagina</h1>
+<blockquote>
+<p><strong>In het kort:</strong> op de plek van
+<code>[[formulier]]</code> komt hetzelfde aanmeldformulier als op
+<code>aanmelden.php</code> en paal13.com, in drie stappen. Is het
+seizoen niet open, dan staat er dat de aanmelding gesloten is.</p>
+</blockquote>
+<p>Het formulier heeft drie stappen: <strong>Naam</strong>,
+<strong>Jij</strong> (geboortedatum en, als iemand dat wil, geslacht) en
+<strong>Contact</strong> (e-mailadres, telefoonnummer en het vinkje voor
+de privacyverklaring). Wie 15 is, krijgt in stap 2 het blok
+<strong>Akkoord van je ouder of verzorger</strong> (naam van de ouder en
+een vinkje dat die het goed vindt dat het kind solliciteert). Het
+formulier is overal hetzelfde; je kunt het niet per pagina
+aanpassen.</p>
+<p>Na het versturen ziet de bezoeker op dezelfde pagina de bevestiging
+&quot;Je aanmelding is binnen&quot;. Daarna volgt een mail met een link naar het
+portaal. De aanmelding komt in het beheer binnen met de bron-code van de
+pagina (zie <a href="#herkomst-bijhouden">Herkomst bijhouden</a>).</p>
+<p>Staat het actieve seizoen niet op &quot;open&quot;, dan staat er op de plek van
+het formulier &quot;De aanmelding is gesloten&quot;.</p>
 <hr />
 <h1 id="het-rapport">Het rapport</h1>
-<p>Het ontwerp wordt niet aangepast bij het uploaden — animaties en
+<blockquote>
+<p><strong>In het kort:</strong> na het inlezen krijg je een rapport
+over wat er in het ontwerp zit. Het ontwerp gaat pas live als je dat
+rapport bevestigt.</p>
+</blockquote>
+<p>Het ontwerp wordt niet aangepast bij het uploaden; animaties en
 interactie blijven dus werken. (De enige uitzondering is het losmaken
 van ingesloten afbeeldingen hierboven, en dat staat achter een vinkje
 dat je kunt uitzetten.) Maar daardoor kan er ook van alles in zitten wat
@@ -233,39 +395,71 @@ je niet wilt. Daarom krijg je na het inlezen een rapport te zien, en
 gaat het ontwerp pas live als je dat bevestigt.</p>
 <p>Waar het rapport op let:</p>
 <ul>
-<li><strong>Let op</strong> — scripts van andere websites, formulieren
+<li><strong>Let op</strong>: scripts van andere websites, formulieren
 die naar een andere partij sturen, en bekende trackers zoals Google
 Analytics.</li>
-<li><strong>Aandacht</strong> — scripts in het bestand zelf, externe
+<li><strong>Aandacht</strong>: scripts in het bestand zelf, externe
 lettertypen (Google Fonts stuurt het IP-adres van de bezoeker naar de
 VS), code die netwerkverkeer opzet, en cookies of browseropslag.</li>
-<li><strong>Klein punt</strong> — afbeeldingen van andere websites,
+<li><strong>Klein punt</strong>: afbeeldingen van andere websites,
 <code>onclick</code>-acties, <code>javascript:</code>-links.</li>
-<li><strong>Tip</strong> — een ontbrekend <code>[[formulier]]</code>,
+<li><strong>Tip</strong>: een ontbrekend <code>[[formulier]]</code>,
 taal, titel, hoofdkop of alt-teksten.</li>
 </ul>
 <p>Een ontwerp dat je zelf hebt gemaakt en dat alles in het bestand zelf
-heeft staan, geeft meestal helemaal geen bevindingen.</p>
+heeft staan, geeft meestal helemaal geen bevindingen (&quot;Er is niets
+bijzonders gevonden in dit ontwerp&quot;).</p>
+<p>Onder het rapport staan <strong>Eerst bekijken</strong> (de nieuwe
+versie in een eigen tabblad, alleen voor jou) en <strong>Live
+zetten</strong>. Live zetten kan pas als je het vinkje &quot;Ik heb het
+rapport gelezen en wil dit ontwerp live zetten&quot; hebt gezet.</p>
 <h2 id="externe-bronnen-toestaan">Externe bronnen toestaan</h2>
-<p>Verwijst het ontwerp naar een andere website — bijvoorbeeld
-<code>cdn.tailwindcss.com</code> voor de opmaak — dan wordt die
+<p>Verwijst het ontwerp naar een andere website, bijvoorbeeld
+<code>cdn.tailwindcss.com</code> voor de opmaak, dan wordt die
 <strong>standaard geblokkeerd</strong> door de browser. De pagina ziet
 er dan anders uit dan bedoeld.</p>
 <p>Bij het bevestigen van het rapport staat per host een vinkje om hem
 toe te staan. Vink alleen aan wat je vertrouwt en wat het ontwerp echt
-nodig heeft. Dat wordt vastgelegd in het logboek.</p>
+nodig heeft. Dat wordt vastgelegd in het logboek. Later aanpassen kan
+bij &quot;Gegevens&quot; in het veld <strong>Toegestane externe bronnen</strong>:
+één hostnaam per regel.</p>
 <p>Beter dan toestaan is meestal: het lettertype of de opmaak in het
 bestand zelf zetten. Dan werkt de pagina ook als die andere website
 eruit ligt, en gaan er geen gegevens van bezoekers naar derden.</p>
+<p>Eén ding kun je nooit toestaan: script uit het ontwerp mag geen
+verzoeken doen naar andere adressen dan het meetpunt van de pagina zelf.
+Dat beschermt de gegevens in het beheer.</p>
 <hr />
 <h1 id="versies">Versies</h1>
-<p>Elke upload is een nieuwe versie. Je ziet ze allemaal terug, kunt
-elke versie bekijken en met één klik terugzetten. De laatste tien
-versies blijven bewaard.</p>
-<p>Een net geüploade versie staat nog niet live: eerst het rapport
+<blockquote>
+<p><strong>In het kort:</strong> elke upload is een nieuwe versie. Je
+kunt elke versie bekijken en een oudere met één klik terugzetten. De
+laatste tien blijven bewaard.</p>
+</blockquote>
+<p>Onder &quot;Ontwerp&quot; staat de lijst met versies. Per versie zie je de
+datum, de bestandsnaam, de grootte en of er aandachtspunten in het
+rapport stonden.</p>
+<ul>
+<li><strong>Live</strong> staat bij de versie die bezoekers zien.</li>
+<li><strong>Niet bevestigd</strong> staat bij een versie waarvan het
+rapport nog niet is bevestigd. Met <strong>Rapport</strong> open je dat
+rapport.</li>
+<li><strong>Bekijken</strong> opent een versie in een nieuw
+tabblad.</li>
+<li><strong>Terugzetten</strong> zet een eerder bevestigde versie weer
+live, na een bevestiging. De huidige versie blijft bewaard.</li>
+</ul>
+<p>De laatste tien versies blijven bewaard; de versie die live staat
+altijd. Een net geüploade versie staat nog niet live: eerst het rapport
 bevestigen.</p>
+<p>Rechts op het scherm staat een <strong>Voorbeeld</strong> van de
+versie die live staat.</p>
 <hr />
-<h1 id="status">Status</h1>
+<h1 id="status-en-vindbaarheid">Status en vindbaarheid</h1>
+<blockquote>
+<p><strong>In het kort:</strong> alleen &quot;Gepubliceerd&quot; is voor iedereen
+te zien. Standaard is een pagina niet vindbaar via Google.</p>
+</blockquote>
 <table>
 <thead>
 <tr>
@@ -276,11 +470,12 @@ bevestigen.</p>
 <tbody>
 <tr>
 <td>Concept</td>
-<td>Een 404, behalve voor ingelogde beheerders</td>
+<td>Een 404 (pagina niet gevonden), behalve voor ingelogde beheerders
+met het recht <code>paginas</code></td>
 </tr>
 <tr>
 <td>Alleen beheerders</td>
-<td>Hetzelfde — handig om iets voor te leggen aan het bestuur</td>
+<td>Hetzelfde; handig om iets voor te leggen aan het bestuur</td>
 </tr>
 <tr>
 <td>Gepubliceerd</td>
@@ -289,64 +484,292 @@ bevestigen.</p>
 </tbody>
 </table>
 <p>Pas bij <strong>Gepubliceerd</strong> tellen bezoeken mee in de
-statistiek. Kijk je zelf als beheerder naar een pagina die nog niet
-openbaar is, dan zie je bovenaan een balk en telt je bezoek niet
-mee.</p>
-<p>Standaard staat een pagina op &quot;niet vindbaar via Google&quot;. Dat kun je
-per pagina aanzetten.</p>
+cijfers. Kijk je zelf als beheerder naar een pagina die nog niet
+openbaar is, of naar een versie die nog niet is bevestigd, dan zie je
+bovenaan een balk en telt je bezoek niet mee.</p>
+<p>Standaard staat een pagina op &quot;niet vindbaar via Google&quot;. Wil je dat
+wel, vink dan bij &quot;Gegevens&quot; <strong>Mag gevonden worden via
+Google</strong> aan. Dan gebeurt er automatisch nog meer:</p>
+<ul>
+<li>de pagina krijgt een <strong>canonical</strong>-adres
+(<code>/p/&lt;adres&gt;</code>, zonder <code>?bron=</code> of andere
+toevoegingen), tenzij het ontwerp er zelf een heeft;</li>
+<li>de pagina komt in <strong><code>/sitemap.xml</code></strong>, waar
+Google hem vindt, en <code>/robots.txt</code> verwijst daarnaar. Meld de
+sitemap één keer aan in Google Search Console.</li>
+</ul>
+<p><strong>Startpagina van het domein.</strong> Vink bij &quot;Gegevens&quot;
+<strong>Startpagina van sollicitatie.paal13.com</strong> aan bij de
+belangrijkste landingspagina. Wie dan naar
+<code>https://sollicitatie.paal13.com/</code> gaat en niet is ingelogd,
+komt op die pagina uit; ingelogde sollicitanten en beheerders gaan naar
+hun eigen omgeving. Dat is goed voor Google (de voorpagina is het
+sterkste adres) en voor bezoekers die het adres intypen. Zet op die
+pagina wel een link &quot;Al gesolliciteerd? Log in&quot; naar
+<code>/portaal/</code>. Er is maar één startpagina; staat de pagina niet
+op Gepubliceerd, dan gaat de voorpagina gewoon naar het inloggen.</p>
+<p>Op de testomgeving is een pagina nooit vindbaar, ook niet met het
+vinkje aan: anders concurreert test met de echte site in de
+zoekresultaten.</p>
+<h2 id="de-vacature-in-google">De vacature in Google</h2>
+<p>Zet <code>[[vacature_schema]]</code> in de <code>&lt;head&gt;</code>
+van het ontwerp. Daar komt dan een vacature voor Google Jobs (&quot;Lifeguard
+(strandwacht)&quot; in Callantsoog), met de werkperiode, de selectiedag, het
+trainingsweekend en het loon per leeftijd uit het seizoen. Je ziet er op
+de pagina zelf niets van.</p>
+<p>De vacature staat er alleen als:</p>
+<ul>
+<li>de pagina <strong>Gepubliceerd</strong> is en <strong>Mag gevonden
+worden via Google</strong> aan staat (dus nooit op de
+testomgeving);</li>
+<li>de aanmelding van het seizoen <strong>open</strong> staat;</li>
+<li>de deadline (<strong>Aanmelden kan tot</strong>) nog niet voorbij
+is. Zonder deadline geldt de selectiedag.</li>
+</ul>
+<p>Daarna is de markering leeg en <strong>verloopt de vacature
+vanzelf</strong> in Google; je hoeft niets weg te halen. Opent de
+aanmelding volgend jaar weer, dan staat hij er vanzelf opnieuw, met de
+nieuwe gegevens. Controleer een gepubliceerde pagina één keer met de
+test voor rich results van Google.</p>
+<p>In het overzicht staat <strong>Geen ontwerp</strong> bij een pagina
+waarop nog geen versie live staat.</p>
+<hr />
+<h1 id="cijfers-waar-haken-mensen-af">Cijfers: waar haken mensen
+af?</h1>
+<blockquote>
+<p><strong>In het kort:</strong> per pagina zie je bezoekers, bezoeken,
+aanmeldingen en omzetting, en een trechter die laat zien bij welke stap
+van het formulier mensen stoppen.</p>
+</blockquote>
+<p>Bovenaan een pagina, en per pagina in het overzicht, staan vier
+cijfers:</p>
+<ul>
+<li><strong>Unieke bezoekers</strong> en <strong>Bezoeken</strong>
+(dezelfde bezoeker telt hooguit eens per 30 minuten als bezoek);</li>
+<li><strong>Aanmeldingen</strong>: verstuurde formulieren;</li>
+<li><strong>Omzetting</strong>: aanmeldingen gedeeld door unieke
+bezoekers.</li>
+</ul>
+<p>Daaronder staat <strong>Waar haken mensen af?</strong>. Die trechter
+heeft deze treden:</p>
+<ol type="1">
+<li>Pagina bekeken</li>
+<li>Stap 1 · Naam (begonnen met invullen)</li>
+<li>Stap 2 · Jij</li>
+<li>Stap 3 · Contact</li>
+<li>Aanmelding verstuurd</li>
+</ol>
+<p>Bij elke trede staat het aantal en het percentage van iedereen die
+aan het formulier begon. Waar mensen afvallen, staat &quot;… gingen hier niet
+verder&quot;.</p>
+<p>Los daaronder staat <strong>Halverwege weggegaan</strong>, per stap.
+Dat is geen telling maar een aanwijzing. Het signaal komt van een
+tabblad dat naar de achtergrond gaat, en dat gebeurt ook als iemand even
+iets opzoekt en daarna gewoon doorgaat. Gebruik het om te zien bij welke
+stap het vaakst gebeurt, niet als aantal afhakers.</p>
+<p>Is er nog niets gemeten, dan staat er dat de cijfers verschijnen
+zodra de pagina gepubliceerd is en er bezoekers komen.</p>
 <hr />
 <h1 id="herkomst-bijhouden">Herkomst bijhouden</h1>
-<p>Elke pagina heeft een <strong>bron-code</strong>. Die reist mee tot
-in het dossier van de sollicitant, dus je ziet later precies welke
-pagina welke aanmeldingen heeft opgeleverd — en hoeveel daarvan
-uiteindelijk zijn aangenomen. Dat overzicht staat op het dashboard en
-onderaan het overzicht van landingspagina&#39;s.</p>
-<p>Gebruik je dezelfde pagina voor meerdere advertenties, dan kun je de
-bron ook in het adres meegeven:
-<code>.../aanmelden.php?bron=instagram-mei</code>.</p>
+<blockquote>
+<p><strong>In het kort:</strong> elke pagina heeft een bron-code die
+meereist tot in het dossier van de sollicitant. Op het tabblad
+<strong>Overzicht</strong> zie je per bron (en per campagne) de
+bezoeken, hoeveel mensen begonnen, de aanmeldingen, hoeveel daarvan zijn
+aangenomen en waar ze afhaken.</p>
+</blockquote>
+<p>Elke pagina heeft een <strong>bron-code</strong>. Je stelt hem in bij
+&quot;Gegevens&quot;; laat je het veld leeg, dan wordt het adres van de pagina
+gebruikt. De code reist mee tot in het dossier van de sollicitant, dus
+je ziet later precies welke pagina welke aanmeldingen heeft opgeleverd,
+en hoeveel daarvan uiteindelijk zijn aangenomen.</p>
+<p>Dat staat op het tabblad <strong>Overzicht</strong> van
+Landingspagina&#39;s, met een keuze voor de periode (dit seizoen, 30 of 90
+dagen, of alles). Bovenaan de cijfers en de trechter van alle bronnen
+samen; daaronder <strong>Per bron</strong>: elke landingspagina, het
+formulier op de website, het eigen formulier
+(<strong>Aanmeldpagina</strong>) en &quot;Zonder bron&quot;, met bezoeken,
+begonnen, aanmeldingen, aangenomen, aanmeldingen per 100 bezoeken en de
+grootste afhaak in het formulier. Campagnes staan ingesprongen onder hun
+bron: één regel per campagne en per combinatie van UTM-velden, met
+daaronder klein bijvoorbeeld &quot;bron instagram · medium story · variant
+video-1&quot; (zie <a href="#utm-velden">UTM-velden</a>). Een campagne zonder
+naam, maar wel met UTM-velden, heet &quot;zonder campagnenaam&quot;.</p>
+<p>Het formulier op paal13.com (de WordPress-plugin) telt vanaf plugin
+2.142 ook het bezoek en neemt een campagne uit het adres mee:
+<code>https://paal13.com/aanmelden/?bron=instagram-mei</code> komt in
+het overzicht onder de website, campagne <code>instagram-mei</code>. De
+losse UTM-velden neemt de plugin mee vanaf versie 2.145.</p>
+<p>Het eigen formulier
+<code>https://sollicitatie.paal13.com/aanmelden.php</code> heet in het
+overzicht <strong>Aanmeldpagina</strong> als er geen <code>?bron=</code>
+in het adres staat; een campagne of UTM-velden komen dan daaronder.</p>
+<h2 id="campagnes-en-qr-codes">Campagnes en QR-codes</h2>
+<p>Wil je weten welke poster, flyer of advertentie iets oplevert,
+gebruik dan <strong>dezelfde pagina</strong> met een campagne erachter:
+<code>https://sollicitatie.paal13.com/p/zomer-2027?bron=poster-csg-2027</code>.
+Een aanmelding via die link telt gewoon mee voor de pagina (de cijfers
+en de trechter van de pagina blijven kloppen), en in het overzicht zie
+je hem terug onder die campagne. Werkt een advertentieplatform met
+<code>utm_campaign</code> of <code>utm_source</code>, dan wordt die
+gebruikt als er geen <code>?bron=</code> is.</p>
+<p>Een campagnenaam bestaat uit kleine letters, cijfers en koppeltekens,
+maximaal 40 tekens. Andere tekens worden vanzelf een koppelteken
+(&quot;Poster CSG 2027&quot; wordt <code>poster-csg-2027</code>).</p>
+<p>Je hoeft de link niet zelf te maken. Op het scherm van een pagina
+staat het blok <strong>Delen en meten</strong>: vul een campagne in en
+klik op <strong>Link maken</strong>. Je krijgt de volledige link (met
+<strong>Kopiëren</strong>) en een QR-code om te downloaden:
+<strong>SVG</strong> voor drukwerk (blijft scherp op elk formaat) en,
+als de server het kan, een <strong>PNG</strong>. De QR-code wordt op
+onze eigen server gemaakt; er gaat niets naar een andere dienst. Scan
+hem altijd even met je telefoon voordat je iets laat drukken, en wijzig
+daarna het adres van de pagina niet meer.</p>
+<p>Het canonical-adres voor Google blijft altijd zonder
+<code>?bron=</code>, dus campagnelinks leveren geen dubbele pagina&#39;s op
+in de zoekresultaten.</p>
+<p>Gebruik je het gewone aanmeldformulier voor meerdere advertenties,
+dan kun je de bron ook daar in het adres meegeven:
+<code>https://sollicitatie.paal13.com/aanmelden.php?bron=instagram-mei</code>.</p>
+<p>Het veld <strong>Doelgroep</strong> bij &quot;Gegevens&quot; is alleen voor
+jezelf; het staat in het overzicht achter het adres.</p>
+<h2 id="utm-velden">UTM-velden</h2>
+<p>Advertentieplatforms (Meta, Google, TikTok) zetten vaak UTM-velden
+achter een link, bijvoorbeeld
+<code>?utm_source=instagram&amp;utm_medium=story&amp;utm_campaign=zomer-2027&amp;utm_content=video-1</code>.
+Vier daarvan bewaren we los, sinds versie 2.145:</p>
+<table>
+<thead>
+<tr>
+<th>Veld</th>
+<th>In het overzicht</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>utm_source</code></td>
+<td>bron</td>
+</tr>
+<tr>
+<td><code>utm_medium</code></td>
+<td>medium</td>
+</tr>
+<tr>
+<td><code>utm_campaign</code></td>
+<td>campagne</td>
+</tr>
+<tr>
+<td><code>utm_content</code></td>
+<td>variant</td>
+</tr>
+</tbody>
+</table>
+<p><code>utm_term</code> (het zoekwoord van een zoekadvertentie) bewaren
+we niet. De waarden worden geschoond zoals een campagnenaam: kleine
+letters, cijfers en koppeltekens, maximaal 40 tekens. Ze worden
+opgeslagen bij elk bezoek en elke stap in het formulier (in de anonieme
+statistiek) en bij de aanmelding zelf, en reizen mee als het formulier
+wordt verstuurd. Dat werkt op landingspagina&#39;s, het formulier op de
+website (plugin 2.145 of nieuwer) en <code>/aanmelden.php</code>. Er is
+geen cookie voor nodig en er wordt geen IP-adres bij bewaard.</p>
+<p>De campagne blijft daarnaast ook in de bron-code van de aanmelding
+staan, als <code>&lt;bron&gt;/&lt;campagne&gt;</code> (bijvoorbeeld
+<code>zomer-2027/poster-csg-2027</code>). Staat er geen
+<code>?bron=</code> in het adres, dan geldt <code>utm_campaign</code>
+als campagne, en anders <code>utm_source</code>.</p>
+<p>De sollicitant ziet de herkomst van de eigen aanmelding terug in de
+download &quot;je gegevens&quot; (onder herkomst). Ze volgen dezelfde
+bewaartermijn als de rest van de sollicitatie.</p>
 <hr />
 <h1 id="wat-we-van-bezoekers-bijhouden">Wat we van bezoekers
 bijhouden</h1>
-<p>Zo min mogelijk. De pagina zet <strong>geen cookies</strong> en start
-geen sessie, dus er is geen cookiemelding nodig.</p>
+<blockquote>
+<p><strong>In het kort:</strong> zo min mogelijk. Geen cookies, geen
+sessie, geen cookiemelding nodig. Alleen tellingen, met een code die
+elke dag verandert.</p>
+</blockquote>
+<p>De pagina zet <strong>geen cookies</strong> en start geen sessie, dus
+er is geen cookiemelding nodig.</p>
 <p>Om unieke bezoekers te kunnen tellen wordt een versleutelde code
 bewaard die elke dag verandert en niet naar een persoon te herleiden is.
 Die code wordt na 30 dagen gewist; de aantallen blijven. De cijfers zelf
 verdwijnen na 13 maanden. Beide termijnen staan bij <strong>Instellingen
-› Bewaartermijnen</strong>.</p>
+› Bewaren &amp; opschonen</strong> (&quot;Herkenning unieke bezoekers&quot; en
+&quot;Bezoekersstatistiek landingspagina&#39;s&quot;). Het wissen gebeurt alleen als
+daar &quot;Automatisch opschonen inschakelen&quot; aan staat.</p>
 <p>Dezelfde bezoeker telt hooguit <strong>eens per 30 minuten</strong>
 als bezoek op dezelfde pagina. Vernieuwen, de terug-knop en een tabblad
 dat door de browser in de slaapstand is gezet en daarna opnieuw laadt,
-tellen dus niet opnieuw mee. (Instelling
-<code>paginas.bezoek_venster_min</code>.)</p>
+tellen dus niet opnieuw mee. Bekende zoekmachines en andere robots
+tellen niet mee.</p>
+<p>Naast het bezoek houden we bij hoever iemand in het formulier kwam:
+begonnen met invullen, stap 2 bereikt, stap 3 bereikt, verstuurd.
+Daarvan staat alleen het stapnummer geregistreerd, nooit iets wat iemand
+heeft ingetypt. Kwam de bezoeker via een campagnelink, dan staan de
+campagne en de UTM-velden uit het adres erbij (zie <a href="#utm-velden">UTM-velden</a>).</p>
+<p>Wil je helemaal niets meten, zet dan onder <strong>Instellingen ›
+Bewaren &amp; opschonen</strong> het vinkje <strong>Bezoekersstatistiek
+op de landingspagina&#39;s en het aanmeldformulier</strong> uit (standaard
+staat het aan). Dan schrijft het systeem geen enkele gebeurtenis meer
+weg en verdwijnt ook het meetadres uit de pagina. Wat al geteld is,
+blijft staan volgens de termijnen hierboven.</p>
 <p>Let op: zet je ontwerp zelf een cookie of een tracker, dan gelden de
 gewone regels wél en is de brigade daarvoor verantwoordelijk. Het
 rapport waarschuwt daarvoor, en de browser blokkeert het tot je het
 toestaat.</p>
 <hr />
 <h1 id="het-adres-wijzigen">Het adres wijzigen</h1>
-<p>Wijzig je het adres van een pagina, dan verhuizen de afbeeldingen
-automatisch mee — maar <strong>bestaande links, QR-codes en advertenties
-werken dan niet meer</strong>. Kies het adres dus meteen goed.</p>
-<p>Oude adressen van vóór deze versie (<code>/l/&lt;naam&gt;</code>)
-sturen automatisch door naar <code>/p/&lt;naam&gt;</code>.</p>
+<blockquote>
+<p><strong>In het kort:</strong> kan, maar bestaande links, QR-codes en
+advertenties werken daarna niet meer.</p>
+</blockquote>
+<p>Wijzig je bij &quot;Gegevens&quot; het adres van een pagina, dan verhuizen de
+afbeeldingen automatisch mee, maar <strong>bestaande links, QR-codes en
+advertenties werken dan niet meer</strong>. Kies het adres dus meteen
+goed.</p>
+<p>Oude adressen uit de eerste versie van deze module
+(<code>/l/&lt;naam&gt;</code>) sturen automatisch door naar
+<code>/p/&lt;naam&gt;</code>.</p>
+<hr />
+<h1 id="een-pagina-verwijderen">Een pagina verwijderen</h1>
+<blockquote>
+<p><strong>In het kort:</strong> onderaan een pagina staat &quot;Pagina
+verwijderen&quot;. De pagina, alle versies en de afbeeldingen verdwijnen;
+aanmeldingen en de anonieme cijfers blijven.</p>
+</blockquote>
+<p>Onderaan het scherm van een pagina staat het blok
+<strong>Verwijderen</strong> (alleen als je het recht hebt om pagina&#39;s
+te verwijderen). Na een bevestiging verdwijnt de pagina van het web,
+samen met alle versies en geüploade bestanden. Aanmeldingen die er ooit
+via binnenkwamen blijven staan, en de statistiek blijft anoniem bewaard.
+Dit is niet terug te draaien.</p>
+<p>Wil je een pagina alleen tijdelijk offline halen, zet de status dan
+terug op <strong>Concept</strong>.</p>
 <hr />
 <h1 id="als-de-pagina-niet-laadt">Als de pagina niet laadt</h1>
+<blockquote>
+<p><strong>In het kort:</strong> controleer de status, of er een
+bevestigde versie live staat, en of er externe bronnen worden
+geblokkeerd.</p>
+</blockquote>
 <ul>
-<li><strong>404 terwijl de pagina bestaat</strong> — staat de status op
-Gepubliceerd? En is er een bevestigde versie? Werkt
-<code>/p/&lt;naam&gt;</code> niet maar
+<li><strong>404 terwijl de pagina bestaat</strong>: staat de status op
+Gepubliceerd? En staat er een bevestigde versie live (niet &quot;Geen
+ontwerp&quot;)? Werkt <code>/p/&lt;naam&gt;</code> niet maar
 <code>/p.php?s=&lt;naam&gt;</code> wel, dan ontbreekt de rewrite-regel
 in <code>.htaccess</code>; het overzichtsscherm laat dan zien welke
 regels erin moeten.</li>
-<li><strong>De pagina ziet er kaal uit</strong> — waarschijnlijk wordt
+<li><strong>De pagina ziet er kaal uit</strong>: waarschijnlijk wordt
 een externe bron geblokkeerd. Kijk in het rapport van de versie welke
 hosts erin zitten en sta ze toe, of zet de opmaak in het bestand
 zelf.</li>
-<li><strong>Het formulier staat er niet</strong> —
+<li><strong>Het formulier staat er niet</strong>:
 <code>[[formulier]]</code> ontbreekt in het ontwerp, of het seizoen
 staat niet op &quot;open&quot;. In dat laatste geval verschijnt er een melding dat
 de aanmelding gesloten is.</li>
+<li><strong>Het bestand is te groot</strong>: het scherm zegt hoeveel de
+server per upload aanneemt. Laat de afbeeldingen losmaken, of maak het
+bestand kleiner.</li>
 </ul>
 </body>
 </html>

@@ -6,7 +6,8 @@
  *  aangemeld              → info-melding "Aanmelding ontvangen" (tekst: instelling portaal.welkomst_tekst)
  *  uitgenodigd_selectie / aangemeld_selectie → navy kaart SELECTIEDAG
  *  uitgenodigd_tw         → navy kaart TRAININGSWEEKEND
- *  afgewezen              → kaart "Dit seizoen niet verder" + AVG-acties
+ *  eindfases (portaal_eindstand()): afgewezen → "Dit seizoen niet verder", afgehaakt → "Je
+ *  sollicitatie is gestopt" (beide met seintje + AVG-acties), zelf verwijderd → alleen de kaart
  */
 require_once __DIR__ . '/../includes/functions.php';
 portaal_alleen_include(__FILE__);
@@ -57,20 +58,45 @@ if (in_array($_fase, ['uitgenodigd_selectie', 'aangemeld_selectie'], true) && !e
   </div>
 </div>
 
-<?php elseif ($_fase === 'afgewezen'): ?>
+<?php elseif ($_eind = portaal_eindstand($sol)): ?>
 <div class="pt-stapel">
   <div class="pt-afgewezen">
     <div class="pt-afgewezen-kop">
-      <span class="pt-taakrij-icoon error"><?= icoon('kruis-cirkel', 20) ?></span>
+      <span class="pt-taakrij-icoon <?= h($_eind['kleur']) ?>"><?= icoon($_eind['icoon'], 20) ?></span>
       <div class="pt-afgewezen-tekst">
-        <span class="pt-afgewezen-titel">Dit seizoen niet verder</span>
-        <p>Na de selectie hebben we besloten je dit seizoen niet aan te nemen. Dat zegt niets over volgend jaar — je bent dan opnieuw welkom.</p>
+        <span class="pt-afgewezen-titel"><?= h($_eind['titel']) ?></span>
+        <p><?= h($_eind['tekst']) ?></p>
       </div>
     </div>
     <div class="pt-afgewezen-scheiding"></div>
+    <?php if ($_fase === 'afgewezen'): ?>
     <p>Wil je weten waarop we hebben gelet? Mail <a href="mailto:<?= h(portaal_contact_email()) ?>"><?= h(portaal_contact_email()) ?></a> — we vertellen het graag persoonlijk.</p>
+    <?php else: ?>
+    <p>Klopt dit niet, of heb je nog een vraag? <a href="<?= APP_URL ?>/portaal/contact.php">Neem contact met ons op</a>.</p>
+    <?php endif; ?>
   </div>
+  <?php if ($_eind['avg']): ?>
   <div class="pt-takenlijst">
+    <?php $_seintje = function_exists('seintje_heeft') && seintje_heeft((int)($sol['persoon_id'] ?? 0)); ?>
+    <div class="pt-taakrij afvink<?= $_seintje ? ' gedaan' : '' ?>">
+      <span class="pt-taakrij-icoon <?= $_seintje ? 'ok' : 'accent' ?>"><?= icoon($_seintje ? 'vink' : 'bel', 20) ?></span>
+      <span class="pt-taakrij-tekst">
+        <span class="pt-taakrij-titel"><?= $_seintje ? 'Je krijgt een seintje' : 'Seintje bij de volgende werving?' ?></span>
+        <span class="pt-taakrij-sub"><?= $_seintje
+          ? 'We bewaren je naam en contactgegevens daarvoor maximaal een jaar.'
+          : 'Dan bewaren we je naam en contactgegevens maximaal een jaar.' ?></span>
+      </span>
+      <form method="POST" class="pt-taakrij-afvink">
+        <?= csrf_input() ?>
+        <input type="hidden" name="seintje_actie" value="<?= $_seintje ? 'uit' : 'aan' ?>">
+        <?php if ($_seintje): ?>
+          <button type="submit" class="pt-taakrij-actie">Toch niet</button>
+        <?php else: ?>
+          <button type="submit" class="pt-taakrij-gedaan"><?= icoon('bel', 16) ?>Ja, graag</button>
+        <?php endif; ?>
+      </form>
+    </div>
+    <div class="pt-taakrij-scheiding"></div>
     <a href="<?= APP_URL ?>/portaal/gegevens.php#download" class="pt-taakrij">
       <span class="pt-taakrij-icoon navy"><?= icoon('download', 20) ?></span>
       <span class="pt-taakrij-tekst"><span class="pt-taakrij-titel">Mijn gegevens downloaden</span><span class="pt-taakrij-sub">Alles wat we bewaren, als bestand</span></span>
@@ -83,6 +109,10 @@ if (in_array($_fase, ['uitgenodigd_selectie', 'aangemeld_selectie'], true) && !e
       <span class="pt-taakrij-chevron"><?= icoon('chevron', 18) ?></span>
     </a>
   </div>
-  <span class="pt-hulp">We bewaren je gegevens maximaal 2 jaar na het seizoen.</span>
+  <span class="pt-hulp"><?= $_seintje
+    ? 'Je gegevens blijven maximaal een jaar bewaard, alleen voor dat seintje.'
+    : 'Zonder seintje verwijderen we je gegevens ' . h(function_exists('seintje_afwijs_termijn_tekst') ? seintje_afwijs_termijn_tekst() : 'vier weken')
+      . ($_fase === 'afgewezen' ? ' na de afwijzing.' : ' nadat je sollicitatie is gestopt.') ?></span>
+  <?php endif; ?>
 </div>
 <?php endif; ?>

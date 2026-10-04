@@ -9,6 +9,8 @@ $sol_id = portaal_vereis_login();
 $sol = portaal_sollicitant_laden($sol_id);
 if (!$sol) { unset($_SESSION['portaal_sol_id']); redirect(APP_URL . '/portaal/'); }
 
+// "Stel een vraag" staat op portaal/contact.php (eigen tab); hier alleen een verwijzing.
+
 $gezien_op = portaal_berichten_gezien_op($sol_id);
 $berichten = portaal_berichten($sol_id, $gezien_op);
 $ongelezen = count(array_filter($berichten, fn($b) => $b['ongelezen']));
@@ -35,7 +37,7 @@ require __DIR__ . '/_kop.php';
   <?php else: ?>
     <?php foreach ($berichten as $b): ?>
     <a class="pt-bericht<?= $b['ongelezen'] ? ' ongelezen' : '' ?>" href="<?= APP_URL ?>/portaal/bericht.php?id=<?= (int)$b['id'] ?>">
-      <span class="pt-bericht-icoon"><?= icoon($b['icoon'], 20) ?></span>
+      <?= portaal_kanaal_iconen($b['kanalen']) ?>
       <div class="pt-bericht-tekst">
         <div class="pt-bericht-kop">
           <span class="pt-bericht-titel"><?= h($b['titel']) ?></span>
@@ -46,8 +48,17 @@ require __DIR__ . '/_kop.php';
       </div>
     </a>
     <?php endforeach; ?>
-    <span class="pt-hulp">Berichten blijven een seizoen bewaard.</span>
+    <?php $_bewaar_mnd = function_exists('instelling_int') ? instelling_int('bewaar.maillog_body_mnd', 3) : 3; ?>
+    <span class="pt-hulp">Berichten zie je hier <?= $_bewaar_mnd === 1 ? '1 maand' : (int)$_bewaar_mnd . ' maanden' ?> terug.</span>
   <?php endif; ?>
+
+  <a class="pt-bericht" href="<?= APP_URL ?>/portaal/contact.php">
+    <span class="pt-bericht-icoon"><?= icoon('chat', 20) ?></span>
+    <div class="pt-bericht-tekst">
+      <span class="pt-bericht-titel">Reageren of een vraag stellen?</span>
+      <span class="pt-bericht-sam">Via Contact komt je vraag met je naam erbij bij ons binnen.</span>
+    </div>
+  </a>
 </div>
 
 <?php require __DIR__ . '/_voet.php'; ?>

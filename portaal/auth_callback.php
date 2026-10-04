@@ -12,7 +12,8 @@ sessie_start();
 $fout = '';
 
 // 1. State check
-if (empty($_GET['state']) || $_GET['state'] !== ($_SESSION['portaal_sso_state'] ?? '')) {
+// hash_equals: vergelijken in constante tijd, net als in het beheer.
+if (empty($_GET['state']) || !is_string($_GET['state']) || !hash_equals((string)($_SESSION['portaal_sso_state'] ?? ''), $_GET['state'])) {
     $fout = 'Ongeldige sessie-state.';
 }
 
@@ -35,9 +36,10 @@ if (!$fout) {
             'redirect_uri'  => APP_URL . '/portaal/auth_callback.php',
             'client_id'     => OIDC_CLIENT_ID,
             'client_secret' => OIDC_CLIENT_SECRET,
-        ]),
+        ] + array_filter(['code_verifier' => oidc_pkce_verifier('portaal_sso_pkce')])),
         CURLOPT_TIMEOUT        => 10,
         CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_SSL_VERIFYHOST => 2,
     ]);
     $body = curl_exec($ch);
     $http = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -110,7 +112,7 @@ if (!$fout) {
     if (!$sol) {
         // Geen bestaande sollicitatie én geen beheer — kan een nieuwe sollicitant zijn
         unset($_SESSION['portaal_sso_state'], $_SESSION['portaal_sso_email']);
-        $_SESSION['portaal_flash'] = 'Je Authentik-account is herkend, maar er is nog geen sollicitatie. Vul eerst het aanmeldformulier in.';
+        flash('info', 'Je Paal 13-account is herkend, maar er is nog geen sollicitatie. Vul eerst het aanmeldformulier in.');
         redirect(APP_URL . '/portaal/');
     }
 
@@ -126,14 +128,20 @@ if (!$fout) {
 <html lang="nl">
 <head>
 <meta charset="UTF-8">
-<title>Inloggen mislukt</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Inloggen mislukt — Paal 13</title>
 <link rel="stylesheet" href="<?= APP_URL ?>/assets/css/stijl.css">
 </head>
-<body style="background:var(--navy);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px">
-  <div style="background:#fff;border-radius:12px;padding:30px;max-width:420px;text-align:center">
-    <h2 style="color:#e53e3e;margin-bottom:10px">Inloggen mislukt</h2>
-    <p style="color:#4a5568;font-size:14px;margin-bottom:20px"><?= htmlspecialchars($fout) ?></p>
-    <a href="<?= APP_URL ?>/portaal/" class="btn btn-primary">Opnieuw proberen</a>
+<body>
+<main class="login-wrapper">
+  <div class="login-kaart">
+    <div class="login-logo">
+      <h1>Inloggen mislukt</h1>
+    </div>
+    <div class="ds-melding ds-melding-error" role="alert"><?= icoon('let-op', 16) ?><span><?= h($fout) ?></span></div>
+    <a href="<?= APP_URL ?>/portaal/" class="ds-btn ds-btn-primair ds-btn-vol">Opnieuw proberen</a>
   </div>
+</main>
 </body>
 </html>

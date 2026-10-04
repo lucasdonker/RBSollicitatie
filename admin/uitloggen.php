@@ -1,6 +1,11 @@
 <?php
 require_once __DIR__ . '/../includes/functions.php';
 sessie_start();
+// Alleen via POST met csrf (de knop in admin/_nav.php): een link kon een andere site je laten uitloggen.
+// Een GET (oude bladwijzer) gaat terug naar het beheer.
+if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') { header('Location: ' . APP_URL . '/admin/'); exit; }
+// Al uitgelogd (sessie verlopen)? Dan valt er niets te beschermen; geen foutpagina.
+if (!empty($_SESSION['bhd_id'])) csrf_check();
 $via = $_SESSION['bhd_via'] ?? 'wachtwoord';
 $slug = defined('OIDC_SLUG') ? OIDC_SLUG : '';
 // Vóór session_destroy(): audit_log() leest de actor uit de sessie op het moment van aanroepen.

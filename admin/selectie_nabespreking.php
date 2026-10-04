@@ -1,35 +1,84 @@
 <?php
+/**
+ * Nabespreking en bellijst — eerst besluiten met z'n allen, dan bellen, dan pas mailen.
+ *
+ * Twee tabbladen omdat het twee momenten zijn: aan tafel het besluit nemen, en daarna
+ * de mensen bellen. De scores zijn een advies, het gesprek bepaalt (ontwerpfilosofie §3).
+ *
+ * Dit is bestuurswerk: taak Nabespreken, en voor de bellijst taak Bellen (telefoonnummers, fase
+ * doorvoeren; includes/modules/selectiedag.php).
+ */
 require_once __DIR__ . '/../includes/functions.php';
-$pagina_titel = 'Nabespreking';
-$actieve_nav  = 'selectiedag';
-vereis_recht('selectiedag', 'bewerken');
+require_once __DIR__ . '/../includes/beheer/laden.php';
+
+$_bel_acties = ['gebeld', 'bel_los', 'gebeld_wissen', 'doorvoeren_een', 'gebelde_doorvoeren'];
+$_is_bel = ($_GET['tab'] ?? '') === 'bellijst'
+        || ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array((string)($_POST['actie'] ?? ''), $_bel_acties, true));
+vereis_recht('selectiedag', $_is_bel ? 'bellen' : 'nabespreken');
 
 $seizoen = actief_seizoen();
 $sid = $seizoen ? (int)$seizoen['id'] : 0;
-$ik = $_SESSION['bhd_naam'] ?? 'onbekend';
+$ik  = $_SESSION['bhd_naam'] ?? 'onbekend';
 
-// ── Acties ───────────────────────────────────────────────────
+/** Na doorvoeren: zeggen wat er gebeurde, als melding op de herladen pagina (fase + bericht). */
+function nb_doorvoer_melding(bool $ok, ?array $res): void {
+    if (!$ok) { flash('fout', 'Doorvoeren lukte niet' . (!empty($res['fout']) ? ': ' . $res['fout'] : '') . '.'); return; }
+    $bericht = function_exists('fase_melding_tekst') ? fase_melding_tekst($res ?? []) : '';
+    flash('succes', 'Doorgevoerd: ' . fase_label((string)($res['nieuw'] ?? '')) . '. ' . ($bericht !== '' ? $bericht : 'Er is geen bericht verstuurd.'));
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $sid) {
     csrf_check();
-    $actie = $_POST['actie'] ?? '';
+    $actie = (string)($_POST['actie'] ?? '');
+
+    // Een verouderd tabblad op een tweede tablet mag niet over het werk van een collega heen:
+    // weigeren als iemand anders deze persoon aan het bellen is, of als hij niet (meer) op de
+    // selectiedag-lijst staat (bijv. al doorgevoerd).
+    if (in_array($actie, ['besluit', 'gebeld', 'gebeld_wissen', 'doorvoeren_een'], true)) {
+        $_sol  = (int)($_POST['sol_id'] ?? 0);
+        $_rij  = selectie_besluit_van($sid, $_sol) ?? [];
+        $_fout = !selectie_is_kandidaat($sid, $_sol)
+            ? 'Deze persoon staat niet meer op de lijst van de selectiedag. Ververs de pagina.'
+            : (evenement_claim_actief($_rij['bel_door'] ?? null, $_rij['bel_sinds'] ?? null, (int)($_SESSION['bhd_id'] ?? 0))
+                ? evenement_claim_naam((int)$_rij['bel_door']) . ' is deze persoon aan het bellen. Ververs de pagina.'
+                : '');
+        if ($_fout !== '') {
+            header('Content-Type: application/json');
+            echo json_encode(['ok' => false, 'fout' => $_fout]);
+            exit;
+        }
+    }
 
     if ($actie === 'besluit') {
         header('Content-Type: application/json');
-        selectie_besluit_zetten($sid, (int)$_POST['sol_id'], $_POST['besluit'] ?? '', $_POST['notitie'] ?? '', $ik);
+        selectie_besluit_zetten($sid, (int)$_POST['sol_id'], (string)($_POST['besluit'] ?? ''),
+                                (string)($_POST['notitie'] ?? ''), $ik);
         echo json_encode(['ok' => true]);
         exit;
     }
-    if ($actie === 'doorvoeren') {
-        $n = selectie_besluit_doorvoeren($sid);
-        flash('succes', "$n sollicitant(en) doorgezet: 'door' → uitgenodigd voor het TW, 'niet' → afgewezen. Twijfelgevallen bleven staan.");
-        redirect(APP_URL . '/admin/selectie_nabespreking.php');
-    }
-
     if ($actie === 'gebeld') {
         header('Content-Type: application/json');
-        $meteen = !empty($_POST['meteen_doorvoeren']);
-        $res = selectie_gebeld_zetten($sid, (int)$_POST['sol_id'], $_POST['gebeld_notitie'] ?? '', $ik, $meteen);
-        echo json_encode(['ok' => true] + $res);
+        $sol = (int)$_POST['sol_id'];
+        $nieuw = (string)($_POST['nieuw_besluit'] ?? '');
+        // Bij "door" meteen vastleggen of iemand op het trainingsweekend komt; dan krijgt de
+        // sollicitant die vraag niet ook nog in het portaal.
+        $tw = (string)($_POST['tw_bevestiging'] ?? '');
+        if (in_array($tw, ['komt', 'komt_niet'], true)) {
+            if (!evenement_bevestigen('tw', $sid, $sol, $tw, (string)($_POST['tw_reden'] ?? ''), 'bellijst')) {
+                echo json_encode(['ok' => false, 'fout' => 'Vul de reden in als iemand niet op het trainingsweekend kan komen.']);
+                exit;
+            }
+        }
+        $res = selectie_gebeld_zetten($sid, $sol, (string)($_POST['gebeld_notitie'] ?? ''), $ik,
+                                      !empty($_POST['meteen_doorvoeren']), in_array($nieuw, ['door', 'niet'], true) ? $nieuw : null);
+        if (!empty($_POST['meteen_doorvoeren'])) nb_doorvoer_melding((bool)$res['doorgevoerd'], $res['fase_res']);
+        echo json_encode(['ok' => true, 'gebeld' => true, 'doorgevoerd' => $res['doorgevoerd']]);
+        exit;
+    }
+    if ($actie === 'bel_los') {
+        header('Content-Type: application/json');
+        evenement_claim_los('selectie_besluit', 'bel', $sid, (int)$_POST['sol_id'], (int)($_SESSION['bhd_id'] ?? 0));
+        echo json_encode(['ok' => true]);
         exit;
     }
     if ($actie === 'gebeld_wissen') {
@@ -40,13 +89,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $sid) {
     }
     if ($actie === 'doorvoeren_een') {
         header('Content-Type: application/json');
-        $ok = selectie_besluit_doorvoeren_een($sid, (int)$_POST['sol_id']);
-        echo json_encode(['ok' => $ok]);
+        $_res = null;
+        $_ok  = selectie_besluit_doorvoeren_een($sid, (int)$_POST['sol_id'], $_res);
+        nb_doorvoer_melding($_ok, $_res);
+        echo json_encode(['ok' => $_ok]);
         exit;
     }
+    // Alles in één keer doorvoeren (actie 'doorvoeren') is bewust weg: dan gaat er bericht
+    // uit vóórdat er gebeld is. Doorvoeren gaat via de bellijst, per persoon of per gebelde.
     if ($actie === 'gebelde_doorvoeren') {
         $n = selectie_gebelde_doorvoeren($sid);
-        flash('succes', "$n gebelde sollicitant(en) doorgezet naar hun nieuwe fase.");
+        flash('succes', $n . ' gebelde ' . ($n === 1 ? 'sollicitant' : 'sollicitanten') . ' doorgevoerd naar de nieuwe fase. Wat er aan berichten uitging, staat in het berichtenlog.');
         redirect(APP_URL . '/admin/selectie_nabespreking.php?tab=bellijst');
     }
 }
@@ -55,259 +108,284 @@ $criteria   = selectie_criteria();
 $kandidaten = $sid ? selectie_kandidaten($sid) : [];
 $groepen    = $sid ? selectie_groepen($sid) : [];
 $besluiten  = $sid ? selectie_besluiten($sid) : [];
+// Eén query voor alle scores en één voor alle observaties (niet per kaart).
+$scores_alle = $sid ? selectie_scores_alle($sid) : [];
+$obs_alle    = $sid ? selectie_observaties_alle($sid) : [];
+$lgf_alle    = $sid ? lg_feedback_alle($sid) : [];   // feedback van lifeguards, ook één query
 
 $groep_naam = [];
 foreach ($groepen as $g) $groep_naam[$g['id']] = $g['naam'] ?: 'Groep ' . $g['nummer'];
 
-// Filter
-$filter = $_GET['filter'] ?? 'alle';
-$zichtbaar = array_filter($kandidaten, function($k) use ($filter, $besluiten) {
-    $b = $besluiten[(int)$k['sol_id']]['besluit'] ?? '';
-    return match ($filter) {
-        'door'    => $b === 'door',
-        'twijfel' => $b === 'twijfel',
-        'niet'    => $b === 'niet',
-        'open'    => $b === '',
-        default   => true,
-    };
-});
+$tab = (string)($_GET['tab'] ?? 'nabespreken');
+// Filters en sortering (includes/beheer/nabespreking.php). 'filter' is de oude naam van het besluitfilter.
+$nb_f = [
+    'q'        => (string)($_GET['q'] ?? ''),
+    'besluit'  => (string)($_GET['filter'] ?? ''),
+    'signaal'  => (string)($_GET['signaal'] ?? ''),
+    'advies'   => (string)($_GET['advies'] ?? ''),
+    'groep'    => (string)($_GET['groep'] ?? ''),
+    'aanwezig' => (string)($_GET['aanwezig'] ?? ''),
+    'obs'      => (string)($_GET['obs'] ?? ''),
+    'sort'     => (string)($_GET['sort'] ?? 'naam'),
+];
+if (!isset(bh_nb_obs_filters()[$nb_f['obs']])) $nb_f['obs'] = '';
+if ($nb_f['besluit'] === 'alle') $nb_f['besluit'] = '';
+if (!isset(bh_nb_sorteringen()[$nb_f['sort']])) $nb_f['sort'] = 'naam';
 
-// Tellingen
-$tel = ['door'=>0, 'twijfel'=>0, 'niet'=>0, 'open'=>0];
+$tel = ['door' => 0, 'twijfel' => 0, 'niet' => 0, 'open' => 0];
 foreach ($kandidaten as $k) {
     $b = $besluiten[(int)$k['sol_id']]['besluit'] ?? '';
     $tel[$b ?: 'open']++;
 }
 
+// Eén keer ongefilterd (voor de tellers en de aantallen in de keuzelijsten), één keer zoals gevraagd.
+$nb_alle   = $sid ? bh_nb_lijst($kandidaten, $besluiten, $scores_alle, $obs_alle, $lgf_alle, $criteria, []) : [];
+$nb_tel    = bh_nb_tellers($nb_alle, $besluiten);
+$zichtbaar = $sid ? bh_nb_lijst($kandidaten, $besluiten, $scores_alle, $obs_alle, $lgf_alle, $criteria, $nb_f) : [];
+$nb_sig_tel = [];
+foreach ($nb_alle as $_k) foreach (array_unique(array_column($_k['nb']['signalen'], 'soort')) as $_s) $nb_sig_tel[$_s] = ($nb_sig_tel[$_s] ?? 0) + 1;
+$nb_rand_tel = count(array_filter($nb_alle, fn($k) => $k['nb']['rand']));
+
+// Bellijst: wie een besluit heeft maar nog niet is doorgevoerd — ook twijfel: die bel je
+// ook, en na het gesprek wordt het door of niet.
+$bel_kandidaten = array_values(array_filter($kandidaten, function ($k) use ($besluiten) {
+    $b = $besluiten[(int)$k['sol_id']] ?? null;
+    return $b && in_array($b['besluit'] ?? '', ['door', 'twijfel', 'niet'], true) && empty($b['doorgevoerd_op']);
+}));
+$tel_gebeld = $tel_ongebeld = 0;
+foreach ($bel_kandidaten as $k) {
+    if (!empty($besluiten[(int)$k['sol_id']]['gebeld_op'])) $tel_gebeld++; else $tel_ongebeld++;
+}
+
+$pagina_titel = $tab === 'bellijst' ? 'Bellijst' : 'Nabespreking';
+$actieve_nav  = 'selectiedag';
+// Bellijst: lijst en kaart verversen vanzelf (admin/_bellijst.php, data-live-blok); nabespreking: melding.
+$live_scopes  = $sid ? ['sd:' . $sid] : [];
 require __DIR__ . '/layout_top.php';
 ?>
 
-<style>
-.nb-kaart { background:var(--bg-card); border:1px solid var(--rand); border-radius:12px; margin-bottom:12px; overflow:hidden; border-left:4px solid var(--rand); }
-.nb-kaart.b-door { border-left-color:var(--groen); }
-.nb-kaart.b-twijfel { border-left-color:var(--oranje); }
-.nb-kaart.b-niet { border-left-color:var(--rood); }
-.nb-kop { display:flex; align-items:center; gap:12px; padding:14px 16px; }
-.nb-foto { width:52px; height:52px; border-radius:50%; object-fit:cover; border:2px solid var(--rand); flex-shrink:0; }
-.nb-foto-leeg { width:52px; height:52px; border-radius:50%; background:var(--grijs-bg); display:flex; align-items:center; justify-content:center; font-weight:600; color:var(--grijs); flex-shrink:0; }
-.nb-naam { font-weight:600; font-size:16px; }
-.nb-body { padding:0 16px 16px; }
-.nb-kolommen { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-@media(max-width:640px){ .nb-kolommen { grid-template-columns:1fr; } }
-.nb-obs { padding:8px 10px; border-radius:8px; font-size:13px; background:var(--grijs-bg); margin-bottom:5px; }
-.nb-obs.positief { background:var(--groen-bg); }
-.nb-obs.aandacht { background:var(--rood-bg); }
-.nb-score-rij { display:flex; align-items:center; gap:8px; font-size:13px; padding:3px 0; }
-.nb-score-balk { flex:1; height:6px; background:var(--grijs-bg); border-radius:3px; overflow:hidden; }
-.nb-score-vul { height:100%; background:var(--navy); }
-.nb-besluit-knop { padding:8px 16px; border-radius:8px; font-size:13px; font-weight:600; border:1.5px solid var(--rand); background:var(--bg-card); cursor:pointer; }
-.nb-besluit-knop.door.aan { background:var(--groen); border-color:var(--groen); color:#fff; }
-.nb-besluit-knop.twijfel.aan { background:var(--oranje); border-color:var(--oranje); color:#fff; }
-.nb-besluit-knop.niet.aan { background:var(--rood); border-color:var(--rood); color:#fff; }
-.nb-filter { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
-.nb-filter a { padding:7px 14px; border-radius:20px; font-size:13px; text-decoration:none; color:var(--tekst); background:var(--bg-card); border:1px solid var(--rand); }
-.nb-filter a.actief { background:var(--navy); color:#fff; border-color:var(--navy); }
-</style>
-
-<div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap">
-  <a href="<?= APP_URL ?>/admin/selectie_indeling.php" style="padding:7px 14px;border-radius:8px;font-size:13px;text-decoration:none;color:var(--tekst);background:var(--bg-card);border:1px solid var(--rand)">1 · Groepsindeling</a>
-  <a href="<?= APP_URL ?>/admin/selectie_inchecken.php" style="padding:7px 14px;border-radius:8px;font-size:13px;text-decoration:none;color:var(--tekst);background:var(--bg-card);border:1px solid var(--rand)">2 · Inchecken</a>
-  <a href="<?= APP_URL ?>/admin/selectiedag.php" style="padding:7px 14px;border-radius:8px;font-size:13px;text-decoration:none;color:var(--tekst);background:var(--bg-card);border:1px solid var(--rand)">3 · Beoordelen</a>
-  <a href="<?= APP_URL ?>/admin/selectie_nabespreking.php" style="padding:7px 14px;border-radius:8px;font-size:13px;text-decoration:none;color:#fff;background:var(--navy);border:1px solid var(--navy)">4 · Nabespreking</a>
-</div>
-
-<?php if (!$sid): ?>
-  <div class="flash flash-fout">Geen actief seizoen.</div>
-<?php elseif (!$kandidaten): ?>
-  <div class="card"><div class="card-body" style="text-align:center;padding:40px;color:var(--tekst-zacht)">Nog geen kandidaten.</div></div>
-<?php else: ?>
-
 <?php
-  $tab = $_GET['tab'] ?? 'nabespreken';
-  // Bellijst: kandidaten met een definitief besluit (door/niet), nog niet doorgevoerd
-  $bel_kandidaten = array_filter($kandidaten, function($k) use ($besluiten) {
-      $b = $besluiten[(int)$k['sol_id']] ?? null;
-      return $b && in_array($b['besluit'] ?? '', ['door','niet'], true) && empty($b['doorgevoerd_op']);
-  });
-  $tel_gebeld = 0; $tel_ongebeld = 0;
-  foreach ($bel_kandidaten as $k) {
-      $b = $besluiten[(int)$k['sol_id']] ?? [];
-      if (!empty($b['gebeld_op'])) $tel_gebeld++; else $tel_ongebeld++;
-  }
+  $subnav_actief = $tab === 'bellijst' ? 'bellijst' : 'nabespreking';
+  $subnav_datum  = $seizoen && !empty($seizoen['datum_selectiedag']) ? datum_nl($seizoen['datum_selectiedag']) : null;
+  require __DIR__ . '/_selectie_subnav.php';
 ?>
 
-<!-- Tab-toggle -->
-<div style="display:flex;gap:6px;margin-bottom:16px;border-bottom:1px solid var(--rand);padding-bottom:0">
-  <a href="?tab=nabespreken" style="padding:9px 18px;font-size:14px;font-weight:600;text-decoration:none;border-bottom:3px solid <?= $tab==='nabespreken'?'var(--navy)':'transparent' ?>;color:<?= $tab==='nabespreken'?'var(--navy)':'var(--tekst-zacht)' ?>">Nabespreken</a>
-  <a href="?tab=bellijst" style="padding:9px 18px;font-size:14px;font-weight:600;text-decoration:none;border-bottom:3px solid <?= $tab==='bellijst'?'var(--navy)':'transparent' ?>;color:<?= $tab==='bellijst'?'var(--navy)':'var(--tekst-zacht)' ?>">📞 Bellijst<?php if ($tel_ongebeld): ?> <span style="background:var(--oranje);color:#fff;border-radius:10px;padding:1px 7px;font-size:11px"><?= $tel_ongebeld ?></span><?php endif; ?></a>
-</div>
+<?php if (!$sid || !$kandidaten): ?>
+  <div class="ds-kaart ds-kaart-p">
+    <?php
+      $leeg_titel = $sid ? 'Nog geen sollicitanten' : 'Geen actief seizoen';
+      $leeg_tekst = $sid ? 'Zodra er sollicitanten op de selectiedag zijn geweest, bespreek je ze hier na.' : '';
+      $leeg_icoon = 'mensen';
+      require __DIR__ . '/_leeg.php';
+    ?>
+  </div>
 
-<?php if ($tab === 'bellijst'): ?>
-  <?php require __DIR__ . '/selectie_bellijst_partial.php'; ?>
+<?php elseif ($tab === 'bellijst'): ?>
+  <?php
+    $bel_sid       = $sid;
+    $bel_lijst     = $bel_kandidaten;
+    $bel_besluiten = $besluiten;
+    $bel_gebeld    = $tel_gebeld;
+    $bel_ongebeld  = $tel_ongebeld;
+    $bel_scores    = $scores_alle;
+    $bel_obs       = $obs_alle;
+    $bel_lgf       = $lgf_alle;
+    $bel_nb        = array_column($nb_alle, 'nb', 'sol_id');
+    $bel_groepen   = $groep_naam;
+    require __DIR__ . '/_bellijst.php';
+  ?>
+
 <?php else: ?>
 
-<p style="font-size:12.5px;color:var(--tekst-zacht);margin:0 0 12px">
-  Alles per kandidaat bij elkaar. De scores zijn indicatief — de observaties en jullie gesprek bepalen het besluit.
-  Zet per persoon een voorlopig besluit. Als je klaar bent, ga je naar de <a href="?tab=bellijst" style="color:var(--navy)">Bellijst</a> om iedereen te bellen en per persoon door te voeren.
-</p>
-
-<!-- Filter -->
-<div class="nb-filter">
-  <a href="?filter=alle" class="<?= $filter==='alle'?'actief':'' ?>">Iedereen (<?= count($kandidaten) ?>)</a>
-  <a href="?filter=open" class="<?= $filter==='open'?'actief':'' ?>">○ Nog open (<?= $tel['open'] ?>)</a>
-  <a href="?filter=door" class="<?= $filter==='door'?'actief':'' ?>" style="color:<?= $filter==='door'?'#fff':'var(--groen)' ?>">✓ Door (<?= $tel['door'] ?>)</a>
-  <a href="?filter=twijfel" class="<?= $filter==='twijfel'?'actief':'' ?>" style="color:<?= $filter==='twijfel'?'#fff':'var(--oranje)' ?>">? Twijfel (<?= $tel['twijfel'] ?>)</a>
-  <a href="?filter=niet" class="<?= $filter==='niet'?'actief':'' ?>" style="color:<?= $filter==='niet'?'#fff':'var(--rood)' ?>">✕ Niet (<?= $tel['niet'] ?>)</a>
-</div>
-
-<!-- Kandidaten -->
-<?php foreach ($zichtbaar as $k):
-  $sol_id = (int)$k['sol_id'];
-  $scores = selectie_scores_van($sid, $sol_id);
-  $observaties = selectie_observaties_van($sid, $sol_id);
-  $besluit = $besluiten[$sol_id]['besluit'] ?? '';
-  $notitie = $besluiten[$sol_id]['notitie'] ?? '';
-  $foto = !empty($k['foto_url']) ? foto_url($k['foto_url']) : null;
-?>
-<div class="nb-kaart <?= $besluit ? 'b-' . $besluit : '' ?>" id="nb-<?= $sol_id ?>">
-  <div class="nb-kop">
-    <?php if ($foto): ?>
-      <img class="nb-foto" src="<?= h($foto) ?>" alt="" loading="lazy"
-           style="cursor:pointer"
-           data-foto="<?= h($foto) ?>" data-naam="<?= h(trim($k['voornaam'].' '.$k['achternaam'])) ?>"
-           onclick="fotoVergroten(this.dataset.foto, this.dataset.naam)">
-    <?php else: ?>
-      <span class="nb-foto-leeg"><?= h(mb_strtoupper(mb_substr($k['voornaam'],0,1) . mb_substr($k['achternaam'],0,1))) ?></span>
-    <?php endif; ?>
-    <div style="flex:1">
-      <div class="nb-naam"><?= h($k['naam']) ?></div>
-      <div style="font-size:12px;color:var(--tekst-zacht)">
-        <?= $k['leeftijd'] ? $k['leeftijd'] . ' jaar' : '' ?>
-        <?= $k['groep_id'] ? '· ' . h($groep_naam[$k['groep_id']] ?? '') : '' ?>
-        <?php if (!$k['aanwezig']): ?>· <span style="color:var(--rood)">was afwezig</span><?php endif; ?>
-      </div>
+  <?php $_hier = APP_URL . '/admin/selectie_nabespreking.php'; ?>
+  <section class="ds-kaart bh-dekkop bh-nb-stand-kaart">
+    <div class="bh-dekkop-zin">
+      <?= bh_stoplicht($nb_tel['open'] > 0 ? 'krap' : 'goed',
+                       $nb_tel['open'] . ' van ' . $nb_tel['totaal'] . ' nog zonder besluit') ?>
+      <?php if ($nb_tel['rand_open'] > 0): ?>
+        <a class="bh-nb-snel" href="<?= h($_hier . '?' . http_build_query(['signaal' => 'rand', 'filter' => 'open', 'sort' => 'rand'])) ?>">
+          <?= $nb_tel['rand_open'] ?> <?= $nb_tel['rand_open'] === 1 ? 'randgeval' : 'randgevallen' ?> om eerst te bespreken</a>
+      <?php endif; ?>
     </div>
+    <p class="bh-dekkop-uitleg">
+      Advies op cijfer: <?= $nb_tel['advies']['door'] ?> door · <?= $nb_tel['advies']['twijfel'] ?> twijfel ·
+      <?= $nb_tel['advies']['niet'] ?> niet<?= $nb_tel['advies']['geen'] ? ' · ' . $nb_tel['advies']['geen'] . ' zonder cijfer' : '' ?>.
+      Het cijfer is een advies; jullie gesprek bepaalt.<?php if (mag('selectiedag', 'bellen')): ?> Daarna bel je iedereen via de <a href="?tab=bellijst">bellijst</a>.<?php endif; ?>
+    </p>
+  </section>
+
+  <?php
+    $_besl = ['' => 'Besluit: iedereen (' . count($kandidaten) . ')', 'open' => 'Besluit: nog open (' . $tel['open'] . ')'];
+    foreach (selectie_besluit_labels() as $_bk => $_bd) $_besl[$_bk] = 'Besluit: ' . mb_strtolower($_bd[0]) . ' (' . $tel[$_bk] . ')';
+    $_sig = ['' => 'Signalen: alle', 'rand' => 'Alleen randgevallen (' . $nb_rand_tel . ')'];
+    foreach (bh_nb_signaal_soorten() as $_sk => $_sl) if (!empty($nb_sig_tel[$_sk])) $_sig[$_sk] = $_sl . ' (' . $nb_sig_tel[$_sk] . ')';
+    $_adv = ['' => 'Advies: alle', 'door' => 'Advies: door (' . $nb_tel['advies']['door'] . ')',
+             'twijfel' => 'Advies: twijfel (' . $nb_tel['advies']['twijfel'] . ')', 'niet' => 'Advies: niet (' . $nb_tel['advies']['niet'] . ')',
+             'geen' => 'Advies: nog geen cijfer (' . $nb_tel['advies']['geen'] . ')'];
+    $_grp = ['' => 'Groep: alle'];
+    foreach ($groep_naam as $_gid => $_gn) $_grp[(string)$_gid] = 'Groep: ' . $_gn;
+    $_grp['geen'] = 'Groep: zonder groep';
+    $_obsf = ['' => 'Observaties: alle'];
+    foreach (bh_nb_obs_filters() as $_ok => $_ol) {
+        $_on = count(array_filter($nb_alle, fn($k) => bh_nb_obs_past($k['nb'], $_ok)));
+        $_obsf[$_ok] = $_ol . ' (' . $_on . ')';
+    }
+    $filter_velden = [
+        ['soort' => 'zoek',    'naam' => 'q',        'label' => 'Zoek op naam', 'waarde' => $nb_f['q']],
+        ['soort' => 'keuze',   'naam' => 'signaal',  'label' => 'Signalen', 'waarde' => $nb_f['signaal'], 'opties' => $_sig],
+        ['soort' => 'keuze',   'naam' => 'obs',      'label' => 'Observaties', 'waarde' => $nb_f['obs'], 'opties' => $_obsf],
+        ['soort' => 'keuze',   'naam' => 'filter',   'label' => 'Besluit', 'waarde' => $nb_f['besluit'], 'opties' => $_besl],
+        ['soort' => 'sorteer', 'naam' => 'sort',     'label' => 'Sorteren', 'waarde' => $nb_f['sort'], 'opties' => bh_nb_sorteringen()],
+        ['soort' => 'keuze',   'naam' => 'advies',   'label' => 'Advies', 'waarde' => $nb_f['advies'], 'opties' => $_adv, 'meer' => true],
+        ['soort' => 'keuze',   'naam' => 'groep',    'label' => 'Groep', 'waarde' => $nb_f['groep'], 'opties' => $_grp, 'meer' => true],
+        ['soort' => 'keuze',   'naam' => 'aanwezig', 'label' => 'Aanwezig', 'waarde' => $nb_f['aanwezig'], 'meer' => true,
+         'opties' => ['' => 'Aanwezig: iedereen', 'ja' => 'Was aanwezig', 'nee' => 'Was niet aanwezig']],
+    ];
+    $_gefilterd = array_filter(array_diff_key($nb_f, ['sort' => 1])) || $nb_f['sort'] !== 'naam';
+    $filter_wissen  = $_gefilterd ? $_hier : null;
+    require __DIR__ . '/_filterbalk.php';
+  ?>
+
+  <?php if ($zichtbaar): ?>
+  <div class="bh-lijstkop">
+    <span class="bh-meta"><?= count($zichtbaar) ?> van <?= count($kandidaten) ?> getoond</span>
+    <button type="button" class="ds-btn ds-btn-zacht ds-btn-sm" data-klap-alles="details.bh-nb-meer" aria-pressed="false">Alles uitklappen</button>
   </div>
-  <div class="nb-body">
+  <?php endif; ?>
+
+  <?php if (!$zichtbaar): ?>
+    <div class="ds-kaart ds-kaart-p">
+      <?php
+        $leeg_titel = 'Niemand gevonden';
+        $leeg_tekst = 'Pas de zoekterm of de filters aan.';
+        $leeg_icoon = 'zoek';
+        require __DIR__ . '/_leeg.php';
+      ?>
+    </div>
+  <?php endif; ?>
+
+  <?php
+    // Na feedback vastleggen terug naar dezelfde lijst (filters in de URL-namen van de filterbalk).
+    $_url_f = ['q' => $nb_f['q'], 'filter' => $nb_f['besluit'], 'signaal' => $nb_f['signaal'], 'advies' => $nb_f['advies'],
+               'groep' => $nb_f['groep'], 'aanwezig' => $nb_f['aanwezig'], 'obs' => $nb_f['obs'], 'sort' => $nb_f['sort'] !== 'naam' ? $nb_f['sort'] : ''];
+    $_lgf_terug = $_hier . (array_filter($_url_f) ? '?' . http_build_query(array_filter($_url_f)) : '');
+  ?>
+  <div class="bh-nb-lijst" data-nb data-endpoint="<?= h($_hier) ?>" data-csrf="<?= h(csrf_token()) ?>">
+  <?php foreach ($zichtbaar as $k):
+    $_id  = (int)$k['sol_id'];
+    $_nb  = $k['nb'];
+    $_obs = $obs_alle[$_id] ?? [];
+    $_lgf = $lgf_alle[$_id] ?? [];
+    $_b   = $besluiten[$_id]['besluit'] ?? '';
+    $_not = $besluiten[$_id]['notitie'] ?? '';
+    $_kleur = ['door' => 'groen', 'twijfel' => 'oranje', 'niet' => 'rood'][$_b] ?? 'grijs';
+    $_sam = array_filter([
+        count($_obs) ? count($_obs) . ' ' . (count($_obs) === 1 ? 'observatie' : 'observaties') : 'geen observaties',
+        $_nb['pos'] ? $_nb['pos'] . ' positief' : '',
+        $_nb['neutraal'] ? $_nb['neutraal'] . ' neutraal' : '',
+        $_nb['aandacht'] ? $_nb['aandacht'] . ' aandacht' : '',
+        $_lgf ? count($_lgf) . ' feedback van strandwachten' : '',
+    ]);
+  ?>
+  <section class="bh-nb-kaart ds-fase-<?= h($_kleur) ?><?= $_b ? ' besloten' : '' ?>" id="nb-<?= $_id ?>" data-sol="<?= $_id ?>">
+    <header class="bh-nb-kop">
+      <?= bh_avatar($k, 46, ['dim' => empty($k['aanwezig']), 'vergroot' => true]) ?>
+      <span class="bh-nb-wie">
+        <a class="bh-nb-naam" href="<?= APP_URL ?>/admin/sollicitant.php?id=<?= $_id ?>&amp;tab=selectiedag"><?= h((string)$k['naam']) ?></a>
+        <?= bh_meta([
+            $k['leeftijd'] ? $k['leeftijd'] . ' jaar' : '',
+            $k['groep_id'] ? ($groep_naam[$k['groep_id']] ?? '') : '',
+        ]) ?>
+      </span>
+      <?php if ($_nb['advies']): ?>
+        <?= bh_badge('Advies: ' . mb_strtolower($_nb['advies']['label']), $_nb['advies']['kleur'], ['titel' => $_nb['advies']['reden']]) ?>
+      <?php endif; ?>
+      <span class="bh-nb-score">
+        <span class="bh-num"><?= $_nb['gem'] !== null ? h(cijfer_nl((float)$_nb['gem'])) : '–' ?></span>
+        <span class="bh-meta"><?= $_nb['gem'] !== null ? 'gemiddeld' : 'geen cijfer' ?></span>
+      </span>
+    </header>
+
+    <?php if ($_nb['signalen']): ?>
+      <div class="bh-nb-signalen" aria-label="Signalen">
+        <?php foreach ($_nb['signalen'] as $_s) echo bh_chip($_s['tekst'], bh_nb_signaal_kleur($_s['soort'])); ?>
+      </div>
+    <?php endif; ?>
 
     <?php if (!empty($k['bijzonderheden'])): ?>
-    <div style="padding:9px 12px;background:#fff5f5;border:1px solid #feb2b2;border-radius:8px;font-size:13px;color:#9b2c2c;margin-bottom:12px">
-      ⚠️ <strong>Bijzonderheden:</strong> <?= nl2br(h($k['bijzonderheden'])) ?>
-    </div>
+      <div class="ds-melding ds-melding-warn">
+        <?= icoon('waarschuwing', 16) ?>
+        <?php if (mag('blk', 'lezen')): ?>
+          <span><strong>Bijzonderheid:</strong> <?= nl2br(h((string)$k['bijzonderheden'])) ?></span>
+        <?php else: ?>
+          <span><strong>Let op:</strong> er is een bijzonderheid bekend; die staat in het formulier.</span>
+        <?php endif; ?>
+      </div>
     <?php endif; ?>
 
-    <div class="nb-kolommen">
-      <!-- Observaties -->
-      <div>
-        <div style="font-size:12px;font-weight:600;color:var(--tekst-zacht);margin-bottom:6px">💬 Observaties (<?= count($observaties) ?>)</div>
-        <?php if (!$observaties): ?>
-          <div style="font-size:13px;color:var(--grijs)">Geen observaties genoteerd.</div>
-        <?php else: foreach ($observaties as $o): ?>
-          <div class="nb-obs <?= h($o['soort']) ?>">
-            <?= nl2br(h($o['tekst'])) ?>
-            <span style="font-size:11px;color:var(--grijs)">— <?= h($o['beoordelaar']) ?></span>
-          </div>
-        <?php endforeach; endif; ?>
-      </div>
+    <details class="bh-klap bh-nb-meer" data-klap-id="nb-<?= $_id ?>">
+      <summary>
+        <span class="bh-klap-titel">Observaties, cijfers en feedback</span>
+        <span class="bh-klap-sam"><?= h(implode(' · ', $_sam)) ?></span>
+      </summary>
+      <div class="bh-klap-inhoud bh-nb-kolommen">
+        <div>
+          <h3>Observaties</h3>
+          <?php if (!$_obs): ?>
+            <p class="bh-dossier-tekst zacht">Niemand heeft iets genoteerd.</p>
+          <?php else: $obs_lijst = $_obs; $obs_eigen = null; require __DIR__ . '/_observaties.php'; endif; ?>
+        </div>
 
-      <!-- Scores -->
-      <div>
-        <div style="font-size:12px;font-weight:600;color:var(--tekst-zacht);margin-bottom:6px">⭐ Scores (gemiddeld)</div>
+        <div>
+          <h3>Cijfers per onderdeel</h3>
+          <?php if (empty($scores_alle[$_id])): ?>
+            <p class="bh-dossier-tekst zacht">Niet beoordeeld.</p>
+          <?php else: $scs_scores = $scores_alle[$_id]; require __DIR__ . '/_sd_scores.php'; endif; ?>
+        </div>
+
         <?php
-        $heeft_scores = false;
-        foreach ($criteria as $tk => $test):
-          if (empty($scores[$tk])) continue;
-          $heeft_scores = true;
+          // Wat strandwachten het bestuur over deze sollicitant vertelden; hier vastleggen.
+          $lgf_sol_id = $_id; $lgf_seizoen_id = $sid; $lgf_moment = 'selectiedag'; $lgf_mag_bewerken = true;
+          $lgf_terug = $_lgf_terug . '#nb-' . $_id;
+          $lgf_rijen = $_lgf; $lgf_kaart = false; $lgf_kop = 'h3';
+          require __DIR__ . '/_lg_feedback.php';
         ?>
-        <div style="font-size:11px;color:var(--tekst-zacht);margin-top:6px"><?= h($test['icoon'] ?? '') ?> <?= h($test['naam']) ?></div>
-        <?php foreach ($test['criteria'] as $crit):
-          $sc = $scores[$tk][$crit['sleutel']] ?? null;
-          if (!$sc || !$sc['allen']) continue;
-        ?>
-        <div class="nb-score-rij">
-          <span style="min-width:90px"><?= h($crit['label']) ?></span>
-          <span class="nb-score-balk"><span class="nb-score-vul" style="width:<?= ($sc['gem']/5)*100 ?>%"></span></span>
-          <span style="min-width:56px;text-align:right;color:var(--tekst-zacht)"><?= $sc['gem'] ?> <span style="font-size:10px">(<?= count($sc['allen']) ?>)</span></span>
-        </div>
+      </div>
+    </details>
+
+    <footer class="bh-nb-besluit">
+      <div class="bh-nb-knoppen" role="group" aria-label="Besluit over <?= h((string)$k['naam']) ?>">
+        <?php foreach (selectie_besluit_labels() as $_bk => $_bd): ?>
+          <button type="button" class="bh-besluitknop <?= $_bk ?><?= $_b === $_bk ? ' aan' : '' ?>"
+                  aria-pressed="<?= $_b === $_bk ? 'true' : 'false' ?>" data-besluit="<?= $_bk ?>"><?= h($_bd[0]) ?></button>
         <?php endforeach; ?>
-        <?php endforeach; ?>
-        <?php if (!$heeft_scores): ?><div style="font-size:13px;color:var(--grijs)">Geen scores ingevuld.</div><?php endif; ?>
       </div>
-    </div>
-
-    <!-- Besluit -->
-    <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--rand-licht)">
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <span style="font-size:13px;font-weight:600;color:var(--tekst-zacht)">Besluit:</span>
-        <div class="nb-besluit" data-sol="<?= $sol_id ?>">
-          <button type="button" class="nb-besluit-knop door <?= $besluit==='door'?'aan':'' ?>" onclick="zetBesluit(<?= $sol_id ?>,'door')">✓ Door naar TW</button>
-          <button type="button" class="nb-besluit-knop twijfel <?= $besluit==='twijfel'?'aan':'' ?>" onclick="zetBesluit(<?= $sol_id ?>,'twijfel')">? Twijfel</button>
-          <button type="button" class="nb-besluit-knop niet <?= $besluit==='niet'?'aan':'' ?>" onclick="zetBesluit(<?= $sol_id ?>,'niet')">✕ Niet</button>
-        </div>
-      </div>
-      <input type="text" id="notitie-<?= $sol_id ?>" value="<?= h($notitie) ?>" placeholder="Notitie bij het besluit (optioneel)"
-             onchange="zetBesluit(<?= $sol_id ?>, null)"
-             style="width:100%;margin-top:8px;padding:8px 10px;border:1px solid var(--rand);border-radius:8px;font-size:13px;box-sizing:border-box">
-    </div>
-
+      <input type="text" class="ds-input bh-nb-notitie" data-notitie
+             aria-label="Reden of aantekening bij <?= h((string)$k['naam']) ?>"
+             value="<?= h((string)$_not) ?>" placeholder="Korte reden of aantekening…">
+      <span class="bh-nb-stand" data-stand aria-live="polite"></span>
+    </footer>
+  </section>
+  <?php endforeach; ?>
   </div>
-</div>
-<?php endforeach; ?>
 
-<!-- Doorvoeren -->
-<div class="card" style="margin-top:16px;border:2px solid var(--navy)">
-  <div class="card-body" style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
-    <div style="flex:1;min-width:200px">
-      <div style="font-weight:600;margin-bottom:2px">Besluiten doorvoeren</div>
-      <div style="font-size:12.5px;color:var(--tekst-zacht)">
-        Zet <strong><?= $tel['door'] ?></strong> kandidaten op "uitgenodigd voor TW" en wijs <strong><?= $tel['niet'] ?></strong> af.
-        Twijfelgevallen (<?= $tel['twijfel'] ?>) en open (<?= $tel['open'] ?>) blijven staan.
-      </div>
+  <?php if ($tel['door'] + $tel['niet'] + $tel['twijfel'] > 0): ?>
+  <div class="bh-nb-afsluiten">
+    <div>
+      <strong><?= $tel['door'] + $tel['niet'] + $tel['twijfel'] ?> sollicitanten hebben een besluit.</strong>
+      <span class="bh-meta">
+        Bellen doe je op de bellijst, ook de twijfelgevallen: daar wordt het na het gesprek door of niet.
+        Je voert per persoon door, zodat er pas bericht uitgaat nadat je hebt gebeld.
+      </span>
     </div>
-    <div style="margin-top:20px">
-      <button type="button" onclick="document.getElementById('geavanceerd-doorvoeren').style.display='block';this.style.display='none'" style="background:none;border:none;color:var(--tekst-zacht);font-size:12.5px;cursor:pointer;text-decoration:underline">⚙ Geavanceerd: alles in één keer doorvoeren</button>
-      <div id="geavanceerd-doorvoeren" style="display:none;margin-top:12px;padding:14px;background:var(--grijs-bg);border-radius:10px">
-        <div style="font-size:12.5px;color:var(--tekst-zacht);margin-bottom:10px">
-          Zet <strong><?= $tel['door'] ?></strong> kandidaten ineens op "uitgenodigd voor TW" en wijs <strong><?= $tel['niet'] ?></strong> af, zónder de bellijst te gebruiken.
-          Twijfelgevallen (<?= $tel['twijfel'] ?>) en open (<?= $tel['open'] ?>) blijven staan. Handig bij heel veel sollicitanten.
-        </div>
-        <form method="POST" onsubmit="return confirm('Weet je het zeker? Dit past de fase van alle beoordeelde sollicitanten in één keer aan.\n\n<?= $tel['door'] ?> → uitgenodigd TW\n<?= $tel['niet'] ?> → afgewezen')">
-          <?= csrf_input() ?>
-          <input type="hidden" name="actie" value="doorvoeren">
-          <button type="submit" class="btn btn-primary" <?= ($tel['door']+$tel['niet'])===0?'disabled':'' ?>>Alles doorvoeren →</button>
-        </form>
-      </div>
-    </div>
+    <?php if (mag('selectiedag', 'bellen')): ?><a class="ds-btn ds-btn-primair" href="?tab=bellijst">Naar de bellijst</a><?php endif; ?>
   </div>
-</div>
+  <?php endif; ?>
 
-<?php endif; // einde tab nabespreken ?>
+<?php endif; ?>
 
-<script>
-const CSRF = '<?= csrf_token() ?>';
-
-function zetBesluit(solId, besluit) {
-  const wrap = document.querySelector('.nb-besluit[data-sol="' + solId + '"]');
-  // Als besluit null: alleen notitie opslaan, huidige besluit-knop-status behouden
-  if (besluit === null) {
-    const aan = wrap.querySelector('.nb-besluit-knop.aan');
-    besluit = aan ? (aan.classList.contains('door') ? 'door' : aan.classList.contains('twijfel') ? 'twijfel' : 'niet') : '';
-  } else {
-    // Toggle: nogmaals klikken = wissen
-    const huidig = wrap.querySelector('.nb-besluit-knop.' + besluit + '.aan');
-    wrap.querySelectorAll('.nb-besluit-knop').forEach(b => b.classList.remove('aan'));
-    if (!huidig) wrap.querySelector('.nb-besluit-knop.' + besluit).classList.add('aan');
-    else besluit = '';
-    // Kaart-rand kleuren
-    const kaart = document.getElementById('nb-' + solId);
-    kaart.className = 'nb-kaart' + (besluit ? ' b-' + besluit : '');
-  }
-  const notitie = document.getElementById('notitie-' + solId).value;
-  fetch(location.pathname, { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
-    body: new URLSearchParams({ actie:'besluit', sol_id:solId, besluit, notitie, _csrf:CSRF }) });
-}
-</script>
-
+<?php if ($tab !== 'bellijst'): ?>
+<script src="<?= APP_URL ?>/assets/js/nabespreking.js?v=<?= @filemtime(__DIR__ . '/../assets/js/nabespreking.js') ?>" defer></script>
 <?php endif; ?>
 
 <?php require __DIR__ . '/layout_bottom.php'; ?>

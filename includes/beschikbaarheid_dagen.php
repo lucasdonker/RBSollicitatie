@@ -22,6 +22,5 @@ function seizoen_weektype(array $seizoen, int $week): string {
 
 /** Korte dagnaam: 1=ma … 7=zo. */
 function dag_kort(int $dag): string {
-    $d = ['', 'ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'];
-    return $d[$dag] ?? (string)$dag;
+    return dagen_kort_nl()[$dag] ?? (string)$dag;
 }

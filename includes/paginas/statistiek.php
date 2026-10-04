@@ -12,17 +12,79 @@
 
 if (!function_exists('pag_track')) {
 
+/**
+ * De gebeurtenissen die we tellen, in trechtervolgorde.
+ *
+ *  bezoek              de pagina is geopend
+ *  formulier_start     iemand vult het eerste veld aan (komt van het script, niet van de server:
+ *                      alleen zo weet je dat iemand écht begon en niet alleen langsliep)
+ *  formulier_stap      een volgende stap bereikt; 'detail' is het stapnummer
+ *  formulier_verlaten  het tabblad ging naar de achtergrond terwijl het formulier openstond;
+ *                      'detail' is de verste stap. Een aanwijzing, geen bewijs — op mobiel is
+ *                      dit het enige signaal dat iemand vertrekt, en soms komt hij gewoon terug.
+ *  formulier_klaar     de aanmelding is opgeslagen (server)
+ *  formulier_geweigerd de inzending is tegengehouden (server: bot, te snel, te vaak)
+ */
 function pag_event_typen(): array {
-    return ['bezoek', 'formulier_start', 'formulier_klaar', 'formulier_geweigerd'];
+    return ['bezoek', 'formulier_start', 'formulier_stap', 'formulier_verlaten', 'formulier_klaar', 'formulier_geweigerd'];
 }
 
 /**
- * Dag-gebonden pseudoniem van de bezoeker: IP + user-agent + dag + geheim. Niet herleidbaar
- * naar een persoon en na één dag vervallen (andere dag = andere hash).
+ * De kolom 'type' is een ENUM. MariaDB weigert een waarde die er niet in staat niet met een
+ * fout maar zet er stilletjes een lege string neer — dus de ENUM moet mee met pag_event_typen().
+ * Draait alleen als er echt iets ontbreekt.
+ */
+function pag_events_enum_bij(\PDO $db): void {
+    try {
+        $q = $db->prepare("SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS
+                           WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'pagina_events' AND COLUMN_NAME = 'type'");
+        $q->execute();
+        $huidig = (string)$q->fetchColumn();
+        if ($huidig === '') return;
+
+        $ontbreekt = false;
+        foreach (pag_event_typen() as $t) {
+            if (!str_contains($huidig, "'" . $t . "'")) { $ontbreekt = true; break; }
+        }
+        if (!$ontbreekt) return;
+
+        $lijst = "'" . implode("','", pag_event_typen()) . "'";
+        $db->exec("ALTER TABLE `pagina_events` MODIFY COLUMN `type` ENUM($lijst) NOT NULL");
+        error_log('pag_events_enum_bij: type-ENUM uitgebreid');
+    } catch (\Throwable $e) { error_log('pag_events_enum_bij: ' . $e->getMessage()); }
+}
+
+/**
+ * Het geheime zout voor het bezoekerspseudoniem: 32 willekeurige bytes (hex) in de instelling
+ * paginas.pseudoniem_zout, eenmalig aangemaakt. INSERT IGNORE + opnieuw lezen: twee verzoeken
+ * tegelijk krijgen zo toch hetzelfde zout. Lukt opslaan niet, dan geldt een zout voor dit
+ * verzoek alleen (hooguit een dubbele telling, nooit een herleidbare hash).
+ */
+function pag_pseudoniem_zout(): string {
+    static $zout = null;
+    if ($zout !== null) return $zout;
+    $geldig = fn($z) => is_string($z) && preg_match('/^[0-9a-f]{64}$/', $z);
+    $z = function_exists('instelling') ? instelling('paginas.pseudoniem_zout', '') : '';
+    if ($geldig($z)) return $zout = $z;
+    $nieuw = bin2hex(random_bytes(32));
+    try {
+        db()->prepare("INSERT IGNORE INTO instellingen (sleutel, waarde) VALUES ('paginas.pseudoniem_zout', ?)")->execute([$nieuw]);
+        $q = db()->prepare("SELECT waarde FROM instellingen WHERE sleutel = 'paginas.pseudoniem_zout'");
+        $q->execute();
+        $z = $q->fetchColumn();
+        if ($geldig($z)) return $zout = $z;
+    } catch (\Throwable $e) { error_log('pag_pseudoniem_zout: ' . $e->getMessage()); }
+    return $zout = $nieuw;
+}
+
+/**
+ * Dag-gebonden pseudoniem van de bezoeker. De dagsleutel is afgeleid van het geheime zout en
+ * de datum (HMAC), de hash van IP + user-agent met die dagsleutel. Zonder het zout niet terug
+ * te rekenen, en morgen is het een andere code: een bezoeker is niet over dagen te volgen.
  */
 function pag_bezoeker_hash(): string {
-    $geheim = defined('APP_URL') ? APP_URL : 'paal13';
-    return hash('sha256', ($_SERVER['REMOTE_ADDR'] ?? '') . '|' . ($_SERVER['HTTP_USER_AGENT'] ?? '') . '|' . date('Y-m-d') . '|' . $geheim);
+    $dagsleutel = hash_hmac('sha256', date('Y-m-d'), pag_pseudoniem_zout());
+    return hash_hmac('sha256', ($_SERVER['REMOTE_ADDR'] ?? '') . '|' . ($_SERVER['HTTP_USER_AGENT'] ?? ''), $dagsleutel);
 }
 
 /** Grove bot-herkenning, zodat crawlers de statistiek niet opblazen. */
@@ -42,35 +104,54 @@ function pag_bezoek_venster_min(): int {
 }
 
 /**
- * Is deze bezoeker net al geteld op deze pagina?
+ * Is deze gebeurtenis net al geteld voor deze bezoeker op deze pagina?
+ *
  * Een browser vraagt een pagina om allerlei redenen opnieuw op zonder dat iemand hem echt
  * opnieuw opent: terug-knop, vernieuwen, of een tabblad dat door Edge/Chrome in slaapstand
  * is gezet en bij het terugwisselen opnieuw wordt geladen. Zonder deze controle telt dat
- * allemaal als bezoek.
+ * allemaal mee. Hetzelfde geldt voor de stap-gebeurtenissen: heen en weer bladeren door het
+ * formulier mag stap 2 niet vijf keer laten meetellen. Vandaar ook $detail in de vergelijking.
  */
-function pag_bezoek_recent(?int $pagina_id, string $hash): bool {
+function pag_event_recent(string $type, ?int $pagina_id, string $hash, ?string $detail = null): bool {
     $min = pag_bezoek_venster_min();
     if ($min <= 0) return false;
     try {
         $q = db()->prepare("SELECT 1 FROM pagina_events
-                            WHERE type = 'bezoek' AND bezoeker_hash = ? AND pagina_id <=> ?
+                            WHERE type = ? AND bezoeker_hash = ? AND pagina_id <=> ? AND detail <=> ?
                               AND moment > DATE_SUB(NOW(), INTERVAL ? MINUTE) LIMIT 1");
-        $q->execute([$hash, $pagina_id, $min]);
+        $q->execute([$type, $hash, $pagina_id, $detail, $min]);
         return (bool)$q->fetchColumn();
-    } catch (\Throwable $e) { error_log('pag_bezoek_recent: ' . $e->getMessage()); return false; }
+    } catch (\Throwable $e) { error_log('pag_event_recent: ' . $e->getMessage()); return false; }
 }
 
-/** Leg een gebeurtenis vast. Alleen het type, de pagina/bron en het dag-pseudoniem. */
-function pag_track(string $type, ?int $pagina_id, ?string $bron_code = null): void {
+/** Blijft bestaan voor oude aanroepen; pag_event_recent() is de bredere versie. */
+function pag_bezoek_recent(?int $pagina_id, string $hash): bool {
+    return pag_event_recent('bezoek', $pagina_id, $hash);
+}
+
+/**
+ * Leg een gebeurtenis vast. Alleen het type, de pagina/bron, een stapnummer en het
+ * dag-pseudoniem — nooit iets wat iemand heeft ingevuld.
+ */
+function pag_track(string $type, ?int $pagina_id, ?string $bron_code = null, ?string $detail = null, array $utm = []): void {
     if (!in_array($type, pag_event_typen(), true)) return;
     if (function_exists('instelling_bool') && !instelling_bool('paginas.tracking', true)) return;
-    if ($type === 'bezoek' && pag_is_bot()) return;
+    // Alleen de serverkant-gebeurtenissen (een echte aanmelding, een weigering) tellen bij bots
+    // sowieso niet mee; al het andere komt van een browser en moet de statistiek niet opblazen.
+    if ($type !== 'formulier_klaar' && $type !== 'formulier_geweigerd' && pag_is_bot()) return;
+
+    $detail = $detail === null ? null : substr(trim($detail), 0, 40);
+    if ($detail === '') $detail = null;
+
     try {
         pag_auto_setup();
-        // Herhaalde weergaves binnen het venster niet nóg eens tellen.
-        if ($type === 'bezoek' && pag_bezoek_recent($pagina_id, pag_bezoeker_hash())) return;
-        db()->prepare("INSERT INTO pagina_events (pagina_id, bron_code, type, bezoeker_hash) VALUES (?,?,?,?)")
-            ->execute([$pagina_id, $bron_code, $type, pag_bezoeker_hash()]);
+        if ($type !== 'formulier_klaar' && pag_event_recent($type, $pagina_id, pag_bezoeker_hash(), $detail)) return;
+        // UTM alleen meeschrijven als er iets is (en via pag_utm_uit geschoond): dan blijft een oude
+        // aanroep zonder UTM werken, ook als de kolommen er nog niet zijn.
+        $utm = ($utm && function_exists('pag_utm_uit')) ? array_filter(array_intersect_key(pag_utm_uit($utm), $utm)) : [];
+        $kol = array_merge(['pagina_id', 'bron_code', 'type', 'detail', 'bezoeker_hash'], array_keys($utm));
+        db()->prepare("INSERT INTO pagina_events (" . implode(', ', $kol) . ") VALUES (" . implode(',', array_fill(0, count($kol), '?')) . ")")
+            ->execute(array_merge([$pagina_id, $bron_code, $type, $detail, pag_bezoeker_hash()], array_values($utm)));
     } catch (\Throwable $e) { error_log('pag_track: ' . $e->getMessage()); }
 }
 
@@ -82,7 +163,8 @@ function pag_stats_bulk(array $pagina_ids): array {
     $uit = [];
     $ids = array_values(array_unique(array_filter(array_map('intval', $pagina_ids))));
     foreach ($ids as $id) {
-        $uit[$id] = ['bezoeken'=>0,'uniek'=>0,'starts'=>0,'klaar'=>0,'geweigerd'=>0,'start_pct'=>0,'klaar_pct'=>0];
+        $uit[$id] = ['bezoeken'=>0,'uniek'=>0,'starts'=>0,'klaar'=>0,'geweigerd'=>0,'verlaten'=>0,
+                     'start_pct'=>0,'klaar_pct'=>0,'bezoek_klaar_pct'=>0];
     }
     if (!$ids) return $uit;
     try {
@@ -100,13 +182,15 @@ function pag_stats_bulk(array $pagina_ids): array {
                 case 'formulier_start':     $uit[$id]['starts']    = (int)$r['aantal']; break;
                 case 'formulier_klaar':     $uit[$id]['klaar']     = (int)$r['aantal']; break;
                 case 'formulier_geweigerd': $uit[$id]['geweigerd'] = (int)$r['aantal']; break;
+                case 'formulier_verlaten':  $uit[$id]['verlaten']  = (int)$r['aantal']; break;
             }
         }
     } catch (\Throwable $e) { error_log('pag_stats_bulk: ' . $e->getMessage()); }
 
     foreach ($uit as $id => $s) {
-        $uit[$id]['start_pct'] = $s['uniek']  > 0 ? (int)round($s['starts'] / $s['uniek']  * 100) : 0;
-        $uit[$id]['klaar_pct'] = $s['starts'] > 0 ? (int)round($s['klaar']  / $s['starts'] * 100) : 0;
+        $uit[$id]['start_pct']        = $s['uniek']  > 0 ? (int)round($s['starts'] / $s['uniek']  * 100) : 0;
+        $uit[$id]['klaar_pct']        = $s['starts'] > 0 ? (int)round($s['klaar']  / $s['starts'] * 100) : 0;
+        $uit[$id]['bezoek_klaar_pct'] = $s['uniek']  > 0 ? (int)round($s['klaar']  / $s['uniek']  * 100) : 0;
     }
     return $uit;
 }
@@ -117,8 +201,92 @@ function pag_stats(int $pagina_id): array {
 }
 
 /**
- * Wervingsoverzicht: per bron hoeveel aanmeldingen en hoeveel daarvan aangenomen.
+ * De trechter van één pagina: van bezoek tot aanmelding, met per stap hoeveel mensen er
+ * kwamen en hoeveel er daarna afhaakten.
+ *
+ * Retour: ['treden' => [['sleutel','label','aantal','pct_van_start','verloop'], …], 'verlaten_per_stap' => [nr => aantal]]
+ * 'verloop' is het aantal mensen dat deze trede haalde maar de volgende niet.
+ *
+ * Let op bij het lezen: stap 1 heeft geen eigen gebeurtenis — wie begint te typen zit per
+ * definitie in stap 1. 'formulier_start' ís dus stap 1.
+ */
+function pag_trechter(int $pagina_id, int $stappen = 3): array {
+    $tellingen = ['bezoek' => 0, 'formulier_start' => 0, 'formulier_klaar' => 0];
+    $per_stap = [];
+    $verlaten = [];
+
+    try {
+        pag_auto_setup();
+        $q = db()->prepare("SELECT type, detail, COUNT(*) AS aantal
+                            FROM pagina_events WHERE pagina_id = ? GROUP BY type, detail");
+        $q->execute([$pagina_id]);
+        foreach ($q->fetchAll() as $r) {
+            $type = (string)$r['type'];
+            $aantal = (int)$r['aantal'];
+            if ($type === 'formulier_stap') {
+                $per_stap[(int)$r['detail']] = ($per_stap[(int)$r['detail']] ?? 0) + $aantal;
+            } elseif ($type === 'formulier_verlaten') {
+                $verlaten[(int)$r['detail']] = ($verlaten[(int)$r['detail']] ?? 0) + $aantal;
+            } elseif (isset($tellingen[$type])) {
+                $tellingen[$type] += $aantal;
+            }
+        }
+    } catch (\Throwable $e) { error_log('pag_trechter: ' . $e->getMessage()); }
+
+    return ['treden' => pag_trechter_treden($tellingen, $per_stap, $stappen), 'verlaten_per_stap' => $verlaten];
+}
+
+/**
+ * De treden van een trechter uit tellingen (één rekenregel voor een pagina en voor het totaal).
+ * @param array $tellingen ['bezoek','formulier_start','formulier_klaar'] => aantal
+ * @param array $per_stap  [stapnummer >= 2 => aantal]
+ * @return array [['sleutel','label','aantal','pct_van_start','verloop','grootste'], …]
+ *   'grootste' = hier haakt relatief het grootste deel af (alleen als er iemand afhaakt). Alleen
+ *   binnen het formulier: dat de meeste bezoekers niet beginnen is normaal, en daar valt aan het
+ *   formulier niets te verbeteren.
+ */
+function pag_trechter_treden(array $tellingen, array $per_stap, int $stappen = 3): array {
+    $labels = aanmeld_stappen_labels($stappen);
+    $treden = [['sleutel' => 'bezoek', 'label' => 'Pagina bekeken', 'aantal' => (int)($tellingen['bezoek'] ?? 0)]];
+    $treden[] = ['sleutel' => 'stap1', 'label' => 'Stap 1 · ' . ($labels[1] ?? ''), 'aantal' => (int)($tellingen['formulier_start'] ?? 0)];
+    for ($n = 2; $n <= $stappen; $n++) {
+        $treden[] = ['sleutel' => 'stap' . $n, 'label' => 'Stap ' . $n . ' · ' . ($labels[$n] ?? ''), 'aantal' => (int)($per_stap[$n] ?? 0)];
+    }
+    $treden[] = ['sleutel' => 'klaar', 'label' => 'Aanmelding verstuurd', 'aantal' => (int)($tellingen['formulier_klaar'] ?? 0)];
+
+    $basis = (int)($tellingen['formulier_start'] ?? 0);
+    $grootste = null; $grootste_deel = 0.0;
+    foreach ($treden as $i => $t) {
+        $treden[$i]['pct_van_start'] = $basis > 0 ? (int)round($t['aantal'] / $basis * 100) : 0;
+        $volgende = $treden[$i + 1]['aantal'] ?? null;
+        $treden[$i]['verloop'] = ($volgende !== null && $t['aantal'] > $volgende) ? $t['aantal'] - $volgende : 0;
+        $treden[$i]['grootste'] = false;
+        $deel = $t['aantal'] > 0 ? $treden[$i]['verloop'] / $t['aantal'] : 0.0;
+        if ($t['sleutel'] !== 'bezoek' && $treden[$i]['verloop'] > 0 && $deel > $grootste_deel) { $grootste = $i; $grootste_deel = $deel; }
+    }
+    if ($grootste !== null) $treden[$grootste]['grootste'] = true;
+    return $treden;
+}
+
+/** De korte stapnamen, zodat de statistiek dezelfde woorden gebruikt als het formulier zelf. */
+function aanmeld_stappen_labels(int $aantal = 3): array {
+    if (function_exists('aanmeld_stappen')) {
+        $uit = [];
+        foreach (aanmeld_stappen() as $nr => $s) $uit[$nr] = (string)$s['kort'];
+        return $uit;
+    }
+    $terugval = [1 => 'Naam', 2 => 'Jij', 3 => 'Contact'];
+    return array_slice($terugval, 0, $aantal, true);
+}
+
+/**
+ * Wervingsoverzicht: per bron hoeveel aanmeldingen en hoeveel daarvan aangenomen, en per bron de
+ * campagnes (bron_code "<bron>/<campagne>", zie werving.php).
  * Leest de sollicitaties zelf, niet de events — een aanmelding telt pas als hij er echt is.
+ *
+ * Retour, gesorteerd op aanmeldingen: [['bron' => label, 'bron_code', 'aanmeldingen', 'aangenomen',
+ *   'campagnes' => [['campagne', 'aanmeldingen', 'aangenomen'], …],
+ *   'zonder'    => ['aanmeldingen', 'aangenomen']], …]   ('zonder' = zonder campagne binnen die bron)
  */
 function pag_werving_overzicht(?int $seizoen_id = null): array {
     try {
@@ -127,18 +295,53 @@ function pag_werving_overzicht(?int $seizoen_id = null): array {
         $args = [];
         if ($seizoen_id) { $where .= " AND s.seizoen_id = ?"; $args[] = $seizoen_id; }
         $q = db()->prepare("
-            SELECT COALESCE(s.bron_label, s.bron_code) AS bron,
-                   s.bron_code,
+            SELECT s.bron_code,
+                   MIN(s.bron_label) AS bron_label,
                    COUNT(*) AS aanmeldingen,
                    SUM(CASE WHEN s.fase = 'aangenomen' THEN 1 ELSE 0 END) AS aangenomen
             FROM sollicitaties s
             $where
-            GROUP BY s.bron_code, bron
-            ORDER BY aanmeldingen DESC
+            GROUP BY s.bron_code
         ");
         $q->execute($args);
-        return $q->fetchAll();
+        $rijen = $q->fetchAll();
     } catch (\Throwable $e) { return []; }
+
+    $per = [];
+    foreach ($rijen as $r) {
+        $delen = explode('/', (string)$r['bron_code'], 2);
+        $basis = $delen[0];
+        $camp  = $delen[1] ?? '';
+        $n = (int)$r['aanmeldingen'];
+        $a = (int)$r['aangenomen'];
+        if (!isset($per[$basis])) {
+            $per[$basis] = ['bron' => '', 'bron_code' => $basis, 'aanmeldingen' => 0, 'aangenomen' => 0,
+                            'campagnes' => [], 'zonder' => ['aanmeldingen' => 0, 'aangenomen' => 0]];
+        }
+        $per[$basis]['aanmeldingen'] += $n;
+        $per[$basis]['aangenomen']   += $a;
+
+        // Label van de bron: bij voorkeur van een aanmelding zonder campagne; anders dat van een
+        // campagne zonder het achtervoegsel " · <campagne>".
+        $label = (string)($r['bron_label'] ?? '');
+        if ($camp !== '' && str_ends_with($label, ' · ' . $camp)) $label = substr($label, 0, -strlen(' · ' . $camp));
+        if ($label !== '' && ($per[$basis]['bron'] === '' || $camp === '')) $per[$basis]['bron'] = $label;
+
+        if ($camp === '') {
+            $per[$basis]['zonder'] = ['aanmeldingen' => $n, 'aangenomen' => $a];
+        } else {
+            $per[$basis]['campagnes'][] = ['campagne' => $camp, 'aanmeldingen' => $n, 'aangenomen' => $a];
+        }
+    }
+
+    $op_aantal = fn($x, $y) => $y['aanmeldingen'] <=> $x['aanmeldingen'];
+    foreach ($per as $k => $b) {
+        if ($b['bron'] === '') $per[$k]['bron'] = $b['bron_code'];
+        usort($per[$k]['campagnes'], $op_aantal);
+    }
+    $uit = array_values($per);
+    usort($uit, $op_aantal);
+    return $uit;
 }
 
 /**

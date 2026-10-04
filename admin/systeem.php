@@ -5,7 +5,9 @@
  * Handig direct na een upload: draaien de automatische migraties?
  */
 require_once __DIR__ . '/../includes/functions.php';
-vereist_rol('admin');
+// Dit scherm draait migraties en repareert het schema, dus 'bewerken' en niet 'lezen'.
+// In de standaardmatrix heeft alleen de beheerder de module 'systeem'.
+vereis_recht('systeem', 'bewerken');
 
 $pagina_titel = 'Systeem & Updates';
 $actieve_nav  = 'systeem';
@@ -30,10 +32,12 @@ try {
 // Migraties forceren / schema repareren (handig na een upload)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['actie'] ?? '') === 'migreer') {
     csrf_check();
+    $_fout = null;
     if (function_exists('db_failsafe')) {
-        try { db_failsafe(true); } catch (\Throwable $e) {}
+        try { db_failsafe(true); } catch (\Throwable $e) { $_fout = $e->getMessage(); }
     }
-    flash('succes', 'Databasecontrole uitgevoerd: ontbrekende tabellen en kolommen zijn aangemaakt waar nodig.');
+    if ($_fout !== null) flash('fout', 'De databasecontrole liep vast: ' . $_fout . ' Zie ook het logboek.');
+    else flash('succes', 'Databasecontrole uitgevoerd: ontbrekende tabellen en kolommen zijn aangemaakt waar nodig.');
     redirect(APP_URL . '/admin/systeem.php');
 }
 
@@ -43,8 +47,12 @@ $gezondheid = function_exists('db_gezondheid') ? db_gezondheid() : null;
 // Health check: volledige systeemcontrole (met optionele reparatie)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['actie'] ?? '') === 'health_repareer') {
     csrf_check();
-    if (function_exists('health_check')) health_check(true);
-    flash('succes', 'Systeemcontrole uitgevoerd en waar mogelijk hersteld.');
+    $_fout = null;
+    if (function_exists('health_check')) {
+        try { health_check(true); } catch (\Throwable $e) { $_fout = $e->getMessage(); }
+    }
+    if ($_fout !== null) flash('fout', 'De systeemcontrole liep vast: ' . $_fout);
+    else flash('succes', 'Systeemcontrole uitgevoerd en waar mogelijk hersteld. Wat nog rood of oranje is, staat hieronder.');
     redirect(APP_URL . '/admin/systeem.php');
 }
 $health = function_exists('health_check') ? health_check(false) : null;
@@ -65,63 +73,81 @@ $changelog = function_exists('app_changelog') ? app_changelog() : [];
 require __DIR__ . '/layout_top.php';
 ?>
 
-<div class="card" style="margin-bottom:14px">
-  <div class="card-body" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+<div class="ds-kaart">
+  <div class="bh-kaartbody bh-sys-versiebalk">
     <div>
-      <div style="font-size:12px;color:var(--tekst-zacht)">Geïnstalleerde versie</div>
-      <div style="font-size:24px;font-weight:700;color:var(--navy)"><?= h(APP_VERSIE) ?></div>
+      <div class="bh-sys-klein">Geïnstalleerde versie</div>
+      <div class="bh-sys-versie"><?= h(APP_VERSIE) ?></div>
     </div>
-    <div style="flex:1"></div>
-    <a href="<?= APP_URL ?>/diagnose.php" class="btn btn-outline btn-sm" target="_blank">🔍 Diagnose draaien</a>
-    <form method="POST" style="margin:0">
+    <div class="bh-vulling"></div>
+    <?php /* Hele scherm eist al systeem-bewerken; update.php zelf eist rol admin. */ ?>
+    <a href="<?= APP_URL ?>/admin/update.php" class="ds-btn ds-btn-secundair ds-btn-sm" title="Losse SQL-migraties uit de map sql/ bekijken en uitvoeren">SQL-migraties</a>
+    <form method="POST" class="bh-sys-kaal">
       <?= csrf_input() ?>
       <input type="hidden" name="actie" value="migreer">
-      <button type="submit" class="btn btn-outline btn-sm" title="Voer alle automatische database-migraties uit">⚙️ Migraties uitvoeren</button>
+      <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm" title="Voer alle automatische database-migraties uit">Migraties uitvoeren</button>
     </form>
   </div>
 </div>
 
 <!-- Systeemgezondheid (health check) -->
 <?php if ($health !== null): ?>
-<div class="card" style="margin-bottom:14px">
-  <div class="card-header"><div class="card-title">Systeemgezondheid</div></div>
-  <div class="card-body">
+<div class="ds-kaart">
+  <div class="bh-kaartkop"><h2>Systeemgezondheid</h2></div>
+  <div class="bh-kaartbody">
     <?php
-      $health_kleur = ['ok' => 'var(--groen)', 'waarschuwing' => 'var(--oranje)', 'fout' => 'var(--rood)'];
-      $health_bg    = ['ok' => 'var(--groen-bg)', 'waarschuwing' => 'var(--oranje-bg)', 'fout' => 'var(--rood-bg)'];
-      $health_icoon = ['ok' => '✓', 'waarschuwing' => '⚠', 'fout' => '✗'];
+      // Kleur per stand: klassen .bh-sys-status/.bh-sys-kleur + ok|waarschuwing|fout in beheer.css.
+      $health_icoon = ['ok' => 'vink', 'waarschuwing' => 'waarschuwing', 'fout' => 'kruis'];
       $health_label = ['ok' => 'Alles in orde', 'waarschuwing' => 'Aandachtspunten', 'fout' => 'Er is een probleem'];
       $st = $health['status'];
     ?>
-    <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:<?= $health_bg[$st] ?>;border:1px solid <?= $health_kleur[$st] ?>;border-radius:8px;margin-bottom:14px">
-      <span style="font-size:18px"><?= $health_icoon[$st] ?></span>
-      <span style="font-size:13px;color:<?= $health_kleur[$st] ?>"><strong><?= $health_label[$st] ?>.</strong></span>
+    <div class="bh-sys-status <?= h($st) ?>">
+      <span class="bh-healthicoon"><?= icoon($health_icoon[$st], 18) ?></span>
+      <span class="bh-sys-statustekst bh-sys-kleur <?= h($st) ?>"><strong><?= $health_label[$st] ?>.</strong></span>
     </div>
 
-    <div style="display:flex;flex-direction:column;gap:8px">
+    <div class="bh-sys-checks">
       <?php
         $check_namen = [
           'database' => 'Database', 'cron' => 'Cron (automatische taken)', 'mailwachtrij' => 'Mailwachtrij',
           'opschoning' => 'AVG-opschoning', 'mappen' => 'Mappen & rechten', 'configuratie' => 'Configuratie',
+          'berichten' => 'E-mail en testmodus', 'inloggen' => 'Inloggen (Authentik)',
           'kluis' => 'Kluis (versleutelde documenten)', 'zegel' => 'Documentzegel (PDF)',
+          'snelheid' => 'Snel antwoorden (PHP-FPM)', 'backup' => 'Back-up vóór updates',
         ];
         foreach ($health['checks'] as $sleutel => $check):
           $ck = $check['status'];
+          $punten = $check['punten'] ?? [];
       ?>
-      <div style="display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--rand)">
-        <span style="font-size:14px;color:<?= $health_kleur[$ck] ?>;min-width:16px"><?= $health_icoon[$ck] ?></span>
-        <div style="flex:1">
-          <div style="font-size:13px;font-weight:600"><?= h($check_namen[$sleutel] ?? $sleutel) ?></div>
-          <div style="font-size:12px;color:var(--tekst-zacht)"><?= h($check['uitleg']) ?><?= !empty($check['hersteld']) ? ' <span style="color:var(--groen)">(automatisch hersteld)</span>' : '' ?></div>
+      <div class="bh-sys-check">
+        <span class="bh-healthicoon bh-sys-kleur <?= h($ck) ?>"><?= icoon($health_icoon[$ck], 15) ?></span>
+        <div class="bh-vulling">
+          <div class="bh-sys-checknaam"><?= h($check_namen[$sleutel] ?? $sleutel) ?></div>
+          <?php if ($punten): /* Per punt de tekst + een knop naar het juiste tabblad (health_punt()). */ ?>
+            <ul class="bh-instellen-lijst">
+              <?php foreach ($punten as $p): ?>
+                <li class="bh-instellen-punt <?= h($p['soort']) ?>">
+                  <span class="bh-instellen-tekst bh-sys-klein"><?= h($p['tekst']) ?></span>
+                  <a class="ds-btn ds-btn-zacht ds-btn-sm" href="<?= h($p['url']) ?>"><?= h($p['knop']) ?></a>
+                </li>
+              <?php endforeach; ?>
+            </ul>
+            <?php if ($sleutel === 'berichten' && function_exists('mail_omleiden') && mail_omleiden() !== ''): ?>
+              <div class="bh-sys-klein"><?= h(health_testmodus_tekst(mail_omleiden())) ?></div>
+            <?php endif; ?>
+          <?php else: ?>
+          <div class="bh-sys-klein"><?= h($check['uitleg']) ?><?= !empty($check['hersteld']) ? ' <span class="bh-tekst-ok">(automatisch hersteld)</span>' : '' ?></div>
+          <?php endif; ?>
+          <?php if ($sleutel === 'kluis'): ?><a href="<?= APP_URL ?>/admin/kluis.php" class="ds-btn ds-btn-zacht ds-btn-sm"><?= icoon('sleutel', 14) ?> Kluissleutel wisselen</a><?php endif; ?>
         </div>
       </div>
       <?php endforeach; ?>
     </div>
 
-    <form method="post" style="margin-top:14px">
+    <form method="post" class="bh-sys-repareer">
       <?= csrf_input() ?>
       <input type="hidden" name="actie" value="health_repareer">
-      <button type="submit" class="btn btn-primary btn-sm">Controleren &amp; repareren</button>
+      <button type="submit" class="ds-btn ds-btn-primair ds-btn-sm">Controleren &amp; repareren</button>
     </form>
   </div>
 </div>
@@ -129,32 +155,35 @@ require __DIR__ . '/layout_top.php';
 
 <!-- Herinneringen: proefdraaien -->
 <?php if (function_exists('herinnering_run')): ?>
-<div class="card" style="margin-bottom:14px" id="herinneringen">
-  <div class="card-header"><div class="card-title">Herinneringen</div></div>
-  <div class="card-body">
-    <p style="font-size:13px;color:var(--tekst-zacht);margin:0 0 12px">
-      Laatste automatische run: <strong><?= h(instelling('cron.laatste_run', '') ?: 'nog niet') ?></strong>
-      (<?= h(instelling('cron.laatste_bron', '') ?: '-') ?>). Proefdraaien toont wie een herinnering zou krijgen zonder iets te versturen.
+<div class="ds-kaart bh-sys-herinneringen" id="herinneringen">
+  <div class="bh-kaartkop"><h2>Herinneringen</h2></div>
+  <div class="bh-kaartbody">
+    <p class="bh-sys-intro">
+      Herinneringen draaien automatisch elk kwartier; laatste keer:
+      <strong><?= h(instelling('cron.laatste_kwartier', '') ?: 'nog niet') ?></strong>.
+      Proefdraaien toont wie een herinnering zou krijgen zonder iets te versturen.
     </p>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <form method="post" style="margin:0"><?= csrf_input() ?><input type="hidden" name="actie" value="herinneringen_proef">
-        <button type="submit" class="btn btn-outline btn-sm">Proefdraaien (niets versturen)</button></form>
-      <form method="post" style="margin:0" onsubmit="return confirm('Herinneringen nu echt versturen (via de wachtrij)?')"><?= csrf_input() ?><input type="hidden" name="actie" value="herinneringen_draai">
-        <button type="submit" class="btn btn-primary btn-sm">Nu draaien</button></form>
+    <div class="bh-sys-knoprij">
+      <form method="post" class="bh-sys-kaal"><?= csrf_input() ?><input type="hidden" name="actie" value="herinneringen_proef">
+        <button type="submit" class="ds-btn ds-btn-secundair ds-btn-sm">Proefdraaien (niets versturen)</button></form>
+      <form method="post" class="bh-sys-kaal" data-bevestig-titel="Herinneringen nu versturen?"
+            data-bevestig="Iedereen die volgens de regels een herinnering hoort te krijgen, krijgt hem ook echt. Wil je eerst zien wie dat zijn, gebruik dan Proefdraaien."
+            data-bevestig-knop="Ja, versturen"><?= csrf_input() ?><input type="hidden" name="actie" value="herinneringen_draai">
+        <button type="submit" class="ds-btn ds-btn-primair ds-btn-sm">Nu draaien</button></form>
     </div>
     <?php if ($herinnering_resultaat !== null): ?>
-    <div style="margin-top:14px;font-size:13px">
-      <div style="font-weight:600;margin-bottom:6px"><?= $herinnering_echt ? 'Gedraaid' : 'Proefrun' ?> op <?= date('d-m-Y H:i') ?></div>
+    <div class="bh-sys-resultaat">
+      <div class="bh-sys-resultaat-kop"><?= $herinnering_echt ? 'Gedraaid' : 'Proefrun' ?> op <?= date('d-m-Y H:i') ?></div>
       <?php foreach ($herinnering_resultaat as $hs => $hr): ?>
-      <div style="padding:8px 0;border-bottom:1px solid var(--rand)">
+      <div class="bh-sys-herinnering">
         <div><strong><?= h($hr['naam']) ?></strong>
-          <?php if (!$hr['aan']): ?><span class="badge">uit</span>
-          <?php else: ?> — <?= (int)$hr['kandidaten'] ?> kandidaat/-aten, <?= (int)$hr['verstuurd'] ?> <?= $herinnering_echt ? 'in de wachtrij' : 'zou versturen' ?>, <?= (int)$hr['overgeslagen'] ?> overgeslagen<?php endif; ?>
+          <?php if (!$hr['aan']): ?><?= bh_badge('Uit', 'grijs') ?>
+          <?php else: ?> — <?= (int)$hr['kandidaten'] ?> sollicitant(en), <?= (int)$hr['verstuurd'] ?> <?= $herinnering_echt ? 'in de wachtrij' : 'zou versturen' ?>, <?= (int)$hr['overgeslagen'] ?> overgeslagen<?php endif; ?>
         </div>
         <?php if (!empty($hr['lijst'])): ?>
-        <div style="color:var(--tekst-zacht);margin-top:4px">
+        <div class="bh-sys-herinnering-lijst">
           <?php foreach ($hr['lijst'] as $hl): ?>
-            <span style="display:inline-block;margin:2px 8px 2px 0"><?= h($hl['naam'] ?: ('#' . $hl['sol_id'])) ?>: <em><?= h($hl['actie']) ?></em></span>
+            <span class="bh-sys-herinnering-naam"><?= h($hl['naam'] ?: ('#' . $hl['sol_id'])) ?>: <em><?= h($hl['actie']) ?></em></span>
           <?php endforeach; ?>
         </div>
         <?php endif; ?>
@@ -167,43 +196,40 @@ require __DIR__ . '/layout_top.php';
 <?php endif; ?>
 
 <!-- Tabelstatus -->
-<div class="card" style="margin-bottom:14px">
-  <div class="card-header"><div class="card-title">Database</div></div>
-  <div class="card-body">
+<div class="ds-kaart">
+  <div class="bh-kaartkop"><h2>Database</h2></div>
+  <div class="bh-kaartbody">
     <?php if ($db_fout): ?>
-      <div style="color:var(--rood)">Kan de database niet lezen: <?= h($db_fout) ?></div>
+      <div class="bh-tekst-fout">Kan de database niet lezen: <?= h($db_fout) ?></div>
     <?php else: ?>
       <?php if ($gezondheid !== null): ?>
         <?php if ($gezondheid['ok']): ?>
-          <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--groen-bg);border:1px solid var(--groen);border-radius:8px;margin-bottom:12px">
-            <span style="font-size:18px">✓</span>
-            <span style="font-size:13px;color:var(--groen)"><strong>Database in orde.</strong> Alle verwachte tabellen en kolommen zijn aanwezig.</span>
+          <div class="bh-sys-status ok bh-sys-status-db">
+            <span class="bh-healthicoon"><?= icoon('vink', 18) ?></span>
+            <span class="bh-sys-statustekst bh-sys-kleur ok"><strong>Database in orde.</strong> Alle verwachte tabellen en kolommen zijn aanwezig.</span>
           </div>
         <?php else: ?>
-          <div style="padding:10px 14px;background:var(--oranje-bg);border:1px solid var(--oranje);border-radius:8px;margin-bottom:12px">
-            <div style="font-size:13px;color:var(--oranje);font-weight:600;margin-bottom:4px">⚠ Er ontbreekt iets in de database</div>
+          <div class="bh-sys-dbmelding">
+            <div class="bh-sys-dbmelding-kop">Er ontbreekt iets in de database</div>
             <?php if (!empty($gezondheid['ontbrekende_kolommen'])): ?>
-              <div style="font-size:12px;color:var(--tekst-zacht)">Ontbrekende kolommen: <?= h(implode(', ', $gezondheid['ontbrekende_kolommen'])) ?></div>
+              <div class="bh-sys-klein">Ontbrekende kolommen: <?= h(implode(', ', $gezondheid['ontbrekende_kolommen'])) ?></div>
             <?php endif; ?>
-            <div style="font-size:12px;color:var(--tekst-zacht);margin-top:4px">Klik op "Databasecontrole uitvoeren" hieronder om dit automatisch te herstellen.</div>
+            <div class="bh-sys-klein bh-sys-klein-ruimte">Klik bovenaan op "Migraties uitvoeren" om dit automatisch te herstellen.</div>
           </div>
         <?php endif; ?>
       <?php endif; ?>
-      <p style="font-size:12.5px;color:var(--tekst-zacht);margin-bottom:12px">
+      <p class="bh-sys-uitleg">
         Het systeem controleert en herstelt het databaseschema automatisch bij elk bezoek. Ontbrekende tabellen
-        en kolommen worden vanzelf aangemaakt. Klopt er toch iets niet na een upload? Klik dan op
-        "Databasecontrole uitvoeren".
+        en kolommen worden vanzelf aangemaakt. Klopt er toch iets niet na een upload? Klik dan bovenaan op
+        "Migraties uitvoeren".
       </p>
       <?php foreach ($verwacht as $groep => $tabellen): ?>
-      <div style="margin-bottom:10px">
-        <div style="font-size:12px;font-weight:600;color:var(--tekst-zacht);margin-bottom:4px"><?= h($groep) ?></div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px">
+      <div class="bh-sys-tabelgroep">
+        <div class="bh-sys-tabelgroep-kop"><?= h($groep) ?></div>
+        <div class="bh-sys-tabellen">
           <?php foreach ($tabellen as $t): $ok = in_array($t, $aanwezig, true); ?>
-          <span style="display:inline-flex;align-items:center;gap:5px;font-size:11.5px;padding:4px 10px;border-radius:20px;
-                       background:<?= $ok ? 'var(--groen-bg)' : 'var(--grijs-bg)' ?>;
-                       color:<?= $ok ? 'var(--groen)' : 'var(--grijs)' ?>;
-                       border:1px solid <?= $ok ? 'var(--groen)' : 'var(--rand)' ?>">
-            <?= $ok ? '✓' : '○' ?> <?= h($t) ?>
+          <span class="bh-sys-tabel<?= $ok ? ' ok' : '' ?>">
+            <?= icoon($ok ? 'vink' : 'punt', 13) ?> <?= h($t) ?>
           </span>
           <?php endforeach; ?>
         </div>
@@ -214,36 +240,36 @@ require __DIR__ . '/layout_top.php';
 </div>
 
 <!-- Logboek -->
-<div class="card">
-  <div class="card-header"><div class="card-title">Logboek</div></div>
-  <div style="padding:0 0 4px">
-    <p style="font-size:12.5px;color:var(--tekst-zacht);margin-bottom:12px">
+<div class="ds-kaart">
+  <div class="bh-kaartkop"><h2>Logboek</h2></div>
+  <div class="bh-sys-logboek">
+    <p class="bh-sys-uitleg">
       Alle sporen van het systeem in één tijdlijn: acties, verstuurde berichten, technische fouten,
       het bewijsspoor van ondertekeningen, de AVG-opschoning en mislukte inlogpogingen.
     </p>
-    <a href="<?= APP_URL ?>/admin/logboek.php" class="btn btn-outline btn-sm"><?= icoon('auditlog', 14) ?> Logboek openen</a>
+    <a href="<?= APP_URL ?>/admin/logboek.php" class="ds-btn ds-btn-secundair ds-btn-sm"><?= icoon('auditlog', 14) ?> Logboek openen</a>
   </div>
 </div>
 
 <!-- Changelog -->
-<div class="card">
-  <div class="card-header"><div class="card-title">Changelog</div></div>
-  <div class="card-body">
+<div class="ds-kaart">
+  <div class="bh-kaartkop"><h2>Changelog</h2></div>
+  <div class="bh-kaartbody">
     <?php if (!$changelog): ?>
-      <div style="color:var(--tekst-zacht)">Geen changelog beschikbaar.</div>
+      <div class="bh-sys-leeg">Geen changelog beschikbaar.</div>
     <?php else: ?>
       <?php foreach ($changelog as $versie => $c): ?>
-      <details <?= $versie === APP_VERSIE ? 'open' : '' ?> style="border-bottom:1px solid var(--rand-licht);padding:10px 0">
-        <summary style="cursor:pointer;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-          <span style="font-weight:700;color:var(--navy);font-size:14px"><?= h($versie) ?></span>
+      <details <?= $versie === APP_VERSIE ? 'open' : '' ?> class="bh-sys-versieblok">
+        <summary class="bh-sys-versiekop">
+          <span class="bh-sys-versienr"><?= h($versie) ?></span>
           <?php if ($versie === APP_VERSIE): ?>
-            <span style="font-size:10px;font-weight:700;color:#fff;background:var(--groen);padding:2px 8px;border-radius:4px">HUIDIG</span>
+            <span class="bh-sys-huidig">HUIDIG</span>
           <?php endif; ?>
-          <span style="font-size:13px;color:var(--tekst)"><?= h($c['titel'] ?? '') ?></span>
-          <span style="flex:1"></span>
-          <span style="font-size:11px;color:var(--grijs)"><?= h($c['datum'] ?? '') ?></span>
+          <span class="bh-sys-versietitel"><?= h($c['titel'] ?? '') ?></span>
+          <span class="bh-vulling"></span>
+          <span class="bh-sys-datum"><?= h($c['datum'] ?? '') ?></span>
         </summary>
-        <ul style="margin:8px 0 0;padding-left:20px;font-size:12.5px;line-height:1.8;color:var(--tekst-zacht)">
+        <ul class="bh-sys-punten">
           <?php foreach ($c['punten'] ?? [] as $p): ?>
           <li><?= h($p) ?></li>
           <?php endforeach; ?>
